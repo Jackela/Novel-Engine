@@ -12,7 +12,7 @@ Central server that integrates all monitoring components:
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import uvicorn
@@ -208,7 +208,7 @@ class ObservabilityServer:
                 "service": "Novel Engine Observability",
                 "version": "1.0.0",
                 "status": "running",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "endpoints": {
                     "metrics": "/metrics",
                     "health": "/health",
@@ -375,7 +375,7 @@ class ObservabilityServer:
         async def get_observability_status():
             """Get overall observability system status"""
             status = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "components": {
                     "metrics": {"status": "healthy", "details": "Prometheus metrics active"},
                     "tracing": get_tracing_health(),
@@ -469,7 +469,7 @@ class ObservabilityServer:
                             metric_data = MetricData(
                                 name=metric_name,
                                 value=latest_metric["value"],
-                                timestamp=datetime.utcnow(),
+                                timestamp=datetime.now(timezone.utc),
                                 labels=latest_metric.get("labels", {}),
                                 description=f"Metric: {metric_name}"
                             )

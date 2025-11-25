@@ -20,6 +20,7 @@ from contexts.subjective.domain.value_objects.perception_range import (
 class TestPerceptionRangeCreation:
     """Test suite for PerceptionRange value object creation and validation."""
 
+    @pytest.mark.unit
     def test_minimal_perception_range_creation(self):
         """Test creating perception range with minimal required fields."""
         perception_range = PerceptionRange(
@@ -36,6 +37,7 @@ class TestPerceptionRangeCreation:
         assert perception_range.accuracy_modifier == 0.8
         assert perception_range.environmental_modifiers == {}
 
+    @pytest.mark.unit
     def test_full_perception_range_creation(self):
         """Test creating perception range with environmental modifiers."""
         env_modifiers = {"fog": 0.5, "darkness": 0.3, "rain": 0.8}
@@ -54,6 +56,8 @@ class TestPerceptionRangeCreation:
         assert perception_range.accuracy_modifier == 0.9
         assert perception_range.environmental_modifiers == env_modifiers
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_zero_ranges_allowed(self):
         """Test that zero ranges are allowed (but negative are not)."""
         perception_range = PerceptionRange(
@@ -71,6 +75,7 @@ class TestPerceptionRangeCreation:
 class TestPerceptionRangeValidation:
     """Test suite for PerceptionRange validation logic."""
 
+    @pytest.mark.unit
     def test_negative_base_range_validation(self):
         """Test validation fails with negative base range."""
         with pytest.raises(ValueError, match="Base range cannot be negative"):
@@ -82,6 +87,7 @@ class TestPerceptionRangeValidation:
                 environmental_modifiers={},
             )
 
+    @pytest.mark.unit
     def test_negative_effective_range_validation(self):
         """Test validation fails with negative effective range."""
         with pytest.raises(ValueError, match="Effective range cannot be negative"):
@@ -93,6 +99,7 @@ class TestPerceptionRangeValidation:
                 environmental_modifiers={},
             )
 
+    @pytest.mark.unit
     def test_accuracy_modifier_below_zero(self):
         """Test validation fails with accuracy modifier below 0.0."""
         with pytest.raises(
@@ -106,6 +113,7 @@ class TestPerceptionRangeValidation:
                 environmental_modifiers={},
             )
 
+    @pytest.mark.unit
     def test_accuracy_modifier_above_one(self):
         """Test validation fails with accuracy modifier above 1.0."""
         with pytest.raises(
@@ -119,6 +127,7 @@ class TestPerceptionRangeValidation:
                 environmental_modifiers={},
             )
 
+    @pytest.mark.unit
     def test_empty_environmental_modifier_name(self):
         """Test validation fails with empty environmental modifier name."""
         with pytest.raises(
@@ -132,6 +141,7 @@ class TestPerceptionRangeValidation:
                 environmental_modifiers={"": 0.5},
             )
 
+    @pytest.mark.unit
     def test_whitespace_environmental_modifier_name(self):
         """Test validation fails with whitespace-only environmental modifier name."""
         with pytest.raises(
@@ -145,6 +155,7 @@ class TestPerceptionRangeValidation:
                 environmental_modifiers={"   \t\n  ": 0.5},
             )
 
+    @pytest.mark.unit
     def test_non_string_environmental_modifier_name(self):
         """Test validation fails with non-string environmental modifier name."""
         with pytest.raises(
@@ -158,6 +169,7 @@ class TestPerceptionRangeValidation:
                 environmental_modifiers={123: 0.5},
             )
 
+    @pytest.mark.unit
     def test_non_numeric_environmental_modifier_value(self):
         """Test validation fails with non-numeric environmental modifier value."""
         with pytest.raises(
@@ -171,6 +183,7 @@ class TestPerceptionRangeValidation:
                 environmental_modifiers={"fog": "heavy"},
             )
 
+    @pytest.mark.unit
     def test_boundary_accuracy_modifier_values(self):
         """Test that boundary accuracy modifier values (0.0 and 1.0) are valid."""
         # Test 0.0
@@ -197,6 +210,8 @@ class TestPerceptionRangeValidation:
 class TestVisibilityCalculation:
     """Test suite for visibility calculation at different distances."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_visibility_at_zero_distance(self):
         """Test visibility at zero distance is always clear."""
         perception_range = PerceptionRange(
@@ -210,6 +225,7 @@ class TestVisibilityCalculation:
         visibility = perception_range.calculate_visibility_at_distance(0.0)
         assert visibility == VisibilityLevel.CLEAR
 
+    @pytest.mark.unit
     def test_visibility_beyond_effective_range(self):
         """Test visibility beyond effective range is invisible."""
         perception_range = PerceptionRange(
@@ -228,6 +244,7 @@ class TestVisibilityCalculation:
         visibility_beyond = perception_range.calculate_visibility_at_distance(60.0)
         assert visibility_beyond == VisibilityLevel.INVISIBLE
 
+    @pytest.mark.unit
     def test_visibility_within_range_perfect_conditions(self):
         """Test visibility calculation within range with perfect conditions."""
         perception_range = PerceptionRange(
@@ -254,6 +271,7 @@ class TestVisibilityCalculation:
             VisibilityLevel.HIDDEN,
         ]
 
+    @pytest.mark.unit
     def test_visibility_with_environmental_degradation(self):
         """Test visibility degradation due to environmental conditions."""
         # Perfect conditions
@@ -300,6 +318,7 @@ class TestVisibilityCalculation:
         # Degraded should be worse (higher index) or equal
         assert degraded_index >= perfect_index
 
+    @pytest.mark.unit
     def test_visibility_with_low_accuracy(self):
         """Test visibility with low accuracy modifier."""
         low_accuracy_perception = PerceptionRange(
@@ -323,6 +342,7 @@ class TestVisibilityCalculation:
             VisibilityLevel.INVISIBLE,
         ]
 
+    @pytest.mark.unit
     def test_visibility_level_thresholds(self):
         """Test specific visibility level threshold calculations."""
         # Create perception with known parameters to test specific thresholds
@@ -349,6 +369,7 @@ class TestVisibilityCalculation:
 class TestPerceptionRangeUtilityMethods:
     """Test suite for PerceptionRange utility methods."""
 
+    @pytest.mark.unit
     def test_is_within_range_true(self):
         """Test is_within_range returns True for distances within effective range."""
         perception_range = PerceptionRange(
@@ -363,6 +384,7 @@ class TestPerceptionRangeUtilityMethods:
         assert perception_range.is_within_range(40.0)
         assert perception_range.is_within_range(80.0)  # Exactly at effective range
 
+    @pytest.mark.unit
     def test_is_within_range_false(self):
         """Test is_within_range returns False for distances beyond effective range."""
         perception_range = PerceptionRange(
@@ -377,6 +399,7 @@ class TestPerceptionRangeUtilityMethods:
         assert not perception_range.is_within_range(100.0)
         assert not perception_range.is_within_range(150.0)
 
+    @pytest.mark.unit
     def test_apply_environmental_modifier_creates_new_instance(self):
         """Test apply_environmental_modifier creates new instance with additional modifier."""
         original = PerceptionRange(
@@ -405,6 +428,8 @@ class TestPerceptionRangeUtilityMethods:
         # Different objects
         assert original is not modified
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_apply_environmental_modifier_overwrites_existing(self):
         """Test apply_environmental_modifier overwrites existing modifier with same name."""
         original = PerceptionRange(
@@ -424,6 +449,7 @@ class TestPerceptionRangeUtilityMethods:
 class TestPerceptionCapabilitiesCreation:
     """Test suite for PerceptionCapabilities creation and validation."""
 
+    @pytest.mark.unit
     def test_minimal_perception_capabilities_creation(self):
         """Test creating perception capabilities with minimal fields."""
         visual_range = PerceptionRange(
@@ -443,6 +469,7 @@ class TestPerceptionCapabilitiesCreation:
         assert capabilities.passive_awareness_bonus == 0.0
         assert capabilities.focused_perception_multiplier == 1.5
 
+    @pytest.mark.unit
     def test_full_perception_capabilities_creation(self):
         """Test creating perception capabilities with all fields."""
         visual_range = PerceptionRange(
@@ -480,6 +507,7 @@ class TestPerceptionCapabilitiesCreation:
 class TestPerceptionCapabilitiesValidation:
     """Test suite for PerceptionCapabilities validation logic."""
 
+    @pytest.mark.unit
     def test_empty_perception_ranges_validation(self):
         """Test validation fails with empty perception ranges."""
         with pytest.raises(
@@ -487,6 +515,7 @@ class TestPerceptionCapabilitiesValidation:
         ):
             PerceptionCapabilities(perception_ranges={})
 
+    @pytest.mark.unit
     def test_invalid_perception_type_key(self):
         """Test validation fails with invalid perception type key."""
         visual_range = PerceptionRange(
@@ -500,6 +529,7 @@ class TestPerceptionCapabilitiesValidation:
         with pytest.raises(ValueError, match="Invalid perception type"):
             PerceptionCapabilities(perception_ranges={"invalid_key": visual_range})
 
+    @pytest.mark.unit
     def test_invalid_perception_range_value(self):
         """Test validation fails with invalid perception range value."""
         with pytest.raises(ValueError, match="Invalid perception range for"):
@@ -507,6 +537,7 @@ class TestPerceptionCapabilitiesValidation:
                 perception_ranges={PerceptionType.VISUAL: "invalid_range"}
             )
 
+    @pytest.mark.unit
     def test_perception_type_mismatch(self):
         """Test validation fails when perception range type doesn't match dictionary key."""
         auditory_range = PerceptionRange(
@@ -524,6 +555,7 @@ class TestPerceptionCapabilitiesValidation:
                 }  # But mapped to visual
             )
 
+    @pytest.mark.unit
     def test_negative_passive_awareness_bonus(self):
         """Test validation fails with negative passive awareness bonus."""
         visual_range = PerceptionRange(
@@ -542,6 +574,7 @@ class TestPerceptionCapabilitiesValidation:
                 passive_awareness_bonus=-0.1,
             )
 
+    @pytest.mark.unit
     def test_zero_focused_perception_multiplier(self):
         """Test validation fails with zero focused perception multiplier."""
         visual_range = PerceptionRange(
@@ -560,6 +593,7 @@ class TestPerceptionCapabilitiesValidation:
                 focused_perception_multiplier=0.0,
             )
 
+    @pytest.mark.unit
     def test_negative_focused_perception_multiplier(self):
         """Test validation fails with negative focused perception multiplier."""
         visual_range = PerceptionRange(
@@ -619,6 +653,8 @@ class TestPerceptionCapabilitiesBusinessLogic:
             focused_perception_multiplier=2.0,
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_best_visibility_no_focus(self, multi_sense_capabilities):
         """Test getting best visibility without focused perception."""
         distance = 50.0
@@ -630,6 +666,7 @@ class TestPerceptionCapabilitiesBusinessLogic:
         # Should not be invisible since all senses can reach this distance
         assert visibility != VisibilityLevel.INVISIBLE
 
+    @pytest.mark.unit
     def test_get_best_visibility_with_focus(self, multi_sense_capabilities):
         """Test getting best visibility with focused perception."""
         distance = 50.0
@@ -663,6 +700,8 @@ class TestPerceptionCapabilitiesBusinessLogic:
         # Focused should be better (lower index) or equal
         assert focused_index <= unfocused_index
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_best_visibility_beyond_all_ranges(self, multi_sense_capabilities):
         """Test visibility beyond all perception ranges."""
         distance = 1000.0  # Beyond all ranges
@@ -670,6 +709,8 @@ class TestPerceptionCapabilitiesBusinessLogic:
         visibility = multi_sense_capabilities.get_best_visibility_at_distance(distance)
         assert visibility == VisibilityLevel.INVISIBLE
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_maximum_range(self, multi_sense_capabilities):
         """Test getting maximum perception range."""
         max_range = multi_sense_capabilities.get_maximum_range()
@@ -677,6 +718,7 @@ class TestPerceptionCapabilitiesBusinessLogic:
         # Should be the magical range (180.0) as it has the highest effective range
         assert max_range == 180.0
 
+    @pytest.mark.unit
     def test_get_maximum_range_empty_ranges(self):
         """Test getting maximum range with no perception ranges (edge case)."""
         # This shouldn't happen due to validation, but test the method directly
@@ -700,6 +742,8 @@ class TestPerceptionCapabilitiesBusinessLogic:
         max_range = empty_capabilities.get_maximum_range()
         assert max_range == 0.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_perception_type(self, multi_sense_capabilities):
         """Test checking for specific perception types."""
         assert multi_sense_capabilities.has_perception_type(PerceptionType.VISUAL)
@@ -709,6 +753,8 @@ class TestPerceptionCapabilitiesBusinessLogic:
         assert not multi_sense_capabilities.has_perception_type(PerceptionType.THERMAL)
         assert not multi_sense_capabilities.has_perception_type(PerceptionType.PSYCHIC)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_perception_types(self, multi_sense_capabilities):
         """Test getting all available perception types."""
         perception_types = multi_sense_capabilities.get_perception_types()
@@ -725,6 +771,7 @@ class TestPerceptionCapabilitiesBusinessLogic:
 class TestComplexPerceptionScenarios:
     """Test suite for complex perception scenarios."""
 
+    @pytest.mark.unit
     def test_stealth_detection_scenario(self):
         """Test a complex stealth detection scenario with multiple perception types."""
         # Visual perception affected by darkness
@@ -811,6 +858,7 @@ class TestComplexPerceptionScenarios:
         unfocused_index = visibility_order.index(medium_visibility)
         assert focused_index <= unfocused_index
 
+    @pytest.mark.unit
     def test_environmental_adaptation_scenario(self):
         """Test perception adaptation to changing environmental conditions."""
         base_visual_range = PerceptionRange(
@@ -860,6 +908,7 @@ class TestComplexPerceptionScenarios:
         assert foggy_range.environmental_modifiers == {"fog": 0.4}
         assert foggy_rainy_range.environmental_modifiers == {"fog": 0.4, "rain": 0.7}
 
+    @pytest.mark.unit
     def test_focused_perception_effectiveness(self):
         """Test effectiveness of focused perception in different scenarios."""
         # Create a perception with limited range for testing focus effects
@@ -904,6 +953,7 @@ class TestComplexPerceptionScenarios:
         )
         assert focused_far_beyond == VisibilityLevel.INVISIBLE
 
+    @pytest.mark.unit
     def test_multi_sense_compensation_scenario(self):
         """Test how multiple senses can compensate for each other's weaknesses."""
         # Visual perception with fog penalty
@@ -965,6 +1015,7 @@ class TestComplexPerceptionScenarios:
 class TestEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     def test_zero_effective_range_perception(self):
         """Test perception with zero effective range."""
         zero_range = PerceptionRange(
@@ -985,6 +1036,7 @@ class TestEdgeCasesAndBoundaryConditions:
         assert zero_range.is_within_range(0.0)
         assert not zero_range.is_within_range(0.1)
 
+    @pytest.mark.unit
     def test_zero_accuracy_perception(self):
         """Test perception with zero accuracy modifier."""
         zero_accuracy = PerceptionRange(
@@ -1001,6 +1053,7 @@ class TestEdgeCasesAndBoundaryConditions:
             visibility == VisibilityLevel.INVISIBLE
         )  # Zero accuracy results in zero visibility score
 
+    @pytest.mark.unit
     def test_extreme_environmental_modifiers(self):
         """Test behavior with extreme environmental modifiers."""
         extreme_perception = PerceptionRange(
@@ -1019,6 +1072,7 @@ class TestEdgeCasesAndBoundaryConditions:
         # Combined modifier: 0.01 * 100.0 = 1.0, but distance factor and other elements affect final score
         assert isinstance(visibility, VisibilityLevel)
 
+    @pytest.mark.unit
     def test_very_large_distances(self):
         """Test behavior with very large distances."""
         normal_perception = PerceptionRange(
@@ -1035,6 +1089,7 @@ class TestEdgeCasesAndBoundaryConditions:
         assert visibility == VisibilityLevel.INVISIBLE
         assert not normal_perception.is_within_range(huge_distance)
 
+    @pytest.mark.unit
     def test_negative_distances(self):
         """Test behavior with negative distances (should be treated as positive)."""
         perception_range = PerceptionRange(
@@ -1053,6 +1108,7 @@ class TestEdgeCasesAndBoundaryConditions:
         assert visibility_negative == VisibilityLevel.CLEAR
         assert visibility_zero == VisibilityLevel.CLEAR
 
+    @pytest.mark.unit
     def test_focused_perception_on_nonexistent_type(self):
         """Test focused perception on a perception type that doesn't exist."""
         visual_range = PerceptionRange(

@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 
 # Test all the new modular components
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_component_initialization():
     """Test that all components can be initialized successfully."""
@@ -109,6 +110,7 @@ async def test_component_initialization():
     return len(initialized_components) > 0
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_modular_director_agent():
     """Test the modular DirectorAgent implementation."""
@@ -161,6 +163,7 @@ async def test_modular_director_agent():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_component_protocols():
     """Test that components implement their protocols correctly."""
@@ -199,6 +202,7 @@ async def test_component_protocols():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_component_architecture():
     """Test the overall component architecture and integration."""

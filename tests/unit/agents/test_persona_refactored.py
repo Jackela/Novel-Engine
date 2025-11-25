@@ -19,6 +19,7 @@ sys.path.append("src")
 try:
     from src.agents.director_agent import DirectorAgent
     from src.agents.persona_agent import PersonaAgent
+import pytest
 
     print("✅ Component imports successful")
     AGENTS_AVAILABLE = True
@@ -41,6 +42,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.unit
 def test_persona_core():
     """Test PersonaCore component."""
     print("\n🔍 Testing PersonaCore...")
@@ -78,6 +80,7 @@ def test_persona_core():
         return False
 
 
+@pytest.mark.unit
 def test_character_context_manager():
     """Test CharacterContextManager component."""
     print("\n🔍 Testing CharacterContextManager...")
@@ -130,6 +133,7 @@ def test_character_context_manager():
         return False
 
 
+@pytest.mark.unit
 def test_decision_engine():
     """Test DecisionEngine component."""
     print("\n🔍 Testing DecisionEngine...")
@@ -183,6 +187,7 @@ def test_decision_engine():
         return False
 
 
+@pytest.mark.unit
 def test_refactored_persona_agent():
     """Test the refactored PersonaAgent class."""
     print("\n🔍 Testing Refactored PersonaAgent...")
@@ -233,6 +238,7 @@ def test_refactored_persona_agent():
         return False
 
 
+@pytest.mark.unit
 def test_performance_improvements():
     """Test performance improvements of refactored architecture."""
     print("\n⚡ Testing Performance Improvements...")

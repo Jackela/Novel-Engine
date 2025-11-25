@@ -10,7 +10,7 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
@@ -675,7 +675,7 @@ class ScenarioManager:
             if hasattr(scenario, key):
                 setattr(scenario, key, value)
 
-        scenario.updated_at = datetime.utcnow()
+        scenario.updated_at = datetime.now(timezone.utc)
 
         # Validate updated scenario
         validation_errors = self._validate_scenario(scenario)
@@ -812,7 +812,7 @@ class ScenarioManager:
 
         export_data = {
             "collection": collection.model_dump(),
-            "export_timestamp": datetime.utcnow().isoformat(),
+            "export_timestamp": datetime.now(timezone.utc).isoformat(),
             "format_version": "1.0",
         }
 

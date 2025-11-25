@@ -22,6 +22,8 @@ from contexts.interactions.domain.value_objects.negotiation_status import (
 class TestNegotiationEnums:
     """Test suite for negotiation enumeration types."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_negotiation_phase_values(self):
         """Test NegotiationPhase enum values."""
         assert NegotiationPhase.INITIATION.value == "initiation"
@@ -32,6 +34,8 @@ class TestNegotiationEnums:
         assert NegotiationPhase.IMPLEMENTATION.value == "implementation"
         assert NegotiationPhase.TERMINATED.value == "terminated"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_negotiation_outcome_values(self):
         """Test NegotiationOutcome enum values."""
         assert NegotiationOutcome.PENDING.value == "pending"
@@ -42,6 +46,7 @@ class TestNegotiationEnums:
         assert NegotiationOutcome.TIMEOUT.value == "timeout"
         assert NegotiationOutcome.CANCELLED.value == "cancelled"
 
+    @pytest.mark.unit
     def test_termination_reason_values(self):
         """Test TerminationReason enum values."""
         assert TerminationReason.MUTUAL_AGREEMENT.value == "mutual_agreement"
@@ -59,6 +64,7 @@ class TestNegotiationEnums:
 class TestNegotiationStatusCreation:
     """Test suite for NegotiationStatus creation and basic functionality."""
 
+    @pytest.mark.unit
     def test_minimal_status_creation(self):
         """Test creating NegotiationStatus with minimal required fields."""
         now = datetime.now(timezone.utc)
@@ -78,6 +84,7 @@ class TestNegotiationStatusCreation:
         assert status.actual_completion_at is None
         assert status.termination_reason is None
 
+    @pytest.mark.unit
     def test_full_status_creation(self):
         """Test creating NegotiationStatus with all optional fields."""
         now = datetime.now(timezone.utc)
@@ -102,6 +109,7 @@ class TestNegotiationStatusCreation:
         assert status.actual_completion_at == actual
         assert status.termination_reason == TerminationReason.MUTUAL_AGREEMENT
 
+    @pytest.mark.unit
     def test_frozen_dataclass_immutability(self):
         """Test that NegotiationStatus is immutable (frozen dataclass)."""
         now = datetime.now(timezone.utc)
@@ -120,6 +128,7 @@ class TestNegotiationStatusCreation:
 class TestNegotiationStatusValidation:
     """Test suite for NegotiationStatus validation logic."""
 
+    @pytest.mark.unit
     def test_timezone_validation_started_at(self):
         """Test validation fails with naive datetime for started_at."""
         naive_datetime = datetime(2023, 1, 1, 12, 0, 0)  # No timezone
@@ -133,6 +142,7 @@ class TestNegotiationStatusValidation:
                 last_activity_at=aware_datetime,
             )
 
+    @pytest.mark.unit
     def test_timezone_validation_last_activity_at(self):
         """Test validation fails with naive datetime for last_activity_at."""
         aware_datetime = datetime.now(timezone.utc)
@@ -146,6 +156,7 @@ class TestNegotiationStatusValidation:
                 last_activity_at=naive_datetime,
             )
 
+    @pytest.mark.unit
     def test_timezone_validation_expected_completion_at(self):
         """Test validation fails with naive datetime for expected_completion_at."""
         aware_datetime = datetime.now(timezone.utc)
@@ -162,6 +173,7 @@ class TestNegotiationStatusValidation:
                 expected_completion_at=naive_datetime,
             )
 
+    @pytest.mark.unit
     def test_timezone_validation_actual_completion_at(self):
         """Test validation fails with naive datetime for actual_completion_at."""
         aware_datetime = datetime.now(timezone.utc)
@@ -179,6 +191,7 @@ class TestNegotiationStatusValidation:
                 termination_reason=TerminationReason.MUTUAL_AGREEMENT,
             )
 
+    @pytest.mark.unit
     def test_started_at_after_last_activity_validation(self):
         """Test validation fails when started_at is after last_activity_at."""
         now = datetime.now(timezone.utc)
@@ -194,6 +207,7 @@ class TestNegotiationStatusValidation:
                 last_activity_at=earlier,
             )
 
+    @pytest.mark.unit
     def test_started_at_after_expected_completion_validation(self):
         """Test validation fails when started_at is after expected_completion_at."""
         now = datetime.now(timezone.utc)
@@ -210,6 +224,7 @@ class TestNegotiationStatusValidation:
                 expected_completion_at=earlier,
             )
 
+    @pytest.mark.unit
     def test_started_at_after_actual_completion_validation(self):
         """Test validation fails when started_at is after actual_completion_at."""
         now = datetime.now(timezone.utc)
@@ -227,6 +242,7 @@ class TestNegotiationStatusValidation:
                 termination_reason=TerminationReason.MUTUAL_AGREEMENT,
             )
 
+    @pytest.mark.unit
     def test_terminated_phase_with_pending_outcome_validation(self):
         """Test validation fails for terminated phase with pending outcome."""
         now = datetime.now(timezone.utc)
@@ -241,6 +257,7 @@ class TestNegotiationStatusValidation:
                 last_activity_at=now,
             )
 
+    @pytest.mark.unit
     def test_terminated_phase_without_termination_reason_validation(self):
         """Test validation fails for terminated phase without termination reason."""
         now = datetime.now(timezone.utc)
@@ -256,6 +273,7 @@ class TestNegotiationStatusValidation:
                 actual_completion_at=now,
             )
 
+    @pytest.mark.unit
     def test_terminated_phase_without_actual_completion_validation(self):
         """Test validation fails for terminated phase without actual completion time."""
         now = datetime.now(timezone.utc)
@@ -271,6 +289,7 @@ class TestNegotiationStatusValidation:
                 termination_reason=TerminationReason.MUTUAL_AGREEMENT,
             )
 
+    @pytest.mark.unit
     def test_agreement_outcome_phase_consistency_validation(self):
         """Test validation for agreement outcomes in inappropriate phases."""
         now = datetime.now(timezone.utc)
@@ -284,6 +303,7 @@ class TestNegotiationStatusValidation:
                 last_activity_at=now,
             )
 
+    @pytest.mark.unit
     def test_partial_agreement_outcome_phase_consistency_validation(self):
         """Test validation for partial agreement outcomes in inappropriate phases."""
         now = datetime.now(timezone.utc)
@@ -301,6 +321,7 @@ class TestNegotiationStatusValidation:
 class TestNegotiationStatusFactoryMethods:
     """Test suite for NegotiationStatus factory methods."""
 
+    @pytest.mark.unit
     def test_create_initial_default_time(self):
         """Test creating initial status with default timestamp."""
         with patch(
@@ -319,6 +340,8 @@ class TestNegotiationStatusFactoryMethods:
             assert status.actual_completion_at is None
             assert status.termination_reason is None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_initial_specific_time(self):
         """Test creating initial status with specific timestamp."""
         specific_time = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -330,6 +353,8 @@ class TestNegotiationStatusFactoryMethods:
         assert status.started_at == specific_time
         assert status.last_activity_at == specific_time
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_initial_with_expected_completion(self):
         """Test creating initial status with expected completion time."""
         start_time = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -346,6 +371,7 @@ class TestNegotiationStatusFactoryMethods:
 class TestNegotiationStatusPhaseTransitions:
     """Test suite for phase transition logic."""
 
+    @pytest.mark.unit
     def test_valid_phase_transitions(self):
         """Test all valid phase transitions."""
         now = datetime.now(timezone.utc)
@@ -401,6 +427,7 @@ class TestNegotiationStatusPhaseTransitions:
             NegotiationPhase.TERMINATED, NegotiationPhase.INITIATION
         )
 
+    @pytest.mark.unit
     def test_invalid_phase_transitions(self):
         """Test invalid phase transitions."""
         now = datetime.now(timezone.utc)
@@ -427,6 +454,7 @@ class TestNegotiationStatusPhaseTransitions:
             NegotiationPhase.TERMINATED, NegotiationPhase.IMPLEMENTATION
         )
 
+    @pytest.mark.unit
     def test_advance_to_phase_success(self):
         """Test successful phase advancement."""
         now = datetime.now(timezone.utc)
@@ -445,6 +473,7 @@ class TestNegotiationStatusPhaseTransitions:
             new_status.expected_completion_at == status.expected_completion_at
         )  # Unchanged
 
+    @pytest.mark.unit
     def test_advance_to_phase_default_time(self):
         """Test phase advancement with default activity time."""
         now = datetime.now(timezone.utc)
@@ -461,6 +490,7 @@ class TestNegotiationStatusPhaseTransitions:
             assert new_status.phase == NegotiationPhase.PREPARATION
             assert new_status.last_activity_at == mock_now
 
+    @pytest.mark.unit
     def test_advance_to_phase_invalid_transition(self):
         """Test phase advancement with invalid transition."""
         now = datetime.now(timezone.utc)
@@ -475,6 +505,7 @@ class TestNegotiationStatusPhaseTransitions:
 class TestNegotiationStatusCompletion:
     """Test suite for negotiation completion logic."""
 
+    @pytest.mark.unit
     def test_complete_with_outcome_success(self):
         """Test successful negotiation completion."""
         now = datetime.now(timezone.utc)
@@ -494,6 +525,7 @@ class TestNegotiationStatusCompletion:
         assert completed_status.actual_completion_at == completion_time
         assert completed_status.termination_reason == TerminationReason.MUTUAL_AGREEMENT
 
+    @pytest.mark.unit
     def test_complete_with_outcome_default_time(self):
         """Test completion with default completion time."""
         now = datetime.now(timezone.utc)
@@ -513,6 +545,7 @@ class TestNegotiationStatusCompletion:
             assert completed_status.actual_completion_at == mock_completion
             assert completed_status.last_activity_at == mock_completion
 
+    @pytest.mark.unit
     def test_complete_different_outcomes(self):
         """Test completion with different outcome types."""
         now = datetime.now(timezone.utc)
@@ -545,6 +578,7 @@ class TestNegotiationStatusCompletion:
 class TestNegotiationStatusActivityUpdate:
     """Test suite for activity timestamp updates."""
 
+    @pytest.mark.unit
     def test_update_last_activity_specific_time(self):
         """Test updating last activity with specific timestamp."""
         now = datetime.now(timezone.utc)
@@ -562,6 +596,8 @@ class TestNegotiationStatusActivityUpdate:
         assert updated_status.actual_completion_at == status.actual_completion_at
         assert updated_status.termination_reason == status.termination_reason
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_update_last_activity_default_time(self):
         """Test updating last activity with default timestamp."""
         now = datetime.now(timezone.utc)
@@ -581,6 +617,7 @@ class TestNegotiationStatusActivityUpdate:
 class TestNegotiationStatusProperties:
     """Test suite for NegotiationStatus properties."""
 
+    @pytest.mark.unit
     def test_is_active_property(self):
         """Test is_active property for different phases."""
         now = datetime.now(timezone.utc)
@@ -615,6 +652,7 @@ class TestNegotiationStatusProperties:
         )
         assert not terminated_status.is_active
 
+    @pytest.mark.unit
     def test_is_completed_property(self):
         """Test is_completed property for different outcomes."""
         now = datetime.now(timezone.utc)
@@ -649,6 +687,7 @@ class TestNegotiationStatusProperties:
             )
             assert status.is_completed, f"Outcome {outcome.value} should be completed"
 
+    @pytest.mark.unit
     def test_duration_property(self):
         """Test duration property calculation."""
         start_time = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -679,6 +718,7 @@ class TestNegotiationStatusProperties:
         )
         assert active_status.duration is None
 
+    @pytest.mark.unit
     def test_time_since_last_activity_property(self):
         """Test time_since_last_activity property calculation."""
         # Mock current time for consistent testing
@@ -709,6 +749,7 @@ class TestNegotiationStatusProperties:
 class TestNegotiationStatusEquality:
     """Test suite for NegotiationStatus equality comparison."""
 
+    @pytest.mark.unit
     def test_equality_same_values(self):
         """Test equality with identical values."""
         now = datetime.now(timezone.utc)
@@ -738,6 +779,7 @@ class TestNegotiationStatusEquality:
         assert status1 == status2
         assert not (status1 != status2)
 
+    @pytest.mark.unit
     def test_equality_different_phases(self):
         """Test inequality with different phases."""
         now = datetime.now(timezone.utc)
@@ -759,6 +801,7 @@ class TestNegotiationStatusEquality:
         assert status1 != status2
         assert not (status1 == status2)
 
+    @pytest.mark.unit
     def test_equality_different_timestamps(self):
         """Test inequality with different timestamps."""
         now = datetime.now(timezone.utc)
@@ -780,6 +823,7 @@ class TestNegotiationStatusEquality:
 
         assert status1 != status2
 
+    @pytest.mark.unit
     def test_equality_with_non_negotiation_status(self):
         """Test equality comparison with non-NegotiationStatus objects."""
         now = datetime.now(timezone.utc)
@@ -802,6 +846,7 @@ class TestNegotiationStatusEquality:
 class TestNegotiationStatusStringRepresentation:
     """Test suite for NegotiationStatus string representation."""
 
+    @pytest.mark.unit
     def test_str_representation(self):
         """Test string representation of NegotiationStatus."""
         now = datetime.now(timezone.utc)
@@ -816,6 +861,7 @@ class TestNegotiationStatusStringRepresentation:
         assert str_repr == "NegotiationStatus(phase=bargaining, outcome=pending)"
         assert isinstance(str_repr, str)
 
+    @pytest.mark.unit
     def test_str_representation_completed(self):
         """Test string representation of completed negotiation."""
         now = datetime.now(timezone.utc)
@@ -837,6 +883,7 @@ class TestNegotiationStatusStringRepresentation:
 class TestNegotiationStatusEdgeCases:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     def test_same_start_and_activity_time(self):
         """Test status with identical start and activity times."""
         now = datetime.now(timezone.utc)
@@ -853,6 +900,7 @@ class TestNegotiationStatusEdgeCases:
         assert status.is_active
         assert not status.is_completed
 
+    @pytest.mark.unit
     def test_immediate_completion(self):
         """Test negotiation completed immediately after start."""
         now = datetime.now(timezone.utc)
@@ -870,6 +918,7 @@ class TestNegotiationStatusEdgeCases:
         assert not status.is_active
         assert status.is_completed
 
+    @pytest.mark.unit
     def test_very_long_negotiation(self):
         """Test negotiation with very long duration."""
         start_time = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -889,6 +938,7 @@ class TestNegotiationStatusEdgeCases:
         expected_duration = 365 * 24 * 3600  # 1 year in seconds
         assert status.duration == expected_duration
 
+    @pytest.mark.unit
     def test_microsecond_precision_timestamps(self):
         """Test negotiation status with microsecond-precision timestamps."""
         start_time = datetime(2023, 1, 1, 12, 0, 0, 123456, tzinfo=timezone.utc)
@@ -904,6 +954,7 @@ class TestNegotiationStatusEdgeCases:
         assert status.started_at.microsecond == 123456
         assert status.last_activity_at.microsecond == 789012
 
+    @pytest.mark.unit
     def test_phase_transition_edge_cases(self):
         """Test edge cases in phase transition validation."""
         now = datetime.now(timezone.utc)
@@ -925,6 +976,7 @@ class TestNegotiationStatusEdgeCases:
         ]:
             assert status._is_valid_phase_transition(phase, NegotiationPhase.TERMINATED)
 
+    @pytest.mark.unit
     def test_outcome_phase_consistency_edge_cases(self):
         """Test edge cases in outcome-phase consistency validation."""
         now = datetime.now(timezone.utc)

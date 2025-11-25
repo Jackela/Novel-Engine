@@ -84,6 +84,7 @@ class TestRetrieveAgentContextUseCase:
         ]
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_retrieve_agent_context_returns_accessible_entries(
         self, use_case, mock_retriever, mock_assembler, sample_agent, sample_entries
     ):
@@ -118,6 +119,7 @@ class TestRetrieveAgentContextUseCase:
         assert result == expected_context
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_retrieve_agent_context_filters_by_knowledge_types(
         self, use_case, mock_retriever, mock_assembler, sample_agent, sample_entries
     ):
@@ -145,6 +147,7 @@ class TestRetrieveAgentContextUseCase:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_retrieve_agent_context_filters_by_owning_character(
         self, use_case, mock_retriever, mock_assembler, sample_agent, sample_entries
     ):
@@ -172,6 +175,7 @@ class TestRetrieveAgentContextUseCase:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_retrieve_agent_context_returns_empty_for_no_access(
         self, use_case, mock_retriever, mock_assembler, sample_agent
     ):
@@ -199,6 +203,7 @@ class TestRetrieveAgentContextUseCase:
         assert len(result.knowledge_entries) == 0
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_retrieve_agent_context_assembles_context_aggregate(
         self, use_case, mock_retriever, mock_assembler, sample_agent, sample_entries
     ):

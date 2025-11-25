@@ -1,101 +1,208 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { useRealtimeEvents } from '../useRealtimeEvents';
+import React, { useState, useEffect } from 'react';
 
-// Mock EventSource
-class MockEventSource {
-  url: string;
-  onopen: ((event: Event) => void) | null = null;
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onerror: ((event: Event) => void) | null = null;
-  readyState: number = 0;
-  CONNECTING = 0;
-  OPEN = 1;
-  CLOSED = 2;
-
-  constructor(url: string) {
-    this.url = url;
-    this.readyState = this.CONNECTING;
-
-    // Simulate connection opening after a short delay
-    setTimeout(() => {
-      // Only open connection if not already in error/closed state
-      if (this.readyState === this.CONNECTING) {
-        this.readyState = this.OPEN;
-        if (this.onopen) {
-          this.onopen(new Event('open'));
-        }
-      }
-    }, 10);
-  }
-
-  close() {
-    this.readyState = this.CLOSED;
-  }
-
-  // Test helper to simulate receiving a message
-  simulateMessage(data: Record<string, unknown>) {
-    if (this.onmessage) {
-      const event = new MessageEvent('message', {
-        data: JSON.stringify(data),
-      });
-      this.onmessage(event);
-    }
-  }
-
-  // Test helper to simulate an error
-  simulateError() {
-    this.readyState = this.CLOSED;
-    if (this.onerror) {
-      this.onerror(new Event('error'));
-    }
-  }
-}
-
+/**
+ * Mock EventSource implementation for testing.
+ *
+ * These tests use a TestComponent that renders the hook's output to DOM elements,
+ * combined with waitFor for async state changes.
+ */
 describe('useRealtimeEvents', () => {
-  let eventSourceInstance: MockEventSource | null = null;
+  // Global mocks for controlling the EventSource from tests
+  let mockOnOpen: (() => void) | null = null;
+  let mockOnMessage: ((data: Record<string, unknown>) => void) | null = null;
+  let mockOnError: (() => void) | null = null;
+  let mockClose: (() => void) | null = null;
+  let mockUrl: string | null = null;
+  let mockReadyState = 0;
+  let instanceCreated = false;
+
+  class MockEventSourceImpl {
+    static CONNECTING = 0;
+    static OPEN = 1;
+    static CLOSED = 2;
+    CONNECTING = 0;
+    OPEN = 1;
+    CLOSED = 2;
+
+    constructor(url: string) {
+      mockUrl = url;
+      mockReadyState = this.CONNECTING;
+      instanceCreated = true;
+    }
+
+    get url() {
+      return mockUrl || '';
+    }
+
+    get readyState() {
+      return mockReadyState;
+    }
+
+    set onopen(fn: ((event: Event) => void) | null) {
+      mockOnOpen = () => {
+        if (mockReadyState === 0 && fn) {
+          mockReadyState = 1;
+          fn(new Event('open'));
+        }
+      };
+    }
+
+    set onmessage(fn: ((event: MessageEvent) => void) | null) {
+      mockOnMessage = (data: Record<string, unknown>) => {
+        if (mockReadyState === 1 && fn) {
+          fn(new MessageEvent('message', { data: JSON.stringify(data) }));
+        }
+      };
+    }
+
+    set onerror(fn: ((event: Event) => void) | null) {
+      mockOnError = () => {
+        if (fn) {
+          mockReadyState = 2;
+          fn(new Event('error'));
+        }
+      };
+    }
+
+    get onopen() {
+      return null;
+    }
+
+    get onmessage() {
+      return null;
+    }
+
+    get onerror() {
+      return null;
+    }
+
+    close() {
+      mockReadyState = 2;
+      if (mockClose) mockClose();
+    }
+  }
 
   beforeEach(() => {
-    // Replace global EventSource with mock constructor
+    mockOnOpen = null;
+    mockOnMessage = null;
+    mockOnError = null;
+    mockClose = null;
+    mockUrl = null;
+    mockReadyState = 0;
+    instanceCreated = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global as any).EventSource = class extends MockEventSource {
-      constructor(url: string) {
-        super(url);
-        eventSourceInstance = this as MockEventSource;
-      }
-    };
+    (global as any).EventSource = MockEventSourceImpl;
   });
 
   afterEach(() => {
-    eventSourceInstance = null;
     vi.restoreAllMocks();
   });
 
+  // Test component that renders hook state and provides a trigger mechanism
+  interface TestComponentProps {
+    options?: Parameters<typeof useRealtimeEvents>[0];
+    onHookReady?: (helpers: {
+      triggerOpen: () => void;
+      triggerMessage: (data: Record<string, unknown>) => void;
+      triggerError: () => void;
+    }) => void;
+  }
+
+  const TestComponent: React.FC<TestComponentProps> = ({ options, onHookReady }) => {
+    const hookResult = useRealtimeEvents(options);
+    const [, setTick] = useState(0);
+
+    // Expose trigger functions to parent via callback
+    useEffect(() => {
+      if (onHookReady) {
+        onHookReady({
+          triggerOpen: () => {
+            mockOnOpen?.();
+            // Force a tick to allow React to process
+            setTick(t => t + 1);
+          },
+          triggerMessage: (data: Record<string, unknown>) => {
+            mockOnMessage?.(data);
+            setTick(t => t + 1);
+          },
+          triggerError: () => {
+            mockOnError?.();
+            setTick(t => t + 1);
+          },
+        });
+      }
+    }, [onHookReady]);
+
+    return (
+      <div>
+        <div data-testid="connection-state">{hookResult.connectionState}</div>
+        <div data-testid="loading">{String(hookResult.loading)}</div>
+        <div data-testid="error">{hookResult.error?.message ?? 'null'}</div>
+        <div data-testid="events-count">{hookResult.events.length}</div>
+        <div data-testid="first-event-id">{hookResult.events[0]?.id ?? 'none'}</div>
+        <div data-testid="last-event-id">{hookResult.events[hookResult.events.length - 1]?.id ?? 'none'}</div>
+      </div>
+    );
+  };
+
   it('establishes SSE connection and sets connectionState to connected', async () => {
-    const { result } = renderHook(() => useRealtimeEvents());
+    let helpers: { triggerOpen: () => void } | null = null;
 
-    // Initially connecting
-    expect(result.current.connectionState).toBe('connecting');
-    expect(result.current.loading).toBe(true);
+    render(
+      <TestComponent
+        onHookReady={(h) => {
+          helpers = h;
+        }}
+      />
+    );
 
-    // Wait for connection to open
+    expect(screen.getByTestId('connection-state')).toHaveTextContent('connecting');
+    expect(screen.getByTestId('loading')).toHaveTextContent('true');
+
+    // Wait for hook to be ready (EventSource handlers attached)
     await waitFor(() => {
-      expect(result.current.connectionState).toBe('connected');
+      expect(mockOnOpen).not.toBeNull();
     });
 
-    expect(result.current.loading).toBe(false);
-    expect(result.current.error).toBeNull();
+    // Trigger open
+    await act(async () => {
+      helpers?.triggerOpen();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('connection-state')).toHaveTextContent('connected');
+    });
+
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('error')).toHaveTextContent('null');
   });
 
   it('receives and parses events correctly', async () => {
-    const { result } = renderHook(() => useRealtimeEvents());
+    let helpers: { triggerOpen: () => void; triggerMessage: (data: Record<string, unknown>) => void } | null = null;
 
-    // Wait for connection
+    render(
+      <TestComponent
+        onHookReady={(h) => {
+          helpers = h;
+        }}
+      />
+    );
+
     await waitFor(() => {
-      expect(result.current.connectionState).toBe('connected');
+      expect(mockOnOpen).not.toBeNull();
     });
 
-    // Simulate receiving an event
+    await act(async () => {
+      helpers?.triggerOpen();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('connection-state')).toHaveTextContent('connected');
+    });
+
     const testEvent = {
       id: 'evt-1',
       type: 'character',
@@ -106,154 +213,291 @@ describe('useRealtimeEvents', () => {
       characterName: 'Test Character',
     };
 
-    eventSourceInstance?.simulateMessage(testEvent);
-
-    await waitFor(() => {
-      expect(result.current.events).toHaveLength(1);
+    await act(async () => {
+      helpers?.triggerMessage(testEvent);
     });
 
-    expect(result.current.events[0]).toEqual(testEvent);
+    await waitFor(() => {
+      expect(screen.getByTestId('events-count')).toHaveTextContent('1');
+    });
+
+    expect(screen.getByTestId('first-event-id')).toHaveTextContent('evt-1');
   });
 
   it('shows error state when connection fails', async () => {
-    const { result } = renderHook(() => useRealtimeEvents());
+    let helpers: { triggerError: () => void } | null = null;
 
-    // Simulate connection error
-    eventSourceInstance?.simulateError();
+    render(
+      <TestComponent
+        options={{ maxRetries: 0 }}
+        onHookReady={(h) => {
+          helpers = h;
+        }}
+      />
+    );
 
     await waitFor(() => {
-      expect(result.current.connectionState).toBe('error');
+      expect(mockOnError).not.toBeNull();
     });
 
-    expect(result.current.loading).toBe(false);
-    expect(result.current.error).toBeInstanceOf(Error);
-    expect(result.current.error?.message).toContain('Failed to connect to event stream');
+    await act(async () => {
+      helpers?.triggerError();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('connection-state')).toHaveTextContent('error');
+    });
+
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('error')).toHaveTextContent('Failed to connect after 0 attempts');
   });
 
   it('respects maxEvents buffer limit', async () => {
     const maxEvents = 5;
-    const { result } = renderHook(() => useRealtimeEvents({ maxEvents }));
+    let helpers: { triggerOpen: () => void; triggerMessage: (data: Record<string, unknown>) => void } | null = null;
 
-    // Wait for connection
+    render(
+      <TestComponent
+        options={{ maxEvents }}
+        onHookReady={(h) => {
+          helpers = h;
+        }}
+      />
+    );
+
     await waitFor(() => {
-      expect(result.current.connectionState).toBe('connected');
+      expect(mockOnOpen).not.toBeNull();
+    });
+
+    await act(async () => {
+      helpers?.triggerOpen();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('connection-state')).toHaveTextContent('connected');
     });
 
     // Send more events than the buffer limit
-    for (let i = 1; i <= 10; i++) {
-      const testEvent = {
-        id: `evt-${i}`,
-        type: 'system' as const,
-        title: `Event ${i}`,
-        description: `Description ${i}`,
-        timestamp: Date.now() + i,
-        severity: 'low' as const,
-      };
-      eventSourceInstance?.simulateMessage(testEvent);
-    }
+    await act(async () => {
+      for (let i = 1; i <= 10; i++) {
+        helpers?.triggerMessage({
+          id: `evt-${i}`,
+          type: 'system',
+          title: `Event ${i}`,
+          description: `Description ${i}`,
+          timestamp: Date.now() + i,
+          severity: 'low',
+        });
+      }
+    });
 
     await waitFor(() => {
-      expect(result.current.events.length).toBe(maxEvents);
+      expect(screen.getByTestId('events-count')).toHaveTextContent('5');
     });
 
     // Verify newest events are kept (evt-10 should be first, evt-6 should be last)
-    expect(result.current.events[0].id).toBe('evt-10');
-    expect(result.current.events[4].id).toBe('evt-6');
+    expect(screen.getByTestId('first-event-id')).toHaveTextContent('evt-10');
+    expect(screen.getByTestId('last-event-id')).toHaveTextContent('evt-6');
   });
 
   it('cleans up EventSource on unmount', async () => {
-    const { result, unmount } = renderHook(() => useRealtimeEvents());
+    let helpers: { triggerOpen: () => void } | null = null;
+    let closeCalled = false;
+    mockClose = () => {
+      closeCalled = true;
+    };
 
-    // Wait for connection
+    const { unmount } = render(
+      <TestComponent
+        onHookReady={(h) => {
+          helpers = h;
+        }}
+      />
+    );
+
     await waitFor(() => {
-      expect(result.current.connectionState).toBe('connected');
+      expect(mockOnOpen).not.toBeNull();
     });
 
-    const closeSpy = vi.spyOn(eventSourceInstance!, 'close');
+    await act(async () => {
+      helpers?.triggerOpen();
+    });
 
-    // Unmount the hook
+    await waitFor(() => {
+      expect(screen.getByTestId('connection-state')).toHaveTextContent('connected');
+    });
+
     unmount();
 
-    // Verify EventSource was closed
-    expect(closeSpy).toHaveBeenCalled();
-    expect(eventSourceInstance?.readyState).toBe(2); // CLOSED state
+    expect(mockReadyState).toBe(2); // CLOSED
   });
 
   it('handles invalid JSON in event data gracefully', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let onMessageFn: ((event: MessageEvent) => void) | null = null;
+    let helpers: { triggerOpen: () => void } | null = null;
 
-    const { result } = renderHook(() => useRealtimeEvents());
+    // Override the mock to capture the raw onmessage handler
+    class CapturingMockEventSource {
+      static CONNECTING = 0;
+      static OPEN = 1;
+      static CLOSED = 2;
+      CONNECTING = 0;
+      OPEN = 1;
+      CLOSED = 2;
+      url: string;
 
-    // Wait for connection
+      constructor(url: string) {
+        this.url = url;
+        mockReadyState = 0;
+        instanceCreated = true;
+      }
+
+      get readyState() {
+        return mockReadyState;
+      }
+
+      set onopen(fn: ((event: Event) => void) | null) {
+        mockOnOpen = () => {
+          if (mockReadyState === 0 && fn) {
+            mockReadyState = 1;
+            fn(new Event('open'));
+          }
+        };
+      }
+
+      set onmessage(fn: ((event: MessageEvent) => void) | null) {
+        onMessageFn = fn;
+      }
+
+      set onerror(fn: ((event: Event) => void) | null) {
+        mockOnError = () => {
+          if (fn) {
+            mockReadyState = 2;
+            fn(new Event('error'));
+          }
+        };
+      }
+
+      get onopen() {
+        return null;
+      }
+
+      get onmessage() {
+        return onMessageFn;
+      }
+
+      get onerror() {
+        return null;
+      }
+
+      close() {
+        mockReadyState = 2;
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global as any).EventSource = CapturingMockEventSource;
+
+    render(
+      <TestComponent
+        onHookReady={(h) => {
+          helpers = h;
+        }}
+      />
+    );
+
     await waitFor(() => {
-      expect(result.current.connectionState).toBe('connected');
+      expect(mockOnOpen).not.toBeNull();
+    });
+
+    await act(async () => {
+      helpers?.triggerOpen();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('connection-state')).toHaveTextContent('connected');
     });
 
     // Simulate receiving invalid JSON
-    if (eventSourceInstance?.onmessage) {
-      const invalidEvent = new MessageEvent('message', {
-        data: 'not valid json',
-      });
-      eventSourceInstance.onmessage(invalidEvent);
-    }
+    await act(async () => {
+      if (onMessageFn && mockReadyState === 1) {
+        onMessageFn(new MessageEvent('message', { data: 'not valid json' }));
+      }
+    });
 
-    // Should not crash, events array should remain empty
-    expect(result.current.events).toHaveLength(0);
-    expect(result.current.connectionState).toBe('connected');
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to parse event data'),
-      expect.any(Error),
-      'not valid json'
+    expect(screen.getByTestId('events-count')).toHaveTextContent('0');
+    expect(screen.getByTestId('connection-state')).toHaveTextContent('connected');
+    // The logger prefixes with [ERROR], so we check that it was called with something containing our message
+    expect(consoleSpy).toHaveBeenCalled();
+    const errorCall = consoleSpy.mock.calls.find(call =>
+      typeof call[0] === 'string' && call[0].includes('Failed to parse SSE event data')
     );
+    expect(errorCall).toBeDefined();
+    // The second argument should contain the SyntaxError
+    expect(errorCall?.[1]).toBeDefined();
+    expect(errorCall?.[1].name).toBe('SyntaxError');
 
     consoleSpy.mockRestore();
   });
 
   it('skips events with missing required fields', async () => {
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let helpers: { triggerOpen: () => void; triggerMessage: (data: Record<string, unknown>) => void } | null = null;
 
-    const { result } = renderHook(() => useRealtimeEvents());
+    render(
+      <TestComponent
+        onHookReady={(h) => {
+          helpers = h;
+        }}
+      />
+    );
 
-    // Wait for connection
     await waitFor(() => {
-      expect(result.current.connectionState).toBe('connected');
+      expect(mockOnOpen).not.toBeNull();
+    });
+
+    await act(async () => {
+      helpers?.triggerOpen();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('connection-state')).toHaveTextContent('connected');
     });
 
     // Send event missing required fields
-    const invalidEvent = {
-      // Missing: id, type, title
-      description: 'Test description',
-      timestamp: Date.now(),
-      severity: 'low',
-    };
+    await act(async () => {
+      helpers?.triggerMessage({
+        description: 'Test description',
+        timestamp: Date.now(),
+        severity: 'low',
+        // Missing: id, type, title
+      });
+    });
 
-    eventSourceInstance?.simulateMessage(invalidEvent);
-
-    // Event should be skipped
-    expect(result.current.events).toHaveLength(0);
+    expect(screen.getByTestId('events-count')).toHaveTextContent('0');
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Received malformed event'),
-      expect.any(String)
+      expect.stringContaining('Received malformed SSE event'),
+      expect.objectContaining({ data: expect.any(String) })
     );
 
     consoleWarnSpy.mockRestore();
   });
 
-  it('uses custom endpoint when provided', () => {
+  it('uses custom endpoint when provided', async () => {
     const customEndpoint = '/custom/events/stream';
-    renderHook(() => useRealtimeEvents({ endpoint: customEndpoint }));
+    render(<TestComponent options={{ endpoint: customEndpoint }} />);
 
-    // Verify the instance was created with the custom endpoint
-    expect(eventSourceInstance).not.toBeNull();
-    expect(eventSourceInstance?.url).toBe(customEndpoint);
+    await waitFor(() => {
+      expect(mockUrl).toBe(customEndpoint);
+    });
   });
 
   it('respects enabled flag', () => {
-    const { result } = renderHook(() => useRealtimeEvents({ enabled: false }));
+    render(<TestComponent options={{ enabled: false }} />);
 
-    expect(result.current.loading).toBe(false);
-    expect(result.current.connectionState).toBe('disconnected');
-    // When disabled, EventSource should not be instantiated
-    expect(eventSourceInstance).toBeNull();
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('connection-state')).toHaveTextContent('disconnected');
+    expect(instanceCreated).toBe(false);
   });
 });

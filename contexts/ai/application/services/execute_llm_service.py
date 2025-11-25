@@ -268,7 +268,7 @@ class ExecuteLLMService:
         Returns:
             Comprehensive execution result
         """
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
         config = config or LLMExecutionConfig()
 
         # Initialize result
@@ -287,9 +287,9 @@ class ExecuteLLMService:
 
             # Step 1: Check cache if enabled
             if config.enable_caching and self._cache_service:
-                cache_start = asyncio.get_event_loop().time()
+                cache_start = asyncio.get_running_loop().time()
                 cached_response = await self._cache_service.get_async(request)
-                result.cache_lookup_time = asyncio.get_event_loop().time() - cache_start
+                result.cache_lookup_time = asyncio.get_running_loop().time() - cache_start
 
                 if cached_response:
                     result.response = cached_response
@@ -305,13 +305,13 @@ class ExecuteLLMService:
                         )
 
                     result.execution_time_seconds = (
-                        asyncio.get_event_loop().time() - start_time
+                        asyncio.get_running_loop().time() - start_time
                     )
                     return result
 
             # Step 2: Rate limiting check
             if config.enforce_rate_limits and self._rate_limiter:
-                rate_limit_start = asyncio.get_event_loop().time()
+                rate_limit_start = asyncio.get_running_loop().time()
 
                 # Select provider for rate limiting check
                 provider = self._router.select_provider_for_model(
@@ -327,7 +327,7 @@ class ExecuteLLMService:
                     )
 
                     result.rate_limit_check_time = (
-                        asyncio.get_event_loop().time() - rate_limit_start
+                        asyncio.get_running_loop().time() - rate_limit_start
                     )
 
                     if not rate_limit_result.allowed:
@@ -343,7 +343,7 @@ class ExecuteLLMService:
                         )
 
                         result.execution_time_seconds = (
-                            asyncio.get_event_loop().time() - start_time
+                            asyncio.get_running_loop().time() - start_time
                         )
                         return result
 
@@ -367,7 +367,7 @@ class ExecuteLLMService:
                     )
 
                     result.execution_time_seconds = (
-                        asyncio.get_event_loop().time() - start_time
+                        asyncio.get_running_loop().time() - start_time
                     )
                     return result
 
@@ -386,14 +386,14 @@ class ExecuteLLMService:
                     error_details="No available provider for model",
                 )
                 result.execution_time_seconds = (
-                    asyncio.get_event_loop().time() - start_time
+                    asyncio.get_running_loop().time() - start_time
                 )
                 return result
 
             result.provider_used = provider.provider_id
 
             # Step 5: Execute with retry policy
-            provider_start = asyncio.get_event_loop().time()
+            provider_start = asyncio.get_running_loop().time()
 
             if config.enable_retries and self._retry_policy:
                 retry_result = await self._retry_policy.execute_with_retry_async(
@@ -412,7 +412,7 @@ class ExecuteLLMService:
                 result.success = result.response.status == LLMResponseStatus.SUCCESS
 
             result.provider_response_time = (
-                asyncio.get_event_loop().time() - provider_start
+                asyncio.get_running_loop().time() - provider_start
             )
 
             # Step 6: Post-execution processing
@@ -456,7 +456,7 @@ class ExecuteLLMService:
                 error_details=result.error_details,
             )
 
-        result.execution_time_seconds = asyncio.get_event_loop().time() - start_time
+        result.execution_time_seconds = asyncio.get_running_loop().time() - start_time
         return result
 
     async def execute_stream_async(

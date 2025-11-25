@@ -114,6 +114,7 @@ const createAPIClient = (): AxiosInstance => {
   const client = axios.create({
     baseURL: API_BASE_URL,
     timeout: API_TIMEOUT,
+    withCredentials: true,  // Enable sending httpOnly cookies with requests [SEC-001]
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -146,21 +147,31 @@ const createAPIClient = (): AxiosInstance => {
     (error) => Promise.reject(error)
   );
 
-  // Request interceptor to add authentication token
+  // Request interceptor to add authentication token and CSRF token [SEC-001]
   client.interceptors.request.use(
     (config: AxiosRequestConfig) => {
       const state = store.getState();
       const token = state.auth.accessToken;
-      
+
+      // Add Bearer token if available (for backward compatibility during migration)
+      // In production, authentication will use httpOnly cookies instead
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-      
+
+      // Add CSRF token for state-changing requests [SEC-001]
+      if (config.method && ['post', 'put', 'delete', 'patch'].includes(config.method.toLowerCase())) {
+        const csrfToken = getCsrfTokenFromCookie();
+        if (csrfToken && config.headers) {
+          config.headers['X-CSRF-Token'] = csrfToken;
+        }
+      }
+
       // Add request ID for tracing
       if (config.headers) {
         config.headers['X-Request-ID'] = generateRequestId();
       }
-      
+
       return config;
     },
     (error) => {
@@ -257,6 +268,27 @@ const generateRequestId = (): string => {
 };
 
 /**
+ * Extract CSRF token from cookie for state-changing requests [SEC-001]
+ *
+ * The CSRF token is stored as a non-httpOnly cookie so JavaScript can read it
+ * and include it in request headers for CSRF protection.
+ *
+ * @returns CSRF token string or null if not found
+ */
+const getCsrfTokenFromCookie = (): string | null => {
+  if (typeof document === 'undefined') {
+    return null;  // SSR/Node environment
+  }
+
+  const cookieValue = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('csrf_token='))
+    ?.split('=')[1];
+
+  return cookieValue || null;
+};
+
+/**
  * Create API client with JWTAuthService integration (T049-T050)
  * 
  * This version uses the new IAuthenticationService for token management
@@ -269,6 +301,7 @@ export const createAuthenticatedAPIClient = (authService: IAuthenticationService
   const client = axios.create({
     baseURL: API_BASE_URL,
     timeout: API_TIMEOUT,
+    withCredentials: true,  // Enable sending httpOnly cookies with requests [SEC-001]
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -300,26 +333,36 @@ export const createAuthenticatedAPIClient = (authService: IAuthenticationService
     (error) => Promise.reject(error)
   );
 
-  // T049: Request interceptor for auth token injection
+  // T049: Request interceptor for auth token injection and CSRF protection [SEC-001]
   client.interceptors.request.use(
     (config: AxiosRequestConfig) => {
       const token = authService.getToken();
-      
+
+      // Add Bearer token if available (for backward compatibility during migration)
+      // In production, authentication will use httpOnly cookies instead
       if (token && config.headers) {
         config.headers.Authorization = `${token.tokenType} ${token.accessToken}`;
-        
+
         logger.debug('Auth token injected into request', undefined, {
           component: 'apiClient',
           action: 'injectToken',
           url: config.url,
         });
       }
-      
+
+      // Add CSRF token for state-changing requests [SEC-001]
+      if (config.method && ['post', 'put', 'delete', 'patch'].includes(config.method.toLowerCase())) {
+        const csrfToken = getCsrfTokenFromCookie();
+        if (csrfToken && config.headers) {
+          config.headers['X-CSRF-Token'] = csrfToken;
+        }
+      }
+
       // Add request ID for tracing
       if (config.headers) {
         config.headers['X-Request-ID'] = generateRequestId();
       }
-      
+
       return config;
     },
     (error) => {

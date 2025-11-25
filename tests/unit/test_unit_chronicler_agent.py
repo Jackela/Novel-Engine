@@ -408,6 +408,7 @@ class TestChroniclerAgentPerformance:
         )
 
     @pytest.mark.performance
+    @pytest.mark.unit
     def test_transcription_performance(self):
         """测试转录性能"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -453,6 +454,7 @@ class TestChroniclerAgentPerformance:
                 pass
 
     @pytest.mark.performance
+    @pytest.mark.unit
     def test_multiple_transcriptions_performance(self):
         """测试多次转录性能"""
         if not hasattr(self.chronicler, "transcribe_log"):

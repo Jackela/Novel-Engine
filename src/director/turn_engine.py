@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from src.core.emergent_narrative import EmergentNarrativeEngine
+from src.core.narrative import EmergentNarrativeEngine
 
 # Import core engines for integration
 from src.core.subjective_reality import SubjectiveRealityEngine

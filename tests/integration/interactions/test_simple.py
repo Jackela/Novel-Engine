@@ -85,6 +85,7 @@ except ImportError as e:
                 setattr(self, k, v)
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_engine_initialization():
     """Test engine initialization and startup."""
@@ -111,6 +112,7 @@ async def test_engine_initialization():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_dialogue_interaction():
     """Test dialogue interaction processing."""
@@ -154,6 +156,7 @@ async def test_dialogue_interaction():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_cooperation_interaction():
     """Test cooperation interaction processing."""
@@ -190,6 +193,7 @@ async def test_cooperation_interaction():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_engine_statistics():
     """Test engine performance monitoring."""

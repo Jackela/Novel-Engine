@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Test Pyramid History Data",
+  "description": "Historical test pyramid distribution data",
+  "type": "object",
+  "required": ["timestamp", "score", "total_tests", "distribution", "missing_markers"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the data was collected"
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Pyramid health score (0-10, where 10 is perfect)"
+    },
+    "total_tests": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of tests collected"
+    },
+    "distribution": {
+      "type": "object",
+      "description": "Test distribution across pyramid layers",
+      "required": ["unit", "integration", "e2e"],
+      "properties": {
+        "unit": {
+          "$ref": "#/definitions/layerData",
+          "description": "Unit tests (target: 70%)"
+        },
+        "integration": {
+          "$ref": "#/definitions/layerData",
+          "description": "Integration tests (target: 20%)"
+        },
+        "e2e": {
+          "$ref": "#/definitions/layerData",
+          "description": "End-to-end tests (target: 10%)"
+        }
+      }
+    },
+    "missing_markers": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of tests without pyramid markers"
+    }
+  },
+  "definitions": {
+    "layerData": {
+      "type": "object",
+      "required": ["count", "percentage"],
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of tests in this layer"
+        },
+        "percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percentage of total tests in this layer"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "timestamp": "2025-11-25T12:05:16.056481",
+      "score": 2.24,
+      "total_tests": 2930,
+      "distribution": {
+        "unit": {
+          "count": 2365,
+          "percentage": 80.72
+        },
+        "integration": {
+          "count": 11,
+          "percentage": 0.38
+        },
+        "e2e": {
+          "count": 5,
+          "percentage": 0.17
+        }
+      },
+      "missing_markers": 549
+    }
+  ]
+}

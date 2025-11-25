@@ -42,6 +42,7 @@ class TestDirectorAgent:
             pass
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_director_initialization_success(self):
         """测试导演代理初始化 - 成功情况"""
         event_bus = Mock()
@@ -172,6 +173,7 @@ class TestDirectorAgent:
                 raise
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_run_turn_no_agents(self):
         """测试运行回合 - 没有代理"""
         if not hasattr(self.director, "run_turn"):
@@ -267,6 +269,7 @@ class TestDirectorAgentAdvanced:
             pass
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_event_bus_interaction(self):
         """测试与事件总线的交互"""
         # 检查导演是否使用事件总线
@@ -376,6 +379,7 @@ class TestDirectorAgentPerformance:
             pass
 
     @pytest.mark.performance
+    @pytest.mark.unit
     def test_agent_registration_performance(self):
         """测试代理注册性能"""
         if not hasattr(self.director, "register_agent"):
@@ -397,6 +401,7 @@ class TestDirectorAgentPerformance:
         assert registration_time / 10 < 0.2  # 每个代理注册不超过200ms
 
     @pytest.mark.performance
+    @pytest.mark.unit
     def test_turn_execution_performance(self):
         """测试回合执行性能"""
         if not hasattr(self.director, "run_turn"):

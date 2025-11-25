@@ -52,6 +52,7 @@ from contexts.narratives.application.services.narrative_arc_application_service 
 class TestNarrativeArcApplicationServiceInitialization:
     """Test suite for NarrativeArcApplicationService initialization."""
 
+    @pytest.mark.unit
     def test_initialization_with_required_repository(self):
         """Test service initialization with required repository."""
         mock_repository = Mock()
@@ -64,6 +65,7 @@ class TestNarrativeArcApplicationServiceInitialization:
         assert service.command_handler is not None
         assert service.query_handler is not None
 
+    @pytest.mark.unit
     def test_initialization_with_all_dependencies(self):
         """Test service initialization with all dependencies provided."""
         mock_repository = Mock()
@@ -88,6 +90,7 @@ class TestNarrativeArcApplicationServiceInitialization:
     @patch(
         "contexts.narratives.application.services.narrative_arc_application_service.CausalGraphService"
     )
+    @pytest.mark.unit
     def test_default_service_initialization(
         self, mock_causal_service, mock_flow_service
     ):
@@ -108,6 +111,8 @@ class TestNarrativeArcApplicationServiceInitialization:
     @patch(
         "contexts.narratives.application.services.narrative_arc_application_service.logger"
     )
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_initialization_logging(self, mock_logger):
         """Test that initialization is logged."""
         mock_repository = Mock()
@@ -137,6 +142,7 @@ class TestArcLifecycleManagement:
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     def test_create_narrative_arc_minimal_params(self):
         """Test creating narrative arc with minimal parameters."""
         expected_arc_id = "new-arc-123"
@@ -165,6 +171,7 @@ class TestArcLifecycleManagement:
         assert call_args.notes == ""
         assert call_args.metadata is None
 
+    @pytest.mark.unit
     def test_create_narrative_arc_full_params(self):
         """Test creating narrative arc with all parameters."""
         character_ids = [uuid4(), uuid4()]
@@ -203,6 +210,7 @@ class TestArcLifecycleManagement:
         assert call_args.notes == "Test notes"
         assert call_args.metadata == metadata
 
+    @pytest.mark.unit
     def test_get_narrative_arc(self):
         """Test getting a narrative arc."""
         arc_id = "test-arc-789"
@@ -228,6 +236,7 @@ class TestArcLifecycleManagement:
         assert call_args.include_details is True
         assert call_args.include_events is False
 
+    @pytest.mark.unit
     def test_get_narrative_arc_not_found(self):
         """Test getting a non-existent narrative arc."""
         arc_id = "nonexistent-arc"
@@ -242,6 +251,7 @@ class TestArcLifecycleManagement:
         assert call_args.include_details is True  # Default value
         assert call_args.include_events is False  # Default value
 
+    @pytest.mark.unit
     def test_update_narrative_arc(self):
         """Test updating a narrative arc."""
         arc_id = "update-arc-123"
@@ -272,6 +282,8 @@ class TestArcLifecycleManagement:
         assert call_args.tags == set(new_tags)
         assert call_args.metadata == new_metadata
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_start_narrative_arc(self):
         """Test starting a narrative arc."""
         arc_id = "start-arc-456"
@@ -286,6 +298,8 @@ class TestArcLifecycleManagement:
         assert call_args.arc_id == arc_id
         assert call_args.start_sequence == start_sequence
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_complete_narrative_arc(self):
         """Test completing a narrative arc."""
         arc_id = "complete-arc-789"
@@ -311,6 +325,7 @@ class TestPlotPointManagement:
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     def test_add_plot_point_minimal_params(self):
         """Test adding a plot point with minimal parameters."""
         arc_id = "test-arc"
@@ -340,6 +355,7 @@ class TestPlotPointManagement:
         assert call_args.story_significance == Decimal("5.0")
         assert call_args.involved_characters is None
 
+    @pytest.mark.unit
     def test_add_plot_point_full_params(self):
         """Test adding a plot point with all parameters."""
         arc_id = "test-arc"
@@ -390,6 +406,7 @@ class TestPlotPointManagement:
         assert call_args.tags == set(tags)
         assert call_args.notes == "Critical story moment"
 
+    @pytest.mark.unit
     def test_get_plot_point(self):
         """Test getting a specific plot point."""
         arc_id = "test-arc"
@@ -410,6 +427,7 @@ class TestPlotPointManagement:
         assert call_args.arc_id == arc_id
         assert call_args.plot_point_id == plot_point_id
 
+    @pytest.mark.unit
     def test_get_plot_points_in_sequence(self):
         """Test getting plot points in sequence order."""
         arc_id = "test-arc"
@@ -437,6 +455,7 @@ class TestPlotPointManagement:
         assert call_args.start_sequence == 1
         assert call_args.end_sequence == 20
 
+    @pytest.mark.unit
     def test_update_plot_point(self):
         """Test updating a plot point."""
         arc_id = "test-arc"
@@ -470,6 +489,7 @@ class TestPlotPointManagement:
         assert call_args.outcome == "Updated outcome"
         assert call_args.notes == "Updated notes"
 
+    @pytest.mark.unit
     def test_update_plot_point_partial(self):
         """Test updating a plot point with partial parameters."""
         arc_id = "test-arc"
@@ -487,6 +507,8 @@ class TestPlotPointManagement:
         assert call_args.sequence_order is None
         assert call_args.emotional_intensity is None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_remove_plot_point(self):
         """Test removing a plot point."""
         arc_id = "test-arc"
@@ -512,6 +534,7 @@ class TestThemeManagement:
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     def test_add_theme_minimal_params(self):
         """Test adding a theme with minimal parameters."""
         arc_id = "test-arc"
@@ -540,6 +563,7 @@ class TestThemeManagement:
         assert call_args.cultural_significance == Decimal("5.0")
         assert call_args.development_potential == Decimal("5.0")
 
+    @pytest.mark.unit
     def test_add_theme_full_params(self):
         """Test adding a theme with all parameters."""
         arc_id = "test-arc"
@@ -578,6 +602,7 @@ class TestThemeManagement:
         assert call_args.tags == set(tags)
         assert call_args.notes == "Core theme of the narrative"
 
+    @pytest.mark.unit
     def test_get_theme(self):
         """Test getting a specific theme."""
         arc_id = "test-arc"
@@ -598,6 +623,7 @@ class TestThemeManagement:
         assert call_args.arc_id == arc_id
         assert call_args.theme_id == theme_id
 
+    @pytest.mark.unit
     def test_get_themes_at_sequence(self):
         """Test getting themes active at a specific sequence."""
         arc_id = "test-arc"
@@ -621,6 +647,7 @@ class TestThemeManagement:
         assert call_args.arc_id == arc_id
         assert call_args.sequence == sequence
 
+    @pytest.mark.unit
     def test_develop_theme(self):
         """Test developing a theme at a specific sequence."""
         arc_id = "test-arc"
@@ -652,6 +679,7 @@ class TestPacingManagement:
         self.service = NarrativeArcApplicationService(repository=self.mock_repository)
         self.service.command_handler = Mock()
 
+    @pytest.mark.unit
     def test_add_pacing_segment_minimal_params(self):
         """Test adding a pacing segment with minimal parameters."""
         arc_id = "test-arc"
@@ -681,6 +709,7 @@ class TestPacingManagement:
         assert call_args.action_ratio == Decimal("0.3")
         assert call_args.reflection_ratio == Decimal("0.3")
 
+    @pytest.mark.unit
     def test_add_pacing_segment_full_params(self):
         """Test adding a pacing segment with all parameters."""
         arc_id = "test-arc"
@@ -740,6 +769,7 @@ class TestContextManagement:
         self.service = NarrativeArcApplicationService(repository=self.mock_repository)
         self.service.command_handler = Mock()
 
+    @pytest.mark.unit
     def test_add_narrative_context_minimal_params(self):
         """Test adding a narrative context with minimal parameters."""
         arc_id = "test-arc"
@@ -765,6 +795,7 @@ class TestContextManagement:
         assert call_args.importance == Decimal("5.0")
         assert call_args.is_persistent is False
 
+    @pytest.mark.unit
     def test_add_narrative_context_full_params(self):
         """Test adding a narrative context with all parameters."""
         arc_id = "test-arc"
@@ -813,6 +844,8 @@ class TestContextManagement:
         assert call_args.tags == set(tags)
         assert call_args.notes == "Central to the political intrigue subplot"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_activate_context(self):
         """Test activating a narrative context."""
         arc_id = "test-arc"
@@ -825,6 +858,8 @@ class TestContextManagement:
         assert call_args.arc_id == arc_id
         assert call_args.context_id == context_id
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_deactivate_context(self):
         """Test deactivating a narrative context."""
         arc_id = "test-arc"
@@ -849,6 +884,7 @@ class TestCharacterManagement:
         self.service = NarrativeArcApplicationService(repository=self.mock_repository)
         self.service.command_handler = Mock()
 
+    @pytest.mark.unit
     def test_add_character_to_arc(self):
         """Test adding a character to a narrative arc."""
         arc_id = "test-arc"
@@ -870,6 +906,8 @@ class TestCharacterManagement:
         assert call_args.role == "protagonist"
         assert call_args.character_arc_notes == "Main character development notes"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_add_character_to_arc_minimal(self):
         """Test adding a character to arc with minimal parameters."""
         arc_id = "test-arc"
@@ -895,6 +933,7 @@ class TestAnalysisAndOptimization:
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     def test_analyze_narrative_flow(self):
         """Test analyzing narrative flow."""
         arc_id = "test-arc"
@@ -925,6 +964,7 @@ class TestAnalysisAndOptimization:
         assert call_args.include_recommendations is True
         assert call_args.include_tension_progression is True
 
+    @pytest.mark.unit
     def test_optimize_sequence(self):
         """Test optimizing plot point sequence."""
         arc_id = "test-arc"
@@ -953,6 +993,7 @@ class TestAnalysisAndOptimization:
         assert call_args.preserve_critical_order is True
         assert call_args.optimization_criteria == optimization_criteria
 
+    @pytest.mark.unit
     def test_establish_causal_link(self):
         """Test establishing causal relationship between plot points."""
         arc_id = "test-arc"
@@ -982,6 +1023,7 @@ class TestAnalysisAndOptimization:
         assert call_args.certainty == Decimal("0.9")
         assert call_args.metadata == metadata
 
+    @pytest.mark.unit
     def test_analyze_causality(self):
         """Test analyzing causality in narrative arc."""
         arc_id = "test-arc"
@@ -1019,6 +1061,7 @@ class TestComprehensiveAnalysis:
         self.service = NarrativeArcApplicationService(repository=self.mock_repository)
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     def test_get_arc_metrics(self):
         """Test getting comprehensive arc metrics."""
         arc_id = "test-arc"
@@ -1046,6 +1089,7 @@ class TestComprehensiveAnalysis:
         assert call_args.include_flow_analysis is False
         assert call_args.include_causal_analysis is False
 
+    @pytest.mark.unit
     def test_get_arc_summary(self):
         """Test getting comprehensive arc summary."""
         arc_id = "test-arc"
@@ -1080,6 +1124,7 @@ class TestSearchAndDiscovery:
         self.service = NarrativeArcApplicationService(repository=self.mock_repository)
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     def test_search_narrative_arcs_minimal_params(self):
         """Test searching narrative arcs with minimal parameters."""
         expected_result = {
@@ -1112,6 +1157,7 @@ class TestSearchAndDiscovery:
         assert call_args.sort_by == "updated_at"
         assert call_args.sort_order == "desc"
 
+    @pytest.mark.unit
     def test_search_narrative_arcs_full_params(self):
         """Test searching narrative arcs with all parameters."""
         character_ids = [uuid4(), uuid4()]
@@ -1157,6 +1203,7 @@ class TestSearchAndDiscovery:
         assert call_args.sort_by == "created_at"
         assert call_args.sort_order == "asc"
 
+    @pytest.mark.unit
     def test_get_arcs_by_type(self):
         """Test getting narrative arcs by type."""
         arc_type = "main"
@@ -1183,6 +1230,7 @@ class TestSearchAndDiscovery:
         assert call_args.limit == 10
         assert call_args.offset == 0
 
+    @pytest.mark.unit
     def test_get_arcs_by_type_minimal_params(self):
         """Test getting arcs by type with minimal parameters."""
         arc_type = "subplot"
@@ -1214,6 +1262,7 @@ class TestErrorHandling:
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     def test_command_handler_exception_propagation(self):
         """Test that exceptions from command handler are properly propagated."""
         self.service.command_handler.handle_create_narrative_arc.side_effect = (
@@ -1225,6 +1274,7 @@ class TestErrorHandling:
                 arc_name="Test Arc", arc_type="main", description="Test"
             )
 
+    @pytest.mark.unit
     def test_query_handler_exception_propagation(self):
         """Test that exceptions from query handler are properly propagated."""
         self.service.query_handler.handle_get_narrative_arc.side_effect = RuntimeError(
@@ -1234,6 +1284,7 @@ class TestErrorHandling:
         with pytest.raises(RuntimeError, match="Database connection failed"):
             self.service.get_narrative_arc(arc_id="test-arc")
 
+    @pytest.mark.unit
     def test_decimal_conversion_handling(self):
         """Test proper handling of decimal conversions."""
         # This should work fine with valid numeric values
@@ -1267,6 +1318,7 @@ class TestIntegrationScenarios:
         self.service.command_handler = Mock()
         self.service.query_handler = Mock()
 
+    @pytest.mark.unit
     def test_complete_arc_creation_workflow(self):
         """Test complete workflow of creating and configuring an arc."""
         # 1. Create arc
@@ -1310,6 +1362,7 @@ class TestIntegrationScenarios:
         assert self.service.command_handler.handle_add_theme.called
         assert self.service.command_handler.handle_start_narrative_arc.called
 
+    @pytest.mark.unit
     def test_analysis_workflow(self):
         """Test complete analysis workflow."""
         arc_id = "analysis-arc"

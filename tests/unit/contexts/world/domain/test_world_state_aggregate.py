@@ -97,6 +97,7 @@ class TestWorldStateAggregate:
 
     # ==================== Initialization and Validation Tests ====================
 
+    @pytest.mark.unit
     def test_world_state_initialization(self):
         """Test WorldState proper initialization."""
         world = WorldState(name="Test World", description="Test Description")
@@ -116,18 +117,24 @@ class TestWorldStateAggregate:
             world.version == 2
         )  # Version increments during creation (1) and activation (2)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_world_state_auto_name_generation(self):
         """Test automatic name generation when name is empty."""
         world = WorldState(name="")
         assert world.name.startswith("World_")
         assert len(world.name) > 6  # "World_" + 8-char ID prefix
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_world_state_validation_empty_name(self):
         """Test validation fails for empty name after initialization."""
         with pytest.raises(ValueError) as exc_info:
             WorldState(name="   ")  # Whitespace-only name
         assert "World name cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_world_state_validation_future_time(self):
         """Test validation for world time in far future."""
         future_time = datetime.now() + timedelta(days=400)  # More than a year
@@ -135,6 +142,8 @@ class TestWorldStateAggregate:
             WorldState(name="Test", world_time=future_time)
         assert "World time is more than a year in the future" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_world_state_validation_entity_limit(self):
         """Test validation for entity limit exceeded."""
         world = WorldState(name="Test", max_entities=2)
@@ -151,6 +160,7 @@ class TestWorldStateAggregate:
 
     # ==================== State Transition Tests ====================
 
+    @pytest.mark.unit
     def test_activate_world_state(self, world_state):
         """Test activating world state."""
         world_state.status = WorldStatus.PAUSED
@@ -169,6 +179,8 @@ class TestWorldStateAggregate:
         )
         assert activation_event is not None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_pause_world_state(self, world_state):
         """Test pausing active world state."""
         world_state.activate()  # Ensure it's active
@@ -185,6 +197,8 @@ class TestWorldStateAggregate:
         pause_event = next((e for e in events if "paused" in e.change_reason), None)
         assert pause_event is not None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_pause_non_active_world_state(self, world_state):
         """Test pausing non-active world state does nothing."""
         world_state.status = WorldStatus.ARCHIVED
@@ -196,6 +210,8 @@ class TestWorldStateAggregate:
         assert world_state.status == WorldStatus.ARCHIVED
         assert world_state.version == initial_version
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_archive_world_state(self, world_state):
         """Test archiving world state."""
         initial_version = world_state.version
@@ -212,6 +228,7 @@ class TestWorldStateAggregate:
 
     # ==================== Entity Management Tests ====================
 
+    @pytest.mark.unit
     def test_add_entity_success(self, world_state, sample_entity_data):
         """Test successfully adding an entity."""
         initial_count = len(world_state.entities)
@@ -241,6 +258,8 @@ class TestWorldStateAggregate:
         )
         assert add_event is not None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_add_duplicate_entity_fails(self, world_state, sample_entity_data):
         """Test adding entity with duplicate ID fails."""
         world_state.add_entity(**sample_entity_data)
@@ -252,6 +271,7 @@ class TestWorldStateAggregate:
             in str(exc_info.value)
         )
 
+    @pytest.mark.unit
     def test_remove_entity_success(self, world_state, sample_entity_data):
         """Test successfully removing an entity."""
         # First add the entity
@@ -283,11 +303,14 @@ class TestWorldStateAggregate:
         )
         assert remove_event is not None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_remove_nonexistent_entity(self, world_state):
         """Test removing non-existent entity returns None."""
         result = world_state.remove_entity("nonexistent-id", "Test")
         assert result is None
 
+    @pytest.mark.unit
     def test_move_entity_success(self, world_state, sample_entity_data):
         """Test successfully moving an entity."""
         # Add entity first
@@ -325,12 +348,15 @@ class TestWorldStateAggregate:
         )
         assert move_event is not None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_move_nonexistent_entity(self, world_state):
         """Test moving non-existent entity returns False."""
         new_coordinates = Coordinates(x=50.0, y=60.0, z=10.0)
         success = world_state.move_entity("nonexistent-id", new_coordinates, "Test")
         assert success is False
 
+    @pytest.mark.unit
     def test_update_entity_success(self, world_state, sample_entity_data):
         """Test successfully updating an entity."""
         # Add entity first
@@ -364,6 +390,8 @@ class TestWorldStateAggregate:
         )
         assert update_event is not None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_update_nonexistent_entity(self, world_state):
         """Test updating non-existent entity returns False."""
         success = world_state.update_entity(
@@ -373,6 +401,8 @@ class TestWorldStateAggregate:
 
     # ==================== Query Operations Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_entity_success(self, world_state, sample_entity_data):
         """Test getting entity by ID."""
         world_state.add_entity(**sample_entity_data)
@@ -382,11 +412,14 @@ class TestWorldStateAggregate:
         assert entity is not None
         assert entity.id == sample_entity_data["entity_id"]
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_nonexistent_entity(self, world_state):
         """Test getting non-existent entity returns None."""
         entity = world_state.get_entity("nonexistent-id")
         assert entity is None
 
+    @pytest.mark.unit
     def test_get_entities_by_type(self, world_state):
         """Test filtering entities by type."""
         coords1 = Coordinates(0, 0, 0)
@@ -406,6 +439,7 @@ class TestWorldStateAggregate:
         assert all(entity.entity_type == EntityType.CHARACTER for entity in characters)
         assert all(entity.entity_type == EntityType.OBJECT for entity in objects)
 
+    @pytest.mark.unit
     def test_get_entities_in_area(self, world_state):
         """Test spatial query for entities within radius."""
         center = Coordinates(0, 0, 0)
@@ -425,6 +459,7 @@ class TestWorldStateAggregate:
         assert "far_entity" not in entity_ids
         assert len(entities_in_area) == 2
 
+    @pytest.mark.unit
     def test_get_entities_in_area_with_type_filter(self, world_state):
         """Test spatial query with entity type filtering."""
         center = Coordinates(0, 0, 0)
@@ -443,6 +478,8 @@ class TestWorldStateAggregate:
         assert len(characters_in_area) == 1
         assert characters_in_area[0].entity_type == EntityType.CHARACTER
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_entities_at_coordinates_exact(self, world_state):
         """Test getting entities at exact coordinates."""
         coords = Coordinates(10, 20, 5)
@@ -456,6 +493,7 @@ class TestWorldStateAggregate:
         assert len(entities) == 1
         assert entities[0].id == "exact_entity"
 
+    @pytest.mark.unit
     def test_get_entities_at_coordinates_with_tolerance(self, world_state):
         """Test getting entities at coordinates with tolerance."""
         coords = Coordinates(10, 20, 5)
@@ -475,6 +513,7 @@ class TestWorldStateAggregate:
 
     # ==================== Time Management Tests ====================
 
+    @pytest.mark.unit
     def test_advance_time_success(self, world_state):
         """Test advancing world time."""
         initial_time = world_state.world_time
@@ -494,6 +533,8 @@ class TestWorldStateAggregate:
         )
         assert time_event is not None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_advance_time_backwards_fails(self, world_state):
         """Test advancing time backwards fails."""
         initial_time = world_state.world_time
@@ -503,6 +544,8 @@ class TestWorldStateAggregate:
             world_state.advance_time(past_time, "Invalid time")
         assert "New time must be after current world time" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_advance_time_same_time_fails(self, world_state):
         """Test advancing to same time fails."""
         current_time = world_state.world_time
@@ -513,6 +556,7 @@ class TestWorldStateAggregate:
 
     # ==================== Environment Tests ====================
 
+    @pytest.mark.unit
     def test_update_environment_success(self, world_state):
         """Test updating environment properties."""
         initial_version = world_state.version
@@ -537,6 +581,8 @@ class TestWorldStateAggregate:
         )
         assert env_event is not None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_update_environment_merge_properties(self, world_state):
         """Test environment updates merge with existing properties."""
         world_state.environment = {"existing_prop": "value", "weather": "sunny"}
@@ -550,6 +596,8 @@ class TestWorldStateAggregate:
 
     # ==================== Spatial Indexing Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_spatial_grid_key(self, world_state):
         """Test spatial grid key calculation."""
         coords = Coordinates(150.5, 250.7, 0)
@@ -559,6 +607,8 @@ class TestWorldStateAggregate:
         # With grid size 100.0: x=150.5 -> grid_x=1, y=250.7 -> grid_y=2
         assert grid_key == "1,2"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_spatial_grid_key_negative_coordinates(self, world_state):
         """Test spatial grid key for negative coordinates."""
         coords = Coordinates(-150.5, -250.7, 0)
@@ -568,6 +618,8 @@ class TestWorldStateAggregate:
         # With grid size 100.0: x=-150.5 -> grid_x=-2, y=-250.7 -> grid_y=-3
         assert grid_key == "-2,-3"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_add_to_spatial_index(self, world_state):
         """Test adding entity to spatial index."""
         coords = Coordinates(50, 50, 0)
@@ -579,6 +631,8 @@ class TestWorldStateAggregate:
         assert grid_key in world_state.spatial_index
         assert entity_id in world_state.spatial_index[grid_key]
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_remove_from_spatial_index(self, world_state):
         """Test removing entity from spatial index."""
         coords = Coordinates(50, 50, 0)
@@ -595,6 +649,7 @@ class TestWorldStateAggregate:
         # Grid cell should be removed when empty
         assert grid_key not in world_state.spatial_index
 
+    @pytest.mark.unit
     def test_remove_from_spatial_index_nonexistent(self, world_state):
         """Test removing non-existent entity from spatial index."""
         coords = Coordinates(50, 50, 0)
@@ -602,6 +657,7 @@ class TestWorldStateAggregate:
         # Should not raise exception
         world_state._remove_from_spatial_index("nonexistent", coords)
 
+    @pytest.mark.unit
     def test_get_entities_from_spatial_index(self, world_state):
         """Test getting candidate entities from spatial index."""
         # Add entities in different grid cells
@@ -626,6 +682,7 @@ class TestWorldStateAggregate:
 
     # ==================== Utility Operations Tests ====================
 
+    @pytest.mark.unit
     def test_create_snapshot(self, world_state, sample_entity_data):
         """Test creating world state snapshot."""
         world_state.add_entity(**sample_entity_data)
@@ -652,6 +709,7 @@ class TestWorldStateAggregate:
         )
         assert snapshot_event is not None
 
+    @pytest.mark.unit
     def test_reset_state_preserve_entities(self, world_state, sample_entity_data):
         """Test resetting state while preserving entities."""
         world_state.add_entity(**sample_entity_data)
@@ -675,6 +733,8 @@ class TestWorldStateAggregate:
         )
         assert reset_event is not None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_reset_state_clear_entities(self, world_state, sample_entity_data):
         """Test resetting state and clearing entities."""
         world_state.add_entity(**sample_entity_data)
@@ -688,6 +748,7 @@ class TestWorldStateAggregate:
         assert len(world_state.environment) == 0  # Environment cleared
         assert len(world_state.spatial_index) == 0  # Spatial index cleared
 
+    @pytest.mark.unit
     def test_get_statistics(self, world_state):
         """Test getting world state statistics."""
         # Add various entities
@@ -714,6 +775,7 @@ class TestWorldStateAggregate:
 
     # ==================== Domain Events Tests ====================
 
+    @pytest.mark.unit
     def test_domain_events_generation(self, world_state, sample_entity_data):
         """Test that domain events are properly generated."""
         # Clear any initialization events
@@ -736,6 +798,8 @@ class TestWorldStateAggregate:
             assert len(event.correlation_id) > 0
             assert event.source == "world_context"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_domain_events_clear(self, world_state):
         """Test clearing domain events."""
         world_state.pause()
@@ -744,6 +808,8 @@ class TestWorldStateAggregate:
         world_state.clear_domain_events()
         assert len(world_state.get_domain_events()) == 0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_domain_events(self, world_state):
         """Test checking for pending domain events."""
         world_state.clear_domain_events()
@@ -754,6 +820,8 @@ class TestWorldStateAggregate:
 
     # ==================== Edge Cases and Error Conditions ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_entity_operations_empty_spatial_index(self, world_state):
         """Test entity operations work with empty spatial index."""
         coords = Coordinates(0, 0, 0)
@@ -765,6 +833,8 @@ class TestWorldStateAggregate:
         entities = world_state.get_entities_at_coordinates(coords, 0.0)
         assert len(entities) == 0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_large_coordinate_values(self, world_state):
         """Test handling of large coordinate values."""
         large_coords = Coordinates(x=1e9, y=1e9, z=1e9)
@@ -775,6 +845,8 @@ class TestWorldStateAggregate:
         entity = world_state.get_entity("large_entity")
         assert entity.coordinates == large_coords
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_boundary_spatial_grid(self, world_state):
         """Test spatial grid boundary conditions."""
         # Test coordinates exactly on grid boundaries
@@ -783,6 +855,7 @@ class TestWorldStateAggregate:
         grid_key = world_state._get_spatial_grid_key(boundary_coords)
         assert grid_key == "1,2"  # Should consistently assign to one grid
 
+    @pytest.mark.unit
     def test_concurrent_entity_modifications(self, world_state, sample_entity_data):
         """Test entity modifications update timestamps correctly."""
         world_state.add_entity(**sample_entity_data)
@@ -801,6 +874,8 @@ class TestWorldStateAggregate:
         updated_entity = world_state.get_entity(sample_entity_data["entity_id"])
         assert updated_entity.updated_at > initial_updated_at
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_entity_id_consistency(self, world_state):
         """Test entity ID consistency in aggregate."""
         coords = Coordinates(0, 0, 0)
@@ -814,6 +889,8 @@ class TestWorldStateAggregate:
         assert "test-id" in world_state.entities
         assert world_state.entities["test-id"].id == "test-id"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_world_state_version_consistency(self, world_state):
         """Test version increments consistently across operations."""
         initial_version = world_state.version
@@ -831,6 +908,7 @@ class TestWorldStateAggregate:
 
     # ==================== Integration-like Tests ====================
 
+    @pytest.mark.unit
     def test_complete_entity_lifecycle(self, world_state):
         """Test complete entity lifecycle from creation to removal."""
         coords = Coordinates(10, 20, 0)
@@ -868,6 +946,7 @@ class TestWorldStateAggregate:
         assert removed_entity.id == entity_id
         assert world_state.get_entity(entity_id) is None
 
+    @pytest.mark.unit
     def test_spatial_query_integration(self, world_state):
         """Test spatial queries work correctly with entity management."""
         center = Coordinates(0, 0, 0)
@@ -903,6 +982,7 @@ class TestWorldStateAggregate:
         assert "far1" in nearby_ids_after_move
         assert len(nearby_ids_after_move) == 3
 
+    @pytest.mark.unit
     def test_environment_and_time_integration(self, world_state):
         """Test environment updates and time advancement work together."""
         # Set initial environment

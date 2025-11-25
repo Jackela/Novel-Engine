@@ -40,6 +40,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_bridge_infrastructure():
     """Test bridge infrastructure if available."""
@@ -64,6 +65,7 @@ async def test_bridge_infrastructure():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_system_integration():
     """Test basic system integration."""

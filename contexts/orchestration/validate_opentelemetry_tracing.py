@@ -326,13 +326,13 @@ def test_requirements_compliance():
 
         print("✅ Checking required OpenTelemetry packages:")
 
-        import pkg_resources
+        from importlib.metadata import version, PackageNotFoundError
 
         for package in required_packages:
             try:
-                version = pkg_resources.get_distribution(package).version
-                print(f"   ✅ {package}: {version}")
-            except pkg_resources.DistributionNotFound:
+                pkg_version = version(package)
+                print(f"   ✅ {package}: {pkg_version}")
+            except PackageNotFoundError:
                 print(f"   ❌ {package}: NOT INSTALLED")
                 return False
 

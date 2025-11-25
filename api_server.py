@@ -18,11 +18,14 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 from typing import Any, Dict, List, Optional, Set
 from types import SimpleNamespace
 
+import jwt  # For token validation
+
 import uvicorn
+from fastapi.security import APIKeyCookie
 from src.config.character_factory import CharacterFactory
 from src.agents.chronicler_agent import ChroniclerAgent
 from config_loader import get_config
@@ -42,6 +45,26 @@ from src.caching.global_chunk_cache import chunk_cache
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ===================================================================
+# Cookie Configuration for httpOnly Token Storage [SEC-001]
+# ===================================================================
+COOKIE_NAME = "access_token"
+REFRESH_COOKIE_NAME = "refresh_token"
+CSRF_COOKIE_NAME = "csrf_token"
+
+# Environment-based security settings
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true").lower() in ("true", "1", "yes")  # HTTPS only in production
+COOKIE_HTTPONLY = True  # Protect against XSS
+COOKIE_SAMESITE = "lax"  # CSRF protection while allowing normal navigation
+COOKIE_MAX_AGE = 3600 * 24  # 24 hours for access token
+REFRESH_COOKIE_MAX_AGE = 3600 * 24 * 30  # 30 days for refresh token
+CSRF_TOKEN_MAX_AGE = 3600 * 24  # 24 hours for CSRF token
+
+# JWT Configuration
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "development-secret-key-change-in-production"))
+JWT_ALGORITHM = "HS256"
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 15  # Short-lived access tokens
 
 # Import World Context API Router
 try:
@@ -168,6 +191,36 @@ class CampaignCreationResponse(BaseModel):
     name: str
     status: str
     created_at: str
+
+
+# ===================================================================
+# Authentication Request/Response Models [SEC-001]
+# ===================================================================
+
+class LoginRequest(BaseModel):
+    """Request model for user login."""
+    email: str = Field(..., description="User email address")
+    password: str = Field(..., description="User password")
+    remember_me: bool = Field(default=False, description="Whether to extend session duration")
+
+
+class AuthResponse(BaseModel):
+    """Response model for authentication endpoints."""
+    access_token: str = Field(..., description="JWT access token (for backward compatibility)")
+    refresh_token: str = Field(..., description="JWT refresh token (for backward compatibility)")
+    token_type: str = Field(default="Bearer", description="Token type")
+    expires_in: int = Field(..., description="Token expiry time in seconds")
+    user: Dict[str, Any] = Field(..., description="User information")
+
+
+class RefreshTokenRequest(BaseModel):
+    """Request model for token refresh."""
+    refresh_token: str = Field(..., description="Refresh token")
+
+
+class CSRFTokenResponse(BaseModel):
+    """Response model for CSRF token endpoint."""
+    csrf_token: str = Field(..., description="CSRF token for state-changing requests")
 
 
 @asynccontextmanager
@@ -1809,6 +1862,482 @@ async def create_campaign(request: CampaignCreationRequest) -> CampaignCreationR
         logger.error(f"Error creating campaign: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Failed to create campaign: {str(e)}"
+        )
+
+
+# ===================================================================
+# Authentication Endpoints (Security Improvements - SEC-001)
+# ===================================================================
+
+@app.post("/api/auth/login", response_model=AuthResponse, tags=["Authentication"])
+async def login(credentials: LoginRequest, response: Response):
+    """
+    Authenticate user and set httpOnly cookies for token storage.
+
+    This endpoint implements SEC-001 security improvements:
+    - Tokens stored in httpOnly cookies (XSS protection)
+    - Secure flag for HTTPS-only transmission
+    - SameSite=Lax for CSRF protection
+    - Short-lived access tokens (15 min)
+    - Long-lived refresh tokens (30 days)
+
+    The response also includes tokens in the body for backward compatibility
+    during the migration period.
+
+    Args:
+        credentials: User login credentials (email, password, remember_me)
+        response: FastAPI Response object for setting cookies
+
+    Returns:
+        AuthResponse with tokens and user information
+    """
+    try:
+        # TODO: Replace with actual authentication logic
+        # For now, this is a mock implementation for demonstration
+
+        # Validate credentials (mock implementation)
+        if not credentials.email or not credentials.password:
+            raise HTTPException(
+                status_code=400,
+                detail="Email and password are required"
+            )
+
+        # Mock user data - replace with actual database lookup
+        user_data = {
+            "id": str(uuid.uuid4()),
+            "email": credentials.email,
+            "name": credentials.email.split("@")[0],
+            "role": "user",
+            "created_at": datetime.now(UTC).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+
+        # Calculate token expiry
+        access_token_expires = datetime.now(UTC) + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+        refresh_token_expires = datetime.now(UTC) + timedelta(days=30)
+
+        # Create JWT tokens
+        access_token_payload = {
+            "user_id": user_data["id"],
+            "email": user_data["email"],
+            "exp": access_token_expires,
+            "iat": datetime.now(UTC),
+            "type": "access"
+        }
+
+        refresh_token_payload = {
+            "user_id": user_data["id"],
+            "email": user_data["email"],
+            "exp": refresh_token_expires,
+            "iat": datetime.now(UTC),
+            "type": "refresh"
+        }
+
+        access_token = jwt.encode(access_token_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        refresh_token = jwt.encode(refresh_token_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+        # Set httpOnly cookies for tokens
+        cookie_max_age = REFRESH_COOKIE_MAX_AGE if credentials.remember_me else COOKIE_MAX_AGE
+
+        response.set_cookie(
+            key=COOKIE_NAME,
+            value=access_token,
+            httponly=COOKIE_HTTPONLY,
+            secure=COOKIE_SECURE,
+            samesite=COOKIE_SAMESITE,
+            max_age=COOKIE_MAX_AGE
+        )
+
+        response.set_cookie(
+            key=REFRESH_COOKIE_NAME,
+            value=refresh_token,
+            httponly=COOKIE_HTTPONLY,
+            secure=COOKIE_SECURE,
+            samesite=COOKIE_SAMESITE,
+            max_age=cookie_max_age
+        )
+
+        logger.info(f"User login successful: {credentials.email} (cookies set)")
+
+        # Return tokens in response body for backward compatibility
+        return AuthResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="Bearer",
+            expires_in=JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            user=user_data
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Login failed: {str(e)}"
+        )
+
+
+@app.post("/api/auth/refresh", response_model=AuthResponse, tags=["Authentication"])
+async def refresh_token(request: RefreshTokenRequest, response: Response, req: Request):
+    """
+    Refresh access token using refresh token.
+
+    Accepts refresh token from:
+    1. httpOnly cookie (preferred)
+    2. Request body (for backward compatibility)
+
+    Returns new access token and sets httpOnly cookie.
+
+    Args:
+        request: Refresh token request (optional, for backward compatibility)
+        response: FastAPI Response object for setting cookies
+        req: FastAPI Request object for reading cookies
+
+    Returns:
+        AuthResponse with new tokens
+    """
+    try:
+        # Try to get refresh token from cookie first, then from body
+        refresh_token_value = req.cookies.get(REFRESH_COOKIE_NAME) or request.refresh_token
+
+        if not refresh_token_value:
+            raise HTTPException(
+                status_code=401,
+                detail="No refresh token provided"
+            )
+
+        # Validate and decode refresh token
+        try:
+            payload = jwt.decode(refresh_token_value, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+
+            if payload.get("type") != "refresh":
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid token type"
+                )
+
+            user_id = payload.get("user_id")
+            email = payload.get("email")
+
+            if not user_id or not email:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid token payload"
+                )
+
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(
+                status_code=401,
+                detail="Refresh token has expired"
+            )
+        except jwt.InvalidTokenError as e:
+            raise HTTPException(
+                status_code=401,
+                detail=f"Invalid refresh token: {str(e)}"
+            )
+
+        # TODO: Verify user still exists and is active
+        user_data = {
+            "id": user_id,
+            "email": email,
+            "name": email.split("@")[0],
+            "role": "user",
+            "created_at": datetime.now(UTC).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+
+        # Create new access token
+        access_token_expires = datetime.now(UTC) + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token_payload = {
+            "user_id": user_id,
+            "email": email,
+            "exp": access_token_expires,
+            "iat": datetime.now(UTC),
+            "type": "access"
+        }
+
+        access_token = jwt.encode(access_token_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+        # Set new access token cookie
+        response.set_cookie(
+            key=COOKIE_NAME,
+            value=access_token,
+            httponly=COOKIE_HTTPONLY,
+            secure=COOKIE_SECURE,
+            samesite=COOKIE_SAMESITE,
+            max_age=COOKIE_MAX_AGE
+        )
+
+        logger.info(f"Token refreshed for user: {email}")
+
+        return AuthResponse(
+            access_token=access_token,
+            refresh_token=refresh_token_value,
+            token_type="Bearer",
+            expires_in=JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            user=user_data
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token refresh failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Token refresh failed: {str(e)}"
+        )
+
+
+@app.get("/api/auth/csrf-token", response_model=CSRFTokenResponse, tags=["Authentication"])
+async def get_csrf_token(response: Response):
+    """
+    Generate and return CSRF token for state-changing requests.
+
+    The CSRF token is set as a non-httpOnly cookie so JavaScript can read it
+    and include it in request headers. This provides CSRF protection for
+    state-changing operations (POST, PUT, DELETE, PATCH).
+
+    Usage:
+    1. Call this endpoint to get a CSRF token
+    2. Include the token in X-CSRF-Token header for mutations
+    3. Backend validates the token matches the cookie value
+
+    Returns:
+        CSRFTokenResponse with the generated CSRF token
+    """
+    try:
+        # Generate cryptographically secure random token
+        csrf_token = secrets.token_urlsafe(32)
+
+        # Set CSRF token as non-httpOnly cookie (JS needs to read it)
+        response.set_cookie(
+            key=CSRF_COOKIE_NAME,
+            value=csrf_token,
+            httponly=False,  # JavaScript must be able to read this
+            secure=COOKIE_SECURE,
+            samesite="strict",  # Strict for CSRF tokens
+            max_age=CSRF_TOKEN_MAX_AGE
+        )
+
+        logger.debug("CSRF token generated and set")
+
+        return CSRFTokenResponse(csrf_token=csrf_token)
+
+    except Exception as e:
+        logger.error(f"CSRF token generation failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate CSRF token: {str(e)}"
+        )
+
+
+class LogoutRequest(BaseModel):
+    """Request model for logout."""
+    access_token: Optional[str] = Field(None, description="Optional access token to invalidate")
+
+
+class LogoutResponse(BaseModel):
+    """Response model for logout."""
+    success: bool
+    message: str
+
+
+class TokenValidationResponse(BaseModel):
+    """Response model for token validation."""
+    valid: bool
+    expires_at: Optional[int] = Field(None, description="Token expiry timestamp in milliseconds")
+    user_id: Optional[str] = None
+    error: Optional[str] = None
+
+
+@app.post("/api/auth/logout", response_model=LogoutResponse, tags=["Authentication"])
+async def logout(request: Request, response: Response, body: Optional[LogoutRequest] = None):
+    """
+    Logout endpoint to invalidate user session and clear httpOnly cookies.
+
+    This endpoint implements SEC-001 security improvements:
+    - Clears all authentication cookies (access_token, refresh_token)
+    - Logs the logout event for audit trail
+    - Always returns success to ensure frontend can reliably clear state
+
+    The endpoint clears httpOnly cookies by setting them to expire immediately.
+
+    In a production environment with a session store, this would also:
+    - Add tokens to a Redis blacklist with TTL matching token expiry
+    - Mark session as inactive in database
+
+    Args:
+        request: FastAPI Request object for logging
+        response: FastAPI Response object for clearing cookies
+        body: Optional logout request body (for backward compatibility)
+
+    Returns:
+        LogoutResponse with success status
+    """
+    try:
+        # Extract token from Authorization header or request body for logging
+        auth_header = request.headers.get("Authorization", "")
+        token = None
+
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+        elif body and body.access_token:
+            token = body.access_token
+
+        # Log the logout event
+        client_ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("user-agent", "unknown")
+
+        # Mask token for logging (show first 10 chars only)
+        masked_token = f"{token[:10]}..." if token and len(token) > 10 else "no-token"
+
+        logger.info(
+            f"Logout event: token={masked_token}, ip={client_ip}, ua={user_agent[:50]}"
+        )
+
+        # Clear httpOnly cookies by setting max_age=0
+        response.delete_cookie(
+            key=COOKIE_NAME,
+            secure=COOKIE_SECURE,
+            samesite=COOKIE_SAMESITE
+        )
+
+        response.delete_cookie(
+            key=REFRESH_COOKIE_NAME,
+            secure=COOKIE_SECURE,
+            samesite=COOKIE_SAMESITE
+        )
+
+        response.delete_cookie(
+            key=CSRF_COOKIE_NAME,
+            secure=COOKIE_SECURE,
+            samesite="strict"
+        )
+
+        logger.info("Authentication cookies cleared successfully")
+
+        # TODO: [SEC-002] When implementing a token blacklist or session store,
+        # add token invalidation here:
+        # - Add token to a Redis blacklist with TTL matching token expiry
+        # - Or mark session as inactive in database
+
+        return LogoutResponse(
+            success=True,
+            message="Logout successful"
+        )
+
+    except Exception as e:
+        # Always return success for logout to ensure frontend can clear state
+        logger.warning(f"Logout encountered an error (still returning success): {e}")
+        return LogoutResponse(
+            success=True,
+            message="Logout successful"
+        )
+
+
+@app.get("/api/auth/validate", response_model=TokenValidationResponse, tags=["Authentication"])
+async def validate_token(request: Request):
+    """
+    Validate the current access token.
+
+    This endpoint checks if the token in the Authorization header is valid.
+    Returns token status and expiry information.
+
+    Returns:
+        200 with valid=true if token is valid
+        401 with valid=false if token is invalid or expired
+    """
+    try:
+        auth_header = request.headers.get("Authorization", "")
+
+        if not auth_header.startswith("Bearer "):
+            return JSONResponse(
+                status_code=401,
+                content=TokenValidationResponse(
+                    valid=False,
+                    error="Missing or invalid Authorization header"
+                ).model_dump()
+            )
+
+        token = auth_header[7:]
+
+        if not token:
+            return JSONResponse(
+                status_code=401,
+                content=TokenValidationResponse(
+                    valid=False,
+                    error="No token provided"
+                ).model_dump()
+            )
+
+        # Try to decode and validate the token
+        try:
+            # Get the secret key from environment or use a default for development
+            secret_key = os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "development-secret-key"))
+
+            # Decode the token
+            payload = jwt.decode(token, secret_key, algorithms=["HS256"])
+
+            # Extract expiry and user info
+            exp = payload.get("exp")
+            user_id = payload.get("user_id") or payload.get("sub")
+
+            # Check if token is expired
+            if exp:
+                from datetime import timezone
+                exp_datetime = datetime.fromtimestamp(exp, tz=timezone.utc)
+                now = datetime.now(timezone.utc)
+
+                if now > exp_datetime:
+                    return JSONResponse(
+                        status_code=401,
+                        content=TokenValidationResponse(
+                            valid=False,
+                            error="Token has expired"
+                        ).model_dump()
+                    )
+
+                # Return valid token with expiry in milliseconds
+                expires_at_ms = int(exp * 1000)
+
+                return TokenValidationResponse(
+                    valid=True,
+                    expires_at=expires_at_ms,
+                    user_id=user_id
+                )
+
+            # Token is valid but no expiry (shouldn't happen with proper tokens)
+            return TokenValidationResponse(
+                valid=True,
+                user_id=user_id
+            )
+
+        except jwt.ExpiredSignatureError:
+            return JSONResponse(
+                status_code=401,
+                content=TokenValidationResponse(
+                    valid=False,
+                    error="Token has expired"
+                ).model_dump()
+            )
+        except jwt.InvalidTokenError as e:
+            return JSONResponse(
+                status_code=401,
+                content=TokenValidationResponse(
+                    valid=False,
+                    error=f"Invalid token: {str(e)}"
+                ).model_dump()
+            )
+
+    except Exception as e:
+        logger.error(f"Token validation error: {e}")
+        return JSONResponse(
+            status_code=401,
+            content=TokenValidationResponse(
+                valid=False,
+                error="Token validation failed"
+            ).model_dump()
         )
 
 

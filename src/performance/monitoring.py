@@ -234,7 +234,7 @@ class PerformanceMonitor:
     def _start_monitoring(self):
         """Initialize monitoring background tasks."""
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             self._monitoring_task = loop.create_task(self._monitoring_loop())
             self._cleanup_task = loop.create_task(self._cleanup_loop())
         except RuntimeError:

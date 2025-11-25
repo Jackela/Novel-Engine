@@ -60,6 +60,7 @@ export function useRealtimeEvents({
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isUnmountedRef = useRef(false);
+  const connectionStateRef = useRef<ConnectionState>(connectionState);
 
   // Calculate exponential backoff delay
   const calculateRetryDelay = useCallback((retryCount: number): number => {
@@ -72,19 +73,22 @@ export function useRealtimeEvents({
     return Math.floor(delay + jitter);
   }, [initialRetryDelay, maxRetryDelay]);
 
+  // Keep connectionStateRef in sync with state
+  connectionStateRef.current = connectionState;
+
   // Reset heartbeat timer on message received
   const resetHeartbeatTimer = useCallback(() => {
     if (heartbeatTimeoutRef.current) {
       clearTimeout(heartbeatTimeoutRef.current);
     }
     heartbeatTimeoutRef.current = setTimeout(() => {
-      if (!isUnmountedRef.current && connectionState === 'connected') {
+      if (!isUnmountedRef.current && connectionStateRef.current === 'connected') {
         logger.warn('SSE heartbeat timeout - no message received, reconnecting');
         eventSourceRef.current?.close();
         setConnectionState('reconnecting');
       }
     }, heartbeatTimeout);
-  }, [heartbeatTimeout, connectionState]);
+  }, [heartbeatTimeout]);
 
   // Create connection with retry logic
   const createConnection = useCallback(() => {
@@ -125,7 +129,6 @@ export function useRealtimeEvents({
         logger.info('SSE connection established', {
           endpoint,
           wasReconnection,
-          totalReconnections: stats.totalReconnections + (wasReconnection ? 1 : 0)
         });
       };
 
@@ -209,7 +212,7 @@ export function useRealtimeEvents({
       setLoading(false);
       setError(new Error('Failed to initialize event stream connection.'));
     }
-  }, [endpoint, enabled, maxRetries, calculateRetryDelay, resetHeartbeatTimer, maxEvents, stats.totalReconnections]);
+  }, [endpoint, enabled, maxRetries, calculateRetryDelay, resetHeartbeatTimer, maxEvents]);
 
   // Manual reconnect function exposed to consumers
   const reconnect = useCallback(() => {

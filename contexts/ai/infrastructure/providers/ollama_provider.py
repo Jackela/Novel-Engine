@@ -302,7 +302,7 @@ class OllamaProvider(ILLMProvider):
                         "models_available": len(models),
                         "api_status": response.status,
                         "provider": "Ollama",
-                        "timestamp": asyncio.get_event_loop().time(),
+                        "timestamp": asyncio.get_running_loop().time(),
                         "issues": [] if has_models else ["No models installed"],
                     }
                 else:
@@ -310,7 +310,7 @@ class OllamaProvider(ILLMProvider):
                         "status": "unhealthy",
                         "api_status": response.status,
                         "provider": "Ollama",
-                        "timestamp": asyncio.get_event_loop().time(),
+                        "timestamp": asyncio.get_running_loop().time(),
                     }
 
         except Exception as e:
@@ -318,7 +318,7 @@ class OllamaProvider(ILLMProvider):
                 "status": "unhealthy",
                 "error": str(e),
                 "provider": "Ollama",
-                "timestamp": asyncio.get_event_loop().time(),
+                "timestamp": asyncio.get_running_loop().time(),
             }
 
     async def close_async(self) -> None:

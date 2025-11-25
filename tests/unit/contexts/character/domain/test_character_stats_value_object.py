@@ -29,6 +29,7 @@ class TestCoreAbilities:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_core_abilities_creation_success(self):
         """Test successful core abilities creation."""
         abilities = CoreAbilities(
@@ -49,6 +50,7 @@ class TestCoreAbilities:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
     def test_core_abilities_validation_too_low(self):
         """Test validation fails for ability scores too low."""
         with pytest.raises(ValueError) as exc_info:
@@ -62,6 +64,7 @@ class TestCoreAbilities:
             )
         assert "Ability scores must be between 1 and 30" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_core_abilities_validation_too_high(self):
         """Test validation fails for ability scores too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -75,6 +78,7 @@ class TestCoreAbilities:
             )
         assert "Ability scores must be between 1 and 30" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_core_abilities_boundary_values(self):
         """Test ability scores at boundary values."""
         # Minimum values
@@ -101,6 +105,7 @@ class TestCoreAbilities:
 
     # ==================== Method Tests ====================
 
+    @pytest.mark.unit
     def test_get_ability_score(self):
         """Test getting specific ability scores."""
         abilities = CoreAbilities(
@@ -119,6 +124,7 @@ class TestCoreAbilities:
         assert abilities.get_ability_score(AbilityScore.WISDOM) == 13
         assert abilities.get_ability_score(AbilityScore.CHARISMA) == 11
 
+    @pytest.mark.unit
     def test_get_ability_modifier(self):
         """Test ability modifier calculations."""
         abilities = CoreAbilities(
@@ -137,6 +143,7 @@ class TestCoreAbilities:
         assert abilities.get_ability_modifier(AbilityScore.WISDOM) == 1
         assert abilities.get_ability_modifier(AbilityScore.CHARISMA) == -2
 
+    @pytest.mark.unit
     def test_get_ability_modifier_extreme_values(self):
         """Test ability modifier calculations for extreme values."""
         abilities = CoreAbilities(
@@ -154,6 +161,7 @@ class TestCoreAbilities:
         assert abilities.get_ability_modifier(AbilityScore.WISDOM) == -1
         assert abilities.get_ability_modifier(AbilityScore.CHARISMA) == 4
 
+    @pytest.mark.unit
     def test_get_all_modifiers(self):
         """Test getting all ability modifiers as dictionary."""
         abilities = CoreAbilities(
@@ -174,6 +182,7 @@ class TestCoreAbilities:
         assert modifiers["wisdom"] == 1
         assert modifiers["charisma"] == 0
 
+    @pytest.mark.unit
     def test_is_exceptional_ability(self):
         """Test exceptional ability detection (18+)."""
         abilities = CoreAbilities(
@@ -190,6 +199,8 @@ class TestCoreAbilities:
         assert abilities.is_exceptional_ability(AbilityScore.CONSTITUTION) is True
         assert abilities.is_exceptional_ability(AbilityScore.INTELLIGENCE) is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_strongest_ability(self):
         """Test finding strongest ability."""
         abilities = CoreAbilities(
@@ -203,6 +214,8 @@ class TestCoreAbilities:
 
         assert abilities.get_strongest_ability() == AbilityScore.CONSTITUTION
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_weakest_ability(self):
         """Test finding weakest ability."""
         abilities = CoreAbilities(
@@ -216,6 +229,7 @@ class TestCoreAbilities:
 
         assert abilities.get_weakest_ability() == AbilityScore.CHARISMA
 
+    @pytest.mark.unit
     def test_get_strongest_weakest_tie_handling(self):
         """Test handling of ties in strongest/weakest ability."""
         abilities = CoreAbilities(
@@ -248,6 +262,7 @@ class TestVitalStats:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_vital_stats_creation_success(self):
         """Test successful vital stats creation."""
         stats = VitalStats(
@@ -272,6 +287,7 @@ class TestVitalStats:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
     def test_vital_stats_validation_max_health_zero_fails(self):
         """Test validation fails for max health of zero."""
         with pytest.raises(ValueError) as exc_info:
@@ -287,6 +303,7 @@ class TestVitalStats:
             )
         assert "Max health must be positive" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_vital_stats_validation_current_health_exceeds_max_fails(self):
         """Test validation fails when current health exceeds max."""
         with pytest.raises(ValueError) as exc_info:
@@ -302,6 +319,7 @@ class TestVitalStats:
             )
         assert "Current health must be between 0 and max health" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_vital_stats_validation_current_health_negative_fails(self):
         """Test validation fails for negative current health."""
         with pytest.raises(ValueError) as exc_info:
@@ -317,6 +335,7 @@ class TestVitalStats:
             )
         assert "Current health must be between 0 and max health" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_vital_stats_validation_max_mana_negative_fails(self):
         """Test validation fails for negative max mana."""
         with pytest.raises(ValueError) as exc_info:
@@ -332,6 +351,7 @@ class TestVitalStats:
             )
         assert "Max mana cannot be negative" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_vital_stats_validation_current_mana_exceeds_max_fails(self):
         """Test validation fails when current mana exceeds max."""
         with pytest.raises(ValueError) as exc_info:
@@ -347,6 +367,7 @@ class TestVitalStats:
             )
         assert "Current mana must be between 0 and max mana" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_vital_stats_validation_armor_class_too_high_fails(self):
         """Test validation fails for armor class too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -362,6 +383,7 @@ class TestVitalStats:
             )
         assert "Armor class must be between 0 and 50" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_vital_stats_validation_speed_too_high_fails(self):
         """Test validation fails for speed too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -377,6 +399,7 @@ class TestVitalStats:
             )
         assert "Speed must be between 0 and 200" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_vital_stats_boundary_values(self):
         """Test vital stats at boundary values."""
         # Test minimum values
@@ -411,6 +434,7 @@ class TestVitalStats:
 
     # ==================== Status Methods Tests ====================
 
+    @pytest.mark.unit
     def test_is_alive_with_health(self):
         """Test is_alive returns True when character has health."""
         stats = VitalStats(
@@ -426,6 +450,7 @@ class TestVitalStats:
 
         assert stats.is_alive() is True
 
+    @pytest.mark.unit
     def test_is_alive_without_health(self):
         """Test is_alive returns False when character has no health."""
         stats = VitalStats(
@@ -441,6 +466,7 @@ class TestVitalStats:
 
         assert stats.is_alive() is False
 
+    @pytest.mark.unit
     def test_is_unconscious_at_zero_health(self):
         """Test is_unconscious returns True at zero health."""
         stats = VitalStats(
@@ -456,6 +482,7 @@ class TestVitalStats:
 
         assert stats.is_unconscious() is True
 
+    @pytest.mark.unit
     def test_is_unconscious_with_health(self):
         """Test is_unconscious returns False with health."""
         stats = VitalStats(
@@ -471,6 +498,7 @@ class TestVitalStats:
 
         assert stats.is_unconscious() is False
 
+    @pytest.mark.unit
     def test_is_healthy_at_full_health(self):
         """Test is_healthy returns True at full health."""
         stats = VitalStats(
@@ -486,6 +514,7 @@ class TestVitalStats:
 
         assert stats.is_healthy() is True
 
+    @pytest.mark.unit
     def test_is_healthy_not_at_full_health(self):
         """Test is_healthy returns False when not at full health."""
         stats = VitalStats(
@@ -501,6 +530,7 @@ class TestVitalStats:
 
         assert stats.is_healthy() is False
 
+    @pytest.mark.unit
     def test_is_wounded_below_half_health(self):
         """Test is_wounded returns True below 50% health."""
         stats = VitalStats(
@@ -516,6 +546,7 @@ class TestVitalStats:
 
         assert stats.is_wounded() is True
 
+    @pytest.mark.unit
     def test_is_wounded_above_half_health(self):
         """Test is_wounded returns False above 50% health."""
         stats = VitalStats(
@@ -531,6 +562,7 @@ class TestVitalStats:
 
         assert stats.is_wounded() is False
 
+    @pytest.mark.unit
     def test_is_critically_wounded_below_quarter_health(self):
         """Test is_critically_wounded returns True below 25% health."""
         stats = VitalStats(
@@ -546,6 +578,7 @@ class TestVitalStats:
 
         assert stats.is_critically_wounded() is True
 
+    @pytest.mark.unit
     def test_is_critically_wounded_above_quarter_health(self):
         """Test is_critically_wounded returns False above 25% health."""
         stats = VitalStats(
@@ -563,6 +596,7 @@ class TestVitalStats:
 
     # ==================== Percentage Methods Tests ====================
 
+    @pytest.mark.unit
     def test_health_percentage(self):
         """Test health percentage calculation."""
         stats = VitalStats(
@@ -578,6 +612,7 @@ class TestVitalStats:
 
         assert stats.health_percentage() == 0.6
 
+    @pytest.mark.unit
     def test_mana_percentage_with_mana(self):
         """Test mana percentage calculation with mana."""
         stats = VitalStats(
@@ -593,6 +628,7 @@ class TestVitalStats:
 
         assert stats.mana_percentage() == 0.75
 
+    @pytest.mark.unit
     def test_mana_percentage_no_mana(self):
         """Test mana percentage returns 1.0 when max mana is 0."""
         stats = VitalStats(
@@ -608,6 +644,7 @@ class TestVitalStats:
 
         assert stats.mana_percentage() == 1.0
 
+    @pytest.mark.unit
     def test_stamina_percentage_with_stamina(self):
         """Test stamina percentage calculation."""
         stats = VitalStats(
@@ -623,6 +660,7 @@ class TestVitalStats:
 
         assert stats.stamina_percentage() == 0.5
 
+    @pytest.mark.unit
     def test_stamina_percentage_no_stamina(self):
         """Test stamina percentage returns 1.0 when max stamina is 0."""
         stats = VitalStats(
@@ -640,6 +678,7 @@ class TestVitalStats:
 
     # ==================== Condition Summary Tests ====================
 
+    @pytest.mark.unit
     def test_get_condition_summary_perfect_health(self):
         """Test condition summary at perfect health."""
         stats = VitalStats(
@@ -655,6 +694,7 @@ class TestVitalStats:
 
         assert stats.get_condition_summary() == "Perfect Health"
 
+    @pytest.mark.unit
     def test_get_condition_summary_lightly_wounded(self):
         """Test condition summary when lightly wounded."""
         stats = VitalStats(
@@ -670,6 +710,7 @@ class TestVitalStats:
 
         assert stats.get_condition_summary() == "Lightly Wounded"
 
+    @pytest.mark.unit
     def test_get_condition_summary_moderately_wounded(self):
         """Test condition summary when moderately wounded."""
         stats = VitalStats(
@@ -685,6 +726,7 @@ class TestVitalStats:
 
         assert stats.get_condition_summary() == "Moderately Wounded"
 
+    @pytest.mark.unit
     def test_get_condition_summary_heavily_wounded(self):
         """Test condition summary when heavily wounded."""
         stats = VitalStats(
@@ -700,6 +742,7 @@ class TestVitalStats:
 
         assert stats.get_condition_summary() == "Heavily Wounded"
 
+    @pytest.mark.unit
     def test_get_condition_summary_critically_wounded(self):
         """Test condition summary when critically wounded."""
         stats = VitalStats(
@@ -715,6 +758,7 @@ class TestVitalStats:
 
         assert stats.get_condition_summary() == "Critically Wounded"
 
+    @pytest.mark.unit
     def test_get_condition_summary_unconscious(self):
         """Test condition summary when unconscious."""
         stats = VitalStats(
@@ -736,6 +780,7 @@ class TestCombatStats:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_combat_stats_creation_success(self):
         """Test successful combat stats creation."""
         stats = CombatStats(
@@ -756,6 +801,7 @@ class TestCombatStats:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
     def test_combat_stats_validation_attack_bonus_too_low_fails(self):
         """Test validation fails for attack bonus too low."""
         with pytest.raises(ValueError) as exc_info:
@@ -769,6 +815,7 @@ class TestCombatStats:
             )
         assert "Base attack bonus must be between -10 and 30" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_combat_stats_validation_attack_bonus_too_high_fails(self):
         """Test validation fails for attack bonus too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -782,6 +829,7 @@ class TestCombatStats:
             )
         assert "Base attack bonus must be between -10 and 30" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_combat_stats_validation_initiative_modifier_too_low_fails(self):
         """Test validation fails for initiative modifier too low."""
         with pytest.raises(ValueError) as exc_info:
@@ -795,6 +843,7 @@ class TestCombatStats:
             )
         assert "Initiative modifier must be between -10 and 20" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_combat_stats_validation_critical_chance_too_high_fails(self):
         """Test validation fails for critical hit chance too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -808,6 +857,7 @@ class TestCombatStats:
             )
         assert "Critical hit chance must be between 0.0 and 1.0" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_combat_stats_validation_critical_multiplier_too_low_fails(self):
         """Test validation fails for critical damage multiplier too low."""
         with pytest.raises(ValueError) as exc_info:
@@ -823,6 +873,7 @@ class TestCombatStats:
             exc_info.value
         )
 
+    @pytest.mark.unit
     def test_combat_stats_boundary_values(self):
         """Test combat stats at boundary values."""
         # Test minimum values
@@ -853,6 +904,8 @@ class TestCombatStats:
 
     # ==================== Method Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_spell_resistance_with_resistance(self):
         """Test has_spell_resistance returns True with resistance."""
         stats = CombatStats(
@@ -866,6 +919,8 @@ class TestCombatStats:
 
         assert stats.has_spell_resistance() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_spell_resistance_without_resistance(self):
         """Test has_spell_resistance returns False without resistance."""
         stats = CombatStats(
@@ -879,6 +934,8 @@ class TestCombatStats:
 
         assert stats.has_spell_resistance() is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_damage_reduction_with_reduction(self):
         """Test has_damage_reduction returns True with reduction."""
         stats = CombatStats(
@@ -892,6 +949,8 @@ class TestCombatStats:
 
         assert stats.has_damage_reduction() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_damage_reduction_without_reduction(self):
         """Test has_damage_reduction returns False without reduction."""
         stats = CombatStats(
@@ -905,6 +964,8 @@ class TestCombatStats:
 
         assert stats.has_damage_reduction() is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_fast_positive_initiative(self):
         """Test is_fast returns True with positive initiative."""
         stats = CombatStats(
@@ -918,6 +979,8 @@ class TestCombatStats:
 
         assert stats.is_fast() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_fast_zero_initiative(self):
         """Test is_fast returns False with zero initiative."""
         stats = CombatStats(
@@ -931,6 +994,8 @@ class TestCombatStats:
 
         assert stats.is_fast() is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_fast_negative_initiative(self):
         """Test is_fast returns False with negative initiative."""
         stats = CombatStats(
@@ -944,6 +1009,7 @@ class TestCombatStats:
 
         assert stats.is_fast() is False
 
+    @pytest.mark.unit
     def test_get_combat_summary_expert_level(self):
         """Test combat summary for expert level character."""
         stats = CombatStats(
@@ -962,6 +1028,7 @@ class TestCombatStats:
         assert summary["durability"] == "Tough"
         assert summary["magic_resistance"] == "High"
 
+    @pytest.mark.unit
     def test_get_combat_summary_novice_level(self):
         """Test combat summary for novice level character."""
         stats = CombatStats(
@@ -980,6 +1047,7 @@ class TestCombatStats:
         assert summary["durability"] == "Fragile"
         assert summary["magic_resistance"] == "None"
 
+    @pytest.mark.unit
     def test_get_combat_summary_average_level(self):
         """Test combat summary for average level character."""
         stats = CombatStats(
@@ -1055,6 +1123,7 @@ class TestCharacterStats:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_character_stats_creation_success(
         self, sample_core_abilities, sample_vital_stats, sample_combat_stats
     ):
@@ -1075,6 +1144,7 @@ class TestCharacterStats:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
     def test_character_stats_validation_negative_experience_fails(
         self, sample_core_abilities, sample_vital_stats, sample_combat_stats
     ):
@@ -1089,6 +1159,7 @@ class TestCharacterStats:
             )
         assert "Experience points cannot be negative" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_stats_validation_negative_skill_points_fails(
         self, sample_core_abilities, sample_vital_stats, sample_combat_stats
     ):
@@ -1103,6 +1174,7 @@ class TestCharacterStats:
             )
         assert "Skill points cannot be negative" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_stats_validation_experience_too_high_fails(
         self, sample_core_abilities, sample_vital_stats, sample_combat_stats
     ):
@@ -1117,6 +1189,7 @@ class TestCharacterStats:
             )
         assert "Experience points cannot exceed 10 million" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_stats_validation_skill_points_too_high_fails(
         self, sample_core_abilities, sample_vital_stats, sample_combat_stats
     ):
@@ -1131,6 +1204,7 @@ class TestCharacterStats:
             )
         assert "Skill points cannot exceed 1000" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_stats_boundary_values(
         self, sample_core_abilities, sample_vital_stats, sample_combat_stats
     ):
@@ -1161,6 +1235,8 @@ class TestCharacterStats:
 
     # ==================== Method Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_ability_modifier(self, sample_character_stats):
         """Test getting ability modifier through character stats."""
         assert (
@@ -1170,10 +1246,13 @@ class TestCharacterStats:
             sample_character_stats.get_ability_modifier(AbilityScore.CONSTITUTION) == 3
         )  # 16 -> +3
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_alive_when_alive(self, sample_character_stats):
         """Test is_alive returns True when character is alive."""
         assert sample_character_stats.is_alive() is True
 
+    @pytest.mark.unit
     def test_is_alive_when_dead(self, sample_core_abilities, sample_combat_stats):
         """Test is_alive returns False when character is dead."""
         dead_vital_stats = VitalStats(
@@ -1197,10 +1276,13 @@ class TestCharacterStats:
 
         assert dead_stats.is_alive() is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_can_cast_spells_with_mana(self, sample_character_stats):
         """Test can_cast_spells returns True with mana."""
         assert sample_character_stats.can_cast_spells() is True
 
+    @pytest.mark.unit
     def test_can_cast_spells_without_mana(
         self, sample_core_abilities, sample_combat_stats
     ):
@@ -1226,6 +1308,7 @@ class TestCharacterStats:
 
         assert no_mana_stats.can_cast_spells() is False
 
+    @pytest.mark.unit
     def test_get_overall_power_level_calculations(self):
         """Test overall power level calculations for different characters."""
         # Create a legendary character
@@ -1304,6 +1387,7 @@ class TestCharacterStats:
 
         assert novice_stats.get_overall_power_level() == "Novice"
 
+    @pytest.mark.unit
     def test_needs_rest_low_health(self, sample_core_abilities, sample_combat_stats):
         """Test needs_rest returns True with low health."""
         low_health_vital_stats = VitalStats(
@@ -1327,6 +1411,7 @@ class TestCharacterStats:
 
         assert stats.needs_rest() is True
 
+    @pytest.mark.unit
     def test_needs_rest_low_mana(self, sample_core_abilities, sample_combat_stats):
         """Test needs_rest returns True with low mana."""
         low_mana_vital_stats = VitalStats(
@@ -1350,6 +1435,7 @@ class TestCharacterStats:
 
         assert stats.needs_rest() is True
 
+    @pytest.mark.unit
     def test_needs_rest_low_stamina(self, sample_core_abilities, sample_combat_stats):
         """Test needs_rest returns True with low stamina."""
         low_stamina_vital_stats = VitalStats(
@@ -1373,10 +1459,13 @@ class TestCharacterStats:
 
         assert stats.needs_rest() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_needs_rest_good_condition(self, sample_character_stats):
         """Test needs_rest returns False in good condition."""
         assert sample_character_stats.needs_rest() is False
 
+    @pytest.mark.unit
     def test_get_stats_summary(self, sample_character_stats):
         """Test comprehensive stats summary generation."""
         summary = sample_character_stats.get_stats_summary()
@@ -1398,11 +1487,13 @@ class TestCharacterStats:
 
     # ==================== Immutability Tests ====================
 
+    @pytest.mark.unit
     def test_character_stats_immutability(self, sample_character_stats):
         """Test that character stats is immutable (frozen dataclass)."""
         with pytest.raises(AttributeError):
             sample_character_stats.experience_points = 2000
 
+    @pytest.mark.unit
     def test_core_abilities_immutability(self):
         """Test that core abilities is immutable."""
         abilities = CoreAbilities(
@@ -1417,6 +1508,7 @@ class TestCharacterStats:
         with pytest.raises(AttributeError):
             abilities.strength = 20
 
+    @pytest.mark.unit
     def test_vital_stats_immutability(self):
         """Test that vital stats is immutable."""
         stats = VitalStats(
@@ -1433,6 +1525,7 @@ class TestCharacterStats:
         with pytest.raises(AttributeError):
             stats.current_health = 50
 
+    @pytest.mark.unit
     def test_combat_stats_immutability(self):
         """Test that combat stats is immutable."""
         stats = CombatStats(
@@ -1449,6 +1542,7 @@ class TestCharacterStats:
 
     # ==================== Edge Cases and Integration Tests ====================
 
+    @pytest.mark.unit
     def test_ability_modifier_calculation_precision(self):
         """Test ability modifier calculations maintain precision."""
         # Test edge cases in modifier calculation
@@ -1478,6 +1572,7 @@ class TestCharacterStats:
                 == expected_modifier
             )
 
+    @pytest.mark.unit
     def test_character_stats_edge_case_combinations(self):
         """Test character stats with various edge case combinations."""
         # Test high-constitution, low-health character (magical effect scenario)

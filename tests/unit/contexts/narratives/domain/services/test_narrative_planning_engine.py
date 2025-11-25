@@ -41,6 +41,7 @@ def _build_state(phase: StoryArcPhase) -> StoryArcState:
 class TestNarrativePlanningEngine:
     """Desired behaviours for generate_guidance_for_turn."""
 
+    @pytest.mark.unit
     def test_generate_guidance_in_exposition_focuses_on_character_intros(self) -> None:
         engine = NarrativePlanningEngine()
         guidance = engine.generate_guidance_for_turn(
@@ -53,6 +54,7 @@ class TestNarrativePlanningEngine:
         ).lower()
         assert "introduc" in combined_objectives and "character" in combined_objectives
 
+    @pytest.mark.unit
     def test_generate_guidance_in_climax_highlights_high_tension(self) -> None:
         engine = NarrativePlanningEngine()
         state = StoryArcState(
@@ -71,6 +73,7 @@ class TestNarrativePlanningEngine:
             or guidance.target_tension_level >= Decimal("8")
         )
 
+    @pytest.mark.unit
     def test_generate_guidance_in_rising_action_increases_tension(self) -> None:
         engine = NarrativePlanningEngine()
         guidance = engine.generate_guidance_for_turn(
@@ -83,6 +86,7 @@ class TestNarrativePlanningEngine:
         ).lower()
         assert "increase tension" in combined_objectives
 
+    @pytest.mark.unit
     def test_generate_guidance_in_falling_action_resolves_subplots(self) -> None:
         engine = NarrativePlanningEngine()
         guidance = engine.generate_guidance_for_turn(
@@ -95,6 +99,7 @@ class TestNarrativePlanningEngine:
         ).lower()
         assert "resolve subplots" in combined_objectives
 
+    @pytest.mark.unit
     def test_generate_guidance_in_resolution_provides_closure(self) -> None:
         engine = NarrativePlanningEngine()
         guidance = engine.generate_guidance_for_turn(

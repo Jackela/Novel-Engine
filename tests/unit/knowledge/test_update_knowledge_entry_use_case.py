@@ -115,6 +115,7 @@ class TestUpdateKnowledgeEntryUseCase:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_update_entry_success(
         self, use_case, valid_command, mock_repository, mock_event_publisher
     ):
@@ -137,6 +138,7 @@ class TestUpdateKnowledgeEntryUseCase:
         assert event_call[1]["topic"] == "knowledge.entry.updated"
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_update_entry_with_empty_content_raises_error(
         self, use_case, existing_entry
     ):
@@ -158,6 +160,7 @@ class TestUpdateKnowledgeEntryUseCase:
             await use_case.execute(invalid_command)
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_update_entry_not_found_raises_error(self, use_case, mock_repository):
         """Test that updating non-existent entry raises error."""
         if UpdateKnowledgeEntryCommand is None:
@@ -178,6 +181,7 @@ class TestUpdateKnowledgeEntryUseCase:
             await use_case.execute(command)
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_update_entry_preserves_immutable_fields(
         self, use_case, valid_command, mock_repository, existing_entry
     ):
@@ -194,6 +198,7 @@ class TestUpdateKnowledgeEntryUseCase:
         assert saved_entry.owning_character_id == existing_entry.owning_character_id
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_update_entry_updates_timestamp(
         self, use_case, valid_command, mock_repository
     ):
@@ -210,6 +215,7 @@ class TestUpdateKnowledgeEntryUseCase:
         assert saved_entry.updated_at.tzinfo == timezone.utc
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_update_entry_publishes_domain_event(
         self, use_case, valid_command, mock_event_publisher, existing_entry
     ):
@@ -234,6 +240,7 @@ class TestUpdateKnowledgeEntryUseCase:
         assert event_call[1]["key"] == existing_entry.id
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_update_entry_repository_failure_does_not_publish_event(
         self, use_case, valid_command, mock_repository, mock_event_publisher
     ):
@@ -249,6 +256,7 @@ class TestUpdateKnowledgeEntryUseCase:
         mock_event_publisher.publish.assert_not_called()
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_update_entry_multiple_times(
         self, use_case, mock_repository, existing_entry
     ):

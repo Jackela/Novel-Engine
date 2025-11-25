@@ -174,6 +174,7 @@ class TestCharacterAggregate:
 
     # ==================== Initialization and Validation Tests ====================
 
+    @pytest.mark.unit
     def test_character_initialization_success(
         self, sample_character_profile, sample_character_stats, sample_skills
     ):
@@ -195,6 +196,7 @@ class TestCharacterAggregate:
         assert len(character._events) == 1  # Creation event
         assert character._events[0].__class__.__name__ == "CharacterCreated"
 
+    @pytest.mark.unit
     def test_character_validation_invalid_level(
         self, sample_character_profile, sample_character_stats, sample_skills
     ):
@@ -214,6 +216,7 @@ class TestCharacterAggregate:
             )
         assert "Level must be between 1 and 100" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_validation_insufficient_health(
         self, sample_character_profile, sample_character_stats, sample_skills
     ):
@@ -247,6 +250,7 @@ class TestCharacterAggregate:
             )
         assert "Character health too low" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_validation_racial_abilities(
         self, sample_character_stats, sample_skills
     ):
@@ -292,6 +296,7 @@ class TestCharacterAggregate:
             )
         assert "Dwarf should have constitution >= 12" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_validation_class_skills(
         self, sample_character_profile, sample_character_stats
     ):
@@ -314,6 +319,7 @@ class TestCharacterAggregate:
             )
         assert "Fighter should have combat skills" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_validation_age_consistency(
         self, sample_character_stats, sample_skills
     ):
@@ -344,6 +350,7 @@ class TestCharacterAggregate:
 
     # ==================== Profile Management Tests ====================
 
+    @pytest.mark.unit
     def test_update_profile_success(self, sample_character):
         """Test successful profile update."""
         initial_version = sample_character.version
@@ -369,6 +376,7 @@ class TestCharacterAggregate:
         assert len(sample_character._events) == initial_events + 1
         assert sample_character._events[-1].__class__.__name__ == "CharacterUpdated"
 
+    @pytest.mark.unit
     def test_update_profile_validation_failure_rollback(self, sample_character):
         """Test profile update rollback on validation failure."""
         initial_profile = sample_character.profile
@@ -397,6 +405,7 @@ class TestCharacterAggregate:
 
     # ==================== Statistics Management Tests ====================
 
+    @pytest.mark.unit
     def test_update_stats_success(self, sample_character):
         """Test successful stats update."""
         initial_version = sample_character.version
@@ -427,6 +436,7 @@ class TestCharacterAggregate:
         assert sample_character.stats.vital_stats.current_health == initial_health - 5
         assert sample_character.version == initial_version + 1
 
+    @pytest.mark.unit
     def test_update_stats_excessive_health_loss_fails(self, sample_character):
         """Test stats update fails when losing too much health at once."""
         initial_health = sample_character.stats.vital_stats.current_health
@@ -455,6 +465,7 @@ class TestCharacterAggregate:
             sample_character.update_stats(new_stats)
         assert "Cannot lose more than half health" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_update_stats_exceed_maximum_values_fails(self, sample_character):
         """Test stats update fails when current values exceed maximums."""
         # Create valid vital stats first, then modify the object to bypass validation
@@ -487,6 +498,7 @@ class TestCharacterAggregate:
         # Now the Character's validation should catch it
         assert "Current values cannot exceed maximum values" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_update_stats_rollback_on_validation_failure(self, sample_character):
         """Test stats update rollback on validation failure."""
         initial_stats = sample_character.stats
@@ -521,6 +533,7 @@ class TestCharacterAggregate:
 
     # ==================== Character Operations Tests ====================
 
+    @pytest.mark.unit
     def test_level_up_success(self, sample_character):
         """Test successful character level up."""
         initial_level = sample_character.profile.level
@@ -543,6 +556,7 @@ class TestCharacterAggregate:
         assert sample_character.stats.skill_points == initial_skill_points + 5
         assert sample_character.version == initial_version + 1
 
+    @pytest.mark.unit
     def test_level_up_at_maximum_level_fails(self, sample_character):
         """Test level up fails at maximum level."""
         # Set character to maximum level
@@ -564,6 +578,8 @@ class TestCharacterAggregate:
             sample_character.level_up()
         assert "Character is already at maximum level" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_heal_success(self, sample_character):
         """Test successful character healing."""
         # First damage the character
@@ -579,6 +595,8 @@ class TestCharacterAggregate:
         assert sample_character.stats.vital_stats.current_health <= max_health
         assert sample_character.version == initial_version + 1
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_heal_to_maximum_health(self, sample_character):
         """Test healing caps at maximum health."""
         # First damage the character
@@ -590,6 +608,8 @@ class TestCharacterAggregate:
 
         assert sample_character.stats.vital_stats.current_health == max_health
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_heal_zero_amount_fails(self, sample_character):
         """Test healing with zero or negative amount fails."""
         with pytest.raises(ValueError) as exc_info:
@@ -600,6 +620,8 @@ class TestCharacterAggregate:
             sample_character.heal(-5)
         assert "Heal amount must be positive" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_heal_at_full_health_no_change(self, sample_character):
         """Test healing at full health makes no changes."""
         initial_health = sample_character.stats.vital_stats.current_health
@@ -611,6 +633,7 @@ class TestCharacterAggregate:
         assert sample_character.stats.vital_stats.current_health == initial_health
         assert sample_character.version == initial_version
 
+    @pytest.mark.unit
     def test_take_damage_success(self, sample_character):
         """Test successful damage application."""
         initial_health = sample_character.stats.vital_stats.current_health
@@ -628,6 +651,7 @@ class TestCharacterAggregate:
         )
         assert sample_character.version == initial_version + 1
 
+    @pytest.mark.unit
     def test_take_damage_with_reduction(self, sample_character):
         """Test damage application with damage reduction."""
         # Create new combat stats with damage reduction
@@ -656,6 +680,7 @@ class TestCharacterAggregate:
 
         assert sample_character.stats.vital_stats.current_health == initial_health - 3
 
+    @pytest.mark.unit
     def test_take_damage_minimum_one(self, sample_character):
         """Test damage always deals at least 1 point."""
         # Create new combat stats with very high damage reduction
@@ -683,6 +708,8 @@ class TestCharacterAggregate:
 
         assert sample_character.stats.vital_stats.current_health == initial_health - 1
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_take_damage_zero_amount_fails(self, sample_character):
         """Test taking zero or negative damage fails."""
         with pytest.raises(ValueError) as exc_info:
@@ -693,6 +720,8 @@ class TestCharacterAggregate:
             sample_character.take_damage(-5)
         assert "Damage amount must be positive" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_take_damage_to_zero_health(self, sample_character):
         """Test taking damage that reduces health to zero."""
         initial_health = sample_character.stats.vital_stats.current_health
@@ -705,16 +734,21 @@ class TestCharacterAggregate:
 
     # ==================== Query Methods Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_alive_when_alive(self, sample_character):
         """Test is_alive returns True when character has health."""
         assert sample_character.is_alive() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_alive_when_dead(self, sample_character):
         """Test is_alive returns False when character has no health."""
         # Reduce health to 0
         sample_character.take_damage(1000)
         assert sample_character.is_alive() is False
 
+    @pytest.mark.unit
     def test_can_level_up_with_sufficient_xp(self, sample_character):
         """Test can_level_up with sufficient experience."""
         required_xp = 100
@@ -731,11 +765,14 @@ class TestCharacterAggregate:
 
         assert sample_character.can_level_up(required_xp) is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_can_level_up_insufficient_xp(self, sample_character):
         """Test can_level_up with insufficient experience."""
         required_xp = 100
         assert sample_character.can_level_up(required_xp) is False
 
+    @pytest.mark.unit
     def test_can_level_up_at_max_level(self, sample_character):
         """Test can_level_up returns False at maximum level."""
         # Set to maximum level
@@ -754,6 +791,7 @@ class TestCharacterAggregate:
 
         assert sample_character.can_level_up(0) is False
 
+    @pytest.mark.unit
     def test_get_character_summary(self, sample_character):
         """Test character summary generation."""
         summary = sample_character.get_character_summary()
@@ -777,6 +815,7 @@ class TestCharacterAggregate:
 
     # ==================== Factory Method Tests ====================
 
+    @pytest.mark.unit
     def test_create_new_character_success(self):
         """Test successful character creation using factory method."""
         core_abilities = CoreAbilities(
@@ -807,6 +846,7 @@ class TestCharacterAggregate:
         assert character.is_alive()
         assert len(character._events) == 1  # Creation event
 
+    @pytest.mark.unit
     def test_create_new_character_appropriate_health_mana(self):
         """Test new character creation calculates appropriate health and mana."""
         core_abilities = CoreAbilities(
@@ -838,12 +878,15 @@ class TestCharacterAggregate:
 
     # ==================== Domain Events Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_domain_events_creation(self, sample_character):
         """Test domain events are created properly."""
         assert len(sample_character._events) == 1
         creation_event = sample_character._events[0]
         assert creation_event.__class__.__name__ == "CharacterCreated"
 
+    @pytest.mark.unit
     def test_domain_events_profile_update(self, sample_character):
         """Test domain events for profile updates."""
         initial_event_count = len(sample_character._events)
@@ -866,6 +909,8 @@ class TestCharacterAggregate:
         update_event = sample_character._events[-1]
         assert update_event.__class__.__name__ == "CharacterUpdated"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_domain_events_stats_change(self, sample_character):
         """Test domain events for stats changes."""
         initial_event_count = len(sample_character._events)
@@ -876,6 +921,8 @@ class TestCharacterAggregate:
         stats_event = sample_character._events[-1]
         assert stats_event.__class__.__name__ == "CharacterStatsChanged"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_events(self, sample_character):
         """Test getting domain events."""
         events = sample_character.get_events()
@@ -884,6 +931,8 @@ class TestCharacterAggregate:
         # Should be a copy, not the original list
         assert events is not sample_character._events
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_clear_events(self, sample_character):
         """Test clearing domain events."""
         # Ensure there are events
@@ -895,6 +944,7 @@ class TestCharacterAggregate:
 
     # ==================== Skills Management Tests ====================
 
+    @pytest.mark.unit
     def test_update_skills_success(self, sample_character):
         """Test successful skills update."""
         initial_version = sample_character.version
@@ -919,6 +969,7 @@ class TestCharacterAggregate:
         assert sample_character.skills == new_skills
         assert sample_character.version == initial_version + 1
 
+    @pytest.mark.unit
     def test_update_skills_validation_failure_rollback(self, sample_character):
         """Test skills update rollback on validation failure."""
         initial_skills = sample_character.skills
@@ -942,6 +993,8 @@ class TestCharacterAggregate:
 
     # ==================== Edge Cases and Integration Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_character_version_consistency(self, sample_character):
         """Test version increments consistently across operations."""
         initial_version = sample_character.version
@@ -956,6 +1009,7 @@ class TestCharacterAggregate:
         sample_character.level_up()
         assert sample_character.version == initial_version + 3
 
+    @pytest.mark.unit
     def test_character_timestamp_updates(self, sample_character):
         """Test updated_at timestamp changes with operations."""
         initial_updated_at = sample_character.updated_at
@@ -969,6 +1023,7 @@ class TestCharacterAggregate:
 
         assert sample_character.updated_at > initial_updated_at
 
+    @pytest.mark.unit
     def test_complete_character_lifecycle(self, sample_character):
         """Test complete character lifecycle from creation to high level."""
         # Start at level 1
@@ -993,6 +1048,8 @@ class TestCharacterAggregate:
         # Character should still be alive
         assert sample_character.is_alive()
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_character_business_rules_consistency(self, sample_character):
         """Test business rules are maintained across operations."""
         # Level up should maintain health-constitution relationship

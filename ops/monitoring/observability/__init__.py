@@ -66,7 +66,11 @@ def create_span(operation_name: str, tags: Optional[Dict[str, Any]] = None):
     Yields:
         Span object for the operation
     """
-    # Placeholder span implementation
+    # PLACEHOLDER: Span implementation returns mock data
+    # Real implementation requires OpenTelemetry SDK integration:
+    # - Configure TracerProvider with Jaeger/OTLP exporter
+    # - Create actual spans with proper context propagation
+    # - Support for span attributes, events, and status
     span_data = {
         'operation_name': operation_name,
         'tags': tags or {},
@@ -85,13 +89,18 @@ def create_span(operation_name: str, tags: Optional[Dict[str, Any]] = None):
 def track_metric(metric_name: str, value: float, tags: Optional[Dict[str, str]] = None):
     """
     Track a custom metric.
-    
+
     Args:
         metric_name: Name of the metric
         value: Metric value
         tags: Optional tags for the metric
     """
-    # Placeholder - would actually send to metrics backend
+    # PLACEHOLDER: Metrics tracking not yet implemented
+    # Real implementation requires:
+    # - Prometheus client or StatsD integration
+    # - Metric type handling (counter, gauge, histogram)
+    # - Label/tag sanitization and cardinality limits
+    pass
 
 def configure_tracing(config: Dict[str, Any]) -> Dict[str, Any]:
     """

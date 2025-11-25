@@ -276,6 +276,10 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
         connect();
       }, delay);
     }
+    // Intentionally excluding `connect` from deps:
+    // - Including it would cause a circular dependency: handleClose -> connect -> handleClose
+    // - The connect function is called explicitly within the timeout callback
+    // - This pattern is required for the exponential backoff reconnection logic
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.reconnectAttempts, maxReconnectAttempts, getReconnectDelay]);
 

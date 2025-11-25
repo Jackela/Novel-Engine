@@ -13,7 +13,7 @@ Usage:
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     from src.metrics.global_metrics import metrics as global_metrics
@@ -31,7 +31,7 @@ def main() -> int:
     snap = global_metrics.snapshot().to_dict()
     rows = [
         [
-            snap.get("ts", datetime.utcnow().isoformat()),
+            snap.get("ts", datetime.now(timezone.utc).isoformat()),
             snap.get("saved_tokens", 0),
             snap.get("saved_cost", 0.0),
             snap.get("cache_exact_hits", 0),

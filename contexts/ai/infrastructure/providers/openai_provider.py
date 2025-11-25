@@ -336,7 +336,7 @@ class OpenAIProvider(ILLMProvider):
                     "response_time_ms": 0,  # Would measure actual response time
                     "api_status": response.status,
                     "provider": "OpenAI",
-                    "timestamp": asyncio.get_event_loop().time(),
+                    "timestamp": asyncio.get_running_loop().time(),
                 }
 
         except Exception as e:
@@ -344,7 +344,7 @@ class OpenAIProvider(ILLMProvider):
                 "status": "unhealthy",
                 "error": str(e),
                 "provider": "OpenAI",
-                "timestamp": asyncio.get_event_loop().time(),
+                "timestamp": asyncio.get_running_loop().time(),
             }
 
     async def close_async(self) -> None:

@@ -20,6 +20,7 @@ from contexts.subjective.domain.value_objects.awareness import (
 class TestAwarenessStateCreation:
     """Test suite for AwarenessState value object creation and validation."""
 
+    @pytest.mark.unit
     def test_minimal_awareness_state_creation(self):
         """Test creating awareness state with minimal required fields."""
         state = AwarenessState(
@@ -36,6 +37,7 @@ class TestAwarenessStateCreation:
         assert state.fatigue_level == 0.0
         assert state.stress_level == 0.0
 
+    @pytest.mark.unit
     def test_full_awareness_state_creation(self):
         """Test creating awareness state with all fields populated."""
         modifiers = {AwarenessModifier.TRAINING: 0.3, AwarenessModifier.FATIGUE: -0.4}
@@ -58,6 +60,8 @@ class TestAwarenessStateCreation:
         assert state.fatigue_level == 0.3
         assert state.stress_level == 0.7
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_awareness_modifiers_none_initialization(self):
         """Test that None modifiers are properly initialized to empty dict."""
         state = AwarenessState(
@@ -70,6 +74,8 @@ class TestAwarenessStateCreation:
         assert isinstance(state.awareness_modifiers, dict)
         assert state.awareness_modifiers == {}
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_awareness_modifiers_list_conversion(self):
         """Test that modifier lists/tuples are converted to dict."""
         modifiers_list = [(AwarenessModifier.CONFIDENCE, 0.5)]
@@ -88,6 +94,7 @@ class TestAwarenessStateCreation:
 class TestAwarenessStateValidation:
     """Test suite for AwarenessState validation logic."""
 
+    @pytest.mark.unit
     def test_invalid_awareness_modifier_type(self):
         """Test validation fails with invalid modifier type."""
         with pytest.raises(ValueError, match="Invalid awareness modifier"):
@@ -98,6 +105,7 @@ class TestAwarenessStateValidation:
                 awareness_modifiers={"invalid_string": 0.5},
             )
 
+    @pytest.mark.unit
     def test_invalid_modifier_value_type(self):
         """Test validation fails with non-numeric modifier value."""
         with pytest.raises(ValueError, match="Modifier value .* must be numeric"):
@@ -108,6 +116,7 @@ class TestAwarenessStateValidation:
                 awareness_modifiers={AwarenessModifier.TRAINING: "invalid"},
             )
 
+    @pytest.mark.unit
     def test_modifier_value_out_of_range_positive(self):
         """Test validation fails with modifier value > 1.0."""
         with pytest.raises(
@@ -120,6 +129,7 @@ class TestAwarenessStateValidation:
                 awareness_modifiers={AwarenessModifier.TRAINING: 1.5},
             )
 
+    @pytest.mark.unit
     def test_modifier_value_out_of_range_negative(self):
         """Test validation fails with modifier value < -1.0."""
         with pytest.raises(
@@ -132,6 +142,7 @@ class TestAwarenessStateValidation:
                 awareness_modifiers={AwarenessModifier.FATIGUE: -1.5},
             )
 
+    @pytest.mark.unit
     def test_fatigue_level_negative(self):
         """Test validation fails with negative fatigue level."""
         with pytest.raises(
@@ -144,6 +155,7 @@ class TestAwarenessStateValidation:
                 fatigue_level=-0.1,
             )
 
+    @pytest.mark.unit
     def test_fatigue_level_too_high(self):
         """Test validation fails with fatigue level > 1.0."""
         with pytest.raises(
@@ -156,6 +168,7 @@ class TestAwarenessStateValidation:
                 fatigue_level=1.5,
             )
 
+    @pytest.mark.unit
     def test_stress_level_negative(self):
         """Test validation fails with negative stress level."""
         with pytest.raises(
@@ -168,6 +181,7 @@ class TestAwarenessStateValidation:
                 stress_level=-0.1,
             )
 
+    @pytest.mark.unit
     def test_stress_level_too_high(self):
         """Test validation fails with stress level > 1.0."""
         with pytest.raises(
@@ -180,6 +194,7 @@ class TestAwarenessStateValidation:
                 stress_level=1.5,
             )
 
+    @pytest.mark.unit
     def test_target_specific_focus_requires_target(self):
         """Test validation fails when target-specific focus lacks focus_target."""
         with pytest.raises(
@@ -192,6 +207,8 @@ class TestAwarenessStateValidation:
                 focus_target=None,
             )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_target_specific_focus_with_target_succeeds(self):
         """Test target-specific focus with focus_target succeeds."""
         state = AwarenessState(
@@ -208,6 +225,8 @@ class TestAwarenessStateValidation:
 class TestCalculateEffectiveAlertness:
     """Test suite for calculate_effective_alertness business logic."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_no_modifiers_returns_current_alertness(self):
         """Test that with no modifiers, effective alertness equals current alertness."""
         state = AwarenessState(
@@ -219,6 +238,8 @@ class TestCalculateEffectiveAlertness:
         effective = state.calculate_effective_alertness()
         assert effective == AlertnessLevel.ALERT
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_fatigue_reduces_alertness(self):
         """Test that fatigue reduces effective alertness."""
         state = AwarenessState(
@@ -232,6 +253,8 @@ class TestCalculateEffectiveAlertness:
         # Should be reduced due to fatigue penalty
         assert effective.value in ["relaxed", "drowsy"]
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_stress_moderate_increases_alertness(self):
         """Test that moderate stress increases alertness."""
         state = AwarenessState(
@@ -245,6 +268,7 @@ class TestCalculateEffectiveAlertness:
         # Should be same or higher due to moderate stress benefit
         assert effective in [AlertnessLevel.RELAXED, AlertnessLevel.ALERT]
 
+    @pytest.mark.unit
     def test_stress_extreme_decreases_alertness(self):
         """Test that extreme stress decreases alertness."""
         state = AwarenessState(
@@ -262,6 +286,7 @@ class TestCalculateEffectiveAlertness:
             AlertnessLevel.DROWSY,
         ]
 
+    @pytest.mark.unit
     def test_positive_modifiers_increase_alertness(self):
         """Test that positive modifiers increase alertness."""
         state = AwarenessState(
@@ -282,6 +307,7 @@ class TestCalculateEffectiveAlertness:
             AlertnessLevel.PARANOID,
         ]
 
+    @pytest.mark.unit
     def test_negative_modifiers_decrease_alertness(self):
         """Test that negative modifiers decrease alertness."""
         state = AwarenessState(
@@ -302,6 +328,8 @@ class TestCalculateEffectiveAlertness:
             AlertnessLevel.RELAXED,
         ]
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_fear_positive_increases_alertness(self):
         """Test that positive fear increases alertness."""
         state = AwarenessState(
@@ -315,6 +343,7 @@ class TestCalculateEffectiveAlertness:
         # Positive fear should increase alertness
         assert effective in [AlertnessLevel.ALERT, AlertnessLevel.VIGILANT]
 
+    @pytest.mark.unit
     def test_fear_negative_decreases_alertness(self):
         """Test that negative fear (overwhelming fear) decreases alertness."""
         state = AwarenessState(
@@ -332,6 +361,7 @@ class TestCalculateEffectiveAlertness:
             AlertnessLevel.SLEEPING,
         ]
 
+    @pytest.mark.unit
     def test_alertness_clamping_maximum(self):
         """Test that calculated alertness doesn't exceed PARANOID."""
         state = AwarenessState(
@@ -348,6 +378,7 @@ class TestCalculateEffectiveAlertness:
         effective = state.calculate_effective_alertness()
         assert effective == AlertnessLevel.PARANOID  # Maximum level
 
+    @pytest.mark.unit
     def test_alertness_clamping_minimum(self):
         """Test that calculated alertness doesn't go below UNCONSCIOUS."""
         state = AwarenessState(
@@ -370,6 +401,8 @@ class TestCalculateEffectiveAlertness:
 class TestPerceptionBonus:
     """Test suite for get_perception_bonus calculations."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_unconscious_severe_penalty(self):
         """Test unconscious state has severe perception penalty."""
         state = AwarenessState(
@@ -381,6 +414,7 @@ class TestPerceptionBonus:
         bonus = state.get_perception_bonus()
         assert bonus == -1.0  # Cannot perceive
 
+    @pytest.mark.unit
     def test_sleeping_heavy_penalty(self):
         """Test sleeping state has heavy perception penalty."""
         state = AwarenessState(
@@ -392,6 +426,8 @@ class TestPerceptionBonus:
         bonus = state.get_perception_bonus()
         assert bonus == -0.8  # Very poor perception
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_relaxed_neutral_bonus(self):
         """Test relaxed state has neutral perception bonus."""
         state = AwarenessState(
@@ -403,6 +439,8 @@ class TestPerceptionBonus:
         bonus = state.get_perception_bonus()
         assert bonus == 0.0  # Normal perception
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_vigilant_high_bonus(self):
         """Test vigilant state has high perception bonus."""
         state = AwarenessState(
@@ -414,6 +452,8 @@ class TestPerceptionBonus:
         bonus = state.get_perception_bonus()
         assert bonus == 0.6  # High perception
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_target_specific_focus_bonus(self):
         """Test target-specific focus adds significant bonus."""
         state = AwarenessState(
@@ -426,6 +466,8 @@ class TestPerceptionBonus:
         bonus = state.get_perception_bonus()
         assert bonus == 0.5  # High bonus for focused target
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_task_focused_penalty(self):
         """Test task-focused attention reduces perception."""
         state = AwarenessState(
@@ -437,6 +479,8 @@ class TestPerceptionBonus:
         bonus = state.get_perception_bonus()
         assert bonus == 0.1  # 0.3 (alert) - 0.2 (task penalty) = 0.1
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_environmental_focus_bonus(self):
         """Test environmental focus adds perception bonus."""
         state = AwarenessState(
@@ -448,6 +492,8 @@ class TestPerceptionBonus:
         bonus = state.get_perception_bonus()
         assert bonus == 0.31  # Environmental focus bonus (updated for better balance)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_combined_alertness_and_focus_bonus(self):
         """Test combining high alertness with threat scanning focus."""
         state = AwarenessState(
@@ -463,6 +509,8 @@ class TestPerceptionBonus:
 class TestReactionTimeModifier:
     """Test suite for get_reaction_time_modifier calculations."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_unconscious_no_reaction(self):
         """Test unconscious state has no reaction capability."""
         state = AwarenessState(
@@ -474,6 +522,7 @@ class TestReactionTimeModifier:
         modifier = state.get_reaction_time_modifier()
         assert modifier == 10.0  # No reaction
 
+    @pytest.mark.unit
     def test_sleeping_very_slow_reaction(self):
         """Test sleeping state has very slow reaction."""
         state = AwarenessState(
@@ -485,6 +534,8 @@ class TestReactionTimeModifier:
         modifier = state.get_reaction_time_modifier()
         assert modifier == 5.0  # Very slow reaction
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_vigilant_fast_reaction(self):
         """Test vigilant state has fast reaction time."""
         state = AwarenessState(
@@ -496,6 +547,8 @@ class TestReactionTimeModifier:
         modifier = state.get_reaction_time_modifier()
         assert modifier == 0.6  # Fast reaction
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_fatigue_penalty_on_reaction_time(self):
         """Test fatigue increases reaction time modifier."""
         state = AwarenessState(
@@ -509,6 +562,7 @@ class TestReactionTimeModifier:
         # 0.8 (alert) * 2.0 (fatigue penalty) * stress_modifier
         assert modifier > 0.8  # Should be slower due to fatigue
 
+    @pytest.mark.unit
     def test_optimal_stress_level_reaction(self):
         """Test that moderate stress (around 0.3) is optimal for reaction time."""
         state_optimal = AwarenessState(
@@ -535,6 +589,8 @@ class TestReactionTimeModifier:
 class TestStealthDetection:
     """Test suite for can_detect_stealth logic."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_unconscious_cannot_detect_stealth(self):
         """Test unconscious entities cannot detect stealth."""
         state = AwarenessState(
@@ -545,6 +601,7 @@ class TestStealthDetection:
 
         assert not state.can_detect_stealth()
 
+    @pytest.mark.unit
     def test_sleeping_cannot_detect_stealth(self):
         """Test sleeping entities cannot detect stealth."""
         state = AwarenessState(
@@ -555,6 +612,8 @@ class TestStealthDetection:
 
         assert not state.can_detect_stealth()
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_threat_scanning_can_detect_stealth(self):
         """Test threat scanning attention can always detect stealth."""
         state = AwarenessState(
@@ -565,6 +624,8 @@ class TestStealthDetection:
 
         assert state.can_detect_stealth()
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_environmental_focus_can_detect_stealth(self):
         """Test environmental focus can detect stealth."""
         state = AwarenessState(
@@ -575,6 +636,7 @@ class TestStealthDetection:
 
         assert state.can_detect_stealth()
 
+    @pytest.mark.unit
     def test_high_alertness_can_detect_stealth(self):
         """Test high alertness levels can detect stealth."""
         for alertness in [
@@ -590,6 +652,8 @@ class TestStealthDetection:
 
             assert state.can_detect_stealth(), f"{alertness} should detect stealth"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_low_alertness_cannot_detect_stealth_normally(self):
         """Test low alertness without special focus cannot detect stealth."""
         for alertness in [AlertnessLevel.DROWSY, AlertnessLevel.RELAXED]:
@@ -607,6 +671,8 @@ class TestStealthDetection:
 class TestCombatSurprise:
     """Test suite for is_surprised_by_combat logic."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_unconscious_always_surprised(self):
         """Test unconscious entities are always surprised by combat."""
         state = AwarenessState(
@@ -617,6 +683,7 @@ class TestCombatSurprise:
 
         assert state.is_surprised_by_combat()
 
+    @pytest.mark.unit
     def test_sleeping_always_surprised(self):
         """Test sleeping entities are always surprised by combat."""
         state = AwarenessState(
@@ -627,6 +694,7 @@ class TestCombatSurprise:
 
         assert state.is_surprised_by_combat()
 
+    @pytest.mark.unit
     def test_task_focused_more_likely_surprised(self):
         """Test task-focused entities are more likely surprised."""
         # Drowsy + task-focused = surprised
@@ -653,6 +721,7 @@ class TestCombatSurprise:
         )
         assert not state.is_surprised_by_combat()
 
+    @pytest.mark.unit
     def test_only_drowsy_surprised_when_not_task_focused(self):
         """Test only drowsy entities are surprised when not task-focused."""
         # Drowsy without task focus = surprised
@@ -671,6 +740,7 @@ class TestCombatSurprise:
         )
         assert not state.is_surprised_by_combat()
 
+    @pytest.mark.unit
     def test_high_alertness_not_surprised(self):
         """Test high alertness entities are not surprised by combat."""
         for alertness in [
@@ -692,6 +762,7 @@ class TestCombatSurprise:
 class TestImmutableOperations:
     """Test suite for immutable operations that create new instances."""
 
+    @pytest.mark.unit
     def test_with_modified_alertness_creates_new_instance(self):
         """Test with_modified_alertness returns new instance with changed alertness."""
         original = AwarenessState(
@@ -715,6 +786,7 @@ class TestImmutableOperations:
         # Different objects
         assert original is not modified
 
+    @pytest.mark.unit
     def test_with_focus_change_creates_new_instance(self):
         """Test with_focus_change returns new instance with changed focus."""
         original = AwarenessState(
@@ -740,6 +812,7 @@ class TestImmutableOperations:
         # Different objects
         assert original is not modified
 
+    @pytest.mark.unit
     def test_with_added_modifier_creates_new_instance(self):
         """Test with_added_modifier returns new instance with additional modifier."""
         original = AwarenessState(
@@ -764,6 +837,8 @@ class TestImmutableOperations:
         # Different objects
         assert original is not modified
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_with_added_modifier_overwrites_existing(self):
         """Test with_added_modifier overwrites existing modifier of same type."""
         original = AwarenessState(
@@ -782,6 +857,7 @@ class TestImmutableOperations:
 class TestComplexScenarios:
     """Test suite for complex scenarios combining multiple factors."""
 
+    @pytest.mark.unit
     def test_exhausted_guard_scenario(self):
         """Test a complex scenario: exhausted guard on duty."""
         exhausted_guard = AwarenessState(
@@ -821,6 +897,7 @@ class TestComplexScenarios:
         if effective_alertness == AlertnessLevel.DROWSY:
             assert exhausted_guard.is_surprised_by_combat()
 
+    @pytest.mark.unit
     def test_enhanced_sentinel_scenario(self):
         """Test a complex scenario: magically enhanced sentinel."""
         enhanced_sentinel = AwarenessState(
@@ -855,6 +932,7 @@ class TestComplexScenarios:
         # Never surprised
         assert not enhanced_sentinel.is_surprised_by_combat()
 
+    @pytest.mark.unit
     def test_terrified_civilian_scenario(self):
         """Test a complex scenario: terrified civilian in crisis."""
         terrified_civilian = AwarenessState(
@@ -890,6 +968,7 @@ class TestComplexScenarios:
         if effective_alertness in [AlertnessLevel.SLEEPING, AlertnessLevel.DROWSY]:
             assert not terrified_civilian.can_detect_stealth()
 
+    @pytest.mark.unit
     def test_focused_researcher_scenario(self):
         """Test a complex scenario: researcher deeply focused on work."""
         focused_researcher = AwarenessState(
@@ -931,6 +1010,7 @@ class TestComplexScenarios:
 class TestEdgeCases:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     def test_all_modifier_types_combined(self):
         """Test awareness state with all possible modifier types."""
         all_modifiers = {
@@ -966,6 +1046,7 @@ class TestEdgeCases:
         assert isinstance(reaction_modifier, float)
         assert reaction_modifier > 0  # Must be positive
 
+    @pytest.mark.unit
     def test_boundary_modifier_values(self):
         """Test modifier values at exact boundaries."""
         boundary_modifiers = {
@@ -992,6 +1073,8 @@ class TestEdgeCases:
         assert isinstance(perception_bonus, float)
         assert isinstance(reaction_modifier, float)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_empty_string_focus_target(self):
         """Test behavior with empty string as focus target."""
         # This should be allowed - empty string is different from None
@@ -1006,6 +1089,8 @@ class TestEdgeCases:
         assert state.focus_target == ""
         assert state.attention_focus == AttentionFocus.TARGET_SPECIFIC
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_very_long_focus_target(self):
         """Test behavior with very long focus target string."""
         long_target = "x" * 1000  # Very long target name
@@ -1025,6 +1110,7 @@ class TestEdgeCases:
 class TestEquality:
     """Test suite for equality comparison."""
 
+    @pytest.mark.unit
     def test_identical_states_are_equal(self):
         """Test that identical awareness states are equal."""
         modifiers = {AwarenessModifier.TRAINING: 0.3}
@@ -1051,6 +1137,7 @@ class TestEquality:
 
         assert state1 == state2
 
+    @pytest.mark.unit
     def test_different_alertness_not_equal(self):
         """Test that states with different alertness are not equal."""
         state1 = AwarenessState(
@@ -1067,6 +1154,7 @@ class TestEquality:
 
         assert state1 != state2
 
+    @pytest.mark.unit
     def test_different_modifiers_not_equal(self):
         """Test that states with different modifiers are not equal."""
         state1 = AwarenessState(

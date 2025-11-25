@@ -24,6 +24,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Basic Creation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_creation_success(self):
         """Test successful coordinates creation."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -33,6 +35,8 @@ class TestCoordinatesValueObject:
         assert coords.z == 5.0
         assert coords.precision == 6
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_creation_default_z(self):
         """Test coordinates creation with default z value."""
         coords = Coordinates(x=10.0, y=20.0)
@@ -42,12 +46,16 @@ class TestCoordinatesValueObject:
         assert coords.z == 0.0
         assert coords.precision == 6
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_creation_default_precision(self):
         """Test coordinates creation with default precision."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
 
         assert coords.precision == 6
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_precision_rounding(self):
         """Test that coordinates are rounded to specified precision."""
         coords = Coordinates(x=10.123456789, y=20.987654321, z=5.555555555, precision=3)
@@ -58,6 +66,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_validation_invalid_types(self):
         """Test validation fails for invalid coordinate types."""
         with pytest.raises(ValueError) as exc_info:
@@ -72,6 +82,8 @@ class TestCoordinatesValueObject:
             Coordinates(x=10.0, y=20.0, z="invalid")
         assert "z coordinate must be numeric" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_validation_nan_values(self):
         """Test validation fails for NaN values."""
         with pytest.raises(ValueError) as exc_info:
@@ -86,6 +98,8 @@ class TestCoordinatesValueObject:
             Coordinates(x=10.0, y=20.0, z=float("nan"))
         assert "z coordinate must be a finite number" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_validation_infinite_values(self):
         """Test validation fails for infinite values."""
         with pytest.raises(ValueError) as exc_info:
@@ -96,12 +110,16 @@ class TestCoordinatesValueObject:
             Coordinates(x=10.0, y=float("-inf"), z=5.0)
         assert "y coordinate must be a finite number" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_validation_precision_invalid_type(self):
         """Test validation fails for invalid precision type."""
         with pytest.raises(ValueError) as exc_info:
             Coordinates(x=10.0, y=20.0, z=5.0, precision="invalid")
         assert "Precision must be an integer between 0 and 15" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_validation_precision_out_of_range(self):
         """Test validation fails for precision out of valid range."""
         with pytest.raises(ValueError) as exc_info:
@@ -112,6 +130,8 @@ class TestCoordinatesValueObject:
             Coordinates(x=10.0, y=20.0, z=5.0, precision=16)
         assert "Precision must be an integer between 0 and 15" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_coordinates_validation_extreme_values(self):
         """Test validation fails for extremely large coordinate values."""
         with pytest.raises(ValueError) as exc_info:
@@ -124,6 +144,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Distance Calculation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_distance_to_3d(self):
         """Test 3D Euclidean distance calculation."""
         coords1 = Coordinates(x=0.0, y=0.0, z=0.0)
@@ -134,6 +156,8 @@ class TestCoordinatesValueObject:
 
         assert distance == pytest.approx(expected_distance)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_distance_to_3d_with_z(self):
         """Test 3D distance calculation with z component."""
         coords1 = Coordinates(x=1.0, y=2.0, z=3.0)
@@ -144,6 +168,8 @@ class TestCoordinatesValueObject:
 
         assert distance == pytest.approx(expected_distance)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_distance_to_same_point(self):
         """Test distance to same point is zero."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -152,6 +178,8 @@ class TestCoordinatesValueObject:
 
         assert distance == 0.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_distance_to_invalid_type(self):
         """Test distance calculation fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -162,6 +190,8 @@ class TestCoordinatesValueObject:
             exc_info.value
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_distance_to_2d(self):
         """Test 2D distance calculation ignoring z component."""
         coords1 = Coordinates(x=0.0, y=0.0, z=100.0)  # High z value
@@ -172,6 +202,8 @@ class TestCoordinatesValueObject:
 
         assert distance == pytest.approx(expected_distance)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_distance_to_2d_same_point(self):
         """Test 2D distance to same point is zero."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -180,6 +212,8 @@ class TestCoordinatesValueObject:
 
         assert distance == 0.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_distance_to_2d_invalid_type(self):
         """Test 2D distance calculation fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -190,6 +224,8 @@ class TestCoordinatesValueObject:
             exc_info.value
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_manhattan_distance_to(self):
         """Test Manhattan distance calculation."""
         coords1 = Coordinates(x=1.0, y=2.0, z=3.0)
@@ -200,6 +236,8 @@ class TestCoordinatesValueObject:
 
         assert distance == expected_distance
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_manhattan_distance_same_point(self):
         """Test Manhattan distance to same point is zero."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -208,6 +246,8 @@ class TestCoordinatesValueObject:
 
         assert distance == 0.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_manhattan_distance_invalid_type(self):
         """Test Manhattan distance calculation fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -220,6 +260,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Range Check Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_within_range_true(self):
         """Test is_within_range returns True when within range."""
         center = Coordinates(x=0.0, y=0.0, z=0.0)
@@ -228,6 +270,8 @@ class TestCoordinatesValueObject:
         assert center.is_within_range(nearby, max_distance=5.0) is True
         assert center.is_within_range(nearby, max_distance=6.0) is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_within_range_false(self):
         """Test is_within_range returns False when outside range."""
         center = Coordinates(x=0.0, y=0.0, z=0.0)
@@ -235,6 +279,8 @@ class TestCoordinatesValueObject:
 
         assert center.is_within_range(distant, max_distance=4.0) is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_within_range_exact_boundary(self):
         """Test is_within_range at exact boundary distance."""
         center = Coordinates(x=0.0, y=0.0, z=0.0)
@@ -242,6 +288,8 @@ class TestCoordinatesValueObject:
 
         assert center.is_within_range(boundary, max_distance=5.0) is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_within_range_negative_distance_fails(self):
         """Test is_within_range fails with negative max_distance."""
         coords1 = Coordinates(x=0.0, y=0.0, z=0.0)
@@ -253,6 +301,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Coordinate Transformation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_translate(self):
         """Test coordinate translation."""
         original = Coordinates(x=10.0, y=20.0, z=5.0, precision=3)
@@ -268,6 +318,8 @@ class TestCoordinatesValueObject:
         assert original.y == 20.0
         assert original.z == 5.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_translate_default_dz(self):
         """Test translation with default dz value."""
         original = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -277,6 +329,8 @@ class TestCoordinatesValueObject:
         assert translated.y == 10.0
         assert translated.z == 5.0  # Should remain unchanged
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_midpoint(self):
         """Test midpoint calculation between two coordinates."""
         coords1 = Coordinates(x=0.0, y=0.0, z=0.0, precision=6)
@@ -289,6 +343,8 @@ class TestCoordinatesValueObject:
         assert midpoint.z == 3.0
         assert midpoint.precision == 4  # Should use minimum precision
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_midpoint_same_point(self):
         """Test midpoint with same point."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -299,6 +355,8 @@ class TestCoordinatesValueObject:
         assert midpoint.y == coords.y
         assert midpoint.z == coords.z
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_midpoint_invalid_type(self):
         """Test midpoint calculation fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -311,6 +369,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Conversion Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_to_tuple(self):
         """Test conversion to tuple."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -320,6 +380,8 @@ class TestCoordinatesValueObject:
         assert tuple_result == (10.0, 20.0, 5.0)
         assert isinstance(tuple_result, tuple)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_to_tuple_2d(self):
         """Test conversion to 2D tuple."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -329,6 +391,8 @@ class TestCoordinatesValueObject:
         assert tuple_result == (10.0, 20.0)
         assert isinstance(tuple_result, tuple)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_to_dict(self):
         """Test conversion to dictionary."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -341,6 +405,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Factory Method Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_tuple_2d(self):
         """Test creation from 2D tuple."""
         coords = Coordinates.from_tuple((10.0, 20.0), precision=3)
@@ -350,6 +416,8 @@ class TestCoordinatesValueObject:
         assert coords.z == 0.0
         assert coords.precision == 3
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_tuple_3d(self):
         """Test creation from 3D tuple."""
         coords = Coordinates.from_tuple((10.0, 20.0, 5.0), precision=4)
@@ -359,6 +427,8 @@ class TestCoordinatesValueObject:
         assert coords.z == 5.0
         assert coords.precision == 4
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_tuple_invalid_length(self):
         """Test creation from tuple with invalid length."""
         with pytest.raises(ValueError) as exc_info:
@@ -369,6 +439,8 @@ class TestCoordinatesValueObject:
             Coordinates.from_tuple((10.0, 20.0, 5.0, 15.0))  # Four elements
         assert "Coordinate tuple must have 2 or 3 elements" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_dict_complete(self):
         """Test creation from complete dictionary."""
         data = {"x": 10.0, "y": 20.0, "z": 5.0, "precision": 3}
@@ -380,6 +452,8 @@ class TestCoordinatesValueObject:
         assert coords.z == 5.0
         assert coords.precision == 3
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_dict_minimal(self):
         """Test creation from minimal dictionary."""
         data = {"x": 10.0, "y": 20.0}
@@ -391,6 +465,7 @@ class TestCoordinatesValueObject:
         assert coords.z == 0.0  # Default value
         assert coords.precision == 6  # Default value
 
+    @pytest.mark.unit
     def test_from_dict_missing_required(self):
         """Test creation from dictionary missing required keys."""
         with pytest.raises(KeyError):
@@ -399,6 +474,8 @@ class TestCoordinatesValueObject:
         with pytest.raises(KeyError):
             Coordinates.from_dict({"y": 20.0})  # Missing 'x'
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_origin_factory(self):
         """Test origin factory method."""
         origin = Coordinates.origin(precision=4)
@@ -408,6 +485,8 @@ class TestCoordinatesValueObject:
         assert origin.z == 0.0
         assert origin.precision == 4
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_origin_default_precision(self):
         """Test origin with default precision."""
         origin = Coordinates.origin()
@@ -419,6 +498,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Mathematical Operations Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_addition(self):
         """Test vector addition."""
         coords1 = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -431,6 +512,8 @@ class TestCoordinatesValueObject:
         assert result.z == 20.0
         assert result.precision == 4  # Should use minimum precision
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_addition_invalid_type(self):
         """Test addition fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -439,6 +522,8 @@ class TestCoordinatesValueObject:
             coords + "invalid"
         assert "Can only add Coordinates to Coordinates" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_subtraction(self):
         """Test vector subtraction."""
         coords1 = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -451,6 +536,8 @@ class TestCoordinatesValueObject:
         assert result.z == 3.0
         assert result.precision == 4  # Should use minimum precision
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_subtraction_invalid_type(self):
         """Test subtraction fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -459,6 +546,8 @@ class TestCoordinatesValueObject:
             coords - "invalid"
         assert "Can only subtract Coordinates from Coordinates" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_multiplication_by_scalar(self):
         """Test scalar multiplication."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0, precision=3)
@@ -470,6 +559,8 @@ class TestCoordinatesValueObject:
         assert result.z == 12.5
         assert result.precision == 3  # Should preserve original precision
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_multiplication_by_integer(self):
         """Test multiplication by integer."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -480,6 +571,8 @@ class TestCoordinatesValueObject:
         assert result.y == 60.0
         assert result.z == 15.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_multiplication_invalid_type(self):
         """Test multiplication fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -488,6 +581,8 @@ class TestCoordinatesValueObject:
             coords * "invalid"
         assert "Can only multiply Coordinates by numeric values" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_right_multiplication(self):
         """Test right multiplication (scalar * coordinates)."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -500,6 +595,8 @@ class TestCoordinatesValueObject:
 
     # ==================== String Representation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_str_representation(self):
         """Test string representation."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -508,6 +605,8 @@ class TestCoordinatesValueObject:
 
         assert str_repr == "(10.0, 20.0, 5.0)"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_repr_representation(self):
         """Test detailed string representation."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0, precision=3)
@@ -519,6 +618,7 @@ class TestCoordinatesValueObject:
 
     # ==================== Immutability Tests ====================
 
+    @pytest.mark.unit
     def test_immutability_frozen_dataclass(self):
         """Test that coordinates is immutable (frozen dataclass)."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -526,6 +626,7 @@ class TestCoordinatesValueObject:
         with pytest.raises(AttributeError):
             coords.x = 15.0  # Should fail due to frozen dataclass
 
+    @pytest.mark.unit
     def test_operations_create_new_instances(self):
         """Test that operations create new instances instead of modifying original."""
         original = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -547,6 +648,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Equality and Hashing Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality(self):
         """Test coordinate equality."""
         coords1 = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -557,6 +660,8 @@ class TestCoordinatesValueObject:
         assert coords1 != coords3
         assert coords2 != coords3
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_different_precision(self):
         """Test equality with different precision."""
         coords1 = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -565,6 +670,8 @@ class TestCoordinatesValueObject:
         # Should be equal because precision is not compared in equality
         assert coords1 == coords2
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_hash_consistency(self):
         """Test that equal coordinates have the same hash."""
         coords1 = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -574,6 +681,8 @@ class TestCoordinatesValueObject:
         if coords1 == coords2:
             assert hash(coords1) == hash(coords2)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_hashable_in_set(self):
         """Test that coordinates can be used in sets."""
         coords1 = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -587,6 +696,8 @@ class TestCoordinatesValueObject:
 
     # ==================== Edge Cases and Boundary Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_precision_zero(self):
         """Test coordinates with zero precision."""
         coords = Coordinates(x=10.123, y=20.456, z=5.789, precision=0)
@@ -595,6 +706,8 @@ class TestCoordinatesValueObject:
         assert coords.y == 20.0
         assert coords.z == 6.0  # Should round 5.789 to 6
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_precision_maximum(self):
         """Test coordinates with maximum precision."""
         coords = Coordinates(x=10.123456789012345, y=20.0, z=5.0, precision=15)
@@ -602,6 +715,8 @@ class TestCoordinatesValueObject:
         # Should preserve high precision
         assert coords.x == 10.123456789012345
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_very_small_coordinates(self):
         """Test very small coordinate values."""
         coords = Coordinates(x=1e-10, y=-1e-10, z=1e-15, precision=15)
@@ -610,6 +725,8 @@ class TestCoordinatesValueObject:
         assert coords.y == -1e-10
         assert coords.z == 1e-15
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_boundary_coordinate_values(self):
         """Test coordinates at boundary values."""
         max_coord = 1e10
@@ -619,6 +736,8 @@ class TestCoordinatesValueObject:
         assert coords.y == -max_coord
         assert coords.z == 0.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_distance_calculations_with_precision(self):
         """Test distance calculations respect precision."""
         coords1 = Coordinates(x=0.0, y=0.0, z=0.0, precision=2)
@@ -629,6 +748,7 @@ class TestCoordinatesValueObject:
 
         assert distance == pytest.approx(expected)
 
+    @pytest.mark.unit
     def test_complex_mathematical_operations(self):
         """Test complex combinations of mathematical operations."""
         coords1 = Coordinates(x=10.0, y=20.0, z=5.0)

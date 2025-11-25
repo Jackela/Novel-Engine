@@ -34,6 +34,7 @@ from contexts.ai.domain.value_objects.common import (
 class TestLLMExecutionConfig:
     """Test suite for LLMExecutionConfig data class."""
 
+    @pytest.mark.unit
     def test_default_config_creation(self):
         """Test creating execution config with default values."""
         config = LLMExecutionConfig()
@@ -50,6 +51,7 @@ class TestLLMExecutionConfig:
         assert config.enable_streaming is False
         assert config.metadata == {}
 
+    @pytest.mark.unit
     def test_custom_config_creation(self):
         """Test creating execution config with custom values."""
         preferred_providers = ["openai", "anthropic"]
@@ -99,6 +101,7 @@ class TestLLMExecutionResult:
             output_tokens=50,
         )
 
+    @pytest.mark.unit
     def test_basic_result_creation(self):
         """Test creating execution result with basic parameters."""
         result = LLMExecutionResult(
@@ -129,6 +132,7 @@ class TestLLMExecutionResult:
         assert result.fallback_used is False
         assert result.execution_metadata == {}
 
+    @pytest.mark.unit
     def test_result_with_all_parameters(self):
         """Test creating execution result with all optional parameters."""
         from contexts.ai.infrastructure.policies.cost_tracking import CostEntry
@@ -169,6 +173,7 @@ class TestLLMExecutionResult:
         assert result.provider_response_time == 1.8
         assert result.execution_metadata == execution_metadata
 
+    @pytest.mark.unit
     def test_total_tokens_property(self):
         """Test total_tokens property calculation."""
         token_usage = {"input_tokens": 100, "output_tokens": 50, "total_tokens": 150}
@@ -185,6 +190,8 @@ class TestLLMExecutionResult:
 
         assert result.total_tokens == 150
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_total_tokens_property_empty(self):
         """Test total_tokens property with empty usage."""
         result = LLMExecutionResult(
@@ -198,6 +205,7 @@ class TestLLMExecutionResult:
 
         assert result.total_tokens == 0
 
+    @pytest.mark.unit
     def test_total_cost_property(self):
         """Test total_cost property calculation."""
         from contexts.ai.infrastructure.policies.cost_tracking import CostEntry
@@ -217,6 +225,8 @@ class TestLLMExecutionResult:
 
         assert result.total_cost == Decimal("0.15")
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_total_cost_property_no_cost_entry(self):
         """Test total_cost property with no cost entry."""
         result = LLMExecutionResult(
@@ -253,12 +263,15 @@ class TestProviderRouter:
         self.mock_provider_2.provider_id = self.provider_id_2
         self.mock_provider_2.get_model_info.return_value = self.model_id_2
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_router_initialization(self):
         """Test provider router initialization."""
         assert len(self.router._providers) == 0
         assert len(self.router._provider_health) == 0
         assert len(self.router._performance_metrics) == 0
 
+    @pytest.mark.unit
     def test_register_provider(self):
         """Test registering a provider with the router."""
         self.router.register_provider(self.mock_provider_1)
@@ -281,6 +294,8 @@ class TestProviderRouter:
         assert metrics["success_rate"] == 1.0
         assert metrics["total_requests"] == 0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_register_multiple_providers(self):
         """Test registering multiple providers."""
         self.router.register_provider(self.mock_provider_1)
@@ -290,6 +305,8 @@ class TestProviderRouter:
         assert self.provider_id_1.provider_name in self.router._providers
         assert self.provider_id_2.provider_name in self.router._providers
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_provider_existing(self):
         """Test getting existing provider by name."""
         self.router.register_provider(self.mock_provider_1)
@@ -298,12 +315,16 @@ class TestProviderRouter:
 
         assert provider == self.mock_provider_1
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_provider_non_existing(self):
         """Test getting non-existing provider."""
         provider = self.router.get_provider("non-existing-provider")
 
         assert provider is None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_select_provider_for_model_preferred(self):
         """Test selecting provider with preferred providers list."""
         self.router.register_provider(self.mock_provider_1)
@@ -318,6 +339,8 @@ class TestProviderRouter:
 
         assert provider == self.mock_provider_2
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_select_provider_for_model_fallback_to_any(self):
         """Test selecting provider when preferred not available, fallback to any."""
         self.router.register_provider(self.mock_provider_1)
@@ -332,6 +355,8 @@ class TestProviderRouter:
 
         assert provider == self.mock_provider_1
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_select_provider_for_model_with_fallback(self):
         """Test selecting provider using fallback providers."""
         self.router.register_provider(self.mock_provider_1)
@@ -350,6 +375,8 @@ class TestProviderRouter:
         # Should return provider even if unhealthy when used as fallback
         assert provider == self.mock_provider_1
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_select_provider_for_model_no_match(self):
         """Test selecting provider when no provider can handle the model."""
         self.router.register_provider(self.mock_provider_1)
@@ -361,6 +388,8 @@ class TestProviderRouter:
 
         assert provider is None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_can_handle_model_true(self):
         """Test _can_handle_model method when provider supports model."""
         result = self.router._can_handle_model(
@@ -372,6 +401,8 @@ class TestProviderRouter:
             self.model_id_1.model_name
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_can_handle_model_false(self):
         """Test _can_handle_model method when provider doesn't support model."""
         self.mock_provider_1.get_model_info.return_value = None
@@ -380,6 +411,8 @@ class TestProviderRouter:
 
         assert result is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_provider_healthy_true(self):
         """Test _is_provider_healthy method for healthy provider."""
         self.router.register_provider(self.mock_provider_1)
@@ -388,6 +421,8 @@ class TestProviderRouter:
 
         assert is_healthy is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_provider_healthy_false_not_available(self):
         """Test _is_provider_healthy method for unavailable provider."""
         self.router.register_provider(self.mock_provider_1)
@@ -399,6 +434,8 @@ class TestProviderRouter:
 
         assert is_healthy is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_provider_healthy_false_too_many_failures(self):
         """Test _is_provider_healthy method for provider with too many failures."""
         self.router.register_provider(self.mock_provider_1)
@@ -410,6 +447,8 @@ class TestProviderRouter:
 
         assert is_healthy is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_provider_healthy_unknown_provider(self):
         """Test _is_provider_healthy method for unknown provider."""
         is_healthy = self.router._is_provider_healthy("unknown-provider")
@@ -420,6 +459,7 @@ class TestProviderRouter:
 class TestExecuteLLMServiceInitialization:
     """Test suite for ExecuteLLMService initialization."""
 
+    @pytest.mark.unit
     def test_initialization_minimal(self):
         """Test service initialization with minimal dependencies."""
         service = ExecuteLLMService()
@@ -435,6 +475,7 @@ class TestExecuteLLMServiceInitialization:
         assert service._execution_stats["rate_limited_requests"] == 0
         assert service._execution_stats["budget_exceeded_requests"] == 0
 
+    @pytest.mark.unit
     def test_initialization_with_all_dependencies(self):
         """Test service initialization with all dependencies."""
         mock_cache_service = Mock()
@@ -454,6 +495,8 @@ class TestExecuteLLMServiceInitialization:
         assert service._cost_tracker == mock_cost_tracker
         assert service._retry_policy == mock_retry_policy
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_register_provider(self):
         """Test registering provider with the service."""
         service = ExecuteLLMService()
@@ -515,6 +558,7 @@ class TestExecuteLLMServiceExecution:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_successful_flow(self):
         """Test successful execution flow with all policies."""
         # Setup mocks
@@ -554,6 +598,7 @@ class TestExecuteLLMServiceExecution:
         self.mock_retry_policy.execute_with_retry_async.assert_called_once()
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_cache_hit(self):
         """Test execution flow with cache hit."""
         # Setup cache hit
@@ -578,6 +623,7 @@ class TestExecuteLLMServiceExecution:
         self.mock_cost_tracker.check_budget_async.assert_not_called()  # No budget check for cached
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_rate_limited(self):
         """Test execution flow with rate limiting."""
         # Setup rate limiting
@@ -601,6 +647,7 @@ class TestExecuteLLMServiceExecution:
         self.mock_retry_policy.execute_with_retry_async.assert_not_called()
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_budget_exceeded(self):
         """Test execution flow with budget exceeded."""
         # Setup budget exceeded
@@ -625,6 +672,7 @@ class TestExecuteLLMServiceExecution:
         self.mock_retry_policy.execute_with_retry_async.assert_not_called()
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_no_provider_available(self):
         """Test execution flow with no available provider."""
         # Setup no provider for model
@@ -650,6 +698,7 @@ class TestExecuteLLMServiceExecution:
         self.mock_retry_policy.execute_with_retry_async.assert_not_called()
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_without_retry_policy(self):
         """Test execution without retry policy (direct execution)."""
         # Create service without retry policy
@@ -671,6 +720,7 @@ class TestExecuteLLMServiceExecution:
         self.mock_provider.generate_async.assert_called_once_with(self.request, None)
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_with_exception(self):
         """Test execution flow when exception occurs."""
         # Setup exception during execution
@@ -695,6 +745,7 @@ class TestExecuteLLMServiceExecution:
         assert result.response.status == LLMResponseStatus.FAILED
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_caching_disabled(self):
         """Test execution flow with caching disabled."""
         config = LLMExecutionConfig(enable_caching=False)
@@ -720,6 +771,7 @@ class TestExecuteLLMServiceExecution:
         assert result.success is True
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_rate_limiting_disabled(self):
         """Test execution flow with rate limiting disabled."""
         config = LLMExecutionConfig(enforce_rate_limits=False)
@@ -743,6 +795,7 @@ class TestExecuteLLMServiceExecution:
         assert result.success is True
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_budget_enforcement_disabled(self):
         """Test execution flow with budget enforcement disabled."""
         config = LLMExecutionConfig(enforce_budgets=False)
@@ -770,6 +823,7 @@ class TestExecuteLLMServiceExecution:
         assert result.success is True
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_async_post_execution_processing(self):
         """Test post-execution processing for successful requests."""
         # Setup successful execution
@@ -838,6 +892,7 @@ class TestExecuteLLMServiceStreamingExecution:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_stream_async_successful(self):
         """Test successful streaming execution."""
         # Setup rate limiting
@@ -881,6 +936,7 @@ class TestExecuteLLMServiceStreamingExecution:
         # Note: Cannot verify method call with direct function replacement
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_stream_async_rate_limited(self):
         """Test streaming execution with rate limiting."""
         # Setup rate limiting
@@ -902,6 +958,7 @@ class TestExecuteLLMServiceStreamingExecution:
         self.mock_provider.generate_stream_async.assert_not_called()
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_stream_async_no_provider(self):
         """Test streaming execution with no available provider."""
         # Mock provider to not handle the model
@@ -917,6 +974,7 @@ class TestExecuteLLMServiceStreamingExecution:
         assert "Error: No available provider for model" in chunks[0]
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_stream_async_provider_exception(self):
         """Test streaming execution with provider exception."""
         # Setup rate limiting
@@ -943,6 +1001,7 @@ class TestExecuteLLMServiceStreamingExecution:
         assert "Error: Provider error" in chunks[0]
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_execute_stream_async_rate_limiting_disabled(self):
         """Test streaming execution with rate limiting disabled."""
         config = LLMExecutionConfig(enforce_rate_limits=False, enable_streaming=True)
@@ -984,6 +1043,7 @@ class TestExecuteLLMServiceStatisticsAndMetrics:
         }
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_get_execution_stats_async_with_requests(self):
         """Test getting execution statistics when requests have been made."""
         stats = await self.service.get_execution_stats_async()
@@ -999,6 +1059,7 @@ class TestExecuteLLMServiceStatisticsAndMetrics:
         assert stats["budget_exceeded_rate"] == 0.02  # 2/100
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_get_execution_stats_async_no_requests(self):
         """Test getting execution statistics when no requests have been made."""
         service = ExecuteLLMService()  # Fresh service with no requests
@@ -1011,6 +1072,7 @@ class TestExecuteLLMServiceStatisticsAndMetrics:
         assert stats["rate_limit_rate"] == 0.0
         assert stats["budget_exceeded_rate"] == 0.0
 
+    @pytest.mark.unit
     def test_estimate_request_cost_with_model_pricing(self):
         """Test cost estimation when model has pricing information."""
         provider_id = ProviderId.create_openai()
@@ -1037,6 +1099,7 @@ class TestExecuteLLMServiceStatisticsAndMetrics:
         )
         assert estimated_cost == expected_cost
 
+    @pytest.mark.unit
     def test_estimate_request_cost_no_pricing(self):
         """Test cost estimation when model has no pricing information."""
         provider_id = ProviderId.create_openai()
@@ -1056,6 +1119,7 @@ class TestExecuteLLMServiceStatisticsAndMetrics:
 
         assert estimated_cost == Decimal("0")
 
+    @pytest.mark.unit
     def test_estimate_request_cost_no_max_tokens(self):
         """Test cost estimation when request has no max_tokens specified."""
         provider_id = ProviderId.create_openai()
@@ -1084,6 +1148,7 @@ class TestExecuteLLMServiceStatisticsAndMetrics:
         assert estimated_cost == expected_cost
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_record_cached_usage(self):
         """Test recording usage for cached responses."""
 
@@ -1142,6 +1207,7 @@ class TestExecuteLLMServiceIntegration:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_minimal_execution_flow(self):
         """Test minimal execution flow without optional services."""
         # Setup provider response
@@ -1171,6 +1237,7 @@ class TestExecuteLLMServiceIntegration:
         assert stats["success_rate"] == 1.0
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_provider_selection_with_preferences(self):
         """Test provider selection with preferred providers."""
         # Register second provider
@@ -1216,6 +1283,7 @@ class TestExecuteLLMServiceIntegration:
         self.mock_provider.generate_async.assert_not_called()
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_error_handling_and_statistics(self):
         """Test error handling and statistics tracking."""
         # Setup provider to fail

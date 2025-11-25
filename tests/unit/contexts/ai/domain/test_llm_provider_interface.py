@@ -36,6 +36,7 @@ from contexts.ai.domain.value_objects.common import (
 class TestLLMRequestTypeEnum:
     """Test suite for LLMRequestType enum."""
 
+    @pytest.mark.unit
     def test_all_request_types_exist(self):
         """Test that all expected request types are defined."""
         expected_types = {
@@ -53,6 +54,8 @@ class TestLLMRequestTypeEnum:
         actual_types = {item.name for item in LLMRequestType}
         assert actual_types == expected_types
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_request_type_string_values(self):
         """Test that request type enum values have correct string representations."""
         assert LLMRequestType.COMPLETION.value == "completion"
@@ -65,11 +68,15 @@ class TestLLMRequestTypeEnum:
         assert LLMRequestType.EMBEDDING.value == "embedding"
         assert LLMRequestType.FUNCTION_CALL.value == "function_call"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_request_type_str_method(self):
         """Test that __str__ method returns the value."""
         assert str(LLMRequestType.COMPLETION) == "completion"
         assert str(LLMRequestType.FUNCTION_CALL) == "function_call"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_request_type_uniqueness(self):
         """Test that all request type values are unique."""
         values = [item.value for item in LLMRequestType]
@@ -79,6 +86,7 @@ class TestLLMRequestTypeEnum:
 class TestLLMResponseStatusEnum:
     """Test suite for LLMResponseStatus enum."""
 
+    @pytest.mark.unit
     def test_all_response_statuses_exist(self):
         """Test that all expected response statuses are defined."""
         expected_statuses = {
@@ -95,6 +103,8 @@ class TestLLMResponseStatusEnum:
         actual_statuses = {item.name for item in LLMResponseStatus}
         assert actual_statuses == expected_statuses
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_response_status_string_values(self):
         """Test that response status enum values have correct string representations."""
         assert LLMResponseStatus.SUCCESS.value == "success"
@@ -106,6 +116,8 @@ class TestLLMResponseStatusEnum:
         assert LLMResponseStatus.INVALID_REQUEST.value == "invalid_request"
         assert LLMResponseStatus.TIMEOUT.value == "timeout"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_response_status_str_method(self):
         """Test that __str__ method returns the value."""
         assert str(LLMResponseStatus.SUCCESS) == "success"
@@ -121,6 +133,7 @@ class TestLLMRequestCreation:
         self.model_id = ModelId.create_gpt4(provider_id)
         self.request_id = uuid4()
 
+    @pytest.mark.unit
     def test_basic_request_creation(self):
         """Test basic LLM request creation with required parameters."""
         request = LLMRequest(
@@ -147,6 +160,7 @@ class TestLLMRequestCreation:
         assert request.stream is False
         assert request.metadata == {}
 
+    @pytest.mark.unit
     def test_request_creation_with_all_parameters(self):
         """Test request creation with all optional parameters."""
         parameters = {"custom_param": "value"}
@@ -186,6 +200,7 @@ class TestLLMRequestCreation:
         assert request.stream is True
         assert request.metadata == metadata
 
+    @pytest.mark.unit
     def test_request_validation_invalid_request_id(self):
         """Test request validation with invalid request ID."""
         with pytest.raises(ValueError, match="request_id must be a UUID"):
@@ -196,6 +211,7 @@ class TestLLMRequestCreation:
                 prompt="Test prompt",
             )
 
+    @pytest.mark.unit
     def test_request_validation_invalid_request_type(self):
         """Test request validation with invalid request type."""
         with pytest.raises(
@@ -208,6 +224,7 @@ class TestLLMRequestCreation:
                 prompt="Test prompt",
             )
 
+    @pytest.mark.unit
     def test_request_validation_invalid_model_id(self):
         """Test request validation with invalid model ID."""
         with pytest.raises(ValueError, match="model_id must be a ModelId instance"):
@@ -218,6 +235,7 @@ class TestLLMRequestCreation:
                 prompt="Test prompt",
             )
 
+    @pytest.mark.unit
     def test_request_validation_empty_prompt(self):
         """Test request validation with empty prompt."""
         with pytest.raises(
@@ -230,6 +248,7 @@ class TestLLMRequestCreation:
                 prompt="",
             )
 
+    @pytest.mark.unit
     def test_request_validation_invalid_temperature(self):
         """Test request validation with invalid temperature values."""
         with pytest.raises(ValueError, match="temperature must be between 0.0 and 2.0"):
@@ -250,6 +269,7 @@ class TestLLMRequestCreation:
                 temperature=2.1,
             )
 
+    @pytest.mark.unit
     def test_request_validation_invalid_top_p(self):
         """Test request validation with invalid top_p values."""
         with pytest.raises(ValueError, match="top_p must be between 0.0 and 1.0"):
@@ -270,6 +290,7 @@ class TestLLMRequestCreation:
                 top_p=1.1,
             )
 
+    @pytest.mark.unit
     def test_request_validation_invalid_penalties(self):
         """Test request validation with invalid penalty values."""
         with pytest.raises(
@@ -294,6 +315,7 @@ class TestLLMRequestCreation:
                 frequency_penalty=2.1,
             )
 
+    @pytest.mark.unit
     def test_request_validation_invalid_max_tokens(self):
         """Test request validation with invalid max_tokens values."""
         with pytest.raises(ValueError, match="max_tokens must be a positive integer"):
@@ -314,6 +336,7 @@ class TestLLMRequestCreation:
                 max_tokens=-100,
             )
 
+    @pytest.mark.unit
     def test_request_validation_max_tokens_exceeds_model_limit(self):
         """Test request validation when max_tokens exceeds model limits."""
         with pytest.raises(ValueError, match="max_tokens .* exceeds model limit"):
@@ -325,6 +348,7 @@ class TestLLMRequestCreation:
                 max_tokens=self.model_id.max_output_tokens + 1,
             )
 
+    @pytest.mark.unit
     def test_request_validation_invalid_timeout(self):
         """Test request validation with invalid timeout values."""
         with pytest.raises(
@@ -338,6 +362,7 @@ class TestLLMRequestCreation:
                 timeout_seconds=0,
             )
 
+    @pytest.mark.unit
     def test_request_validation_duplicate_stop_sequences(self):
         """Test request validation with duplicate stop sequences."""
         with pytest.raises(ValueError, match="stop_sequences must be unique"):
@@ -358,6 +383,7 @@ class TestLLMRequestFactoryMethods:
         provider_id = ProviderId.create_openai()
         self.model_id = ModelId.create_gpt4(provider_id)
 
+    @pytest.mark.unit
     def test_create_chat_request_basic(self):
         """Test creating chat request with basic parameters."""
         messages = [
@@ -379,6 +405,8 @@ class TestLLMRequestFactoryMethods:
         assert request.metadata["messages"] == messages
         assert request.metadata["format"] == "chat"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_chat_request_with_system_prompt(self):
         """Test creating chat request with system prompt."""
         messages = [{"role": "user", "content": "Hello"}]
@@ -391,6 +419,8 @@ class TestLLMRequestFactoryMethods:
         assert request.system_prompt == system_prompt
         assert request.metadata["messages"] == messages
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_chat_request_with_custom_metadata(self):
         """Test creating chat request with custom metadata."""
         messages = [{"role": "user", "content": "Hello"}]
@@ -406,6 +436,7 @@ class TestLLMRequestFactoryMethods:
         assert request.metadata["source"] == "test"
         assert request.metadata["priority"] == "high"
 
+    @pytest.mark.unit
     def test_create_completion_request_basic(self):
         """Test creating completion request with basic parameters."""
         prompt = "Complete this text:"
@@ -422,6 +453,7 @@ class TestLLMRequestFactoryMethods:
         assert request.temperature == 0.7
         assert request.metadata["format"] == "completion"
 
+    @pytest.mark.unit
     def test_create_completion_request_with_parameters(self):
         """Test creating completion request with custom parameters."""
         prompt = "Complete this text:"
@@ -458,6 +490,8 @@ class TestLLMRequestBusinessMethods:
             system_prompt="System instruction",
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_estimate_input_tokens(self):
         """Test token estimation for input text."""
         # Rough approximation: 1 token ≈ 4 characters
@@ -470,6 +504,8 @@ class TestLLMRequestBusinessMethods:
         assert estimated_tokens == expected_tokens
         assert estimated_tokens > 0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_estimate_input_tokens_no_system_prompt(self):
         """Test token estimation with no system prompt."""
         request = LLMRequest(
@@ -484,6 +520,7 @@ class TestLLMRequestBusinessMethods:
 
         assert estimated_tokens == expected_tokens
 
+    @pytest.mark.unit
     def test_get_effective_max_tokens_with_limit(self):
         """Test getting effective max tokens with specified limit."""
         request = LLMRequest(
@@ -499,6 +536,8 @@ class TestLLMRequestBusinessMethods:
         assert effective_max == 1000
         assert effective_max <= self.model_id.max_output_tokens
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_effective_max_tokens_no_limit(self):
         """Test getting effective max tokens without specified limit."""
         request = LLMRequest(
@@ -512,6 +551,7 @@ class TestLLMRequestBusinessMethods:
 
         assert effective_max == self.model_id.max_output_tokens
 
+    @pytest.mark.unit
     def test_get_effective_max_tokens_exceeds_model_limit(self):
         """Test effective max tokens when requested exceeds model limit."""
         # This should not happen due to validation, but test the method logic
@@ -528,6 +568,8 @@ class TestLLMRequestBusinessMethods:
 
         assert effective_max == expected
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_compatible_with_model_compatible(self):
         """Test model compatibility check for compatible request."""
         request = LLMRequest(
@@ -541,6 +583,7 @@ class TestLLMRequestBusinessMethods:
 
         assert is_compatible is True
 
+    @pytest.mark.unit
     def test_is_compatible_with_model_unsupported_capability(self):
         """Test model compatibility check for unsupported capability."""
         # Create model without EMBEDDING capability
@@ -564,6 +607,7 @@ class TestLLMRequestBusinessMethods:
 
         assert is_compatible is False
 
+    @pytest.mark.unit
     def test_is_compatible_with_model_context_too_large(self):
         """Test model compatibility check for oversized context."""
         # Create a very long prompt that exceeds context limits
@@ -593,6 +637,7 @@ class TestLLMResponseCreation:
         self.request_id = uuid4()
         self.response_id = uuid4()
 
+    @pytest.mark.unit
     def test_basic_response_creation(self):
         """Test basic LLM response creation with required parameters."""
         response = LLMResponse(
@@ -618,6 +663,7 @@ class TestLLMResponseCreation:
         assert response.error_details is None
         assert response.provider_response == {}
 
+    @pytest.mark.unit
     def test_response_creation_with_all_parameters(self):
         """Test response creation with all optional parameters."""
         usage_stats = {"input_tokens": 100, "output_tokens": 50, "total_tokens": 150}
@@ -646,6 +692,7 @@ class TestLLMResponseCreation:
         assert response.metadata == metadata
         assert response.provider_response == provider_response
 
+    @pytest.mark.unit
     def test_response_validation_invalid_request_id(self):
         """Test response validation with invalid request ID."""
         with pytest.raises(ValueError, match="request_id must be a UUID"):
@@ -656,6 +703,7 @@ class TestLLMResponseCreation:
                 content="Test content",
             )
 
+    @pytest.mark.unit
     def test_response_validation_invalid_response_id(self):
         """Test response validation with invalid response ID."""
         with pytest.raises(ValueError, match="response_id must be a UUID"):
@@ -666,6 +714,7 @@ class TestLLMResponseCreation:
                 content="Test content",
             )
 
+    @pytest.mark.unit
     def test_response_validation_invalid_status(self):
         """Test response validation with invalid status."""
         with pytest.raises(ValueError, match="status must be a LLMResponseStatus enum"):
@@ -676,6 +725,7 @@ class TestLLMResponseCreation:
                 content="Test content",
             )
 
+    @pytest.mark.unit
     def test_response_validation_successful_without_content(self):
         """Test response validation for successful response without content."""
         with pytest.raises(ValueError, match="Successful responses must have content"):
@@ -686,6 +736,7 @@ class TestLLMResponseCreation:
                 content=None,  # No content for successful response
             )
 
+    @pytest.mark.unit
     def test_response_validation_failed_without_error_details(self):
         """Test response validation for failed response without error details."""
         with pytest.raises(
@@ -698,6 +749,7 @@ class TestLLMResponseCreation:
                 error_details=None,  # No error details for failed response
             )
 
+    @pytest.mark.unit
     def test_response_validation_invalid_usage_stats(self):
         """Test response validation with invalid usage stats."""
         with pytest.raises(
@@ -715,6 +767,7 @@ class TestLLMResponseCreation:
                 },
             )
 
+    @pytest.mark.unit
     def test_response_validation_invalid_cost_estimate(self):
         """Test response validation with invalid cost estimate."""
         with pytest.raises(
@@ -738,6 +791,7 @@ class TestLLMResponseFactoryMethods:
         self.model_id = ModelId.create_gpt4(provider_id)
         self.request_id = uuid4()
 
+    @pytest.mark.unit
     def test_create_success_response(self):
         """Test creating successful response using factory method."""
         content = "Generated response content"
@@ -764,6 +818,7 @@ class TestLLMResponseFactoryMethods:
             input_tokens, output_tokens
         )
 
+    @pytest.mark.unit
     def test_create_success_response_custom_finish_reason(self):
         """Test creating successful response with custom finish reason."""
         content = "Generated content"
@@ -783,6 +838,7 @@ class TestLLMResponseFactoryMethods:
         assert response.finish_reason == finish_reason
         assert response.status == LLMResponseStatus.SUCCESS
 
+    @pytest.mark.unit
     def test_create_error_response(self):
         """Test creating error response using factory method."""
         error_status = LLMResponseStatus.RATE_LIMITED
@@ -803,6 +859,7 @@ class TestLLMResponseFactoryMethods:
             "total_tokens": 0,
         }
 
+    @pytest.mark.unit
     def test_create_error_response_with_model(self):
         """Test creating error response with model information."""
         error_status = LLMResponseStatus.MODEL_UNAVAILABLE
@@ -843,10 +900,14 @@ class TestLLMResponseBusinessMethods:
             error_details="Generation failed",
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_successful_for_success_status(self):
         """Test is_successful method for successful responses."""
         assert self.success_response.is_successful() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_successful_for_partial_success_status(self):
         """Test is_successful method for partial success responses."""
         partial_response = LLMResponse(
@@ -858,10 +919,14 @@ class TestLLMResponseBusinessMethods:
 
         assert partial_response.is_successful() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_successful_for_error_status(self):
         """Test is_successful method for error responses."""
         assert self.error_response.is_successful() is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_total_tokens(self):
         """Test getting total token usage."""
         total_tokens = self.success_response.get_total_tokens()
@@ -869,6 +934,8 @@ class TestLLMResponseBusinessMethods:
         assert total_tokens == 150  # 100 input + 50 output
         assert total_tokens == self.success_response.usage_stats["total_tokens"]
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_input_tokens(self):
         """Test getting input token usage."""
         input_tokens = self.success_response.get_input_tokens()
@@ -876,6 +943,8 @@ class TestLLMResponseBusinessMethods:
         assert input_tokens == 100
         assert input_tokens == self.success_response.usage_stats["input_tokens"]
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_output_tokens(self):
         """Test getting output token usage."""
         output_tokens = self.success_response.get_output_tokens()
@@ -883,6 +952,7 @@ class TestLLMResponseBusinessMethods:
         assert output_tokens == 50
         assert output_tokens == self.success_response.usage_stats["output_tokens"]
 
+    @pytest.mark.unit
     def test_token_methods_with_empty_stats(self):
         """Test token methods when usage stats are empty."""
         empty_response = LLMResponse(
@@ -901,6 +971,7 @@ class TestLLMResponseBusinessMethods:
 class TestLLMProviderErrorHierarchy:
     """Test suite for LLM provider error hierarchy."""
 
+    @pytest.mark.unit
     def test_base_llm_provider_error(self):
         """Test base LLMProviderError exception."""
         provider_id = ProviderId.create_openai()
@@ -920,6 +991,8 @@ class TestLLMProviderErrorHierarchy:
         assert error.error_code == error_code
         assert error.retry_after == retry_after
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_base_error_without_optional_parameters(self):
         """Test base error without optional parameters."""
         message = "Simple error"
@@ -931,6 +1004,7 @@ class TestLLMProviderErrorHierarchy:
         assert error.error_code is None
         assert error.retry_after is None
 
+    @pytest.mark.unit
     def test_rate_limit_error(self):
         """Test RateLimitError specific exception."""
         provider_id = ProviderId.create_openai()
@@ -947,6 +1021,8 @@ class TestLLMProviderErrorHierarchy:
         assert error.provider_id == provider_id
         assert error.retry_after == retry_after
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_quota_exceeded_error(self):
         """Test QuotaExceededError specific exception."""
         provider_id = ProviderId.create_openai()
@@ -961,6 +1037,8 @@ class TestLLMProviderErrorHierarchy:
         assert str(error) == message
         assert error.error_code == "QUOTA_EXCEEDED"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_model_unavailable_error(self):
         """Test ModelUnavailableError specific exception."""
         message = "Model is temporarily unavailable"
@@ -971,6 +1049,8 @@ class TestLLMProviderErrorHierarchy:
         assert isinstance(error, ModelUnavailableError)
         assert str(error) == message
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_invalid_request_error(self):
         """Test InvalidRequestError specific exception."""
         message = "Invalid request parameters"
@@ -1058,6 +1138,8 @@ class TestILLMProviderInterface:
             model_id=self.model_id, prompt="Test prompt"
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_provider_properties(self):
         """Test provider basic properties."""
         assert self.provider.provider_id == self.provider_id
@@ -1065,6 +1147,7 @@ class TestILLMProviderInterface:
         assert self.provider.is_available is True
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_generate_async(self):
         """Test asynchronous generation method."""
         response = await self.provider.generate_async(self.request)
@@ -1075,6 +1158,8 @@ class TestILLMProviderInterface:
         assert response.content == "Mock generated content"
         assert response.model_id == self.model_id
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_generate_sync_wrapper(self):
         """Test synchronous generation wrapper."""
         response = self.provider.generate(self.request)
@@ -1084,6 +1169,7 @@ class TestILLMProviderInterface:
         assert response.status == LLMResponseStatus.SUCCESS
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_generate_stream_async(self):
         """Test asynchronous streaming generation."""
         chunks = []
@@ -1092,6 +1178,8 @@ class TestILLMProviderInterface:
 
         assert chunks == ["Mock ", "streaming ", "content"]
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_estimate_tokens(self):
         """Test token estimation method."""
         text = "This is a test text for token estimation"
@@ -1100,12 +1188,16 @@ class TestILLMProviderInterface:
         expected = len(text) // 4  # Mock implementation
         assert estimated == expected
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_validate_request_valid(self):
         """Test request validation for valid request."""
         is_valid = self.provider.validate_request(self.request)
 
         assert is_valid is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_validate_request_invalid(self):
         """Test request validation for invalid request."""
         # Create request with incompatible model capability
@@ -1120,12 +1212,16 @@ class TestILLMProviderInterface:
 
         assert is_valid is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_model_info_existing(self):
         """Test getting model info for existing model."""
         model_info = self.provider.get_model_info(self.model_id.model_name)
 
         assert model_info == self.model_id
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_model_info_non_existing(self):
         """Test getting model info for non-existing model."""
         model_info = self.provider.get_model_info("non-existing-model")
@@ -1133,6 +1229,7 @@ class TestILLMProviderInterface:
         assert model_info is None
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_health_check_async(self):
         """Test asynchronous health check."""
         health = await self.provider.health_check_async()
@@ -1142,6 +1239,8 @@ class TestILLMProviderInterface:
         assert health["models_available"] == 1
         assert health["quota_utilization"] == 0.45
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_health_check_sync_wrapper(self):
         """Test synchronous health check wrapper."""
         health = self.provider.health_check()
@@ -1149,10 +1248,14 @@ class TestILLMProviderInterface:
         assert health["status"] == "healthy"
         assert isinstance(health, dict)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_supports_streaming_default(self):
         """Test default streaming support."""
         assert self.provider.supports_streaming() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_supports_function_calling(self):
         """Test function calling support detection."""
         # Our mock model supports function calling via capabilities
@@ -1166,6 +1269,7 @@ class TestILLMProviderInterface:
 
         assert supports_functions == expected
 
+    @pytest.mark.unit
     def test_get_rate_limits_default(self):
         """Test default rate limits."""
         rate_limits = self.provider.get_rate_limits()
@@ -1173,6 +1277,8 @@ class TestILLMProviderInterface:
         assert rate_limits["requests_per_minute"] == 60
         assert rate_limits["tokens_per_minute"] == 10000
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_pricing_info(self):
         """Test getting pricing information."""
         pricing = self.provider.get_pricing_info(self.model_id)
@@ -1181,6 +1287,8 @@ class TestILLMProviderInterface:
         assert pricing["output_token_cost"] == self.model_id.cost_per_output_token
         assert pricing["currency"] == "USD"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_string_representation(self):
         """Test string representations of provider."""
         str_repr = str(self.provider)
@@ -1207,6 +1315,7 @@ class TestILLMProviderWithBudget:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_generate_async_with_budget(self):
         """Test async generation with token budget."""
         response = await self.provider.generate_async(self.request, self.budget)
@@ -1216,6 +1325,7 @@ class TestILLMProviderWithBudget:
         # Budget enforcement would be handled by the implementation
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_generate_stream_async_with_budget(self):
         """Test async streaming with token budget."""
         chunks = []

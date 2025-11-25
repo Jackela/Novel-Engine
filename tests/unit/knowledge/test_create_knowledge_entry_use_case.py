@@ -94,6 +94,7 @@ class TestCreateKnowledgeEntryUseCase:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_entry_success(
         self, use_case, valid_command, mock_repository, mock_event_publisher
     ):
@@ -123,6 +124,7 @@ class TestCreateKnowledgeEntryUseCase:
         assert event_call[1]["topic"] == "knowledge.entry.created"
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_entry_with_empty_content_raises_error(self, use_case):
         """Test that empty content raises ValueError."""
         if CreateKnowledgeEntryCommand is None:
@@ -144,6 +146,7 @@ class TestCreateKnowledgeEntryUseCase:
             await use_case.execute(invalid_command)
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_entry_sets_timestamps(
         self, use_case, valid_command, mock_repository
     ):
@@ -163,6 +166,7 @@ class TestCreateKnowledgeEntryUseCase:
         assert saved_entry.created_at == saved_entry.updated_at
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_entry_generates_unique_id(
         self, use_case, valid_command, mock_repository
     ):
@@ -178,6 +182,7 @@ class TestCreateKnowledgeEntryUseCase:
         assert first_entry.id != second_entry.id
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_entry_with_public_access(self, use_case, mock_repository):
         """Test creating entry with PUBLIC access level."""
         if CreateKnowledgeEntryCommand is None:
@@ -203,6 +208,7 @@ class TestCreateKnowledgeEntryUseCase:
         assert saved_entry.access_control.access_level == AccessLevel.PUBLIC
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_entry_with_role_based_access(self, use_case, mock_repository):
         """Test creating entry with ROLE_BASED access level."""
         if CreateKnowledgeEntryCommand is None:
@@ -230,6 +236,7 @@ class TestCreateKnowledgeEntryUseCase:
         assert "medical" in saved_entry.access_control.allowed_roles
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_entry_publishes_domain_event(
         self, use_case, valid_command, mock_event_publisher
     ):
@@ -255,6 +262,7 @@ class TestCreateKnowledgeEntryUseCase:
         assert event_call[1]["key"] == entry_id
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_entry_repository_failure_does_not_publish_event(
         self, use_case, valid_command, mock_repository, mock_event_publisher
     ):

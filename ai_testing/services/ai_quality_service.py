@@ -11,7 +11,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -679,7 +679,7 @@ class AIQualityAssessmentService(IAIQualityAssessment):
         if cache_key in self.assessment_cache:
             cached_result = self.assessment_cache[cache_key]
             if (
-                datetime.utcnow() - cached_result.timestamp
+                datetime.now(timezone.utc) - cached_result.timestamp
             ).seconds < self.cache_ttl_seconds:
                 logger.info(f"Returning cached assessment: {request.assessment_id}")
                 return cached_result
@@ -1137,7 +1137,7 @@ class AIQualityAssessmentService(IAIQualityAssessment):
         """Generate comprehensive quality assessment report (Interface method)"""
 
         report = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "total_tests": len(results),
             "passed": sum(1 for r in results if r.passed),
             "failed": sum(1 for r in results if not r.passed),

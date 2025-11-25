@@ -13,6 +13,7 @@ import { dashboardAPI } from '../../services/api/dashboardAPI';
 import EnginePanel from './panels/EnginePanel';
 import WorldPanel from './panels/WorldPanel';
 import InsightsPanel from './panels/InsightsPanel';
+import WorldStateMap from './WorldStateMapV2';
 
 type PipelineState = 'idle' | 'running' | 'paused' | 'stopped';
 

@@ -27,6 +27,8 @@ pytestmark = pytest.mark.knowledge
 class TestAccessControlRuleInvariants:
     """Test suite for AccessControlRule invariants and validation."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_public_access_level_requires_no_additional_data(self):
         """Test PUBLIC access level can be created without roles or character IDs."""
         if AccessControlRule is None:
@@ -42,6 +44,7 @@ class TestAccessControlRuleInvariants:
         assert len(rule.allowed_roles) == 0
         assert len(rule.allowed_character_ids) == 0
 
+    @pytest.mark.unit
     def test_role_based_access_requires_roles(self):
         """Test ROLE_BASED access level requires at least one role."""
         if AccessControlRule is None:
@@ -58,6 +61,7 @@ class TestAccessControlRuleInvariants:
                 allowed_roles=(),  # Empty tuple - should raise error
             )
 
+    @pytest.mark.unit
     def test_role_based_access_with_roles_succeeds(self):
         """Test ROLE_BASED access level with roles succeeds."""
         if AccessControlRule is None:
@@ -76,6 +80,7 @@ class TestAccessControlRuleInvariants:
         assert "engineer" in rule.allowed_roles
         assert "crew" in rule.allowed_roles
 
+    @pytest.mark.unit
     def test_character_specific_access_requires_character_ids(self):
         """Test CHARACTER_SPECIFIC access level requires at least one character ID."""
         if AccessControlRule is None:
@@ -93,6 +98,7 @@ class TestAccessControlRuleInvariants:
                 allowed_character_ids=(),  # Empty tuple - should raise error
             )
 
+    @pytest.mark.unit
     def test_character_specific_access_with_character_ids_succeeds(self):
         """Test CHARACTER_SPECIFIC access level with character IDs succeeds."""
         if AccessControlRule is None:
@@ -111,6 +117,7 @@ class TestAccessControlRuleInvariants:
         assert "char-001" in rule.allowed_character_ids
         assert "char-002" in rule.allowed_character_ids
 
+    @pytest.mark.unit
     def test_access_control_rule_is_immutable(self):
         """Test that AccessControlRule is immutable (frozen dataclass)."""
         if AccessControlRule is None:
@@ -162,6 +169,7 @@ class TestAccessControlRulePermits:
             allowed_character_ids=("char-001", "char-002"),
         )
 
+    @pytest.mark.unit
     def test_public_rule_permits_all_agents(self, public_rule):
         """Test PUBLIC access permits all agents."""
         # Arrange
@@ -174,6 +182,7 @@ class TestAccessControlRulePermits:
         assert public_rule.permits(agent2) is True
         assert public_rule.permits(agent3) is True
 
+    @pytest.mark.unit
     def test_role_based_rule_permits_agents_with_matching_role(self, role_based_rule):
         """Test ROLE_BASED access permits agents with matching role."""
         # Arrange
@@ -190,6 +199,8 @@ class TestAccessControlRulePermits:
         assert role_based_rule.permits(agent_with_medical) is True
         assert role_based_rule.permits(agent_with_both) is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_role_based_rule_denies_agents_without_matching_role(self, role_based_rule):
         """Test ROLE_BASED access denies agents without matching role."""
         # Arrange
@@ -204,6 +215,7 @@ class TestAccessControlRulePermits:
         assert role_based_rule.permits(agent_wrong_role) is False
         assert role_based_rule.permits(agent_other_roles) is False
 
+    @pytest.mark.unit
     def test_character_specific_rule_permits_allowed_characters(
         self, character_specific_rule
     ):
@@ -216,6 +228,7 @@ class TestAccessControlRulePermits:
         assert character_specific_rule.permits(agent_char_001) is True
         assert character_specific_rule.permits(agent_char_002) is True
 
+    @pytest.mark.unit
     def test_character_specific_rule_denies_other_characters(
         self, character_specific_rule
     ):
@@ -228,6 +241,7 @@ class TestAccessControlRulePermits:
         assert character_specific_rule.permits(agent_char_003) is False
         assert character_specific_rule.permits(agent_char_004) is False
 
+    @pytest.mark.unit
     def test_role_based_with_multiple_roles_any_match_grants_access(self):
         """Test ROLE_BASED with multiple roles - any match grants access."""
         if AccessControlRule is None:

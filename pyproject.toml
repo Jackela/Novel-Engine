@@ -214,7 +214,9 @@ markers = [
     "narrative: Narrative and content tests",
     "performance: Performance and load tests",
     "security: Security and validation tests",
-    "slow: Tests that take significant time to run",
+    "slow: Tests that take significant time to run (> 1000ms / 1s)",
+    "medium: Medium speed tests (100ms - 1000ms)",
+    "fast: Fast tests that complete in <100ms",
     "requires_services: Tests requiring external services to be running",
     "knowledge: Knowledge Management context tests (Feature 001)",
 ]

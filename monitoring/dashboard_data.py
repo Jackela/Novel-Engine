@@ -16,7 +16,7 @@ import os
 import statistics
 from collections import deque
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class TimeSeriesData:
     
     def get_average(self, minutes: int = 60) -> Optional[float]:
         """Get average value over specified time period"""
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         recent_points = [
             point.value for point in self.data_points 
             if point.timestamp >= cutoff_time
@@ -59,7 +59,7 @@ class TimeSeriesData:
     
     def get_percentile(self, percentile: int, minutes: int = 60) -> Optional[float]:
         """Get percentile value over specified time period"""
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         recent_points = [
             point.value for point in self.data_points 
             if point.timestamp >= cutoff_time
@@ -149,7 +149,7 @@ class DashboardDataCollector:
         
         # Parse time range
         duration_minutes = self._parse_time_range(time_range)
-        cutoff_time = datetime.utcnow() - timedelta(minutes=duration_minutes)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=duration_minutes)
         
         # Filter data points
         series = self.time_series_data[metric_name]
@@ -232,7 +232,7 @@ class DashboardDataCollector:
     
     async def _aggregate_data(self):
         """Aggregate raw data into different time intervals"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         
         for interval in self.config.aggregation_intervals:
             if interval not in self.aggregated_data:
@@ -296,7 +296,7 @@ class DashboardDataCollector:
     
     async def _cleanup_old_data(self):
         """Clean up old data beyond retention period"""
-        cutoff_time = datetime.utcnow() - timedelta(hours=self.config.data_retention_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=self.config.data_retention_hours)
         
         # Clean raw data
         for series in self.time_series_data.values():
@@ -542,7 +542,7 @@ class DashboardDataCollector:
         
         dashboard_data = {
             "dashboard": asdict(dashboard),
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
             "widgets": {}
         }
         
@@ -624,7 +624,7 @@ class DashboardDataCollector:
         os.makedirs(self.config.export_path, exist_ok=True)
         
         # Generate filename
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"{dashboard_id}_{timestamp}.{format}"
         filepath = os.path.join(self.config.export_path, filename)
         
@@ -645,7 +645,7 @@ class DashboardDataCollector:
     
     def get_system_overview(self) -> Dict[str, Any]:
         """Get system overview data for quick status check"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         
         # Key metrics for overview
         key_metrics = [

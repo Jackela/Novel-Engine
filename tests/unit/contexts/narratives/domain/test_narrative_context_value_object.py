@@ -23,12 +23,16 @@ from contexts.narratives.domain.value_objects.narrative_context import (
 class TestContextScopeEnum:
     """Test suite for ContextScope enum."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_all_scope_levels_exist(self):
         """Test that all expected scope levels are defined."""
         expected_scopes = {"GLOBAL", "ARC", "CHAPTER", "SCENE", "MOMENT"}
         actual_scopes = {item.name for item in ContextScope}
         assert actual_scopes == expected_scopes
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_scope_string_values(self):
         """Test that scope enum values have correct string representations."""
         assert ContextScope.GLOBAL.value == "global"
@@ -37,6 +41,7 @@ class TestContextScopeEnum:
         assert ContextScope.SCENE.value == "scene"
         assert ContextScope.MOMENT.value == "moment"
 
+    @pytest.mark.unit
     def test_scope_logical_ordering(self):
         """Test that scope levels represent logical hierarchy."""
         scope_hierarchy = {
@@ -56,11 +61,15 @@ class TestContextScopeEnum:
             scope_hierarchy[ContextScope.SCENE] > scope_hierarchy[ContextScope.MOMENT]
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_scope_uniqueness(self):
         """Test that all scope values are unique."""
         values = [item.value for item in ContextScope]
         assert len(values) == len(set(values))
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_scope_membership(self):
         """Test scope membership operations."""
         assert ContextScope.GLOBAL in ContextScope
@@ -71,6 +80,7 @@ class TestContextScopeEnum:
 class TestContextTypeEnum:
     """Test suite for ContextType enum."""
 
+    @pytest.mark.unit
     def test_all_context_types_exist(self):
         """Test that all expected context types are defined."""
         expected_types = {
@@ -90,6 +100,7 @@ class TestContextTypeEnum:
         actual_types = {item.name for item in ContextType}
         assert actual_types == expected_types
 
+    @pytest.mark.unit
     def test_context_type_string_values(self):
         """Test that context type enum values have correct string representations."""
         assert ContextType.SETTING.value == "setting"
@@ -105,11 +116,15 @@ class TestContextTypeEnum:
         assert ContextType.INTERPERSONAL.value == "interpersonal"
         assert ContextType.ENVIRONMENTAL.value == "environmental"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_context_type_uniqueness(self):
         """Test that all context type values are unique."""
         values = [item.value for item in ContextType]
         assert len(values) == len(set(values))
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_context_type_membership(self):
         """Test context type membership operations."""
         assert ContextType.SETTING in ContextType
@@ -120,6 +135,7 @@ class TestContextTypeEnum:
 class TestNarrativeContextCreation:
     """Test suite for NarrativeContext creation and initialization."""
 
+    @pytest.mark.unit
     def test_create_minimal_narrative_context(self):
         """Test creating narrative context with minimal required fields."""
         context = NarrativeContext(
@@ -139,6 +155,7 @@ class TestNarrativeContextCreation:
             == "The formal throne room where important court business is conducted"
         )
 
+    @pytest.mark.unit
     def test_create_comprehensive_narrative_context(self):
         """Test creating narrative context with all fields specified."""
         char_id1 = uuid4()
@@ -274,6 +291,7 @@ class TestNarrativeContextCreation:
         assert context.creation_timestamp == creation_time
         assert context.metadata["inspiration"] == "Real historical events"
 
+    @pytest.mark.unit
     def test_default_values_initialization(self):
         """Test that default values are properly initialized."""
         context = NarrativeContext(
@@ -322,6 +340,7 @@ class TestNarrativeContextCreation:
         assert context.creation_timestamp is not None
         assert isinstance(context.creation_timestamp, datetime)
 
+    @pytest.mark.unit
     def test_frozen_dataclass_immutability(self):
         """Test that NarrativeContext is immutable (frozen dataclass)."""
         context = NarrativeContext(
@@ -346,6 +365,7 @@ class TestNarrativeContextCreation:
 class TestNarrativeContextValidation:
     """Test suite for NarrativeContext validation logic."""
 
+    @pytest.mark.unit
     def test_empty_context_id_validation(self):
         """Test validation fails with empty context ID."""
         with pytest.raises(ValueError, match="Context ID cannot be empty"):
@@ -357,6 +377,7 @@ class TestNarrativeContextValidation:
                 description="Valid description",
             )
 
+    @pytest.mark.unit
     def test_whitespace_only_context_id_validation(self):
         """Test validation fails with whitespace-only context ID."""
         with pytest.raises(ValueError, match="Context ID cannot be empty"):
@@ -368,6 +389,7 @@ class TestNarrativeContextValidation:
                 description="Valid description",
             )
 
+    @pytest.mark.unit
     def test_empty_name_validation(self):
         """Test validation fails with empty name."""
         with pytest.raises(ValueError, match="Context name cannot be empty"):
@@ -379,6 +401,7 @@ class TestNarrativeContextValidation:
                 description="Valid description",
             )
 
+    @pytest.mark.unit
     def test_whitespace_only_name_validation(self):
         """Test validation fails with whitespace-only name."""
         with pytest.raises(ValueError, match="Context name cannot be empty"):
@@ -390,6 +413,7 @@ class TestNarrativeContextValidation:
                 description="Valid description",
             )
 
+    @pytest.mark.unit
     def test_empty_description_validation(self):
         """Test validation fails with empty description."""
         with pytest.raises(ValueError, match="Context description cannot be empty"):
@@ -401,6 +425,7 @@ class TestNarrativeContextValidation:
                 description="",
             )
 
+    @pytest.mark.unit
     def test_whitespace_only_description_validation(self):
         """Test validation fails with whitespace-only description."""
         with pytest.raises(ValueError, match="Context description cannot be empty"):
@@ -412,6 +437,7 @@ class TestNarrativeContextValidation:
                 description="   \t\n  ",
             )
 
+    @pytest.mark.unit
     def test_invalid_sequence_range_validation(self):
         """Test validation fails when from sequence is after to sequence."""
         with pytest.raises(
@@ -427,6 +453,7 @@ class TestNarrativeContextValidation:
                 applies_to_sequence=25,
             )
 
+    @pytest.mark.unit
     def test_valid_sequence_range_equal_values(self):
         """Test that equal from and to sequence values are valid."""
         context = NarrativeContext(
@@ -442,6 +469,7 @@ class TestNarrativeContextValidation:
         assert context.applies_from_sequence == 30
         assert context.applies_to_sequence == 30
 
+    @pytest.mark.unit
     def test_valid_sequence_range_proper_order(self):
         """Test that proper sequence order is valid."""
         context = NarrativeContext(
@@ -457,6 +485,7 @@ class TestNarrativeContextValidation:
         assert context.applies_from_sequence == 10
         assert context.applies_to_sequence == 20
 
+    @pytest.mark.unit
     def test_narrative_importance_below_minimum_validation(self):
         """Test validation fails with narrative importance below 1."""
         with pytest.raises(
@@ -471,6 +500,7 @@ class TestNarrativeContextValidation:
                 narrative_importance=Decimal("0.5"),
             )
 
+    @pytest.mark.unit
     def test_narrative_importance_above_maximum_validation(self):
         """Test validation fails with narrative importance above 10."""
         with pytest.raises(
@@ -485,6 +515,7 @@ class TestNarrativeContextValidation:
                 narrative_importance=Decimal("11.0"),
             )
 
+    @pytest.mark.unit
     def test_visibility_level_boundary_validation(self):
         """Test visibility level boundary validation."""
         with pytest.raises(
@@ -511,6 +542,7 @@ class TestNarrativeContextValidation:
                 visibility_level=Decimal("10.1"),
             )
 
+    @pytest.mark.unit
     def test_complexity_level_boundary_validation(self):
         """Test complexity level boundary validation."""
         with pytest.raises(
@@ -537,6 +569,7 @@ class TestNarrativeContextValidation:
                 complexity_level=Decimal("15.0"),
             )
 
+    @pytest.mark.unit
     def test_valid_decimal_boundary_values(self):
         """Test that boundary decimal values are valid."""
         context = NarrativeContext(
@@ -554,6 +587,7 @@ class TestNarrativeContextValidation:
         assert context.visibility_level == Decimal("10.0")
         assert context.complexity_level == Decimal("5.5")
 
+    @pytest.mark.unit
     def test_evolution_rate_below_minimum_validation(self):
         """Test validation fails with evolution rate below 0."""
         with pytest.raises(ValueError, match="evolution_rate must be between 0 and 1"):
@@ -566,6 +600,7 @@ class TestNarrativeContextValidation:
                 evolution_rate=Decimal("-0.1"),
             )
 
+    @pytest.mark.unit
     def test_evolution_rate_above_maximum_validation(self):
         """Test validation fails with evolution rate above 1."""
         with pytest.raises(ValueError, match="evolution_rate must be between 0 and 1"):
@@ -578,6 +613,7 @@ class TestNarrativeContextValidation:
                 evolution_rate=Decimal("1.1"),
             )
 
+    @pytest.mark.unit
     def test_stability_boundary_validation(self):
         """Test stability boundary validation."""
         with pytest.raises(ValueError, match="stability must be between 0 and 1"):
@@ -600,6 +636,7 @@ class TestNarrativeContextValidation:
                 stability=Decimal("1.5"),
             )
 
+    @pytest.mark.unit
     def test_valid_rate_boundary_values(self):
         """Test that boundary rate values (0 and 1) are valid."""
         context = NarrativeContext(
@@ -615,6 +652,7 @@ class TestNarrativeContextValidation:
         assert context.evolution_rate == Decimal("0.0")
         assert context.stability == Decimal("1.0")
 
+    @pytest.mark.unit
     def test_influence_values_below_minimum_validation(self):
         """Test validation fails with influence values below -10."""
         with pytest.raises(
@@ -629,6 +667,7 @@ class TestNarrativeContextValidation:
                 mood_influences={"fear": Decimal("-11.0")},
             )
 
+    @pytest.mark.unit
     def test_influence_values_above_maximum_validation(self):
         """Test validation fails with influence values above 10."""
         with pytest.raises(
@@ -643,6 +682,7 @@ class TestNarrativeContextValidation:
                 tension_modifiers={"conflict": Decimal("15.0")},
             )
 
+    @pytest.mark.unit
     def test_pacing_effects_boundary_validation(self):
         """Test pacing effects boundary validation."""
         with pytest.raises(
@@ -657,6 +697,7 @@ class TestNarrativeContextValidation:
                 pacing_effects={"urgency": Decimal("-12.0")},
             )
 
+    @pytest.mark.unit
     def test_valid_influence_boundary_values(self):
         """Test that boundary influence values (-10 and 10) are valid."""
         context = NarrativeContext(
@@ -675,6 +716,7 @@ class TestNarrativeContextValidation:
         assert context.tension_modifiers["magical"] == Decimal("5.0")
         assert context.pacing_effects["acceleration"] == Decimal("-8.5")
 
+    @pytest.mark.unit
     def test_string_length_validations(self):
         """Test string length constraint validations."""
         # Context ID too long
@@ -713,6 +755,7 @@ class TestNarrativeContextValidation:
                 description="x" * 2001,
             )
 
+    @pytest.mark.unit
     def test_valid_string_length_boundaries(self):
         """Test that maximum string length boundaries are valid."""
         context = NarrativeContext(
@@ -731,6 +774,8 @@ class TestNarrativeContextValidation:
 class TestNarrativeContextProperties:
     """Test suite for NarrativeContext property methods."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_sequence_range_with_from_sequence(self):
         """Test has_sequence_range returns True when from sequence is set."""
         context = NarrativeContext(
@@ -744,6 +789,8 @@ class TestNarrativeContextProperties:
 
         assert context.has_sequence_range is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_sequence_range_with_to_sequence(self):
         """Test has_sequence_range returns True when to sequence is set."""
         context = NarrativeContext(
@@ -757,6 +804,7 @@ class TestNarrativeContextProperties:
 
         assert context.has_sequence_range is True
 
+    @pytest.mark.unit
     def test_has_sequence_range_with_both_sequences(self):
         """Test has_sequence_range returns True when both sequences are set."""
         context = NarrativeContext(
@@ -771,6 +819,8 @@ class TestNarrativeContextProperties:
 
         assert context.has_sequence_range is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_sequence_range_false(self):
         """Test has_sequence_range returns False when no sequences are set."""
         context = NarrativeContext(
@@ -783,6 +833,7 @@ class TestNarrativeContextProperties:
 
         assert context.has_sequence_range is False
 
+    @pytest.mark.unit
     def test_is_temporal_context_true(self):
         """Test is_temporal_context returns True when not persistent and has sequence range."""
         context = NarrativeContext(
@@ -798,6 +849,7 @@ class TestNarrativeContextProperties:
 
         assert context.is_temporal_context is True
 
+    @pytest.mark.unit
     def test_is_temporal_context_false_persistent(self):
         """Test is_temporal_context returns False when persistent even with sequence range."""
         context = NarrativeContext(
@@ -813,6 +865,8 @@ class TestNarrativeContextProperties:
 
         assert context.is_temporal_context is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_temporal_context_false_no_range(self):
         """Test is_temporal_context returns False when no sequence range."""
         context = NarrativeContext(
@@ -826,6 +880,7 @@ class TestNarrativeContextProperties:
 
         assert context.is_temporal_context is False
 
+    @pytest.mark.unit
     def test_affects_characters_true(self):
         """Test affects_characters returns True when characters are affected."""
         char_id = uuid4()
@@ -841,6 +896,8 @@ class TestNarrativeContextProperties:
 
         assert context.affects_characters is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_affects_characters_false(self):
         """Test affects_characters returns False when no characters are affected."""
         context = NarrativeContext(
@@ -853,6 +910,7 @@ class TestNarrativeContextProperties:
 
         assert context.affects_characters is False
 
+    @pytest.mark.unit
     def test_has_hidden_information_true(self):
         """Test has_hidden_information returns True when hidden information exists."""
         context = NarrativeContext(
@@ -869,6 +927,8 @@ class TestNarrativeContextProperties:
 
         assert context.has_hidden_information is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_hidden_information_false(self):
         """Test has_hidden_information returns False when no hidden information exists."""
         context = NarrativeContext(
@@ -881,6 +941,7 @@ class TestNarrativeContextProperties:
 
         assert context.has_hidden_information is False
 
+    @pytest.mark.unit
     def test_has_narrative_constraints_true(self):
         """Test has_narrative_constraints returns True when constraints exist."""
         context = NarrativeContext(
@@ -897,6 +958,8 @@ class TestNarrativeContextProperties:
 
         assert context.has_narrative_constraints is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_narrative_constraints_false(self):
         """Test has_narrative_constraints returns False when no constraints exist."""
         context = NarrativeContext(
@@ -909,6 +972,8 @@ class TestNarrativeContextProperties:
 
         assert context.has_narrative_constraints is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_influences_mood_true(self):
         """Test influences_mood returns True when mood influences exist."""
         context = NarrativeContext(
@@ -922,6 +987,8 @@ class TestNarrativeContextProperties:
 
         assert context.influences_mood is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_influences_mood_false(self):
         """Test influences_mood returns False when no mood influences exist."""
         context = NarrativeContext(
@@ -934,6 +1001,8 @@ class TestNarrativeContextProperties:
 
         assert context.influences_mood is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_influences_pacing_true(self):
         """Test influences_pacing returns True when pacing effects exist."""
         context = NarrativeContext(
@@ -947,6 +1016,8 @@ class TestNarrativeContextProperties:
 
         assert context.influences_pacing is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_influences_pacing_false(self):
         """Test influences_pacing returns False when no pacing effects exist."""
         context = NarrativeContext(
@@ -959,6 +1030,8 @@ class TestNarrativeContextProperties:
 
         assert context.influences_pacing is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_prerequisites_true(self):
         """Test has_prerequisites returns True when prerequisite contexts exist."""
         context = NarrativeContext(
@@ -972,6 +1045,8 @@ class TestNarrativeContextProperties:
 
         assert context.has_prerequisites is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_prerequisites_false(self):
         """Test has_prerequisites returns False when no prerequisite contexts exist."""
         context = NarrativeContext(
@@ -984,6 +1059,8 @@ class TestNarrativeContextProperties:
 
         assert context.has_prerequisites is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_conflicts_true(self):
         """Test has_conflicts returns True when conflicting contexts exist."""
         context = NarrativeContext(
@@ -997,6 +1074,8 @@ class TestNarrativeContextProperties:
 
         assert context.has_conflicts is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_conflicts_false(self):
         """Test has_conflicts returns False when no conflicting contexts exist."""
         context = NarrativeContext(
@@ -1013,6 +1092,7 @@ class TestNarrativeContextProperties:
 class TestOverallInfluenceStrength:
     """Test suite for overall influence strength calculation."""
 
+    @pytest.mark.unit
     def test_influence_strength_base_calculation(self):
         """Test influence strength with base values only."""
         context = NarrativeContext(
@@ -1028,6 +1108,7 @@ class TestOverallInfluenceStrength:
         # Expected: (6.0 * 8.0) / 10.0 + 0 = 4.8
         assert context.overall_influence_strength == Decimal("4.8")
 
+    @pytest.mark.unit
     def test_influence_strength_with_influences(self):
         """Test influence strength with various influences."""
         context = NarrativeContext(
@@ -1055,6 +1136,7 @@ class TestOverallInfluenceStrength:
         # Total: min(10, 5.6 + 2.0) = min(10, 7.6) = 7.6
         assert context.overall_influence_strength == Decimal("7.6")
 
+    @pytest.mark.unit
     def test_influence_strength_capped_at_ten(self):
         """Test that influence strength is capped at 10."""
         context = NarrativeContext(
@@ -1078,6 +1160,7 @@ class TestOverallInfluenceStrength:
         # Total: min(10, 10.0 + 3.0) = 10.0 (capped)
         assert context.overall_influence_strength == Decimal("10.0")
 
+    @pytest.mark.unit
     def test_influence_strength_bonus_capped(self):
         """Test that influence bonus is capped at 3."""
         context = NarrativeContext(
@@ -1101,6 +1184,8 @@ class TestOverallInfluenceStrength:
 class TestContextualComplexityScore:
     """Test suite for contextual complexity score calculation."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_complexity_score_base_only(self):
         """Test complexity score with only base complexity level."""
         context = NarrativeContext(
@@ -1115,6 +1200,7 @@ class TestContextualComplexityScore:
         # Expected: 6.0 + 0 + 0 = 6.0
         assert context.contextual_complexity_score == Decimal("6.0")
 
+    @pytest.mark.unit
     def test_complexity_score_with_relationships(self):
         """Test complexity score with context relationships."""
         context = NarrativeContext(
@@ -1135,6 +1221,7 @@ class TestContextualComplexityScore:
         # Total: 4.0 + 1.8 + 0 = 5.8
         assert context.contextual_complexity_score == Decimal("5.8")
 
+    @pytest.mark.unit
     def test_complexity_score_with_information_layers(self):
         """Test complexity score with information layer complexity."""
         context = NarrativeContext(
@@ -1155,6 +1242,7 @@ class TestContextualComplexityScore:
         # Total: 5.0 + 0 + 0.9 = 5.9
         assert context.contextual_complexity_score == Decimal("5.9")
 
+    @pytest.mark.unit
     def test_complexity_score_comprehensive(self):
         """Test complexity score with all components."""
         context = NarrativeContext(
@@ -1178,6 +1266,7 @@ class TestContextualComplexityScore:
         # Total: 7.0 + 1.8 + 0.9 = 9.7
         assert context.contextual_complexity_score == Decimal("9.7")
 
+    @pytest.mark.unit
     def test_complexity_score_capped_at_ten(self):
         """Test that complexity score is capped at 10."""
         context = NarrativeContext(
@@ -1205,6 +1294,7 @@ class TestContextualComplexityScore:
 class TestNarrativeContextInstanceMethods:
     """Test suite for NarrativeContext instance methods."""
 
+    @pytest.mark.unit
     def test_applies_at_sequence_persistent_no_range(self):
         """Test applies_at_sequence for persistent context with no range."""
         context = NarrativeContext(
@@ -1221,6 +1311,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.applies_at_sequence(50) is True
         assert context.applies_at_sequence(100) is True
 
+    @pytest.mark.unit
     def test_applies_at_sequence_non_persistent_no_range(self):
         """Test applies_at_sequence for non-persistent context with no range."""
         context = NarrativeContext(
@@ -1237,6 +1328,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.applies_at_sequence(25) is False
         assert context.applies_at_sequence(100) is False
 
+    @pytest.mark.unit
     def test_applies_at_sequence_with_range(self):
         """Test applies_at_sequence with defined sequence range."""
         context = NarrativeContext(
@@ -1262,6 +1354,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.applies_at_sequence(41) is False
         assert context.applies_at_sequence(50) is False
 
+    @pytest.mark.unit
     def test_applies_at_sequence_from_only(self):
         """Test applies_at_sequence with only from sequence defined."""
         context = NarrativeContext(
@@ -1282,6 +1375,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.applies_at_sequence(50) is True
         assert context.applies_at_sequence(100) is True
 
+    @pytest.mark.unit
     def test_applies_at_sequence_to_only(self):
         """Test applies_at_sequence with only to sequence defined."""
         context = NarrativeContext(
@@ -1302,6 +1396,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.applies_at_sequence(51) is False
         assert context.applies_at_sequence(75) is False
 
+    @pytest.mark.unit
     def test_affects_character_true(self):
         """Test affects_character returns True for affected character."""
         char_id1 = uuid4()
@@ -1321,6 +1416,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.affects_character(char_id2) is True
         assert context.affects_character(char_id3) is False
 
+    @pytest.mark.unit
     def test_character_knows_context_true(self):
         """Test character_knows_context returns True for required character."""
         char_id1 = uuid4()
@@ -1340,6 +1436,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.character_knows_context(char_id2) is True
         assert context.character_knows_context(char_id3) is False
 
+    @pytest.mark.unit
     def test_get_character_reaction_existing(self):
         """Test get_character_reaction returns reaction for existing character."""
         char_id1 = uuid4()
@@ -1362,6 +1459,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.get_character_reaction(char_id2) == "worried_and_cautious"
         assert context.get_character_reaction(char_id3) is None
 
+    @pytest.mark.unit
     def test_conflicts_with_context_true(self):
         """Test conflicts_with_context returns True for conflicting context."""
         context = NarrativeContext(
@@ -1381,6 +1479,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.conflicts_with_context("celebration_mood") is True
         assert context.conflicts_with_context("war_preparation") is False
 
+    @pytest.mark.unit
     def test_reinforces_context_true(self):
         """Test reinforces_context returns True for reinforcing context."""
         context = NarrativeContext(
@@ -1400,6 +1499,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.reinforces_context("divine_mandate") is True
         assert context.reinforces_context("random_chance") is False
 
+    @pytest.mark.unit
     def test_requires_context_true(self):
         """Test requires_context returns True for prerequisite context."""
         context = NarrativeContext(
@@ -1419,6 +1519,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.requires_context("succession_crisis") is True
         assert context.requires_context("economic_boom") is False
 
+    @pytest.mark.unit
     def test_get_mood_influence_existing(self):
         """Test get_mood_influence returns correct value for existing mood."""
         context = NarrativeContext(
@@ -1438,6 +1539,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.get_mood_influence("hope") == Decimal("-2.0")
         assert context.get_mood_influence("tension") == Decimal("8.0")
 
+    @pytest.mark.unit
     def test_get_mood_influence_default(self):
         """Test get_mood_influence returns default value for non-existing mood."""
         context = NarrativeContext(
@@ -1455,6 +1557,7 @@ class TestNarrativeContextInstanceMethods:
         # Should return actual value for existing mood
         assert context.get_mood_influence("gloom") == Decimal("4.0")
 
+    @pytest.mark.unit
     def test_get_tension_modifier_existing(self):
         """Test get_tension_modifier returns correct value for existing tension type."""
         context = NarrativeContext(
@@ -1475,6 +1578,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.get_tension_modifier("mystery") == Decimal("-1.5")
         assert context.get_tension_modifier("comic") == Decimal("0")
 
+    @pytest.mark.unit
     def test_get_pacing_effect_existing(self):
         """Test get_pacing_effect returns correct value for existing pacing aspect."""
         context = NarrativeContext(
@@ -1495,6 +1599,7 @@ class TestNarrativeContextInstanceMethods:
         assert context.get_pacing_effect("action_frequency") == Decimal("4.5")
         assert context.get_pacing_effect("dialogue_focus") == Decimal("0")
 
+    @pytest.mark.unit
     def test_get_contextual_summary(self):
         """Test get_contextual_summary returns comprehensive summary dict."""
         char_id = uuid4()
@@ -1550,6 +1655,7 @@ class TestNarrativeContextInstanceMethods:
 class TestNarrativeContextStringRepresentation:
     """Test suite for NarrativeContext string representation methods."""
 
+    @pytest.mark.unit
     def test_str_representation(self):
         """Test human-readable string representation."""
         context = NarrativeContext(
@@ -1564,6 +1670,7 @@ class TestNarrativeContextStringRepresentation:
         expected = "NarrativeContext('Renaissance Period', historical, global)"
         assert str_repr == expected
 
+    @pytest.mark.unit
     def test_repr_representation(self):
         """Test developer representation for debugging."""
         context = NarrativeContext(
@@ -1583,6 +1690,7 @@ class TestNarrativeContextStringRepresentation:
         )
         assert repr_str == expected
 
+    @pytest.mark.unit
     def test_string_representations_different(self):
         """Test that str and repr provide different information."""
         context = NarrativeContext(
@@ -1608,6 +1716,7 @@ class TestNarrativeContextStringRepresentation:
 class TestNarrativeContextEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     def test_creation_with_fixed_timestamp(self):
         """Test creation with explicitly set timestamp."""
         fixed_time = datetime(2024, 9, 15, 16, 45, 30, tzinfo=timezone.utc)
@@ -1623,6 +1732,7 @@ class TestNarrativeContextEdgeCasesAndBoundaryConditions:
 
         assert context.creation_timestamp == fixed_time
 
+    @pytest.mark.unit
     def test_large_collections_handling(self):
         """Test handling of large collections."""
         many_locations = {f"location_{i}" for i in range(100)}
@@ -1696,6 +1806,7 @@ class TestNarrativeContextEdgeCasesAndBoundaryConditions:
         assert context.has_prerequisites is True
         assert context.has_conflicts is True
 
+    @pytest.mark.unit
     def test_decimal_precision_handling(self):
         """Test handling of decimal precision for influence and score values."""
         context = NarrativeContext(
@@ -1730,6 +1841,7 @@ class TestNarrativeContextEdgeCasesAndBoundaryConditions:
         assert isinstance(influence_score, Decimal)
         assert isinstance(complexity_score, Decimal)
 
+    @pytest.mark.unit
     def test_unicode_text_handling(self):
         """Test handling of unicode characters in text fields."""
         context = NarrativeContext(
@@ -1754,6 +1866,7 @@ class TestNarrativeContextEdgeCasesAndBoundaryConditions:
         assert "多文化研究" in context.source_material
         assert "📚" in context.research_notes
 
+    @pytest.mark.unit
     def test_complex_metadata_handling(self):
         """Test handling of complex metadata structures."""
         complex_metadata = {
@@ -1811,6 +1924,7 @@ class TestNarrativeContextEdgeCasesAndBoundaryConditions:
 class TestNarrativeContextCollectionsAndComparison:
     """Test suite for NarrativeContext behavior in collections and comparisons."""
 
+    @pytest.mark.unit
     def test_contexts_in_list(self):
         """Test NarrativeContext objects in list operations."""
         context1 = NarrativeContext(
@@ -1835,6 +1949,7 @@ class TestNarrativeContextCollectionsAndComparison:
         assert context1 in context_list
         assert context2 in context_list
 
+    @pytest.mark.unit
     def test_contexts_sorting_by_influence_strength(self):
         """Test sorting NarrativeContext objects by overall influence strength."""
         contexts = [
@@ -1878,6 +1993,7 @@ class TestNarrativeContextCollectionsAndComparison:
             >= sorted_contexts[3].overall_influence_strength
         )
 
+    @pytest.mark.unit
     def test_context_equality_identity(self):
         """Test that identical NarrativeContext objects are considered equal."""
         context1 = NarrativeContext(
@@ -1901,6 +2017,7 @@ class TestNarrativeContextCollectionsAndComparison:
         # But they should be different objects
         assert context1 is not context2
 
+    @pytest.mark.unit
     def test_context_inequality(self):
         """Test that different NarrativeContext objects are not equal."""
         context1 = NarrativeContext(
@@ -1922,6 +2039,7 @@ class TestNarrativeContextCollectionsAndComparison:
         assert context1 != context2
         assert not (context1 == context2)
 
+    @pytest.mark.unit
     def test_context_hashing_consistency(self):
         """Test that equal NarrativeContext objects have same hash."""
         context1 = NarrativeContext(
@@ -1944,6 +2062,7 @@ class TestNarrativeContextCollectionsAndComparison:
         assert context1 == context2
         assert hash(context1) == hash(context2)
 
+    @pytest.mark.unit
     def test_contexts_in_set(self):
         """Test NarrativeContext objects in set operations."""
         context1 = NarrativeContext(
@@ -1979,6 +2098,7 @@ class TestNarrativeContextCollectionsAndComparison:
         assert context2 in context_set
         assert context1_duplicate in context_set  # Should find context1
 
+    @pytest.mark.unit
     def test_contexts_as_dict_keys(self):
         """Test using NarrativeContext objects as dictionary keys."""
         context1 = NarrativeContext(

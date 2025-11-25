@@ -1,4 +1,4 @@
-name: Tests
+name: CI Pipeline with Quality Gates
 
 on:
   push:
@@ -9,10 +9,237 @@ on:
 
 env:
   PYTHON_VERSION: '3.11'
+  MIN_PYRAMID_SCORE: '7.0'  # Minimum acceptable test pyramid score
 
 jobs:
-  tests:
+  # Quality Gates - Test Pyramid Validation
+  test-pyramid-check:
+    name: Test Pyramid Quality Gate
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio
+
+      - name: Run test pyramid monitor
+        id: pyramid
+        run: |
+          python scripts/testing/test-pyramid-monitor-fast.py --format json --save-history > pyramid-report.json
+          echo "Pyramid check completed"
+
+      - name: Check pyramid score
+        run: |
+          SCORE=$(python -c "import json; print(json.load(open('pyramid-report.json'))['score'])")
+          echo "Test Pyramid Score: $SCORE"
+
+          if (( $(echo "$SCORE < $MIN_PYRAMID_SCORE" | bc -l) )); then
+            echo "::error::Test pyramid score ($SCORE) is below minimum threshold ($MIN_PYRAMID_SCORE)"
+            echo "::error::Please improve test distribution to match the pyramid (70% unit, 20% integration, 10% e2e)"
+            exit 1
+          else
+            echo "::notice::Test pyramid score: $SCORE (threshold: $MIN_PYRAMID_SCORE)"
+          fi
+
+      - name: Upload pyramid report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-pyramid-report
+          path: |
+            pyramid-report.json
+            .pyramid-history/
+
+      - name: Comment PR with pyramid score
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('pyramid-report.json', 'utf8'));
+
+            const emoji = report.score >= parseFloat(process.env.MIN_PYRAMID_SCORE) ? '✅' : '❌';
+            const status = report.score >= parseFloat(process.env.MIN_PYRAMID_SCORE) ? 'PASS' : 'FAIL';
+
+            const body = `
+            ## ${emoji} Test Pyramid Quality Gate - ${status}
+
+            **Score:** ${report.score.toFixed(1)}/10.0 (Threshold: ${process.env.MIN_PYRAMID_SCORE})
+
+            | Type | Count | Percentage | Target | Delta |
+            |------|-------|------------|--------|-------|
+            | Unit | ${report.distribution.unit.count} | ${report.distribution.unit.percentage.toFixed(1)}% | ${report.distribution.unit.target}% | ${report.distribution.unit.delta > 0 ? '+' : ''}${report.distribution.unit.delta.toFixed(1)}% |
+            | Integration | ${report.distribution.integration.count} | ${report.distribution.integration.percentage.toFixed(1)}% | ${report.distribution.integration.target}% | ${report.distribution.integration.delta > 0 ? '+' : ''}${report.distribution.integration.delta.toFixed(1)}% |
+            | E2E | ${report.distribution.e2e.count} | ${report.distribution.e2e.percentage.toFixed(1)}% | ${report.distribution.e2e.target}% | ${report.distribution.e2e.delta > 0 ? '+' : ''}${report.distribution.e2e.delta.toFixed(1)}% |
+
+            **Total Tests:** ${report.total_tests}
+            ${report.missing_markers > 0 ? `\n⚠️ **Missing Markers:** ${report.missing_markers} tests need classification\n` : ''}
+
+            <details>
+            <summary>Recommendations</summary>
+
+            ${report.recommendations.map(r => `- ${r}`).join('\n')}
+
+            </details>
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # Validate test markers
+  validate-markers:
+    name: Validate Test Markers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changed files detection
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Validate all test markers
+        run: |
+          python scripts/testing/validate-test-markers.py --all --verbose
+
+  # Unit Tests - Fast, isolated tests
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [test-pyramid-check, validate-markers]
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements/requirements-test.txt
+          pip install -e .
+
+      - name: Export PYTHONPATH
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+
+      - name: Run unit tests
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
+          pytest -m "unit" --tb=short --durations=10 --junitxml=reports/unit-tests.xml
+
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: reports/unit-tests.xml
+
+  # Integration Tests - Tests with external dependencies
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test-pyramid-check, validate-markers]
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements/requirements-test.txt
+          pip install -e .
+
+      - name: Export PYTHONPATH
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+
+      - name: Run integration tests
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
+          pytest -m "integration" --tb=short --durations=10 --junitxml=reports/integration-tests.xml
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: reports/integration-tests.xml
+
+  # E2E Tests - End-to-end workflow tests
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [test-pyramid-check, validate-markers]
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements/requirements-test.txt
+          pip install -e .
+
+      - name: Export PYTHONPATH
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+
+      - name: Run E2E tests
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
+          pytest -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
+
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: reports/e2e-tests.xml
+
+  # Smoke Tests - Quick sanity checks
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [validate-markers]
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
     steps:
@@ -44,15 +271,74 @@ jobs:
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
           unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
-          echo "PYTHONPATH=$PYTHONPATH"
-          echo "PYTEST_DISABLE_PLUGIN_AUTOLOAD=${PYTEST_DISABLE_PLUGIN_AUTOLOAD:-<unset>}"
-          python -c "import sys; print('sys.path head:', sys.path[:3])"
-          python -c "import importlib; mod = importlib.import_module('src.shared_types'); print('CharacterData?', hasattr(mod, 'CharacterData'))"
-          pytest -p pytest_asyncio -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py
+          pytest -p pytest_asyncio -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py --junitxml=reports/smoke-tests.xml
 
-      - name: Upload JUnit report
-        if: ${{ always() && env.ACT != 'true' }}
+      - name: Upload smoke test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: junit-report
-          path: reports/test-results/pytest-report.xml
+          name: smoke-test-results
+          path: reports/smoke-tests.xml
+
+  # Speed Regression Detection
+  speed-regression:
+    name: Speed Regression Check
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need history for comparison
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements/requirements-test.txt
+          pip install -e .
+
+      - name: Run speed report
+        run: |
+          python scripts/testing/test-speed-report.py --format json > speed-report.json
+          cat speed-report.json
+
+      - name: Check for slow tests
+        run: |
+          SLOW_COUNT=$(python -c "import json; data=json.load(open('speed-report.json')); print(data.get('slow_tests', {}).get('count', 0))")
+          echo "Found $SLOW_COUNT slow tests (>1000ms)"
+
+          if [ "$SLOW_COUNT" -gt 10 ]; then
+            echo "::warning::Found $SLOW_COUNT slow tests. Consider optimization or reclassification."
+          fi
+
+      - name: Upload speed report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: speed-report
+          path: speed-report.json
+
+  # Final status check
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [test-pyramid-check, unit-tests, integration-tests, e2e-tests, smoke-tests]
+    if: always()
+    steps:
+      - name: Check all jobs status
+        run: |
+          if [ "${{ needs.test-pyramid-check.result }}" != "success" ] || \
+             [ "${{ needs.unit-tests.result }}" != "success" ] || \
+             [ "${{ needs.integration-tests.result }}" != "success" ] || \
+             [ "${{ needs.e2e-tests.result }}" != "success" ] || \
+             [ "${{ needs.smoke-tests.result }}" != "success" ]; then
+            echo "::error::One or more CI jobs failed"
+            exit 1
+          fi
+          echo "::notice::All CI checks passed successfully!"

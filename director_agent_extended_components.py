@@ -6,7 +6,7 @@ import asyncio
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Type
 
@@ -51,7 +51,7 @@ class CampaignLoggingService:
             raise RuntimeError("CampaignLoggingService not initialized")
         metadata = metadata or {}
         entry = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "message": message,
             "metadata": metadata,
         }

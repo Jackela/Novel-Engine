@@ -97,6 +97,7 @@ def create_test_world_state():
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_persona_agent_initialization():
     """Test PersonaAgent initialization."""
     print("🔄 Testing PersonaAgent initialization...")
@@ -132,6 +133,7 @@ async def test_persona_agent_initialization():
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_decision_making():
     """Test decision making functionality."""
     print("🔄 Testing decision making...")
@@ -175,6 +177,7 @@ async def test_decision_making():
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_response_generation():
     """Test response generation functionality."""
     print("🔄 Testing response generation...")
@@ -201,6 +204,7 @@ async def test_response_generation():
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_world_event_processing():
     """Test world event processing."""
     print("🔄 Testing world event processing...")
@@ -237,6 +241,7 @@ async def test_world_event_processing():
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_data_access_methods():
     """Test data access methods."""
     print("🔄 Testing data access methods...")
@@ -275,6 +280,7 @@ async def test_data_access_methods():
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_integration_statistics():
     """Test integration statistics."""
     print("🔄 Testing integration statistics...")
@@ -320,6 +326,7 @@ async def test_integration_statistics():
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_factory_function():
     """Test factory function."""
     print("🔄 Testing factory function...")
@@ -345,6 +352,7 @@ async def test_factory_function():
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_backward_compatibility():
     """Test backward compatibility features."""
     print("🔄 Testing backward compatibility...")
@@ -374,6 +382,7 @@ async def test_backward_compatibility():
 
 
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_error_handling():
     """Test error handling and recovery."""
     print("🔄 Testing error handling...")
@@ -454,5 +463,5 @@ async def run_comprehensive_test():
 
 if __name__ == "__main__":
     # Run the comprehensive test
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     success_rate = loop.run_until_complete(run_comprehensive_test())

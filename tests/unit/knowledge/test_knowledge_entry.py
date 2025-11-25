@@ -60,6 +60,7 @@ class TestKnowledgeEntryUpdateContent:
             created_by="user-001",
         )
 
+    @pytest.mark.unit
     def test_update_content_success(self, sample_knowledge_entry):
         """Test successful content update returns domain event."""
         # Arrange
@@ -78,6 +79,7 @@ class TestKnowledgeEntryUpdateContent:
         assert event.updated_by == updated_by
         assert event.timestamp == sample_knowledge_entry.updated_at
 
+    @pytest.mark.unit
     def test_update_content_empty_string_raises_error(self, sample_knowledge_entry):
         """Test that empty content raises ValueError."""
         # Arrange
@@ -88,6 +90,7 @@ class TestKnowledgeEntryUpdateContent:
         with pytest.raises(ValueError, match="Content cannot be empty"):
             sample_knowledge_entry.update_content(empty_content, updated_by)
 
+    @pytest.mark.unit
     def test_update_content_whitespace_only_raises_error(self, sample_knowledge_entry):
         """Test that whitespace-only content raises ValueError."""
         # Arrange
@@ -98,6 +101,7 @@ class TestKnowledgeEntryUpdateContent:
         with pytest.raises(ValueError, match="Content cannot be empty"):
             sample_knowledge_entry.update_content(whitespace_content, updated_by)
 
+    @pytest.mark.unit
     def test_update_content_preserves_immutable_fields(self, sample_knowledge_entry):
         """Test that update_content does not modify immutable fields."""
         # Arrange
@@ -117,6 +121,8 @@ class TestKnowledgeEntryUpdateContent:
         assert sample_knowledge_entry.created_by == original_created_by
         assert sample_knowledge_entry.knowledge_type == original_knowledge_type
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_update_content_timestamp_is_utc(self, sample_knowledge_entry):
         """Test that updated_at timestamp uses UTC timezone."""
         # Arrange
@@ -130,6 +136,8 @@ class TestKnowledgeEntryUpdateContent:
         assert sample_knowledge_entry.updated_at.tzinfo == timezone.utc
         assert event.timestamp.tzinfo == timezone.utc
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_update_content_multiple_times(self, sample_knowledge_entry):
         """Test multiple consecutive content updates."""
         # Arrange
@@ -169,6 +177,7 @@ class TestKnowledgeEntryContentValidation:
             "created_by": "user-001",
         }
 
+    @pytest.mark.unit
     def test_create_entry_with_empty_content_raises_error(self, sample_entry_data):
         """Test that creating entry with empty content raises ValueError."""
         # Arrange
@@ -178,6 +187,8 @@ class TestKnowledgeEntryContentValidation:
         with pytest.raises(ValueError, match="Content cannot be empty"):
             KnowledgeEntry(**sample_entry_data)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_entry_with_valid_content_succeeds(self, sample_entry_data):
         """Test successful creation with valid content."""
         # Act
@@ -187,6 +198,7 @@ class TestKnowledgeEntryContentValidation:
         assert entry.content == sample_entry_data["content"]
         assert entry.id == sample_entry_data["id"]
 
+    @pytest.mark.unit
     def test_knowledge_type_is_immutable(self, sample_entry_data):
         """Test that knowledge_type cannot be changed after creation."""
         # Arrange
@@ -197,6 +209,7 @@ class TestKnowledgeEntryContentValidation:
         with pytest.raises(AttributeError):
             entry.knowledge_type = KnowledgeType.OBJECTIVE
 
+    @pytest.mark.unit
     def test_created_at_is_immutable(self, sample_entry_data):
         """Test that created_at cannot be changed after creation."""
         # Arrange
@@ -207,6 +220,7 @@ class TestKnowledgeEntryContentValidation:
         with pytest.raises(AttributeError):
             entry.created_at = new_timestamp
 
+    @pytest.mark.unit
     def test_id_is_immutable(self, sample_entry_data):
         """Test that entry ID cannot be changed after creation."""
         # Arrange
@@ -278,6 +292,7 @@ class TestKnowledgeEntryIsAccessibleBy:
             created_by="user-001",
         )
 
+    @pytest.mark.unit
     def test_public_entry_accessible_by_all_agents(self, public_entry):
         """Test that PUBLIC entry is accessible by all agents."""
         # Arrange
@@ -290,6 +305,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         assert public_entry.is_accessible_by(agent2) is True
         assert public_entry.is_accessible_by(agent3) is True
 
+    @pytest.mark.unit
     def test_role_based_entry_accessible_by_agents_with_matching_role(
         self, role_based_entry
     ):
@@ -308,6 +324,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         assert role_based_entry.is_accessible_by(agent_with_medical) is True
         assert role_based_entry.is_accessible_by(agent_with_both) is True
 
+    @pytest.mark.unit
     def test_role_based_entry_not_accessible_by_agents_without_matching_role(
         self, role_based_entry
     ):
@@ -324,6 +341,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         assert role_based_entry.is_accessible_by(agent_wrong_role) is False
         assert role_based_entry.is_accessible_by(agent_other_roles) is False
 
+    @pytest.mark.unit
     def test_character_specific_entry_accessible_by_allowed_characters(
         self, character_specific_entry
     ):
@@ -336,6 +354,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         assert character_specific_entry.is_accessible_by(agent_char_001) is True
         assert character_specific_entry.is_accessible_by(agent_char_002) is True
 
+    @pytest.mark.unit
     def test_character_specific_entry_not_accessible_by_other_characters(
         self, character_specific_entry
     ):
@@ -348,6 +367,7 @@ class TestKnowledgeEntryIsAccessibleBy:
         assert character_specific_entry.is_accessible_by(agent_char_003) is False
         assert character_specific_entry.is_accessible_by(agent_char_004) is False
 
+    @pytest.mark.unit
     def test_is_accessible_by_delegates_to_access_control_rule(self):
         """Test that is_accessible_by delegates to AccessControlRule.permits."""
         if KnowledgeEntry is None:

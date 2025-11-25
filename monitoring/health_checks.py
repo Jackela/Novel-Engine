@@ -14,7 +14,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
@@ -95,7 +95,7 @@ class HealthCheckManager:
                 status=HealthStatus.UNKNOWN,
                 message=f"Health check '{name}' not found",
                 duration_ms=0,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 error="Check not found"
             )
         
@@ -106,7 +106,7 @@ class HealthCheckManager:
                 status=HealthStatus.UNKNOWN,
                 message="Health check disabled",
                 duration_ms=0,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
         
         start_time = time.time()
@@ -138,7 +138,7 @@ class HealthCheckManager:
                 status=status,
                 message=message,
                 duration_ms=duration_ms,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 details=details
             )
             
@@ -149,7 +149,7 @@ class HealthCheckManager:
                 status=HealthStatus.UNHEALTHY,
                 message=f"Health check timed out after {check.timeout_seconds}s",
                 duration_ms=duration_ms,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 error="Timeout"
             )
             
@@ -160,7 +160,7 @@ class HealthCheckManager:
                 status=HealthStatus.UNHEALTHY,
                 message=f"Health check failed: {str(e)}",
                 duration_ms=duration_ms,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 error=str(e)
             )
         
@@ -191,7 +191,7 @@ class HealthCheckManager:
                         status=HealthStatus.UNHEALTHY,
                         message=f"Health check error: {str(result)}",
                         duration_ms=0,
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(timezone.utc),
                         error=str(result)
                     ))
                 else:
@@ -209,7 +209,7 @@ class HealthCheckManager:
         
         return SystemHealth(
             status=overall_status,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             uptime_seconds=uptime_seconds,
             checks=results,
             summary=summary
@@ -505,12 +505,12 @@ def create_health_endpoint(app: FastAPI):
     @app.get("/health")
     async def health_check():
         """Simple health check endpoint"""
-        return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+        return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
     
     @app.get("/health/live")
     async def liveness_probe():
         """Kubernetes liveness probe endpoint"""
-        return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
+        return {"status": "alive", "timestamp": datetime.now(timezone.utc).isoformat()}
     
     @app.get("/health/ready")
     async def readiness_probe():
@@ -715,7 +715,7 @@ class HttpSyntheticCheck(SyntheticCheck):
                     message = f"HTTP {self.method} {self.url} returned {response.status}"
                     
                     return CheckResult(
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(timezone.utc),
                         success=success,
                         duration_ms=duration_ms,
                         message=message,
@@ -726,7 +726,7 @@ class HttpSyntheticCheck(SyntheticCheck):
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
             return CheckResult(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 success=False,
                 duration_ms=duration_ms,
                 message=f"HTTP check failed: {str(e)}",

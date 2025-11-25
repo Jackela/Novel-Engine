@@ -76,6 +76,7 @@ class TestAgentContext:
             ),
         ]
 
+    @pytest.mark.unit
     def test_to_llm_prompt_text_formats_knowledge_entries_correctly(
         self, sample_agent, sample_entries
     ):
@@ -101,6 +102,7 @@ class TestAgentContext:
         assert "repair the station's life support system" in prompt
         assert "Andromeda sector" in prompt
 
+    @pytest.mark.unit
     def test_to_llm_prompt_text_groups_by_knowledge_type(
         self, sample_agent, sample_entries
     ):
@@ -125,6 +127,7 @@ class TestAgentContext:
 
         assert profile_index < objective_index < lore_index
 
+    @pytest.mark.unit
     def test_to_llm_prompt_text_empty_context_returns_minimal_prompt(
         self, sample_agent
     ):
@@ -141,6 +144,7 @@ class TestAgentContext:
         assert "Agent: char-001" in prompt
         assert "No knowledge available" in prompt
 
+    @pytest.mark.unit
     def test_to_llm_prompt_text_includes_agent_identity(
         self, sample_agent, sample_entries
     ):
@@ -160,6 +164,7 @@ class TestAgentContext:
         for role in sample_agent.roles:
             assert role in prompt
 
+    @pytest.mark.unit
     def test_to_llm_prompt_text_preserves_entry_order_within_type(self, sample_agent):
         """Test that entries maintain order within their knowledge type group."""
         now = datetime.now(timezone.utc)

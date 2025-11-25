@@ -1,0 +1,20 @@
+{
+  "timestamp": "2025-11-25T12:26:01.509957",
+  "score": 2.235494880546074,
+  "total_tests": 2930,
+  "distribution": {
+    "unit": {
+      "count": 2365,
+      "percentage": 80.71672354948805
+    },
+    "integration": {
+      "count": 11,
+      "percentage": 0.37542662116040953
+    },
+    "e2e": {
+      "count": 5,
+      "percentage": 0.17064846416382254
+    }
+  },
+  "missing_markers": 549
+}

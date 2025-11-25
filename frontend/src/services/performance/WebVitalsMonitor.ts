@@ -119,10 +119,13 @@ export class WebVitalsMonitor implements IPerformanceMonitor {
 
   /**
    * Log metric to console (development only)
+   * Note: This console.log is intentional - it's gated by reportToConsole
+   * which defaults to DEV mode only. Used for developer debugging of Web Vitals.
    */
   private logToConsole(metric: PerformanceMetric): void {
     const emoji = metric.rating === 'good' ? '✅' : metric.rating === 'needs-improvement' ? '⚠️' : '❌'
 
+    // Development-only logging, controlled by reportToConsole flag
     console.log(
       `${emoji} [Web Vitals] ${metric.name}:`,
       {
@@ -138,16 +141,19 @@ export class WebVitalsMonitor implements IPerformanceMonitor {
    * Future: Integrate with LoggerFactory or analytics platform
    */
   private sendToAnalytics(metric: PerformanceMetric): void {
-    if (!this.options.reportToAnalytics) {
+    if (!this.reportToAnalytics) {
       return
     }
 
-    // Placeholder hook for future integration
-    console.debug('[Web Vitals][analytics]', {
-      metric: metric.name,
-      value: metric.value,
-      rating: metric.rating,
-    })
+    // TODO: Replace with proper analytics integration (e.g., LoggerFactory)
+    // This debug logging is temporary until analytics service is integrated
+    if (import.meta.env.DEV) {
+      console.debug('[Web Vitals][analytics]', {
+        metric: metric.name,
+        value: metric.value,
+        rating: metric.rating,
+      })
+    }
   }
 }
 

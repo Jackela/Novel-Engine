@@ -214,6 +214,10 @@ export const usePerformanceOptimizer = () => {
     if (document.documentElement) {
       document.documentElement.style.setProperty('--react-concurrent', 'enabled');
     }
+    // Intentionally excluding `determineOptimizationLevel` from deps:
+    // - This function is stable (only depends on thresholds which is memoized)
+    // - Including it would not change behavior since thresholds never change
+    // - The function is called within setOptimizationState callback, not as a direct dependency
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generateRecommendations]);
 

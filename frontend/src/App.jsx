@@ -5,7 +5,7 @@ import CharacterSelection from './components/CharacterSelection.jsx';
 import CharacterCreation from './components/CharacterCreation.jsx';
 import TestCharacterSelection from './components/TestCharacterSelection.jsx';
 import SimpleCharacterSelection from './components/SimpleCharacterSelection.jsx';
-import EmergentDashboard from './components/EmergentDashboard';
+import Dashboard from './components/dashboard/Dashboard';
 import './styles/design-system.css';
 import './App.css';
 
@@ -166,7 +166,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<EmergentDashboard />} />
+        <Route path="/" element={<Dashboard />} />
         <Route path="/home-old" element={<Home />} />
         <Route path="/character-selection" element={<SimpleCharacterSelection />} />
         <Route path="/character-creation" element={<CharacterCreation />} />

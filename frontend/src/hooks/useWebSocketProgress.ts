@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { logger } from '../services/logging/LoggerFactory';
 
 export interface ProgressUpdate {
   generation_id: string;
@@ -207,6 +208,12 @@ export function useWebSocketProgress({
       }));
       onError?.(connectionError);
     }
+    // Intentionally excluding `state.lastHeartbeat` and `connect` from deps:
+    // - state.lastHeartbeat: Used only for latency calculation inside onmessage handler,
+    //   and reading the stale value is acceptable since we update it immediately after
+    // - connect: Would cause infinite reconnection loop since connect is called within
+    //   the onclose handler for reconnection logic
+    // - startHeartbeatMonitoring: Called inside onopen but doesn't need to trigger reconnect
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generationId, enabled, onUpdate, onError, onConnect, onDisconnect, state.connectionAttempts]);
 

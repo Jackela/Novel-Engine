@@ -56,7 +56,8 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
     // Report to callback
     onMetric?.(metric)
 
-    // Log to console in development
+    // Development-only logging for performance debugging
+    // This console.log is intentional and gated by DEV mode check
     if (import.meta.env.DEV) {
       console.log(`[Performance] ${metric.name}:`, {
         value: metric.value,
@@ -145,6 +146,11 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
     if (shouldTrackWebVitals) {
       trackWebVitals()
     }
+    // Intentionally excluding trackWebVitals from deps:
+    // - trackWebVitals is a stable function that only needs to run once on mount
+    // - Including it would cause the web vitals listeners to be registered multiple times
+    // - The function captures onMetric and reportToAnalytics via closure, which is correct
+    //   since we want the initial configuration to persist
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldTrackWebVitals])
 

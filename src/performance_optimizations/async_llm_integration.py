@@ -498,7 +498,7 @@ def call_llm_async_wrapper(
     async optimizations while maintaining the same interface.
     """
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         if loop.is_running():
             # If in async context, create task
             task = loop.create_task(

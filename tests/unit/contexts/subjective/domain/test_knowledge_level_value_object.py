@@ -22,6 +22,7 @@ from contexts.subjective.domain.value_objects.knowledge_level import (
 class TestKnowledgeItemCreation:
     """Test suite for KnowledgeItem value object creation and validation."""
 
+    @pytest.mark.unit
     def test_minimal_knowledge_item_creation(self):
         """Test creating knowledge item with minimal required fields."""
         acquired_time = datetime.now()
@@ -44,6 +45,7 @@ class TestKnowledgeItemCreation:
         assert item.expires_at is None
         assert item.tags == set()
 
+    @pytest.mark.unit
     def test_full_knowledge_item_creation(self):
         """Test creating knowledge item with all fields populated."""
         acquired_time = datetime.now()
@@ -70,6 +72,7 @@ class TestKnowledgeItemCreation:
         assert item.expires_at == expires_time
         assert item.tags == tags
 
+    @pytest.mark.unit
     def test_tags_none_initialization(self):
         """Test that None tags are properly initialized to empty set."""
         acquired_time = datetime.now()
@@ -87,6 +90,7 @@ class TestKnowledgeItemCreation:
         assert isinstance(item.tags, set)
         assert item.tags == set()
 
+    @pytest.mark.unit
     def test_tags_list_conversion(self):
         """Test that tag lists are converted to sets."""
         acquired_time = datetime.now()
@@ -109,6 +113,7 @@ class TestKnowledgeItemCreation:
 class TestKnowledgeItemValidation:
     """Test suite for KnowledgeItem validation logic."""
 
+    @pytest.mark.unit
     def test_empty_subject_validation(self):
         """Test validation fails with empty subject."""
         acquired_time = datetime.now()
@@ -123,6 +128,7 @@ class TestKnowledgeItemValidation:
                 acquired_at=acquired_time,
             )
 
+    @pytest.mark.unit
     def test_whitespace_subject_validation(self):
         """Test validation fails with whitespace-only subject."""
         acquired_time = datetime.now()
@@ -137,6 +143,7 @@ class TestKnowledgeItemValidation:
                 acquired_at=acquired_time,
             )
 
+    @pytest.mark.unit
     def test_empty_information_validation(self):
         """Test validation fails with empty information."""
         acquired_time = datetime.now()
@@ -151,6 +158,7 @@ class TestKnowledgeItemValidation:
                 acquired_at=acquired_time,
             )
 
+    @pytest.mark.unit
     def test_whitespace_information_validation(self):
         """Test validation fails with whitespace-only information."""
         acquired_time = datetime.now()
@@ -165,6 +173,7 @@ class TestKnowledgeItemValidation:
                 acquired_at=acquired_time,
             )
 
+    @pytest.mark.unit
     def test_expiration_before_acquisition_validation(self):
         """Test validation fails when expiration time is before acquisition time."""
         acquired_time = datetime.now()
@@ -183,6 +192,7 @@ class TestKnowledgeItemValidation:
                 expires_at=expires_time,
             )
 
+    @pytest.mark.unit
     def test_expiration_equal_to_acquisition_validation(self):
         """Test validation fails when expiration time equals acquisition time."""
         acquired_time = datetime.now()
@@ -205,6 +215,7 @@ class TestKnowledgeItemValidation:
 class TestKnowledgeItemBusinessLogic:
     """Test suite for KnowledgeItem business logic methods."""
 
+    @pytest.mark.unit
     def test_is_current_no_expiration(self):
         """Test that knowledge without expiration is always current."""
         acquired_time = datetime.now()
@@ -223,6 +234,7 @@ class TestKnowledgeItemBusinessLogic:
         assert item.is_current()
         assert item.is_current(datetime.now() + timedelta(days=365))
 
+    @pytest.mark.unit
     def test_is_current_before_expiration(self):
         """Test that knowledge is current before expiration time."""
         acquired_time = datetime.now()
@@ -242,6 +254,7 @@ class TestKnowledgeItemBusinessLogic:
         check_time = expires_time - timedelta(minutes=30)
         assert item.is_current(check_time)
 
+    @pytest.mark.unit
     def test_is_current_after_expiration(self):
         """Test that knowledge is not current after expiration time."""
         acquired_time = datetime.now()
@@ -261,6 +274,7 @@ class TestKnowledgeItemBusinessLogic:
         check_time = expires_time + timedelta(minutes=1)
         assert not item.is_current(check_time)
 
+    @pytest.mark.unit
     def test_is_current_default_time(self):
         """Test is_current uses current time when no time provided."""
         acquired_time = datetime.now()
@@ -279,6 +293,7 @@ class TestKnowledgeItemBusinessLogic:
         # Should be current now
         assert item.is_current()
 
+    @pytest.mark.unit
     def test_get_reliability_score_absolute_direct(self):
         """Test reliability score for absolute certainty with direct observation."""
         acquired_time = datetime.now()
@@ -295,6 +310,7 @@ class TestKnowledgeItemBusinessLogic:
         # Absolute certainty (1.0) * Direct observation (1.0) = 1.0
         assert item.get_reliability_score() == 1.0
 
+    @pytest.mark.unit
     def test_get_reliability_score_high_certainty_ally_report(self):
         """Test reliability score for high certainty from ally report."""
         acquired_time = datetime.now()
@@ -312,6 +328,7 @@ class TestKnowledgeItemBusinessLogic:
         expected_score = 0.85 * 0.9
         assert item.get_reliability_score() == expected_score
 
+    @pytest.mark.unit
     def test_get_reliability_score_low_certainty_enemy_report(self):
         """Test reliability score for low certainty from enemy report."""
         acquired_time = datetime.now()
@@ -329,6 +346,7 @@ class TestKnowledgeItemBusinessLogic:
         expected_score = 0.40 * 0.5
         assert item.get_reliability_score() == expected_score
 
+    @pytest.mark.unit
     def test_get_reliability_score_unknown_certainty(self):
         """Test reliability score for unknown certainty."""
         acquired_time = datetime.now()
@@ -345,6 +363,7 @@ class TestKnowledgeItemBusinessLogic:
         # Unknown certainty (0.0) * Speculation (0.3) = 0.0
         assert item.get_reliability_score() == 0.0
 
+    @pytest.mark.unit
     def test_has_tag_existing(self):
         """Test has_tag returns True for existing tags."""
         acquired_time = datetime.now()
@@ -363,6 +382,7 @@ class TestKnowledgeItemBusinessLogic:
         assert item.has_tag("urgent")
         assert item.has_tag("tactical")
 
+    @pytest.mark.unit
     def test_has_tag_nonexistent(self):
         """Test has_tag returns False for non-existent tags."""
         acquired_time = datetime.now()
@@ -381,6 +401,7 @@ class TestKnowledgeItemBusinessLogic:
         assert not item.has_tag("unknown")
         assert not item.has_tag("")
 
+    @pytest.mark.unit
     def test_has_tag_empty_tags(self):
         """Test has_tag with empty tag set."""
         acquired_time = datetime.now()
@@ -401,6 +422,7 @@ class TestKnowledgeItemBusinessLogic:
 class TestKnowledgeItemImmutableOperations:
     """Test suite for KnowledgeItem immutable operations."""
 
+    @pytest.mark.unit
     def test_with_updated_certainty_creates_new_instance(self):
         """Test with_updated_certainty creates new instance with updated certainty."""
         acquired_time = datetime.now()
@@ -433,6 +455,7 @@ class TestKnowledgeItemImmutableOperations:
         # Different objects
         assert original is not updated
 
+    @pytest.mark.unit
     def test_with_updated_certainty_and_source(self):
         """Test with_updated_certainty can also update source."""
         acquired_time = datetime.now()
@@ -462,6 +485,8 @@ class TestKnowledgeItemImmutableOperations:
 class TestKnowledgeBaseCreation:
     """Test suite for KnowledgeBase creation and validation."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_empty_knowledge_base_creation(self):
         """Test creating an empty knowledge base."""
         kb = KnowledgeBase(knowledge_items={})
@@ -470,6 +495,7 @@ class TestKnowledgeBaseCreation:
         assert kb.get_total_knowledge_count() == 0
         assert kb.get_subjects_count() == 0
 
+    @pytest.mark.unit
     def test_knowledge_base_with_items(self):
         """Test creating knowledge base with items."""
         acquired_time = datetime.now()
@@ -504,11 +530,13 @@ class TestKnowledgeBaseCreation:
 class TestKnowledgeBaseValidation:
     """Test suite for KnowledgeBase validation logic."""
 
+    @pytest.mark.unit
     def test_invalid_knowledge_items_type(self):
         """Test validation fails with non-dict knowledge_items."""
         with pytest.raises(ValueError, match="Knowledge items must be a dictionary"):
             KnowledgeBase(knowledge_items="invalid")
 
+    @pytest.mark.unit
     def test_invalid_subject_items_type(self):
         """Test validation fails when subject items is not a list."""
         with pytest.raises(
@@ -516,11 +544,13 @@ class TestKnowledgeBaseValidation:
         ):
             KnowledgeBase(knowledge_items={"test_subject": "invalid"})
 
+    @pytest.mark.unit
     def test_invalid_knowledge_item_type(self):
         """Test validation fails with invalid knowledge item type."""
         with pytest.raises(ValueError, match="Invalid knowledge item for subject"):
             KnowledgeBase(knowledge_items={"test_subject": ["invalid_item"]})
 
+    @pytest.mark.unit
     def test_knowledge_item_subject_mismatch(self):
         """Test validation fails when knowledge item subject doesn't match key."""
         acquired_time = datetime.now()
@@ -595,6 +625,8 @@ class TestKnowledgeBaseQuerying:
 
         return KnowledgeBase(knowledge_items=knowledge_items)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_knowledge_about_existing_subject(self, sample_knowledge_base):
         """Test getting knowledge about an existing subject."""
         knowledge = sample_knowledge_base.get_knowledge_about("enemy_position")
@@ -604,11 +636,15 @@ class TestKnowledgeBaseQuerying:
         assert knowledge[0].information == "Enemy at north gate"
         assert knowledge[0].certainty_level == CertaintyLevel.ABSOLUTE
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_knowledge_about_nonexistent_subject(self, sample_knowledge_base):
         """Test getting knowledge about a non-existent subject."""
         knowledge = sample_knowledge_base.get_knowledge_about("nonexistent_subject")
         assert knowledge == []
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_knowledge_about_with_min_reliability(self, sample_knowledge_base):
         """Test getting knowledge with minimum reliability threshold."""
         # High reliability threshold should exclude speculative knowledge
@@ -620,6 +656,8 @@ class TestKnowledgeBaseQuerying:
         assert knowledge[0].information == "Guards change every 4 hours"
         assert knowledge[0].certainty_level == CertaintyLevel.HIGH
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_knowledge_about_sorting(self, sample_knowledge_base):
         """Test that knowledge is sorted by reliability then by acquisition time."""
         # Get all current guard patrol knowledge
@@ -633,6 +671,8 @@ class TestKnowledgeBaseQuerying:
             knowledge[0].get_reliability_score() > knowledge[1].get_reliability_score()
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_most_reliable_knowledge_existing(self, sample_knowledge_base):
         """Test getting most reliable knowledge for existing subject."""
         most_reliable = sample_knowledge_base.get_most_reliable_knowledge(
@@ -643,11 +683,15 @@ class TestKnowledgeBaseQuerying:
         assert most_reliable.information == "Guards change every 4 hours"
         assert most_reliable.certainty_level == CertaintyLevel.HIGH
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_most_reliable_knowledge_nonexistent(self, sample_knowledge_base):
         """Test getting most reliable knowledge for non-existent subject."""
         most_reliable = sample_knowledge_base.get_most_reliable_knowledge("nonexistent")
         assert most_reliable is None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_knowledge_about_with_sufficient_certainty(self, sample_knowledge_base):
         """Test has_knowledge_about with sufficient certainty."""
         # Should have knowledge about enemy position with high certainty
@@ -660,6 +704,8 @@ class TestKnowledgeBaseQuerying:
             "guard_patrol", CertaintyLevel.MINIMAL
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_knowledge_about_insufficient_certainty(self, sample_knowledge_base):
         """Test has_knowledge_about with insufficient certainty."""
         # Guard patrol knowledge might not meet absolute certainty requirement
@@ -673,6 +719,8 @@ class TestKnowledgeBaseQuerying:
                 "guard_patrol", CertaintyLevel.ABSOLUTE
             )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_knowledge_about_nonexistent(self, sample_knowledge_base):
         """Test has_knowledge_about for non-existent subject."""
         assert not sample_knowledge_base.has_knowledge_about(
@@ -735,6 +783,7 @@ class TestKnowledgeBaseFiltering:
 
         return KnowledgeBase(knowledge_items=knowledge_items)
 
+    @pytest.mark.unit
     def test_get_subjects_by_type(self, diverse_knowledge_base):
         """Test filtering subjects by knowledge type."""
         tactical_subjects = diverse_knowledge_base.get_subjects_by_type(
@@ -757,6 +806,8 @@ class TestKnowledgeBaseFiltering:
         )
         assert nonexistent_subjects == []
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_subjects_by_tag(self, diverse_knowledge_base):
         """Test filtering subjects by tag."""
         security_subjects = diverse_knowledge_base.get_subjects_by_tag("security")
@@ -770,6 +821,7 @@ class TestKnowledgeBaseFiltering:
         )
         assert nonexistent_tag_subjects == []
 
+    @pytest.mark.unit
     def test_get_knowledge_by_source(self, diverse_knowledge_base):
         """Test filtering knowledge by source."""
         direct_obs_knowledge = diverse_knowledge_base.get_knowledge_by_source(
@@ -791,6 +843,7 @@ class TestKnowledgeBaseFiltering:
         )
         assert nonexistent_source_knowledge == {}
 
+    @pytest.mark.unit
     def test_get_stale_knowledge(self):
         """Test getting stale/expired knowledge."""
         now = datetime.now()
@@ -828,6 +881,7 @@ class TestKnowledgeBaseFiltering:
 class TestKnowledgeBaseImmutableOperations:
     """Test suite for KnowledgeBase immutable operations."""
 
+    @pytest.mark.unit
     def test_add_knowledge_creates_new_instance(self):
         """Test add_knowledge creates new instance with additional knowledge."""
         now = datetime.now()
@@ -867,6 +921,7 @@ class TestKnowledgeBaseImmutableOperations:
         # Different objects
         assert original_kb is not updated_kb
 
+    @pytest.mark.unit
     def test_add_knowledge_to_existing_subject(self):
         """Test adding knowledge to existing subject."""
         now = datetime.now()
@@ -904,6 +959,7 @@ class TestKnowledgeBaseImmutableOperations:
         )
         assert len(original_knowledge) == 1
 
+    @pytest.mark.unit
     def test_update_knowledge(self):
         """Test update_knowledge method."""
         now = datetime.now()
@@ -935,6 +991,7 @@ class TestKnowledgeBaseImmutableOperations:
         )
         assert len(test_knowledge) == 2
 
+    @pytest.mark.unit
     def test_update_knowledge_subject_mismatch(self):
         """Test update_knowledge validates subject match."""
         now = datetime.now()
@@ -968,6 +1025,7 @@ class TestKnowledgeBaseImmutableOperations:
 class TestKnowledgeBaseStatistics:
     """Test suite for KnowledgeBase statistics methods."""
 
+    @pytest.mark.unit
     def test_get_total_knowledge_count(self):
         """Test getting total knowledge count."""
         now = datetime.now()
@@ -1006,6 +1064,7 @@ class TestKnowledgeBaseStatistics:
         # Should count all items, including multiple per subject
         assert kb.get_total_knowledge_count() == 6
 
+    @pytest.mark.unit
     def test_get_subjects_count(self):
         """Test getting subjects count."""
         now = datetime.now()
@@ -1031,6 +1090,8 @@ class TestKnowledgeBaseStatistics:
 
         assert kb.get_subjects_count() == 3
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_empty_knowledge_base_statistics(self):
         """Test statistics for empty knowledge base."""
         kb = KnowledgeBase(knowledge_items={})
@@ -1042,6 +1103,7 @@ class TestKnowledgeBaseStatistics:
 class TestComplexScenarios:
     """Test suite for complex knowledge management scenarios."""
 
+    @pytest.mark.unit
     def test_intelligence_gathering_scenario(self):
         """Test a complex intelligence gathering scenario."""
         now = datetime.now()
@@ -1111,6 +1173,7 @@ class TestComplexScenarios:
             >= all_knowledge[2].get_reliability_score()
         )
 
+    @pytest.mark.unit
     def test_information_expiry_scenario(self):
         """Test scenario where information becomes stale over time."""
         base_time = datetime.now()

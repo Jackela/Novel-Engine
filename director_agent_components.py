@@ -13,7 +13,7 @@ import asyncio
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -30,7 +30,7 @@ class ComponentState:
 
     def update(self, **entries: Any) -> None:
         self.metadata.update(entries)
-        self.last_updated = datetime.utcnow()
+        self.last_updated = datetime.now(timezone.utc)
 
 
 class AgentLifecycleManager:
@@ -58,7 +58,7 @@ class AgentLifecycleManager:
         self._agents[agent_id] = {
             "agent_id": agent_id,
             "agent_type": getattr(agent, "agent_type", "unknown"),
-            "registered_at": datetime.utcnow().isoformat(),
+            "registered_at": datetime.now(timezone.utc).isoformat(),
         }
         return True
 

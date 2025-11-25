@@ -30,7 +30,7 @@ from src.core.data_models import (
     MemoryType,
     StandardResponse,
 )
-from src.core.emergent_narrative import EmergentNarrativeEngine
+from src.core.narrative import EmergentNarrativeEngine
 
 # Import core narrative engines
 from src.core.subjective_reality import SubjectiveRealityEngine

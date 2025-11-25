@@ -121,6 +121,7 @@ except ImportError as e:
     EnhancedMultiAgentBridge = MockEnhancedMultiAgentBridge
 
 
+@pytest.mark.integration
 class TestPersonaAgentModularComponents:
     """Comprehensive tests for PersonaAgent modular components."""
 
@@ -170,6 +171,7 @@ class TestPersonaAgentModularComponents:
         assert hasattr(decision, "selected_action")
         assert hasattr(decision, "confidence_score")
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_character_data_manager_component(self):
         """Test CharacterDataManager component functionality."""
@@ -204,6 +206,7 @@ class TestPersonaAgentModularComponents:
         # Test memory capacity management
         assert memory_manager.get_memory_usage() >= 0
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_llm_client_component(self):
         """Test LLMClient component functionality."""
@@ -226,6 +229,7 @@ class TestPersonaAgentModularComponents:
         assert isinstance(response, (str, dict))
 
 
+@pytest.mark.integration
 class TestInteractionEngineModularComponents:
     """Comprehensive tests for InteractionEngine modular components."""
 
@@ -245,7 +249,6 @@ class TestInteractionEngineModularComponents:
         assert engine.config.max_concurrent_interactions == 5
         assert engine.config.enable_parallel_processing is True
         assert engine.is_initialized is True
-
     @pytest.mark.asyncio
     async def test_interaction_validator_component(self):
         """Test InteractionValidator component."""
@@ -268,6 +271,7 @@ class TestInteractionEngineModularComponents:
         assert hasattr(validation_result, "success")
         assert validation_result.success is True
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_queue_manager_component(self):
         """Test QueueManager component functionality."""
@@ -293,6 +297,7 @@ class TestInteractionEngineModularComponents:
         assert status["queue_size"] >= 0
         assert status["processing_active"] in [True, False]
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_interaction_processing_pipeline(self):
         """Test complete interaction processing pipeline."""
@@ -321,6 +326,7 @@ class TestInteractionEngineModularComponents:
             assert outcome.processing_duration >= 0
 
 
+@pytest.mark.integration
 class TestMultiAgentBridgeModularComponents:
     """Comprehensive tests for MultiAgentBridge modular components."""
 
@@ -332,7 +338,6 @@ class TestMultiAgentBridgeModularComponents:
 
         assert bridge.event_bus == mock_event_bus
         assert hasattr(bridge, "_agents")
-
     @pytest.mark.asyncio
     async def test_dialogue_manager_component(self):
         """Test DialogueManager component."""
@@ -356,6 +361,7 @@ class TestMultiAgentBridgeModularComponents:
         stats = dialogue_manager.get_dialogue_stats()
         assert isinstance(stats, dict)
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_llm_batch_processor_component(self):
         """Test LLMBatchProcessor component."""
@@ -395,6 +401,7 @@ class TestMultiAgentBridgeModularComponents:
         assert isinstance(stats, dict)
         assert "total_cost" in stats
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_bridge_agent_coordination(self):
         """Test agent coordination through the bridge."""
@@ -411,9 +418,9 @@ class TestMultiAgentBridgeModularComponents:
         assert bridge._agents["test_agent_001"] == mock_agent
 
 
+@pytest.mark.integration
 class TestModularComponentIntegration:
     """Test integration between modular components."""
-
     @pytest.mark.asyncio
     async def test_persona_agent_with_interaction_engine(self):
         """Test PersonaAgent integration with InteractionEngine."""
@@ -444,6 +451,7 @@ class TestModularComponentIntegration:
         assert hasattr(outcome, "success")
         assert outcome.interaction_id == "integration_001"
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_full_modular_system_coordination(self):
         """Test coordination between all major modular components."""
@@ -467,9 +475,9 @@ class TestModularComponentIntegration:
         assert "coord_test_002" in bridge._agents
 
 
+@pytest.mark.integration
 class TestModularComponentPerformance:
     """Performance tests for modular components."""
-
     @pytest.mark.asyncio
     async def test_persona_agent_decision_performance(self):
         """Test PersonaAgent decision-making performance."""
@@ -502,6 +510,7 @@ class TestModularComponentPerformance:
             total_time < 1.0
         ), f"Performance test failed: {total_time}s for 5 decisions"
 
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_interaction_engine_throughput(self):
         """Test InteractionEngine processing throughput."""

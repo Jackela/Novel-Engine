@@ -28,6 +28,8 @@ class TestAPIServerEndpoints:
         self.client = TestClient(app)
 
     @pytest.mark.api
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_root_endpoint_success(self):
         """测试根端点 - 成功情况"""
         response = self.client.get("/")
@@ -38,6 +40,8 @@ class TestAPIServerEndpoints:
         assert "StoryForge AI" in data["message"]
 
     @pytest.mark.api
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_health_endpoint_success(self, mock_config):
         """测试健康检查端点 - 成功情况"""
         with patch("api_server.get_config", return_value=mock_config):
@@ -52,6 +56,7 @@ class TestAPIServerEndpoints:
             assert "version" in data
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_health_endpoint_config_error(self):
         """测试健康检查端点 - 配置错误"""
         with patch("api_server.get_config") as mock_get_config:
@@ -65,6 +70,7 @@ class TestAPIServerEndpoints:
             assert "detail" in data
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_characters_endpoint_empty_directory(self, temp_dir):
         """测试角色列表端点 - 空目录"""
         # 创建空的角色目录
@@ -82,6 +88,7 @@ class TestAPIServerEndpoints:
             assert data["characters"] == []
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_characters_endpoint_populated_directory(self, characters_directory):
         """测试角色列表端点 - 有角色数据"""
         with patch(
@@ -98,6 +105,7 @@ class TestAPIServerEndpoints:
             assert "pilot" in data["characters"]
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_characters_endpoint_directory_not_found(self, temp_dir):
         """测试角色列表端点 - 目录不存在"""
         non_existent_dir = temp_dir / "non_existent"
@@ -114,6 +122,7 @@ class TestAPIServerEndpoints:
             assert data["characters"] == []
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_character_detail_endpoint_success(self, characters_directory):
         """测试角色详情端点 - 成功情况"""
         # 确保使用正确的字符目录路径 (不是 parent)
@@ -139,6 +148,8 @@ class TestAPIServerEndpoints:
                 assert data["character_id"] == "engineer"
 
     @pytest.mark.api
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_character_detail_endpoint_not_found(self, characters_directory):
         """测试角色详情端点 - 角色不存在"""
         with patch(
@@ -154,6 +165,7 @@ class TestAPIServerEndpoints:
 
     @pytest.mark.api
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_simulations_endpoint_valid_request(
         self, characters_directory, sample_simulation_request
     ):
@@ -195,6 +207,8 @@ class TestAPIServerEndpoints:
                 )
 
     @pytest.mark.api
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_simulations_endpoint_invalid_request_empty_characters(self):
         """测试模拟端点 - 无效请求（空角色列表）"""
         invalid_request = {"character_names": [], "turns": 3}
@@ -204,6 +218,7 @@ class TestAPIServerEndpoints:
         assert response.status_code == 422  # Validation error
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_simulations_endpoint_invalid_request_too_many_characters(self):
         """测试模拟端点 - 无效请求（角色过多）"""
         invalid_request = {
@@ -224,6 +239,7 @@ class TestAPIServerEndpoints:
         assert response.status_code == 422  # Validation error
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_simulations_endpoint_character_not_found(self, temp_dir):
         """测试模拟端点 - 角色不存在"""
         with patch(
@@ -253,6 +269,8 @@ class TestAPIServerEndpoints:
             )
 
     @pytest.mark.api
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_campaigns_endpoint_success(self):
         """测试活动列表端点 - 成功情况"""
         response = self.client.get("/campaigns")
@@ -263,6 +281,7 @@ class TestAPIServerEndpoints:
         assert isinstance(data["campaigns"], list)
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_create_campaign_endpoint_success(self):
         """测试创建活动端点 - 成功情况"""
         campaign_data = {
@@ -283,6 +302,7 @@ class TestAPIServerEndpoints:
         assert data["status"] == "created"
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_health_endpoint_severe_error(self):
         """测试健康检查端点 - 严重错误处理"""
         with patch("api_server.get_config") as mock_get_config:
@@ -296,6 +316,7 @@ class TestAPIServerEndpoints:
             assert "detail" in data
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_characters_endpoint_permission_error(self):
         """测试角色列表端点 - 权限错误"""
         with patch(
@@ -313,6 +334,7 @@ class TestAPIServerEndpoints:
                     assert "Permission denied" in data["detail"]
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_characters_endpoint_unexpected_error(self):
         """测试角色列表端点 - 意外错误"""
         with patch(
@@ -330,6 +352,8 @@ class TestAPIServerEndpoints:
                     assert "Failed to retrieve characters" in data["detail"]
 
     @pytest.mark.api
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_simulations_endpoint_empty_character_list(self):
         """测试模拟端点 - 空角色列表验证"""
         empty_request = {"character_names": [], "turns": 3}
@@ -340,6 +364,7 @@ class TestAPIServerEndpoints:
         assert response.status_code == 422  # FastAPI validation error
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_simulations_endpoint_character_loading_failure(self, temp_dir):
         """测试模拟端点 - 角色加载失败"""
         with patch(
@@ -372,6 +397,7 @@ class TestAPIServerEndpoints:
                 assert "Failed to load character" in data["detail"]
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_simulations_endpoint_director_turn_failure(self, characters_directory):
         """测试模拟端点 - 导演回合执行失败"""
         with patch(
@@ -415,6 +441,7 @@ class TestAPIServerEndpoints:
                 assert "story" in data
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_simulations_endpoint_story_generation_failure(self, characters_directory):
         """测试模拟端点 - 故事生成失败回退"""
         with patch(
@@ -455,6 +482,7 @@ class TestAPIServerEndpoints:
                 )
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_character_detail_endpoint_unexpected_error(self, characters_directory):
         """测试角色详情端点 - 意外错误"""
         with patch(
@@ -478,6 +506,7 @@ class TestAPIServerEndpoints:
                 assert "could not be loaded" in data["background_summary"]
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_campaigns_endpoint_file_system_error(self):
         """测试活动列表端点 - 文件系统错误"""
         with patch("os.path.isdir", return_value=True):
@@ -493,6 +522,7 @@ class TestAPIServerEndpoints:
                 assert data["campaigns"] == []
 
     @pytest.mark.api
+    @pytest.mark.unit
     def test_create_campaign_endpoint_file_creation_failure(self):
         """测试创建活动端点 - 文件创建失败"""
         with patch("os.makedirs"), patch("builtins.open") as mock_open:
@@ -522,6 +552,8 @@ class TestAPIServerErrorHandling:
         self.client = TestClient(app)
 
     @pytest.mark.api
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_404_endpoint_not_found(self):
         """测试404错误处理"""
         response = self.client.get("/nonexistent-endpoint")
@@ -532,6 +564,8 @@ class TestAPIServerErrorHandling:
         assert "detail" in data
 
     @pytest.mark.api
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_405_method_not_allowed(self):
         """测试405方法不允许错误"""
         response = self.client.put("/")  # 根端点不支持PUT
@@ -539,6 +573,8 @@ class TestAPIServerErrorHandling:
         assert response.status_code == 405
 
     @pytest.mark.api
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_422_validation_error(self):
         """测试422验证错误"""
         invalid_data = {"invalid_field": "invalid_value"}
@@ -557,6 +593,8 @@ class TestAPIServerSecurity:
         self.client = TestClient(app)
 
     @pytest.mark.security
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_cors_headers_present(self):
         """测试CORS头部设置"""
         # CORS头部在GET请求中也会出现
@@ -572,6 +610,8 @@ class TestAPIServerSecurity:
         assert response_with_origin.status_code == 200
 
     @pytest.mark.security
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_input_validation_sql_injection_attempt(self):
         """测试SQL注入防护"""
         malicious_input = {
@@ -585,6 +625,8 @@ class TestAPIServerSecurity:
         assert response.status_code in [404, 422]
 
     @pytest.mark.security
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_input_validation_xss_attempt(self):
         """测试XSS防护"""
         xss_payload = "<script>alert('xss')</script>"
@@ -597,6 +639,8 @@ class TestAPIServerSecurity:
             assert xss_payload not in response.text
 
     @pytest.mark.security
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_path_traversal_protection(self):
         """测试路径遍历防护"""
         malicious_path = "../../../etc/passwd"
@@ -606,6 +650,8 @@ class TestAPIServerSecurity:
         assert response.status_code == 404
 
     @pytest.mark.security
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_large_payload_handling(self):
         """测试大载荷处理"""
         large_payload = {"character_names": ["test"] * 1000, "turns": 10}  # 大量角色名
@@ -625,6 +671,8 @@ class TestAPIServerPerformance:
         self.client = TestClient(app)
 
     @pytest.mark.performance
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_health_endpoint_response_time(self):
         """测试健康检查端点响应时间"""
         import time
@@ -639,6 +687,7 @@ class TestAPIServerPerformance:
         assert response_time < 1.0  # 应该在1秒内响应
 
     @pytest.mark.performance
+    @pytest.mark.unit
     def test_characters_endpoint_response_time(self, characters_directory):
         """测试角色列表端点响应时间"""
         import time
@@ -658,6 +707,7 @@ class TestAPIServerPerformance:
 
     @pytest.mark.performance
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_concurrent_health_checks(self):
         """测试并发健康检查"""
         import concurrent.futures

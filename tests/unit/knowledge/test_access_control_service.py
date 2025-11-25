@@ -105,6 +105,8 @@ class TestAccessControlServiceFilterAccessibleEntries:
 
         return [public_entry, engineer_entry, medical_entry, char_entry]
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_filter_returns_all_public_entries(self, service, sample_entries):
         """Test that public entries are accessible to all agents."""
         # Arrange
@@ -117,6 +119,7 @@ class TestAccessControlServiceFilterAccessibleEntries:
         assert len(accessible) == 1
         assert accessible[0].access_control.access_level == AccessLevel.PUBLIC
 
+    @pytest.mark.unit
     def test_filter_returns_public_and_role_based_entries(
         self, service, sample_entries
     ):
@@ -133,6 +136,7 @@ class TestAccessControlServiceFilterAccessibleEntries:
         assert sample_entries[0].id in entry_ids  # Public
         assert sample_entries[1].id in entry_ids  # Engineer
 
+    @pytest.mark.unit
     def test_filter_with_multiple_roles_gets_all_matching(
         self, service, sample_entries
     ):
@@ -150,6 +154,7 @@ class TestAccessControlServiceFilterAccessibleEntries:
         assert sample_entries[1].id in entry_ids  # Engineer
         assert sample_entries[2].id in entry_ids  # Medical
 
+    @pytest.mark.unit
     def test_filter_with_character_id_gets_character_specific(
         self, service, sample_entries
     ):
@@ -166,6 +171,7 @@ class TestAccessControlServiceFilterAccessibleEntries:
         assert sample_entries[0].id in entry_ids  # Public
         assert sample_entries[3].id in entry_ids  # Character-specific
 
+    @pytest.mark.unit
     def test_filter_empty_list_returns_empty(self, service):
         """Test that filtering empty list returns empty list."""
         if AgentIdentity is None:
@@ -191,6 +197,7 @@ class TestAccessControlServiceCanAccessEntry:
             pytest.skip("AccessControlService not yet implemented")
         return AccessControlService()
 
+    @pytest.mark.unit
     def test_can_access_public_entry(self, service):
         """Test that any agent can access public entry."""
         if KnowledgeEntry is None or AgentIdentity is None:
@@ -215,6 +222,7 @@ class TestAccessControlServiceCanAccessEntry:
         # Assert
         assert has_access is True
 
+    @pytest.mark.unit
     def test_can_access_role_based_with_matching_role(self, service):
         """Test that agent with matching role can access role-based entry."""
         if KnowledgeEntry is None or AgentIdentity is None:
@@ -242,6 +250,7 @@ class TestAccessControlServiceCanAccessEntry:
         # Assert
         assert has_access is True
 
+    @pytest.mark.unit
     def test_cannot_access_role_based_without_matching_role(self, service):
         """Test that agent without matching role cannot access role-based entry."""
         if KnowledgeEntry is None or AgentIdentity is None:

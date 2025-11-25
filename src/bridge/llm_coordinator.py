@@ -321,7 +321,7 @@ class LLMCoordinator:
             cache_key = self._generate_cache_key(request)
             fut: Optional[asyncio.Future] = None
             if cache_key not in self._inflight:
-                fut = asyncio.get_event_loop().create_future()
+                fut = asyncio.get_running_loop().create_future()
                 self._inflight[cache_key] = fut
                 self._waiters_count[cache_key] = self._waiters_count.get(cache_key, 0)
 

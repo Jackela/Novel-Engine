@@ -55,6 +55,7 @@ class MockDirectorAgent:
         return {"success": True, "turn_number": self.turn_count, "agents_processed": 2}
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_bridge_initialization():
     """Test 1: Enhanced Multi-Agent Bridge Component Initialization"""
@@ -100,6 +101,7 @@ async def test_bridge_initialization():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_ai_systems_initialization():
     """Test 2: AI Systems Integration"""
@@ -127,6 +129,7 @@ async def test_ai_systems_initialization():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_agent_registration():
     """Test 3: Agent Registration and Management"""
@@ -163,6 +166,7 @@ async def test_agent_registration():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_dialogue_management():
     """Test 4: Dialogue Management System"""
@@ -209,6 +213,7 @@ async def test_dialogue_management():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_enhanced_turn_execution():
     """Test 5: Enhanced Turn Execution"""
@@ -250,6 +255,7 @@ async def test_enhanced_turn_execution():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_performance_tracking():
     """Test 6: Performance Metrics and Tracking"""
@@ -295,6 +301,7 @@ async def test_performance_tracking():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_cost_and_budget_management():
     """Test 7: Cost and Budget Management"""
@@ -339,6 +346,7 @@ async def test_cost_and_budget_management():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_component_integration():
     """Test 8: Component Integration and Communication"""
@@ -384,6 +392,7 @@ async def test_component_integration():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_backward_compatibility():
     """Test 9: Backward Compatibility"""

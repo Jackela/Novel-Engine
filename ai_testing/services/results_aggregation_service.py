@@ -11,7 +11,7 @@ import statistics
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -310,7 +310,7 @@ class ResultsAnalyzer:
         """Create time series data from results"""
 
         # Filter to time window
-        cutoff_time = datetime.utcnow() - timedelta(days=time_window_days)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=time_window_days)
         recent_results = [
             r for r in results if r.timestamp and r.timestamp >= cutoff_time
         ]
@@ -978,7 +978,7 @@ class ResultsAggregationService(IResultsAggregation):
 
         try:
             # Determine time period
-            end_time = request.end_time or datetime.utcnow()
+            end_time = request.end_time or datetime.now(timezone.utc)
 
             if request.start_time:
                 start_time = request.start_time
@@ -1124,7 +1124,7 @@ class ResultsAggregationService(IResultsAggregation):
                     passed=True,
                     score=0.8 + (i * 0.05),
                     duration_ms=1000 + (i * 100),
-                    timestamp=datetime.utcnow() - timedelta(hours=i),
+                    timestamp=datetime.now(timezone.utc) - timedelta(hours=i),
                 )
                 mock_results.append(result)
 
@@ -1897,7 +1897,7 @@ async def get_trends(time_window_days: int = 7):
     service: ResultsAggregationService = app.state.aggregation_service
 
     # Get recent results
-    cutoff_time = datetime.utcnow() - timedelta(days=time_window_days)
+    cutoff_time = datetime.now(timezone.utc) - timedelta(days=time_window_days)
     recent_results = [
         r for r in service.all_results if r.timestamp and r.timestamp >= cutoff_time
     ]
@@ -1912,7 +1912,7 @@ async def get_quality_insights():
     service: ResultsAggregationService = app.state.aggregation_service
 
     # Get recent results (last 24 hours)
-    cutoff_time = datetime.utcnow() - timedelta(hours=24)
+    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
     recent_results = [
         r for r in service.all_results if r.timestamp and r.timestamp >= cutoff_time
     ]

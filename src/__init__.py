@@ -17,7 +17,7 @@ __description__ = "Advanced AI Narrative Generation Platform"
 
 # Core exports - Legacy architecture
 try:
-    from .core.emergent_narrative import EmergentNarrativeEngine  # noqa: F401
+    from .core.narrative import EmergentNarrativeEngine  # noqa: F401 - Updated from deprecated emergent_narrative
     from .core.subjective_reality import SubjectiveRealityEngine  # noqa: F401
     from .infrastructure.observability import MetricsCollector  # noqa: F401
     from .infrastructure.state_store import UnifiedStateManager  # noqa: F401

@@ -15,7 +15,7 @@ import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Union
 
@@ -392,7 +392,7 @@ class PrometheusMetricsCollector:
     def get_metrics_dict(self) -> Dict[str, Any]:
         """Get metrics as dictionary for JSON export"""
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "metrics": {},
             "summary": {
                 "total_http_requests": self.http_requests_total,

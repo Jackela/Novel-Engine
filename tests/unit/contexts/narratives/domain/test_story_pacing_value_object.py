@@ -23,6 +23,7 @@ from contexts.narratives.domain.value_objects.story_pacing import (
 class TestPacingTypeEnum:
     """Test suite for PacingType enum."""
 
+    @pytest.mark.unit
     def test_all_pacing_types_exist(self):
         """Test that all expected pacing types are defined."""
         expected_types = {
@@ -41,6 +42,7 @@ class TestPacingTypeEnum:
         actual_types = {item.name for item in PacingType}
         assert actual_types == expected_types
 
+    @pytest.mark.unit
     def test_pacing_type_string_values(self):
         """Test that pacing type enum values have correct string representations."""
         assert PacingType.STEADY.value == "steady"
@@ -54,11 +56,15 @@ class TestPacingTypeEnum:
         assert PacingType.SLOW_BURN.value == "slow_burn"
         assert PacingType.STACCATO.value == "staccato"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_pacing_type_uniqueness(self):
         """Test that all pacing type values are unique."""
         values = [item.value for item in PacingType]
         assert len(values) == len(set(values))
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_pacing_type_membership(self):
         """Test pacing type membership operations."""
         assert PacingType.STEADY in PacingType
@@ -69,12 +75,16 @@ class TestPacingTypeEnum:
 class TestPacingIntensityEnum:
     """Test suite for PacingIntensity enum."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_all_intensity_levels_exist(self):
         """Test that all expected intensity levels are defined."""
         expected_levels = {"GLACIAL", "SLOW", "MODERATE", "BRISK", "FAST", "BREAKNECK"}
         actual_levels = {item.name for item in PacingIntensity}
         assert actual_levels == expected_levels
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_intensity_string_values(self):
         """Test that intensity enum values have correct string representations."""
         assert PacingIntensity.GLACIAL.value == "glacial"
@@ -84,6 +94,7 @@ class TestPacingIntensityEnum:
         assert PacingIntensity.FAST.value == "fast"
         assert PacingIntensity.BREAKNECK.value == "breakneck"
 
+    @pytest.mark.unit
     def test_intensity_logical_ordering(self):
         """Test that intensity levels represent logical progression."""
         intensity_order = {
@@ -116,11 +127,15 @@ class TestPacingIntensityEnum:
             > intensity_order[PacingIntensity.GLACIAL]
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_intensity_uniqueness(self):
         """Test that all intensity values are unique."""
         values = [item.value for item in PacingIntensity]
         assert len(values) == len(set(values))
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_intensity_membership(self):
         """Test intensity membership operations."""
         assert PacingIntensity.MODERATE in PacingIntensity
@@ -131,6 +146,7 @@ class TestPacingIntensityEnum:
 class TestStoryPacingCreation:
     """Test suite for StoryPacing creation and initialization."""
 
+    @pytest.mark.unit
     def test_create_minimal_story_pacing(self):
         """Test creating story pacing with minimal required fields."""
         pacing = StoryPacing(
@@ -172,6 +188,7 @@ class TestStoryPacingCreation:
         assert isinstance(pacing.creation_timestamp, datetime)
         assert pacing.metadata == {}
 
+    @pytest.mark.unit
     def test_create_full_story_pacing(self):
         """Test creating story pacing with all fields specified."""
         tension_curve = (Decimal("2.0"), Decimal("5.0"), Decimal("8.0"), Decimal("3.0"))
@@ -243,6 +260,7 @@ class TestStoryPacingCreation:
         assert pacing.metadata == metadata
 
     @patch("contexts.narratives.domain.value_objects.story_pacing.datetime")
+    @pytest.mark.unit
     def test_automatic_timestamp_generation(self, mock_datetime):
         """Test that creation_timestamp is auto-generated when not provided."""
         expected_time = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
@@ -259,6 +277,7 @@ class TestStoryPacingCreation:
         assert pacing.creation_timestamp == expected_time
         mock_datetime.now.assert_called_once_with(timezone.utc)
 
+    @pytest.mark.unit
     def test_frozen_dataclass_immutability(self):
         """Test that StoryPacing instances are immutable."""
         pacing = StoryPacing(
@@ -279,6 +298,7 @@ class TestStoryPacingCreation:
 class TestStoryPacingValidation:
     """Test suite for StoryPacing validation and constraints."""
 
+    @pytest.mark.unit
     def test_empty_pacing_id_raises_error(self):
         """Test that empty pacing ID raises validation error."""
         with pytest.raises(ValueError, match="Pacing ID cannot be empty"):
@@ -299,6 +319,7 @@ class TestStoryPacingValidation:
                 end_sequence=5,
             )
 
+    @pytest.mark.unit
     def test_invalid_sequence_numbers_raise_errors(self):
         """Test that invalid sequence numbers raise validation errors."""
         # Negative start sequence
@@ -345,6 +366,7 @@ class TestStoryPacingValidation:
                 end_sequence=5,
             )
 
+    @pytest.mark.unit
     def test_invalid_ratios_raise_errors(self):
         """Test that invalid ratio values raise validation errors."""
         # Dialogue ratio out of range
@@ -382,6 +404,7 @@ class TestStoryPacingValidation:
                 reflection_ratio=Decimal("0.1"),
             )
 
+    @pytest.mark.unit
     def test_valid_ratio_sum_tolerance(self):
         """Test that slight deviations in ratio sum are tolerated."""
         # Should pass with ratios summing to 0.95
@@ -410,6 +433,7 @@ class TestStoryPacingValidation:
         )
         assert pacing2.dialogue_ratio == Decimal("0.35")
 
+    @pytest.mark.unit
     def test_invalid_scale_values_raise_errors(self):
         """Test that invalid scale values (1-10) raise validation errors."""
         # Event density too low
@@ -436,6 +460,7 @@ class TestStoryPacingValidation:
                 sentence_complexity=Decimal("15.0"),
             )
 
+    @pytest.mark.unit
     def test_invalid_frequency_and_intensity_values_raise_errors(self):
         """Test that invalid frequency and intensity values raise validation errors."""
         # Revelation frequency out of range
@@ -464,6 +489,7 @@ class TestStoryPacingValidation:
                 cliffhanger_intensity=Decimal("15.0"),
             )
 
+    @pytest.mark.unit
     def test_negative_count_values_raise_errors(self):
         """Test that negative count values raise validation errors."""
         with pytest.raises(ValueError, match="must be non-negative"):
@@ -486,6 +512,7 @@ class TestStoryPacingValidation:
                 curiosity_hooks=-5,
             )
 
+    @pytest.mark.unit
     def test_invalid_tension_curve_values_raise_errors(self):
         """Test that invalid tension curve values raise validation errors."""
         with pytest.raises(
@@ -500,6 +527,7 @@ class TestStoryPacingValidation:
                 tension_curve=[Decimal("5.0"), Decimal("12.0"), Decimal("3.0")],
             )
 
+    @pytest.mark.unit
     def test_invalid_peak_positions_raise_errors(self):
         """Test that invalid peak positions raise validation errors."""
         with pytest.raises(ValueError, match="outside segment range"):
@@ -512,6 +540,7 @@ class TestStoryPacingValidation:
                 emotional_peaks=[3, 7, 12],  # 3 and 12 are outside range
             )
 
+    @pytest.mark.unit
     def test_invalid_rest_positions_raise_errors(self):
         """Test that invalid rest positions raise validation errors."""
         with pytest.raises(ValueError, match="outside segment range"):
@@ -524,6 +553,7 @@ class TestStoryPacingValidation:
                 rest_periods=[4, 8, 11],  # 4 and 11 are outside range
             )
 
+    @pytest.mark.unit
     def test_string_length_constraints(self):
         """Test string length validation constraints."""
         long_id = "a" * 101
@@ -551,6 +581,7 @@ class TestStoryPacingValidation:
 class TestStoryPacingProperties:
     """Test suite for StoryPacing computed properties."""
 
+    @pytest.mark.unit
     def test_segment_length_property(self):
         """Test segment_length property calculation."""
         pacing = StoryPacing(
@@ -574,6 +605,7 @@ class TestStoryPacingProperties:
 
         assert single_pacing.segment_length == 2
 
+    @pytest.mark.unit
     def test_boolean_properties(self):
         """Test boolean properties."""
         # Test with empty lists
@@ -605,6 +637,7 @@ class TestStoryPacingProperties:
         assert full_pacing.has_rest_periods is True
         assert full_pacing.has_tension_curve is True
 
+    @pytest.mark.unit
     def test_intensity_classification_properties(self):
         """Test intensity classification properties."""
         # High intensity
@@ -660,6 +693,7 @@ class TestStoryPacingProperties:
         assert medium.is_high_intensity is False
         assert medium.is_low_intensity is False
 
+    @pytest.mark.unit
     def test_tension_properties_with_empty_curve(self):
         """Test tension properties with empty tension curve."""
         pacing = StoryPacing(
@@ -674,6 +708,7 @@ class TestStoryPacingProperties:
         assert pacing.peak_tension == Decimal("5.0")
         assert pacing.tension_variance == Decimal("0")
 
+    @pytest.mark.unit
     def test_tension_properties_with_curve(self):
         """Test tension properties with defined tension curve."""
         tension_values = [
@@ -700,6 +735,7 @@ class TestStoryPacingProperties:
         expected_variance = sum((t - avg) ** 2 for t in tension_values) / Decimal("4")
         assert pacing.tension_variance == expected_variance
 
+    @pytest.mark.unit
     def test_tension_properties_single_value(self):
         """Test tension properties with single tension value."""
         pacing = StoryPacing(
@@ -715,6 +751,7 @@ class TestStoryPacingProperties:
         assert pacing.peak_tension == Decimal("7.0")
         assert pacing.tension_variance == Decimal("0")
 
+    @pytest.mark.unit
     def test_pacing_complexity_score(self):
         """Test pacing complexity score calculation."""
         # Simple pacing
@@ -755,6 +792,7 @@ class TestStoryPacingProperties:
         assert complex_score > simple_score
         assert complex_score <= Decimal("10")  # Capped at 10
 
+    @pytest.mark.unit
     def test_engagement_score(self):
         """Test engagement score calculation."""
         # Low engagement pacing
@@ -797,6 +835,7 @@ class TestStoryPacingProperties:
 class TestStoryPacingMethods:
     """Test suite for StoryPacing methods."""
 
+    @pytest.mark.unit
     def test_contains_sequence(self):
         """Test contains_sequence method."""
         pacing = StoryPacing(
@@ -818,6 +857,7 @@ class TestStoryPacingMethods:
         assert pacing.contains_sequence(0) is False
         assert pacing.contains_sequence(100) is False
 
+    @pytest.mark.unit
     def test_get_tension_at_sequence_no_curve(self):
         """Test get_tension_at_sequence with no tension curve."""
         pacing = StoryPacing(
@@ -833,6 +873,7 @@ class TestStoryPacingMethods:
         assert pacing.get_tension_at_sequence(5) is None
         assert pacing.get_tension_at_sequence(15) is None
 
+    @pytest.mark.unit
     def test_get_tension_at_sequence_outside_range(self):
         """Test get_tension_at_sequence outside segment range."""
         pacing = StoryPacing(
@@ -847,6 +888,7 @@ class TestStoryPacingMethods:
         assert pacing.get_tension_at_sequence(4) is None
         assert pacing.get_tension_at_sequence(16) is None
 
+    @pytest.mark.unit
     def test_get_tension_at_sequence_single_value(self):
         """Test get_tension_at_sequence with single tension value."""
         pacing = StoryPacing(
@@ -863,6 +905,7 @@ class TestStoryPacingMethods:
         assert pacing.get_tension_at_sequence(10) == Decimal("6.0")
         assert pacing.get_tension_at_sequence(15) == Decimal("6.0")
 
+    @pytest.mark.unit
     def test_get_tension_at_sequence_interpolation(self):
         """Test get_tension_at_sequence with interpolation."""
         tension_curve = [Decimal("2.0"), Decimal("8.0"), Decimal("4.0")]
@@ -895,6 +938,7 @@ class TestStoryPacingMethods:
         assert tension_17 is not None
         assert Decimal("4.0") < tension_17 < Decimal("8.0")
 
+    @pytest.mark.unit
     def test_is_emotional_peak(self):
         """Test is_emotional_peak method."""
         pacing = StoryPacing(
@@ -914,6 +958,7 @@ class TestStoryPacingMethods:
         assert pacing.is_emotional_peak(5) is False
         assert pacing.is_emotional_peak(10) is False
 
+    @pytest.mark.unit
     def test_is_rest_period(self):
         """Test is_rest_period method."""
         pacing = StoryPacing(
@@ -933,6 +978,7 @@ class TestStoryPacingMethods:
         assert pacing.is_rest_period(3) is False
         assert pacing.is_rest_period(10) is False
 
+    @pytest.mark.unit
     def test_get_pacing_context(self):
         """Test get_pacing_context method."""
         tension_curve = [Decimal("3.0"), Decimal("7.0"), Decimal("5.0")]
@@ -982,6 +1028,7 @@ class TestStoryPacingMethods:
 class TestStoryPacingStringRepresentation:
     """Test suite for StoryPacing string representations."""
 
+    @pytest.mark.unit
     def test_str_representation_with_segment_name(self):
         """Test __str__ method with segment name."""
         pacing = StoryPacing(
@@ -996,6 +1043,8 @@ class TestStoryPacingStringRepresentation:
         expected = "StoryPacing('Climax Battle', crescendo, fast)"
         assert str(pacing) == expected
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_str_representation_without_segment_name(self):
         """Test __str__ method without segment name."""
         pacing = StoryPacing(
@@ -1009,6 +1058,7 @@ class TestStoryPacingStringRepresentation:
         expected = "StoryPacing('test-pacing', steady, moderate)"
         assert str(pacing) == expected
 
+    @pytest.mark.unit
     def test_repr_representation(self):
         """Test __repr__ method."""
         pacing = StoryPacing(
@@ -1028,6 +1078,7 @@ class TestStoryPacingStringRepresentation:
 class TestStoryPacingEquality:
     """Test suite for StoryPacing equality and hashing."""
 
+    @pytest.mark.unit
     def test_equality_same_values(self):
         """Test equality with same values."""
         pacing1 = StoryPacing(
@@ -1051,6 +1102,7 @@ class TestStoryPacingEquality:
         assert pacing1 == pacing2
         assert hash(pacing1) == hash(pacing2)
 
+    @pytest.mark.unit
     def test_inequality_different_values(self):
         """Test inequality with different values."""
         pacing1 = StoryPacing(
@@ -1072,6 +1124,7 @@ class TestStoryPacingEquality:
         assert pacing1 != pacing2
         assert hash(pacing1) != hash(pacing2)
 
+    @pytest.mark.unit
     def test_equality_in_collections(self):
         """Test that equality works correctly in collections."""
         pacing1 = StoryPacing(
@@ -1100,6 +1153,7 @@ class TestStoryPacingEquality:
 class TestStoryPacingEdgeCases:
     """Test suite for StoryPacing edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     def test_minimum_valid_segment(self):
         """Test minimum valid segment with two sequences."""
         pacing = StoryPacing(
@@ -1115,6 +1169,7 @@ class TestStoryPacingEdgeCases:
         assert pacing.contains_sequence(1) is True
         assert pacing.contains_sequence(2) is False
 
+    @pytest.mark.unit
     def test_large_segment(self):
         """Test large segment with many sequences."""
         pacing = StoryPacing(
@@ -1131,6 +1186,7 @@ class TestStoryPacingEdgeCases:
         assert pacing.contains_sequence(1000) is True
         assert pacing.contains_sequence(1001) is False
 
+    @pytest.mark.unit
     def test_extreme_ratio_values(self):
         """Test extreme but valid ratio values."""
         # All dialogue
@@ -1159,6 +1215,7 @@ class TestStoryPacingEdgeCases:
         )
         assert action_heavy.action_ratio == Decimal("1.0")
 
+    @pytest.mark.unit
     def test_extreme_scale_values(self):
         """Test extreme but valid scale values."""
         extreme_pacing = StoryPacing(
@@ -1176,6 +1233,7 @@ class TestStoryPacingEdgeCases:
         assert extreme_pacing.event_density == Decimal("10.0")
         assert extreme_pacing.sentence_complexity == Decimal("1.0")
 
+    @pytest.mark.unit
     def test_complex_tension_curve_interpolation(self):
         """Test complex tension curve with many points."""
         complex_curve = [

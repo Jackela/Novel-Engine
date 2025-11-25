@@ -43,6 +43,8 @@ def build_state(
 class TestStoryArcManager:
     """StoryArcManager transition behaviour."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_initial_state_available(self) -> None:
         state = build_state(StoryArcPhase.EXPOSITION)
         manager = StoryArcManager(state)
@@ -50,6 +52,7 @@ class TestStoryArcManager:
         assert manager.current_state is state
         assert manager.current_phase == StoryArcPhase.EXPOSITION
 
+    @pytest.mark.unit
     def test_advance_through_sequence(self) -> None:
         initial_state = build_state(
             StoryArcPhase.EXPOSITION,
@@ -81,6 +84,7 @@ class TestStoryArcManager:
         assert climax_state.current_phase == StoryArcPhase.CLIMAX
         assert climax_state.previous_phase == StoryArcPhase.RISING_ACTION
 
+    @pytest.mark.unit
     def test_cannot_advance_when_not_ready(self) -> None:
         manager = StoryArcManager(
             build_state(
@@ -93,6 +97,7 @@ class TestStoryArcManager:
         with pytest.raises(RuntimeError):
             manager.advance_to_next_phase()
 
+    @pytest.mark.unit
     def test_cannot_advance_with_pending_requirements(self) -> None:
         manager = StoryArcManager(
             build_state(
@@ -106,6 +111,7 @@ class TestStoryArcManager:
         with pytest.raises(RuntimeError):
             manager.advance_to_next_phase()
 
+    @pytest.mark.unit
     def test_cannot_skip_phases_with_update(self) -> None:
         manager = StoryArcManager(
             build_state(
@@ -122,6 +128,7 @@ class TestStoryArcManager:
         with pytest.raises(ValueError):
             manager.update_state(skipping_state)
 
+    @pytest.mark.unit
     def test_cannot_rewind_phases(self) -> None:
         manager = StoryArcManager(
             build_state(
@@ -135,6 +142,7 @@ class TestStoryArcManager:
         with pytest.raises(ValueError):
             manager.update_state(rewinding_state)
 
+    @pytest.mark.unit
     def test_cannot_advance_past_final_phase(self) -> None:
         manager = StoryArcManager(
             build_state(
@@ -147,6 +155,7 @@ class TestStoryArcManager:
         with pytest.raises(RuntimeError):
             manager.advance_to_next_phase()
 
+    @pytest.mark.unit
     def test_metadata_merges_when_advancing(self) -> None:
         state = StoryArcState(
             **{

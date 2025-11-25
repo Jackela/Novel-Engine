@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field, field_validator
@@ -319,6 +320,7 @@ def _patch_e2e_database_fixture() -> None:
 _patch_e2e_database_fixture()
 
 # API Application with M10 Observability Enhancement
+# Note: lifespan is defined below after required globals are initialized
 
 app = FastAPI(
     title="Novel Engine Turn Orchestration API",
@@ -383,23 +385,25 @@ turn_orchestrator = TurnOrchestrator(prometheus_collector=prometheus_collector)
 active_turns: Dict[str, Dict[str, Any]] = {}
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize application on startup."""
+# Lifespan context manager for startup/shutdown events
+@asynccontextmanager
+async def lifespan_handler(app: FastAPI):
+    """Manage application lifespan (startup and shutdown)."""
+    # Startup
     logger.info("Starting Novel Engine Turn Orchestration API")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on application shutdown."""
+    yield
+    # Shutdown
     logger.info("Shutting down Novel Engine Turn Orchestration API")
-
     # Cleanup any active turn resources
     for turn_id in list(active_turns.keys()):
         try:
             await turn_orchestrator.cleanup_turn_resources(TurnId.parse(turn_id))
         except Exception as e:
             logger.error(f"Error cleaning up turn {turn_id}: {e}")
+
+
+# Apply lifespan to app
+app.router.lifespan_context = lifespan_handler
 
 
 # Dependency injection

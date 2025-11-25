@@ -402,6 +402,10 @@ class LevelUpCharacterCommandHandler:
                     f"Ability improvements requested: {command.ability_score_improvements}"
                 )
                 # TODO: Implement ability score improvements
+                # Implementation requires:
+                # - Modify CoreAbilities value object to support incremental updates
+                # - Add Character.apply_ability_improvements() domain method
+                # - Validate improvements against level-up rules (e.g., max +2 per ability)
 
             # Apply skill improvements if specified
             if command.skill_improvements:
@@ -409,6 +413,10 @@ class LevelUpCharacterCommandHandler:
                     f"Skill improvements requested: {command.skill_improvements}"
                 )
                 # TODO: Implement skill improvements
+                # Implementation requires:
+                # - Add skill proficiency tracking to Character aggregate
+                # - Support for skill expertise (double proficiency bonus)
+                # - Validate skill selections against class/background restrictions
 
             # Save character
             await self.repository.save(character)
@@ -453,7 +461,10 @@ class DeleteCharacterCommandHandler:
                 return False
 
             # TODO: Raise CharacterDeleted domain event before deletion
-            # This would require modifying the character to add the event first
+            # Implementation requires:
+            # - Create CharacterDeleted domain event class
+            # - Add character.mark_for_deletion(reason) method that raises the event
+            # - Ensure event handlers can clean up related data (inventory, relationships)
 
             # Delete character
             deleted = await self.repository.delete(character_id)

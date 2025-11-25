@@ -227,13 +227,7 @@ export default defineConfig({
     },
     // Isolate tests to prevent WebSocket connection leaks
     isolate: true,
-    // Pool options to prevent hanging
-    pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: true,
-        isolate: true
-      }
-    }
+    // Use forks pool for better compatibility with MUI barrel imports
+    pool: 'forks',
   },
 });

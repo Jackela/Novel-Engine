@@ -157,7 +157,7 @@ class IntelligentCacheManager:
         """Initialize background cleanup and metrics tasks."""
         if self.config.background_cleanup:
             try:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 self._cleanup_task = loop.create_task(self._background_cleanup())
 
                 if self.config.enable_metrics:
@@ -736,7 +736,7 @@ def cached(ttl: Optional[float] = None, key_prefix: str = "func"):
                 return await async_wrapper(*args, **kwargs)
 
             try:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 return loop.run_until_complete(async_func())
             except RuntimeError:
                 # No event loop, execute function directly

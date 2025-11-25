@@ -28,6 +28,8 @@ from contexts.character.domain.value_objects.skills import (
 class TestProficiencyLevel:
     """Test suite for ProficiencyLevel enum."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_proficiency_level_values(self):
         """Test proficiency level enum values."""
         assert ProficiencyLevel.UNTRAINED.value == 0
@@ -39,6 +41,8 @@ class TestProficiencyLevel:
         assert ProficiencyLevel.GRANDMASTER.value == 6
         assert ProficiencyLevel.LEGENDARY.value == 7
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_proficiency_level_ordering(self):
         """Test that proficiency levels can be compared."""
         assert ProficiencyLevel.UNTRAINED.value < ProficiencyLevel.NOVICE.value
@@ -49,6 +53,7 @@ class TestProficiencyLevel:
 class TestSkillCategory:
     """Test suite for SkillCategory enum."""
 
+    @pytest.mark.unit
     def test_skill_category_values(self):
         """Test skill category enum values."""
         expected_categories = [
@@ -68,6 +73,8 @@ class TestSkillCategory:
         for expected in expected_categories:
             assert expected in category_values
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_category_uniqueness(self):
         """Test that all skill category values are unique."""
         category_values = [category.value for category in SkillCategory]
@@ -79,6 +86,7 @@ class TestSkill:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_skill_creation_success(self):
         """Test successful skill creation."""
         skill = Skill(
@@ -95,6 +103,8 @@ class TestSkill:
         assert skill.modifier == 3
         assert skill.description == "Expertise with sword combat"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_creation_minimal(self):
         """Test skill creation with minimal data."""
         skill = Skill(
@@ -109,6 +119,8 @@ class TestSkill:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_empty_name_fails(self):
         """Test skill validation fails with empty name."""
         with pytest.raises(ValueError) as exc_info:
@@ -120,6 +132,8 @@ class TestSkill:
             )
         assert "Skill name cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_whitespace_name_fails(self):
         """Test skill validation fails with whitespace-only name."""
         with pytest.raises(ValueError) as exc_info:
@@ -131,6 +145,8 @@ class TestSkill:
             )
         assert "Skill name cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_name_too_long_fails(self):
         """Test skill validation fails with name too long."""
         long_name = "A" * 51  # 51 characters
@@ -143,6 +159,8 @@ class TestSkill:
             )
         assert "Skill name cannot exceed 50 characters" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_modifier_too_low_fails(self):
         """Test skill validation fails with modifier too low."""
         with pytest.raises(ValueError) as exc_info:
@@ -154,6 +172,8 @@ class TestSkill:
             )
         assert "Skill modifier must be between -10 and 20" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_modifier_too_high_fails(self):
         """Test skill validation fails with modifier too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -165,6 +185,7 @@ class TestSkill:
             )
         assert "Skill modifier must be between -10 and 20" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_skill_description_too_long_fails(self):
         """Test skill validation fails with description too long."""
         long_description = "A" * 501  # 501 characters
@@ -178,6 +199,7 @@ class TestSkill:
             )
         assert "Skill description cannot exceed 500 characters" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_skill_boundary_values(self):
         """Test skill creation at boundary values."""
         # Test minimum values
@@ -206,6 +228,8 @@ class TestSkill:
 
     # ==================== Method Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_total_modifier(self):
         """Test total modifier calculation."""
         skill = Skill(
@@ -217,6 +241,8 @@ class TestSkill:
 
         assert skill.get_total_modifier() == 7  # 4 + 3
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_total_modifier_untrained(self):
         """Test total modifier for untrained skill."""
         skill = Skill(
@@ -228,6 +254,8 @@ class TestSkill:
 
         assert skill.get_total_modifier() == 2  # 0 + 2
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_total_modifier_negative(self):
         """Test total modifier with negative modifier."""
         skill = Skill(
@@ -239,6 +267,8 @@ class TestSkill:
 
         assert skill.get_total_modifier() == -2  # 1 + (-3)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_trained_true(self):
         """Test is_trained returns True for trained skills."""
         skill = Skill(
@@ -250,6 +280,8 @@ class TestSkill:
 
         assert skill.is_trained() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_trained_false(self):
         """Test is_trained returns False for untrained skills."""
         skill = Skill(
@@ -261,6 +293,7 @@ class TestSkill:
 
         assert skill.is_trained() is False
 
+    @pytest.mark.unit
     def test_is_expert_level_true(self):
         """Test is_expert_level returns True for expert+ skills."""
         expert_skill = Skill(
@@ -280,6 +313,8 @@ class TestSkill:
         assert expert_skill.is_expert_level() is True
         assert master_skill.is_expert_level() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_expert_level_false(self):
         """Test is_expert_level returns False for below expert skills."""
         skill = Skill(
@@ -291,6 +326,7 @@ class TestSkill:
 
         assert skill.is_expert_level() is False
 
+    @pytest.mark.unit
     def test_is_master_level_true(self):
         """Test is_master_level returns True for master+ skills."""
         master_skill = Skill(
@@ -310,6 +346,8 @@ class TestSkill:
         assert master_skill.is_master_level() is True
         assert grandmaster_skill.is_master_level() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_master_level_false(self):
         """Test is_master_level returns False for below master skills."""
         skill = Skill(
@@ -321,6 +359,7 @@ class TestSkill:
 
         assert skill.is_master_level() is False
 
+    @pytest.mark.unit
     def test_get_proficiency_description(self):
         """Test proficiency description generation."""
         skill_levels = [
@@ -375,6 +414,7 @@ class TestSkillGroup:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_skill_group_creation_success(self, sample_combat_skills):
         """Test successful skill group creation."""
         group = SkillGroup(
@@ -392,6 +432,8 @@ class TestSkillGroup:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_group_empty_name_fails(self, sample_combat_skills):
         """Test skill group validation fails with empty name."""
         with pytest.raises(ValueError) as exc_info:
@@ -403,6 +445,8 @@ class TestSkillGroup:
             )
         assert "Skill group name cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_group_base_modifier_too_low_fails(self, sample_combat_skills):
         """Test skill group validation fails with base modifier too low."""
         with pytest.raises(ValueError) as exc_info:
@@ -414,6 +458,8 @@ class TestSkillGroup:
             )
         assert "Base modifier must be between -5 and 10" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_group_base_modifier_too_high_fails(self, sample_combat_skills):
         """Test skill group validation fails with base modifier too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -425,6 +471,8 @@ class TestSkillGroup:
             )
         assert "Base modifier must be between -5 and 10" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skill_group_empty_skills_fails(self):
         """Test skill group validation fails with no skills."""
         with pytest.raises(ValueError) as exc_info:
@@ -436,6 +484,7 @@ class TestSkillGroup:
             )
         assert "Skill group must contain at least one skill" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_skill_group_mismatched_category_fails(self):
         """Test skill group validation fails with mismatched skill categories."""
         mismatched_skills = {
@@ -458,6 +507,8 @@ class TestSkillGroup:
 
     # ==================== Method Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_existing(self, sample_skill_group):
         """Test getting an existing skill from group."""
         skill = sample_skill_group.get_skill("melee_combat")
@@ -465,6 +516,8 @@ class TestSkillGroup:
         assert skill is not None
         assert skill.name == "Melee Combat"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_case_insensitive(self, sample_skill_group):
         """Test getting skill is case insensitive."""
         skill = sample_skill_group.get_skill("MELEE_COMBAT")
@@ -472,21 +525,29 @@ class TestSkillGroup:
         assert skill is not None
         assert skill.name == "Melee Combat"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_nonexistent(self, sample_skill_group):
         """Test getting non-existent skill returns None."""
         skill = sample_skill_group.get_skill("nonexistent_skill")
 
         assert skill is None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_skill_existing(self, sample_skill_group):
         """Test has_skill returns True for existing skills."""
         assert sample_skill_group.has_skill("melee_combat") is True
         assert sample_skill_group.has_skill("RANGED_COMBAT") is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_skill_nonexistent(self, sample_skill_group):
         """Test has_skill returns False for non-existent skills."""
         assert sample_skill_group.has_skill("nonexistent_skill") is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_average_proficiency(self, sample_skill_group):
         """Test average proficiency calculation."""
         # Expert(4) + Journeyman(3) + Apprentice(2) = 9, avg = 3.0
@@ -494,6 +555,8 @@ class TestSkillGroup:
 
         assert avg == 3.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_average_proficiency_empty_group(self):
         """Test average proficiency for hypothetical empty group."""
         # This test is theoretical since empty groups fail validation
@@ -510,6 +573,8 @@ class TestSkillGroup:
         avg = group.get_average_proficiency()
         assert avg == 0.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_expert_skills(self, sample_skill_group):
         """Test getting expert-level skills from group."""
         expert_skills = sample_skill_group.get_expert_skills()
@@ -517,12 +582,15 @@ class TestSkillGroup:
         assert len(expert_skills) == 1
         assert expert_skills[0].name == "Melee Combat"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_count_trained_skills(self, sample_skill_group):
         """Test counting trained skills in group."""
         trained_count = sample_skill_group.count_trained_skills()
 
         assert trained_count == 3  # All skills are trained (above UNTRAINED)
 
+    @pytest.mark.unit
     def test_count_trained_skills_with_untrained(self):
         """Test counting trained skills with some untrained."""
         mixed_skills = {
@@ -589,6 +657,8 @@ class TestSkills:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skills_creation_success(self, sample_skill_groups):
         """Test successful Skills creation."""
         skills = Skills(
@@ -601,6 +671,8 @@ class TestSkills:
         assert "Common" in skills.languages
         assert skills.specializations["melee_combat"] == 3
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skills_creation_minimal(self, sample_skill_groups):
         """Test Skills creation with minimal data."""
         skills = Skills(
@@ -613,12 +685,16 @@ class TestSkills:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skills_empty_skill_groups_fails(self):
         """Test Skills validation fails with empty skill groups."""
         with pytest.raises(ValueError) as exc_info:
             Skills(skill_groups={}, languages={"Common"}, specializations={})  # Empty
         assert "Character must have at least one skill group" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skills_empty_language_name_fails(self, sample_skill_groups):
         """Test Skills validation fails with empty language name."""
         with pytest.raises(ValueError) as exc_info:
@@ -629,6 +705,8 @@ class TestSkills:
             )
         assert "Language names cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skills_language_name_too_long_fails(self, sample_skill_groups):
         """Test Skills validation fails with language name too long."""
         long_language = "A" * 31  # 31 characters
@@ -640,6 +718,8 @@ class TestSkills:
             )
         assert "Language names cannot exceed 30 characters" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skills_empty_specialization_name_fails(self, sample_skill_groups):
         """Test Skills validation fails with empty specialization name."""
         with pytest.raises(ValueError) as exc_info:
@@ -650,6 +730,8 @@ class TestSkills:
             )
         assert "Specialization names cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skills_specialization_bonus_too_low_fails(self, sample_skill_groups):
         """Test Skills validation fails with specialization bonus too low."""
         with pytest.raises(ValueError) as exc_info:
@@ -660,6 +742,8 @@ class TestSkills:
             )
         assert "Specialization bonus must be between -5 and 15" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_skills_specialization_bonus_too_high_fails(self, sample_skill_groups):
         """Test Skills validation fails with specialization bonus too high."""
         with pytest.raises(ValueError) as exc_info:
@@ -672,6 +756,8 @@ class TestSkills:
 
     # ==================== Skill Lookup Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_by_name_found(self, sample_skills):
         """Test getting skill by name when found."""
         skill = sample_skills.get_skill("melee_combat")
@@ -680,6 +766,8 @@ class TestSkills:
         assert skill.name == "Melee Combat"
         assert skill.category == SkillCategory.COMBAT
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_by_name_case_insensitive(self, sample_skills):
         """Test getting skill by name is case insensitive."""
         skill = sample_skills.get_skill("MELEE_COMBAT")
@@ -687,12 +775,16 @@ class TestSkills:
         assert skill is not None
         assert skill.name == "Melee Combat"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_by_name_not_found(self, sample_skills):
         """Test getting skill by name when not found."""
         skill = sample_skills.get_skill("nonexistent_skill")
 
         assert skill is None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_by_category_found(self, sample_skills):
         """Test getting skill by name and category when found."""
         skill = sample_skills.get_skill("persuasion", SkillCategory.SOCIAL)
@@ -701,12 +793,16 @@ class TestSkills:
         assert skill.name == "Persuasion"
         assert skill.category == SkillCategory.SOCIAL
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_by_category_wrong_category(self, sample_skills):
         """Test getting skill with wrong category returns None."""
         skill = sample_skills.get_skill("melee_combat", SkillCategory.SOCIAL)
 
         assert skill is None
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_skill_sufficient_proficiency(self, sample_skills):
         """Test has_skill returns True with sufficient proficiency."""
         assert sample_skills.has_skill("melee_combat", ProficiencyLevel.EXPERT) is True
@@ -714,20 +810,28 @@ class TestSkills:
             sample_skills.has_skill("melee_combat", ProficiencyLevel.JOURNEYMAN) is True
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_skill_insufficient_proficiency(self, sample_skills):
         """Test has_skill returns False with insufficient proficiency."""
         assert sample_skills.has_skill("persuasion", ProficiencyLevel.EXPERT) is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_skill_default_proficiency(self, sample_skills):
         """Test has_skill with default minimum proficiency."""
         assert sample_skills.has_skill("deception") is True  # NOVICE >= NOVICE
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_skill_nonexistent_skill(self, sample_skills):
         """Test has_skill returns False for non-existent skill."""
         assert sample_skills.has_skill("nonexistent_skill") is False
 
     # ==================== Modifier Calculation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_modifier_existing_skill(self, sample_skills):
         """Test getting skill modifier for existing skill."""
         # Melee Combat: EXPERT(4) + modifier(2) = 6 (excluding specialization)
@@ -737,6 +841,8 @@ class TestSkills:
 
         assert modifier == 6
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_modifier_with_specialization(self, sample_skills):
         """Test getting skill modifier with specialization bonus."""
         # Melee Combat: EXPERT(4) + modifier(2) + specialization(2) = 8
@@ -746,6 +852,8 @@ class TestSkills:
 
         assert modifier == 8
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_modifier_without_specialization(self, sample_skills):
         """Test getting skill modifier without specialization bonus."""
         # Melee Combat: EXPERT(4) + modifier(2) = 6 (ignoring specialization)
@@ -755,6 +863,8 @@ class TestSkills:
 
         assert modifier == 6
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_modifier_nonexistent_skill(self, sample_skills):
         """Test getting skill modifier for non-existent skill returns 0."""
         modifier = sample_skills.get_skill_modifier("nonexistent_skill")
@@ -763,6 +873,8 @@ class TestSkills:
 
     # ==================== Category and Collection Methods Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skills_by_category_existing(self, sample_skills):
         """Test getting skills by existing category."""
         combat_skills = sample_skills.get_skills_by_category(SkillCategory.COMBAT)
@@ -772,12 +884,16 @@ class TestSkills:
         assert "Melee Combat" in skill_names
         assert "Ranged Combat" in skill_names
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skills_by_category_nonexistent(self, sample_skills):
         """Test getting skills by non-existent category returns empty list."""
         magical_skills = sample_skills.get_skills_by_category(SkillCategory.MAGICAL)
 
         assert magical_skills == []
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_expert_skills(self, sample_skills):
         """Test getting all expert-level skills."""
         expert_skills = sample_skills.get_expert_skills()
@@ -786,12 +902,16 @@ class TestSkills:
         assert expert_skills[0].name == "Melee Combat"
         assert expert_skills[0].proficiency_level == ProficiencyLevel.EXPERT
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_master_skills(self, sample_skills):
         """Test getting all master-level skills."""
         master_skills = sample_skills.get_master_skills()
 
         assert len(master_skills) == 0  # No master-level skills in sample
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_all_skills(self, sample_skills):
         """Test getting all skills across categories."""
         all_skills = sample_skills.get_all_skills()
@@ -801,6 +921,8 @@ class TestSkills:
         assert "Melee Combat" in skill_names
         assert "Persuasion" in skill_names
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_count_trained_skills(self, sample_skills):
         """Test counting total trained skills."""
         trained_count = sample_skills.count_trained_skills()
@@ -809,17 +931,23 @@ class TestSkills:
 
     # ==================== Language Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_speaks_language_existing(self, sample_skills):
         """Test speaks_language returns True for known languages."""
         assert sample_skills.speaks_language("Common") is True
         assert sample_skills.speaks_language("Elvish") is True
         assert sample_skills.speaks_language("Draconic") is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_speaks_language_case_insensitive(self, sample_skills):
         """Test speaks_language is case insensitive."""
         assert sample_skills.speaks_language("common") is True
         assert sample_skills.speaks_language("ELVISH") is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_speaks_language_unknown(self, sample_skills):
         """Test speaks_language returns False for unknown languages."""
         assert sample_skills.speaks_language("Orcish") is False
@@ -827,6 +955,8 @@ class TestSkills:
 
     # ==================== Analysis Methods Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_strongest_category(self, sample_skills):
         """Test finding strongest skill category."""
         strongest = sample_skills.get_strongest_category()
@@ -835,6 +965,7 @@ class TestSkills:
         # Social has lower average: APPRENTICE(2) + NOVICE(1) = 1.5 avg
         assert strongest == SkillCategory.COMBAT
 
+    @pytest.mark.unit
     def test_get_strongest_category_empty_skills(self):
         """Test strongest category with minimal skills."""
         minimal_skills = {
@@ -852,6 +983,7 @@ class TestSkills:
         strongest = skills.get_strongest_category()
         assert strongest == SkillCategory.PHYSICAL
 
+    @pytest.mark.unit
     def test_is_specialist_true(self, sample_skills):
         """Test is_specialist returns True when meeting criteria."""
         # Add more expert combat skills to test
@@ -875,6 +1007,8 @@ class TestSkills:
 
         assert skills.is_specialist(SkillCategory.COMBAT, min_expert_skills=3) is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_specialist_false(self, sample_skills):
         """Test is_specialist returns False when not meeting criteria."""
         assert (
@@ -882,16 +1016,22 @@ class TestSkills:
             is False
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_can_perform_action_success(self, sample_skills):
         """Test can_perform_action returns True for achievable actions."""
         # Melee Combat modifier is 6 (or 8 with specialization), + 10 base = 16/18
         assert sample_skills.can_perform_action("melee_combat", difficulty=15) is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_can_perform_action_failure(self, sample_skills):
         """Test can_perform_action returns False for difficult actions."""
         # Deception modifier is 1, + 10 base = 11
         assert sample_skills.can_perform_action("deception", difficulty=20) is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_can_perform_action_nonexistent_skill(self, sample_skills):
         """Test can_perform_action with non-existent skill."""
         # Non-existent skill has 0 modifier, + 10 base = 10
@@ -902,6 +1042,7 @@ class TestSkills:
 
     # ==================== Summary Method Tests ====================
 
+    @pytest.mark.unit
     def test_get_skill_summary(self, sample_skills):
         """Test comprehensive skill summary generation."""
         summary = sample_skills.get_skill_summary()
@@ -916,6 +1057,8 @@ class TestSkills:
         assert len(summary["skill_categories"]) == 2
         assert len(summary["top_skills"]) <= 5
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_skill_summary_top_skills_ordering(self, sample_skills):
         """Test that top skills are ordered by modifier."""
         summary = sample_skills.get_skill_summary()
@@ -926,6 +1069,7 @@ class TestSkills:
 
     # ==================== Factory Method Tests ====================
 
+    @pytest.mark.unit
     def test_create_basic_skills(self):
         """Test creating basic skill set."""
         basic_skills = Skills.create_basic_skills()
@@ -954,6 +1098,8 @@ class TestSkills:
         # Check specializations is empty
         assert len(basic_skills.specializations) == 0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_basic_skills_with_level(self):
         """Test creating basic skills with specific level."""
         # Level parameter exists in signature but doesn't affect current implementation
@@ -964,12 +1110,14 @@ class TestSkills:
 
     # ==================== Immutability Tests ====================
 
+    @pytest.mark.unit
     def test_skills_immutability(self, sample_skills):
         """Test that Skills is immutable (frozen dataclass)."""
         with pytest.raises(Exception):  # Should raise FrozenInstanceError
             # Test that you can't assign new values to frozen fields
             sample_skills.skill_groups = {}
 
+    @pytest.mark.unit
     def test_skill_immutability(self):
         """Test that Skill is immutable."""
         skill = Skill("Test", SkillCategory.COMBAT, ProficiencyLevel.NOVICE, 0)
@@ -977,6 +1125,7 @@ class TestSkills:
         with pytest.raises(AttributeError):
             skill.modifier = 5
 
+    @pytest.mark.unit
     def test_skill_group_immutability(self):
         """Test that SkillGroup is immutable."""
         skills_dict = {
@@ -989,6 +1138,7 @@ class TestSkills:
 
     # ==================== Edge Cases and Integration Tests ====================
 
+    @pytest.mark.unit
     def test_skills_with_overlapping_specializations(self, sample_skill_groups):
         """Test skills with specializations for non-existent skills."""
         skills = Skills(
@@ -1008,6 +1158,7 @@ class TestSkills:
         modifier_nonexistent = skills.get_skill_modifier("nonexistent_skill")
         assert modifier_nonexistent == 0
 
+    @pytest.mark.unit
     def test_skills_boundary_values_comprehensive(self):
         """Test skills with various boundary value combinations."""
         # Create skills with extreme values

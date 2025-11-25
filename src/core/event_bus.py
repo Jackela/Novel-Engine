@@ -339,7 +339,7 @@ class EventBus:
         if not self._running:
             await self.start()
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             # Store event if event store is enabled
@@ -358,7 +358,7 @@ class EventBus:
             result = EventProcessingResult(
                 event_id=event.metadata.event_id,
                 success=True,
-                processing_time=asyncio.get_event_loop().time() - start_time,
+                processing_time=asyncio.get_running_loop().time() - start_time,
             )
 
             logger.debug(
@@ -384,7 +384,7 @@ class EventBus:
                 event_id=event.metadata.event_id,
                 success=False,
                 errors=[str(e)],
-                processing_time=asyncio.get_event_loop().time() - start_time,
+                processing_time=asyncio.get_running_loop().time() - start_time,
             )
 
     async def publish_and_wait(
@@ -451,7 +451,7 @@ class EventBus:
 
     async def _handle_event(self, event: Event) -> None:
         """Handle a single event with all registered handlers."""
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             # Get handlers for this event type
@@ -488,7 +488,7 @@ class EventBus:
                     failed_handlers += 1
 
             # Update statistics
-            processing_time = asyncio.get_event_loop().time() - start_time
+            processing_time = asyncio.get_running_loop().time() - start_time
 
             self._processing_stats["handlers_executed"] += len(handlers)
 

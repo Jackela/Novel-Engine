@@ -264,7 +264,7 @@ class PostgreSQLConnectionPool:
         self, query: str, *args, fetch_mode: str = "none"  # none, one, all
     ) -> Any:
         """Execute query with performance monitoring."""
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             async with self.get_connection() as conn:
@@ -276,7 +276,7 @@ class PostgreSQLConnectionPool:
                     result = await conn.execute(query, *args)
 
                 # Track performance metrics
-                execution_time = asyncio.get_event_loop().time() - start_time
+                execution_time = asyncio.get_running_loop().time() - start_time
                 self._metrics["total_queries"] += 1
                 self._metrics["query_times"].append(execution_time)
 

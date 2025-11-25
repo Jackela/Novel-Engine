@@ -16,6 +16,8 @@ from contexts.narratives.domain.value_objects.narrative_id import NarrativeId
 class TestNarrativeIdCreation:
     """Test suite for NarrativeId creation and basic functionality."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_with_uuid(self):
         """Test creating NarrativeId with valid UUID."""
         uuid_value = uuid4()
@@ -24,6 +26,8 @@ class TestNarrativeIdCreation:
         assert narrative_id.value == uuid_value
         assert isinstance(narrative_id.value, UUID)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_with_specific_uuid(self):
         """Test creating NarrativeId with specific UUID."""
         specific_uuid = UUID("12345678-1234-5678-9abc-123456789abc")
@@ -32,6 +36,7 @@ class TestNarrativeIdCreation:
         assert narrative_id.value == specific_uuid
         assert str(narrative_id.value) == "12345678-1234-5678-9abc-123456789abc"
 
+    @pytest.mark.unit
     def test_frozen_dataclass_immutability(self):
         """Test that NarrativeId is immutable (frozen dataclass)."""
         uuid_value = uuid4()
@@ -41,6 +46,8 @@ class TestNarrativeIdCreation:
         with pytest.raises(AttributeError):
             narrative_id.value = uuid4()
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_class_metadata(self):
         """Test that class-level metadata is correctly set."""
         assert NarrativeId._context_name == "narratives"
@@ -50,26 +57,31 @@ class TestNarrativeIdCreation:
 class TestNarrativeIdValidation:
     """Test suite for NarrativeId validation logic."""
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_string(self):
         """Test validation fails with string instead of UUID."""
         with pytest.raises(TypeError, match="NarrativeId value must be a UUID, got"):
             NarrativeId("not-a-uuid-object")
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_integer(self):
         """Test validation fails with integer instead of UUID."""
         with pytest.raises(TypeError, match="NarrativeId value must be a UUID, got"):
             NarrativeId(12345)
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_none(self):
         """Test validation fails with None instead of UUID."""
         with pytest.raises(TypeError, match="NarrativeId value must be a UUID, got"):
             NarrativeId(None)
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_dict(self):
         """Test validation fails with dict instead of UUID."""
         with pytest.raises(TypeError, match="NarrativeId value must be a UUID, got"):
             NarrativeId({"uuid": "12345678-1234-5678-9abc-123456789abc"})
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_list(self):
         """Test validation fails with list instead of UUID."""
         with pytest.raises(TypeError, match="NarrativeId value must be a UUID, got"):
@@ -79,6 +91,7 @@ class TestNarrativeIdValidation:
 class TestNarrativeIdFactoryMethods:
     """Test suite for NarrativeId factory methods."""
 
+    @pytest.mark.unit
     def test_generate_creates_unique_ids(self):
         """Test that generate() creates unique IDs each time."""
         id1 = NarrativeId.generate()
@@ -100,6 +113,8 @@ class TestNarrativeIdFactoryMethods:
         assert isinstance(id2.value, UUID)
         assert isinstance(id3.value, UUID)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_string_valid_uuid(self):
         """Test creating NarrativeId from valid UUID string."""
         uuid_string = "12345678-1234-5678-9abc-123456789abc"
@@ -110,6 +125,8 @@ class TestNarrativeIdFactoryMethods:
             str(narrative_id.value) == uuid_string.lower()
         )  # UUID strings are normalized to lowercase
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_string_uppercase_uuid(self):
         """Test creating NarrativeId from uppercase UUID string."""
         uuid_string = "12345678-1234-5678-9ABC-123456789ABC"
@@ -118,6 +135,8 @@ class TestNarrativeIdFactoryMethods:
         assert isinstance(narrative_id, NarrativeId)
         assert str(narrative_id.value) == uuid_string.lower()
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_string_without_dashes(self):
         """Test creating NarrativeId from UUID string without dashes."""
         uuid_string = "123456781234567890ab123456789abc"
@@ -127,6 +146,7 @@ class TestNarrativeIdFactoryMethods:
         # UUID constructor should handle this and add dashes
         assert len(str(narrative_id.value)) == 36  # Standard UUID format with dashes
 
+    @pytest.mark.unit
     def test_from_string_invalid_format(self):
         """Test from_string fails with invalid UUID format."""
         invalid_strings = [
@@ -143,11 +163,13 @@ class TestNarrativeIdFactoryMethods:
             with pytest.raises(ValueError, match="Invalid UUID format for NarrativeId"):
                 NarrativeId.from_string(invalid_string)
 
+    @pytest.mark.unit
     def test_from_string_none(self):
         """Test from_string fails with None."""
         with pytest.raises(ValueError, match="Invalid UUID format for NarrativeId"):
             NarrativeId.from_string(None)
 
+    @pytest.mark.unit
     def test_from_string_non_string_type(self):
         """Test from_string fails with non-string types."""
         with pytest.raises(ValueError, match="Invalid UUID format for NarrativeId"):
@@ -160,6 +182,8 @@ class TestNarrativeIdFactoryMethods:
 class TestNarrativeIdStringRepresentation:
     """Test suite for NarrativeId string representation."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_str_representation(self):
         """Test string representation of NarrativeId."""
         uuid_value = UUID("12345678-1234-5678-9abc-123456789abc")
@@ -169,6 +193,8 @@ class TestNarrativeIdStringRepresentation:
         assert str_repr == f"NarrativeId({uuid_value})"
         assert isinstance(str_repr, str)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_str_representation_generated(self):
         """Test string representation of generated NarrativeId."""
         narrative_id = NarrativeId.generate()
@@ -182,6 +208,8 @@ class TestNarrativeIdStringRepresentation:
         uuid_part = str_repr.replace("NarrativeId(", "").replace(")", "")
         UUID(uuid_part)  # Should not raise exception
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_repr_representation(self):
         """Test repr representation of NarrativeId."""
         uuid_value = UUID("12345678-1234-5678-9abc-123456789abc")
@@ -192,6 +220,8 @@ class TestNarrativeIdStringRepresentation:
         assert "12345678-1234-5678-9abc-123456789abc" in repr_str
         assert "value=" in repr_str
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_to_string_method(self):
         """Test to_string method returns UUID string."""
         uuid_value = UUID("12345678-1234-5678-9abc-123456789abc")
@@ -205,6 +235,8 @@ class TestNarrativeIdStringRepresentation:
 class TestNarrativeIdEquality:
     """Test suite for NarrativeId equality comparison."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_same_uuid(self):
         """Test equality with same UUID value."""
         uuid_value = uuid4()
@@ -214,6 +246,8 @@ class TestNarrativeIdEquality:
         assert id1 == id2
         assert not (id1 != id2)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_different_uuids(self):
         """Test inequality with different UUID values."""
         uuid1 = uuid4()
@@ -225,6 +259,7 @@ class TestNarrativeIdEquality:
         assert id1 != id2
         assert not (id1 == id2)
 
+    @pytest.mark.unit
     def test_equality_with_non_narrative_id(self):
         """Test equality comparison with non-NarrativeId objects."""
         uuid_value = uuid4()
@@ -245,11 +280,15 @@ class TestNarrativeIdEquality:
         assert narrative_id != {}
         assert narrative_id != []
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_reflexive(self):
         """Test that equality is reflexive (a == a)."""
         narrative_id = NarrativeId.generate()
         assert narrative_id == narrative_id
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_symmetric(self):
         """Test that equality is symmetric (a == b implies b == a)."""
         uuid_value = uuid4()
@@ -259,6 +298,8 @@ class TestNarrativeIdEquality:
         assert id1 == id2
         assert id2 == id1
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_transitive(self):
         """Test that equality is transitive (a == b and b == c implies a == c)."""
         uuid_value = uuid4()
@@ -274,6 +315,8 @@ class TestNarrativeIdEquality:
 class TestNarrativeIdHashing:
     """Test suite for NarrativeId hashing behavior."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_hash_consistency(self):
         """Test that hash is consistent for same object."""
         narrative_id = NarrativeId.generate()
@@ -282,6 +325,8 @@ class TestNarrativeIdHashing:
 
         assert hash1 == hash2
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_hash_equality_implies_same_hash(self):
         """Test that equal objects have the same hash."""
         uuid_value = uuid4()
@@ -291,6 +336,8 @@ class TestNarrativeIdHashing:
         assert id1 == id2
         assert hash(id1) == hash(id2)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_hash_different_for_different_uuids(self):
         """Test that different UUIDs produce different hashes."""
         id1 = NarrativeId.generate()
@@ -300,6 +347,8 @@ class TestNarrativeIdHashing:
         # it's extremely unlikely with UUIDs
         assert hash(id1) != hash(id2)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_usable_as_dict_key(self):
         """Test that NarrativeId can be used as dictionary key."""
         id1 = NarrativeId.generate()
@@ -315,6 +364,7 @@ class TestNarrativeIdHashing:
         equivalent_id = NarrativeId(uuid_value)
         assert test_dict[equivalent_id] == "value1"  # Should find the same entry
 
+    @pytest.mark.unit
     def test_usable_in_set(self):
         """Test that NarrativeId can be used in sets."""
         id1 = NarrativeId.generate()
@@ -337,6 +387,8 @@ class TestNarrativeIdHashing:
 class TestNarrativeIdRoundTripConversion:
     """Test suite for round-trip conversion between different representations."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_generate_to_string_to_from_string(self):
         """Test round-trip: generate -> to_string -> from_string."""
         original = NarrativeId.generate()
@@ -346,6 +398,8 @@ class TestNarrativeIdRoundTripConversion:
         assert original == reconstructed
         assert original.value == reconstructed.value
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_string_to_string_consistency(self):
         """Test that from_string -> to_string produces consistent results."""
         uuid_string = "12345678-1234-5678-9abc-123456789abc"
@@ -354,6 +408,8 @@ class TestNarrativeIdRoundTripConversion:
 
         assert result_string == uuid_string.lower()
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_uuid_to_narrative_id_to_string(self):
         """Test round-trip: UUID -> NarrativeId -> to_string."""
         original_uuid = uuid4()
@@ -362,6 +418,8 @@ class TestNarrativeIdRoundTripConversion:
 
         assert string_repr == str(original_uuid)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_multiple_round_trips(self):
         """Test multiple round-trip conversions maintain equality."""
         original = NarrativeId.generate()
@@ -381,6 +439,8 @@ class TestNarrativeIdRoundTripConversion:
 class TestNarrativeIdEdgeCases:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_nil_uuid(self):
         """Test with nil/zero UUID."""
         nil_uuid = UUID("00000000-0000-0000-0000-000000000000")
@@ -389,6 +449,8 @@ class TestNarrativeIdEdgeCases:
         assert narrative_id.value == nil_uuid
         assert narrative_id.to_string() == "00000000-0000-0000-0000-000000000000"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_max_uuid(self):
         """Test with maximum UUID value."""
         max_uuid = UUID("ffffffff-ffff-ffff-ffff-ffffffffffff")
@@ -397,6 +459,8 @@ class TestNarrativeIdEdgeCases:
         assert narrative_id.value == max_uuid
         assert narrative_id.to_string() == "ffffffff-ffff-ffff-ffff-ffffffffffff"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_uuid_versions(self):
         """Test with different UUID versions."""
         # UUID version 1 (time-based)
@@ -412,6 +476,7 @@ class TestNarrativeIdEdgeCases:
         # Different versions should create different IDs
         assert id1 != id4
 
+    @pytest.mark.unit
     def test_case_insensitive_from_string(self):
         """Test that from_string handles case variations correctly."""
         uuid_lower = "12345678-1234-5678-9abc-123456789def"
@@ -432,6 +497,8 @@ class TestNarrativeIdEdgeCases:
         assert id_upper.to_string() == uuid_lower
         assert id_mixed.to_string() == uuid_lower
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_compact_uuid_string(self):
         """Test from_string with compact (no dashes) UUID format."""
         compact_uuid = "123456781234567890ab123456789def"
@@ -441,6 +508,8 @@ class TestNarrativeIdEdgeCases:
         expected_standard = "12345678-1234-5678-90ab-123456789def"
         assert narrative_id.to_string() == expected_standard
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_memory_efficiency(self):
         """Test that multiple NarrativeIds with same UUID value are memory efficient."""
         uuid_value = uuid4()
@@ -462,6 +531,7 @@ class TestNarrativeIdEdgeCases:
 class TestNarrativeIdCollections:
     """Test suite for NarrativeId behavior in collections."""
 
+    @pytest.mark.unit
     def test_list_operations(self):
         """Test NarrativeId in list operations."""
         id1 = NarrativeId.generate()
@@ -479,6 +549,8 @@ class TestNarrativeIdCollections:
         equivalent_id1 = NarrativeId(id1.value)
         assert equivalent_id1 in id_list
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_set_operations(self):
         """Test NarrativeId in set operations."""
         id1 = NarrativeId.generate()
@@ -493,6 +565,7 @@ class TestNarrativeIdCollections:
         assert id2 in id_set
         assert equivalent_id1 in id_set
 
+    @pytest.mark.unit
     def test_dict_key_operations(self):
         """Test NarrativeId as dictionary keys."""
         id1 = NarrativeId.generate()
@@ -513,6 +586,8 @@ class TestNarrativeIdCollections:
         assert len(id_dict) == 2  # Should still have 2 keys
         assert id_dict[id1] == "updated_data1"  # Original key should have updated value
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_sorting(self):
         """Test that NarrativeIds can be sorted (by UUID string representation)."""
         # Create IDs with known UUID values for predictable sorting
@@ -533,16 +608,22 @@ class TestNarrativeIdCollections:
 class TestNarrativeIdContextMetadata:
     """Test suite for context-specific metadata and features."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_context_name_metadata(self):
         """Test context name class variable."""
         assert hasattr(NarrativeId, "_context_name")
         assert NarrativeId._context_name == "narratives"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_type_name_metadata(self):
         """Test type name class variable."""
         assert hasattr(NarrativeId, "_type_name")
         assert NarrativeId._type_name == "NarrativeId"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_metadata_is_class_variable(self):
         """Test that metadata are class variables, not instance variables."""
         id1 = NarrativeId.generate()
@@ -554,6 +635,7 @@ class TestNarrativeIdContextMetadata:
         assert id1._context_name is NarrativeId._context_name
         assert id1._type_name is NarrativeId._type_name
 
+    @pytest.mark.unit
     def test_metadata_immutability(self):
         """Test that metadata cannot be changed on instances."""
         narrative_id = NarrativeId.generate()

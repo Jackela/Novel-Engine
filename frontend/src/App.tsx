@@ -26,7 +26,6 @@ import { SkeletonDashboard } from './components/loading';
 import { usePerformance } from './hooks/usePerformance';
 import './styles/design-system.generated.css';
 import './styles/design-system.css';
-import './components/EmergentDashboard.css';
 
 // Query client (React Query v3)
 const queryClient = new QueryClient();
@@ -122,6 +121,9 @@ const AppRoutes: React.FC = () => {
     <RouterProvider
       router={appRouter}
       fallbackElement={<LoadingFallback />}
+      future={{
+        v7_startTransition: true,
+      }}
     />
   );
 };

@@ -31,6 +31,7 @@ from src.core.logging_system import (
 )
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_logging_system():
     """Test the structured logging system."""
@@ -82,6 +83,7 @@ async def test_logging_system():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_error_handling_system():
     """Test the centralized error handling system."""
@@ -129,6 +131,7 @@ async def test_error_handling_system():
         return False
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_integration():
     """Test integration between error handling and logging systems."""

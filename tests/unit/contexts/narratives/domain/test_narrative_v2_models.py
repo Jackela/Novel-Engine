@@ -26,6 +26,8 @@ except ModuleNotFoundError:
 class TestStoryArcPhase:
     """Behaviour validation for StoryArcPhase enum helpers."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_enum_contains_expected_members(self) -> None:
         phase_names = {phase.name for phase in StoryArcPhase}
         assert phase_names == {
@@ -36,6 +38,8 @@ class TestStoryArcPhase:
             "RESOLUTION",
         }
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_phase_properties_expose_expected_metadata(self) -> None:
         assert StoryArcPhase.EXPOSITION.typical_position_ratio == (0.0, 0.15)
         assert StoryArcPhase.CLIMAX.typical_pacing_intensity == "fast"
@@ -64,6 +68,8 @@ class TestStoryArcState:
         base_kwargs.update(overrides)
         return StoryArcState(**base_kwargs)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_defaults_are_applied(self) -> None:
         state = self._build_state()
         assert state.transition_requirements == []
@@ -71,6 +77,8 @@ class TestStoryArcState:
         assert state.state_timestamp <= datetime.now(timezone.utc)
         assert state.phase_position_description == "early"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_phase_complete_true_when_progress_and_transition_ready(self) -> None:
         state = self._build_state(
             phase_progress=Decimal("0.96"),
@@ -78,10 +86,14 @@ class TestStoryArcState:
         )
         assert state.is_phase_complete is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_phase_complete_false_when_below_threshold(self) -> None:
         state = self._build_state(phase_progress=Decimal("0.7"))
         assert state.is_phase_complete is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_to_context_dict_contains_expected_fields(self) -> None:
         state = self._build_state()
         context = state.to_context_dict()
@@ -91,6 +103,7 @@ class TestStoryArcState:
         assert context["active_plot_threads"] == 3
         assert context["ready_for_transition"] is False
 
+    @pytest.mark.unit
     def test_state_is_immutable(self) -> None:
         state = self._build_state()
         with pytest.raises(ValidationError):
@@ -104,10 +117,12 @@ class TestStoryArcState:
             ("current_tension_level", Decimal("12")),
         ],
     )
+    @pytest.mark.unit
     def test_invalid_progress_values_raise(self, field: str, value: Decimal) -> None:
         with pytest.raises(ValidationError):
             self._build_state(**{field: value})
 
+    @pytest.mark.unit
     def test_transition_requirements_reject_empty_strings(self) -> None:
         with pytest.raises(ValidationError):
             self._build_state(transition_requirements=[""])
@@ -138,6 +153,8 @@ class TestNarrativeGuidance:
         base_kwargs.update(overrides)
         return NarrativeGuidance(**base_kwargs)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_defaults_populate_lists_and_metadata(self) -> None:
         guidance = self._build_guidance()
         assert guidance.secondary_narrative_goals == []
@@ -146,6 +163,8 @@ class TestNarrativeGuidance:
         assert guidance.target_tension_level == Decimal("5.0")
         assert guidance.created_timestamp <= datetime.now(timezone.utc)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_to_director_context_matches_expected_shape(self) -> None:
         guidance = self._build_guidance(
             secondary_narrative_goals=["Foreshadow villain"],
@@ -159,11 +178,13 @@ class TestNarrativeGuidance:
         assert pytest.approx(context["content_mix"]["dialogue"], rel=1e-6) == 0.3
         assert context["required_elements"] == ["mysterious symbol"]
 
+    @pytest.mark.unit
     def test_guidance_is_immutable(self) -> None:
         guidance = self._build_guidance()
         with pytest.raises(ValidationError):
             guidance.narrative_tone = "dark"  # type: ignore[misc]
 
+    @pytest.mark.unit
     def test_invalid_ratio_sum_raises(self) -> None:
         with pytest.raises(ValidationError):
             self._build_guidance(
@@ -172,6 +193,7 @@ class TestNarrativeGuidance:
                 reflection_ratio=Decimal("0.5"),
             )
 
+    @pytest.mark.unit
     def test_empty_primary_goal_not_allowed(self) -> None:
         with pytest.raises(ValidationError):
             self._build_guidance(primary_narrative_goal="  ")
@@ -190,6 +212,8 @@ class TestPacingAdjustment:
         base_kwargs.update(overrides)
         return PacingAdjustment(**base_kwargs)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_defaults_initialise_metadata(self) -> None:
         adjustment = self._build_adjustment()
         assert adjustment.dialogue_adjustment == Decimal("0")
@@ -198,6 +222,7 @@ class TestPacingAdjustment:
             seconds=1
         )
 
+    @pytest.mark.unit
     def test_adjustment_is_immutable(self) -> None:
         adjustment = self._build_adjustment()
         with pytest.raises(ValidationError):
@@ -211,10 +236,12 @@ class TestPacingAdjustment:
             ("dialogue_adjustment", Decimal("0.5")),
         ],
     )
+    @pytest.mark.unit
     def test_out_of_bounds_values_raise(self, field: str, value: Decimal) -> None:
         with pytest.raises(ValidationError):
             self._build_adjustment(**{field: value})
 
+    @pytest.mark.unit
     def test_negative_turn_number_raises(self) -> None:
         with pytest.raises(ValidationError):
             self._build_adjustment(turn_number=-1)

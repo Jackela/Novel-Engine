@@ -6,7 +6,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box } from '@mui/material';
 import App from '../App';
 import Navbar from '../components/Navbar';
-import Dashboard from '../components/Dashboard';
+import Dashboard from '../components/dashboard/Dashboard';
 import CharacterStudio from '../components/CharacterStudio';
 import StoryWorkshop from '../components/StoryWorkshop';
 import StoryLibrary from '../components/StoryLibrary';

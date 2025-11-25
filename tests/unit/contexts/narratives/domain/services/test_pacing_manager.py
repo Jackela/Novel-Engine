@@ -41,6 +41,8 @@ def _build_state(phase: StoryArcPhase) -> StoryArcState:
 class TestPacingManager:
     """Desired behaviours for adjust_pacing."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_adjust_pacing_in_climax_increases_speed(self) -> None:
         manager = PacingManager()
         state = _build_state(StoryArcPhase.CLIMAX)
@@ -49,6 +51,8 @@ class TestPacingManager:
         assert isinstance(adjustment, PacingAdjustment)
         assert adjustment.speed_modifier > Decimal("1.0")
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_adjust_pacing_in_resolution_decreases_speed(self) -> None:
         manager = PacingManager()
         state = _build_state(StoryArcPhase.RESOLUTION)

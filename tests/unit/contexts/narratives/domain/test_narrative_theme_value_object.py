@@ -21,6 +21,7 @@ from contexts.narratives.domain.value_objects.narrative_theme import (
 class TestThemeTypeEnum:
     """Test suite for ThemeType enum."""
 
+    @pytest.mark.unit
     def test_all_theme_types_exist(self):
         """Test that all expected theme types are defined."""
         expected_types = {
@@ -41,6 +42,7 @@ class TestThemeTypeEnum:
         actual_types = {item.name for item in ThemeType}
         assert actual_types == expected_types
 
+    @pytest.mark.unit
     def test_theme_type_string_values(self):
         """Test that theme type enum values have correct string representations."""
         assert ThemeType.UNIVERSAL.value == "universal"
@@ -56,11 +58,15 @@ class TestThemeTypeEnum:
         assert ThemeType.FAMILY.value == "family"
         assert ThemeType.COMING_OF_AGE.value == "coming_of_age"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_theme_type_uniqueness(self):
         """Test that all theme type values are unique."""
         values = [item.value for item in ThemeType]
         assert len(values) == len(set(values))
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_theme_type_membership(self):
         """Test theme type membership operations."""
         assert ThemeType.MORAL in ThemeType
@@ -71,12 +77,16 @@ class TestThemeTypeEnum:
 class TestThemeIntensityEnum:
     """Test suite for ThemeIntensity enum."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_all_intensity_levels_exist(self):
         """Test that all expected intensity levels are defined."""
         expected_levels = {"SUBTLE", "MODERATE", "PROMINENT", "CENTRAL", "OVERWHELMING"}
         actual_levels = {item.name for item in ThemeIntensity}
         assert actual_levels == expected_levels
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_intensity_string_values(self):
         """Test that intensity enum values have correct string representations."""
         assert ThemeIntensity.SUBTLE.value == "subtle"
@@ -85,6 +95,7 @@ class TestThemeIntensityEnum:
         assert ThemeIntensity.CENTRAL.value == "central"
         assert ThemeIntensity.OVERWHELMING.value == "overwhelming"
 
+    @pytest.mark.unit
     def test_intensity_logical_ordering(self):
         """Test that intensity levels represent logical progression."""
         intensity_order = {
@@ -116,6 +127,7 @@ class TestThemeIntensityEnum:
 class TestNarrativeThemeCreation:
     """Test suite for NarrativeTheme creation and initialization."""
 
+    @pytest.mark.unit
     def test_create_minimal_narrative_theme(self):
         """Test creating narrative theme with minimal required fields."""
         theme = NarrativeTheme(
@@ -132,6 +144,7 @@ class TestNarrativeThemeCreation:
         assert theme.name == "Love"
         assert theme.description == "The power of love to transform"
 
+    @pytest.mark.unit
     def test_create_comprehensive_narrative_theme(self):
         """Test creating narrative theme with all fields specified."""
         creation_time = datetime.now(timezone.utc)
@@ -204,6 +217,7 @@ class TestNarrativeThemeCreation:
         assert theme.creation_timestamp == creation_time
         assert theme.metadata["author_intent"] == "explore human capacity for change"
 
+    @pytest.mark.unit
     def test_default_values_initialization(self):
         """Test that default values are properly initialized."""
         theme = NarrativeTheme(
@@ -244,6 +258,7 @@ class TestNarrativeThemeCreation:
         assert theme.creation_timestamp is not None
         assert isinstance(theme.creation_timestamp, datetime)
 
+    @pytest.mark.unit
     def test_frozen_dataclass_immutability(self):
         """Test that NarrativeTheme is immutable (frozen dataclass)."""
         theme = NarrativeTheme(
@@ -268,6 +283,7 @@ class TestNarrativeThemeCreation:
 class TestNarrativeThemeValidation:
     """Test suite for NarrativeTheme validation logic."""
 
+    @pytest.mark.unit
     def test_empty_name_validation(self):
         """Test validation fails with empty name."""
         with pytest.raises(ValueError, match="Theme name cannot be empty"):
@@ -279,6 +295,7 @@ class TestNarrativeThemeValidation:
                 description="Valid description",
             )
 
+    @pytest.mark.unit
     def test_whitespace_only_name_validation(self):
         """Test validation fails with whitespace-only name."""
         with pytest.raises(ValueError, match="Theme name cannot be empty"):
@@ -290,6 +307,7 @@ class TestNarrativeThemeValidation:
                 description="Valid description",
             )
 
+    @pytest.mark.unit
     def test_empty_description_validation(self):
         """Test validation fails with empty description."""
         with pytest.raises(ValueError, match="Theme description cannot be empty"):
@@ -301,6 +319,7 @@ class TestNarrativeThemeValidation:
                 description="",
             )
 
+    @pytest.mark.unit
     def test_whitespace_only_description_validation(self):
         """Test validation fails with whitespace-only description."""
         with pytest.raises(ValueError, match="Theme description cannot be empty"):
@@ -312,6 +331,7 @@ class TestNarrativeThemeValidation:
                 description="   \t\n  ",
             )
 
+    @pytest.mark.unit
     def test_negative_sequence_validation(self):
         """Test validation fails with negative sequence numbers."""
         with pytest.raises(
@@ -350,6 +370,7 @@ class TestNarrativeThemeValidation:
                 peak_intensity_sequence=-10,
             )
 
+    @pytest.mark.unit
     def test_zero_sequence_allowed(self):
         """Test that zero sequence numbers are allowed."""
         theme = NarrativeTheme(
@@ -367,6 +388,7 @@ class TestNarrativeThemeValidation:
         assert theme.resolution_sequence == 0
         assert theme.peak_intensity_sequence == 0
 
+    @pytest.mark.unit
     def test_moral_complexity_below_minimum_validation(self):
         """Test validation fails with moral complexity below 1."""
         with pytest.raises(
@@ -381,6 +403,7 @@ class TestNarrativeThemeValidation:
                 moral_complexity=Decimal("0.5"),
             )
 
+    @pytest.mark.unit
     def test_moral_complexity_above_maximum_validation(self):
         """Test validation fails with moral complexity above 10."""
         with pytest.raises(
@@ -395,6 +418,7 @@ class TestNarrativeThemeValidation:
                 moral_complexity=Decimal("11.0"),
             )
 
+    @pytest.mark.unit
     def test_emotional_resonance_boundary_validation(self):
         """Test emotional resonance boundary validation."""
         with pytest.raises(
@@ -421,6 +445,7 @@ class TestNarrativeThemeValidation:
                 emotional_resonance=Decimal("10.1"),
             )
 
+    @pytest.mark.unit
     def test_universal_appeal_boundary_validation(self):
         """Test universal appeal boundary validation."""
         with pytest.raises(
@@ -447,6 +472,7 @@ class TestNarrativeThemeValidation:
                 universal_appeal=Decimal("15.0"),
             )
 
+    @pytest.mark.unit
     def test_valid_decimal_boundary_values(self):
         """Test that boundary decimal values (1 and 10) are valid."""
         theme = NarrativeTheme(
@@ -464,6 +490,7 @@ class TestNarrativeThemeValidation:
         assert theme.emotional_resonance == Decimal("10.0")
         assert theme.universal_appeal == Decimal("5.5")
 
+    @pytest.mark.unit
     def test_audience_relevance_boundary_validation(self):
         """Test audience relevance value validation."""
         with pytest.raises(
@@ -490,6 +517,7 @@ class TestNarrativeThemeValidation:
                 target_audience_relevance={"adults": Decimal("11.5")},
             )
 
+    @pytest.mark.unit
     def test_valid_audience_relevance_boundaries(self):
         """Test that audience relevance boundaries (0 and 10) are valid."""
         theme = NarrativeTheme(
@@ -509,6 +537,7 @@ class TestNarrativeThemeValidation:
         assert theme.target_audience_relevance["tech_workers"] == Decimal("10.0")
         assert theme.target_audience_relevance["elderly"] == Decimal("3.5")
 
+    @pytest.mark.unit
     def test_string_length_validations(self):
         """Test string length constraint validations."""
         # Theme ID too long
@@ -547,6 +576,7 @@ class TestNarrativeThemeValidation:
                 description="x" * 1001,
             )
 
+    @pytest.mark.unit
     def test_valid_string_length_boundaries(self):
         """Test that maximum string length boundaries are valid."""
         theme = NarrativeTheme(
@@ -565,6 +595,7 @@ class TestNarrativeThemeValidation:
 class TestNarrativeThemeProperties:
     """Test suite for NarrativeTheme property methods."""
 
+    @pytest.mark.unit
     def test_is_major_theme_for_major_intensities(self):
         """Test is_major_theme returns True for major intensity levels."""
         major_intensities = [
@@ -584,6 +615,7 @@ class TestNarrativeThemeProperties:
 
             assert theme.is_major_theme is True
 
+    @pytest.mark.unit
     def test_is_major_theme_false_for_minor_intensities(self):
         """Test is_major_theme returns False for minor intensity levels."""
         minor_intensities = [ThemeIntensity.SUBTLE, ThemeIntensity.MODERATE]
@@ -599,6 +631,8 @@ class TestNarrativeThemeProperties:
 
             assert theme.is_major_theme is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_central_theme_true_for_central(self):
         """Test is_central_theme returns True only for CENTRAL intensity."""
         theme = NarrativeTheme(
@@ -611,6 +645,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.is_central_theme is True
 
+    @pytest.mark.unit
     def test_is_central_theme_false_for_non_central(self):
         """Test is_central_theme returns False for non-CENTRAL intensities."""
         non_central_intensities = [
@@ -631,6 +666,7 @@ class TestNarrativeThemeProperties:
 
             assert theme.is_central_theme is False
 
+    @pytest.mark.unit
     def test_has_symbolic_representation_with_elements(self):
         """Test has_symbolic_representation with symbolic elements."""
         theme = NarrativeTheme(
@@ -645,6 +681,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.has_symbolic_representation is True
 
+    @pytest.mark.unit
     def test_has_symbolic_representation_with_flag(self):
         """Test has_symbolic_representation with expressed_through_symbolism flag."""
         theme = NarrativeTheme(
@@ -659,6 +696,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.has_symbolic_representation is True
 
+    @pytest.mark.unit
     def test_has_symbolic_representation_false(self):
         """Test has_symbolic_representation returns False when neither condition met."""
         theme = NarrativeTheme(
@@ -673,6 +711,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.has_symbolic_representation is False
 
+    @pytest.mark.unit
     def test_has_character_expression_with_arc_flag(self):
         """Test has_character_expression with character arc expression."""
         theme = NarrativeTheme(
@@ -687,6 +726,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.has_character_expression is True
 
+    @pytest.mark.unit
     def test_has_character_expression_with_archetypes(self):
         """Test has_character_expression with character archetypes."""
         theme = NarrativeTheme(
@@ -701,6 +741,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.has_character_expression is True
 
+    @pytest.mark.unit
     def test_has_character_expression_false(self):
         """Test has_character_expression returns False when neither condition met."""
         theme = NarrativeTheme(
@@ -715,6 +756,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.has_character_expression is False
 
+    @pytest.mark.unit
     def test_spans_full_narrative_true(self):
         """Test spans_full_narrative returns True when both sequences are set."""
         theme = NarrativeTheme(
@@ -729,6 +771,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.spans_full_narrative is True
 
+    @pytest.mark.unit
     def test_spans_full_narrative_false_missing_intro(self):
         """Test spans_full_narrative returns False when introduction sequence is None."""
         theme = NarrativeTheme(
@@ -743,6 +786,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.spans_full_narrative is False
 
+    @pytest.mark.unit
     def test_spans_full_narrative_false_missing_resolution(self):
         """Test spans_full_narrative returns False when resolution sequence is None."""
         theme = NarrativeTheme(
@@ -757,6 +801,7 @@ class TestNarrativeThemeProperties:
 
         assert theme.spans_full_narrative is False
 
+    @pytest.mark.unit
     def test_spans_full_narrative_false_both_none(self):
         """Test spans_full_narrative returns False when both sequences are None."""
         theme = NarrativeTheme(
@@ -775,6 +820,7 @@ class TestNarrativeThemeProperties:
 class TestThematicComplexityScore:
     """Test suite for thematic complexity score calculation."""
 
+    @pytest.mark.unit
     def test_base_complexity_only(self):
         """Test complexity score with only moral complexity (no bonuses)."""
         theme = NarrativeTheme(
@@ -795,6 +841,7 @@ class TestThematicComplexityScore:
         # Expected: 3.0 + 0.0 + 0.0 = 3.0
         assert theme.thematic_complexity_score == Decimal("3.0")
 
+    @pytest.mark.unit
     def test_complexity_with_expression_methods(self):
         """Test complexity score with multiple expression methods."""
         theme = NarrativeTheme(
@@ -814,6 +861,7 @@ class TestThematicComplexityScore:
         # Expected: 6.0 + (4 * 0.5) + 0.0 = 8.0
         assert theme.thematic_complexity_score == Decimal("8.0")
 
+    @pytest.mark.unit
     def test_complexity_with_theme_relationships(self):
         """Test complexity score with thematic relationships."""
         theme = NarrativeTheme(
@@ -835,6 +883,7 @@ class TestThematicComplexityScore:
         # Expected: 7.0 + 0.0 + ((2 + 3) * 0.3) = 7.0 + 1.5 = 8.5
         assert theme.thematic_complexity_score == Decimal("8.5")
 
+    @pytest.mark.unit
     def test_complexity_with_all_bonuses(self):
         """Test complexity score with all bonuses."""
         theme = NarrativeTheme(
@@ -857,6 +906,7 @@ class TestThematicComplexityScore:
         # But capped at 10.0
         assert theme.thematic_complexity_score == Decimal("10.0")
 
+    @pytest.mark.unit
     def test_complexity_capping_at_ten(self):
         """Test that complexity score is capped at 10."""
         theme = NarrativeTheme(
@@ -883,6 +933,7 @@ class TestThematicComplexityScore:
 class TestNarrativeImpactScore:
     """Test suite for narrative impact score calculation."""
 
+    @pytest.mark.unit
     def test_impact_score_subtle_intensity(self):
         """Test impact score calculation for SUBTLE intensity."""
         theme = NarrativeTheme(
@@ -903,6 +954,7 @@ class TestNarrativeImpactScore:
         expected_score = Decimal("1.2")
         assert theme.narrative_impact_score == expected_score
 
+    @pytest.mark.unit
     def test_impact_score_central_intensity(self):
         """Test impact score calculation for CENTRAL intensity."""
         theme = NarrativeTheme(
@@ -921,6 +973,7 @@ class TestNarrativeImpactScore:
         expected_score = Decimal("6.96")
         assert theme.narrative_impact_score == expected_score
 
+    @pytest.mark.unit
     def test_impact_score_overwhelming_intensity(self):
         """Test impact score calculation for OVERWHELMING intensity."""
         theme = NarrativeTheme(
@@ -944,6 +997,7 @@ class TestNarrativeImpactScore:
         expected_score = Decimal("9.7")
         assert theme.narrative_impact_score == expected_score
 
+    @pytest.mark.unit
     def test_impact_score_all_intensities(self):
         """Test impact score progression across intensity levels."""
         base_scores = []
@@ -980,6 +1034,7 @@ class TestNarrativeImpactScore:
 class TestNarrativeThemeInstanceMethods:
     """Test suite for NarrativeTheme instance methods."""
 
+    @pytest.mark.unit
     def test_conflicts_with_theme_true(self):
         """Test conflicts_with_theme returns True for conflicting theme."""
         theme = NarrativeTheme(
@@ -995,6 +1050,7 @@ class TestNarrativeThemeInstanceMethods:
         assert theme.conflicts_with_theme("nihilism") is True
         assert theme.conflicts_with_theme("optimism") is False
 
+    @pytest.mark.unit
     def test_reinforces_theme_true(self):
         """Test reinforces_theme returns True for reinforcing theme."""
         theme = NarrativeTheme(
@@ -1010,6 +1066,7 @@ class TestNarrativeThemeInstanceMethods:
         assert theme.reinforces_theme("loyalty") is True
         assert theme.reinforces_theme("hatred") is False
 
+    @pytest.mark.unit
     def test_has_symbolic_element_true(self):
         """Test has_symbolic_element returns True for existing symbol."""
         theme = NarrativeTheme(
@@ -1025,6 +1082,7 @@ class TestNarrativeThemeInstanceMethods:
         assert theme.has_symbolic_element("dove") is True
         assert theme.has_symbolic_element("darkness") is False
 
+    @pytest.mark.unit
     def test_has_related_motif_true(self):
         """Test has_related_motif returns True for existing motif."""
         theme = NarrativeTheme(
@@ -1040,6 +1098,7 @@ class TestNarrativeThemeInstanceMethods:
         assert theme.has_related_motif("mentor_death") is True
         assert theme.has_related_motif("happy_ending") is False
 
+    @pytest.mark.unit
     def test_uses_archetype_true(self):
         """Test uses_archetype returns True for existing archetype."""
         theme = NarrativeTheme(
@@ -1061,6 +1120,7 @@ class TestNarrativeThemeInstanceMethods:
         assert theme.uses_archetype("shadow") is True
         assert theme.uses_archetype("villain") is False
 
+    @pytest.mark.unit
     def test_get_audience_relevance_existing(self):
         """Test get_audience_relevance returns correct value for existing audience."""
         theme = NarrativeTheme(
@@ -1080,6 +1140,7 @@ class TestNarrativeThemeInstanceMethods:
         assert theme.get_audience_relevance("philosophers") == Decimal("8.0")
         assert theme.get_audience_relevance("general_public") == Decimal("6.0")
 
+    @pytest.mark.unit
     def test_get_audience_relevance_default(self):
         """Test get_audience_relevance returns default value for non-existing audience."""
         theme = NarrativeTheme(
@@ -1095,6 +1156,7 @@ class TestNarrativeThemeInstanceMethods:
         assert theme.get_audience_relevance("international") == Decimal("5.0")
         assert theme.get_audience_relevance("local_community") == Decimal("8.0")
 
+    @pytest.mark.unit
     def test_get_thematic_context(self):
         """Test get_thematic_context returns comprehensive context dict."""
         theme = NarrativeTheme(
@@ -1148,6 +1210,7 @@ class TestNarrativeThemeInstanceMethods:
 class TestNarrativeThemeFactoryMethods:
     """Test suite for NarrativeTheme factory methods."""
 
+    @pytest.mark.unit
     def test_with_updated_intensity_change_intensity(self):
         """Test updating theme intensity."""
         original = NarrativeTheme(
@@ -1172,6 +1235,7 @@ class TestNarrativeThemeFactoryMethods:
         assert updated.symbolic_elements == original.symbolic_elements
         assert updated.moral_complexity == original.moral_complexity
 
+    @pytest.mark.unit
     def test_with_updated_intensity_immutability(self):
         """Test that original theme remains unchanged."""
         original = NarrativeTheme(
@@ -1191,6 +1255,7 @@ class TestNarrativeThemeFactoryMethods:
         # They should be different objects
         assert original is not updated
 
+    @pytest.mark.unit
     def test_with_updated_intensity_collections_copied(self):
         """Test that collections are properly copied in new instance."""
         original = NarrativeTheme(
@@ -1213,6 +1278,7 @@ class TestNarrativeThemeFactoryMethods:
         assert updated.reinforces_themes == original.reinforces_themes
         assert updated.tags == original.tags
 
+    @pytest.mark.unit
     def test_with_updated_intensity_preserves_metadata(self):
         """Test that metadata and timestamps are preserved."""
         creation_time = datetime.now(timezone.utc)
@@ -1240,6 +1306,7 @@ class TestNarrativeThemeFactoryMethods:
 class TestNarrativeThemeStringRepresentation:
     """Test suite for NarrativeTheme string representation methods."""
 
+    @pytest.mark.unit
     def test_str_representation(self):
         """Test human-readable string representation."""
         theme = NarrativeTheme(
@@ -1254,6 +1321,7 @@ class TestNarrativeThemeStringRepresentation:
         expected = "NarrativeTheme('Growing Up', coming_of_age, central)"
         assert str_repr == expected
 
+    @pytest.mark.unit
     def test_repr_representation(self):
         """Test developer representation for debugging."""
         theme = NarrativeTheme(
@@ -1273,6 +1341,7 @@ class TestNarrativeThemeStringRepresentation:
         )
         assert repr_str == expected
 
+    @pytest.mark.unit
     def test_string_representations_different(self):
         """Test that str and repr provide different information."""
         theme = NarrativeTheme(
@@ -1298,6 +1367,7 @@ class TestNarrativeThemeStringRepresentation:
 class TestNarrativeThemeEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     def test_creation_with_fixed_timestamp(self):
         """Test creation with explicitly set timestamp."""
         fixed_time = datetime(2024, 6, 15, 14, 30, 45, tzinfo=timezone.utc)
@@ -1313,6 +1383,7 @@ class TestNarrativeThemeEdgeCasesAndBoundaryConditions:
 
         assert theme.creation_timestamp == fixed_time
 
+    @pytest.mark.unit
     def test_large_collections_handling(self):
         """Test handling of large collections."""
         many_symbols = {f"symbol_{i}" for i in range(100)}
@@ -1350,6 +1421,7 @@ class TestNarrativeThemeEdgeCasesAndBoundaryConditions:
         assert theme.has_symbolic_representation is True
         assert theme.has_character_expression is True
 
+    @pytest.mark.unit
     def test_decimal_precision_handling(self):
         """Test handling of decimal precision for score values."""
         theme = NarrativeTheme(
@@ -1374,6 +1446,7 @@ class TestNarrativeThemeEdgeCasesAndBoundaryConditions:
         assert isinstance(complexity_score, Decimal)
         assert isinstance(impact_score, Decimal)
 
+    @pytest.mark.unit
     def test_unicode_text_handling(self):
         """Test handling of unicode characters in text fields."""
         theme = NarrativeTheme(
@@ -1395,6 +1468,7 @@ class TestNarrativeThemeEdgeCasesAndBoundaryConditions:
         assert "多元文化环境" in theme.cultural_context
         assert "⚡" in theme.development_trajectory
 
+    @pytest.mark.unit
     def test_complex_metadata_handling(self):
         """Test handling of complex metadata structures."""
         complex_metadata = {
@@ -1440,6 +1514,7 @@ class TestNarrativeThemeEdgeCasesAndBoundaryConditions:
 class TestNarrativeThemeCollectionsAndComparison:
     """Test suite for NarrativeTheme behavior in collections and comparisons."""
 
+    @pytest.mark.unit
     def test_themes_in_list(self):
         """Test NarrativeTheme objects in list operations."""
         theme1 = NarrativeTheme(
@@ -1464,6 +1539,7 @@ class TestNarrativeThemeCollectionsAndComparison:
         assert theme1 in theme_list
         assert theme2 in theme_list
 
+    @pytest.mark.unit
     def test_themes_sorting_by_impact_score(self):
         """Test sorting NarrativeTheme objects by narrative impact score."""
         themes = [
@@ -1496,6 +1572,7 @@ class TestNarrativeThemeCollectionsAndComparison:
         # SUBTLE should be last (lowest impact)
         assert sorted_themes[-1].intensity == ThemeIntensity.SUBTLE
 
+    @pytest.mark.unit
     def test_theme_equality_identity(self):
         """Test that identical NarrativeTheme objects are considered equal."""
         theme1 = NarrativeTheme(
@@ -1519,6 +1596,7 @@ class TestNarrativeThemeCollectionsAndComparison:
         # But they should be different objects
         assert theme1 is not theme2
 
+    @pytest.mark.unit
     def test_theme_inequality(self):
         """Test that different NarrativeTheme objects are not equal."""
         theme1 = NarrativeTheme(
@@ -1540,6 +1618,7 @@ class TestNarrativeThemeCollectionsAndComparison:
         assert theme1 != theme2
         assert not (theme1 == theme2)
 
+    @pytest.mark.unit
     def test_theme_hashing_consistency(self):
         """Test that equal NarrativeTheme objects have same hash."""
         theme1 = NarrativeTheme(
@@ -1562,6 +1641,7 @@ class TestNarrativeThemeCollectionsAndComparison:
         assert theme1 == theme2
         assert hash(theme1) == hash(theme2)
 
+    @pytest.mark.unit
     def test_themes_in_set(self):
         """Test NarrativeTheme objects in set operations."""
         theme1 = NarrativeTheme(
@@ -1597,6 +1677,7 @@ class TestNarrativeThemeCollectionsAndComparison:
         assert theme2 in theme_set
         assert theme1_duplicate in theme_set  # Should find theme1
 
+    @pytest.mark.unit
     def test_themes_as_dict_keys(self):
         """Test using NarrativeTheme objects as dictionary keys."""
         theme1 = NarrativeTheme(

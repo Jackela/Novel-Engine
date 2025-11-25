@@ -223,9 +223,9 @@ class RedisConnectionPool:
                     break
 
                 # Health check
-                start_time = asyncio.get_event_loop().time()
+                start_time = asyncio.get_running_loop().time()
                 await self.redis.ping()
-                response_time = asyncio.get_event_loop().time() - start_time
+                response_time = asyncio.get_running_loop().time() - start_time
 
                 # Update metrics
                 self._metrics["response_times"].append(response_time)
@@ -295,7 +295,7 @@ class RedisConnectionPool:
         if not self._initialized:
             await self.initialize()
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             serialized_value = self._serialize_value(value, strategy)
@@ -304,7 +304,7 @@ class RedisConnectionPool:
             result = await self.redis.setex(key, expire_time, serialized_value)
 
             self._metrics["total_commands"] += 1
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = asyncio.get_running_loop().time() - start_time
             self._metrics["response_times"].append(response_time)
 
             return bool(result)
@@ -321,13 +321,13 @@ class RedisConnectionPool:
         if not self._initialized:
             await self.initialize()
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             value = await self.redis.get(key)
 
             self._metrics["total_commands"] += 1
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = asyncio.get_running_loop().time() - start_time
             self._metrics["response_times"].append(response_time)
 
             if value is not None:

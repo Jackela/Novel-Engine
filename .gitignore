@@ -436,7 +436,6 @@ reports/evidence/**/*.png
 reports/evidence/**/*.jpg
 reports/evidence/**/*.mp4
 frontend/reports/
-frontend/undefined:/
 
 # Third-party tool configurations
 .specify/
@@ -454,7 +453,6 @@ evaluation/
 !.env.local.template
 .venv-run/
 coverage.json
-undefined:/
 
 # Runtime artifacts
 data/

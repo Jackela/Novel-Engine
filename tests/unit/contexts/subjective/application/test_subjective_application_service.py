@@ -51,6 +51,8 @@ from contexts.subjective.domain.value_objects.subjective_id import SubjectiveId
 class TestSubjectiveApplicationServiceInitialization:
     """Test suite for SubjectiveApplicationService initialization."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_initialization_with_all_dependencies(self):
         """Test initialization with all dependencies provided."""
         mock_repository = Mock(spec=ITurnBriefRepository)
@@ -65,6 +67,8 @@ class TestSubjectiveApplicationServiceInitialization:
         assert isinstance(service.command_handlers, SubjectiveCommandHandlerRegistry)
         assert hasattr(service, "logger")
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_initialization_with_minimal_dependencies(self):
         """Test initialization with minimal dependencies (default fog service)."""
         mock_repository = Mock(spec=ITurnBriefRepository)
@@ -75,6 +79,7 @@ class TestSubjectiveApplicationServiceInitialization:
         assert isinstance(service.fog_of_war_service, FogOfWarService)
         assert isinstance(service.command_handlers, SubjectiveCommandHandlerRegistry)
 
+    @pytest.mark.unit
     def test_command_handler_registry_initialization(self):
         """Test that command handler registry is properly initialized with dependencies."""
         mock_repository = Mock(spec=ITurnBriefRepository)
@@ -127,6 +132,7 @@ class TestTurnBriefOperations:
             perception_ranges={PerceptionType.VISUAL: visual_range}
         )
 
+    @pytest.mark.unit
     def test_create_turn_brief_for_entity_success(
         self, mock_dependencies, sample_perception_capabilities
     ):
@@ -168,6 +174,7 @@ class TestTurnBriefOperations:
 
         assert result == expected_id
 
+    @pytest.mark.unit
     def test_create_turn_brief_with_minimal_parameters(
         self, mock_dependencies, sample_perception_capabilities
     ):
@@ -197,6 +204,7 @@ class TestTurnBriefOperations:
 
         assert result == expected_id
 
+    @pytest.mark.unit
     def test_create_turn_brief_command_handler_exception(
         self, mock_dependencies, sample_perception_capabilities
     ):
@@ -218,6 +226,7 @@ class TestTurnBriefOperations:
                 world_state_version=1,
             )
 
+    @pytest.mark.unit
     def test_get_turn_brief_by_entity_id_found(self, mock_dependencies):
         """Test getting TurnBrief when entity exists."""
         service = SubjectiveApplicationService(
@@ -235,6 +244,7 @@ class TestTurnBriefOperations:
         )
         assert result is mock_turn_brief
 
+    @pytest.mark.unit
     def test_get_turn_brief_by_entity_id_not_found(self, mock_dependencies):
         """Test getting TurnBrief when entity does not exist."""
         service = SubjectiveApplicationService(
@@ -251,6 +261,7 @@ class TestTurnBriefOperations:
         )
         assert result is None
 
+    @pytest.mark.unit
     def test_delete_turn_brief_success(self, mock_dependencies):
         """Test successful TurnBrief deletion."""
         service = SubjectiveApplicationService(
@@ -273,6 +284,7 @@ class TestTurnBriefOperations:
         )
         assert result is True
 
+    @pytest.mark.unit
     def test_delete_turn_brief_not_found(self, mock_dependencies):
         """Test TurnBrief deletion when entity does not exist."""
         service = SubjectiveApplicationService(
@@ -290,6 +302,7 @@ class TestTurnBriefOperations:
         mock_dependencies["repository"].delete.assert_not_called()
         assert result is False
 
+    @pytest.mark.unit
     def test_delete_turn_brief_repository_failure(self, mock_dependencies):
         """Test TurnBrief deletion when repository delete fails."""
         service = SubjectiveApplicationService(
@@ -353,6 +366,7 @@ class TestPerceptionOperations:
             focused_perception_multiplier=1.5,
         )
 
+    @pytest.mark.unit
     def test_update_perception_capabilities_success(
         self, mock_dependencies, sample_perception_capabilities
     ):
@@ -386,6 +400,7 @@ class TestPerceptionOperations:
         assert call_args.new_perception_capabilities == sample_perception_capabilities
         assert call_args.change_reason == "equipment_upgrade"
 
+    @pytest.mark.unit
     def test_update_perception_capabilities_entity_not_found(
         self, mock_dependencies, sample_perception_capabilities
     ):
@@ -409,6 +424,7 @@ class TestPerceptionOperations:
                 change_reason="equipment_upgrade",
             )
 
+    @pytest.mark.unit
     def test_add_perception_success(self, mock_dependencies):
         """Test successful perception addition."""
         service = SubjectiveApplicationService(
@@ -449,6 +465,7 @@ class TestPerceptionOperations:
         assert call_args.observer_position == (10.0, 20.0, 0.0)
         assert call_args.target_position == (30.0, 40.0, 0.0)
 
+    @pytest.mark.unit
     def test_add_perception_minimal_parameters(self, mock_dependencies):
         """Test perception addition with minimal parameters."""
         service = SubjectiveApplicationService(
@@ -476,6 +493,7 @@ class TestPerceptionOperations:
         assert call_args.observer_position is None  # Default value
         assert call_args.target_position is None  # Default value
 
+    @pytest.mark.unit
     def test_add_perception_entity_not_found(self, mock_dependencies):
         """Test perception addition when entity not found."""
         service = SubjectiveApplicationService(
@@ -497,6 +515,7 @@ class TestPerceptionOperations:
                 environmental_conditions={},
             )
 
+    @pytest.mark.unit
     def test_add_perception_invalid_command(self, mock_dependencies):
         """Test perception addition with invalid command parameters."""
         service = SubjectiveApplicationService(
@@ -550,6 +569,7 @@ class TestAwarenessOperations:
             stress_level=0.4,
         )
 
+    @pytest.mark.unit
     def test_update_awareness_state_success(
         self, mock_dependencies, sample_awareness_state
     ):
@@ -607,6 +627,7 @@ class TestFogOfWarOperations:
             "command_handlers": mock_command_handlers,
         }
 
+    @pytest.mark.unit
     def test_update_fog_of_war_success(self, mock_dependencies):
         """Test successful fog of war update."""
         service = SubjectiveApplicationService(
@@ -673,6 +694,7 @@ class TestErrorHandling:
             "command_handlers": mock_command_handlers,
         }
 
+    @pytest.mark.unit
     def test_repository_exception_propagation(self, mock_dependencies):
         """Test that repository exceptions are properly propagated."""
         service = SubjectiveApplicationService(
@@ -688,6 +710,7 @@ class TestErrorHandling:
         with pytest.raises(Exception, match="Database connection failed"):
             service.get_turn_brief_by_entity_id("test_entity")
 
+    @pytest.mark.unit
     def test_command_handler_exception_propagation(self, mock_dependencies):
         """Test that command handler exceptions are properly propagated."""
         service = SubjectiveApplicationService(
@@ -719,6 +742,7 @@ class TestErrorHandling:
                 world_state_version=1,
             )
 
+    @pytest.mark.unit
     def test_invalid_parameter_handling(self, mock_dependencies):
         """Test handling of invalid parameters."""
         service = SubjectiveApplicationService(
@@ -795,6 +819,7 @@ class TestIntegrationScenarios:
             focused_perception_multiplier=2.0,
         )
 
+    @pytest.mark.unit
     def test_entity_lifecycle_scenario(
         self, mock_dependencies, complete_perception_capabilities
     ):
@@ -902,6 +927,7 @@ class TestIntegrationScenarios:
         mock_dependencies["repository"].get_by_entity_id.assert_called()
         mock_dependencies["repository"].delete.assert_called_once_with(created_id)
 
+    @pytest.mark.unit
     def test_error_recovery_scenario(
         self, mock_dependencies, complete_perception_capabilities
     ):

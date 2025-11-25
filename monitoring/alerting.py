@@ -19,7 +19,7 @@ import statistics
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum
@@ -383,7 +383,7 @@ class AlertManager:
             severity=rule.severity,
             status=AlertStatus.ACTIVE,
             message=message,
-            fired_at=datetime.utcnow(),
+            fired_at=datetime.now(timezone.utc),
             current_value=current_value,
             threshold_value=rule.threshold,
             labels=rule.labels.copy(),
@@ -407,7 +407,7 @@ class AlertManager:
         if alert_id in self.active_alerts:
             alert = self.active_alerts[alert_id]
             alert.status = AlertStatus.RESOLVED
-            alert.resolved_at = datetime.utcnow()
+            alert.resolved_at = datetime.now(timezone.utc)
             
             # Remove from active alerts
             del self.active_alerts[alert_id]
@@ -505,7 +505,7 @@ class AlertManager:
                 
                 # Update alert notification tracking
                 alert.notification_count += 1
-                alert.last_notification = datetime.utcnow()
+                alert.last_notification = datetime.now(timezone.utc)
                 
                 logger.info(f"Notification sent: {channel.value} for alert {alert.id}")
             else:
@@ -751,7 +751,7 @@ class AlertManager:
         if alert_id in self.active_alerts:
             alert = self.active_alerts[alert_id]
             alert.status = AlertStatus.ACKNOWLEDGED
-            alert.acknowledged_at = datetime.utcnow()
+            alert.acknowledged_at = datetime.now(timezone.utc)
             alert.annotations["acknowledged_by"] = user
             
             await self._persist_alert(alert)
@@ -766,7 +766,7 @@ class AlertManager:
     
     def get_alert_history(self, hours: int = 24) -> List[Alert]:
         """Get alert history for specified time period"""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         return [
             alert for alert in self.alert_history 
             if alert.fired_at >= cutoff_time

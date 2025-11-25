@@ -31,6 +31,7 @@ class TestPhysicalTraits:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_physical_traits_creation_success(self):
         """Test successful physical traits creation."""
         traits = PhysicalTraits(
@@ -51,6 +52,8 @@ class TestPhysicalTraits:
         assert traits.distinguishing_marks == ["scar on left cheek"]
         assert traits.physical_description == "Tall and athletic"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_physical_traits_creation_minimal(self):
         """Test physical traits creation with minimal data."""
         traits = PhysicalTraits()
@@ -65,18 +68,24 @@ class TestPhysicalTraits:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_physical_traits_height_validation_too_short(self):
         """Test height validation fails for unreasonably short height."""
         with pytest.raises(ValueError) as exc_info:
             PhysicalTraits(height_cm=20)
         assert "Height must be between 30-300 cm" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_physical_traits_height_validation_too_tall(self):
         """Test height validation fails for unreasonably tall height."""
         with pytest.raises(ValueError) as exc_info:
             PhysicalTraits(height_cm=350)
         assert "Height must be between 30-300 cm" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_physical_traits_height_validation_boundary_values(self):
         """Test height validation at boundary values."""
         # Should work at boundaries
@@ -86,18 +95,24 @@ class TestPhysicalTraits:
         traits_max = PhysicalTraits(height_cm=300)
         assert traits_max.height_cm == 300
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_physical_traits_weight_validation_too_light(self):
         """Test weight validation fails for unreasonably light weight."""
         with pytest.raises(ValueError) as exc_info:
             PhysicalTraits(weight_kg=3)
         assert "Weight must be between 5-500 kg" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_physical_traits_weight_validation_too_heavy(self):
         """Test weight validation fails for unreasonably heavy weight."""
         with pytest.raises(ValueError) as exc_info:
             PhysicalTraits(weight_kg=600)
         assert "Weight must be between 5-500 kg" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_physical_traits_weight_validation_boundary_values(self):
         """Test weight validation at boundary values."""
         # Should work at boundaries
@@ -113,6 +128,7 @@ class TestPersonalityTraits:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_personality_traits_creation_success(self):
         """Test successful personality traits creation."""
         traits = PersonalityTraits(
@@ -136,6 +152,8 @@ class TestPersonalityTraits:
         assert "protect the innocent" in traits.motivations
         assert "losing loved ones" in traits.fears
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_personality_traits_creation_minimal(self):
         """Test personality traits creation with minimal data."""
         traits = PersonalityTraits(traits={"courage": 0.5})
@@ -147,12 +165,16 @@ class TestPersonalityTraits:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_personality_traits_empty_traits_fails(self):
         """Test personality traits validation fails with empty traits."""
         with pytest.raises(ValueError) as exc_info:
             PersonalityTraits(traits={})
         assert "Personality traits cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_personality_traits_invalid_score_too_low(self):
         """Test validation fails for trait scores below 0.0."""
         with pytest.raises(ValueError) as exc_info:
@@ -161,6 +183,8 @@ class TestPersonalityTraits:
             exc_info.value
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_personality_traits_invalid_score_too_high(self):
         """Test validation fails for trait scores above 1.0."""
         with pytest.raises(ValueError) as exc_info:
@@ -169,6 +193,8 @@ class TestPersonalityTraits:
             exc_info.value
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_personality_traits_boundary_scores(self):
         """Test trait scores at boundary values."""
         traits = PersonalityTraits(traits={"minimum": 0.0, "maximum": 1.0})
@@ -176,12 +202,16 @@ class TestPersonalityTraits:
         assert traits.traits["minimum"] == 0.0
         assert traits.traits["maximum"] == 1.0
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_personality_traits_empty_trait_name_fails(self):
         """Test validation fails for empty trait names."""
         with pytest.raises(ValueError) as exc_info:
             PersonalityTraits(traits={"": 0.5})
         assert "Trait names cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_personality_traits_whitespace_trait_name_fails(self):
         """Test validation fails for whitespace-only trait names."""
         with pytest.raises(ValueError) as exc_info:
@@ -190,18 +220,24 @@ class TestPersonalityTraits:
 
     # ==================== Method Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_trait_score_existing_trait(self):
         """Test getting trait score for existing trait."""
         traits = PersonalityTraits(traits={"courage": 0.8})
 
         assert traits.get_trait_score("courage") == 0.8
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_trait_score_missing_trait_returns_default(self):
         """Test getting trait score for missing trait returns 0.5."""
         traits = PersonalityTraits(traits={"courage": 0.8})
 
         assert traits.get_trait_score("missing") == 0.5
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_trait_score_case_insensitive(self):
         """Test trait score lookup is case insensitive."""
         traits = PersonalityTraits(traits={"courage": 0.8})
@@ -209,18 +245,24 @@ class TestPersonalityTraits:
         assert traits.get_trait_score("courage") == 0.8
         assert traits.get_trait_score("COURAGE") == 0.8
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_trait_existing(self):
         """Test has_trait returns True for existing traits."""
         traits = PersonalityTraits(traits={"courage": 0.8})
 
         assert traits.has_trait("courage") is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_trait_missing(self):
         """Test has_trait returns False for missing traits."""
         traits = PersonalityTraits(traits={"courage": 0.8})
 
         assert traits.has_trait("missing") is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_trait_case_insensitive(self):
         """Test has_trait is case insensitive."""
         traits = PersonalityTraits(traits={"courage": 0.8})
@@ -234,6 +276,7 @@ class TestBackground:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_background_creation_success(self):
         """Test successful background creation."""
         background = Background(
@@ -252,6 +295,8 @@ class TestBackground:
         assert background.education == "village school"
         assert "farmer" in background.previous_occupations
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_background_creation_minimal(self):
         """Test background creation with minimal data."""
         background = Background()
@@ -266,36 +311,45 @@ class TestBackground:
 
     # ==================== Method Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_education_with_education(self):
         """Test has_education returns True when education exists."""
         background = Background(education="university")
 
         assert background.has_education() is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_education_without_education(self):
         """Test has_education returns False when education is None."""
         background = Background()
 
         assert background.has_education() is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_education_with_empty_education(self):
         """Test has_education returns False when education is empty."""
         background = Background(education="   ")
 
         assert background.has_education() is False
 
+    @pytest.mark.unit
     def test_has_family_connections_with_family(self):
         """Test has_family_connections returns True when family exists."""
         background = Background(family={"father": "merchant"})
 
         assert background.has_family_connections() is True
 
+    @pytest.mark.unit
     def test_has_family_connections_without_family(self):
         """Test has_family_connections returns False when family is None."""
         background = Background()
 
         assert background.has_family_connections() is False
 
+    @pytest.mark.unit
     def test_has_family_connections_with_empty_family(self):
         """Test has_family_connections returns False when family is empty."""
         background = Background(family={})
@@ -347,6 +401,7 @@ class TestCharacterProfile:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     def test_character_profile_creation_success(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -370,6 +425,7 @@ class TestCharacterProfile:
         assert profile.age == 120
         assert profile.level == 3
 
+    @pytest.mark.unit
     def test_character_profile_creation_minimal(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -393,6 +449,7 @@ class TestCharacterProfile:
 
     # ==================== Validation Tests ====================
 
+    @pytest.mark.unit
     def test_character_profile_empty_name_fails(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -411,6 +468,7 @@ class TestCharacterProfile:
             )
         assert "Character name cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_profile_whitespace_name_fails(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -429,6 +487,7 @@ class TestCharacterProfile:
             )
         assert "Character name cannot be empty" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_profile_name_too_long_fails(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -448,6 +507,7 @@ class TestCharacterProfile:
             )
         assert "Character name cannot exceed 100 characters" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_profile_negative_age_fails(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -466,6 +526,7 @@ class TestCharacterProfile:
             )
         assert "Age must be between 0 and 10000" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_profile_age_too_high_fails(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -484,6 +545,7 @@ class TestCharacterProfile:
             )
         assert "Age must be between 0 and 10000" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_profile_level_too_low_fails(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -502,6 +564,7 @@ class TestCharacterProfile:
             )
         assert "Level must be between 1 and 100" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_profile_level_too_high_fails(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -520,6 +583,7 @@ class TestCharacterProfile:
             )
         assert "Level must be between 1 and 100" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_profile_too_many_languages_fails(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -540,6 +604,7 @@ class TestCharacterProfile:
             )
         assert "Cannot speak more than 20 languages" in str(exc_info.value)
 
+    @pytest.mark.unit
     def test_character_profile_empty_language_fails(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -561,6 +626,7 @@ class TestCharacterProfile:
 
     # ==================== Age Methods Tests ====================
 
+    @pytest.mark.unit
     def test_is_adult_human_adult(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -579,6 +645,7 @@ class TestCharacterProfile:
 
         assert profile.is_adult() is True
 
+    @pytest.mark.unit
     def test_is_adult_human_child(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -597,6 +664,7 @@ class TestCharacterProfile:
 
         assert profile.is_adult() is False
 
+    @pytest.mark.unit
     def test_is_adult_elf_adult(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -615,6 +683,7 @@ class TestCharacterProfile:
 
         assert profile.is_adult() is True
 
+    @pytest.mark.unit
     def test_is_adult_elf_child(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -633,6 +702,7 @@ class TestCharacterProfile:
 
         assert profile.is_adult() is False
 
+    @pytest.mark.unit
     def test_is_adult_dwarf_adult(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -651,6 +721,7 @@ class TestCharacterProfile:
 
         assert profile.is_adult() is True
 
+    @pytest.mark.unit
     def test_is_adult_boundary_values(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -672,10 +743,13 @@ class TestCharacterProfile:
 
     # ==================== Title and Summary Methods Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_full_title_with_title(self, sample_character_profile):
         """Test get_full_title with title."""
         assert sample_character_profile.get_full_title() == "Sir Sir Galahad"
 
+    @pytest.mark.unit
     def test_get_full_title_without_title(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -694,6 +768,8 @@ class TestCharacterProfile:
 
         assert profile.get_full_title() == "No Title"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_get_character_summary_with_affiliation(self, sample_character_profile):
         """Test character summary with affiliation."""
         summary = sample_character_profile.get_character_summary()
@@ -704,6 +780,7 @@ class TestCharacterProfile:
         assert "Paladin" in summary
         assert "Knights of the Round Table" in summary
 
+    @pytest.mark.unit
     def test_get_character_summary_without_affiliation(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -730,17 +807,22 @@ class TestCharacterProfile:
 
     # ==================== Language Methods Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_speaks_language_with_languages_list(self, sample_character_profile):
         """Test speaks_language with explicit languages list."""
         assert sample_character_profile.speaks_language("Common") is True
         assert sample_character_profile.speaks_language("Celestial") is True
         assert sample_character_profile.speaks_language("Orcish") is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_speaks_language_case_insensitive(self, sample_character_profile):
         """Test speaks_language is case insensitive."""
         assert sample_character_profile.speaks_language("common") is True
         assert sample_character_profile.speaks_language("CELESTIAL") is True
 
+    @pytest.mark.unit
     def test_speaks_language_without_languages_list(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -762,21 +844,28 @@ class TestCharacterProfile:
 
     # ==================== Personality Trait Methods Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_trait_above_threshold_true(self, sample_character_profile):
         """Test has_trait_above returns True when trait is above threshold."""
         assert sample_character_profile.has_trait_above("courage", 0.7) is True
         assert sample_character_profile.has_trait_above("loyalty", 0.8) is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_trait_above_threshold_false(self, sample_character_profile):
         """Test has_trait_above returns False when trait is below threshold."""
         assert sample_character_profile.has_trait_above("intelligence", 0.7) is False
         assert sample_character_profile.has_trait_above("courage", 0.9) is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_has_trait_above_missing_trait(self, sample_character_profile):
         """Test has_trait_above with missing trait uses default 0.5."""
         assert sample_character_profile.has_trait_above("missing", 0.4) is True
         assert sample_character_profile.has_trait_above("missing", 0.6) is False
 
+    @pytest.mark.unit
     def test_get_personality_summary_strong_traits(
         self, sample_physical_traits, sample_background
     ):
@@ -809,6 +898,7 @@ class TestCharacterProfile:
         assert "intelligence" not in summary
         assert "charisma" not in summary
 
+    @pytest.mark.unit
     def test_get_personality_summary_no_strong_traits(
         self, sample_physical_traits, sample_background
     ):
@@ -842,6 +932,7 @@ class TestCharacterProfile:
         assert "loyalty" in summary
         assert "intelligence" in summary
 
+    @pytest.mark.unit
     def test_get_personality_summary_empty_traits(
         self, sample_physical_traits, sample_background
     ):
@@ -866,11 +957,13 @@ class TestCharacterProfile:
 
     # ==================== Immutability Tests ====================
 
+    @pytest.mark.unit
     def test_character_profile_immutability(self, sample_character_profile):
         """Test that character profile is immutable (frozen dataclass)."""
         with pytest.raises(AttributeError):
             sample_character_profile.name = "New Name"
 
+    @pytest.mark.unit
     def test_physical_traits_immutability(self):
         """Test that physical traits is immutable."""
         traits = PhysicalTraits(height_cm=180)
@@ -878,6 +971,7 @@ class TestCharacterProfile:
         with pytest.raises(AttributeError):
             traits.height_cm = 190
 
+    @pytest.mark.unit
     def test_personality_traits_immutability(self):
         """Test that personality traits is immutable."""
         traits = PersonalityTraits(traits={"courage": 0.8})
@@ -885,6 +979,7 @@ class TestCharacterProfile:
         with pytest.raises(AttributeError):
             traits.alignment = "chaotic good"
 
+    @pytest.mark.unit
     def test_background_immutability(self):
         """Test that background is immutable."""
         background = Background(backstory="Test")
@@ -894,6 +989,7 @@ class TestCharacterProfile:
 
     # ==================== Edge Cases and Integration Tests ====================
 
+    @pytest.mark.unit
     def test_character_profile_with_all_enum_values(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -913,6 +1009,7 @@ class TestCharacterProfile:
             )
             assert profile.gender == gender
 
+    @pytest.mark.unit
     def test_character_profile_racial_age_combinations(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):
@@ -942,6 +1039,7 @@ class TestCharacterProfile:
 
             assert profile.is_adult() == expected_adult
 
+    @pytest.mark.unit
     def test_character_profile_boundary_validations(
         self, sample_physical_traits, sample_personality_traits, sample_background
     ):

@@ -114,6 +114,7 @@ class TestDeleteKnowledgeEntryUseCase:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_delete_entry_success(
         self, use_case, valid_command, mock_repository, mock_event_publisher
     ):
@@ -131,6 +132,7 @@ class TestDeleteKnowledgeEntryUseCase:
         assert event_call[1]["topic"] == "knowledge.entry.deleted"
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_delete_entry_not_found_raises_error(self, use_case, mock_repository):
         """Test that deleting non-existent entry raises error."""
         if DeleteKnowledgeEntryCommand is None:
@@ -150,6 +152,7 @@ class TestDeleteKnowledgeEntryUseCase:
             await use_case.execute(command)
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_delete_entry_publishes_domain_event(
         self, use_case, valid_command, mock_event_publisher, existing_entry
     ):
@@ -174,6 +177,7 @@ class TestDeleteKnowledgeEntryUseCase:
         assert event_call[1]["key"] == existing_entry.id
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_delete_entry_repository_failure_does_not_publish_event(
         self, use_case, valid_command, mock_repository, mock_event_publisher
     ):
@@ -189,6 +193,7 @@ class TestDeleteKnowledgeEntryUseCase:
         mock_event_publisher.publish.assert_not_called()
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_delete_entry_verifies_entry_exists_before_deletion(
         self, use_case, valid_command, mock_repository
     ):
@@ -207,6 +212,7 @@ class TestDeleteKnowledgeEntryUseCase:
         assert get_index < delete_index
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_delete_already_deleted_entry_raises_error(
         self, use_case, mock_repository
     ):
@@ -231,6 +237,7 @@ class TestDeleteKnowledgeEntryUseCase:
         mock_repository.delete.assert_not_called()
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_delete_entry_includes_snapshot_in_event(
         self, use_case, valid_command, mock_event_publisher, existing_entry
     ):

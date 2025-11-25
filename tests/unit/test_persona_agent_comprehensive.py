@@ -406,6 +406,7 @@ class TestPersonaAgentDecisionMaking:
         )
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_handle_turn_start_no_action(self):
         """Test turn start handling when no action is generated"""
         agent = self.create_test_agent()
@@ -421,6 +422,7 @@ class TestPersonaAgentDecisionMaking:
         )
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_make_decision_with_valid_world_state(self):
         """Test decision making with valid world state"""
         agent = self.create_test_agent()
@@ -433,6 +435,7 @@ class TestPersonaAgentDecisionMaking:
             assert result is None or isinstance(result, CharacterAction)
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_decision_making_error_handling(self):
         """Test decision making error handling"""
         agent = self.create_test_agent()
@@ -540,6 +543,7 @@ class TestPersonaAgentWorldInterpretation:
                 assert callable(method)
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_threat_assessment_capability(self):
         """Test agent's threat assessment capabilities"""
         agent = self.create_test_agent()
@@ -592,6 +596,7 @@ class TestPersonaAgentAIIntegration:
             )
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_ai_api_key_validation(self):
         """Test AI API key validation"""
         # Test the validation function directly
@@ -607,6 +612,7 @@ class TestPersonaAgentAIIntegration:
             assert result is None
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_ai_integration_fallback_behavior(self):
         """Test fallback behavior when AI integration fails"""
         agent = self.create_test_agent()
@@ -622,6 +628,7 @@ class TestPersonaAgentAIIntegration:
             assert result is None or isinstance(result, CharacterAction)
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_ai_request_handling_with_mock(self):
         """Test AI request handling with mocked responses"""
         agent = self.create_test_agent()
@@ -679,6 +686,7 @@ class TestPersonaAgentMemoryAndEvolution:
             )
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_memory_system_initialization(self):
         """Test memory system initialization"""
         agent = self.create_test_agent()
@@ -694,6 +702,7 @@ class TestPersonaAgentMemoryAndEvolution:
             assert hasattr(agent, attr)
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_character_evolution_tracking(self):
         """Test character evolution and experience tracking"""
         agent = self.create_test_agent()

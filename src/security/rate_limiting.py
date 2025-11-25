@@ -248,7 +248,7 @@ class RateLimiter:
                 await self._cleanup_old_clients()
 
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             self._cleanup_task = loop.create_task(cleanup_loop())
         except RuntimeError:
             # No event loop running yet

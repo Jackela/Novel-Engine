@@ -314,7 +314,7 @@ class EnterpriseStorageManager:
         if not self._initialized:
             await self.initialize()
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             # Store in primary backend (PostgreSQL)
@@ -346,7 +346,7 @@ class EnterpriseStorageManager:
                 )
 
             # Record metrics
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = asyncio.get_running_loop().time() - start_time
             await self._record_operation_metrics(
                 DataCategory.CHARACTERS, StorageBackend.POSTGRESQL, response_time
             )
@@ -364,7 +364,7 @@ class EnterpriseStorageManager:
         if not self._initialized:
             await self.initialize()
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             # Try cache first
@@ -376,7 +376,7 @@ class EnterpriseStorageManager:
                     character_id
                 )
                 if cached_data:
-                    response_time = asyncio.get_event_loop().time() - start_time
+                    response_time = asyncio.get_running_loop().time() - start_time
                     await self._record_operation_metrics(
                         DataCategory.CHARACTERS, StorageBackend.REDIS, response_time
                     )
@@ -397,7 +397,7 @@ class EnterpriseStorageManager:
                             character_id, character_data
                         )
 
-                    response_time = asyncio.get_event_loop().time() - start_time
+                    response_time = asyncio.get_running_loop().time() - start_time
                     await self._record_operation_metrics(
                         DataCategory.CHARACTERS,
                         StorageBackend.POSTGRESQL,
@@ -427,7 +427,7 @@ class EnterpriseStorageManager:
         if not self._initialized:
             await self.initialize()
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             memory_id = None
@@ -461,7 +461,7 @@ class EnterpriseStorageManager:
                 )
 
             # Record metrics
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = asyncio.get_running_loop().time() - start_time
             await self._record_operation_metrics(
                 DataCategory.MEMORY, StorageBackend.POSTGRESQL, response_time
             )
@@ -484,7 +484,7 @@ class EnterpriseStorageManager:
         if not self._initialized:
             await self.initialize()
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             # Search in PostgreSQL (primary)
@@ -497,7 +497,7 @@ class EnterpriseStorageManager:
                 )
 
                 # Record metrics
-                response_time = asyncio.get_event_loop().time() - start_time
+                response_time = asyncio.get_running_loop().time() - start_time
                 await self._record_operation_metrics(
                     DataCategory.MEMORY, StorageBackend.POSTGRESQL, response_time
                 )
@@ -524,7 +524,7 @@ class EnterpriseStorageManager:
             logger.warning("Redis not available for session storage")
             return False
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             policy = self.config.storage_policies.get(DataCategory.SESSIONS)
@@ -535,7 +535,7 @@ class EnterpriseStorageManager:
             )
 
             # Record metrics
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = asyncio.get_running_loop().time() - start_time
             await self._record_operation_metrics(
                 DataCategory.SESSIONS, StorageBackend.REDIS, response_time
             )
@@ -555,13 +555,13 @@ class EnterpriseStorageManager:
         if not self.redis:
             return None
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             session_data = await self.redis.connection_pool.get_session(session_id)
 
             # Record metrics
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = asyncio.get_running_loop().time() - start_time
             await self._record_operation_metrics(
                 DataCategory.SESSIONS, StorageBackend.REDIS, response_time
             )
@@ -580,7 +580,7 @@ class EnterpriseStorageManager:
         if not self._initialized:
             await self.initialize()
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             # Try cache first
@@ -588,7 +588,7 @@ class EnterpriseStorageManager:
                 cache_key = f"system_state:{key}"
                 cached_value = await self.redis.connection_pool.get(cache_key)
                 if cached_value is not None:
-                    response_time = asyncio.get_event_loop().time() - start_time
+                    response_time = asyncio.get_running_loop().time() - start_time
                     await self._record_operation_metrics(
                         DataCategory.SYSTEM_STATE, StorageBackend.REDIS, response_time
                     )
@@ -605,7 +605,7 @@ class EnterpriseStorageManager:
                     ttl = policy.ttl_seconds if policy else 300
                     await self.redis.connection_pool.set(cache_key, value, ttl=ttl)
 
-                response_time = asyncio.get_event_loop().time() - start_time
+                response_time = asyncio.get_running_loop().time() - start_time
                 await self._record_operation_metrics(
                     DataCategory.SYSTEM_STATE, StorageBackend.POSTGRESQL, response_time
                 )
@@ -626,7 +626,7 @@ class EnterpriseStorageManager:
         if not self._initialized:
             await self.initialize()
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             # Store in PostgreSQL
@@ -643,7 +643,7 @@ class EnterpriseStorageManager:
                 await self.redis.connection_pool.set(cache_key, value, ttl=ttl)
 
             # Record metrics
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = asyncio.get_running_loop().time() - start_time
             await self._record_operation_metrics(
                 DataCategory.SYSTEM_STATE, StorageBackend.POSTGRESQL, response_time
             )
@@ -671,7 +671,7 @@ class EnterpriseStorageManager:
         if not self.s3:
             raise RuntimeError("S3 not configured for file storage")
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             object_info = await self.s3.upload_bytes(
@@ -682,7 +682,7 @@ class EnterpriseStorageManager:
             )
 
             # Record metrics
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = asyncio.get_running_loop().time() - start_time
             await self._record_operation_metrics(
                 DataCategory.FILES, StorageBackend.S3, response_time
             )
@@ -702,13 +702,13 @@ class EnterpriseStorageManager:
         if not self.s3:
             return None
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
 
         try:
             content = await self.s3.download_bytes(file_path, use_cache=use_cache)
 
             # Record metrics
-            response_time = asyncio.get_event_loop().time() - start_time
+            response_time = asyncio.get_running_loop().time() - start_time
             await self._record_operation_metrics(
                 DataCategory.FILES, StorageBackend.S3, response_time
             )

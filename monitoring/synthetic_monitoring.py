@@ -16,7 +16,7 @@ import ssl
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -246,7 +246,7 @@ class SyntheticMonitor:
                 # Track failures
                 if result.status == CheckStatus.SUCCESS:
                     self.consecutive_failures[check.name] = 0
-                    self.last_success[check.name] = datetime.utcnow()
+                    self.last_success[check.name] = datetime.now(timezone.utc)
                 else:
                     self.consecutive_failures[check.name] += 1
                     
@@ -282,7 +282,7 @@ class SyntheticMonitor:
                     check_name=check.name,
                     check_type=check.check_type,
                     status=CheckStatus.ERROR,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     duration_ms=(time.time() - start_time) * 1000,
                     error_message=f"Unsupported check type: {check.check_type}"
                 )
@@ -294,7 +294,7 @@ class SyntheticMonitor:
                 check_name=check.name,
                 check_type=check.check_type,
                 status=CheckStatus.ERROR,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 duration_ms=(time.time() - start_time) * 1000,
                 error_message=str(e),
                 error_details={"exception": type(e).__name__}
@@ -330,7 +330,7 @@ class SyntheticMonitor:
                     check_name=check.name,
                     check_type=CheckType.HTTP,
                     status=CheckStatus.SUCCESS,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     duration_ms=response_time,
                     status_code=response.status,
                     response_size=len(content),
@@ -347,7 +347,7 @@ class SyntheticMonitor:
                 check_name=check.name,
                 check_type=CheckType.HTTP,
                 status=CheckStatus.TIMEOUT,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 duration_ms=(time.time() - start_time) * 1000,
                 error_message=f"Request timed out after {config.timeout_seconds}s"
             )
@@ -356,7 +356,7 @@ class SyntheticMonitor:
                 check_name=check.name,
                 check_type=CheckType.HTTP,
                 status=CheckStatus.FAILURE,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 duration_ms=(time.time() - start_time) * 1000,
                 error_message=str(e),
                 error_details={"exception": type(e).__name__}
@@ -513,7 +513,7 @@ class SyntheticMonitor:
                 check_name=check.name,
                 check_type=CheckType.API,
                 status=CheckStatus.SUCCESS if all_passed else CheckStatus.FAILURE,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 duration_ms=total_duration,
                 custom_metrics={
                     "endpoints_tested": len(results),
@@ -537,7 +537,7 @@ class SyntheticMonitor:
                 check_name=check.name,
                 check_type=CheckType.API,
                 status=CheckStatus.ERROR,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 duration_ms=(time.time() - start_time) * 1000,
                 error_message=str(e),
                 error_details={"exception": type(e).__name__}
@@ -620,7 +620,7 @@ class SyntheticMonitor:
                     check_name=check.name,
                     check_type=CheckType.USER_JOURNEY,
                     status=CheckStatus.SUCCESS if journey_success else CheckStatus.FAILURE,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     duration_ms=(time.time() - start_time) * 1000,
                     custom_metrics={
                         "steps_total": len(config.steps),
@@ -649,7 +649,7 @@ class SyntheticMonitor:
                 check_name=check.name,
                 check_type=CheckType.USER_JOURNEY,
                 status=CheckStatus.ERROR,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 duration_ms=(time.time() - start_time) * 1000,
                 error_message=str(e),
                 error_details={"exception": type(e).__name__}
@@ -810,7 +810,7 @@ class SyntheticMonitor:
             return {}
         
         # Filter results to time window
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         recent_results = [
             r for r in self.results[check_name] 
             if r.timestamp >= cutoff_time

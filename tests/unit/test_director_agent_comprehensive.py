@@ -187,6 +187,7 @@ class TestDirectorAgentRegistration:
         return mock_agent
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_register_agent_success(self):
         """Test successful agent registration"""
         mock_agent = self.create_mock_agent()
@@ -202,6 +203,7 @@ class TestDirectorAgentRegistration:
                 assert mock_agent in self.director.registered_agents
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_register_agent_validation_checks(self):
         """Test agent validation during registration"""
         if not hasattr(self.director, "register_agent"):
@@ -238,6 +240,7 @@ class TestDirectorAgentRegistration:
                 assert agent in self.director.registered_agents
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_register_agent_duplicate_handling(self):
         """Test handling of duplicate agent registration"""
         if not hasattr(self.director, "register_agent"):
@@ -337,6 +340,7 @@ class TestDirectorAgentTurnExecution:
             pass
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_run_turn_no_agents(self):
         """Test running a turn with no registered agents"""
         if not hasattr(self.director, "run_turn"):
@@ -400,6 +404,7 @@ class TestDirectorAgentLogging:
             pass
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_campaign_log_initialization(self):
         """Test campaign log file creation during initialization"""
         director = DirectorAgent(
@@ -523,6 +528,7 @@ class TestDirectorAgentWorldState:
             assert director.world_state is not None
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_world_state_initialization_missing_file(self):
         """Test world state initialization when file doesn't exist"""
         director = DirectorAgent(

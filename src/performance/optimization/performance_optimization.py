@@ -156,7 +156,7 @@ class AsyncEventBus:
                 else:
                     # Run sync callbacks in thread pool
                     tasks.append(
-                        asyncio.get_event_loop().run_in_executor(None, callback, data)
+                        asyncio.get_running_loop().run_in_executor(None, callback, data)
                     )
 
             if tasks:
@@ -274,7 +274,7 @@ async def optimize_simulation_execution(director, turns: int):
         await performance_optimizer.event_bus.emit("turn_start", turn_number)
 
         # Execute turn (wrap synchronous operation)
-        await asyncio.get_event_loop().run_in_executor(None, director.run_turn)
+        await asyncio.get_running_loop().run_in_executor(None, director.run_turn)
 
         await performance_optimizer.event_bus.emit("turn_complete", turn_number)
 

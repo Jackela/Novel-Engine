@@ -14,7 +14,7 @@ import asyncio
 import logging
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 
 import httpx
@@ -309,7 +309,7 @@ class AITestOrchestrator(ITestOrchestrator):
 
             # Update execution status
             execution.status = TestStatus.CANCELLED
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(timezone.utc)
 
             # Notify downstream services
             await self._notify_execution_cancelled(execution)
@@ -516,7 +516,7 @@ class AITestOrchestrator(ITestOrchestrator):
         try:
             # Update execution status
             execution.status = TestStatus.RUNNING
-            execution.started_at = datetime.utcnow()
+            execution.started_at = datetime.now(timezone.utc)
             await self._update_execution_in_redis(execution)
 
             # Emit execution started event
@@ -541,7 +541,7 @@ class AITestOrchestrator(ITestOrchestrator):
             execution.status = (
                 TestStatus.COMPLETED if result.passed else TestStatus.FAILED
             )
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(timezone.utc)
             execution.duration_ms = int(
                 (execution.completed_at - execution.started_at).total_seconds() * 1000
             )
@@ -558,7 +558,7 @@ class AITestOrchestrator(ITestOrchestrator):
         except Exception as e:
             logger.error(f"Scenario execution failed: {execution.scenario_id}: {e}")
             execution.status = TestStatus.FAILED
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(timezone.utc)
             execution.error_message = str(e)
             await self._update_execution_in_redis(execution)
 

@@ -22,6 +22,7 @@ except ImportError as e:
     world_router = None
 
 
+@pytest.mark.integration
 class TestWorldAPIIntegration:
     """Integration tests for World context FastAPI endpoints."""
 
@@ -205,6 +206,7 @@ class TestWorldAPIIntegration:
         assert response.status_code != 405, "Validate endpoint should accept GET"
 
 
+@pytest.mark.integration
 class TestAPIServerIntegration:
     """Test API server integration with World router."""
 

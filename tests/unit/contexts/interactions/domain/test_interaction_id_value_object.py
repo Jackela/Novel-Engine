@@ -16,6 +16,8 @@ from contexts.interactions.domain.value_objects.interaction_id import Interactio
 class TestInteractionIdCreation:
     """Test suite for InteractionId creation and basic functionality."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_with_uuid(self):
         """Test creating InteractionId with valid UUID."""
         uuid_value = uuid4()
@@ -24,6 +26,8 @@ class TestInteractionIdCreation:
         assert interaction_id.value == uuid_value
         assert isinstance(interaction_id.value, UUID)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_with_specific_uuid(self):
         """Test creating InteractionId with specific UUID."""
         specific_uuid = UUID("12345678-1234-5678-9abc-123456789abc")
@@ -32,6 +36,7 @@ class TestInteractionIdCreation:
         assert interaction_id.value == specific_uuid
         assert str(interaction_id.value) == "12345678-1234-5678-9abc-123456789abc"
 
+    @pytest.mark.unit
     def test_frozen_dataclass_immutability(self):
         """Test that InteractionId is immutable (frozen dataclass)."""
         uuid_value = uuid4()
@@ -45,26 +50,31 @@ class TestInteractionIdCreation:
 class TestInteractionIdValidation:
     """Test suite for InteractionId validation logic."""
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_string(self):
         """Test validation fails with string instead of UUID."""
         with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
             InteractionId("not-a-uuid-object")
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_integer(self):
         """Test validation fails with integer instead of UUID."""
         with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
             InteractionId(12345)
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_none(self):
         """Test validation fails with None instead of UUID."""
         with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
             InteractionId(None)
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_dict(self):
         """Test validation fails with dict instead of UUID."""
         with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
             InteractionId({"uuid": "12345678-1234-5678-9abc-123456789abc"})
 
+    @pytest.mark.unit
     def test_invalid_uuid_type_list(self):
         """Test validation fails with list instead of UUID."""
         with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
@@ -74,6 +84,7 @@ class TestInteractionIdValidation:
 class TestInteractionIdFactoryMethods:
     """Test suite for InteractionId factory methods."""
 
+    @pytest.mark.unit
     def test_generate_creates_unique_ids(self):
         """Test that generate() creates unique IDs each time."""
         id1 = InteractionId.generate()
@@ -95,6 +106,8 @@ class TestInteractionIdFactoryMethods:
         assert isinstance(id2.value, UUID)
         assert isinstance(id3.value, UUID)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_string_valid_uuid(self):
         """Test creating InteractionId from valid UUID string."""
         uuid_string = "12345678-1234-5678-9abc-123456789abc"
@@ -105,6 +118,8 @@ class TestInteractionIdFactoryMethods:
             str(interaction_id.value) == uuid_string.lower()
         )  # UUID strings are normalized to lowercase
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_string_uppercase_uuid(self):
         """Test creating InteractionId from uppercase UUID string."""
         uuid_string = "12345678-1234-5678-9ABC-123456789ABC"
@@ -113,6 +128,8 @@ class TestInteractionIdFactoryMethods:
         assert isinstance(interaction_id, InteractionId)
         assert str(interaction_id.value) == uuid_string.lower()
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_string_without_dashes(self):
         """Test creating InteractionId from UUID string without dashes."""
         uuid_string = "123456781234567890ab123456789abc"
@@ -122,6 +139,7 @@ class TestInteractionIdFactoryMethods:
         # UUID constructor should handle this and add dashes
         assert len(str(interaction_id.value)) == 36  # Standard UUID format with dashes
 
+    @pytest.mark.unit
     def test_from_string_invalid_format(self):
         """Test from_string fails with invalid UUID format."""
         invalid_strings = [
@@ -138,11 +156,13 @@ class TestInteractionIdFactoryMethods:
             with pytest.raises(ValueError, match="Invalid UUID string"):
                 InteractionId.from_string(invalid_string)
 
+    @pytest.mark.unit
     def test_from_string_none(self):
         """Test from_string fails with None."""
         with pytest.raises(ValueError, match="Invalid UUID string"):
             InteractionId.from_string(None)
 
+    @pytest.mark.unit
     def test_from_string_non_string_type(self):
         """Test from_string fails with non-string types."""
         with pytest.raises(ValueError, match="Invalid UUID string"):
@@ -155,6 +175,8 @@ class TestInteractionIdFactoryMethods:
 class TestInteractionIdStringRepresentation:
     """Test suite for InteractionId string representation."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_str_representation(self):
         """Test string representation of InteractionId."""
         uuid_value = UUID("12345678-1234-5678-9abc-123456789abc")
@@ -164,6 +186,8 @@ class TestInteractionIdStringRepresentation:
         assert str_repr == "12345678-1234-5678-9abc-123456789abc"
         assert isinstance(str_repr, str)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_str_representation_generated(self):
         """Test string representation of generated InteractionId."""
         interaction_id = InteractionId.generate()
@@ -176,6 +200,8 @@ class TestInteractionIdStringRepresentation:
         # Should be able to create UUID from the string
         UUID(str_repr)  # Should not raise exception
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_repr_not_implemented(self):
         """Test that repr uses default dataclass representation."""
         uuid_value = UUID("12345678-1234-5678-9abc-123456789abc")
@@ -190,6 +216,8 @@ class TestInteractionIdStringRepresentation:
 class TestInteractionIdEquality:
     """Test suite for InteractionId equality comparison."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_same_uuid(self):
         """Test equality with same UUID value."""
         uuid_value = uuid4()
@@ -199,6 +227,8 @@ class TestInteractionIdEquality:
         assert id1 == id2
         assert not (id1 != id2)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_different_uuids(self):
         """Test inequality with different UUID values."""
         uuid1 = uuid4()
@@ -210,6 +240,7 @@ class TestInteractionIdEquality:
         assert id1 != id2
         assert not (id1 == id2)
 
+    @pytest.mark.unit
     def test_equality_with_non_interaction_id(self):
         """Test equality comparison with non-InteractionId objects."""
         uuid_value = uuid4()
@@ -230,11 +261,15 @@ class TestInteractionIdEquality:
         assert interaction_id != {}
         assert interaction_id != []
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_reflexive(self):
         """Test that equality is reflexive (a == a)."""
         interaction_id = InteractionId.generate()
         assert interaction_id == interaction_id
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_symmetric(self):
         """Test that equality is symmetric (a == b implies b == a)."""
         uuid_value = uuid4()
@@ -244,6 +279,8 @@ class TestInteractionIdEquality:
         assert id1 == id2
         assert id2 == id1
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_equality_transitive(self):
         """Test that equality is transitive (a == b and b == c implies a == c)."""
         uuid_value = uuid4()
@@ -259,6 +296,8 @@ class TestInteractionIdEquality:
 class TestInteractionIdHashing:
     """Test suite for InteractionId hashing behavior."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_hash_consistency(self):
         """Test that hash is consistent for same object."""
         interaction_id = InteractionId.generate()
@@ -267,6 +306,8 @@ class TestInteractionIdHashing:
 
         assert hash1 == hash2
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_hash_equality_implies_same_hash(self):
         """Test that equal objects have the same hash."""
         uuid_value = uuid4()
@@ -276,6 +317,8 @@ class TestInteractionIdHashing:
         assert id1 == id2
         assert hash(id1) == hash(id2)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_hash_different_for_different_uuids(self):
         """Test that different UUIDs produce different hashes."""
         id1 = InteractionId.generate()
@@ -285,6 +328,8 @@ class TestInteractionIdHashing:
         # it's extremely unlikely with UUIDs
         assert hash(id1) != hash(id2)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_usable_as_dict_key(self):
         """Test that InteractionId can be used as dictionary key."""
         id1 = InteractionId.generate()
@@ -300,6 +345,7 @@ class TestInteractionIdHashing:
         equivalent_id = InteractionId(uuid_value)
         assert test_dict[equivalent_id] == "value1"  # Should find the same entry
 
+    @pytest.mark.unit
     def test_usable_in_set(self):
         """Test that InteractionId can be used in sets."""
         id1 = InteractionId.generate()
@@ -322,6 +368,8 @@ class TestInteractionIdHashing:
 class TestInteractionIdRoundTripConversion:
     """Test suite for round-trip conversion between different representations."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_generate_to_string_to_from_string(self):
         """Test round-trip: generate -> string -> from_string."""
         original = InteractionId.generate()
@@ -331,6 +379,8 @@ class TestInteractionIdRoundTripConversion:
         assert original == reconstructed
         assert original.value == reconstructed.value
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_from_string_to_string_consistency(self):
         """Test that from_string -> string produces consistent results."""
         uuid_string = "12345678-1234-5678-9abc-123456789abc"
@@ -339,6 +389,8 @@ class TestInteractionIdRoundTripConversion:
 
         assert result_string == uuid_string.lower()
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_uuid_to_interaction_id_to_string(self):
         """Test round-trip: UUID -> InteractionId -> string."""
         original_uuid = uuid4()
@@ -347,6 +399,8 @@ class TestInteractionIdRoundTripConversion:
 
         assert string_repr == str(original_uuid)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_multiple_round_trips(self):
         """Test multiple round-trip conversions maintain equality."""
         original = InteractionId.generate()
@@ -366,6 +420,8 @@ class TestInteractionIdRoundTripConversion:
 class TestInteractionIdEdgeCases:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_nil_uuid(self):
         """Test with nil/zero UUID."""
         nil_uuid = UUID("00000000-0000-0000-0000-000000000000")
@@ -374,6 +430,8 @@ class TestInteractionIdEdgeCases:
         assert interaction_id.value == nil_uuid
         assert str(interaction_id) == "00000000-0000-0000-0000-000000000000"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_max_uuid(self):
         """Test with maximum UUID value."""
         max_uuid = UUID("ffffffff-ffff-ffff-ffff-ffffffffffff")
@@ -382,6 +440,8 @@ class TestInteractionIdEdgeCases:
         assert interaction_id.value == max_uuid
         assert str(interaction_id) == "ffffffff-ffff-ffff-ffff-ffffffffffff"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_uuid_versions(self):
         """Test with different UUID versions."""
         # UUID version 1 (time-based)
@@ -397,6 +457,7 @@ class TestInteractionIdEdgeCases:
         # Different versions should create different IDs
         assert id1 != id4
 
+    @pytest.mark.unit
     def test_case_insensitive_from_string(self):
         """Test that from_string handles case variations correctly."""
         uuid_lower = "12345678-1234-5678-9abc-123456789def"
@@ -417,6 +478,8 @@ class TestInteractionIdEdgeCases:
         assert str(id_upper) == uuid_lower
         assert str(id_mixed) == uuid_lower
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_compact_uuid_string(self):
         """Test from_string with compact (no dashes) UUID format."""
         compact_uuid = "123456781234567890ab123456789def"
@@ -426,6 +489,8 @@ class TestInteractionIdEdgeCases:
         expected_standard = "12345678-1234-5678-90ab-123456789def"
         assert str(interaction_id) == expected_standard
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_memory_efficiency(self):
         """Test that multiple InteractionIds with same UUID value are memory efficient."""
         uuid_value = uuid4()
@@ -447,6 +512,7 @@ class TestInteractionIdEdgeCases:
 class TestInteractionIdCollections:
     """Test suite for InteractionId behavior in collections."""
 
+    @pytest.mark.unit
     def test_list_operations(self):
         """Test InteractionId in list operations."""
         id1 = InteractionId.generate()
@@ -464,6 +530,8 @@ class TestInteractionIdCollections:
         equivalent_id1 = InteractionId(id1.value)
         assert equivalent_id1 in id_list
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_set_operations(self):
         """Test InteractionId in set operations."""
         id1 = InteractionId.generate()
@@ -478,6 +546,7 @@ class TestInteractionIdCollections:
         assert id2 in id_set
         assert equivalent_id1 in id_set
 
+    @pytest.mark.unit
     def test_dict_key_operations(self):
         """Test InteractionId as dictionary keys."""
         id1 = InteractionId.generate()
@@ -498,6 +567,8 @@ class TestInteractionIdCollections:
         assert len(id_dict) == 2  # Should still have 2 keys
         assert id_dict[id1] == "updated_data1"  # Original key should have updated value
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_sorting(self):
         """Test that InteractionIds can be sorted (by UUID string representation)."""
         # Create IDs with known UUID values for predictable sorting

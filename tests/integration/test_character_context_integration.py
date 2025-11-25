@@ -34,6 +34,7 @@ from contexts.character.domain.value_objects.skills import (
 )
 
 
+@pytest.mark.integration
 class TestCharacterContextIntegration:
     """Integration tests for the complete Character bounded context."""
 
@@ -179,7 +180,8 @@ class TestCharacterContextIntegration:
                 modifier == expected_modifier
             ), f"Score {score} should have modifier {expected_modifier}, got {modifier}"
 
-    @pytest.mark.asyncio
+    @pytest.mark.integration
+@pytest.mark.asyncio
     async def test_character_application_service_create_character(
         self, character_application_service, sample_character_data
     ):
@@ -208,7 +210,8 @@ class TestCharacterContextIntegration:
         )
         character_application_service.command_handlers.handle_command.assert_called_once()
 
-    @pytest.mark.asyncio
+    @pytest.mark.integration
+@pytest.mark.asyncio
     async def test_character_application_service_duplicate_name_validation(
         self, character_application_service, sample_character_data
     ):
@@ -255,7 +258,8 @@ class TestCharacterContextIntegration:
         with pytest.raises(ValueError, match="Invalid gender"):
             CreateCharacterCommand(**invalid_data)
 
-    @pytest.mark.asyncio
+    @pytest.mark.integration
+@pytest.mark.asyncio
     async def test_character_stats_updates(self, character_application_service):
         """Test character stats update functionality."""
         character_id = str(CharacterID.generate())
@@ -279,7 +283,8 @@ class TestCharacterContextIntegration:
         # Verify command handler was called
         character_application_service.command_handlers.handle_command.assert_called_once()
 
-    @pytest.mark.asyncio
+    @pytest.mark.integration
+@pytest.mark.asyncio
     async def test_character_level_up(self, character_application_service):
         """Test character level up functionality."""
         character_id = str(CharacterID.generate())
@@ -297,7 +302,8 @@ class TestCharacterContextIntegration:
         # Verify command handler was called
         character_application_service.command_handlers.handle_command.assert_called_once()
 
-    @pytest.mark.asyncio
+    @pytest.mark.integration
+@pytest.mark.asyncio
     async def test_character_healing_and_damage(self, character_application_service):
         """Test character healing and damage functionality."""
         character_id = str(CharacterID.generate())
@@ -328,7 +334,8 @@ class TestCharacterContextIntegration:
             == 2
         )
 
-    @pytest.mark.asyncio
+    @pytest.mark.integration
+@pytest.mark.asyncio
     async def test_character_query_operations(self, character_application_service):
         """Test character query operations."""
         # Mock repository query methods
@@ -491,6 +498,7 @@ class TestCharacterContextIntegration:
         assert summary["race"] == "halfling"
 
 
+@pytest.mark.integration
 class TestCharacterRepositoryIntegration:
     """Integration tests for character repository implementation."""
 

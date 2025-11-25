@@ -67,6 +67,7 @@ class TestDirectorAgentKnowledgeSystem:
         return mock_agent
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_retrieve_relevant_knowledge_rag_no_knowledge_base(self):
         """Test RAG knowledge retrieval when knowledge base doesn't exist"""
         mock_agent = self.create_mock_agent()
@@ -83,6 +84,7 @@ class TestDirectorAgentKnowledgeSystem:
                 assert isinstance(result, list)
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_create_default_knowledge_fragments(self):
         """Test creation of default knowledge fragments"""
         mock_agent = self.create_mock_agent()
@@ -180,6 +182,7 @@ class TestDirectorAgentNarrativeEngine:
             pass
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_narrative_resolver_initialization(self):
         """Test narrative action resolver initialization"""
         # Check if director has narrative resolver
@@ -187,6 +190,7 @@ class TestDirectorAgentNarrativeEngine:
         assert self.director.narrative_resolver is not None
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_story_state_tracking(self):
         """Test story state tracking system"""
         # Check if director maintains story state
@@ -199,6 +203,7 @@ class TestDirectorAgentNarrativeEngine:
             assert component in self.director.story_state
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_world_state_tracker_initialization(self):
         """Test world state tracker initialization"""
         # Check if director has world state tracker
@@ -215,6 +220,7 @@ class TestDirectorAgentNarrativeEngine:
             assert component in self.director.world_state_tracker
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_campaign_brief_integration(self):
         """Test campaign brief integration"""
         # Check if director can handle campaign brief
@@ -247,6 +253,7 @@ class TestDirectorAgentWorldStateManagement:
                 pass
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_world_state_data_initialization(self):
         """Test world state data structure initialization"""
         director = DirectorAgent(
@@ -281,6 +288,7 @@ class TestDirectorAgentWorldStateManagement:
         assert director.world_state_file_path == self.temp_world_state
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_initialize_default_world_state(self):
         """Test default world state initialization"""
         director = DirectorAgent(
@@ -344,6 +352,7 @@ class TestDirectorAgentAgentOrchestration:
         return mock_agent
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_agent_registration_capacity(self):
         """Test agent registration capacity and management"""
         # Test multiple agent registration
@@ -405,6 +414,7 @@ class TestDirectorAgentAgentOrchestration:
             assert "agent" in str(e).lower() or "turn" in str(e).lower()
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_error_tracking_system(self):
         """Test error tracking and recovery system"""
         # Should have error tracking attributes
@@ -417,6 +427,7 @@ class TestDirectorAgentAgentOrchestration:
         assert self.director.last_error_time is None
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_simulation_state_tracking(self):
         """Test simulation state tracking and management"""
         # Should track simulation state
@@ -430,6 +441,7 @@ class TestDirectorAgentAgentOrchestration:
         assert isinstance(self.director.simulation_start_time, datetime)
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_configuration_driven_parameters(self):
         """Test configuration-driven parameter management"""
         # Should have configuration parameters
@@ -459,6 +471,7 @@ class TestDirectorAgentEventHandling:
             pass
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_event_bus_integration(self):
         """Test event bus integration and subscription"""
         director = DirectorAgent(

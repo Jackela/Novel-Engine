@@ -30,6 +30,7 @@ class TestCharacterFactory:
         self.mock_event_bus = Mock(spec=EventBus)
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_factory_initialization_success(self):
         """Test factory initialization - success case"""
         event_bus = Mock(spec=EventBus)
@@ -219,6 +220,7 @@ class TestCharacterFactoryConfiguration:
         self.mock_event_bus = Mock(spec=EventBus)
 
     @pytest.mark.unit
+    @pytest.mark.fast
     def test_factory_with_different_event_buses(self):
         """Test factory with different event bus instances"""
         bus1 = Mock(spec=EventBus)
@@ -280,6 +282,7 @@ class TestCharacterFactoryPerformance:
         self.mock_event_bus = Mock(spec=EventBus)
 
     @pytest.mark.performance
+    @pytest.mark.unit
     def test_character_creation_performance(self, tmp_path):
         """Test character creation performance"""
         import time

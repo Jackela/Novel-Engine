@@ -171,6 +171,7 @@ class TestDirectorAgentComponents(unittest.TestCase):
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
+    @pytest.mark.unit
     def test_agent_lifecycle_manager_initialization(self):
         """Test AgentLifecycleManager initialization."""
         manager = AgentLifecycleManager(self.event_bus, self.state)
@@ -184,6 +185,7 @@ class TestDirectorAgentComponents(unittest.TestCase):
         self.assertIsInstance(status, dict)
         self.assertIn("total_agents", status)
 
+    @pytest.mark.unit
     def test_agent_lifecycle_manager_agent_registration(self):
         """Test agent registration and removal."""
         manager = AgentLifecycleManager(self.event_bus, self.state)
@@ -209,6 +211,7 @@ class TestDirectorAgentComponents(unittest.TestCase):
         agent_list_after = manager.get_agent_list()
         self.assertEqual(len(agent_list_after), 0)
 
+    @pytest.mark.unit
     def test_world_state_manager_initialization(self):
         """Test WorldStateManager initialization."""
         test_file = os.path.join(self.temp_dir, "test_world_state.json")
@@ -223,6 +226,7 @@ class TestDirectorAgentComponents(unittest.TestCase):
         self.assertIsInstance(summary, dict)
         self.assertIn("environment", summary)
 
+    @pytest.mark.unit
     def test_world_state_manager_save_load(self):
         """Test world state save and load operations."""
         test_file = os.path.join(self.temp_dir, "test_world_state.json")
@@ -244,6 +248,7 @@ class TestDirectorAgentComponents(unittest.TestCase):
         loaded_summary = manager2.get_world_state_summary()
         self.assertEqual(original_summary["locations"], loaded_summary["locations"])
 
+    @pytest.mark.unit
     def test_campaign_logging_service(self):
         """Test CampaignLoggingService functionality."""
         log_file = os.path.join(self.temp_dir, "test_campaign.md")
@@ -271,6 +276,7 @@ class TestDirectorAgentComponents(unittest.TestCase):
         # Cleanup
         asyncio.run(service.cleanup())
 
+    @pytest.mark.unit
     def test_configuration_service(self):
         """Test ConfigurationService functionality."""
         service = ConfigurationService(self.event_bus, self.state)
@@ -296,6 +302,7 @@ class TestDirectorAgentComponents(unittest.TestCase):
         test_value = service.get_config_value("test_key")
         self.assertEqual(test_value, "test_value")
 
+    @pytest.mark.unit
     def test_error_handler(self):
         """Test SystemErrorHandler functionality."""
         handler = SystemErrorHandler(self.event_bus, self.state)
@@ -348,6 +355,7 @@ class TestDirectorAgentIntegration(unittest.TestCase):
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
+    @pytest.mark.unit
     def test_director_agent_creation(self):
         """Test DirectorAgent creation and initialization."""
         director = DirectorAgent(
@@ -377,6 +385,8 @@ class TestDirectorAgentIntegration(unittest.TestCase):
         for component_name in expected_components:
             self.assertIn(component_name, director.components)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_director_agent_factory_functions(self):
         """Test factory functions for creating DirectorAgent."""
         # Test main factory
@@ -387,6 +397,7 @@ class TestDirectorAgentIntegration(unittest.TestCase):
         director2 = create_director_with_agents(self.world_state_path)
         self.assertIsInstance(director2, DirectorAgent)
 
+    @pytest.mark.unit
     async def test_async_director_creation(self):
         """Test async DirectorAgent creation."""
         director = await create_async_director_agent(
@@ -399,6 +410,7 @@ class TestDirectorAgentIntegration(unittest.TestCase):
         # Test shutdown
         await director.shutdown()
 
+    @pytest.mark.unit
     def test_backward_compatibility_interface(self):
         """Test backward compatibility of DirectorAgent interface."""
         director = DirectorAgent(
@@ -436,6 +448,7 @@ class TestDirectorAgentIntegration(unittest.TestCase):
         except Exception as e:
             self.fail(f"log_event raised exception: {e}")
 
+    @pytest.mark.unit
     def test_enhanced_interface_methods(self):
         """Test enhanced interface methods."""
         director = DirectorAgent(
@@ -464,6 +477,7 @@ class TestDirectorAgentIntegration(unittest.TestCase):
         self.assertIn("simulation_metrics", metrics)
         self.assertIn("component_metrics", metrics)
 
+    @pytest.mark.unit
     def test_component_access_properties(self):
         """Test component access through properties."""
         director = DirectorAgent(
@@ -502,6 +516,8 @@ class TestSystemResilience(unittest.TestCase):
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_error_recovery(self):
         """Test system error recovery capabilities."""
         director = DirectorAgent(self.event_bus)
@@ -520,6 +536,7 @@ class TestSystemResilience(unittest.TestCase):
         status = director.get_simulation_status()
         self.assertIsInstance(status, dict)
 
+    @pytest.mark.unit
     def test_component_failure_isolation(self):
         """Test that component failures don't crash the entire system."""
         director = DirectorAgent(self.event_bus)
@@ -536,6 +553,8 @@ class TestSystemResilience(unittest.TestCase):
         except Exception as e:
             self.fail(f"System crashed due to component failure: {e}")
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_initialization_resilience(self):
         """Test resilience during initialization."""
         # Test with invalid file paths

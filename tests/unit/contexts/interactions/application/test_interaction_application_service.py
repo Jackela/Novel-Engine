@@ -43,6 +43,7 @@ from contexts.interactions.domain.value_objects.proposal_terms import ProposalTe
 class TestInteractionApplicationServiceInitialization:
     """Test suite for InteractionApplicationService initialization."""
 
+    @pytest.mark.unit
     def test_initialization_with_all_dependencies(self):
         """Test initialization with all dependencies provided."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
@@ -57,6 +58,7 @@ class TestInteractionApplicationServiceInitialization:
         assert service.negotiation_service is mock_negotiation_service
         assert isinstance(service.command_handler, InteractionCommandHandler)
 
+    @pytest.mark.unit
     def test_initialization_with_minimal_dependencies(self):
         """Test initialization with minimal dependencies (default negotiation service)."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
@@ -67,6 +69,7 @@ class TestInteractionApplicationServiceInitialization:
         assert isinstance(service.negotiation_service, NegotiationService)
         assert isinstance(service.command_handler, InteractionCommandHandler)
 
+    @pytest.mark.unit
     def test_command_handler_initialization(self):
         """Test that command handler is properly initialized with dependencies."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
@@ -112,6 +115,7 @@ class TestNegotiationSessionOperations:
         return Mock(spec=NegotiationParty)
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_negotiation_session_success(self, mock_dependencies):
         """Test successful negotiation session creation."""
         service = InteractionApplicationService(
@@ -164,6 +168,7 @@ class TestNegotiationSessionOperations:
         assert result["events_generated"] == ["session_created"]
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_create_negotiation_session_with_defaults(self, mock_dependencies):
         """Test negotiation session creation with default parameters."""
         service = InteractionApplicationService(
@@ -199,6 +204,7 @@ class TestNegotiationSessionOperations:
         assert call_args.require_unanimous_agreement is False  # Default
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_add_party_to_negotiation_success(
         self, mock_dependencies, sample_negotiation_party
     ):
@@ -253,6 +259,7 @@ class TestNegotiationSessionOperations:
         assert result["session_status"]["can_start"] is True  # >= 2 parties
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_add_party_insufficient_parties(
         self, mock_dependencies, sample_negotiation_party
     ):
@@ -284,6 +291,7 @@ class TestNegotiationSessionOperations:
         assert result["session_status"]["can_start"] is False  # < 2 parties
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_advance_negotiation_phase_success(self, mock_dependencies):
         """Test successful negotiation phase advancement."""
         service = InteractionApplicationService(
@@ -331,6 +339,7 @@ class TestNegotiationSessionOperations:
         assert result["phase_transition"]["forced"] is False
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_advance_negotiation_phase_forced(self, mock_dependencies):
         """Test forced negotiation phase advancement."""
         service = InteractionApplicationService(
@@ -394,6 +403,7 @@ class TestProposalOperations:
         return response
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_submit_proposal_success(
         self, mock_dependencies, sample_proposal_terms
     ):
@@ -457,6 +467,7 @@ class TestProposalOperations:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_submit_proposal_response_success(
         self, mock_dependencies, sample_proposal_response
     ):
@@ -525,6 +536,7 @@ class TestProposalOperations:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_submit_proposal_response_negative_momentum(
         self, mock_dependencies, sample_proposal_response
     ):
@@ -591,6 +603,7 @@ class TestNegotiationCompletion:
         }
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_complete_negotiation_success(self, mock_dependencies):
         """Test successful negotiation completion."""
         service = InteractionApplicationService(
@@ -681,6 +694,7 @@ class TestNegotiationCompletion:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_complete_negotiation_with_conflicts(self, mock_dependencies):
         """Test negotiation completion with unresolved conflicts."""
         service = InteractionApplicationService(
@@ -761,6 +775,7 @@ class TestAnalyticalOperations:
         }
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_get_negotiation_insights_comprehensive(self, mock_dependencies):
         """Test comprehensive negotiation insights analysis."""
         service = InteractionApplicationService(
@@ -867,6 +882,7 @@ class TestAnalyticalOperations:
         assert isinstance(result["recommendations"], list)
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_get_negotiation_insights_low_compatibility(self, mock_dependencies):
         """Test insights analysis with low party compatibility."""
         service = InteractionApplicationService(
@@ -965,6 +981,7 @@ class TestProposalOptimization:
         return session
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_optimize_active_proposals_success(
         self, mock_dependencies, mock_negotiation_session
     ):
@@ -1037,6 +1054,7 @@ class TestProposalOptimization:
         assert isinstance(result["overall_recommendations"], list)
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_optimize_active_proposals_session_not_found(self, mock_dependencies):
         """Test proposal optimization when session is not found."""
         service = InteractionApplicationService(
@@ -1053,6 +1071,7 @@ class TestProposalOptimization:
             )
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_optimize_active_proposals_no_proposals(self, mock_dependencies):
         """Test proposal optimization with no active proposals."""
         service = InteractionApplicationService(
@@ -1132,6 +1151,7 @@ class TestSessionHealthMonitoring:
         return session
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_monitor_session_health_healthy_session(
         self, mock_dependencies, mock_healthy_session
     ):
@@ -1191,6 +1211,7 @@ class TestSessionHealthMonitoring:
         assert result["key_metrics"]["conflict_count"] == 1
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_monitor_session_health_unhealthy_session(
         self, mock_dependencies, mock_unhealthy_session
     ):
@@ -1256,6 +1277,7 @@ class TestSessionHealthMonitoring:
         assert result["key_metrics"]["conflict_count"] == 4
 
     @pytest.mark.asyncio
+    @pytest.mark.unit
     async def test_monitor_session_health_session_not_found(self, mock_dependencies):
         """Test health monitoring when session is not found."""
         service = InteractionApplicationService(
@@ -1275,6 +1297,7 @@ class TestSessionHealthMonitoring:
 class TestPrivateHelperMethods:
     """Test suite for private helper methods in InteractionApplicationService."""
 
+    @pytest.mark.unit
     def test_calculate_success_probability(self):
         """Test success probability calculation."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
@@ -1306,6 +1329,7 @@ class TestPrivateHelperMethods:
         min_success = service._calculate_success_probability(0.0, 20, 0.0)
         assert min_success == 0.0
 
+    @pytest.mark.unit
     def test_generate_recommendations(self):
         """Test recommendation generation logic."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
@@ -1359,6 +1383,7 @@ class TestPrivateHelperMethods:
         # Should remove duplicates
         assert len(recommendations) == len(set(recommendations))
 
+    @pytest.mark.unit
     def test_calculate_health_score(self):
         """Test health score calculation."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
@@ -1405,6 +1430,7 @@ class TestPrivateHelperMethods:
         assert unhealthy_score < 50.0
         assert unhealthy_score >= 0.0
 
+    @pytest.mark.unit
     def test_get_health_status(self):
         """Test health status description conversion."""
         mock_repository = Mock(spec=NegotiationSessionRepository)
@@ -1424,6 +1450,7 @@ class TestPrivateHelperMethods:
         assert service._get_health_status(35.0) == "poor"
         assert service._get_health_status(0.0) == "critical"
 
+    @pytest.mark.unit
     def test_generate_health_recommendations(self):
         """Test health recommendation generation."""
         mock_repository = Mock(spec=NegotiationSessionRepository)

@@ -19,6 +19,55 @@ export interface UpdateCharacterRequest {
   configuration?: Record<string, unknown>;
 }
 
+// Types for batch update operations
+export interface BatchUpdateItem {
+  id: string;
+  updates: UpdateCharacterRequest;
+}
+
+export interface BatchUpdateResult {
+  succeeded: Character[];
+  failed: Array<{
+    id: string;
+    error: string;
+  }>;
+}
+
+// Types for character relationships
+export interface CharacterRelationship {
+  type: 'ally' | 'enemy' | 'neutral' | 'family' | 'romantic' | 'rival' | 'mentor' | 'student';
+  target_id: string;
+  target_name: string;
+  strength?: number; // 0-1 representing relationship strength
+  description?: string;
+}
+
+export interface CharacterRelationshipsResponse {
+  character_id: string;
+  relationships: CharacterRelationship[];
+}
+
+// Types for character history
+export interface CharacterHistoryEvent {
+  timestamp: string;
+  event: string;
+  details?: Record<string, unknown>;
+}
+
+export interface CharacterHistoryResponse {
+  character_id: string;
+  history: CharacterHistoryEvent[];
+}
+
+// Types for character export
+export interface CharacterExportData {
+  character: Character;
+  relationships?: CharacterRelationship[];
+  history?: CharacterHistoryEvent[];
+  exported_at: string;
+  format: 'json' | 'csv';
+}
+
 export interface GetCharactersParams {
   page?: number;
   limit?: number;
@@ -245,70 +294,351 @@ export class CharactersAPI {
   }
 
   /**
-   * Batch operations (future enhancement)
+   * Batch update multiple characters in parallel
+   * Uses Promise.all since batch endpoint doesn't exist yet
+   * Handles partial failures gracefully
    */
   async batchUpdateCharacters(
-    _updates: Array<{ id: string; updates: UpdateCharacterRequest }>
-  ): Promise<BaseAPIResponse<Character[]>> {
+    updates: BatchUpdateItem[]
+  ): Promise<BaseAPIResponse<BatchUpdateResult>> {
     try {
-      // TODO: Implement batch update endpoint when available
+      // TODO: When batch endpoint is available, use:
       // const response = await apiClient.patch('/characters/batch', { updates });
       // return handleAPIResponse(response);
-      
-      throw new Error('Batch update not yet implemented');
+
+      // For now, update characters in parallel using individual endpoints
+      const results = await Promise.allSettled(
+        updates.map(async ({ id, updates: characterUpdates }) => {
+          const response = await this.updateCharacter(id, characterUpdates);
+          return { id, character: response.data };
+        })
+      );
+
+      const succeeded: Character[] = [];
+      const failed: Array<{ id: string; error: string }> = [];
+
+      results.forEach((result, index) => {
+        const { id } = updates[index];
+        if (result.status === 'fulfilled' && result.value.character) {
+          succeeded.push(result.value.character);
+        } else {
+          const errorMessage = result.status === 'rejected'
+            ? (result.reason as Error).message || 'Unknown error'
+            : 'Update returned no data';
+          failed.push({ id, error: errorMessage });
+        }
+      });
+
+      return {
+        success: failed.length === 0,
+        data: { succeeded, failed },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `batch_${Date.now()}`,
+        },
+      };
     } catch (error) {
       return handleAPIError(error);
     }
   }
 
   /**
-   * Get character relationships (future enhancement)
+   * Get character relationships
+   * Attempts to fetch from API endpoint, falls back to deriving from character data
    */
-  async getCharacterRelationships(_characterId: string): Promise<BaseAPIResponse<unknown>> {
+  async getCharacterRelationships(characterId: string): Promise<BaseAPIResponse<CharacterRelationshipsResponse>> {
     try {
-      // TODO: Implement relationships endpoint when available
-      // const response = await apiClient.get(`/characters/${characterId}/relationships`);
-      // return handleAPIResponse(response);
-      
-      throw new Error('Character relationships not yet implemented');
+      // Try to fetch from dedicated endpoint first
+      try {
+        const response = await apiClient.get(`/api/characters/${encodeURIComponent(characterId)}/relationships`);
+        const data = response.data as CharacterRelationshipsResponse;
+        return {
+          success: true,
+          data,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            request_id: `rel_${Date.now()}`,
+          },
+        };
+      } catch {
+        // Endpoint doesn't exist, derive relationships from character data
+        const characterResponse = await apiClient.get(`/api/characters/${encodeURIComponent(characterId)}`);
+        const characterData = characterResponse.data as Record<string, unknown>;
+
+        const relationships = this.deriveRelationshipsFromCharacter(characterId, characterData);
+
+        return {
+          success: true,
+          data: {
+            character_id: characterId,
+            relationships,
+          },
+          metadata: {
+            timestamp: new Date().toISOString(),
+            request_id: `rel_derived_${Date.now()}`,
+            version: 'derived', // Indicates relationships were derived, not from dedicated endpoint
+          },
+        };
+      }
     } catch (error) {
       return handleAPIError(error);
     }
   }
 
   /**
-   * Get character interaction history (future enhancement)
+   * Derive relationships from character data when dedicated endpoint is unavailable
    */
-  async getCharacterHistory(_characterId: string, _params?: {
+  private deriveRelationshipsFromCharacter(
+    _characterId: string,
+    characterData: Record<string, unknown>
+  ): CharacterRelationship[] {
+    const relationships: CharacterRelationship[] = [];
+
+    // Extract structured_data which may contain relationship info
+    const structuredData = characterData.structured_data as Record<string, unknown> | undefined;
+
+    // Process allies field
+    const allies = (structuredData?.allies || characterData.allies) as string[] | undefined;
+    if (Array.isArray(allies)) {
+      allies.forEach((ally) => {
+        relationships.push({
+          type: 'ally',
+          target_id: ally,
+          target_name: this.formatNameFromId(ally),
+          strength: 0.7,
+        });
+      });
+    }
+
+    // Process enemies field
+    const enemies = (structuredData?.enemies || characterData.enemies) as string[] | undefined;
+    if (Array.isArray(enemies)) {
+      enemies.forEach((enemy) => {
+        relationships.push({
+          type: 'enemy',
+          target_id: enemy,
+          target_name: this.formatNameFromId(enemy),
+          strength: 0.7,
+        });
+      });
+    }
+
+    // Process generic relationships field (Record<string, number> format)
+    const relationshipsRecord = characterData.relationships as Record<string, number> | undefined;
+    if (relationshipsRecord && typeof relationshipsRecord === 'object') {
+      Object.entries(relationshipsRecord).forEach(([targetId, value]) => {
+        // Determine relationship type based on value
+        // Positive values = ally, negative = enemy, around 0 = neutral
+        let type: CharacterRelationship['type'] = 'neutral';
+        if (value > 0.3) type = 'ally';
+        else if (value < -0.3) type = 'enemy';
+
+        // Avoid duplicates from allies/enemies arrays
+        const existing = relationships.find((r) => r.target_id === targetId);
+        if (!existing) {
+          relationships.push({
+            type,
+            target_id: targetId,
+            target_name: this.formatNameFromId(targetId),
+            strength: Math.abs(value),
+          });
+        }
+      });
+    }
+
+    return relationships;
+  }
+
+  /**
+   * Format a character ID into a readable name
+   */
+  private formatNameFromId(id: string): string {
+    return id
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
+  /**
+   * Get character interaction history
+   * Attempts to fetch from API endpoint, returns empty history if endpoint unavailable
+   */
+  async getCharacterHistory(characterId: string, params?: {
     limit?: number;
     since?: string;
-  }): Promise<BaseAPIResponse<unknown[]>> {
+  }): Promise<BaseAPIResponse<CharacterHistoryResponse>> {
     try {
-      // TODO: Implement history endpoint when available
-      // const response = await apiClient.get(`/characters/${characterId}/history`, { params });
-      // return handleAPIResponse(response);
-      
-      throw new Error('Character history not yet implemented');
+      // Try to fetch from dedicated endpoint first
+      try {
+        const response = await apiClient.get(
+          `/api/characters/${encodeURIComponent(characterId)}/history`,
+          { params }
+        );
+        const data = response.data as CharacterHistoryResponse;
+        return {
+          success: true,
+          data,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            request_id: `hist_${Date.now()}`,
+          },
+        };
+      } catch {
+        // TODO: When history endpoint is implemented, remove this fallback
+        // Endpoint doesn't exist yet, return empty history
+        return {
+          success: true,
+          data: {
+            character_id: characterId,
+            history: [],
+          },
+          metadata: {
+            timestamp: new Date().toISOString(),
+            request_id: `hist_empty_${Date.now()}`,
+            version: 'placeholder', // Indicates history endpoint not yet available
+          },
+        };
+      }
     } catch (error) {
       return handleAPIError(error);
     }
   }
 
   /**
-   * Export character data (future enhancement)
+   * Export character data
+   * Fetches full character data and formats for export
    */
-  async exportCharacter(_characterId: string, _format: 'json' | 'csv' = 'json'): Promise<BaseAPIResponse<unknown>> {
+  async exportCharacter(characterId: string, format: 'json' | 'csv' = 'json'): Promise<BaseAPIResponse<CharacterExportData>> {
     try {
-      // TODO: Implement export endpoint when available
-      // const response = await apiClient.get(`/characters/${characterId}/export`, {
-      //   params: { format }
-      // });
-      // return handleAPIResponse(response);
-      
-      throw new Error('Character export not yet implemented');
+      // Try to use dedicated export endpoint first
+      try {
+        const response = await apiClient.get(
+          `/api/characters/${encodeURIComponent(characterId)}/export`,
+          { params: { format } }
+        );
+        return {
+          success: true,
+          data: response.data as CharacterExportData,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            request_id: `export_${Date.now()}`,
+          },
+        };
+      } catch {
+        // Export endpoint doesn't exist, build export data manually
+        // Fetch character data
+        const characterResponse = await apiClient.get(`/api/characters/${encodeURIComponent(characterId)}`);
+        const rawCharacter = characterResponse.data as Record<string, unknown>;
+        const character = this.transformCharacterDetail(characterId, rawCharacter);
+
+        // Optionally fetch relationships (don't fail if unavailable)
+        let relationships: CharacterRelationship[] | undefined;
+        try {
+          const relResponse = await this.getCharacterRelationships(characterId);
+          if (relResponse.success && relResponse.data) {
+            relationships = relResponse.data.relationships;
+          }
+        } catch {
+          // Relationships not available, continue without them
+        }
+
+        // Optionally fetch history (don't fail if unavailable)
+        let history: CharacterHistoryEvent[] | undefined;
+        try {
+          const histResponse = await this.getCharacterHistory(characterId);
+          if (histResponse.success && histResponse.data) {
+            history = histResponse.data.history;
+          }
+        } catch {
+          // History not available, continue without it
+        }
+
+        const exportData: CharacterExportData = {
+          character,
+          relationships: relationships?.length ? relationships : undefined,
+          history: history?.length ? history : undefined,
+          exported_at: new Date().toISOString(),
+          format,
+        };
+
+        return {
+          success: true,
+          data: exportData,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            request_id: `export_composed_${Date.now()}`,
+            version: 'composed', // Indicates export was composed from multiple sources
+          },
+        };
+      }
     } catch (error) {
       return handleAPIError(error);
     }
+  }
+
+  /**
+   * Convert export data to CSV format string
+   * Utility method for CSV exports
+   */
+  formatExportAsCSV(exportData: CharacterExportData): string {
+    const { character, relationships, history } = exportData;
+    const lines: string[] = [];
+
+    // Character header and data
+    lines.push('# Character');
+    lines.push('id,name,type,status,background,created_at,updated_at');
+    lines.push([
+      character.id,
+      `"${character.name}"`,
+      character.type,
+      character.status,
+      `"${character.background.replace(/"/g, '""')}"`,
+      character.created_at,
+      character.updated_at,
+    ].join(','));
+    lines.push('');
+
+    // Personality traits
+    lines.push('# Personality Traits');
+    lines.push('openness,conscientiousness,extraversion,agreeableness,neuroticism');
+    lines.push([
+      character.personality_traits.openness,
+      character.personality_traits.conscientiousness,
+      character.personality_traits.extraversion,
+      character.personality_traits.agreeableness,
+      character.personality_traits.neuroticism,
+    ].join(','));
+    lines.push('');
+
+    // Relationships
+    if (relationships?.length) {
+      lines.push('# Relationships');
+      lines.push('type,target_id,target_name,strength');
+      relationships.forEach((rel) => {
+        lines.push([
+          rel.type,
+          rel.target_id,
+          `"${rel.target_name}"`,
+          rel.strength ?? '',
+        ].join(','));
+      });
+      lines.push('');
+    }
+
+    // History
+    if (history?.length) {
+      lines.push('# History');
+      lines.push('timestamp,event,details');
+      history.forEach((evt) => {
+        lines.push([
+          evt.timestamp,
+          `"${evt.event.replace(/"/g, '""')}"`,
+          evt.details ? `"${JSON.stringify(evt.details).replace(/"/g, '""')}"` : '',
+        ].join(','));
+      });
+    }
+
+    return lines.join('\n');
   }
 }
 

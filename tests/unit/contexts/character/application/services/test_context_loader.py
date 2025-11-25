@@ -188,6 +188,7 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Basic Functionality Tests ====================
 
+    @pytest.mark.unit
     async def test_load_complete_character_context(self):
         """Test loading a complete character context with all files."""
         character_id = "test_character"
@@ -212,6 +213,7 @@ Developed expertise in systematic validation and quality assurance.
         successful_files = [f for f in result.loaded_files if f.loaded_successfully]
         self.assertEqual(len(successful_files), 4)
 
+    @pytest.mark.unit
     async def test_load_partial_character_context(self):
         """Test loading character context with some files missing."""
         character_id = "partial_character"
@@ -240,6 +242,7 @@ Developed expertise in systematic validation and quality assurance.
         self.assertEqual(len(successful_files), 2)
         self.assertEqual(len(failed_files), 2)
 
+    @pytest.mark.unit
     async def test_character_identifier_validation_and_sanitization(self):
         """Test character identifier validation and sanitization."""
         # Valid identifiers
@@ -263,6 +266,7 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== File Parsing Tests ====================
 
+    @pytest.mark.unit
     async def test_yaml_parsing_valid_data(self):
         """Test YAML file parsing with valid data."""
         yaml_content = yaml.dump(self.sample_stats_data)
@@ -280,6 +284,7 @@ Developed expertise in systematic validation and quality assurance.
                 self.assertEqual(result.age, 25)
                 self.assertTrue(file_info.loaded_successfully)
 
+    @pytest.mark.unit
     async def test_yaml_parsing_empty_file(self):
         """Test YAML parsing with empty file."""
         with patch("aiofiles.open", return_value=create_async_mock_file("")):
@@ -294,6 +299,7 @@ Developed expertise in systematic validation and quality assurance.
                 self.assertFalse(file_info.loaded_successfully)
                 self.assertIn("empty", file_info.error_message.lower())
 
+    @pytest.mark.unit
     async def test_yaml_parsing_invalid_yaml(self):
         """Test YAML parsing with malformed YAML."""
         invalid_yaml = "invalid: yaml: content: [unclosed"
@@ -310,6 +316,7 @@ Developed expertise in systematic validation and quality assurance.
                 self.assertFalse(file_info.loaded_successfully)
                 self.assertIsNotNone(file_info.error_message)
 
+    @pytest.mark.unit
     async def test_markdown_parsing_memory(self):
         """Test memory markdown parsing."""
         with patch(
@@ -327,6 +334,7 @@ Developed expertise in systematic validation and quality assurance.
                 self.assertIsInstance(result, MemoryContext)
                 self.assertTrue(file_info.loaded_successfully)
 
+    @pytest.mark.unit
     async def test_markdown_parsing_objectives(self):
         """Test objectives markdown parsing."""
         with patch(
@@ -344,6 +352,7 @@ Developed expertise in systematic validation and quality assurance.
                 self.assertIsInstance(result, ObjectivesContext)
                 self.assertTrue(file_info.loaded_successfully)
 
+    @pytest.mark.unit
     async def test_markdown_parsing_profile(self):
         """Test profile markdown parsing."""
         with patch(
@@ -365,6 +374,7 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Error Handling Tests ====================
 
+    @pytest.mark.unit
     async def test_file_size_limit_enforcement(self):
         """Test that files exceeding size limits are rejected."""
         large_content = "x" * (2 * 1024 * 1024)  # 2MB content
@@ -381,6 +391,7 @@ Developed expertise in systematic validation and quality assurance.
                 self.assertFalse(file_info.loaded_successfully)
                 self.assertIn("too large", file_info.error_message.lower())
 
+    @pytest.mark.unit
     async def test_nonexistent_character_directory(self):
         """Test handling of nonexistent character directory."""
         with self.assertRaises(ContextLoaderError) as context:
@@ -388,6 +399,7 @@ Developed expertise in systematic validation and quality assurance.
 
         self.assertIn("directory not found", str(context.exception).lower())
 
+    @pytest.mark.unit
     async def test_invalid_context_type(self):
         """Test handling of invalid context type in markdown parsing."""
         # Use the helper function for proper async context manager
@@ -407,6 +419,7 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Security Tests ====================
 
+    @pytest.mark.unit
     async def test_path_traversal_protection(self):
         """Test protection against path traversal attacks."""
         malicious_ids = [
@@ -420,6 +433,7 @@ Developed expertise in systematic validation and quality assurance.
             with self.assertRaises(SecurityError):
                 await self.service._security_check(malicious_id)
 
+    @pytest.mark.unit
     async def test_invalid_character_security_check(self):
         """Test security check with invalid characters."""
         invalid_ids = [
@@ -434,6 +448,7 @@ Developed expertise in systematic validation and quality assurance.
             with self.assertRaises(SecurityError):
                 await self.service._security_check(invalid_id)
 
+    @pytest.mark.unit
     async def test_character_id_length_security(self):
         """Test security check for overly long character IDs."""
         long_id = "a" * 101  # Exceeds 100 character limit
@@ -443,6 +458,8 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Caching Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.medium
     async def test_caching_functionality(self):
         """Test that caching works correctly."""
         character_id = "cache_test"
@@ -461,6 +478,8 @@ Developed expertise in systematic validation and quality assurance.
         self.assertEqual(result1.character_id, result2.character_id)
         self.assertEqual(result1.character_name, result2.character_name)
 
+    @pytest.mark.unit
+    @pytest.mark.slow
     async def test_cache_expiration(self):
         """Test that cache entries expire correctly."""
         # Create service with very short cache TTL
@@ -481,6 +500,8 @@ Developed expertise in systematic validation and quality assurance.
         await short_cache_service.load_character_context(character_id)
         self.assertEqual(short_cache_service._load_stats["cache_misses"], 2)
 
+    @pytest.mark.unit
+    @pytest.mark.medium
     async def test_cache_clearing(self):
         """Test manual cache clearing."""
         character_id = "cache_clear_test"
@@ -497,6 +518,7 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Circuit Breaker Tests ====================
 
+    @pytest.mark.unit
     async def test_circuit_breaker_failure_accumulation(self):
         """Test that circuit breaker accumulates failures correctly."""
         # Trigger multiple failures
@@ -508,6 +530,7 @@ Developed expertise in systematic validation and quality assurance.
             self.service._circuit_breaker["state"], "CLOSED"
         )  # Not yet at threshold
 
+    @pytest.mark.unit
     async def test_circuit_breaker_opens_on_threshold(self):
         """Test that circuit breaker opens when failure threshold is reached."""
         # Trigger failures to reach threshold
@@ -516,6 +539,7 @@ Developed expertise in systematic validation and quality assurance.
 
         self.assertEqual(self.service._circuit_breaker["state"], "OPEN")
 
+    @pytest.mark.unit
     async def test_circuit_breaker_blocks_requests_when_open(self):
         """Test that circuit breaker blocks requests when open."""
         # Force circuit breaker open
@@ -525,6 +549,8 @@ Developed expertise in systematic validation and quality assurance.
         with self.assertRaises(ServiceUnavailableError):
             await self.service.load_character_context("test")
 
+    @pytest.mark.unit
+    @pytest.mark.medium
     async def test_circuit_breaker_recovery(self):
         """Test circuit breaker recovery to half-open state."""
         # Force circuit breaker open with old failure time
@@ -545,6 +571,8 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Concurrency Control Tests ====================
 
+    @pytest.mark.unit
+    @pytest.mark.slow
     async def test_concurrent_load_limit(self):
         """Test that concurrent load limit is enforced."""
         character_id = "concurrency_test"
@@ -564,6 +592,7 @@ Developed expertise in systematic validation and quality assurance.
         successful_results = [r for r in results if isinstance(r, CharacterContext)]
         self.assertTrue(len(successful_results) > 0)
 
+    @pytest.mark.unit
     async def test_load_timeout_handling(self):
         """Test that load operations timeout correctly."""
         character_id = "timeout_test"
@@ -581,6 +610,7 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Data Integrity Tests ====================
 
+    @pytest.mark.unit
     async def test_name_consistency_validation(self):
         """Test validation of name consistency across contexts."""
         character_id = "inconsistent_name_test"
@@ -608,6 +638,8 @@ Developed expertise in systematic validation and quality assurance.
         self.assertTrue(len(result.validation_warnings) > 0)
         self.assertFalse(result.context_integrity)
 
+    @pytest.mark.unit
+    @pytest.mark.medium
     async def test_age_consistency_validation(self):
         """Test validation of age consistency across contexts."""
         character_id = "inconsistent_age_test"
@@ -635,6 +667,7 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Service Monitoring Tests ====================
 
+    @pytest.mark.unit
     async def test_service_statistics_collection(self):
         """Test that service statistics are collected correctly."""
         character_id = "stats_test"
@@ -666,6 +699,8 @@ Developed expertise in systematic validation and quality assurance.
             stats["caching"]["hit_rate"], expected_hit_rate, places=2
         )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     async def test_service_health_status_determination(self):
         """Test service health status determination logic."""
         # Test healthy status
@@ -686,6 +721,7 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Directory Structure Validation Tests ====================
 
+    @pytest.mark.unit
     async def test_directory_structure_validation_success(self):
         """Test successful directory structure validation."""
         character_id = "validation_test"
@@ -702,6 +738,7 @@ Developed expertise in systematic validation and quality assurance.
         for file_type, file_info in result["expected_files"].items():
             self.assertTrue(file_info["exists"])
 
+    @pytest.mark.unit
     async def test_directory_structure_validation_partial(self):
         """Test directory structure validation with missing files."""
         character_id = "partial_validation_test"
@@ -716,6 +753,7 @@ Developed expertise in systematic validation and quality assurance.
         self.assertEqual(result["files_found"], 2)
         self.assertEqual(result["total_expected"], 4)
 
+    @pytest.mark.unit
     async def test_directory_structure_validation_missing_directory(self):
         """Test directory structure validation with missing directory."""
         result = await self.service.validate_character_directory_structure(
@@ -728,6 +766,7 @@ Developed expertise in systematic validation and quality assurance.
 
     # ==================== Edge Cases and Robustness Tests ====================
 
+    @pytest.mark.unit
     async def test_empty_yaml_handling(self):
         """Test handling of empty YAML files."""
         character_id = "empty_yaml_test"
@@ -747,6 +786,7 @@ Developed expertise in systematic validation and quality assurance.
         self.assertFalse(result.partial_load)
         self.assertIsNone(result.stats_context)
 
+    @pytest.mark.unit
     async def test_malformed_markdown_handling(self):
         """Test handling of malformed markdown files."""
         character_id = "malformed_md_test"
@@ -765,6 +805,7 @@ Developed expertise in systematic validation and quality assurance.
         # Only 1 of 4 files loaded, so partial_load should be True
         self.assertTrue(result.partial_load)
 
+    @pytest.mark.unit
     async def test_unicode_character_handling(self):
         """Test handling of Unicode characters in content."""
         character_id = "unicode_test"
@@ -815,6 +856,7 @@ class TestContextLoaderServiceIntegration(unittest.IsolatedAsyncioTestCase):
         except Exception:
             pass
 
+    @pytest.mark.unit
     async def test_load_aria_shadowbane_context(self):
         """Integration test with Aria Shadowbane example data."""
         # This test would use the actual Aria Shadowbane files created earlier
@@ -904,6 +946,8 @@ class TestContextLoaderPerformance(unittest.IsolatedAsyncioTestCase):
         except Exception:
             pass
 
+    @pytest.mark.unit
+    @pytest.mark.medium
     async def test_concurrent_loading_performance(self):
         """Test performance under concurrent loading conditions."""
         import time

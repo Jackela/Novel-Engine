@@ -19,7 +19,7 @@ import asyncio
 import secrets
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import httpx
@@ -207,7 +207,7 @@ class TestAuthentication:
         expired_token = jwt.encode(
             {
                 "user_id": user_id,
-                "exp": datetime.utcnow() - timedelta(minutes=1),  # Expired
+                "exp": datetime.now(timezone.utc) - timedelta(minutes=1),  # Expired
             },
             TEST_JWT_SECRET,
             algorithm="HS256",

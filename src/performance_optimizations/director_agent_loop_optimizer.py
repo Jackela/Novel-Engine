@@ -490,7 +490,7 @@ class DirectorAgentPerformanceOptimizer:
                 def optimized_log_event(event_description: str):
                     """Optimized non-blocking log event."""
                     try:
-                        loop = asyncio.get_event_loop()
+                        loop = asyncio.get_running_loop()
                         if loop.is_running():
                             asyncio.create_task(
                                 async_logger.log_event_async(event_description)

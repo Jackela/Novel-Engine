@@ -44,6 +44,7 @@ def _build_test_state() -> StoryArcState:
 class TestNarrativeEngineV2:
     """Integration tests for the NarrativeEngineV2 facade."""
 
+    @pytest.mark.unit
     def test_get_narrative_context_for_turn_coordinates_managers(self) -> None:
         """
         Verify that get_narrative_context_for_turn properly coordinates
@@ -89,6 +90,7 @@ class TestNarrativeEngineV2:
         )
         mock_pacing_manager.adjust_pacing.assert_called_once_with(state=test_state)
 
+    @pytest.mark.unit
     def test_get_narrative_context_for_turn_integrates_pacing_into_guidance(
         self,
     ) -> None:

@@ -10,7 +10,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -575,7 +575,7 @@ class AlertDetector:
                 alerts.append(alert)
 
                 # Update rule state
-                rule.last_triggered = datetime.utcnow()
+                rule.last_triggered = datetime.now(timezone.utc)
 
         return alerts
 
@@ -722,12 +722,12 @@ class AlertDetector:
             return False
 
         # Check cooldown
-        time_since_last = datetime.utcnow() - rule.last_triggered
+        time_since_last = datetime.now(timezone.utc) - rule.last_triggered
         if time_since_last.total_seconds() < rule.cooldown_minutes * 60:
             return True
 
         # Check hourly limit
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
         recent_triggers = [
             a
             for a in self.recent_alerts
@@ -1145,7 +1145,7 @@ This is an automated notification from Novel-Engine AI Testing System.
     def _is_rule_active(self, rule: NotificationRule) -> bool:
         """Check if rule is currently active based on schedule"""
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Check active days
         if rule.active_days:
@@ -1196,7 +1196,7 @@ This is an automated notification from Novel-Engine AI Testing System.
 
         try:
             notification.status = NotificationStatus.SENT
-            notification.sent_at = datetime.utcnow()
+            notification.sent_at = datetime.now(timezone.utc)
 
             # Get channel handler
             handler = self.channel_handlers.get(notification.channel)
@@ -1212,11 +1212,11 @@ This is an automated notification from Novel-Engine AI Testing System.
 
             if success:
                 notification.status = NotificationStatus.DELIVERED
-                notification.delivered_at = datetime.utcnow()
+                notification.delivered_at = datetime.now(timezone.utc)
                 logger.info(f"Notification delivered: {notification.notification_id}")
             else:
                 notification.status = NotificationStatus.FAILED
-                notification.failed_at = datetime.utcnow()
+                notification.failed_at = datetime.now(timezone.utc)
 
                 # Schedule retry if under limit
                 if notification.retry_count < notification.max_retries:
@@ -1245,7 +1245,7 @@ This is an automated notification from Novel-Engine AI Testing System.
         while True:
             try:
                 # Clean up old alerts and notifications
-                cutoff_time = datetime.utcnow() - timedelta(days=7)
+                cutoff_time = datetime.now(timezone.utc) - timedelta(days=7)
 
                 # Remove old alerts
                 old_alert_ids = [
@@ -1503,7 +1503,7 @@ async def resolve_alert(alert_id: str):
     if alert_id in service.active_alerts:
         alert = service.active_alerts[alert_id]
         alert.resolved = True
-        alert.resolved_at = datetime.utcnow()
+        alert.resolved_at = datetime.now(timezone.utc)
         return {"status": "resolved"}
     else:
         raise HTTPException(status_code=404, detail="Alert not found")
@@ -1521,7 +1521,7 @@ async def get_notification_status():
             [
                 n
                 for n in service.sent_notifications
-                if n.sent_at and n.sent_at.date() == datetime.utcnow().date()
+                if n.sent_at and n.sent_at.date() == datetime.now(timezone.utc).date()
             ]
         ),
         "available_channels": list(service.channel_handlers.keys()),

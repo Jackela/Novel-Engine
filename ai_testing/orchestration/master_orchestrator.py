@@ -10,7 +10,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -383,7 +383,7 @@ class TestPhaseExecutor:
         """Execute a specific testing phase"""
 
         start_time = time.time()
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
 
         try:
             logger.info(f"Executing phase: {phase.value}")
@@ -408,7 +408,7 @@ class TestPhaseExecutor:
                 results = []
 
             # Calculate phase metrics
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             duration_ms = self._calculate_duration_ms(start_time)
 
             passed_results = [r for r in results if r.passed]
@@ -447,7 +447,7 @@ class TestPhaseExecutor:
 
         except Exception as e:
             logger.error(f"Phase execution failed for {phase.value}: {e}")
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             duration_ms = self._calculate_duration_ms(start_time)
 
             return TestPhaseResult(
@@ -748,7 +748,7 @@ class MasterOrchestrator:
         """Execute comprehensive end-to-end testing"""
 
         start_time = time.time()
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
 
         logger.info(
             f"Starting comprehensive test: {request.test_name} (Session: {request.test_session_id})"
@@ -792,7 +792,7 @@ class MasterOrchestrator:
             logger.error(f"Comprehensive test failed: {e}")
 
             # Create error result
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             total_duration_ms = self._calculate_duration_ms(start_time)
 
             error_result = ComprehensiveTestResult(
@@ -880,8 +880,8 @@ class MasterOrchestrator:
                         error_phase_result = TestPhaseResult(
                             phase=TestingPhase.INITIALIZATION,  # Placeholder
                             status=TestStatus.FAILED,
-                            started_at=datetime.utcnow(),
-                            completed_at=datetime.utcnow(),
+                            started_at=datetime.now(timezone.utc),
+                            completed_at=datetime.now(timezone.utc),
                             duration_ms=0,
                             passed=False,
                             score=0.0,
@@ -934,7 +934,7 @@ class MasterOrchestrator:
     ) -> ComprehensiveTestResult:
         """Aggregate final comprehensive test results"""
 
-        completed_at = datetime.utcnow()
+        completed_at = datetime.now(timezone.utc)
         total_duration_ms = self._calculate_duration_ms(start_time)
 
         # Calculate overall metrics

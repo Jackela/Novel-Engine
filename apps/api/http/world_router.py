@@ -18,8 +18,10 @@ All endpoints follow RESTful principles with proper error handling,
 validation, and performance optimization.
 """
 
+import json
 import logging
 from datetime import datetime
+from pathlib import Path as FilePath
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query
@@ -292,6 +294,32 @@ class SearchWorldsResponse(BaseModel):
     status_filter: Optional[str] = None
 
 
+class WorldHistoryEntry(BaseModel):
+    """Individual entry in world history."""
+
+    timestamp: str
+    event_type: str
+    description: str
+    changes: Optional[Dict[str, Any]] = None
+
+
+class WorldHistoryResponse(BaseModel):
+    """Response model for world history queries."""
+
+    world_id: str
+    history: List[WorldHistoryEntry] = Field(default_factory=list)
+    total_count: int
+
+
+class WorldValidationResponse(BaseModel):
+    """Response model for world validation queries."""
+
+    world_id: str
+    valid: bool
+    errors: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
 # ==================== COMMAND ENDPOINTS (Write Operations) ====================
 
 
@@ -481,28 +509,104 @@ async def get_world_summary(
 
 @router.get(
     "/{world_id}/history",
-    response_model=Dict[str, Any],
-    responses={
-        501: {
-            "description": "World history retrieval not yet implemented",
-            "model": Dict[str, Any],
-        }
-    },
+    response_model=WorldHistoryResponse,
 )
-async def get_world_history(world_id: str) -> JSONResponse:
+async def get_world_history(
+    world_id: str = Path(..., description="ID of the world to query"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum history entries to return"),
+    offset: int = Query(0, ge=0, description="Number of entries to skip"),
+) -> WorldHistoryResponse:
     """
-    Placeholder endpoint for retrieving historical world state deltas.
+    Retrieve recent history of world state changes and events.
 
-    Returns HTTP 501 until a full history service is implemented.
+    Returns a list of recent changes/events from the world state, including
+    timestamps, event types, and descriptions of what changed.
     """
-    logger.info("World history request received for world_id=%s", world_id)
-    return JSONResponse(
-        status_code=501,
-        content={
-            "detail": "World history retrieval is not yet implemented.",
-            "world_id": world_id,
-        },
-    )
+    logger.info(f"World history request received for world_id={world_id}")
+
+    try:
+        # Try to load world state from file
+        world_state_path = FilePath("world_state.json")
+        history_entries: List[WorldHistoryEntry] = []
+
+        if world_state_path.exists():
+            try:
+                with open(world_state_path, "r") as f:
+                    world_data = json.load(f)
+
+                # Extract events from world state
+                world_state = world_data.get("world_state", world_data)
+                events = world_state.get("events", {})
+
+                # Process recent events
+                recent_events = events.get("recent", [])
+                for event in recent_events:
+                    entry = WorldHistoryEntry(
+                        timestamp=event.get("timestamp", datetime.now().isoformat()),
+                        event_type=event.get("type", "event"),
+                        description=event.get("description", "World event occurred"),
+                        changes=event.get("changes"),
+                    )
+                    history_entries.append(entry)
+
+                # Add metadata-based history if available
+                metadata = world_data.get("metadata", {})
+                if metadata:
+                    last_updated = metadata.get("last_updated")
+                    change_count = metadata.get("change_count", 0)
+                    if last_updated and change_count > 0:
+                        history_entries.append(
+                            WorldHistoryEntry(
+                                timestamp=last_updated,
+                                event_type="state_update",
+                                description=f"World state updated (change #{change_count})",
+                                changes={"change_count": change_count},
+                            )
+                        )
+
+                # Add environment state as initial entry if no other history
+                if not history_entries:
+                    env = world_state.get("environment", {})
+                    time_info = env.get("time", {})
+                    created_at = world_state.get("metadata", {}).get(
+                        "created_at", datetime.now().isoformat()
+                    )
+                    history_entries.append(
+                        WorldHistoryEntry(
+                            timestamp=created_at,
+                            event_type="world_created",
+                            description="World state initialized",
+                            changes={
+                                "in_game_time": time_info.get("in_game_time", "Unknown"),
+                                "weather": env.get("weather", {}),
+                            },
+                        )
+                    )
+
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning(f"Could not read world state file: {e}")
+
+        # Sort by timestamp (newest first) and apply pagination
+        history_entries.sort(key=lambda x: x.timestamp, reverse=True)
+        total_count = len(history_entries)
+        paginated_entries = history_entries[offset : offset + limit]
+
+        logger.info(
+            f"World history query completed for world {world_id}: "
+            f"{len(paginated_entries)} entries returned"
+        )
+
+        return WorldHistoryResponse(
+            world_id=world_id,
+            history=paginated_entries,
+            total_count=total_count,
+        )
+
+    except Exception as e:
+        logger.error(f"Error retrieving world history: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve world history: {str(e)}"
+        )
 
 
 @router.get("/{world_id}/entities", response_model=EntitiesInAreaResponse)
@@ -605,28 +709,128 @@ async def get_entities_by_type(
 
 @router.get(
     "/{world_id}/validate",
-    response_model=Dict[str, Any],
-    responses={
-        501: {
-            "description": "World validation not yet implemented",
-            "model": Dict[str, Any],
-        }
-    },
+    response_model=WorldValidationResponse,
 )
-async def validate_world_state(world_id: str) -> JSONResponse:
+async def validate_world_state(
+    world_id: str = Path(..., description="ID of the world to validate"),
+) -> WorldValidationResponse:
     """
-    Placeholder endpoint for validating world state consistency.
+    Validate world state consistency and integrity.
 
-    Returns HTTP 501 until validation routines are implemented.
+    Performs basic validation checks on the world state including:
+    - JSON structure validity
+    - Required fields existence (entities, relationships, metadata)
+    - Circular reference detection in relationships
     """
-    logger.info("World validation requested for world_id=%s", world_id)
-    return JSONResponse(
-        status_code=501,
-        content={
-            "detail": "World validation is not yet implemented.",
-            "world_id": world_id,
-        },
-    )
+    logger.info(f"World validation requested for world_id={world_id}")
+
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    try:
+        # Try to load world state from file
+        world_state_path = FilePath("world_state.json")
+
+        if not world_state_path.exists():
+            warnings.append("World state file not found, using default empty state")
+            return WorldValidationResponse(
+                world_id=world_id,
+                valid=True,
+                errors=errors,
+                warnings=warnings,
+            )
+
+        # Validate JSON structure is readable
+        try:
+            with open(world_state_path, "r") as f:
+                world_data = json.load(f)
+        except json.JSONDecodeError as e:
+            errors.append(f"Invalid JSON structure: {str(e)}")
+            return WorldValidationResponse(
+                world_id=world_id,
+                valid=False,
+                errors=errors,
+                warnings=warnings,
+            )
+
+        # Get the world state section
+        world_state = world_data.get("world_state", world_data)
+
+        # Validate required top-level fields
+        required_fields = ["metadata", "environment", "events"]
+        for field in required_fields:
+            if field not in world_state:
+                warnings.append(f"Missing recommended field: {field}")
+
+        # Validate metadata structure
+        metadata = world_state.get("metadata", {})
+        if not metadata:
+            warnings.append("Metadata section is empty or missing")
+        else:
+            if "created_at" not in metadata and "version" not in metadata:
+                warnings.append("Metadata missing timestamp or version information")
+
+        # Validate environment structure
+        environment = world_state.get("environment", {})
+        if environment:
+            # Check for time information
+            if "time" not in environment:
+                warnings.append("Environment missing time information")
+
+        # Validate entities structure (if present)
+        entities = world_state.get("characters", {})
+        locations = world_state.get("locations", {})
+
+        # Check for circular references in relationships
+        circular_refs = _check_circular_references(world_state)
+        if circular_refs:
+            for ref in circular_refs:
+                errors.append(f"Circular reference detected: {ref}")
+
+        # Validate entity data integrity
+        for entity_id, entity in entities.items():
+            if not isinstance(entity, dict):
+                errors.append(f"Invalid entity structure for {entity_id}: expected dict")
+            elif "id" in entity and entity["id"] != entity_id:
+                warnings.append(
+                    f"Entity ID mismatch: key={entity_id}, id={entity.get('id')}"
+                )
+
+        # Validate location data integrity
+        for location_id, location in locations.items():
+            if not isinstance(location, dict):
+                errors.append(
+                    f"Invalid location structure for {location_id}: expected dict"
+                )
+
+        # Validate events structure
+        events = world_state.get("events", {})
+        if events:
+            if "recent" in events and not isinstance(events["recent"], list):
+                errors.append("events.recent must be a list")
+            if "scheduled" in events and not isinstance(events["scheduled"], list):
+                errors.append("events.scheduled must be a list")
+
+        # Determine overall validity
+        is_valid = len(errors) == 0
+
+        logger.info(
+            f"World validation completed for {world_id}: "
+            f"valid={is_valid}, errors={len(errors)}, warnings={len(warnings)}"
+        )
+
+        return WorldValidationResponse(
+            world_id=world_id,
+            valid=is_valid,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    except Exception as e:
+        logger.error(f"Error validating world state: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to validate world state: {str(e)}"
+        )
 
 
 @router.get("/search", response_model=SearchWorldsResponse)
@@ -788,3 +992,64 @@ def _build_world_delta_command(request: ApplyWorldDeltaRequest) -> ApplyWorldDel
     except Exception as e:
         logger.error(f"Error building world delta command: {e}")
         raise ValueError(f"Invalid request data: {e}")
+
+
+def _check_circular_references(world_state: Dict[str, Any]) -> List[str]:
+    """
+    Check for circular references in world state relationships.
+
+    This function detects circular references in entity relationships
+    and location hierarchies that could cause infinite loops.
+
+    Args:
+        world_state: The world state data to check
+
+    Returns:
+        List of circular reference descriptions (empty if none found)
+    """
+    circular_refs: List[str] = []
+
+    # Check character relationships for circular references
+    characters = world_state.get("characters", {})
+    for char_id, char_data in characters.items():
+        if not isinstance(char_data, dict):
+            continue
+
+        # Check if character references themselves in relationships
+        relationships = char_data.get("relationships", {})
+        if isinstance(relationships, dict):
+            for rel_type, rel_targets in relationships.items():
+                if isinstance(rel_targets, list) and char_id in rel_targets:
+                    circular_refs.append(
+                        f"Character '{char_id}' has self-reference in {rel_type}"
+                    )
+                elif rel_targets == char_id:
+                    circular_refs.append(
+                        f"Character '{char_id}' has self-reference in {rel_type}"
+                    )
+
+    # Check location hierarchy for circular references
+    locations = world_state.get("locations", {})
+    for loc_id, loc_data in locations.items():
+        if not isinstance(loc_data, dict):
+            continue
+
+        # Check parent/child relationships
+        parent = loc_data.get("parent_location")
+        if parent == loc_id:
+            circular_refs.append(f"Location '{loc_id}' references itself as parent")
+
+        # Check for deeper circular chains (A -> B -> A)
+        visited = {loc_id}
+        current = parent
+        while current and current in locations:
+            if current in visited:
+                circular_refs.append(
+                    f"Location hierarchy cycle detected involving '{loc_id}'"
+                )
+                break
+            visited.add(current)
+            current_loc = locations.get(current, {})
+            current = current_loc.get("parent_location") if isinstance(current_loc, dict) else None
+
+    return circular_refs

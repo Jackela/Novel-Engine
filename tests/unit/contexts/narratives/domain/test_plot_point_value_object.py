@@ -22,6 +22,7 @@ from contexts.narratives.domain.value_objects.plot_point import (
 class TestPlotPointTypeEnum:
     """Test suite for PlotPointType enum."""
 
+    @pytest.mark.unit
     def test_all_enum_values_exist(self):
         """Test that all expected enum values are defined."""
         expected_types = {
@@ -46,6 +47,7 @@ class TestPlotPointTypeEnum:
         actual_types = {item.name for item in PlotPointType}
         assert actual_types == expected_types
 
+    @pytest.mark.unit
     def test_enum_string_values(self):
         """Test that enum values have correct string representations."""
         assert PlotPointType.INCITING_INCIDENT.value == "inciting_incident"
@@ -65,11 +67,15 @@ class TestPlotPointTypeEnum:
         assert PlotPointType.SACRIFICE.value == "sacrifice"
         assert PlotPointType.TRANSFORMATION.value == "transformation"
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_enum_uniqueness(self):
         """Test that all enum values are unique."""
         values = [item.value for item in PlotPointType]
         assert len(values) == len(set(values))
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_enum_membership(self):
         """Test enum membership operations."""
         assert PlotPointType.CLIMAX in PlotPointType
@@ -80,12 +86,16 @@ class TestPlotPointTypeEnum:
 class TestPlotPointImportanceEnum:
     """Test suite for PlotPointImportance enum."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_all_importance_levels_exist(self):
         """Test that all expected importance levels are defined."""
         expected_levels = {"CRITICAL", "MAJOR", "MODERATE", "MINOR", "SUPPLEMENTAL"}
         actual_levels = {item.name for item in PlotPointImportance}
         assert actual_levels == expected_levels
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_importance_string_values(self):
         """Test that importance enum values have correct string representations."""
         assert PlotPointImportance.CRITICAL.value == "critical"
@@ -94,6 +104,7 @@ class TestPlotPointImportanceEnum:
         assert PlotPointImportance.MINOR.value == "minor"
         assert PlotPointImportance.SUPPLEMENTAL.value == "supplemental"
 
+    @pytest.mark.unit
     def test_importance_ordering_concept(self):
         """Test that importance levels represent logical ordering."""
         # Test that we can create a mapping for ordering
@@ -126,6 +137,7 @@ class TestPlotPointImportanceEnum:
 class TestPlotPointCreation:
     """Test suite for PlotPoint creation and initialization."""
 
+    @pytest.mark.unit
     def test_create_minimal_plot_point(self):
         """Test creating plot point with minimal required fields."""
         plot_point = PlotPoint(
@@ -144,6 +156,7 @@ class TestPlotPointCreation:
         assert plot_point.description == "A test plot point for validation"
         assert plot_point.sequence_order == 10
 
+    @pytest.mark.unit
     def test_create_plot_point_with_all_fields(self):
         """Test creating plot point with all fields specified."""
         char_id1 = uuid4()
@@ -197,6 +210,7 @@ class TestPlotPointCreation:
         assert plot_point.creation_timestamp == creation_time
         assert plot_point.metadata == {"author": "test", "version": 1}
 
+    @pytest.mark.unit
     def test_default_values_initialization(self):
         """Test that default values are properly initialized."""
         plot_point = PlotPoint(
@@ -232,6 +246,7 @@ class TestPlotPointCreation:
         assert plot_point.creation_timestamp is not None
         assert isinstance(plot_point.creation_timestamp, datetime)
 
+    @pytest.mark.unit
     def test_frozen_dataclass_immutability(self):
         """Test that PlotPoint is immutable (frozen dataclass)."""
         plot_point = PlotPoint(
@@ -257,6 +272,7 @@ class TestPlotPointCreation:
 class TestPlotPointValidation:
     """Test suite for PlotPoint validation logic."""
 
+    @pytest.mark.unit
     def test_empty_title_validation(self):
         """Test validation fails with empty title."""
         with pytest.raises(ValueError, match="Plot point title cannot be empty"):
@@ -269,6 +285,7 @@ class TestPlotPointValidation:
                 sequence_order=10,
             )
 
+    @pytest.mark.unit
     def test_whitespace_only_title_validation(self):
         """Test validation fails with whitespace-only title."""
         with pytest.raises(ValueError, match="Plot point title cannot be empty"):
@@ -281,6 +298,7 @@ class TestPlotPointValidation:
                 sequence_order=10,
             )
 
+    @pytest.mark.unit
     def test_empty_description_validation(self):
         """Test validation fails with empty description."""
         with pytest.raises(ValueError, match="Plot point description cannot be empty"):
@@ -293,6 +311,7 @@ class TestPlotPointValidation:
                 sequence_order=10,
             )
 
+    @pytest.mark.unit
     def test_whitespace_only_description_validation(self):
         """Test validation fails with whitespace-only description."""
         with pytest.raises(ValueError, match="Plot point description cannot be empty"):
@@ -305,6 +324,7 @@ class TestPlotPointValidation:
                 sequence_order=10,
             )
 
+    @pytest.mark.unit
     def test_negative_sequence_order_validation(self):
         """Test validation fails with negative sequence order."""
         with pytest.raises(ValueError, match="Sequence order must be non-negative"):
@@ -317,6 +337,8 @@ class TestPlotPointValidation:
                 sequence_order=-1,
             )
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_zero_sequence_order_allowed(self):
         """Test that zero sequence order is allowed."""
         plot_point = PlotPoint(
@@ -330,6 +352,7 @@ class TestPlotPointValidation:
 
         assert plot_point.sequence_order == 0
 
+    @pytest.mark.unit
     def test_negative_estimated_duration_validation(self):
         """Test validation fails with negative estimated duration."""
         with pytest.raises(
@@ -345,6 +368,7 @@ class TestPlotPointValidation:
                 estimated_duration=-5,
             )
 
+    @pytest.mark.unit
     def test_zero_estimated_duration_validation(self):
         """Test validation fails with zero estimated duration."""
         with pytest.raises(
@@ -360,6 +384,7 @@ class TestPlotPointValidation:
                 estimated_duration=0,
             )
 
+    @pytest.mark.unit
     def test_none_estimated_duration_allowed(self):
         """Test that None estimated duration is allowed."""
         plot_point = PlotPoint(
@@ -374,6 +399,7 @@ class TestPlotPointValidation:
 
         assert plot_point.estimated_duration is None
 
+    @pytest.mark.unit
     def test_emotional_intensity_below_minimum_validation(self):
         """Test validation fails with emotional intensity below 0."""
         with pytest.raises(
@@ -389,6 +415,7 @@ class TestPlotPointValidation:
                 emotional_intensity=Decimal("-1.0"),
             )
 
+    @pytest.mark.unit
     def test_emotional_intensity_above_maximum_validation(self):
         """Test validation fails with emotional intensity above 10."""
         with pytest.raises(
@@ -404,6 +431,7 @@ class TestPlotPointValidation:
                 emotional_intensity=Decimal("11.0"),
             )
 
+    @pytest.mark.unit
     def test_dramatic_tension_boundary_validation(self):
         """Test dramatic tension boundary validation."""
         with pytest.raises(
@@ -419,6 +447,7 @@ class TestPlotPointValidation:
                 dramatic_tension=Decimal("15.5"),
             )
 
+    @pytest.mark.unit
     def test_story_significance_boundary_validation(self):
         """Test story significance boundary validation."""
         with pytest.raises(
@@ -434,6 +463,7 @@ class TestPlotPointValidation:
                 story_significance=Decimal("-0.5"),
             )
 
+    @pytest.mark.unit
     def test_valid_intensity_boundary_values(self):
         """Test that boundary intensity values (0 and 10) are valid."""
         plot_point = PlotPoint(
@@ -452,6 +482,7 @@ class TestPlotPointValidation:
         assert plot_point.dramatic_tension == Decimal("10.0")
         assert plot_point.story_significance == Decimal("5.5")
 
+    @pytest.mark.unit
     def test_plot_point_id_max_length_validation(self):
         """Test validation fails with plot point ID too long."""
         long_id = "x" * 101  # 101 characters
@@ -468,6 +499,7 @@ class TestPlotPointValidation:
                 sequence_order=10,
             )
 
+    @pytest.mark.unit
     def test_title_max_length_validation(self):
         """Test validation fails with title too long."""
         long_title = "x" * 201  # 201 characters
@@ -484,6 +516,7 @@ class TestPlotPointValidation:
                 sequence_order=10,
             )
 
+    @pytest.mark.unit
     def test_description_max_length_validation(self):
         """Test validation fails with description too long."""
         long_description = "x" * 2001  # 2001 characters
@@ -501,6 +534,7 @@ class TestPlotPointValidation:
                 sequence_order=10,
             )
 
+    @pytest.mark.unit
     def test_valid_max_length_boundaries(self):
         """Test that maximum length boundaries are valid."""
         max_id = "x" * 100
@@ -524,6 +558,8 @@ class TestPlotPointValidation:
 class TestPlotPointProperties:
     """Test suite for PlotPoint property methods."""
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_major_plot_point_critical(self):
         """Test is_major_plot_point returns True for CRITICAL importance."""
         plot_point = PlotPoint(
@@ -537,6 +573,8 @@ class TestPlotPointProperties:
 
         assert plot_point.is_major_plot_point is True
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_major_plot_point_major(self):
         """Test is_major_plot_point returns True for MAJOR importance."""
         plot_point = PlotPoint(
@@ -550,6 +588,7 @@ class TestPlotPointProperties:
 
         assert plot_point.is_major_plot_point is True
 
+    @pytest.mark.unit
     def test_is_major_plot_point_false_for_lower_importance(self):
         """Test is_major_plot_point returns False for lower importance levels."""
         plot_points = [
@@ -570,6 +609,8 @@ class TestPlotPointProperties:
 
             assert plot_point.is_major_plot_point is False
 
+    @pytest.mark.unit
+    @pytest.mark.fast
     def test_is_climactic_true_for_climax(self):
         """Test is_climactic returns True for CLIMAX type."""
         plot_point = PlotPoint(
@@ -583,6 +624,7 @@ class TestPlotPointProperties:
 
         assert plot_point.is_climactic is True
 
+    @pytest.mark.unit
     def test_is_climactic_false_for_non_climax(self):
         """Test is_climactic returns False for non-CLIMAX types."""
         non_climax_types = [
@@ -605,6 +647,7 @@ class TestPlotPointProperties:
 
             assert plot_point.is_climactic is False
 
+    @pytest.mark.unit
     def test_is_turning_point_for_turning_point_types(self):
         """Test is_turning_point returns True for turning point types."""
         turning_point_types = [
@@ -627,6 +670,7 @@ class TestPlotPointProperties:
 
             assert plot_point.is_turning_point is True
 
+    @pytest.mark.unit
     def test_is_turning_point_false_for_non_turning_point_types(self):
         """Test is_turning_point returns False for non-turning point types."""
         non_turning_types = [
@@ -651,6 +695,7 @@ class TestPlotPointProperties:
 
             assert plot_point.is_turning_point is False
 
+    @pytest.mark.unit
     def test_has_prerequisites_with_events(self):
         """Test has_prerequisites returns True when prerequisite events exist."""
         plot_point = PlotPoint(
@@ -665,6 +710,7 @@ class TestPlotPointProperties:
 
         assert plot_point.has_prerequisites is True
 
+    @pytest.mark.unit
     def test_has_prerequisites_without_events(self):
         """Test has_prerequisites returns False when no prerequisite events."""
         plot_point = PlotPoint(
@@ -679,6 +725,7 @@ class TestPlotPointProperties:
 
         assert plot_point.has_prerequisites is False
 
+    @pytest.mark.unit
     def test_has_consequences_with_events(self):
         """Test has_consequences returns True when consequence events exist."""
         plot_point = PlotPoint(
@@ -697,6 +744,7 @@ class TestPlotPointProperties:
 
         assert plot_point.has_consequences is True
 
+    @pytest.mark.unit
     def test_has_consequences_without_events(self):
         """Test has_consequences returns False when no consequence events."""
         plot_point = PlotPoint(
@@ -711,6 +759,7 @@ class TestPlotPointProperties:
 
         assert plot_point.has_consequences is False
 
+    @pytest.mark.unit
     def test_affects_characters_with_characters(self):
         """Test affects_characters returns True when characters are involved."""
         char_id1 = uuid4()
@@ -728,6 +777,7 @@ class TestPlotPointProperties:
 
         assert plot_point.affects_characters is True
 
+    @pytest.mark.unit
     def test_affects_characters_without_characters(self):
         """Test affects_characters returns False when no characters involved."""
         plot_point = PlotPoint(
@@ -746,6 +796,7 @@ class TestPlotPointProperties:
 class TestPlotPointOverallImpactScore:
     """Test suite for overall impact score calculation."""
 
+    @pytest.mark.unit
     def test_critical_importance_impact_score(self):
         """Test impact score calculation for CRITICAL importance."""
         plot_point = PlotPoint(
@@ -764,6 +815,7 @@ class TestPlotPointOverallImpactScore:
         expected_score = Decimal("9.2")
         assert plot_point.overall_impact_score == expected_score
 
+    @pytest.mark.unit
     def test_major_importance_impact_score(self):
         """Test impact score calculation for MAJOR importance."""
         plot_point = PlotPoint(
@@ -782,6 +834,7 @@ class TestPlotPointOverallImpactScore:
         expected_score = Decimal("5.76")
         assert plot_point.overall_impact_score == expected_score
 
+    @pytest.mark.unit
     def test_supplemental_importance_impact_score(self):
         """Test impact score calculation for SUPPLEMENTAL importance."""
         plot_point = PlotPoint(
@@ -800,6 +853,7 @@ class TestPlotPointOverallImpactScore:
         expected_score = Decimal("0.6")
         assert plot_point.overall_impact_score == expected_score
 
+    @pytest.mark.unit
     def test_impact_score_boundary_values(self):
         """Test impact score with boundary intensity values."""
         # Maximum possible score
@@ -838,6 +892,7 @@ class TestPlotPointOverallImpactScore:
 class TestPlotPointInstanceMethods:
     """Test suite for PlotPoint instance methods."""
 
+    @pytest.mark.unit
     def test_involves_character_true(self):
         """Test involves_character returns True for involved character."""
         char_id1 = uuid4()
@@ -858,6 +913,7 @@ class TestPlotPointInstanceMethods:
         assert plot_point.involves_character(char_id2) is True
         assert plot_point.involves_character(char_id3) is False
 
+    @pytest.mark.unit
     def test_affects_theme_true(self):
         """Test affects_theme returns True for affected theme."""
         plot_point = PlotPoint(
@@ -874,6 +930,7 @@ class TestPlotPointInstanceMethods:
         assert plot_point.affects_theme("courage") is True
         assert plot_point.affects_theme("love") is False
 
+    @pytest.mark.unit
     def test_has_tag_true(self):
         """Test has_tag returns True for existing tag."""
         plot_point = PlotPoint(
@@ -890,6 +947,7 @@ class TestPlotPointInstanceMethods:
         assert plot_point.has_tag("celebration") is True
         assert plot_point.has_tag("defeat") is False
 
+    @pytest.mark.unit
     def test_get_narrative_context(self):
         """Test get_narrative_context returns comprehensive context dict."""
         char_id = uuid4()
@@ -929,6 +987,7 @@ class TestPlotPointInstanceMethods:
 class TestPlotPointFactoryMethods:
     """Test suite for PlotPoint factory methods."""
 
+    @pytest.mark.unit
     def test_with_updated_intensity_single_value(self):
         """Test updating a single intensity value."""
         original = PlotPoint(
@@ -955,6 +1014,7 @@ class TestPlotPointFactoryMethods:
         assert updated.title == original.title
         assert updated.sequence_order == original.sequence_order
 
+    @pytest.mark.unit
     def test_with_updated_intensity_multiple_values(self):
         """Test updating multiple intensity values."""
         original = PlotPoint(
@@ -979,6 +1039,7 @@ class TestPlotPointFactoryMethods:
         # Non-updated value should remain the same
         assert updated.story_significance == Decimal("9.0")
 
+    @pytest.mark.unit
     def test_with_updated_intensity_none_values(self):
         """Test that None values preserve original intensities."""
         original = PlotPoint(
@@ -1005,6 +1066,7 @@ class TestPlotPointFactoryMethods:
         # Non-None value should be updated
         assert updated.dramatic_tension == Decimal("5.0")
 
+    @pytest.mark.unit
     def test_with_updated_intensity_immutability(self):
         """Test that original PlotPoint remains unchanged."""
         original = PlotPoint(
@@ -1026,6 +1088,7 @@ class TestPlotPointFactoryMethods:
         # They should be different objects
         assert original is not updated
 
+    @pytest.mark.unit
     def test_with_additional_characters_add_characters(self):
         """Test adding characters to a plot point."""
         char_id1 = uuid4()
@@ -1049,6 +1112,7 @@ class TestPlotPointFactoryMethods:
         # Original should remain unchanged
         assert original.involved_characters == {char_id1}
 
+    @pytest.mark.unit
     def test_with_additional_characters_duplicate_characters(self):
         """Test adding characters that already exist."""
         char_id1 = uuid4()
@@ -1070,6 +1134,7 @@ class TestPlotPointFactoryMethods:
         assert updated.involved_characters == {char_id1, char_id2}
         assert len(updated.involved_characters) == 2
 
+    @pytest.mark.unit
     def test_with_additional_characters_empty_set(self):
         """Test adding empty set of characters."""
         char_id = uuid4()
@@ -1091,6 +1156,7 @@ class TestPlotPointFactoryMethods:
         # Objects should be different
         assert original is not updated
 
+    @pytest.mark.unit
     def test_with_additional_characters_immutability(self):
         """Test that original collections are not modified."""
         char_id1 = uuid4()
@@ -1119,6 +1185,7 @@ class TestPlotPointFactoryMethods:
 class TestPlotPointStringRepresentation:
     """Test suite for PlotPoint string representation methods."""
 
+    @pytest.mark.unit
     def test_str_representation(self):
         """Test human-readable string representation."""
         plot_point = PlotPoint(
@@ -1134,6 +1201,7 @@ class TestPlotPointStringRepresentation:
         expected = "PlotPoint('The Final Battle', climax, seq=90)"
         assert str_repr == expected
 
+    @pytest.mark.unit
     def test_repr_representation(self):
         """Test developer representation for debugging."""
         plot_point = PlotPoint(
@@ -1155,6 +1223,7 @@ class TestPlotPointStringRepresentation:
         )
         assert repr_str == expected
 
+    @pytest.mark.unit
     def test_string_representations_different(self):
         """Test that str and repr provide different information."""
         plot_point = PlotPoint(
@@ -1181,6 +1250,7 @@ class TestPlotPointStringRepresentation:
 class TestPlotPointEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     def test_creation_with_mock_timestamp(self):
         """Test creation with explicitly mocked timestamp."""
         fixed_time = datetime(2024, 1, 15, 12, 30, 45, tzinfo=timezone.utc)
@@ -1197,6 +1267,7 @@ class TestPlotPointEdgeCasesAndBoundaryConditions:
 
         assert plot_point.creation_timestamp == fixed_time
 
+    @pytest.mark.unit
     def test_large_collections_handling(self):
         """Test handling of large collections."""
         many_characters = {uuid4() for _ in range(100)}
@@ -1228,6 +1299,7 @@ class TestPlotPointEdgeCasesAndBoundaryConditions:
         assert plot_point.has_prerequisites is True
         assert plot_point.has_consequences is True
 
+    @pytest.mark.unit
     def test_decimal_precision_handling(self):
         """Test handling of decimal precision for intensity values."""
         plot_point = PlotPoint(
@@ -1260,6 +1332,7 @@ class TestPlotPointEdgeCasesAndBoundaryConditions:
         )  # MAJOR importance weight
         assert impact_score == expected
 
+    @pytest.mark.unit
     def test_unicode_text_handling(self):
         """Test handling of unicode characters in text fields."""
         plot_point = PlotPoint(
@@ -1279,6 +1352,7 @@ class TestPlotPointEdgeCasesAndBoundaryConditions:
         assert "café parisien ☕" in plot_point.location_context
         assert "📝✨" in plot_point.narrative_notes
 
+    @pytest.mark.unit
     def test_complex_metadata_handling(self):
         """Test handling of complex metadata structures."""
         complex_metadata = {
@@ -1318,6 +1392,7 @@ class TestPlotPointEdgeCasesAndBoundaryConditions:
 class TestPlotPointCollectionsAndComparison:
     """Test suite for PlotPoint behavior in collections and comparisons."""
 
+    @pytest.mark.unit
     def test_plot_points_in_list(self):
         """Test PlotPoint objects in list operations."""
         plot1 = PlotPoint(
@@ -1344,6 +1419,7 @@ class TestPlotPointCollectionsAndComparison:
         assert plot1 in plot_list
         assert plot2 in plot_list
 
+    @pytest.mark.unit
     def test_plot_points_sorting_by_sequence(self):
         """Test sorting PlotPoint objects by sequence order."""
         plots = [
@@ -1364,6 +1440,7 @@ class TestPlotPointCollectionsAndComparison:
 
         assert actual_orders == expected_orders
 
+    @pytest.mark.unit
     def test_plot_points_sorting_by_impact_score(self):
         """Test sorting PlotPoint objects by overall impact score."""
         plots = [
@@ -1397,6 +1474,7 @@ class TestPlotPointCollectionsAndComparison:
         # MINOR should be last (lowest impact)
         assert sorted_by_impact[-1].importance == PlotPointImportance.MINOR
 
+    @pytest.mark.unit
     def test_plot_point_equality_identity(self):
         """Test that identical PlotPoint objects are considered equal."""
         plot1 = PlotPoint(
@@ -1422,6 +1500,7 @@ class TestPlotPointCollectionsAndComparison:
         # But they should be different objects
         assert plot1 is not plot2
 
+    @pytest.mark.unit
     def test_plot_point_inequality(self):
         """Test that different PlotPoint objects are not equal."""
         plot1 = PlotPoint(
@@ -1445,6 +1524,7 @@ class TestPlotPointCollectionsAndComparison:
         assert plot1 != plot2
         assert not (plot1 == plot2)
 
+    @pytest.mark.unit
     def test_plot_point_hashing_consistency(self):
         """Test that equal PlotPoint objects have same hash."""
         plot1 = PlotPoint(
@@ -1469,6 +1549,7 @@ class TestPlotPointCollectionsAndComparison:
         assert plot1 == plot2
         assert hash(plot1) == hash(plot2)
 
+    @pytest.mark.unit
     def test_plot_points_in_set(self):
         """Test PlotPoint objects in set operations."""
         plot1 = PlotPoint(
@@ -1507,6 +1588,7 @@ class TestPlotPointCollectionsAndComparison:
         assert plot2 in plot_set
         assert plot1_duplicate in plot_set  # Should find plot1
 
+    @pytest.mark.unit
     def test_plot_points_as_dict_keys(self):
         """Test using PlotPoint objects as dictionary keys."""
         plot1 = PlotPoint(

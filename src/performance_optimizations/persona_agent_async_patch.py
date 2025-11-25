@@ -167,8 +167,8 @@ class PersonaAgentAsyncPatch:
 
                 # Use original method with performance monitoring
                 start_time = (
-                    asyncio.get_event_loop().time()
-                    if asyncio.get_event_loop().is_running()
+                    asyncio.get_running_loop().time()
+                    if asyncio.get_running_loop().is_running()
                     else 0
                 )
 
@@ -177,7 +177,7 @@ class PersonaAgentAsyncPatch:
                 )
 
                 if start_time > 0:
-                    duration = asyncio.get_event_loop().time() - start_time
+                    duration = asyncio.get_running_loop().time() - start_time
                     logger.debug(
                         f"Agent {persona_agent_instance.agent_id} decision making took {duration:.3f}s"
                     )
