@@ -149,7 +149,8 @@ jobs:
       - name: Run unit tests
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
-          pytest -m "unit" --tb=short --durations=10 --junitxml=reports/unit-tests.xml
+          unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
+          pytest -p pytest_asyncio -m "unit" --tb=short --durations=10 --junitxml=reports/unit-tests.xml
 
       - name: Upload unit test results
         if: always()
@@ -188,7 +189,8 @@ jobs:
       - name: Run integration tests
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
-          pytest -m "integration" --tb=short --durations=10 --junitxml=reports/integration-tests.xml
+          unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
+          pytest -p pytest_asyncio -m "integration" --tb=short --durations=10 --junitxml=reports/integration-tests.xml
 
       - name: Upload integration test results
         if: always()
@@ -227,7 +229,8 @@ jobs:
       - name: Run E2E tests
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
-          pytest -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
+          unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
+          pytest -p pytest_asyncio -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
 
       - name: Upload E2E test results
         if: always()
