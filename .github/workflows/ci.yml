@@ -145,11 +145,10 @@ jobs:
       - name: Export PYTHONPATH
         run: |
           echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+          echo "PYTEST_DISABLE_PLUGIN_AUTOLOAD=0" >> $GITHUB_ENV
 
       - name: Run unit tests
         run: |
-          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
-          unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
           pytest -p pytest_asyncio -m "unit" --tb=short --durations=10 --junitxml=reports/unit-tests.xml
 
       - name: Upload unit test results
@@ -185,11 +184,10 @@ jobs:
       - name: Export PYTHONPATH
         run: |
           echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+          echo "PYTEST_DISABLE_PLUGIN_AUTOLOAD=0" >> $GITHUB_ENV
 
       - name: Run integration tests
         run: |
-          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
-          unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
           pytest -p pytest_asyncio -m "integration" --tb=short --durations=10 --junitxml=reports/integration-tests.xml
 
       - name: Upload integration test results
@@ -225,11 +223,10 @@ jobs:
       - name: Export PYTHONPATH
         run: |
           echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+          echo "PYTEST_DISABLE_PLUGIN_AUTOLOAD=0" >> $GITHUB_ENV
 
       - name: Run E2E tests
         run: |
-          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
-          unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
           pytest -p pytest_asyncio -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
 
       - name: Upload E2E test results
@@ -265,16 +262,14 @@ jobs:
       - name: Export PYTHONPATH
         run: |
           echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+          echo "PYTEST_DISABLE_PLUGIN_AUTOLOAD=0" >> $GITHUB_ENV
 
       - name: Debug sys.path
         run: |
-          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
           python -c "import os, sys; print('PYTHONPATH:', os.environ.get('PYTHONPATH')); print('sys.path:', sys.path)"
 
       - name: Run smoke tests with JUnit XML
         run: |
-          export PYTHONPATH="$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src:${PYTHONPATH:-}"
-          unset PYTEST_DISABLE_PLUGIN_AUTOLOAD
           pytest -p pytest_asyncio -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py --junitxml=reports/smoke-tests.xml
 
       - name: Upload smoke test results
