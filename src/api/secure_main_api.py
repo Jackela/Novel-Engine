@@ -12,13 +12,13 @@ Performance: High-throughput with async operations and caching
 Author: Novel Engine Development Team
 """
 
+import json
 import logging
 import os
 import secrets
-import json
-from pathlib import Path
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import uvicorn
@@ -294,7 +294,9 @@ def _get_user_characters(user_id: str) -> List[CharacterRecord]:
     return list(user_character_store.get(user_id, []))
 
 
-def _upsert_user_character(user_id: str, payload: CharacterCreateRequest) -> CharacterRecord:
+def _upsert_user_character(
+    user_id: str, payload: CharacterCreateRequest
+) -> CharacterRecord:
     now = datetime.now(timezone.utc)
     existing = user_character_store.setdefault(user_id, [])
     record = CharacterRecord(
@@ -689,9 +691,7 @@ def create_secure_app() -> FastAPI:
     )
     async def run_secure_simulation(
         request: SecureSimulationRequest,
-        current_user: User = Depends(
-            _auth_dependency(Permission.SIMULATION_CREATE)
-        ),
+        current_user: User = Depends(_auth_dependency(Permission.SIMULATION_CREATE)),
     ):
         """Secure Simulation Execution Endpoint"""
         start_time = datetime.now(timezone.utc)
@@ -704,7 +704,9 @@ def create_secure_app() -> FastAPI:
         try:
             orchestrator = getattr(app.state, "orchestrator", None)
             if not orchestrator:
-                logger.warning("System orchestrator not available; returning mocked simulation response")
+                logger.warning(
+                    "System orchestrator not available; returning mocked simulation response"
+                )
 
             # Input validation already handled by middleware, but we can add business logic validation
             if len(set(request.character_names)) != len(request.character_names):
@@ -713,7 +715,11 @@ def create_secure_app() -> FastAPI:
                 )
 
             available_characters = set(_resolve_available_characters(current_user.id))
-            missing = [name for name in request.character_names if name not in available_characters]
+            missing = [
+                name
+                for name in request.character_names
+                if name not in available_characters
+            ]
             if missing:
                 raise HTTPException(
                     status_code=422,
@@ -761,7 +767,9 @@ def create_secure_app() -> FastAPI:
 def _register_secure_api_routes(app: FastAPI):
     """Secure API Routes Registration"""
     # Create secure API instances
-    character_api = None  # Legacy character API endpoints not used for user-created characters
+    character_api = (
+        None  # Legacy character API endpoints not used for user-created characters
+    )
     story_generation_api = create_story_generation_api(None)
     interaction_api = create_interaction_api(None)
 
@@ -784,9 +792,7 @@ def _register_secure_api_routes(app: FastAPI):
     )
     async def create_user_character(
         request: CharacterCreateRequest,
-        current_user: User = Depends(
-            _auth_dependency(Permission.CHARACTER_CREATE)
-        ),
+        current_user: User = Depends(_auth_dependency(Permission.CHARACTER_CREATE)),
     ):
         """Create a user-owned character"""
         # Basic business validation
@@ -801,9 +807,7 @@ def _register_secure_api_routes(app: FastAPI):
         tags=["Characters"],
     )
     async def list_user_characters(
-        current_user: User = Depends(
-            _auth_dependency(Permission.CHARACTER_READ)
-        ),
+        current_user: User = Depends(_auth_dependency(Permission.CHARACTER_READ)),
     ):
         """List user-owned characters merged with defaults"""
         defaults = _get_default_characters()

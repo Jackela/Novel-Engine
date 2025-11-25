@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 from typing import List
 
+import pytest
 import requests
 
 # 配置日志

@@ -22,9 +22,9 @@ from src.templates.dynamic_template_engine import DynamicTemplateEngine
 
 from .config_manager import ConfigurationManager
 from .database_manager import DatabaseConfig, DatabaseManager, DatabaseType
-from .narrative import EmergentNarrativeEngine
 from .error_handler import CentralizedErrorHandler
 from .event_bus import Event, EventBus, EventHandler, EventPriority
+from .narrative import EmergentNarrativeEngine
 
 # Import new architectural components
 from .service_container import (

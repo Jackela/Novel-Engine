@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import Mock
 
+import pytest
+
 from shared_types import CharacterAction
 from src.agents.director_agent import DirectorAgent
 from src.event_bus import EventBus

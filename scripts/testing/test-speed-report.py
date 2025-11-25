@@ -38,7 +38,7 @@ class TestSpeedAnalyzer:
         self.categorized_tests: Dict[str, List[Tuple[str, float]]] = {
             "fast": [],
             "medium": [],
-            "slow": []
+            "slow": [],
         }
 
     def run_tests_with_timing(self) -> bool:
@@ -47,21 +47,20 @@ class TestSpeedAnalyzer:
         print("This may take several minutes...\n")
 
         cmd = [
-            "python", "-m", "pytest",
+            "python",
+            "-m",
+            "pytest",
             self.test_path,
             "--durations=0",  # Show all test durations
             "-v",
             "--tb=no",  # No traceback on failures
             "--no-cov",  # Disable coverage for faster execution
-            "-q"
+            "-q",
         ]
 
         try:
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=600  # 10 minute timeout
+                cmd, capture_output=True, text=True, timeout=600  # 10 minute timeout
             )
 
             # Parse timing output from both stdout and stderr
@@ -81,7 +80,7 @@ class TestSpeedAnalyzer:
         """Parse pytest duration output to extract test timings."""
         # Pattern: "0.12s call     tests/unit/module/test_file.py::test_name"
         duration_pattern = re.compile(
-            r'(\d+\.\d+)s\s+(call|setup|teardown)\s+(tests/[^\s]+)'
+            r"(\d+\.\d+)s\s+(call|setup|teardown)\s+(tests/[^\s]+)"
         )
 
         test_phases: Dict[str, Dict[str, float]] = defaultdict(
@@ -156,9 +155,15 @@ class TestSpeedAnalyzer:
                     report.append(f"  {duration:>6.3f}s  {test_name}")
 
         # Calculate average durations
-        avg_fast = sum(d for _, d in self.categorized_tests["fast"]) / max(fast_count, 1)
-        avg_medium = sum(d for _, d in self.categorized_tests["medium"]) / max(medium_count, 1)
-        avg_slow = sum(d for _, d in self.categorized_tests["slow"]) / max(slow_count, 1)
+        avg_fast = sum(d for _, d in self.categorized_tests["fast"]) / max(
+            fast_count, 1
+        )
+        avg_medium = sum(d for _, d in self.categorized_tests["medium"]) / max(
+            medium_count, 1
+        )
+        avg_slow = sum(d for _, d in self.categorized_tests["slow"]) / max(
+            slow_count, 1
+        )
 
         report.append("\n" + "=" * 80)
         report.append("STATISTICS:")
@@ -176,34 +181,43 @@ class TestSpeedAnalyzer:
             "total_tests": len(self.test_timings),
             "thresholds": {
                 "fast_ms": self.FAST_THRESHOLD * 1000,
-                "medium_ms": self.MEDIUM_THRESHOLD * 1000
+                "medium_ms": self.MEDIUM_THRESHOLD * 1000,
             },
             "distribution": {
                 "fast": {
                     "count": len(self.categorized_tests["fast"]),
-                    "percentage": (len(self.categorized_tests["fast"]) / len(self.test_timings)) * 100,
+                    "percentage": (
+                        len(self.categorized_tests["fast"]) / len(self.test_timings)
+                    )
+                    * 100,
                     "tests": [
                         {"name": name, "duration_s": duration}
                         for name, duration in self.categorized_tests["fast"]
-                    ]
+                    ],
                 },
                 "medium": {
                     "count": len(self.categorized_tests["medium"]),
-                    "percentage": (len(self.categorized_tests["medium"]) / len(self.test_timings)) * 100,
+                    "percentage": (
+                        len(self.categorized_tests["medium"]) / len(self.test_timings)
+                    )
+                    * 100,
                     "tests": [
                         {"name": name, "duration_s": duration}
                         for name, duration in self.categorized_tests["medium"]
-                    ]
+                    ],
                 },
                 "slow": {
                     "count": len(self.categorized_tests["slow"]),
-                    "percentage": (len(self.categorized_tests["slow"]) / len(self.test_timings)) * 100,
+                    "percentage": (
+                        len(self.categorized_tests["slow"]) / len(self.test_timings)
+                    )
+                    * 100,
                     "tests": [
                         {"name": name, "duration_s": duration}
                         for name, duration in self.categorized_tests["slow"]
-                    ]
-                }
-            }
+                    ],
+                },
+            },
         }
 
         output_path = Path(output_file)
@@ -212,11 +226,7 @@ class TestSpeedAnalyzer:
 
     def get_test_files_by_category(self) -> Dict[str, set]:
         """Get unique test files grouped by speed category."""
-        files_by_category = {
-            "fast": set(),
-            "medium": set(),
-            "slow": set()
-        }
+        files_by_category = {"fast": set(), "medium": set(), "slow": set()}
 
         for category, tests in self.categorized_tests.items():
             for test_name, _ in tests:

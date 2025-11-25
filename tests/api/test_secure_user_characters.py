@@ -1,4 +1,6 @@
 import os
+
+import pytest
 from fastapi.testclient import TestClient
 
 from src.api import secure_main_api as api
@@ -27,7 +29,11 @@ def build_client():
     )
     svc = api.get_security_service()
     allow = lambda: dummy_user
-    for perm in [api.Permission.CHARACTER_CREATE, api.Permission.CHARACTER_READ, api.Permission.SIMULATION_CREATE]:
+    for perm in [
+        api.Permission.CHARACTER_CREATE,
+        api.Permission.CHARACTER_READ,
+        api.Permission.SIMULATION_CREATE,
+    ]:
         app.dependency_overrides[svc.require_permission(perm)] = allow
 
     return TestClient(app)

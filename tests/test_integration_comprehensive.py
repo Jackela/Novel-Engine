@@ -765,7 +765,6 @@ class TestSecurityValidationIntegration:
 
 # Pytest configuration and fixtures
 @pytest.fixture(scope="session")
-@pytest.mark.integration
 def test_client():
     """Session-scoped test client"""
     return TestClient(app)

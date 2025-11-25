@@ -156,7 +156,9 @@ class SpeedMarkerAdder:
                                     # Insert after the last marker
                                     pass
 
-                            content = content[:insert_pos] + marker + content[insert_pos:]
+                            content = (
+                                content[:insert_pos] + marker + content[insert_pos:]
+                            )
                             modifications += 1
                             break
 
@@ -218,9 +220,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Add speed markers to test files based on measurements"
     )
-    parser.add_argument(
-        "--test-path", default="tests/", help="Path to tests directory"
-    )
+    parser.add_argument("--test-path", default="tests/", help="Path to tests directory")
     parser.add_argument(
         "--dry-run",
         action="store_true",

@@ -18,7 +18,6 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointFactoryMethods:
     """Test suite for PlotPoint factory methods."""
 
@@ -216,5 +215,3 @@ class TestPlotPointFactoryMethods:
         assert char_id2 not in original.involved_characters
         # Updated should have new character
         assert char_id2 in updated.involved_characters
-
-

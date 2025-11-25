@@ -357,7 +357,9 @@ class SystemOrchestrator:
                 "template_engine_initialized": self.dynamic_template_engine is not None,
                 "is_running": self._is_running,
                 "shutdown_requested": self._shutdown_requested,
-                "active_agents_count": len(self.active_agents) if self.active_agents else 0,
+                "active_agents_count": (
+                    len(self.active_agents) if self.active_agents else 0
+                ),
             }
 
             return StandardResponse(
@@ -525,7 +527,11 @@ class SystemOrchestrator:
                 persona_id=agent_id,
                 name=initial_state.base_identity.name if initial_state else agent_id,
                 archetype=CharacterArchetype.SURVIVOR,
-                personality_traits=initial_state.base_identity.personality_traits if initial_state else [],
+                personality_traits=(
+                    initial_state.base_identity.personality_traits
+                    if initial_state
+                    else []
+                ),
                 behavioral_preferences={},
                 emotional_tendencies={},
             )
@@ -534,7 +540,11 @@ class SystemOrchestrator:
             )
 
             if not character_result.success:
-                error_msg = character_result.error.message if character_result.error else "Unknown error"
+                error_msg = (
+                    character_result.error.message
+                    if character_result.error
+                    else "Unknown error"
+                )
                 logger.warning(
                     f"Character template creation failed for {agent_id}: {error_msg}"
                 )

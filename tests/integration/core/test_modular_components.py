@@ -249,6 +249,7 @@ class TestInteractionEngineModularComponents:
         assert engine.config.max_concurrent_interactions == 5
         assert engine.config.enable_parallel_processing is True
         assert engine.is_initialized is True
+
     @pytest.mark.asyncio
     async def test_interaction_validator_component(self):
         """Test InteractionValidator component."""
@@ -338,6 +339,7 @@ class TestMultiAgentBridgeModularComponents:
 
         assert bridge.event_bus == mock_event_bus
         assert hasattr(bridge, "_agents")
+
     @pytest.mark.asyncio
     async def test_dialogue_manager_component(self):
         """Test DialogueManager component."""
@@ -421,6 +423,7 @@ class TestMultiAgentBridgeModularComponents:
 @pytest.mark.integration
 class TestModularComponentIntegration:
     """Test integration between modular components."""
+
     @pytest.mark.asyncio
     async def test_persona_agent_with_interaction_engine(self):
         """Test PersonaAgent integration with InteractionEngine."""
@@ -478,6 +481,7 @@ class TestModularComponentIntegration:
 @pytest.mark.integration
 class TestModularComponentPerformance:
     """Performance tests for modular components."""
+
     @pytest.mark.asyncio
     async def test_persona_agent_decision_performance(self):
         """Test PersonaAgent decision-making performance."""

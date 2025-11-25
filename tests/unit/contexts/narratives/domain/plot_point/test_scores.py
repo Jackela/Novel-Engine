@@ -18,7 +18,6 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointOverallImpactScore:
     """Test suite for overall impact score calculation."""
 
@@ -114,5 +113,3 @@ class TestPlotPointOverallImpactScore:
 
         # Expected: (0.0 * 0.4 + 0.0 * 0.4 + 0.0 * 0.2) * 0.2 = 0.0
         assert min_plot_point.overall_impact_score == Decimal("0.0")
-
-

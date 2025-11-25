@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import Mock
 
+import pytest
+
 from src.event_bus import EventBus
 
 

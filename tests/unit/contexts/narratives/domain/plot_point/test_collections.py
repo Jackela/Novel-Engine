@@ -18,7 +18,6 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointCollectionsAndComparison:
     """Test suite for PlotPoint behavior in collections and comparisons."""
 

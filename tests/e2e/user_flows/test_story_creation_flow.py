@@ -29,11 +29,7 @@ class TestStoryCreationFlow:
     """E2E tests for complete story creation workflow."""
 
     def test_complete_story_creation_flow(
-        self,
-        client,
-        data_factory,
-        api_helper,
-        performance_tracker
+        self, client, data_factory, api_helper, performance_tracker
     ):
         """
         Test complete story creation from world setup to narrative output.
@@ -53,28 +49,32 @@ class TestStoryCreationFlow:
         # Step 2: Create first character
         start_time = time.time()
         character1_data = data_factory.create_character_data(
-            name="Aria Stormwind",
-            agent_id="aria_stormwind"
+            name="Aria Stormwind", agent_id="aria_stormwind"
         )
         character1_data["background_summary"] = "A skilled warrior seeking redemption"
         character1_data["personality_traits"] = "brave, determined, honorable"
 
         response = client.post("/api/characters", json=character1_data)
-        assert response.status_code in [200, 201], f"Failed to create character: {response.text}"
+        assert response.status_code in [
+            200,
+            201,
+        ], f"Failed to create character: {response.text}"
         char1_result = response.json()
         performance_tracker.record("create_character_1", time.time() - start_time)
 
         # Step 3: Create second character
         start_time = time.time()
         character2_data = data_factory.create_character_data(
-            name="Marcus Shadowblade",
-            agent_id="marcus_shadowblade"
+            name="Marcus Shadowblade", agent_id="marcus_shadowblade"
         )
         character2_data["background_summary"] = "A mysterious rogue with a hidden past"
         character2_data["personality_traits"] = "cunning, secretive, loyal"
 
         response = client.post("/api/characters", json=character2_data)
-        assert response.status_code in [200, 201], f"Failed to create character: {response.text}"
+        assert response.status_code in [
+            200,
+            201,
+        ], f"Failed to create character: {response.text}"
         char2_result = response.json()
         performance_tracker.record("create_character_2", time.time() - start_time)
 
@@ -88,11 +88,14 @@ class TestStoryCreationFlow:
         start_time = time.time()
         story_request = data_factory.create_story_request(
             characters=["aria_stormwind", "marcus_shadowblade"],
-            title="The Shadow and the Storm"
+            title="The Shadow and the Storm",
         )
 
         response = client.post("/api/stories/generate", json=story_request)
-        assert response.status_code in [200, 202], f"Failed to start story generation: {response.text}"
+        assert response.status_code in [
+            200,
+            202,
+        ], f"Failed to start story generation: {response.text}"
 
         story_response = response.json()
         generation_id = story_response.get("data", {}).get("generation_id")
@@ -116,7 +119,7 @@ class TestStoryCreationFlow:
 
                 if status in ["completed", "failed"]:
                     final_status = status_data
-                    story_completed = (status == "completed")
+                    story_completed = status == "completed"
                     break
 
             time.sleep(poll_interval)
@@ -125,7 +128,9 @@ class TestStoryCreationFlow:
         performance_tracker.record("story_generation_wait", generation_duration)
 
         # Step 7: Verify story was generated successfully
-        assert story_completed, f"Story generation did not complete. Final status: {final_status}"
+        assert (
+            story_completed
+        ), f"Story generation did not complete. Final status: {final_status}"
         assert final_status, "No final status received"
 
         story_data = final_status.get("data", {})
@@ -142,14 +147,12 @@ class TestStoryCreationFlow:
         assert perf_summary["total_operations"] >= 5, "Not enough operations tracked"
 
         # Total flow should complete in reasonable time (< 90 seconds)
-        assert perf_summary["total_duration"] < 90, f"Story creation flow took too long: {perf_summary['total_duration']}s"
+        assert (
+            perf_summary["total_duration"] < 90
+        ), f"Story creation flow took too long: {perf_summary['total_duration']}s"
 
     def test_story_creation_with_three_characters(
-        self,
-        client,
-        data_factory,
-        api_helper,
-        performance_tracker
+        self, client, data_factory, api_helper, performance_tracker
     ):
         """Test story creation with 3 characters for more complex interactions."""
         # Ensure API is ready
@@ -159,7 +162,7 @@ class TestStoryCreationFlow:
         characters_data = [
             ("Elena Brightstar", "elena_brightstar", "wise, compassionate, mentor"),
             ("Kael Ironforge", "kael_ironforge", "strong, stubborn, protective"),
-            ("Lyra Moonwhisper", "lyra_moonwhisper", "mystical, enigmatic, powerful")
+            ("Lyra Moonwhisper", "lyra_moonwhisper", "mystical, enigmatic, powerful"),
         ]
 
         created_chars = []
@@ -173,8 +176,7 @@ class TestStoryCreationFlow:
 
         # Start story generation with all 3 characters
         story_request = data_factory.create_story_request(
-            characters=created_chars,
-            title="The Unlikely Alliance"
+            characters=created_chars, title="The Unlikely Alliance"
         )
 
         response = client.post("/api/stories/generate", json=story_request)
@@ -193,7 +195,7 @@ class TestStoryCreationFlow:
             if response.status_code == 200:
                 status = response.json().get("data", {}).get("status")
                 if status in ["completed", "failed"]:
-                    completed = (status == "completed")
+                    completed = status == "completed"
                     break
 
             time.sleep(2)
@@ -205,34 +207,30 @@ class TestStoryCreationFlow:
         # Attempt to create story with non-existent characters
         story_request = data_factory.create_story_request(
             characters=["nonexistent_char_1", "nonexistent_char_2"],
-            title="Invalid Story"
+            title="Invalid Story",
         )
 
         response = client.post("/api/stories/generate", json=story_request)
 
         # Should fail with 4xx error (either 400, 404, or 422)
-        assert response.status_code in [400, 404, 422], \
-            f"Expected error for invalid characters, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            404,
+            422,
+        ], f"Expected error for invalid characters, got {response.status_code}"
 
     def test_story_creation_empty_character_list(self, client, data_factory):
         """Test that story generation requires at least one character."""
-        story_request = {
-            "characters": [],
-            "title": "Empty Story"
-        }
+        story_request = {"characters": [], "title": "Empty Story"}
 
         response = client.post("/api/stories/generate", json=story_request)
 
         # Should fail validation (422 Unprocessable Entity)
-        assert response.status_code == 422, \
-            f"Expected validation error for empty characters, got {response.status_code}"
+        assert (
+            response.status_code == 422
+        ), f"Expected validation error for empty characters, got {response.status_code}"
 
-    def test_concurrent_story_generation(
-        self,
-        client,
-        data_factory,
-        api_helper
-    ):
+    def test_concurrent_story_generation(self, client, data_factory, api_helper):
         """Test that multiple stories can be generated concurrently."""
         # Create characters for two separate stories
         chars_story1 = []
@@ -240,8 +238,7 @@ class TestStoryCreationFlow:
 
         for i in range(2):
             char_data = data_factory.create_character_data(
-                name=f"Story1Char{i}",
-                agent_id=f"story1_char{i}"
+                name=f"Story1Char{i}", agent_id=f"story1_char{i}"
             )
             response = client.post("/api/characters", json=char_data)
             assert response.status_code in [200, 201]
@@ -249,8 +246,7 @@ class TestStoryCreationFlow:
 
         for i in range(2):
             char_data = data_factory.create_character_data(
-                name=f"Story2Char{i}",
-                agent_id=f"story2_char{i}"
+                name=f"Story2Char{i}", agent_id=f"story2_char{i}"
             )
             response = client.post("/api/characters", json=char_data)
             assert response.status_code in [200, 201]
@@ -258,12 +254,10 @@ class TestStoryCreationFlow:
 
         # Start both story generations
         request1 = data_factory.create_story_request(
-            characters=chars_story1,
-            title="Story One"
+            characters=chars_story1, title="Story One"
         )
         request2 = data_factory.create_story_request(
-            characters=chars_story2,
-            title="Story Two"
+            characters=chars_story2, title="Story Two"
         )
 
         response1 = client.post("/api/stories/generate", json=request1)

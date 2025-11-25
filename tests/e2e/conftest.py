@@ -60,6 +60,7 @@ def client(api_app):
     with TestClient(api_app, raise_server_exceptions=False) as test_client:
         # Wait for API to become fully healthy before yielding client
         import time
+
         max_wait = 30
         start = time.time()
         last_status = None
@@ -94,9 +95,7 @@ def client(api_app):
 async def async_client(api_app):
     """Create async test client for async operations."""
     async with AsyncClient(
-        app=api_app,
-        base_url="http://testserver",
-        timeout=30.0
+        app=api_app, base_url="http://testserver", timeout=30.0
     ) as ac:
         yield ac
 
@@ -123,7 +122,7 @@ def capture_failure_artifacts(request, temp_artifacts_dir):
         failure_info = {
             "test_name": request.node.name,
             "timestamp": datetime.now().isoformat(),
-            "failure": str(request.node.rep_call.longrepr)
+            "failure": str(request.node.rep_call.longrepr),
         }
         failure_log.write_text(json.dumps(failure_info, indent=2))
 
@@ -143,7 +142,7 @@ class TestDataFactory:
     def create_character_data(
         name: Optional[str] = None,
         agent_id: Optional[str] = None,
-        archetype: Optional[str] = None
+        archetype: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create character data for testing."""
         char_name = name or f"TestChar_{datetime.now().timestamp()}"
@@ -158,21 +157,16 @@ class TestDataFactory:
             "dominant_emotion": "calm",
             "energy_level": 8,
             "stress_level": 3,
-            "skills": {
-                "combat": 0.7,
-                "diplomacy": 0.6,
-                "investigation": 0.8
-            },
+            "skills": {"combat": 0.7, "diplomacy": 0.6, "investigation": 0.8},
             "relationships": {},
             "current_location": "Test Location",
             "inventory": ["test_item"],
-            "metadata": {"test": True}
+            "metadata": {"test": True},
         }
 
     @staticmethod
     def create_world_data(
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        name: Optional[str] = None, description: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create world data for testing."""
         world_name = name or f"TestWorld_{datetime.now().timestamp()}"
@@ -180,34 +174,26 @@ class TestDataFactory:
         return {
             "name": world_name,
             "description": description or f"Description for {world_name}",
-            "settings": {
-                "genre": "fantasy",
-                "theme": "adventure",
-                "tone": "epic"
-            },
+            "settings": {"genre": "fantasy", "theme": "adventure", "tone": "epic"},
             "locations": [
                 {
                     "name": "Starting Village",
                     "description": "A peaceful village",
-                    "type": "settlement"
+                    "type": "settlement",
                 }
             ],
-            "rules": [
-                "Magic exists but is rare",
-                "Technology is medieval"
-            ],
-            "metadata": {"test": True}
+            "rules": ["Magic exists but is rare", "Technology is medieval"],
+            "metadata": {"test": True},
         }
 
     @staticmethod
     def create_story_request(
-        characters: List[str],
-        title: Optional[str] = None
+        characters: List[str], title: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create story generation request."""
         return {
             "characters": characters,
-            "title": title or f"Test Story {datetime.now().timestamp()}"
+            "title": title or f"Test Story {datetime.now().timestamp()}",
         }
 
 
@@ -220,11 +206,7 @@ def data_factory():
 @pytest.fixture
 async def cleanup_test_data(async_client):
     """Cleanup test data after test completion."""
-    created_resources = {
-        "characters": [],
-        "worlds": [],
-        "stories": []
-    }
+    created_resources = {"characters": [], "worlds": [], "stories": []}
 
     yield created_resources
 
@@ -242,6 +224,7 @@ class APITestHelper:
     def wait_for_health(self, timeout: int = 30) -> bool:
         """Wait for API to become healthy."""
         import time
+
         start_time = time.time()
 
         while time.time() - start_time < timeout:
@@ -249,7 +232,10 @@ class APITestHelper:
                 response = self.client.get("/health")
                 if response.status_code == 200:
                     data = response.json()
-                    if data.get("data", {}).get("service_status") in ["healthy", "degraded"]:
+                    if data.get("data", {}).get("service_status") in [
+                        "healthy",
+                        "degraded",
+                    ]:
                         return True
             except Exception:
                 pass
@@ -297,12 +283,11 @@ class APITestHelper:
         return response.json()
 
     def wait_for_story_completion(
-        self,
-        generation_id: str,
-        timeout: int = 60
+        self, generation_id: str, timeout: int = 60
     ) -> Dict[str, Any]:
         """Wait for story generation to complete."""
         import time
+
         start_time = time.time()
 
         while time.time() - start_time < timeout:
@@ -314,7 +299,9 @@ class APITestHelper:
 
             time.sleep(2)
 
-        raise TimeoutError(f"Story generation {generation_id} did not complete in {timeout}s")
+        raise TimeoutError(
+            f"Story generation {generation_id} did not complete in {timeout}s"
+        )
 
 
 @pytest.fixture
@@ -344,12 +331,14 @@ class PerformanceTracker:
 
     def record(self, operation: str, duration: float, metadata: Optional[Dict] = None):
         """Record a performance metric."""
-        self.metrics.append({
-            "operation": operation,
-            "duration": duration,
-            "timestamp": datetime.now().isoformat(),
-            "metadata": metadata or {}
-        })
+        self.metrics.append(
+            {
+                "operation": operation,
+                "duration": duration,
+                "timestamp": datetime.now().isoformat(),
+                "metadata": metadata or {},
+            }
+        )
 
     def get_summary(self) -> Dict[str, Any]:
         """Get performance summary."""
@@ -363,7 +352,7 @@ class PerformanceTracker:
             "avg_duration": sum(durations) / len(durations),
             "min_duration": min(durations),
             "max_duration": max(durations),
-            "operations": self.metrics
+            "operations": self.metrics,
         }
 
 

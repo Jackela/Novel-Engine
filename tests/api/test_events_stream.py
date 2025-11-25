@@ -91,7 +91,9 @@ class TestEventsStreamEndpoint:
                 line_count += 1
 
                 # Stop after collecting enough lines or finding a data line
-                if line_count > 30 or any(l.startswith("data:") for l in lines_collected):
+                if line_count > 30 or any(
+                    l.startswith("data:") for l in lines_collected
+                ):
                     break
 
             # Find first "data:" line - this is the essential part of SSE
@@ -132,7 +134,12 @@ class TestEventsStreamEndpoint:
                     assert isinstance(event_data["severity"], str)
 
                     # Validate enums
-                    assert event_data["type"] in ["character", "story", "system", "interaction"]
+                    assert event_data["type"] in [
+                        "character",
+                        "story",
+                        "system",
+                        "interaction",
+                    ]
                     assert event_data["severity"] in ["low", "medium", "high"]
 
                     break  # Only test first event
@@ -245,7 +252,9 @@ class TestEventsStreamEndpoint:
 
                     # Timestamp should be in milliseconds
                     # Current time in ms is around 1.7e12 (as of 2024)
-                    assert timestamp > 1_600_000_000_000, "Timestamp too small (not in ms?)"
+                    assert (
+                        timestamp > 1_600_000_000_000
+                    ), "Timestamp too small (not in ms?)"
                     assert timestamp < 2_000_000_000_000, "Timestamp too large"
 
                     # Verify timestamp is recent (within last 10 seconds)

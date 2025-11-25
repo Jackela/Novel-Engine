@@ -18,7 +18,6 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointTypeEnum:
     """Test suite for PlotPointType enum."""
 
@@ -133,5 +132,3 @@ class TestPlotPointImportanceEnum:
             importance_order[PlotPointImportance.MINOR]
             > importance_order[PlotPointImportance.SUPPLEMENTAL]
         )
-
-

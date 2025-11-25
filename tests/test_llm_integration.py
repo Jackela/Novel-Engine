@@ -4,6 +4,7 @@ import sys
 import unittest
 from unittest.mock import patch
 
+import pytest
 import yaml
 
 # HACK: Force project root onto path to fix persistent import issue

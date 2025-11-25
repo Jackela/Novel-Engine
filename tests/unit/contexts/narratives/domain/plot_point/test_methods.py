@@ -18,7 +18,6 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointInstanceMethods:
     """Test suite for PlotPoint instance methods."""
 
@@ -113,5 +112,3 @@ class TestPlotPointInstanceMethods:
         assert context["has_consequences"] is True
         assert context["reveals_information"] is True
         assert context["changes_relationships"] is True
-
-

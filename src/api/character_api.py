@@ -147,14 +147,22 @@ class CharacterAPI:
                 character_identity = CharacterIdentity(
                     name=request.name,
                     personality_traits=traits_list,
-                    motivations=[request.background_summary] if request.background_summary else [],
+                    motivations=(
+                        [request.background_summary]
+                        if request.background_summary
+                        else []
+                    ),
                 )
 
                 # Create CharacterState with proper structure
                 character_state = CharacterState(
                     base_identity=character_identity,
                     current_mood=emotional_state,
-                    current_location=request.current_location if hasattr(request, 'current_location') else None,
+                    current_location=(
+                        request.current_location
+                        if hasattr(request, "current_location")
+                        else None
+                    ),
                 )
 
                 result = await self.orchestrator.create_agent_context(
@@ -230,7 +238,9 @@ class CharacterAPI:
                 character_name = character_id
                 try:
                     if self.orchestrator.database:
-                        agent_info = await self.orchestrator.database.get_agent_info(character_id)
+                        agent_info = await self.orchestrator.database.get_agent_info(
+                            character_id
+                        )
                         if agent_info and agent_info.get("character_name"):
                             character_name = agent_info["character_name"]
                 except Exception:

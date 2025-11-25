@@ -53,7 +53,9 @@ class PyramidMarkerAdder:
         r"tests/e2e/",
     ]
 
-    def __init__(self, project_root: Path = None, dry_run: bool = False, verbose: bool = False):
+    def __init__(
+        self, project_root: Path = None, dry_run: bool = False, verbose: bool = False
+    ):
         """Initialize marker adder."""
         self.project_root = project_root or Path.cwd()
         self.dry_run = dry_run
@@ -92,7 +94,9 @@ class PyramidMarkerAdder:
         # Default to unit for all other tests
         return "unit"
 
-    def has_pyramid_marker(self, lines: List[str], line_idx: int, class_markers: Set[str]) -> bool:
+    def has_pyramid_marker(
+        self, lines: List[str], line_idx: int, class_markers: Set[str]
+    ) -> bool:
         """Check if a test function has a pyramid marker."""
         # Check class-level markers first
         if class_markers & self.PYRAMID_MARKERS:
@@ -105,7 +109,7 @@ class PyramidMarkerAdder:
                 if f"@pytest.mark.{marker}" in line:
                     return True
             # Stop looking back if we hit another function/class definition
-            if re.match(r'^    def \w+|^class \w+', line):
+            if re.match(r"^    def \w+|^class \w+", line):
                 break
 
         return False
@@ -118,20 +122,20 @@ class PyramidMarkerAdder:
             List of (line_number, test_name, class_name or None)
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             print(f"  ERROR reading {file_path}: {e}")
             return []
 
-        lines = content.split('\n')
+        lines = content.split("\n")
         unmarked_tests = []
         current_class = None
         class_markers: Set[str] = set()
 
         for i, line in enumerate(lines):
             # Check for class definition
-            class_match = re.match(r'^class (Test\w+)', line)
+            class_match = re.match(r"^class (Test\w+)", line)
             if class_match:
                 current_class = class_match.group(1)
                 class_markers = set()
@@ -145,7 +149,7 @@ class PyramidMarkerAdder:
                 continue
 
             # Check for test function definition (indented = in class, not indented = standalone)
-            test_match = re.match(r'^(    )?def (test_\w+)', line)
+            test_match = re.match(r"^(    )?def (test_\w+)", line)
             if test_match:
                 indent = test_match.group(1)
                 test_name = test_match.group(2)
@@ -154,7 +158,9 @@ class PyramidMarkerAdder:
                 effective_class_markers = class_markers if indent else set()
 
                 if not self.has_pyramid_marker(lines, i, effective_class_markers):
-                    unmarked_tests.append((i, test_name, current_class if indent else None))
+                    unmarked_tests.append(
+                        (i, test_name, current_class if indent else None)
+                    )
                 else:
                     self.stats["tests_already_marked"] += 1
 
@@ -172,7 +178,7 @@ class PyramidMarkerAdder:
             return 0
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
         except Exception as e:
             print(f"  ERROR reading {file_path}: {e}")
@@ -213,16 +219,20 @@ class PyramidMarkerAdder:
 
         if self.dry_run:
             if self.verbose:
-                print(f"  [DRY RUN] Would add {markers_added} @pytest.mark.{marker} to {file_path}")
+                print(
+                    f"  [DRY RUN] Would add {markers_added} @pytest.mark.{marker} to {file_path}"
+                )
                 for line_idx, test_name, class_name in unmarked_tests:
                     loc = f"{class_name}::{test_name}" if class_name else test_name
                     print(f"    - Line {line_idx + 1}: {loc}")
         else:
             try:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.writelines(lines)
                 if self.verbose:
-                    print(f"  Added {markers_added} @pytest.mark.{marker} to {file_path}")
+                    print(
+                        f"  Added {markers_added} @pytest.mark.{marker} to {file_path}"
+                    )
             except Exception as e:
                 print(f"  ERROR writing {file_path}: {e}")
                 return 0
@@ -248,7 +258,11 @@ class PyramidMarkerAdder:
         print(f"Found {len(test_files)} test files to process\n")
 
         # Group files by marker type for reporting
-        files_by_marker: Dict[str, List[Path]] = {"unit": [], "integration": [], "e2e": []}
+        files_by_marker: Dict[str, List[Path]] = {
+            "unit": [],
+            "integration": [],
+            "e2e": [],
+        }
 
         for file_path in sorted(test_files):
             marker = self.determine_marker(file_path)
@@ -292,7 +306,8 @@ def main():
         help="Show what would be changed without modifying files",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Show detailed information about changes",
     )

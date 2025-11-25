@@ -2,6 +2,8 @@ import os
 import unittest
 from unittest.mock import Mock, mock_open, patch
 
+import pytest
+
 from shared_types import CharacterAction
 from src.agents.persona_agent.protocols import (
     ThreatLevel,

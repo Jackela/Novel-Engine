@@ -230,68 +230,71 @@ class SecurityHeaders:
 
     def get_header(self, header_name: str) -> Optional[str]:
         """STANDARD SECURITY HEADER RETRIEVAL
-        
+
         Get the value for a specific security header based on current configuration.
         Useful for testing and validation.
-        
+
         Args:
             header_name: The name of the HTTP header to retrieve
-            
+
         Returns:
             The header value if configured, None otherwise
         """
         # Content Security Policy
-        if header_name in ["Content-Security-Policy", "Content-Security-Policy-Report-Only"]:
+        if header_name in [
+            "Content-Security-Policy",
+            "Content-Security-Policy-Report-Only",
+        ]:
             if self.config.enable_csp:
                 return self._build_csp_header()
             return None
-        
+
         # X-XSS-Protection
         if header_name == "X-XSS-Protection":
             if self.config.enable_xss_protection:
                 return self.config.xss_protection_value
             return None
-        
+
         # X-Content-Type-Options
         if header_name == "X-Content-Type-Options":
             if self.config.enable_content_type_options:
                 return "nosniff"
             return None
-        
+
         # X-Frame-Options
         if header_name == "X-Frame-Options":
             if self.config.enable_frame_options:
                 return self.config.frame_options_value
             return None
-        
+
         # Referrer-Policy
         if header_name == "Referrer-Policy":
             if self.config.enable_referrer_policy:
                 return self.config.referrer_policy_value
             return None
-        
+
         # Permissions-Policy
         if header_name == "Permissions-Policy":
             if self.config.enable_permissions_policy:
                 return self._build_permissions_policy_header()
             return None
-        
+
         # Strict-Transport-Security (HSTS)
         if header_name == "Strict-Transport-Security":
             if self.config.enable_hsts:
                 return self._build_hsts_header()
             return None
-        
+
         # Expect-CT
         if header_name == "Expect-CT":
             if self.config.enable_expect_ct:
                 return self._build_expect_ct_header()
             return None
-        
+
         # Custom headers
         if header_name in self.config.custom_headers:
             return self.config.custom_headers[header_name]
-        
+
         # Static headers
         static_headers = {
             "X-Permitted-Cross-Domain-Policies": "none",
@@ -305,10 +308,10 @@ class SecurityHeaders:
             "X-Security-Framework": "Enterprise-Grade",
             "X-Content-Security": "Validated",
         }
-        
+
         if header_name in static_headers:
             return static_headers[header_name]
-        
+
         return None
 
     def apply_headers(self, response: Response, request: Request) -> Response:
@@ -393,7 +396,9 @@ class SecurityHeaders:
         """STANDARD REQUEST SECURITY VALIDATION"""
         # Force HTTPS if configured (but allow localhost in tests/dev)
         host = request.headers.get("host") or ""
-        is_local = ("localhost" in host) or ("127.0.0.1" in host) or ("testserver" in host)
+        is_local = (
+            ("localhost" in host) or ("127.0.0.1" in host) or ("testserver" in host)
+        )
         if self.config.force_https and request.url.scheme != "https" and not is_local:
             # In production, this would be handled by a reverse proxy
             # but we can log the attempt

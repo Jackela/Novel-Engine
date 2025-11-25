@@ -623,9 +623,7 @@ class TestSecurityIntegration:
 
         # 2. Make authenticated request with proper headers
         headers = {"Authorization": f"Bearer {access_token}"}
-        response = await security_suite.client.get(
-            "/api/characters", headers=headers
-        )
+        response = await security_suite.client.get("/api/characters", headers=headers)
 
         # Should succeed with proper authentication
         # ASGI test transport may pre-route 400/503; treat as acceptable in test context

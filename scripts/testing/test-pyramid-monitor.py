@@ -90,11 +90,13 @@ class TestPyramidMonitor:
         """Parse pytest output to categorize tests."""
         # More efficient single-pass collection using pytest's JSON report plugin
         try:
-            import tempfile
             import os
+            import tempfile
 
             # Use a temp file for collecting test data
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False
+            ) as tmp:
                 tmp_path = tmp.name
 
             try:
@@ -119,7 +121,15 @@ class TestPyramidMonitor:
                 # Now count by marker using separate quick calls
                 for marker in ["unit", "integration", "e2e"]:
                     marker_result = subprocess.run(
-                        [sys.executable, "-m", "pytest", "--collect-only", "-q", "-m", marker],
+                        [
+                            sys.executable,
+                            "-m",
+                            "pytest",
+                            "--collect-only",
+                            "-q",
+                            "-m",
+                            marker,
+                        ],
                         capture_output=True,
                         text=True,
                         timeout=90,
@@ -133,7 +143,9 @@ class TestPyramidMonitor:
                 categorized = sum(len(tests) for tests in self.tests_data.values())
                 missing_count = self.total_tests - categorized
                 if missing_count > 0:
-                    self.missing_markers = [f"test_missing_{i}" for i in range(missing_count)]
+                    self.missing_markers = [
+                        f"test_missing_{i}" for i in range(missing_count)
+                    ]
 
             finally:
                 if os.path.exists(tmp_path):
@@ -195,7 +207,9 @@ class TestPyramidMonitor:
 
         return max(0.0, min(10.0, score))
 
-    def generate_console_report(self, distribution: Dict[str, float], score: float) -> str:
+    def generate_console_report(
+        self, distribution: Dict[str, float], score: float
+    ) -> str:
         """Generate ASCII console report."""
         lines = []
         lines.append("=" * 80)
@@ -231,7 +245,9 @@ class TestPyramidMonitor:
 
         # Missing markers section
         if self.missing_markers:
-            lines.append(f"MISSING MARKERS: {len(self.missing_markers)} tests need classification")
+            lines.append(
+                f"MISSING MARKERS: {len(self.missing_markers)} tests need classification"
+            )
             lines.append("")
 
         # Recommendations
@@ -243,9 +259,7 @@ class TestPyramidMonitor:
         lines.append("=" * 80)
         return "\n".join(lines)
 
-    def generate_json_report(
-        self, distribution: Dict[str, float], score: float
-    ) -> str:
+    def generate_json_report(self, distribution: Dict[str, float], score: float) -> str:
         """Generate JSON report."""
         data = {
             "timestamp": datetime.now().isoformat(),
@@ -295,7 +309,9 @@ class TestPyramidMonitor:
         lines.append("")
 
         if self.missing_markers:
-            lines.append(f"**Missing Markers:** {len(self.missing_markers)} tests need classification")
+            lines.append(
+                f"**Missing Markers:** {len(self.missing_markers)} tests need classification"
+            )
             lines.append("")
 
         lines.append("## Recommendations")
@@ -309,7 +325,9 @@ class TestPyramidMonitor:
     def generate_html_report(self, distribution: Dict[str, float], score: float) -> str:
         """Generate HTML report."""
         # Read template if it exists, otherwise use inline template
-        template_path = self.project_root / "scripts/testing/pyramid-report-template.html"
+        template_path = (
+            self.project_root / "scripts/testing/pyramid-report-template.html"
+        )
 
         if template_path.exists():
             with open(template_path, "r") as f:
@@ -339,7 +357,9 @@ class TestPyramidMonitor:
         rec_html = "".join(f"<li>{rec}</li>" for rec in recommendations)
 
         # Replace placeholders
-        html = template.replace("{{TIMESTAMP}}", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        html = template.replace(
+            "{{TIMESTAMP}}", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
         html = html.replace("{{SCORE}}", f"{score:.1f}")
         html = html.replace("{{TOTAL}}", f"{self.total_tests:,}")
         html = html.replace("{{ROWS}}", "\n".join(rows))
@@ -459,7 +479,9 @@ class TestPyramidMonitor:
             )
 
         if not recommendations:
-            recommendations.append("Test pyramid looks good! Keep up the excellent work.")
+            recommendations.append(
+                "Test pyramid looks good! Keep up the excellent work."
+            )
 
         return recommendations
 

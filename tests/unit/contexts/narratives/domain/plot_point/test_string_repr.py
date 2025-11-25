@@ -18,7 +18,6 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointStringRepresentation:
     """Test suite for PlotPoint string representation methods."""
 
@@ -83,5 +82,3 @@ class TestPlotPointStringRepresentation:
         # repr should include more technical details
         assert "different-repr-test" in repr_str
         assert "critical" in repr_str
-
-

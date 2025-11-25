@@ -575,7 +575,13 @@ class CharacterInteractionProcessor:
                             # Fall back to creating default state if data is in old format
                             default_identity = CharacterIdentity(
                                 name=state_data.get("name", character),
-                                personality_traits=state_data.get("personality_traits", ["adaptive"]) if isinstance(state_data.get("personality_traits"), list) else ["adaptive"],
+                                personality_traits=(
+                                    state_data.get("personality_traits", ["adaptive"])
+                                    if isinstance(
+                                        state_data.get("personality_traits"), list
+                                    )
+                                    else ["adaptive"]
+                                ),
                             )
                             character_states[character] = CharacterState(
                                 base_identity=default_identity,

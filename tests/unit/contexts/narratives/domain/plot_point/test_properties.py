@@ -18,7 +18,6 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointProperties:
     """Test suite for PlotPoint property methods."""
 
@@ -256,5 +255,3 @@ class TestPlotPointProperties:
         )
 
         assert plot_point.affects_characters is False
-
-

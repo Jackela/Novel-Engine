@@ -17,14 +17,15 @@ Test Categories:
 6. Token Validation
 """
 
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timedelta, UTC
-import jwt
 import os
+from datetime import UTC, datetime, timedelta
+
+import jwt
+import pytest
 
 # Import the FastAPI app
-from api_server import app, JWT_SECRET_KEY, JWT_ALGORITHM
+from api_server import JWT_ALGORITHM, JWT_SECRET_KEY, app
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -39,7 +40,7 @@ def mock_credentials():
     return {
         "email": "test@example.com",
         "password": "securepassword123",
-        "remember_me": False
+        "remember_me": False,
     }
 
 
@@ -118,12 +119,14 @@ class TestCookieSecurity:
         credentials_remember = {
             "email": "test@example.com",
             "password": "password123",
-            "remember_me": True
+            "remember_me": True,
         }
 
         response_remember = client.post("/api/auth/login", json=credentials_remember)
         set_cookie_remember = response_remember.headers.get_list("set-cookie")
-        refresh_cookie_remember = [h for h in set_cookie_remember if "refresh_token=" in h][0]
+        refresh_cookie_remember = [
+            h for h in set_cookie_remember if "refresh_token=" in h
+        ][0]
 
         # Extract Max-Age from cookie (format: Max-Age=<seconds>)
         # With remember_me, it should be 30 days = 2592000 seconds
@@ -213,8 +216,9 @@ class TestCookieSecurity:
         # Both access_token and refresh_token should have HttpOnly flag
         for cookie_header in set_cookie_headers:
             if "access_token=" in cookie_header or "refresh_token=" in cookie_header:
-                assert "HttpOnly" in cookie_header, \
-                    f"Cookie missing HttpOnly flag: {cookie_header}"
+                assert (
+                    "HttpOnly" in cookie_header
+                ), f"Cookie missing HttpOnly flag: {cookie_header}"
 
     @pytest.mark.unit
     def test_token_validation_endpoint(self, client, mock_credentials):
@@ -234,8 +238,7 @@ class TestCookieSecurity:
 
         # Test valid token
         valid_response = client.get(
-            "/api/auth/validate",
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/auth/validate", headers={"Authorization": f"Bearer {token}"}
         )
 
         assert valid_response.status_code == 200
@@ -275,14 +278,15 @@ class TestCookieSecurity:
             "email": "test@example.com",
             "exp": datetime.now(UTC) - timedelta(hours=1),  # Expired 1 hour ago
             "iat": datetime.now(UTC) - timedelta(hours=2),
-            "type": "access"
+            "type": "access",
         }
 
-        expired_token = jwt.encode(expired_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        expired_token = jwt.encode(
+            expired_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
+        )
 
         response = client.get(
-            "/api/auth/validate",
-            headers={"Authorization": f"Bearer {expired_token}"}
+            "/api/auth/validate", headers={"Authorization": f"Bearer {expired_token}"}
         )
 
         assert response.status_code == 401
@@ -310,7 +314,7 @@ class TestCookieSecurity:
         # The TestClient will automatically include cookies from previous responses
         refresh_response = client.post(
             "/api/auth/refresh",
-            json={"refresh_token": refresh_token}  # For backward compatibility
+            json={"refresh_token": refresh_token},  # For backward compatibility
         )
 
         assert refresh_response.status_code == 200
@@ -408,7 +412,7 @@ class TestCookieSecurityIntegration:
         credentials = {
             "email": "integrationtest@example.com",
             "password": "password123",
-            "remember_me": False
+            "remember_me": False,
         }
 
         login_response = client.post("/api/auth/login", json=credentials)
@@ -418,15 +422,14 @@ class TestCookieSecurityIntegration:
         # Step 3: Validate token
         validate_response = client.get(
             "/api/auth/validate",
-            headers={"Authorization": f"Bearer {login_data['access_token']}"}
+            headers={"Authorization": f"Bearer {login_data['access_token']}"},
         )
         assert validate_response.status_code == 200
         assert validate_response.json()["valid"] is True
 
         # Step 4: Refresh token
         refresh_response = client.post(
-            "/api/auth/refresh",
-            json={"refresh_token": login_data["refresh_token"]}
+            "/api/auth/refresh", json={"refresh_token": login_data["refresh_token"]}
         )
         assert refresh_response.status_code == 200
 
@@ -444,10 +447,7 @@ class TestCookieSecurityIntegration:
         - HttpOnly flag prevents JavaScript access
         - Even with XSS, attacker cannot steal tokens from cookies
         """
-        credentials = {
-            "email": "xsstest@example.com",
-            "password": "password123"
-        }
+        credentials = {"email": "xsstest@example.com", "password": "password123"}
 
         response = client.post("/api/auth/login", json=credentials)
         assert response.status_code == 200

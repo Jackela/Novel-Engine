@@ -42,7 +42,12 @@ from src.api.error_handlers import (
 )
 from src.api.health_system import HealthMonitor, create_health_data_response
 from src.api.interaction_api import create_interaction_api
-from src.api.logging_system import LogCategory, LogLevel, StructuredLogger, setup_logging
+from src.api.logging_system import (
+    LogCategory,
+    LogLevel,
+    StructuredLogger,
+    setup_logging,
+)
 from src.api.monitoring import setup_monitoring
 
 # Import new integration systems
@@ -206,7 +211,9 @@ async def lifespan(app: FastAPI):
         app.state.health_monitor = global_health_monitor
 
         # Setup system orchestrator
-        orchestrator_mode = OrchestratorMode.TESTING if is_testing else OrchestratorMode.PRODUCTION
+        orchestrator_mode = (
+            OrchestratorMode.TESTING if is_testing else OrchestratorMode.PRODUCTION
+        )
 
         orchestrator_config = OrchestratorConfig(
             mode=orchestrator_mode,
@@ -222,13 +229,11 @@ async def lifespan(app: FastAPI):
         startup_timeout = 30.0 if is_testing else 60.0
         try:
             startup_result = await asyncio.wait_for(
-                global_orchestrator.startup(),
-                timeout=startup_timeout
+                global_orchestrator.startup(), timeout=startup_timeout
             )
         except asyncio.TimeoutError:
             raise ServiceUnavailableException(
-                "System Orchestrator",
-                f"Startup timed out after {startup_timeout}s"
+                "System Orchestrator", f"Startup timed out after {startup_timeout}s"
             )
 
         if not startup_result.success:
@@ -535,7 +540,12 @@ def create_app() -> FastAPI:
 
     # Add trusted host middleware for security in production
     if not config.debug:
-        trusted_hosts = cors_origins + [config.host, "localhost", "127.0.0.1", "testserver"]
+        trusted_hosts = cors_origins + [
+            config.host,
+            "localhost",
+            "127.0.0.1",
+            "testserver",
+        ]
         app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 
     # Enhanced system endpoints
@@ -648,7 +658,9 @@ def create_app() -> FastAPI:
                     environment="startup",
                 )
                 metadata = APIMetadata(
-                    timestamp=datetime.now(), api_version="1.1", server_time=response_time
+                    timestamp=datetime.now(),
+                    api_version="1.1",
+                    server_time=response_time,
                 )
                 response = HealthCheckResponse(data=fallback_data, metadata=metadata)
                 return JSONResponse(
@@ -921,8 +933,7 @@ def _register_legacy_routes(app: FastAPI):
             yield "retry: 3000\n\n"
 
             global_structured_logger.info(
-                f"SSE client connected: {client_id}",
-                category=LogCategory.SYSTEM
+                f"SSE client connected: {client_id}", category=LogCategory.SYSTEM
             )
             active_sse_connections["count"] += 1
 
@@ -959,7 +970,7 @@ def _register_legacy_routes(app: FastAPI):
                     # Client disconnected - clean up and exit gracefully
                     global_structured_logger.info(
                         f"SSE client disconnected: {client_id}",
-                        category=LogCategory.SYSTEM
+                        category=LogCategory.SYSTEM,
                     )
                     active_sse_connections["count"] -= 1
                     break
@@ -969,7 +980,7 @@ def _register_legacy_routes(app: FastAPI):
                     global_structured_logger.error(
                         f"SSE event generation error for client {client_id}: {e}",
                         exc_info=e,
-                        category=LogCategory.ERROR
+                        category=LogCategory.ERROR,
                     )
 
                     error_event = {
@@ -978,7 +989,7 @@ def _register_legacy_routes(app: FastAPI):
                         "title": "Stream Error",
                         "description": f"Internal error: {str(e)}",
                         "timestamp": int(time.time() * 1000),
-                        "severity": "high"
+                        "severity": "high",
                     }
 
                     yield f"data: {json.dumps(error_event)}\n\n"
@@ -988,7 +999,7 @@ def _register_legacy_routes(app: FastAPI):
             global_structured_logger.error(
                 f"Fatal SSE error for client {client_id}: {fatal_error}",
                 exc_info=fatal_error,
-                category=LogCategory.ERROR
+                category=LogCategory.ERROR,
             )
             active_sse_connections["count"] -= 1
             raise
@@ -1023,7 +1034,7 @@ def _register_legacy_routes(app: FastAPI):
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
                 "X-Accel-Buffering": "no",  # Disable nginx buffering for streaming
-            }
+            },
         )
 
     @app.post("/simulations", response_model=dict)

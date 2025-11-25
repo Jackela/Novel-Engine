@@ -30,10 +30,7 @@ class TestWorldBuildingFlow:
     """E2E tests for world building and configuration."""
 
     def test_world_configuration_complete(
-        self,
-        client,
-        data_factory,
-        performance_tracker
+        self, client, data_factory, performance_tracker
     ):
         """
         Test complete world building workflow.
@@ -48,59 +45,60 @@ class TestWorldBuildingFlow:
         # Step 1: Create world with comprehensive settings
         start_time = time.time()
         world_data = data_factory.create_world_data(
-            name="Aetheria",
-            description="A realm where magic and technology coexist"
+            name="Aetheria", description="A realm where magic and technology coexist"
         )
 
         # Enhance world with detailed settings
-        world_data.update({
-            "settings": {
-                "genre": "science-fantasy",
-                "theme": "exploration",
-                "tone": "hopeful",
-                "tech_level": "advanced",
-                "magic_level": "moderate",
-                "danger_level": "medium"
-            },
-            "locations": [
-                {
-                    "name": "Crystal Spire",
-                    "description": "A towering structure of crystallized energy",
-                    "type": "landmark",
-                    "accessibility": "public"
+        world_data.update(
+            {
+                "settings": {
+                    "genre": "science-fantasy",
+                    "theme": "exploration",
+                    "tone": "hopeful",
+                    "tech_level": "advanced",
+                    "magic_level": "moderate",
+                    "danger_level": "medium",
                 },
-                {
-                    "name": "Shadowfen Marshes",
-                    "description": "Dark wetlands shrouded in mystery",
-                    "type": "wilderness",
-                    "accessibility": "dangerous"
-                },
-                {
-                    "name": "Haven City",
-                    "description": "The central hub of civilization",
-                    "type": "settlement",
-                    "accessibility": "public"
-                }
-            ],
-            "rules": [
-                "Magic requires catalysts from natural sources",
-                "Technology is powered by crystalline energy",
-                "Different regions have varying magic density",
-                "Time flows normally across all locations"
-            ],
-            "factions": [
-                {
-                    "name": "The Crystalline Order",
-                    "description": "Mages who study energy manipulation",
-                    "alignment": "neutral"
-                },
-                {
-                    "name": "Tech Consortium",
-                    "description": "Engineers and inventors",
-                    "alignment": "progressive"
-                }
-            ]
-        })
+                "locations": [
+                    {
+                        "name": "Crystal Spire",
+                        "description": "A towering structure of crystallized energy",
+                        "type": "landmark",
+                        "accessibility": "public",
+                    },
+                    {
+                        "name": "Shadowfen Marshes",
+                        "description": "Dark wetlands shrouded in mystery",
+                        "type": "wilderness",
+                        "accessibility": "dangerous",
+                    },
+                    {
+                        "name": "Haven City",
+                        "description": "The central hub of civilization",
+                        "type": "settlement",
+                        "accessibility": "public",
+                    },
+                ],
+                "rules": [
+                    "Magic requires catalysts from natural sources",
+                    "Technology is powered by crystalline energy",
+                    "Different regions have varying magic density",
+                    "Time flows normally across all locations",
+                ],
+                "factions": [
+                    {
+                        "name": "The Crystalline Order",
+                        "description": "Mages who study energy manipulation",
+                        "alignment": "neutral",
+                    },
+                    {
+                        "name": "Tech Consortium",
+                        "description": "Engineers and inventors",
+                        "alignment": "progressive",
+                    },
+                ],
+            }
+        )
 
         # Note: Actual API endpoints may vary - adapting to what's available
         # If /api/worlds doesn't exist, this test documents the desired API
@@ -110,7 +108,10 @@ class TestWorldBuildingFlow:
         if response.status_code == 404:
             pytest.skip("World API endpoint not yet implemented")
 
-        assert response.status_code in [200, 201], f"World creation failed: {response.text}"
+        assert response.status_code in [
+            200,
+            201,
+        ], f"World creation failed: {response.text}"
 
         world_result = response.json()
         performance_tracker.record("world_creation", time.time() - start_time)
@@ -136,7 +137,7 @@ class TestWorldBuildingFlow:
                     "name": "Ancient Library",
                     "description": "Repository of forgotten knowledge",
                     "type": "landmark",
-                    "accessibility": "restricted"
+                    "accessibility": "restricted",
                 }
             ]
         }
@@ -167,10 +168,7 @@ class TestWorldBuildingFlow:
     def test_world_validation(self, client, data_factory):
         """Test world configuration validation."""
         # Test 1: Create world with minimal valid data
-        minimal_world = {
-            "name": "Minimal World",
-            "description": "A simple world"
-        }
+        minimal_world = {"name": "Minimal World", "description": "A simple world"}
 
         response = client.post("/api/worlds", json=minimal_world)
 
@@ -189,10 +187,7 @@ class TestWorldBuildingFlow:
         assert response.status_code == 422, "Should reject world without name"
 
         # Test 3: World with empty name
-        empty_name_world = {
-            "name": "",
-            "description": "Empty name world"
-        }
+        empty_name_world = {"name": "", "description": "Empty name world"}
 
         response = client.post("/api/worlds", json=empty_name_world)
         assert response.status_code == 422, "Should reject world with empty name"
@@ -215,13 +210,9 @@ class TestWorldBuildingFlow:
             {
                 "name": "Northern Peaks",
                 "description": "Mountain range",
-                "type": "terrain"
+                "type": "terrain",
             },
-            {
-                "name": "Southern Seas",
-                "description": "Ocean waters",
-                "type": "terrain"
-            }
+            {"name": "Southern Seas", "description": "Ocean waters", "type": "terrain"},
         ]
 
         for location in locations_to_add:
@@ -250,7 +241,7 @@ class TestWorldBuildingFlow:
         world_data["rules"] = [
             "Magic is forbidden",
             "Technology is limited to medieval level",
-            "Resurrection is impossible"
+            "Resurrection is impossible",
         ]
 
         response = client.post("/api/worlds", json=world_data)
@@ -287,15 +278,11 @@ class TestWorldBuildingFlow:
 
         # Create characters associated with this world
         char_data = data_factory.create_character_data(
-            name="World Native",
-            agent_id="world_native"
+            name="World Native", agent_id="world_native"
         )
 
         # Add world reference if supported
-        char_data["metadata"] = {
-            "world_id": world_id,
-            "origin": "Character World"
-        }
+        char_data["metadata"] = {"world_id": world_id, "origin": "Character World"}
 
         response = client.post("/api/characters", json=char_data)
         assert response.status_code in [200, 201]
@@ -305,19 +292,14 @@ class TestWorldBuildingFlow:
         char_ids = [c.get("agent_id") for c in characters]
         assert "world_native" in char_ids
 
-    def test_world_state_persistence(
-        self,
-        client,
-        data_factory,
-        performance_tracker
-    ):
+    def test_world_state_persistence(self, client, data_factory, performance_tracker):
         """Test that world state persists across operations."""
         # Create world
         world_data = data_factory.create_world_data(name="Persistent World")
         world_data["settings"] = {
             "time_of_day": "dawn",
             "season": "spring",
-            "year": 1205
+            "year": 1205,
         }
 
         response = client.post("/api/worlds", json=world_data)
@@ -338,14 +320,17 @@ class TestWorldBuildingFlow:
             world_data = response.json().get("data", response.json())
             assert world_data.get("name") == "Persistent World"
 
-            performance_tracker.record(f"world_retrieval_{i+1}", time.time() - start_time)
+            performance_tracker.record(
+                f"world_retrieval_{i+1}", time.time() - start_time
+            )
 
             time.sleep(0.5)  # Small delay between retrievals
 
         # Verify consistency
         perf_summary = performance_tracker.get_summary()
         retrieval_times = [
-            m["duration"] for m in perf_summary["operations"]
+            m["duration"]
+            for m in perf_summary["operations"]
             if "world_retrieval_" in m["operation"]
         ]
 
@@ -379,10 +364,7 @@ class TestWorldBuildingFlow:
         assert response.status_code == 404, "Deleted world should not be retrievable"
 
     def test_multiple_worlds_coexistence(
-        self,
-        client,
-        data_factory,
-        performance_tracker
+        self, client, data_factory, performance_tracker
     ):
         """Test that multiple worlds can coexist independently."""
         # Create multiple worlds
@@ -399,13 +381,15 @@ class TestWorldBuildingFlow:
 
             assert response.status_code in [200, 201]
 
-            world_id = response.json().get("data", {}).get("id") or name.lower().replace(" ", "_")
+            world_id = response.json().get("data", {}).get(
+                "id"
+            ) or name.lower().replace(" ", "_")
             created_worlds.append((name, world_id))
 
         creation_time = time.time() - start_time
-        performance_tracker.record("multiple_worlds_creation", creation_time, {
-            "count": len(world_names)
-        })
+        performance_tracker.record(
+            "multiple_worlds_creation", creation_time, {"count": len(world_names)}
+        )
 
         # Verify all worlds exist
         response = client.get("/api/worlds")
