@@ -181,7 +181,7 @@ class TestCharacterContextIntegration:
             ), f"Score {score} should have modifier {expected_modifier}, got {modifier}"
 
     @pytest.mark.integration
-@pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_character_application_service_create_character(
         self, character_application_service, sample_character_data
     ):
@@ -211,7 +211,7 @@ class TestCharacterContextIntegration:
         character_application_service.command_handlers.handle_command.assert_called_once()
 
     @pytest.mark.integration
-@pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_character_application_service_duplicate_name_validation(
         self, character_application_service, sample_character_data
     ):
@@ -259,7 +259,7 @@ class TestCharacterContextIntegration:
             CreateCharacterCommand(**invalid_data)
 
     @pytest.mark.integration
-@pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_character_stats_updates(self, character_application_service):
         """Test character stats update functionality."""
         character_id = str(CharacterID.generate())
@@ -284,7 +284,7 @@ class TestCharacterContextIntegration:
         character_application_service.command_handlers.handle_command.assert_called_once()
 
     @pytest.mark.integration
-@pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_character_level_up(self, character_application_service):
         """Test character level up functionality."""
         character_id = str(CharacterID.generate())
@@ -303,7 +303,7 @@ class TestCharacterContextIntegration:
         character_application_service.command_handlers.handle_command.assert_called_once()
 
     @pytest.mark.integration
-@pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_character_healing_and_damage(self, character_application_service):
         """Test character healing and damage functionality."""
         character_id = str(CharacterID.generate())
@@ -335,7 +335,7 @@ class TestCharacterContextIntegration:
         )
 
     @pytest.mark.integration
-@pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_character_query_operations(self, character_application_service):
         """Test character query operations."""
         # Mock repository query methods

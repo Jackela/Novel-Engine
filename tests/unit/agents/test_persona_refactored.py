@@ -15,12 +15,12 @@ from typing import Any, Dict
 # Add src to path for imports
 sys.path.append("src")
 
+import pytest
+
 # Import components to test
 try:
     from src.agents.director_agent import DirectorAgent
     from src.agents.persona_agent import PersonaAgent
-import pytest
-
     print("✅ Component imports successful")
     AGENTS_AVAILABLE = True
 except ImportError as e:
