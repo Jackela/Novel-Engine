@@ -1,6 +1,6 @@
 # Testing Infrastructure Requirements
 pytest>=7.0.0
-pytest-asyncio>=0.20.0
+pytest-asyncio>=0.21.0,<1.0.0  # Pin to 0.x version to avoid breaking changes in 1.x
 pytest-mock>=3.10.0
 pytest-cov>=4.0.0
 pytest-benchmark>=4.0.0
