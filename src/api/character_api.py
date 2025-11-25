@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException, Path
 from pydantic import BaseModel, Field, field_validator
 
-from src.core.data_models import CharacterState, EmotionalState
+from src.core.data_models import CharacterIdentity, CharacterState, EmotionalState
 from src.core.system_orchestrator import SystemOrchestrator
 from src.templates.character.persona_models import CharacterArchetype
 
@@ -136,13 +136,25 @@ class CharacterAPI:
                         EmotionalState, request.dominant_emotion.upper()
                     )
 
-                character_state = CharacterState(
-                    agent_id=request.agent_id,
+                # Parse personality_traits string into list
+                traits_list = [
+                    t.strip()
+                    for t in request.personality_traits.split(",")
+                    if t.strip()
+                ]
+
+                # Create CharacterIdentity with request data
+                character_identity = CharacterIdentity(
                     name=request.name,
-                    background_summary=request.background_summary,
-                    personality_traits=request.personality_traits,
-                    emotional_state=emotional_state,
-                    skills=request.skills,
+                    personality_traits=traits_list,
+                    motivations=[request.background_summary] if request.background_summary else [],
+                )
+
+                # Create CharacterState with proper structure
+                character_state = CharacterState(
+                    base_identity=character_identity,
+                    current_mood=emotional_state,
+                    current_location=request.current_location if hasattr(request, 'current_location') else None,
                 )
 
                 result = await self.orchestrator.create_agent_context(
@@ -161,6 +173,8 @@ class CharacterAPI:
                         result.error.message if result.error else "Unknown error"
                     )
                     raise HTTPException(status_code=400, detail=error_message)
+            except HTTPException:
+                raise
             except ValueError as e:
                 raise HTTPException(status_code=422, detail=str(e))
             except Exception as e:
@@ -212,11 +226,20 @@ class CharacterAPI:
                 if character_id not in active_agents:
                     raise HTTPException(status_code=404, detail="Character not found")
 
+                # Try to get character name from database
+                character_name = character_id
+                try:
+                    if self.orchestrator.database:
+                        agent_info = await self.orchestrator.database.get_agent_info(character_id)
+                        if agent_info and agent_info.get("character_name"):
+                            character_name = agent_info["character_name"]
+                except Exception:
+                    pass  # Fall back to character_id as name
+
                 # Get character information from orchestrator
-                # For now, return basic information
                 return {
                     "agent_id": character_id,
-                    "name": character_id,
+                    "name": character_name,
                     "current_status": "active",
                     "last_activity": active_agents[character_id].isoformat(),
                     "created_at": active_agents[character_id].isoformat(),
@@ -264,6 +287,39 @@ class CharacterAPI:
                 raise
             except Exception as e:
                 logger.error(f"Error updating character {character_id}: {e}")
+                raise HTTPException(status_code=500, detail="Internal server error.")
+
+        @app.delete("/api/characters/{character_id}", response_model=dict)
+        async def delete_character(
+            character_id: str = Path(..., description="Character ID")
+        ):
+            """Delete a character."""
+            if not self.orchestrator:
+                raise HTTPException(
+                    status_code=503, detail="System not ready. Please try again."
+                )
+
+            try:
+                # Check if character exists
+                active_agents = getattr(self.orchestrator, "active_agents", {})
+                if character_id not in active_agents:
+                    raise HTTPException(status_code=404, detail="Character not found")
+
+                # Remove from active agents
+                del active_agents[character_id]
+
+                # Log deletion
+                logger.info(f"Character {character_id} deleted successfully")
+
+                return {
+                    "message": "Character deleted successfully.",
+                    "agent_id": character_id,
+                    "deleted_at": datetime.now().isoformat(),
+                }
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"Error deleting character {character_id}: {e}")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
 

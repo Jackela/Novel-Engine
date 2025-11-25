@@ -748,6 +748,45 @@ class ContextDatabase:
                 ),
             )
 
+    async def get_agent_info(self, agent_id: AgentID) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve agent information from the database.
+
+        Args:
+            agent_id: The unique agent identifier
+
+        Returns:
+            Dictionary with agent info or None if not found
+        """
+        try:
+            async with self.get_enhanced_connection() as connection:
+                cursor = await connection.execute(
+                    """
+                    SELECT agent_id, character_name, faction_data, personality_traits,
+                           core_beliefs, created_at, last_updated, is_active
+                    FROM agents WHERE agent_id = ?
+                    """,
+                    (agent_id,),
+                )
+                row = await cursor.fetchone()
+
+                if row:
+                    return {
+                        "agent_id": row[0],
+                        "character_name": row[1],
+                        "faction_data": json.loads(row[2]) if row[2] else [],
+                        "personality_traits": json.loads(row[3]) if row[3] else [],
+                        "core_beliefs": json.loads(row[4]) if row[4] else [],
+                        "created_at": row[5],
+                        "last_updated": row[6],
+                        "is_active": row[7],
+                    }
+                return None
+
+        except Exception as e:
+            logger.error(f"Failed to get agent info for {agent_id}: {e}")
+            return None
+
     # STANDARD DATABASE MAINTENANCE ENHANCED BY SYSTEM HEALTH
 
     async def perform_standard_maintenance(self) -> StandardResponse:

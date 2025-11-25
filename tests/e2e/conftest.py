@@ -275,7 +275,8 @@ class APITestHelper:
         response = self.client.get("/api/characters")
         response.raise_for_status()
         data = response.json()
-        return data.get("data", {}).get("characters", [])
+        # API returns {"characters": [...]} directly, not wrapped in data
+        return data.get("characters", [])
 
     def delete_character(self, agent_id: str) -> bool:
         """Delete a character."""

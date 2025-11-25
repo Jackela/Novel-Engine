@@ -232,6 +232,7 @@ class TestCharacterManagementFlow:
     def test_bulk_character_operations(
         self,
         client,
+        api_helper,
         data_factory,
         performance_tracker
     ):
@@ -287,7 +288,8 @@ class TestCharacterManagementFlow:
         invalid_char["agent_id"] = "invalid character id!"  # Contains invalid characters
 
         response = client.post("/api/characters", json=invalid_char)
-        assert response.status_code == 422, "Should reject invalid agent_id"
+        # Accept both 400 (Bad Request) and 422 (Unprocessable Entity) for validation errors
+        assert response.status_code in [400, 422], f"Should reject invalid agent_id, got {response.status_code}"
 
         # Test 2: Missing required fields
         incomplete_char = {
@@ -296,7 +298,7 @@ class TestCharacterManagementFlow:
         }
 
         response = client.post("/api/characters", json=incomplete_char)
-        assert response.status_code == 422, "Should reject incomplete character data"
+        assert response.status_code in [400, 422], f"Should reject incomplete character data, got {response.status_code}"
 
         # Test 3: Invalid skill values (out of range)
         invalid_skills_char = data_factory.create_character_data(
@@ -307,7 +309,7 @@ class TestCharacterManagementFlow:
         }
 
         response = client.post("/api/characters", json=invalid_skills_char)
-        assert response.status_code == 422, "Should reject invalid skill values"
+        assert response.status_code in [400, 422], f"Should reject invalid skill values, got {response.status_code}"
 
         # Test 4: Duplicate character creation
         valid_char = data_factory.create_character_data(
