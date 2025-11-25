@@ -25,6 +25,13 @@ try:
 except ImportError:  # pragma: no cover
     pytest_plugins = tuple()
 
+
+def pytest_configure(config):
+    """Configure pytest-asyncio mode."""
+    # Set asyncio_mode to auto if not already set
+    if not hasattr(config.option, "asyncio_mode"):
+        config.option.asyncio_mode = "auto"
+
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
