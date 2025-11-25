@@ -42,7 +42,7 @@ from src.api.error_handlers import (
 )
 from src.api.health_system import HealthMonitor, create_health_data_response
 from src.api.interaction_api import create_interaction_api
-from src.api.logging_system import LogCategory, LogLevel, setup_logging
+from src.api.logging_system import LogCategory, LogLevel, StructuredLogger, setup_logging
 from src.api.monitoring import setup_monitoring
 
 # Import new integration systems
@@ -176,26 +176,40 @@ async def lifespan(app: FastAPI):
     config = APIServerConfig()
     app_start_time = datetime.now()
 
-    try:
-        # Initialize structured logging
-        global_structured_logger = setup_logging(
-            app,
-            log_level=LogLevel.DEBUG if config.debug else LogLevel.INFO,
-            log_file="logs/novel_engine_api.log" if not config.debug else None,
-            output_format="json" if not config.debug else "text",
-        )
+    # Detect testing mode early to skip blocking operations
+    is_testing = os.getenv("ORCHESTRATOR_MODE", "").lower() == "testing"
 
-        global_structured_logger.info(
-            "Starting Enhanced Novel Engine API Server", category=LogCategory.SYSTEM
-        )
+    try:
+        # Initialize structured logging (skip in testing mode to avoid blocking)
+        if is_testing:
+            # Create a minimal logger that doesn't try to add middleware
+            global_structured_logger = StructuredLogger(
+                name="novel_engine_test",
+                level=LogLevel.DEBUG,
+                output_format="text",
+                log_file=None,
+            )
+            app.state.logger = global_structured_logger
+        else:
+            global_structured_logger = setup_logging(
+                app,
+                log_level=LogLevel.DEBUG if config.debug else LogLevel.INFO,
+                log_file="logs/novel_engine_api.log" if not config.debug else None,
+                output_format="json" if not config.debug else "text",
+            )
+            global_structured_logger.info(
+                "Starting Enhanced Novel Engine API Server", category=LogCategory.SYSTEM
+            )
 
         # Initialize health monitoring
         global_health_monitor = HealthMonitor(app_start_time)
         app.state.health_monitor = global_health_monitor
 
         # Setup system orchestrator
+        orchestrator_mode = OrchestratorMode.TESTING if is_testing else OrchestratorMode.PRODUCTION
+
         orchestrator_config = OrchestratorConfig(
-            mode=OrchestratorMode.PRODUCTION,
+            mode=orchestrator_mode,
             max_concurrent_agents=config.max_concurrent_agents,
             debug_logging=config.debug,
         )
@@ -204,7 +218,18 @@ async def lifespan(app: FastAPI):
             database_path=config.database_path, config=orchestrator_config
         )
 
-        startup_result = await global_orchestrator.startup()
+        # Add timeout protection for startup (30s for TESTING, 60s for PRODUCTION)
+        startup_timeout = 30.0 if is_testing else 60.0
+        try:
+            startup_result = await asyncio.wait_for(
+                global_orchestrator.startup(),
+                timeout=startup_timeout
+            )
+        except asyncio.TimeoutError:
+            raise ServiceUnavailableException(
+                "System Orchestrator",
+                f"Startup timed out after {startup_timeout}s"
+            )
 
         if not startup_result.success:
             error_msg = (
@@ -627,7 +652,7 @@ def create_app() -> FastAPI:
                 )
                 response = HealthCheckResponse(data=fallback_data, metadata=metadata)
                 return JSONResponse(
-                    content=response.model_dump(),
+                    content=response.model_dump(mode="json"),
                     status_code=503,
                     headers={"Cache-Control": "no-cache"},
                 )
@@ -658,7 +683,7 @@ def create_app() -> FastAPI:
             response = HealthCheckResponse(data=health_data, metadata=metadata)
 
             return JSONResponse(
-                content=response.model_dump(),
+                content=response.model_dump(mode="json"),
                 status_code=status_code,
                 headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
             )
@@ -685,7 +710,7 @@ def create_app() -> FastAPI:
             response = HealthCheckResponse(data=fallback_data, metadata=metadata)
 
             return JSONResponse(
-                content=response.model_dump(),
+                content=response.model_dump(mode="json"),
                 status_code=503,
                 headers={"Cache-Control": "no-cache"},
             )

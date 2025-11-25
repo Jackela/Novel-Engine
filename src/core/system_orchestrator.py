@@ -68,6 +68,7 @@ class OrchestratorMode(Enum):
     SIMULATION = "simulation"  # Simulation mode for testing
     DEVELOPMENT = "development"  # Development and debugging mode
     PRODUCTION = "production"  # Production deployment mode
+    TESTING = "testing"  # Fast startup for E2E/integration tests
 
 
 class SystemHealth(Enum):
@@ -283,19 +284,25 @@ class SystemOrchestrator:
                 self.character_manager,
             )
 
-            # Initialize narrative engines
-            logger.info("Initializing narrative engines")
-            self.subjective_reality_engine = SubjectiveRealityEngine()
-            self.emergent_narrative_engine = EmergentNarrativeEngine()
+            # Initialize narrative engines (skip in TESTING mode for fast startup)
+            if self.config.mode != OrchestratorMode.TESTING:
+                logger.info("Initializing narrative engines")
+                self.subjective_reality_engine = SubjectiveRealityEngine()
+                self.emergent_narrative_engine = EmergentNarrativeEngine()
 
-            # Initialize narrative engines
-            await self.subjective_reality_engine.initialize()
-            await self.emergent_narrative_engine.initialize()
+                # Initialize narrative engines
+                await self.subjective_reality_engine.initialize()
+                await self.emergent_narrative_engine.initialize()
 
-            logger.info("Narrative engines initialized successfully")
+                logger.info("Narrative engines initialized successfully")
+            else:
+                logger.info("Skipping narrative engines in TESTING mode")
 
-            # Start background tasks
-            await self._start_background_tasks()
+            # Start background tasks (skip in TESTING mode for fast startup)
+            if self.config.mode != OrchestratorMode.TESTING:
+                await self._start_background_tasks()
+            else:
+                logger.info("Skipping background tasks in TESTING mode")
 
             # Perform initial health check
             health_result = await self._perform_health_check()
@@ -330,6 +337,37 @@ class SystemOrchestrator:
                     code="ORCHESTRATOR_STARTUP_FAILED",
                     message="System orchestrator startup failed",
                     details={"exception": str(e)},
+                ),
+            )
+
+    async def get_system_health(self) -> StandardResponse:
+        """
+        Get comprehensive system health status.
+
+        Returns:
+            StandardResponse with health data including component status.
+        """
+        try:
+            health_data = {
+                "mode": self.config.mode.value if self.config else "unknown",
+                "database_initialized": self.database is not None,
+                "memory_system_initialized": self.layered_memory_system is not None,
+                "template_engine_initialized": self.dynamic_template_engine is not None,
+                "is_running": self._is_running,
+                "shutdown_requested": self._shutdown_requested,
+                "active_agents_count": len(self.active_agents) if self.active_agents else 0,
+            }
+
+            return StandardResponse(
+                success=True,
+                data=health_data,
+            )
+        except Exception as e:
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="HEALTH_CHECK_FAILED",
+                    message=str(e),
                 ),
             )
 

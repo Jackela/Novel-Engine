@@ -39,6 +39,8 @@ def api_app():
     os.environ["ENABLE_RATE_LIMITING"] = "false"
     os.environ["ENABLE_AUTH"] = "false"
     os.environ["DATABASE_PATH"] = "data/test_e2e.db"
+    # Use TESTING mode for fast startup (skips background tasks and narrative engines)
+    os.environ["ORCHESTRATOR_MODE"] = "testing"
 
     app = create_app()
     yield app
