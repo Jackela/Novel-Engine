@@ -163,12 +163,8 @@ def mock_gemini_response():
     return response
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """创建事件循环用于异步测试"""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# Note: event_loop fixture removed - pytest-asyncio 0.21+ handles this automatically
+# Defining a custom event_loop fixture is deprecated and causes conflicts
 
 
 @pytest.fixture(autouse=True)
