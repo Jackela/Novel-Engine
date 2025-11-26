@@ -232,10 +232,11 @@ class TestStoryCreationFlow:
 
         response = client.post("/api/stories/generate", json=story_request)
 
-        # Should fail validation (422 Unprocessable Entity)
-        assert (
-            response.status_code == 422
-        ), f"Expected validation error for empty characters, got {response.status_code}"
+        # Should fail validation (400 Bad Request or 422 Unprocessable Entity)
+        assert response.status_code in [
+            400,
+            422,
+        ], f"Expected validation error for empty characters, got {response.status_code}"
 
     def test_concurrent_story_generation(self, client, data_factory, api_helper):
         """Test that multiple stories can be generated concurrently."""

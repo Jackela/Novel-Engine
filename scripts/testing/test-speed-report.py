@@ -251,38 +251,89 @@ class TestSpeedAnalyzer:
 
 def main():
     """Main entry point."""
-    test_path = sys.argv[1] if len(sys.argv) > 1 else "tests/"
+    import argparse
 
-    analyzer = TestSpeedAnalyzer(test_path)
+    parser = argparse.ArgumentParser(description="Test Speed Analysis Tool")
+    parser.add_argument("test_path", nargs="?", default="tests/", help="Path to tests directory")
+    parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+    args = parser.parse_args()
 
-    print("Test Speed Analysis Tool")
-    print("=" * 80)
+    analyzer = TestSpeedAnalyzer(args.test_path)
+
+    # Suppress stdout for JSON format
+    if args.format != "json":
+        print("Test Speed Analysis Tool", file=sys.stderr)
+        print("=" * 80, file=sys.stderr)
 
     if not analyzer.run_tests_with_timing():
-        print("Failed to collect test timing data.")
-        sys.exit(1)
+        if args.format == "json":
+            # Output minimal JSON even on failure
+            print(json.dumps({
+                "test_path": args.test_path,
+                "total_tests": 0,
+                "slow_tests": {"count": 0},
+                "error": "Failed to collect test timing data"
+            }))
+            sys.exit(0)  # Don't fail for JSON format
+        else:
+            print("Failed to collect test timing data.", file=sys.stderr)
+            sys.exit(1)
 
     analyzer.categorize_tests()
 
-    # Print report
-    print(analyzer.generate_report())
+    if args.format == "json":
+        # Output JSON directly to stdout
+        total_tests = len(analyzer.test_timings)
+        data = {
+            "test_path": args.test_path,
+            "total_tests": total_tests,
+            "thresholds": {
+                "fast_ms": analyzer.FAST_THRESHOLD * 1000,
+                "medium_ms": analyzer.MEDIUM_THRESHOLD * 1000,
+            },
+            "slow_tests": {
+                "count": len(analyzer.categorized_tests["slow"]),
+                "tests": [
+                    {"name": name, "duration_s": duration}
+                    for name, duration in analyzer.categorized_tests["slow"][:10]
+                ],
+            },
+            "distribution": {
+                "fast": {
+                    "count": len(analyzer.categorized_tests["fast"]),
+                    "percentage": (len(analyzer.categorized_tests["fast"]) / max(total_tests, 1)) * 100,
+                },
+                "medium": {
+                    "count": len(analyzer.categorized_tests["medium"]),
+                    "percentage": (len(analyzer.categorized_tests["medium"]) / max(total_tests, 1)) * 100,
+                },
+                "slow": {
+                    "count": len(analyzer.categorized_tests["slow"]),
+                    "percentage": (len(analyzer.categorized_tests["slow"]) / max(total_tests, 1)) * 100,
+                },
+            },
+        }
+        print(json.dumps(data, indent=2))
+    else:
+        # Print text report
+        print(analyzer.generate_report())
 
-    # Save JSON report
-    analyzer.save_json_report("test-speed-report.json")
+        # Save JSON report
+        analyzer.save_json_report("test-speed-report.json")
 
-    # Show files that need markers
-    print("\n" + "=" * 80)
-    print("FILES NEEDING SPEED MARKERS:")
-    print("=" * 80)
+        # Show files that need markers
+        print("\n" + "=" * 80)
+        print("FILES NEEDING SPEED MARKERS:")
+        print("=" * 80)
 
-    files_by_category = analyzer.get_test_files_by_category()
+        files_by_category = analyzer.get_test_files_by_category()
 
-    for category in ["fast", "medium", "slow"]:
-        files = files_by_category[category]
-        if files:
-            print(f"\n{category.upper()} Files ({len(files)}):")
-            for file_path in sorted(files):
-                print(f"  - {file_path}")
+        for category in ["fast", "medium", "slow"]:
+            files = files_by_category[category]
+            if files:
+                print(f"\n{category.upper()} Files ({len(files)}):")
+                for file_path in sorted(files):
+                    print(f"  - {file_path}")
 
 
 if __name__ == "__main__":
