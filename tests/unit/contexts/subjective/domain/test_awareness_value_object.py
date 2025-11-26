@@ -21,6 +21,7 @@ class TestAwarenessStateCreation:
     """Test suite for AwarenessState value object creation and validation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_minimal_awareness_state_creation(self):
         """Test creating awareness state with minimal required fields."""
         state = AwarenessState(
@@ -94,6 +95,7 @@ class TestAwarenessStateCreation:
 class TestAwarenessStateValidation:
     """Test suite for AwarenessState validation logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_invalid_awareness_modifier_type(self):
         """Test validation fails with invalid modifier type."""
@@ -227,6 +229,7 @@ class TestCalculateEffectiveAlertness:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_no_modifiers_returns_current_alertness(self):
         """Test that with no modifiers, effective alertness equals current alertness."""
         state = AwarenessState(
@@ -403,6 +406,7 @@ class TestPerceptionBonus:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_unconscious_severe_penalty(self):
         """Test unconscious state has severe perception penalty."""
         state = AwarenessState(
@@ -511,6 +515,7 @@ class TestReactionTimeModifier:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_unconscious_no_reaction(self):
         """Test unconscious state has no reaction capability."""
         state = AwarenessState(
@@ -591,6 +596,7 @@ class TestStealthDetection:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_unconscious_cannot_detect_stealth(self):
         """Test unconscious entities cannot detect stealth."""
         state = AwarenessState(
@@ -673,6 +679,7 @@ class TestCombatSurprise:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_unconscious_always_surprised(self):
         """Test unconscious entities are always surprised by combat."""
         state = AwarenessState(
@@ -762,6 +769,7 @@ class TestCombatSurprise:
 class TestImmutableOperations:
     """Test suite for immutable operations that create new instances."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_with_modified_alertness_creates_new_instance(self):
         """Test with_modified_alertness returns new instance with changed alertness."""
@@ -857,6 +865,7 @@ class TestImmutableOperations:
 class TestComplexScenarios:
     """Test suite for complex scenarios combining multiple factors."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_exhausted_guard_scenario(self):
         """Test a complex scenario: exhausted guard on duty."""
@@ -1011,6 +1020,7 @@ class TestEdgeCases:
     """Test suite for edge cases and boundary conditions."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_all_modifier_types_combined(self):
         """Test awareness state with all possible modifier types."""
         all_modifiers = {
@@ -1110,6 +1120,7 @@ class TestEdgeCases:
 class TestEquality:
     """Test suite for equality comparison."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_identical_states_are_equal(self):
         """Test that identical awareness states are equal."""

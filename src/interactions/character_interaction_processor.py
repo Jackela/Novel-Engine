@@ -24,7 +24,9 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Import enhanced data models
 from src.core.data_models import (
+    CharacterIdentity,
     CharacterState,
+    EmotionalState,
     ErrorInfo,
     MemoryItem,
     MemoryType,
@@ -566,18 +568,48 @@ class CharacterInteractionProcessor:
 
                     if result:
                         state_data = json.loads(result[0])
-                        character_states[character] = CharacterState(**state_data)
+                        try:
+                            # Try to load as new format with base_identity
+                            character_states[character] = CharacterState(**state_data)
+                        except TypeError:
+                            # Fall back to creating default state if data is in old format
+                            default_identity = CharacterIdentity(
+                                name=state_data.get("name", character),
+                                personality_traits=(
+                                    state_data.get("personality_traits", ["adaptive"])
+                                    if isinstance(
+                                        state_data.get("personality_traits"), list
+                                    )
+                                    else ["adaptive"]
+                                ),
+                            )
+                            character_states[character] = CharacterState(
+                                base_identity=default_identity,
+                                current_mood=EmotionalState.CALM,
+                            )
                     else:
                         # Create default character state
+                        default_identity = CharacterIdentity(
+                            name=character,
+                            personality_traits=["adaptive"],
+                            motivations=["engage"],
+                        )
                         character_states[character] = CharacterState(
-                            agent_id=character, name=character, current_status="active"
+                            base_identity=default_identity,
+                            current_mood=EmotionalState.CALM,
                         )
             except Exception as e:
                 logger.warning(
                     f"Failed to load state for {character}, using default: {str(e)}"
                 )
+                default_identity = CharacterIdentity(
+                    name=character,
+                    personality_traits=["adaptive"],
+                    motivations=["engage"],
+                )
                 character_states[character] = CharacterState(
-                    agent_id=character, name=character, current_status="active"
+                    base_identity=default_identity,
+                    current_mood=EmotionalState.CALM,
                 )
 
         return character_states

@@ -108,6 +108,7 @@ async def test_async_llm_client_performance():
         return {"success": False, "error": str(e)}
 
 
+@pytest.mark.integration
 def test_persona_agent_patch():
     """Test the PersonaAgent async patch performance."""
     import pytest

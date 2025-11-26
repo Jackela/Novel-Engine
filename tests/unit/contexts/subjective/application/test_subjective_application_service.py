@@ -53,6 +53,7 @@ class TestSubjectiveApplicationServiceInitialization:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_initialization_with_all_dependencies(self):
         """Test initialization with all dependencies provided."""
         mock_repository = Mock(spec=ITurnBriefRepository)

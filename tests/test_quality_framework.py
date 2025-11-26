@@ -28,6 +28,7 @@ from src.shared_types import SharedTypes
 class TestDataModels:
     """Test data model functionality."""
 
+    @pytest.mark.unit
     def test_character_creation(self):
         """Test character model creation and validation."""
         character_data = {
@@ -44,12 +45,14 @@ class TestDataModels:
         assert "Combat" in character.skills
         assert "Sword" in character.equipment
 
+    @pytest.mark.unit
     def test_character_validation(self):
         """Test character data validation."""
         # Test invalid character creation
         with pytest.raises((ValueError, TypeError)):
             Character(name="", background="test")
 
+    @pytest.mark.unit
     def test_world_state_creation(self):
         """Test world state model."""
         world_state = WorldState(
@@ -64,6 +67,7 @@ class TestDataModels:
         assert "Market Day" in world_state.active_events
         assert world_state.environmental_factors["temperature"] == "warm"
 
+    @pytest.mark.unit
     def test_action_result_creation(self):
         """Test action result model."""
         action_result = ActionResult(
@@ -76,6 +80,7 @@ class TestDataModels:
         assert action_result.success is True
         assert "Character gained experience" in action_result.consequences
 
+    @pytest.mark.unit
     def test_campaign_state_creation(self):
         """Test campaign state model."""
         campaign_state = CampaignState(
@@ -111,6 +116,7 @@ class TestSystemOrchestrator:
         """Create orchestrator instance for testing."""
         return SystemOrchestrator(event_bus=mock_event_bus, database=mock_database)
 
+    @pytest.mark.unit
     def test_orchestrator_initialization(self, orchestrator):
         """Test orchestrator initialization."""
         assert orchestrator is not None
@@ -160,6 +166,7 @@ class TestEventBus:
         """Create event bus instance."""
         return EventBus()
 
+    @pytest.mark.unit
     def test_event_bus_initialization(self, event_bus):
         """Test event bus initialization."""
         assert event_bus is not None
@@ -185,6 +192,7 @@ class TestEventBus:
         assert len(received_events) == 1
         assert received_events[0]["message"] == "test"
 
+    @pytest.mark.unit
     def test_event_unsubscription(self, event_bus):
         """Test event unsubscription."""
 
@@ -283,6 +291,7 @@ class TestPersonaAgent:
         """Create persona agent instance."""
         return PersonaAgent(character_config=persona_config, event_bus=mock_event_bus)
 
+    @pytest.mark.unit
     def test_persona_agent_initialization(self, persona_agent, persona_config):
         """Test persona agent initialization."""
         assert persona_agent.name == persona_config["name"]
@@ -301,6 +310,7 @@ class TestPersonaAgent:
         assert decision is not None
         assert decision in scenario["options"]
 
+    @pytest.mark.unit
     def test_persona_agent_skill_check(self, persona_agent):
         """Test persona agent skill checks."""
         # Test skill that agent has
@@ -324,6 +334,7 @@ class TestDirectorAgent:
         """Create director agent instance."""
         return DirectorAgent(event_bus=mock_event_bus)
 
+    @pytest.mark.unit
     def test_director_agent_initialization(self, director_agent):
         """Test director agent initialization."""
         assert director_agent is not None
@@ -372,11 +383,13 @@ class TestDirectorAgent:
 class TestSharedTypes:
     """Test shared types and utilities."""
 
+    @pytest.mark.unit
     def test_shared_types_availability(self):
         """Test that shared types are properly defined."""
         assert hasattr(SharedTypes, "ActionType")
         assert hasattr(SharedTypes, "DecisionType")
 
+    @pytest.mark.unit
     def test_action_type_enumeration(self):
         """Test action type enumeration."""
         action_types = SharedTypes.ActionType
@@ -384,6 +397,7 @@ class TestSharedTypes:
         assert hasattr(action_types, "MOVE")
         assert hasattr(action_types, "INTERACT")
 
+    @pytest.mark.unit
     def test_decision_type_enumeration(self):
         """Test decision type enumeration."""
         decision_types = SharedTypes.DecisionType
@@ -530,6 +544,7 @@ class TestIntegrationScenarios:
 class TestErrorHandling:
     """Test error handling and edge cases."""
 
+    @pytest.mark.unit
     def test_invalid_character_data_handling(self):
         """Test handling of invalid character data."""
         with pytest.raises((ValueError, TypeError)):
@@ -538,6 +553,7 @@ class TestErrorHandling:
         with pytest.raises((ValueError, TypeError)):
             Character(name="", background="")
 
+    @pytest.mark.unit
     def test_malformed_world_state_handling(self):
         """Test handling of malformed world state data."""
         # Test with minimal data
@@ -642,6 +658,7 @@ class TestPerformanceRequirements:
 class TestSecurityRequirements:
     """Test security requirements and validation."""
 
+    @pytest.mark.unit
     def test_input_sanitization(self):
         """Test input sanitization for character data."""
         # Test script injection prevention
@@ -659,6 +676,7 @@ class TestSecurityRequirements:
         assert character.name == malicious_input  # Stored as-is for now
         # Note: In real implementation, input should be sanitized
 
+    @pytest.mark.unit
     def test_data_validation_boundaries(self):
         """Test data validation boundary conditions."""
         # Test extremely long inputs
@@ -679,6 +697,7 @@ class TestSecurityRequirements:
             pass
 
     @pytest.mark.security
+    @pytest.mark.unit
     def test_configuration_security(self):
         """Test configuration security practices."""
         # Verify no hardcoded secrets or credentials

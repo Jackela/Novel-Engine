@@ -9,6 +9,7 @@ import sys
 import time
 from datetime import datetime
 
+import pytest
 import requests
 
 
@@ -25,6 +26,7 @@ def check_env():
     return True
 
 
+@pytest.mark.integration
 def test_gemini_direct():
     """直接测试Gemini API"""
     import pytest
@@ -52,6 +54,7 @@ def test_gemini_direct():
         return False
 
 
+@pytest.mark.integration
 def test_api_server():
     """测试API服务器"""
     import pytest

@@ -18,6 +18,7 @@ class TestInteractionIdCreation:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_create_with_uuid(self):
         """Test creating InteractionId with valid UUID."""
         uuid_value = uuid4()
@@ -28,6 +29,7 @@ class TestInteractionIdCreation:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_create_with_specific_uuid(self):
         """Test creating InteractionId with specific UUID."""
         specific_uuid = UUID("12345678-1234-5678-9abc-123456789abc")
@@ -36,6 +38,7 @@ class TestInteractionIdCreation:
         assert interaction_id.value == specific_uuid
         assert str(interaction_id.value) == "12345678-1234-5678-9abc-123456789abc"
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_frozen_dataclass_immutability(self):
         """Test that InteractionId is immutable (frozen dataclass)."""
@@ -51,11 +54,13 @@ class TestInteractionIdValidation:
     """Test suite for InteractionId validation logic."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_invalid_uuid_type_string(self):
         """Test validation fails with string instead of UUID."""
         with pytest.raises(ValueError, match="InteractionId must be a UUID, got"):
             InteractionId("not-a-uuid-object")
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_invalid_uuid_type_integer(self):
         """Test validation fails with integer instead of UUID."""
@@ -218,6 +223,7 @@ class TestInteractionIdEquality:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_equality_same_uuid(self):
         """Test equality with same UUID value."""
         uuid_value = uuid4()
@@ -298,6 +304,7 @@ class TestInteractionIdHashing:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_hash_consistency(self):
         """Test that hash is consistent for same object."""
         interaction_id = InteractionId.generate()
@@ -308,6 +315,7 @@ class TestInteractionIdHashing:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_hash_equality_implies_same_hash(self):
         """Test that equal objects have the same hash."""
         uuid_value = uuid4()
@@ -370,6 +378,7 @@ class TestInteractionIdRoundTripConversion:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_generate_to_string_to_from_string(self):
         """Test round-trip: generate -> string -> from_string."""
         original = InteractionId.generate()
@@ -391,6 +400,7 @@ class TestInteractionIdRoundTripConversion:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_uuid_to_interaction_id_to_string(self):
         """Test round-trip: UUID -> InteractionId -> string."""
         original_uuid = uuid4()
@@ -401,6 +411,7 @@ class TestInteractionIdRoundTripConversion:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_multiple_round_trips(self):
         """Test multiple round-trip conversions maintain equality."""
         original = InteractionId.generate()
@@ -422,6 +433,7 @@ class TestInteractionIdEdgeCases:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_nil_uuid(self):
         """Test with nil/zero UUID."""
         nil_uuid = UUID("00000000-0000-0000-0000-000000000000")
@@ -432,6 +444,7 @@ class TestInteractionIdEdgeCases:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_max_uuid(self):
         """Test with maximum UUID value."""
         max_uuid = UUID("ffffffff-ffff-ffff-ffff-ffffffffffff")
@@ -442,6 +455,7 @@ class TestInteractionIdEdgeCases:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_uuid_versions(self):
         """Test with different UUID versions."""
         # UUID version 1 (time-based)
@@ -512,6 +526,7 @@ class TestInteractionIdEdgeCases:
 class TestInteractionIdCollections:
     """Test suite for InteractionId behavior in collections."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_list_operations(self):
         """Test InteractionId in list operations."""

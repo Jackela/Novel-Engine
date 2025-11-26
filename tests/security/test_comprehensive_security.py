@@ -279,6 +279,7 @@ class TestInputValidation:
     def input_validator(self):
         return InputValidator()
 
+    @pytest.mark.integration
     def test_sql_injection_detection(self, input_validator):
         """Test SQL injection detection"""
         malicious_inputs = [
@@ -299,6 +300,7 @@ class TestInputValidation:
                 or "injection" in exc_info.value.message.lower()
             )
 
+    @pytest.mark.integration
     def test_xss_detection(self, input_validator):
         """Test XSS attack detection"""
         xss_payloads = [
@@ -316,6 +318,7 @@ class TestInputValidation:
             assert exc_info.value.severity.value in ["medium", "high"]
             assert "xss" in exc_info.value.message.lower()
 
+    @pytest.mark.integration
     def test_command_injection_detection(self, input_validator):
         """Test command injection detection"""
         command_payloads = [
@@ -333,6 +336,7 @@ class TestInputValidation:
 
             assert exc_info.value.severity.value in ["medium", "high"]
 
+    @pytest.mark.integration
     def test_input_sanitization(self, input_validator):
         """Test input sanitization functionality"""
         # Test HTML escaping
@@ -415,6 +419,7 @@ class TestRateLimiting:
 class TestSecurityHeaders:
     """++ SACRED SECURITY HEADERS TESTS ++"""
 
+    @pytest.mark.integration
     def test_security_headers_configuration(self):
         """Test security headers configuration"""
         config = get_production_security_config()
@@ -618,9 +623,7 @@ class TestSecurityIntegration:
 
         # 2. Make authenticated request with proper headers
         headers = {"Authorization": f"Bearer {access_token}"}
-        response = await security_suite.client.get(
-            "/api/characters", headers=headers
-        )
+        response = await security_suite.client.get("/api/characters", headers=headers)
 
         # Should succeed with proper authentication
         # ASGI test transport may pre-route 400/503; treat as acceptable in test context

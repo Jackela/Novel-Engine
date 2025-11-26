@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import Mock
 
+import pytest
+
 from shared_types import CharacterAction
 from src.agents.director_agent import DirectorAgent
 from src.event_bus import EventBus
@@ -13,6 +15,7 @@ class TestDirectorAgent(unittest.TestCase):
         self.event_bus = Mock(spec=EventBus)
         self.director = DirectorAgent(event_bus=self.event_bus)
 
+    @pytest.mark.unit
     def test_initialization(self):
         """Test that the DirectorAgent initializes correctly and subscribes to events."""
         self.assertEqual(self.director.event_bus, self.event_bus)
@@ -20,6 +23,7 @@ class TestDirectorAgent(unittest.TestCase):
             "AGENT_ACTION_COMPLETE", self.director._bus_agent_action_handler
         )
 
+    @pytest.mark.unit
     def test_run_turn_emits_event(self):
         """Test that run_turn emits a TURN_START event."""
         # Register a mock agent to prevent the method from exiting early
@@ -35,6 +39,7 @@ class TestDirectorAgent(unittest.TestCase):
             "TURN_START", world_state_update=unittest.mock.ANY
         )
 
+    @pytest.mark.unit
     def test_handle_agent_action(self):
         """Test that _handle_agent_action correctly processes an agent's action."""
         # Create a mock agent and action
@@ -56,6 +61,7 @@ class TestDirectorAgent(unittest.TestCase):
         self.director.log_event.assert_called_once()
         self.assertEqual(self.director.total_actions_processed, 1)
 
+    @pytest.mark.unit
     def test_handle_agent_action_with_no_action(self):
         """Test that _handle_agent_action handles cases where the agent does nothing."""
         mock_agent = Mock(spec=PersonaAgent)

@@ -18,10 +18,10 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointFactoryMethods:
     """Test suite for PlotPoint factory methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_with_updated_intensity_single_value(self):
         """Test updating a single intensity value."""
@@ -215,5 +215,3 @@ class TestPlotPointFactoryMethods:
         assert char_id2 not in original.involved_characters
         # Updated should have new character
         assert char_id2 in updated.involved_characters
-
-

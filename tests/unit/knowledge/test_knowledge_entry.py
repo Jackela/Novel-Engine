@@ -199,6 +199,7 @@ class TestKnowledgeEntryContentValidation:
         assert entry.id == sample_entry_data["id"]
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_knowledge_type_is_immutable(self, sample_entry_data):
         """Test that knowledge_type cannot be changed after creation."""
         # Arrange

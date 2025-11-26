@@ -1,4 +1,6 @@
 import os
+
+import pytest
 from fastapi.testclient import TestClient
 
 from src.api import secure_main_api as api
@@ -27,12 +29,17 @@ def build_client():
     )
     svc = api.get_security_service()
     allow = lambda: dummy_user
-    for perm in [api.Permission.CHARACTER_CREATE, api.Permission.CHARACTER_READ, api.Permission.SIMULATION_CREATE]:
+    for perm in [
+        api.Permission.CHARACTER_CREATE,
+        api.Permission.CHARACTER_READ,
+        api.Permission.SIMULATION_CREATE,
+    ]:
         app.dependency_overrides[svc.require_permission(perm)] = allow
 
     return TestClient(app)
 
 
+@pytest.mark.integration
 def test_create_list_and_simulate_user_character():
     client = build_client()
 
@@ -65,6 +72,7 @@ def test_create_list_and_simulate_user_character():
     assert "nova" in sim_resp.json().get("participants", [])
 
 
+@pytest.mark.integration
 def test_simulation_rejects_unknown_character():
     client = build_client()
     sim_resp = client.post(

@@ -24,6 +24,7 @@ class TestCausalRelationTypeEnum:
     """Test suite for CausalRelationType enum."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_all_relation_types_exist(self):
         """Test that all expected relation types are defined."""
         expected_types = {
@@ -150,6 +151,7 @@ class TestCausalNodeCreation:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_create_minimal_causal_node(self):
         """Test creating causal node with minimal required fields."""
         node = CausalNode(node_id="minimal-node-1", title="Minimal Node")
@@ -307,11 +309,13 @@ class TestCausalNodeValidation:
     """Test suite for CausalNode validation logic."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_empty_node_id_validation(self):
         """Test validation fails with empty node ID."""
         with pytest.raises(ValueError, match="Causal node ID cannot be empty"):
             CausalNode(node_id="", title="Valid Title")
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_whitespace_only_node_id_validation(self):
         """Test validation fails with whitespace-only node ID."""
@@ -348,6 +352,7 @@ class TestCausalNodeValidation:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_valid_with_only_description(self):
         """Test validation passes with only description."""
         node = CausalNode(
@@ -356,6 +361,7 @@ class TestCausalNodeValidation:
         assert node.title == ""
         assert node.description == "Valid description"
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_occurrence_probability_below_minimum_validation(self):
         """Test validation fails with occurrence probability below 0."""
@@ -517,6 +523,7 @@ class TestCausalNodeValidation:
         assert node.sequence_order == 0
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_negative_temporal_delay_validation(self):
         """Test validation fails with negative temporal delay."""
         with pytest.raises(ValueError, match="Temporal delay must be non-negative"):
@@ -536,6 +543,7 @@ class TestCausalNodeValidation:
 
         assert node.temporal_delay == 0
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_zero_duration_validation(self):
         """Test validation fails with zero duration."""
@@ -603,6 +611,7 @@ class TestCausalNodeProperties:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_total_causes_calculation(self):
         """Test total_causes property calculation."""
         node = CausalNode(
@@ -715,6 +724,7 @@ class TestCausalNodeProperties:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_isolated_false_with_causes(self):
         """Test is_isolated returns False when node has causes."""
         node = CausalNode(
@@ -756,6 +766,7 @@ class TestCausalComplexityScore:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_base_complexity_only(self):
         """Test complexity score with only causal relationships (no bonuses)."""
         node = CausalNode(
@@ -895,6 +906,7 @@ class TestCausalNodeInstanceMethods:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_causes_node_direct_effect(self):
         """Test causes_node returns True for direct effects."""
         node = CausalNode(
@@ -1021,6 +1033,7 @@ class TestCausalNodeInstanceMethods:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_relationship_type_existing(self):
         """Test get_relationship_type returns correct enum for existing relationship."""
         node = CausalNode(
@@ -1045,6 +1058,7 @@ class TestCausalNodeInstanceMethods:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_relationship_strength_existing(self):
         """Test get_relationship_strength returns correct enum for existing relationship."""
         node = CausalNode(
@@ -1139,6 +1153,7 @@ class TestCausalNodeInstanceMethods:
 class TestCausalNodeFactoryMethods:
     """Test suite for CausalNode factory methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_with_additional_cause_direct_cause(self):
         """Test adding direct cause relationship."""
@@ -1280,6 +1295,7 @@ class TestCausalNodeStringRepresentation:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_str_representation_with_title(self):
         """Test human-readable string representation with title."""
         node = CausalNode(
@@ -1355,6 +1371,7 @@ class TestCausalNodeEdgeCasesAndBoundaryConditions:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_creation_with_fixed_timestamp(self):
         """Test creation with explicitly set timestamp."""
         fixed_time = datetime(2024, 8, 15, 10, 30, 45, tzinfo=timezone.utc)
@@ -1506,6 +1523,7 @@ class TestCausalNodeCollectionsAndComparison:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_nodes_in_list(self):
         """Test CausalNode objects in list operations."""
         node1 = CausalNode(node_id="list-test-1", title="First Node")
@@ -1586,6 +1604,7 @@ class TestCausalNodeCollectionsAndComparison:
         assert node1 != node2
         assert not (node1 == node2)
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_node_hashing_consistency(self):
         """Test that equal CausalNode objects have same hash."""

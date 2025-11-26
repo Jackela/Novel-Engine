@@ -39,6 +39,7 @@ def run_async_test(fn):
 class TestBridgeConfiguration:
     """Test BridgeConfiguration functionality."""
 
+    @pytest.mark.unit
     def test_default_configuration(self):
         """Test default bridge configuration."""
         config = BridgeConfiguration()
@@ -51,6 +52,7 @@ class TestBridgeConfiguration:
         assert config.turn_timeout_seconds == 30
         assert config.llm_coordination is not None
 
+    @pytest.mark.unit
     def test_custom_configuration(self):
         """Test custom bridge configuration."""
         config = BridgeConfiguration(
@@ -85,6 +87,7 @@ class TestEnhancedMultiAgentBridge:
         """Create Enhanced Multi-Agent Bridge for testing."""
         return EnhancedMultiAgentBridge(mock_director_agent, bridge_config)
 
+    @pytest.mark.unit
     def test_bridge_initialization(self, enhanced_bridge):
         """Test bridge initialization."""
         assert enhanced_bridge._initialized is False
@@ -139,6 +142,7 @@ class TestEnhancedMultiAgentBridge:
         assert "agent_results" in result
         assert "coordination_results" in result
 
+    @pytest.mark.unit
     def test_request_priority_determination(self, enhanced_bridge):
         """Test request priority determination logic."""
         # Mock agent with no special properties
@@ -180,6 +184,7 @@ class TestEnhancedMultiAgentBridge:
         assert "ai_orchestrator" in components
         assert "coordination_engine" in components
 
+    @pytest.mark.unit
     def test_execution_time_calculation(self, enhanced_bridge):
         """Test average execution time calculation."""
         # Add some mock turn history

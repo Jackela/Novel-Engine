@@ -17,14 +17,15 @@ Test Categories:
 6. Token Validation
 """
 
-import pytest
-from fastapi.testclient import TestClient
-from datetime import datetime, timedelta, UTC
-import jwt
 import os
+from datetime import UTC, datetime, timedelta
+
+import jwt
+import pytest
 
 # Import the FastAPI app
-from api_server import app, JWT_SECRET_KEY, JWT_ALGORITHM
+from api_server import JWT_ALGORITHM, JWT_SECRET_KEY, app
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -39,13 +40,14 @@ def mock_credentials():
     return {
         "email": "test@example.com",
         "password": "securepassword123",
-        "remember_me": False
+        "remember_me": False,
     }
 
 
 class TestCookieSecurity:
     """Test suite for cookie security implementation [SEC-001]"""
 
+    @pytest.mark.unit
     def test_login_sets_httponly_cookie(self, client, mock_credentials):
         """
         Test that login endpoint sets httpOnly cookie for access token.
@@ -78,6 +80,7 @@ class TestCookieSecurity:
         assert "HttpOnly" in access_cookie
         assert "SameSite=Lax" in access_cookie or "SameSite=lax" in access_cookie
 
+    @pytest.mark.unit
     def test_login_sets_refresh_token_cookie(self, client, mock_credentials):
         """
         Test that login endpoint sets httpOnly cookie for refresh token.
@@ -103,6 +106,7 @@ class TestCookieSecurity:
         assert "HttpOnly" in refresh_cookie
         assert "SameSite=Lax" in refresh_cookie or "SameSite=lax" in refresh_cookie
 
+    @pytest.mark.unit
     def test_remember_me_extends_cookie_duration(self, client):
         """
         Test that remember_me flag extends refresh token cookie duration.
@@ -115,17 +119,20 @@ class TestCookieSecurity:
         credentials_remember = {
             "email": "test@example.com",
             "password": "password123",
-            "remember_me": True
+            "remember_me": True,
         }
 
         response_remember = client.post("/api/auth/login", json=credentials_remember)
         set_cookie_remember = response_remember.headers.get_list("set-cookie")
-        refresh_cookie_remember = [h for h in set_cookie_remember if "refresh_token=" in h][0]
+        refresh_cookie_remember = [
+            h for h in set_cookie_remember if "refresh_token=" in h
+        ][0]
 
         # Extract Max-Age from cookie (format: Max-Age=<seconds>)
         # With remember_me, it should be 30 days = 2592000 seconds
         assert "Max-Age=" in refresh_cookie_remember
 
+    @pytest.mark.unit
     def test_logout_clears_cookies(self, client, mock_credentials):
         """
         Test that logout endpoint clears all authentication cookies.
@@ -156,6 +163,7 @@ class TestCookieSecurity:
         # The exact behavior may vary, so we check for the presence of cookie deletion
         assert len(set_cookie_headers) >= 2  # At least access_token and refresh_token
 
+    @pytest.mark.unit
     def test_csrf_token_generation(self, client):
         """
         Test CSRF token generation endpoint.
@@ -189,6 +197,7 @@ class TestCookieSecurity:
         # CSRF cookie should have SameSite=strict
         assert "SameSite=Strict" in csrf_cookie or "SameSite=strict" in csrf_cookie
 
+    @pytest.mark.unit
     def test_cookie_not_accessible_via_javascript(self, client, mock_credentials):
         """
         Test that httpOnly cookies cannot be accessed via JavaScript.
@@ -207,9 +216,11 @@ class TestCookieSecurity:
         # Both access_token and refresh_token should have HttpOnly flag
         for cookie_header in set_cookie_headers:
             if "access_token=" in cookie_header or "refresh_token=" in cookie_header:
-                assert "HttpOnly" in cookie_header, \
-                    f"Cookie missing HttpOnly flag: {cookie_header}"
+                assert (
+                    "HttpOnly" in cookie_header
+                ), f"Cookie missing HttpOnly flag: {cookie_header}"
 
+    @pytest.mark.unit
     def test_token_validation_endpoint(self, client, mock_credentials):
         """
         Test token validation endpoint.
@@ -227,8 +238,7 @@ class TestCookieSecurity:
 
         # Test valid token
         valid_response = client.get(
-            "/api/auth/validate",
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/auth/validate", headers={"Authorization": f"Bearer {token}"}
         )
 
         assert valid_response.status_code == 200
@@ -237,6 +247,7 @@ class TestCookieSecurity:
         assert "expires_at" in data
         assert "user_id" in data
 
+    @pytest.mark.unit
     def test_token_validation_missing_token(self, client):
         """
         Test token validation with missing Authorization header.
@@ -252,6 +263,7 @@ class TestCookieSecurity:
         assert data["valid"] is False
         assert "error" in data
 
+    @pytest.mark.unit
     def test_token_validation_expired_token(self, client):
         """
         Test token validation with expired token.
@@ -266,14 +278,15 @@ class TestCookieSecurity:
             "email": "test@example.com",
             "exp": datetime.now(UTC) - timedelta(hours=1),  # Expired 1 hour ago
             "iat": datetime.now(UTC) - timedelta(hours=2),
-            "type": "access"
+            "type": "access",
         }
 
-        expired_token = jwt.encode(expired_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        expired_token = jwt.encode(
+            expired_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
+        )
 
         response = client.get(
-            "/api/auth/validate",
-            headers={"Authorization": f"Bearer {expired_token}"}
+            "/api/auth/validate", headers={"Authorization": f"Bearer {expired_token}"}
         )
 
         assert response.status_code == 401
@@ -281,6 +294,7 @@ class TestCookieSecurity:
         assert data["valid"] is False
         assert "expired" in data["error"].lower()
 
+    @pytest.mark.unit
     def test_token_refresh_with_cookie(self, client, mock_credentials):
         """
         Test token refresh using httpOnly cookie.
@@ -290,17 +304,23 @@ class TestCookieSecurity:
         - New access token is returned
         - New access token cookie is set
         """
+        import time
+
         # Login to get refresh token
         login_response = client.post("/api/auth/login", json=mock_credentials)
         assert login_response.status_code == 200
 
         refresh_token = login_response.json()["refresh_token"]
 
+        # Wait to ensure the new token will have a different timestamp
+        # (JWTs created within the same second have identical timestamps)
+        time.sleep(1.1)
+
         # Refresh using cookie (simulated by sending empty body)
         # The TestClient will automatically include cookies from previous responses
         refresh_response = client.post(
             "/api/auth/refresh",
-            json={"refresh_token": refresh_token}  # For backward compatibility
+            json={"refresh_token": refresh_token},  # For backward compatibility
         )
 
         assert refresh_response.status_code == 200
@@ -314,6 +334,7 @@ class TestCookieSecurity:
         cookies = refresh_response.cookies
         assert "access_token" in cookies
 
+    @pytest.mark.unit
     def test_secure_flag_environment_based(self, client, mock_credentials, monkeypatch):
         """
         Test that Secure flag is controlled by environment variable.
@@ -337,6 +358,7 @@ class TestCookieSecurity:
         # We just verify the cookie is set correctly
         assert "access_token=" in access_cookie
 
+    @pytest.mark.unit
     def test_logout_always_succeeds(self, client):
         """
         Test that logout always returns success, even without valid session.
@@ -353,6 +375,7 @@ class TestCookieSecurity:
         data = response.json()
         assert data["success"] is True
 
+    @pytest.mark.unit
     def test_cors_credentials_support(self, client):
         """
         Test that CORS is configured to support credentials.
@@ -395,7 +418,7 @@ class TestCookieSecurityIntegration:
         credentials = {
             "email": "integrationtest@example.com",
             "password": "password123",
-            "remember_me": False
+            "remember_me": False,
         }
 
         login_response = client.post("/api/auth/login", json=credentials)
@@ -405,15 +428,14 @@ class TestCookieSecurityIntegration:
         # Step 3: Validate token
         validate_response = client.get(
             "/api/auth/validate",
-            headers={"Authorization": f"Bearer {login_data['access_token']}"}
+            headers={"Authorization": f"Bearer {login_data['access_token']}"},
         )
         assert validate_response.status_code == 200
         assert validate_response.json()["valid"] is True
 
         # Step 4: Refresh token
         refresh_response = client.post(
-            "/api/auth/refresh",
-            json={"refresh_token": login_data["refresh_token"]}
+            "/api/auth/refresh", json={"refresh_token": login_data["refresh_token"]}
         )
         assert refresh_response.status_code == 200
 
@@ -431,10 +453,7 @@ class TestCookieSecurityIntegration:
         - HttpOnly flag prevents JavaScript access
         - Even with XSS, attacker cannot steal tokens from cookies
         """
-        credentials = {
-            "email": "xsstest@example.com",
-            "password": "password123"
-        }
+        credentials = {"email": "xsstest@example.com", "password": "password123"}
 
         response = client.post("/api/auth/login", json=credentials)
         assert response.status_code == 200

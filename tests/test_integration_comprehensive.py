@@ -54,6 +54,7 @@ SIMULATION_REQUEST = {
 class TestFullSystemIntegration:
     """Test complete system integration scenarios"""
 
+    @pytest.mark.integration
     def test_end_to_end_simulation_workflow(self):
         """Test complete simulation workflow from API to story generation"""
         # Step 1: Get available characters via API
@@ -94,6 +95,7 @@ class TestFullSystemIntegration:
         assert sim_data["turns_executed"] > 0
         assert sim_data["duration_seconds"] > 0
 
+    @pytest.mark.integration
     def test_character_detail_to_simulation_integration(self):
         """Test character detail loading integrates with simulation"""
         # Get character details
@@ -120,6 +122,7 @@ class TestFullSystemIntegration:
         # This tests the integration pipeline even if character names aren't passed through
         assert len(story) > 100, "Integration should produce meaningful story"
 
+    @pytest.mark.integration
     def test_system_health_to_functionality_integration(self):
         """Test system health checks correlate with functionality"""
         # Check system health
@@ -138,6 +141,7 @@ class TestFullSystemIntegration:
         # System should be consistent
         assert health_data["status"] == "healthy"
 
+    @pytest.mark.integration
     def test_multi_user_concurrent_simulation(self):
         """Test concurrent simulation requests (multi-user scenario)"""
         # Define multiple simulation requests
@@ -189,6 +193,7 @@ class TestFullSystemIntegration:
 class TestAPIBackendIntegration:
     """Test API layer integration with backend components"""
 
+    @pytest.mark.integration
     def test_api_character_loading_backend_integration(self):
         """Test API character endpoints integrate with backend character system"""
         # Test each generic character through API
@@ -213,6 +218,7 @@ class TestAPIBackendIntegration:
                 assert "character" in stats
                 assert "combat_stats" in stats
 
+    @pytest.mark.integration
     def test_api_error_handling_backend_integration(self):
         """Test API error handling integrates with backend error states"""
         # Test non-existent character
@@ -228,6 +234,7 @@ class TestAPIBackendIntegration:
         health_response = client.get("/health")
         assert health_response.status_code == 200
 
+    @pytest.mark.integration
     def test_api_validation_backend_consistency(self):
         """Test API validation matches backend capabilities"""
         # Test minimum character requirement
@@ -256,6 +263,7 @@ class TestAPIBackendIntegration:
 class TestCharacterSimulationIntegration:
     """Test character system integration with simulation engine"""
 
+    @pytest.mark.integration
     def test_character_loading_simulation_execution(self):
         """Test character loading integrates properly with simulation execution"""
         # Load characters directly
@@ -281,6 +289,7 @@ class TestCharacterSimulationIntegration:
         # Should complete without errors
         assert len(director.agents) == 2
 
+    @pytest.mark.integration
     def test_character_attributes_simulation_behavior(self):
         """Test character attributes affect simulation behavior"""
         # Load different character types
@@ -301,6 +310,7 @@ class TestCharacterSimulationIntegration:
         assert pilot_decision is not None or pilot_decision is None
         assert scientist_decision is not None or scientist_decision is None
 
+    @pytest.mark.integration
     def test_multi_character_interaction_simulation(self):
         """Test multi-character interactions in simulation"""
         # Create full character team
@@ -327,6 +337,7 @@ class TestCharacterSimulationIntegration:
 class TestStoryGenerationPipeline:
     """Test complete story generation pipeline integration"""
 
+    @pytest.mark.integration
     def test_simulation_to_story_pipeline(self):
         """Test complete pipeline from simulation execution to story generation"""
         # Set up simulation
@@ -359,6 +370,7 @@ class TestStoryGenerationPipeline:
         for term in banned_terms:
             assert term not in story_lower, f"Found banned term: {term}"
 
+    @pytest.mark.integration
     def test_character_context_story_integration(self):
         """Test character context integration in generated stories"""
         # Create simulation with specific character context
@@ -380,6 +392,7 @@ class TestStoryGenerationPipeline:
         # (Note: Current implementation may show "Unknown" for characters)
         assert len(story) > 50, "Story should be generated from character context"
 
+    @pytest.mark.integration
     def test_narrative_style_story_consistency(self):
         """Test narrative style consistency across story generation"""
         # Create test simulation log
@@ -425,6 +438,7 @@ class TestStoryGenerationPipeline:
 class TestMultiComponentWorkflows:
     """Test complex workflows involving multiple components"""
 
+    @pytest.mark.integration
     def test_character_creation_to_simulation_workflow(self):
         """Test workflow from character creation/loading to simulation execution"""
         # Character loading phase
@@ -466,6 +480,7 @@ class TestMultiComponentWorkflows:
         has_sci_fi = any(indicator in story_lower for indicator in sci_fi_indicators)
         assert has_sci_fi, "Workflow should maintain sci-fi theme throughout"
 
+    @pytest.mark.integration
     def test_error_recovery_multi_component_workflow(self):
         """Test error recovery across multiple components"""
         # Test with partially invalid data
@@ -489,6 +504,7 @@ class TestMultiComponentWorkflows:
             # Should not crash entire system
             assert isinstance(e, Exception), "Errors should be handled gracefully"
 
+    @pytest.mark.integration
     def test_performance_multi_component_integration(self):
         """Test performance characteristics of integrated system"""
 
@@ -523,6 +539,7 @@ class TestMultiComponentWorkflows:
 class TestPerformanceIntegration:
     """Test performance characteristics of integrated system"""
 
+    @pytest.mark.integration
     def test_concurrent_api_backend_performance(self):
         """Test concurrent API requests with backend integration"""
 
@@ -556,6 +573,7 @@ class TestPerformanceIntegration:
             success_count >= len(responses) * 0.9
         ), "Most concurrent requests should succeed"
 
+    @pytest.mark.integration
     def test_memory_usage_integration(self):
         """Test memory usage across integrated components"""
         # Load multiple characters
@@ -589,6 +607,7 @@ class TestPerformanceIntegration:
 class TestErrorPropagationAndRecovery:
     """Test error propagation and recovery across components"""
 
+    @pytest.mark.integration
     def test_character_loading_error_propagation(self):
         """Test character loading error propagation through system"""
         # Attempt to load non-existent character via API
@@ -603,6 +622,7 @@ class TestErrorPropagationAndRecovery:
         health_response = client.get("/health")
         assert health_response.status_code == 200
 
+    @pytest.mark.integration
     def test_simulation_error_recovery_integration(self):
         """Test simulation error recovery with story generation"""
         # Test with empty character list (should fail gracefully)
@@ -618,6 +638,7 @@ class TestErrorPropagationAndRecovery:
         # System recovery validation
         assert valid_response.json()["story"] is not None
 
+    @pytest.mark.integration
     def test_story_generation_error_handling_integration(self):
         """Test story generation error handling in full pipeline"""
         # Create corrupted log scenario
@@ -642,6 +663,7 @@ class TestErrorPropagationAndRecovery:
 class TestSecurityValidationIntegration:
     """Test security and validation across integrated components"""
 
+    @pytest.mark.integration
     def test_input_validation_api_to_backend(self):
         """Test input validation from API through to backend"""
         # Test SQL injection prevention
@@ -666,6 +688,7 @@ class TestSecurityValidationIntegration:
         health_response = client.get("/health")
         assert health_response.status_code == 200
 
+    @pytest.mark.integration
     def test_brand_content_validation_integration(self):
         """Test brand content validation across entire pipeline"""
         # Run complete simulation
@@ -711,6 +734,7 @@ class TestSecurityValidationIntegration:
         has_sci_fi = any(term in story_lower for term in sci_fi_terms)
         assert has_sci_fi, "Story should contain generic sci-fi content"
 
+    @pytest.mark.integration
     def test_data_integrity_across_components(self):
         """Test data integrity maintained across all components"""
         # Get character data

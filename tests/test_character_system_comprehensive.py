@@ -41,6 +41,7 @@ CHARACTER_DIR = (Path(__file__).resolve().parents[1] / "characters").resolve()
 class TestCharacterLoading:
     """Test character loading and validation systems"""
 
+    @pytest.mark.integration
     def test_all_generic_characters_loadable(self):
         """Test that all generic characters can be loaded successfully"""
         event_bus = EventBus()
@@ -53,6 +54,7 @@ class TestCharacterLoading:
             assert agent.agent_id is not None
             assert hasattr(agent, "character_context")
 
+    @pytest.mark.integration
     def test_character_directory_structure(self):
         """Test that character directories have proper structure"""
         for char_name in GENERIC_CHARACTERS:
@@ -66,6 +68,7 @@ class TestCharacterLoading:
             assert md_file.exists(), f"Markdown file missing for {char_name}"
             assert yaml_file.exists(), f"Stats file missing for {char_name}"
 
+    @pytest.mark.integration
     def test_character_metadata_validation(self):
         """Test character metadata is valid and complete"""
         for char_name in GENERIC_CHARACTERS:
@@ -99,6 +102,7 @@ class TestCharacterLoading:
                 ), f"Missing {field} in {char_name} character info"
                 assert char_info[field], f"Empty {field} in {char_name} character info"
 
+    @pytest.mark.integration
     def test_no_branded_content_in_characters(self):
         """Test that no branded content exists in character files"""
         branded_terms = [
@@ -137,6 +141,7 @@ class TestCharacterLoading:
                         term not in content
                     ), f"Branded term '{term}' found in {yaml_file}"
 
+    @pytest.mark.integration
     def test_character_load_error_handling(self):
         """Test error handling for invalid character loading"""
         event_bus = EventBus()
@@ -145,6 +150,7 @@ class TestCharacterLoading:
         with pytest.raises(Exception):
             factory.create_character("nonexistent_character")
 
+    @pytest.mark.integration
     def test_character_context_loading(self):
         """Test character context loading functionality"""
         event_bus = EventBus()
@@ -161,6 +167,7 @@ class TestCharacterLoading:
 class TestGenericCharacterProfiles:
     """Test specific generic character profiles"""
 
+    @pytest.mark.integration
     def test_pilot_character_profile(self):
         """Test pilot character profile details"""
         event_bus = EventBus()
@@ -189,6 +196,7 @@ class TestGenericCharacterProfiles:
         assert combat["pilot"] >= 8  # Should be excellent pilot
         assert combat["tactics"] >= 7  # Should have good tactical skills
 
+    @pytest.mark.integration
     def test_scientist_character_profile(self):
         """Test scientist character profile details"""
         event_bus = EventBus()
@@ -217,6 +225,7 @@ class TestGenericCharacterProfiles:
         assert psych["corruption_resistance"] >= 8
         assert psych["aggression"] <= 3  # Should be non-aggressive
 
+    @pytest.mark.integration
     def test_engineer_character_profile(self):
         """Test engineer character profile details"""
         event_bus = EventBus()
@@ -247,6 +256,7 @@ class TestGenericCharacterProfiles:
         equipment = stats["equipment"]
         assert any("tool" in item.lower() for item in equipment["special_gear"])
 
+    @pytest.mark.integration
     def test_test_character_profile(self):
         """Test test character profile for development purposes"""
         event_bus = EventBus()
@@ -275,6 +285,7 @@ class TestGenericCharacterProfiles:
 class TestCharacterStatistics:
     """Test character statistics and attributes"""
 
+    @pytest.mark.integration
     def test_combat_stats_validity(self):
         """Test that all combat stats are within valid ranges"""
         for char_name in GENERIC_CHARACTERS:
@@ -297,6 +308,7 @@ class TestCharacterStatistics:
                 value = combat[stat]
                 assert 1 <= value <= 10, f"Invalid {stat} value {value} for {char_name}"
 
+    @pytest.mark.integration
     def test_psychological_profile_validity(self):
         """Test that psychological profiles are valid"""
         for char_name in GENERIC_CHARACTERS:
@@ -320,6 +332,7 @@ class TestCharacterStatistics:
                 value = psych[stat]
                 assert 1 <= value <= 10, f"Invalid {stat} value {value} for {char_name}"
 
+    @pytest.mark.integration
     def test_equipment_completeness(self):
         """Test that character equipment is complete and appropriate"""
         for char_name in GENERIC_CHARACTERS:
@@ -342,6 +355,7 @@ class TestCharacterStatistics:
             assert isinstance(equipment["special_gear"], list)
             assert len(equipment["special_gear"]) >= 1
 
+    @pytest.mark.integration
     def test_character_relationships(self):
         """Test character relationships are defined"""
         for char_name in GENERIC_CHARACTERS:
@@ -372,6 +386,7 @@ class TestCharacterFactory:
             temp_char_dir.mkdir()
             yield temp_char_dir
 
+    @pytest.mark.integration
     def test_character_factory_initialization(self):
         """Test character factory initialization"""
         event_bus = EventBus()
@@ -381,6 +396,7 @@ class TestCharacterFactory:
             factory, "load_character"
         )
 
+    @pytest.mark.integration
     def test_character_creation_validation(self, temp_character_dir):
         """Test character creation with validation"""
         # This would test programmatic character creation if implemented
@@ -408,6 +424,7 @@ class TestCharacterFactory:
         # Test would create character and validate structure
         assert char_data["name"] == "Test Character"
 
+    @pytest.mark.integration
     def test_character_template_validation(self):
         """Test character template validation"""
         # Verify all characters follow the same template structure
@@ -431,6 +448,7 @@ class TestCharacterFactory:
 class TestCharacterMemorySystem:
     """Test character memory and persistence"""
 
+    @pytest.mark.integration
     def test_character_memory_initialization(self):
         """Test character memory system initialization"""
         event_bus = EventBus()
@@ -446,6 +464,7 @@ class TestCharacterMemorySystem:
         assert hasattr(agent, "short_term_memory")
         assert hasattr(agent, "long_term_memory")
 
+    @pytest.mark.integration
     def test_memory_persistence_across_sessions(self):
         """Test that character memory persists across sessions"""
         event_bus = EventBus()
@@ -463,6 +482,7 @@ class TestCharacterMemorySystem:
         assert agent2.character_name is not None
         assert hasattr(agent2, "memory_interface")
 
+    @pytest.mark.integration
     def test_memory_log_format(self):
         """Test memory log format and structure"""
         event_bus = EventBus()
@@ -479,6 +499,7 @@ class TestCharacterMemorySystem:
 class TestCharacterInteractions:
     """Test character interactions and behavior"""
 
+    @pytest.mark.integration
     def test_character_decision_making(self):
         """Test character decision-making infrastructure"""
         event_bus = EventBus()
@@ -494,6 +515,7 @@ class TestCharacterInteractions:
         weights = agent.decision_weights
         assert isinstance(weights, dict)
 
+    @pytest.mark.integration
     def test_character_context_awareness(self):
         """Test character context awareness in decisions"""
         event_bus = EventBus()
@@ -508,6 +530,7 @@ class TestCharacterInteractions:
         assert scientist.character_context != engineer.character_context
         assert pilot.character_context != engineer.character_context
 
+    @pytest.mark.integration
     def test_character_personality_consistency(self):
         """Test that character personalities are consistent"""
         # Load character psychological profiles
@@ -529,6 +552,7 @@ class TestCharacterInteractions:
         # Scientist should be more cautious than pilot
         assert scientist_psych["caution"] > pilot_psych["caution"]
 
+    @pytest.mark.integration
     def test_multi_character_simulation(self):
         """Test multi-character simulation setup"""
         event_bus = EventBus()
@@ -554,6 +578,7 @@ class TestCharacterInteractions:
 class TestPerformanceAndScalability:
     """Test performance and scalability characteristics"""
 
+    @pytest.mark.integration
     def test_character_loading_performance(self):
         """Test character loading performance"""
         import time
@@ -568,6 +593,7 @@ class TestPerformanceAndScalability:
         loading_time = end_time - start_time
         assert loading_time < 2.0, f"Character loading took too long: {loading_time}s"
 
+    @pytest.mark.integration
     def test_multiple_character_memory_usage(self):
         """Test memory usage with multiple characters"""
         event_bus = EventBus()
@@ -585,6 +611,7 @@ class TestPerformanceAndScalability:
         agent_ids = [agent.agent_id for agent in agents]
         assert len(set(agent_ids)) == len(agent_ids)  # All unique
 
+    @pytest.mark.integration
     def test_concurrent_character_operations(self):
         """Test concurrent character operations"""
         import concurrent.futures
@@ -615,6 +642,7 @@ class TestPerformanceAndScalability:
 class TestCharacterValidation:
     """Test character validation and data integrity"""
 
+    @pytest.mark.integration
     def test_character_data_consistency(self):
         """Test consistency between markdown and YAML data"""
         for char_name in GENERIC_CHARACTERS:
@@ -642,6 +670,7 @@ class TestCharacterValidation:
                 yaml_faction in md_content
             ), f"Faction {yaml_faction} not found in {char_name} markdown"
 
+    @pytest.mark.integration
     def test_character_balance_validation(self):
         """Test character balance and fairness"""
         all_stats = {}
@@ -672,6 +701,7 @@ class TestCharacterValidation:
             balance_ratio <= 2.0
         ), f"Characters are severely unbalanced: {combat_totals}"
 
+    @pytest.mark.integration
     def test_sci_fi_theme_consistency(self):
         """Test that all characters maintain sci-fi theme consistency"""
         sci_fi_keywords = [

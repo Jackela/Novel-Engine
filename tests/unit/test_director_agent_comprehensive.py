@@ -502,6 +502,7 @@ class TestDirectorAgentWorldState:
             pass
 
     @pytest.mark.unit
+    @pytest.mark.integration
     def test_world_state_loading_existing_file(self):
         """Test loading world state from existing file"""
         # Create test world state file

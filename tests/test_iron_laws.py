@@ -112,6 +112,7 @@ class TestIronLawsValidation:
             reasoning="Investigating unusual readings from the object",
         )
 
+    @pytest.mark.unit
     def test_iron_laws_validation_core(self, director_agent, mock_agent, sample_action):
         """Test core Iron Laws validation engine."""
         # Execute validation
@@ -134,6 +135,7 @@ class TestIronLawsValidation:
         ]
         assert all(check in result.checks_performed for check in expected_checks)
 
+    @pytest.mark.unit
     def test_causality_law_validation(self, director_agent, mock_agent):
         """Test E001 Causality Law validation."""
         # Test valid causal action
@@ -175,6 +177,7 @@ class TestIronLawsValidation:
         assert len(violations) > 0
         assert all(v.law_code == "E001" for v in violations)
 
+    @pytest.mark.unit
     def test_resource_law_validation(self, director_agent, mock_agent):
         """Test E002 Resource Law validation."""
         character_data = mock_agent.character_data
@@ -222,6 +225,7 @@ class TestIronLawsValidation:
         assert len(violations) > 0
         assert all(v.law_code == "E002" for v in violations)
 
+    @pytest.mark.unit
     def test_physics_law_validation(self, director_agent, mock_agent):
         """Test E003 Physics Law validation."""
         character_data = mock_agent.character_data
@@ -276,6 +280,7 @@ class TestIronLawsValidation:
         assert len(violations) > 0
         assert all(v.law_code == "E003" for v in violations)
 
+    @pytest.mark.unit
     def test_narrative_law_validation(self, director_agent, mock_agent):
         """Test E004 Narrative Law validation."""
         world_context = director_agent._get_current_world_context()
@@ -321,6 +326,7 @@ class TestIronLawsValidation:
         assert len(violations) > 0
         assert all(v.law_code == "E004" for v in violations)
 
+    @pytest.mark.unit
     def test_social_law_validation(self, director_agent, mock_agent):
         """Test E005 Social Law validation."""
         world_context = director_agent._get_current_world_context()
@@ -404,6 +410,7 @@ class TestIronLawsRepairSystem:
             "equipment": ["basic_weapon", "standard_armor"],
         }
 
+    @pytest.mark.unit
     def test_causality_repair(self, director_agent):
         """Test E001 Causality Law violation repairs."""
         # Create action with causality violation
@@ -452,6 +459,7 @@ class TestIronLawsRepairSystem:
         repairs_text = " ".join(repairs_made)
         assert "target" in repairs_text.lower() or "reasoning" in repairs_text.lower()
 
+    @pytest.mark.unit
     def test_resource_repair(self, director_agent, mock_character_data):
         """Test E002 Resource Law violation repairs."""
         # Create action that exceeds stamina
@@ -493,6 +501,7 @@ class TestIronLawsRepairSystem:
             repairs_made
         ) or "Reduced duration" in " ".join(repairs_made)
 
+    @pytest.mark.unit
     def test_physics_repair(self, director_agent, mock_character_data):
         """Test E003 Physics Law violation repairs."""
         # Create physically impossible action
@@ -531,6 +540,7 @@ class TestIronLawsRepairSystem:
         assert repaired_action.parameters.range < 1000.0  # Should be reduced
         assert "Adjusted movement" in " ".join(repairs_made)
 
+    @pytest.mark.unit
     def test_narrative_repair(self, director_agent):
         """Test E004 Narrative Law violation repairs."""
         # Create narratively incoherent action
@@ -575,6 +585,7 @@ class TestIronLawsRepairSystem:
             or repaired_action.target.entity_id != "ally"
         )
 
+    @pytest.mark.unit
     def test_social_repair(self, director_agent):
         """Test E005 Social Law violation repairs."""
         # Create socially inappropriate action
@@ -614,6 +625,7 @@ class TestIronLawsRepairSystem:
         )  # Should be reduced
         assert "Adjusted communication" in " ".join(repairs_made)
 
+    @pytest.mark.unit
     def test_comprehensive_repair_attempt(self, director_agent, mock_character_data):
         """Test comprehensive repair system with multiple violation types."""
         # Create action with multiple violations
@@ -673,6 +685,7 @@ class TestIronLawsHelperMethods:
         """Create DirectorAgent instance for testing."""
         return DirectorAgent()
 
+    @pytest.mark.unit
     def test_group_violations_by_law(self, director_agent):
         """Test violation grouping by law code."""
         violations = [
@@ -708,6 +721,7 @@ class TestIronLawsHelperMethods:
         assert len(grouped["E001"]) == 2
         assert len(grouped["E002"]) == 1
 
+    @pytest.mark.unit
     def test_get_current_world_context(self, director_agent):
         """Test world context generation."""
         context = director_agent._get_current_world_context()
@@ -725,6 +739,7 @@ class TestIronLawsHelperMethods:
         assert isinstance(context["story_state"], dict)
         assert isinstance(context["physics"], dict)
 
+    @pytest.mark.unit
     def test_determine_overall_validation_result(self, director_agent):
         """Test overall validation result determination."""
         # Test with no violations
@@ -772,6 +787,7 @@ class TestIronLawsHelperMethods:
         result = director_agent._determine_overall_validation_result(low_violations)
         assert result == ValidationResult.VALID
 
+    @pytest.mark.unit
     def test_calculate_action_stamina_cost(self, director_agent):
         """Test stamina cost calculation."""
         # Test basic action
@@ -855,6 +871,7 @@ class TestIronLawsIntegration:
             director.register_agent(mock_agent)
             yield director, mock_agent
 
+    @pytest.mark.unit
     def test_iron_laws_during_turn_processing(self, director_with_agents):
         """Test that Iron Laws validation occurs during normal turn processing."""
         director, mock_agent = director_with_agents
@@ -883,6 +900,7 @@ class TestIronLawsIntegration:
             assert mock_adjudicate.called
             assert turn_result["total_actions"] >= 0
 
+    @pytest.mark.unit
     def test_iron_laws_error_handling(self, director_with_agents):
         """Test error handling in Iron Laws validation."""
         director, mock_agent = director_with_agents
@@ -900,6 +918,7 @@ class TestIronLawsIntegration:
                 len(turn_result["errors"]) >= 0
             )  # Error handling should prevent crashes
 
+    @pytest.mark.unit
     def test_iron_laws_performance_tracking(self, director_with_agents):
         """Test that Iron Laws validation performance is tracked."""
         director, mock_agent = director_with_agents
@@ -925,6 +944,7 @@ class TestIronLawsEdgeCases:
         """Create DirectorAgent for edge case testing."""
         return DirectorAgent()
 
+    @pytest.mark.unit
     def test_invalid_action_handling(self, director_agent):
         """Test handling of invalid or malformed actions."""
         # Test with None action
@@ -941,6 +961,7 @@ class TestIronLawsEdgeCases:
         assert hasattr(result, "violations")
         assert len(result.violations) > 0
 
+    @pytest.mark.unit
     def test_malformed_character_data_handling(self, director_agent):
         """Test handling of malformed character data."""
         malformed_agent = Mock()
@@ -955,6 +976,7 @@ class TestIronLawsEdgeCases:
         assert hasattr(result, "overall_result")
         assert result.overall_result == ValidationResult.CATASTROPHIC_FAILURE
 
+    @pytest.mark.unit
     def test_resource_calculation_edge_cases(self, director_agent):
         """Test stamina calculation edge cases."""
         # Test action with no parameters
@@ -975,6 +997,7 @@ class TestIronLawsEdgeCases:
         cost = director_agent._calculate_action_stamina_cost(invalid_param_action)
         assert cost >= 1  # Should handle gracefully
 
+    @pytest.mark.unit
     def test_repair_system_edge_cases(self, director_agent):
         """Test repair system edge cases."""
         # Test repair with no violations

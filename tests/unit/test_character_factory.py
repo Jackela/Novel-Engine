@@ -31,6 +31,7 @@ class TestCharacterFactory:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_factory_initialization_success(self):
         """Test factory initialization - success case"""
         event_bus = Mock(spec=EventBus)
@@ -40,6 +41,7 @@ class TestCharacterFactory:
         assert hasattr(factory, "event_bus")
         assert hasattr(factory, "base_character_path")
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_create_character_empty_name(self):
         """Test character creation with empty name raises ValueError"""
@@ -221,6 +223,7 @@ class TestCharacterFactoryConfiguration:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_factory_with_different_event_buses(self):
         """Test factory with different event bus instances"""
         bus1 = Mock(spec=EventBus)
@@ -282,6 +285,7 @@ class TestCharacterFactoryPerformance:
         self.mock_event_bus = Mock(spec=EventBus)
 
     @pytest.mark.performance
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_character_creation_performance(self, tmp_path):
         """Test character creation performance"""

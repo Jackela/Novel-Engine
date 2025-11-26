@@ -18,10 +18,10 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointInstanceMethods:
     """Test suite for PlotPoint instance methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_involves_character_true(self):
         """Test involves_character returns True for involved character."""
@@ -112,5 +112,3 @@ class TestPlotPointInstanceMethods:
         assert context["has_consequences"] is True
         assert context["reveals_information"] is True
         assert context["changes_relationships"] is True
-
-

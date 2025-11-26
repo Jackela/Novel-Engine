@@ -49,13 +49,13 @@ class TestMarkerValidator:
             return False, [f"File not found: {file_path}"]
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             return False, [f"Error reading file: {e}"]
 
         violations = []
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # Track test functions and their markers
         current_class = None
@@ -64,7 +64,7 @@ class TestMarkerValidator:
 
         for i, line in enumerate(lines, 1):
             # Check for class definition
-            class_match = re.match(r'^class (Test\w+)', line)
+            class_match = re.match(r"^class (Test\w+)", line)
             if class_match:
                 current_class = class_match.group(1)
                 class_markers = set()
@@ -79,13 +79,13 @@ class TestMarkerValidator:
                 continue
 
             # Check for function-level markers
-            if line.strip().startswith('@pytest.mark.'):
+            if line.strip().startswith("@pytest.mark."):
                 for marker in self.PYRAMID_MARKERS:
                     if f"@pytest.mark.{marker}" in line:
                         pending_markers.add(marker)
 
             # Check for test function definition
-            test_match = re.match(r'^    def (test_\w+)', line)
+            test_match = re.match(r"^    def (test_\w+)", line)
             if test_match:
                 test_name = test_match.group(1)
                 self.total_tests_checked += 1
@@ -94,7 +94,9 @@ class TestMarkerValidator:
                 effective_markers = pending_markers | class_markers
 
                 if not effective_markers:
-                    location = f"{current_class}::{test_name}" if current_class else test_name
+                    location = (
+                        f"{current_class}::{test_name}" if current_class else test_name
+                    )
                     violations.append(
                         f"Line {i}: {location} - Missing pyramid marker "
                         f"(needs @pytest.mark.unit, @pytest.mark.integration, or @pytest.mark.e2e)"
@@ -120,7 +122,11 @@ class TestMarkerValidator:
 
             if not is_valid:
                 all_valid = False
-                rel_path = file_path.relative_to(self.project_root) if file_path.is_relative_to(self.project_root) else file_path
+                rel_path = (
+                    file_path.relative_to(self.project_root)
+                    if file_path.is_relative_to(self.project_root)
+                    else file_path
+                )
                 self.violations[str(rel_path)] = violations
 
         return all_valid
@@ -141,7 +147,10 @@ class TestMarkerValidator:
             return
 
         print("✗ Test marker validation FAILED", file=sys.stderr)
-        print(f"  Found {self.total_violations} tests without pyramid markers\n", file=sys.stderr)
+        print(
+            f"  Found {self.total_violations} tests without pyramid markers\n",
+            file=sys.stderr,
+        )
 
         if verbose:
             for file_path, violations in sorted(self.violations.items()):
@@ -152,10 +161,22 @@ class TestMarkerValidator:
             print("\n" + "=" * 80, file=sys.stderr)
             print("How to fix:", file=sys.stderr)
             print("  Add one of these markers before your test:", file=sys.stderr)
-            print("    @pytest.mark.unit       - Fast, isolated unit tests", file=sys.stderr)
-            print("    @pytest.mark.integration - Tests with external dependencies", file=sys.stderr)
-            print("    @pytest.mark.e2e        - End-to-end workflow tests", file=sys.stderr)
-            print("\n  You can also add markers at the class level to apply to all tests.", file=sys.stderr)
+            print(
+                "    @pytest.mark.unit       - Fast, isolated unit tests",
+                file=sys.stderr,
+            )
+            print(
+                "    @pytest.mark.integration - Tests with external dependencies",
+                file=sys.stderr,
+            )
+            print(
+                "    @pytest.mark.e2e        - End-to-end workflow tests",
+                file=sys.stderr,
+            )
+            print(
+                "\n  You can also add markers at the class level to apply to all tests.",
+                file=sys.stderr,
+            )
             print("=" * 80, file=sys.stderr)
         else:
             print(f"  {len(self.violations)} file(s) with violations", file=sys.stderr)
@@ -181,7 +202,7 @@ Examples:
 Bypass in commit message:
   If you need to bypass this check temporarily, include [skip-marker-check]
   in your commit message. Use this sparingly and only with justification.
-        """
+        """,
     )
 
     parser.add_argument(

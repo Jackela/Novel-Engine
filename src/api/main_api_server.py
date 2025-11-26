@@ -42,7 +42,12 @@ from src.api.error_handlers import (
 )
 from src.api.health_system import HealthMonitor, create_health_data_response
 from src.api.interaction_api import create_interaction_api
-from src.api.logging_system import LogCategory, LogLevel, setup_logging
+from src.api.logging_system import (
+    LogCategory,
+    LogLevel,
+    StructuredLogger,
+    setup_logging,
+)
 from src.api.monitoring import setup_monitoring
 
 # Import new integration systems
@@ -176,26 +181,42 @@ async def lifespan(app: FastAPI):
     config = APIServerConfig()
     app_start_time = datetime.now()
 
-    try:
-        # Initialize structured logging
-        global_structured_logger = setup_logging(
-            app,
-            log_level=LogLevel.DEBUG if config.debug else LogLevel.INFO,
-            log_file="logs/novel_engine_api.log" if not config.debug else None,
-            output_format="json" if not config.debug else "text",
-        )
+    # Detect testing mode early to skip blocking operations
+    is_testing = os.getenv("ORCHESTRATOR_MODE", "").lower() == "testing"
 
-        global_structured_logger.info(
-            "Starting Enhanced Novel Engine API Server", category=LogCategory.SYSTEM
-        )
+    try:
+        # Initialize structured logging (skip in testing mode to avoid blocking)
+        if is_testing:
+            # Create a minimal logger that doesn't try to add middleware
+            global_structured_logger = StructuredLogger(
+                name="novel_engine_test",
+                level=LogLevel.DEBUG,
+                output_format="text",
+                log_file=None,
+            )
+            app.state.logger = global_structured_logger
+        else:
+            global_structured_logger = setup_logging(
+                app,
+                log_level=LogLevel.DEBUG if config.debug else LogLevel.INFO,
+                log_file="logs/novel_engine_api.log" if not config.debug else None,
+                output_format="json" if not config.debug else "text",
+            )
+            global_structured_logger.info(
+                "Starting Enhanced Novel Engine API Server", category=LogCategory.SYSTEM
+            )
 
         # Initialize health monitoring
         global_health_monitor = HealthMonitor(app_start_time)
         app.state.health_monitor = global_health_monitor
 
         # Setup system orchestrator
+        orchestrator_mode = (
+            OrchestratorMode.TESTING if is_testing else OrchestratorMode.PRODUCTION
+        )
+
         orchestrator_config = OrchestratorConfig(
-            mode=OrchestratorMode.PRODUCTION,
+            mode=orchestrator_mode,
             max_concurrent_agents=config.max_concurrent_agents,
             debug_logging=config.debug,
         )
@@ -204,7 +225,16 @@ async def lifespan(app: FastAPI):
             database_path=config.database_path, config=orchestrator_config
         )
 
-        startup_result = await global_orchestrator.startup()
+        # Add timeout protection for startup (30s for TESTING, 60s for PRODUCTION)
+        startup_timeout = 30.0 if is_testing else 60.0
+        try:
+            startup_result = await asyncio.wait_for(
+                global_orchestrator.startup(), timeout=startup_timeout
+            )
+        except asyncio.TimeoutError:
+            raise ServiceUnavailableException(
+                "System Orchestrator", f"Startup timed out after {startup_timeout}s"
+            )
 
         if not startup_result.success:
             error_msg = (
@@ -510,7 +540,12 @@ def create_app() -> FastAPI:
 
     # Add trusted host middleware for security in production
     if not config.debug:
-        trusted_hosts = cors_origins + [config.host, "localhost", "127.0.0.1", "testserver"]
+        trusted_hosts = cors_origins + [
+            config.host,
+            "localhost",
+            "127.0.0.1",
+            "testserver",
+        ]
         app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 
     # Enhanced system endpoints
@@ -610,8 +645,28 @@ def create_app() -> FastAPI:
         try:
             health_monitor = getattr(app.state, "health_monitor", None)
             if not health_monitor:
-                raise ServiceUnavailableException(
-                    "Health Monitor", "Health monitoring system not available"
+                # Return 503 directly without raising - avoids global exception handler
+                response_time = (time.time() - start_time) * 1000
+                logger.warning("Health check called before monitor initialized")
+                fallback_data = HealthCheckData(
+                    service_status="initializing",
+                    database_status="unknown",
+                    orchestrator_status="unknown",
+                    active_agents=0,
+                    uptime_seconds=0,
+                    version="1.1.0",
+                    environment="startup",
+                )
+                metadata = APIMetadata(
+                    timestamp=datetime.now(),
+                    api_version="1.1",
+                    server_time=response_time,
+                )
+                response = HealthCheckResponse(data=fallback_data, metadata=metadata)
+                return JSONResponse(
+                    content=response.model_dump(mode="json"),
+                    status_code=503,
+                    headers={"Cache-Control": "no-cache"},
                 )
 
             # Get comprehensive health status
@@ -640,7 +695,7 @@ def create_app() -> FastAPI:
             response = HealthCheckResponse(data=health_data, metadata=metadata)
 
             return JSONResponse(
-                content=response.model_dump(),
+                content=response.model_dump(mode="json"),
                 status_code=status_code,
                 headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
             )
@@ -667,7 +722,7 @@ def create_app() -> FastAPI:
             response = HealthCheckResponse(data=fallback_data, metadata=metadata)
 
             return JSONResponse(
-                content=response.model_dump(),
+                content=response.model_dump(mode="json"),
                 status_code=503,
                 headers={"Cache-Control": "no-cache"},
             )
@@ -878,8 +933,7 @@ def _register_legacy_routes(app: FastAPI):
             yield "retry: 3000\n\n"
 
             global_structured_logger.info(
-                f"SSE client connected: {client_id}",
-                category=LogCategory.SYSTEM
+                f"SSE client connected: {client_id}", category=LogCategory.SYSTEM
             )
             active_sse_connections["count"] += 1
 
@@ -916,7 +970,7 @@ def _register_legacy_routes(app: FastAPI):
                     # Client disconnected - clean up and exit gracefully
                     global_structured_logger.info(
                         f"SSE client disconnected: {client_id}",
-                        category=LogCategory.SYSTEM
+                        category=LogCategory.SYSTEM,
                     )
                     active_sse_connections["count"] -= 1
                     break
@@ -926,7 +980,7 @@ def _register_legacy_routes(app: FastAPI):
                     global_structured_logger.error(
                         f"SSE event generation error for client {client_id}: {e}",
                         exc_info=e,
-                        category=LogCategory.ERROR
+                        category=LogCategory.ERROR,
                     )
 
                     error_event = {
@@ -935,7 +989,7 @@ def _register_legacy_routes(app: FastAPI):
                         "title": "Stream Error",
                         "description": f"Internal error: {str(e)}",
                         "timestamp": int(time.time() * 1000),
-                        "severity": "high"
+                        "severity": "high",
                     }
 
                     yield f"data: {json.dumps(error_event)}\n\n"
@@ -945,7 +999,7 @@ def _register_legacy_routes(app: FastAPI):
             global_structured_logger.error(
                 f"Fatal SSE error for client {client_id}: {fatal_error}",
                 exc_info=fatal_error,
-                category=LogCategory.ERROR
+                category=LogCategory.ERROR,
             )
             active_sse_connections["count"] -= 1
             raise
@@ -980,7 +1034,7 @@ def _register_legacy_routes(app: FastAPI):
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
                 "X-Accel-Buffering": "no",  # Disable nginx buffering for streaming
-            }
+            },
         )
 
     @app.post("/simulations", response_model=dict)

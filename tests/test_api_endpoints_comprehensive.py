@@ -43,6 +43,7 @@ SAMPLE_SIMULATION_REQUEST = {
 class TestHealthEndpoints:
     """Test health check and system status endpoints"""
 
+    @pytest.mark.integration
     def test_root_endpoint_returns_storyforge_branding(self):
         """Verify root endpoint shows StoryForge AI branding"""
         response = client.get("/")
@@ -52,6 +53,7 @@ class TestHealthEndpoints:
         assert "status" in data
         assert "timestamp" in data
 
+    @pytest.mark.integration
     def test_health_endpoint_basic_functionality(self):
         """Test basic health check functionality"""
         response = client.get("/health")
@@ -61,12 +63,14 @@ class TestHealthEndpoints:
         assert "timestamp" in data
         assert "uptime" in data
 
+    @pytest.mark.integration
     def test_system_status_endpoint(self):
         """Test system status endpoint with comprehensive checks"""
         response = client.get("/meta/system-status")
         assert response.status_code == 200
         # Note: This might fail due to Pydantic issues, but functionality works
 
+    @pytest.mark.integration
     def test_policy_endpoint(self):
         """Test policy information endpoint"""
         response = client.get("/meta/policy")
@@ -79,6 +83,7 @@ class TestHealthEndpoints:
 class TestCharacterEndpoints:
     """Test character-related API endpoints"""
 
+    @pytest.mark.integration
     def test_characters_list_returns_generic_characters(self):
         """Verify characters list returns only generic characters"""
         response = client.get("/characters")
@@ -102,6 +107,7 @@ class TestCharacterEndpoints:
         for branded in branded_chars:
             assert branded not in characters
 
+    @pytest.mark.integration
     def test_character_detail_pilot(self):
         """Test pilot character details"""
         response = client.get("/characters/pilot")
@@ -119,6 +125,7 @@ class TestCharacterEndpoints:
         assert stats["character"]["faction"] == "Galactic Defense Force"
         assert stats["character"]["specialization"] == "Starfighter Pilot"
 
+    @pytest.mark.integration
     def test_character_detail_scientist(self):
         """Test scientist character details"""
         response = client.get("/characters/scientist")
@@ -141,6 +148,7 @@ class TestCharacterEndpoints:
         for term in branded_terms:
             assert term.lower() not in content
 
+    @pytest.mark.integration
     def test_character_detail_engineer(self):
         """Test engineer character details"""
         response = client.get("/characters/engineer")
@@ -152,6 +160,7 @@ class TestCharacterEndpoints:
         assert "Systems Engineer" in data["narrative_context"]
         assert "Engineering Corps" in data["narrative_context"]
 
+    @pytest.mark.integration
     def test_character_detail_nonexistent(self):
         """Test request for non-existent character"""
         response = client.get("/characters/nonexistent")
@@ -159,6 +168,7 @@ class TestCharacterEndpoints:
         data = response.json()
         assert "not found" in data["detail"].lower()
 
+    @pytest.mark.integration
     def test_character_detail_legacy_branded_characters(self):
         """Test that legacy branded characters return 404"""
         legacy_characters = ["bastion_guardian", "freewind_raider", "isabella_varr"]
@@ -166,6 +176,7 @@ class TestCharacterEndpoints:
             response = client.get(f"/characters/{char_name}")
             assert response.status_code == 404
 
+    @pytest.mark.integration
     def test_enhanced_character_endpoint(self):
         """Test enhanced character data endpoint"""
         response = client.get("/characters/pilot/enhanced")
@@ -180,6 +191,7 @@ class TestCharacterEndpoints:
 class TestSimulationEndpoints:
     """Test simulation execution endpoints"""
 
+    @pytest.mark.integration
     def test_simulation_with_generic_characters(self):
         """Test simulation with new generic characters"""
         response = client.post("/simulations", json=SAMPLE_SIMULATION_REQUEST)
@@ -210,6 +222,7 @@ class TestSimulationEndpoints:
         assert "vast expanse" in story or "space" in story
         assert data["participants"] == ["pilot", "scientist"]
 
+    @pytest.mark.integration
     def test_simulation_minimum_characters_validation(self):
         """Test validation for minimum character requirement"""
         invalid_request = {
@@ -220,6 +233,7 @@ class TestSimulationEndpoints:
         response = client.post("/simulations", json=invalid_request)
         assert response.status_code == 422  # Validation error
 
+    @pytest.mark.integration
     def test_simulation_maximum_characters_validation(self):
         """Test validation for maximum character limit"""
         # Create request with too many characters
@@ -233,6 +247,7 @@ class TestSimulationEndpoints:
         # Should either limit or reject based on validation rules
         assert response.status_code in [200, 422]
 
+    @pytest.mark.integration
     def test_simulation_with_all_generic_characters(self):
         """Test simulation with all available generic characters"""
         all_chars_request = {
@@ -248,6 +263,7 @@ class TestSimulationEndpoints:
         assert data["turns_executed"] > 0
         assert data["duration_seconds"] > 0
 
+    @pytest.mark.integration
     def test_simulation_story_quality(self):
         """Test that generated stories meet quality standards"""
         response = client.post("/simulations", json=SAMPLE_SIMULATION_REQUEST)
@@ -276,6 +292,7 @@ class TestSimulationEndpoints:
         story_lower = story.lower()
         assert any(indicator in story_lower for indicator in sci_fi_indicators)
 
+    @pytest.mark.integration
     def test_simulation_with_custom_setting_scenario(self):
         """Test simulation with various settings and scenarios"""
         test_cases = [
@@ -307,6 +324,7 @@ class TestSimulationEndpoints:
 class TestCampaignEndpoints:
     """Test campaign management endpoints"""
 
+    @pytest.mark.integration
     def test_campaigns_list_endpoint(self):
         """Test listing available campaigns"""
         response = client.get("/campaigns")
@@ -315,6 +333,7 @@ class TestCampaignEndpoints:
         assert "campaigns" in data
         assert isinstance(data["campaigns"], list)
 
+    @pytest.mark.integration
     def test_campaign_creation_with_generic_theme(self):
         """Test creating campaign with generic sci-fi theme"""
         campaign_data = {
@@ -337,6 +356,7 @@ class TestCampaignEndpoints:
 class TestErrorHandlingAndEdgeCases:
     """Test error handling and edge cases"""
 
+    @pytest.mark.integration
     def test_invalid_json_request(self):
         """Test handling of malformed JSON"""
         response = client.post(
@@ -346,6 +366,7 @@ class TestErrorHandlingAndEdgeCases:
         )
         assert response.status_code == 422
 
+    @pytest.mark.integration
     def test_missing_required_fields(self):
         """Test validation of missing required fields"""
         incomplete_request = {"setting": "space station"}
@@ -354,6 +375,7 @@ class TestErrorHandlingAndEdgeCases:
         data = response.json()
         assert "character_names" in str(data)
 
+    @pytest.mark.integration
     def test_empty_character_list(self):
         """Test simulation with empty character list"""
         empty_request = {
@@ -364,6 +386,7 @@ class TestErrorHandlingAndEdgeCases:
         response = client.post("/simulations", json=empty_request)
         assert response.status_code == 422
 
+    @pytest.mark.integration
     def test_nonexistent_character_in_simulation(self):
         """Test simulation with non-existent character"""
         invalid_request = {
@@ -375,6 +398,7 @@ class TestErrorHandlingAndEdgeCases:
         # Should either filter out invalid characters or return error
         assert response.status_code in [200, 400, 422]
 
+    @pytest.mark.integration
     def test_rate_limiting_compliance(self):
         """Test that API handles multiple requests appropriately"""
         # Make multiple rapid requests
@@ -386,6 +410,7 @@ class TestErrorHandlingAndEdgeCases:
         # All should succeed (no rate limiting implemented yet)
         assert all(status == 200 for status in responses)
 
+    @pytest.mark.integration
     def test_cors_headers_present(self):
         """Test CORS headers are present"""
         response = client.options("/characters")
@@ -396,6 +421,7 @@ class TestErrorHandlingAndEdgeCases:
 class TestSecurityAndValidation:
     """Test security measures and input validation"""
 
+    @pytest.mark.integration
     def test_input_sanitization(self):
         """Test that inputs are properly sanitized"""
         malicious_request = {
@@ -413,6 +439,7 @@ class TestSecurityAndValidation:
         assert "<script>" not in story
         assert "DROP TABLE" not in story
 
+    @pytest.mark.integration
     def test_sql_injection_prevention(self):
         """Test SQL injection prevention"""
         injection_attempt = {
@@ -425,6 +452,7 @@ class TestSecurityAndValidation:
         # Should handle gracefully without crashes
         assert response.status_code in [200, 400, 422]
 
+    @pytest.mark.integration
     def test_excessive_input_length_handling(self):
         """Test handling of excessively long inputs"""
         very_long_string = "x" * 10000
@@ -442,6 +470,7 @@ class TestSecurityAndValidation:
 class TestPerformanceAndLoad:
     """Test performance characteristics"""
 
+    @pytest.mark.integration
     def test_response_time_health_check(self):
         """Test health check response time"""
         start_time = time.time()
@@ -452,6 +481,7 @@ class TestPerformanceAndLoad:
         response_time = end_time - start_time
         assert response_time < 1.0  # Should respond within 1 second
 
+    @pytest.mark.integration
     def test_response_time_character_list(self):
         """Test character listing response time"""
         start_time = time.time()
@@ -462,6 +492,7 @@ class TestPerformanceAndLoad:
         response_time = end_time - start_time
         assert response_time < 2.0  # Should respond within 2 seconds
 
+    @pytest.mark.integration
     def test_simulation_execution_time(self):
         """Test simulation execution time is reasonable"""
         start_time = time.time()
@@ -477,6 +508,7 @@ class TestPerformanceAndLoad:
         assert data["duration_seconds"] < 10.0
 
     @pytest.mark.slow
+    @pytest.mark.integration
     def test_concurrent_requests_handling(self):
         """Test handling of concurrent requests"""
         import concurrent.futures
@@ -497,12 +529,14 @@ class TestPerformanceAndLoad:
 class TestAPIDocumentation:
     """Test API documentation and schema"""
 
+    @pytest.mark.integration
     def test_openapi_schema_accessibility(self):
         """Test that OpenAPI schema is accessible"""
         response = client.get("/docs")
         assert response.status_code == 200
         assert "text/html" in response.headers.get("content-type", "")
 
+    @pytest.mark.integration
     def test_redoc_documentation_accessibility(self):
         """Test that ReDoc documentation is accessible"""
         response = client.get("/redoc")

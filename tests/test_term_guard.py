@@ -42,6 +42,7 @@ except ImportError as e:
 class TestFilterRule:
     """Test FilterRule data structure and validation."""
 
+    @pytest.mark.unit
     def test_filter_rule_creation(self):
         """Test creating filter rules with valid parameters."""
         rule = FilterRule(
@@ -60,6 +61,7 @@ class TestFilterRule:
         assert rule.case_sensitive is False  # default
         assert rule.word_boundary is True  # default
 
+    @pytest.mark.unit
     def test_filter_rule_defaults(self):
         """Test filter rule default values."""
         rule = FilterRule(
@@ -77,6 +79,7 @@ class TestFilterRule:
 class TestIPViolation:
     """Test IPViolation data structure."""
 
+    @pytest.mark.unit
     def test_ip_violation_creation(self):
         """Test creating IP violation records."""
         violation = IPViolation(
@@ -141,6 +144,7 @@ class TestTermGuard:
         yield temp_path
         temp_path.unlink()
 
+    @pytest.mark.unit
     def test_term_guard_initialization(self, temp_config):
         """Test Term Guard initialization with configuration."""
         guard = TermGuard(config_path=temp_config)
@@ -151,6 +155,7 @@ class TestTermGuard:
         assert guard.replacement_dict["Vanguard Paladin"] == "Alliance Network Marine"
         assert guard.replacement_dict["Commandant"] == "Officer"
 
+    @pytest.mark.unit
     def test_term_guard_default_initialization(self):
         """Test Term Guard initialization with defaults."""
         with patch("pathlib.Path.exists", return_value=False):
@@ -163,6 +168,7 @@ class TestTermGuard:
             for rule in guard.filter_rules
         )
 
+    @pytest.mark.unit
     def test_analyze_content_basic(self, temp_config):
         """Test basic content analysis functionality."""
         guard = TermGuard(config_path=temp_config)
@@ -187,6 +193,7 @@ class TestTermGuard:
         assert len(legacy_violations) == 1
         assert legacy_violations[0].violation_type == ViolationType.TRADEMARK
 
+    @pytest.mark.unit
     def test_analyze_content_whitelist(self, temp_config):
         """Test content analysis respects whitelist."""
         guard = TermGuard(config_path=temp_config)
@@ -199,6 +206,7 @@ class TestTermGuard:
         assert "Alliance Network" not in violation_terms
         assert "Guard" not in violation_terms
 
+    @pytest.mark.unit
     def test_clean_content_replace(self, temp_config):
         """Test content cleaning with replacement action."""
         guard = TermGuard(config_path=temp_config)
@@ -215,6 +223,7 @@ class TestTermGuard:
             in report.actions_taken
         )
 
+    @pytest.mark.unit
     def test_clean_content_block(self, temp_config):
         """Test content cleaning with block action."""
         guard = TermGuard(config_path=temp_config)
@@ -229,6 +238,7 @@ class TestTermGuard:
             "Blocked 'legacy franchise'" in action for action in report.actions_taken
         )
 
+    @pytest.mark.unit
     def test_clean_content_analyze_only(self, temp_config):
         """Test content analysis without applying fixes."""
         guard = TermGuard(config_path=temp_config)
@@ -241,6 +251,7 @@ class TestTermGuard:
         assert len(report.violations_found) >= 2
         assert len(report.actions_taken) == 0  # No fixes applied
 
+    @pytest.mark.unit
     def test_generic_replacement_generation(self, temp_config):
         """Test generic replacement generation."""
         guard = TermGuard(config_path=temp_config)
@@ -259,6 +270,7 @@ class TestTermGuard:
         assert replacement.startswith("Faction_")
         assert len(replacement) > len("Faction_")
 
+    @pytest.mark.unit
     def test_compliance_report_generation(self, temp_config):
         """Test compliance report generation."""
         guard = TermGuard(config_path=temp_config)
@@ -312,6 +324,7 @@ class TestTermGuard:
         assert "trademark" in compliance_report["violation_breakdown"]
         assert len(compliance_report["recommendations"]) > 0
 
+    @pytest.mark.unit
     def test_compliance_report_empty(self, temp_config):
         """Test compliance report with no data."""
         guard = TermGuard(config_path=temp_config)
@@ -325,6 +338,7 @@ class TestTermGuard:
 class TestTermGuardIntegration:
     """Test Term Guard integration scenarios."""
 
+    @pytest.mark.unit
     def test_complex_content_cleaning(self):
         """Test cleaning complex content with multiple violation types."""
         # Use default configuration for this test
@@ -350,6 +364,7 @@ class TestTermGuardIntegration:
             # Ensure critical violations were handled
             assert not report.safe_for_use or len(high_confidence_violations) == 0
 
+    @pytest.mark.unit
     def test_configuration_error_handling(self):
         """Test Term Guard handles configuration errors gracefully."""
         # Test with invalid configuration file
@@ -362,6 +377,7 @@ class TestTermGuardIntegration:
                 # Should still initialize with default rules
                 assert len(guard.filter_rules) > 0
 
+    @pytest.mark.unit
     def test_regex_error_handling(self):
         """Test handling of invalid regex patterns."""
         # Create Term Guard with invalid regex pattern
@@ -398,6 +414,7 @@ class TestTermGuardCLI:
         yield temp_path
         temp_path.unlink()
 
+    @pytest.mark.unit
     def test_cli_analyze_only(self, temp_input_file, capsys):
         """Test CLI analyze-only mode."""
         from scripts.term_guard import main
@@ -415,6 +432,7 @@ class TestTermGuardCLI:
         assert "Analysis Results" in captured.out
         assert "potential IP violations" in captured.out
 
+    @pytest.mark.unit
     def test_cli_clean_with_output(self, temp_input_file, tmp_path):
         """Test CLI cleaning with output file."""
         from scripts.term_guard import main
@@ -440,6 +458,7 @@ class TestTermGuardCLI:
         cleaned_content = output_file.read_text(encoding="utf-8")
         assert len(cleaned_content) > 0
 
+    @pytest.mark.unit
     def test_cli_compliance_report(self, temp_input_file, tmp_path):
         """Test CLI compliance report generation."""
         from scripts.term_guard import main
@@ -467,6 +486,7 @@ class TestTermGuardCLI:
         assert "violation_breakdown" in report_data
         assert "recommendations" in report_data
 
+    @pytest.mark.unit
     def test_cli_file_not_found(self, capsys):
         """Test CLI behavior with non-existent input file."""
         from scripts.term_guard import main

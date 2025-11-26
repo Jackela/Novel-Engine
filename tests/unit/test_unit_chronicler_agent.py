@@ -55,6 +55,7 @@ class TestChroniclerAgent:
             pass
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_chronicler_initialization_success(self):
         """测试记录代理初始化 - 成功情况"""
         event_bus = Mock()
@@ -99,7 +100,7 @@ class TestChroniclerAgent:
             pytest.skip("Chronicler agent does not have transcribe_log method")
 
         # 使用模拟Gemini响应
-        with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+        with patch("src.agents.chronicler_agent._make_gemini_api_request") as mock_gemini:
             mock_response = Mock()
             mock_response.text = (
                 "In a realm of adventure, our heroes faced great challenges..."
@@ -136,7 +137,7 @@ class TestChroniclerAgent:
             with open(empty_log_file, "w") as f:
                 f.write("")
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch("src.agents.chronicler_agent._make_gemini_api_request") as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = "A tale begins in silence..."
                 mock_gemini.return_value = mock_response
@@ -158,7 +159,7 @@ class TestChroniclerAgent:
         if not hasattr(self.chronicler, "transcribe_log"):
             pytest.skip("Chronicler agent does not have transcribe_log method")
 
-        with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+        with patch("src.agents.chronicler_agent._make_gemini_api_request") as mock_gemini:
             # 模拟API调用失败
             mock_gemini.side_effect = Exception("API request failed")
 
@@ -171,7 +172,7 @@ class TestChroniclerAgent:
         if not hasattr(self.chronicler, "transcribe_log"):
             pytest.skip("Chronicler agent does not have transcribe_log method")
 
-        with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+        with patch("src.agents.chronicler_agent._make_gemini_api_request") as mock_gemini:
             # 模拟空响应
             mock_response = Mock()
             mock_response.text = ""
@@ -216,7 +217,7 @@ class TestChroniclerAgent:
         """测试角色名集成"""
         # 检查角色名是否在转录过程中被使用
         if hasattr(self.chronicler, "transcribe_log"):
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch("src.agents.chronicler_agent._make_gemini_api_request") as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = (
                     "The hero, villain, and sage embark on their journey..."
@@ -261,6 +262,7 @@ class TestChroniclerAgentAdvanced:
         )
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_event_bus_integration(self):
         """测试与事件总线的集成"""
         # 检查记录代理是否正确使用事件总线
@@ -295,7 +297,7 @@ class TestChroniclerAgentAdvanced:
                     f.write(f"Protagonist: Action in turn {turn + 1}\n")
                     f.write(f"Antagonist: Response in turn {turn + 1}\n\n")
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch("src.agents.chronicler_agent._make_gemini_api_request") as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = """In an epic tale spanning five crucial moments, 
                 the protagonist and antagonist engaged in a series of meaningful exchanges 
@@ -374,7 +376,7 @@ class TestChroniclerAgentAdvanced:
                         f"Antagonist: Elaborate response {turn + 1} with intricate details...\n\n"
                     )
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch("src.agents.chronicler_agent._make_gemini_api_request") as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = "An epic saga of twenty pivotal moments..."
                 mock_gemini.return_value = mock_response
@@ -409,6 +411,7 @@ class TestChroniclerAgentPerformance:
 
     @pytest.mark.performance
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_transcription_performance(self):
         """测试转录性能"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -424,7 +427,7 @@ class TestChroniclerAgentPerformance:
                     f.write(f"Perf Hero: Action {turn + 1}\n")
                     f.write(f"Perf Villain: Response {turn + 1}\n\n")
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch("src.agents.chronicler_agent._make_gemini_api_request") as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = (
                     "A performance test story with multiple characters..."
@@ -473,7 +476,7 @@ class TestChroniclerAgentPerformance:
                     f.write(f"Hero: Action in log {i}\n")
                     f.write(f"Villain: Response in log {i}\n\n")
 
-            with patch("chronicler_agent._make_gemini_api_request") as mock_gemini:
+            with patch("src.agents.chronicler_agent._make_gemini_api_request") as mock_gemini:
                 mock_response = Mock()
                 mock_response.text = "Quick test story..."
                 mock_gemini.return_value = mock_response

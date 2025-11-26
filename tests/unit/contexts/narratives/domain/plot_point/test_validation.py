@@ -18,10 +18,10 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointValidation:
     """Test suite for PlotPoint validation logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_empty_title_validation(self):
         """Test validation fails with empty title."""
@@ -303,5 +303,3 @@ class TestPlotPointValidation:
         assert len(plot_point.plot_point_id) == 100
         assert len(plot_point.title) == 200
         assert len(plot_point.description) == 2000
-
-

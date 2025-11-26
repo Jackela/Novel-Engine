@@ -251,6 +251,7 @@ class TestInputValidator:
         """Create input validator for testing"""
         return InputValidator()
 
+    @pytest.mark.unit
     def test_sql_injection_detection(self, validator):
         """Test SQL injection detection"""
         malicious_inputs = [
@@ -264,6 +265,7 @@ class TestInputValidator:
             with pytest.raises(ValidationError):
                 validator.validate_input(malicious_input, InputType.TEXT)
 
+    @pytest.mark.unit
     def test_xss_detection(self, validator):
         """Test XSS detection"""
         xss_inputs = [
@@ -277,6 +279,7 @@ class TestInputValidator:
             with pytest.raises(ValidationError):
                 validator.validate_input(xss_input, InputType.TEXT)
 
+    @pytest.mark.unit
     def test_command_injection_detection(self, validator):
         """Test command injection detection"""
         command_injections = [
@@ -290,6 +293,7 @@ class TestInputValidator:
             with pytest.raises(ValidationError):
                 validator.validate_input(cmd_injection, InputType.TEXT)
 
+    @pytest.mark.unit
     def test_path_traversal_detection(self, validator):
         """Test path traversal detection"""
         path_traversals = [
@@ -302,6 +306,7 @@ class TestInputValidator:
             with pytest.raises(ValidationError):
                 validator.validate_input(path_traversal, InputType.FILENAME)
 
+    @pytest.mark.unit
     def test_valid_input_passes(self, validator):
         """Test that valid input passes validation"""
         valid_inputs = [
@@ -316,6 +321,7 @@ class TestInputValidator:
             result = validator.validate_input(valid_input, input_type)
             assert result is not None
 
+    @pytest.mark.unit
     def test_json_validation(self, validator):
         """Test JSON validation"""
         # Valid JSON
@@ -443,6 +449,7 @@ class TestSecurityHeaders:
         response.headers = {}
         return response
 
+    @pytest.mark.unit
     def test_csp_header_construction(self, security_headers):
         """Test CSP header construction"""
         csp_header = security_headers._build_csp_header()
@@ -452,6 +459,7 @@ class TestSecurityHeaders:
         assert "object-src 'none'" in csp_header
         assert "frame-ancestors 'none'" in csp_header
 
+    @pytest.mark.unit
     def test_security_headers_application(
         self, security_headers, mock_request, mock_response
     ):
@@ -469,6 +477,7 @@ class TestSecurityHeaders:
         assert response.headers["X-Content-Type-Options"] == "nosniff"
         assert response.headers["X-Frame-Options"] == "DENY"
 
+    @pytest.mark.unit
     def test_hsts_header_construction(self, security_headers):
         """Test HSTS header construction"""
         hsts_header = security_headers._build_hsts_header()
@@ -477,6 +486,7 @@ class TestSecurityHeaders:
         assert "includeSubDomains" in hsts_header
         assert "preload" in hsts_header
 
+    @pytest.mark.unit
     def test_permissions_policy_construction(self, security_headers):
         """Test Permissions Policy header construction"""
         permissions_header = security_headers._build_permissions_policy_header()
@@ -503,6 +513,7 @@ class TestDataProtection:
         # Cleanup
         os.unlink(db_path)
 
+    @pytest.mark.unit
     def test_encryption_service(self):
         """Test encryption and decryption"""
         encryption_service = EncryptionService("test_key")
@@ -514,6 +525,7 @@ class TestDataProtection:
         assert encrypted_data != original_data
         assert decrypted_data == original_data
 
+    @pytest.mark.unit
     def test_dictionary_encryption(self):
         """Test dictionary encryption"""
         encryption_service = EncryptionService("test_key")

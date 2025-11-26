@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class EventPriority(IntEnum):
     """Event priority levels for processing order."""
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
@@ -37,6 +38,7 @@ class EventPriority(IntEnum):
 @dataclass
 class Event:
     """Represents an event in the system."""
+
     event_type: str
     data: Any
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -57,6 +59,7 @@ class Event:
 @dataclass
 class DeadLetterEntry:
     """Represents a failed event in the dead-letter queue."""
+
     event: Event
     error: str
     handler_name: str
@@ -320,7 +323,7 @@ class EventBus:
 
         # Trim history if needed
         if len(self._history) > self._max_history:
-            self._history = self._history[-self._max_history:]
+            self._history = self._history[-self._max_history :]
 
     def _add_to_dead_letter(
         self,
@@ -339,7 +342,7 @@ class EventBus:
 
         # Trim dead-letter queue if needed
         if len(self._dead_letters) > self._max_dead_letters:
-            self._dead_letters = self._dead_letters[-self._max_dead_letters:]
+            self._dead_letters = self._dead_letters[-self._max_dead_letters :]
 
         logger.warning(
             f"Event '{event.event_type}' (id={event.event_id[:8]}) "
@@ -415,8 +418,7 @@ class EventBus:
         if event_type:
             before = len(self._dead_letters)
             self._dead_letters = [
-                e for e in self._dead_letters
-                if e.event.event_type != event_type
+                e for e in self._dead_letters if e.event.event_type != event_type
             ]
             return before - len(self._dead_letters)
         else:
@@ -467,8 +469,7 @@ class EventBus:
                 success_count += 1
                 # Remove from dead-letter queue
                 self._dead_letters = [
-                    e for e in self._dead_letters
-                    if e.event.event_id != event.event_id
+                    e for e in self._dead_letters if e.event.event_id != event.event_id
                 ]
 
         return success_count
@@ -481,9 +482,7 @@ class EventBus:
             "history_size": len(self._history),
             "dead_letter_size": len(self._dead_letters),
             "paused_event_types": list(self._paused_types),
-            "subscriber_counts": {
-                k: len(v) for k, v in self._subscribers.items()
-            },
+            "subscriber_counts": {k: len(v) for k, v in self._subscribers.items()},
         }
 
     def reset_metrics(self) -> None:

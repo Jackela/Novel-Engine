@@ -30,6 +30,7 @@ class TestCoreAbilities:
     # ==================== Creation Tests ====================
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_core_abilities_creation_success(self):
         """Test successful core abilities creation."""
         abilities = CoreAbilities(
@@ -262,6 +263,7 @@ class TestVitalStats:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_vital_stats_creation_success(self):
         """Test successful vital stats creation."""
@@ -780,6 +782,7 @@ class TestCombatStats:
 
     # ==================== Creation Tests ====================
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_combat_stats_creation_success(self):
         """Test successful combat stats creation."""

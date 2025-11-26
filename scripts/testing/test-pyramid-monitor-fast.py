@@ -69,17 +69,18 @@ class FastTestPyramidMonitor:
     def _parse_test_file(self, file_path: Path) -> None:
         """Parse a test file to extract test functions and their markers."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Find test functions
-            test_pattern = re.compile(r'^    def (test_\w+)', re.MULTILINE)
-            class_pattern = re.compile(r'^class (Test\w+)', re.MULTILINE)
+            test_pattern = re.compile(r"^    def (test_\w+)", re.MULTILINE)
+            class_pattern = re.compile(r"^class (Test\w+)", re.MULTILINE)
 
-            # Track current markers
-            current_markers = set()
+            # Track class-level and function-level markers separately
+            class_markers = set()
+            function_markers = set()
 
-            lines = content.split('\n')
+            lines = content.split("\n")
             current_class = None
 
             for i, line in enumerate(lines):
@@ -87,19 +88,24 @@ class FastTestPyramidMonitor:
                 class_match = class_pattern.match(line)
                 if class_match:
                     current_class = class_match.group(1)
-                    # Reset markers for new class
-                    current_markers = set()
+                    # Reset class markers for new class
+                    class_markers = set()
+                    function_markers = set()
                     # Look back for markers before class
                     for j in range(max(0, i - 10), i):
-                        marker_match = re.search(r'@pytest\.mark\.(unit|integration|e2e)', lines[j])
+                        marker_match = re.search(
+                            r"@pytest\.mark\.(unit|integration|e2e)", lines[j]
+                        )
                         if marker_match:
-                            current_markers.add(marker_match.group(1))
+                            class_markers.add(marker_match.group(1))
 
                 # Check for test function markers
-                if line.strip().startswith('@pytest.mark.'):
-                    marker_match = re.search(r'@pytest\.mark\.(unit|integration|e2e)', line)
+                if line.strip().startswith("@pytest.mark."):
+                    marker_match = re.search(
+                        r"@pytest\.mark\.(unit|integration|e2e)", line
+                    )
                     if marker_match:
-                        current_markers.add(marker_match.group(1))
+                        function_markers.add(marker_match.group(1))
 
                 # Check for test function
                 test_match = test_pattern.match(line)
@@ -110,14 +116,17 @@ class FastTestPyramidMonitor:
                     # Add to all tests
                     self.all_tests.add(test_id)
 
+                    # Combine class and function markers
+                    effective_markers = class_markers | function_markers
+
                     # Add to marker sets
-                    if current_markers:
-                        for marker in current_markers:
+                    if effective_markers:
+                        for marker in effective_markers:
                             if marker in self.tests_by_marker:
                                 self.tests_by_marker[marker].add(test_id)
 
-                    # Reset function-level markers
-                    current_markers = set()
+                    # Reset only function-level markers (class markers persist)
+                    function_markers = set()
 
         except Exception as e:
             print(f"Warning: Could not parse {file_path}: {e}", file=sys.stderr)
@@ -161,7 +170,9 @@ class FastTestPyramidMonitor:
             categorized.update(tests)
         return len(self.all_tests - categorized)
 
-    def generate_console_report(self, distribution: Dict[str, float], score: float) -> str:
+    def generate_console_report(
+        self, distribution: Dict[str, float], score: float
+    ) -> str:
         """Generate ASCII console report."""
         lines = []
         lines.append("=" * 80)
@@ -228,7 +239,9 @@ class FastTestPyramidMonitor:
         }
         return json.dumps(data, indent=2)
 
-    def generate_markdown_report(self, distribution: Dict[str, float], score: float) -> str:
+    def generate_markdown_report(
+        self, distribution: Dict[str, float], score: float
+    ) -> str:
         """Generate Markdown report."""
         lines = []
         lines.append("# Test Pyramid Report")
@@ -270,7 +283,9 @@ class FastTestPyramidMonitor:
 
     def generate_html_report(self, distribution: Dict[str, float], score: float) -> str:
         """Generate HTML report using template."""
-        template_path = self.project_root / "scripts/testing/pyramid-report-template.html"
+        template_path = (
+            self.project_root / "scripts/testing/pyramid-report-template.html"
+        )
 
         if template_path.exists():
             with open(template_path, "r") as f:
@@ -287,7 +302,7 @@ class FastTestPyramidMonitor:
             target = self.TARGETS[marker]
             delta = pct - target
 
-            delta_class = 'positive' if delta >= 0 else 'negative'
+            delta_class = "positive" if delta >= 0 else "negative"
             rows.append(
                 f"<tr>"
                 f"<td>{marker.capitalize()}</td>"
@@ -302,7 +317,9 @@ class FastTestPyramidMonitor:
         rec_html = "".join(f"<li>{rec}</li>" for rec in recommendations)
 
         # Replace placeholders
-        html = template.replace("{{TIMESTAMP}}", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        html = template.replace(
+            "{{TIMESTAMP}}", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
         html = html.replace("{{SCORE}}", f"{score:.1f}")
         html = html.replace("{{TOTAL}}", f"{len(self.all_tests):,}")
         html = html.replace("{{ROWS}}", "\n".join(rows))

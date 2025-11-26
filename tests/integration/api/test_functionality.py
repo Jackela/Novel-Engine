@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 from typing import List
 
+import pytest
 import requests
 
 # 配置日志
@@ -62,6 +63,7 @@ def check_environment():
     return True
 
 
+@pytest.mark.integration
 def test_gemini_api_direct():
     """直接测试Gemini API调用"""
     import pytest
@@ -120,6 +122,7 @@ def start_api_server():
         return None
 
 
+@pytest.mark.integration
 def test_api_endpoints(base_url="http://127.0.0.1:8000"):
     """测试API端点"""
     import pytest

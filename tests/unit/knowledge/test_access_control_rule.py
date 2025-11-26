@@ -29,6 +29,7 @@ class TestAccessControlRuleInvariants:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_public_access_level_requires_no_additional_data(self):
         """Test PUBLIC access level can be created without roles or character IDs."""
         if AccessControlRule is None:

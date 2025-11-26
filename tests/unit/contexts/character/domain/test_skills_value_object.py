@@ -30,6 +30,7 @@ class TestProficiencyLevel:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_proficiency_level_values(self):
         """Test proficiency level enum values."""
         assert ProficiencyLevel.UNTRAINED.value == 0
@@ -518,6 +519,7 @@ class TestSkillGroup:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_skill_case_insensitive(self, sample_skill_group):
         """Test getting skill is case insensitive."""
         skill = sample_skill_group.get_skill("MELEE_COMBAT")
@@ -527,6 +529,7 @@ class TestSkillGroup:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_skill_nonexistent(self, sample_skill_group):
         """Test getting non-existent skill returns None."""
         skill = sample_skill_group.get_skill("nonexistent_skill")
@@ -557,6 +560,7 @@ class TestSkillGroup:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_average_proficiency_empty_group(self):
         """Test average proficiency for hypothetical empty group."""
         # This test is theoretical since empty groups fail validation
@@ -584,6 +588,7 @@ class TestSkillGroup:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_count_trained_skills(self, sample_skill_group):
         """Test counting trained skills in group."""
         trained_count = sample_skill_group.count_trained_skills()
@@ -768,6 +773,7 @@ class TestSkills:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_skill_by_name_case_insensitive(self, sample_skills):
         """Test getting skill by name is case insensitive."""
         skill = sample_skills.get_skill("MELEE_COMBAT")
@@ -777,6 +783,7 @@ class TestSkills:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_skill_by_name_not_found(self, sample_skills):
         """Test getting skill by name when not found."""
         skill = sample_skills.get_skill("nonexistent_skill")
@@ -795,6 +802,7 @@ class TestSkills:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_skill_by_category_wrong_category(self, sample_skills):
         """Test getting skill with wrong category returns None."""
         skill = sample_skills.get_skill("melee_combat", SkillCategory.SOCIAL)
@@ -812,6 +820,7 @@ class TestSkills:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_has_skill_insufficient_proficiency(self, sample_skills):
         """Test has_skill returns False with insufficient proficiency."""
         assert sample_skills.has_skill("persuasion", ProficiencyLevel.EXPERT) is False
@@ -875,6 +884,7 @@ class TestSkills:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_skills_by_category_existing(self, sample_skills):
         """Test getting skills by existing category."""
         combat_skills = sample_skills.get_skills_by_category(SkillCategory.COMBAT)
@@ -904,6 +914,7 @@ class TestSkills:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_master_skills(self, sample_skills):
         """Test getting all master-level skills."""
         master_skills = sample_skills.get_master_skills()
@@ -933,6 +944,7 @@ class TestSkills:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_speaks_language_existing(self, sample_skills):
         """Test speaks_language returns True for known languages."""
         assert sample_skills.speaks_language("Common") is True
@@ -957,6 +969,7 @@ class TestSkills:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_strongest_category(self, sample_skills):
         """Test finding strongest skill category."""
         strongest = sample_skills.get_strongest_category()
@@ -965,6 +978,7 @@ class TestSkills:
         # Social has lower average: APPRENTICE(2) + NOVICE(1) = 1.5 avg
         assert strongest == SkillCategory.COMBAT
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_get_strongest_category_empty_skills(self):
         """Test strongest category with minimal skills."""
@@ -1018,6 +1032,7 @@ class TestSkills:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_can_perform_action_success(self, sample_skills):
         """Test can_perform_action returns True for achievable actions."""
         # Melee Combat modifier is 6 (or 8 with specialization), + 10 base = 16/18

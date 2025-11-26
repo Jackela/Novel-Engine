@@ -24,6 +24,7 @@ class TestNegotiationEnums:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_negotiation_phase_values(self):
         """Test NegotiationPhase enum values."""
         assert NegotiationPhase.INITIATION.value == "initiation"
@@ -64,6 +65,7 @@ class TestNegotiationEnums:
 class TestNegotiationStatusCreation:
     """Test suite for NegotiationStatus creation and basic functionality."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_minimal_status_creation(self):
         """Test creating NegotiationStatus with minimal required fields."""
@@ -128,6 +130,7 @@ class TestNegotiationStatusCreation:
 class TestNegotiationStatusValidation:
     """Test suite for NegotiationStatus validation logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_timezone_validation_started_at(self):
         """Test validation fails with naive datetime for started_at."""
@@ -322,6 +325,7 @@ class TestNegotiationStatusFactoryMethods:
     """Test suite for NegotiationStatus factory methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_create_initial_default_time(self):
         """Test creating initial status with default timestamp."""
         with patch(
@@ -371,6 +375,7 @@ class TestNegotiationStatusFactoryMethods:
 class TestNegotiationStatusPhaseTransitions:
     """Test suite for phase transition logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_valid_phase_transitions(self):
         """Test all valid phase transitions."""
@@ -506,6 +511,7 @@ class TestNegotiationStatusCompletion:
     """Test suite for negotiation completion logic."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_complete_with_outcome_success(self):
         """Test successful negotiation completion."""
         now = datetime.now(timezone.utc)
@@ -579,6 +585,7 @@ class TestNegotiationStatusActivityUpdate:
     """Test suite for activity timestamp updates."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_update_last_activity_specific_time(self):
         """Test updating last activity with specific timestamp."""
         now = datetime.now(timezone.utc)
@@ -617,6 +624,7 @@ class TestNegotiationStatusActivityUpdate:
 class TestNegotiationStatusProperties:
     """Test suite for NegotiationStatus properties."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_is_active_property(self):
         """Test is_active property for different phases."""
@@ -750,6 +758,7 @@ class TestNegotiationStatusEquality:
     """Test suite for NegotiationStatus equality comparison."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_equality_same_values(self):
         """Test equality with identical values."""
         now = datetime.now(timezone.utc)
@@ -847,6 +856,7 @@ class TestNegotiationStatusStringRepresentation:
     """Test suite for NegotiationStatus string representation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_str_representation(self):
         """Test string representation of NegotiationStatus."""
         now = datetime.now(timezone.utc)
@@ -883,6 +893,7 @@ class TestNegotiationStatusStringRepresentation:
 class TestNegotiationStatusEdgeCases:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_same_start_and_activity_time(self):
         """Test status with identical start and activity times."""

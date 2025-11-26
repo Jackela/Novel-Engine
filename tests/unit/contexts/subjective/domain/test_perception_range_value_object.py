@@ -21,6 +21,7 @@ class TestPerceptionRangeCreation:
     """Test suite for PerceptionRange value object creation and validation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_minimal_perception_range_creation(self):
         """Test creating perception range with minimal required fields."""
         perception_range = PerceptionRange(
@@ -75,6 +76,7 @@ class TestPerceptionRangeCreation:
 class TestPerceptionRangeValidation:
     """Test suite for PerceptionRange validation logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_negative_base_range_validation(self):
         """Test validation fails with negative base range."""
@@ -212,6 +214,7 @@ class TestVisibilityCalculation:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_visibility_at_zero_distance(self):
         """Test visibility at zero distance is always clear."""
         perception_range = PerceptionRange(
@@ -370,6 +373,7 @@ class TestPerceptionRangeUtilityMethods:
     """Test suite for PerceptionRange utility methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_is_within_range_true(self):
         """Test is_within_range returns True for distances within effective range."""
         perception_range = PerceptionRange(
@@ -450,6 +454,7 @@ class TestPerceptionCapabilitiesCreation:
     """Test suite for PerceptionCapabilities creation and validation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_minimal_perception_capabilities_creation(self):
         """Test creating perception capabilities with minimal fields."""
         visual_range = PerceptionRange(
@@ -507,6 +512,7 @@ class TestPerceptionCapabilitiesCreation:
 class TestPerceptionCapabilitiesValidation:
     """Test suite for PerceptionCapabilities validation logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_empty_perception_ranges_validation(self):
         """Test validation fails with empty perception ranges."""
@@ -711,6 +717,7 @@ class TestPerceptionCapabilitiesBusinessLogic:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_maximum_range(self, multi_sense_capabilities):
         """Test getting maximum perception range."""
         max_range = multi_sense_capabilities.get_maximum_range()
@@ -771,6 +778,7 @@ class TestPerceptionCapabilitiesBusinessLogic:
 class TestComplexPerceptionScenarios:
     """Test suite for complex perception scenarios."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_stealth_detection_scenario(self):
         """Test a complex stealth detection scenario with multiple perception types."""
@@ -1015,6 +1023,7 @@ class TestComplexPerceptionScenarios:
 class TestEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_zero_effective_range_perception(self):
         """Test perception with zero effective range."""

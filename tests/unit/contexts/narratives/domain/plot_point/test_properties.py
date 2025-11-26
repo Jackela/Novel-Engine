@@ -18,12 +18,12 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointProperties:
     """Test suite for PlotPoint property methods."""
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_major_plot_point_critical(self):
         """Test is_major_plot_point returns True for CRITICAL importance."""
         plot_point = PlotPoint(
@@ -255,5 +255,3 @@ class TestPlotPointProperties:
         )
 
         assert plot_point.affects_characters is False
-
-

@@ -28,6 +28,7 @@ class TestStoryArcPhase:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_enum_contains_expected_members(self) -> None:
         phase_names = {phase.name for phase in StoryArcPhase}
         assert phase_names == {
@@ -79,6 +80,7 @@ class TestStoryArcState:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_phase_complete_true_when_progress_and_transition_ready(self) -> None:
         state = self._build_state(
             phase_progress=Decimal("0.96"),
@@ -88,6 +90,7 @@ class TestStoryArcState:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_phase_complete_false_when_below_threshold(self) -> None:
         state = self._build_state(phase_progress=Decimal("0.7"))
         assert state.is_phase_complete is False
@@ -103,6 +106,7 @@ class TestStoryArcState:
         assert context["active_plot_threads"] == 3
         assert context["ready_for_transition"] is False
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_state_is_immutable(self) -> None:
         state = self._build_state()

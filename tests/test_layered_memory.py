@@ -487,6 +487,7 @@ class TestLayeredMemorySystem:
 class TestMemoryPriority:
     """Unit tests for MemoryPriority enum."""
 
+    @pytest.mark.unit
     def test_memory_priority_values(self):
         """Test MemoryPriority enum values."""
         assert MemoryPriority.CRITICAL.value == "critical"
@@ -499,6 +500,7 @@ class TestMemoryPriority:
 class TestMemoryQueryRequest:
     """Unit tests for MemoryQueryRequest dataclass."""
 
+    @pytest.mark.unit
     def test_memory_query_request_defaults(self):
         """Test MemoryQueryRequest default values."""
         query = MemoryQueryRequest(query_text="test query")
@@ -513,6 +515,7 @@ class TestMemoryQueryRequest:
         assert query.include_working_memory is True
         assert query.include_emotional_context is True
 
+    @pytest.mark.unit
     def test_memory_query_request_custom(self):
         """Test MemoryQueryRequest custom values."""
         start_time = datetime.now()
@@ -538,6 +541,7 @@ class TestMemoryQueryRequest:
 class TestMemoryQueryResult:
     """Unit tests for MemoryQueryResult dataclass."""
 
+    @pytest.mark.unit
     def test_memory_query_result_defaults(self):
         """Test MemoryQueryResult default values."""
         result = MemoryQueryResult()

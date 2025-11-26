@@ -23,12 +23,8 @@ from httpx import AsyncClient
 from src.api.main_api_server import create_app
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create event loop for async tests."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# Note: event_loop fixture removed - pytest-asyncio 0.21+ handles this automatically
+# Defining a custom event_loop fixture is deprecated and causes conflicts
 
 
 @pytest.fixture(scope="module")
@@ -39,6 +35,8 @@ def api_app():
     os.environ["ENABLE_RATE_LIMITING"] = "false"
     os.environ["ENABLE_AUTH"] = "false"
     os.environ["DATABASE_PATH"] = "data/test_e2e.db"
+    # Use TESTING mode for fast startup (skips background tasks and narrative engines)
+    os.environ["ORCHESTRATOR_MODE"] = "testing"
 
     app = create_app()
     yield app
@@ -56,20 +54,35 @@ def api_app():
 def client(api_app):
     """Create synchronous test client."""
     with TestClient(api_app, raise_server_exceptions=False) as test_client:
-        # Wait for lifespan to complete (system to be ready)
+        # Wait for API to become ready before yielding client
         import time
-        max_wait = 30
+
+        max_wait = 15  # Reduced from 30s - should be sufficient
         start = time.time()
+        last_status = None
+        last_service_status = None
 
         while time.time() - start < max_wait:
             try:
                 response = test_client.get("/health")
-                if response.status_code in [200, 503]:
-                    # Health endpoint responds, system is initializing or ready
-                    break
-            except Exception:
-                pass
-            time.sleep(0.5)
+                last_status = response.status_code
+
+                if response.status_code == 200:
+                    data = response.json()
+                    last_service_status = data.get("data", {}).get("service_status")
+                    # Accept healthy OR degraded (non-critical checks may fail in CI)
+                    if last_service_status in ["healthy", "degraded"]:
+                        break
+            except Exception as e:
+                last_status = f"exception: {e}"
+            time.sleep(0.2)  # Reduced from 0.5s for faster iteration
+        else:
+            # Timeout reached - fail with clear message
+            raise RuntimeError(
+                f"API failed to become ready within {max_wait}s. "
+                f"Last status code: {last_status}, "
+                f"Last service_status: {last_service_status}"
+            )
 
         yield test_client
 
@@ -78,9 +91,7 @@ def client(api_app):
 async def async_client(api_app):
     """Create async test client for async operations."""
     async with AsyncClient(
-        app=api_app,
-        base_url="http://testserver",
-        timeout=30.0
+        app=api_app, base_url="http://testserver", timeout=30.0
     ) as ac:
         yield ac
 
@@ -107,7 +118,7 @@ def capture_failure_artifacts(request, temp_artifacts_dir):
         failure_info = {
             "test_name": request.node.name,
             "timestamp": datetime.now().isoformat(),
-            "failure": str(request.node.rep_call.longrepr)
+            "failure": str(request.node.rep_call.longrepr),
         }
         failure_log.write_text(json.dumps(failure_info, indent=2))
 
@@ -127,7 +138,7 @@ class TestDataFactory:
     def create_character_data(
         name: Optional[str] = None,
         agent_id: Optional[str] = None,
-        archetype: Optional[str] = None
+        archetype: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create character data for testing."""
         char_name = name or f"TestChar_{datetime.now().timestamp()}"
@@ -142,21 +153,16 @@ class TestDataFactory:
             "dominant_emotion": "calm",
             "energy_level": 8,
             "stress_level": 3,
-            "skills": {
-                "combat": 0.7,
-                "diplomacy": 0.6,
-                "investigation": 0.8
-            },
+            "skills": {"combat": 0.7, "diplomacy": 0.6, "investigation": 0.8},
             "relationships": {},
             "current_location": "Test Location",
             "inventory": ["test_item"],
-            "metadata": {"test": True}
+            "metadata": {"test": True},
         }
 
     @staticmethod
     def create_world_data(
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        name: Optional[str] = None, description: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create world data for testing."""
         world_name = name or f"TestWorld_{datetime.now().timestamp()}"
@@ -164,34 +170,26 @@ class TestDataFactory:
         return {
             "name": world_name,
             "description": description or f"Description for {world_name}",
-            "settings": {
-                "genre": "fantasy",
-                "theme": "adventure",
-                "tone": "epic"
-            },
+            "settings": {"genre": "fantasy", "theme": "adventure", "tone": "epic"},
             "locations": [
                 {
                     "name": "Starting Village",
                     "description": "A peaceful village",
-                    "type": "settlement"
+                    "type": "settlement",
                 }
             ],
-            "rules": [
-                "Magic exists but is rare",
-                "Technology is medieval"
-            ],
-            "metadata": {"test": True}
+            "rules": ["Magic exists but is rare", "Technology is medieval"],
+            "metadata": {"test": True},
         }
 
     @staticmethod
     def create_story_request(
-        characters: List[str],
-        title: Optional[str] = None
+        characters: List[str], title: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create story generation request."""
         return {
             "characters": characters,
-            "title": title or f"Test Story {datetime.now().timestamp()}"
+            "title": title or f"Test Story {datetime.now().timestamp()}",
         }
 
 
@@ -204,11 +202,7 @@ def data_factory():
 @pytest.fixture
 async def cleanup_test_data(async_client):
     """Cleanup test data after test completion."""
-    created_resources = {
-        "characters": [],
-        "worlds": [],
-        "stories": []
-    }
+    created_resources = {"characters": [], "worlds": [], "stories": []}
 
     yield created_resources
 
@@ -226,6 +220,7 @@ class APITestHelper:
     def wait_for_health(self, timeout: int = 30) -> bool:
         """Wait for API to become healthy."""
         import time
+
         start_time = time.time()
 
         while time.time() - start_time < timeout:
@@ -233,7 +228,10 @@ class APITestHelper:
                 response = self.client.get("/health")
                 if response.status_code == 200:
                     data = response.json()
-                    if data.get("data", {}).get("service_status") in ["healthy", "degraded"]:
+                    if data.get("data", {}).get("service_status") in [
+                        "healthy",
+                        "degraded",
+                    ]:
                         return True
             except Exception:
                 pass
@@ -259,7 +257,8 @@ class APITestHelper:
         response = self.client.get("/api/characters")
         response.raise_for_status()
         data = response.json()
-        return data.get("data", {}).get("characters", [])
+        # API returns {"characters": [...]} directly, not wrapped in data
+        return data.get("characters", [])
 
     def delete_character(self, agent_id: str) -> bool:
         """Delete a character."""
@@ -271,7 +270,8 @@ class APITestHelper:
         response = self.client.post("/api/stories/generate", json=story_request)
         response.raise_for_status()
         data = response.json()
-        return data.get("data", {}).get("generation_id")
+        # API returns generation_id directly (not wrapped in "data")
+        return data.get("generation_id") or data.get("data", {}).get("generation_id")
 
     def get_story_status(self, generation_id: str) -> Dict[str, Any]:
         """Get story generation status."""
@@ -280,12 +280,11 @@ class APITestHelper:
         return response.json()
 
     def wait_for_story_completion(
-        self,
-        generation_id: str,
-        timeout: int = 60
+        self, generation_id: str, timeout: int = 60
     ) -> Dict[str, Any]:
         """Wait for story generation to complete."""
         import time
+
         start_time = time.time()
 
         while time.time() - start_time < timeout:
@@ -297,7 +296,9 @@ class APITestHelper:
 
             time.sleep(2)
 
-        raise TimeoutError(f"Story generation {generation_id} did not complete in {timeout}s")
+        raise TimeoutError(
+            f"Story generation {generation_id} did not complete in {timeout}s"
+        )
 
 
 @pytest.fixture
@@ -327,12 +328,14 @@ class PerformanceTracker:
 
     def record(self, operation: str, duration: float, metadata: Optional[Dict] = None):
         """Record a performance metric."""
-        self.metrics.append({
-            "operation": operation,
-            "duration": duration,
-            "timestamp": datetime.now().isoformat(),
-            "metadata": metadata or {}
-        })
+        self.metrics.append(
+            {
+                "operation": operation,
+                "duration": duration,
+                "timestamp": datetime.now().isoformat(),
+                "metadata": metadata or {},
+            }
+        )
 
     def get_summary(self) -> Dict[str, Any]:
         """Get performance summary."""
@@ -346,7 +349,7 @@ class PerformanceTracker:
             "avg_duration": sum(durations) / len(durations),
             "min_duration": min(durations),
             "max_duration": max(durations),
-            "operations": self.metrics
+            "operations": self.metrics,
         }
 
 

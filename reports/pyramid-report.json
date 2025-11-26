@@ -1,33 +1,33 @@
 {
-  "timestamp": "2025-11-25T12:26:01.502978",
-  "score": 2.24,
-  "total_tests": 2930,
-  "test_files_scanned": 204,
+  "timestamp": "2025-11-25T13:49:48.102603",
+  "score": 1.76,
+  "total_tests": 2280,
+  "test_files_scanned": 126,
   "distribution": {
     "unit": {
-      "count": 2365,
-      "percentage": 80.72,
+      "count": 1721,
+      "percentage": 75.48,
       "target": 70.0,
-      "delta": 10.72
+      "delta": 5.48
     },
     "integration": {
       "count": 11,
-      "percentage": 0.38,
+      "percentage": 0.48,
       "target": 20.0,
-      "delta": -19.62
+      "delta": -19.52
     },
     "e2e": {
       "count": 5,
-      "percentage": 0.17,
+      "percentage": 0.22,
       "target": 10.0,
-      "delta": -9.83
+      "delta": -9.78
     }
   },
-  "missing_markers": 549,
+  "missing_markers": 543,
   "recommendations": [
-    "Add pyramid markers (unit/integration/e2e) to 549 uncategorized tests",
-    "Reduce unit tests or reclassify them (currently +10.7% above target of 70.0%)",
-    "Add more integration tests (currently 19.6% below target of 20.0%)",
+    "Add pyramid markers (unit/integration/e2e) to 543 uncategorized tests",
+    "Reduce unit tests or reclassify them (currently +5.5% above target of 70.0%)",
+    "Add more integration tests (currently 19.5% below target of 20.0%)",
     "Add more e2e tests (currently 9.8% below target of 10.0%)"
   ]
 }

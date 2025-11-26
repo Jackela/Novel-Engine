@@ -21,6 +21,7 @@ from src.core.system_orchestrator import SystemOrchestrator
 class TestWebSocketOptimizations:
     """Test WebSocket connection pooling and performance improvements."""
 
+    @pytest.mark.unit
     def test_connection_pool_creation(self):
         """Test connection pool initialization."""
         pool = ConnectionPool()
@@ -28,6 +29,7 @@ class TestWebSocketOptimizations:
         assert len(pool.last_activity) == 0
         assert pool.cleanup_interval == 300
 
+    @pytest.mark.unit
     def test_connection_pool_add_remove(self):
         """Test adding and removing connections."""
         pool = ConnectionPool()
@@ -320,12 +322,14 @@ class TestIntegratedPerformance:
 class TestFrontendOptimizations:
     """Test frontend optimizations (requires frontend test environment)."""
 
+    @pytest.mark.unit
     def test_api_cache_deduplication(self):
         """Test API request deduplication prevents duplicate calls."""
         # This would require a more complex test setup with actual HTTP mocking
         # For now, we can test the cache logic
         pass
 
+    @pytest.mark.unit
     def test_mobile_responsive_behavior(self):
         """Test mobile-responsive UI adaptations."""
         # This would require React Testing Library setup

@@ -26,6 +26,7 @@ class TestProviderTypeEnum:
     """Test suite for ProviderType enum."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_all_provider_types_exist(self):
         """Test that all expected provider types are defined."""
         expected_types = {
@@ -207,6 +208,7 @@ class TestProviderIdValidation:
     """Test suite for ProviderId validation and constraints."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_empty_provider_name_raises_error(self):
         """Test that empty provider name raises validation error."""
         with pytest.raises(ValueError, match="provider_name is required"):
@@ -344,6 +346,7 @@ class TestProviderIdFactoryMethods:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_create_openai_default(self):
         """Test creating OpenAI provider with default parameters."""
         provider_id = ProviderId.create_openai()
@@ -410,6 +413,7 @@ class TestProviderIdFactoryMethods:
 class TestProviderIdMethods:
     """Test suite for ProviderId methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_is_official_provider(self):
         """Test is_official_provider method."""
@@ -494,6 +498,7 @@ class TestModelIdCreation:
         )
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_create_minimal_model_id(self):
         """Test creating ModelId with minimal required fields."""
         model_id = ModelId(model_name="test-model", provider_id=self.provider_id)
@@ -565,6 +570,7 @@ class TestModelIdValidation:
         )
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_empty_model_name_raises_error(self):
         """Test that empty model name raises validation error."""
         with pytest.raises(ValueError, match="model_name is required"):
@@ -583,6 +589,7 @@ class TestModelIdValidation:
         ):
             ModelId(model_name=long_name, provider_id=self.provider_id)
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_invalid_model_name_characters_raise_errors(self):
         """Test that invalid model name characters raise validation errors."""
@@ -703,6 +710,7 @@ class TestModelIdFactoryMethods:
         )
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_create_gpt4(self):
         """Test creating GPT-4 model."""
         model_id = ModelId.create_gpt4(self.provider_id)
@@ -784,6 +792,7 @@ class TestModelIdMethods:
             provider_name="Test Provider", provider_type=ProviderType.CUSTOM
         )
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_supports_capability(self):
         """Test supports_capability method."""
@@ -962,6 +971,7 @@ class TestTokenBudgetValidation:
     """Test suite for TokenBudget validation and constraints."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_empty_budget_id_raises_error(self):
         """Test that empty budget ID raises validation error."""
         with pytest.raises(ValueError, match="budget_id is required"):
@@ -998,6 +1008,7 @@ class TestTokenBudgetValidation:
             budget = TokenBudget(budget_id=budget_id, allocated_tokens=1000)
             assert budget.budget_id == budget_id
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_invalid_token_values_raise_errors(self):
         """Test that invalid token values raise validation errors."""
@@ -1092,6 +1103,7 @@ class TestTokenBudgetFactoryMethods:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_create_daily_budget_default(self):
         """Test creating daily budget with default parameters."""
         budget = TokenBudget.create_daily_budget("user123", 5000)
@@ -1114,6 +1126,7 @@ class TestTokenBudgetFactoryMethods:
         assert budget.cost_limit == Decimal("200.00")
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_create_project_budget(self):
         """Test creating project budget."""
         budget = TokenBudget.create_project_budget(
@@ -1134,6 +1147,7 @@ class TestTokenBudgetMethods:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_get_available_tokens(self):
         """Test get_available_tokens method."""
         budget = TokenBudget(
@@ -1213,6 +1227,7 @@ class TestTokenBudgetMethods:
         cost_util = budget.get_cost_utilization_percentage()
         assert cost_util == Decimal("0.00")
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_can_reserve_tokens(self):
         """Test can_reserve_tokens method."""
@@ -1476,6 +1491,7 @@ class TestTokenBudgetMethods:
 class TestTokenBudgetEquality:
     """Test suite for TokenBudget equality and hashing."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_equality_same_values(self):
         """Test equality with same values."""

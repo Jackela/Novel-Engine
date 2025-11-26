@@ -25,6 +25,7 @@ class TestContextScopeEnum:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_all_scope_levels_exist(self):
         """Test that all expected scope levels are defined."""
         expected_scopes = {"GLOBAL", "ARC", "CHAPTER", "SCENE", "MOMENT"}
@@ -41,6 +42,7 @@ class TestContextScopeEnum:
         assert ContextScope.SCENE.value == "scene"
         assert ContextScope.MOMENT.value == "moment"
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_scope_logical_ordering(self):
         """Test that scope levels represent logical hierarchy."""
@@ -365,6 +367,7 @@ class TestNarrativeContextCreation:
 class TestNarrativeContextValidation:
     """Test suite for NarrativeContext validation logic."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_empty_context_id_validation(self):
         """Test validation fails with empty context ID."""
@@ -776,6 +779,7 @@ class TestNarrativeContextProperties:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_has_sequence_range_with_from_sequence(self):
         """Test has_sequence_range returns True when from sequence is set."""
         context = NarrativeContext(
@@ -1093,6 +1097,7 @@ class TestOverallInfluenceStrength:
     """Test suite for overall influence strength calculation."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_influence_strength_base_calculation(self):
         """Test influence strength with base values only."""
         context = NarrativeContext(
@@ -1186,6 +1191,7 @@ class TestContextualComplexityScore:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_complexity_score_base_only(self):
         """Test complexity score with only base complexity level."""
         context = NarrativeContext(
@@ -1294,6 +1300,7 @@ class TestContextualComplexityScore:
 class TestNarrativeContextInstanceMethods:
     """Test suite for NarrativeContext instance methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_applies_at_sequence_persistent_no_range(self):
         """Test applies_at_sequence for persistent context with no range."""
@@ -1656,6 +1663,7 @@ class TestNarrativeContextStringRepresentation:
     """Test suite for NarrativeContext string representation methods."""
 
     @pytest.mark.unit
+    @pytest.mark.unit
     def test_str_representation(self):
         """Test human-readable string representation."""
         context = NarrativeContext(
@@ -1716,6 +1724,7 @@ class TestNarrativeContextStringRepresentation:
 class TestNarrativeContextEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_creation_with_fixed_timestamp(self):
         """Test creation with explicitly set timestamp."""
@@ -1924,6 +1933,7 @@ class TestNarrativeContextEdgeCasesAndBoundaryConditions:
 class TestNarrativeContextCollectionsAndComparison:
     """Test suite for NarrativeContext behavior in collections and comparisons."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_contexts_in_list(self):
         """Test NarrativeContext objects in list operations."""

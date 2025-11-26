@@ -1,7 +1,10 @@
 # Makefile for Novel-Engine Development and Testing
 # Provides convenient commands for local development and CI simulation
 
-.PHONY: help setup test test-ci act-setup act-test act-ci act-clean docker-clean lint format install upgrade
+.PHONY: help setup test test-ci test-unit test-integration test-e2e test-coverage test-watch \
+        validate-markers test-pyramid speed-report ci-full pre-push \
+        act-setup act-test act-ci act-ci-verbose act-list act-clean \
+        docker-clean lint format type-check install upgrade clean quality ci-local
 
 # Default target
 help:
@@ -17,6 +20,17 @@ help:
 	@echo "  make test           - Run tests locally with pytest"
 	@echo "  make test-ci        - Run CI test suite (enhanced_bridge + character_system)"
 	@echo "  make test-watch     - Run tests in watch mode (requires pytest-watch)"
+	@echo "  make test-coverage  - Run tests with coverage report"
+	@echo ""
+	@echo "CI Parity Commands (match GitHub Actions):"
+	@echo "  make test-unit      - Run unit tests only"
+	@echo "  make test-integration - Run integration tests only"
+	@echo "  make test-e2e       - Run E2E tests only"
+	@echo "  make validate-markers - Validate all test pyramid markers"
+	@echo "  make test-pyramid   - Check test pyramid score (>= 5.5)"
+	@echo "  make speed-report   - Run speed regression check"
+	@echo "  make ci-full        - Run full CI simulation locally"
+	@echo "  make pre-push       - Quick pre-push verification"
 	@echo ""
 	@echo "ACT Local GitHub Actions:"
 	@echo "  make act-setup      - Setup ACT for local GitHub Actions testing"
@@ -72,6 +86,42 @@ test-watch:
 test-coverage:
 	@echo "Running tests with coverage..."
 	pytest --cov=src --cov-report=html --cov-report=term
+
+# ============================================
+# CI Parity Commands (match GitHub Actions)
+# ============================================
+
+test-unit:
+	@echo "Running unit tests..."
+	pytest -m "unit" --tb=short --durations=10
+
+test-integration:
+	@echo "Running integration tests..."
+	pytest -m "integration" --tb=short --durations=10
+
+test-e2e:
+	@echo "Running E2E tests..."
+	pytest -m "e2e" --tb=short --durations=10
+
+validate-markers:
+	@echo "Validating test markers..."
+	python scripts/testing/validate-test-markers.py --all --verbose
+
+test-pyramid:
+	@echo "Checking test pyramid..."
+	python scripts/testing/test-pyramid-monitor-fast.py --format json
+
+speed-report:
+	@echo "Running speed regression check..."
+	python scripts/testing/test-speed-report.py
+
+# Full CI simulation (matches GitHub Actions ci.yml)
+ci-full: validate-markers test-pyramid test-unit test-integration test-e2e test-ci speed-report
+	@echo "✓ Full CI simulation complete"
+
+# Pre-push check (quick verification before pushing)
+pre-push: validate-markers test-pyramid test-unit
+	@echo "✓ Pre-push checks passed"
 
 # ============================================
 # ACT Local GitHub Actions Commands

@@ -18,10 +18,10 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointTypeEnum:
     """Test suite for PlotPointType enum."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_all_enum_values_exist(self):
         """Test that all expected enum values are defined."""
@@ -132,5 +132,3 @@ class TestPlotPointImportanceEnum:
             importance_order[PlotPointImportance.MINOR]
             > importance_order[PlotPointImportance.SUPPLEMENTAL]
         )
-
-

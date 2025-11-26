@@ -43,6 +43,7 @@ class TestPacingManager:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_adjust_pacing_in_climax_increases_speed(self) -> None:
         manager = PacingManager()
         state = _build_state(StoryArcPhase.CLIMAX)
@@ -53,6 +54,7 @@ class TestPacingManager:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_adjust_pacing_in_resolution_decreases_speed(self) -> None:
         manager = PacingManager()
         state = _build_state(StoryArcPhase.RESOLUTION)

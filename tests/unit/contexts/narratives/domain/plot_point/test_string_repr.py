@@ -18,10 +18,10 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointStringRepresentation:
     """Test suite for PlotPoint string representation methods."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_str_representation(self):
         """Test human-readable string representation."""
@@ -82,5 +82,3 @@ class TestPlotPointStringRepresentation:
         # repr should include more technical details
         assert "different-repr-test" in repr_str
         assert "critical" in repr_str
-
-

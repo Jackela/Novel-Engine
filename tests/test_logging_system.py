@@ -30,6 +30,7 @@ from core.logging_system import (
 class TestLogContext:
     """Test LogContext functionality."""
 
+    @pytest.mark.unit
     def test_log_context_creation(self):
         """Test LogContext creation and defaults."""
         context = LogContext()
@@ -40,6 +41,7 @@ class TestLogContext:
         assert context.user_id is None
         assert isinstance(context.metadata, dict)
 
+    @pytest.mark.unit
     def test_log_context_with_values(self):
         """Test LogContext with provided values."""
         context = LogContext(
@@ -79,6 +81,7 @@ class TestStructuredLogger:
         """Create structured logger for testing."""
         return StructuredLogger("test_logger", logger_config)
 
+    @pytest.mark.unit
     def test_structured_logger_initialization(self, structured_logger):
         """Test structured logger initialization."""
         assert structured_logger.name == "test_logger"
@@ -86,6 +89,7 @@ class TestStructuredLogger:
         assert len(structured_logger._context_stack) == 0
         assert len(structured_logger.performance_metrics) == 0
 
+    @pytest.mark.unit
     def test_context_management(self, structured_logger):
         """Test logging context management."""
         context = LogContext(component="test_component")
@@ -100,6 +104,7 @@ class TestStructuredLogger:
         assert popped_context == context
         assert len(structured_logger._context_stack) == 0
 
+    @pytest.mark.unit
     def test_basic_logging(self, structured_logger):
         """Test basic logging functionality."""
         # Test different log levels
@@ -114,6 +119,7 @@ class TestStructuredLogger:
         # Should not raise exceptions
         assert True
 
+    @pytest.mark.unit
     def test_logging_with_context(self, structured_logger):
         """Test logging with context."""
         context = LogContext(
@@ -129,6 +135,7 @@ class TestStructuredLogger:
         current_context = structured_logger.get_current_context()
         assert current_context.component == "test_component"
 
+    @pytest.mark.unit
     def test_error_logging(self, structured_logger):
         """Test error logging with exception details."""
         test_exception = ValueError("Test exception")
@@ -139,6 +146,7 @@ class TestStructuredLogger:
         # Should not raise exceptions
         assert True
 
+    @pytest.mark.unit
     def test_performance_tracking(self, structured_logger):
         """Test performance tracking functionality."""
         tracker = structured_logger.track_performance("test_operation")
@@ -156,6 +164,7 @@ class TestStructuredLogger:
         # Performance metric should be recorded
         assert len(structured_logger.performance_metrics) > 0
 
+    @pytest.mark.unit
     def test_audit_logging(self, structured_logger):
         """Test audit logging functionality."""
         context = LogContext(user_id="test_user", session_id="audit_session")
@@ -164,6 +173,7 @@ class TestStructuredLogger:
         # Audit entry should be recorded
         assert len(structured_logger.audit_trail) > 0
 
+    @pytest.mark.unit
     def test_security_logging(self, structured_logger):
         """Test security logging functionality."""
         context = LogContext(user_id="test_user")
@@ -172,6 +182,7 @@ class TestStructuredLogger:
         # Should not raise exceptions
         assert True
 
+    @pytest.mark.unit
     def test_logger_statistics(self, structured_logger):
         """Test logger statistics."""
         # Add some activity
@@ -189,6 +200,7 @@ class TestStructuredLogger:
 class TestPerformanceTracker:
     """Test PerformanceTracker functionality."""
 
+    @pytest.mark.unit
     def test_performance_tracker_creation(self):
         """Test PerformanceTracker creation."""
         context = LogContext(component="test_component")
@@ -198,6 +210,7 @@ class TestPerformanceTracker:
         assert tracker.context == context
         assert isinstance(tracker.start_time, float)
 
+    @pytest.mark.unit
     def test_performance_tracker_metrics(self):
         """Test performance tracker metrics."""
         tracker = PerformanceTracker("test_operation")
@@ -212,6 +225,7 @@ class TestPerformanceTracker:
 class TestStructuredFormatter:
     """Test StructuredFormatter functionality."""
 
+    @pytest.mark.unit
     def test_json_formatter(self):
         """Test JSON output formatting."""
         formatter = StructuredFormatter(format_type="json")
@@ -232,6 +246,7 @@ class TestStructuredFormatter:
         assert parsed["level"] == "INFO"
         assert parsed["message"] == "Test message"
 
+    @pytest.mark.unit
     def test_readable_formatter(self):
         """Test readable output formatting."""
         formatter = StructuredFormatter(format_type="readable")
@@ -253,6 +268,7 @@ class TestStructuredFormatter:
         assert "test_component" in result
         assert "Test message" in result
 
+    @pytest.mark.unit
     def test_formatter_with_none_component(self):
         """Test formatter handling None component (fixed issue)."""
         formatter = StructuredFormatter(format_type="readable")
@@ -273,6 +289,7 @@ class TestStructuredFormatter:
 class TestLoggerFactory:
     """Test LoggerFactory functionality."""
 
+    @pytest.mark.unit
     def test_get_logger(self):
         """Test logger factory get_logger method."""
         logger1 = LoggerFactory.get_logger("test_logger1")
@@ -282,6 +299,7 @@ class TestLoggerFactory:
         assert logger1 is logger2
         assert isinstance(logger1, StructuredLogger)
 
+    @pytest.mark.unit
     def test_configure_defaults(self):
         """Test default configuration."""
         LoggerFactory.configure_defaults({"level": "DEBUG"})

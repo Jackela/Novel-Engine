@@ -23,8 +23,10 @@ from typing import Any, Dict, List, Optional
 
 # Import data models
 from src.core.data_models import (
+    CharacterIdentity,
     CharacterState,
     DynamicContext,
+    EmotionalState,
     ErrorInfo,
     MemoryItem,
     MemoryType,
@@ -68,6 +70,7 @@ class OrchestratorMode(Enum):
     SIMULATION = "simulation"  # Simulation mode for testing
     DEVELOPMENT = "development"  # Development and debugging mode
     PRODUCTION = "production"  # Production deployment mode
+    TESTING = "testing"  # Fast startup for E2E/integration tests
 
 
 class SystemHealth(Enum):
@@ -283,19 +286,25 @@ class SystemOrchestrator:
                 self.character_manager,
             )
 
-            # Initialize narrative engines
-            logger.info("Initializing narrative engines")
-            self.subjective_reality_engine = SubjectiveRealityEngine()
-            self.emergent_narrative_engine = EmergentNarrativeEngine()
+            # Initialize narrative engines (skip in TESTING mode for fast startup)
+            if self.config.mode != OrchestratorMode.TESTING:
+                logger.info("Initializing narrative engines")
+                self.subjective_reality_engine = SubjectiveRealityEngine()
+                self.emergent_narrative_engine = EmergentNarrativeEngine()
 
-            # Initialize narrative engines
-            await self.subjective_reality_engine.initialize()
-            await self.emergent_narrative_engine.initialize()
+                # Initialize narrative engines
+                await self.subjective_reality_engine.initialize()
+                await self.emergent_narrative_engine.initialize()
 
-            logger.info("Narrative engines initialized successfully")
+                logger.info("Narrative engines initialized successfully")
+            else:
+                logger.info("Skipping narrative engines in TESTING mode")
 
-            # Start background tasks
-            await self._start_background_tasks()
+            # Start background tasks (skip in TESTING mode for fast startup)
+            if self.config.mode != OrchestratorMode.TESTING:
+                await self._start_background_tasks()
+            else:
+                logger.info("Skipping background tasks in TESTING mode")
 
             # Perform initial health check
             health_result = await self._perform_health_check()
@@ -330,6 +339,39 @@ class SystemOrchestrator:
                     code="ORCHESTRATOR_STARTUP_FAILED",
                     message="System orchestrator startup failed",
                     details={"exception": str(e)},
+                ),
+            )
+
+    async def get_system_health(self) -> StandardResponse:
+        """
+        Get comprehensive system health status.
+
+        Returns:
+            StandardResponse with health data including component status.
+        """
+        try:
+            health_data = {
+                "mode": self.config.mode.value if self.config else "unknown",
+                "database_initialized": self.database is not None,
+                "memory_system_initialized": self.layered_memory_system is not None,
+                "template_engine_initialized": self.dynamic_template_engine is not None,
+                "is_running": self._is_running,
+                "shutdown_requested": self._shutdown_requested,
+                "active_agents_count": (
+                    len(self.active_agents) if self.active_agents else 0
+                ),
+            }
+
+            return StandardResponse(
+                success=True,
+                data=health_data,
+            )
+        except Exception as e:
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="HEALTH_CHECK_FAILED",
+                    message=str(e),
                 ),
             )
 
@@ -420,8 +462,15 @@ class SystemOrchestrator:
 
             # Create character state if not provided
             if initial_state is None:
+                default_identity = CharacterIdentity(
+                    name=agent_id,
+                    personality_traits=["adaptive"],
+                    core_beliefs=["adaptive"],
+                    motivations=["engage"],
+                )
                 initial_state = CharacterState(
-                    agent_id=agent_id, name=agent_id, current_status="active"
+                    base_identity=default_identity,
+                    current_mood=EmotionalState.CALM,
                 )
 
             # Register agent in database first to avoid foreign key constraint issues
@@ -469,26 +518,35 @@ class SystemOrchestrator:
             await agent_memory.store_memory(welcome_memory)
 
             # Register agent in character manager - create a basic persona
-            from src.templates.character_template_manager import (
+            from src.templates.character.persona_models import (
                 CharacterArchetype,
                 CharacterPersona,
             )
 
             basic_persona = CharacterPersona(
                 persona_id=agent_id,
-                character_name=agent_id,
-                character_archetype=CharacterArchetype.SURVIVOR,
-                trait_profiles={},
-                interaction_preferences={},
-                current_emotional_range={},
+                name=initial_state.base_identity.name if initial_state else agent_id,
+                archetype=CharacterArchetype.SURVIVOR,
+                personality_traits=(
+                    initial_state.base_identity.personality_traits
+                    if initial_state
+                    else []
+                ),
+                behavioral_preferences={},
+                emotional_tendencies={},
             )
             character_result = await self.character_manager.create_persona(
                 basic_persona
             )
 
             if not character_result.success:
+                error_msg = (
+                    character_result.error.message
+                    if character_result.error
+                    else "Unknown error"
+                )
                 logger.warning(
-                    f"Character template creation failed for {agent_id}: {character_result.message}"
+                    f"Character template creation failed for {agent_id}: {error_msg}"
                 )
 
             # Register agent as active

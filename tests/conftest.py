@@ -17,13 +17,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-# Explicitly enable async plugin because autoload is disabled via sitecustomize.
-try:
-    import pytest_asyncio  # noqa: F401
+# Load pytest-asyncio plugin early so asyncio_mode=auto in pytest.ini is recognized.
+# This must happen before pytest parses config options.
+pytest_plugins = ("pytest_asyncio",)
 
-    pytest_plugins = ("pytest_asyncio",)
-except ImportError:  # pragma: no cover
-    pytest_plugins = tuple()
+
+# Note: pytest_configure is defined below (line ~227) to register markers.
+# asyncio_mode is already set in pytest.ini, so no need to set it here.
+# Having two pytest_configure functions would cause the second to override the first.
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -162,12 +163,8 @@ def mock_gemini_response():
     return response
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """创建事件循环用于异步测试"""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# Note: event_loop fixture removed - pytest-asyncio 0.21+ handles this automatically
+# Defining a custom event_loop fixture is deprecated and causes conflicts
 
 
 @pytest.fixture(autouse=True)
@@ -240,15 +237,8 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.slow)
 
 
-# 测试报告钩子（仅在 pytest-html 可用时注册，避免 GA 缺失插件导致失败）
-if (
-    importlib.util.find_spec("pytest_html") is not None
-    and os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD") != "1"
-):
-
-    def pytest_html_report_title(report):
-        """自定义HTML报告标题"""
-        report.title = "StoryForge AI 测试报告"
+# 测试报告钩子已移除 - pytest_html_report_title 在某些版本中不被支持
+# 且会在 plugin autoload 启用时导致 PluginValidationError
 
 
 @pytest.hookimpl(trylast=True)

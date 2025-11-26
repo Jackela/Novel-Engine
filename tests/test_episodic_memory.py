@@ -27,6 +27,7 @@ from src.memory.episodic_memory import EpisodicEvent, EpisodicMemory
 class TestEpisodicEvent:
     """Unit tests for EpisodicEvent dataclass."""
 
+    @pytest.mark.unit
     def test_episodic_event_initialization(self):
         """Test EpisodicEvent initialization and significance calculation."""
         memory = MemoryItem(
@@ -51,6 +52,7 @@ class TestEpisodicEvent:
         assert event.significance_score > 0.0
         assert event.significance_score <= 1.0
 
+    @pytest.mark.unit
     def test_episodic_event_significance_calculation(self):
         """Test significance score calculation."""
         memory = MemoryItem(
@@ -69,6 +71,7 @@ class TestEpisodicEvent:
 
         assert event.significance_score > 0.0
 
+    @pytest.mark.unit
     def test_add_causal_link(self):
         """Test adding causal links to events."""
         memory = MemoryItem(
@@ -86,6 +89,7 @@ class TestEpisodicEvent:
         assert "leads_to:memory_b" in event.causal_links
         assert event.significance_score >= initial_significance
 
+    @pytest.mark.unit
     def test_add_duplicate_causal_link(self):
         """Test that duplicate causal links are not added."""
         memory = MemoryItem(

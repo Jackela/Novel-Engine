@@ -34,6 +34,7 @@ from src.core.config_manager import (
 class TestConfigFormat:
     """Unit tests for ConfigFormat enum."""
 
+    @pytest.mark.unit
     def test_config_format_values(self):
         """Test ConfigFormat enum values."""
         assert ConfigFormat.YAML.value == "yaml"
@@ -44,6 +45,7 @@ class TestConfigFormat:
 class TestConfigurationPaths:
     """Unit tests for ConfigurationPaths dataclass."""
 
+    @pytest.mark.unit
     def test_configuration_paths_defaults(self):
         """Test ConfigurationPaths default values."""
         paths = ConfigurationPaths()
@@ -53,6 +55,7 @@ class TestConfigurationPaths:
         assert paths.settings == "configs/environments/settings.yaml"
         assert paths.staging_settings == "staging/settings_staging.yaml"
 
+    @pytest.mark.unit
     def test_get_all_paths(self):
         """Test get_all_paths returns all standard paths."""
         all_paths = ConfigurationPaths.get_all_paths()
@@ -66,6 +69,7 @@ class TestConfigurationPaths:
 class TestConfigDefaults:
     """Unit tests for ConfigDefaults dataclass."""
 
+    @pytest.mark.unit
     def test_config_defaults_initialization(self):
         """Test ConfigDefaults default values."""
         defaults = ConfigDefaults()
@@ -76,6 +80,7 @@ class TestConfigDefaults:
         assert defaults.environment == "development"
         assert defaults.database_url == "sqlite:///data/novel_engine.db"
 
+    @pytest.mark.unit
     def test_config_defaults_to_dict(self):
         """Test ConfigDefaults to_dict conversion."""
         defaults = ConfigDefaults()
@@ -92,6 +97,7 @@ class TestConfigDefaults:
         assert config_dict["server"]["port"] == 8000
         assert config_dict["database"]["url"] == "sqlite:///data/novel_engine.db"
 
+    @pytest.mark.unit
     def test_config_defaults_custom_values(self):
         """Test ConfigDefaults with custom values."""
         defaults = ConfigDefaults(
@@ -118,6 +124,7 @@ class TestConfigurationManager:
         """Create ConfigurationManager with temp directory."""
         return ConfigurationManager(base_path=str(temp_config_dir))
 
+    @pytest.mark.unit
     def test_initialization(self, config_manager):
         """Test ConfigurationManager initialization."""
         assert config_manager.config_data is not None
@@ -125,6 +132,7 @@ class TestConfigurationManager:
         assert config_manager.defaults is not None
         assert config_manager.paths is not None
 
+    @pytest.mark.unit
     def test_default_configuration_loaded(self, config_manager):
         """Test default configuration is loaded."""
         assert "server" in config_manager.config_data
@@ -132,6 +140,7 @@ class TestConfigurationManager:
         assert config_manager.get("server.host") == "127.0.0.1"
         assert config_manager.get("server.port") == 8000
 
+    @pytest.mark.unit
     def test_load_yaml_config_file(self, temp_config_dir):
         """Test loading YAML configuration file."""
         configs_dir = temp_config_dir / "configs" / "environments"
@@ -148,6 +157,7 @@ class TestConfigurationManager:
         assert manager.get("server.host") == "0.0.0.0"
         assert manager.get("server.port") == 9000
 
+    @pytest.mark.unit
     def test_load_json_config_file(self, temp_config_dir):
         """Test loading JSON configuration file."""
         configs_dir = temp_config_dir / "configs" / "environments"
@@ -169,6 +179,7 @@ class TestConfigurationManager:
 
         assert manager.get("server.host") in ["192.168.1.1", "127.0.0.1"]
 
+    @pytest.mark.unit
     def test_merge_configurations(self, config_manager):
         """Test configuration merging."""
         base = {"server": {"host": "127.0.0.1", "port": 8000}, "database": {"url": ""}}
@@ -181,6 +192,7 @@ class TestConfigurationManager:
         assert "api" in base
         assert base["api"]["version"] == "v2"
 
+    @pytest.mark.unit
     def test_environment_variable_override(self, temp_config_dir, monkeypatch):
         """Test environment variable overrides."""
         monkeypatch.setenv("API_HOST", "10.0.0.1")
@@ -193,6 +205,7 @@ class TestConfigurationManager:
         assert manager.get("server.port") == 5000
         assert manager.get("server.debug") is True
 
+    @pytest.mark.unit
     def test_convert_env_value_boolean(self, config_manager):
         """Test environment value conversion for booleans."""
         assert config_manager._convert_env_value("true", "server", "debug") is True
@@ -200,11 +213,13 @@ class TestConfigurationManager:
         assert config_manager._convert_env_value("yes", "server", "debug") is True
         assert config_manager._convert_env_value("false", "server", "debug") is False
 
+    @pytest.mark.unit
     def test_convert_env_value_integer(self, config_manager):
         """Test environment value conversion for integers."""
         assert config_manager._convert_env_value("8080", "server", "port") == 8080
         assert config_manager._convert_env_value("100", "database", "pool_size") == 100
 
+    @pytest.mark.unit
     def test_convert_env_value_list(self, config_manager):
         """Test environment value conversion for lists."""
         result = config_manager._convert_env_value(
@@ -212,6 +227,7 @@ class TestConfigurationManager:
         )
         assert result == ["http://localhost", "https://example.com"]
 
+    @pytest.mark.unit
     def test_get_configuration_value(self, config_manager):
         """Test getting configuration values."""
         assert config_manager.get("server.host") == "127.0.0.1"
@@ -219,6 +235,7 @@ class TestConfigurationManager:
         assert config_manager.get("nonexistent.key") is None
         assert config_manager.get("nonexistent.key", "default") == "default"
 
+    @pytest.mark.unit
     def test_set_configuration_value(self, config_manager):
         """Test setting configuration values."""
         config_manager.set("server.host", "192.168.1.100")
@@ -227,6 +244,7 @@ class TestConfigurationManager:
         config_manager.set("new.nested.key", "value")
         assert config_manager.get("new.nested.key") == "value"
 
+    @pytest.mark.unit
     def test_get_section(self, config_manager):
         """Test getting entire configuration section."""
         server_config = config_manager.get_section("server")
@@ -235,6 +253,7 @@ class TestConfigurationManager:
         assert "host" in server_config
         assert "port" in server_config
 
+    @pytest.mark.unit
     def test_to_dict(self, config_manager):
         """Test converting configuration to dictionary."""
         config_dict = config_manager.to_dict()
@@ -243,6 +262,7 @@ class TestConfigurationManager:
         assert "server" in config_dict
         assert "database" in config_dict
 
+    @pytest.mark.unit
     def test_save_to_file_yaml(self, config_manager, temp_config_dir):
         """Test saving configuration to YAML file."""
         output_file = temp_config_dir / "output.yaml"
@@ -256,6 +276,7 @@ class TestConfigurationManager:
         assert "server" in loaded_data
         assert loaded_data["server"]["host"] == "127.0.0.1"
 
+    @pytest.mark.unit
     def test_save_to_file_json(self, config_manager, temp_config_dir):
         """Test saving configuration to JSON file."""
         output_file = temp_config_dir / "output.json"
@@ -269,6 +290,7 @@ class TestConfigurationManager:
         assert "server" in loaded_data
         assert loaded_data["server"]["host"] == "127.0.0.1"
 
+    @pytest.mark.unit
     def test_reload_configuration(self, temp_config_dir):
         """Test reloading configuration."""
         manager = ConfigurationManager(base_path=str(temp_config_dir))
@@ -280,6 +302,7 @@ class TestConfigurationManager:
         manager.reload()
         assert manager.get("server.host") == initial_host
 
+    @pytest.mark.unit
     def test_validation_missing_section(self, temp_config_dir):
         """Test configuration validation with missing sections."""
         manager = ConfigurationManager(base_path=str(temp_config_dir))
@@ -288,6 +311,7 @@ class TestConfigurationManager:
         with pytest.raises(ValueError, match="Missing required configuration section"):
             manager._validate_configuration()
 
+    @pytest.mark.unit
     def test_validation_invalid_port(self, temp_config_dir):
         """Test configuration validation with invalid port."""
         manager = ConfigurationManager(base_path=str(temp_config_dir))
@@ -304,6 +328,7 @@ class TestConfigurationManager:
 class TestGlobalConfigurationFunctions:
     """Unit tests for global configuration functions."""
 
+    @pytest.mark.unit
     def test_get_config_manager_singleton(self):
         """Test get_config_manager returns singleton instance."""
         from src.core import config_manager as cm_module
@@ -315,22 +340,26 @@ class TestGlobalConfigurationFunctions:
 
         assert manager1 is manager2
 
+    @pytest.mark.unit
     def test_get_config_with_key_path(self):
         """Test get_config with key path."""
         value = get_config("server.host")
         assert value is not None
 
+    @pytest.mark.unit
     def test_get_config_with_default(self):
         """Test get_config with default value."""
         value = get_config("nonexistent.key", "default_value")
         assert value == "default_value"
 
+    @pytest.mark.unit
     def test_get_config_full_dict(self):
         """Test get_config returns full dict when no key path."""
         config = get_config()
         assert isinstance(config, dict)
         assert "server" in config
 
+    @pytest.mark.unit
     def test_reload_config_function(self):
         """Test reload_config function."""
         from src.core import config_manager as cm_module
@@ -338,6 +367,7 @@ class TestGlobalConfigurationFunctions:
         cm_module._config_manager = ConfigurationManager()
         reload_config()
 
+    @pytest.mark.unit
     def test_get_campaign_log_filename(self):
         """Test get_campaign_log_filename function."""
         filename = get_campaign_log_filename()

@@ -18,10 +18,10 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointCreation:
     """Test suite for PlotPoint creation and initialization."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_create_minimal_plot_point(self):
         """Test creating plot point with minimal required fields."""
@@ -152,5 +152,3 @@ class TestPlotPointCreation:
 
         with pytest.raises(AttributeError):
             plot_point.emotional_intensity = Decimal("8.0")
-
-

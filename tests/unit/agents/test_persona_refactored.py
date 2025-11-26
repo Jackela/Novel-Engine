@@ -21,6 +21,7 @@ import pytest
 try:
     from src.agents.director_agent import DirectorAgent
     from src.agents.persona_agent import PersonaAgent
+
     print("✅ Component imports successful")
     AGENTS_AVAILABLE = True
 except ImportError as e:
@@ -42,6 +43,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.unit
 @pytest.mark.unit
 def test_persona_core():
     """Test PersonaCore component."""

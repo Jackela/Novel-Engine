@@ -10,6 +10,7 @@ import sys
 import time
 from datetime import datetime
 
+import pytest
 import requests
 
 
@@ -156,6 +157,7 @@ if __name__ == "__main__":
     print("创建了最小化API服务器: minimal_api_server.py")
 
 
+@pytest.mark.integration
 def test_minimal_api():
     """测试最小化API服务器"""
     print("=== 测试最小化API服务器 ===")

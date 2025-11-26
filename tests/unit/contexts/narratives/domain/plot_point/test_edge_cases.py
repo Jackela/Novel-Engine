@@ -18,10 +18,10 @@ from contexts.narratives.domain.value_objects.plot_point import (
 )
 
 
-
 class TestPlotPointEdgeCasesAndBoundaryConditions:
     """Test suite for edge cases and boundary conditions."""
 
+    @pytest.mark.unit
     @pytest.mark.unit
     def test_creation_with_mock_timestamp(self):
         """Test creation with explicitly mocked timestamp."""
@@ -159,5 +159,3 @@ class TestPlotPointEdgeCasesAndBoundaryConditions:
             "item3",
         ]
         assert plot_point.metadata["unicode_key_🔑"] == "unicode_value_🌟"
-
-

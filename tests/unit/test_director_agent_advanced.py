@@ -183,6 +183,7 @@ class TestDirectorAgentNarrativeEngine:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_narrative_resolver_initialization(self):
         """Test narrative action resolver initialization"""
         # Check if director has narrative resolver
@@ -472,6 +473,7 @@ class TestDirectorAgentEventHandling:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_event_bus_integration(self):
         """Test event bus integration and subscription"""
         director = DirectorAgent(

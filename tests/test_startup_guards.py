@@ -107,6 +107,7 @@ Pydantic - MIT License
         with open("NOTICE", "w", encoding="utf-8") as f:
             f.write(notice_content)
 
+    @pytest.mark.unit
     def test_startup_guard_initialization(self):
         """Test StartupGuard initializes properly."""
         guard = StartupGuard()
@@ -116,6 +117,7 @@ Pydantic - MIT License
         assert guard.config is None
         assert guard.logger is not None
 
+    @pytest.mark.unit
     def test_validate_configuration_success(self):
         """Test configuration validation passes with valid settings."""
         self.create_test_settings_file()
@@ -127,6 +129,7 @@ Pydantic - MIT License
         assert self.startup_guard.config is not None
         assert "system" in self.startup_guard.config
 
+    @pytest.mark.unit
     def test_validate_configuration_missing_file(self):
         """Test configuration validation fails when settings.yaml is missing."""
         # Don't create settings file
@@ -139,6 +142,7 @@ Pydantic - MIT License
             for error in self.startup_guard.errors
         )
 
+    @pytest.mark.unit
     def test_validate_configuration_invalid_yaml(self):
         """Test configuration validation fails with invalid YAML."""
         with open("settings.yaml", "w", encoding="utf-8") as f:
@@ -151,6 +155,7 @@ Pydantic - MIT License
             "Invalid YAML syntax" in error for error in self.startup_guard.errors
         )
 
+    @pytest.mark.unit
     def test_validate_configuration_missing_sections(self):
         """Test configuration validation fails with missing required sections."""
         incomplete_config = {"system": {"name": "Test"}}
@@ -164,6 +169,7 @@ Pydantic - MIT License
             for error in self.startup_guard.errors
         )
 
+    @pytest.mark.unit
     def test_validate_configuration_iron_laws_disabled(self):
         """Test configuration validation fails when Iron Laws are disabled."""
         config_with_disabled_laws = {
@@ -186,6 +192,7 @@ Pydantic - MIT License
             for error in self.startup_guard.errors
         )
 
+    @pytest.mark.unit
     def test_validate_legal_compliance_success(self):
         """Test legal compliance validation passes with valid files."""
         self.create_test_settings_file()
@@ -200,6 +207,7 @@ Pydantic - MIT License
         assert result is True
         assert len(self.startup_guard.errors) == 0
 
+    @pytest.mark.unit
     def test_validate_legal_compliance_missing_legal_file(self):
         """Test legal compliance validation fails when LEGAL.md is missing."""
         self.create_test_settings_file()
@@ -214,6 +222,7 @@ Pydantic - MIT License
             "LEGAL.md file not found" in error for error in self.startup_guard.errors
         )
 
+    @pytest.mark.unit
     def test_validate_legal_compliance_missing_notice_file(self):
         """Test legal compliance validation fails when NOTICE is missing."""
         self.create_test_settings_file()
@@ -228,6 +237,7 @@ Pydantic - MIT License
             "NOTICE file not found" in error for error in self.startup_guard.errors
         )
 
+    @pytest.mark.unit
     def test_validate_legal_compliance_fan_mode_registry_creation(self):
         """Test fan mode registry file is created when missing."""
         fan_config = {
@@ -262,6 +272,7 @@ Pydantic - MIT License
         assert "compliance" in registry_data
         assert registry_data["compliance"]["non_commercial"] is True
 
+    @pytest.mark.unit
     def test_validate_file_structure_creates_directories(self):
         """Test file structure validation creates missing directories."""
         # Create required files that _validate_file_structure expects
@@ -288,6 +299,7 @@ Pydantic - MIT License
         for dir_path in required_dirs:
             assert Path(dir_path).exists(), f"Directory {dir_path} should exist"
 
+    @pytest.mark.unit
     def test_validate_file_structure_missing_required_files(self):
         """Test file structure validation fails with missing required files."""
         # Create some but not all required files
@@ -301,6 +313,7 @@ Pydantic - MIT License
             "Required file not found" in error for error in self.startup_guard.errors
         )
 
+    @pytest.mark.unit
     def test_validate_file_structure_creates_private_gitignore(self):
         """Test file structure validation creates private/.gitignore."""
         self.create_test_settings_file()
@@ -323,6 +336,7 @@ Pydantic - MIT License
         assert "!.gitignore" in content  # Except .gitignore itself
 
     @patch("scripts.build_kb.__import__")
+    @pytest.mark.unit
     def test_validate_external_dependencies_missing_packages(self, mock_import):
         """Test external dependencies validation fails with missing packages."""
 
@@ -342,6 +356,7 @@ Pydantic - MIT License
         )
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test_key"})
+    @pytest.mark.unit
     def test_validate_external_dependencies_with_api_keys(self):
         """Test external dependencies validation with available API keys."""
         with patch("scripts.build_kb.__import__") as mock_import:
@@ -352,6 +367,7 @@ Pydantic - MIT License
             assert result is True
             # Should log available API keys but not fail
 
+    @pytest.mark.unit
     def test_validate_knowledge_base_creates_structure(self):
         """Test knowledge base validation creates KB structure."""
         self.create_test_settings_file()
@@ -373,6 +389,7 @@ Pydantic - MIT License
                 subdir_path / "README.md"
             ).exists(), f"README should exist in {subdir}"
 
+    @pytest.mark.unit
     def test_validate_api_readiness_success(self):
         """Test API readiness validation passes."""
         self.create_test_settings_file()
@@ -382,6 +399,7 @@ Pydantic - MIT License
 
         assert result is True
 
+    @pytest.mark.unit
     def test_validate_api_readiness_cors_warning(self):
         """Test API readiness validation warns about empty CORS origins."""
         config_with_empty_cors = {
@@ -410,6 +428,7 @@ Pydantic - MIT License
             for warning in self.startup_guard.warnings
         )
 
+    @pytest.mark.unit
     def test_validate_all_success(self):
         """Test complete validation passes with all components valid."""
         # Set up complete valid environment
@@ -430,6 +449,7 @@ Pydantic - MIT License
             assert len(self.startup_guard.errors) == 0
             assert self.startup_guard.config is not None
 
+    @pytest.mark.unit
     def test_validate_all_failure(self):
         """Test complete validation fails with missing components."""
         # Don't create any required files
@@ -439,6 +459,7 @@ Pydantic - MIT License
         assert result is False
         assert len(self.startup_guard.errors) > 0
 
+    @pytest.mark.unit
     def test_get_system_status(self):
         """Test system status reporting."""
         self.create_test_settings_file()
@@ -479,6 +500,7 @@ class TestKnowledgeBaseBuilder:
         os.chdir(self.original_cwd)
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
+    @pytest.mark.unit
     def test_knowledge_base_builder_initialization(self):
         """Test KnowledgeBaseBuilder initializes properly."""
         builder = KnowledgeBaseBuilder(self.test_config)
@@ -486,6 +508,7 @@ class TestKnowledgeBaseBuilder:
         assert builder.config == self.test_config
         assert builder.logger is not None
 
+    @pytest.mark.unit
     def test_build_kb_success(self):
         """Test knowledge base building succeeds."""
         result = self.kb_builder.build_kb()
@@ -519,6 +542,7 @@ class TestKnowledgeBaseBuilder:
                         subitem_path.exists()
                     ), f"KB subdirectory {subitem} should exist"
 
+    @pytest.mark.unit
     def test_create_iron_laws_template(self):
         """Test Iron Laws template creation."""
         template = self.kb_builder._create_iron_laws_template()
@@ -541,6 +565,7 @@ class TestKnowledgeBaseBuilder:
             assert "validation" in iron_laws[law]
             assert "priority" in iron_laws[law]
 
+    @pytest.mark.unit
     def test_create_fog_of_war_template(self):
         """Test Fog of War template creation."""
         template = self.kb_builder._create_fog_of_war_template()
@@ -560,6 +585,7 @@ class TestKnowledgeBaseBuilder:
 
         assert "filtering_rules" in fog_of_war
 
+    @pytest.mark.unit
     def test_create_narrative_templates(self):
         """Test narrative templates creation."""
         template = self.kb_builder._create_narrative_templates()
@@ -645,6 +671,7 @@ Pydantic - MIT License
         Path("logs").mkdir(exist_ok=True)
 
     @patch("scripts.build_kb.__import__")
+    @pytest.mark.unit
     def test_complete_system_validation(self, mock_import):
         """Test complete system validation with all components."""
         mock_import.return_value = Mock()
@@ -666,6 +693,7 @@ Pydantic - MIT License
         kb_path = Path("private/knowledge_base")
         assert kb_path.exists()
 
+    @pytest.mark.unit
     def test_system_validation_with_warnings(self):
         """Test system validation that passes with warnings."""
         self.create_complete_test_environment()
@@ -693,6 +721,7 @@ Pydantic - MIT License
                 for warning in startup_guard.warnings
             )
 
+    @pytest.mark.unit
     def test_startup_guard_error_recovery(self):
         """Test startup guard handles errors gracefully."""
         # Create minimal environment that will have some failures

@@ -347,7 +347,9 @@ class TestUserStories:
 
     # ++ USER STORY 3: PERSISTENT MEMORY & RELATIONSHIP EVOLUTION TESTS ++
 
-    @pytest.mark.skip(reason="CharacterState API signature changed - test uses deprecated agent_id parameter")
+    @pytest.mark.skip(
+        reason="CharacterState API signature changed - test uses deprecated agent_id parameter"
+    )
     async def test_story_3_memory_formation(self, orchestrator):
         """
         Test Story 3 Acceptance Criteria: Memory system
@@ -419,7 +421,9 @@ class TestUserStories:
         assert stats_data["memory_types"]["semantic"] >= 1
         assert stats_data["memory_types"]["emotional"] >= 1
 
-    @pytest.mark.skip(reason="CharacterState API signature changed - test uses deprecated agent_id parameter")
+    @pytest.mark.skip(
+        reason="CharacterState API signature changed - test uses deprecated agent_id parameter"
+    )
     async def test_story_3_relationship_evolution(self, orchestrator):
         """
         Test Story 3 Acceptance Criteria: Relationship dynamics

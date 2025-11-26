@@ -13,8 +13,15 @@ from .auth_system import (
     initialize_security_service,
 )
 
+# Input validation middleware
+from .input_validation import create_validation_middleware
+
 # Rate limiting
-from .rate_limiting import RateLimitConfig, create_rate_limit_middleware, get_rate_limiter
+from .rate_limiting import (
+    RateLimitConfig,
+    create_rate_limit_middleware,
+    get_rate_limiter,
+)
 
 # Security headers middleware
 from .security_headers import (
@@ -22,9 +29,6 @@ from .security_headers import (
     get_development_security_config,
     get_production_security_config,
 )
-
-# Input validation middleware
-from .input_validation import create_validation_middleware
 
 __all__ = [
     # Auth

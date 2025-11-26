@@ -26,6 +26,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_coordinates_creation_success(self):
         """Test successful coordinates creation."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -180,6 +181,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_distance_to_invalid_type(self):
         """Test distance calculation fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -214,6 +216,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_distance_to_2d_invalid_type(self):
         """Test 2D distance calculation fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -248,6 +251,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_manhattan_distance_invalid_type(self):
         """Test Manhattan distance calculation fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -272,6 +276,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_within_range_false(self):
         """Test is_within_range returns False when outside range."""
         center = Coordinates(x=0.0, y=0.0, z=0.0)
@@ -281,6 +286,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_within_range_exact_boundary(self):
         """Test is_within_range at exact boundary distance."""
         center = Coordinates(x=0.0, y=0.0, z=0.0)
@@ -290,6 +296,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_is_within_range_negative_distance_fails(self):
         """Test is_within_range fails with negative max_distance."""
         coords1 = Coordinates(x=0.0, y=0.0, z=0.0)
@@ -476,6 +483,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_origin_factory(self):
         """Test origin factory method."""
         origin = Coordinates.origin(precision=4)
@@ -524,6 +532,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_subtraction(self):
         """Test vector subtraction."""
         coords1 = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -548,6 +557,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_multiplication_by_scalar(self):
         """Test scalar multiplication."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0, precision=3)
@@ -583,6 +593,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_right_multiplication(self):
         """Test right multiplication (scalar * coordinates)."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
@@ -607,6 +618,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_repr_representation(self):
         """Test detailed string representation."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0, precision=3)
@@ -672,6 +684,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_hash_consistency(self):
         """Test that equal coordinates have the same hash."""
         coords1 = Coordinates(x=10.0, y=20.0, z=5.0, precision=6)
@@ -708,6 +721,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_precision_maximum(self):
         """Test coordinates with maximum precision."""
         coords = Coordinates(x=10.123456789012345, y=20.0, z=5.0, precision=15)
@@ -717,6 +731,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_very_small_coordinates(self):
         """Test very small coordinate values."""
         coords = Coordinates(x=1e-10, y=-1e-10, z=1e-15, precision=15)
@@ -727,6 +742,7 @@ class TestCoordinatesValueObject:
 
     @pytest.mark.unit
     @pytest.mark.fast
+    @pytest.mark.unit
     def test_boundary_coordinate_values(self):
         """Test coordinates at boundary values."""
         max_coord = 1e10

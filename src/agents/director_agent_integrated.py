@@ -962,7 +962,11 @@ class DirectorAgent:
             if not character_name:
                 # Try to get name from character_data dict
                 char_data = getattr(agent, "character_data", {})
-                character_name = char_data.get("name", "Unknown") if isinstance(char_data, dict) else "Unknown"
+                character_name = (
+                    char_data.get("name", "Unknown")
+                    if isinstance(char_data, dict)
+                    else "Unknown"
+                )
 
             # Extract faction if available
             faction = getattr(agent, "faction", "Neutral")
