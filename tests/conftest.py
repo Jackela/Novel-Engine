@@ -17,13 +17,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-# Explicitly enable async plugin because autoload is disabled via sitecustomize.
-try:
-    import pytest_asyncio  # noqa: F401
-
-    pytest_plugins = ("pytest_asyncio",)
-except ImportError:  # pragma: no cover
-    pytest_plugins = tuple()
+# Note: pytest-asyncio is loaded via -p pytest_asyncio in pytest.ini addopts.
+# Do NOT use pytest_plugins here as it can interfere with plugin initialization order.
+# asyncio_mode=auto is set in pytest.ini.
 
 
 # Note: pytest_configure is defined below (line ~227) to register markers.
