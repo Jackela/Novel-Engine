@@ -149,7 +149,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pytest -p pytest_asyncio --asyncio-mode=auto -m "unit" --tb=short --durations=10 --junitxml=reports/unit-tests.xml
+          pytest -m "unit" --tb=short --durations=10 --junitxml=reports/unit-tests.xml
 
       - name: Upload unit test results
         if: always()
@@ -188,7 +188,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          pytest -p pytest_asyncio --asyncio-mode=auto -m "integration" --tb=short --durations=10 --junitxml=reports/integration-tests.xml
+          pytest -m "integration" --tb=short --durations=10 --junitxml=reports/integration-tests.xml
 
       - name: Upload integration test results
         if: always()
@@ -228,7 +228,7 @@ jobs:
 
       - name: Run E2E tests
         run: |
-          pytest -p pytest_asyncio --asyncio-mode=auto -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
+          pytest -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
 
       - name: Upload E2E test results
         if: always()
@@ -271,7 +271,7 @@ jobs:
 
       - name: Run smoke tests with JUnit XML
         run: |
-          pytest -p pytest_asyncio --asyncio-mode=auto -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py --junitxml=reports/smoke-tests.xml
+          pytest -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py --junitxml=reports/smoke-tests.xml
 
       - name: Upload smoke test results
         if: always()

@@ -17,9 +17,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-# Note: pytest-asyncio is loaded via -p pytest_asyncio in pytest.ini addopts.
-# Do NOT use pytest_plugins here as it can interfere with plugin initialization order.
-# asyncio_mode=auto is set in pytest.ini.
+# Load pytest-asyncio plugin early so asyncio_mode=auto in pytest.ini is recognized.
+# This must happen before pytest parses config options.
+pytest_plugins = ("pytest_asyncio",)
 
 
 # Note: pytest_configure is defined below (line ~227) to register markers.
