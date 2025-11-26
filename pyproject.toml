@@ -226,7 +226,6 @@ filterwarnings = [
     "ignore::PendingDeprecationWarning",
     "ignore::UserWarning:pydantic.*",
 ]
-asyncio_mode = "auto"
 
 # Bandit security linting
 [tool.bandit]
