@@ -17,6 +17,7 @@ Example:
 """
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -51,6 +52,7 @@ class TestSpeedAnalyzer:
             "-m",
             "pytest",
             self.test_path,
+            "-m", "unit",  # Only analyze unit tests for speed (fast subset)
             "--durations=0",  # Show all test durations
             "-v",
             "--tb=no",  # No traceback on failures
@@ -58,9 +60,18 @@ class TestSpeedAnalyzer:
             "-q",
         ]
 
+        # Set PYTHONPATH for CI environments
+        env = os.environ.copy()
+        cwd = os.getcwd()
+        pythonpath = f"{cwd}:{cwd}/src"
+        if "PYTHONPATH" in env:
+            pythonpath = f"{pythonpath}:{env['PYTHONPATH']}"
+        env["PYTHONPATH"] = pythonpath
+        env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "0"
+
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=600  # 10 minute timeout
+                cmd, capture_output=True, text=True, timeout=300, env=env  # 5 min timeout
             )
 
             # Parse timing output from both stdout and stderr

@@ -201,7 +201,7 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30  # 58 E2E tests need ~20min; added buffer for CI variability
+    timeout-minutes: 45  # 58 E2E tests with polling loops need ~30-40min in CI
     needs: [test-pyramid-check, validate-markers]
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
