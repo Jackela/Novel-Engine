@@ -279,8 +279,9 @@ class HealthMonitor:
             Returns:
                 CPU health status and performance metrics
             """
-            # Get CPU usage over 1 second
-            cpu_percent = psutil.cpu_percent(interval=1)
+            # Get current CPU usage without blocking (interval=0)
+            # Note: interval=1 would block the event loop for 1 second!
+            cpu_percent = psutil.cpu_percent(interval=0)
 
             if cpu_percent > 95:
                 raise Exception(f"High CPU usage: {cpu_percent}%")
