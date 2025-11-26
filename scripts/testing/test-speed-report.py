@@ -42,10 +42,11 @@ class TestSpeedAnalyzer:
             "slow": [],
         }
 
-    def run_tests_with_timing(self) -> bool:
+    def run_tests_with_timing(self, silent: bool = False) -> bool:
         """Run pytest with timing output and capture results."""
-        print(f"Running tests in {self.test_path}...")
-        print("This may take several minutes...\n")
+        if not silent:
+            print(f"Running tests in {self.test_path}...", file=sys.stderr)
+            print("This may take several minutes...\n", file=sys.stderr)
 
         cmd = [
             "python",
@@ -265,7 +266,8 @@ def main():
         print("Test Speed Analysis Tool", file=sys.stderr)
         print("=" * 80, file=sys.stderr)
 
-    if not analyzer.run_tests_with_timing():
+    silent = args.format == "json"
+    if not analyzer.run_tests_with_timing(silent=silent):
         if args.format == "json":
             # Output minimal JSON even on failure
             print(json.dumps({
