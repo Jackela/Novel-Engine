@@ -2273,8 +2273,8 @@ async def validate_token(request: Request):
 
         # Try to decode and validate the token
         try:
-            # Get the secret key from environment or use a default for development
-            secret_key = os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "development-secret-key"))
+            # Use the module-level JWT_SECRET_KEY constant for consistency
+            secret_key = JWT_SECRET_KEY
 
             # Decode the token
             payload = jwt.decode(token, secret_key, algorithms=["HS256"])

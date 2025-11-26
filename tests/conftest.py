@@ -26,11 +26,9 @@ except ImportError:  # pragma: no cover
     pytest_plugins = tuple()
 
 
-def pytest_configure(config):
-    """Configure pytest-asyncio mode."""
-    # Set asyncio_mode to auto via _ini_config before tests are collected
-    # This approach works with pytest-asyncio 0.21+
-    config.addinivalue_line("asyncio_mode", "auto")
+# Note: pytest_configure is defined below (line ~227) to register markers.
+# asyncio_mode is already set in pytest.ini, so no need to set it here.
+# Having two pytest_configure functions would cause the second to override the first.
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent

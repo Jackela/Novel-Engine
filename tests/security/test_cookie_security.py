@@ -304,11 +304,17 @@ class TestCookieSecurity:
         - New access token is returned
         - New access token cookie is set
         """
+        import time
+
         # Login to get refresh token
         login_response = client.post("/api/auth/login", json=mock_credentials)
         assert login_response.status_code == 200
 
         refresh_token = login_response.json()["refresh_token"]
+
+        # Wait to ensure the new token will have a different timestamp
+        # (JWTs created within the same second have identical timestamps)
+        time.sleep(1.1)
 
         # Refresh using cookie (simulated by sending empty body)
         # The TestClient will automatically include cookies from previous responses
