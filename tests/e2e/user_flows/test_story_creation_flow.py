@@ -98,7 +98,10 @@ class TestStoryCreationFlow:
         ], f"Failed to start story generation: {response.text}"
 
         story_response = response.json()
-        generation_id = story_response.get("data", {}).get("generation_id")
+        # API returns generation_id directly (not wrapped in "data")
+        generation_id = story_response.get("generation_id") or story_response.get(
+            "data", {}
+        ).get("generation_id")
         assert generation_id, "No generation_id returned"
         performance_tracker.record("start_story_generation", time.time() - start_time)
 
@@ -182,7 +185,11 @@ class TestStoryCreationFlow:
         response = client.post("/api/stories/generate", json=story_request)
         assert response.status_code in [200, 202]
 
-        generation_id = response.json().get("data", {}).get("generation_id")
+        # API returns generation_id directly (not wrapped in "data")
+        resp_data = response.json()
+        generation_id = resp_data.get("generation_id") or resp_data.get("data", {}).get(
+            "generation_id"
+        )
         assert generation_id
 
         # Wait for completion (may take longer with 3 characters)
@@ -266,8 +273,15 @@ class TestStoryCreationFlow:
         assert response1.status_code in [200, 202]
         assert response2.status_code in [200, 202]
 
-        gen_id1 = response1.json().get("data", {}).get("generation_id")
-        gen_id2 = response2.json().get("data", {}).get("generation_id")
+        # API returns generation_id directly (not wrapped in "data")
+        resp1 = response1.json()
+        resp2 = response2.json()
+        gen_id1 = resp1.get("generation_id") or resp1.get("data", {}).get(
+            "generation_id"
+        )
+        gen_id2 = resp2.get("generation_id") or resp2.get("data", {}).get(
+            "generation_id"
+        )
 
         assert gen_id1
         assert gen_id2

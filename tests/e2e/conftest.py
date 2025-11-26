@@ -23,12 +23,8 @@ from httpx import AsyncClient
 from src.api.main_api_server import create_app
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create event loop for async tests."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# Note: event_loop fixture removed - pytest-asyncio 0.21+ handles this automatically
+# Defining a custom event_loop fixture is deprecated and causes conflicts
 
 
 @pytest.fixture(scope="module")
@@ -274,7 +270,8 @@ class APITestHelper:
         response = self.client.post("/api/stories/generate", json=story_request)
         response.raise_for_status()
         data = response.json()
-        return data.get("data", {}).get("generation_id")
+        # API returns generation_id directly (not wrapped in "data")
+        return data.get("generation_id") or data.get("data", {}).get("generation_id")
 
     def get_story_status(self, generation_id: str) -> Dict[str, Any]:
         """Get story generation status."""

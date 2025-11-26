@@ -296,15 +296,18 @@ class StoryGenerationAPI:
         async def get_generation_status(generation_id: str):
             """Get current status of a story generation (REST fallback)."""
             if generation_id not in self.active_generations:
-                return {"error": "Generation not found"}
+                raise HTTPException(status_code=404, detail="Generation not found")
 
             state = self.active_generations[generation_id]
             return {
-                "generation_id": generation_id,
-                "status": state["status"],
-                "progress": state.get("progress", 0),
-                "stage": state.get("stage", "unknown"),
-                "estimated_time_remaining": self._calculate_time_remaining(state),
+                "data": {
+                    "generation_id": generation_id,
+                    "status": state["status"],
+                    "progress": state.get("progress", 0),
+                    "stage": state.get("stage", "unknown"),
+                    "estimated_time_remaining": self._calculate_time_remaining(state),
+                    "story_content": state.get("story_content"),
+                }
             }
 
     async def _generate_story_async(self, generation_id: str):

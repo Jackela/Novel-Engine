@@ -68,7 +68,11 @@ class TestNarrativeGenerationFlow:
             202,
         ], f"Failed to start orchestration: {response.text}"
 
-        generation_id = response.json().get("data", {}).get("generation_id")
+        # API returns generation_id directly (not wrapped in "data")
+        resp_data = response.json()
+        generation_id = resp_data.get("generation_id") or resp_data.get("data", {}).get(
+            "generation_id"
+        )
         assert generation_id, "No generation_id returned"
         performance_tracker.record("orchestration_start", time.time() - start_time)
 
@@ -196,7 +200,11 @@ class TestNarrativeGenerationFlow:
         response = client.post("/api/stories/generate", json=story_request)
         assert response.status_code in [200, 202]
 
-        generation_id = response.json().get("data", {}).get("generation_id")
+        # API returns generation_id directly (not wrapped in "data")
+        resp_data = response.json()
+        generation_id = resp_data.get("generation_id") or resp_data.get("data", {}).get(
+            "generation_id"
+        )
 
         # Track progress over time
         progress_snapshots = []
@@ -284,7 +292,11 @@ class TestNarrativeGenerationFlow:
             response = client.post("/api/stories/generate", json=story_request)
             assert response.status_code in [200, 202]
 
-            gen_id = response.json().get("data", {}).get("generation_id")
+            # API returns generation_id directly (not wrapped in "data")
+            resp_data = response.json()
+            gen_id = resp_data.get("generation_id") or resp_data.get("data", {}).get(
+                "generation_id"
+            )
             generation_ids.append(gen_id)
 
         performance_tracker.record(
@@ -318,7 +330,11 @@ class TestNarrativeGenerationFlow:
         response = client.post("/api/stories/generate", json=story_request)
         assert response.status_code in [200, 202]
 
-        generation_id = response.json().get("data", {}).get("generation_id")
+        # API returns generation_id directly (not wrapped in "data")
+        resp_data = response.json()
+        generation_id = resp_data.get("generation_id") or resp_data.get("data", {}).get(
+            "generation_id"
+        )
 
         # Wait for completion
         max_wait = 60
@@ -362,7 +378,11 @@ class TestNarrativeGenerationFlow:
 
             response = client.post("/api/stories/generate", json=story_request)
             if response.status_code in [200, 202]:
-                gen_id = response.json().get("data", {}).get("generation_id")
+                # API returns generation_id directly (not wrapped in "data")
+                resp_data = response.json()
+                gen_id = resp_data.get("generation_id") or resp_data.get(
+                    "data", {}
+                ).get("generation_id")
                 generation_ids.append(gen_id)
 
         # All generations should be trackable

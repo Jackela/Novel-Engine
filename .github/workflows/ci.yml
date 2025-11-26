@@ -201,7 +201,7 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10  # Prevent infinite hangs in CI
+    timeout-minutes: 20  # 58 E2E tests need more time; prevent infinite hangs
     needs: [test-pyramid-check, validate-markers]
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
