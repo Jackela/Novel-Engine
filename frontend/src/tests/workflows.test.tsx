@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box } from '@mui/material';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import App from '../App';
 import Navbar from '../components/Navbar';
 import Dashboard from '../components/dashboard/Dashboard';
@@ -11,6 +13,12 @@ import CharacterStudio from '../components/CharacterStudio';
 import StoryWorkshop from '../components/StoryWorkshop';
 import StoryLibrary from '../components/StoryLibrary';
 import SystemMonitor from '../components/SystemMonitor';
+import authSlice from '../store/slices/authSlice';
+import charactersSlice from '../store/slices/charactersSlice';
+import storiesSlice from '../store/slices/storiesSlice';
+import campaignsSlice from '../store/slices/campaignsSlice';
+import dashboardSlice from '../store/slices/dashboardSlice';
+import decisionSlice from '../store/slices/decisionSlice';
 
 import { vi } from 'vitest';
 
@@ -116,19 +124,35 @@ const createTestQueryClient = () => {
   });
 };
 
+const createTestStore = () => {
+  return configureStore({
+    reducer: {
+      auth: authSlice,
+      characters: charactersSlice,
+      stories: storiesSlice,
+      campaigns: campaignsSlice,
+      dashboard: dashboardSlice,
+      decision: decisionSlice,
+    },
+  });
+};
+
 const renderAppWithProviders = async ({ route = '/' } = {}) => {
   const queryClient = createTestQueryClient();
+  const store = createTestStore();
   let rendered;
   await act(async () => {
     rendered = render(
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <MemoryRouter initialEntries={[route]}>
-            <TestApp />
-          </MemoryRouter>
-        </ThemeProvider>
-      </QueryClientProvider>
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <MemoryRouter initialEntries={[route]}>
+              <TestApp />
+            </MemoryRouter>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </Provider>
     );
   });
   return rendered!;
