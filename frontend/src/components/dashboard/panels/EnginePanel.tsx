@@ -1,7 +1,11 @@
-import React, { Suspense } from 'react';
-import { Box, Stack, CircularProgress } from '@mui/material';
+import React from 'react';
+import { Box, Stack, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import TurnPipelineStatus from '../TurnPipelineStatus';
 import RealTimeActivity from '../RealTimeActivity';
+import SuspenseWrapper from '../../common/SuspenseWrapper';
+import { ErrorBoundary } from '../../error-boundaries/ErrorBoundary';
+import PanelErrorFallback from '../PanelErrorFallback';
 
 interface EnginePanelProps {
   loading: boolean;
@@ -11,59 +15,65 @@ interface EnginePanelProps {
   onClose?: () => void;
 }
 
-const LazyWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Suspense
-    fallback={
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
-        <CircularProgress size={24} sx={{ color: 'var(--color-accent-primary)' }} />
-      </Box>
-    }
-  >
-    {children}
-  </Suspense>
-);
-
-const EnginePanel: React.FC<EnginePanelProps> = React.memo(({ 
-  loading, 
-  error, 
-  pipelineStatus, 
-  isLive, 
-  onClose 
+const EnginePanel: React.FC<EnginePanelProps> = React.memo(({
+  loading,
+  error,
+  pipelineStatus,
+  isLive,
+  onClose,
 }) => {
   return (
-    <Stack spacing={3} sx={{ height: '100%', minWidth: 300 }}>
-      {/* Pipeline Status */}
-      <Box className="command-panel" sx={{ flex: '0 0 auto' }}>
-        <div className="command-panel-header">
-          <span className="command-panel-title">Simulation Pipeline</span>
-          {onClose && (
-            <button 
-              onClick={onClose} 
-              style={{ background: 'none', border: 'none', color: 'var(--color-text-dim)', cursor: 'pointer' }}
-            >
-              ×
-            </button>
-          )}
-        </div>
-        <LazyWrapper>
-          <TurnPipelineStatus loading={loading} error={error} status={pipelineStatus} isLive={isLive} />
-        </LazyWrapper>
-      </Box>
+    <ErrorBoundary
+      componentName="EnginePanel"
+      fallback={(err, reset) => (
+        <PanelErrorFallback error={err} onReset={reset} panelName="Engine" />
+      )}
+    >
+      <Stack spacing={3} sx={{ height: '100%', minWidth: 300 }}>
+        {/* Pipeline Status */}
+        <Box className="command-panel" sx={{ flex: '0 0 auto' }}>
+          <div className="command-panel-header">
+            <span className="command-panel-title">Simulation Pipeline</span>
+            {onClose && (
+              <IconButton
+                onClick={onClose}
+                aria-label="Close engine panel"
+                size="small"
+                sx={{
+                  color: 'var(--color-text-dim)',
+                  p: 0.5,
+                  '&:hover': {
+                    color: 'var(--color-text-secondary)',
+                    bgcolor: 'var(--color-bg-interactive)',
+                  },
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            )}
+          </div>
+          <SuspenseWrapper>
+            <TurnPipelineStatus
+              loading={loading}
+              error={error}
+              status={pipelineStatus}
+              isLive={isLive}
+            />
+          </SuspenseWrapper>
+        </Box>
 
-      {/* Real-time Activity */}
-      <Box className="command-panel" sx={{ flex: 1, minHeight: 300 }}>
-        <div className="command-panel-header">
-          <span className="command-panel-title">Activity Stream</span>
-        </div>
-        <LazyWrapper>
-          <RealTimeActivity loading={loading} error={error} density="condensed" />
-        </LazyWrapper>
-      </Box>
-    </Stack>
+        {/* Real-time Activity */}
+        <Box className="command-panel" sx={{ flex: 1, minHeight: 300 }}>
+          <div className="command-panel-header">
+            <span className="command-panel-title">Activity Stream</span>
+          </div>
+          <SuspenseWrapper>
+            <RealTimeActivity loading={loading} error={error} density="condensed" />
+          </SuspenseWrapper>
+        </Box>
+      </Stack>
+    </ErrorBoundary>
   );
 });
 
-EnginePanel.displayName = 'EnginePanel';
-
 export default EnginePanel;
-

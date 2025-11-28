@@ -3,12 +3,36 @@ import { logger } from '../services/logging/LoggerFactory';
 
 export interface RealtimeEvent {
   id: string | number;
-  type: 'character' | 'story' | 'system' | 'interaction';
+  type: 'character' | 'story' | 'system' | 'interaction' | 'decision_required' | 'decision_accepted' | 'decision_finalized' | 'negotiation_required';
   title: string;
   description: string;
   timestamp: number;
   characterName?: string;
   severity: 'low' | 'medium' | 'high';
+  data?: Record<string, unknown>;
+}
+
+export interface DecisionEventData {
+  decision_id: string;
+  decision_type: string;
+  turn_number: number;
+  title: string;
+  description: string;
+  narrative_context: string;
+  options: Array<{
+    option_id: number;
+    label: string;
+    description: string;
+    icon?: string;
+    impact_preview?: string;
+    is_default?: boolean;
+  }>;
+  default_option_id?: number;
+  timeout_seconds: number;
+  dramatic_tension: number;
+  emotional_intensity: number;
+  created_at: string;
+  expires_at: string;
 }
 
 interface UseRealtimeEventsOptions {
@@ -23,6 +47,8 @@ interface UseRealtimeEventsOptions {
   maxRetryDelay?: number;
   /** Heartbeat timeout in ms - reconnect if no message received (default: 60000) */
   heartbeatTimeout?: number;
+  /** Callback for decision events (decision_required, negotiation_required, etc.) */
+  onDecisionEvent?: (event: RealtimeEvent) => void;
 }
 
 type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'error' | 'reconnecting';
@@ -42,6 +68,7 @@ export function useRealtimeEvents({
   initialRetryDelay = 1000,
   maxRetryDelay = 30000,
   heartbeatTimeout = 60000,
+  onDecisionEvent,
 }: UseRealtimeEventsOptions = {}) {
   const [events, setEvents] = useState<RealtimeEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,6 +173,13 @@ export function useRealtimeEvents({
           if (!eventData.id || !eventData.type || !eventData.title) {
             logger.warn('Received malformed SSE event, skipping:', { data: event.data });
             return;
+          }
+
+          // Handle decision-related events via callback
+          const decisionEventTypes = ['decision_required', 'decision_accepted', 'decision_finalized', 'negotiation_required'];
+          if (decisionEventTypes.includes(eventData.type) && onDecisionEvent) {
+            logger.info('Decision event received:', { type: eventData.type, id: eventData.id });
+            onDecisionEvent(eventData);
           }
 
           // Add to buffer and maintain max size (newest first)

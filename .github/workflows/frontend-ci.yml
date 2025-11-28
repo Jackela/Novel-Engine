@@ -59,6 +59,17 @@ jobs:
         if: ${{ hashFiles('frontend/package.json') != '' }}
         run: npm run build --if-present
 
+      - name: Set up Python (for smoke tests backend)
+        if: ${{ hashFiles('frontend/package.json') != '' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        if: ${{ hashFiles('frontend/package.json') != '' }}
+        run: |
+          pip install -r ../requirements.txt
+
       - name: Install Playwright Browsers
         if: ${{ hashFiles('frontend/package.json') != '' }}
         run: npx playwright install --with-deps chromium
@@ -66,10 +77,14 @@ jobs:
       - name: Playwright Smoke Tests
         if: ${{ hashFiles('frontend/package.json') != '' && github.event_name == 'pull_request' }}
         run: npm run test:e2e:smoke
+        env:
+          PYTHONPATH: "..:../src"
 
       - name: Playwright Full Tests
         if: ${{ hashFiles('frontend/package.json') != '' && github.event_name != 'pull_request' }}
         run: npm run test:e2e
+        env:
+          PYTHONPATH: "..:../src"
 
       - name: Upload Experience Report
         if: ${{ always() && env.ACT != 'true' }}

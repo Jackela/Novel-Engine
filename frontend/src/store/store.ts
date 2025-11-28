@@ -4,6 +4,7 @@ import charactersSlice from './slices/charactersSlice';
 import storiesSlice from './slices/storiesSlice';
 import campaignsSlice from './slices/campaignsSlice';
 import dashboardSlice from './slices/dashboardSlice';
+import decisionSlice from './slices/decisionSlice';
 import { mobileMemoryMiddleware } from './middleware/mobileMemoryMiddleware';
 import { logger } from '../services/logging/LoggerFactory';
 
@@ -21,12 +22,13 @@ export const store = configureStore({
     stories: storiesSlice,
     campaigns: campaignsSlice,
     dashboard: dashboardSlice,
+    decision: decisionSlice,
   },
   middleware: (getDefaultMiddleware) => {
     const middleware = getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [
-          'persist/PERSIST', 
+          'persist/PERSIST',
           'persist/REHYDRATE',
           '@@mobile-memory/CLEANUP',
           '@@mobile-memory/CHECK_PRESSURE',
@@ -45,6 +47,11 @@ export const store = configureStore({
   },
   devTools: process.env.NODE_ENV !== 'production',
 });
+
+// Expose store for E2E testing (development/test environments only)
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  (window as Window & { __REDUX_STORE__?: typeof store }).__REDUX_STORE__ = store;
+}
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

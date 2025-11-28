@@ -1,19 +1,36 @@
+/**
+ * Dashboard Component
+ *
+ * Main dashboard view with three-region layout:
+ * - Sidebar: Engine controls (Pipeline status + Activity stream)
+ * - Main: World State Map (primary focus)
+ * - Aside: Insights (Quick actions + MFD analytics)
+ *
+ * Refactored for:
+ * - Better visual hierarchy
+ * - Cleaner code structure
+ * - Proper spacing and layout
+ * - Accessibility compliance
+ */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Alert, Snackbar, useMediaQuery, Stack, useTheme } from '@mui/material';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useDispatch } from 'react-redux';
+import { Alert, Snackbar } from '@mui/material';
 import CommandLayout from '../layout/CommandLayout';
-import MobileTabbedDashboard from '../layout/MobileTabbedDashboard';
-import { logger } from '../../services/logging/LoggerFactory';
-import QuickActions, { type QuickAction } from './QuickActions';
 import CommandTopBar from '../layout/CommandTopBar';
+import DashboardLayout from './DashboardLayout';
+import { logger } from '../../services/logging/LoggerFactory';
 import { dashboardAPI } from '../../services/api/dashboardAPI';
+import { type QuickAction } from './QuickActions';
+import { DecisionPointDialog } from '../decision';
+import { useRealtimeEvents, type RealtimeEvent } from '../../hooks/useRealtimeEvents';
+import { setDecisionPoint, clearDecisionPoint, type DecisionPoint } from '../../store/slices/decisionSlice';
+import type { AppDispatch } from '../../store/store';
 
-// Import new panels
+// Import panels
 import EnginePanel from './panels/EnginePanel';
 import WorldPanel from './panels/WorldPanel';
 import InsightsPanel from './panels/InsightsPanel';
-import WorldStateMap from './WorldStateMapV2';
 
 type PipelineState = 'idle' | 'running' | 'paused' | 'stopped';
 
@@ -23,32 +40,97 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _campaignId }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const dispatch = useDispatch<AppDispatch>();
 
+  // Core state
   const [loading, setLoading] = useState(false);
   const [error, _setError] = useState<string | null>(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [pipelineStatus, setPipelineStatus] = useState<PipelineState>('idle');
   const [isLiveMode, setIsLiveMode] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Layout state
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [asideOpen, setAsideOpen] = useState(true);
+  const [mfdMode, setMfdMode] = useState<'analytics' | 'network' | 'timeline' | 'signals'>('analytics');
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+
+  // Connection state
   const [isOnline, setIsOnline] = useState(() => {
     if (typeof navigator === 'undefined') return true;
     return navigator.onLine;
   });
 
+  // Notification state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  // Handle decision events from SSE
+  const handleDecisionEvent = useCallback((event: RealtimeEvent) => {
+    logger.info('Decision event received in Dashboard:', { type: event.type, id: event.id });
+
+    if (event.type === 'decision_required' && event.data) {
+      // Transform SSE event data to DecisionPoint format
+      const data = event.data as Record<string, unknown>;
+      const decisionPoint: DecisionPoint = {
+        decisionId: data.decision_id as string,
+        decisionType: data.decision_type as DecisionPoint['decisionType'],
+        turnNumber: data.turn_number as number,
+        title: data.title as string,
+        description: data.description as string,
+        narrativeContext: data.narrative_context as string || '',
+        options: ((data.options as Array<Record<string, unknown>>) || []).map((opt) => ({
+          optionId: opt.option_id as number,
+          label: opt.label as string,
+          description: opt.description as string,
+          icon: opt.icon as string | undefined,
+          impactPreview: opt.impact_preview as string | undefined,
+          isDefault: opt.is_default as boolean | undefined,
+        })),
+        defaultOptionId: data.default_option_id as number | undefined,
+        timeoutSeconds: data.timeout_seconds as number || 120,
+        dramaticTension: data.dramatic_tension as number || 7,
+        emotionalIntensity: data.emotional_intensity as number || 7,
+        createdAt: data.created_at as string,
+        expiresAt: data.expires_at as string,
+      };
+      dispatch(setDecisionPoint(decisionPoint));
+      showNotification('Decision point reached - your input is needed!');
+    } else if (event.type === 'decision_accepted' || event.type === 'decision_finalized') {
+      dispatch(clearDecisionPoint());
+    }
+  }, [dispatch]);
+
+  // Subscribe to SSE events with decision handler
+  useRealtimeEvents({
+    enabled: isOnline,
+    onDecisionEvent: handleDecisionEvent,
+  });
+
+  // Auto-refresh timer
   useEffect(() => {
     const interval = setInterval(() => setLastUpdate(new Date()), 10000);
     return () => clearInterval(interval);
   }, []);
 
+  // Online/offline detection
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const handleOnline = () => { setIsOnline(true); showNotification('Connection restored.'); };
-    const handleOffline = () => { setIsOnline(false); setIsLiveMode(false); showNotification('Connection lost.'); };
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      showNotification('Connection restored.');
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setIsLiveMode(false);
+      showNotification('Connection lost.');
+    };
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -62,6 +144,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
 
   const handleQuickAction = useCallback(async (action: QuickAction) => {
     logger.info('Quick action triggered:', { action });
+
     try {
       switch (action) {
         case 'play': {
@@ -78,7 +161,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
           break;
         }
         case 'pause': {
-          // Pause uses same endpoint as stop for now (backend can be enhanced)
           setPipelineStatus('paused');
           setIsLiveMode(false);
           showNotification('System paused');
@@ -99,7 +181,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
         }
         case 'refresh': {
           setLoading(true);
-          // Fetch fresh data from all dashboard endpoints
           const [_statusRes, orchestrationRes] = await Promise.all([
             dashboardAPI.getSystemStatus(),
             dashboardAPI.getOrchestrationStatus(),
@@ -125,237 +206,130 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
 
   const handleSnackbarClose = () => setSnackbarOpen(false);
 
-  // --- LAYOUT SECTIONS ---
-
-  // --- STATE ---
-  const [mfdMode, setMfdMode] = useState<'analytics' | 'network' | 'timeline' | 'signals'>('analytics');
-  const [leftPanelOpen, setLeftPanelOpen] = useState(true);
-  const [rightPanelOpen, setRightPanelOpen] = useState(true);
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
-
-  // --- ANIMATION VARIANTS ---
-  const panelVariants = {
-    open: { 
-      width: '25%', 
-      opacity: 1,
-      transition: { type: 'spring', stiffness: 300, damping: 30 }
-    },
-    closed: { 
-      width: 0, 
-      opacity: 0,
-      transition: { type: 'spring', stiffness: 300, damping: 30 }
-    }
-  };
-
-  // Mobile Layout (Tabbed)
-  if (isMobile) {
-    return (
-      <CommandLayout>
-        <CommandTopBar 
-          pipelineStatus={pipelineStatus} 
-          isOnline={isOnline} 
-          isLive={isLiveMode} 
-          lastUpdate={lastUpdate} 
-        />
-        <MobileTabbedDashboard components={{
-          essential: [
-            <Box key="pipeline" sx={{ mb: 2 }}>
-              <EnginePanel 
-                loading={loading} 
-                error={!!error} 
-                pipelineStatus={pipelineStatus} 
-                isLive={isLiveMode} 
-                onClose={() => setLeftPanelOpen(false)}
-              />
-            </Box>,
-            <Box key="actions" sx={{ mb: 2 }}>
-              <QuickActions status={pipelineStatus} isLive={isLiveMode} isOnline={isOnline} onAction={handleQuickAction} variant="tile" />
-            </Box>
-          ],
-          activity: [
-            <Box key="world">
-              <WorldPanel loading={loading} error={!!error} onExpand={() => setIsMapExpanded(true)} />
-            </Box>
-          ],
-          analytics: [
-            <Box key="insights">
-              <InsightsPanel 
-                loading={loading} 
-                error={!!error} 
-                pipelineStatus={pipelineStatus} 
-                isLive={isLiveMode} 
-                isOnline={isOnline}
-                mfdMode={mfdMode}
-                onMfdModeChange={setMfdMode}
-                onQuickAction={handleQuickAction}
-                onClose={() => setRightPanelOpen(false)}
-              />
-            </Box>
-          ]
-        }}>
-          <></>
-        </MobileTabbedDashboard>
-      </CommandLayout>
-    );
-  }
-
   return (
     <CommandLayout>
-      <CommandTopBar 
-        pipelineStatus={pipelineStatus} 
-        isOnline={isOnline} 
-        isLive={isLiveMode} 
-        lastUpdate={lastUpdate} 
+      {/* Top Status Bar */}
+      <CommandTopBar
+        pipelineStatus={pipelineStatus}
+        isOnline={isOnline}
+        isLive={isLiveMode}
+        lastUpdate={lastUpdate}
       />
-      
-      {/* View Controls (Floating or Integrated) - Only visible if a panel is closed */}
-      {(!leftPanelOpen || !rightPanelOpen) && (
-        <div style={{ position: 'absolute', top: 'calc(var(--header-height) + 10px)', left: '50%', transform: 'translateX(-50%)', zIndex: 100, display: 'flex', gap: '8px' }}>
-          {!leftPanelOpen && (
-            <button 
-              onClick={() => setLeftPanelOpen(true)}
-              style={{ background: 'var(--color-bg-panel)', border: '1px solid var(--color-accent-primary)', color: 'var(--color-accent-primary)', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-header)', fontSize: '10px' }}
+
+      {/* Three-Region Dashboard Layout */}
+      <DashboardLayout
+        sidebarOpen={sidebarOpen}
+        asideOpen={asideOpen}
+        onSidebarToggle={setSidebarOpen}
+        onAsideToggle={setAsideOpen}
+        sidebar={
+          <EnginePanel
+            loading={loading}
+            error={!!error}
+            pipelineStatus={pipelineStatus}
+            isLive={isLiveMode}
+          />
+        }
+        main={
+          <WorldPanel
+            loading={loading}
+            error={!!error}
+            onExpand={() => setIsMapExpanded(true)}
+          />
+        }
+        aside={
+          <InsightsPanel
+            loading={loading}
+            error={!!error}
+            pipelineStatus={pipelineStatus}
+            isLive={isLiveMode}
+            isOnline={isOnline}
+            mfdMode={mfdMode}
+            onMfdModeChange={setMfdMode}
+            onQuickAction={handleQuickAction}
+            lastUpdate={lastUpdate}
+          />
+        }
+      />
+
+      {/* Map Fullscreen Overlay */}
+      {isMapExpanded && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 2000,
+            background: 'var(--color-bg-base, #0a0a0b)',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-header)',
+                fontSize: '24px',
+                color: 'var(--color-accent-primary, #6366f1)',
+              }}
             >
-              SHOW ENGINE
-            </button>
-          )}
-          {!rightPanelOpen && (
-            <button 
-              onClick={() => setRightPanelOpen(true)}
-              style={{ background: 'var(--color-bg-panel)', border: '1px solid var(--color-accent-primary)', color: 'var(--color-accent-primary)', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-header)', fontSize: '10px' }}
+              WORLD STATE // INSPECT MODE
+            </span>
+            <button
+              onClick={() => setIsMapExpanded(false)}
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--color-border, #2a2a30)',
+                color: 'var(--color-text-primary, #f0f0f2)',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-header)',
+                borderRadius: '4px',
+              }}
             >
-              SHOW INSIGHTS
+              CLOSE [ESC]
             </button>
-          )}
+          </div>
+
+          <div
+            style={{
+              flex: 1,
+              border: '1px solid var(--color-border, #2a2a30)',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}
+          >
+            <WorldPanel loading={loading} error={!!error} />
+          </div>
         </div>
       )}
 
-      {/* Main Content Area - Flexbox for smooth animation */}
-      <Box 
-        sx={{ 
-          p: 3, 
-          display: 'flex', // Changed from Grid to Flex for animation
-          gap: 3,
-          height: 'calc(100vh - var(--header-height))',
-          overflow: 'hidden',
-          width: '100%',
-          position: 'relative'
-        }}
-      >
-        {/* Left Column: Engine */}
-        <AnimatePresence initial={false}>
-          {leftPanelOpen && (
-            <motion.div
-              initial="open"
-              animate="open"
-              exit="closed"
-              variants={panelVariants}
-              style={{ overflow: 'hidden', height: '100%' }}
-            >
-              <Box sx={{ height: '100%', pr: 1, overflowY: 'auto' }}>
-                <EnginePanel 
-                  loading={loading} 
-                  error={!!error} 
-                  pipelineStatus={pipelineStatus} 
-                  isLive={isLiveMode} 
-                  onClose={() => setLeftPanelOpen(false)}
-                />
-              </Box>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Decision Point Dialog - Modal for user interaction */}
+      <DecisionPointDialog />
 
-        {/* Center Column: World */}
-        <motion.div 
-          layout 
-          style={{ flex: 1, height: '100%', minWidth: 0 }} // minWidth 0 is crucial for flex child shrinking
-        >
-          <Box sx={{ height: '100%', overflow: 'hidden' }}>
-            <WorldPanel loading={loading} error={!!error} onExpand={() => setIsMapExpanded(true)} />
-          </Box>
-        </motion.div>
-
-        {/* Right Column: Insights */}
-        <AnimatePresence initial={false}>
-          {rightPanelOpen && (
-            <motion.div
-              initial="open"
-              animate="open"
-              exit="closed"
-              variants={panelVariants}
-              style={{ overflow: 'hidden', height: '100%' }}
-            >
-              <Box sx={{ height: '100%', pl: 1, overflowY: 'auto' }}>
-                <InsightsPanel 
-                  loading={loading} 
-                  error={!!error} 
-                  pipelineStatus={pipelineStatus} 
-                  isLive={isLiveMode} 
-                  isOnline={isOnline}
-                  mfdMode={mfdMode}
-                  onMfdModeChange={setMfdMode}
-                  onQuickAction={handleQuickAction}
-                  onClose={() => setRightPanelOpen(false)}
-                />
-              </Box>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </Box>
-
-      {/* Map Overlay (Full Screen) */}
-      <AnimatePresence>
-        {isMapExpanded && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 2000,
-              background: 'var(--color-bg-base)',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            {/* Overlay Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <span style={{ fontFamily: 'var(--font-header)', fontSize: '24px', color: 'var(--color-accent-primary)' }}>WORLD STATE // INSPECT MODE</span>
-              <button 
-                onClick={() => setIsMapExpanded(false)}
-                style={{ 
-                  background: 'transparent', 
-                  border: '1px solid var(--color-border)', 
-                  color: 'var(--color-text-primary)', 
-                  padding: '8px 16px', 
-                  cursor: 'pointer', 
-                  fontFamily: 'var(--font-header)'
-                }}
-              >
-                CLOSE OVERLAY [ESC]
-              </button>
-            </div>
-            
-            {/* Full Map Content */}
-            <Box sx={{ flex: 1, border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden' }}>
-               <WorldStateMap loading={loading} error={!!error} />
-            </Box>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      {/* Notification Snackbar */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert onClose={handleSnackbarClose} severity="info" variant="filled" sx={{ borderRadius: 2 }}>
+        <Alert
+          onClose={handleSnackbarClose}
+          severity="info"
+          variant="filled"
+          sx={{ borderRadius: 2 }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>

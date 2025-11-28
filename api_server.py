@@ -471,6 +471,45 @@ else:
         "World context router not available - endpoints will not be accessible"
     )
 
+# Include Prompts Router
+try:
+    from src.api.prompts_router import router as prompts_router
+
+    app.include_router(prompts_router)
+    logger.info("Prompts router included with prefix /api/prompts")
+except ImportError as e:
+    logger.warning(f"Prompts router not available: {e}")
+
+# Include Decision Router for user participatory interaction
+try:
+    from src.decision import (
+        decision_router,
+        initialize_decision_system,
+        InteractionPauseController,
+        DecisionPointDetector,
+        NegotiationEngine,
+    )
+
+    # Create decision system components
+    _decision_pause_controller = InteractionPauseController(default_timeout=120)
+    _decision_detector = DecisionPointDetector(
+        tension_threshold=7.0,
+        intensity_threshold=7.0,
+        always_detect_interval=3,  # For testing: every 3 turns
+    )
+    _decision_negotiation_engine = NegotiationEngine()
+
+    # Include router
+    app.include_router(decision_router)
+    DECISION_ROUTER_AVAILABLE = True
+    logger.info("Decision router included with prefix /api/decision")
+except ImportError as e:
+    DECISION_ROUTER_AVAILABLE = False
+    _decision_pause_controller = None
+    _decision_detector = None
+    _decision_negotiation_engine = None
+    logger.warning(f"Decision router not available: {e}")
+
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
@@ -795,7 +834,7 @@ def _run_orchestration_background(
                     _orchestration_state["steps"][1]["progress"] = 50
 
                 # Actually run the turn (this calls the LLM)
-                director.run_turn()
+                turn_result = director.run_turn()
 
                 # Mark steps as completed
                 with _orchestration_lock:
@@ -818,6 +857,65 @@ def _run_orchestration_background(
                     description=f"Turn completed in {turn_duration:.2f}s",
                     severity="low"
                 ))
+
+                # === DECISION POINT DETECTION ===
+                # Check for user interaction points if decision system is available
+                if DECISION_ROUTER_AVAILABLE and _decision_detector and _decision_pause_controller:
+                    try:
+                        # Build narrative context from recent story
+                        narrative_context = ""
+                        if _generated_narrative.get("story"):
+                            # Use last 500 chars as context
+                            narrative_context = _generated_narrative["story"][-500:]
+
+                        # Analyze turn result for decision point
+                        decision_point = _decision_detector.analyze_turn(
+                            turn_number=turn_num,
+                            turn_result=turn_result if isinstance(turn_result, dict) else {},
+                            narrative_context=narrative_context,
+                            characters=[{"name": n} for n in character_names],
+                        )
+
+                        if decision_point:
+                            logger.info(f"Decision point detected at turn {turn_num}: {decision_point.title}")
+
+                            # Broadcast decision point to frontend
+                            broadcast_sse_event({
+                                "id": f"decision-{decision_point.decision_id}",
+                                "type": "decision_required",
+                                "title": decision_point.title,
+                                "description": decision_point.description,
+                                "severity": "high",
+                                "timestamp": decision_point.created_at.isoformat(),
+                                "data": decision_point.to_dict(),
+                            })
+
+                            # Pause and wait for user decision (blocking with timeout)
+                            try:
+                                user_decision = asyncio.run(
+                                    _decision_pause_controller.pause_for_decision(decision_point)
+                                )
+                                if user_decision:
+                                    logger.info(f"User decision received: {user_decision.input_type}")
+                                    # User decision can influence next turn via world state
+                                    # Store in generated narrative for context
+                                    with _orchestration_lock:
+                                        if "user_decisions" not in _generated_narrative:
+                                            _generated_narrative["user_decisions"] = []
+                                        _generated_narrative["user_decisions"].append({
+                                            "turn": turn_num,
+                                            "decision_id": decision_point.decision_id,
+                                            "input_type": user_decision.input_type,
+                                            "selected_option_id": user_decision.selected_option_id,
+                                            "free_text": user_decision.free_text,
+                                        })
+                                else:
+                                    logger.info("Decision point skipped/timed out")
+                            except Exception as pause_error:
+                                logger.warning(f"Decision pause failed: {pause_error}")
+
+                    except Exception as decision_error:
+                        logger.warning(f"Decision detection failed: {decision_error}")
 
             except Exception as e:
                 logger.error(f"Error during turn {turn_num}: {e}")
@@ -1495,6 +1593,22 @@ def broadcast_sse_event(event_data: Dict[str, Any]):
             queue.put_nowait(event_data)
         except asyncio.QueueFull:
             logger.warning(f"SSE queue full for client {client_id}, dropping event")
+
+
+# Initialize decision system now that broadcast_sse_event is available
+if DECISION_ROUTER_AVAILABLE:
+    try:
+        from src.decision import initialize_decision_system as _init_decision
+        _init_decision(
+            pause_controller=_decision_pause_controller,
+            decision_detector=_decision_detector,
+            negotiation_engine=_decision_negotiation_engine,
+            broadcast_sse_event=broadcast_sse_event,
+        )
+        logger.info("Decision system initialized with SSE broadcast capability")
+    except Exception as e:
+        logger.warning(f"Failed to initialize decision system: {e}")
+
 
 def setup_eventbus_sse_bridge(event_bus: EventBus):
     """

@@ -1,6 +1,9 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, Button, styled } from '@mui/material';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import WorldStateMap from '../WorldStateMapV2';
+import { ErrorBoundary } from '../../error-boundaries/ErrorBoundary';
+import PanelErrorFallback from '../PanelErrorFallback';
 
 interface WorldPanelProps {
   loading: boolean;
@@ -8,53 +11,66 @@ interface WorldPanelProps {
   onExpand?: () => void;
 }
 
+const ExpandButton = styled(Button)(({ theme }) => ({
+  position: 'absolute',
+  top: theme.spacing(1),
+  right: theme.spacing(6), // Leave space for GridTile options button
+  zIndex: 10,
+  minWidth: 'auto',
+  padding: theme.spacing(0.5, 1),
+  fontSize: '10px',
+  fontFamily: 'var(--font-header)',
+  textTransform: 'uppercase',
+  backgroundColor: 'color-mix(in srgb, var(--color-accent-primary) 10%, transparent)',
+  borderColor: 'var(--color-accent-primary)',
+  color: 'var(--color-accent-primary)',
+  '&:hover': {
+    backgroundColor: 'color-mix(in srgb, var(--color-accent-primary) 20%, transparent)',
+    borderColor: 'var(--color-accent-primary)',
+  },
+  '&:focus-visible': {
+    outline: '2px solid var(--color-accent-primary)',
+    outlineOffset: '2px',
+  },
+}));
+
 const WorldPanel: React.FC<WorldPanelProps> = React.memo(({ loading, error, onExpand }) => {
   return (
-    <Box className="command-panel" sx={{ height: '100%', p: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-       {/* Map Header Overlay */}
-       <div style={{ 
-         position: 'absolute', 
-         top: 0, 
-         left: 0, 
-         right: 0, 
-         height: '48px', 
-         display: 'flex', 
-         alignItems: 'center', 
-         justifyContent: 'space-between', 
-         padding: '0 16px', 
-         background: 'linear-gradient(to bottom, rgba(0,0,0,0.8), transparent)', 
-         zIndex: 10,
-         pointerEvents: 'none' // Let clicks pass through to map where possible, but buttons need pointer-events: auto
-       }}>
-         <span className="command-panel-title" style={{ pointerEvents: 'auto' }}>World State</span>
-         {onExpand && (
-           <button 
-              onClick={onExpand}
-              style={{ 
-                pointerEvents: 'auto',
-                background: 'rgba(0, 255, 198, 0.1)', 
-                border: '1px solid var(--color-accent-primary)', 
-                color: 'var(--color-accent-primary)', 
-                borderRadius: '4px',
-                padding: '4px 8px',
-                cursor: 'pointer',
-                fontSize: '10px',
-                fontFamily: 'var(--font-header)',
-                textTransform: 'uppercase'
-              }}
-           >
-             Expand ↗
-           </button>
-         )}
-       </div>
+    <ErrorBoundary
+      componentName="WorldPanel"
+      fallback={(err, reset) => (
+        <PanelErrorFallback error={err} onReset={reset} panelName="World State" />
+      )}
+    >
+      <Box
+        className="command-panel"
+        sx={{
+          height: '100%',
+          p: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+        }}
+      >
+        {/* Expand button overlay - positioned in top right */}
+        {onExpand && (
+          <ExpandButton
+            variant="outlined"
+            size="small"
+            onClick={onExpand}
+            aria-label="Expand world map"
+            startIcon={<OpenInFullIcon sx={{ fontSize: '12px !important' }} />}
+          >
+            Expand
+          </ExpandButton>
+        )}
 
-       {/* Map takes full height of center column now */}
-      <WorldStateMap loading={loading} error={error} />
-    </Box>
+        {/* Map takes full height of center column */}
+        <WorldStateMap loading={loading} error={error} />
+      </Box>
+    </ErrorBoundary>
   );
 });
 
-WorldPanel.displayName = 'WorldPanel';
-
 export default WorldPanel;
-

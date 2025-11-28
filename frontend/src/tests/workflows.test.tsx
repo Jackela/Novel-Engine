@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box } from '@mui/material';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import App from '../App';
 import Navbar from '../components/Navbar';
 import Dashboard from '../components/dashboard/Dashboard';
@@ -11,6 +13,13 @@ import CharacterStudio from '../components/CharacterStudio';
 import StoryWorkshop from '../components/StoryWorkshop';
 import StoryLibrary from '../components/StoryLibrary';
 import SystemMonitor from '../components/SystemMonitor';
+import authSlice from '../store/slices/authSlice';
+import charactersSlice from '../store/slices/charactersSlice';
+import storiesSlice from '../store/slices/storiesSlice';
+import campaignsSlice from '../store/slices/campaignsSlice';
+import dashboardSlice from '../store/slices/dashboardSlice';
+import decisionSlice from '../store/slices/decisionSlice';
+import { AuthProvider } from '../contexts/AuthContext';
 
 import { vi } from 'vitest';
 
@@ -116,19 +125,37 @@ const createTestQueryClient = () => {
   });
 };
 
+const createTestStore = () => {
+  return configureStore({
+    reducer: {
+      auth: authSlice,
+      characters: charactersSlice,
+      stories: storiesSlice,
+      campaigns: campaignsSlice,
+      dashboard: dashboardSlice,
+      decision: decisionSlice,
+    },
+  });
+};
+
 const renderAppWithProviders = async ({ route = '/' } = {}) => {
   const queryClient = createTestQueryClient();
+  const store = createTestStore();
   let rendered;
   await act(async () => {
     rendered = render(
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <MemoryRouter initialEntries={[route]}>
-            <TestApp />
-          </MemoryRouter>
-        </ThemeProvider>
-      </QueryClientProvider>
+      <Provider store={store}>
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              <MemoryRouter initialEntries={[route]}>
+                <TestApp />
+              </MemoryRouter>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </AuthProvider>
+      </Provider>
     );
   });
   return rendered!;
@@ -160,7 +187,7 @@ describe('Novel Engine Workflows', () => {
       await renderAppWithProviders();
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^dashboard$/i })).toBeInTheDocument();
       });
 
       expect(screen.getByRole('button', { name: /characters/i })).toBeInTheDocument();
@@ -248,7 +275,7 @@ describe('Novel Engine Workflows', () => {
       });
 
       // Check for navigation buttons
-      expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^dashboard$/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /characters/i })).toBeInTheDocument();
     });
   });
@@ -264,7 +291,7 @@ describe('Integration Tests', () => {
     });
 
     // Should have main navigation elements
-    expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^dashboard$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /characters/i })).toBeInTheDocument();
   });
 });
