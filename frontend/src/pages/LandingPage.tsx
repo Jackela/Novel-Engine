@@ -202,6 +202,7 @@ const LandingPage: React.FC = () => {
                     size="large"
                     onClick={handleDemoClick}
                     startIcon={<RocketLaunchIcon />}
+                    data-testid="cta-demo"
                     sx={{
                       py: 2,
                       px: 5,
