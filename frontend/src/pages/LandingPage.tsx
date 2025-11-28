@@ -156,16 +156,7 @@ const LandingPage: React.FC = () => {
                     textTransform: 'uppercase',
                     mb: 4,
                     position: 'relative',
-                    '&::after': {
-                      content: '"NARRATIVE"',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      color: 'var(--color-neon-cyan)',
-                      opacity: 0.5,
-                      transform: 'translate(-5px, -5px)',
-                      zIndex: -1,
-                    }
+                    textShadow: '0 0 30px rgba(99, 102, 241, 0.4), 0 0 60px rgba(99, 102, 241, 0.2)',
                   }}
                 >
                   NARRATIVE<br />

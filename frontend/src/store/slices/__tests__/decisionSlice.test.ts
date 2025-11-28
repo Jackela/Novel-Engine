@@ -4,7 +4,7 @@
  * Tests for the Redux slice managing decision point state.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import decisionReducer, {
   setDecisionPoint,

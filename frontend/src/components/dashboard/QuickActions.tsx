@@ -20,6 +20,7 @@ import {
   Settings as SettingsIcon,
   Fullscreen as FullscreenIcon,
   Download as DownloadIcon,
+  PersonAdd as PersonAddIcon,
 } from '@mui/icons-material';
 import GridTile from '../layout/GridTile';
 import { telemetry } from '../../utils/telemetry';
@@ -79,7 +80,8 @@ export type QuickAction =
   | 'save'
   | 'settings'
   | 'fullscreen'
-  | 'export';
+  | 'export'
+  | 'createCharacter';
 
 interface QuickActionsProps {
   loading?: boolean;
@@ -193,6 +195,10 @@ const QuickActions: React.FC<QuickActionsProps> = ({
 
   const handleExport = () => {
     onAction('export');
+  };
+
+  const handleCreateCharacter = () => {
+    onAction('createCharacter');
   };
 
   const renderConnectionIndicator = (showStatusChip = true) => (
@@ -372,6 +378,21 @@ const QuickActions: React.FC<QuickActionsProps> = ({
               aria-label="Export data"
             >
               <DownloadIcon />
+            </ActionButton>
+          </TooltipWrapper>
+        </Tooltip>
+      </Fade>
+
+      <Fade in timeout={380}>
+        <Tooltip title="Create Character" placement={isMobile ? 'top' : 'bottom'}>
+          <TooltipWrapper>
+            <ActionButton
+              data-testid="quick-action-create-character"
+              onClick={handleCreateCharacter}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Create new character"
+            >
+              <PersonAddIcon />
             </ActionButton>
           </TooltipWrapper>
         </Tooltip>

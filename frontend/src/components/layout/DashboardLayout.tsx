@@ -38,7 +38,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       return false;
     }
     try {
-      return window.sessionStorage.getItem(GUEST_BANNER_KEY) === '1';
+      // Use localStorage for persistent preference across sessions
+      return window.localStorage.getItem(GUEST_BANNER_KEY) === '1';
     } catch {
       return false;
     }
@@ -47,7 +48,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const handleDismissBanner = () => {
     if (typeof window !== 'undefined') {
       try {
-        window.sessionStorage.setItem(GUEST_BANNER_KEY, '1');
+        // Use localStorage for persistent preference across sessions
+        window.localStorage.setItem(GUEST_BANNER_KEY, '1');
       } catch {
         // ignore storage errors
       }

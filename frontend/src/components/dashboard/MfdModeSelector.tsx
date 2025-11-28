@@ -15,6 +15,7 @@ interface MfdModeOption {
 /**
  * Default MFD mode configuration
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const MFD_MODES: readonly MfdModeOption[] = [
   { id: 'analytics', label: 'DATA', description: 'Analytics Dashboard' },
   { id: 'network', label: 'NET', description: 'Character Networks' },
@@ -119,5 +120,7 @@ const MfdModeSelector: React.FC<MfdModeSelectorProps> = React.memo(({
     </ToggleButtonGroup>
   );
 });
+
+MfdModeSelector.displayName = 'MfdModeSelector';
 
 export default MfdModeSelector;

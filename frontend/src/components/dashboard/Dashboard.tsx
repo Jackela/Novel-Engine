@@ -23,6 +23,7 @@ import { logger } from '../../services/logging/LoggerFactory';
 import { dashboardAPI } from '../../services/api/dashboardAPI';
 import { type QuickAction } from './QuickActions';
 import { DecisionPointDialog } from '../decision';
+import CharacterCreationDialog from '../CharacterStudio/CharacterCreationDialog';
 import { useRealtimeEvents, type RealtimeEvent } from '../../hooks/useRealtimeEvents';
 import { setDecisionPoint, clearDecisionPoint, type DecisionPoint } from '../../store/slices/decisionSlice';
 import type { AppDispatch } from '../../store/store';
@@ -54,6 +55,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
   const [asideOpen, setAsideOpen] = useState(true);
   const [mfdMode, setMfdMode] = useState<'analytics' | 'network' | 'timeline' | 'signals'>('analytics');
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+
+  // Character creation dialog state
+  const [characterDialogOpen, setCharacterDialogOpen] = useState(false);
 
   // Connection state
   const [isOnline, setIsOnline] = useState(() => {
@@ -193,6 +197,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
           showNotification('Data refreshed');
           break;
         }
+        case 'createCharacter': {
+          setCharacterDialogOpen(true);
+          break;
+        }
         default:
           showNotification(`Action ${action} triggered`);
       }
@@ -316,6 +324,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
 
       {/* Decision Point Dialog - Modal for user interaction */}
       <DecisionPointDialog />
+
+      {/* Character Creation Dialog */}
+      <CharacterCreationDialog
+        open={characterDialogOpen}
+        onClose={() => setCharacterDialogOpen(false)}
+        onCharacterCreated={() => {
+          setCharacterDialogOpen(false);
+          showNotification('Character created successfully!');
+        }}
+      />
 
       {/* Notification Snackbar */}
       <Snackbar

@@ -246,7 +246,7 @@ export function useRealtimeEvents({
       setLoading(false);
       setError(new Error('Failed to initialize event stream connection.'));
     }
-  }, [endpoint, enabled, maxRetries, calculateRetryDelay, resetHeartbeatTimer, maxEvents]);
+  }, [endpoint, enabled, maxRetries, calculateRetryDelay, resetHeartbeatTimer, maxEvents, onDecisionEvent]);
 
   // Manual reconnect function exposed to consumers
   const reconnect = useCallback(() => {

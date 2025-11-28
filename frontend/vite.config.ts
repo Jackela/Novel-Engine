@@ -97,11 +97,20 @@ export default defineConfig({
   // Development server optimizations
   server: {
     port: 3000,
-    host: true, // Enable network access
+    host: '0.0.0.0', // Enable network access for WSL2/Docker
+    strictPort: true, // Fail if port is already in use
     cors: true,
-    // HMR optimization
+    // HMR optimization for WSL2 - use WebSocket protocol
     hmr: {
-      port: 3001,
+      protocol: 'ws',
+      host: 'localhost',
+      port: 3000,
+      clientPort: 3000, // Prevent port mapping confusion
+    },
+    // WSL2 file watching fix - use polling with faster interval
+    watch: {
+      usePolling: true,
+      interval: 100, // Faster polling for better responsiveness
     },
     proxy: {
       // Proxy /api/* to backend without versioning
@@ -184,11 +193,28 @@ export default defineConfig({
     },
   },
   
-  // Preview configuration
+  // Preview configuration with SPA fallback
   preview: {
     port: 4173,
     host: true,
+    proxy: {
+      // Proxy /api/* to backend in preview mode
+      '/api': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/meta': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
   },
+  // App type for SPA history fallback support
+  appType: 'spa',
   test: {
     globals: true,
     environment: 'jsdom',
