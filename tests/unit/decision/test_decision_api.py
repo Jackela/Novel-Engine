@@ -449,7 +449,8 @@ class TestDecisionAPIEndpoints:
 
     @pytest.mark.api
     @pytest.mark.unit
-    def test_get_status_success(
+    @pytest.mark.asyncio
+    async def test_get_status_success(
         self, mock_pause_controller, mock_decision_detector, mock_negotiation_engine
     ):
         """Test GET /api/decision/status - success case."""
@@ -462,11 +463,9 @@ class TestDecisionAPIEndpoints:
             "src.decision.api_router._negotiation_engine", mock_negotiation_engine
         ):
             # Call the endpoint function directly
-            import asyncio
-
             from src.decision.api_router import get_decision_status
 
-            result = asyncio.get_event_loop().run_until_complete(get_decision_status())
+            result = await get_decision_status()
 
             assert result["success"] is True
             assert "data" in result
@@ -475,14 +474,13 @@ class TestDecisionAPIEndpoints:
 
     @pytest.mark.api
     @pytest.mark.unit
-    def test_get_status_system_not_initialized(self):
+    @pytest.mark.asyncio
+    async def test_get_status_system_not_initialized(self):
         """Test GET /api/decision/status - system not initialized."""
         with patch("src.decision.api_router._pause_controller", None):
-            import asyncio
-
             from src.decision.api_router import get_decision_status
 
-            result = asyncio.get_event_loop().run_until_complete(get_decision_status())
+            result = await get_decision_status()
 
             assert result["success"] is False
             assert "message" in result
@@ -490,7 +488,8 @@ class TestDecisionAPIEndpoints:
 
     @pytest.mark.api
     @pytest.mark.unit
-    def test_get_status_with_pending_decision(
+    @pytest.mark.asyncio
+    async def test_get_status_with_pending_decision(
         self,
         mock_pause_controller,
         mock_decision_detector,
@@ -510,11 +509,9 @@ class TestDecisionAPIEndpoints:
         with patch(
             "src.decision.api_router._pause_controller", mock_pause_controller
         ):
-            import asyncio
-
             from src.decision.api_router import get_decision_status
 
-            result = asyncio.get_event_loop().run_until_complete(get_decision_status())
+            result = await get_decision_status()
 
             assert result["success"] is True
             assert result["data"]["state"] == "awaiting_input"
@@ -887,7 +884,8 @@ class TestDecisionSystemIntegration:
 
     @pytest.mark.integration
     @pytest.mark.unit
-    def test_decision_workflow_option_selection(
+    @pytest.mark.asyncio
+    async def test_decision_workflow_option_selection(
         self,
         mock_pause_controller,
         mock_decision_detector,
@@ -895,8 +893,6 @@ class TestDecisionSystemIntegration:
         sample_decision_point,
     ):
         """Test complete workflow: decision detected -> option selected -> resolved."""
-        import asyncio
-
         # 1. Initial state - running
         mock_pause_controller.is_paused = False
         mock_pause_controller.get_status.return_value = {"state": "running", "is_paused": False}
@@ -906,7 +902,7 @@ class TestDecisionSystemIntegration:
         ):
             from src.decision.api_router import get_decision_status
 
-            result = asyncio.get_event_loop().run_until_complete(get_decision_status())
+            result = await get_decision_status()
             assert result["data"]["state"] == "running"
 
         # 2. Decision detected - awaiting input
@@ -921,7 +917,7 @@ class TestDecisionSystemIntegration:
         with patch(
             "src.decision.api_router._pause_controller", mock_pause_controller
         ):
-            result = asyncio.get_event_loop().run_until_complete(get_decision_status())
+            result = await get_decision_status()
             assert result["data"]["state"] == "awaiting_input"
             assert result["data"]["current_decision"] is not None
 
@@ -939,14 +935,13 @@ class TestDecisionSystemIntegration:
                 selected_option_id=2,
             )
 
-            result = asyncio.get_event_loop().run_until_complete(
-                submit_decision_response(request)
-            )
+            result = await submit_decision_response(request)
             assert result["success"] is True
 
     @pytest.mark.integration
     @pytest.mark.unit
-    def test_decision_workflow_freetext_with_negotiation(
+    @pytest.mark.asyncio
+    async def test_decision_workflow_freetext_with_negotiation(
         self,
         mock_pause_controller,
         mock_negotiation_engine,
@@ -954,8 +949,6 @@ class TestDecisionSystemIntegration:
         sample_negotiation_result,
     ):
         """Test workflow: freetext input -> negotiation -> accept."""
-        import asyncio
-
         # Setup
         mock_pause_controller.is_paused = True
         mock_pause_controller.current_decision_point = sample_decision_point
@@ -980,9 +973,7 @@ class TestDecisionSystemIntegration:
                 free_text="Make the character do something special",
             )
 
-            result = asyncio.get_event_loop().run_until_complete(
-                submit_decision_response(request)
-            )
+            result = await submit_decision_response(request)
             assert result["success"] is True
             assert result["data"]["needs_negotiation"] is True
 
@@ -1000,9 +991,7 @@ class TestDecisionSystemIntegration:
                 insist_original=False,
             )
 
-            result = asyncio.get_event_loop().run_until_complete(
-                confirm_negotiation(confirm_request)
-            )
+            result = await confirm_negotiation(confirm_request)
             assert result["success"] is True
 
 
