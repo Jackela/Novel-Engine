@@ -11,6 +11,7 @@ the essence of any fictional universe.
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import logging
 import os
@@ -25,6 +26,13 @@ from src.core.config.config_loader import get_config
 from src.core.types.shared_types import CharacterAction
 from src.event_bus import EventBus
 from src.persona_agent import PersonaAgent
+from src.llm_service import UnifiedLLMService, LLMRequest, LLMProvider, ResponseFormat
+from src.prompts import (
+    Language,
+    PromptRegistry,
+    PromptTemplate,
+    StoryGenre,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -92,14 +100,67 @@ def _sanitize_story(value: str) -> str:
     return text.strip()
 
 
+# Global LLM service instance (lazily initialized)
+_llm_service: Optional[UnifiedLLMService] = None
+
+
+def _get_llm_service() -> UnifiedLLMService:
+    """Get or create the global LLM service instance."""
+    global _llm_service
+    if _llm_service is None:
+        _llm_service = UnifiedLLMService()
+    return _llm_service
+
+
 def _make_gemini_api_request(prompt: str) -> Any:
     """
-    Placeholder for Gemini API integration.
+    Call Gemini API using the UnifiedLLMService.
 
-    Tests patch this function to simulate rich narrative output without
-    performing live network calls.
+    This function integrates with the production LLM service to generate
+    high-quality narrative content using Google's Gemini 2.0 Flash model.
+
+    Args:
+        prompt: The prompt to send to the LLM
+
+    Returns:
+        The generated text response
+
+    Raises:
+        RuntimeError: If Gemini API is not configured
     """
-    raise RuntimeError("Gemini API integration is not configured.")
+    llm_service = _get_llm_service()
+
+    # Check if Gemini provider is available
+    if LLMProvider.GEMINI not in llm_service.providers:
+        raise RuntimeError("Gemini API integration is not configured.")
+
+    # Create LLM request for narrative generation
+    request = LLMRequest(
+        prompt=prompt,
+        provider=LLMProvider.GEMINI,
+        response_format=ResponseFormat.NARRATIVE_FORMAT,
+        temperature=0.8,  # Higher creativity for storytelling
+        max_tokens=4000,  # Allow longer narratives
+        cache_enabled=True,
+        requester="chronicler_agent",
+    )
+
+    # Run async call synchronously
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    response = loop.run_until_complete(llm_service.generate(request))
+
+    # Check for errors
+    if "[LLM Error:" in response.content:
+        logger.error(f"LLM generation failed: {response.content}")
+        raise RuntimeError(f"Gemini API call failed: {response.content}")
+
+    logger.info(f"Gemini API call successful: {response.tokens_used} tokens, ${response.cost_estimate:.4f}")
+    return response.content
 
 
 @dataclass
@@ -156,6 +217,10 @@ class ChroniclerAgent:
         max_events_per_batch: Optional[int] = None,
         narrative_style: Optional[str] = None,
         character_names: Optional[Any] = _UNSET,
+        template_id: Optional[str] = None,
+        genre: Optional[StoryGenre] = None,
+        language: Language = Language.ENGLISH,
+        custom_prompt: Optional[str] = None,
     ):
         """
         Initializes the ChroniclerAgent.
@@ -166,6 +231,10 @@ class ChroniclerAgent:
             max_events_per_batch: Optional maximum events per batch.
             narrative_style: Optional narrative style.
             character_names: Optional list of character names for story integration.
+            template_id: Optional ID of a pre-defined prompt template to use.
+            genre: Optional story genre for template selection.
+            language: Language for prompts (default: English).
+            custom_prompt: Optional custom prompt to use instead of templates.
         """
         logger.info("Initializing ChroniclerAgent...")
 
@@ -211,6 +280,26 @@ class ChroniclerAgent:
         self.llm_calls_made = 0
         self.error_count = 0
         self.last_error_time: Optional[datetime] = None
+
+        # Initialize prompt template system
+        self._language = language
+        self._genre = genre
+        self._custom_prompt = custom_prompt
+        self._active_template: Optional[PromptTemplate] = None
+
+        # Try to load template by ID first, then by genre/language
+        if template_id:
+            self._active_template = PromptRegistry.get(template_id)
+            if self._active_template:
+                logger.info(f"Using template: {template_id}")
+        elif genre:
+            self._active_template = PromptRegistry.get_by_genre_and_language(
+                genre, language
+            )
+            if self._active_template:
+                logger.info(
+                    f"Using template for genre={genre.value}, language={language.value}"
+                )
 
         try:
             self._initialize_output_directory()
@@ -268,15 +357,174 @@ class ChroniclerAgent:
         self.narrative_style = normalized
         return True
 
+    def set_template(self, template_id: str) -> bool:
+        """
+        Set the active prompt template by ID.
+
+        Args:
+            template_id: The template ID to use (e.g., "fantasy_zh")
+
+        Returns:
+            True if template was found and set, False otherwise
+        """
+        template = PromptRegistry.get(template_id)
+        if template:
+            self._active_template = template
+            self._language = template.language
+            self._genre = template.genre
+            logger.info(f"Template set to: {template_id}")
+            return True
+        logger.warning(f"Template not found: {template_id}")
+        return False
+
+    def set_genre(self, genre: StoryGenre, language: Optional[Language] = None) -> bool:
+        """
+        Set the active template by genre and optionally language.
+
+        Args:
+            genre: The story genre to use
+            language: Optional language override
+
+        Returns:
+            True if a matching template was found
+        """
+        lang = language or self._language
+        template = PromptRegistry.get_by_genre_and_language(genre, lang)
+        if template:
+            self._active_template = template
+            self._genre = genre
+            self._language = lang
+            logger.info(f"Genre set to: {genre.value} ({lang.value})")
+            return True
+        logger.warning(f"No template found for genre={genre.value}, language={lang.value}")
+        return False
+
+    def set_custom_prompt(self, prompt: str) -> None:
+        """
+        Set a custom prompt to use instead of templates.
+
+        Args:
+            prompt: The custom prompt text
+        """
+        self._custom_prompt = prompt
+        self._active_template = None  # Custom prompt takes precedence
+        logger.info("Custom prompt set")
+
+    def get_available_templates(self) -> List[Dict[str, Any]]:
+        """
+        Get list of all available prompt templates.
+
+        Returns:
+            List of template info dictionaries
+        """
+        return [
+            {
+                "id": t.id,
+                "name": t.name,
+                "genre": t.genre.value,
+                "language": t.language.value,
+                "description": t.description,
+            }
+            for t in PromptRegistry.list_all()
+        ]
+
     def _build_story_prompt(self, base_story: str) -> str:
-        """Construct an instruction prompt for the fallback LLM."""
+        """Construct an enhanced instruction prompt for high-quality narrative generation."""
         participants = ", ".join(self.character_names)
-        return (
-            "You are the Chronicler aboard Meridian Station. "
-            "Transform the following mission log into a concise sci-fi vignette with a hopeful tone.\n\n"
-            f"Participants: {participants}\n"
-            f"Log Extract:\n{base_story}\n"
-        )
+        num_chars = len(self.character_names)
+
+        # Priority 1: Custom prompt if set
+        if self._custom_prompt:
+            return self._custom_prompt.format(
+                characters=participants,
+                num_characters=num_chars,
+                events=base_story,
+                character_list=self.character_names,
+            )
+
+        # Priority 2: Use template if available
+        if self._active_template:
+            return self._active_template.render(
+                characters=self.character_names,
+                events=base_story,
+                world_state=None,
+                user_additions="",
+            )
+
+        # Priority 3: Default prompt based on language
+        if self._language == Language.CHINESE:
+            return f"""你是一位大师级的故事讲述者，创作沉浸式的叙事作品。
+
+## 你的任务
+将以下任务事件转化为一个引人入胜的短篇故事，
+包含生动的意象、引人入胜的角色互动和戏剧性张力。
+
+## 角色
+{participants}
+（共 {num_chars} 个角色 - 为每个角色赋予独特的性格特征和动机）
+
+## 故事要求
+1. **开篇钩子**：以氛围感十足的场景开始，吸引读者
+2. **角色发展**：通过对话和行动展示每个角色的独特个性
+3. **冲突与张力**：包含有意义的挑战和人际关系动态
+4. **生动描写**：使用感官细节 - 视觉、声音、质感、情感
+5. **满意的弧线**：构建高潮并提供解决方案
+6. **独特元素**：自然地融入独特的世界观元素
+
+## 风格指南
+- 使用第三人称过去时
+- 使用多样的句子结构增加节奏感
+- 至少包含 2-3 段角色之间的对话
+- 避免重复的短语或泛泛的描述
+- 长度：800-1200 字
+
+## 需要转化的源事件
+{base_story}
+
+## 输出
+在下面写出完整的短篇故事。不要包含任何元评论或注释 -
+只要可以发表的纯叙事散文。
+
+---
+
+"""
+
+        # Default English prompt
+        return f"""You are a master storyteller crafting an immersive adventure narrative.
+
+## Your Task
+Transform the following mission events into a captivating short story with vivid imagery,
+compelling character interactions, and dramatic tension.
+
+## Characters
+{participants}
+(Total: {num_chars} characters - give each one distinct personality traits and motivations)
+
+## Story Requirements
+1. **Opening Hook**: Start with an atmospheric scene that draws readers in
+2. **Character Development**: Show each character's unique personality through dialogue and actions
+3. **Conflict & Tension**: Include meaningful challenges and interpersonal dynamics
+4. **Vivid Descriptions**: Use sensory details - sights, sounds, textures, emotions
+5. **Satisfying Arc**: Build to a climax and provide resolution
+6. **Unique Elements**: Incorporate distinctive world-building elements naturally
+
+## Style Guidelines
+- Write in third-person past tense
+- Use varied sentence structure for rhythm
+- Include at least 2-3 dialogue exchanges between characters
+- Avoid repetitive phrases or generic descriptions
+- Length: 800-1200 words
+
+## Source Events to Transform
+{base_story}
+
+## Output
+Write the complete short story below. Do not include any meta-commentary or notes -
+just the pure narrative prose that could be published in an anthology.
+
+---
+
+"""
 
     def _invoke_text_model(self, prompt: str) -> Optional[str]:
         """Call the (mockable) Gemini request hook."""
