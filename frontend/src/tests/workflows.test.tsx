@@ -187,7 +187,7 @@ describe('Novel Engine Workflows', () => {
       await renderAppWithProviders();
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^dashboard$/i })).toBeInTheDocument();
       });
 
       expect(screen.getByRole('button', { name: /characters/i })).toBeInTheDocument();
@@ -275,7 +275,7 @@ describe('Novel Engine Workflows', () => {
       });
 
       // Check for navigation buttons
-      expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^dashboard$/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /characters/i })).toBeInTheDocument();
     });
   });
@@ -291,7 +291,7 @@ describe('Integration Tests', () => {
     });
 
     // Should have main navigation elements
-    expect(screen.getByRole('button', { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^dashboard$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /characters/i })).toBeInTheDocument();
   });
 });
