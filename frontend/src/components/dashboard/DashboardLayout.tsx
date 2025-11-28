@@ -56,7 +56,7 @@ const LayoutContainer = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.default,
 }));
 
-const SidebarRegion = styled(motion.aside)<{ $isOpen: boolean }>(({ theme, $isOpen }) => ({
+const SidebarRegion = styled(motion.aside)<{ $isOpen: boolean }>(({ $isOpen }) => ({
   width: $isOpen ? `${SIDEBAR_WIDTH}px` : 0,
   minWidth: $isOpen ? `${SIDEBAR_WIDTH}px` : 0,
   height: '100%',
@@ -75,7 +75,7 @@ const MainRegion = styled(Box)({
   flexDirection: 'column',
 });
 
-const AsideRegion = styled(motion.aside)<{ $isOpen: boolean }>(({ theme, $isOpen }) => ({
+const AsideRegion = styled(motion.aside)<{ $isOpen: boolean }>(({ $isOpen }) => ({
   width: $isOpen ? `${ASIDE_WIDTH}px` : 0,
   minWidth: $isOpen ? `${ASIDE_WIDTH}px` : 0,
   height: '100%',

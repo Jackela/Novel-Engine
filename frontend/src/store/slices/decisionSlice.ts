@@ -188,10 +188,17 @@ const decisionSlice = createSlice({
       state.negotiationResult = null;
       state.error = null;
 
-      // Calculate remaining seconds
-      const expiresAt = new Date(action.payload.expiresAt).getTime();
+      // Calculate remaining seconds with validation
+      const expiresAt = new Date(action.payload.expiresAt);
+      const expiresAtMs = expiresAt.getTime();
       const now = Date.now();
-      state.remainingSeconds = Math.max(0, Math.floor((expiresAt - now) / 1000));
+
+      // Handle invalid expiresAt by falling back to timeoutSeconds
+      if (isNaN(expiresAtMs)) {
+        state.remainingSeconds = action.payload.timeoutSeconds || 30;
+      } else {
+        state.remainingSeconds = Math.max(0, Math.floor((expiresAtMs - now) / 1000));
+      }
     },
 
     // Clear decision point (resolved/expired)

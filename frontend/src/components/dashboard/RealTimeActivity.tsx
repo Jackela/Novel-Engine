@@ -133,16 +133,32 @@ const RealTimeActivity: React.FC<RealTimeActivityProps> = ({ loading: propLoadin
     }
   };
 
-  const formatTimestamp = (timestampMs: number) => {
+  const formatTimestamp = (timestamp: number | null | undefined) => {
+    // Handle invalid timestamps
+    if (!timestamp || typeof timestamp !== 'number' || isNaN(timestamp)) {
+      return 'Recently';
+    }
+
+    // Normalize timestamp: detect if it's in seconds vs milliseconds
+    // If timestamp is less than 1e11 (year ~1973 in ms), assume it's in seconds
+    const normalizedTs = timestamp < 1e11 ? timestamp * 1000 : timestamp;
+
     const now = Date.now();
-    const diff = now - timestampMs;
+    const diff = now - normalizedTs;
+
+    // Handle future timestamps or very old timestamps (likely invalid)
+    if (diff < 0 || diff > 365 * 24 * 60 * 60 * 1000) {
+      return 'Recently';
+    }
 
     if (diff < 60000) {
       return 'Just now';
     } else if (diff < 3600000) {
       return `${Math.floor(diff / 60000)}m ago`;
-    } else {
+    } else if (diff < 86400000) {
       return `${Math.floor(diff / 3600000)}h ago`;
+    } else {
+      return `${Math.floor(diff / 86400000)}d ago`;
     }
   };
 

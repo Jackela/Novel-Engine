@@ -302,9 +302,9 @@ describe('useRealtimeEvents', () => {
 
   it('cleans up EventSource on unmount', async () => {
     let helpers: { triggerOpen: () => void } | null = null;
-    let closeCalled = false;
+    // Variable tracks close() call but we verify via mockReadyState instead
     mockClose = () => {
-      closeCalled = true;
+      // Close callback executed - verified by mockReadyState check below
     };
 
     const { unmount } = render(

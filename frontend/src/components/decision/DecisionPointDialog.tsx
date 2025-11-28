@@ -36,7 +36,6 @@ import {
   selectOption,
   setFreeTextInput,
   decrementCountdown,
-  clearDecisionPoint,
 } from '../../store/slices/decisionSlice';
 import {
   submitDecisionResponse,
