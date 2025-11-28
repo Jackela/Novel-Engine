@@ -272,7 +272,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   // Desktop three-column layout
   return (
-    <LayoutContainer className={`dashboard-layout ${className || ''}`}>
+    <LayoutContainer className={`dashboard-layout ${className || ''}`} data-testid="dashboard-layout">
       {/* Toggle buttons for hidden panels */}
       {!sidebarOpen && (
         <ShowPanelButton
