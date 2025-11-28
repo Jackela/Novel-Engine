@@ -313,9 +313,14 @@ platform/temp/
 
 # BMAD and Tool-Specific Directories
 .bmad-core/
-.claude/commands/
 .cursor/rules/bmad/
 web-bundles/
+
+# Claude Code - ignore most but track skills for team sharing
+.claude/*
+!.claude/skills/
+!.claude/skills/**
+!.claude/commands/
 
 # Generated Data and Artifacts
 personas/
