@@ -19,6 +19,7 @@ import storiesSlice from '../store/slices/storiesSlice';
 import campaignsSlice from '../store/slices/campaignsSlice';
 import dashboardSlice from '../store/slices/dashboardSlice';
 import decisionSlice from '../store/slices/decisionSlice';
+import { AuthProvider } from '../contexts/AuthContext';
 
 import { vi } from 'vitest';
 
@@ -144,14 +145,16 @@ const renderAppWithProviders = async ({ route = '/' } = {}) => {
   await act(async () => {
     rendered = render(
       <Provider store={store}>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <MemoryRouter initialEntries={[route]}>
-              <TestApp />
-            </MemoryRouter>
-          </ThemeProvider>
-        </QueryClientProvider>
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              <MemoryRouter initialEntries={[route]}>
+                <TestApp />
+              </MemoryRouter>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </AuthProvider>
       </Provider>
     );
   });
