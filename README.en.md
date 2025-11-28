@@ -20,7 +20,23 @@ This monorepo uses the root README as the single authoritative project homepage.
 - Production-ready: concurrency-safe, rich logging, caching & retries, error handling & observability
 - Frontend: isolated `frontend/` (React 18) with design system and quality gates
 
-![Flow-based dashboard view](docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png)
+---
+
+## Feature Preview
+
+### Landing Page
+![Landing Page](docs/assets/screenshots/landing-hero.png)
+
+### Dashboard
+![Dashboard Overview](docs/assets/screenshots/dashboard-overview.png)
+
+### MFD (Multi-Function Display)
+| Character Networks (NET) | Timeline (TIME) | Signal Flow (SIG) |
+|:---:|:---:|:---:|
+| ![NET Mode](docs/assets/screenshots/mfd-net.png) | ![TIME Mode](docs/assets/screenshots/mfd-time.png) | ![SIG Mode](docs/assets/screenshots/mfd-sig.png) |
+
+### Mobile Responsive
+<img src="docs/assets/screenshots/dashboard-mobile.png" alt="Mobile View" width="300">
 
 ---
 

@@ -21,7 +21,23 @@
 - 生产友好：并发安全、丰富日志、缓存与重试、错误处理与可观测性
 - 前端支持：独立的 `frontend/`（React 18），设计系统与质量门禁集成
 
-![Flow-based dashboard view](docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png)
+---
+
+## 功能预览
+
+### Landing Page
+![Landing Page](docs/assets/screenshots/landing-hero.png)
+
+### Dashboard 仪表板
+![Dashboard Overview](docs/assets/screenshots/dashboard-overview.png)
+
+### MFD 多功能显示器
+| 角色网络 (NET) | 时间线 (TIME) | 信号流 (SIG) |
+|:---:|:---:|:---:|
+| ![NET Mode](docs/assets/screenshots/mfd-net.png) | ![TIME Mode](docs/assets/screenshots/mfd-time.png) | ![SIG Mode](docs/assets/screenshots/mfd-sig.png) |
+
+### 移动端适配
+<img src="docs/assets/screenshots/dashboard-mobile.png" alt="Mobile View" width="300">
 
 ---
 

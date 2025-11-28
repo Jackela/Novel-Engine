@@ -267,6 +267,7 @@ playwright-report/
 coverage/
 .nyc_output/
 screenshots/
+!docs/assets/screenshots/
 videos/
 test_artifacts/
 
