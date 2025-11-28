@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Box, Collapse, Alert, Button } from '@mui/material';
+import { Box, Collapse, Alert, Button, Chip, Tooltip, Stack } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useAuthContext } from '../../contexts/AuthContext';
 
 interface CommandLayoutProps {
@@ -43,6 +44,31 @@ const CommandLayout: React.FC<CommandLayoutProps> = ({ children }) => {
         overflow: 'hidden' // Prevent body scroll, let dashboard handle it
       }}
     >
+      {/* Guest Mode Chip - visible when in guest mode */}
+      {isGuest && (
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 16,
+            zIndex: 2001
+          }}
+        >
+          <Tooltip title="Demo mode: curated sci-fi data">
+            <Chip
+              label="Demo Mode"
+              color="warning"
+              size="small"
+              icon={<InfoOutlinedIcon fontSize="small" />}
+              data-testid="guest-mode-chip"
+            />
+          </Tooltip>
+        </Stack>
+      )}
+
       {/* Guest Banner Overlay or Top Insert */}
       {guestBannerVisible && (
         <Box sx={{ position: 'relative', zIndex: 2000, bgcolor: 'background.paper' }}>
@@ -50,6 +76,7 @@ const CommandLayout: React.FC<CommandLayoutProps> = ({ children }) => {
             <Alert
               severity="info"
               variant="filled"
+              data-testid="guest-mode-banner"
               action={
                 <Button color="inherit" size="small" onClick={handleDismissBanner}>
                   Dismiss
