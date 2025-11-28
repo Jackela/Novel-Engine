@@ -247,6 +247,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
             mfdMode={mfdMode}
             onMfdModeChange={setMfdMode}
             onQuickAction={handleQuickAction}
+            lastUpdate={lastUpdate}
           />
         }
       />

@@ -7,6 +7,7 @@ import CharacterNetworks from '../CharacterNetworks';
 import NarrativeTimeline from '../NarrativeTimeline';
 import EventCascadeFlow from '../EventCascadeFlow';
 import PerformanceMetrics from '../PerformanceMetrics';
+import SummaryStrip from '../SummaryStrip';
 import MfdModeSelector, { type MfdMode } from '../MfdModeSelector';
 import SuspenseWrapper from '../../common/SuspenseWrapper';
 import { ErrorBoundary } from '../../error-boundaries/ErrorBoundary';
@@ -22,6 +23,7 @@ interface InsightsPanelProps {
   onMfdModeChange: (mode: MfdMode) => void;
   onQuickAction: (action: QuickAction) => void;
   onClose?: () => void;
+  lastUpdate?: Date;
 }
 
 const InsightsPanel: React.FC<InsightsPanelProps> = React.memo(({
@@ -34,6 +36,7 @@ const InsightsPanel: React.FC<InsightsPanelProps> = React.memo(({
   onMfdModeChange,
   onQuickAction,
   onClose,
+  lastUpdate,
 }) => {
   return (
     <ErrorBoundary
@@ -43,6 +46,15 @@ const InsightsPanel: React.FC<InsightsPanelProps> = React.memo(({
       )}
     >
       <Stack spacing={3} sx={{ height: '100%', minWidth: 300 }}>
+        {/* Summary Strip - Command Overview */}
+        <SummaryStrip
+          lastUpdate={lastUpdate || new Date()}
+          pipelineStatus={pipelineStatus}
+          isLive={isLive}
+          isOnline={isOnline}
+          embedded
+        />
+
         {/* Quick Actions (Control) - Always Visible */}
         <Box className="command-panel" sx={{ flex: '0 0 auto' }}>
           <div className="command-panel-header">
