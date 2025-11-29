@@ -30,7 +30,7 @@ test.describe('Landing Page E2E Tests', () => {
      * And: The "Launch Engine" button is present
      * And: Three feature cards are displayed
      */
-    test('should display page title, CTA button, and feature cards', async () => {
+    test('@landing-smoke should display page title, CTA button, and feature cards', async () => {
       await test.step('Given: Application is running and user navigates to /', async () => {
         // Already navigated in beforeEach
         await expect(landingPage.mainTitle).toBeVisible();

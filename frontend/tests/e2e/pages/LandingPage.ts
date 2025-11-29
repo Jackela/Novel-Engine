@@ -47,8 +47,55 @@ export class LandingPage {
 
   /**
    * Navigate to landing page and wait for full load
+   * Also sets up mocks needed for dashboard navigation in CI environment
    */
   async navigateToLanding() {
+    // Set up mocks needed for dashboard navigation (must be before goto)
+    await this.page.addInitScript(() => {
+      try {
+        window.sessionStorage.setItem('novel-engine-guest-session', '1');
+      } catch {
+        // ignore storage failures in CI
+      }
+
+      // Mock EventSource for SSE testing
+      class MockEventSource extends EventTarget {
+        url: string;
+        readyState: number = 0;
+        CONNECTING = 0;
+        OPEN = 1;
+        CLOSED = 2;
+
+        constructor(url: string) {
+          super();
+          this.url = url;
+          this.readyState = this.CONNECTING;
+
+          // Simulate connection opening after a short delay
+          setTimeout(() => {
+            if (this.readyState === this.CONNECTING) {
+              this.readyState = this.OPEN;
+              const openEvent = new Event('open');
+              if (this.onopen) {
+                this.onopen(openEvent);
+              }
+              this.dispatchEvent(openEvent);
+            }
+          }, 10);
+        }
+
+        onopen: ((event: Event) => void) | null = null;
+        onmessage: ((event: MessageEvent) => void) | null = null;
+        onerror: ((event: Event) => void) | null = null;
+
+        close() {
+          this.readyState = this.CLOSED;
+        }
+      }
+
+      (window as any).EventSource = MockEventSource;
+    });
+
     await this.page.goto('/');
     await this.page.waitForLoadState('networkidle');
     // Wait for main content to be visible

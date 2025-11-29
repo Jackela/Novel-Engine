@@ -15,7 +15,7 @@ import { LandingPage } from './pages/LandingPage';
  */
 
 test.describe('Login Flow - Launch Engine CTA', () => {
-  test('@experience-cta @smoke Landing CTA launches dashboard in guest mode', async ({ page }) => {
+  test('@experience-cta Landing CTA launches dashboard in guest mode', async ({ page }) => {
     const landingPage = new LandingPage(page);
     const dashboardPage = new DashboardPage(page);
 
