@@ -38,7 +38,9 @@ test.describe('Landing Page E2E Tests', () => {
 
       await test.step('Then: The page title "NARRATIVE ENGINE" is visible', async () => {
         const titleText = await landingPage.getMainTitleText();
-        expect(titleText.toUpperCase()).toContain('NARRATIVE ENGINE');
+        // Title uses <br> between words, so textContent returns them concatenated
+        const normalizedTitle = titleText.toUpperCase().replace(/\s+/g, '');
+        expect(normalizedTitle).toContain('NARRATIVEENGINE');
       });
 
       await test.step('And: The "Launch Engine" button is present', async () => {
