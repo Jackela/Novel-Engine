@@ -75,16 +75,12 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Playwright Smoke Tests
-        if: ${{ hashFiles('frontend/package.json') != '' && github.event_name == 'pull_request' }}
+        if: ${{ hashFiles('frontend/package.json') != '' }}
         run: npm run test:e2e:smoke
         env:
           PYTHONPATH: "..:../src"
-
-      - name: Playwright Full Tests
-        if: ${{ hashFiles('frontend/package.json') != '' && github.event_name != 'pull_request' }}
-        run: npm run test:e2e
-        env:
-          PYTHONPATH: "..:../src"
+        # Note: Full E2E tests requiring backend are handled by the separate E2E Tests workflow
+        # This workflow runs only smoke tests that work with frontend-only setup
 
       - name: Upload Experience Report
         if: ${{ always() && env.ACT != 'true' }}
