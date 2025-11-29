@@ -8,10 +8,12 @@ code examples, framework patterns, and best practices integration.
 """
 
 import logging
+import os
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+import httpx
 from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
@@ -213,15 +215,28 @@ class BestPracticesResponse(BaseModel):
 class Context7IntegrationAPI:
     """API endpoints for Context7 MCP server integration."""
 
-    def __init__(self, orchestrator=None):
+    def __init__(
+        self,
+        orchestrator=None,
+        context7_client=None,
+        base_url: Optional[str] = None,
+        allow_mock: Optional[bool] = None,
+    ):
         self.orchestrator = orchestrator
+        self.context7_client = context7_client
+        self.base_url = base_url or os.getenv("CONTEXT7_BASE_URL")
+        self.allow_mock = (
+            allow_mock
+            if allow_mock is not None
+            else os.getenv("CONTEXT7_ALLOW_MOCK", "false").lower() == "true"
+        )
         self.context7_available = False
         self._check_context7_availability()
 
     def _check_context7_availability(self):
         """Check if Context7 MCP server is available."""
-        # Check if Context7 MCP server is running and accessible
-        self.context7_available = True  # Default to available
+        # Availability requires an injected client or configured base URL
+        self.context7_available = bool(self.context7_client or self.base_url)
         logger.info(f"Context7 availability: {self.context7_available}")
 
     async def _call_context7(
@@ -234,9 +249,26 @@ class Context7IntegrationAPI:
             )
 
         try:
-            # Use MCP protocol to communicate with Context7
-            # Currently using mock responses for development
-            return await self._mock_context7_response(operation, params)
+            if self.context7_client:
+                return await self.context7_client.call(operation, params)
+
+            if self.base_url:
+                async with httpx.AsyncClient(timeout=10) as client:
+                    response = await client.post(
+                        f"{self.base_url.rstrip('/')}/{operation}", json=params
+                    )
+                    response.raise_for_status()
+                    return response.json()
+
+            if self.allow_mock:
+                logger.warning(
+                    "Context7 client not configured; using explicit mock fallback"
+                )
+                return await self._mock_context7_response(operation, params)
+
+            raise HTTPException(
+                status_code=503, detail="Context7 client not configured"
+            )
 
         except Exception as e:
             logger.error(f"Context7 call failed for {operation}: {e}")

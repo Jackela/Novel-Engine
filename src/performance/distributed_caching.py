@@ -17,6 +17,7 @@ Features:
 import asyncio
 import json
 import logging
+import os
 import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -285,12 +286,18 @@ class RedisCache(CacheInterface):
         redis_url: str = "redis://localhost:6379",
         prefix: str = "novel_engine:",
         default_ttl: int = 3600,
+        allow_mock: Optional[bool] = None,
     ):
         self.redis_url = redis_url
         self.prefix = prefix
         self.default_ttl = default_ttl
         self.metrics = CacheMetrics()
         self._redis = None
+        self.allow_mock = (
+            allow_mock
+            if allow_mock is not None
+            else os.getenv("ALLOW_MOCK_REDIS", "false").lower() == "true"
+        )
 
     async def _get_redis(self):
         """Get Redis connection (lazy initialization)"""
@@ -300,7 +307,11 @@ class RedisCache(CacheInterface):
 
                 self._redis = aioredis.from_url(self.redis_url)
             except ImportError:
-                logger.warning("aioredis not available, using mock Redis")
+                if not self.allow_mock:
+                    raise RuntimeError(
+                        "aioredis not available and mock Redis is disabled"
+                    )
+                logger.warning("aioredis not available, using mock Redis fallback")
                 self._redis = MockRedis()
         return self._redis
 

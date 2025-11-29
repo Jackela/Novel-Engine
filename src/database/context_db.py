@@ -128,30 +128,9 @@ class ContextDatabase:
             raise Exception(
                 f"Database initialization failed: {response.error.message if response.error else 'Unknown error'}"
             )
-        # Set connection attribute for test compatibility - create proper mock connection
-        from unittest.mock import AsyncMock, MagicMock
-
-        # Create a mock cursor that acts as async context manager
-        mock_cursor = AsyncMock()
-        mock_cursor.__aenter__ = AsyncMock(return_value=mock_cursor)
-        mock_cursor.__aexit__ = AsyncMock(return_value=None)
-        mock_cursor.fetchall = AsyncMock(
-            return_value=[
-                ("memories",),
-                ("relationships",),
-                ("agents",),
-                ("interactions",),
-                ("equipment",),
-                ("character_states",),
-            ]
-        )
-
-        # Create mock connection
-        mock_connection = AsyncMock()
-        mock_connection.execute = MagicMock(return_value=mock_cursor)
-        mock_connection.commit = AsyncMock()
-        mock_connection.close = AsyncMock()
-        self.connection = mock_connection
+        # Expose a real pooled connection for legacy callers
+        if self._connection_pool:
+            self.connection = self._connection_pool[0]
 
     async def close(self):
         """Close database connections."""
@@ -163,19 +142,84 @@ class ContextDatabase:
         self._initialized = False
 
     async def store_context(self, session_id: str, character_id: str, context: str):
-        """Store context data (emergency stub for test compatibility)."""
-        logger.info(
-            f"Storing context for session {session_id}, character {character_id}"
-        )
-        # This is a stub - in real implementation would store to database
+        """Store context data for a session/character pair."""
+        try:
+            async with self.get_enhanced_connection() as connection:
+                await connection.execute(
+                    """
+                    INSERT INTO session_contexts (session_id, character_id, context, updated_at)
+                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(session_id, character_id) DO UPDATE
+                    SET context=excluded.context, updated_at=CURRENT_TIMESTAMP
+                    """,
+                    (session_id, character_id, context),
+                )
+                await connection.commit()
+
+            logger.info(
+                f"Stored context for session {session_id}, character {character_id}"
+            )
+            return StandardResponse(
+                success=True,
+                data={"session_id": session_id, "character_id": character_id},
+            )
+        except Exception as e:
+            logger.error(f"Failed to store context: {e}")
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="CONTEXT_STORE_FAILED",
+                    message=str(e),
+                    recoverable=True,
+                ),
+            )
 
     async def get_context(self, session_id: str, character_id: str):
-        """Get context data (emergency stub for test compatibility)."""
-        logger.info(
-            f"Getting context for session {session_id}, character {character_id}"
-        )
-        # Return mock data for tests
-        return {"context": "Test context data"}
+        """Get context data for a session/character pair."""
+        try:
+            async with self.get_enhanced_connection() as connection:
+                async with connection.execute(
+                    """
+                    SELECT context, updated_at FROM session_contexts
+                    WHERE session_id = ? AND character_id = ?
+                    """,
+                    (session_id, character_id),
+                ) as cursor:
+                    row = await cursor.fetchone()
+
+            if not row:
+                return StandardResponse(
+                    success=False,
+                    error=ErrorInfo(
+                        code="CONTEXT_NOT_FOUND",
+                        message="No context found for session/character",
+                        recoverable=False,
+                    ),
+                )
+
+            logger.info(
+                f"Retrieved context for session {session_id}, character {character_id}"
+            )
+            return StandardResponse(
+                success=True,
+                data={
+                    "session_id": session_id,
+                    "character_id": character_id,
+                    "context": row["context"],
+                    "updated_at": row["updated_at"],
+                },
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to get context: {e}")
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="CONTEXT_FETCH_FAILED",
+                    message=str(e),
+                    recoverable=True,
+                ),
+            )
 
     async def initialize_standard_temple(self) -> StandardResponse:
         """

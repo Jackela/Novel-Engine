@@ -13,8 +13,11 @@ This component manages the cognitive processes that drive agent behavior
 while maintaining separation from character data and memory management.
 """
 
+import asyncio
+import json
 import logging
 import random
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -44,6 +47,18 @@ except ImportError:
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+# Module-level LLM service instance (lazy loaded)
+_llm_service_instance: Optional[Any] = None
+
+
+def _get_llm_service() -> Any:
+    """Get or create the LLM service singleton."""
+    global _llm_service_instance
+    if _llm_service_instance is None:
+        from src.llm_service import UnifiedLLMService
+        _llm_service_instance = UnifiedLLMService()
+    return _llm_service_instance
 
 
 class DecisionEngine:
@@ -581,10 +596,117 @@ class DecisionEngine:
         Returns:
             CharacterAction from LLM guidance or None
         """
-        # Placeholder for LLM integration
-        # This would construct a character-specific prompt and call the LLM API
-        # For now, return None to fall back to algorithmic decision-making
-        return None
+        try:
+            from src.llm_service import LLMProvider, LLMRequest, ResponseFormat
+
+            llm_service = _get_llm_service()
+
+            # Check if Gemini provider is available
+            if LLMProvider.GEMINI not in llm_service.providers:
+                logger.debug("Gemini provider not configured, falling back to algorithmic")
+                return None
+
+            # Build decision-making prompt
+            agent_id = self.agent_core.agent_id
+            character_name = getattr(self.agent_core, 'name', agent_id)
+            morale = getattr(self.agent_core, 'morale_level', 0.5)
+
+            # Format available actions
+            action_list = "\n".join([
+                f"  {i+1}. {action.get('type', 'unknown')}: {action.get('description', 'No description')}"
+                for i, action in enumerate(available_actions)
+            ])
+
+            # Extract threat level from situation assessment
+            threat_level = situation_assessment.get('threat_level', 'unknown')
+            nearby_entities = situation_assessment.get('nearby_entities', [])
+
+            prompt = f"""You are {character_name}, an AI agent in an interactive story simulation.
+
+CURRENT SITUATION:
+- Threat Level: {threat_level}
+- Morale: {morale:.0%}
+- Nearby Entities: {', '.join(nearby_entities) if nearby_entities else 'None detected'}
+
+AVAILABLE ACTIONS:
+{action_list if action_list.strip() else '  1. observe: Observe surroundings'}
+
+Based on your character's personality, goals, and the current situation, choose the best action.
+
+Respond in this exact format:
+ACTION: [action type from the list above]
+TARGET: [specific target if applicable, or 'none']
+PRIORITY: [low, normal, high, or critical]
+REASONING: [brief explanation in 1-2 sentences from your character's perspective]"""
+
+            # Create LLM request
+            request = LLMRequest(
+                prompt=prompt,
+                provider=LLMProvider.GEMINI,
+                response_format=ResponseFormat.ACTION_FORMAT,
+                temperature=0.7,
+                max_tokens=500,
+                cache_enabled=True,
+                requester=f"decision_engine_{agent_id}",
+            )
+
+            # Run async call synchronously
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            response = loop.run_until_complete(llm_service.generate(request))
+
+            if "[LLM Error:" in response.content:
+                logger.warning(f"LLM returned error for {agent_id}, falling back")
+                return None
+
+            # Parse LLM response
+            llm_text = response.content
+            logger.info(f"LLM decision for {agent_id}: {response.tokens_used} tokens")
+
+            # Extract components using regex
+            action_match = re.search(r"ACTION:\s*(.+)", llm_text, re.IGNORECASE)
+            target_match = re.search(r"TARGET:\s*(.+)", llm_text, re.IGNORECASE)
+            priority_match = re.search(r"PRIORITY:\s*(.+)", llm_text, re.IGNORECASE)
+            reasoning_match = re.search(r"REASONING:\s*(.+)", llm_text, re.IGNORECASE | re.DOTALL)
+
+            if not action_match:
+                logger.warning(f"Could not parse ACTION from LLM response for {agent_id}")
+                return None
+
+            action_type = action_match.group(1).strip().lower()
+            target = target_match.group(1).strip() if target_match else None
+            if target and target.lower() == 'none':
+                target = None
+
+            # Parse priority
+            priority = ActionPriority.NORMAL
+            if priority_match:
+                priority_str = priority_match.group(1).strip().lower()
+                priority_map = {
+                    'low': ActionPriority.LOW,
+                    'normal': ActionPriority.NORMAL,
+                    'high': ActionPriority.HIGH,
+                    'critical': ActionPriority.CRITICAL,
+                }
+                priority = priority_map.get(priority_str, ActionPriority.NORMAL)
+
+            reasoning = reasoning_match.group(1).strip() if reasoning_match else "[LLM-Guided] Decision made based on situation analysis."
+
+            # Create and return CharacterAction
+            return CharacterAction(
+                action_type=action_type,
+                target=target,
+                priority=priority,
+                reasoning=f"[LLM-Guided] {reasoning}",
+            )
+
+        except Exception as e:
+            logger.warning(f"LLM enhanced decision-making failed for {self.agent_core.agent_id}: {e}")
+            return None
 
     def _process_narrative_situation_update(
         self, narrative_context: Dict[str, Any]

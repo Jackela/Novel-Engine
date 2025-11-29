@@ -738,8 +738,8 @@ def create_app() -> FastAPI:
 
 def _register_api_routes(app: FastAPI):
     """Register all API routes immediately."""
-    # Create placeholder API instances that will be initialized during lifespan
-    character_api = create_character_api(None)  # Will be set during lifespan
+    # Create API instances; orchestrator will be injected during lifespan
+    character_api = create_character_api(None)
     story_generation_api = create_story_generation_api(None)
     interaction_api = create_interaction_api(None)
     subjective_reality_api = create_subjective_reality_api(None)

@@ -16,6 +16,7 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionPriority,
     InteractionType,
 )
+from src.llm_service import generate_narrative_content
 from src.memory.layered_memory import LayeredMemorySystem
 from src.templates.character import CharacterTemplateManager
 from src.templates.context_renderer import ContextRenderer
@@ -117,77 +118,121 @@ class InteractionEngine:
     async def _process_dialogue_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
-        """Minimal dialogue processing placeholder."""
-        outcome.generated_content.append(
-            f"Dialogue between {', '.join(context.participants)}"
+        """LLM-backed dialogue processing."""
+        content = await self._render_text(
+            "dialogue",
+            context,
+            "Generate a short dialogue beat with intent and subtext.",
         )
-        return StandardResponse(
-            success=True, metadata={"blessing": "dialogue_processed"}
-        )
+        outcome.generated_content.append(content)
+        return StandardResponse(success=True, metadata={"blessing": "dialogue_processed"})
 
     async def _process_combat_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
-        outcome.generated_content.append(
-            f"Combat initiated at {context.location or 'unknown location'}"
+        content = await self._render_text(
+            "combat",
+            context,
+            "Describe a fast combat exchange with stakes and consequences.",
         )
+        outcome.generated_content.append(content)
         return StandardResponse(success=True, metadata={"blessing": "combat_processed"})
 
     async def _process_cooperation_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
-        outcome.generated_content.append(
-            f"Cooperation effort among {', '.join(context.participants)}"
+        content = await self._render_text(
+            "cooperation",
+            context,
+            "Show a collaborative effort and its tangible outcome.",
         )
-        return StandardResponse(
-            success=True, metadata={"blessing": "cooperation_processed"}
-        )
+        outcome.generated_content.append(content)
+        return StandardResponse(success=True, metadata={"blessing": "cooperation_processed"})
 
     async def _process_negotiation_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
-        outcome.generated_content.append("Negotiation sequence completed")
-        return StandardResponse(
-            success=True, metadata={"blessing": "negotiation_processed"}
+        content = await self._render_text(
+            "negotiation",
+            context,
+            "Create an exchange of offers and counteroffers with a clear shift in leverage.",
         )
+        outcome.generated_content.append(content)
+        return StandardResponse(success=True, metadata={"blessing": "negotiation_processed"})
 
     async def _process_instruction_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
-        outcome.generated_content.append("Instruction delivered successfully")
-        return StandardResponse(
-            success=True, metadata={"blessing": "instruction_processed"}
+        content = await self._render_text(
+            "instruction",
+            context,
+            "Deliver concise instructions and the recipient's immediate reaction.",
         )
+        outcome.generated_content.append(content)
+        return StandardResponse(success=True, metadata={"blessing": "instruction_processed"})
 
     async def _process_ritual_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
-        outcome.generated_content.append("Ritual completed according to plan")
+        content = await self._render_text(
+            "ritual",
+            context,
+            "Describe a ritual step with sensory detail and intended effect.",
+        )
+        outcome.generated_content.append(content)
         return StandardResponse(success=True, metadata={"blessing": "ritual_processed"})
 
     async def _process_exploration_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
-        outcome.generated_content.append("Exploration results catalogued")
-        return StandardResponse(
-            success=True, metadata={"blessing": "exploration_processed"}
+        content = await self._render_text(
+            "exploration",
+            context,
+            "Summarize a discovery moment with location cues and newfound information.",
         )
+        outcome.generated_content.append(content)
+        return StandardResponse(success=True, metadata={"blessing": "exploration_processed"})
 
     async def _process_maintenance_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
-        outcome.generated_content.append("Maintenance cycle completed")
-        return StandardResponse(
-            success=True, metadata={"blessing": "maintenance_processed"}
+        content = await self._render_text(
+            "maintenance",
+            context,
+            "Narrate a maintenance task and how it stabilizes the system or equipment.",
         )
+        outcome.generated_content.append(content)
+        return StandardResponse(success=True, metadata={"blessing": "maintenance_processed"})
 
     async def _process_emergency_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
-        outcome.generated_content.append("Emergency response executed")
-        return StandardResponse(
-            success=True, metadata={"blessing": "emergency_processed"}
+        content = await self._render_text(
+            "emergency",
+            context,
+            "Write an urgent response sequence with clear risks and immediate actions.",
         )
+        outcome.generated_content.append(content)
+        return StandardResponse(success=True, metadata={"blessing": "emergency_processed"})
+
+    async def _render_text(
+        self, interaction_kind: str, context: InteractionContext, guidance: str
+    ) -> str:
+        """Generate narrative text for an interaction using the LLM service."""
+        participants = ", ".join(context.participants)
+        location = context.location or "an unspecified location"
+        prompt = (
+            f"You are writing a {interaction_kind} scene.\n"
+            f"Participants: {participants}\n"
+            f"Location: {location}\n"
+            f"Guidance: {guidance}\n"
+            "Return 2-3 sentences of vivid narrative; no meta commentary."
+        )
+        try:
+            return await generate_narrative_content(prompt, style="concise")
+        except Exception as e:
+            logger.error("LLM generation failed for %s: %s", interaction_kind, e)
+            return f"{interaction_kind.title()} involving {participants} at {location}."
 
     async def initiate_interaction(
         self, context: InteractionContext, auto_process: bool = True

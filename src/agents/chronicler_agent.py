@@ -599,12 +599,16 @@ just the pure narrative prose that could be published in an anthology.
         return f"Narrate this event dramatically: {event.description}"
 
     def _call_llm(self, prompt: str) -> str:
-        """Makes an LLM API call for narrative generation."""
-        logger.debug(f"ChroniclerAgent calling LLM with prompt: {prompt}")
-        time.sleep(0.1)  # Simulate API call
-        self.llm_calls_made += 1
-        # Fallback for now
-        return f"A noteworthy event occurred: {prompt.split(':')[-1].strip()}"
+        """Makes an LLM API call for narrative generation using Gemini."""
+        logger.debug(f"ChroniclerAgent calling LLM with prompt length: {len(prompt)}")
+        try:
+            response = _make_gemini_api_request(prompt)
+            self.llm_calls_made += 1
+            return response or f"A noteworthy event occurred: {prompt.split(':')[-1].strip()}"
+        except Exception as e:
+            logger.warning(f"LLM call failed, using fallback: {e}")
+            self.llm_calls_made += 1
+            return f"A noteworthy event occurred: {prompt.split(':')[-1].strip()}"
 
     def _render_event_narrative(self, event: CampaignEvent) -> str:
         """Render a deterministic sci-fi styled paragraph for an event."""

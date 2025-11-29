@@ -1,27 +1,5 @@
 #!/usr/bin/env python3
-"""
-Refactored bridge placeholders for tests to patch.
-
-The test suite patches classes from this module. We provide minimal stubs
-so that patching works regardless of internal implementation details.
-"""
-
-
-class DialogueManager:  # pragma: no cover - test uses patch
-    pass
-
-
-class LLMCoordinator:  # pragma: no cover - test uses patch
-    pass
-
-
-class AIIntelligenceOrchestrator:  # pragma: no cover - test uses patch
-    pass
-
-
-class AgentCoordinationEngine:  # pragma: no cover - test uses patch
-    pass
-
+"""Refactored bridge wrapper that forwards to the real bridge implementation."""
 
 from typing import Any, Optional
 

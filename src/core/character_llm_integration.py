@@ -7,12 +7,25 @@ Handles LLM integration and prompt construction for PersonaAgent characters.
 Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
+import asyncio
 import logging
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from src.shared_types import ActionPriority, CharacterAction
+from src.core.types.shared_types import ActionPriority, CharacterAction
+
+# Module-level LLM service instance (lazy loaded)
+_llm_service_instance: Optional[Any] = None
+
+
+def _get_llm_service() -> Any:
+    """Get or create the LLM service singleton."""
+    global _llm_service_instance
+    if _llm_service_instance is None:
+        from src.llm_service import UnifiedLLMService
+        _llm_service_instance = UnifiedLLMService()
+    return _llm_service_instance
 
 logger = logging.getLogger(__name__)
 
@@ -347,10 +360,46 @@ TARGET: hostile_entity_alpha
 REASONING: As a dedicated envoy of the Founders' Council, my duty requires me to engage threats to protect innocent civilians. My decisive nature and high mission success priority compel me to take direct action."""
 
     def _call_llm(self, prompt: str) -> str:
-        """Call LLM with the constructed prompt."""
-        # This would be implemented with actual LLM integration
-        # For now, return a placeholder response
-        response = "ACTION: observe\\nTARGET: none\\nREASONING: I need to assess the situation before taking action."
+        """Call LLM with the constructed prompt using UnifiedLLMService."""
+        fallback_response = "ACTION: observe\nTARGET: none\nREASONING: Assessing situation before taking action."
+
+        try:
+            from src.llm_service import LLMProvider, LLMRequest, ResponseFormat
+
+            llm_service = _get_llm_service()
+
+            if LLMProvider.GEMINI not in llm_service.providers:
+                logger.warning(f"Agent {self.agent_id}: Gemini not configured, using fallback")
+                response = fallback_response
+            else:
+                request = LLMRequest(
+                    prompt=prompt,
+                    provider=LLMProvider.GEMINI,
+                    response_format=ResponseFormat.ACTION_FORMAT,
+                    temperature=0.7,
+                    max_tokens=1500,
+                    cache_enabled=True,
+                    requester=f"character_llm_{self.agent_id}",
+                )
+
+                try:
+                    loop = asyncio.get_event_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+
+                llm_response = loop.run_until_complete(llm_service.generate(request))
+
+                if "[LLM Error:" in llm_response.content:
+                    logger.warning(f"Agent {self.agent_id}: LLM error, using fallback")
+                    response = fallback_response
+                else:
+                    logger.info(f"Agent {self.agent_id}: LLM call successful ({llm_response.tokens_used} tokens)")
+                    response = llm_response.content
+
+        except Exception as e:
+            logger.warning(f"Agent {self.agent_id}: LLM call failed ({e}), using fallback")
+            response = fallback_response
 
         # Store in history
         self.response_history.append(response)

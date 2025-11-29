@@ -114,8 +114,9 @@ export default defineConfig({
     },
     proxy: {
       // Proxy /api/* to backend without versioning
+      // Use 127.0.0.1 explicitly for WSL2 compatibility (avoid IPv6 resolution issues)
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
 
         // SSE-specific configuration for event streaming
@@ -132,27 +133,27 @@ export default defineConfig({
       },
       // Proxy /meta/* to backend
       '/meta': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
       // Proxy /health to backend
       '/health': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
       // Proxy /cache/* to backend
       '/cache': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
       // Proxy /characters/* to backend
       '/characters': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
       // Proxy /simulations/* to backend
       '/simulations': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },
@@ -199,16 +200,17 @@ export default defineConfig({
     host: true,
     proxy: {
       // Proxy /api/* to backend in preview mode
+      // Use 127.0.0.1 explicitly for WSL2 compatibility
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
       '/meta': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
       '/health': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },

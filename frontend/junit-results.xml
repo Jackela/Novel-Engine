@@ -1,6 +1,2 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="14.865077000000001">
-<testsuite name="login-flow.spec.ts" timestamp="2025-11-14T13:03:46.914Z" hostname="chromium-desktop" tests="1" failures="0" skipped="0" time="3.985" errors="0">
-<testcase name="Login Flow - Demo CTA › @experience-cta @smoke Landing CTA launches dashboard in guest mode" classname="login-flow.spec.ts" time="3.985">
-</testcase>
-</testsuite>
+<testsuites id="" name="" tests="0" failures="0" skipped="0" errors="0" time="106.920281">
 </testsuites>

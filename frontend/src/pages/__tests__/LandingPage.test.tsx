@@ -6,16 +6,7 @@ import type * as ReactRouterDom from 'react-router-dom';
 import { vi } from 'vitest';
 import LandingPage from '../LandingPage';
 
-const mockEnterGuestMode = vi.hoisted(() => vi.fn());
 const mockNavigate = vi.hoisted(() => vi.fn());
-
-vi.mock('../../contexts/AuthContext', () => ({
-  useAuthContext: () => ({
-    isAuthenticated: false,
-    isGuest: false,
-    enterGuestMode: mockEnterGuestMode,
-  }),
-}));
 
 vi.mock('react-router-dom', async () => {
   const actual: typeof ReactRouterDom = await vi.importActual('react-router-dom');
@@ -36,26 +27,31 @@ function renderLandingPage() {
   );
 }
 
-describe('LandingPage CTAs', () => {
+describe('LandingPage', () => {
   afterEach(() => {
-    mockEnterGuestMode.mockClear();
     mockNavigate.mockClear();
   });
 
-  it('renders the Request Access CTA with the ops@ mailto link', () => {
+  it('navigates to the dashboard when Launch Engine is clicked', () => {
     renderLandingPage();
 
-    const requestAccess = screen.getByRole('link', { name: /request access/i });
-    expect(requestAccess).toHaveAttribute('href', 'mailto:ops@novel-engine.ai?subject=Novel%20Engine%20Access');
+    const launchButton = screen.getByRole('button', { name: /launch engine/i });
+    fireEvent.click(launchButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard', { replace: true });
   });
 
-  it('enters guest mode and navigates to the dashboard when View Demo is clicked', () => {
+  it('renders the main title', () => {
     renderLandingPage();
 
-    const demoButton = screen.getByRole('button', { name: /view demo/i });
-    fireEvent.click(demoButton);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/NARRATIVE.*ENGINE/i);
+  });
 
-    expect(mockEnterGuestMode).toHaveBeenCalledTimes(1);
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard', { replace: true });
+  it('renders the feature cards', () => {
+    renderLandingPage();
+
+    expect(screen.getByText(/Live Orchestration/i)).toBeInTheDocument();
+    expect(screen.getByText(/Adaptive Analytics/i)).toBeInTheDocument();
+    expect(screen.getByText(/Secure Environment/i)).toBeInTheDocument();
   });
 });

@@ -497,23 +497,53 @@ novel-engine stories generate --title "My Story"</code></pre>
         self, endpoint_path: str
     ) -> List[Dict[str, Any]]:
         """Generate Context7-powered code examples for an endpoint."""
-        if not self.context7_api:
+        if not self.context7_api or not getattr(
+            self.context7_api, "context7_available", False
+        ):
             return self._get_fallback_examples(endpoint_path)
 
         try:
-            # Generate examples in multiple formats
             formats = ["python", "curl", "javascript"]
             examples = []
 
             for format_type in formats:
-                # This would call the Context7 API to generate examples
-                example = {
-                    "format": format_type,
-                    "language": format_type if format_type != "curl" else "bash",
-                    "code": self._generate_example_code(endpoint_path, format_type),
-                    "explanation": f"Example usage in {format_type}",
-                }
-                examples.append(example)
+                context7_response = await self.context7_api._call_context7(
+                    "generate_code_example",
+                    {
+                        "endpoint_path": endpoint_path,
+                        "framework": "python",
+                        "format": format_type,
+                        "include_auth": True,
+                        "include_error_handling": True,
+                        "complexity_level": "intermediate",
+                        "use_case": None,
+                    },
+                )
+
+                if not context7_response.get("success"):
+                    logger.warning(
+                        "Context7 failed for %s (%s); using fallback",
+                        endpoint_path,
+                        format_type,
+                    )
+                    examples.append(
+                        self._get_fallback_example(endpoint_path, format_type)
+                    )
+                    continue
+
+                example_data = context7_response["example"]
+                examples.append(
+                    {
+                        "format": format_type,
+                        "language": (
+                            format_type if format_type != "curl" else "bash"
+                        ),
+                        "code": example_data["code"],
+                        "explanation": example_data.get(
+                            "explanation", f"Example usage in {format_type}"
+                        ),
+                    }
+                )
 
             return examples
 
@@ -523,21 +553,36 @@ novel-engine stories generate --title "My Story"</code></pre>
             )
             return self._get_fallback_examples(endpoint_path)
 
-    def _get_fallback_examples(self, endpoint_path: str) -> List[Dict[str, Any]]:
-        """Get fallback examples when Context7 is not available."""
-        return [
-            {
+    def _get_fallback_example(
+        self, endpoint_path: str, format_type: str
+    ) -> Dict[str, Any]:
+        """Single-format fallback example."""
+        if format_type == "python":
+            return {
                 "format": "python",
                 "language": "python",
                 "code": f'import httpx\nresponse = await httpx.get("http://localhost:8000{endpoint_path}")\nprint(response.json())',
                 "explanation": "Basic Python example using httpx",
-            },
-            {
+            }
+        if format_type == "curl":
+            return {
                 "format": "curl",
                 "language": "bash",
                 "code": f'curl -X GET "http://localhost:8000{endpoint_path}"',
                 "explanation": "Command line example using curl",
-            },
+            }
+        return {
+            "format": format_type,
+            "language": format_type,
+            "code": self._generate_example_code(endpoint_path, format_type),
+            "explanation": f"Example usage in {format_type}",
+        }
+
+    def _get_fallback_examples(self, endpoint_path: str) -> List[Dict[str, Any]]:
+        """Get fallback examples when Context7 is not available."""
+        return [
+            self._get_fallback_example(endpoint_path, "python"),
+            self._get_fallback_example(endpoint_path, "curl"),
         ]
 
     def _generate_example_code(self, endpoint_path: str, format_type: str) -> str:

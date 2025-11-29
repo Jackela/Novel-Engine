@@ -4,10 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import LiveTvIcon from '@mui/icons-material/LiveTv';
 import InsightsIcon from '@mui/icons-material/Insights';
-import SecurityIcon from '@mui/icons-material/Security';
+import SecurityIcon from '@mui/icons-material/Security';  // Still used in feature grid
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import { motion } from 'framer-motion';
-import { useAuthContext } from '../contexts/AuthContext';
 
 // Animation variants
 const containerVariants = {
@@ -36,14 +35,8 @@ const itemVariants = {
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, isGuest, enterGuestMode } = useAuthContext();
 
-
-
-  const handleDemoClick = () => {
-    if (!isAuthenticated || !isGuest) {
-      enterGuestMode();
-    }
+  const handleLaunchClick = () => {
     navigate('/dashboard', { replace: true });
   };
 
@@ -182,74 +175,30 @@ const LandingPage: React.FC = () => {
               </motion.div>
 
               <motion.div variants={itemVariants}>
-                <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
-                  spacing={3}
-                  justifyContent="center"
-                  sx={{ mt: 2 }}
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={handleLaunchClick}
+                  startIcon={<RocketLaunchIcon />}
+                  data-testid="cta-launch"
+                  sx={{
+                    py: 2,
+                    px: 6,
+                    fontSize: '1.2rem',
+                    fontWeight: 600,
+                    borderRadius: '9999px',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    boxShadow: '0 0 20px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+                      boxShadow: '0 0 30px rgba(99, 102, 241, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                      transform: 'translateY(-2px)',
+                    },
+                  }}
                 >
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={handleDemoClick}
-                    startIcon={<RocketLaunchIcon />}
-                    data-testid="cta-demo"
-                    sx={{
-                      py: 2,
-                      px: 5,
-                      fontSize: '1.1rem',
-                      fontWeight: 600,
-                      borderRadius: '9999px',
-                      background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                      boxShadow: '0 0 20px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
-                        boxShadow: '0 0 30px rgba(99, 102, 241, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                        transform: 'translateY(-2px)',
-                      },
-                    }}
-                  >
-                    {isAuthenticated && isGuest ? 'Resume Simulation' : 'View Demo'}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    onClick={handleDemoClick}
-                    startIcon={<SecurityIcon />}
-                    sx={{
-                      py: 1.5,
-                      px: 4,
-                      fontSize: '1.1rem',
-                      borderColor: 'rgba(255, 255, 255, 0.2)',
-                      color: 'text.primary',
-                      '&:hover': {
-                        borderColor: '#fff',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                      },
-                    }}
-                  >
-                    Enter Dashboard
-                  </Button>
-                  <Button
-                    component="a"
-                    href="mailto:ops@novel-engine.ai?subject=Novel%20Engine%20Access"
-                    variant="text"
-                    size="large"
-                    sx={{
-                      py: 1.5,
-                      px: 4,
-                      fontSize: '1rem',
-                      color: 'text.secondary',
-                      textDecoration: 'underline',
-                      '&:hover': {
-                        color: 'text.primary',
-                      },
-                    }}
-                  >
-                    Request Access
-                  </Button>
-                </Stack>
+                  Launch Engine
+                </Button>
               </motion.div>
             </Stack>
 

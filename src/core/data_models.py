@@ -678,49 +678,6 @@ class LegacyWorldState:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-
-# Emergency stub classes for test compatibility
-class PersonaAgent:
-    """Emergency stub for PersonaAgent - should be imported from src.persona_agent"""
-
-    def __init__(self, character_config=None, event_bus=None):
-        self.character_config = character_config or {}
-        self.event_bus = event_bus
-        self.name = (
-            character_config.get("name", "Unknown") if character_config else "Unknown"
-        )
-        self.personality = (
-            character_config.get("personality", "Unknown")
-            if character_config
-            else "Unknown"
-        )
-        self.skills = character_config.get("skills", []) if character_config else []
-
-    async def make_decision(self, scenario):
-        """Stub decision making"""
-        options = scenario.get("options", ["wait"])
-        return options[0] if options else "wait"
-
-    def check_skill(self, skill_name):
-        """Stub skill check"""
-        return skill_name in self.skills
-
-
-class DirectorAgent:
-    """Emergency stub for DirectorAgent - should be imported from director_agent"""
-
-    def __init__(self, event_bus=None):
-        self.event_bus = event_bus
-
-    async def process_turn(self, turn_data):
-        """Stub turn processing"""
-        return {"status": "success"}
-
-    async def generate_narrative(self, context):
-        """Stub narrative generation"""
-        return "A narrative was generated..."
-
-
 # ENHANCED MODULE INITIALIZATION
 if __name__ == "__main__":
     # STANDARD DATA MODEL TESTING RITUAL
@@ -778,9 +735,6 @@ __all__ = [
     "validate_blessed_data_model",
     "ActionResult",
     "WorldState",
-    # Emergency stub exports
-    "PersonaAgent",
-    "DirectorAgent",
 ]
 
 # Alias WorldState to LegacyWorldState for test compatibility

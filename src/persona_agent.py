@@ -11,6 +11,7 @@ context-loading stack.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
@@ -41,6 +42,9 @@ _SCRIPT_TAG_RE = re.compile(r"<\s*/?\s*script[^>]*>", re.IGNORECASE)
 _WHITESPACE_RE = re.compile(r"\s+")
 _API_KEY_SENTINELS = {"", "none", "your_key_here"}
 
+# Global LLM service instance for lazy initialization
+_llm_service_instance: Optional[Any] = None
+
 
 def _sanitize_text(value: str) -> str:
     """Basic sanitizer to strip scripts and collapse whitespace."""
@@ -59,13 +63,78 @@ def _validate_gemini_api_key() -> Optional[str]:
     return None
 
 
+def _get_llm_service() -> Any:
+    """Get or create the global LLM service instance."""
+    global _llm_service_instance
+    if _llm_service_instance is None:
+        try:
+            from src.llm_service import UnifiedLLMService
+
+            _llm_service_instance = UnifiedLLMService()
+        except ImportError as e:
+            logger.error(f"Failed to import UnifiedLLMService: {e}")
+            raise RuntimeError("UnifiedLLMService not available")
+    return _llm_service_instance
+
+
 def _make_gemini_api_request(prompt: str) -> Optional[str]:
     """
-    Placeholder Gemini API helper.
+    Gemini API integration using UnifiedLLMService.
 
-    Tests patch this function; raising keeps accidental live calls obvious.
+    This provides actual LLM-guided decision making for PersonaAgent using
+    the unified LLM service with caching and cost controls.
+
+    Args:
+        prompt: The action decision prompt from PersonaAgent
+
+    Returns:
+        The generated response text or None if service unavailable
+
+    Raises:
+        RuntimeError: If Gemini API is not configured
     """
-    raise RuntimeError("Gemini API integration is not configured for PersonaAgent.")
+    from src.llm_service import (
+        LLMProvider,
+        LLMRequest,
+        ResponseFormat,
+    )
+
+    llm_service = _get_llm_service()
+
+    # Check if Gemini provider is available
+    if LLMProvider.GEMINI not in llm_service.providers:
+        raise RuntimeError("Gemini API integration is not configured.")
+
+    # Create LLM request for action decision
+    request = LLMRequest(
+        prompt=prompt,
+        provider=LLMProvider.GEMINI,
+        response_format=ResponseFormat.ACTION_FORMAT,  # Expects ACTION:/TARGET:/REASONING:
+        temperature=0.7,
+        max_tokens=2000,
+        cache_enabled=True,
+        requester="persona_agent",
+    )
+
+    # Run async call synchronously
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    response = loop.run_until_complete(llm_service.generate(request))
+
+    # Check for errors
+    if "[LLM Error:" in response.content:
+        logger.error(f"LLM generation failed: {response.content}")
+        raise RuntimeError(f"Gemini API call failed: {response.content}")
+
+    logger.info(
+        f"Gemini API call successful: {response.tokens_used} tokens, "
+        f"${response.cost_estimate:.4f}"
+    )
+    return response.content
 
 
 def _generate_fallback_response(

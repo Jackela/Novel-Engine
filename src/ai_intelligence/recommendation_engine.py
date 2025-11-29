@@ -1279,22 +1279,57 @@ class RecommendationEngine:
         context: Optional[Dict[str, Any]],
     ):
         """Learn from user feedback."""
-        # Implementation would update preferences based on feedback
-        pass
+        recommendation.user_feedback = feedback
+        profile.feedback_history[recommendation.recommendation_id] = feedback
+
+        await self._update_preference_weights(profile, recommendation, feedback)
+        await self._update_collaborative_data(
+            profile.user_id, recommendation, feedback
+        )
 
     async def _update_preference_weights(
         self, profile: UserProfile, recommendation: Recommendation, feedback: str
     ):
         """Update preference weights based on feedback."""
-        # Implementation would adjust preference weights
-        pass
+        delta = self.learning_rate
+        if feedback.lower() in {"liked", "positive", "thumbs_up"}:
+            delta *= 1.0
+        elif feedback.lower() in {"disliked", "negative", "thumbs_down"}:
+            delta *= -1.0
+        else:
+            delta = 0.0
+
+        if delta == 0.0:
+            return
+
+        key = f"{recommendation.recommendation_type.value}:{recommendation.target_value}"
+        pref = profile.preferences.get(
+            key,
+            UserPreference(
+                preference_id=key,
+                user_id=profile.user_id,
+                preference_type=PreferenceType.EXPLICIT,
+                category=recommendation.recommendation_type.value,
+                value=recommendation.target_value,
+                weight=1.0,
+                confidence=0.5,
+            ),
+        )
+
+        pref.weight = max(0.0, min(5.0, pref.weight + delta))
+        pref.confidence = max(0.0, min(1.0, pref.confidence + abs(delta) / 5))
+        pref.last_updated = datetime.now()
+        profile.preferences[key] = pref
 
     async def _update_collaborative_data(
         self, user_id: str, recommendation: Recommendation, feedback: str
     ):
         """Update collaborative filtering data."""
-        # Implementation would update collaborative filtering models
-        pass
+        # Basic implicit collaborative scoring: store similarity seed per target
+        key = (user_id, recommendation.target_value)
+        current = self.similarity_matrix.get(key, 0.0)
+        adjustment = 0.05 if feedback.lower() in {"liked", "positive"} else -0.05
+        self.similarity_matrix[key] = max(0.0, min(1.0, current + adjustment))
 
     # Additional analysis methods...
 
@@ -1302,25 +1337,58 @@ class RecommendationEngine:
         self, profile: UserProfile
     ) -> Dict[str, Any]:
         """Analyze user preference patterns."""
-        return {"analysis": "placeholder"}
+        by_category: Dict[str, List[float]] = defaultdict(list)
+        for pref in profile.preferences.values():
+            by_category[pref.category].append(pref.weight * pref.confidence)
+
+        category_scores = {
+            cat: sum(scores) / len(scores) if scores else 0.0
+            for cat, scores in by_category.items()
+        }
+        top_category = (
+            max(category_scores.items(), key=lambda x: x[1])[0]
+            if category_scores
+            else None
+        )
+        return {"category_scores": category_scores, "top_category": top_category}
 
     async def _analyze_behavioral_patterns(
         self, profile: UserProfile
     ) -> Dict[str, Any]:
         """Analyze user behavioral patterns."""
-        return {"analysis": "placeholder"}
+        patterns = profile.behavioral_patterns or {}
+        session_lengths = patterns.get("session_lengths", [])
+        avg_session = (
+            sum(session_lengths) / len(session_lengths) if session_lengths else 0.0
+        )
+        return {
+            "avg_session_length": avg_session,
+            "preferred_hours": patterns.get("preferred_hours", []),
+        }
 
     async def _calculate_recommendation_effectiveness(
         self, profile: UserProfile
     ) -> Dict[str, Any]:
         """Calculate recommendation effectiveness metrics."""
-        return {"effectiveness": "placeholder"}
+        total = len(profile.feedback_history)
+        positive = len(
+            [fb for fb in profile.feedback_history.values() if fb == "liked"]
+        )
+        effectiveness = (positive / total) if total else 0.0
+        return {"effectiveness": effectiveness, "total_feedback": total}
 
     async def _generate_profile_improvement_suggestions(
         self, profile: UserProfile
     ) -> List[str]:
         """Generate suggestions for improving user profile."""
-        return ["Suggestion placeholder"]
+        suggestions = []
+        if profile.profile_completeness < 0.6:
+            suggestions.append("Provide more explicit genre and tone preferences.")
+        if not profile.behavioral_patterns.get("usage_patterns"):
+            suggestions.append("Record a few sessions to refine behavioral patterns.")
+        if not profile.similarity_groups:
+            suggestions.append("Engage with community content to build similarity data.")
+        return suggestions or ["Profile is sufficiently populated."]
 
     def _get_top_preferences(self, profile: UserProfile) -> List[Dict[str, Any]]:
         """Get top user preferences."""
@@ -1344,11 +1412,21 @@ class RecommendationEngine:
         self, profile: UserProfile
     ) -> Dict[str, Any]:
         """Analyze how user preferences have evolved."""
-        return {"evolution": "placeholder"}
+        history = profile.feedback_history
+        return {
+            "total_feedback": len(history),
+            "recent_feedback": list(history.items())[-5:],
+        }
 
     async def _get_similarity_insights(self, user_id: str) -> Dict[str, Any]:
         """Get insights about user similarity to others."""
-        return {"similarity": "placeholder"}
+        related = {
+            other: score
+            for (uid, other), score in self.similarity_matrix.items()
+            if uid == user_id
+        }
+        top = sorted(related.items(), key=lambda x: x[1], reverse=True)[:5]
+        return {"similar_users": top}
 
     async def _update_single_preference(
         self, user_id: str, preference_type: str, data: Any
@@ -1368,13 +1446,19 @@ class RecommendationEngine:
         self, profile: UserProfile
     ) -> Dict[str, float]:
         """Get genre preferences from similar users."""
-        return {}
+        preferences: Dict[str, float] = defaultdict(float)
+        for (uid, target), score in self.similarity_matrix.items():
+            if uid == profile.user_id and "genre:" in target:
+                _, genre = target.split(":", 1)
+                preferences[genre] += score
+        return dict(preferences)
 
     async def _calculate_genre_content_score(
         self, profile: UserProfile, genre: str
     ) -> float:
         """Calculate content-based score for a genre."""
-        return 0.5
+        base = profile.preference_vectors.get(genre, [])
+        return float(sum(base) / len(base)) if base else 0.0
 
     def _generate_genre_reasoning(
         self,
@@ -1393,25 +1477,49 @@ class RecommendationEngine:
         self, profile: UserProfile, archetype: str
     ) -> float:
         """Calculate character compatibility score."""
-        return 0.6
+        key = f"character:{archetype}"
+        base = profile.preference_vectors.get(key, [])
+        return float(sum(base) / len(base)) if base else 0.0
 
     async def _calculate_style_compatibility(
         self, profile: UserProfile, style: str, genre_preferences: Dict[str, float]
     ) -> float:
         """Calculate writing style compatibility."""
-        return 0.5
+        style_pref = next(
+            (
+                p
+                for p in profile.preferences.values()
+                if p.category == "writing_style" and p.value == style
+            ),
+            None,
+        )
+        base_score = style_pref.weight * style_pref.confidence if style_pref else 0.0
+        genre_boost = max(genre_preferences.values()) if genre_preferences else 0.0
+        return min(1.0, base_score + genre_boost / 10)
 
     async def _calculate_feedback_adjustment(
         self, profile: UserProfile, recommendation: Recommendation
     ) -> float:
         """Calculate score adjustment based on feedback history."""
+        feedback = profile.feedback_history.get(recommendation.recommendation_id)
+        if feedback == "liked":
+            return 0.1
+        if feedback == "disliked":
+            return -0.1
         return 0.0
 
     async def _calculate_context_adjustment(
         self, context: RecommendationContext, recommendation: Recommendation
     ) -> float:
         """Calculate score adjustment based on context."""
-        return 0.0
+        adjustment = 0.0
+        if context.current_story_context:
+            tags = context.current_story_context.get("tags", [])
+            if recommendation.target_value in tags:
+                adjustment += 0.1
+        if context.temporal_context and context.temporal_context.get("mood") == "low":
+            adjustment -= 0.05
+        return adjustment
 
 
 def create_recommendation_engine(
