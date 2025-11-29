@@ -5,6 +5,9 @@ from fastapi.testclient import TestClient
 
 from src.api import secure_main_api as api
 
+# Check if LLM service is available (simulation endpoint requires LLM)
+LLM_SERVICE_AVAILABLE = bool(os.environ.get("GEMINI_API_KEY"))
+
 
 def build_client():
     os.environ["SKIP_INPUT_VALIDATION"] = "1"
@@ -40,6 +43,7 @@ def build_client():
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(not LLM_SERVICE_AVAILABLE, reason="LLM service not available (GEMINI_API_KEY not set)")
 def test_create_list_and_simulate_user_character():
     client = build_client()
 
@@ -73,6 +77,7 @@ def test_create_list_and_simulate_user_character():
 
 
 @pytest.mark.integration
+@pytest.mark.skipif(not LLM_SERVICE_AVAILABLE, reason="LLM service not available (GEMINI_API_KEY not set)")
 def test_simulation_rejects_unknown_character():
     client = build_client()
     sim_resp = client.post(
