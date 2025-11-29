@@ -27,6 +27,7 @@ from fastapi import (
 from pydantic import BaseModel, Field
 
 from src.core.system_orchestrator import SystemOrchestrator
+from src.llm_service import generate_narrative_content
 
 logger = logging.getLogger(__name__)
 
@@ -470,11 +471,7 @@ class StoryGenerationAPI:
             stage=state.get("stage", "unknown"),
             stage_detail=state.get("stage_detail", ""),
             estimated_time_remaining=self._calculate_time_remaining(state),
-            active_agents=[
-                "DirectorAgent",
-                "PersonaAgent",
-                "ChroniclerAgent",
-            ],  # Could be dynamic
+            active_agents=self._get_active_agents(),
         )
         return update.model_dump_json()
 
@@ -490,14 +487,25 @@ class StoryGenerationAPI:
             stage=state.get("stage", "unknown"),
             stage_detail=state.get("stage_detail", ""),
             estimated_time_remaining=self._calculate_time_remaining(state),
-            active_agents=[
-                "DirectorAgent",
-                "PersonaAgent",
-                "ChroniclerAgent",
-            ],  # Mock data
+            active_agents=self._get_active_agents(),
         )
 
         await websocket.send_text(update.json())
+
+    def _get_active_agents(self) -> List[str]:
+        """Derive active agent identifiers from the orchestrator."""
+        if not self.orchestrator:
+            return []
+
+        try:
+            active_agents = getattr(self.orchestrator, "active_agents", {})
+            if isinstance(active_agents, dict):
+                return list(active_agents.keys())[:8]
+            if isinstance(active_agents, list):
+                return active_agents[:8]
+        except Exception:
+            logger.debug("Could not resolve active agents for progress update")
+        return []
 
     def _calculate_time_remaining(self, state: Dict[str, Any]) -> int:
         """Calculate estimated time remaining based on progress."""
@@ -574,9 +582,12 @@ class StoryGenerationAPI:
     async def _create_narrative_plan(self, generation_id: str, character_results: List):
         """Create narrative plan using orchestrator."""
         try:
-            # This would use the actual story planning system
-            await asyncio.sleep(0.2)  # Minimal delay for simulation
-            return {"plan": "narrative_structure", "characters": len(character_results)}
+            summary_prompt = (
+                "Create a concise story outline with acts and beats for characters: "
+                f"{', '.join([c['character'] for c in character_results])}."
+            )
+            plan = await generate_narrative_content(summary_prompt, style="outline")
+            return {"plan": plan, "characters": len(character_results)}
         except Exception as e:
             logger.error(f"Narrative planning failed for {generation_id}: {e}")
             return None
@@ -586,9 +597,16 @@ class StoryGenerationAPI:
     ):
         """Generate individual story turn."""
         try:
-            # This would use the actual multi-agent story generation
-            await asyncio.sleep(0.3)  # Reduced from original 1.5s
-            return {"turn": turn_number, "content": f"Turn {turn_number} content"}
+            plan_snippet = ""
+            if isinstance(planning_result, dict):
+                plan_snippet = planning_result.get("plan", "") or ""
+
+            prompt = (
+                f"Turn {turn_number + 1}: expand the narrative based on this plan:\n"
+                f"{plan_snippet}\nKeep it concise but vivid."
+            )
+            content = await generate_narrative_content(prompt, style="narrative")
+            return {"turn": turn_number, "content": content}
         except Exception as e:
             logger.error(
                 f"Turn generation failed for {generation_id}, turn {turn_number}: {e}"

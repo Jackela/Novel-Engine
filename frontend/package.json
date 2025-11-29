@@ -22,7 +22,7 @@
     "test:cleanup": "node scripts/test-cleanup.js",
     "test:single": "node scripts/test-safe.js",
     "test:e2e": "playwright test && node scripts/generate-experience-report.mjs",
-    "test:e2e:smoke": "playwright test --grep '@experience-cta|@experience-offline' && node scripts/generate-experience-report.mjs",
+    "test:e2e:smoke": "playwright test --grep '@experience-offline|@landing-smoke' && node scripts/generate-experience-report.mjs",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
     "test:uat": "ts-node --esm tests/e2e/run-uat.ts",

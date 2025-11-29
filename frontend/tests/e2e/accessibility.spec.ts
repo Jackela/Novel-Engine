@@ -73,7 +73,7 @@ test.describe('Keyboard-Only User Journey', () => {
 
     const mainContent = page.locator('#main-content');
     await expect(mainContent).toBeVisible();
-    await expect(page.locator('[data-testid="cta-container"]')).toBeVisible();
+    await expect(page.locator('[data-testid="cta-launch"]')).toBeVisible();
   });
 
   /**

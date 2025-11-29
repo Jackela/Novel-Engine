@@ -6,7 +6,10 @@ Core decision-making engine for PersonaAgent character behavior.
 Evaluates world state, character context, and personality traits to generate appropriate actions.
 """
 
+import asyncio
+import json
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -16,6 +19,52 @@ from ..protocols import (
     ThreatLevel,
     WorldEvent,
 )
+
+# Module-level LLM service instance (lazy loaded)
+_llm_service_instance: Optional[Any] = None
+
+
+def _get_llm_service() -> Any:
+    """Get or create the LLM service singleton."""
+    global _llm_service_instance
+    if _llm_service_instance is None:
+        from src.llm_service import UnifiedLLMService
+        _llm_service_instance = UnifiedLLMService()
+    return _llm_service_instance
+
+
+async def _call_llm_for_score(prompt: str, requester: str) -> Optional[float]:
+    """Call LLM to get a score. Returns None on failure."""
+    try:
+        from src.llm_service import LLMProvider, LLMRequest, ResponseFormat
+
+        llm_service = _get_llm_service()
+        if LLMProvider.GEMINI not in llm_service.providers:
+            return None
+
+        request = LLMRequest(
+            prompt=prompt,
+            provider=LLMProvider.GEMINI,
+            response_format=ResponseFormat.ACTION_FORMAT,
+            temperature=0.3,  # Lower for more consistent scoring
+            max_tokens=200,
+            cache_enabled=True,
+            requester=requester,
+        )
+
+        response = await llm_service.generate(request)
+        if "[LLM Error:" in response.content:
+            return None
+
+        # Extract numeric score from response
+        score_match = re.search(r"SCORE:\s*([\d.]+)", response.content, re.IGNORECASE)
+        if score_match:
+            score = float(score_match.group(1))
+            return max(0.0, min(1.0, score))  # Clamp to [0, 1]
+        return None
+    except Exception as e:
+        logging.getLogger(__name__).debug(f"LLM scoring failed: {e}")
+        return None
 
 # Import shared types with fallback
 try:
@@ -556,38 +605,174 @@ class DecisionProcessor:
     async def _score_personal_relationships(
         self, action: Dict[str, Any], context: DecisionContext
     ) -> float:
-        """Score based on personal relationship impacts."""
-        return 0.5  # Placeholder implementation
+        """Score based on personal relationship impacts using LLM analysis."""
+        action_type = action.get("type", action.get("action_type", "unknown"))
+        target = action.get("target", "none")
+
+        # Get character relationship data
+        relationships = context.character_state.get("relationships", {})
+        rel_summary = ", ".join([
+            f"{k}: {v.get('trust', 0.5):.1f} trust"
+            for k, v in list(relationships.items())[:5]
+        ]) if relationships else "No established relationships"
+
+        prompt = f"""Analyze how this action affects personal relationships.
+
+ACTION: {action_type}
+TARGET: {target}
+CURRENT RELATIONSHIPS: {rel_summary}
+
+Rate how this action impacts relationships on a 0-1 scale:
+- 0.0: Severely damages relationships
+- 0.5: Neutral impact
+- 1.0: Greatly strengthens relationships
+
+Respond in format:
+SCORE: [0.0-1.0]
+REASON: [brief explanation]"""
+
+        score = await _call_llm_for_score(prompt, "relationship_score")
+        return score if score is not None else 0.5
 
     async def _score_moral_principles(
         self, action: Dict[str, Any], context: DecisionContext
     ) -> float:
-        """Score based on moral principles."""
-        return 0.5  # Placeholder implementation
+        """Score based on moral principles using LLM ethical evaluation."""
+        action_type = action.get("type", action.get("action_type", "unknown"))
+        target = action.get("target", "none")
+
+        # Get character moral traits
+        traits = context.character_state.get("traits", {})
+        moral_traits = {k: v for k, v in traits.items()
+                       if k in ["honor", "compassion", "justice", "loyalty", "honesty"]}
+        traits_str = ", ".join([f"{k}: {v}" for k, v in moral_traits.items()]) or "standard ethics"
+
+        prompt = f"""Evaluate this action's alignment with moral principles.
+
+ACTION: {action_type}
+TARGET: {target}
+CHARACTER MORAL TRAITS: {traits_str}
+
+Rate moral alignment on a 0-1 scale:
+- 0.0: Severely unethical, violates core principles
+- 0.5: Morally neutral
+- 1.0: Highly ethical, upholds principles
+
+Respond in format:
+SCORE: [0.0-1.0]
+REASON: [brief explanation]"""
+
+        score = await _call_llm_for_score(prompt, "moral_score")
+        return score if score is not None else 0.5
 
     async def _score_resource_acquisition(
         self, action: Dict[str, Any], context: DecisionContext
     ) -> float:
-        """Score based on resource acquisition potential."""
-        return 0.5  # Placeholder implementation
+        """Score based on resource acquisition potential (algorithmic)."""
+        action_type = action.get("type", action.get("action_type", "")).lower()
+        score = 0.5
+
+        # Actions that typically acquire resources
+        resource_actions = {
+            "loot": 0.9, "gather": 0.85, "trade": 0.7, "scavenge": 0.8,
+            "search": 0.6, "explore": 0.5, "steal": 0.75, "harvest": 0.8
+        }
+
+        if action_type in resource_actions:
+            score = resource_actions[action_type]
+
+        # Adjust based on current resource constraints
+        constraints = context.resource_constraints or {}
+        if constraints:
+            # Higher score if we're low on resources
+            avg_constraint = sum(constraints.values()) / len(constraints)
+            if avg_constraint < 0.3:  # Resource scarcity
+                score = min(1.0, score + 0.2)
+
+        return score
 
     async def _score_knowledge_seeking(
         self, action: Dict[str, Any], context: DecisionContext
     ) -> float:
-        """Score based on knowledge seeking value."""
-        return 0.5  # Placeholder implementation
+        """Score based on knowledge seeking value (algorithmic)."""
+        action_type = action.get("type", action.get("action_type", "")).lower()
+        score = 0.5
+
+        # Actions that acquire knowledge
+        knowledge_actions = {
+            "investigate": 0.9, "research": 0.95, "observe": 0.7, "explore": 0.75,
+            "interrogate": 0.6, "search": 0.6, "study": 0.9, "scout": 0.7,
+            "communicate": 0.5, "negotiate": 0.4
+        }
+
+        if action_type in knowledge_actions:
+            score = knowledge_actions[action_type]
+
+        # Adjust based on character curiosity trait
+        traits = context.character_state.get("traits", {})
+        curiosity = traits.get("curiosity", traits.get("inquisitive", 0.5))
+        if isinstance(curiosity, (int, float)):
+            score = score * 0.7 + curiosity * 0.3
+
+        return score
 
     async def _score_status_advancement(
         self, action: Dict[str, Any], context: DecisionContext
     ) -> float:
-        """Score based on status advancement potential."""
-        return 0.5  # Placeholder implementation
+        """Score based on status advancement potential (algorithmic)."""
+        action_type = action.get("type", action.get("action_type", "")).lower()
+        score = 0.5
+
+        # Actions that improve social status
+        status_actions = {
+            "negotiate": 0.8, "persuade": 0.75, "lead": 0.9, "command": 0.85,
+            "ally": 0.7, "impress": 0.8, "challenge": 0.6, "defend": 0.6,
+            "help": 0.5, "communicate": 0.4
+        }
+
+        if action_type in status_actions:
+            score = status_actions[action_type]
+
+        # Adjust based on character ambition
+        traits = context.character_state.get("traits", {})
+        ambition = traits.get("ambition", traits.get("leadership", 0.5))
+        if isinstance(ambition, (int, float)):
+            score = score * 0.6 + ambition * 0.4
+
+        return score
 
     async def _analyze_threat_factors(
         self, event: WorldEvent, character_data: Dict[str, Any]
     ) -> Dict[str, float]:
-        """Analyze threat factors from an event."""
-        return {"base_threat": 0.5}  # Placeholder implementation
+        """Analyze threat factors from an event using LLM."""
+        event_type = getattr(event, "event_type", "unknown")
+        event_desc = getattr(event, "description", str(event))
+        affected = getattr(event, "affected_entities", [])
+        character_id = character_data.get("id", "unknown")
+
+        prompt = f"""Analyze threat factors from this event for a character.
+
+EVENT TYPE: {event_type}
+EVENT DESCRIPTION: {event_desc[:200]}
+AFFECTED ENTITIES: {affected[:5]}
+CHARACTER ID: {character_id}
+
+Rate each threat factor from 0.0 (no threat) to 1.0 (maximum threat):
+Respond in format:
+SCORE: [base_threat 0.0-1.0]
+PHYSICAL_DANGER: [0.0-1.0]
+RESOURCE_RISK: [0.0-1.0]
+SOCIAL_THREAT: [0.0-1.0]"""
+
+        score = await _call_llm_for_score(prompt, "threat_factors")
+        base_threat = score if score is not None else 0.5
+
+        return {
+            "base_threat": base_threat,
+            "physical_danger": base_threat * 0.8,
+            "resource_risk": base_threat * 0.5,
+            "social_threat": base_threat * 0.3,
+        }
 
     async def _calculate_threat_level(
         self, threat_factors: Dict[str, float]
@@ -619,14 +804,85 @@ class DecisionProcessor:
         recent_events: List[WorldEvent],
         character_context: Dict[str, Any],
     ) -> ThreatLevel:
-        """Assess overall threat level from world state and events."""
-        return ThreatLevel.MODERATE  # Placeholder implementation
+        """Assess overall threat level from world state and events using LLM."""
+        # Summarize recent events
+        event_summary = []
+        for event in recent_events[:5]:
+            event_type = getattr(event, "event_type", "unknown")
+            desc = getattr(event, "description", "")[:100]
+            event_summary.append(f"- {event_type}: {desc}")
+        events_str = "\n".join(event_summary) if event_summary else "No recent events"
+
+        # Get world state context
+        location = world_state.get("current_location", "unknown")
+        hostiles = world_state.get("hostile_entities", [])
+
+        prompt = f"""Assess overall threat level for a character.
+
+LOCATION: {location}
+HOSTILE ENTITIES NEARBY: {len(hostiles)} ({hostiles[:3] if hostiles else 'none'})
+RECENT EVENTS:
+{events_str}
+
+Rate the threat level on a 0-1 scale:
+- 0.0-0.2: Negligible threat
+- 0.2-0.4: Low threat
+- 0.4-0.6: Moderate threat
+- 0.6-0.8: High threat
+- 0.8-1.0: Critical threat
+
+Respond in format:
+SCORE: [0.0-1.0]
+REASON: [brief explanation]"""
+
+        score = await _call_llm_for_score(prompt, "overall_threat")
+        if score is None:
+            score = 0.5
+
+        # Map score to ThreatLevel
+        if score < 0.2:
+            return ThreatLevel.NEGLIGIBLE
+        elif score < 0.4:
+            return ThreatLevel.LOW
+        elif score < 0.6:
+            return ThreatLevel.MODERATE
+        elif score < 0.8:
+            return ThreatLevel.HIGH
+        else:
+            return ThreatLevel.CRITICAL
 
     async def _calculate_time_pressure(
         self, world_state: Dict[str, Any], character_state: Dict[str, Any]
     ) -> float:
-        """Calculate time pressure factor."""
-        return 0.5  # Placeholder implementation
+        """Calculate time pressure factor (algorithmic)."""
+        pressure = 0.5  # Base pressure
+
+        # Check for urgent events
+        if world_state.get("combat_active", False):
+            pressure += 0.3
+        if world_state.get("timer_active", False):
+            pressure += 0.2
+
+        # Check character conditions
+        health = character_state.get("health", 1.0)
+        if health < 0.3:
+            pressure += 0.2  # Low health = high urgency
+
+        stamina = character_state.get("stamina", 1.0)
+        if stamina < 0.2:
+            pressure += 0.1
+
+        # Check for pursuit/danger
+        if world_state.get("being_pursued", False):
+            pressure += 0.25
+
+        # Check deadline proximity
+        deadline = world_state.get("mission_deadline", None)
+        if deadline:
+            # Assume deadline is a timestamp or turn count
+            pressure += 0.15
+
+        return min(1.0, max(0.0, pressure))
 
     async def _determine_action_category(self, action_type: str) -> str:
         """Determine category for an action type."""

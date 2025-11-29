@@ -19,7 +19,7 @@ export default function CharacterSelectionContainer({ selectedCharacters, onSele
           characters={characters || []}
           selectedCharacters={selectedCharacters}
           onSelectionChange={onSelectionChange}
-          isLoading={false}
+          isLoading={isLoading}
         />
       </Box>
     </AsyncStates>

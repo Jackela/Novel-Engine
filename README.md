@@ -117,6 +117,7 @@ SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwri
 - **前端**：进入 `frontend/` 后运行 `npm run lint`、`npm run type-check`、`npm test -- --run`。仪表盘相关改动必须使用上述环境变量运行全部 Playwright 套件（Core / Extended / Interactions / Cross-browser / Accessibility / Login）。`data-role` 与 `data-testid` 标签是自动化和 MCP 的硬性要求。
 - **后端**：执行 `bash scripts/validate_ci_locally.sh` 以获得 Black、Isort、Flake8、Mypy 以及 pytest coverage 的完整输出；若仅需冒烟可运行 `pytest tests/test_security_framework.py tests/test_quality_framework.py`。
 - **CI 对齐**：使用 `act --pull=false -W .github/workflows/frontend-ci.yml -j build-and-test` 与 `act --pull=false -W .github/workflows/ci.yml -j tests` 模拟 GitHub Actions，日志保存在 `tmp/act-frontend.log` 与 `tmp/act-ci.log`。
+- **Mock/Stub 控制**：默认会失败而非静默使用 mock。仅在测试时使用环境变量开启：`ALLOW_MOCK_REDIS`, `ALLOW_MOCK_GEOIP`, `ALLOW_MOCK_USER_AGENTS`, `CONTEXT7_ALLOW_MOCK`。详细见 `docs/ENVIRONMENT_FLAGS.md`。
 - **Lighthouse / MCP 证据**：`CHROME_PATH=/usr/bin/google-chrome npx @lhci/cli@0.14.0 autorun` 生成性能报告；`node scripts/mcp_chrome_runner.js --viewport WIDTHxHEIGHT …` 采集真实 UI 截图与 metadata（存放在 `docs/assets/dashboard/` 并在 README/UX 报告中引用）。
 - 详细约定、命令表与文档更新流程请参阅 [`docs/coding-standards.md`](docs/coding-standards.md)。
 

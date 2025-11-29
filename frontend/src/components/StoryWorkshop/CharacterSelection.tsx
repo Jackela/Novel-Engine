@@ -38,27 +38,21 @@ interface CharacterCardProps {
   onClick: () => void;
 }
 
+const DEFAULT_FACTION = 'Unspecified';
+const DEFAULT_ROLE = 'Character';
+
 const CharacterCard: React.FC<CharacterCardProps> = ({
   characterName,
   isSelected,
   onClick,
 }) => {
-  // Mock character data - in a real app, this would come from character details
-  const mockData = {
-    faction: characterName.includes('bastion_guardian') ? 'Bastion Cohort' : 
-             characterName.includes('freewind_raider') ? 'Freewind Collective' : 
-             characterName.includes('entropy_adept') ? 'Entropy Cult' : 'Alliance Network',
-    role: characterName.includes('bastion_guardian') ? 'Sentinel' : 
-          characterName.includes('freewind_raider') ? 'Collective Captain' : 
-          characterName.includes('entropy_adept') ? 'Entropy Paladin' : 'Character',
-  };
-
   const getFactionColor = (faction: string) => {
     const colors: Record<string, string> = {
       'Alliance Network': 'var(--color-character-protagonist)',
       'Entropy Cult': 'var(--color-character-antagonist)',
       'Freewind Collective': 'var(--color-character-supporting)',
       'Bastion Cohort': 'var(--color-character-neutral)',
+      'Unspecified': 'var(--color-text-tertiary)',
       'Other': 'var(--color-text-tertiary)',
     };
     return colors[faction] || 'var(--color-text-tertiary)';
@@ -115,7 +109,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                 height: 64,
                 mx: 'auto',
                 mb: 2,
-                bgcolor: getFactionColor(mockData.faction),
+                bgcolor: getFactionColor(DEFAULT_FACTION),
                 fontSize: '1.5rem',
                 fontWeight: 700,
                 border: isSelected ? 3 : 0,
@@ -132,10 +126,10 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
             
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5, mb: 1 }}>
               <Chip
-                label={mockData.faction}
+                label={DEFAULT_FACTION}
                 size="small"
                 sx={{
-                  bgcolor: getFactionColor(mockData.faction),
+                  bgcolor: getFactionColor(DEFAULT_FACTION),
                   color: 'white',
                   fontWeight: 600,
                   fontSize: '0.75rem',
@@ -144,7 +138,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
             </Box>
             
             <Typography variant="body2" color="text.secondary">
-              {mockData.role}
+              {DEFAULT_ROLE}
             </Typography>
           </CardContent>
         </Box>
@@ -193,13 +187,7 @@ export default function CharacterSelection({
 
     // Apply faction filter
     if (factionFilter) {
-      filtered = filtered.filter(character => {
-        // Mock faction detection - in real app, this would come from character data
-        const faction = character.includes('bastion_guardian') ? 'Bastion Cohort' : 
-                       character.includes('freewind_raider') ? 'Freewind Collective' : 
-                       character.includes('entropy_adept') ? 'Entropy Cult' : 'Alliance Network';
-        return faction === factionFilter;
-      });
+      filtered = filtered.filter(() => factionFilter === DEFAULT_FACTION);
     }
 
     // Apply selection filter
@@ -212,15 +200,8 @@ export default function CharacterSelection({
 
   // Available factions for filtering
   const availableFactions = useMemo(() => {
-    const factions = new Set<string>();
-    characters.forEach(character => {
-      const faction = character.includes('bastion_guardian') ? 'Bastion Cohort' : 
-                     character.includes('freewind_raider') ? 'Freewind Collective' : 
-                     character.includes('entropy_adept') ? 'Entropy Cult' : 'Alliance Network';
-      factions.add(faction);
-    });
-    return Array.from(factions).sort();
-  }, [characters]);
+    return [DEFAULT_FACTION];
+  }, []);
 
   const handleCharacterToggle = (character: string) => {
     if (selectedCharacters.includes(character)) {

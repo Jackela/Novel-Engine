@@ -160,6 +160,16 @@ CREATE TABLE IF NOT EXISTS interactions (
     CONSTRAINT location_not_empty CHECK (LENGTH(TRIM(location)) > 0)
 );
 
+-- ++ SESSION CONTEXT STORAGE SANCTIFIED BY PERSISTENCE ++
+CREATE TABLE IF NOT EXISTS session_contexts (
+    session_id TEXT NOT NULL,
+    character_id TEXT NOT NULL,
+    context TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (session_id, character_id),
+    CONSTRAINT context_not_empty CHECK (LENGTH(TRIM(context)) > 0)
+);
+
 -- ++ SACRED CONTEXT REFERENCES SANCTIFIED BY CROSS-DOCUMENT LINKING ++
 CREATE TABLE IF NOT EXISTS context_references (
     reference_id TEXT PRIMARY KEY NOT NULL,

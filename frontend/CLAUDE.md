@@ -14,15 +14,31 @@ All design and implementation MUST follow:
    - All business rules must exist in one canonical place (SSOT).
 
 2. **SOLID**
-   - Single Responsibility: each module has one reason to change.
-   - Open/Closed: extend via abstractions, avoid modifying stable code.
-   - Liskov Substitution: avoid inheritance that breaks substitutability.
-   - Interface Segregation: keep interfaces small and focused.
-   - Dependency Inversion: high-level policies depend only on abstractions.
+   - **Single Responsibility (SRP)**: each module has one reason to change.
+     - Example: `AuthService` handles auth, `UserService` handles user data
+     - Guideline: If a file exceeds 200 lines, consider splitting
+   - **Open/Closed (OCP)**: extend via abstractions, avoid modifying stable code.
+     - Example: Add new features via new components, not modifying existing ones
+   - **Liskov Substitution (LSP)**: avoid inheritance that breaks substitutability.
+   - **Interface Segregation (ISP)**: keep interfaces small and focused.
+     - Example: `Clickable`, `Draggable` instead of `InteractiveElement`
+   - **Dependency Inversion (DIP)**: high-level policies depend only on abstractions.
+     - Example: Components depend on service interfaces, not implementations
 
 3. **Single Source of Truth (SSOT)**
    - Never duplicate business rules, validation rules, constants, or domain logic.
    - When encountering duplicated logic, consolidate it.
+
+   ### SSOT Canonical Sources
+   | Concern | Canonical Source | Never Duplicate In |
+   |---------|------------------|-------------------|
+   | Design Tokens | `src/styles/tokens.ts` | TSX files, CSS files |
+   | Theme Config | `src/styles/theme.ts` | Component styles |
+   | Route Definitions | `src/App.tsx` | Navigation components |
+   | API Endpoints | `src/services/api/` | Components directly |
+   | Auth State | `src/store/authSlice.ts` | Local component state |
+   | Type Definitions | `src/types/` | Inline type declarations |
+   | Constants | `src/constants/` | Magic numbers/strings |
 
 4. **Strong Typing**
    - Prefer explicit typedefs, value objects, enums, and structured data.
@@ -52,10 +68,10 @@ All design and implementation MUST follow:
 
 All work MUST follow a test-first mindset:
 
-1. **TDD Workflow**
-   - Red → Write or update tests FIRST.
-   - Green → Implement only enough code to satisfy tests.
-   - Refactor → Clean up structure while keeping tests green.
+1. **TDD Workflow (Red-Green-Refactor)**
+   - **Red** → Write or update tests FIRST. The test should fail initially.
+   - **Green** → Implement only enough code to satisfy tests.
+   - **Refactor** → Clean up structure while keeping tests green.
 
 2. **Test Layers**
    - Unit tests: pure modules, domain logic, helpers.
@@ -64,15 +80,86 @@ All work MUST follow a test-first mindset:
 
 3. **BDD Style**
    - Test scenarios MUST describe behavior: Given / When / Then.
+   - Use `test.step()` in Playwright for clear phase separation.
 
 4. **Coverage Expectations**
    - New or changed code MUST have appropriate test coverage.
+   - Coverage threshold: 80% minimum for new code.
    - Coverage must never decrease.
 
 5. **Test Principles**
    - Deterministic, isolated, readable.
    - Avoid mocking domain logic; apply mocks only at boundaries.
    - Treat flaky tests as defects to fix, not to skip.
+
+### TDD Example Workflow
+
+```
+1. Identify requirement (from OpenSpec or user story)
+2. Write failing test that describes expected behavior
+3. Run test to confirm it fails (Red)
+4. Write minimal code to make test pass (Green)
+5. Refactor code while keeping tests green
+6. Repeat for next requirement
+```
+
+### E2E Test File Template (Playwright)
+
+```typescript
+import { test, expect } from '@playwright/test';
+import { PageObject } from './pages/PageObject';
+
+/**
+ * Feature Name E2E Test Suite
+ *
+ * OpenSpec: [change-id]
+ * Spec: [spec-path]/spec.md
+ */
+test.describe('Feature Name E2E Tests', () => {
+  test.describe('Scenario: Description from spec', () => {
+    /**
+     * Given: [precondition]
+     * When: [action]
+     * Then: [expected result]
+     */
+    test('should [expected behavior]', async ({ page }) => {
+      await test.step('Given: [precondition]', async () => {
+        // Setup
+      });
+
+      await test.step('When: [action]', async () => {
+        // Action
+      });
+
+      await test.step('Then: [expected result]', async () => {
+        // Assertion
+      });
+    });
+  });
+});
+```
+
+### Unit Test File Template (Vitest)
+
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
+import { functionUnderTest } from './module';
+
+describe('ModuleName', () => {
+  describe('functionUnderTest', () => {
+    it('should [expected behavior] given [condition]', () => {
+      // Arrange
+      const input = 'test';
+
+      // Act
+      const result = functionUnderTest(input);
+
+      // Assert
+      expect(result).toBe(expected);
+    });
+  });
+});
+```
 
 ---
 

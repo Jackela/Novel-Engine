@@ -21,6 +21,7 @@ May the System protect all operations from threats 🛡️
 import ipaddress
 import json
 import time
+import os
 
 try:
     import aioredis
@@ -43,7 +44,9 @@ try:
 
     GEOIP2_AVAILABLE = True
 except ImportError:
-    # Stub implementation when geoip2 is not available
+    if os.getenv("ALLOW_MOCK_GEOIP", "false").lower() != "true":
+        raise
+    # Stub implementation when geoip2 is not available and mocks are allowed
     class MockGeoIP2Database:
         def __init__(self, *args, **kwargs):
             pass
@@ -76,7 +79,9 @@ try:
 
     USER_AGENTS_AVAILABLE = True
 except ImportError:
-    # Stub implementation when user_agents is not available
+    if os.getenv("ALLOW_MOCK_USER_AGENTS", "false").lower() != "true":
+        raise
+    # Stub implementation when user_agents is not available and mocks are allowed
     class MockUserAgent:
         def __init__(self):
             self.browser = type("", (), {"family": "Unknown"})()

@@ -16,6 +16,8 @@ import json
 import logging
 import os
 import secrets
+import time
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,7 +33,10 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from src.api.character_api import create_character_api
 from src.api.interaction_api import create_interaction_api
-from src.api.story_generation_api import create_story_generation_api
+from src.api.story_generation_api import (
+    StoryGenerationRequest,
+    create_story_generation_api,
+)
 from src.core.system_orchestrator import (
     OrchestratorConfig,
     OrchestratorMode,
@@ -703,12 +708,13 @@ def create_secure_app() -> FastAPI:
 
         try:
             orchestrator = getattr(app.state, "orchestrator", None)
-            if not orchestrator:
-                logger.warning(
-                    "System orchestrator not available; returning mocked simulation response"
+            story_api = getattr(app.state, "story_api", None)
+
+            if not orchestrator or not story_api:
+                raise HTTPException(
+                    status_code=503, detail="System not ready. Please try again."
                 )
 
-            # Input validation already handled by middleware, but we can add business logic validation
             if len(set(request.character_names)) != len(request.character_names):
                 raise HTTPException(
                     status_code=400, detail="Duplicate character names are not allowed"
@@ -726,19 +732,37 @@ def create_secure_app() -> FastAPI:
                     detail=f"Characters unavailable for simulation: {', '.join(missing)}",
                 )
 
-            # Execute simulation (this would be the actual simulation logic)
-            # For now, return a secure mock response
-            story_content = (
-                f"In a live run on behalf of {current_user.username}, "
-                f"the crew ({', '.join(request.character_names)}) navigated "
-                f"{request.turns} turns through {request.style or 'narrative'} constraints."
+            active_agents = getattr(orchestrator, "active_agents", {})
+            for name in request.character_names:
+                if name not in active_agents:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Character not registered in orchestrator: {name}",
+                    )
+
+            generation_id = f"secure_{uuid.uuid4().hex[:8]}"
+            story_request = StoryGenerationRequest(
+                characters=request.character_names,
+                title=request.style or "Simulation Story",
             )
 
+            story_api.active_generations[generation_id] = {
+                "status": "initiated",
+                "request": story_request,
+                "progress": 0,
+                "stage": "initializing",
+                "start_time": datetime.now(),
+            }
+
+            await story_api._generate_story_async(generation_id)
+
+            generation_state = story_api.active_generations.get(generation_id, {})
+            story_content = generation_state.get("story_content", "")
             duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             response = SecureSimulationResponse(
-                simulation_id=simulation_id,
-                story=story_content,
+                simulation_id=generation_id,
+                story=story_content or "Story generation completed.",
                 participants=request.character_names,
                 turns_executed=request.turns,
                 duration_seconds=duration,
@@ -747,7 +771,7 @@ def create_secure_app() -> FastAPI:
             )
 
             logger.info(
-                f"Simulation completed: {simulation_id} | Duration: {duration:.2f}s"
+                f"Simulation completed: {generation_id} | Duration: {duration:.2f}s"
             )
             return response
 

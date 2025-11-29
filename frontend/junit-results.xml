@@ -1,6 +1,204 @@
-<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="14.865077000000001">
-<testsuite name="login-flow.spec.ts" timestamp="2025-11-14T13:03:46.914Z" hostname="chromium-desktop" tests="1" failures="0" skipped="0" time="3.985" errors="0">
-<testcase name="Login Flow - Demo CTA › @experience-cta @smoke Landing CTA launches dashboard in guest mode" classname="login-flow.spec.ts" time="3.985">
+<testsuites id="" name="" tests="2" failures="2" skipped="0" errors="0" time="77.919244">
+<testsuite name="dashboard-interactions.spec.ts" timestamp="2025-11-29T20:37:18.046Z" hostname="chromium-desktop" tests="1" failures="1" skipped="0" time="65.981" errors="0">
+<testcase name="Dashboard Interactions › @experience-offline @smoke Connection indicator reflects offline recovery" classname="dashboard-interactions.spec.ts" time="65.981">
+<failure message="dashboard-interactions.spec.ts:44:3 @experience-offline @smoke Connection indicator reflects offline recovery" type="FAILURE">
+<![CDATA[  [chromium-desktop] › dashboard-interactions.spec.ts:44:3 › Dashboard Interactions › @experience-offline @smoke Connection indicator reflects offline recovery 
+
+    Test timeout of 60000ms exceeded while running "beforeEach" hook.
+
+       5 |   let dashboardPage: DashboardPage;
+       6 |
+    >  7 |   test.beforeEach(async ({ page }) => {
+         |        ^
+       8 |     dashboardPage = new DashboardPage(page);
+       9 |     await dashboardPage.navigateToDashboard();
+      10 |   });
+        at /mnt/d/Code/Novel-Engine/frontend/tests/e2e/dashboard-interactions.spec.ts:7:8
+
+    Error: page.goto: Target page, context or browser has been closed
+
+       at pages/DashboardPage.ts:142
+
+      140 |       } catch (error) {
+      141 |         console.warn('⚠️ Landing page navigation timed out, retrying once more', error);
+    > 142 |         await this.page.goto('/', { waitUntil: 'commit', timeout: 30000 });
+          |                         ^
+      143 |       }
+      144 |
+      145 |       const demoCta = this.page.locator('[data-testid="cta-demo"]');
+        at DashboardPage.navigateToDashboard (/mnt/d/Code/Novel-Engine/frontend/tests/e2e/pages/DashboardPage.ts:142:25)
+        at /mnt/d/Code/Novel-Engine/frontend/tests/e2e/dashboard-interactions.spec.ts:9:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/dashboard-interactions-Das-6cb76-r-reflects-offline-recovery-chromium-desktop/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/dashboard-interactions-Das-6cb76-r-reflects-offline-recovery-chromium-desktop/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/dashboard-interactions-Das-6cb76-r-reflects-offline-recovery-chromium-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/dashboard-interactions-Das-6cb76-r-reflects-offline-recovery-chromium-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/dashboard-interactions-Das-6cb76-r-reflects-offline-recovery-chromium-desktop/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/dashboard-interactions-Das-6cb76-r-reflects-offline-recovery-chromium-desktop/video.webm]]
+
+[[ATTACHMENT|test-results/dashboard-interactions-Das-6cb76-r-reflects-offline-recovery-chromium-desktop/trace.zip]]
+]]>
+</system-out>
+<system-err>
+<![CDATA[⚠️ Direct dashboard navigation failed, falling back to landing CTA page.goto: Timeout 45000ms exceeded.
+Call log:
+[2m  - navigating to "http://localhost:3000/dashboard", waiting until "domcontentloaded"[22m
+
+    at DashboardPage.navigateToDashboard [90m(/mnt/d/Code/Novel-Engine/frontend/[39mtests/e2e/pages/DashboardPage.ts:131:23[90m)[39m
+    at [90m/mnt/d/Code/Novel-Engine/frontend/[39mtests/e2e/dashboard-interactions.spec.ts:9:5 {
+  name: [32m'TimeoutError'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'/mnt/d/Code/Novel-Engine/frontend/tests/e2e/pages/DashboardPage.ts'[39m,
+      line: [33m131[39m,
+      column: [33m23[39m,
+      function: [32m'DashboardPage.navigateToDashboard'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Navigate to "/dashboard"'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: {
+      url: [32m'/dashboard'[39m,
+      waitUntil: [32m'domcontentloaded'[39m,
+      timeout: [33m45000[39m
+    },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@33'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@33'[39m,
+      _title: [32m'Navigate to "/dashboard"'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1764448687613[39m,
+    error: {
+      message: [32m'TimeoutError: page.goto: Timeout 45000ms exceeded.\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/dashboard", waiting until "domcontentloaded"\x1B[22m\n'[39m,
+      stack: [32m'TimeoutError: page.goto: Timeout 45000ms exceeded.\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/dashboard", waiting until "domcontentloaded"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at DashboardPage.navigateToDashboard (/mnt/d/Code/Novel-Engine/frontend/tests/e2e/pages/DashboardPage.ts:131:23)\n'[39m +
+        [32m'    at /mnt/d/Code/Novel-Engine/frontend/tests/e2e/dashboard-interactions.spec.ts:9:5'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+⚠️ Landing page navigation timed out, retrying once more page.goto: Test timeout of 60000ms exceeded.
+Call log:
+[2m  - navigating to "http://localhost:3000/", waiting until "domcontentloaded"[22m
+
+    at DashboardPage.navigateToDashboard [90m(/mnt/d/Code/Novel-Engine/frontend/[39mtests/e2e/pages/DashboardPage.ts:139:25[90m)[39m
+    at [90m/mnt/d/Code/Novel-Engine/frontend/[39mtests/e2e/dashboard-interactions.spec.ts:9:5 {
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'/mnt/d/Code/Novel-Engine/frontend/tests/e2e/pages/DashboardPage.ts'[39m,
+      line: [33m139[39m,
+      column: [33m25[39m,
+      function: [32m'DashboardPage.navigateToDashboard'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Navigate to "/"'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: { url: [32m'/'[39m, waitUntil: [32m'domcontentloaded'[39m, timeout: [33m30000[39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@34'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@34'[39m,
+      _title: [32m'Navigate to "/"'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1764448703597[39m,
+    error: {
+      message: [32m'Error: page.goto: Test timeout of 60000ms exceeded.\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/", waiting until "domcontentloaded"\x1B[22m\n'[39m,
+      stack: [32m'Error: page.goto: Test timeout of 60000ms exceeded.\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/", waiting until "domcontentloaded"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at DashboardPage.navigateToDashboard (/mnt/d/Code/Novel-Engine/frontend/tests/e2e/pages/DashboardPage.ts:139:25)\n'[39m +
+        [32m'    at /mnt/d/Code/Novel-Engine/frontend/tests/e2e/dashboard-interactions.spec.ts:9:5'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+]]>
+</system-err>
+</testcase>
+</testsuite>
+<testsuite name="login-flow.spec.ts" timestamp="2025-11-29T20:37:18.046Z" hostname="chromium-desktop" tests="1" failures="1" skipped="0" time="38.638" errors="0">
+<testcase name="Login Flow - Launch Engine CTA › @experience-cta @smoke Landing CTA launches dashboard in guest mode" classname="login-flow.spec.ts" time="38.638">
+<failure message="login-flow.spec.ts:18:3 @experience-cta @smoke Landing CTA launches dashboard in guest mode" type="FAILURE">
+<![CDATA[  [chromium-desktop] › login-flow.spec.ts:18:3 › Login Flow - Launch Engine CTA › @experience-cta @smoke Landing CTA launches dashboard in guest mode 
+
+    TimeoutError: page.goto: Timeout 30000ms exceeded.
+    Call log:
+      - navigating to "http://localhost:3000/", waiting until "load"
+
+
+       at pages/LandingPage.ts:99
+
+       97 |     });
+       98 |
+    >  99 |     await this.page.goto('/');
+          |                     ^
+      100 |     await this.page.waitForLoadState('networkidle');
+      101 |     // Wait for main content to be visible
+      102 |     await this.mainTitle.waitFor({ state: 'visible', timeout: 30000 });
+        at LandingPage.navigateToLanding (/mnt/d/Code/Novel-Engine/frontend/tests/e2e/pages/LandingPage.ts:99:21)
+        at /mnt/d/Code/Novel-Engine/frontend/tests/e2e/login-flow.spec.ts:23:5
+
+    attachment #1: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/login-flow-Login-Flow---La-60282-hes-dashboard-in-guest-mode-chromium-desktop/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/login-flow-Login-Flow---La-60282-hes-dashboard-in-guest-mode-chromium-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/login-flow-Login-Flow---La-60282-hes-dashboard-in-guest-mode-chromium-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/login-flow-Login-Flow---La-60282-hes-dashboard-in-guest-mode-chromium-desktop/video.webm]]
+
+[[ATTACHMENT|test-results/login-flow-Login-Flow---La-60282-hes-dashboard-in-guest-mode-chromium-desktop/trace.zip]]
+]]>
+</system-out>
 </testcase>
 </testsuite>
 </testsuites>

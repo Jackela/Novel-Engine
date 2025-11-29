@@ -608,42 +608,84 @@ class GoalManager:
         self, goal: Goal, context: GoalContext
     ) -> float:
         """Calculate how well goal aligns with character state and traits."""
-        # This would analyze character traits, current mood, faction alignment, etc.
-        # For now, using a simple heuristic
-
         score = 0.5
 
-        # Survival goals get high alignment when threatened
-        if goal.goal_type == GoalType.SURVIVAL and context.threat_level in [
-            ThreatLevel.HIGH,
-            ThreatLevel.CRITICAL,
-        ]:
-            score = 0.9
+        # Threat-based adjustments
+        if context.threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]:
+            if goal.goal_type == GoalType.SURVIVAL:
+                score = 0.95  # Survival is critical
+            elif goal.goal_type == GoalType.COMBAT:
+                score = 0.8  # Combat goals rise in priority
+            elif goal.goal_type == GoalType.SOCIAL:
+                score = 0.2  # Social goals drop
+            elif goal.goal_type == GoalType.EXPLORATION:
+                score = 0.15  # Exploration is risky
+        elif context.threat_level == ThreatLevel.LOW:
+            if goal.goal_type == GoalType.EXPLORATION:
+                score = 0.8  # Safe to explore
+            elif goal.goal_type == GoalType.SOCIAL:
+                score = 0.75  # Good time for social
+            elif goal.goal_type == GoalType.PERSONAL_GROWTH:
+                score = 0.7  # Can focus on growth
 
-        # Social goals get lower priority when alone or threatened
-        elif goal.goal_type == GoalType.SOCIAL and context.threat_level in [
-            ThreatLevel.HIGH,
-            ThreatLevel.CRITICAL,
-        ]:
-            score = 0.2
+        # Resource-based adjustments
+        available_resources = context.available_resources or {}
+        if goal.goal_type == GoalType.RESOURCE_GATHERING:
+            # Higher priority if resources are low
+            avg_resources = sum(available_resources.values()) / max(1, len(available_resources))
+            if avg_resources < 0.3:
+                score = max(score, 0.85)
 
-        return score
+        # Goal urgency adjustment
+        if hasattr(goal, 'deadline') and goal.deadline:
+            # Closer deadlines increase alignment
+            score = min(1.0, score + 0.1)
+
+        return max(0.1, min(1.0, score))
 
     async def _calculate_opportunity_score(
         self, goal: Goal, context: GoalContext
     ) -> float:
         """Calculate current opportunity level for achieving the goal."""
-        # This would analyze current world state for opportunities
-        # For now, using a simple heuristic
-
         score = 0.5
 
-        # Exploration goals benefit from being in new locations
-        if goal.goal_type == GoalType.EXPLORATION and context.current_location:
-            # Assuming new locations provide opportunities
-            score = 0.7
+        # Location-based opportunities
+        if context.current_location:
+            if goal.goal_type == GoalType.EXPLORATION:
+                # New locations are opportunities for exploration
+                score = 0.75
+            elif goal.goal_type == GoalType.RESOURCE_GATHERING:
+                # Check if location has resources
+                score = 0.6
 
-        return score
+        # Social opportunities
+        nearby_entities = context.nearby_entities or []
+        if goal.goal_type == GoalType.SOCIAL and len(nearby_entities) > 0:
+            # More entities = more social opportunities
+            score = min(0.9, 0.5 + len(nearby_entities) * 0.1)
+
+        # Combat opportunities
+        if goal.goal_type == GoalType.COMBAT:
+            hostile_count = sum(1 for e in nearby_entities if "hostile" in str(e).lower())
+            if hostile_count > 0:
+                score = 0.8  # Combat targets available
+            else:
+                score = 0.2  # No combat opportunities
+
+        # Knowledge opportunities
+        if goal.goal_type == GoalType.KNOWLEDGE:
+            # Check for information sources
+            if any("library" in str(context.current_location).lower() or
+                   "archive" in str(context.current_location).lower()
+                   for _ in [1]):
+                score = 0.85
+
+        # Threat reduces most opportunities except survival/combat
+        if context.threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]:
+            if goal.goal_type not in [GoalType.SURVIVAL, GoalType.COMBAT]:
+                score *= 0.5
+
+        return max(0.1, min(1.0, score))
 
     async def _check_goal_completion(self, goal: Goal) -> None:
         """Check if goal should be marked as completed or failed."""
@@ -795,18 +837,122 @@ class GoalManager:
     # Placeholder methods for future implementation
 
     async def _validate_goal_dependencies(self, goal: Goal) -> None:
-        """Validate goal dependencies exist and are achievable."""
-        pass  # Placeholder
+        """Validate goal dependencies exist and are achievable.
+
+        Checks that all dependency goal IDs exist and are in a state
+        that allows the dependent goal to be pursued.
+        """
+        if not goal.dependencies:
+            return
+
+        completed_goal_ids = {g.goal_id for g in self._completed_goals}
+        failed_goal_ids = {g.goal_id for g in self._failed_goals}
+
+        for dep_id in goal.dependencies:
+            # Check if dependency exists
+            if dep_id in completed_goal_ids:
+                # Dependency is already completed - good
+                continue
+            elif dep_id in self._active_goals:
+                # Dependency is active - still achievable
+                dep_goal = self._active_goals[dep_id]
+                if dep_goal.status in (GoalStatus.ABANDONED, GoalStatus.PAUSED):
+                    self.logger.warning(
+                        f"Goal {goal.goal_id} depends on {dep_id} which is {dep_goal.status.value}"
+                    )
+            elif dep_id in failed_goal_ids:
+                # Dependency failed - this goal may be unachievable
+                self.logger.warning(
+                    f"Goal {goal.goal_id} depends on failed goal {dep_id}"
+                )
+            else:
+                # Dependency doesn't exist
+                self.logger.warning(
+                    f"Goal {goal.goal_id} has unknown dependency: {dep_id}"
+                )
 
     async def _update_goal_relationships(self, goal: Goal) -> None:
-        """Update relationships between goals."""
-        pass  # Placeholder
+        """Update relationships between goals.
+
+        Tracks conflicts and synergies between goals based on goal types.
+        Updates self._goal_relationships bidirectionally.
+        """
+        # Define goal type relationships
+        # Synergies: goals that support each other
+        synergies = {
+            GoalType.SURVIVAL: [GoalType.RESOURCE, GoalType.TACTICAL],
+            GoalType.COMBAT: [GoalType.TACTICAL, GoalType.STRATEGIC],
+            GoalType.EXPLORATION: [GoalType.KNOWLEDGE, GoalType.RESOURCE],
+            GoalType.SOCIAL: [GoalType.FACTION, GoalType.PERSONAL],
+            GoalType.RESOURCE: [GoalType.SURVIVAL, GoalType.EXPLORATION],
+            GoalType.KNOWLEDGE: [GoalType.EXPLORATION, GoalType.STRATEGIC],
+            GoalType.FACTION: [GoalType.SOCIAL, GoalType.STRATEGIC],
+            GoalType.PERSONAL: [GoalType.SOCIAL, GoalType.KNOWLEDGE],
+            GoalType.TACTICAL: [GoalType.COMBAT, GoalType.SURVIVAL],
+            GoalType.STRATEGIC: [GoalType.FACTION, GoalType.KNOWLEDGE],
+        }
+
+        # Initialize relationship list for this goal if not exists
+        if goal.goal_id not in self._goal_relationships:
+            self._goal_relationships[goal.goal_id] = []
+
+        # Find related goals based on type synergies
+        synergy_types = synergies.get(goal.goal_type, [])
+
+        for other_goal in self._active_goals.values():
+            if other_goal.goal_id == goal.goal_id:
+                continue
+
+            # Check for synergy
+            if other_goal.goal_type in synergy_types:
+                # Add bidirectional relationship
+                if other_goal.goal_id not in self._goal_relationships[goal.goal_id]:
+                    self._goal_relationships[goal.goal_id].append(other_goal.goal_id)
+
+                if other_goal.goal_id not in self._goal_relationships:
+                    self._goal_relationships[other_goal.goal_id] = []
+                if goal.goal_id not in self._goal_relationships[other_goal.goal_id]:
+                    self._goal_relationships[other_goal.goal_id].append(goal.goal_id)
+
+            # Check for explicit dependencies
+            if other_goal.goal_id in goal.dependencies:
+                if other_goal.goal_id not in self._goal_relationships[goal.goal_id]:
+                    self._goal_relationships[goal.goal_id].append(other_goal.goal_id)
 
     async def _update_goal_priorities(
         self, scored_goals: List[Tuple[Goal, float]]
     ) -> None:
-        """Update goal priorities based on calculated scores."""
-        pass  # Placeholder
+        """Update goal priorities based on calculated scores.
+
+        Maps scores (0.0-1.0) to GoalPriority enum values:
+        - 0.8+: CRITICAL
+        - 0.6-0.8: HIGH
+        - 0.4-0.6: MEDIUM
+        - 0.2-0.4: LOW
+        - <0.2: MINIMAL
+
+        Also updates the goal's last_updated timestamp.
+        """
+        for goal, score in scored_goals:
+            # Map score to priority
+            if score >= 0.8:
+                new_priority = GoalPriority.CRITICAL
+            elif score >= 0.6:
+                new_priority = GoalPriority.HIGH
+            elif score >= 0.4:
+                new_priority = GoalPriority.MEDIUM
+            elif score >= 0.2:
+                new_priority = GoalPriority.LOW
+            else:
+                new_priority = GoalPriority.MINIMAL
+
+            # Only update if priority changed
+            if goal.priority != new_priority:
+                self.logger.debug(
+                    f"Goal {goal.goal_id} priority: {goal.priority.value} -> {new_priority.value} (score: {score:.2f})"
+                )
+                goal.priority = new_priority
+                goal.last_updated = datetime.now().timestamp()
 
     async def _analyze_event_for_goals(
         self, event: WorldEvent, character_context: Dict[str, Any]
