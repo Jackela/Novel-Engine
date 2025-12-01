@@ -7,6 +7,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import SecurityIcon from '@mui/icons-material/Security';  // Still used in feature grid
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import { motion } from 'framer-motion';
+import { tokens } from '../styles/tokens';
 
 // Animation variants
 const containerVariants = {
@@ -46,7 +47,6 @@ const LandingPage: React.FC = () => {
         minHeight: '100vh',
         position: 'relative',
         overflow: 'hidden',
-        // background: '#0a0a0b', // Removed to allow global gradient
         color: 'text.primary',
       }}
     >
@@ -127,7 +127,7 @@ const LandingPage: React.FC = () => {
                   label="Novel Engine v1.0"
                   sx={{
                     background: 'rgba(99, 102, 241, 0.1)',
-                    color: '#818cf8',
+                    color: 'primary.light',
                     border: '1px solid rgba(99, 102, 241, 0.2)',
                     fontWeight: 600,
                     backdropFilter: 'blur(4px)',
@@ -187,11 +187,11 @@ const LandingPage: React.FC = () => {
                     fontSize: '1.2rem',
                     fontWeight: 600,
                     borderRadius: '9999px',
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    background: `linear-gradient(135deg, ${tokens.colors.primary[500]} 0%, ${tokens.colors.primary[600]} 100%)`,
                     boxShadow: '0 0 20px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+                      background: `linear-gradient(135deg, ${tokens.colors.primary[600]} 0%, ${tokens.colors.primary[700]} 100%)`,
                       boxShadow: '0 0 30px rgba(99, 102, 241, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                       transform: 'translateY(-2px)',
                     },
@@ -207,17 +207,17 @@ const LandingPage: React.FC = () => {
               <Grid container spacing={3} justifyContent="center">
                 {[
                   {
-                    icon: <LiveTvIcon sx={{ fontSize: 32, color: '#6366f1' }} />,
+                    icon: <LiveTvIcon sx={{ fontSize: 32, color: tokens.colors.primary[500] }} />,
                     title: 'Live Orchestration',
                     desc: 'Real-time control over narrative turns and character decisions.',
                   },
                   {
-                    icon: <InsightsIcon sx={{ fontSize: 32, color: '#8b5cf6' }} />,
+                    icon: <InsightsIcon sx={{ fontSize: 32, color: tokens.colors.secondary[500] }} />,
                     title: 'Adaptive Analytics',
                     desc: 'Deep insights into plot progression and character relationships.',
                   },
                   {
-                    icon: <SecurityIcon sx={{ fontSize: 32, color: '#10b981' }} />,
+                    icon: <SecurityIcon sx={{ fontSize: 32, color: tokens.colors.status.success.main }} />,
                     title: 'Secure Environment',
                     desc: 'Air-gapped simulation sandbox for safe narrative testing.',
                   },
