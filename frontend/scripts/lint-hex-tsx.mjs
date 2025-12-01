@@ -7,12 +7,35 @@ const allowList = new Set([
   join('src', 'styles', 'tokens.ts').replace(/\\/g, '/'),
 ]);
 
-const hexRe = /#[0-9A-Fa-f]{3,8}\b/;
+// Match hex colors that are NOT:
+// 1. Inside comments (// ...)
+// 2. Part of CSS variable fallbacks: var(--..., #hex)
+const hexRe = /#[0-9A-Fa-f]{3,8}\b/g;
+const commentLineRe = /^\s*\/\//;
+const cssVarFallbackRe = /var\([^)]*,\s*#[0-9A-Fa-f]{3,8}\s*\)/;
+
 const problems = [];
 const excludePatterns = [
   // Keep tests excluded; they can contain inline samples
   /src\/tests\//,
 ];
+
+function hasNonFallbackHex(text) {
+  const lines = text.split('\n');
+  for (const line of lines) {
+    // Skip comment lines
+    if (commentLineRe.test(line)) continue;
+
+    // Remove CSS variable fallbacks from consideration
+    const lineWithoutFallbacks = line.replace(cssVarFallbackRe, '');
+
+    // Check if there are still hex colors
+    if (hexRe.test(lineWithoutFallbacks)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function walk(dir) {
   for (const entry of readdirSync(dir)) {
@@ -26,7 +49,7 @@ function walk(dir) {
       if (allowList.has(rel)) continue;
       if (/\.test\.(ts|tsx)$/.test(p)) continue;
       const text = readFileSync(p, 'utf8');
-      if (hexRe.test(text)) {
+      if (hasNonFallbackHex(text)) {
         problems.push(rel);
       }
     }
