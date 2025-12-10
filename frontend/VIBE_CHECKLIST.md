@@ -12,6 +12,9 @@ Never generate a component implementation without first confirming:
 3.  **UI States:** Have you planned for `Loading`, `Empty`, `Error`, and `Success`?
 
 ## 1. Design System Strict Mode
+*   **Aesthetic:** "VisionOS / Glassmorphism". Use `tokens.glass.main` for containers.
+*   **Motion:** "Everything flows." Lists must cascade in. Use `framer-motion` for entrances.
+*   **Typography:** Hierarchy is king. Use `tokens.typography` sizes.
 *   **Source of Truth:** Use `src/styles/theme.ts` and `src/styles/tokens.ts` for ALL styling.
 *   **Components:** prefer `@mui/material` components or our local `src/components/atoms`.
 *   **Spacing:** ONLY use `theme.spacing()`. NEVER use raw pixels (e.g., `margin: "15px"` is FORBIDDEN).
