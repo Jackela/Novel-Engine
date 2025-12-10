@@ -105,7 +105,12 @@ const CommandTopBar: React.FC<CommandTopBarProps> = ({
         </Stack>
 
         {/* Connection Icon */}
-        <Box data-testid="connection-status" display="flex" alignItems="center">
+        <Box 
+          data-testid="connection-status" 
+          data-status={isOnline ? 'online' : 'offline'}
+          display="flex" 
+          alignItems="center"
+        >
           {isOnline ? (
             <WifiIcon sx={{ fontSize: 18, color: tokens.colors.primary[500] }} />
           ) : (

@@ -1,5 +1,6 @@
-import React from 'react';
-import { Box } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, IconButton, useTheme, useMediaQuery } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import Sidebar from './Sidebar';
 import { tokens } from '@/styles/tokens';
 
@@ -8,6 +9,14 @@ interface CommandLayoutProps {
 }
 
 const CommandLayout: React.FC<CommandLayoutProps> = ({ children }) => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
   return (
     <Box
       sx={{
@@ -20,8 +29,33 @@ const CommandLayout: React.FC<CommandLayoutProps> = ({ children }) => {
       }}
       data-testid="dashboard-layout"
     >
-      {/* Global Sidebar (VisionOS Style) */}
-      <Sidebar />
+      {/* Mobile Menu Button - Floating */}
+      {isMobile && (
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          edge="start"
+          onClick={handleDrawerToggle}
+          sx={{
+            position: 'fixed',
+            left: 16,
+            bottom: 16, // Bottom left thumb-friendly
+            zIndex: 1300,
+            bgcolor: tokens.colors.primary[600],
+            color: 'white',
+            boxShadow: tokens.elevation.lg,
+            '&:hover': { bgcolor: tokens.colors.primary[700] }
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+      )}
+
+      {/* Global Sidebar */}
+      <Sidebar 
+        mobileOpen={mobileOpen} 
+        onMobileClose={() => setMobileOpen(false)} 
+      />
 
       {/* Main Content Area */}
       <Box 
@@ -32,8 +66,8 @@ const CommandLayout: React.FC<CommandLayoutProps> = ({ children }) => {
           position: 'relative', 
           width: '100%', 
           height: '100vh',
-          marginLeft: '80px', // Matches collapsed sidebar width
-          transition: 'margin-left 0.3s ease', // Smooth transition if we ever push content
+          marginLeft: isMobile ? 0 : '80px', // Matches collapsed sidebar width (0 on mobile)
+          transition: 'margin-left 0.3s ease',
           overflowY: 'auto',
           scrollBehavior: 'smooth',
           // Custom scrollbar

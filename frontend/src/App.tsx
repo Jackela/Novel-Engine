@@ -13,10 +13,14 @@ import { CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import theme from './styles/theme';
 import { store } from './store/store';
-// Route-based code splitting with React.lazy() (T050)
+// Route-based code splitting
 const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
-// import { useAppSelector } from './hooks/redux'; // Unused after auth refactor
+const CharactersPage = lazy(() => import('./pages/CharactersPage'));
+const StoriesPage = lazy(() => import('./pages/StoriesPage'));
+const CampaignsPage = lazy(() => import('./pages/CampaignsPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+
 import { initializeMobileOptimizations } from './utils/serviceWorkerRegistration';
 import { logger } from './services/logging/LoggerFactory';
 import { ErrorBoundary } from './components/error-boundaries/ErrorBoundary';
@@ -24,17 +28,16 @@ import { AuthProvider, useAuthContext } from './contexts/AuthContext';
 import { SkipLink } from './components/a11y';
 import { SkeletonDashboard } from './components/loading';
 import { usePerformance } from './hooks/usePerformance';
+import CommandLayout from './components/layout/CommandLayout'; // Import Layout
 import './styles/design-system.generated.css';
 import './styles/design-system.css';
 
-// Query client (React Query v3)
 const queryClient = new QueryClient();
 
-// Protected route wrapper (T051-T052: Dev bypass removed, uses AuthContext)
+// Protected route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuthContext();
   
-  // Show loading state while auth is initializing
   if (isLoading) {
     return (
       <div style={{ 
@@ -49,7 +52,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     );
   }
   
-  // T051: No dev mode bypass - authentication enforced in all environments
   if (!isAuthenticated) {
     logger.warn('Unauthenticated access to protected route, redirecting to landing', {
       component: 'ProtectedRoute',
@@ -61,23 +63,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// Loading fallback using SkeletonDashboard (T059)
+// Loading fallback
 const LoadingFallback: React.FC = () => <SkeletonDashboard />;
 
-const LoginPlaceholder: React.FC = () => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100vh',
-      background: 'var(--color-bg-primary)',
-    }}
-  >
-    <h2>Login Page (Not Yet Implemented)</h2>
-  </div>
-);
-
+// Root Shell (SkipLink + Outlet)
 const AppShell: React.FC = () => (
   <>
     <SkipLink targetId="main-content" text="Skip to main content" />
@@ -85,19 +74,19 @@ const AppShell: React.FC = () => (
   </>
 );
 
+// Layout Wrapper for Authenticated Routes (SSOT: Sidebar lives here)
+const LayoutWrapper: React.FC = () => (
+  <CommandLayout>
+    <Suspense fallback={<LoadingFallback />}>
+      <Outlet />
+    </Suspense>
+  </CommandLayout>
+);
+
 const appRouter = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<AppShell />}>
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback />}>
-              <Dashboard />
-            </Suspense>
-          </ProtectedRoute>
-        }
-      />
+      {/* Public Routes */}
       <Route
         path="/"
         element={
@@ -106,16 +95,31 @@ const appRouter = createBrowserRouter(
           </Suspense>
         }
       />
-      <Route path="/login" element={<LoginPlaceholder />} />
+      <Route 
+        path="/login" 
+        element={
+          <Suspense fallback={<LoadingFallback />}>
+            <LoginPage />
+          </Suspense>
+        } 
+      />
+
+      {/* Authenticated Routes with Persistent Sidebar */}
+      <Route element={<ProtectedRoute><LayoutWrapper /></ProtectedRoute>}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/campaigns" element={<CampaignsPage />} />
+        <Route path="/characters" element={<CharactersPage />} />
+        <Route path="/stories" element={<StoriesPage />} />
+      </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Route>
   ),
   {
-    // Future flags removed - using defaults for current react-router-dom version
+    // Future flags removed
   }
 );
 
-// Main App component with routing
 const AppRoutes: React.FC = () => {
   return (
     <RouterProvider
@@ -128,12 +132,9 @@ const AppRoutes: React.FC = () => {
   );
 };
 
-// Root App component
 const App: React.FC = () => {
-  // T075: Core Web Vitals tracking in production
   usePerformance({
     onMetric: (metric) => {
-      // Send to LoggerFactory for analytics
       logger.info('Web Vital metric', {
         name: metric.name,
         value: metric.value,
@@ -145,43 +146,11 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
-    // Initialize mobile optimizations
     initializeMobileOptimizations({
-      onSuccess: (_registration) => {
-        logger.info('Mobile optimizations: Service worker registered successfully');
-      },
-      onUpdate: (_registration) => {
-        logger.info('Mobile optimizations: Service worker updated');
-        // Optionally show update notification to user
-      },
-      onOfflineReady: () => {
-        logger.info('Mobile optimizations: App ready to work offline');
-      }
+      onSuccess: () => logger.info('Mobile optimizations: Service worker registered'),
+      onUpdate: () => logger.info('Mobile optimizations: Service worker updated'),
+      onOfflineReady: () => logger.info('Mobile optimizations: App ready to work offline')
     });
-
-    // Listen for mobile memory pressure events
-    const handleMemoryPressure = (event: CustomEvent) => {
-      logger.warn('Memory pressure detected:', event.detail);
-      // Could dispatch Redux action to trigger cleanup
-      store.dispatch({ type: '@@mobile-memory/FORCE_CLEANUP' });
-    };
-
-    // Listen for mobile connection changes
-    const handleConnectionChange = (event: CustomEvent) => {
-      logger.info('Connection changed:', event.detail);
-      // Could adjust app behavior based on connection quality
-      if (event.detail.saveData) {
-        logger.info('Data saver mode detected - reducing feature set');
-      }
-    };
-
-    window.addEventListener('mobile-memory-pressure', handleMemoryPressure as EventListener);
-    window.addEventListener('mobile-connection-change', handleConnectionChange as EventListener);
-
-    return () => {
-      window.removeEventListener('mobile-memory-pressure', handleMemoryPressure as EventListener);
-      window.removeEventListener('mobile-connection-change', handleConnectionChange as EventListener);
-    };
   }, []);
 
   return (

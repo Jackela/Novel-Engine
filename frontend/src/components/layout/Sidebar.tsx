@@ -6,8 +6,10 @@ import {
   Tooltip, 
   Stack, 
   Typography, 
-  useTheme, 
-  Avatar
+  useTheme,
+  Drawer,
+  useMediaQuery,
+  ButtonBase
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -31,28 +33,33 @@ const NAV_ITEMS = [
   { path: '/monitor', label: 'System', icon: <MonitorIcon /> },
 ];
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  return (
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    if (isMobile && onMobileClose) {
+      onMobileClose();
+    }
+  };
+
+  const SidebarContent = (
     <Box
-      component={motion.div}
-      initial={{ width: 80 }}
-      animate={{ width: isExpanded ? 240 : 80 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       sx={{
-        height: '100vh',
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        zIndex: 1200,
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        ...tokens.glass.main,
-        borderRight: tokens.glass.border,
+        ...(isMobile ? { bgcolor: tokens.colors.background.paper } : tokens.glass.main),
+        borderRight: isMobile ? 'none' : tokens.glass.border,
       }}
     >
       {/* Logo Area */}
@@ -72,30 +79,30 @@ const Sidebar: React.FC = () => {
             boxShadow: tokens.elevation.glow,
             cursor: 'pointer'
           }}
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => !isMobile && setIsExpanded(!isExpanded)}
         >
           <Typography variant="h6" fontWeight="bold" color="white">NE</Typography>
         </Box>
       </Box>
 
       {/* Navigation Items */}
-      <Stack spacing={1} sx={{ px: 2, mt: 4, flex: 1 }}>
+      <Stack spacing={1} sx={{ px: 2, mt: 4, flex: 1 }} role="navigation" aria-label="Main Navigation">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.path;
           return (
-            <Tooltip key={item.path} title={isExpanded ? '' : item.label} placement="right">
-              <Box
-                onClick={() => navigate(item.path)}
+            <Tooltip key={item.path} title={isExpanded && !isMobile ? '' : item.label} placement="right">
+              <ButtonBase
+                onClick={() => handleNavigate(item.path)}
                 sx={{
                   position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
+                  width: '100%',
                   height: 48,
                   borderRadius: 2,
-                  cursor: 'pointer',
-                  overflow: 'hidden',
                   px: 1.5,
                   color: isActive ? tokens.colors.primary[400] : tokens.colors.text.secondary,
+                  transition: 'all 0.2s',
                   '&:hover': {
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
                     color: tokens.colors.text.primary,
@@ -123,7 +130,7 @@ const Sidebar: React.FC = () => {
                 </Box>
 
                 <AnimatePresence>
-                  {isExpanded && (
+                  {(isExpanded || isMobile) && (
                     <motion.div
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -134,14 +141,14 @@ const Sidebar: React.FC = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </Box>
+              </ButtonBase>
             </Tooltip>
           );
         })}
       </Stack>
 
       {/* Bottom Actions */}
-      <Box sx={{ p: 2, borderTop: tokens.glass.border }}>
+      <Box sx={{ p: 2, borderTop: isMobile ? `1px solid ${tokens.colors.border.primary}` : tokens.glass.border }}>
         <Stack spacing={1}>
            <Tooltip title={isExpanded ? '' : 'Settings'} placement="right">
             <IconButton sx={{ color: tokens.colors.text.secondary }}>
@@ -156,25 +163,69 @@ const Sidebar: React.FC = () => {
         </Stack>
       </Box>
 
-       {/* Toggle Button (Absolute) */}
-       <IconButton
-        onClick={() => setIsExpanded(!isExpanded)}
-        sx={{
-          position: 'absolute',
-          right: -12,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: 24,
-          height: 24,
-          bgcolor: tokens.colors.background.paper,
-          border: `1px solid ${tokens.colors.border.primary}`,
-          zIndex: 1300,
-          '&:hover': { bgcolor: tokens.colors.primary[900] }
-        }}
-       >
-         {isExpanded ? <ChevronLeftIcon sx={{ fontSize: 16 }} /> : <ChevronRightIcon sx={{ fontSize: 16 }} />}
-       </IconButton>
+       {/* Toggle Button (Desktop Only) */}
+       {!isMobile && (
+         <IconButton
+          onClick={() => setIsExpanded(!isExpanded)}
+          sx={{
+            position: 'absolute',
+            right: -12,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 24,
+            height: 24,
+            bgcolor: tokens.colors.background.paper,
+            border: `1px solid ${tokens.colors.border.primary}`,
+            zIndex: 1300,
+            '&:hover': { bgcolor: tokens.colors.primary[900] }
+          }}
+          aria-label={isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}
+         >
+           {isExpanded ? <ChevronLeftIcon sx={{ fontSize: 16 }} /> : <ChevronRightIcon sx={{ fontSize: 16 }} />}
+         </IconButton>
+       )}
 
+    </Box>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={onMobileClose}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          '& .MuiDrawer-paper': { 
+            width: 240, 
+            boxSizing: 'border-box',
+            bgcolor: tokens.colors.background.default,
+            borderRight: `1px solid ${tokens.colors.border.primary}`
+          },
+        }}
+      >
+        {SidebarContent}
+      </Drawer>
+    );
+  }
+
+  return (
+    <Box
+      component={motion.div}
+      initial={{ width: 80 }}
+      animate={{ width: isExpanded ? 240 : 80 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      sx={{
+        height: '100vh',
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 1200,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {SidebarContent}
     </Box>
   );
 };
