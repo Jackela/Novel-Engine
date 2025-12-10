@@ -145,10 +145,7 @@ The Novel-Engine represents a sophisticated AI-enhanced interactive storytelling
 ### Code Duplication Analysis
 
 #### High-Priority Issues
-- **Agent Implementations**: Multiple persona agent variants
-  - `src/persona_agent.py` (3,377 lines)
-  - `src/agents/persona_agent_modular.py` 
-  - `src/agents/persona_agent_refactored.py`
+- **Agent Implementations**: Legacy variants removed; consolidate on `src/persona_agent.py` (3,377 lines)
 - **Database Access**: Repeated connection patterns across 96 files
 - **Configuration Loading**: Similar config patterns in multiple modules
 

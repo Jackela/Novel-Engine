@@ -576,6 +576,25 @@ When refactoring a component to this design system:
 
 ---
 
+## Vibe Coding: Atomic Inventory & Rules
+
+To ensure AI generation quality, strict adherence to this inventory is required.
+
+### Directory Mapping
+- **Atoms** (`src/components/ui/`): Fundamental building blocks. wrappers around MUI components.
+- **Molecules** (`src/components/common/`): Combinations of atoms. Search bars, basic cards.
+- **Organisms** (`src/features/*/components/`): Business-logic aware complex components.
+- **Templates/Layouts** (`src/components/layout/`): Page structures.
+
+### Forbidden Patterns (Strict Guardrails)
+1.  **Direct API Calls:** `fetch` or `axios` inside components is **BANNED**. Use hooks.
+2.  **Inline Magic Numbers:** `margin: "15px"` is **BANNED**. Use `theme.spacing(2)`.
+3.  **Hardcoded Hex Colors:** `#333` is **BANNED**. Use `theme.palette.text.primary`.
+4.  **Prop Drilling:** Passing props down > 3 levels. Use Context or Redux.
+5.  **Console Logs:** No `console.log` in production code.
+
+---
+
 ## Version History
 
 - **v1.0** (2025-01-XX): Initial SSOT creation
