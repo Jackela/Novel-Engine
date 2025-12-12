@@ -12,7 +12,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 // Mock child components to avoid complex dependencies
-vi.mock('@/components/dashboard/TurnPipelineStatus', () => ({
+vi.mock('../../../../../src/features/dashboard/TurnPipelineStatus', () => ({
   default: ({ loading, error, status, isLive }: { loading: boolean; error: boolean; status: string; isLive: boolean }) => (
     <div
       data-testid="turn-pipeline-status"
@@ -26,7 +26,7 @@ vi.mock('@/components/dashboard/TurnPipelineStatus', () => ({
   ),
 }));
 
-vi.mock('@/components/dashboard/RealTimeActivity', () => ({
+vi.mock('../../../../../src/features/dashboard/RealTimeActivity', () => ({
   default: ({ loading, error, density }: { loading: boolean; error: boolean; density: string }) => (
     <div
       data-testid="real-time-activity"
@@ -39,7 +39,7 @@ vi.mock('@/components/dashboard/RealTimeActivity', () => ({
   ),
 }));
 
-import EnginePanel from '@/components/dashboard/panels/EnginePanel';
+import EnginePanel from '../../../../../src/features/dashboard/panels/EnginePanel';
 
 describe('EnginePanel', () => {
   const defaultProps = {

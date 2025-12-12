@@ -17,8 +17,8 @@
  */
 
 import React, { Component, type ReactNode } from 'react';
-import { logger } from '../../services/logging/LoggerFactory';
-import type { ErrorBoundaryState, ErrorBoundaryProps } from '../../types/errors';
+import { logger } from '@/services/logging/LoggerFactory';
+import type { ErrorBoundaryState, ErrorBoundaryProps } from '@/types/errors';
 
 // ErrorInfo type definition (React's ErrorInfo is a type-only export)
 interface ErrorInfo {

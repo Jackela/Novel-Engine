@@ -14,7 +14,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import theme from './styles/theme';
 import { store } from './store/store';
 // Route-based code splitting
-const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
+const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const CharactersPage = lazy(() => import('./pages/CharactersPage'));
 const StoriesPage = lazy(() => import('./pages/StoriesPage'));
@@ -37,13 +37,13 @@ const queryClient = new QueryClient();
 // Protected route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuthContext();
-  
+
   if (isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         height: '100vh',
         background: 'var(--color-bg-primary)'
       }}>
@@ -51,7 +51,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
       </div>
     );
   }
-  
+
   if (!isAuthenticated) {
     logger.warn('Unauthenticated access to protected route, redirecting to landing', {
       component: 'ProtectedRoute',
@@ -59,7 +59,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     });
     return <Navigate to="/" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -95,13 +95,13 @@ const appRouter = createBrowserRouter(
           </Suspense>
         }
       />
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={
           <Suspense fallback={<LoadingFallback />}>
             <LoginPage />
           </Suspense>
-        } 
+        }
       />
 
       {/* Authenticated Routes with Persistent Sidebar */}

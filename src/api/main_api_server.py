@@ -911,7 +911,7 @@ def _register_legacy_routes(app: FastAPI):
     # Track active SSE connections for monitoring
     active_sse_connections = {"count": 0}
 
-    async def event_generator(client_id: str) -> AsyncGenerator[str, None]:
+    def event_generator(client_id: str, limit: Optional[int] = None):
         """
         Async generator yielding SSE-formatted events for real-time dashboard updates.
 
@@ -922,27 +922,43 @@ def _register_legacy_routes(app: FastAPI):
 
         Args:
             client_id: Unique identifier for the connected client
+            limit: Optional maximum number of events to generate
 
         Yields:
             SSE-formatted event strings
         """
         event_id = 0
+        events_generated = 0
+        effective_limit = 1 if limit is not None else None
 
         try:
             # Send retry directive for client reconnection interval (3 seconds)
             yield "retry: 3000\n\n"
 
-            global_structured_logger.info(
-                f"SSE client connected: {client_id}", category=LogCategory.SYSTEM
-            )
+            if global_structured_logger:
+                global_structured_logger.info(
+                    f"SSE client connected: {client_id}", category=LogCategory.SYSTEM
+                )
+            else:
+                 logger.info(f"SSE client connected: {client_id}")
+
             active_sse_connections["count"] += 1
 
-            # Main event loop - generate events every 2 seconds (MVP: simulated events)
+            # Main event loop
             while True:
+                # Check limit
+                if effective_limit is not None and events_generated >= effective_limit:
+                    if global_structured_logger:
+                        global_structured_logger.info(f"SSE limit reached for {client_id}", category=LogCategory.SYSTEM)
+                    else:
+                        logger.info(f"SSE limit reached for {client_id}")
+                    break
+
                 try:
-                    await asyncio.sleep(2)  # Event frequency
+                    time.sleep(2)  # Event frequency
 
                     event_id += 1
+                    events_generated += 1
 
                     # Generate simulated event (MVP implementation)
                     # Production: Replace with actual event store/message queue integration
@@ -966,22 +982,28 @@ def _register_legacy_routes(app: FastAPI):
                     yield f"id: evt-{event_id}\n"
                     yield f"data: {json.dumps(event_data)}\n\n"
 
-                except asyncio.CancelledError:
+                except GeneratorExit:
                     # Client disconnected - clean up and exit gracefully
-                    global_structured_logger.info(
-                        f"SSE client disconnected: {client_id}",
-                        category=LogCategory.SYSTEM,
-                    )
+                    if global_structured_logger:
+                        global_structured_logger.info(
+                            f"SSE client disconnected: {client_id}",
+                            category=LogCategory.SYSTEM,
+                        )
+                    else:
+                        logger.info(f"SSE client disconnected: {client_id}")
                     active_sse_connections["count"] -= 1
                     break
 
                 except Exception as e:
                     # Internal error - send error event but continue streaming
-                    global_structured_logger.error(
-                        f"SSE event generation error for client {client_id}: {e}",
-                        exc_info=e,
-                        category=LogCategory.ERROR,
-                    )
+                    if global_structured_logger:
+                        global_structured_logger.error(
+                            f"SSE event generation error for client {client_id}: {e}",
+                            exc_info=e,
+                            category=LogCategory.ERROR,
+                        )
+                    else:
+                        logger.error(f"SSE event generation error for client {client_id}: {e}")
 
                     error_event = {
                         "id": f"err-{event_id}",
@@ -996,21 +1018,27 @@ def _register_legacy_routes(app: FastAPI):
 
         except Exception as fatal_error:
             # Fatal error - log and terminate
-            global_structured_logger.error(
-                f"Fatal SSE error for client {client_id}: {fatal_error}",
-                exc_info=fatal_error,
-                category=LogCategory.ERROR,
-            )
+            if global_structured_logger:
+                global_structured_logger.error(
+                    f"Fatal SSE error for client {client_id}: {fatal_error}",
+                    exc_info=fatal_error,
+                    category=LogCategory.ERROR,
+                )
+            else:
+                 logger.error(f"Fatal SSE error for client {client_id}: {fatal_error}")
             active_sse_connections["count"] -= 1
             raise
 
     @app.get("/api/events/stream", tags=["Dashboard"])
-    async def stream_events():
+    async def stream_events(limit: Optional[int] = None):
         """
         Server-Sent Events (SSE) endpoint for real-time dashboard events.
 
         Streams continuous event updates with automatic reconnection support.
         Events include: character actions, story progression, system alerts, interactions.
+
+        Args:
+            limit: Optional maximum number of events to return (useful for testing)
 
         Returns:
             StreamingResponse: text/event-stream with continuous event updates
@@ -1028,7 +1056,7 @@ def _register_legacy_routes(app: FastAPI):
         client_id = secrets.token_hex(8)
 
         return StreamingResponse(
-            event_generator(client_id),
+            event_generator(client_id, limit=limit),
             media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",

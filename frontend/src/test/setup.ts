@@ -7,6 +7,21 @@ if (typeof globalThis.self === 'undefined') {
   (globalThis as any).self = globalThis;
 }
 
+// Polyfills
+if (typeof window !== 'undefined') {
+  window.scrollTo = vi.fn();
+}
+
+global.EventSource = vi.fn(() => ({
+  onmessage: null,
+  onopen: null,
+  onerror: null,
+  close: vi.fn(),
+  CONNECTING: 0,
+  OPEN: 1,
+  CLOSED: 2,
+})) as any;
+
 // Global test setup for Novel Engine frontend tests
 
 // Track cleanup functions for proper test isolation
@@ -46,7 +61,7 @@ class MockWebSocket {
 
   constructor(url: string) {
     this.url = url;
-    
+
     // Simulate async connection behavior
     setTimeout(() => {
       this.readyState = MockWebSocket.OPEN;
@@ -120,7 +135,7 @@ vi.mock('axios', () => ({
       get: vi.fn(() => Promise.resolve({
         data: {
           api: 'healthy',
-          config: 'loaded', 
+          config: 'loaded',
           version: '1.0.0',
         },
       })),
@@ -193,10 +208,10 @@ console.warn = (...args: any[]) => {
   // Filter out specific warnings that are expected in test environment
   const message = args[0];
   if (
-    typeof message === 'string' && 
+    typeof message === 'string' &&
     (message.includes('ReactDOMTestUtils.act') ||
-     message.includes('validateDOMNesting') ||
-     message.includes('WebSocket'))
+      message.includes('validateDOMNesting') ||
+      message.includes('WebSocket'))
   ) {
     return;
   }

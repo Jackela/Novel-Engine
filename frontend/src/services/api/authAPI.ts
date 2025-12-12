@@ -1,6 +1,6 @@
 import { apiClient, handleAPIResponse, handleAPIError } from './apiClient';
 import type { BaseAPIResponse } from './apiClient';
-import type { User } from '../../store/slices/authSlice';
+import type { User } from '@/store/slices/authSlice';
 
 // Authentication request/response types based on OpenAPI spec
 export interface LoginRequest {
@@ -202,7 +202,7 @@ export class AuthAPI {
       // TODO: Implement get current user endpoint when available
       // const response = await apiClient.get('/auth/me');
       // return handleAPIResponse(response);
-      
+
       throw new Error('Get current user not yet implemented');
     } catch (error) {
       return handleAPIError(error);

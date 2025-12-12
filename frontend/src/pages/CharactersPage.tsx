@@ -1,5 +1,5 @@
 import React from 'react';
-import CharacterStudio from '../components/features/characters';
+import CharacterStudio from '../features/characters';
 
 const CharactersPage: React.FC = () => {
   return (

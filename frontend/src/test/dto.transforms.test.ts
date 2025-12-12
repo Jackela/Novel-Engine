@@ -1,20 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import api from '../services/api';
-// Access private transform methods for test via 'any' escape on exported singleton
-const getTransforms = () => {
-  const instance: any = api; // singleton instance
-  return {
-    transformCharacterResponse: instance.transformCharacterResponse.bind(instance),
-    extractStatsFromData: instance.extractStatsFromData.bind(instance),
-    extractEquipmentFromData: instance.extractEquipmentFromData.bind(instance),
-    transformEnhancedCharacterResponse: instance.transformEnhancedCharacterResponse.bind(instance),
-    transformSimulationResponse: instance.transformSimulationResponse.bind(instance),
-  };
-};
+import {
+  extractStatsFromData,
+  extractEquipmentFromData,
+  transformCharacterResponse,
+  transformEnhancedCharacterResponse,
+  transformSimulationResponse
+} from '../services/dtoTransforms';
 
 describe('DTO transforms', () => {
   it('extracts default stats when structured data is missing', () => {
-    const { extractStatsFromData } = getTransforms();
     const stats = extractStatsFromData(undefined);
     expect(stats).toMatchObject({
       strength: 5,
@@ -27,7 +21,6 @@ describe('DTO transforms', () => {
   });
 
   it('extracts equipment items from structured data', () => {
-    const { extractEquipmentFromData } = getTransforms();
     const items = extractEquipmentFromData({
       equipment: {
         primary_weapon: 'Rifle',
@@ -39,7 +32,6 @@ describe('DTO transforms', () => {
   });
 
   it('transforms character response with fallback fields', () => {
-    const { transformCharacterResponse } = getTransforms();
     const res = transformCharacterResponse({
       name: 'Aria',
       structured_data: { combat_stats: { strength: 7 } },
@@ -49,7 +41,6 @@ describe('DTO transforms', () => {
   });
 
   it('transforms enhanced character response with equipment and fallback role', () => {
-    const { transformEnhancedCharacterResponse } = getTransforms();
     const res = transformEnhancedCharacterResponse({
       character_id: 'c1',
       name: 'Kael',
@@ -65,7 +56,6 @@ describe('DTO transforms', () => {
   });
 
   it('transforms simulation response to StoryProject structure', () => {
-    const { transformSimulationResponse } = getTransforms();
     const story = transformSimulationResponse(
       { story: 'Once upon a time', turns_executed: 3, duration_seconds: 2, participants: ['Aria'] },
       { title: 'Test', description: 'Desc', characters: ['Aria'], settings: { turns: 3, narrativeStyle: 'concise', genre: 'test', tone: 'dramatic', environment: 'test', objectives: [] } }

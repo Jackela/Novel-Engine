@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from contexts.knowledge.domain.events.knowledge_entry_updated import (
@@ -59,6 +59,8 @@ class KnowledgeEntry:
         if not updated_by:
             raise ValueError("updated_by is required")
         timestamp = datetime.now(timezone.utc)
+        if timestamp <= self.updated_at:
+            timestamp = self.updated_at + timedelta(microseconds=1)
         object.__setattr__(self, "content", new_content)
         object.__setattr__(self, "updated_at", timestamp)
         return KnowledgeEntryUpdated(

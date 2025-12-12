@@ -10,7 +10,7 @@
  */
 
 import type { Middleware } from '@reduxjs/toolkit';
-import type { RootState } from '../store';
+import type { RootState } from '@/store/store';
 
 // Mobile memory limits
 const MOBILE_MEMORY_LIMITS = {
@@ -25,7 +25,7 @@ const MOBILE_MEMORY_LIMITS = {
 // Track memory-sensitive slices
 const MONITORED_SLICES = [
   'characters',
-  'stories', 
+  'stories',
   'campaigns',
   'dashboard'
 ] as const;
@@ -57,7 +57,7 @@ class MobileMemoryManager {
 
   // LRU cleanup for arrays
   cleanupArray<T extends { id?: string; timestamp?: number; createdAt?: string | Date }>(
-    items: T[], 
+    items: T[],
     maxSize: number
   ): T[] {
     if (items.length <= maxSize) return items;
@@ -80,11 +80,11 @@ class MobileMemoryManager {
         return {
           ...s,
           characters: this.cleanupArray(
-            (s as Record<string, unknown>).characters as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
+            (s as Record<string, unknown>).characters as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [],
             MOBILE_MEMORY_LIMITS.MAX_CHARACTERS
           ),
           recentActivity: this.cleanupArray(
-            (s as Record<string, unknown>).recentActivity as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
+            (s as Record<string, unknown>).recentActivity as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [],
             100
           )
         };
@@ -93,11 +93,11 @@ class MobileMemoryManager {
         return {
           ...s,
           stories: this.cleanupArray(
-            (s as Record<string, unknown>).stories as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
+            (s as Record<string, unknown>).stories as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [],
             MOBILE_MEMORY_LIMITS.MAX_STORIES
           ),
           history: this.cleanupArray(
-            (s as Record<string, unknown>).history as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
+            (s as Record<string, unknown>).history as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [],
             MOBILE_MEMORY_LIMITS.MAX_HISTORY_ITEMS
           )
         };
@@ -106,7 +106,7 @@ class MobileMemoryManager {
         return {
           ...s,
           campaigns: this.cleanupArray(
-            (s as Record<string, unknown>).campaigns as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
+            (s as Record<string, unknown>).campaigns as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [],
             MOBILE_MEMORY_LIMITS.MAX_CAMPAIGNS
           )
         };
@@ -115,17 +115,17 @@ class MobileMemoryManager {
         return {
           ...s,
           events: this.cleanupArray(
-            (s as Record<string, unknown>).events as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
+            (s as Record<string, unknown>).events as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [],
             MOBILE_MEMORY_LIMITS.MAX_DASHBOARD_EVENTS
           ),
           notifications: this.cleanupArray(
-            (s as Record<string, unknown>).notifications as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
+            (s as Record<string, unknown>).notifications as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [],
             50
           ),
           metrics: {
             ...(s as Record<string, unknown>).metrics as Record<string, unknown>,
             history: this.cleanupArray(
-              ((s as Record<string, unknown>).metrics as Record<string, unknown>)?.history as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [], 
+              ((s as Record<string, unknown>).metrics as Record<string, unknown>)?.history as Array<{ id?: string; timestamp?: number; createdAt?: string | Date }> || [],
               200
             )
           }
@@ -140,16 +140,16 @@ class MobileMemoryManager {
 const memoryManager = new MobileMemoryManager();
 
 // Mobile memory middleware
-export const mobileMemoryMiddleware: Middleware<{}, RootState> = 
+export const mobileMemoryMiddleware: Middleware<{}, RootState> =
   (storeAPI) => (next) => (action) => {
-    
+
     // Process the action first
     const result = next(action);
 
     // Check if cleanup is needed
     if (memoryManager.shouldCleanup() || memoryManager.isMemoryPressure()) {
       const state = storeAPI.getState();
-      
+
       // Check if any slice needs cleanup
       let needsCleanup = false;
       const cleanedSlices: Partial<RootState> = {};
@@ -158,11 +158,11 @@ export const mobileMemoryMiddleware: Middleware<{}, RootState> =
         const sliceState = state[sliceName];
         if (sliceState) {
           const cleanedState = memoryManager.cleanupSlice(sliceState, sliceName);
-          
+
           // Check if cleanup made changes
           const originalSize = JSON.stringify(sliceState).length;
           const cleanedSize = JSON.stringify(cleanedState).length;
-          
+
           if (cleanedSize < originalSize) {
             cleanedSlices[sliceName] = cleanedState;
             needsCleanup = true;

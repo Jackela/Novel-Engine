@@ -308,6 +308,14 @@ class CharacterInterpreter:
                         if key not in self.character_data:
                             self.character_data[key] = value
 
+            # Prefer structured YAML "character" section for core identity fields.
+            character_section = self.character_data.get("character")
+            if isinstance(character_section, dict):
+                for field in ("name", "faction", "specialization", "role", "rank"):
+                    value = character_section.get(field)
+                    if value:
+                        self.character_data[field] = value
+
         except Exception as e:
             logger.error(f"Error merging YAML data: {str(e)}")
 

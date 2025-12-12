@@ -30,14 +30,14 @@ from src.config.character_factory import CharacterFactory
 from src.agents.chronicler_agent import ChroniclerAgent
 from config_loader import get_config
 from src.agents.director_agent import DirectorAgent
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-# Removed stale import: _validate_gemini_api_key, _make_gemini_api_request no longer exist
+
 from src.event_bus import EventBus
 from src.metrics.global_metrics import metrics as global_metrics
 from src.caching.registry import invalidate_by_tags
@@ -115,113 +115,45 @@ def _get_characters_directory_path() -> str:
 
 DEFAULT_CHARACTERS_PATH = os.path.abspath(_get_characters_directory_path())
 
-
-class HealthResponse(BaseModel):
-    message: str
-    status: Optional[str] = None
-    timestamp: Optional[str] = None
-
-
-class ErrorResponse(BaseModel):
-    error: str
-    detail: str
-
-
-class CharactersListResponse(BaseModel):
-    characters: List[str]
-
-
-class SimulationRequest(BaseModel):
-    character_names: List[str] = Field(..., min_length=2, max_length=6)
-    turns: Optional[int] = Field(None, ge=1, le=10)
-    setting: Optional[str] = None
-    scenario: Optional[str] = None
+def _structured_defaults(
+    name: str,
+    specialization: str = "Unknown",
+    faction: str = "Independent",
+) -> Dict[str, Any]:
+    return {
+        "stats": {
+            "character": {
+                "name": name,
+                "specialization": specialization,
+                "faction": faction,
+            }
+        },
+        "combat_stats": {},
+        "equipment": {"items": []},
+    }
 
 
-class SimulationResponse(BaseModel):
-    story: str
-    participants: List[str]
-    turns_executed: int
-    duration_seconds: float
-
-
-class CharacterDetailResponse(BaseModel):
-    """Response model for detailed character information."""
-
-    character_id: str
-    character_name: str
-    name: str
-    background_summary: str
-    personality_traits: str
-    current_status: str
-    narrative_context: str
-    skills: Dict[str, float] = Field(default_factory=dict)
-    relationships: Dict[str, float] = Field(default_factory=dict)
-    current_location: str = ""
-    inventory: List[str] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    structured_data: Dict[str, Any] = Field(default_factory=dict)
-
-
-class FileCount(BaseModel):
-    """Response model for file count information."""
-
-    count: int
-    file_type: str
-
-
-class CampaignsListResponse(BaseModel):
-    """Response model for campaigns list."""
-
-    campaigns: List[str]
-
-
-class CampaignCreationRequest(BaseModel):
-    """Request model for campaign creation."""
-
-    name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=1000)
-    participants: List[str] = Field(..., min_length=1)
-
-
-class CampaignCreationResponse(BaseModel):
-    """Response model for campaign creation."""
-
-    campaign_id: str
-    name: str
-    status: str
-    created_at: str
-
-
-# ===================================================================
-# Authentication Request/Response Models [SEC-001]
-# ===================================================================
-
-class LoginRequest(BaseModel):
-    """Request model for user login."""
-    email: str = Field(..., description="User email address")
-    password: str = Field(..., description="User password")
-    remember_me: bool = Field(default=False, description="Whether to extend session duration")
-
-
-class AuthResponse(BaseModel):
-    """Response model for authentication endpoints."""
-    access_token: str = Field(..., description="JWT access token (for backward compatibility)")
-    refresh_token: str = Field(..., description="JWT refresh token (for backward compatibility)")
-    token_type: str = Field(default="Bearer", description="Token type")
-    expires_in: int = Field(..., description="Token expiry time in seconds")
-    user: Dict[str, Any] = Field(..., description="User information")
-
-
-class RefreshTokenRequest(BaseModel):
-    """Request model for token refresh."""
-    refresh_token: str = Field(..., description="Refresh token")
-
-
-class CSRFTokenResponse(BaseModel):
-    """Response model for CSRF token endpoint."""
-    csrf_token: str = Field(..., description="CSRF token for state-changing requests")
-
+from src.core.service_container import ServiceContainer, get_service_container
+from src.core.system_orchestrator import SystemOrchestrator, OrchestratorConfig
+from src.services.api_service import ApiOrchestrationService
+from src.api.schemas import (
+    HealthResponse,
+    ErrorResponse,
+    CharactersListResponse,
+    SimulationRequest,
+    SimulationResponse,
+    CharacterDetailResponse,
+    FileCount,
+    CampaignsListResponse,
+    CampaignCreationRequest,
+    CampaignCreationResponse,
+    LoginRequest,
+    AuthResponse,
+    RefreshTokenRequest,
+    CSRFTokenResponse,
+    InvalidationRequest,
+    ChunkInRequest
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -229,207 +161,74 @@ async def lifespan(app: FastAPI):
     logger.info("Starting StoryForge AI API server...")
     try:
         # Validate configuration during startup
-        get_config()
+        config = get_config()
         logger.info("Configuration loaded successfully")
 
-        # Setup EventBus-SSE bridge for real-time dashboard events
-        # This is done late (after imports) to avoid circular dependency
+        # Initialize Service Container
+        container = get_service_container()
+
+        # Setup EventBus
         try:
             from src.event_bus import EventBus as EventBusClass
             global_event_bus = EventBusClass()
             app.state.event_bus = global_event_bus
-            # Note: setup_eventbus_sse_bridge will be called after it's defined
-            logger.info("Global EventBus initialized for SSE integration")
+            
+            # Register Global EventBus in Container
+            container.register_singleton(EventBusClass, global_event_bus)
+            logger.info("Global EventBus initialized and registered")
         except Exception as bus_error:
-            logger.warning(f"Could not initialize EventBus for SSE: {bus_error}")
+            logger.warning(f"Could not initialize EventBus: {bus_error}")
+            global_event_bus = None
+
+        # Initialize System Orchestrator (Functional Core)
+        try:
+            orchestrator = SystemOrchestrator(
+                event_bus=global_event_bus,
+                config=OrchestratorConfig(debug_logging=True)
+            )
+            await orchestrator.startup()
+            container.register_singleton(SystemOrchestrator, orchestrator)
+            logger.info("System Orchestrator initialized")
+        except Exception as orch_error:
+            logger.error(f"Failed to initialize SystemOrchestrator: {orch_error}")
+            # We continue, but orchestration might fail
+            orchestrator = None
+
+        # Initialize API Service (Imperative Shell Bridge)
+        if orchestrator and global_event_bus:
+            character_factory = CharacterFactory(global_event_bus)
+            api_service = ApiOrchestrationService(orchestrator, global_event_bus, character_factory)
+            container.register_singleton(ApiOrchestrationService, api_service)
+            app.state.api_service = api_service
+            logger.info("ApiOrchestrationService initialized")
+        else:
+            logger.warning("ApiOrchestrationService skipped due to missing dependencies")
+            app.state.api_service = None
 
     except Exception as e:
         logger.error(f"Configuration error during startup: {e}")
         raise e
+    
     yield
+    
     logger.info("Shutting down StoryForge AI API server.")
+    # Shutdown services
+    try:
+        container = get_service_container()
+        # await container.shutdown_all_services() # If we fully implemented container lifecycle
+        if hasattr(app.state, 'api_service') and app.state.api_service:
+            await app.state.api_service.stop_simulation()
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}")
 
 
 API_START_TIME = datetime.now(UTC)
-
-GENERIC_CHARACTER_DEFS: Dict[str, Dict[str, Any]] = {
-    "pilot": {
-        "character_name": "pilot",
-        "display_name": "Alex Chen",
-        "narrative_context": (
-            "Alex Chen, an Elite Starfighter Pilot with the Galactic Defense Force,"
-            " leads the response wing protecting Meridian Station."
-        ),
-        "structured_data": {
-            "stats": {
-                "character": {
-                    "name": "Alex Chen",
-                    "faction": "Galactic Defense Force",
-                    "specialization": "Starfighter Pilot",
-                },
-                "combat_stats": {"attack": 78, "defense": 72, "agility": 88},
-            }
-        },
-        "enhanced_context": {
-            "psychological_profile": {
-                "discipline": "Ace pilot with meditation rituals",
-                "primary_drive": "Keep the station's civilians safe",
-            },
-            "tactical_analysis": {
-                "preferred_assets": ["Interceptor squad", "docking bay 4"],
-                "signature_maneuver": "Nova Vortex evasive pattern",
-            },
-        },
-    },
-    "scientist": {
-        "character_name": "scientist",
-        "display_name": "Dr. Maya Patel",
-        "narrative_context": (
-            "Dr. Maya Patel, lead Xenobiology Researcher at the Scientific Research Institute,"
-            " documents the newly discovered crystalline spores."
-        ),
-        "structured_data": {
-            "stats": {
-                "character": {
-                    "name": "Dr. Maya Patel",
-                    "faction": "Scientific Research Institute",
-                    "specialization": "Xenobiology Research",
-                },
-                "combat_stats": {"analysis": 90, "survival": 68, "support": 74},
-            }
-        },
-        "enhanced_context": {
-            "psychological_profile": {
-                "discipline": "Methodical, curiosity-driven",
-                "primary_drive": "Decode alien ecosystems",
-            },
-            "tactical_analysis": {
-                "preferred_assets": ["Mobile lab", "sensor drones"],
-                "signature_maneuver": "Rapid containment protocol",
-            },
-        },
-    },
-    "engineer": {
-        "character_name": "engineer",
-        "display_name": "Jordan Kim",
-        "narrative_context": (
-            "Systems Engineer Jordan Kim keeps the Engineering Corps' plasma conduits stable"
-            " while mentoring new recruits."
-        ),
-        "structured_data": {
-            "stats": {
-                "character": {
-                    "name": "Jordan Kim",
-                    "faction": "Engineering Corps",
-                    "specialization": "Systems Engineer",
-                },
-                "combat_stats": {"repair": 92, "defense": 65, "tactics": 70},
-            }
-        },
-        "enhanced_context": {
-            "psychological_profile": {
-                "discipline": "Pragmatic problem-solver",
-                "primary_drive": "Keep the station running",
-            },
-            "tactical_analysis": {
-                "preferred_assets": ["Fabrication lab", "drone swarm"],
-                "signature_maneuver": "Adaptive reroute protocol",
-            },
-        },
-    },
-    "test": {
-        "character_name": "test",
-        "display_name": "Synthetic Liaison Unit",
-        "narrative_context": (
-            "The Synthetic Liaison Unit coordinates pilot, scientist, and engineer briefs"
-            " to maintain neutral oversight."
-        ),
-        "structured_data": {
-            "stats": {
-                "character": {
-                    "name": "Synthetic Liaison Unit",
-                    "faction": "Meridian Command",
-                    "specialization": "Operations Liaison",
-                },
-                "combat_stats": {"analysis": 85, "coordination": 88, "support": 80},
-            }
-        },
-        "enhanced_context": {
-            "psychological_profile": {
-                "discipline": "Emotionally detached analyst",
-                "primary_drive": "Collect balanced intel",
-            },
-            "tactical_analysis": {
-                "preferred_assets": ["Observation decks"],
-                "signature_maneuver": "Multi-threaded briefing",
-            },
-        },
-    },
-}
 
 
 def _uptime_seconds() -> float:
     return (datetime.now(UTC) - API_START_TIME).total_seconds()
 
 
-def _sanitize_text(text: Optional[str]) -> str:
-    if not text:
-        return ""
-    cleaned = html.unescape(text)
-    cleaned = re.sub(r"[<>'\";]", " ", cleaned)
-    cleaned = re.sub(
-        r"drop\s+table", "neutralized operation", cleaned, flags=re.IGNORECASE
-    )
-    cleaned = re.sub(r"\s+", " ", cleaned)
-    return cleaned.strip()
-
-
-class GenericPersonaAgent:
-    def __init__(self, character_id: str, data: Dict[str, Any]):
-        self.agent_id = character_id
-        self.agent_type = "generic"
-        self.character_name = data["character_name"]
-        self.character = SimpleNamespace(
-            name=data["display_name"],
-            background_summary=data["narrative_context"],
-            personality_traits="Resourceful and adaptable",
-            current_status="Active",
-            narrative_context=data["narrative_context"],
-            skills={"strategy": 0.8, "teamwork": 0.9},
-            relationships={},
-            current_location="Meridian Station",
-            inventory=["standard field kit"],
-            metadata={"structured_data": data["structured_data"]},
-        )
-        self.character_data = {"name": data["display_name"]}
-
-
-def _build_generic_story(request: SimulationRequest) -> str:
-    setting = _sanitize_text(request.setting) or "stellar patrol corridor"
-    scenario = _sanitize_text(request.scenario) or "critical mission"
-    crew = ", ".join(request.character_names)
-    segments = [
-        f"Within the {setting}, {crew} aligned their orbital vectors with Meridian Station's docking halo.",
-        f"Their objective centered on {scenario}, threading a course past nebular lightning, gravity shears, and drifting research buoys.",
-        "Spectral scanners painted cosmic lattices across the hull while telemetry panels whispered about unknown signals in the Perseus Spur.",
-        "They catalogued auroras, decoded encrypted beacons, and reassured remote habitats that the Galactic Defense Forces still guarded the frontier.",
-        "Every log entry emphasized collaboration, innovation, and the belief that science and defense thrive together among the stars.",
-    ]
-    return " ".join(segments)
-
-
-def _structured_defaults(
-    name: str, specialization: str = "Unknown", faction: str = "Independent"
-) -> Dict[str, Any]:
-    return {
-        "stats": {
-            "character": {
-                "name": name,
-                "faction": faction,
-                "specialization": specialization,
-            }
-        }
-    }
 
 
 app = FastAPI(
@@ -442,25 +241,28 @@ app = FastAPI(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
 @app.middleware("http")
-async def global_options_handler(request: Request, call_next):
+async def _cors_preflight_middleware(request: Request, call_next):
     if request.method == "OPTIONS":
-        headers = {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Max-Age": "86400",
-        }
-        return Response(status_code=204, headers=headers)
-    response = await call_next(request)
-    return response
+        return Response(
+            status_code=204,
+            headers={
+                "Access-Control-Allow-Origin": "http://localhost:3000",
+                "Access-Control-Allow-Methods": "*",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Credentials": "true",
+            },
+        )
+    return await call_next(request)
+
+
+
 
 # Include World Context Router
 if WORLD_ROUTER_AVAILABLE:
@@ -561,8 +363,6 @@ async def fastapi_exception_handler(request: Request, exc: HTTPException):
     )
 
 
-class InvalidationRequest(BaseModel):
-    all_of: List[str]
 
 
 @app.get("/cache/metrics")
@@ -584,11 +384,6 @@ async def cache_invalidate(req: InvalidationRequest) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"invalidation error: {e}")
         raise HTTPException(status_code=500, detail="invalidation error")
-
-
-class ChunkInRequest(BaseModel):
-    seq: int
-    data: str
 
 
 @app.post("/cache/chunk/{key}")
@@ -699,504 +494,115 @@ async def system_status() -> Dict[str, Any]:
     }
 
 
-# Global orchestration state for pipeline status tracking
-_orchestration_state: Dict[str, Any] = {
-    "current_turn": 0,
-    "total_turns": 0,
-    "queue_length": 0,
-    "average_processing_time": 0.0,
-    "status": "idle",  # idle, running, paused, stopped
-    "steps": [],
-    "last_updated": None,
-}
 
-# Orchestration executor and task management
-_orchestration_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="orch_")
-_orchestration_lock = threading.Lock()
-_orchestration_stop_flag = threading.Event()
-
-# Generated narrative storage
-_generated_narrative: Dict[str, Any] = {
-    "story": "",
-    "log_path": "",
-    "participants": [],
-    "turns_completed": 0,
-    "last_generated": None,
-}
+# Validated orchestration state and background runner removed in favor of ApiOrchestrationService.
+# Use app.state.api_service for relevant functionality.
 
 
-def _run_orchestration_background(
-    character_names: List[str],
-    total_turns: int,
-    start_turn: int = 1
-) -> None:
-    """
-    Run story generation in a background thread.
-    This function is synchronous and runs DirectorAgent.run_turn() for each turn.
-    """
-    global _orchestration_state, _generated_narrative
-
-    logger.info(f"Starting real orchestration with characters: {character_names}, turns: {total_turns}")
-
-    # Reset stop flag
-    _orchestration_stop_flag.clear()
-
-    try:
-        # Initialize components
-        event_bus = EventBus()
-        character_factory = CharacterFactory(event_bus)
-
-        # Setup SSE bridge to broadcast events to dashboard
-        setup_eventbus_sse_bridge(event_bus)
-
-        # Create agents for each character
-        agents = []
-        for name in character_names:
-            try:
-                agent = character_factory.create_character(name)
-                agents.append(agent)
-                logger.info(f"Created agent for character: {name}")
-
-                # Broadcast character creation event
-                broadcast_sse_event(create_sse_event(
-                    event_type="character",
-                    title=f"Agent Created: {name}",
-                    description=f"Character agent {name} initialized for story generation",
-                    severity="low",
-                    character_name=name
-                ))
-            except Exception as e:
-                logger.error(f"Failed to create agent for {name}: {e}")
-                broadcast_sse_event(create_sse_event(
-                    event_type="system",
-                    title=f"Agent Creation Failed",
-                    description=f"Could not create agent for {name}: {str(e)}",
-                    severity="high"
-                ))
-
-        if not agents:
-            raise ValueError("No agents could be created")
-
-        # Generate unique log path
-        log_path = f"logs/orchestration_{uuid.uuid4().hex[:8]}.md"
-        os.makedirs("logs", exist_ok=True)
-
-        # Initialize director and register agents
-        director = DirectorAgent(event_bus, campaign_log_path=log_path)
-        for agent in agents:
-            director.register_agent(agent)
-
-        # Update state
-        with _orchestration_lock:
-            _orchestration_state["queue_length"] = len(agents)
-            _generated_narrative["log_path"] = log_path
-            _generated_narrative["participants"] = character_names
-
-        # Broadcast start event
-        broadcast_sse_event(create_sse_event(
-            event_type="system",
-            title="Orchestration Started",
-            description=f"Beginning story generation with {len(agents)} characters for {total_turns} turns",
-            severity="medium"
-        ))
-
-        # Execute simulation turns
-        turn_times = []
-        for turn_num in range(start_turn, start_turn + total_turns):
-            # Check for stop signal
-            if _orchestration_stop_flag.is_set():
-                logger.info("Orchestration stopped by user")
-                break
-
-            turn_start = time.time()
-
-            # Update state for this turn
-            with _orchestration_lock:
-                _orchestration_state["current_turn"] = turn_num
-                _orchestration_state["steps"] = _get_default_pipeline_steps()
-                _orchestration_state["steps"][0]["status"] = "processing"
-                _orchestration_state["steps"][0]["progress"] = 25
-
-            # Broadcast turn start event
-            broadcast_sse_event(create_sse_event(
-                event_type="story",
-                title=f"Turn {turn_num}/{total_turns}",
-                description=f"Processing turn {turn_num}",
-                severity="low"
-            ))
-
-            try:
-                logger.info(f"Executing turn {turn_num}/{total_turns}")
-
-                # Update step progress
-                with _orchestration_lock:
-                    _orchestration_state["steps"][1]["status"] = "processing"
-                    _orchestration_state["steps"][1]["progress"] = 50
-
-                # Actually run the turn (this calls the LLM)
-                turn_result = director.run_turn()
-
-                # Mark steps as completed
-                with _orchestration_lock:
-                    for step in _orchestration_state["steps"]:
-                        step["status"] = "completed"
-                        step["progress"] = 100
-
-                turn_duration = time.time() - turn_start
-                turn_times.append(turn_duration)
-
-                # Update average processing time
-                with _orchestration_lock:
-                    _orchestration_state["average_processing_time"] = sum(turn_times) / len(turn_times)
-                    _generated_narrative["turns_completed"] = turn_num
-
-                # Broadcast turn completion
-                broadcast_sse_event(create_sse_event(
-                    event_type="story",
-                    title=f"Turn {turn_num} Completed",
-                    description=f"Turn completed in {turn_duration:.2f}s",
-                    severity="low"
-                ))
-
-                # === DECISION POINT DETECTION ===
-                # Check for user interaction points if decision system is available
-                if DECISION_ROUTER_AVAILABLE and _decision_detector and _decision_pause_controller:
-                    try:
-                        # Build narrative context from recent story
-                        narrative_context = ""
-                        if _generated_narrative.get("story"):
-                            # Use last 500 chars as context
-                            narrative_context = _generated_narrative["story"][-500:]
-
-                        # Analyze turn result for decision point
-                        decision_point = _decision_detector.analyze_turn(
-                            turn_number=turn_num,
-                            turn_result=turn_result if isinstance(turn_result, dict) else {},
-                            narrative_context=narrative_context,
-                            characters=[{"name": n} for n in character_names],
-                        )
-
-                        if decision_point:
-                            logger.info(f"Decision point detected at turn {turn_num}: {decision_point.title}")
-
-                            # Broadcast decision point to frontend
-                            broadcast_sse_event({
-                                "id": f"decision-{decision_point.decision_id}",
-                                "type": "decision_required",
-                                "title": decision_point.title,
-                                "description": decision_point.description,
-                                "severity": "high",
-                                "timestamp": decision_point.created_at.isoformat(),
-                                "data": decision_point.to_dict(),
-                            })
-
-                            # Pause and wait for user decision (blocking with timeout)
-                            try:
-                                user_decision = asyncio.run(
-                                    _decision_pause_controller.pause_for_decision(decision_point)
-                                )
-                                if user_decision:
-                                    logger.info(f"User decision received: {user_decision.input_type}")
-                                    # User decision can influence next turn via world state
-                                    # Store in generated narrative for context
-                                    with _orchestration_lock:
-                                        if "user_decisions" not in _generated_narrative:
-                                            _generated_narrative["user_decisions"] = []
-                                        _generated_narrative["user_decisions"].append({
-                                            "turn": turn_num,
-                                            "decision_id": decision_point.decision_id,
-                                            "input_type": user_decision.input_type,
-                                            "selected_option_id": user_decision.selected_option_id,
-                                            "free_text": user_decision.free_text,
-                                        })
-                                else:
-                                    logger.info("Decision point skipped/timed out")
-                            except Exception as pause_error:
-                                logger.warning(f"Decision pause failed: {pause_error}")
-
-                    except Exception as decision_error:
-                        logger.warning(f"Decision detection failed: {decision_error}")
-
-            except Exception as e:
-                logger.error(f"Error during turn {turn_num}: {e}")
-                broadcast_sse_event(create_sse_event(
-                    event_type="system",
-                    title=f"Turn {turn_num} Error",
-                    description=str(e),
-                    severity="high"
-                ))
-                # Continue with next turn
-
-        # Generate final narrative with chronicler
-        try:
-            broadcast_sse_event(create_sse_event(
-                event_type="story",
-                title="Generating Narrative",
-                description="Creating final story from turn logs",
-                severity="medium"
-            ))
-
-            chronicler = ChroniclerAgent(event_bus, character_names=character_names)
-            story = chronicler.transcribe_log(log_path)
-
-            with _orchestration_lock:
-                _generated_narrative["story"] = story
-                _generated_narrative["last_generated"] = datetime.now(UTC).isoformat()
-
-            broadcast_sse_event(create_sse_event(
-                event_type="story",
-                title="Story Generated",
-                description=f"Generated {len(story)} character narrative",
-                severity="medium"
-            ))
-
-        except Exception as e:
-            logger.error(f"Narrative generation failed: {e}")
-            # Read raw log as fallback
-            try:
-                with open(log_path, "r") as f:
-                    raw_log = f.read()
-                with _orchestration_lock:
-                    _generated_narrative["story"] = f"[Raw Log]\n{raw_log}"
-                    _generated_narrative["last_generated"] = datetime.now(UTC).isoformat()
-            except Exception:
-                pass
-
-        # Update final state
-        with _orchestration_lock:
-            _orchestration_state["status"] = "stopped" if _orchestration_stop_flag.is_set() else "idle"
-            _orchestration_state["last_updated"] = datetime.now(UTC).isoformat()
-
-        broadcast_sse_event(create_sse_event(
-            event_type="system",
-            title="Orchestration Complete",
-            description=f"Story generation finished. {_generated_narrative['turns_completed']} turns completed.",
-            severity="medium"
-        ))
-
-    except Exception as e:
-        logger.error(f"Orchestration failed: {e}", exc_info=True)
-        with _orchestration_lock:
-            _orchestration_state["status"] = "idle"
-            _orchestration_state["last_updated"] = datetime.now(UTC).isoformat()
-
-        broadcast_sse_event(create_sse_event(
-            event_type="system",
-            title="Orchestration Failed",
-            description=str(e),
-            severity="high"
-        ))
-
-
-def _get_default_pipeline_steps() -> List[Dict[str, Any]]:
-    """Return default pipeline step definitions."""
-    return [
-        {"id": "narrative-setup", "name": "Narrative Setup", "status": "queued", "progress": 0},
-        {"id": "character-actions", "name": "Character Actions", "status": "queued", "progress": 0},
-        {"id": "world-update", "name": "World Update", "status": "queued", "progress": 0},
-        {"id": "interaction-orchestration", "name": "Interaction Orchestration", "status": "queued", "progress": 0},
-    ]
 
 
 @app.get("/api/orchestration/status")
 async def get_orchestration_status() -> Dict[str, Any]:
     """
     Get current orchestration/pipeline status for dashboard display.
-
-    Returns real-time information about:
-    - Current turn number and total turns
-    - Queue length
-    - Processing steps and their status
-    - Average processing time
+    Delegates to ApiOrchestrationService.
     """
-    global _orchestration_state
+    if not hasattr(app.state, 'api_service') or not app.state.api_service:
+        return {
+            "success": False,
+            "message": "Orchestration service not available",
+            "data": {"status": "error"}
+        }
 
-    # Try to get real status from DirectorAgent if available
-    try:
-        # Check if there's an active director instance
-        config = get_config()
-        if hasattr(config, 'director') and config.director:
-            director = DirectorAgent()
-            status = director.get_simulation_status()
-
-            # Map DirectorAgent status to pipeline format
-            return {
-                "success": True,
-                "data": {
-                    "current_turn": status.get("current_turn", 0),
-                    "total_turns": status.get("total_turns", 0),
-                    "queue_length": status.get("pending_actions", 0),
-                    "average_processing_time": status.get("avg_turn_time", 0.0),
-                    "status": "running" if status.get("is_running", False) else "idle",
-                    "steps": _map_orchestrator_to_steps(status),
-                },
-            }
-    except Exception as e:
-        logger.debug(f"Could not get DirectorAgent status: {e}")
-
-    # Return current orchestration state (may be from SSE updates or defaults)
-    if not _orchestration_state["steps"]:
-        _orchestration_state["steps"] = _get_default_pipeline_steps()
-
-    _orchestration_state["last_updated"] = datetime.now(UTC).isoformat()
-
+    status = await app.state.api_service.get_status()
     return {
         "success": True,
-        "data": _orchestration_state,
+        "data": status
     }
-
-
-def _map_orchestrator_to_steps(status: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Map DirectorAgent/TurnOrchestrator status to pipeline steps format."""
-    steps = _get_default_pipeline_steps()
-
-    # If we have turn orchestrator metrics, use them
-    turn_metrics = status.get("turn_orchestrator_metrics", {})
-    if turn_metrics:
-        current_phase = turn_metrics.get("current_phase", "")
-        phases_completed = turn_metrics.get("phases_completed", [])
-
-        for step in steps:
-            step_id = step["id"]
-            if step_id in phases_completed:
-                step["status"] = "completed"
-                step["progress"] = 100
-            elif step_id == current_phase:
-                step["status"] = "processing"
-                step["progress"] = turn_metrics.get("phase_progress", 50)
-            else:
-                step["status"] = "queued"
-                step["progress"] = 0
-
-    return steps
 
 
 @app.post("/api/orchestration/start")
 async def start_orchestration(request: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Start real story generation orchestration pipeline.
-
-    Request body (optional):
-    - character_names: List[str] - Characters to include (defaults to all available)
-    - total_turns: int - Number of turns to run (default: 3)
-    - start_turn: int - Starting turn number (default: 1)
+    delegates to ApiOrchestrationService.
     """
-    global _orchestration_state, _generated_narrative
-
-    # Check if already running
-    if _orchestration_state["status"] == "running":
-        return {
-            "success": False,
-            "message": "Orchestration already running",
-            "data": _orchestration_state
-        }
+    if not hasattr(app.state, 'api_service') or not app.state.api_service:
+        raise HTTPException(status_code=503, detail="Orchestration service not initialized")
 
     # Parse request parameters
     params = request or {}
-    total_turns = params.get("total_turns", 3)  # Default to 3 turns for reasonable demo
-    start_turn = params.get("start_turn", 1)
-
-    # Get character names - use provided or fetch all available
+    total_turns = params.get("total_turns", 3)
+    start_turn = params.get("start_turn", 1) # Deprecated kept for compat, actually unused by service logic simplified
     character_names = params.get("character_names")
+
+    # Default character logic
     if not character_names:
-        # Fetch available characters
         try:
             characters_path = _get_characters_directory_path()
             available_chars: Set[str] = set()
-
-            # Include generic definitions
-            if os.path.abspath(characters_path) == DEFAULT_CHARACTERS_PATH:
-                available_chars.update(GENERIC_CHARACTER_DEFS.keys())
-
-            # Include directory-based characters
-            if os.path.isdir(characters_path):
-                for item in os.listdir(characters_path):
-                    if os.path.isdir(os.path.join(characters_path, item)):
-                        available_chars.add(item)
-
-            # Select up to 3 characters for demo
+            if hasattr(characters_path, 'iterdir') or isinstance(characters_path, str): 
+                 # Handle path string vs Path object
+                 p = Path(characters_path) if isinstance(characters_path, str) else characters_path
+                 if p.exists():
+                     for item in p.iterdir():
+                         if item.is_dir() and not item.name.startswith('.'):
+                             available_chars.add(item.name)
+            
             character_names = sorted(list(available_chars))[:3]
             if not character_names:
-                character_names = ["pilot", "scientist", "engineer"]  # Fallback to generics
-
+                character_names = ["pilot", "scientist", "engineer"]
         except Exception as e:
             logger.warning(f"Failed to fetch characters, using defaults: {e}")
             character_names = ["pilot", "scientist", "engineer"]
 
-    # Update initial state
-    with _orchestration_lock:
-        _orchestration_state["status"] = "running"
-        _orchestration_state["current_turn"] = start_turn
-        _orchestration_state["total_turns"] = total_turns
-        _orchestration_state["steps"] = _get_default_pipeline_steps()
-        _orchestration_state["steps"][0]["status"] = "processing"
-        _orchestration_state["steps"][0]["progress"] = 10
-        _orchestration_state["last_updated"] = datetime.now(UTC).isoformat()
-
-        # Reset narrative storage
-        _generated_narrative["story"] = ""
-        _generated_narrative["participants"] = character_names
-        _generated_narrative["turns_completed"] = 0
-        _generated_narrative["last_generated"] = None
-
-    # Start background orchestration
-    logger.info(f"Submitting orchestration task: chars={character_names}, turns={total_turns}")
-    _orchestration_executor.submit(
-        _run_orchestration_background,
-        character_names,
-        total_turns,
-        start_turn
+    sim_request = SimulationRequest(
+        character_names=character_names,
+        turns=total_turns
     )
 
-    return {
-        "success": True,
-        "message": f"Orchestration started with {len(character_names)} characters for {total_turns} turns",
-        "data": _orchestration_state
-    }
+    try:
+        result = await app.state.api_service.start_simulation(sim_request)
+        return result
+    except ValueError as val_err:
+        return {
+            "success": False,
+            "message": str(val_err),
+            "data": await app.state.api_service.get_status()
+        }
+    except Exception as e:
+        logger.error(f"Failed to start orchestration: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/orchestration/stop")
 async def stop_orchestration() -> Dict[str, Any]:
     """Stop orchestration pipeline gracefully."""
-    global _orchestration_state
-
-    if _orchestration_state["status"] != "running":
-        return {
-            "success": False,
-            "message": "Orchestration is not running",
-            "data": _orchestration_state
-        }
-
-    # Signal the background task to stop
-    _orchestration_stop_flag.set()
-
-    with _orchestration_lock:
-        _orchestration_state["status"] = "stopped"
-        _orchestration_state["last_updated"] = datetime.now(UTC).isoformat()
-
-    logger.info("Orchestration stop requested")
-
-    return {"success": True, "message": "Orchestration stop requested", "data": _orchestration_state}
+    if not hasattr(app.state, 'api_service') or not app.state.api_service:
+         return {"success": False, "message": "Service unavailable"}
+    
+    return await app.state.api_service.stop_simulation()
 
 
 @app.get("/api/orchestration/narrative")
 async def get_narrative() -> Dict[str, Any]:
     """
     Get the generated story narrative from the last orchestration run.
-
-    Returns the story text, participants, and generation metadata.
     """
-    with _orchestration_lock:
-        return {
-            "success": True,
-            "data": {
-                "story": _generated_narrative["story"],
-                "participants": _generated_narrative["participants"],
-                "turns_completed": _generated_narrative["turns_completed"],
-                "last_generated": _generated_narrative["last_generated"],
-                "has_content": bool(_generated_narrative["story"]),
-            }
+    if not hasattr(app.state, 'api_service') or not app.state.api_service:
+        return {"success": False, "data": {}}
+
+    narrative = await app.state.api_service.get_narrative()
+    return {
+        "success": True, 
+        "data": {
+            "story": narrative.get("story", ""),
+            "participants": narrative.get("participants", []),
+            "turns_completed": narrative.get("turns_completed", 0),
+            "last_generated": narrative.get("last_generated"),
+            "has_content": bool(narrative.get("story", "")),
         }
+    }
 
 
 @app.get("/meta/policy")
@@ -1210,6 +616,66 @@ async def policy_info() -> Dict[str, Any]:
         "last_reviewed": datetime.now(UTC).isoformat(),
     }
 
+@app.post("/simulations", response_model=SimulationResponse)
+async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
+    """Legacy-compatible simulation endpoint used by tests and clients."""
+    start_time = time.time()
+
+    characters_path = _get_characters_directory_path()
+    missing_characters = [
+        name
+        for name in sim_request.character_names
+        if not os.path.isdir(os.path.join(characters_path, name))
+    ]
+    if missing_characters:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Characters not found: {', '.join(missing_characters)}",
+        )
+
+    event_bus = EventBus()
+    character_factory = CharacterFactory(event_bus)
+    director = DirectorAgent(event_bus=event_bus)
+    chronicler = ChroniclerAgent(event_bus=event_bus, character_names=sim_request.character_names)
+
+    agents = []
+    for name in sim_request.character_names:
+        try:
+            agent = character_factory.create_character(name)
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Failed to load character {name}: {e}"
+            )
+        agents.append(agent)
+        try:
+            director.register_agent(agent)
+        except Exception:
+            pass
+
+    turns = sim_request.turns or 3
+    for _ in range(turns):
+        try:
+            director.run_turn()
+        except Exception as e:
+            logger.error(f"Director turn failed: {e}")
+            continue
+
+    try:
+        story = chronicler.transcribe_log(director.campaign_log_file)
+    except Exception as e:
+        participants = ", ".join(sim_request.character_names)
+        story = (
+            f"A story featuring {participants} was generated, but detailed transcription failed: {e}"
+        )
+
+    duration = time.time() - start_time
+    return SimulationResponse(
+        story=story,
+        participants=sim_request.character_names,
+        turns_executed=turns,
+        duration_seconds=duration,
+    )
+
 
 @app.get("/characters", response_model=CharactersListResponse)
 async def get_characters() -> CharactersListResponse:
@@ -1222,12 +688,7 @@ async def get_characters() -> CharactersListResponse:
             logger.warning(f"Characters directory not found at: {characters_path}")
             os.makedirs(characters_path, exist_ok=True)
 
-        include_generic_defs = (
-            os.path.abspath(characters_path) == DEFAULT_CHARACTERS_PATH
-        )
         characters: Set[str] = set()
-        if include_generic_defs:
-            characters.update(GENERIC_CHARACTER_DEFS.keys())
         if os.path.isdir(characters_path):
             for item in os.listdir(characters_path):
                 item_path = os.path.join(characters_path, item)
@@ -1253,137 +714,91 @@ async def get_characters() -> CharactersListResponse:
         )
 
 
-@app.post("/simulations", response_model=SimulationResponse)
-async def run_simulation(request: SimulationRequest) -> SimulationResponse:
-    """Executes a character simulation."""
-    start_time = time.time()
-    logger.info(f"Simulation requested for: {request.character_names}")
 
+@app.post("/characters", response_model=CharacterDetailResponse)
+async def create_character(
+    name: str = Form(...),
+    description: str = Form(...),
+    faction: Optional[str] = Form("Independent"),
+    role: Optional[str] = Form("Unknown"),
+    stats: Optional[str] = Form(None),
+    equipment: Optional[str] = Form(None),
+    files: List[UploadFile] = File(None),
+) -> CharacterDetailResponse:
+    """Creates a new character."""
     try:
-        # Validate request
-        if not request.character_names:
-            raise HTTPException(
-                status_code=400, detail="At least one character name is required"
-            )
-
-        # Load configuration
-        config = get_config()
-        turns_to_execute = request.turns or getattr(config.simulation, "turns", 3)
-
-        prefer_generic_story = (
-            all(name in GENERIC_CHARACTER_DEFS for name in request.character_names)
-            and bool(request.setting or request.scenario)
-        )
-
-        if prefer_generic_story:
-            story = _build_generic_story(request)
-            duration = time.time() - start_time
-            return SimulationResponse(
-                story=story,
-                participants=request.character_names,
-                turns_executed=turns_to_execute,
-                duration_seconds=duration,
-            )
-
-        # Validate characters exist (allow generic overrides)
         characters_path = _get_characters_directory_path()
-        unavailable = []
-        for char_name in request.character_names:
-            if char_name in GENERIC_CHARACTER_DEFS:
-                continue
-            char_path = os.path.join(characters_path, char_name)
-            if not os.path.isdir(char_path):
-                unavailable.append(char_name)
+        character_id = name.lower().replace(" ", "_")
+        character_path = os.path.join(characters_path, character_id)
 
-        if unavailable:
-            error_status = (
-                404
-                if os.path.abspath(characters_path) != DEFAULT_CHARACTERS_PATH
-                else 422
-            )
-            raise HTTPException(
-                status_code=error_status,
-                detail=f"Characters unavailable for simulation: {', '.join(unavailable)}",
-            )
+        if os.path.exists(character_path):
+             raise HTTPException(status_code=409, detail=f"Character '{name}' already exists")
 
-        # Initialize components
-        event_bus = EventBus()
-        character_factory = CharacterFactory(event_bus)
+        os.makedirs(character_path, exist_ok=True)
 
-        # Create agents with error handling
-        agents = []
-        for name in request.character_names:
-            try:
-                agent = character_factory.create_character(name)
-                agents.append(agent)
-                logger.info(f"Successfully created agent for character: {name}")
-            except Exception as e:
-                logger.error(f"Failed to create agent for character {name}: {e}")
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Failed to load character '{name}': {str(e)}",
-                )
+        # Save basic info
+        # In a real implementation, we would use the CharacterFactory or Agent to persist this properly.
+        # For now, we'll create the directory structure and a basic profile.
+        
+        # Parse JSON fields if provided
+        stats_data = json.loads(stats) if stats else {}
+        equipment_data = json.loads(equipment) if equipment else []
 
-        # Generate unique log path
-        log_path = f"logs/simulation_{uuid.uuid4().hex[:8]}.md"
-        os.makedirs("logs", exist_ok=True)
+        # Create profile.md
+        profile_content = f"""# {name}
 
-        # Initialize director and register agents
-        director = DirectorAgent(event_bus, campaign_log_path=log_path)
-        for agent in agents:
-            director.register_agent(agent)
-            logger.info(f"Registered agent: {agent.character.name}")
+## Overview
+**Role:** {role}
+**Faction:** {faction}
 
-        # Execute simulation turns
-        logger.info(f"Starting simulation with {turns_to_execute} turns")
-        for turn_num in range(turns_to_execute):
-            try:
-                logger.info(f"Executing turn {turn_num + 1}/{turns_to_execute}")
-                director.run_turn()
-            except Exception as e:
-                logger.error(f"Error during turn {turn_num + 1}: {e}")
-                # Continue with remaining turns
-                continue
+{description}
 
-        # Generate story with chronicler
-        try:
-            chronicler = ChroniclerAgent(
-                event_bus, character_names=request.character_names
-            )
-            story = chronicler.transcribe_log(log_path)
-        except Exception as e:
-            logger.error(f"Story generation failed: {e}")
-            fallback_story = _build_generic_story(request)
-            characters = ", ".join(_sanitize_text(name) for name in request.character_names)
-            story = (
-                f"{fallback_story} A story featuring {characters} was generated, but detailed transcription failed."
-            )
+## Stats
+{json.dumps(stats_data, indent=2)}
 
-        # Clean up log file
-        try:
-            if os.path.exists(log_path):
-                os.remove(log_path)
-        except Exception as e:
-            logger.warning(f"Failed to clean up log file {log_path}: {e}")
+## Equipment
+{json.dumps(equipment_data, indent=2)}
+"""
+        with open(os.path.join(character_path, "profile.md"), "w") as f:
+            f.write(profile_content)
 
-        duration = time.time() - start_time
-        logger.info(f"Simulation completed in {duration:.2f} seconds")
+        # Handle file uploads
+        if files:
+            for file in files:
+                file_path = os.path.join(character_path, file.filename)
+                with open(file_path, "wb") as f:
+                    content = await file.read()
+                    f.write(content)
 
-        return SimulationResponse(
-            story=story,
-            participants=request.character_names,
-            turns_executed=turns_to_execute,
-            duration_seconds=duration,
+        logger.info(f"Created character: {name} at {character_path}")
+
+        # Return the created character details
+        # We reuse get_character_detail logic or construct response
+        return CharacterDetailResponse(
+            character_id=character_id,
+            character_name=character_id,
+            name=name,
+            background_summary=description,
+            personality_traits="Unknown", # Placeholder
+            current_status="Active",
+            narrative_context="Newly created character",
+            skills=stats_data,
+            inventory=[item.get("name", "Unknown") for item in equipment_data],
+            metadata={"role": role, "faction": faction},
+            structured_data={
+                "stats": {"character": {"name": name, "faction": faction, "specialization": role}},
+                "combat_stats": stats_data,
+                "equipment": {"items": equipment_data}
+            }
         )
+
     except HTTPException:
-        # Re-raise HTTP exceptions without modification
         raise
-    except FileNotFoundError as e:
-        logger.error(f"File not found during simulation: {e}")
-        raise HTTPException(
-            status_code=404, detail=f"Required file not found: {str(e)}"
-        )
     except Exception as e:
+        logger.error(f"Failed to create character: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create character: {str(e)}")
+
+
         logger.error(f"Simulation failed with unexpected error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Simulation execution failed: {str(e)}"
@@ -1406,9 +821,7 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
                 character = agent.character
 
                 structured = getattr(character, "structured_data", None)
-                if not structured and character_id in GENERIC_CHARACTER_DEFS:
-                    structured = GENERIC_CHARACTER_DEFS[character_id]["structured_data"]
-                elif not structured:
+                if not structured:
                     structured = _structured_defaults(
                         getattr(character, "name", character_id),
                         getattr(character, "specialization", "Unknown"),
@@ -1441,13 +854,9 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
             except Exception as e:
                 logger.error(f"Error loading character {character_id}: {e}")
                 # Fallback to basic character info from directory
-                structured = (
-                    GENERIC_CHARACTER_DEFS[character_id]["structured_data"]
-                    if character_id in GENERIC_CHARACTER_DEFS
-                    else _structured_defaults(
+                structured = _structured_defaults(
                         character_id.replace("_", " ").title(), "Unknown"
                     )
-                )
                 return CharacterDetailResponse(
                     character_id=character_id,
                     character_name=character_id,
@@ -1459,23 +868,7 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
                     structured_data=structured,
                 )
 
-        if character_id in GENERIC_CHARACTER_DEFS:
-            data = GENERIC_CHARACTER_DEFS[character_id]
-            return CharacterDetailResponse(
-                character_id=character_id,
-                character_name=data["character_name"],
-                name=data["display_name"],
-                background_summary=data["narrative_context"],
-                personality_traits="Resourceful and adaptable",
-                current_status="Active",
-                narrative_context=data["narrative_context"],
-                skills={"strategy": 0.8, "teamwork": 0.9},
-                relationships={},
-                current_location="Meridian Station",
-                inventory=["standard field kit"],
-                metadata={"structured_data": data["structured_data"]},
-                structured_data=data["structured_data"],
-            )
+
 
         raise HTTPException(
             status_code=404, detail=f"Character '{character_id}' not found"
@@ -1494,16 +887,58 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
 
 @app.get("/characters/{character_id}/enhanced")
 async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
-    data = GENERIC_CHARACTER_DEFS.get(character_id)
-    if not data:
-        raise HTTPException(status_code=404, detail="Character not found")
-    return {
-        "character_name": character_id,
-        "enhanced_context": data["enhanced_context"],
-        "psychological_profile": data["enhanced_context"]["psychological_profile"],
-        "tactical_analysis": data["enhanced_context"]["tactical_analysis"],
-        "structured_data": data["structured_data"],
-    }
+    """Retrieves enhanced character context and analysis data."""
+    try:
+        characters_path = _get_characters_directory_path()
+        character_path = os.path.join(characters_path, character_id)
+        if not os.path.isdir(character_path):
+            raise HTTPException(status_code=404, detail="Character not found")
+
+        event_bus = EventBus()
+        character_factory = CharacterFactory(event_bus)
+        agent = character_factory.create_character(character_id)
+
+        character_data = getattr(agent, "character_data", {}) or {}
+        hybrid = character_data.get("hybrid_context", {}) if isinstance(character_data, dict) else {}
+        enhanced_context = (
+            hybrid.get("markdown_content")
+            or getattr(agent, "character_context", "")
+            or getattr(agent.character, "narrative_context", "")
+            or ""
+        )
+
+        psychological_profile = (
+            character_data.get("psychological_profile", {})
+            if isinstance(character_data, dict)
+            else {}
+        )
+
+        tactical_analysis = {
+            "combat_stats": character_data.get("combat_stats", {})
+            if isinstance(character_data, dict)
+            else {},
+            "decision_weights": character_data.get("decision_weights", {})
+            if isinstance(character_data, dict)
+            else {},
+            "relationship_scores": character_data.get("relationship_scores", {})
+            if isinstance(character_data, dict)
+            else {},
+        }
+
+        return {
+            "character_id": character_id,
+            "enhanced_context": enhanced_context,
+            "psychological_profile": psychological_profile,
+            "tactical_analysis": tactical_analysis,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving enhanced character {character_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve enhanced character details",
+        )
 
 
 @app.get("/campaigns", response_model=CampaignsListResponse)
@@ -1586,13 +1021,42 @@ def create_sse_event(
 
     return event_data
 
+# Global event loop reference for thread-safe SSE broadcasting
+_main_loop: Optional[asyncio.AbstractEventLoop] = None
+
+@app.on_event("startup")
+async def startup_event():
+    global _main_loop
+    _main_loop = asyncio.get_running_loop()
+    logger.info("Captured main event loop for thread-safe operations")
+
+def _safe_sse_put(queue: asyncio.Queue, data: Dict[str, Any], client_id: str):
+    """Helper to safely put data into SSE queue from another thread."""
+    try:
+        queue.put_nowait(data)
+    except asyncio.QueueFull:
+        logger.warning(f"SSE queue full for client {client_id}, dropping event")
+
 def broadcast_sse_event(event_data: Dict[str, Any]):
-    """Broadcast an event to all connected SSE clients."""
-    for client_id, queue in list(sse_event_queues.items()):
+    """Broadcast an event to all connected SSE clients (thread-safe)."""
+    global _main_loop
+    
+    logger.info(f"Broadcasting SSE event: {event_data.get('type')} - {event_data.get('title')} to {len(sse_event_queues)} clients")
+
+    # If we don't have the loop yet (e.g. unit tests), try to get it or skip
+    if _main_loop is None:
         try:
-            queue.put_nowait(event_data)
-        except asyncio.QueueFull:
-            logger.warning(f"SSE queue full for client {client_id}, dropping event")
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            logger.warning("No event loop available for SSE broadcast")
+            return
+    else:
+        loop = _main_loop
+
+    for client_id, queue in list(sse_event_queues.items()):
+        if loop.is_running():
+            loop.call_soon_threadsafe(_safe_sse_put, queue, event_data, client_id)
+
 
 
 # Initialize decision system now that broadcast_sse_event is available
@@ -1802,12 +1266,7 @@ async def stream_events():
 
     return StreamingResponse(
         event_generator(client_id),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",  # Disable nginx buffering for streaming
-        }
+        media_type="text/event-stream"
     )
 
 

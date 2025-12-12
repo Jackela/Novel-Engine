@@ -12,10 +12,10 @@
 
 import type { AxiosInstance } from 'axios';
 import { isAxiosError } from 'axios';
-import type { LoginRequest, LoginResponse, AuthToken } from '../../types/auth';
+import type { LoginRequest, LoginResponse, AuthToken } from '@/types/auth';
 import type { IAuthenticationService, AuthStateChangeCallback, UnauthenticatedCallback } from './IAuthenticationService';
 import type { ITokenStorage } from './ITokenStorage';
-import { logger } from '../logging/LoggerFactory';
+import { logger } from '@/services/logging/LoggerFactory';
 
 /**
  * JWTAuthService class
@@ -85,7 +85,7 @@ export class JWTAuthService implements IAuthenticationService {
 
       return authToken;
     } catch (error) {
-      const errorMessage = isAxiosError(error) 
+      const errorMessage = isAxiosError(error)
         ? error.response?.data?.message || 'Invalid credentials'
         : 'Invalid credentials';
 
@@ -233,7 +233,7 @@ export class JWTAuthService implements IAuthenticationService {
    */
   async isAuthenticated(): Promise<boolean> {
     const token = this.tokenStorage.getToken();
-    
+
     if (!token) {
       return false;
     }
@@ -306,7 +306,7 @@ export class JWTAuthService implements IAuthenticationService {
 
     const scheduleRefresh = () => {
       const token = this.tokenStorage.getToken();
-      
+
       if (!token) {
         logger.debug('No token to refresh', undefined, {
           component: 'JWTAuthService',
@@ -341,7 +341,7 @@ export class JWTAuthService implements IAuthenticationService {
       } else {
         // Schedule refresh for 5 minutes before expiry
         const delay = timeUntilExpiry - refreshThreshold;
-        
+
         logger.debug('Scheduling token refresh', undefined, {
           component: 'JWTAuthService',
           action: 'startTokenRefresh',
@@ -375,7 +375,7 @@ export class JWTAuthService implements IAuthenticationService {
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
-      
+
       logger.debug('Token refresh stopped', undefined, {
         component: 'JWTAuthService',
         action: 'stopTokenRefresh',

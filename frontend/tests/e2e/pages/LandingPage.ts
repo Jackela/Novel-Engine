@@ -52,12 +52,6 @@ export class LandingPage {
   async navigateToLanding() {
     // Set up mocks needed for dashboard navigation (must be before goto)
     await this.page.addInitScript(() => {
-      try {
-        window.sessionStorage.setItem('novel-engine-guest-session', '1');
-      } catch {
-        // ignore storage failures in CI
-      }
-
       // Mock EventSource for SSE testing
       class MockEventSource extends EventTarget {
         url: string;

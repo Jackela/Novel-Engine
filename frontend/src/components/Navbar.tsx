@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '@/services/logging/LoggerFactory';
 import {
   AppBar,
   Toolbar,
@@ -21,7 +21,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useQuery } from 'react-query';
-import api from '../services/api';
+import api from '@/services/api';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -73,7 +73,7 @@ const Navbar: React.FC = () => {
   const getHealthColor = () => {
     if (statusLoading) return 'default';
     if (!systemStatus) return 'error';
-    
+
     switch (systemStatus.api) {
       case 'healthy':
         return 'success';
@@ -87,7 +87,7 @@ const Navbar: React.FC = () => {
   const getHealthLabel = () => {
     if (statusLoading) return 'Checking...';
     if (!systemStatus) return 'Offline';
-    
+
     switch (systemStatus.api) {
       case 'healthy':
         return 'Healthy';
@@ -101,10 +101,10 @@ const Navbar: React.FC = () => {
   const theme = useTheme();
 
   return (
-    <AppBar 
-      position="sticky" 
+    <AppBar
+      position="sticky"
       elevation={0}
-      sx={{ 
+      sx={{
         backgroundColor: theme.palette.background.paper,
         borderBottom: `1px solid ${theme.palette.divider}`,
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -144,7 +144,7 @@ const Navbar: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
-            
+
             return (
               <Button
                 key={item.path}
@@ -158,8 +158,8 @@ const Navbar: React.FC = () => {
                   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
                     transform: isActive ? 'none' : 'translateY(-2px)',
-                    backgroundColor: isActive 
-                      ? undefined 
+                    backgroundColor: isActive
+                      ? undefined
                       : 'primary.main',
                   },
                 }}
@@ -188,7 +188,7 @@ const Navbar: React.FC = () => {
             label={`v${systemStatus?.version || '1.0.0'}`}
             size="small"
             variant="outlined"
-            sx={{ 
+            sx={{
               fontFamily: 'monospace',
               fontWeight: 600,
             }}

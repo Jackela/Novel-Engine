@@ -8,11 +8,11 @@
  * 4. Close button functionality
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 // Mock child components to avoid complex dependencies
-vi.mock('@/components/dashboard/QuickActions', () => ({
+vi.mock('../../../../../src/features/dashboard/QuickActions', () => ({
   default: ({
     loading,
     error,
@@ -42,7 +42,7 @@ vi.mock('@/components/dashboard/QuickActions', () => ({
   ),
 }));
 
-vi.mock('@/components/dashboard/AnalyticsDashboard', () => ({
+vi.mock('../../../../../src/features/dashboard/AnalyticsDashboard', () => ({
   default: ({ loading, error }: { loading: boolean; error: boolean }) => (
     <div data-testid="analytics-dashboard" data-loading={loading} data-error={error}>
       AnalyticsDashboard Mock
@@ -50,7 +50,7 @@ vi.mock('@/components/dashboard/AnalyticsDashboard', () => ({
   ),
 }));
 
-vi.mock('@/components/dashboard/CharacterNetworks', () => ({
+vi.mock('../../../../../src/features/dashboard/CharacterNetworks', () => ({
   default: ({ loading, error }: { loading: boolean; error: boolean }) => (
     <div data-testid="character-networks" data-loading={loading} data-error={error}>
       CharacterNetworks Mock
@@ -58,7 +58,7 @@ vi.mock('@/components/dashboard/CharacterNetworks', () => ({
   ),
 }));
 
-vi.mock('@/components/dashboard/NarrativeTimeline', () => ({
+vi.mock('../../../../../src/features/dashboard/NarrativeTimeline', () => ({
   default: ({ loading, error }: { loading: boolean; error: boolean }) => (
     <div data-testid="narrative-timeline" data-loading={loading} data-error={error}>
       NarrativeTimeline Mock
@@ -66,7 +66,7 @@ vi.mock('@/components/dashboard/NarrativeTimeline', () => ({
   ),
 }));
 
-vi.mock('@/components/dashboard/EventCascadeFlow', () => ({
+vi.mock('../../../../../src/features/dashboard/EventCascadeFlow', () => ({
   default: ({ loading, error }: { loading: boolean; error: boolean }) => (
     <div data-testid="event-cascade-flow" data-loading={loading} data-error={error}>
       EventCascadeFlow Mock
@@ -74,11 +74,26 @@ vi.mock('@/components/dashboard/EventCascadeFlow', () => ({
   ),
 }));
 
-vi.mock('@/components/dashboard/PerformanceMetrics', () => ({
+vi.mock('../../../../../src/features/dashboard/PerformanceMetrics', () => ({
   default: () => <div data-testid="performance-metrics">PerformanceMetrics Mock</div>,
 }));
 
-import InsightsPanel from '@/components/dashboard/panels/InsightsPanel';
+vi.mock('../../../../../src/features/dashboard/SummaryStrip', () => ({
+  default: () => <div data-testid="summary-strip">SummaryStrip Mock</div>,
+}));
+
+vi.mock('../../../../../src/features/dashboard/MfdModeSelector', () => ({
+  default: ({ onChange }: { onChange: (mode: any) => void }) => (
+    <div data-testid="mfd-mode-selector">
+      <button onClick={() => onChange('analytics')}>DATA</button>
+      <button onClick={() => onChange('network')}>NET</button>
+      <button onClick={() => onChange('timeline')}>TIME</button>
+      <button onClick={() => onChange('signals')}>SIG</button>
+    </div>
+  ),
+}));
+
+import InsightsPanel from '../../../../../src/features/dashboard/panels/InsightsPanel';
 
 describe('InsightsPanel', () => {
   const defaultProps = {

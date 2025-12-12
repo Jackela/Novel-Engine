@@ -29,8 +29,15 @@ describe('US3: Query hooks states', () => {
   });
 
   it('error flow', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     vi.spyOn(api, 'getCharacters').mockRejectedValueOnce(new Error('boom'));
-    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const qc = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false }
+      },
+    });
+    // v3 specific logger suppression if needed, but console spy is safer
     await act(async () => {
       render(
         <QueryClientProvider client={qc}>
@@ -41,5 +48,6 @@ describe('US3: Query hooks states', () => {
     await waitFor(async () => {
       expect(await screen.findByText('error')).toBeTruthy();
     });
+    consoleSpy.mockRestore();
   });
 });

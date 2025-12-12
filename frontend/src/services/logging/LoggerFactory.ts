@@ -1,6 +1,6 @@
 import type { ILogger } from './ILogger';
 import { ConsoleLogger } from './ConsoleLogger';
-import { LogLevel } from '../../types/logging';
+import { LogLevel } from '@/types/logging';
 
 export class LoggerFactory {
   private static instance: ILogger | null = null;

@@ -1,7 +1,7 @@
 import type { ILogger } from './ILogger';
-import type { LogLevel, LogContext, LogEntry, LoggerConfig } from '../../types/logging';
+import type { LogLevel, LogContext, LogEntry, LoggerConfig } from '@/types/logging';
 import { Sanitizer } from './Sanitizer';
-import { LogLevel as LogLevelEnum } from '../../types/logging';
+import { LogLevel as LogLevelEnum } from '@/types/logging';
 
 export class ConsoleLogger implements ILogger {
   private config: LoggerConfig;
@@ -59,7 +59,7 @@ export class ConsoleLogger implements ILogger {
 
   createLogEntry(level: LogLevel, message: string, context?: LogContext, error?: Error): LogEntry {
     const sessionId = this.getSessionId();
-    
+
     return {
       id: crypto.randomUUID(),
       level,

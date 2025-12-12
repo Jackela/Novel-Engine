@@ -9,7 +9,7 @@
  * - Article V (SOLID): ISP - Interface Segregation Principle
  */
 
-import type { AuthToken } from '../../types/auth';
+import type { AuthToken } from '@/types/auth';
 
 /**
  * ITokenStorage interface

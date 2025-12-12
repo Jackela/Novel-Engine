@@ -14,6 +14,7 @@ import sys
 import threading
 import time
 import uuid
+import weakref
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -127,9 +128,28 @@ class PerformanceTracker:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit."""
         # Get logger from thread local or create new one
-        logger = getattr(threading.current_thread(), "_structured_logger", None)
+        logger_ref = getattr(threading.current_thread(), "_structured_logger", None)
+        if isinstance(logger_ref, weakref.ReferenceType):
+            logger = logger_ref()
+        else:
+            logger = logger_ref
         if logger:
             self.finish(logger)
+
+
+class _ClosingRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    """RotatingFileHandler that closes the stream after each emit.
+
+    This avoids Windows temp directory cleanup failures in tests.
+    """
+
+    def emit(self, record: logging.LogRecord) -> None:
+        super().emit(record)
+        if self.stream:
+            try:
+                self.stream.close()
+            finally:
+                self.stream = None
 
 
 class StructuredLogger:
@@ -168,8 +188,28 @@ class StructuredLogger:
         # Formatters and handlers
         self._setup_handlers()
 
-        # Thread local logger reference
-        threading.current_thread()._structured_logger = self
+        # Thread local logger reference (weak to avoid leaking file handles in tests)
+        threading.current_thread()._structured_logger = weakref.ref(self)
+
+    def close(self) -> None:
+        """Close and remove all handlers for this logger instance."""
+        for handler in list(self._logger.handlers):
+            try:
+                handler.close()
+            finally:
+                self._logger.removeHandler(handler)
+        logger_ref = getattr(threading.current_thread(), "_structured_logger", None)
+        if isinstance(logger_ref, weakref.ReferenceType):
+            if logger_ref() is self:
+                delattr(threading.current_thread(), "_structured_logger")
+        elif logger_ref is self:
+            delattr(threading.current_thread(), "_structured_logger")
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def _setup_handlers(self) -> None:
         """Setup log handlers based on configuration."""
@@ -188,10 +228,11 @@ class StructuredLogger:
         log_dir = Path(self.config.get("log_dir", "logs"))
         log_dir.mkdir(exist_ok=True)
 
-        file_handler = logging.handlers.RotatingFileHandler(
+        file_handler = _ClosingRotatingFileHandler(
             log_dir / f"{self.name}.jsonl",
             maxBytes=self.config.get("max_file_size", 10 * 1024 * 1024),  # 10MB
             backupCount=self.config.get("backup_count", 5),
+            delay=True,
         )
 
         file_formatter = StructuredFormatter(format_type="json")
@@ -200,10 +241,11 @@ class StructuredLogger:
 
         # Audit file handler
         if self.config.get("enable_audit", True):
-            audit_handler = logging.handlers.RotatingFileHandler(
+            audit_handler = _ClosingRotatingFileHandler(
                 log_dir / f"{self.name}_audit.jsonl",
                 maxBytes=50 * 1024 * 1024,  # 50MB
                 backupCount=10,
+                delay=True,
             )
             audit_handler.addFilter(AuditFilter())
             audit_handler.setFormatter(StructuredFormatter(format_type="json"))

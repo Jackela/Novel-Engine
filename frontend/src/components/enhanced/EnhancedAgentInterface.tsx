@@ -31,7 +31,7 @@ interface EnhancedAgent {
   statistics: EnhancedAgentStatistics;
   capabilities: string[];
   relationships: { [agentId: string]: number };
-  
+
   // Enhanced UI properties
   avatar?: string;
   color?: string;
@@ -49,7 +49,7 @@ interface EnhancedAgentStatistics {
   collaborations: number;
   decisionsInfluenced: number;
   narrativeContributions: number;
-  
+
   // Enhanced metrics
   uptime: number;
   errorRate: number;
@@ -79,9 +79,8 @@ interface EnhancedAgentInterfaceProps {
 }
 
 const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
-  sessionId: _sessionId,
+  sessionId,
   allowDirectControl = true,
-  showAdvancedControls: _showAdvancedControls = false,
   maxAgents = 10,
   className = ''
 }) => {
@@ -104,7 +103,7 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
   });
 
   // Selected agent data
-  const selectedAgent = useMemo(() => 
+  const selectedAgent = useMemo(() =>
     agents.find(agent => agent.id === selectedAgentId) || null,
     [agents, selectedAgentId]
   );
@@ -112,14 +111,14 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
   // Filtered and sorted agents
   const filteredAndSortedAgents = useMemo(() => {
     PerformanceMonitor.start('agent-filtering');
-    
+
     let filtered = agents;
-    
+
     // Apply status filter
     if (filterStatus !== 'all') {
       filtered = filtered.filter(agent => agent.status === filterStatus);
     }
-    
+
     // Apply sorting
     const sorted = filtered.sort((a, b) => {
       switch (sortBy) {
@@ -137,25 +136,25 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
           return 0;
       }
     });
-    
+
     PerformanceMonitor.end('agent-filtering');
     return sorted;
   }, [agents, filterStatus, sortBy]);
 
   // WebSocket message handling
-  const handleWebSocketMessage = useCallback((event: CustomEvent) => {
-    const message = event.detail;
-    
+  const handleWebSocketMessage = useCallback((event: Event) => {
+    const message = (event as CustomEvent).detail;
+
     switch (message.type) {
       case 'agent_status_update':
         deferUpdate(() => {
           setAgents(prev => {
             const newAgents = [...prev];
             const agentIndex = newAgents.findIndex(a => a.id === message.data.agentId);
-            
+
             if (agentIndex >= 0) {
-              newAgents[agentIndex] = { 
-                ...newAgents[agentIndex], 
+              newAgents[agentIndex] = {
+                ...newAgents[agentIndex],
                 ...message.data,
                 lastActivity: Date.now(),
                 // Generate some enhanced properties for demo
@@ -183,12 +182,12 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
                 color: generateAgentColor(message.data.type || 'persona')
               });
             }
-            
+
             return newAgents;
           });
         });
         break;
-        
+
       case 'system_metrics':
         setMetrics({
           totalActions: message.data.totalActions || 0,
@@ -262,7 +261,7 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
   // Event listeners
   useEffect(() => {
     window.addEventListener('websocket-message', handleWebSocketMessage);
-    
+
     // Request initial agent status
     if (wsState.isConnected) {
       sendMessage({
@@ -271,7 +270,7 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
         priority: 'normal'
       });
     }
-    
+
     return () => {
       window.removeEventListener('websocket-message', handleWebSocketMessage);
     };
@@ -299,7 +298,7 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div 
+            <div
               className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
               style={{ backgroundColor: agent.color }}
             >
@@ -314,9 +313,9 @@ const EnhancedAgentInterface: React.FC<EnhancedAgentInterfaceProps> = ({
           </div>
           <NotificationBadge count={agent.notifications} position="top-right">
             <StatusBadge status={
-              agent.status === 'acting' ? 'online' : 
-              agent.status === 'error' ? 'offline' :
-              agent.status === 'thinking' ? 'busy' : 'idle'
+              agent.status === 'acting' ? 'online' :
+                agent.status === 'error' ? 'offline' :
+                  agent.status === 'thinking' ? 'busy' : 'idle'
             } showLabel={false} />
           </NotificationBadge>
         </div>

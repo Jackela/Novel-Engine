@@ -26,7 +26,7 @@ async function globalSetup(config: FullConfig) {
   if (process.env.PLAYWRIGHT_SKIP_VERIFY === 'true') {
     console.log('ℹ️ Skipping dashboard verification (PLAYWRIGHT_SKIP_VERIFY=true)');
   } else {
-    await verifyDashboardAccessibilityWithRetry();
+    await verifyDashboardAccessibilityWithRetry(config.use?.baseURL || 'http://localhost:3000');
   }
 
   console.log('✅ Global setup completed successfully');
@@ -37,17 +37,17 @@ async function globalSetup(config: FullConfig) {
  */
 async function setupMockAPIServer() {
   console.log('📡 Setting up mock API server...');
-  
+
   // In a real implementation, this would:
   // 1. Start a mock server (e.g., using MSW or json-server)
   // 2. Configure endpoints matching OpenAPI spec
   // 3. Setup WebSocket server for real-time updates
   // 4. Prepare response data that matches expected schemas
-  
+
   // For now, we'll use environment variables to configure mock endpoints
   process.env.MOCK_API_ENABLED = 'true';
   process.env.MOCK_API_PORT = '8001';
-  
+
   console.log('📡 Mock API server configured');
 }
 
@@ -56,19 +56,19 @@ async function setupMockAPIServer() {
  */
 async function setupAuthTokens() {
   console.log('🔐 Preparing authentication tokens...');
-  
+
   // Generate test JWT tokens for different user roles
   const testTokens = {
     admin: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LWFkbWluIiwiaWF0IjoxNTE2MjM5MDIyfQ.test-admin-token',
     user: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJpYXQiOjE1MTYyMzkwMjJ9.test-user-token',
     service: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXNlcnZpY2UiLCJpYXQiOjE1MTYyMzkwMjJ9.test-service-token'
   };
-  
+
   // Store tokens in environment for test access
   process.env.TEST_ADMIN_TOKEN = testTokens.admin;
   process.env.TEST_USER_TOKEN = testTokens.user;
   process.env.TEST_SERVICE_TOKEN = testTokens.service;
-  
+
   console.log('🔐 Authentication tokens prepared');
 }
 
@@ -77,7 +77,7 @@ async function setupAuthTokens() {
  */
 async function seedTestData() {
   console.log('🌱 Seeding test data...');
-  
+
   // Test characters for dashboard scenarios
   const testCharacters = [
     {
@@ -89,7 +89,7 @@ async function seedTestData() {
       activity: 0.8
     },
     {
-      id: 'char-002', 
+      id: 'char-002',
       name: 'Merchant Aldric',
       type: 'npc',
       status: 'active',
@@ -99,13 +99,13 @@ async function seedTestData() {
     {
       id: 'char-003',
       name: 'Elder Thorne',
-      type: 'npc', 
+      type: 'npc',
       status: 'active',
       position: { x: 80, y: 220, z: 0 },
       activity: 0.4
     }
   ];
-  
+
   // Test narrative arcs
   const testArcs = [
     {
@@ -118,12 +118,12 @@ async function seedTestData() {
     {
       id: 'arc-002',
       name: 'Merchant Relations',
-      status: 'active', 
+      status: 'active',
       completion: 0.3,
       participants: ['char-001', 'char-002']
     }
   ];
-  
+
   // Test campaign data
   const testCampaign = {
     id: 'campaign-001',
@@ -132,22 +132,20 @@ async function seedTestData() {
     totalTurns: 150,
     status: 'active'
   };
-  
+
   // Store test data in environment/localStorage for access during tests
   process.env.TEST_CHARACTERS = JSON.stringify(testCharacters);
   process.env.TEST_ARCS = JSON.stringify(testArcs);
   process.env.TEST_CAMPAIGN = JSON.stringify(testCampaign);
-  
+
   console.log('🌱 Test data seeded successfully');
 }
 
 /**
  * Verify dashboard is accessible and responsive
  */
-async function verifyDashboardAccessibility() {
-  console.log('🌐 Verifying dashboard accessibility...');
-
-  const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+async function verifyDashboardAccessibility(baseUrl: string) {
+  console.log(`🌐 Verifying dashboard accessibility at ${baseUrl}...`);
 
   // Use curl for HTTP check (most reliable in WSL where Node.js fetch and Playwright browser can fail)
   try {
@@ -186,7 +184,7 @@ async function verifyDashboardAccessibility() {
     const guestChip = page.locator('[data-testid="guest-mode-chip"]');
 
     const ctaVisible = await launchCta
-      .waitFor({ state: 'visible', timeout: 5000 })
+      .waitFor({ state: 'visible', timeout: 15000 })
       .then(() => true)
       .catch(() => false);
 
@@ -202,7 +200,7 @@ async function verifyDashboardAccessibility() {
     }
     await page.waitForSelector('[data-testid="dashboard-layout"]', { timeout: 30000, state: 'attached' });
     await page.waitForSelector('[data-testid="world-state-map"]', { timeout: 10000, state: 'attached' });
-    await page.waitForSelector('[data-testid="real-time-activity"]', { timeout: 10000, state: 'attached' });
+    await page.waitForSelector('[data-testid="system-log"]', { timeout: 10000, state: 'attached' });
 
     console.log('🌐 Dashboard accessibility verified');
 
@@ -216,21 +214,20 @@ async function verifyDashboardAccessibility() {
   }
 }
 
-async function verifyDashboardAccessibilityWithRetry() {
+async function verifyDashboardAccessibilityWithRetry(baseUrl: string) {
   const attempts = Number(process.env.PLAYWRIGHT_VERIFY_ATTEMPTS ?? '3');
   const delayMs = Number(process.env.PLAYWRIGHT_VERIFY_RETRY_DELAY ?? '5000');
   let lastError: unknown = null;
 
   for (let i = 1; i <= attempts; i++) {
     try {
-      await verifyDashboardAccessibility();
+      await verifyDashboardAccessibility(baseUrl);
       return;
     } catch (error) {
       lastError = error;
       const remaining = attempts - i;
       console.warn(
-        `⚠️ Dashboard verification attempt ${i}/${attempts} failed${
-          remaining > 0 ? `; retrying in ${delayMs}ms...` : '.'
+        `⚠️ Dashboard verification attempt ${i}/${attempts} failed${remaining > 0 ? `; retrying in ${delayMs}ms...` : '.'
         }`,
         error,
       );

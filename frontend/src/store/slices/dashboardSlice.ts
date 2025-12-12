@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { dashboardAPI } from '../../services/api/dashboardAPI';
+import { dashboardAPI } from '@/services/api/dashboardAPI';
 
 export interface PerformanceMetrics {
   responseTime: number;
@@ -88,14 +88,14 @@ export interface DashboardState {
 
   // World state
   worldNodes: WorldNode[];
-  
+
   // UI state
   expandedAnalytics: boolean;
   quickActionsState: {
     isRunning: boolean;
     isPaused: boolean;
   };
-  
+
   // Notifications
   notifications: Array<{
     id: string;
@@ -206,8 +206,8 @@ export const fetchDashboardData = createAsyncThunk(
           name: step.name,
           status: step.status,
           progress: step.progress,
-          duration: step.duration,
-          character: step.character,
+          ...(step.duration !== undefined ? { duration: step.duration } : {}),
+          ...(step.character !== undefined ? { character: step.character } : {}),
         })),
       } : {
         currentTurn: 0,
@@ -263,17 +263,17 @@ const dashboardSlice = createSlice({
       state.connected = action.payload;
       state.lastUpdate = new Date().toISOString();
     },
-    
+
     updateLastUpdate: (state) => {
       state.lastUpdate = new Date().toISOString();
     },
-    
+
     // Performance metrics
     updateMetrics: (state, action: PayloadAction<Partial<PerformanceMetrics>>) => {
       state.metrics = { ...state.metrics, ...action.payload };
       state.lastUpdate = new Date().toISOString();
     },
-    
+
     updateSystemStatus: (state, action: PayloadAction<Partial<SystemStatus>>) => {
       state.systemStatus = { ...state.systemStatus, ...action.payload };
     },
@@ -289,16 +289,16 @@ const dashboardSlice = createSlice({
       state.activities = state.activities.slice(0, 50); // Keep only 50 most recent
       state.unreadActivityCount += 1;
     },
-    
+
     markActivitiesAsRead: (state) => {
       state.unreadActivityCount = 0;
     },
-    
+
     // Pipeline management
     updatePipeline: (state, action: PayloadAction<Partial<PipelineData>>) => {
       state.pipeline = { ...state.pipeline, ...action.payload };
     },
-    
+
     updatePipelineStep: (
       state,
       action: PayloadAction<{ stepId: string; updates: Partial<TurnStep> }>
@@ -308,12 +308,12 @@ const dashboardSlice = createSlice({
         Object.assign(step, action.payload.updates);
       }
     },
-    
+
     // World state management
     updateWorldNodes: (state, action: PayloadAction<WorldNode[]>) => {
       state.worldNodes = action.payload;
     },
-    
+
     updateWorldNodeActivity: (
       state,
       action: PayloadAction<{ nodeId: string; activity: number }>
@@ -323,23 +323,23 @@ const dashboardSlice = createSlice({
         node.activity = action.payload.activity;
       }
     },
-    
+
     // UI state management
     toggleAnalytics: (state) => {
       state.expandedAnalytics = !state.expandedAnalytics;
     },
-    
+
     setAnalyticsExpanded: (state, action: PayloadAction<boolean>) => {
       state.expandedAnalytics = action.payload;
     },
-    
+
     updateQuickActionsState: (
       state,
       action: PayloadAction<Partial<DashboardState['quickActionsState']>>
     ) => {
       state.quickActionsState = { ...state.quickActionsState, ...action.payload };
     },
-    
+
     // Notifications
     addNotification: (
       state,
@@ -358,14 +358,14 @@ const dashboardSlice = createSlice({
       state.notifications.unshift(notification);
       state.notifications = state.notifications.slice(0, 20); // Keep only 20 most recent
     },
-    
+
     markNotificationAsRead: (state, action: PayloadAction<string>) => {
       const notification = state.notifications.find((n) => n.id === action.payload);
       if (notification) {
         notification.read = true;
       }
     },
-    
+
     clearNotifications: (state) => {
       state.notifications = [];
     },
@@ -377,6 +377,7 @@ const dashboardSlice = createSlice({
         state.lastUpdate = new Date().toISOString();
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
+
         state.connected = action.payload.connected;
         state.metrics = action.payload.metrics;
         state.systemStatus = action.payload.systemStatus;

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { logger } from '../services/logging/LoggerFactory';
-import type { LogContext } from '../types/logging';
+import { logger } from '@/services/logging/LoggerFactory';
+import type { LogContext } from '@/types/logging';
 
 export function useLogger(componentName?: string) {
   const baseContext: LogContext = useMemo(

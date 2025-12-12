@@ -16,7 +16,7 @@
  */
 
 import React from 'react';
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '@/services/logging/LoggerFactory';
 
 interface CharacterCardProps {
   /** Character name to display */

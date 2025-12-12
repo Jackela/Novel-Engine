@@ -13,7 +13,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { usePerformanceOptimizer } from './usePerformanceOptimizer';
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '@/services/logging/LoggerFactory';
 
 // Types
 export interface WebSocketMessage {
@@ -106,18 +106,18 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
   // Message deduplication
   const isDuplicateMessage = useCallback((messageId: string): boolean => {
     if (!enableMessageDeduplication) return false;
-    
+
     if (messageHistoryRef.current.has(messageId)) {
       return true;
     }
-    
+
     // Add to history and cleanup if too large (optimized for mobile memory)
     messageHistoryRef.current.add(messageId);
     if (messageHistoryRef.current.size > 1000) {
       const oldestMessages = Array.from(messageHistoryRef.current).slice(0, 500);
       oldestMessages.forEach(id => messageHistoryRef.current.delete(id));
     }
-    
+
     return false;
   }, [enableMessageDeduplication]);
 
@@ -136,7 +136,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const pingTime = Date.now();
       statsRef.current.lastPingTime = pingTime;
-      
+
       wsRef.current.send(JSON.stringify({
         id: `heartbeat_${pingTime}`,
         type: 'ping',
@@ -155,7 +155,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
 
     setState(prevState => {
       const queue = [...prevState.messageQueue];
-      
+
       // Sort by priority and timestamp
       queue.sort((a, b) => {
         const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 };
@@ -166,10 +166,10 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
       // Send messages
       for (const message of queue) {
         try {
-          const messageString = enableCompression 
+          const messageString = enableCompression
             ? JSON.stringify(message) // In real implementation, use compression library
             : JSON.stringify(message);
-          
+
           wsRef.current!.send(messageString);
           statsRef.current.messagesSent++;
         } catch (error) {
@@ -189,7 +189,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
   const handleMessage = useCallback((event: MessageEvent) => {
     try {
       const message: WebSocketMessage = JSON.parse(event.data);
-      
+
       // Check for duplicate
       if (isDuplicateMessage(message.id)) {
         return;
@@ -223,7 +223,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
   const handleOpen = useCallback(() => {
     logger.info('WebSocket connected');
     connectionStartTime.current = Date.now();
-    
+
     setState(prevState => ({
       ...prevState,
       isConnected: true,
@@ -248,7 +248,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
   // Handle WebSocket close
   const handleClose = useCallback((event: CloseEvent) => {
     logger.info('WebSocket closed:', event.code, event.reason);
-    
+
     setState(prevState => ({
       ...prevState,
       isConnected: false,
@@ -264,9 +264,9 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
     // Attempt reconnection if not a clean close
     if (event.code !== 1000 && state.reconnectAttempts < maxReconnectAttempts) {
       const delay = getReconnectDelay(state.reconnectAttempts);
-      
+
       logger.info(`Reconnecting in ${delay}ms (attempt ${state.reconnectAttempts + 1}/${maxReconnectAttempts})`);
-      
+
       reconnectTimeoutRef.current = setTimeout(() => {
         setState(prevState => ({
           ...prevState,
@@ -287,7 +287,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
   const handleError = useCallback((event: Event) => {
     logger.error('WebSocket error:', event);
     statsRef.current.errorsCount++;
-    
+
     setState(prevState => ({
       ...prevState,
       lastError: new Error('WebSocket connection error'),
@@ -310,7 +310,7 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
       }));
 
       const ws = new WebSocket(url, protocols);
-      
+
       ws.onopen = handleOpen;
       ws.onclose = handleClose;
       ws.onerror = handleError;
@@ -363,16 +363,16 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       try {
-        const messageString = enableCompression 
+        const messageString = enableCompression
           ? JSON.stringify(fullMessage) // Use compression in real implementation
           : JSON.stringify(fullMessage);
-        
+
         wsRef.current.send(messageString);
         statsRef.current.messagesSent++;
       } catch (error) {
         logger.error('Failed to send message:', error);
         statsRef.current.errorsCount++;
-        
+
         // Queue message for retry
         setState(prevState => ({
           ...prevState,
@@ -400,9 +400,9 @@ export const useWebSocket = (options: WebSocketOptions): WebSocketHookResult => 
   const getConnectionHealth = useCallback((): ConnectionHealth => {
     const now = Date.now();
     const uptime = now - connectionStartTime.current;
-    
+
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    
+
     if (!state.isConnected) {
       status = 'unhealthy';
     } else if (state.latency > 1000 || statsRef.current.errorsCount > 10) {
@@ -449,7 +449,7 @@ export const WebSocketProvider: React.FC<{
   options: WebSocketOptions;
 }> = ({ children, options }) => {
   const webSocket = useWebSocket(options);
-  
+
   return (
     <WebSocketContext.Provider value={webSocket}>
       {children}

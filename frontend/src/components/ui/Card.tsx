@@ -12,7 +12,7 @@
 import React, { forwardRef } from 'react';
 import type { HTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 const cardVariants = cva(
   "rounded-lg border bg-card text-card-foreground transition-all duration-200",
@@ -49,7 +49,7 @@ const cardVariants = cva(
 
 export interface CardProps
   extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof cardVariants> {
+  VariantProps<typeof cardVariants> {
   glow?: boolean;
 }
 
@@ -205,7 +205,7 @@ interface ProgressCardProps extends CardProps {
 const ProgressCard = forwardRef<HTMLDivElement, ProgressCardProps>(
   ({ title, progress, total, description, color = 'default', className, ...props }, ref) => {
     const percentage = total ? Math.round((progress / total) * 100) : Math.round(progress);
-    
+
     const colorClasses = {
       default: 'bg-primary',
       success: 'bg-green-500',
@@ -221,21 +221,21 @@ const ProgressCard = forwardRef<HTMLDivElement, ProgressCardProps>(
             <h3 className="font-semibold">{title}</h3>
             <span className="text-sm font-medium">{percentage}%</span>
           </div>
-          
+
           <div className="w-full bg-muted rounded-full h-2">
             <div
               className={cn("h-2 rounded-full transition-all duration-500", colorClasses[color])}
               style={{ width: `${Math.min(percentage, 100)}%` }}
             />
           </div>
-          
+
           {total && (
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{progress.toLocaleString()}</span>
               <span>{total.toLocaleString()}</span>
             </div>
           )}
-          
+
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>
           )}

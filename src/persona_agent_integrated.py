@@ -495,6 +495,32 @@ class PersonaAgent:
             def metadata(self) -> Dict[str, Any]:
                 return self._agent.character_data.get("metadata", {})
 
+            @property
+            def structured_data(self) -> Dict[str, Any]:
+                """Expose structured stats for API compatibility."""
+                yaml_stats = self._agent.character_data.get("yaml_stats")
+                if isinstance(yaml_stats, dict):
+                    stats = yaml_stats
+                else:
+                    stats = {}
+                    for key in (
+                        "character",
+                        "combat_stats",
+                        "equipment",
+                        "psychological_profile",
+                        "specializations",
+                        "relationships",
+                    ):
+                        if key in self._agent.character_data:
+                            stats[key] = self._agent.character_data[key]
+                    if "character" not in stats:
+                        stats["character"] = {
+                            "name": self._agent.character_data.get("name", self._agent.character_name),
+                            "faction": self._agent.character_data.get("faction", "Independent"),
+                            "specialization": self._agent.character_data.get("specialization", "Unknown"),
+                        }
+                return {"stats": stats}
+
         return CharacterCompatibilityWrapper(self)
 
     @property

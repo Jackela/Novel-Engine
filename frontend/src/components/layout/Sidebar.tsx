@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Box, 
-  IconButton, 
-  Tooltip, 
-  Stack, 
-  Typography, 
+import {
+  Box,
+  IconButton,
+  Tooltip,
+  Stack,
+  Typography,
   useTheme,
   Drawer,
   useMediaQuery,
@@ -86,13 +86,14 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) 
       </Box>
 
       {/* Navigation Items */}
-      <Stack spacing={1} sx={{ px: 2, mt: 4, flex: 1 }} role="navigation" aria-label="Main Navigation">
+      <Stack spacing={1} sx={{ px: 2, mt: 4, flex: 1 }} role="navigation" aria-label="Main Navigation" data-testid="sidebar-navigation">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Tooltip key={item.path} title={isExpanded && !isMobile ? '' : item.label} placement="right">
               <ButtonBase
                 onClick={() => handleNavigate(item.path)}
+                aria-label={item.label}
                 sx={{
                   position: 'relative',
                   display: 'flex',
@@ -124,7 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) 
                     }}
                   />
                 )}
-                
+
                 <Box sx={{ minWidth: 24, display: 'flex', justifyContent: 'center' }}>
                   {item.icon}
                 </Box>
@@ -150,22 +151,22 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) 
       {/* Bottom Actions */}
       <Box sx={{ p: 2, borderTop: isMobile ? `1px solid ${tokens.colors.border.primary}` : tokens.glass.border }}>
         <Stack spacing={1}>
-           <Tooltip title={isExpanded ? '' : 'Settings'} placement="right">
+          <Tooltip title={isExpanded ? '' : 'Settings'} placement="right">
             <IconButton sx={{ color: tokens.colors.text.secondary }}>
               <SettingsIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title={isExpanded ? '' : 'Logout'} placement="right">
             <IconButton sx={{ color: tokens.colors.text.secondary }}>
-               <LogoutIcon />
+              <LogoutIcon />
             </IconButton>
           </Tooltip>
         </Stack>
       </Box>
 
-       {/* Toggle Button (Desktop Only) */}
-       {!isMobile && (
-         <IconButton
+      {/* Toggle Button (Desktop Only) */}
+      {!isMobile && (
+        <IconButton
           onClick={() => setIsExpanded(!isExpanded)}
           sx={{
             position: 'absolute',
@@ -180,10 +181,10 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) 
             '&:hover': { bgcolor: tokens.colors.primary[900] }
           }}
           aria-label={isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}
-         >
-           {isExpanded ? <ChevronLeftIcon sx={{ fontSize: 16 }} /> : <ChevronRightIcon sx={{ fontSize: 16 }} />}
-         </IconButton>
-       )}
+        >
+          {isExpanded ? <ChevronLeftIcon sx={{ fontSize: 16 }} /> : <ChevronRightIcon sx={{ fontSize: 16 }} />}
+        </IconButton>
+      )}
 
     </Box>
   );
@@ -196,8 +197,8 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) 
         onClose={onMobileClose}
         ModalProps={{ keepMounted: true }}
         sx={{
-          '& .MuiDrawer-paper': { 
-            width: 240, 
+          '& .MuiDrawer-paper': {
+            width: 240,
             boxSizing: 'border-box',
             bgcolor: tokens.colors.background.default,
             borderRight: `1px solid ${tokens.colors.border.primary}`

@@ -269,6 +269,8 @@ class ExecuteLLMService:
             Comprehensive execution result
         """
         start_time = asyncio.get_running_loop().time()
+        def _elapsed() -> float:
+            return max(asyncio.get_running_loop().time() - start_time, 1e-6)
         config = config or LLMExecutionConfig()
 
         # Initialize result
@@ -304,9 +306,7 @@ class ExecuteLLMService:
                             request, cached_response, config
                         )
 
-                    result.execution_time_seconds = (
-                        asyncio.get_running_loop().time() - start_time
-                    )
+                    result.execution_time_seconds = _elapsed()
                     return result
 
             # Step 2: Rate limiting check
@@ -342,9 +342,7 @@ class ExecuteLLMService:
                             error_details=rate_limit_result.reason,
                         )
 
-                        result.execution_time_seconds = (
-                            asyncio.get_running_loop().time() - start_time
-                        )
+                        result.execution_time_seconds = _elapsed()
                         return result
 
             # Step 3: Budget enforcement
@@ -366,9 +364,7 @@ class ExecuteLLMService:
                         error_details="Budget limit exceeded",
                     )
 
-                    result.execution_time_seconds = (
-                        asyncio.get_running_loop().time() - start_time
-                    )
+                    result.execution_time_seconds = _elapsed()
                     return result
 
             # Step 4: Provider selection and execution
@@ -385,9 +381,7 @@ class ExecuteLLMService:
                     status=LLMResponseStatus.MODEL_UNAVAILABLE,
                     error_details="No available provider for model",
                 )
-                result.execution_time_seconds = (
-                    asyncio.get_running_loop().time() - start_time
-                )
+                result.execution_time_seconds = _elapsed()
                 return result
 
             result.provider_used = provider.provider_id
@@ -456,7 +450,7 @@ class ExecuteLLMService:
                 error_details=result.error_details,
             )
 
-        result.execution_time_seconds = asyncio.get_running_loop().time() - start_time
+        result.execution_time_seconds = _elapsed()
         return result
 
     async def execute_stream_async(

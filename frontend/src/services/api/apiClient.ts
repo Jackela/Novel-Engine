@@ -1,9 +1,9 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { store } from '../../store/store';
-import { refreshUserToken, logoutUser } from '../../store/slices/authSlice';
-import { logger } from '../logging/LoggerFactory';
-import type { IAuthenticationService } from '../auth/IAuthenticationService';
+import { store } from '@/store/store';
+import { refreshUserToken, logoutUser } from '@/store/slices/authSlice';
+import { logger } from '@/services/logging/LoggerFactory';
+import type { IAuthenticationService } from '@/services/auth/IAuthenticationService';
 
 // API base configuration
 // Use Vite proxy (/api) or direct backend URL - no /v1 versioning
@@ -58,7 +58,7 @@ class MobileAPICache {
   private cleanup(): void {
     const now = Date.now();
     const entries = Array.from(this.cache.entries());
-    
+
     // Remove expired entries first
     entries.forEach(([key, entry]) => {
       if (now > entry.expires) {
@@ -71,7 +71,7 @@ class MobileAPICache {
       const sortedEntries = entries
         .filter(([key]) => this.cache.has(key))
         .sort(([, a], [, b]) => a.timestamp - b.timestamp);
-      
+
       const toRemove = sortedEntries.slice(0, Math.floor(this.maxSize * 0.3));
       toRemove.forEach(([key]) => this.cache.delete(key));
     }
@@ -128,7 +128,7 @@ const createAPIClient = (): AxiosInstance => {
       if (config.method === 'get') {
         const cacheKey = `${config.url}_${JSON.stringify(config.params || {})}`;
         const cachedData = mobileCache.get(cacheKey);
-        
+
         if (cachedData) {
           // Return cached response
           return Promise.reject({
@@ -141,7 +141,7 @@ const createAPIClient = (): AxiosInstance => {
           });
         }
       }
-      
+
       return config;
     },
     (error) => Promise.reject(error)
@@ -186,14 +186,14 @@ const createAPIClient = (): AxiosInstance => {
       if (response.data.metadata?.rate_limit) {
         logger.debug('Rate limit:', response.data.metadata.rate_limit);
       }
-      
+
       // Cache GET requests for mobile optimization
       const config = response.config;
       if (config.method === 'get' && response.status === 200) {
         const cacheKey = `${config.url}_${JSON.stringify(config.params || {})}`;
         mobileCache.set(cacheKey, response.data);
       }
-      
+
       return response;
     },
     async (error) => {
@@ -211,7 +211,7 @@ const createAPIClient = (): AxiosInstance => {
         try {
           // Attempt to refresh token
           await store.dispatch(refreshUserToken());
-          
+
           // Retry original request with new token
           const state = store.getState();
           if (state.auth.accessToken) {
@@ -221,12 +221,12 @@ const createAPIClient = (): AxiosInstance => {
         } catch (refreshError) {
           // Refresh failed, logout user
           store.dispatch(logoutUser());
-          
+
           // Redirect to login page
           if (typeof window !== 'undefined') {
             window.location.href = '/login';
           }
-          
+
           return Promise.reject(refreshError);
         }
       }
@@ -236,10 +236,10 @@ const createAPIClient = (): AxiosInstance => {
         const retryAfter = error.response.headers['retry-after'];
         if (retryAfter && !originalRequest._rateLimitRetry) {
           originalRequest._rateLimitRetry = true;
-          
+
           const delay = parseInt(retryAfter) * 1000; // Convert to milliseconds
           logger.warn(`Rate limited. Retrying after ${delay}ms`);
-          
+
           await new Promise(resolve => setTimeout(resolve, delay));
           return client(originalRequest);
         }
@@ -315,7 +315,7 @@ export const createAuthenticatedAPIClient = (authService: IAuthenticationService
       if (config.method === 'get') {
         const cacheKey = `${config.url}_${JSON.stringify(config.params || {})}`;
         const cachedData = mobileCache.get(cacheKey);
-        
+
         if (cachedData) {
           return Promise.reject({
             __cached: true,
@@ -327,7 +327,7 @@ export const createAuthenticatedAPIClient = (authService: IAuthenticationService
           });
         }
       }
-      
+
       return config;
     },
     (error) => Promise.reject(error)
@@ -381,14 +381,14 @@ export const createAuthenticatedAPIClient = (authService: IAuthenticationService
           rateLimit: response.data.metadata.rate_limit,
         });
       }
-      
+
       // Cache GET requests for mobile optimization
       const config = response.config;
       if (config.method === 'get' && response.status === 200) {
         const cacheKey = `${config.url}_${JSON.stringify(config.params || {})}`;
         mobileCache.set(cacheKey, response.data);
       }
-      
+
       return response;
     },
     async (error) => {
@@ -412,16 +412,16 @@ export const createAuthenticatedAPIClient = (authService: IAuthenticationService
         try {
           // Attempt to refresh token using JWTAuthService
           const newToken = await authService.refreshToken();
-          
+
           // Retry original request with new token
           originalRequest.headers.Authorization = `${newToken.tokenType} ${newToken.accessToken}`;
-          
+
           logger.info('Token refreshed, retrying request', undefined, {
             component: 'apiClient',
             action: '401Handler',
             url: originalRequest.url,
           });
-          
+
           return client(originalRequest);
         } catch (refreshError) {
           // Refresh failed, logout user
@@ -429,14 +429,14 @@ export const createAuthenticatedAPIClient = (authService: IAuthenticationService
             component: 'apiClient',
             action: '401Handler',
           });
-          
+
           await authService.logout();
-          
+
           // Redirect to login page
           if (typeof window !== 'undefined') {
             window.location.href = '/login';
           }
-          
+
           return Promise.reject(refreshError);
         }
       }
@@ -446,14 +446,14 @@ export const createAuthenticatedAPIClient = (authService: IAuthenticationService
         const retryAfter = error.response.headers['retry-after'];
         if (retryAfter && !originalRequest._rateLimitRetry) {
           originalRequest._rateLimitRetry = true;
-          
+
           const delay = parseInt(retryAfter) * 1000;
           logger.warn('Rate limited, retrying', undefined, {
             component: 'apiClient',
             action: 'rateLimitHandler',
             delayMs: delay,
           });
-          
+
           await new Promise(resolve => setTimeout(resolve, delay));
           return client(originalRequest);
         }
@@ -490,7 +490,7 @@ export const handleAPIResponse = <T>(
 type APIErrorShape = { message?: string; code?: string; recoverable?: boolean } & Record<string, unknown>;
 export const handleAPIError = (error: unknown): never => {
   logger.error('API Error:', error);
-  
+
   // Create standardized error format
   const standardError = {
     message: (error as APIErrorShape).message || 'An unexpected error occurred',
@@ -498,7 +498,7 @@ export const handleAPIError = (error: unknown): never => {
     recoverable: (error as APIErrorShape).recoverable !== undefined ? (error as APIErrorShape).recoverable as boolean : true,
     originalError: error as APIErrorShape,
   };
-  
+
   throw standardError;
 };
 

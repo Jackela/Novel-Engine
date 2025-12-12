@@ -432,53 +432,76 @@ class SecurityHeaders:
         return True
 
 
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """STANDARD SECURITY HEADERS MIDDLEWARE"""
+class SecurityHeadersMiddleware:
+    """STANDARD SECURITY HEADERS MIDDLEWARE (ASGI)"""
 
     def __init__(self, app, security_headers: SecurityHeaders):
-        super().__init__(app)
+        self.app = app
         self.security_headers = security_headers
 
-    async def dispatch(self, request: Request, call_next):
+    async def __call__(self, scope, receive, send):
         """STANDARD SECURITY HEADERS APPLICATION"""
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        # Create Request object from scope to access headers/url helpers
+        # We don't pass 'receive' to avoid consuming the body stream
+        from fastapi import Request
+        request = Request(scope)
+
         try:
             # Validate request security
+            # Note: This checks headers/URL only, does not consume body
             if not self.security_headers.validate_request_security(request):
-                from fastapi import HTTPException
+                from fastapi.responses import PlainTextResponse
+                response = PlainTextResponse("Request failed security validation", status_code=400)
+                await response(scope, receive, send)
+                return
 
-                raise HTTPException(
-                    status_code=400, detail="Request failed security validation"
-                )
+            # Wrapper to intercept response start and inject headers
+            async def send_wrapper(message):
+                if message["type"] == "http.response.start":
+                    # Create a dummy response to calculate security headers
+                    from starlette.responses import Response
+                    dummy_response = Response()
+                    
+                    # Apply headers logic
+                    try:
+                        dummy_response = self.security_headers.apply_headers(dummy_response, request)
+                        
+                        # Merge headers into the ASGI message
+                        headers = message.setdefault("headers", [])
+                        
+                        # Convert dummy_response headers to list of (bytes, bytes)
+                        # and remove any existing security headers to avoid duplication
+                        secure_headers_dict = dict(dummy_response.headers)
+                        
+                        # Filter out existing headers that we are about to set
+                        existing_keys = set(k.lower() for k in secure_headers_dict.keys())
+                        headers = [h for h in headers if h[0].decode("latin-1").lower() not in existing_keys]
+                        
+                        # Add new security headers
+                        for k, v in secure_headers_dict.items():
+                            headers.append((k.encode("latin-1"), v.encode("latin-1")))
+                            
+                        message["headers"] = headers
+                        
+                    except Exception as e:
+                        logger.error(f"Error applying security headers: {e}")
+                        # Proceed without headers if calculation fails, or could raise
+                        pass
+                        
+                await send(message)
 
-            # Process request
-            response = await call_next(request)
-
-            # Apply security headers
-            response = self.security_headers.apply_headers(response, request)
-
-            return response
+            await self.app(scope, receive, send_wrapper)
 
         except Exception as e:
-            # Ensure security headers are still applied on error responses
-            try:
-                from fastapi import HTTPException
-                from fastapi.responses import PlainTextResponse
+            logger.error(f"SECURITY HEADERS MIDDLEWARE ERROR: {e}")
+            from fastapi.responses import PlainTextResponse
+            response = PlainTextResponse("Internal Server Error", status_code=500)
+            await response(scope, receive, send)
 
-                status = 500
-                detail = "Security validation error"
-                if isinstance(e, HTTPException):
-                    status = e.status_code
-                    # Extract detail message if present
-                    if getattr(e, "detail", None):
-                        detail = str(e.detail)
-
-                response = PlainTextResponse(detail, status_code=status)
-                response = self.security_headers.apply_headers(response, request)
-                return response
-            except Exception:
-                logger.error(f"SECURITY HEADERS MIDDLEWARE ERROR: {e}")
-                # Fallback: re-raise if we cannot safely craft a response
-                raise
 
 
 def create_security_headers_middleware(

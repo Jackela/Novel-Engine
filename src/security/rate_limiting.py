@@ -703,8 +703,8 @@ class IPWhitelist:
         return False
 
 
-class RateLimitMiddleware(BaseHTTPMiddleware):
-    """STANDARD RATE LIMITING MIDDLEWARE"""
+class RateLimitMiddleware:
+    """STANDARD RATE LIMITING MIDDLEWARE (ASGI)"""
 
     def __init__(
         self,
@@ -714,7 +714,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         config: Optional[RateLimitConfig] = None,
         rate_limiter: Optional[RateLimiter] = None,
     ):
-        super().__init__(app)
+        self.app = app
         self.strategy = strategy or RateLimitStrategy.TOKEN_BUCKET
         self.config = config or RateLimitConfig(strategy=self.strategy)
         self.backend = backend or InMemoryRateLimitBackend()
@@ -725,18 +725,28 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.ddos_detector = self.rate_limiter.ddos_detector
         self.whitelist = self.rate_limiter.whitelist
 
-    async def dispatch(self, request: Request, call_next):
+    async def __call__(self, scope, receive, send):
         """STANDARD REQUEST RATE LIMITING"""
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        from fastapi import Request
+        request = Request(scope)
+
         try:
             # Skip rate limiting for health checks and docs
             skip_paths = ["/health", "/docs", "/redoc", "/openapi.json"]
+            # To handle path correctly without consuming, we use request.url.path which is safe
             if request.url.path in skip_paths:
-                return await call_next(request)
+                await self.app(scope, receive, send)
+                return
 
             client_id = self.rate_limiter._get_client_identifier(request)
 
             if self.whitelist and self.whitelist.is_whitelisted(client_id):
-                return await call_next(request)
+                await self.app(scope, receive, send)
+                return
 
             if self.ddos_detector:
                 allowed, reason = await self.ddos_detector.analyze_request(client_id)
@@ -761,17 +771,26 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     threat_level=ThreatLevel.HIGH,
                 )
 
-            # Process request
-            response = await call_next(request)
+            # Wrapper to intercept response start and inject headers
+            async def send_wrapper(message):
+                if message["type"] == "http.response.start":
+                    headers = message.setdefault("headers", [])
+                    # Remove existing headers if any (to avoid dups, though unlikely for unique keys)
+                    headers = [h for h in headers if h[0].decode("latin-1").lower() not in [
+                        "x-ratelimit-limit", 
+                        "x-ratelimit-remaining", 
+                        "x-ratelimit-reset"
+                    ]]
+                    
+                    headers.append((b"x-ratelimit-limit", str(self.config.requests_per_minute).encode()))
+                    headers.append((b"x-ratelimit-remaining", str(max(limit_result.remaining, 0)).encode()))
+                    headers.append((b"x-ratelimit-reset", str(int(time.time()) + 60).encode()))
+                    
+                    message["headers"] = headers
+                
+                await send(message)
 
-            # Add rate limit headers
-            response.headers["X-RateLimit-Limit"] = str(self.config.requests_per_minute)
-            response.headers["X-RateLimit-Remaining"] = str(
-                max(limit_result.remaining, 0)
-            )
-            response.headers["X-RateLimit-Reset"] = str(int(time.time()) + 60)
-
-            return response
+            await self.app(scope, receive, send_wrapper)
 
         except RateLimitExceeded as e:
             logger.warning(
@@ -782,19 +801,24 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             )
 
             status_code = 429 if e.threat_level != ThreatLevel.CRITICAL else 403
-
-            raise HTTPException(
-                status_code=status_code,
-                detail=e.message,
-                headers={
-                    "Retry-After": str(e.retry_after),
-                    "X-RateLimit-Limit": str(
-                        self.rate_limiter.config.requests_per_minute
-                    ),
-                    "X-RateLimit-Remaining": "0",
-                    "X-RateLimit-Reset": str(int(time.time()) + e.retry_after),
-                },
-            )
+            
+            from fastapi.responses import JSONResponse
+            content = {"detail": e.message}
+            headers = {
+                "Retry-After": str(e.retry_after),
+                "X-RateLimit-Limit": str(
+                    self.rate_limiter.config.requests_per_minute
+                ),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": str(int(time.time()) + e.retry_after),
+            }
+            
+            response = JSONResponse(content=content, status_code=status_code, headers=headers)
+            await response(scope, receive, send)
+            
+        except Exception:
+            # Re-raise other exceptions to let downstream/upstream handle them
+            raise
 
 
 # STANDARD GLOBAL RATE LIMITER INSTANCE

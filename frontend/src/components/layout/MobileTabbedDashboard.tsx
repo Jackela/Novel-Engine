@@ -19,7 +19,7 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import { tokens } from '../../styles/tokens';
+import { tokens } from '@/styles/tokens';
 
 const MobileTabbedContainer = styled(Box)(({ theme: _theme }) => ({
   display: 'flex',
@@ -35,7 +35,7 @@ const CompactTabs = styled(Tabs)(({ theme }) => ({
   minHeight: '48px',
   backgroundColor: theme.palette.background.paper,
   borderBottom: `1px solid ${theme.palette.divider}`,
-  
+
   '& .MuiTab-root': {
     minHeight: '48px',
     fontSize: '0.75rem',
@@ -43,12 +43,12 @@ const CompactTabs = styled(Tabs)(({ theme }) => ({
     padding: theme.spacing(1, 1.5),
     fontWeight: 500,
     transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-    
+
     '&.Mui-selected': {
       fontWeight: 600,
     },
   },
-  
+
   '& .MuiTabs-indicator': {
     backgroundColor: theme.palette.primary.main,
     height: '3px',
@@ -60,7 +60,7 @@ const TabContent = styled(Box)(({ theme }) => ({
   padding: theme.spacing(1),
   overflow: 'auto',
   maxHeight: 'calc(100vh - 120px)',
-  
+
   '&::-webkit-scrollbar': {
     width: '6px',
   },
@@ -107,9 +107,9 @@ interface MobileTabbedDashboardProps {
   };
 }
 
-const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({ 
-  children, 
-  components 
+const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
+  children,
+  components
 }) => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
@@ -206,9 +206,9 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
   return (
     <MobileTabbedContainer>
       {/* Mobile Header */}
-      <Box sx={{ 
-        p: 1.5, 
-        textAlign: 'center', 
+      <Box sx={{
+        p: 1.5,
+        textAlign: 'center',
         backgroundColor: theme.palette.background.paper,
         borderBottom: `1px solid ${theme.palette.divider}`,
       }}>

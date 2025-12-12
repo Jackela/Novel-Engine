@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import MarkdownIt from 'markdown-it';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FRONTEND_ROOT = path.resolve(__dirname, '..');
 const REPORT_DIR = path.join(FRONTEND_ROOT, 'reports');
 const TEST_RESULTS_PATH = path.join(FRONTEND_ROOT, 'test-results.json');

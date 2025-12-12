@@ -32,7 +32,7 @@ test.describe('Dashboard Responsive Layout', () => {
       // Given: Mobile viewport is set (done in beforeEach)
 
       // When: Navigate to dashboard
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
 
       // Then: Tabbed layout should be visible
       const tabs = page.locator('[role="tablist"]');
@@ -52,7 +52,7 @@ test.describe('Dashboard Responsive Layout', () => {
 
     test('Given mobile layout, When user taps Engine tab, Then Engine content displays', async ({ page }) => {
       // Given: Mobile dashboard is loaded
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForSelector('[role="tablist"]', { timeout: 15000 });
 
       // When: Tap on Engine tab (index 0)
@@ -70,7 +70,7 @@ test.describe('Dashboard Responsive Layout', () => {
 
     test('Given mobile layout, When user taps Insights tab, Then Insights content displays', async ({ page }) => {
       // Given: Mobile dashboard is loaded
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForSelector('[role="tablist"]', { timeout: 15000 });
 
       // When: Tap on Insights tab (index 2)
@@ -88,7 +88,7 @@ test.describe('Dashboard Responsive Layout', () => {
 
     test('Given mobile layout, Then World tab is selected by default', async ({ page }) => {
       // Given/When: Mobile dashboard is loaded
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForSelector('[role="tablist"]', { timeout: 15000 });
 
       // Then: World tab (index 1) should be selected
@@ -102,7 +102,7 @@ test.describe('Dashboard Responsive Layout', () => {
 
     test('Given mobile layout, Then tabs have proper accessibility attributes', async ({ page }) => {
       // Given/When: Mobile dashboard is loaded
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForSelector('[role="tablist"]', { timeout: 15000 });
 
       // Then: Tablist should have aria-label
@@ -126,7 +126,7 @@ test.describe('Dashboard Responsive Layout', () => {
 
     test('Given mobile layout, When cycling through tabs, Then content updates correctly', async ({ page }) => {
       // Given: Mobile dashboard is loaded
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForSelector('[role="tablist"]', { timeout: 15000 });
 
       // When/Then: Cycle through all tabs
@@ -159,7 +159,7 @@ test.describe('Dashboard Responsive Layout', () => {
       // Given: Desktop viewport is set (done in beforeEach)
 
       // When: Navigate to dashboard
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
 
       // Then: Three-column layout should be visible
       const dashboardLayout = page.locator('.dashboard-layout');
@@ -181,7 +181,7 @@ test.describe('Dashboard Responsive Layout', () => {
 
     test('Given desktop layout, When sidebar is collapsed, Then Show button appears', async ({ page }) => {
       // Given: Desktop dashboard is loaded
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForSelector('.dashboard-layout', { timeout: 15000 });
 
       // When: Click Hide button on sidebar
@@ -196,7 +196,7 @@ test.describe('Dashboard Responsive Layout', () => {
 
     test('Given collapsed sidebar, When Show button clicked, Then sidebar reopens', async ({ page }) => {
       // Given: Desktop dashboard with collapsed sidebar
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForSelector('.dashboard-layout', { timeout: 15000 });
 
       const hideButton = page.locator('button[aria-label="Hide engine panel"]');
@@ -218,7 +218,7 @@ test.describe('Dashboard Responsive Layout', () => {
     test('Given desktop, When resized to mobile, Then layout transitions to tabs', async ({ page }) => {
       // Given: Desktop viewport with three-column layout
       await page.setViewportSize(DESKTOP_VIEWPORT);
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
 
       // Verify three-column layout
       const dashboardLayout = page.locator('.dashboard-layout:not(.dashboard-layout--mobile)');
@@ -240,7 +240,7 @@ test.describe('Dashboard Responsive Layout', () => {
     test('Given mobile, When resized to desktop, Then layout transitions to three-column', async ({ page }) => {
       // Given: Mobile viewport with tabbed layout
       await page.setViewportSize(MOBILE_VIEWPORT);
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
 
       // Verify tabbed layout
       const tabs = page.locator('[role="tablist"]');
@@ -262,7 +262,7 @@ test.describe('Dashboard Responsive Layout', () => {
     test('Given tablet viewport, Then appropriate layout is shown', async ({ page }) => {
       // Given/When: Tablet viewport
       await page.setViewportSize(TABLET_VIEWPORT);
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForTimeout(500);
 
       // Then: Based on MUI md breakpoint (900px), tablet at 768px should show mobile layout
@@ -276,7 +276,7 @@ test.describe('Dashboard Responsive Layout', () => {
     test('Given mobile layout, When using arrow keys on tabs, Then focus moves between tabs', async ({ page }) => {
       // Given: Mobile dashboard
       await page.setViewportSize(MOBILE_VIEWPORT);
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForSelector('[role="tablist"]', { timeout: 15000 });
 
       // When: Focus first tab and press Right arrow
@@ -292,7 +292,7 @@ test.describe('Dashboard Responsive Layout', () => {
     test('Given desktop layout, When pressing Cmd+[ shortcut, Then sidebar toggles', async ({ page }) => {
       // Given: Desktop dashboard
       await page.setViewportSize(DESKTOP_VIEWPORT);
-      await dashboardPage.navigateToDashboard();
+      await dashboardPage.navigateToDashboard({ mockAPIs: true });
       await page.waitForSelector('.dashboard-layout', { timeout: 15000 });
 
       // Verify sidebar is initially open

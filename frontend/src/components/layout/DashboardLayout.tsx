@@ -3,7 +3,7 @@ import { Box, AppBar, Toolbar, Typography, Container, Chip, Tooltip, Alert, Butt
 import { styled } from '@mui/material/styles';
 import BentoGrid from './BentoGrid';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useAuthContext } from '../../contexts/AuthContext';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   position: 'sticky',
@@ -19,7 +19,7 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
 const MainContainer = styled(Container)(({ theme }) => ({
   maxWidth: '1400px !important',
   padding: theme.spacing(3),
-  
+
   [theme.breakpoints.down('md')]: {
     padding: theme.spacing(2),
   },
@@ -60,7 +60,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const guestBannerVisible = useMemo(() => isGuest && !bannerDismissed, [isGuest, bannerDismissed]);
 
   return (
-    <Box 
+    <Box
       component="div"
       data-testid="dashboard-layout"
       sx={{ minHeight: '100vh', bgcolor: 'background.default' }}
@@ -105,7 +105,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </Collapse>
         </Box>
       )}
-      
+
       <MainContainer role="main" id="main-content" tabIndex={-1}>
         <BentoGrid>
           {children}

@@ -38,7 +38,7 @@ const activateDemoCtaWithKeyboard = async (page: Page) => {
   await expect(skipLink).toBeFocused();
   await page.keyboard.press('Enter');
 
-  const ctaButton = page.locator('[data-testid="cta-demo"]');
+  const ctaButton = page.locator('[data-testid="cta-launch"]');
   await ctaButton.waitFor({ state: 'visible' });
   await page.keyboard.press('Tab');
   await expect(ctaButton).toBeFocused();
@@ -153,9 +153,9 @@ test.describe('Keyboard-Only User Journey', () => {
   /**
    * Test 6: Screen reader announcements work correctly
    */
-test('should announce connection state updates to screen readers', async ({ page }) => {
-  const dashboardPage = await activateDemoCtaWithKeyboard(page);
-  await focusViaTab(page, dashboardPage.playButton.first());
+  test('should announce connection state updates to screen readers', async ({ page }) => {
+    const dashboardPage = await activateDemoCtaWithKeyboard(page);
+    await focusViaTab(page, dashboardPage.playButton.first());
 
     await page.evaluate(() => {
       (window as any).announcements = [];
@@ -172,7 +172,7 @@ test('should announce connection state updates to screen readers', async ({ page
     await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
 
-  const announcements = await page.evaluate(() => (window as any).announcements);
-  expect(announcements.length).toBeGreaterThan(0);
-});
+    const announcements = await page.evaluate(() => (window as any).announcements);
+    expect(announcements.length).toBeGreaterThan(0);
+  });
 });

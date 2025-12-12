@@ -347,9 +347,16 @@ async def apply_world_delta(
         # Convert request to domain command
         command = _build_world_delta_command(request)
 
-        # TODO: Execute command through command bus/handler
-        # For now, simulate successful execution
-        # In full implementation: await command_bus.execute(command)
+        # Execute command through command bus
+        # In a real app, this would be injected via dependency injection
+        from apps.api.infrastructure.command_bus import CommandBus
+        from contexts.world.application.commands.handlers import ApplyWorldDeltaHandler
+        
+        # Setup bus (temporary manual setup until DI is in place)
+        bus = CommandBus()
+        bus.register(type(command), ApplyWorldDeltaHandler())
+        
+        result = await bus.execute(command)
 
         execution_time = (datetime.now() - start_time).total_seconds() * 1000
 
@@ -358,9 +365,9 @@ async def apply_world_delta(
         return WorldDeltaResponse(
             command_id=command.command_id,
             world_state_id=command.world_state_id,
-            success=True,
-            operations_applied=command.get_operation_count(),
-            operation_summary=command.get_operation_summary(),
+            success=result.get("success", False),
+            operations_applied=result.get("operations_applied", 0),
+            operation_summary=result.get("operation_summary", ""),
             execution_time_ms=execution_time,
             world_version=None,  # TODO: Get from aggregate
             correlation_id=command.correlation_id,
