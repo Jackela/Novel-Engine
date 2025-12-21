@@ -189,6 +189,9 @@ class SecurityLogger:
         self.log_directory = Path(log_directory)
         self.log_directory.mkdir(parents=True, exist_ok=True)
 
+        self._security_file_handler: Optional[logging.Handler] = None
+        self._audit_file_handler: Optional[logging.Handler] = None
+
         # Threat intelligence
         self.threat_indicators: Dict[str, ThreatIntelligence] = {}
         self.suspicious_ips: Dict[str, Dict[str, Any]] = {}
@@ -222,6 +225,7 @@ class SecurityLogger:
         )
         file_handler.setFormatter(formatter)
 
+        self._security_file_handler = file_handler
         self.security_logger.addHandler(file_handler)
 
         # Audit log file
@@ -229,6 +233,7 @@ class SecurityLogger:
         audit_log_file = self.log_directory / "audit.log"
         audit_handler = logging.FileHandler(audit_log_file)
         audit_handler.setFormatter(formatter)
+        self._audit_file_handler = audit_handler
         self.audit_logger.addHandler(audit_handler)
 
     def _start_background_tasks(self):
@@ -890,9 +895,11 @@ class SecurityLogger:
             # Cancel background tasks
             if self._log_rotation_task:
                 self._log_rotation_task.cancel()
+                await asyncio.gather(self._log_rotation_task, return_exceptions=True)
 
             if self._threat_analysis_task:
                 self._threat_analysis_task.cancel()
+                await asyncio.gather(self._threat_analysis_task, return_exceptions=True)
 
             # Final log rotation
             await self._rotate_logs()
@@ -901,6 +908,23 @@ class SecurityLogger:
 
         except Exception as e:
             logger.error(f"SECURITY LOGGER SHUTDOWN ERROR: {e}")
+        finally:
+            for handler, target_logger in (
+                (self._security_file_handler, getattr(self, "security_logger", None)),
+                (self._audit_file_handler, getattr(self, "audit_logger", None)),
+            ):
+                if handler is None or target_logger is None:
+                    continue
+                try:
+                    target_logger.removeHandler(handler)
+                finally:
+                    try:
+                        handler.close()
+                    except Exception:
+                        pass
+
+            self._security_file_handler = None
+            self._audit_file_handler = None
 
 
 # GLOBAL SECURITY LOGGER INSTANCE

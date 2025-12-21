@@ -822,31 +822,30 @@ def _register_legacy_routes(app: FastAPI):
             raise HTTPException(status_code=500, detail="Failed to retrieve characters")
 
     @app.get("/characters/{character_id}", response_model=dict)
-        async def legacy_get_character_detail(character_id: str):
-            """Legacy endpoint - Get character details from file system."""
-            try:
-                characters_path = os.path.join(os.getcwd(), "characters")
-                safe_character_id = _safe_dir_segment(character_id, "character_id")
-                character_path = os.path.join(characters_path, safe_character_id)
+    async def legacy_get_character_detail(character_id: str):
+        """Legacy endpoint - Get character details from file system."""
+        try:
+            characters_path = os.path.join(os.getcwd(), "characters")
+            safe_character_id = _safe_dir_segment(character_id, "character_id")
+            character_path = os.path.join(characters_path, safe_character_id)
 
-                if not os.path.isdir(character_path):
-                    raise HTTPException(
-                        status_code=404, detail=f"Character '{safe_character_id}' not found"
-                    )
-
-                # Read character data from file system
-                character_file = os.path.join(
-                    character_path, f"character_{safe_character_id}.md"
+            if not os.path.isdir(character_path):
+                raise HTTPException(
+                    status_code=404, detail=f"Character '{safe_character_id}' not found"
                 )
-                stats_file = os.path.join(character_path, "stats.yaml")
 
-                character_data = {
-                    "character_id": safe_character_id,
-                    "name": safe_character_id.replace("_", " ").title(),
-                    "background_summary": "Character loaded from file system",
-                    "personality_traits": "Based on character files",
-                    "current_status": "active",
-                    "narrative_context": "File-based character",
+            character_file = os.path.join(
+                character_path, f"character_{safe_character_id}.md"
+            )
+            stats_file = os.path.join(character_path, "stats.yaml")
+
+            character_data = {
+                "character_id": safe_character_id,
+                "name": safe_character_id.replace("_", " ").title(),
+                "background_summary": "Character loaded from file system",
+                "personality_traits": "Based on character files",
+                "current_status": "active",
+                "narrative_context": "File-based character",
                 "skills": {},
                 "relationships": {},
                 "current_location": "Unknown",
@@ -854,25 +853,19 @@ def _register_legacy_routes(app: FastAPI):
                 "metadata": {"source": "file_system"},
             }
 
-            # Try to read character description if file exists
             if os.path.exists(character_file):
                 try:
                     with open(character_file, "r", encoding="utf-8") as f:
                         content = f.read()
-                        # Extract basic info from markdown content
                         lines = content.split("\n")
                         for line in lines:
                             if line.startswith("# "):
                                 character_data["name"] = line[2:].strip()
-                            elif (
-                                "background" in line.lower()
-                                or "summary" in line.lower()
-                            ):
+                            elif "background" in line.lower() or "summary" in line.lower():
                                 character_data["background_summary"] = line.strip()
                 except Exception:
                     logger.warning("Could not read character file", exc_info=True)
 
-            # Try to read stats if file exists
             if os.path.exists(stats_file):
                 try:
                     import yaml
