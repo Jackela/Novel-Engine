@@ -58,7 +58,7 @@ aiojobs==1.2.1
 # Enterprise Utilities
 click==8.1.7
 typer==0.9.0
-rich==13.7.0
+rich==14.2.0
 structlog==23.2.0
 
 # Development & Testing (Enterprise)
