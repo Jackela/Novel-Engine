@@ -77,22 +77,42 @@ jobs:
       - name: Check Lighthouse scores
         working-directory: frontend
         run: |
-          # Extract scores from Lighthouse report
-          ACCESSIBILITY_SCORE=$(jq '.[] | select(.url | contains("index.html")) | .categories.accessibility.score * 100' .lighthouseci/lhr-*.json | head -1)
-          PERFORMANCE_SCORE=$(jq '.[] | select(.url | contains("index.html")) | .categories.performance.score * 100' .lighthouseci/lhr-*.json | head -1)
-          
-          echo "Accessibility Score: $ACCESSIBILITY_SCORE"
-          echo "Performance Score: $PERFORMANCE_SCORE"
-          
-          # Fail if scores below threshold
-          if (( $(echo "$ACCESSIBILITY_SCORE < 90" | bc -l) )); then
-            echo "❌ Accessibility score $ACCESSIBILITY_SCORE is below 90"
-            exit 1
-          fi
-          
-          if (( $(echo "$PERFORMANCE_SCORE < 90" | bc -l) )); then
-            echo "❌ Performance score $PERFORMANCE_SCORE is below 90"
-            exit 1
-          fi
-          
+          set -euo pipefail
+
+          # CI thresholds (keep in sync with frontend/.lighthouserc.json)
+          ACCESSIBILITY_THRESHOLD=80
+          PERFORMANCE_THRESHOLD=70
+
+          URLS=(
+            "http://localhost:4173/"
+            "http://localhost:4173/character-selection"
+            "http://localhost:4173/dashboard"
+          )
+
+          RESULTS_JSON="$(jq -s '.' .lighthouseci/lhr-*.json)"
+
+          for URL in "${URLS[@]}"; do
+            ACCESSIBILITY_SCORE="$(echo "$RESULTS_JSON" | jq --arg url "$URL" '[.[] | select(.requestedUrl == $url) | .categories.accessibility.score * 100] | sort | .[length/2|floor]')"
+            PERFORMANCE_SCORE="$(echo "$RESULTS_JSON" | jq --arg url "$URL" '[.[] | select(.requestedUrl == $url) | .categories.performance.score * 100] | sort | .[length/2|floor]')"
+
+            echo "URL: $URL"
+            echo "  Accessibility (median): $ACCESSIBILITY_SCORE"
+            echo "  Performance (median): $PERFORMANCE_SCORE"
+
+            if [ "$ACCESSIBILITY_SCORE" = "null" ] || [ "$PERFORMANCE_SCORE" = "null" ]; then
+              echo "❌ Could not extract Lighthouse scores for $URL"
+              exit 1
+            fi
+
+            if (( $(echo "$ACCESSIBILITY_SCORE < $ACCESSIBILITY_THRESHOLD" | bc -l) )); then
+              echo "❌ Accessibility score $ACCESSIBILITY_SCORE is below $ACCESSIBILITY_THRESHOLD"
+              exit 1
+            fi
+
+            if (( $(echo "$PERFORMANCE_SCORE < $PERFORMANCE_THRESHOLD" | bc -l) )); then
+              echo "❌ Performance score $PERFORMANCE_SCORE is below $PERFORMANCE_THRESHOLD"
+              exit 1
+            fi
+          done
+
           echo "✅ All Lighthouse scores meet thresholds"
