@@ -47,7 +47,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             "emotional_drive": 0.15,
             "memory_influence": 0.1,
         }
-        logger.debug(f"Enhanced DecisionEngine initialized for {agent_core.agent_id}")
+        logger.debug("Enhanced DecisionEngine initialized")
 
     def _evaluate_action_option(
         self, action: Dict[str, Any], situation: Dict[str, Any]

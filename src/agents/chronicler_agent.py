@@ -88,7 +88,7 @@ GENERIC_FACTIONS = {
     "Alliance Forces": "Diplomatic escorts safeguarding interstellar accords.",
 }
 
-_SCRIPT_TAG_RE = re.compile(r"<\s*/?\s*script[^>]*>", re.IGNORECASE)
+_SCRIPT_TAG_RE = re.compile(r"<\s*/?\s*script\b[^>]{0,1024}>", re.IGNORECASE)
 _SQLI_RE = re.compile(r"drop\s+table", re.IGNORECASE)
 
 

@@ -115,6 +115,33 @@ def _get_characters_directory_path() -> str:
 
 DEFAULT_CHARACTERS_PATH = os.path.abspath(_get_characters_directory_path())
 
+_CHARACTER_ID_SLUG_RE = re.compile(r"[^a-z0-9_-]+")
+
+
+def _normalize_character_id(value: str) -> str:
+    raw_value = (value or "").strip().replace("\\", "/")
+    raw_value = os.path.basename(raw_value)
+    normalized = _CHARACTER_ID_SLUG_RE.sub("_", raw_value.lower()).strip("_")
+    if not normalized or normalized in {".", ".."}:
+        raise HTTPException(status_code=400, detail="Invalid character name")
+    return normalized
+
+
+def _safe_dir_segment(value: str, field_name: str) -> str:
+    normalized = (value or "").strip().replace("\\", "/")
+    segment = os.path.basename(normalized)
+    if not segment or segment in {".", ".."} or segment != normalized:
+        raise HTTPException(status_code=400, detail=f"Invalid {field_name}")
+    return segment
+
+
+def _safe_filename(value: str) -> str:
+    normalized = (value or "").strip().replace("\\", "/")
+    filename = os.path.basename(normalized)
+    if not filename or filename in {".", ".."}:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    return filename
+
 def _structured_defaults(
     name: str,
     specialization: str = "Unknown",
@@ -622,11 +649,11 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
     start_time = time.time()
 
     characters_path = _get_characters_directory_path()
-    missing_characters = [
-        name
-        for name in sim_request.character_names
-        if not os.path.isdir(os.path.join(characters_path, name))
-    ]
+    missing_characters: List[str] = []
+    for name in sim_request.character_names:
+        safe_name = _safe_dir_segment(name, "character_name")
+        if not os.path.isdir(os.path.join(characters_path, safe_name)):
+            missing_characters.append(name)
     if missing_characters:
         raise HTTPException(
             status_code=404,
@@ -728,7 +755,7 @@ async def create_character(
     """Creates a new character."""
     try:
         characters_path = _get_characters_directory_path()
-        character_id = name.lower().replace(" ", "_")
+        character_id = _normalize_character_id(name)
         character_path = os.path.join(characters_path, character_id)
 
         if os.path.exists(character_path):
@@ -765,12 +792,13 @@ async def create_character(
         # Handle file uploads
         if files:
             for file in files:
-                file_path = os.path.join(character_path, file.filename)
+                safe_filename = _safe_filename(file.filename)
+                file_path = os.path.join(character_path, safe_filename)
                 with open(file_path, "wb") as f:
                     content = await file.read()
                     f.write(content)
 
-        logger.info(f"Created character: {name} at {character_path}")
+        logger.info("Created character")
 
         # Return the created character details
         # We reuse get_character_detail logic or construct response
@@ -810,14 +838,15 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
     """Retrieves detailed information about a specific character."""
     try:
         characters_path = _get_characters_directory_path()
-        character_path = os.path.join(characters_path, character_id)
+        safe_character_id = _safe_dir_segment(character_id, "character_id")
+        character_path = os.path.join(characters_path, safe_character_id)
 
         if os.path.isdir(character_path):
             # Load character data using CharacterFactory
             try:
                 event_bus = EventBus()
                 character_factory = CharacterFactory(event_bus)
-                agent = character_factory.create_character(character_id)
+                agent = character_factory.create_character(safe_character_id)
                 character = agent.character
 
                 structured = getattr(character, "structured_data", None)
@@ -829,8 +858,8 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
                     )
 
                 return CharacterDetailResponse(
-                    character_id=character_id,
-                    character_name=character_id,
+                    character_id=safe_character_id,
+                    character_name=safe_character_id,
                     name=character.name,
                     background_summary=getattr(
                         character, "background_summary", "No background available"
@@ -851,16 +880,16 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
                     metadata=getattr(character, "metadata", {}),
                     structured_data=structured,
                 )
-            except Exception as e:
-                logger.error(f"Error loading character {character_id}: {e}")
+            except Exception:
+                logger.error("Error loading character", exc_info=True)
                 # Fallback to basic character info from directory
                 structured = _structured_defaults(
-                        character_id.replace("_", " ").title(), "Unknown"
+                        safe_character_id.replace("_", " ").title(), "Unknown"
                     )
                 return CharacterDetailResponse(
-                    character_id=character_id,
-                    character_name=character_id,
-                    name=character_id.replace("_", " ").title(),
+                    character_id=safe_character_id,
+                    character_name=safe_character_id,
+                    name=safe_character_id.replace("_", " ").title(),
                     background_summary="Character data could not be loaded",
                     personality_traits="Unknown",
                     current_status="Data unavailable",
@@ -871,17 +900,15 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
 
 
         raise HTTPException(
-            status_code=404, detail=f"Character '{character_id}' not found"
+            status_code=404, detail=f"Character '{safe_character_id}' not found"
         )
 
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(
-            f"Unexpected error retrieving character {character_id}: {e}", exc_info=True
-        )
+    except Exception:
+        logger.error("Unexpected error retrieving character", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve character details: {str(e)}"
+            status_code=500, detail="Failed to retrieve character details"
         )
 
 
@@ -890,13 +917,14 @@ async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
     """Retrieves enhanced character context and analysis data."""
     try:
         characters_path = _get_characters_directory_path()
-        character_path = os.path.join(characters_path, character_id)
+        safe_character_id = _safe_dir_segment(character_id, "character_id")
+        character_path = os.path.join(characters_path, safe_character_id)
         if not os.path.isdir(character_path):
             raise HTTPException(status_code=404, detail="Character not found")
 
         event_bus = EventBus()
         character_factory = CharacterFactory(event_bus)
-        agent = character_factory.create_character(character_id)
+        agent = character_factory.create_character(safe_character_id)
 
         character_data = getattr(agent, "character_data", {}) or {}
         hybrid = character_data.get("hybrid_context", {}) if isinstance(character_data, dict) else {}
@@ -926,15 +954,15 @@ async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
         }
 
         return {
-            "character_id": character_id,
+            "character_id": safe_character_id,
             "enhanced_context": enhanced_context,
             "psychological_profile": psychological_profile,
             "tactical_analysis": tactical_analysis,
         }
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error retrieving enhanced character {character_id}: {e}")
+    except Exception:
+        logger.error("Error retrieving enhanced character", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to retrieve enhanced character details",
@@ -1041,7 +1069,7 @@ def broadcast_sse_event(event_data: Dict[str, Any]):
     """Broadcast an event to all connected SSE clients (thread-safe)."""
     global _main_loop
     
-    logger.info(f"Broadcasting SSE event: {event_data.get('type')} - {event_data.get('title')} to {len(sse_event_queues)} clients")
+    logger.info("Broadcasting SSE event to %d clients", len(sse_event_queues))
 
     # If we don't have the loop yet (e.g. unit tests), try to get it or skip
     if _main_loop is None:
@@ -1423,7 +1451,7 @@ async def create_campaign(request: CampaignCreationRequest) -> CampaignCreationR
         with open(campaign_file, "w") as f:
             json.dump(campaign_data, f, indent=2)
 
-        logger.info(f"Created campaign {campaign_id}: {request.name}")
+        logger.info("Created campaign %s", campaign_id)
         return CampaignCreationResponse(
             campaign_id=campaign_id,
             name=request.name,
@@ -1530,7 +1558,7 @@ async def login(credentials: LoginRequest, response: Response):
             max_age=cookie_max_age
         )
 
-        logger.info(f"User login successful: {credentials.email} (cookies set)")
+        logger.info("User login successful (cookies set)")
 
         # Return tokens in response body for backward compatibility
         return AuthResponse(

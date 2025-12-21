@@ -9,19 +9,13 @@ Constitution Compliance:
 - FR-011: Audit trail for all knowledge entry changes
 """
 
-import logging
 from typing import Any, Dict, Optional
 
 from src.core.logging_system import (
-    LogCategory,
     LogContext,
     PerformanceTracker,
     StructuredLogger,
 )
-
-# Knowledge Management logger instance
-logger = logging.getLogger("novel_engine.knowledge")
-
 
 def get_knowledge_logger(
     component: str,
@@ -53,11 +47,9 @@ def get_knowledge_logger(
         component=f"knowledge.{component}",
     )
 
-    return StructuredLogger(
-        logger=logger,
-        context=context,
-        category=LogCategory.APPLICATION,
-    )
+    structured_logger = StructuredLogger("novel_engine.knowledge")
+    structured_logger.push_context(context)
+    return structured_logger
 
 
 def log_knowledge_entry_created(
@@ -85,14 +77,10 @@ def log_knowledge_entry_created(
         metadata=metadata or {},
     )
 
-    structured_logger = StructuredLogger(
-        logger=logger,
-        context=context,
-        category=LogCategory.AUDIT,
-    )
-
-    structured_logger.info(
-        f"Knowledge entry created: {entry_id}",
+    structured_logger = StructuredLogger("novel_engine.knowledge")
+    structured_logger.push_context(context)
+    structured_logger.audit(
+        "Knowledge entry created",
         entry_id=entry_id,
         knowledge_type=knowledge_type,
         created_by=created_by,
@@ -122,14 +110,10 @@ def log_knowledge_entry_updated(
         metadata={"changes": changes} if changes else {},
     )
 
-    structured_logger = StructuredLogger(
-        logger=logger,
-        context=context,
-        category=LogCategory.AUDIT,
-    )
-
-    structured_logger.info(
-        f"Knowledge entry updated: {entry_id}",
+    structured_logger = StructuredLogger("novel_engine.knowledge")
+    structured_logger.push_context(context)
+    structured_logger.audit(
+        "Knowledge entry updated",
         entry_id=entry_id,
         updated_by=updated_by,
         changes=changes,
@@ -159,14 +143,10 @@ def log_knowledge_entry_deleted(
         metadata={"snapshot": snapshot} if snapshot else {},
     )
 
-    structured_logger = StructuredLogger(
-        logger=logger,
-        context=context,
-        category=LogCategory.AUDIT,
-    )
-
-    structured_logger.info(
-        f"Knowledge entry deleted: {entry_id}",
+    structured_logger = StructuredLogger("novel_engine.knowledge")
+    structured_logger.push_context(context)
+    structured_logger.audit(
+        "Knowledge entry deleted",
         entry_id=entry_id,
         deleted_by=deleted_by,
     )
@@ -200,14 +180,10 @@ def log_knowledge_retrieval(
         },
     )
 
-    structured_logger = StructuredLogger(
-        logger=logger,
-        context=context,
-        category=LogCategory.PERFORMANCE,
-    )
-
-    structured_logger.info(
-        f"Knowledge retrieval completed for agent {agent_character_id}",
+    structured_logger = StructuredLogger("novel_engine.knowledge")
+    structured_logger.push_context(context)
+    structured_logger.performance(
+        "Knowledge retrieval completed",
         agent_character_id=agent_character_id,
         turn_number=turn_number,
         entry_count=entry_count,
@@ -241,14 +217,10 @@ def log_access_denied(
         },
     )
 
-    structured_logger = StructuredLogger(
-        logger=logger,
-        context=context,
-        category=LogCategory.SECURITY,
-    )
-
-    structured_logger.warning(
-        f"Access denied to entry {entry_id} for agent {agent_character_id}",
+    structured_logger = StructuredLogger("novel_engine.knowledge")
+    structured_logger.push_context(context)
+    structured_logger.security(
+        "Access denied to knowledge entry",
         entry_id=entry_id,
         agent_character_id=agent_character_id,
         access_level=access_level,

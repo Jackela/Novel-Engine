@@ -50,7 +50,7 @@ class CharacterInterpreter:
         self.file_cache: Dict[str, str] = {}
         self.yaml_cache: Dict[str, Dict[str, Any]] = {}
 
-        logger.info(f"CharacterInterpreter initialized for: {character_directory_path}")
+        logger.info("CharacterInterpreter initialized")
 
     def load_character_context(self) -> Dict[str, Any]:
         """

@@ -125,8 +125,16 @@ class CharacterFactory:
         if not character_name or not character_name.strip():
             raise ValueError("Character name cannot be empty or None")
 
+        normalized_character_name = character_name.strip().replace("\\", "/")
+        safe_character_name = os.path.basename(normalized_character_name)
+        if (
+            safe_character_name != normalized_character_name
+            or safe_character_name in {"", ".", ".."}
+        ):
+            raise ValueError("Character name must be a single directory name")
+
         character_directory = os.path.join(
-            self.base_character_path, character_name.strip()
+            self.base_character_path, safe_character_name
         )
 
         if not os.path.exists(character_directory):
@@ -140,20 +148,16 @@ class CharacterFactory:
                 f"Character path exists but is not a directory: {character_directory}"
             )
 
-        logger.info(
-            f"Creating PersonaAgent for character '{character_name}' from {character_directory}"
-        )
+        logger.info("Creating PersonaAgent for character")
 
         try:
             persona_agent = PersonaAgent(
                 character_directory, self.event_bus, agent_id=agent_id
             )
-            logger.info(
-                f"Successfully created PersonaAgent for '{character_name}' with ID: {persona_agent.agent_id}"
-            )
+            logger.info("Successfully created PersonaAgent")
             return persona_agent
-        except Exception as e:
-            logger.error(f"Failed to create PersonaAgent for '{character_name}': {e}")
+        except Exception:
+            logger.error("Failed to create PersonaAgent", exc_info=True)
             raise
 
     def list_available_characters(self) -> list[str]:

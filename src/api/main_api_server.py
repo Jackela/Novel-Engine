@@ -105,6 +105,14 @@ global_health_monitor: Optional[HealthMonitor] = None
 global_structured_logger = None
 
 
+def _safe_dir_segment(value: str, field_name: str) -> str:
+    normalized = (value or "").strip().replace("\\", "/")
+    segment = os.path.basename(normalized)
+    if not segment or segment in {".", ".."} or segment != normalized:
+        raise HTTPException(status_code=400, detail=f"Invalid {field_name}")
+    return segment
+
+
 class OptimizedJSONResponse(JSONResponse):
     """Optimized JSON response with performance enhancements."""
 
@@ -814,30 +822,31 @@ def _register_legacy_routes(app: FastAPI):
             raise HTTPException(status_code=500, detail="Failed to retrieve characters")
 
     @app.get("/characters/{character_id}", response_model=dict)
-    async def legacy_get_character_detail(character_id: str):
-        """Legacy endpoint - Get character details from file system."""
-        try:
-            characters_path = os.path.join(os.getcwd(), "characters")
-            character_path = os.path.join(characters_path, character_id)
+        async def legacy_get_character_detail(character_id: str):
+            """Legacy endpoint - Get character details from file system."""
+            try:
+                characters_path = os.path.join(os.getcwd(), "characters")
+                safe_character_id = _safe_dir_segment(character_id, "character_id")
+                character_path = os.path.join(characters_path, safe_character_id)
 
-            if not os.path.isdir(character_path):
-                raise HTTPException(
-                    status_code=404, detail=f"Character '{character_id}' not found"
+                if not os.path.isdir(character_path):
+                    raise HTTPException(
+                        status_code=404, detail=f"Character '{safe_character_id}' not found"
+                    )
+
+                # Read character data from file system
+                character_file = os.path.join(
+                    character_path, f"character_{safe_character_id}.md"
                 )
+                stats_file = os.path.join(character_path, "stats.yaml")
 
-            # Read character data from file system
-            character_file = os.path.join(
-                character_path, f"character_{character_id}.md"
-            )
-            stats_file = os.path.join(character_path, "stats.yaml")
-
-            character_data = {
-                "character_id": character_id,
-                "name": character_id.replace("_", " ").title(),
-                "background_summary": "Character loaded from file system",
-                "personality_traits": "Based on character files",
-                "current_status": "active",
-                "narrative_context": "File-based character",
+                character_data = {
+                    "character_id": safe_character_id,
+                    "name": safe_character_id.replace("_", " ").title(),
+                    "background_summary": "Character loaded from file system",
+                    "personality_traits": "Based on character files",
+                    "current_status": "active",
+                    "narrative_context": "File-based character",
                 "skills": {},
                 "relationships": {},
                 "current_location": "Unknown",
@@ -860,10 +869,8 @@ def _register_legacy_routes(app: FastAPI):
                                 or "summary" in line.lower()
                             ):
                                 character_data["background_summary"] = line.strip()
-                except Exception as e:
-                    logger.warning(
-                        f"Could not read character file for {character_id}: {e}"
-                    )
+                except Exception:
+                    logger.warning("Could not read character file", exc_info=True)
 
             # Try to read stats if file exists
             if os.path.exists(stats_file):
@@ -875,23 +882,19 @@ def _register_legacy_routes(app: FastAPI):
                         if isinstance(stats, dict):
                             character_data["skills"] = stats.get("skills", {})
                             character_data["metadata"].update(stats.get("metadata", {}))
-                except Exception as e:
-                    logger.warning(f"Could not read stats file for {character_id}: {e}")
+                except Exception:
+                    logger.warning("Could not read stats file", exc_info=True)
 
-            logger.info(
-                f"Legacy character detail endpoint returned data for {character_id}"
-            )
+            logger.info("Legacy character detail endpoint returned data")
             return character_data
 
         except HTTPException:
             raise
-        except Exception as e:
-            logger.error(
-                f"Error in legacy character detail endpoint for {character_id}: {e}"
-            )
+        except Exception:
+            logger.error("Error in legacy character detail endpoint", exc_info=True)
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to retrieve character details: {str(e)}",
+                detail="Failed to retrieve character details",
             )
 
     @app.get("/api/characters", response_model=dict)
@@ -1082,7 +1085,8 @@ def _register_legacy_routes(app: FastAPI):
             characters_path = os.path.join(os.getcwd(), "characters")
             missing_characters = []
             for char_name in character_names:
-                char_path = os.path.join(characters_path, char_name)
+                safe_char_name = _safe_dir_segment(char_name, "character_name")
+                char_path = os.path.join(characters_path, safe_char_name)
                 if not os.path.isdir(char_path):
                     missing_characters.append(char_name)
 
@@ -1129,9 +1133,7 @@ def _register_legacy_routes(app: FastAPI):
                         char_name, character_state
                     )
                     if not result.success:
-                        logger.warning(
-                            f"Could not create agent context for {char_name}: {result.error}"
-                        )
+                        logger.warning("Could not create agent context")
 
             # Use the story generation API to create a story
             story_api = getattr(app.state, "story_api", None)
@@ -1176,9 +1178,7 @@ def _register_legacy_routes(app: FastAPI):
                         "duration_seconds": duration,
                     }
 
-                    logger.info(
-                        f"Legacy simulation completed for {character_names} in {duration:.2f}s"
-                    )
+                    logger.info("Legacy simulation completed in %.2fs", duration)
                     return response
 
                 except Exception as e:
