@@ -68,5 +68,5 @@ pytest-mock==3.12.0
 coverage[toml]==7.3.2
 
 # Enterprise Deployment
-gunicorn==21.2.0
+gunicorn==23.0.0
 uvicorn[standard]==0.24.0
