@@ -1,10 +1,10 @@
 # docs-alignment Specification
 
 ## Purpose
-TBD - created by archiving change refactor-doc-quality. Update Purpose after archive.
+Keep project-facing documentation (README + docs hub) aligned with the currently validated development workflow, without committing transient report artifacts.
 ## Requirements
 ### Requirement: README and Process Docs Reflect Validated Workflow
-Project-facing documentation (README, README.en, docs/INDEX, primary runbooks) MUST match the currently validated startup + regression workflow.
+Project-facing documentation (README, README.en, `docs/index.md`, primary runbooks) MUST match the currently validated startup + regression workflow.
 
 #### Scenario: Quick start references current commands
 - **GIVEN** backend/frontend bootstrap commands or validation scripts change
@@ -13,8 +13,8 @@ Project-facing documentation (README, README.en, docs/INDEX, primary runbooks) M
 
 #### Scenario: Regression suite listed alongside verification evidence
 - **GIVEN** we rely on README/docs to communicate trustworthy quality signals
-- **WHEN** someone inspects `docs/INDEX.md` or related runbooks
-- **THEN** they find the current regression checklist (lint/type-check/vitest/playwright/act) and links to latest reports under `reports/` so they can reproduce or audit without searching the repo manually.
+- **WHEN** someone inspects `docs/index.md` or related runbooks
+- **THEN** they find the current regression checklist (lint/type-check/vitest/playwright/act) and pointers to CI artifacts so they can reproduce or audit without searching the repo manually.
 
 ### Requirement: Dashboard Evidence Assets Stay Fresh
 The repo MUST maintain up-to-date UI evidence (screenshots) captured from the running application and referenced in documentation.
@@ -48,4 +48,3 @@ Documentation MUST state that the Experience Report summary is available in the 
 #### Scenario: README/onboarding describes job summary
 - **WHEN** a contributor reads the docs
 - **THEN** they learn that the Playwright workflow posts a CTA/offline table to the job summary and where to find the full report links.
-

@@ -214,7 +214,7 @@ class StartupGuard:
                 "src",
                 "tests",
                 "docs",
-                "docs/ADRs",
+                "docs/adr",
                 "scripts",
                 "private",
                 "logs",

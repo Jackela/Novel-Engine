@@ -1,7 +1,7 @@
 # Proposal: Dashboard Interaction Accessibility & Data Parity
 
 ## Why
-- MCP audit evidence (`docs/assets/audit/20251115/world_state_map.png`, `character_networks.png`, `system_signals.png`) shows the spatial, network, and timeline tiles render as pointer-only `div`s. Keyboard users cannot activate map markers, character cards, or timeline entries, violating the `dashboard-interactions` spec scenarios that require keyboard activation (see audit snapshot `mcp__chrome-devtools__take_snapshot` ids 8_85-8_219).
+- MCP audit evidence (devtools snapshot `mcp__chrome-devtools__take_snapshot` ids 8_85-8_219) shows the spatial, network, and timeline tiles render as pointer-only `div`s. Keyboard users cannot activate map markers, character cards, or timeline entries, violating the `dashboard-interactions` spec scenarios that require keyboard activation.
 - Quick Actions leak the custom `active` prop down to native `<button>` elements (`frontend/src/components/dashboard/QuickActions.tsx:27-55`), triggering persistent React console warnings (`list_console_messages` msgid 141) and offering inconsistent focus outlines.
 - Spatial/Network tiles still ship with hard-coded demo data (`WorldStateMapV2` locations array, `CharacterNetworks` `useState` stub) and never reconcile against `GET /characters` or related endpoints, so the UI cannot meet audit step §9 (API validation). The dashboard has effectively never rendered real payloads.
 

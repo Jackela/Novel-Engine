@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > Observability
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > Observability
 
 ---
 
@@ -95,10 +95,6 @@ curl http://localhost:8000/meta/system-status
 ### Architecture
 - [System Architecture](../architecture/SYSTEM_ARCHITECTURE.md)
 - [Performance Architecture](../architecture/SYSTEM_ARCHITECTURE.md#performance)
-
-### Reports
-- [Performance Reports](../reports/performance/)
-- [Production Readiness](../reports/FINAL_PRODUCTION_READINESS_REPORT.md)
 
 ---
 

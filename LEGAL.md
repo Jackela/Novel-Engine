@@ -2,7 +2,7 @@
 
 ## Non-Affiliation Disclaimer
 
-This software is not affiliated with or endorsed by any commercial entity, publisher, or rights holder of any intellectual property. This is an independent, non-commercial project developed for educational and research purposes.
+This software is not affiliated with or endorsed by any commercial entity, publisher, or rights holder of any intellectual property (including, but not limited to, Games Workshop Group PLC). This is an independent, non-commercial project developed for educational and research purposes.
 
 ## Copyright and Fair Use
 
@@ -52,3 +52,8 @@ In no event shall the authors or copyright holders be liable for any claim, dama
 ---
 
 *Last Updated: 2025-08-11*
+
+## Trademarks and Third-Party Assets
+
+- Do not submit third-party copyrighted text, images, rules, or trademarked terms to the public repository.
+- IP/trademark hygiene is enforced by CI tooling (see `scripts/term_guard.py`) using the banned-term list in `settings.yaml`.

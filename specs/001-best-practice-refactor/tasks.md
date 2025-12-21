@@ -117,7 +117,7 @@ description: "Task list for Project Best-Practice Refactor"
 
 - [X] T031 [P] [Communications] Publish refactor briefing in docs/comms/refactor-briefing.md
 - [X] T032 [Training] Harmonize onboarding guide in docs/onboarding/guide.md with new workflows
-- [X] T033 [Governance] Update changelog references in docs/changelog/2025-10.md
+- [X] T033 [Governance] Update changelog references in CHANGELOG.md
 - [X] T034 [P] [Quality Assurance] Perform final documentation QA against success criteria (SC-001..SC-005) in specs/001-best-practice-refactor/spec.md
 
 ---

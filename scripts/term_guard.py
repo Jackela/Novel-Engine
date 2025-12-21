@@ -19,8 +19,7 @@ integrated into the content generation workflow to provide real-time
 IP protection and compliance validation.
 
 Architecture Reference:
-- docs/ADRs/ADR-004-ip-protection.md - IP protection strategy
-- docs/LEGAL.md - Legal compliance requirements
+- LEGAL.md - Legal compliance requirements
 - settings.yaml - IP filtering configuration
 
 Development Phase: Work Order PR-04 - IP Cleaning Tool Implementation

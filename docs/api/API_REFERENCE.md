@@ -5,7 +5,7 @@
 **Status**: Current  
 **Audience**: Developers, Integration Teams
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > [API](INDEX.md) > API Reference
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > [API](INDEX.md) > API Reference
 
 ---
 

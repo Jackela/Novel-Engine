@@ -74,5 +74,4 @@ Project Best-Practice Refactor specification (FR-002, FR-003, FR-004).
 2. Verify OIDC token validation pipeline matches current provider metadata.
 3. Confirm rate-limit tiers documented in API policies match gateway config.
 4. Ensure audit log expectations align with observability charter.
-5. Record review date and sign-off in changelog (`docs/changelog/2025-10.md`).
-
+5. Record review date and sign-off in changelog (`CHANGELOG.md`).

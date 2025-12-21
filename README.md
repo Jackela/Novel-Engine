@@ -54,7 +54,7 @@
 - `scripts/`：本地验证、质量与迁移脚本
 - `.github/workflows/`：CI/CD 工作流
 
-更多目录请见仓库根目录清单与 `docs/INDEX.md`。
+更多目录请见仓库根目录清单与 `docs/index.md`。
 
 ---
 
@@ -187,7 +187,7 @@ SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwri
 
 ## 文档与导航
 
-- 文档主页：`docs/INDEX.md`
+- 文档主页：`docs/index.md`
 - 架构：`docs/architecture/INDEX.md`
 - API：`docs/api/INDEX.md`
 - 指南：`docs/guides/INDEX.md`
@@ -208,4 +208,4 @@ SKIP_DASHBOARD_VERIFY=true PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npx playwri
 
 ## LEGAL DISCLAIMER
 
-This project is an independent work and is not affiliated with, endorsed by, or associated with any third-party rights holders, including but not limited to Games Workshop. All references, if any, are used strictly for educational and research purposes. Trademarks and copyrights belong to their respective owners.
+This software is not affiliated with or endorsed by any commercial entity, publisher, or rights holder of any intellectual property (including, but not limited to, Games Workshop Group PLC). This is an independent, non-commercial project developed for educational and research purposes. See `LEGAL.md`.

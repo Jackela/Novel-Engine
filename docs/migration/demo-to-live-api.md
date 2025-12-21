@@ -415,14 +415,13 @@ After migration, verify:
 
 - [SSE Endpoint API Documentation](../api/sse-events-endpoint.md)
 - [useRealtimeEvents Hook](../../frontend/src/hooks/useRealtimeEvents.ts)
-- [UAT Test Results](../testing/uat/UAT_REAL_TESTING_RESULTS.md#dashboard-live-api-integration--sse-real-time-events-2025-11-18)
 - [Vite Environment Variables](https://vitejs.dev/guide/env-and-mode.html)
 
 ## Support
 
 For migration issues:
 1. Check [Troubleshooting](#troubleshooting) section
-2. Review [UAT test results](../testing/uat/UAT_REAL_TESTING_RESULTS.md)
+2. Run Playwright smoke tests (`cd frontend && npm run test:e2e:smoke`) and attach failures/logs to an issue/PR
 3. File an issue with:
    - Error messages from browser console
    - Backend server logs

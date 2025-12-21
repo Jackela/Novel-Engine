@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../../README.md) > [Docs](../../INDEX.md) > [Testing](../INDEX.md) > UAT
+**Navigation**: [Home](../../../README.md) > [Docs](../../index.md) > [Testing](../INDEX.md) > UAT
 
 ---
 
@@ -55,13 +55,7 @@ User Acceptance Testing documentation for Novel Engine, including daily test pla
 
 ---
 
-## 📊 UAT Results
-
-### [Real Testing Results](./UAT_REAL_TESTING_RESULTS.md)
-Actual UAT execution results and findings
-
 ---
-
 ## UAT Process
 
 ### Pre-UAT Checklist
@@ -99,7 +93,7 @@ Actual UAT execution results and findings
 - [Operations Runbook](../../operations/OPERATIONS_RUNBOOK.md)
 
 ### Quality
-- [Coding Standards](../../guides/CODING_STANDARDS.md)
+- [Coding Standards](../../coding-standards.md)
 
 ---
 

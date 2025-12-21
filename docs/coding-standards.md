@@ -37,7 +37,7 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
 
 ### Snapshot & Evidence
 - Store MCP screenshots/JSON in `docs/assets/dashboard/` with date suffixes (`dashboard-flow-YYYY-MM-DD[-suffix].png`). Update both README files and `docs/assets/dashboard/README.md` whenever evidence changes.
-- Cite the latest regression log in `docs/testing/uat/UAT_REAL_TESTING_RESULTS.md` (include command table + log locations under `tmp/` or `frontend/test-results/`).
+- Keep regression logs and raw test artifacts out of the repo. Attach logs/screenshots to PRs (or upload as CI artifacts) instead of committing them.
 
 ## 3. Backend (Python)
 
@@ -60,7 +60,7 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
   act --pull=false -W .github/workflows/frontend-ci.yml -j build-and-test   # Vite + Vitest + Playwright smoke
   act --pull=false -W .github/workflows/ci.yml -j tests                      # Backend pytest
   ```
-  Save logs (e.g., `tmp/act-frontend.log`, `tmp/act-ci.log`) and reference them in UAT docs.
+  Save logs locally (e.g., `tmp/act-frontend.log`, `tmp/act-ci.log`) and attach them to PRs/issues when needed.
 - Lighthouse CI must be run with a real Chrome binary defined explicitly:
   ```bash
   cd frontend
@@ -73,7 +73,6 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
 - Any change touching layout, evidence, or CI must update:
   - README & README.en (sections: dev workflow, coding standards, screenshot references).
   - `docs/assets/dashboard/README.md` (table of MCP captures).
-  - `docs/testing/uat/UAT_REAL_TESTING_RESULTS.md` (latest regression summary, command table, log references).
 - Keep OpenSpec changes (`openspec/changes/<id>/`) validated via `openspec validate <id> --strict`. Every task list must be checked off before a change is considered complete.
 
-Following this checklist ensures the next contributor (human or AI) can reproduce the stack, gather evidence, and pass CI without guesswork. EOF
+Following this checklist ensures the next contributor (human or AI) can reproduce the stack, gather evidence, and pass CI without guesswork.

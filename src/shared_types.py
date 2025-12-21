@@ -16,7 +16,7 @@ These models serve as the foundation for:
 
 Architecture Reference:
 - docs/SCHEMAS.md - Detailed schema documentation
-- docs/ADRs/ADR-003-pydantic-schemas.md - Architecture decision record
+- docs/adr/ADR-003-pydantic-schemas.md - Architecture decision record
 """
 
 from datetime import datetime

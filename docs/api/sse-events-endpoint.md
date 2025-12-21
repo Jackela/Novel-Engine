@@ -345,11 +345,10 @@ async def event_generator(client_id: str):
 
 - [Frontend Integration Guide](../migration/demo-to-live-api.md)
 - [useRealtimeEvents Hook Documentation](../../frontend/src/hooks/useRealtimeEvents.ts)
-- [UAT Test Results](../testing/uat/UAT_REAL_TESTING_RESULTS.md#dashboard-live-api-integration--sse-real-time-events-2025-11-18)
 
 ## Support
 
 For issues or questions:
 - Check [Troubleshooting](#troubleshooting) section
-- Review [UAT test results](../testing/uat/UAT_REAL_TESTING_RESULTS.md)
+- Run Playwright smoke tests (`cd frontend && npm run test:e2e:smoke`) and attach failures/logs to an issue/PR
 - File an issue on GitHub

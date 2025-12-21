@@ -629,7 +629,7 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
     ]
     if missing_characters:
         raise HTTPException(
-            status_code=422,
+            status_code=404,
             detail=f"Characters not found: {', '.join(missing_characters)}",
         )
 

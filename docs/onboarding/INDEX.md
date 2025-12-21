@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > Onboarding
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > Onboarding
 
 ---
 
@@ -17,8 +17,8 @@ Onboarding guides and resources for new team members and contributors to Novel E
 
 ### New Developers
 1. [Quick Start Guide](../QUICK_START.md)
-2. [Developer Guide](../guides/DEVELOPER_GUIDE.md)
-3. [Coding Standards](../guides/CODING_STANDARDS.md)
+2. [Developer Guide](../DEVELOPER_GUIDE.md)
+3. [Coding Standards](../coding-standards.md)
 4. [System Architecture](../architecture/SYSTEM_ARCHITECTURE.md)
 
 ### New Operators
@@ -30,7 +30,7 @@ Onboarding guides and resources for new team members and contributors to Novel E
 ### New Contributors
 1. [Foundations](../FOUNDATIONS.md)
 2. [Project Vision](../Project_Vision.md)
-3. [Development Plan](../DEVELOPMENT_PLAN.md)
+3. [Coding Standards](../coding-standards.md)
 
 ---
 
@@ -42,7 +42,6 @@ Onboarding guides and resources for new team members and contributors to Novel E
 - [Testing Guide](../testing/)
 
 ### Tools & Setup
-- [Setup Documentation](../setup/)
 - [Development Environment](../development/)
 
 ---

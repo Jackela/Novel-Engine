@@ -79,4 +79,4 @@ Refactor specification (FR-002, FR-004, NFR-003).
 2. Verify encryption/retention settings in staging and production.
 3. Review tenant isolation enforcement in repositories and caches.
 4. Ensure deletion job and audit logging flows are documented.
-5. Record review date and owner in `docs/changelog/2025-10.md`.
+5. Record review date and owner in `CHANGELOG.md`.

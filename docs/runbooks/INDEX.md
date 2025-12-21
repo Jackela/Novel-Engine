@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > Runbooks
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > Runbooks
 
 ---
 

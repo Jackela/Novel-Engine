@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > Design
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > Design
 
 ---
 
@@ -64,7 +64,7 @@ Design specifications and architecture documents for Novel Engine features and c
 - [Implementation Guide](../implementation/IMPLEMENTATION.md)
 
 ### Development
-- [Developer Guide](../guides/DEVELOPER_GUIDE.md)
+- [Developer Guide](../DEVELOPER_GUIDE.md)
 - [API Reference](../api/API_REFERENCE.md)
 
 ---

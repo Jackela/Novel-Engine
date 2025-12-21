@@ -7,7 +7,9 @@ jobs:
   note:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Test Gates workflow set to manual-only."
+      - name: Smoke Tests (best-effort)
+        run: |
+          echo "Test Gates workflow set to manual-only."
           pytest -q --maxfail=1 --disable-warnings || true
 
       - name: Contract Tests (best-effort)

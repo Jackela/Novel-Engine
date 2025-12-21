@@ -9,14 +9,17 @@ mkdirSync(dirname(outPath), { recursive: true });
 
 const css = `/* Generated from build-tokens.mjs */
 :root {
-  --color-primary: #6366f1;
-  --color-secondary: #8b5cf6;
-  --color-bg-primary: #0a0a0b;
-  --color-bg-secondary: #111113;
-  --color-bg-tertiary: #1a1a1d;
-  --color-border-primary: #2a2a30;
-  --color-text-primary: #f0f0f2;
-  --color-text-secondary: #b0b0b8;
+  --color-primary: #00f0ff;
+  --color-secondary: #bc13fe;
+  --color-bg-primary: #050508;
+  --color-bg-secondary: #0b0b12;
+  --color-bg-tertiary: #12121a;
+  --color-border-primary: #1f1f2e;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #94a3b8;
+  --color-success: #00ff9d;
+  --color-warning: #ffb800;
+  --color-error: #ff0055;
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
   --spacing-3: 0.75rem;
@@ -27,4 +30,3 @@ const css = `/* Generated from build-tokens.mjs */
 
 writeFileSync(outPath, css);
 console.log(`✔ Wrote ${outPath}`);
-
