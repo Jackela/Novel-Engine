@@ -197,7 +197,21 @@ class PersonaAgent(_PersonaAgentImpl):
                 or not _CHARACTER_DIRNAME_RE.fullmatch(safe_name)
             ):
                 raise ValueError("Invalid character_name")
-            resolved_path_obj = (base_dir / safe_name).resolve()
+            if not base_dir.is_dir():
+                raise FileNotFoundError(
+                    f"Character directory not found: {character_directory_path}"
+                )
+            available_character_dirs = [
+                item
+                for item in os.listdir(base_dir)
+                if (base_dir / item).is_dir()
+            ]
+            matched_name = next(
+                (item for item in available_character_dirs if item == safe_name), None
+            )
+            if not matched_name:
+                raise FileNotFoundError(f"Character directory not found: {safe_name}")
+            resolved_path_obj = (base_dir / matched_name).resolve()
         else:
             resolved_path_obj = base_dir
 

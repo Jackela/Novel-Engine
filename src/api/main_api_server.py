@@ -829,15 +829,29 @@ def _register_legacy_routes(app: FastAPI):
                 or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
             ):
                 raise HTTPException(status_code=400, detail="Invalid character_id")
-            character_path = os.path.join(characters_path, safe_character_id)
-
-            if not os.path.isdir(character_path):
+            if not os.path.isdir(characters_path):
                 raise HTTPException(
                     status_code=404, detail=f"Character '{safe_character_id}' not found"
                 )
 
+            available_character_dirs = [
+                item
+                for item in os.listdir(characters_path)
+                if os.path.isdir(os.path.join(characters_path, item))
+            ]
+            matched_name = next(
+                (item for item in available_character_dirs if item == safe_character_id),
+                None,
+            )
+            if not matched_name:
+                raise HTTPException(
+                    status_code=404, detail=f"Character '{safe_character_id}' not found"
+                )
+
+            character_path = os.path.join(characters_path, matched_name)
+
             character_file = os.path.join(
-                character_path, f"character_{safe_character_id}.md"
+                character_path, f"character_{matched_name}.md"
             )
             stats_file = os.path.join(character_path, "stats.yaml")
 
@@ -1078,6 +1092,13 @@ def _register_legacy_routes(app: FastAPI):
 
             # Validate characters exist
             characters_path = os.path.join(os.getcwd(), "characters")
+            available_character_dirs = set()
+            if os.path.isdir(characters_path):
+                available_character_dirs = {
+                    item
+                    for item in os.listdir(characters_path)
+                    if os.path.isdir(os.path.join(characters_path, item))
+                }
             missing_characters = []
             for char_name in character_names:
                 raw_char_name = (char_name or "").strip()
@@ -1089,8 +1110,7 @@ def _register_legacy_routes(app: FastAPI):
                     or not _CHARACTER_DIRNAME_RE.fullmatch(safe_char_name)
                 ):
                     raise HTTPException(status_code=400, detail="Invalid character_name")
-                char_path = os.path.join(characters_path, safe_char_name)
-                if not os.path.isdir(char_path):
+                if safe_char_name not in available_character_dirs:
                     missing_characters.append(char_name)
 
             if missing_characters:

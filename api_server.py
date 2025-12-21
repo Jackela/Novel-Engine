@@ -633,35 +633,19 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
     """Legacy-compatible simulation endpoint used by tests and clients."""
     start_time = time.time()
 
-    characters_path = _get_characters_directory_path()
-    missing_characters: List[str] = []
-    for name in sim_request.character_names:
-        raw_name = (name or "").strip()
-        safe_name = os.path.basename(raw_name)
-        if (
-            not safe_name
-            or safe_name in {".", ".."}
-            or safe_name != raw_name
-            or not _CHARACTER_DIRNAME_RE.fullmatch(safe_name)
-        ):
-            raise HTTPException(status_code=400, detail="Invalid character_name")
-        if not os.path.isdir(os.path.join(characters_path, safe_name)):
-            missing_characters.append(name)
-    if missing_characters:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Characters not found: {', '.join(missing_characters)}",
-        )
-
     event_bus = EventBus()
     character_factory = CharacterFactory(event_bus)
     director = DirectorAgent(event_bus=event_bus)
     chronicler = ChroniclerAgent(event_bus=event_bus, character_names=sim_request.character_names)
 
+    missing_characters: List[str] = []
     agents = []
     for name in sim_request.character_names:
         try:
             agent = character_factory.create_character(name)
+        except FileNotFoundError:
+            missing_characters.append(name)
+            continue
         except Exception as e:
             raise HTTPException(
                 status_code=400, detail=f"Failed to load character {name}: {e}"
@@ -671,6 +655,12 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
             director.register_agent(agent)
         except Exception:
             pass
+
+    if missing_characters:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Characters not found: {', '.join(missing_characters)}",
+        )
 
     turns = sim_request.turns or 3
     for _ in range(turns):
@@ -748,25 +738,31 @@ async def create_character(
     """Creates a new character."""
     try:
         characters_path = _get_characters_directory_path()
-        character_id = os.path.basename(_normalize_character_id(name))
-        if not _CHARACTER_DIRNAME_RE.fullmatch(character_id):
-            raise HTTPException(status_code=400, detail="Invalid character name")
+        os.makedirs(characters_path, exist_ok=True)
+
+        try:
+            stats_data = json.loads(stats) if stats else {}
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid stats JSON: {exc}") from exc
+
+        try:
+            equipment_data = json.loads(equipment) if equipment else []
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid equipment JSON: {exc}") from exc
+
+        character_id = uuid.uuid4().hex
         character_path = os.path.join(characters_path, character_id)
+        while os.path.exists(character_path):
+            character_id = uuid.uuid4().hex
+            character_path = os.path.join(characters_path, character_id)
 
-        if os.path.exists(character_path):
-             raise HTTPException(status_code=409, detail=f"Character '{name}' already exists")
-
-        os.makedirs(character_path, exist_ok=True)
+        os.makedirs(character_path, exist_ok=False)
 
         # Save basic info
         # In a real implementation, we would use the CharacterFactory or Agent to persist this properly.
         # For now, we'll create the directory structure and a basic profile.
         
-        # Parse JSON fields if provided
-        stats_data = json.loads(stats) if stats else {}
-        equipment_data = json.loads(equipment) if equipment else []
-
-        # Create profile.md
+        # Create character markdown
         profile_content = f"""# {name}
 
 ## Overview
@@ -781,16 +777,19 @@ async def create_character(
 ## Equipment
 {json.dumps(equipment_data, indent=2)}
 """
-        with open(os.path.join(character_path, "profile.md"), "w") as f:
+        markdown_filename = f"character_{character_id}.md"
+        with open(
+            os.path.join(character_path, markdown_filename), "w", encoding="utf-8"
+        ) as f:
             f.write(profile_content)
 
         # Handle file uploads
         if files:
+            uploads_dir = os.path.join(character_path, "uploads")
+            os.makedirs(uploads_dir, exist_ok=True)
             for file in files:
-                safe_filename = os.path.basename((file.filename or "").strip())
-                if not safe_filename or safe_filename in {".", ".."}:
-                    raise HTTPException(status_code=400, detail="Invalid filename")
-                file_path = os.path.join(character_path, safe_filename)
+                upload_id = uuid.uuid4().hex
+                file_path = os.path.join(uploads_dir, f"upload_{upload_id}.bin")
                 with open(file_path, "wb") as f:
                     content = await file.read()
                     f.write(content)
@@ -824,17 +823,10 @@ async def create_character(
         raise HTTPException(status_code=500, detail=f"Failed to create character: {str(e)}")
 
 
-        logger.error(f"Simulation failed with unexpected error: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Simulation execution failed: {str(e)}"
-        )
-
-
 @app.get("/characters/{character_id}", response_model=CharacterDetailResponse)
 async def get_character_detail(character_id: str) -> CharacterDetailResponse:
     """Retrieves detailed information about a specific character."""
     try:
-        characters_path = _get_characters_directory_path()
         raw_character_id = (character_id or "").strip()
         safe_character_id = os.path.basename(raw_character_id)
         if (
@@ -844,69 +836,63 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
             or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
         ):
             raise HTTPException(status_code=400, detail="Invalid character_id")
-        character_path = os.path.join(characters_path, safe_character_id)
+        # Load character data using CharacterFactory (filesystem access is constrained inside the factory).
+        try:
+            event_bus = EventBus()
+            character_factory = CharacterFactory(event_bus)
+            agent = character_factory.create_character(safe_character_id)
+            character = agent.character
 
-        if os.path.isdir(character_path):
-            # Load character data using CharacterFactory
-            try:
-                event_bus = EventBus()
-                character_factory = CharacterFactory(event_bus)
-                agent = character_factory.create_character(safe_character_id)
-                character = agent.character
-
-                structured = getattr(character, "structured_data", None)
-                if not structured:
-                    structured = _structured_defaults(
-                        getattr(character, "name", character_id),
-                        getattr(character, "specialization", "Unknown"),
-                        getattr(character, "faction", "Independent"),
-                    )
-
-                return CharacterDetailResponse(
-                    character_id=safe_character_id,
-                    character_name=safe_character_id,
-                    name=character.name,
-                    background_summary=getattr(
-                        character, "background_summary", "No background available"
-                    ),
-                    personality_traits=getattr(
-                        character,
-                        "personality_traits",
-                        "No personality traits available",
-                    ),
-                    current_status=getattr(character, "current_status", "Unknown"),
-                    narrative_context=getattr(
-                        character, "narrative_context", "No narrative context"
-                    ),
-                    skills=getattr(character, "skills", {}),
-                    relationships=getattr(character, "relationships", {}),
-                    current_location=getattr(character, "current_location", "Unknown"),
-                    inventory=getattr(character, "inventory", []),
-                    metadata=getattr(character, "metadata", {}),
-                    structured_data=structured,
-                )
-            except Exception:
-                logger.error("Error loading character", exc_info=True)
-                # Fallback to basic character info from directory
+            structured = getattr(character, "structured_data", None)
+            if not structured:
                 structured = _structured_defaults(
-                        safe_character_id.replace("_", " ").title(), "Unknown"
-                    )
-                return CharacterDetailResponse(
-                    character_id=safe_character_id,
-                    character_name=safe_character_id,
-                    name=safe_character_id.replace("_", " ").title(),
-                    background_summary="Character data could not be loaded",
-                    personality_traits="Unknown",
-                    current_status="Data unavailable",
-                    narrative_context="Character files could not be parsed",
-                    structured_data=structured,
+                    getattr(character, "name", character_id),
+                    getattr(character, "specialization", "Unknown"),
+                    getattr(character, "faction", "Independent"),
                 )
 
-
-
-        raise HTTPException(
-            status_code=404, detail=f"Character '{safe_character_id}' not found"
-        )
+            return CharacterDetailResponse(
+                character_id=safe_character_id,
+                character_name=safe_character_id,
+                name=character.name,
+                background_summary=getattr(
+                    character, "background_summary", "No background available"
+                ),
+                personality_traits=getattr(
+                    character,
+                    "personality_traits",
+                    "No personality traits available",
+                ),
+                current_status=getattr(character, "current_status", "Unknown"),
+                narrative_context=getattr(
+                    character, "narrative_context", "No narrative context"
+                ),
+                skills=getattr(character, "skills", {}),
+                relationships=getattr(character, "relationships", {}),
+                current_location=getattr(character, "current_location", "Unknown"),
+                inventory=getattr(character, "inventory", []),
+                metadata=getattr(character, "metadata", {}),
+                structured_data=structured,
+            )
+        except FileNotFoundError:
+            raise HTTPException(
+                status_code=404, detail=f"Character '{safe_character_id}' not found"
+            )
+        except Exception:
+            logger.error("Error loading character", exc_info=True)
+            structured = _structured_defaults(
+                safe_character_id.replace("_", " ").title(), "Unknown"
+            )
+            return CharacterDetailResponse(
+                character_id=safe_character_id,
+                character_name=safe_character_id,
+                name=safe_character_id.replace("_", " ").title(),
+                background_summary="Character data could not be loaded",
+                personality_traits="Unknown",
+                current_status="Data unavailable",
+                narrative_context="Character files could not be parsed",
+                structured_data=structured,
+            )
 
     except HTTPException:
         raise
@@ -921,7 +907,6 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
 async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
     """Retrieves enhanced character context and analysis data."""
     try:
-        characters_path = _get_characters_directory_path()
         raw_character_id = (character_id or "").strip()
         safe_character_id = os.path.basename(raw_character_id)
         if (
@@ -931,13 +916,13 @@ async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
             or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
         ):
             raise HTTPException(status_code=400, detail="Invalid character_id")
-        character_path = os.path.join(characters_path, safe_character_id)
-        if not os.path.isdir(character_path):
-            raise HTTPException(status_code=404, detail="Character not found")
 
         event_bus = EventBus()
         character_factory = CharacterFactory(event_bus)
-        agent = character_factory.create_character(safe_character_id)
+        try:
+            agent = character_factory.create_character(safe_character_id)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Character not found")
 
         character_data = getattr(agent, "character_data", {}) or {}
         hybrid = character_data.get("hybrid_context", {}) if isinstance(character_data, dict) else {}

@@ -128,28 +128,36 @@ class CharacterFactory:
         if not character_name or not character_name.strip():
             raise ValueError("Character name cannot be empty or None")
 
-        raw_character_name = character_name.strip()
-        safe_character_name = os.path.basename(raw_character_name)
+        requested_name = character_name.strip()
+        safe_character_name = os.path.basename(requested_name)
         if (
-            safe_character_name != raw_character_name
+            safe_character_name != requested_name
             or safe_character_name in {"", ".", ".."}
             or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_name)
         ):
             raise ValueError("Character name must be a single directory name")
 
-        character_directory = os.path.join(
-            self.base_character_path, safe_character_name
-        )
-
-        if not os.path.exists(character_directory):
+        if not os.path.isdir(self.base_character_path):
             raise FileNotFoundError(
-                f"Character directory not found: {character_directory}. "
-                f"Expected character data in 'characters/{character_name}/' directory."
+                f"Character base directory not found: {self.base_character_path}"
             )
 
-        if not os.path.isdir(character_directory):
+        character_directory: Optional[str] = None
+        for item in os.listdir(self.base_character_path):
+            if item != safe_character_name:
+                continue
+            candidate_path = os.path.join(self.base_character_path, item)
+            if os.path.isdir(candidate_path):
+                character_directory = candidate_path
+                break
             raise FileNotFoundError(
-                f"Character path exists but is not a directory: {character_directory}"
+                f"Character path exists but is not a directory: {candidate_path}"
+            )
+
+        if not character_directory:
+            raise FileNotFoundError(
+                f"Character directory not found for name: {safe_character_name}. "
+                f"Expected character data in '{self.base_character_path}'."
             )
 
         logger.info("Creating PersonaAgent for character")

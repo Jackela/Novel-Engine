@@ -127,8 +127,16 @@ export function transformEnhancedCharacterResponse(data: EnhancedCharacterRespon
 }
 
 export function transformCharacterCreationResponse(data: Record<string, unknown>, formData: CharacterFormData): Character {
+    const maybeId = (data as { character_id?: unknown }).character_id;
+    const maybeFallbackId = (data as { character_name?: unknown }).character_name;
     const maybeName = (data as { name?: unknown }).name;
-    const nameFromServer = typeof maybeName === 'string' ? maybeName : formData.name;
+    const nameFromServer = typeof maybeId === 'string'
+        ? maybeId
+        : typeof maybeFallbackId === 'string'
+            ? maybeFallbackId
+            : typeof maybeName === 'string'
+                ? maybeName
+                : formData.name;
     return {
         id: nameFromServer,
         name: formData.name,
