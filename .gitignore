@@ -322,10 +322,10 @@ web-bundles/
 !.claude/commands/
 
 # Generated Data and Artifacts
-personas/
-quality/
+/personas/
+/quality/
 data/backups/
-campaigns/
+/campaigns/
 
 # Analysis and Test Reports
 *_ANALYSIS.md
