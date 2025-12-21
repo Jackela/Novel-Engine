@@ -116,6 +116,7 @@ def _get_characters_directory_path() -> str:
 DEFAULT_CHARACTERS_PATH = os.path.abspath(_get_characters_directory_path())
 
 _CHARACTER_ID_SLUG_RE = re.compile(r"[^a-z0-9_-]+")
+_CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 def _normalize_character_id(value: str) -> str:
@@ -125,22 +126,6 @@ def _normalize_character_id(value: str) -> str:
     if not normalized or normalized in {".", ".."}:
         raise HTTPException(status_code=400, detail="Invalid character name")
     return normalized
-
-
-def _safe_dir_segment(value: str, field_name: str) -> str:
-    normalized = (value or "").strip().replace("\\", "/")
-    segment = os.path.basename(normalized)
-    if not segment or segment in {".", ".."} or segment != normalized:
-        raise HTTPException(status_code=400, detail=f"Invalid {field_name}")
-    return segment
-
-
-def _safe_filename(value: str) -> str:
-    normalized = (value or "").strip().replace("\\", "/")
-    filename = os.path.basename(normalized)
-    if not filename or filename in {".", ".."}:
-        raise HTTPException(status_code=400, detail="Invalid filename")
-    return filename
 
 def _structured_defaults(
     name: str,
@@ -651,7 +636,15 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
     characters_path = _get_characters_directory_path()
     missing_characters: List[str] = []
     for name in sim_request.character_names:
-        safe_name = _safe_dir_segment(name, "character_name")
+        raw_name = (name or "").strip()
+        safe_name = os.path.basename(raw_name)
+        if (
+            not safe_name
+            or safe_name in {".", ".."}
+            or safe_name != raw_name
+            or not _CHARACTER_DIRNAME_RE.fullmatch(safe_name)
+        ):
+            raise HTTPException(status_code=400, detail="Invalid character_name")
         if not os.path.isdir(os.path.join(characters_path, safe_name)):
             missing_characters.append(name)
     if missing_characters:
@@ -755,7 +748,9 @@ async def create_character(
     """Creates a new character."""
     try:
         characters_path = _get_characters_directory_path()
-        character_id = _normalize_character_id(name)
+        character_id = os.path.basename(_normalize_character_id(name))
+        if not _CHARACTER_DIRNAME_RE.fullmatch(character_id):
+            raise HTTPException(status_code=400, detail="Invalid character name")
         character_path = os.path.join(characters_path, character_id)
 
         if os.path.exists(character_path):
@@ -792,7 +787,9 @@ async def create_character(
         # Handle file uploads
         if files:
             for file in files:
-                safe_filename = _safe_filename(file.filename)
+                safe_filename = os.path.basename((file.filename or "").strip())
+                if not safe_filename or safe_filename in {".", ".."}:
+                    raise HTTPException(status_code=400, detail="Invalid filename")
                 file_path = os.path.join(character_path, safe_filename)
                 with open(file_path, "wb") as f:
                     content = await file.read()
@@ -838,7 +835,15 @@ async def get_character_detail(character_id: str) -> CharacterDetailResponse:
     """Retrieves detailed information about a specific character."""
     try:
         characters_path = _get_characters_directory_path()
-        safe_character_id = _safe_dir_segment(character_id, "character_id")
+        raw_character_id = (character_id or "").strip()
+        safe_character_id = os.path.basename(raw_character_id)
+        if (
+            not safe_character_id
+            or safe_character_id in {".", ".."}
+            or safe_character_id != raw_character_id
+            or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
+        ):
+            raise HTTPException(status_code=400, detail="Invalid character_id")
         character_path = os.path.join(characters_path, safe_character_id)
 
         if os.path.isdir(character_path):
@@ -917,7 +922,15 @@ async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
     """Retrieves enhanced character context and analysis data."""
     try:
         characters_path = _get_characters_directory_path()
-        safe_character_id = _safe_dir_segment(character_id, "character_id")
+        raw_character_id = (character_id or "").strip()
+        safe_character_id = os.path.basename(raw_character_id)
+        if (
+            not safe_character_id
+            or safe_character_id in {".", ".."}
+            or safe_character_id != raw_character_id
+            or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
+        ):
+            raise HTTPException(status_code=400, detail="Invalid character_id")
         character_path = os.path.join(characters_path, safe_character_id)
         if not os.path.isdir(character_path):
             raise HTTPException(status_code=404, detail="Character not found")

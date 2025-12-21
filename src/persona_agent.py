@@ -41,6 +41,7 @@ DEFAULT_CHARACTERS_ROOT = _find_characters_root()
 _SCRIPT_TAG_RE = re.compile(r"<\s*/?\s*script[^>]*>", re.IGNORECASE)
 _WHITESPACE_RE = re.compile(r"\s+")
 _API_KEY_SENTINELS = {"", "none", "your_key_here"}
+_CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 # Global LLM service instance for lazy initialization
 _llm_service_instance: Optional[Any] = None
@@ -175,26 +176,45 @@ class PersonaAgent(_PersonaAgentImpl):
         agent_id: Optional[str] = None,
         character_name: Optional[str] = None,
     ):
-        if character_directory_path and character_name:
-            resolved_path = os.path.join(character_directory_path, character_name)
-        elif character_directory_path:
-            resolved_path = character_directory_path
-        elif character_name:
-            resolved_path = os.path.join(DEFAULT_CHARACTERS_ROOT, character_name)
+        default_root = DEFAULT_CHARACTERS_ROOT.resolve()
+        repo_root = default_root.parent
+        if character_directory_path:
+            base_dir = Path(character_directory_path).resolve()
+            if not base_dir.is_relative_to(repo_root):
+                raise FileNotFoundError(
+                    f"Character directory not found: {character_directory_path}"
+                )
         else:
-            raise ValueError(
-                "PersonaAgent requires either character_directory_path or character_name"
+            base_dir = default_root
+
+        if character_name:
+            raw_name = (character_name or "").strip()
+            safe_name = os.path.basename(raw_name)
+            if (
+                not safe_name
+                or safe_name in {".", ".."}
+                or safe_name != raw_name
+                or not _CHARACTER_DIRNAME_RE.fullmatch(safe_name)
+            ):
+                raise ValueError("Invalid character_name")
+            resolved_path_obj = (base_dir / safe_name).resolve()
+        else:
+            resolved_path_obj = base_dir
+
+        if not resolved_path_obj.is_relative_to(base_dir):
+            raise FileNotFoundError(
+                f"Character directory not found: {character_directory_path}"
             )
 
-        if not os.path.isdir(resolved_path):
-            raise FileNotFoundError(f"Character directory not found: {resolved_path}")
+        if not os.path.isdir(resolved_path_obj):
+            raise FileNotFoundError(f"Character directory not found: {resolved_path_obj}")
 
         if event_bus is None:
             event_bus = EventBus()
 
         derived_agent_id = agent_id or character_name
         self._legacy_character_name = character_name
-        super().__init__(resolved_path, event_bus, derived_agent_id)
+        super().__init__(str(resolved_path_obj), event_bus, derived_agent_id)
 
         # Legacy tests expect cached prompt/response history
         self._llm_prompt_history: List[str] = []

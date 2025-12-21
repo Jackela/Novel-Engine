@@ -15,6 +15,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import secrets
 import time
 from contextlib import asynccontextmanager
@@ -104,14 +105,7 @@ global_orchestrator: Optional[SystemOrchestrator] = None
 global_health_monitor: Optional[HealthMonitor] = None
 global_structured_logger = None
 
-
-def _safe_dir_segment(value: str, field_name: str) -> str:
-    normalized = (value or "").strip().replace("\\", "/")
-    segment = os.path.basename(normalized)
-    if not segment or segment in {".", ".."} or segment != normalized:
-        raise HTTPException(status_code=400, detail=f"Invalid {field_name}")
-    return segment
-
+_CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 class OptimizedJSONResponse(JSONResponse):
     """Optimized JSON response with performance enhancements."""
@@ -826,7 +820,15 @@ def _register_legacy_routes(app: FastAPI):
         """Legacy endpoint - Get character details from file system."""
         try:
             characters_path = os.path.join(os.getcwd(), "characters")
-            safe_character_id = _safe_dir_segment(character_id, "character_id")
+            raw_character_id = (character_id or "").strip()
+            safe_character_id = os.path.basename(raw_character_id)
+            if (
+                not safe_character_id
+                or safe_character_id in {".", ".."}
+                or safe_character_id != raw_character_id
+                or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
+            ):
+                raise HTTPException(status_code=400, detail="Invalid character_id")
             character_path = os.path.join(characters_path, safe_character_id)
 
             if not os.path.isdir(character_path):
@@ -1078,7 +1080,15 @@ def _register_legacy_routes(app: FastAPI):
             characters_path = os.path.join(os.getcwd(), "characters")
             missing_characters = []
             for char_name in character_names:
-                safe_char_name = _safe_dir_segment(char_name, "character_name")
+                raw_char_name = (char_name or "").strip()
+                safe_char_name = os.path.basename(raw_char_name)
+                if (
+                    not safe_char_name
+                    or safe_char_name in {".", ".."}
+                    or safe_char_name != raw_char_name
+                    or not _CHARACTER_DIRNAME_RE.fullmatch(safe_char_name)
+                ):
+                    raise HTTPException(status_code=400, detail="Invalid character_name")
                 char_path = os.path.join(characters_path, safe_char_name)
                 if not os.path.isdir(char_path):
                     missing_characters.append(char_name)

@@ -19,6 +19,7 @@ Usage:
 
 import logging
 import os
+import re
 from typing import Optional
 
 from src.event_bus import EventBus
@@ -26,6 +27,8 @@ from src.persona_agent import PersonaAgent
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+_CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 class CharacterFactory:
@@ -125,11 +128,12 @@ class CharacterFactory:
         if not character_name or not character_name.strip():
             raise ValueError("Character name cannot be empty or None")
 
-        normalized_character_name = character_name.strip().replace("\\", "/")
-        safe_character_name = os.path.basename(normalized_character_name)
+        raw_character_name = character_name.strip()
+        safe_character_name = os.path.basename(raw_character_name)
         if (
-            safe_character_name != normalized_character_name
+            safe_character_name != raw_character_name
             or safe_character_name in {"", ".", ".."}
+            or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_name)
         ):
             raise ValueError("Character name must be a single directory name")
 

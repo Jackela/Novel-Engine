@@ -71,9 +71,7 @@ class PersonaAgentCore:
             event_bus: EventBus instance for decoupled communication
             agent_id: Optional unique identifier for this agent
         """
-        logger.info(
-            f"Initializing PersonaAgent core infrastructure for path: {character_directory_path}"
-        )
+        logger.info("Initializing PersonaAgent core infrastructure")
 
         # Core agent identification
         self.character_directory_path = character_directory_path
@@ -108,7 +106,7 @@ class PersonaAgentCore:
         # Event system integration
         self._setup_event_handling()
 
-        logger.info(f"PersonaAgent core '{self.agent_id}' initialized successfully")
+        logger.info("PersonaAgent core initialized successfully")
 
     def _derive_agent_id_from_path(self, path: str) -> str:
         """
@@ -125,8 +123,8 @@ class PersonaAgentCore:
             base_name = os.path.basename(os.path.normpath(path))
             timestamp_suffix = datetime.now().strftime("%H%M%S")
             return f"{base_name}_{timestamp_suffix}"
-        except Exception as e:
-            logger.warning(f"Error deriving agent ID from path {path}: {e}")
+        except Exception:
+            logger.warning("Error deriving agent ID from path", exc_info=True)
             return f"agent_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     def _initialize_character_state(self) -> None:
@@ -193,11 +191,9 @@ class PersonaAgentCore:
             return
         try:
             self.event_bus.subscribe("TURN_START", self.handle_turn_start)
-            logger.info(
-                f"PersonaAgent '{self.agent_id}' subscribed to TURN_START events"
-            )
-        except Exception as e:
-            logger.error(f"Failed to set up event handling for {self.agent_id}: {e}")
+            logger.info("PersonaAgent subscribed to TURN_START events")
+        except Exception:
+            logger.error("Failed to set up event handling", exc_info=True)
 
     def handle_turn_start(self, world_state_update: Dict[str, Any]) -> None:
         """
