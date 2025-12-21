@@ -78,14 +78,14 @@ export const dashboardAPI = {
    * Get system status from /meta/system-status
    */
   getSystemStatus: async (): Promise<AxiosResponse<SystemStatusResponse>> => {
-    return apiClient.get('/meta/system-status');
+    return apiClient.get('/meta/system-status', { params: { _t: Date.now() } });
   },
 
   /**
    * Get health check from /health
    */
   getHealth: async (): Promise<AxiosResponse<HealthResponse>> => {
-    return apiClient.get('/health');
+    return apiClient.get('/health', { params: { _t: Date.now() } });
   },
 
   /**
@@ -99,13 +99,13 @@ export const dashboardAPI = {
    * Get orchestration/pipeline status from /api/orchestration/status
    */
   getOrchestrationStatus: async (): Promise<AxiosResponse<OrchestrationStatusResponse>> => {
-    return apiClient.get('/api/orchestration/status');
+    return apiClient.get('/api/orchestration/status', { params: { _t: Date.now() } });
   },
 
   /**
    * Start orchestration pipeline
    */
-  startOrchestration: async (params?: { start_turn?: number; total_turns?: number }): Promise<AxiosResponse<OrchestrationStatusResponse>> => {
+  startOrchestration: async (params?: { start_turn?: number; total_turns?: number; character_names?: string[] }): Promise<AxiosResponse<OrchestrationStatusResponse>> => {
     return apiClient.post('/api/orchestration/start', params);
   },
 
@@ -117,10 +117,17 @@ export const dashboardAPI = {
   },
 
   /**
+   * Pause orchestration pipeline
+   */
+  pauseOrchestration: async (): Promise<AxiosResponse<OrchestrationStatusResponse>> => {
+    return apiClient.post('/api/orchestration/pause');
+  },
+
+  /**
    * Get analytics metrics from /api/analytics/metrics
    */
   getAnalyticsMetrics: async (): Promise<AxiosResponse<AnalyticsMetricsResponse>> => {
-    return apiClient.get('/api/analytics/metrics');
+    return apiClient.get('/api/analytics/metrics', { params: { _t: Date.now() } });
   },
 
   /**

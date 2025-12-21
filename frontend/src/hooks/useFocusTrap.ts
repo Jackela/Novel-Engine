@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, type RefObject } from 'react'
-import type { FocusTrapResult } from '../types/accessibility'
+import type { FocusTrapResult } from '@/types/accessibility'
 
 export interface IFocusManager {
   trapFocus: (containerRef: RefObject<HTMLElement>) => void

@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > Testing
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > Testing
 
 ---
 
@@ -46,10 +46,6 @@ Comprehensive testing documentation including strategies, UAT procedures, and te
 - [Day 5: Integration & Regression Testing](./uat/UAT_DAY5_INTEGRATION_REGRESSION_TESTING.md)
 - [Day 6-7: Final Acceptance & Signoff](./uat/UAT_DAY6_7_FINAL_ACCEPTANCE_SIGNOFF.md)
 
-### UAT Results
-
-- [Real Testing Results](./uat/UAT_REAL_TESTING_RESULTS.md)
-
 ---
 
 ## Testing Categories
@@ -79,15 +75,15 @@ Comprehensive testing documentation including strategies, UAT procedures, and te
 ## Related Documentation
 
 ### Development
-- [Developer Guide](../guides/DEVELOPER_GUIDE.md)
-- [Coding Standards](../guides/CODING_STANDARDS.md)
+- [Developer Guide](../DEVELOPER_GUIDE.md)
+- [Coding Standards](../coding-standards.md)
 
 ### Operations
 - [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)
 - [Operations Runbook](../operations/OPERATIONS_RUNBOOK.md)
 
 ### Quality
-- [Code Quality Standards](../guides/CODING_STANDARDS.md)
+- [Code Quality Standards](../coding-standards.md)
 
 ---
 

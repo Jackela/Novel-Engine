@@ -216,8 +216,8 @@ class MultiAgentDemoExecutor:
             # Create PersonaAgent
             try:
                 agent = PersonaAgent(
+                    character_name=char.name.lower().replace(" ", "_"),
                     agent_id=char.name.lower().replace(' ', '_'),
-                    character_data=character_data,
                     event_bus=self.event_bus
                 )
                 agents.append(agent)

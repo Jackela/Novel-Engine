@@ -10,8 +10,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
-// Mock WorldStateMapV2 to avoid complex dependencies
-vi.mock('@/components/dashboard/WorldStateMapV2', () => ({
+// Mock WorldStateMap to avoid complex dependencies
+vi.mock('../../../../../src/features/dashboard/WorldStateMap', () => ({
   default: ({ loading, error }: { loading: boolean; error: boolean }) => (
     <div data-testid="world-state-map" data-loading={loading} data-error={error}>
       World State Map Mock
@@ -19,7 +19,7 @@ vi.mock('@/components/dashboard/WorldStateMapV2', () => ({
   ),
 }));
 
-import WorldPanel from '@/components/dashboard/panels/WorldPanel';
+import WorldPanel from '../../../../../src/features/dashboard/panels/WorldPanel';
 
 describe('WorldPanel', () => {
   describe('Structure', () => {

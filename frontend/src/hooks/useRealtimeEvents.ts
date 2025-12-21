@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '@/services/logging/LoggerFactory';
 
 export interface RealtimeEvent {
   id: string | number;
@@ -187,7 +187,7 @@ export function useRealtimeEvents({
           setEvents([...eventsBufferRef.current]);
 
         } catch (err) {
-          logger.error('Failed to parse SSE event data:', err);
+          logger.error('Failed to parse SSE event data:', err as Error);
         }
       };
 
@@ -241,7 +241,7 @@ export function useRealtimeEvents({
       };
 
     } catch (err) {
-      logger.error(`Failed to create SSE EventSource for ${endpoint}:`, err);
+      logger.error(`Failed to create SSE EventSource for ${endpoint}:`, err as Error);
       setConnectionState('error');
       setLoading(false);
       setError(new Error('Failed to initialize event stream connection.'));

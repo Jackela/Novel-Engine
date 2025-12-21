@@ -193,36 +193,37 @@ class TestDocumentationFoundation:
     @pytest.mark.unit
     def test_adrs_directory_exists(self):
         """Verify Architecture Decision Records directory exists."""
-        adrs_path = Path("docs/ADRs")
-        assert adrs_path.exists(), "docs/ADRs directory must exist"
-        assert adrs_path.is_dir(), "docs/ADRs must be a directory"
+        adrs_path = Path("docs/adr")
+        assert adrs_path.exists(), "docs/adr directory must exist"
+        assert adrs_path.is_dir(), "docs/adr must be a directory"
 
     @pytest.mark.unit
     def test_adrs_readme_exists(self):
         """Verify ADRs README exists and lists all ADRs."""
-        adrs_index = Path("docs/ADRs/INDEX.md")
-        assert adrs_index.exists(), "docs/ADRs/INDEX.md must exist"
+        adrs_index = Path("docs/adr/index.md")
+        assert adrs_index.exists(), "docs/adr/index.md must exist"
 
         with open(adrs_index, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Verify essential ADRs are documented
         essential_adrs = [
-            "ADR-001: Iron Laws Validation System",
-            "ADR-002: Fog of War Information Filtering",
-            "ADR-003: Pydantic Schema Architecture",
+            ("ADR-001", "Iron Laws Validation System"),
+            ("ADR-002", "Fog of War Information Filtering"),
+            ("ADR-003", "Pydantic Schema Architecture"),
         ]
 
-        for adr in essential_adrs:
-            assert adr in content, f"ADRs README must reference '{adr}'"
+        for adr_id, title in essential_adrs:
+            assert adr_id in content, f"ADR index must reference '{adr_id}'"
+            assert title in content, f"ADR index must reference '{title}'"
 
     @pytest.mark.unit
     def test_core_adrs_exist(self):
         """Verify core ADR files exist and are properly formatted."""
         core_adrs = [
-            "docs/ADRs/ADR-001-iron-laws-validation.md",
-            "docs/ADRs/ADR-002-fog-of-war-filtering.md",
-            "docs/ADRs/ADR-003-pydantic-schemas.md",
+            "docs/adr/ADR-001-iron-laws-validation.md",
+            "docs/adr/ADR-002-fog-of-war-filtering.md",
+            "docs/adr/ADR-003-pydantic-schemas.md",
         ]
 
         for adr_path in core_adrs:
@@ -262,7 +263,7 @@ class TestProjectStructure:
     @pytest.mark.unit
     def test_directory_structure(self):
         """Verify essential directories exist."""
-        essential_dirs = ["src", "tests", "docs", "docs/ADRs", "scripts", "private"]
+        essential_dirs = ["src", "tests", "docs", "docs/adr", "scripts", "private"]
 
         for dir_path in essential_dirs:
             path = Path(dir_path)

@@ -11,7 +11,7 @@
 
 import * as Sentry from '@sentry/browser';
 import type { ILogger } from './ILogger';
-import type { LogLevel, LogContext, LoggerConfig } from '../../types/logging';
+import type { LogLevel, LogContext, LoggerConfig } from '@/types/logging';
 import { Sanitizer } from './Sanitizer';
 
 /**
@@ -100,7 +100,7 @@ export class SentryLogger implements ILogger {
     if (!this.shouldLog('WARN')) return;
 
     this.setContextInSentry(context);
-    
+
     if (error) {
       Sentry.captureException(error, {
         level: 'warning',

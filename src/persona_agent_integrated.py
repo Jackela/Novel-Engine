@@ -89,9 +89,7 @@ class PersonaAgent:
             event_bus: EventBus instance for decoupled communication
             agent_id: Optional unique identifier for this agent
         """
-        logger.info(
-            f"Initializing integrated PersonaAgent with modular components: {character_directory_path}"
-        )
+        logger.info("Initializing integrated PersonaAgent with modular components")
 
         # Initialize core component first
         self.core = PersonaAgentCore(
@@ -117,7 +115,7 @@ class PersonaAgent:
                 )
                 # Attempt initial context loading
                 self._schedule_context_load()
-                logger.info(f"Context loading initialized for {self.core.agent_id}")
+                logger.info("Context loading initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize context loading: {e}")
                 self.context_loader = None
@@ -125,10 +123,10 @@ class PersonaAgent:
         # Initialize decision engine with loaded character data (enhanced if context available)
         if CONTEXT_LOADER_AVAILABLE and self.context_loader:
             self.decision_engine = EnhancedDecisionEngine(self.core)
-            logger.info(f"Enhanced DecisionEngine initialized for {self.core.agent_id}")
+            logger.info("Enhanced DecisionEngine initialized")
         else:
             self.decision_engine = DecisionEngine(self.core)
-            logger.info(f"Standard DecisionEngine initialized for {self.core.agent_id}")
+            logger.info("Standard DecisionEngine initialized")
 
         # Initialize memory interface
         self.memory_interface = MemoryInterface(self.core, character_directory_path)
@@ -200,7 +198,7 @@ class PersonaAgent:
             self.decision_engine.agent_core = self.core
             self.memory_interface.agent_core = self.core
 
-            logger.debug(f"Component coordination established for {self.core.agent_id}")
+            logger.debug("Component coordination established")
 
         except Exception as e:
             logger.error(f"Error setting up component coordination: {e}")
@@ -494,6 +492,32 @@ class PersonaAgent:
             @property
             def metadata(self) -> Dict[str, Any]:
                 return self._agent.character_data.get("metadata", {})
+
+            @property
+            def structured_data(self) -> Dict[str, Any]:
+                """Expose structured stats for API compatibility."""
+                yaml_stats = self._agent.character_data.get("yaml_stats")
+                if isinstance(yaml_stats, dict):
+                    stats = yaml_stats
+                else:
+                    stats = {}
+                    for key in (
+                        "character",
+                        "combat_stats",
+                        "equipment",
+                        "psychological_profile",
+                        "specializations",
+                        "relationships",
+                    ):
+                        if key in self._agent.character_data:
+                            stats[key] = self._agent.character_data[key]
+                    if "character" not in stats:
+                        stats["character"] = {
+                            "name": self._agent.character_data.get("name", self._agent.character_name),
+                            "faction": self._agent.character_data.get("faction", "Independent"),
+                            "specialization": self._agent.character_data.get("specialization", "Unknown"),
+                        }
+                return {"stats": stats}
 
         return CharacterCompatibilityWrapper(self)
 

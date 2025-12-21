@@ -198,8 +198,6 @@ lerna-debug.log*
 frontend/.lighthouseci/
 frontend/nm_backup_ci/
 frontend/node_modules_backup_ci/
-package-lock.json
-!frontend/package-lock.json
 yarn.lock
 .npm
 .yarn/
@@ -264,6 +262,7 @@ desktop.ini
 # Testing and Coverage
 test-results/
 playwright-report/
+junit-results.xml
 coverage/
 .nyc_output/
 screenshots/
@@ -323,17 +322,16 @@ web-bundles/
 !.claude/commands/
 
 # Generated Data and Artifacts
-personas/
-quality/
+/personas/
+/quality/
 data/backups/
-campaigns/
+/campaigns/
 
 # Analysis and Test Reports
 *_ANALYSIS.md
 PYTEST_*.txt
 PYTEST_*.md
 test_campaign.md
-AGENTS.md
 
 # Temporary and Generated Files
 world_state_backup.json
@@ -432,6 +430,7 @@ world_state.json
 nonexistent_world_state.json
 
 # Test results (organized in reports/test-results/)
+reports/
 reports/test-results/*.xml
 reports/test-results/*.html
 reports/test-results/*.json
@@ -473,10 +472,6 @@ frontend/test-results.json
 .codemachine/agents
 .codemachine/template.json
 
-# OpenSpec Generated Files and Archives
-openspec/specs/
-openspec/changes/archive/
-
 # Test Output Files (root level)
 test-results.xml
 pytest-report.xml
@@ -488,4 +483,8 @@ campaign_log.md
 
 # Pyramid Reports
 pyramid-report.json
-speed-report.json
+speed-report.json
+.pyramid-history/
+
+# Errant tool output (should never be committed)
+undefined:*/

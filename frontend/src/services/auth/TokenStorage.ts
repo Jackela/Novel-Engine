@@ -12,9 +12,9 @@
  * For production with httpOnly cookies, this would integrate with backend
  */
 
-import type { AuthToken } from '../../types/auth';
+import type { AuthToken } from '@/types/auth';
 import type { ITokenStorage } from './ITokenStorage';
-import { logger } from '../logging/LoggerFactory';
+import { logger } from '@/services/logging/LoggerFactory';
 
 /**
  * Storage key for auth token
@@ -36,7 +36,7 @@ export class TokenStorage implements ITokenStorage {
     try {
       const tokenString = JSON.stringify(token);
       sessionStorage.setItem(TOKEN_STORAGE_KEY, tokenString);
-      
+
       logger.debug('Token saved to storage', undefined, {
         component: 'TokenStorage',
         action: 'saveToken',
@@ -58,7 +58,7 @@ export class TokenStorage implements ITokenStorage {
   getToken(): AuthToken | null {
     try {
       const tokenString = sessionStorage.getItem(TOKEN_STORAGE_KEY);
-      
+
       if (!tokenString) {
         logger.debug('No token found in storage', undefined, {
           component: 'TokenStorage',
@@ -94,7 +94,7 @@ export class TokenStorage implements ITokenStorage {
         component: 'TokenStorage',
         action: 'getToken',
       });
-      
+
       // Clear corrupted token
       this.removeToken();
       return null;
@@ -107,7 +107,7 @@ export class TokenStorage implements ITokenStorage {
   removeToken(): void {
     try {
       sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-      
+
       logger.debug('Token removed from storage', undefined, {
         component: 'TokenStorage',
         action: 'removeToken',

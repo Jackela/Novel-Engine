@@ -183,7 +183,6 @@ This appears to be a duplicate marker definition issue. Investigation needed.
 **Top Offenders**:
 1. `src/__init__.py` - 16 unused imports
 2. `src/agent_lifecycle_manager.py` - 12 unused imports  
-3. `src/director_agent_modular.py` - 16 unused imports
 4. `src/core/iron_laws_processor.py` - 8 unused imports
 
 **Recommendation**:
@@ -957,7 +956,6 @@ def pytest_configure(config):
 #### Unused Import Files (83 violations)
 - `src/__init__.py` (16)
 - `src/agent_lifecycle_manager.py` (12)
-- `src/director_agent_modular.py` (16)
 - `src/core/iron_laws_processor.py` (8)
 - Others (31)
 

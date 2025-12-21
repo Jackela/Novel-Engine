@@ -50,7 +50,7 @@ class CharacterInterpreter:
         self.file_cache: Dict[str, str] = {}
         self.yaml_cache: Dict[str, Dict[str, Any]] = {}
 
-        logger.info(f"CharacterInterpreter initialized for: {character_directory_path}")
+        logger.info("CharacterInterpreter initialized")
 
     def load_character_context(self) -> Dict[str, Any]:
         """
@@ -307,6 +307,14 @@ class CharacterInterpreter:
                     for key, value in yaml_content.items():
                         if key not in self.character_data:
                             self.character_data[key] = value
+
+            # Prefer structured YAML "character" section for core identity fields.
+            character_section = self.character_data.get("character")
+            if isinstance(character_section, dict):
+                for field in ("name", "faction", "specialization", "role", "rank"):
+                    value = character_section.get(field)
+                    if value:
+                        self.character_data[field] = value
 
         except Exception as e:
             logger.error(f"Error merging YAML data: {str(e)}")

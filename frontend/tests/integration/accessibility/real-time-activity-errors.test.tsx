@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import userEvent from '@testing-library/user-event';
-import RealTimeActivity from '../../../src/components/dashboard/RealTimeActivity';
+import RealTimeActivity from '../../../src/features/dashboard/RealTimeActivity';
 
 expect.extend(toHaveNoViolations);
 

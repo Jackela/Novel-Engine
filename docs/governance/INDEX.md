@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > Governance
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > Governance
 
 ---
 
@@ -71,7 +71,6 @@ Governance policies, security controls, and compliance documentation for Novel E
 ## Related Documentation
 
 ### Security
-- [Security Assessment](../reports/COMPREHENSIVE_SECURITY_ASSESSMENT_REPORT.md)
 - [Security Architecture](../architecture/SYSTEM_ARCHITECTURE.md#security)
 
 ### Operations
@@ -79,7 +78,7 @@ Governance policies, security controls, and compliance documentation for Novel E
 - [Incident Response](../runbooks/incident-response.md)
 
 ### Development
-- [Coding Standards](../guides/CODING_STANDARDS.md)
+- [Coding Standards](../coding-standards.md)
 - [API Reference](../api/API_REFERENCE.md)
 
 ---

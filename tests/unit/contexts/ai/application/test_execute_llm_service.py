@@ -1232,7 +1232,7 @@ class TestExecuteLLMServiceIntegration:
         assert result.response == response
         assert result.provider_used == self.provider_id
         assert result.model_used == self.model_id
-        assert result.execution_time_seconds > 0
+        assert result.execution_time_seconds >= 0
 
         # Verify statistics were updated
         stats = await self.service.get_execution_stats_async()

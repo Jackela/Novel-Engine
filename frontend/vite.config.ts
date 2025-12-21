@@ -1,22 +1,14 @@
-import { defineConfig } from 'vite';
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   plugins: [
     react(),
-    nodePolyfills({
-      // Disable process polyfilling by the plugin so we can handle it manually
-      globals: {
-        Buffer: true,
-        global: true,
-        process: true, // Enable process polyfill
-      },
-      protocolImports: true,
-    })
+    // nodePolyfills removed for debugging
   ],
-  
+
   // Manual process polyfill via define
   // MIGRATION NOTE: Transitioning from REACT_APP_* to VITE_* (VITE_* takes precedence)
   /* define: {
@@ -53,7 +45,7 @@ export default defineConfig({
     'process.env.REACT_APP_API_URL': JSON.stringify(process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000'),
     'process.env.REACT_APP_DOCKER': JSON.stringify(process.env.VITE_DOCKER || process.env.REACT_APP_DOCKER || 'false'),
   }, */
-  
+
   // Performance optimizations
   build: {
     // Code splitting and chunk optimization
@@ -72,28 +64,21 @@ export default defineConfig({
         },
       },
     },
-    // Optimize bundle size for mobile performance
-    target: 'esnext',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.log in production
-        drop_debugger: true,
-        dead_code: true,
-        unused: true,
-      },
-      mangle: {
-        safari10: true, // Fix Safari 10+ issues
-      },
-    },
-    // Source maps for debugging
-    sourcemap: true,
-    // Asset optimization for mobile
-    assetsInlineLimit: 2048, // Smaller inline limit for mobile performance
-    // Chunk size warnings optimized for mobile
-    chunkSizeWarningLimit: 800, // Warn for chunks > 800kb (mobile-friendly)
+    outDir: 'dist',
+    emptyOutDir: true,
+    // terserOptions: {
+    //   compress: {
+    //     drop_console: true, // Remove console.log in production
+    //     drop_debugger: true,
+    //     dead_code: true,
+    //     unused: true,
+    //   },
+    //   mangle: {
+    //     safari10: true, // Fix Safari 10+ issues
+    //   },
+    // },
   },
-  
+
   // Development server optimizations
   server: {
     port: 3000,
@@ -158,7 +143,7 @@ export default defineConfig({
       },
     },
   },
-  
+
   // Dependency optimization
   optimizeDeps: {
     include: [
@@ -170,7 +155,7 @@ export default defineConfig({
       'framer-motion'
     ],
   },
-  
+
   // Path resolution
   resolve: {
     alias: {
@@ -183,7 +168,7 @@ export default defineConfig({
       '@mui/icons-material$': resolve(__dirname, 'src/mui-icons.ts'),
     },
   },
-  
+
   // CSS optimization
   css: {
     devSourcemap: true,
@@ -193,7 +178,7 @@ export default defineConfig({
       },
     },
   },
-  
+
   // Preview configuration with SPA fallback
   preview: {
     port: 4173,
@@ -217,45 +202,25 @@ export default defineConfig({
   },
   // App type for SPA history fallback support
   appType: 'spa',
+
+  // Vitest Configuration
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/act-env.ts', './src/test/setup.ts'],
-    testTimeout: 10000, // 10 second timeout for tests
-    hookTimeout: 5000,  // 5 second timeout for hooks
-    teardownTimeout: 5000, // 5 second timeout for teardown
-    exclude: [
-      '**/node_modules/**',
-      '**/nm_backup_ci/**',
-      '**/dist/**',
-      '**/*.e2e.spec.js',
-      '**/*.spec.js',
-      '**/e2e/**',
-      '**/playwright/**',
-      '**/tests/CharacterCreation.e2e.spec.js',
-      '**/tests/CharacterSelection.spec.js', 
-      '**/tests/FullIntegration.spec.js'
-    ],
-    include: [
-      '**/*.test.tsx',
-      '**/*.test.ts'
-    ],
-    reporters: ['verbose'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/**',
-        'dist/**',
-        '**/*.config.js',
-        '**/test-setup.js',
-        '**/setup.ts',
-        '**/*.e2e.spec.js'
-      ]
+    setupFiles: './src/setupTests.ts',
+    css: false, // Disable CSS processing for faster tests
+    fileParallelism: false, // Disable parallelism to prevent hangs on limited resources
+    pool: 'forks', // Use forks instead of threads for better isolation
+    poolOptions: {
+      forks: {
+        singleFork: true, // Run tests sequentially in a single fork
+      },
     },
-    // Isolate tests to prevent WebSocket connection leaks
-    isolate: true,
-    // Use forks pool for better compatibility with MUI barrel imports
-    pool: 'forks',
+    testTimeout: 10000,
+    hookTimeout: 10000,
+    reporters: ['verbose'],
+    // Exclude e2e tests and integration tests from unit test runs
+    exclude: ['node_modules', 'dist', '**/*.spec.ts', '**/*.spec.tsx', '**/tests/integration/**', 'tests/integration'],
   },
+
 });

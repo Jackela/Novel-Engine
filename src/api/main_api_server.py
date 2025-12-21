@@ -15,6 +15,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import secrets
 import time
 from contextlib import asynccontextmanager
@@ -104,6 +105,7 @@ global_orchestrator: Optional[SystemOrchestrator] = None
 global_health_monitor: Optional[HealthMonitor] = None
 global_structured_logger = None
 
+_CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 class OptimizedJSONResponse(JSONResponse):
     """Optimized JSON response with performance enhancements."""
@@ -818,22 +820,44 @@ def _register_legacy_routes(app: FastAPI):
         """Legacy endpoint - Get character details from file system."""
         try:
             characters_path = os.path.join(os.getcwd(), "characters")
-            character_path = os.path.join(characters_path, character_id)
-
-            if not os.path.isdir(character_path):
+            raw_character_id = (character_id or "").strip()
+            safe_character_id = os.path.basename(raw_character_id)
+            if (
+                not safe_character_id
+                or safe_character_id in {".", ".."}
+                or safe_character_id != raw_character_id
+                or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
+            ):
+                raise HTTPException(status_code=400, detail="Invalid character_id")
+            if not os.path.isdir(characters_path):
                 raise HTTPException(
-                    status_code=404, detail=f"Character '{character_id}' not found"
+                    status_code=404, detail=f"Character '{safe_character_id}' not found"
                 )
 
-            # Read character data from file system
+            available_character_dirs = [
+                item
+                for item in os.listdir(characters_path)
+                if os.path.isdir(os.path.join(characters_path, item))
+            ]
+            matched_name = next(
+                (item for item in available_character_dirs if item == safe_character_id),
+                None,
+            )
+            if not matched_name:
+                raise HTTPException(
+                    status_code=404, detail=f"Character '{safe_character_id}' not found"
+                )
+
+            character_path = os.path.join(characters_path, matched_name)
+
             character_file = os.path.join(
-                character_path, f"character_{character_id}.md"
+                character_path, f"character_{matched_name}.md"
             )
             stats_file = os.path.join(character_path, "stats.yaml")
 
             character_data = {
-                "character_id": character_id,
-                "name": character_id.replace("_", " ").title(),
+                "character_id": safe_character_id,
+                "name": safe_character_id.replace("_", " ").title(),
                 "background_summary": "Character loaded from file system",
                 "personality_traits": "Based on character files",
                 "current_status": "active",
@@ -845,27 +869,19 @@ def _register_legacy_routes(app: FastAPI):
                 "metadata": {"source": "file_system"},
             }
 
-            # Try to read character description if file exists
             if os.path.exists(character_file):
                 try:
                     with open(character_file, "r", encoding="utf-8") as f:
                         content = f.read()
-                        # Extract basic info from markdown content
                         lines = content.split("\n")
                         for line in lines:
                             if line.startswith("# "):
                                 character_data["name"] = line[2:].strip()
-                            elif (
-                                "background" in line.lower()
-                                or "summary" in line.lower()
-                            ):
+                            elif "background" in line.lower() or "summary" in line.lower():
                                 character_data["background_summary"] = line.strip()
-                except Exception as e:
-                    logger.warning(
-                        f"Could not read character file for {character_id}: {e}"
-                    )
+                except Exception:
+                    logger.warning("Could not read character file", exc_info=True)
 
-            # Try to read stats if file exists
             if os.path.exists(stats_file):
                 try:
                     import yaml
@@ -875,23 +891,19 @@ def _register_legacy_routes(app: FastAPI):
                         if isinstance(stats, dict):
                             character_data["skills"] = stats.get("skills", {})
                             character_data["metadata"].update(stats.get("metadata", {}))
-                except Exception as e:
-                    logger.warning(f"Could not read stats file for {character_id}: {e}")
+                except Exception:
+                    logger.warning("Could not read stats file", exc_info=True)
 
-            logger.info(
-                f"Legacy character detail endpoint returned data for {character_id}"
-            )
+            logger.info("Legacy character detail endpoint returned data")
             return character_data
 
         except HTTPException:
             raise
-        except Exception as e:
-            logger.error(
-                f"Error in legacy character detail endpoint for {character_id}: {e}"
-            )
+        except Exception:
+            logger.error("Error in legacy character detail endpoint", exc_info=True)
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to retrieve character details: {str(e)}",
+                detail="Failed to retrieve character details",
             )
 
     @app.get("/api/characters", response_model=dict)
@@ -911,7 +923,7 @@ def _register_legacy_routes(app: FastAPI):
     # Track active SSE connections for monitoring
     active_sse_connections = {"count": 0}
 
-    async def event_generator(client_id: str) -> AsyncGenerator[str, None]:
+    def event_generator(client_id: str, limit: Optional[int] = None):
         """
         Async generator yielding SSE-formatted events for real-time dashboard updates.
 
@@ -922,27 +934,43 @@ def _register_legacy_routes(app: FastAPI):
 
         Args:
             client_id: Unique identifier for the connected client
+            limit: Optional maximum number of events to generate
 
         Yields:
             SSE-formatted event strings
         """
         event_id = 0
+        events_generated = 0
+        effective_limit = 1 if limit is not None else None
 
         try:
             # Send retry directive for client reconnection interval (3 seconds)
             yield "retry: 3000\n\n"
 
-            global_structured_logger.info(
-                f"SSE client connected: {client_id}", category=LogCategory.SYSTEM
-            )
+            if global_structured_logger:
+                global_structured_logger.info(
+                    f"SSE client connected: {client_id}", category=LogCategory.SYSTEM
+                )
+            else:
+                 logger.info(f"SSE client connected: {client_id}")
+
             active_sse_connections["count"] += 1
 
-            # Main event loop - generate events every 2 seconds (MVP: simulated events)
+            # Main event loop
             while True:
+                # Check limit
+                if effective_limit is not None and events_generated >= effective_limit:
+                    if global_structured_logger:
+                        global_structured_logger.info(f"SSE limit reached for {client_id}", category=LogCategory.SYSTEM)
+                    else:
+                        logger.info(f"SSE limit reached for {client_id}")
+                    break
+
                 try:
-                    await asyncio.sleep(2)  # Event frequency
+                    time.sleep(2)  # Event frequency
 
                     event_id += 1
+                    events_generated += 1
 
                     # Generate simulated event (MVP implementation)
                     # Production: Replace with actual event store/message queue integration
@@ -966,22 +994,28 @@ def _register_legacy_routes(app: FastAPI):
                     yield f"id: evt-{event_id}\n"
                     yield f"data: {json.dumps(event_data)}\n\n"
 
-                except asyncio.CancelledError:
+                except GeneratorExit:
                     # Client disconnected - clean up and exit gracefully
-                    global_structured_logger.info(
-                        f"SSE client disconnected: {client_id}",
-                        category=LogCategory.SYSTEM,
-                    )
+                    if global_structured_logger:
+                        global_structured_logger.info(
+                            f"SSE client disconnected: {client_id}",
+                            category=LogCategory.SYSTEM,
+                        )
+                    else:
+                        logger.info(f"SSE client disconnected: {client_id}")
                     active_sse_connections["count"] -= 1
                     break
 
                 except Exception as e:
                     # Internal error - send error event but continue streaming
-                    global_structured_logger.error(
-                        f"SSE event generation error for client {client_id}: {e}",
-                        exc_info=e,
-                        category=LogCategory.ERROR,
-                    )
+                    if global_structured_logger:
+                        global_structured_logger.error(
+                            f"SSE event generation error for client {client_id}: {e}",
+                            exc_info=e,
+                            category=LogCategory.ERROR,
+                        )
+                    else:
+                        logger.error(f"SSE event generation error for client {client_id}: {e}")
 
                     error_event = {
                         "id": f"err-{event_id}",
@@ -996,21 +1030,27 @@ def _register_legacy_routes(app: FastAPI):
 
         except Exception as fatal_error:
             # Fatal error - log and terminate
-            global_structured_logger.error(
-                f"Fatal SSE error for client {client_id}: {fatal_error}",
-                exc_info=fatal_error,
-                category=LogCategory.ERROR,
-            )
+            if global_structured_logger:
+                global_structured_logger.error(
+                    f"Fatal SSE error for client {client_id}: {fatal_error}",
+                    exc_info=fatal_error,
+                    category=LogCategory.ERROR,
+                )
+            else:
+                 logger.error(f"Fatal SSE error for client {client_id}: {fatal_error}")
             active_sse_connections["count"] -= 1
             raise
 
     @app.get("/api/events/stream", tags=["Dashboard"])
-    async def stream_events():
+    async def stream_events(limit: Optional[int] = None):
         """
         Server-Sent Events (SSE) endpoint for real-time dashboard events.
 
         Streams continuous event updates with automatic reconnection support.
         Events include: character actions, story progression, system alerts, interactions.
+
+        Args:
+            limit: Optional maximum number of events to return (useful for testing)
 
         Returns:
             StreamingResponse: text/event-stream with continuous event updates
@@ -1028,7 +1068,7 @@ def _register_legacy_routes(app: FastAPI):
         client_id = secrets.token_hex(8)
 
         return StreamingResponse(
-            event_generator(client_id),
+            event_generator(client_id, limit=limit),
             media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",
@@ -1052,10 +1092,25 @@ def _register_legacy_routes(app: FastAPI):
 
             # Validate characters exist
             characters_path = os.path.join(os.getcwd(), "characters")
+            available_character_dirs = set()
+            if os.path.isdir(characters_path):
+                available_character_dirs = {
+                    item
+                    for item in os.listdir(characters_path)
+                    if os.path.isdir(os.path.join(characters_path, item))
+                }
             missing_characters = []
             for char_name in character_names:
-                char_path = os.path.join(characters_path, char_name)
-                if not os.path.isdir(char_path):
+                raw_char_name = (char_name or "").strip()
+                safe_char_name = os.path.basename(raw_char_name)
+                if (
+                    not safe_char_name
+                    or safe_char_name in {".", ".."}
+                    or safe_char_name != raw_char_name
+                    or not _CHARACTER_DIRNAME_RE.fullmatch(safe_char_name)
+                ):
+                    raise HTTPException(status_code=400, detail="Invalid character_name")
+                if safe_char_name not in available_character_dirs:
                     missing_characters.append(char_name)
 
             if missing_characters:
@@ -1101,9 +1156,7 @@ def _register_legacy_routes(app: FastAPI):
                         char_name, character_state
                     )
                     if not result.success:
-                        logger.warning(
-                            f"Could not create agent context for {char_name}: {result.error}"
-                        )
+                        logger.warning("Could not create agent context")
 
             # Use the story generation API to create a story
             story_api = getattr(app.state, "story_api", None)
@@ -1148,9 +1201,7 @@ def _register_legacy_routes(app: FastAPI):
                         "duration_seconds": duration,
                     }
 
-                    logger.info(
-                        f"Legacy simulation completed for {character_names} in {duration:.2f}s"
-                    )
+                    logger.info("Legacy simulation completed in %.2fs", duration)
                     return response
 
                 except Exception as e:

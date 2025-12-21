@@ -1,4 +1,4 @@
-import type { LogLevel, LogContext, LogEntry } from '../../types/logging';
+import type { LogLevel, LogContext, LogEntry } from '@/types/logging';
 
 export interface ILogger {
   debug(message: string, context?: LogContext | Error, extraContext?: LogContext): void;

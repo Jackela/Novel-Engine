@@ -5,7 +5,7 @@
 **Status**: Current  
 **Audience**: DevOps Engineers, System Administrators
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > [Deployment](../deployment/) > Deployment Guide
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > [Deployment](../deployment/) > Deployment Guide
 
 ---
 

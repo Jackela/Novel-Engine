@@ -10,8 +10,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { LoginRequest, AuthToken } from '../types/auth';
-import type { IAuthenticationService } from '../services/auth/IAuthenticationService';
+import type { LoginRequest, AuthToken } from '@/types/auth';
+import type { IAuthenticationService } from '@/services/auth/IAuthenticationService';
 
 /**
  * Authentication state interface

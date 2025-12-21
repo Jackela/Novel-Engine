@@ -19,6 +19,7 @@ Usage:
 
 import logging
 import os
+import re
 from typing import Optional
 
 from src.event_bus import EventBus
@@ -26,6 +27,8 @@ from src.persona_agent import PersonaAgent
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+_CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 class CharacterFactory:
@@ -125,35 +128,48 @@ class CharacterFactory:
         if not character_name or not character_name.strip():
             raise ValueError("Character name cannot be empty or None")
 
-        character_directory = os.path.join(
-            self.base_character_path, character_name.strip()
-        )
+        requested_name = character_name.strip()
+        safe_character_name = os.path.basename(requested_name)
+        if (
+            safe_character_name != requested_name
+            or safe_character_name in {"", ".", ".."}
+            or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_name)
+        ):
+            raise ValueError("Character name must be a single directory name")
 
-        if not os.path.exists(character_directory):
+        if not os.path.isdir(self.base_character_path):
             raise FileNotFoundError(
-                f"Character directory not found: {character_directory}. "
-                f"Expected character data in 'characters/{character_name}/' directory."
+                f"Character base directory not found: {self.base_character_path}"
             )
 
-        if not os.path.isdir(character_directory):
+        character_directory: Optional[str] = None
+        for item in os.listdir(self.base_character_path):
+            if item != safe_character_name:
+                continue
+            candidate_path = os.path.join(self.base_character_path, item)
+            if os.path.isdir(candidate_path):
+                character_directory = candidate_path
+                break
             raise FileNotFoundError(
-                f"Character path exists but is not a directory: {character_directory}"
+                f"Character path exists but is not a directory: {candidate_path}"
             )
 
-        logger.info(
-            f"Creating PersonaAgent for character '{character_name}' from {character_directory}"
-        )
+        if not character_directory:
+            raise FileNotFoundError(
+                f"Character directory not found for name: {safe_character_name}. "
+                f"Expected character data in '{self.base_character_path}'."
+            )
+
+        logger.info("Creating PersonaAgent for character")
 
         try:
             persona_agent = PersonaAgent(
                 character_directory, self.event_bus, agent_id=agent_id
             )
-            logger.info(
-                f"Successfully created PersonaAgent for '{character_name}' with ID: {persona_agent.agent_id}"
-            )
+            logger.info("Successfully created PersonaAgent")
             return persona_agent
-        except Exception as e:
-            logger.error(f"Failed to create PersonaAgent for '{character_name}': {e}")
+        except Exception:
+            logger.error("Failed to create PersonaAgent", exc_info=True)
             raise
 
     def list_available_characters(self) -> list[str]:

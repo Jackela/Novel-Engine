@@ -39,8 +39,7 @@ test.describe('Decision Dialog', () => {
     decisionDialog = new DecisionDialogPage(page);
 
     // Navigate to dashboard
-    await dashboardPage.goto();
-    await dashboardPage.waitForDashboardLoad();
+    await dashboardPage.navigateToDashboard({ mockAPIs: true });
 
     // Expose Redux store for testing (if not already exposed)
     await page.evaluate(() => {
@@ -161,7 +160,7 @@ test.describe('Decision Dialog', () => {
 
     test('confirm button becomes enabled when option is selected', async ({ page }) => {
       const mockDecision = DecisionDialogPage.createMockDecision({
-        defaultOptionId: undefined, // No default selection
+        defaultOptionId: null as any, // No default selection
       });
       await decisionDialog.injectDecisionPoint(mockDecision);
       await decisionDialog.waitForDialog();
@@ -523,8 +522,7 @@ test.describe('Decision Dialog Integration', () => {
     const decisionDialog = new DecisionDialogPage(page);
 
     // Navigate to dashboard
-    await dashboardPage.goto();
-    await dashboardPage.waitForDashboardLoad();
+    await dashboardPage.navigateToDashboard({ mockAPIs: true });
 
     // Verify no dialog initially
     expect(await decisionDialog.isDialogVisible()).toBe(false);
@@ -564,8 +562,7 @@ test.describe('Decision Dialog Integration', () => {
     const decisionDialog = new DecisionDialogPage(page);
 
     // Navigate to dashboard
-    await dashboardPage.goto();
-    await dashboardPage.waitForDashboardLoad();
+    await dashboardPage.navigateToDashboard({ mockAPIs: true });
 
     // Inject decision
     const mockDecision = DecisionDialogPage.createMockDecision();

@@ -49,26 +49,28 @@ class TestSpeedAnalyzer:
             print("This may take several minutes...\n", file=sys.stderr)
 
         cmd = [
-            "python",
+            sys.executable,
             "-m",
             "pytest",
             self.test_path,
             "-m", "unit",  # Only analyze unit tests for speed (fast subset)
             "--durations=0",  # Show all test durations
+            "--durations-min=0",  # Include even extremely fast tests
             "-v",
             "--tb=no",  # No traceback on failures
-            "--no-cov",  # Disable coverage for faster execution
             "-q",
         ]
 
         # Set PYTHONPATH for CI environments
         env = os.environ.copy()
         cwd = os.getcwd()
-        pythonpath = f"{cwd}:{cwd}/src"
-        if "PYTHONPATH" in env:
-            pythonpath = f"{pythonpath}:{env['PYTHONPATH']}"
+        pythonpath_entries = [cwd, os.path.join(cwd, "src")]
+        pythonpath = os.pathsep.join(pythonpath_entries)
+        if env.get("PYTHONPATH"):
+            pythonpath = os.pathsep.join([pythonpath, env["PYTHONPATH"]])
         env["PYTHONPATH"] = pythonpath
-        env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "0"
+        env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+        env.setdefault("PYTEST_PLUGINS", "pytest_asyncio")
 
         try:
             result = subprocess.run(
@@ -92,7 +94,7 @@ class TestSpeedAnalyzer:
         """Parse pytest duration output to extract test timings."""
         # Pattern: "0.12s call     tests/unit/module/test_file.py::test_name"
         duration_pattern = re.compile(
-            r"(\d+\.\d+)s\s+(call|setup|teardown)\s+(tests/[^\s]+)"
+            r"(\d+\.\d+)s\s+(call|setup|teardown)\s+(tests[\\/][^\s]+)"
         )
 
         test_phases: Dict[str, Dict[str, float]] = defaultdict(

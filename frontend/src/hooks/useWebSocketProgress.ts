@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { logger } from '../services/logging/LoggerFactory';
+import { logger } from '@/services/logging/LoggerFactory';
 
 export interface ProgressUpdate {
   generation_id: string;
@@ -71,7 +71,7 @@ export function useWebSocketProgress({
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       const wsUrl = `${protocol}//${host}/api/stories/progress/${generationId}`;
-      
+
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -89,9 +89,9 @@ export function useWebSocketProgress({
 
       ws.onopen = () => {
         if (isUnmountedRef.current) return;
-        
+
         clearTimeout(connectionTimer);
-        
+
         setState(prev => ({
           ...prev,
           isConnected: true,
@@ -101,19 +101,19 @@ export function useWebSocketProgress({
           lastHeartbeat: Date.now(),
         }));
         onConnect?.();
-        
+
         // Start heartbeat monitoring
         startHeartbeatMonitoring();
       };
 
       ws.onmessage = (event) => {
         if (isUnmountedRef.current) return;
-        
+
         const messageReceiveTime = Date.now();
-        
+
         try {
           const data = JSON.parse(event.data);
-          
+
           // Handle heartbeat responses
           if (data.type === 'heartbeat') {
             const latency = messageReceiveTime - (state.lastHeartbeat || messageReceiveTime);
@@ -125,17 +125,17 @@ export function useWebSocketProgress({
             }));
             return;
           }
-          
+
           // Handle progress updates
           const update: ProgressUpdate = data;
-          
+
           setState(prev => ({
             ...prev,
             lastUpdate: update,
             error: null,
             lastHeartbeat: messageReceiveTime,
           }));
-          
+
           onUpdate?.(update);
         } catch (error) {
           logger.error('Failed to parse WebSocket message:', error);
@@ -150,7 +150,7 @@ export function useWebSocketProgress({
 
       ws.onerror = (error) => {
         if (isUnmountedRef.current) return;
-        
+
         logger.error('WebSocket error:', error);
         const wsError = new Error('WebSocket connection error');
         setState(prev => ({
@@ -163,7 +163,7 @@ export function useWebSocketProgress({
 
       ws.onclose = (event) => {
         if (isUnmountedRef.current) return;
-        
+
         setState(prev => ({
           ...prev,
           isConnected: false,
@@ -176,14 +176,14 @@ export function useWebSocketProgress({
             RECONNECT_DELAY_BASE * Math.pow(1.5, state.connectionAttempts),
             10000 // Max 10 second delay
           );
-          
+
           setState(prev => ({
             ...prev,
             connectionAttempts: prev.connectionAttempts + 1,
           }));
 
           logger.info(`WebSocket reconnecting in ${delay}ms (attempt ${state.connectionAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
-          
+
           reconnectTimeoutRef.current = setTimeout(() => {
             if (!isUnmountedRef.current) {
               connect();
@@ -244,21 +244,21 @@ export function useWebSocketProgress({
       wsRef.current.send(message);
     }
   }, []);
-  
+
   const sendHeartbeat = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       setState(prev => ({ ...prev, lastHeartbeat: Date.now() }));
       wsRef.current.send('ping');
     }
   }, []);
-  
+
   const startHeartbeatMonitoring = useCallback(() => {
     const heartbeatTimer = setInterval(() => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         sendHeartbeat();
       }
     }, HEARTBEAT_INTERVAL);
-    
+
     return () => clearInterval(heartbeatTimer);
   }, [sendHeartbeat]);
 

@@ -19,6 +19,7 @@ Usage:
 import logging
 
 from src.config.character_factory import CharacterFactory
+from src.event_bus import EventBus
 
 
 # Configure logging to show LLM integration details
@@ -34,7 +35,7 @@ def demo_llm_enhanced_decision_making():
     
     # Initialize agent with test character using CharacterFactory
     print("\n1. Initializing PersonaAgent...")
-    factory = CharacterFactory()
+    factory = CharacterFactory(EventBus())
     agent = factory.create_character("test")
     print(f"   Agent ID: {agent.agent_id}")
     print(f"   Character Name: {agent.character_data.get('name', 'Unknown')}")
@@ -121,7 +122,7 @@ def demo_llm_fallback_mechanism():
     print("LLM Fallback Mechanism Demo")
     print("=" * 60)
     
-    factory = CharacterFactory()
+    factory = CharacterFactory(EventBus())
     agent = factory.create_character("test")
     
     # Modify agent to trigger LLM failure for demonstration
@@ -168,7 +169,7 @@ def demo_character_specific_prompts():
     print("Character-Specific Prompt Construction Demo")
     print("=" * 60)
     
-    factory = CharacterFactory()
+    factory = CharacterFactory(EventBus())
     agent = factory.create_character("test")
     
     print("\n1. Analyzing Character Profile...")

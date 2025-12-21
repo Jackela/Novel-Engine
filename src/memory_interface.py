@@ -58,7 +58,7 @@ class MemoryInterface:
         self.experiences_processed = 0
         self.significant_experiences = 0
 
-        logger.info(f"MemoryInterface initialized for agent {self.agent_core.agent_id}")
+        logger.info("MemoryInterface initialized")
 
     def update_internal_memory(self, new_log: Dict[str, Any]) -> None:
         """

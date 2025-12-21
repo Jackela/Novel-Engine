@@ -8,7 +8,7 @@
  */
 
 import type { Metric } from 'web-vitals'
-import type { IPerformanceMonitor, PerformanceMetric } from '../../types/accessibility'
+import type { IPerformanceMonitor, PerformanceMetric } from '@/types/accessibility'
 
 export class WebVitalsMonitor implements IPerformanceMonitor {
   private metrics: Map<string, PerformanceMetric> = new Map()

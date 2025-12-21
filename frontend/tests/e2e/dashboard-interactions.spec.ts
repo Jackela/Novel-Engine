@@ -6,7 +6,7 @@ test.describe('Dashboard Interactions', () => {
 
   test.beforeEach(async ({ page }) => {
     dashboardPage = new DashboardPage(page);
-    await dashboardPage.navigateToDashboard();
+    await dashboardPage.navigateToDashboard({ mockAPIs: true });
   });
 
   test('Quick Actions drive pipeline state', async () => {

@@ -1,8 +1,8 @@
 # Novel Engine M1 - Project Documentation
 
-**Version**: 1.0.0  
-**Last Updated**: 2025-08-26  
-**Status**: Baseline Architecture Documentation  
+**Version**: 1.1.0  
+**Last Updated**: 2025-12-01  
+**Status**: Production Ready  
 **Maintainer**: Novel Engine Development Team
 
 ---
@@ -113,6 +113,7 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 - REST API endpoints for all service operations
 - GraphQL gateway for complex queries
 - WebSocket connections for real-time features
+- Server-Sent Events (SSE) for dashboard updates (`/api/events/stream`)
 - Authentication providers (OAuth2, JWT, etc.)
 
 #### Story Engine (`apps/story-engine/`)
@@ -407,12 +408,12 @@ GET  /api/v1/stories/{id}/analysis # Story analysis
 
 #### Character Service API Endpoints
 ```
-POST /api/v1/characters           # Create character
-GET  /api/v1/characters/{id}      # Retrieve character
-PUT  /api/v1/characters/{id}      # Update character
-DELETE /api/v1/characters/{id}    # Delete character
-POST /api/v1/characters/{id}/interactions # Process interaction
-GET  /api/v1/characters/{id}/memory # Character memory
+POST /api/characters           # Create character
+GET  /api/characters/{id}      # Retrieve character
+PUT  /api/characters/{id}      # Update character
+DELETE /api/characters/{id}    # Delete character
+POST /api/characters/{id}/interactions # Process interaction
+GET  /api/characters/{id}/memory # Character memory
 ```
 
 #### Campaign Manager API Endpoints

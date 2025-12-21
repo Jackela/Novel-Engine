@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > Implementation
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > Implementation
 
 ---
 
@@ -74,8 +74,8 @@ Implementation guides, patterns, and workflows for Novel Engine development.
 - [Ports & Adapters](../architecture/ports-adapters.md)
 
 ### Development
-- [Developer Guide](../guides/DEVELOPER_GUIDE.md)
-- [Coding Standards](../guides/CODING_STANDARDS.md)
+- [Developer Guide](../DEVELOPER_GUIDE.md)
+- [Coding Standards](../coding-standards.md)
 - [Core Systems Integration](../guides/CORE_SYSTEMS_INTEGRATION_GUIDE.md)
 
 ### Design

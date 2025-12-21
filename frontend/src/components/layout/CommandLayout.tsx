@@ -1,99 +1,91 @@
-import React, { useMemo, useState } from 'react';
-import { Box, Collapse, Alert, Button, Chip, Tooltip, Stack } from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useAuthContext } from '../../contexts/AuthContext';
+import React, { useState } from 'react';
+import { Box, IconButton, useTheme, useMediaQuery } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import Sidebar from './Sidebar';
+import { tokens } from '@/styles/tokens';
 
 interface CommandLayoutProps {
   children?: React.ReactNode;
 }
 
-const GUEST_BANNER_KEY = 'novel-engine-guest-banner-dismissed';
-
 const CommandLayout: React.FC<CommandLayoutProps> = ({ children }) => {
-  const { isGuest } = useAuthContext();
-  const [bannerDismissed, setBannerDismissed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      // Use localStorage for persistent preference across sessions
-      return window.localStorage.getItem(GUEST_BANNER_KEY) === '1';
-    } catch {
-      return false;
-    }
-  });
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const handleDismissBanner = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        // Use localStorage for persistent preference across sessions
-        window.localStorage.setItem(GUEST_BANNER_KEY, '1');
-      } catch {
-        // ignore
-      }
-    }
-    setBannerDismissed(true);
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
-  const guestBannerVisible = useMemo(() => isGuest && !bannerDismissed, [isGuest, bannerDismissed]);
-
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh', 
-        bgcolor: 'var(--color-bg-base)',
-        color: 'var(--color-text-primary)',
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+        color: 'text.primary',
         display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden' // Prevent body scroll, let dashboard handle it
+        flexDirection: 'row',
+        overflow: 'hidden' 
       }}
+      data-testid="dashboard-layout"
     >
-      {/* Guest Mode Chip - visible when in guest mode */}
-      {isGuest && (
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
+      {/* Mobile Menu Button - Floating */}
+      {isMobile && (
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          edge="start"
+          onClick={handleDrawerToggle}
           sx={{
-            position: 'absolute',
-            top: 8,
-            right: 16,
-            zIndex: 2001
+            position: 'fixed',
+            left: 16,
+            bottom: 16, // Bottom left thumb-friendly
+            zIndex: 1300,
+            bgcolor: tokens.colors.primary[600],
+            color: 'white',
+            boxShadow: tokens.elevation.lg,
+            '&:hover': { bgcolor: tokens.colors.primary[700] }
           }}
         >
-          <Tooltip title="Demo mode: curated sci-fi data">
-            <Chip
-              label="Demo Mode"
-              color="warning"
-              size="small"
-              icon={<InfoOutlinedIcon fontSize="small" />}
-              data-testid="guest-mode-chip"
-            />
-          </Tooltip>
-        </Stack>
+          <MenuIcon />
+        </IconButton>
       )}
 
-      {/* Guest Banner Overlay or Top Insert */}
-      {guestBannerVisible && (
-        <Box sx={{ position: 'relative', zIndex: 2000, bgcolor: 'background.paper' }}>
-          <Collapse in={guestBannerVisible}>
-            <Alert
-              severity="info"
-              variant="filled"
-              data-testid="guest-mode-banner"
-              action={
-                <Button color="inherit" size="small" onClick={handleDismissBanner}>
-                  Dismiss
-                </Button>
-              }
-              sx={{ borderRadius: 0 }}
-            >
-              You're in the demo shell. Actions remain simulated; data may include live API feeds.
-            </Alert>
-          </Collapse>
-        </Box>
-      )}
+      {/* Global Sidebar */}
+      <Sidebar 
+        mobileOpen={mobileOpen} 
+        onMobileClose={() => setMobileOpen(false)} 
+      />
 
-      {/* Main Content Area - Full Width/Height */}
-      <Box sx={{ flex: 1, position: 'relative', width: '100%', height: '100%' }}>
+      {/* Main Content Area */}
+      <Box 
+        component="main" 
+        id="main-content" 
+        sx={{ 
+          flex: 1, 
+          position: 'relative', 
+          width: '100%', 
+          height: '100vh',
+          marginLeft: isMobile ? 0 : '80px', // Matches collapsed sidebar width (0 on mobile)
+          transition: 'margin-left 0.3s ease',
+          overflowY: 'auto',
+          scrollBehavior: 'smooth',
+          // Custom scrollbar
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: tokens.colors.border.tertiary,
+            borderRadius: '4px',
+            '&:hover': {
+              background: tokens.colors.primary[700],
+            },
+          },
+        }}
+      >
         {children}
       </Box>
     </Box>

@@ -5,7 +5,7 @@
 **Status**: Current  
 **Audience**: Technical Leads, Developers, Architects
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > [Architecture](INDEX.md) > System Architecture
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > [Architecture](INDEX.md) > System Architecture
 
 ---
 
@@ -575,7 +575,7 @@ Development:
 
 - [API Reference](../api/API_REFERENCE.md)
 - [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)
-- [Developer Guide](../guides/DEVELOPER_GUIDE.md)
+- [Developer Guide](../DEVELOPER_GUIDE.md)
 - [Bounded Contexts](./bounded-contexts.md)
 - [Context Mapping](./context-mapping.md)
 - [Ports & Adapters](./ports-adapters.md)

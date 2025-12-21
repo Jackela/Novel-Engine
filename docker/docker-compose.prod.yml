@@ -92,7 +92,9 @@ services:
         max-file: "2"
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
     container_name: novel-engine-nginx
     restart: unless-stopped
     ports:

@@ -2,10 +2,21 @@ openapi: 3.0.3
 info:
   title: Semantic Cache Internal API
   version: 0.1.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+
+security:
+  - novelEngineAuth: []
 paths:
   /cache/metrics:
     get:
       summary: Get cache and coordinator metrics snapshot
+      operationId: getCacheMetrics
       responses:
         '200':
           description: Metrics snapshot
@@ -40,9 +51,14 @@ paths:
                     type: number
                     format: float
                     description: Estimated total cost saved due to cache hits (in default currency)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
   /cache/invalidate:
     post:
       summary: Invalidate cache entries by tag intersection
+      operationId: invalidateCache
       requestBody:
         required: true
         content:
@@ -65,3 +81,16 @@ paths:
                 properties:
                   removed:
                     type: integer
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+
+components:
+  securitySchemes:
+    novelEngineAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

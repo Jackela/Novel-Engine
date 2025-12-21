@@ -17,6 +17,7 @@ import logging
 import os
 import re
 import time
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -87,7 +88,7 @@ GENERIC_FACTIONS = {
     "Alliance Forces": "Diplomatic escorts safeguarding interstellar accords.",
 }
 
-_SCRIPT_TAG_RE = re.compile(r"<\s*/?\s*script[^>]*>", re.IGNORECASE)
+_SCRIPT_TAG_RE = re.compile(r"<\s*/?\s*script\b[^>]{0,1024}>", re.IGNORECASE)
 _SQLI_RE = re.compile(r"drop\s+table", re.IGNORECASE)
 
 
@@ -332,8 +333,12 @@ class ChroniclerAgent:
                 )
 
             # Test write permissions
-            (output_path / "test.tmp").touch()
-            (output_path / "test.tmp").unlink()
+            tmp_file = output_path / f"test_{uuid.uuid4().hex}.tmp"
+            tmp_file.touch()
+            try:
+                tmp_file.unlink()
+            except FileNotFoundError:
+                pass
             logger.info(f"Output directory validated: {self.output_directory}")
         except Exception as e:
             raise OSError(f"Output directory initialization failed: {e}")
@@ -678,7 +683,7 @@ just the pure narrative prose that could be published in an anthology.
         """Produce a deterministic, multi-sentence fallback story."""
         crew = ", ".join(self.character_names) if self.character_names else "the crew"
         fallback = (
-            f"In the quiet heartbeat of Meridian Station, {crew} maintained a calm vigil "
+            f"In the quiet heartbeat of Meridian Station in deep space, {crew} maintained a calm vigil "
             "while instruments painted neon auras across the command deck. "
             "Sensors whispered about plasma storms beyond the hull, reminding every watcher "
             "why cosmic patience matters. "

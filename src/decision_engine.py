@@ -88,7 +88,7 @@ class DecisionEngine:
         self.llm_available = LLM_AVAILABLE
         self._setup_llm_session()
 
-        logger.info(f"DecisionEngine initialized for agent {self.agent_core.agent_id}")
+        logger.info("DecisionEngine initialized")
 
     def _setup_llm_session(self) -> None:
         """Set up LLM session with retry strategy if available."""

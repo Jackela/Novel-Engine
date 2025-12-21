@@ -361,6 +361,15 @@ class TurnOrchestrator:
                 log_event_callback(action_description)
                 self.total_actions_processed += 1
 
+                # Emit event for dashboard
+                self.event_bus.emit(
+                    "character_action",
+                    character_name=character_name,
+                    action=action.action_type,
+                    description=action_description,
+                    reasoning=getattr(action, "reasoning", "")
+                )
+
             else:
                 logger.info(f"{agent.agent_id} chose to wait.")
 

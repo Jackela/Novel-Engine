@@ -119,14 +119,6 @@ Data models and schema documentation
 - Metrics Collection
 - Alerting Strategy
 
-### [Reports](./reports/)
-**Technical reports, assessments, and validation documentation**
-- Production Readiness Reports
-- Architecture Reviews
-- Security Assessments
-- Performance Reports
-- UAT Results
-
 ### [QA](./qa/)
 **Quality assurance documentation and procedures**
 
@@ -141,7 +133,7 @@ Data models and schema documentation
 - Security Controls
 - Compliance Checks
 
-### [ADRs](./ADRs/) / [ADR](./adr/)
+### [ADRs](./adr/)
 **Architectural Decision Records**
 - Design decisions
 - Technology choices
@@ -157,17 +149,11 @@ Code examples and sample implementations
 ### [Stories](./stories/)
 User stories and feature scenarios
 
-### [Setup](./setup/)
-Setup guides and installation documentation
-
 ### [Onboarding](./onboarding/)
 New team member and contributor onboarding
 
 ### [Development](./development/)
 Development environment and tooling
-
-### [Miscellaneous](./misc/)
-Additional documentation and examples
 
 ---
 
@@ -186,7 +172,7 @@ Additional documentation and examples
 → [Operations](./operations/) → [Runbooks](./runbooks/) → [Observability](./observability/)
 
 **Architecture Questions?**  
-→ [System Architecture](./architecture/SYSTEM_ARCHITECTURE.md) → [ADRs](./ADRs/)
+→ [System Architecture](./architecture/SYSTEM_ARCHITECTURE.md) → [ADRs](./adr/)
 
 ---
 
@@ -216,17 +202,13 @@ Each documentation file includes:
 Documentation improvements and contributions are welcome!
 
 **To contribute**:
-1. Follow [Coding Standards](./guides/CODING_STANDARDS.md)
+1. Follow [Coding Standards](./coding-standards.md)
 2. Add navigation breadcrumbs
 3. Include metadata headers
 4. Update relevant INDEX files
 5. Cross-reference related documentation
 
 ---
-
-## 📦 Archive
-
-Superseded documentation is archived in [_archive/](./_archive/) with full explanations.
 
 ---
 

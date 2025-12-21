@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { type Page, type Locator, expect } from '@playwright/test';
 
 /**
  * Dashboard Page Object Model
@@ -8,12 +8,12 @@ import { Page, Locator, expect } from '@playwright/test';
  */
 export class DashboardPage {
   readonly page: Page;
-  
+
   // Main layout elements
   readonly dashboardLayout: Locator;
   readonly headerNavigation: Locator;
   readonly bentoGrid: Locator;
-  
+
   // Bento Grid Components (following UI spec naming)
   readonly worldStateMap: Locator;           // Component A
   readonly realTimeActivity: Locator;       // Component B  
@@ -24,14 +24,14 @@ export class DashboardPage {
   readonly eventCascadeFlow: Locator;       // Component G
   readonly narrativeTimeline: Locator;      // Component H
   readonly analyticsPanel: Locator;         // Component I
-  
+
   // Control elements
   readonly playButton: Locator;
   readonly pauseButton: Locator;
   readonly stopButton: Locator;
   readonly refreshButton: Locator;
   readonly settingsButton: Locator;
-  
+
   // Status indicators
   readonly connectionStatus: Locator;
   readonly systemHealth: Locator;
@@ -43,15 +43,15 @@ export class DashboardPage {
 
   constructor(page: Page) {
     this.page = page;
-    
+
     // Main layout
     this.dashboardLayout = page.locator('[data-testid="dashboard-layout"]');
-    this.headerNavigation = page.locator('[data-testid="header-navigation"]');
+    this.headerNavigation = page.locator('[data-testid="sidebar-navigation"]');
     this.bentoGrid = page.locator('[data-testid="bento-grid"]');
-    
+
     // Bento components - using semantic selectors based on UI spec
     this.worldStateMap = page.locator('[data-testid="world-state-map"]');
-    this.realTimeActivity = page.locator('[data-testid="real-time-activity"]');
+    this.realTimeActivity = page.locator('[data-testid="system-log"]');
     this.performanceMetrics = page.locator('[data-testid="performance-metrics"]');
     this.turnPipelineStatus = page.locator('[data-testid="turn-pipeline-status"]').first();
     this.quickActions = page.locator('[data-testid="quick-actions"]');
@@ -59,18 +59,18 @@ export class DashboardPage {
     this.eventCascadeFlow = page.locator('[data-testid="event-cascade-flow"]');
     this.narrativeTimeline = page.locator('[data-testid="narrative-timeline"]');
     this.analyticsPanel = page.locator('[data-testid="analytics-panel"]');
-    
+
     // Controls based on UI spec
     this.playButton = page.locator('[data-testid="quick-action-play"], [aria-label*="Start"], [title*="Start"]');
     this.pauseButton = page.locator('[data-testid="quick-action-pause"], [aria-label*="Pause"], [title*="Pause"]');
     this.stopButton = page.locator('[data-testid="quick-action-stop"], [aria-label*="Stop"], [title*="Stop"]');
     this.refreshButton = page.locator('[data-testid="quick-action-refresh"], [aria-label*="Refresh"], [title*="Refresh"]');
     this.settingsButton = page.locator('[data-testid="settings-button"], [aria-label*="Settings"], [title*="Settings"]');
-    
+
     // Status indicators
     this.connectionStatus = page.locator('[data-testid="connection-status"]');
     this.systemHealth = page.locator('[data-testid="system-health"]');
-    this.liveIndicator = page.locator('[data-testid="live-indicator"]').first();
+    this.liveIndicator = page.locator('[data-testid="pipeline-live-indicator"]').first();
     this.guestModeChip = page.locator('[data-testid="guest-mode-chip"]');
     this.guestModeBanner = page.locator('[data-testid="guest-mode-banner"]');
     this.summaryStrip = page.locator('[data-testid="summary-strip"]');
@@ -79,11 +79,17 @@ export class DashboardPage {
 
   /**
    * Navigate to dashboard and wait for full load
+   * @param options Configuration options for navigation
+   * @param options.mockAPIs If true, sets up default API mocks before navigation
    */
-  async navigateToDashboard() {
+  async navigateToDashboard(options: { mockAPIs?: boolean } = {}) {
+    if (options.mockAPIs) {
+      await this.setupDefaultMocks();
+    }
     await this.page.addInitScript(() => {
       try {
-        window.sessionStorage.setItem('novel-engine-guest-session', '1');
+        window.sessionStorage.setItem('guest_session_active', '1');
+        (window as any).__FORCE_SHOW_METRICS__ = true;
       } catch {
         // ignore storage failures in CI
       }
@@ -101,25 +107,69 @@ export class DashboardPage {
           this.url = url;
           this.readyState = this.CONNECTING;
 
+          // Expose instance for test control
+          if (!(window as any).__mockEventSources) {
+            (window as any).__mockEventSources = [];
+          }
+          (window as any).__mockEventSources.push(this);
+          (window as any).__lastMockEventSource = this;
+          console.log('[MockEventSource] Created', url);
+
           // Simulate connection opening after a short delay
           setTimeout(() => {
             if (this.readyState === this.CONNECTING) {
               this.readyState = this.OPEN;
               const openEvent = new Event('open');
+              console.log('[MockEventSource] Open', url);
               if (this.onopen) {
                 this.onopen(openEvent);
               }
               this.dispatchEvent(openEvent);
+
+              // Simlulate periodic events for performance testing
+              setInterval(() => {
+                if (this.readyState === this.OPEN && this.onmessage) {
+                  const eventData = {
+                    id: Date.now().toString(),
+                    type: 'system',
+                    title: 'System Activity',
+                    description: 'Processing simulation step...',
+                    timestamp: Date.now(),
+                    severity: 'low'
+                  };
+                  const msgEvent = new MessageEvent('message', {
+                    data: JSON.stringify(eventData)
+                  });
+                  this.onmessage(msgEvent);
+                }
+              }, 800);
             }
           }, 10);
         }
 
+        private _onmessage: ((event: MessageEvent) => void) | null = null;
+
+        get onmessage() {
+          return this._onmessage;
+        }
+
+        set onmessage(handler: ((event: MessageEvent) => void) | null) {
+          console.log('[MockEventSource] onmessage handler assigned');
+          this._onmessage = handler;
+        }
+
         onopen: ((event: Event) => void) | null = null;
-        onmessage: ((event: MessageEvent) => void) | null = null;
         onerror: ((event: Event) => void) | null = null;
 
         close() {
           this.readyState = this.CLOSED;
+          const sources = (window as any).__mockEventSources;
+          if (sources) {
+            const index = sources.indexOf(this);
+            if (index > -1) {
+              sources.splice(index, 1);
+            }
+          }
         }
       }
 
@@ -175,18 +225,52 @@ export class DashboardPage {
   async waitForDashboardLoad() {
     // Wait for main layout
     await this.dashboardLayout.waitFor({ state: 'visible', timeout: 30000 });
-    
+
     // Wait for critical Bento components
     await this.worldStateMap.waitFor({ state: 'visible', timeout: 10000 });
     await this.realTimeActivity.waitFor({ state: 'visible', timeout: 10000 });
     await this.performanceMetrics.waitFor({ state: 'visible', timeout: 10000 });
     await this.turnPipelineStatus.waitFor({ state: 'visible', timeout: 10000 });
-    
+
     // Wait for initial data load (loading states should disappear)
     await this.page.waitForFunction(() => {
       const loadingElements = document.querySelectorAll('[data-testid*="loading"], .loading, [class*="loading"]');
       return loadingElements.length === 0;
     }, { timeout: 15000 });
+  }
+
+
+
+  /**
+   * Switch the Dashboard Tab View
+   * @param tabName The label of the tab to click (e.g., 'Network', 'Timeline')
+   */
+  async switchDashboardTab(tabName: string) {
+    console.log(`📑 Switching dashboard tab to: ${tabName}`);
+    // Use a more inclusive selector to handle icons/text layout
+    const tab = this.page.locator(`[role="tab"]`).filter({ hasText: tabName }).first();
+    await expect(tab).toBeVisible();
+    await tab.click();
+
+    // Wait for the corresponding view component to be visible
+    switch (tabName) {
+      case 'Map':
+        await this.worldStateMap.waitFor({ state: 'visible' });
+        break;
+      case 'Network':
+        await this.characterNetworks.waitFor({ state: 'visible' });
+        break;
+      case 'Timeline':
+        await this.narrativeTimeline.waitFor({ state: 'visible' });
+        break;
+      case 'Analytics':
+        await this.analyticsPanel.waitFor({ state: 'visible' });
+        break;
+      case 'Signals':
+        await this.eventCascadeFlow.waitFor({ state: 'visible' });
+        break;
+    }
+    await this.page.waitForTimeout(1000);
   }
 
   /**
@@ -195,16 +279,16 @@ export class DashboardPage {
    */
   async triggerTurnOrchestration() {
     console.log('🎮 Triggering turn orchestration...');
-    
+
     // Find and click the play/run button
     const runButton = this.playButton.first();
-    
+
     await expect(runButton).toBeVisible({ timeout: 5000 });
     await expect(runButton).toBeEnabled({ timeout: 5000 });
-    
+
     // Click to start turn orchestration
     await runButton.click();
-    
+
     // Verify turn started by checking pipeline status
     await this.waitForTurnStart();
   }
@@ -218,7 +302,7 @@ export class DashboardPage {
       '[data-testid="turn-pipeline-status"] [data-status="processing"], [data-testid="turn-pipeline-status"] [data-status="active"]',
       { timeout: 10000 }
     );
-    
+
     // Verify live indicator shows activity
     await expect(this.liveIndicator).toBeVisible({ timeout: 5000 });
   }
@@ -229,26 +313,26 @@ export class DashboardPage {
    */
   async monitorTurnPipeline(): Promise<{ phase: string; completed: boolean; duration?: number }[]> {
     console.log('📊 Monitoring turn pipeline progression...');
-    
+
     const phases = [
       'World Update',
-      'Subjective Brief', 
+      'Subjective Brief',
       'Interaction Orchestration',
       'Event Integration',
       'Narrative Integration'
     ];
-    
+
     const results = [];
     const startTime = Date.now();
-    
+
     for (let i = 0; i < phases.length; i++) {
       const phase = phases[i];
       const phaseStart = Date.now();
-      
+
       try {
         const phaseRow = this.turnPipelineStatus
           .locator('[data-phase-name]')
-          .filter({ hasText: new RegExp(phase, 'i') })
+          .filter({ hasText: new RegExp(phase || '', 'i') })
           .first();
         await expect(phaseRow).toBeVisible({ timeout: 10000 });
 
@@ -269,19 +353,19 @@ export class DashboardPage {
 
         const duration = Date.now() - phaseStart;
         results.push({ phase, completed, duration });
-        
+
         console.log(`✅ Phase ${i + 1}: ${phase} completed in ${duration}ms (completed=${completed})`);
-        
+
       } catch (error) {
         console.log(`⚠️ Phase ${i + 1}: ${phase} did not complete within timeout`);
         results.push({ phase, completed: false });
       }
     }
-    
+
     const totalDuration = Date.now() - startTime;
     console.log(`📊 Turn pipeline monitoring completed in ${totalDuration}ms`);
-    
-    return results;
+
+    return results as { phase: string; completed: boolean; duration?: number; }[];
   }
 
   /**
@@ -289,15 +373,15 @@ export class DashboardPage {
    */
   async observeComponentUpdates() {
     console.log('👀 Observing component updates...');
-    
+
     const updates = {
       worldStateMap: await this.checkWorldStateUpdates(),
-      realTimeActivity: await this.checkActivityUpdates(), 
+      realTimeActivity: await this.checkActivityUpdates(),
       performanceMetrics: await this.checkPerformanceUpdates(),
       characterNetworks: await this.checkCharacterUpdates(),
       narrativeTimeline: await this.checkTimelineUpdates()
     };
-    
+
     return updates;
   }
 
@@ -306,7 +390,17 @@ export class DashboardPage {
    */
   private async checkWorldStateUpdates() {
     const component = this.worldStateMap;
-    
+    const isVisible = await component.isVisible();
+
+    if (!isVisible) {
+      return {
+        hasActivityIndicators: false,
+        hasCharacterMarkers: false,
+        hasNewMovement: false,
+        timestampUpdated: false
+      };
+    }
+
     const markerCount = await component.locator('[data-location]').count();
     const avatarCount = await component.locator('.MuiAvatar-root').count();
     const updates = {
@@ -315,7 +409,7 @@ export class DashboardPage {
       hasNewMovement: markerCount > 1,
       timestampUpdated: await component.locator('text=/Last updated/i').count() > 0
     };
-    
+
     return updates;
   }
 
@@ -324,15 +418,24 @@ export class DashboardPage {
    */
   private async checkActivityUpdates() {
     const component = this.realTimeActivity;
-    
-    const eventCount = await component.locator('li').count();
+    // System Log should always be visible in layout, but safety check
+    if (!await component.isVisible()) {
+      return {
+        hasNewEvents: false,
+        hasLiveIndicator: false,
+        eventCount: 0,
+        hasCharacterActivity: false
+      };
+    }
+
+    const eventCount = await component.locator('[data-testid="activity-event"]').count();
     const updates = {
       hasNewEvents: eventCount > 0,
       hasLiveIndicator: await this.connectionStatus.isVisible(),
       eventCount,
       hasCharacterActivity: await component.locator('[data-testid*="character-activity"]').count() > 0
     };
-    
+
     return updates;
   }
 
@@ -341,14 +444,24 @@ export class DashboardPage {
    */
   private async checkPerformanceUpdates() {
     const component = this.performanceMetrics;
-    
+    const isVisible = await component.isVisible();
+
+    if (!isVisible) {
+      return {
+        hasMetricValues: false,
+        hasLCP: false,
+        hasCLS: false
+      };
+    }
+
     const updates = {
-      hasHealthStatus: await component.locator('[data-testid="performance-health-status"]').first().isVisible(),
+      // Component now only displays Web Vitals grid
       hasMetricValues: await component.locator('[data-testid="performance-metric-value"]').count() > 0,
-      hasProgressBars: await component.locator('[data-testid="performance-metric-progress"], progress, [role="progressbar"]').count() > 0,
-      systemOnline: await this.checkSystemStatus(component, '[data-testid="performance-health-status"]')
+      // Check for specific vitals to ensure complete rendering
+      hasLCP: await component.getByText(/LCP/).first().isVisible(),
+      hasCLS: await component.getByText(/CLS/).first().isVisible()
     };
-    
+
     return updates;
   }
 
@@ -357,12 +470,22 @@ export class DashboardPage {
    */
   private async checkCharacterUpdates() {
     const component = this.characterNetworks;
-    await component.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+    const isVisible = await component.isVisible();
+
+    if (!isVisible) {
+      return {
+        hasCharacterNodes: false,
+        hasConnections: false,
+        hasActivityMarkers: false,
+        networkVisible: false
+      };
+    }
 
     const nodesLocator = component.locator('[data-character-id], .MuiAvatar-root, [data-character]');
     const nodeCount = await nodesLocator.count();
+    // Only wait if visible but empty (loading state)
     if (nodeCount === 0) {
-      await nodesLocator.first().waitFor({ state: 'attached', timeout: 2000 }).catch(() => {});
+      await nodesLocator.first().waitFor({ state: 'attached', timeout: 2000 }).catch(() => { });
     }
 
     const connectionCount = await component.locator('[data-character-id] svg, line, path').count();
@@ -370,9 +493,9 @@ export class DashboardPage {
       hasCharacterNodes: nodeCount > 0,
       hasConnections: connectionCount > 0,
       hasActivityMarkers: nodeCount > 2,
-      networkVisible: await component.isVisible()
+      networkVisible: true
     };
-    
+
     return updates;
   }
 
@@ -381,44 +504,35 @@ export class DashboardPage {
    */
   private async checkTimelineUpdates() {
     const component = this.narrativeTimeline;
-    
+    const isVisible = await component.isVisible();
+
+    if (!isVisible) {
+      return {
+        hasProgressMarkers: false,
+        hasCurrentTurn: false,
+        hasArcProgress: false,
+        timelineVisible: false
+      };
+    }
+
     const updates = {
       hasProgressMarkers: await component.locator('[data-testid*="progress"], [class*="marker"]').count() > 0,
       hasCurrentTurn: await component.locator('[data-testid="current-turn"]').isVisible(),
       hasArcProgress: await component.locator('[data-testid*="arc-progress"]').count() > 0,
-      timelineVisible: await component.isVisible()
+      timelineVisible: true
     };
-    
+
     return updates;
   }
 
-  /**
-   * Helper method to check timestamp updates
-   */
-  private async checkTimestampUpdate(component: Locator) {
-    const timestampElements = component.locator('[data-testid*="timestamp"], [class*="timestamp"], time');
-    return await timestampElements.count() > 0;
-  }
 
-  /**
-   * Helper method to check system status
-   */
-  private async checkSystemStatus(component: Locator, selector = '[data-testid="system-status"], [class*="status"]') {
-    const statusElements = component.locator(selector);
-    if (await statusElements.count() === 0) return false;
-    
-    const statusText = await statusElements.first().textContent();
-    if (!statusText) return false;
-    const normalized = statusText.toLowerCase();
-    return ['healthy', 'online', 'warning', 'active', 'live'].some(flag => normalized.includes(flag));
-  }
 
   /**
    * Validate component layout matches UI specification
    */
   async validateComponentLayout() {
     console.log('📐 Validating component layout...');
-    
+
     const layout = {
       worldStateMap: await this.validateComponentPresence(this.worldStateMap),
       realTimeActivity: await this.validateComponentPresence(this.realTimeActivity),
@@ -426,7 +540,7 @@ export class DashboardPage {
       turnPipeline: await this.validateComponentPresence(this.turnPipelineStatus),
       quickActions: await this.validateQuickActions()
     };
-    
+
     return layout;
   }
 
@@ -464,9 +578,9 @@ export class DashboardPage {
    * Take screenshot of current dashboard state
    */
   async takeFullScreenshot(name: string) {
-    await this.page.screenshot({ 
+    await this.page.screenshot({
       path: `test-results/screenshots/${name}-${Date.now()}.png`,
-      fullPage: true 
+      fullPage: true
     });
   }
 
@@ -482,7 +596,7 @@ export class DashboardPage {
       hasLandmarks: await this.page.locator('[role="main"], main, [role="banner"], [role="navigation"]').count() > 0,
       keyboardNavigation: await this.checkKeyboardNavigation()
     };
-    
+
     return accessibilityChecks;
   }
 
@@ -494,4 +608,198 @@ export class DashboardPage {
     const interactiveElements = await this.page.locator('button, [role="button"], input, select, textarea, a').count();
     return interactiveElements > 0;
   }
-}
+
+  /**
+   * Sets up default API mocks to ensure the dashboard has data to render.
+   * Useful for tests that don't need specific edge case data.
+   */
+  async setupDefaultMocks() {
+    console.log('📡 Setting up default API mocks...');
+
+    const page = this.page;
+
+    // --- Dynamic Mock State ---
+    const PHASES = [
+      'World Update',
+      'Subjective Brief',
+      'Interaction Orchestration',
+      'Event Integration',
+      'Narrative Integration'
+    ];
+
+    let orchestrationState = {
+      status: 'idle',
+      current_turn: 0,
+      total_turns: 0,
+      queue_length: 0,
+      average_processing_time: 0.0,
+      steps: [] as any[]
+    };
+
+    // Setup Console Capture
+    page.on('console', msg => console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`));
+    page.on('pageerror', err => console.log(`[BROWSER ERROR]: ${err.message}`));
+
+    // Characters Mock
+    await page.route(url => !url.pathname.includes('/src/') && /\/characters(\/|\?|$)/.test(url.pathname), async route => {
+      console.log(`[MOCK] Hit: ${route.request().url()}`);
+      const url = route.request().url();
+      if (url.endsWith('/characters') || url.endsWith('/characters/')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ characters: ['1', '2'] })
+        });
+      } else {
+        const id = url.split('/').pop() || '1';
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            id: id,
+            name: `Character ${id}`,
+            role: id === '1' ? 'protagonist' : 'antagonist',
+            status: 'active',
+            trust: 80,
+            relationships: { '2': 0.5 }
+          })
+        });
+      }
+    });
+
+    // World State
+    await page.route(url => !url.pathname.includes('/src/') && /\/world\/state(\/|\?|$)/.test(url.pathname), async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          nodes: [
+            { id: '1', name: 'Location A', position: [0, 0, 0], activity: 0.5 },
+            { id: '2', name: 'Location B', position: [10, 0, 10], activity: 0.2 }
+          ]
+        })
+      });
+    });
+
+    // System Status
+    await page.route(url => !url.pathname.includes('/src/') && /\/meta\/system-status(\/|\?|$)/.test(url.pathname), async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'operational', uptime: 100, version: '1.0.0', components: { api: 'online', simulation: 'running', cache: 'available' } })
+      });
+    });
+
+    // Health
+    await page.route(url => !url.pathname.includes('/src/') && /\/health(\/|\?|$)/.test(url.pathname), async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() })
+      });
+    });
+
+    // Orchestration Status - Dynamic
+    await page.route(/\/api\/orchestration\/status/, async route => {
+      console.log(`[MOCK] Hit: Status | State: ${orchestrationState.status}`);
+      // Simulate progress if active
+      if (orchestrationState.status === 'running' || orchestrationState.status === 'processing') {
+        const incompleteStepIndex = orchestrationState.steps.findIndex(s => s.status !== 'completed');
+
+        if (incompleteStepIndex !== -1) {
+          // Complete the current step
+          orchestrationState.steps[incompleteStepIndex].status = 'completed';
+          orchestrationState.steps[incompleteStepIndex].progress = 100;
+
+          // Start the next step if available
+          if (incompleteStepIndex + 1 < orchestrationState.steps.length) {
+            orchestrationState.steps[incompleteStepIndex + 1].status = 'processing';
+          }
+        }
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: orchestrationState
+        })
+      });
+    });
+
+    // Analytics Metrics
+    await page.route(/\/api\/analytics\/metrics/, async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { status: 'active', last_updated: new Date().toISOString() } })
+      });
+    });
+
+    // Orchestration Start - Dynamic
+    await page.route(/\/api\/orchestration\/start/, async route => {
+      console.log('[MOCK] Hit: Start');
+      // Reset logic for smooth re-runs
+      orchestrationState = {
+        status: 'running',
+        current_turn: (orchestrationState.current_turn || 0) + 1,
+        total_turns: 10,
+        queue_length: 0,
+        average_processing_time: 2.5,
+        steps: PHASES.map(name => ({
+          id: name.toLowerCase().replace(/ /g, '_'),
+          name: name,
+          status: 'queued',
+          progress: 0
+        }))
+      };
+
+      // Start first step immediately
+      if (orchestrationState.steps.length > 0) {
+        orchestrationState.steps[0].status = 'processing';
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: orchestrationState
+        })
+      });
+    });
+
+    // Orchestration Pause - Dynamic
+    await page.route(/\/api\/orchestration\/pause/, async route => {
+      console.log('[MOCK] Hit: Pause');
+      orchestrationState.status = 'paused';
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: orchestrationState })
+      });
+    });
+
+    // Orchestration Stop - Dynamic
+    await page.route(/\/api\/orchestration\/stop/, async route => {
+      console.log('[MOCK] Hit: Stop');
+      orchestrationState.status = 'idle';
+      orchestrationState.steps = [];
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: orchestrationState })
+      });
+    });
+
+    // Event Stream (SSE/NDJSON)
+    await page.route(/\/api\/events\/stream/, async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: ': keep-alive\n\n'
+      });
+    });
+  }
+} // End of class

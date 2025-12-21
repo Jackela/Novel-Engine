@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { charactersAPI } from '../../services/api/charactersAPI';
+import { charactersAPI } from '@/services/api/charactersAPI';
 
 export interface PersonalityTraits {
   openness: number;
@@ -22,6 +22,7 @@ export interface Character {
     memory_retention: 'low' | 'medium' | 'high';
   };
   status: 'active' | 'inactive' | 'archived';
+  relationships?: Record<string, number>;
   created_at: string;
   updated_at: string;
   created_by: string;

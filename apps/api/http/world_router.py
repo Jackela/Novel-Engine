@@ -335,7 +335,7 @@ async def apply_world_delta(
     the command side of CQRS. All changes are applied atomically.
     """
     start_time = datetime.now()
-    logger.info(f"Applying world delta to world {world_id}")
+    logger.info("Applying world delta")
 
     try:
         # Validate world_id matches request
@@ -347,9 +347,16 @@ async def apply_world_delta(
         # Convert request to domain command
         command = _build_world_delta_command(request)
 
-        # TODO: Execute command through command bus/handler
-        # For now, simulate successful execution
-        # In full implementation: await command_bus.execute(command)
+        # Execute command through command bus
+        # In a real app, this would be injected via dependency injection
+        from apps.api.infrastructure.command_bus import CommandBus
+        from contexts.world.application.commands.handlers import ApplyWorldDeltaHandler
+        
+        # Setup bus (temporary manual setup until DI is in place)
+        bus = CommandBus()
+        bus.register(type(command), ApplyWorldDeltaHandler())
+        
+        result = await bus.execute(command)
 
         execution_time = (datetime.now() - start_time).total_seconds() * 1000
 
@@ -358,9 +365,9 @@ async def apply_world_delta(
         return WorldDeltaResponse(
             command_id=command.command_id,
             world_state_id=command.world_state_id,
-            success=True,
-            operations_applied=command.get_operation_count(),
-            operation_summary=command.get_operation_summary(),
+            success=result.get("success", False),
+            operations_applied=result.get("operations_applied", 0),
+            operation_summary=result.get("operation_summary", ""),
             execution_time_ms=execution_time,
             world_version=None,  # TODO: Get from aggregate
             correlation_id=command.correlation_id,
@@ -424,7 +431,7 @@ async def get_world_slice(
     This endpoint provides high-performance access to world entity data
     within specified geographic bounds using the optimized read model.
     """
-    logger.info(f"Getting world slice for world {world_id}")
+    logger.info("Getting world slice")
 
     try:
         # Build query object
@@ -482,7 +489,7 @@ async def get_world_summary(
     This endpoint provides aggregated world information optimized
     for dashboards and quick status checks.
     """
-    logger.info(f"Getting world summary for world {world_id}")
+    logger.info("Getting world summary")
 
     try:
         query = GetWorldSummary(
@@ -492,7 +499,7 @@ async def get_world_summary(
         )
 
         result = await execute_query(query)
-        logger.info(f"World summary query completed for world {world_id}")
+        logger.info("World summary query completed")
 
         return WorldSummaryResponse(**result)
 
@@ -522,7 +529,7 @@ async def get_world_history(
     Returns a list of recent changes/events from the world state, including
     timestamps, event types, and descriptions of what changed.
     """
-    logger.info(f"World history request received for world_id={world_id}")
+    logger.info("World history request received")
 
     try:
         # Try to load world state from file
@@ -592,8 +599,7 @@ async def get_world_history(
         paginated_entries = history_entries[offset : offset + limit]
 
         logger.info(
-            f"World history query completed for world {world_id}: "
-            f"{len(paginated_entries)} entries returned"
+            "World history query completed: %d entries returned", len(paginated_entries)
         )
 
         return WorldHistoryResponse(
@@ -630,9 +636,7 @@ async def get_entities_in_area(
     This endpoint provides efficient spatial queries for finding entities
     within a circular area around a center point.
     """
-    logger.info(
-        f"Getting entities in area for world {world_id} at ({center_x}, {center_y}) radius {radius}"
-    )
+    logger.info("Getting entities in area")
 
     try:
         query = GetEntitiesInArea(
@@ -647,7 +651,7 @@ async def get_entities_in_area(
         )
 
         result = await execute_query(query)
-        logger.info(f"Entities in area query completed for world {world_id}")
+        logger.info("Entities in area query completed")
 
         return EntitiesInAreaResponse(**result)
 
@@ -680,7 +684,7 @@ async def get_entities_by_type(
     This endpoint provides efficient queries for finding all entities
     of a specific type within a world.
     """
-    logger.info(f"Getting entities by type '{entity_type}' for world {world_id}")
+    logger.info("Getting entities by type")
 
     try:
         query = GetEntitiesByType(
@@ -692,7 +696,7 @@ async def get_entities_by_type(
         )
 
         result = await execute_query(query)
-        logger.info(f"Entities by type query completed for world {world_id}")
+        logger.info("Entities by type query completed")
 
         return EntitiesByTypeResponse(**result)
 
@@ -722,7 +726,7 @@ async def validate_world_state(
     - Required fields existence (entities, relationships, metadata)
     - Circular reference detection in relationships
     """
-    logger.info(f"World validation requested for world_id={world_id}")
+    logger.info("World validation requested")
 
     errors: List[str] = []
     warnings: List[str] = []
@@ -815,8 +819,10 @@ async def validate_world_state(
         is_valid = len(errors) == 0
 
         logger.info(
-            f"World validation completed for {world_id}: "
-            f"valid={is_valid}, errors={len(errors)}, warnings={len(warnings)}"
+            "World validation completed: valid=%s, errors=%d, warnings=%d",
+            is_valid,
+            len(errors),
+            len(warnings),
         )
 
         return WorldValidationResponse(
@@ -853,7 +859,7 @@ async def search_worlds(
     This endpoint provides full-text search capabilities across
     world metadata for discovery and navigation.
     """
-    logger.info(f"Searching worlds with term '{search_term}'")
+    logger.info("Searching worlds")
 
     try:
         query = SearchWorlds(

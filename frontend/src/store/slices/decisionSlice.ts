@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { decisionAPI } from '../../services/api/decisionAPI';
+import { decisionAPI } from '@/services/api/decisionAPI';
 
 // Decision point types from backend
 export type DecisionPointType =

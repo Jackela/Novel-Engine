@@ -157,10 +157,10 @@ test.describe('Valid Routes Navigation', () => {
     await landingPage.clickLaunchEngine();
     await expect(page).toHaveURL(/.*\/dashboard/);
 
-    // Navigate back to landing
+    // Navigate back to landing (should redirect to dashboard)
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    await expect(landingPage.mainTitle).toBeVisible();
+    await expect(page).toHaveURL(/.*\/dashboard/);
   });
 
   test('should handle rapid valid route changes', async ({ page }) => {

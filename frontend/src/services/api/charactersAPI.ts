@@ -1,6 +1,6 @@
 import { apiClient, handleAPIResponse, handleAPIError } from './apiClient';
 import type { BaseAPIResponse } from './apiClient';
-import type { Character, PersonalityTraits, CharacterListResponse } from '../../store/slices/charactersSlice';
+import type { Character, PersonalityTraits, CharacterListResponse } from '@/store/slices/charactersSlice';
 
 // Character API request types based on OpenAPI spec
 export interface CreateCharacterRequest {

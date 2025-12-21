@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > Architecture
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > Architecture
 
 ---
 
@@ -246,16 +246,15 @@ The following architecture documentation is planned:
 
 ### API & Development
 - [API Reference](../api/API_REFERENCE.md)
-- [Developer Guide](../guides/DEVELOPER_GUIDE.md)
-- [Coding Standards](../guides/CODING_STANDARDS.md)
+- [Developer Guide](../DEVELOPER_GUIDE.md)
+- [Coding Standards](../coding-standards.md)
 
 ### Operations
 - [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)
 - [Operations Runbook](../operations/OPERATIONS_RUNBOOK.md)
 
 ### Decisions
-- [ADR Index](../ADRs/INDEX.md)
-- [Architecture Decisions](../decisions/)
+- [ADR Index](../adr/index.md)
 
 ---
 

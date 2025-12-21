@@ -9,7 +9,7 @@
  * - Article V (SOLID): ISP - Interface Segregation Principle
  */
 
-import type { LoginRequest, AuthToken } from '../../types/auth';
+import type { LoginRequest, AuthToken } from '@/types/auth';
 
 /**
  * Authentication state change callback

@@ -53,7 +53,7 @@ See: `docs/FOUNDATIONS.en.md`
 - `scripts/`: local validation, quality, migration scripts
 - `.github/workflows/`: CI/CD workflows
 
-See the root directory listing and `docs/INDEX.md` for more.
+See the root directory listing and `docs/index.md` for more.
 
 ---
 
@@ -185,7 +185,7 @@ Run `npm run dev:daemon` beforehand so both stacks are healthy; logs and artifac
 
 ## Documentation
 
-- Docs Home: `docs/INDEX.md`
+- Docs Home: `docs/index.md`
 - Architecture: `docs/architecture/INDEX.md`
 - API: `docs/api/INDEX.md`
 - Guides: `docs/guides/INDEX.md`

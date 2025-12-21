@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { charactersAPI } from '../services/api/charactersAPI';
+import { charactersAPI } from '@/services/api/charactersAPI';
 
 export interface DashboardCharacter {
   id: string;
@@ -36,16 +36,6 @@ function toTitle(name: string) {
     .filter(Boolean)
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
-}
-
-function pseudoRandomTrust(seed: string) {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = (hash << 5) - hash + seed.charCodeAt(i);
-    hash |= 0; // force 32-bit
-  }
-  const normalized = Math.abs(hash % 40);
-  return 55 + normalized; // 55-94 range for consistent UI density
 }
 
 export function useDashboardCharactersDataset() {
@@ -141,7 +131,7 @@ async function fetchCharacters(endpoint: string, signal: AbortSignal): Promise<D
       name: char.name || toTitle(char.id || `Character ${index + 1}`),
       status: mapCharacterStatus(char.status),
       role: mapCharacterType(char.type),
-      trust: pseudoRandomTrust(char.id || String(index)),
+      trust: calculateTrustFromRelationships(char.relationships) ?? 50, // Default trust if missing
     }));
   } catch {
     // Fallback to fetch if axios fails (e.g., interceptor issues)
@@ -178,15 +168,16 @@ async function fetchCharacters(endpoint: string, signal: AbortSignal): Promise<D
             name: detail.name || toTitle(id || `Character ${index + 1}`),
             status: mapCurrentStatusToStatus(detail.current_status),
             role: inferRoleFromCharacter(detail),
-            trust: calculateTrustFromRelationships(detail.relationships) ?? pseudoRandomTrust(id),
+            trust: calculateTrustFromRelationships(detail.relationships) ?? 50,
           };
         } catch {
+          // If detail fetch fails, return minimal info but NO fake data
           return {
             id,
             name: toTitle(id || `Character ${index + 1}`),
             status: 'active' as const,
             role: 'npc' as const,
-            trust: pseudoRandomTrust(id || String(index)),
+            trust: 50,
           };
         }
       })

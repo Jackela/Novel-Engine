@@ -3,7 +3,7 @@
 **Last Updated**: 2024-11-04  
 **Status**: Current
 
-**Navigation**: [Home](../../README.md) > [Docs](../INDEX.md) > Stories
+**Navigation**: [Home](../../README.md) > [Docs](../index.md) > Stories
 
 ---
 
@@ -39,9 +39,7 @@ Acceptance Criteria:
 ## Related Documentation
 
 ### Development
-- [Development Plan](../DEVELOPMENT_PLAN.md)
 - [Implementation Guide](../implementation/)
-- [Task Breakdown](../TASK_BREAKDOWN.md)
 
 ### Testing
 - [Testing Documentation](../testing/)

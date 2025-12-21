@@ -290,7 +290,7 @@ Pydantic - MIT License
             "src",
             "tests",
             "docs",
-            "docs/ADRs",
+            "docs/adr",
             "scripts",
             "private",
             "logs",
