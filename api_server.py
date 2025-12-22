@@ -16,6 +16,7 @@ import secrets
 import threading
 import time
 import uuid
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from datetime import datetime, UTC, timedelta
@@ -30,7 +31,7 @@ from src.config.character_factory import CharacterFactory
 from src.agents.chronicler_agent import ChroniclerAgent
 from config_loader import get_config
 from src.agents.director_agent import DirectorAgent
-from fastapi import FastAPI, HTTPException, Request, Response, UploadFile, File, Form
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -164,7 +165,16 @@ from src.api.schemas import (
     RefreshTokenRequest,
     CSRFTokenResponse,
     InvalidationRequest,
-    ChunkInRequest
+    ChunkInRequest,
+    GuestSessionResponse,
+    WorkspaceCharacterCreateRequest,
+    WorkspaceCharacterUpdateRequest,
+)
+
+from src.workspaces import (
+    FilesystemCharacterStore,
+    FilesystemWorkspaceStore,
+    GuestSessionManager,
 )
 
 @asynccontextmanager
@@ -178,6 +188,29 @@ async def lifespan(app: FastAPI):
 
         # Initialize Service Container
         container = get_service_container()
+
+        # Guest workspaces (filesystem-backed)
+        if getattr(app.state, "workspace_store", None) is None:
+            try:
+                workspace_root = Path(_find_project_root(os.getcwd())) / "data" / "workspaces"
+                workspace_store = FilesystemWorkspaceStore(workspace_root)
+                character_store = FilesystemCharacterStore(workspace_store)
+                guest_session_manager = GuestSessionManager(
+                    workspace_store,
+                    secret_key=JWT_SECRET_KEY,
+                    algorithm=JWT_ALGORITHM,
+                )
+                app.state.workspace_store = workspace_store
+                app.state.workspace_character_store = character_store
+                app.state.guest_session_manager = guest_session_manager
+                logger.info("Guest workspace store initialized")
+            except Exception as ws_error:
+                logger.error(f"Failed to initialize guest workspace store: {ws_error}")
+                app.state.workspace_store = None
+                app.state.workspace_character_store = None
+                app.state.guest_session_manager = None
+        else:
+            logger.info("Guest workspace store preconfigured; skipping initialization")
 
         # Setup EventBus
         try:
@@ -983,16 +1016,265 @@ async def get_campaigns() -> CampaignsListResponse:
         return CampaignsListResponse(campaigns=[])
 
 
+def _get_optional_workspace_id(request: Request) -> Optional[str]:
+    manager = getattr(request.app.state, "guest_session_manager", None)
+    store = getattr(request.app.state, "workspace_store", None)
+    if not manager or not store:
+        return None
+    token = request.cookies.get(manager.cookie_name)
+    if not token:
+        return None
+    workspace_id = manager.decode(token)
+    if not workspace_id:
+        return None
+    store.get_or_create(workspace_id)
+    return workspace_id
+
+
+def _require_workspace_id(request: Request, response: Response) -> str:
+    manager = getattr(request.app.state, "guest_session_manager", None)
+    store = getattr(request.app.state, "workspace_store", None)
+    if not manager or not store:
+        raise HTTPException(status_code=503, detail="Workspace service unavailable")
+
+    token = request.cookies.get(manager.cookie_name)
+    result = manager.resolve_or_create(token)
+
+    response.set_cookie(
+        manager.cookie_name,
+        manager.encode(result.workspace_id),
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=manager.cookie_max_age_seconds(),
+    )
+    return result.workspace_id
+
+
+def _workspace_record_to_character_detail(record: Dict[str, Any]) -> CharacterDetailResponse:
+    char_id = str(record.get("id") or "")
+    char_name = str(record.get("name") or char_id)
+    inventory = record.get("inventory")
+    if not isinstance(inventory, list):
+        inventory = []
+    skills = record.get("skills")
+    if not isinstance(skills, dict):
+        skills = {}
+    relationships = record.get("relationships")
+    if not isinstance(relationships, dict):
+        relationships = {}
+    metadata = record.get("metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+    structured_data = record.get("structured_data")
+    if not isinstance(structured_data, dict):
+        structured_data = {}
+
+    return CharacterDetailResponse(
+        character_id=char_id,
+        character_name=char_name,
+        name=char_name,
+        background_summary=str(record.get("background_summary") or ""),
+        personality_traits=str(record.get("personality_traits") or ""),
+        current_status=str(record.get("current_status") or "active"),
+        narrative_context=str(record.get("narrative_context") or ""),
+        skills=skills,
+        relationships=relationships,
+        current_location=str(record.get("current_location") or ""),
+        inventory=inventory,
+        metadata=metadata,
+        structured_data=structured_data,
+    )
+
+
+@app.post("/api/guest/session", response_model=GuestSessionResponse, tags=["Guest"])
+async def create_or_resume_guest_session(request: Request, response: Response) -> GuestSessionResponse:
+    """Create or resume a guest session backed by a filesystem workspace."""
+    manager = getattr(request.app.state, "guest_session_manager", None)
+    if not manager:
+        raise HTTPException(status_code=503, detail="Workspace service unavailable")
+
+    token = request.cookies.get(manager.cookie_name)
+    result = manager.resolve_or_create(token)
+    response.set_cookie(
+        manager.cookie_name,
+        manager.encode(result.workspace_id),
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=manager.cookie_max_age_seconds(),
+    )
+    return GuestSessionResponse(workspace_id=result.workspace_id, created=result.created)
+
+
+@app.get("/api/workspace/export", tags=["Guest"])
+async def export_workspace_zip(
+    request: Request,
+    workspace_id: str = Depends(_require_workspace_id),
+) -> StreamingResponse:
+    """Export the current workspace as a zip file."""
+    store = getattr(request.app.state, "workspace_store", None)
+    manager = getattr(request.app.state, "guest_session_manager", None)
+    if not store or not manager:
+        raise HTTPException(status_code=503, detail="Workspace service unavailable")
+    zip_bytes = store.export_zip(workspace_id)
+    filename = f"workspace-{workspace_id}.zip"
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    streaming = StreamingResponse(iter([zip_bytes]), media_type="application/zip", headers=headers)
+    streaming.set_cookie(
+        manager.cookie_name,
+        manager.encode(workspace_id),
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=manager.cookie_max_age_seconds(),
+    )
+    return streaming
+
+
+@app.post("/api/workspace/import", response_model=GuestSessionResponse, tags=["Guest"])
+async def import_workspace_zip(
+    request: Request,
+    response: Response,
+    archive: UploadFile = File(...),
+) -> GuestSessionResponse:
+    """Import a workspace zip and switch the current guest session to it."""
+    store = getattr(request.app.state, "workspace_store", None)
+    manager = getattr(request.app.state, "guest_session_manager", None)
+    if not store or not manager:
+        raise HTTPException(status_code=503, detail="Workspace service unavailable")
+
+    zip_bytes = await archive.read()
+    try:
+        workspace = store.import_zip(zip_bytes)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+    response.set_cookie(
+        manager.cookie_name,
+        manager.encode(workspace.id),
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=manager.cookie_max_age_seconds(),
+    )
+    return GuestSessionResponse(workspace_id=workspace.id, created=True)
+
+
 @app.get("/api/characters", response_model=CharactersListResponse)
-async def get_characters_api() -> CharactersListResponse:
+async def get_characters_api(request: Request) -> CharactersListResponse:
     """Unversioned REST endpoint for characters list."""
-    return await get_characters()
+    defaults = (await get_characters()).characters
+    workspace_id = _get_optional_workspace_id(request)
+    workspace_chars: List[str] = []
+    store = getattr(request.app.state, "workspace_character_store", None)
+    if workspace_id and store:
+        try:
+            workspace_chars = store.list_ids(workspace_id)
+        except Exception:
+            workspace_chars = []
+    return CharactersListResponse(characters=sorted({*defaults, *workspace_chars}))
 
 
 @app.get("/api/characters/{character_id}", response_model=CharacterDetailResponse)
-async def get_character_detail_api(character_id: str) -> CharacterDetailResponse:
+async def get_character_detail_api(character_id: str, request: Request) -> CharacterDetailResponse:
     """Unversioned REST endpoint for character detail."""
+    workspace_id = _get_optional_workspace_id(request)
+    store = getattr(request.app.state, "workspace_character_store", None)
+    if workspace_id and store:
+        try:
+            record = store.get(workspace_id, character_id)
+        except ValueError as err:
+            raise HTTPException(status_code=400, detail=str(err)) from err
+        if record:
+            return _workspace_record_to_character_detail(record)
     return await get_character_detail(character_id)
+
+
+@app.post("/api/characters", response_model=CharacterDetailResponse, status_code=201)
+async def create_workspace_character(
+    request: Request,
+    response: Response,
+    payload: WorkspaceCharacterCreateRequest,
+    workspace_id: str = Depends(_require_workspace_id),
+) -> CharacterDetailResponse:
+    """Create a character inside the current guest workspace."""
+    store = getattr(request.app.state, "workspace_character_store", None)
+    if not store:
+        raise HTTPException(status_code=503, detail="Workspace service unavailable")
+
+    requested_id = payload.agent_id or _normalize_character_id(payload.name)
+    character_id = _normalize_character_id(requested_id)
+
+    record_payload: Dict[str, Any] = {
+        "name": payload.name.strip(),
+        "background_summary": payload.background_summary.strip(),
+        "personality_traits": payload.personality_traits.strip(),
+        "skills": payload.skills or {},
+        "relationships": payload.relationships or {},
+        "current_location": payload.current_location or "",
+        "inventory": payload.inventory or [],
+        "metadata": payload.metadata or {},
+        "structured_data": payload.structured_data or {},
+        "current_status": "active",
+        "narrative_context": "",
+    }
+
+    # Ensure uniqueness within workspace.
+    candidate = character_id
+    suffix = 2
+    while store.get(workspace_id, candidate):
+        candidate = f"{character_id}_{suffix}"
+        suffix += 1
+    character_id = candidate
+
+    try:
+        record = store.create(workspace_id, character_id, record_payload)
+    except FileExistsError as err:
+        raise HTTPException(status_code=409, detail=str(err)) from err
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+    return _workspace_record_to_character_detail(record)
+
+
+@app.put("/api/characters/{character_id}", response_model=CharacterDetailResponse)
+async def update_workspace_character(
+    character_id: str,
+    request: Request,
+    response: Response,
+    updates: WorkspaceCharacterUpdateRequest,
+    workspace_id: str = Depends(_require_workspace_id),
+) -> CharacterDetailResponse:
+    """Update a character inside the current guest workspace."""
+    store = getattr(request.app.state, "workspace_character_store", None)
+    if not store:
+        raise HTTPException(status_code=503, detail="Workspace service unavailable")
+    try:
+        record = store.update(workspace_id, character_id, updates.dict(exclude_unset=True))
+    except FileNotFoundError as err:
+        raise HTTPException(status_code=404, detail=str(err)) from err
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+    return _workspace_record_to_character_detail(record)
+
+
+@app.delete("/api/characters/{character_id}", status_code=204)
+async def delete_workspace_character(
+    character_id: str,
+    request: Request,
+    response: Response,
+    workspace_id: str = Depends(_require_workspace_id),
+) -> None:
+    """Delete a character from the current guest workspace."""
+    store = getattr(request.app.state, "workspace_character_store", None)
+    if not store:
+        raise HTTPException(status_code=503, detail="Workspace service unavailable")
+    try:
+        store.delete(workspace_id, character_id)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+    return None
 
 
 @app.get("/api/characters/{character_id}/enhanced")
