@@ -45,7 +45,7 @@ class TestAPIServerEndpoints:
     @pytest.mark.fast
     def test_health_endpoint_success(self, mock_config):
         """测试健康检查端点 - 成功情况"""
-        with patch("api_server.get_config", return_value=mock_config):
+        with patch("src.api.routers.health.get_config", return_value=mock_config):
             response = self.client.get("/health")
 
             assert response.status_code == 200
@@ -60,7 +60,7 @@ class TestAPIServerEndpoints:
     @pytest.mark.unit
     def test_health_endpoint_config_error(self):
         """测试健康检查端点 - 配置错误"""
-        with patch("api_server.get_config") as mock_get_config:
+        with patch("src.api.routers.health.get_config") as mock_get_config:
             mock_get_config.side_effect = Exception("Severe system error")
 
             response = self.client.get("/health")
@@ -79,7 +79,8 @@ class TestAPIServerEndpoints:
         chars_dir.mkdir()
 
         with patch(
-            "api_server._get_characters_directory_path", return_value=str(chars_dir)
+            "src.api.routers.characters.get_characters_directory_path",
+            return_value=str(chars_dir),
         ):
             response = self.client.get("/characters")
 
@@ -93,7 +94,7 @@ class TestAPIServerEndpoints:
     def test_characters_endpoint_populated_directory(self, characters_directory):
         """测试角色列表端点 - 有角色数据"""
         with patch(
-            "api_server._get_characters_directory_path",
+            "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
             response = self.client.get("/characters")
@@ -112,7 +113,7 @@ class TestAPIServerEndpoints:
         non_existent_dir = temp_dir / "non_existent"
 
         with patch(
-            "api_server._get_characters_directory_path",
+            "src.api.routers.characters.get_characters_directory_path",
             return_value=str(non_existent_dir),
         ):
             response = self.client.get("/characters")
@@ -128,11 +129,11 @@ class TestAPIServerEndpoints:
         """测试角色详情端点 - 成功情况"""
         # 确保使用正确的字符目录路径 (不是 parent)
         with patch(
-            "api_server._get_characters_directory_path",
+            "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("api_server.EventBus"), patch(
-                "api_server.CharacterFactory"
+            with patch("src.api.routers.characters.EventBus"), patch(
+                "src.api.routers.characters.CharacterFactory"
             ) as mock_factory:
 
                 # 模拟CharacterFactory失败，但仍应返回基础信息
@@ -154,7 +155,7 @@ class TestAPIServerEndpoints:
     def test_character_detail_endpoint_not_found(self, characters_directory):
         """测试角色详情端点 - 角色不存在"""
         with patch(
-            "api_server._get_characters_directory_path",
+            "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
             response = self.client.get("/characters/nonexistent")
@@ -173,13 +174,13 @@ class TestAPIServerEndpoints:
         """测试模拟端点 - 有效请求"""
         # 确保使用正确的字符目录路径 (不是 parent)
         with patch(
-            "api_server._get_characters_directory_path",
+            "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("api_server.EventBus"), patch(
-                "api_server.CharacterFactory"
-            ) as mock_factory, patch("api_server.DirectorAgent"), patch(
-                "api_server.ChroniclerAgent"
+            with patch("src.api.routers.simulations.EventBus"), patch(
+                "src.api.routers.simulations.CharacterFactory"
+            ) as mock_factory, patch("src.api.routers.simulations.DirectorAgent"), patch(
+                "src.api.routers.simulations.ChroniclerAgent"
             ) as mock_chronicler:
 
                 # 模拟成功的组件创建
@@ -245,7 +246,8 @@ class TestAPIServerEndpoints:
     def test_simulations_endpoint_character_not_found(self, temp_dir):
         """测试模拟端点 - 角色不存在"""
         with patch(
-            "api_server._get_characters_directory_path", return_value=str(temp_dir)
+            "src.api.routers.characters.get_characters_directory_path",
+            return_value=str(temp_dir),
         ):
             # 创建一个存在的角色目录
             char1_dir = temp_dir / "valid_char1"
@@ -307,7 +309,7 @@ class TestAPIServerEndpoints:
     @pytest.mark.unit
     def test_health_endpoint_severe_error(self):
         """测试健康检查端点 - 严重错误处理"""
-        with patch("api_server.get_config") as mock_get_config:
+        with patch("src.api.routers.health.get_config") as mock_get_config:
             mock_get_config.side_effect = Exception("Severe system error")
 
             response = self.client.get("/health")
@@ -322,7 +324,8 @@ class TestAPIServerEndpoints:
     def test_characters_endpoint_permission_error(self):
         """测试角色列表端点 - 权限错误"""
         with patch(
-            "api_server._get_characters_directory_path", return_value="/restricted/path"
+            "src.api.routers.characters.get_characters_directory_path",
+            return_value="/restricted/path",
         ):
             with patch("os.path.isdir", return_value=True):  # 让目录存在检查通过
                 with patch("os.listdir") as mock_listdir:
@@ -340,7 +343,8 @@ class TestAPIServerEndpoints:
     def test_characters_endpoint_unexpected_error(self):
         """测试角色列表端点 - 意外错误"""
         with patch(
-            "api_server._get_characters_directory_path", return_value="/valid/path"
+            "src.api.routers.characters.get_characters_directory_path",
+            return_value="/valid/path",
         ):
             with patch("os.path.isdir", return_value=True):  # 让目录存在检查通过
                 with patch("os.listdir") as mock_listdir:
@@ -370,7 +374,8 @@ class TestAPIServerEndpoints:
     def test_simulations_endpoint_character_loading_failure(self, temp_dir):
         """测试模拟端点 - 角色加载失败"""
         with patch(
-            "api_server._get_characters_directory_path", return_value=str(temp_dir)
+            "src.api.routers.characters.get_characters_directory_path",
+            return_value=str(temp_dir),
         ):
             # 创建角色目录
             char_dir = temp_dir / "test_char1"
@@ -378,7 +383,7 @@ class TestAPIServerEndpoints:
             char_dir2 = temp_dir / "test_char2"
             char_dir2.mkdir()
 
-            with patch("api_server.CharacterFactory") as mock_factory:
+            with patch("src.api.routers.simulations.CharacterFactory") as mock_factory:
                 mock_factory.return_value.create_character.side_effect = Exception(
                     "Character loading failed"
                 )
@@ -403,15 +408,15 @@ class TestAPIServerEndpoints:
     def test_simulations_endpoint_director_turn_failure(self, characters_directory):
         """测试模拟端点 - 导演回合执行失败"""
         with patch(
-            "api_server._get_characters_directory_path",
+            "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("api_server.EventBus"), patch(
-                "api_server.CharacterFactory"
+            with patch("src.api.routers.simulations.EventBus"), patch(
+                "src.api.routers.simulations.CharacterFactory"
             ) as mock_factory, patch(
-                "api_server.DirectorAgent"
+                "src.api.routers.simulations.DirectorAgent"
             ) as mock_director, patch(
-                "api_server.ChroniclerAgent"
+                "src.api.routers.simulations.ChroniclerAgent"
             ) as mock_chronicler:
 
                 # 设置成功的角色创建
@@ -447,13 +452,13 @@ class TestAPIServerEndpoints:
     def test_simulations_endpoint_story_generation_failure(self, characters_directory):
         """测试模拟端点 - 故事生成失败回退"""
         with patch(
-            "api_server._get_characters_directory_path",
+            "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("api_server.EventBus"), patch(
-                "api_server.CharacterFactory"
-            ) as mock_factory, patch("api_server.DirectorAgent"), patch(
-                "api_server.ChroniclerAgent"
+            with patch("src.api.routers.simulations.EventBus"), patch(
+                "src.api.routers.simulations.CharacterFactory"
+            ) as mock_factory, patch("src.api.routers.simulations.DirectorAgent"), patch(
+                "src.api.routers.simulations.ChroniclerAgent"
             ) as mock_chronicler:
 
                 # 设置成功的角色创建
@@ -488,11 +493,11 @@ class TestAPIServerEndpoints:
     def test_character_detail_endpoint_unexpected_error(self, characters_directory):
         """测试角色详情端点 - 意外错误"""
         with patch(
-            "api_server._get_characters_directory_path",
+            "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("api_server.EventBus"), patch(
-                "api_server.CharacterFactory"
+            with patch("src.api.routers.characters.EventBus"), patch(
+                "src.api.routers.characters.CharacterFactory"
             ) as mock_factory:
 
                 mock_factory.return_value.create_character.side_effect = Exception(
@@ -699,7 +704,7 @@ class TestAPIServerPerformance:
         import time
 
         with patch(
-            "api_server._get_characters_directory_path",
+            "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
             start_time = time.time()

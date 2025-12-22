@@ -1,0 +1,5476 @@
+{
+  "components": {
+    "schemas": {
+      "AnalyzeRequest": {
+        "description": "Request to analyze a user prompt.",
+        "properties": {
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Genre context for analysis",
+            "title": "Genre"
+          },
+          "language": {
+            "default": "en",
+            "description": "Language code (en or zh)",
+            "title": "Language",
+            "type": "string"
+          },
+          "prompt": {
+            "description": "The prompt to analyze",
+            "minLength": 10,
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "title": "AnalyzeRequest",
+        "type": "object"
+      },
+      "AnalyzeResponse": {
+        "description": "Response from prompt analysis.",
+        "properties": {
+          "clarity_score": {
+            "title": "Clarity Score",
+            "type": "number"
+          },
+          "creativity_score": {
+            "title": "Creativity Score",
+            "type": "number"
+          },
+          "missing_elements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Elements",
+            "type": "array"
+          },
+          "overall_score": {
+            "title": "Overall Score",
+            "type": "number"
+          },
+          "specificity_score": {
+            "title": "Specificity Score",
+            "type": "number"
+          },
+          "strengths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Strengths",
+            "type": "array"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          },
+          "weaknesses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Weaknesses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "strengths",
+          "weaknesses",
+          "missing_elements",
+          "clarity_score",
+          "specificity_score",
+          "creativity_score",
+          "overall_score",
+          "suggestions"
+        ],
+        "title": "AnalyzeResponse",
+        "type": "object"
+      },
+      "ApplySuggestionRequest": {
+        "description": "Request to apply a single suggestion.",
+        "properties": {
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "language": {
+            "default": "en",
+            "title": "Language",
+            "type": "string"
+          },
+          "prompt": {
+            "description": "The original prompt",
+            "title": "Prompt",
+            "type": "string"
+          },
+          "suggestion": {
+            "description": "The suggestion to apply",
+            "title": "Suggestion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt",
+          "suggestion"
+        ],
+        "title": "ApplySuggestionRequest",
+        "type": "object"
+      },
+      "ApplySuggestionResponse": {
+        "description": "Response from applying a suggestion.",
+        "properties": {
+          "improved_prompt": {
+            "title": "Improved Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "improved_prompt"
+        ],
+        "title": "ApplySuggestionResponse",
+        "type": "object"
+      },
+      "ApplyWorldDeltaRequest": {
+        "description": "Request model for applying world state changes.",
+        "properties": {
+          "batch_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Id"
+          },
+          "correlation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id"
+          },
+          "entity_operations": {
+            "items": {
+              "$ref": "#/components/schemas/EntityOperationRequest"
+            },
+            "title": "Entity Operations",
+            "type": "array"
+          },
+          "environment_operation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EnvironmentOperationRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expected_world_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected World Version"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "priority": {
+            "default": "normal",
+            "pattern": "^(low|normal|high|critical)$",
+            "title": "Priority",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Overall reason for applying this delta",
+            "title": "Reason",
+            "type": "string"
+          },
+          "reset_operation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResetOperationRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "snapshot_operation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotOperationRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "default": "world_api",
+            "title": "Source",
+            "type": "string"
+          },
+          "time_operation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TimeOperationRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timeout_seconds": {
+            "default": 30,
+            "maximum": 300.0,
+            "minimum": 1.0,
+            "title": "Timeout Seconds",
+            "type": "integer"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "world_state_id": {
+            "description": "ID of the world state to modify",
+            "title": "World State Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "world_state_id",
+          "reason"
+        ],
+        "title": "ApplyWorldDeltaRequest",
+        "type": "object"
+      },
+      "AuthResponse": {
+        "description": "Response model for authentication endpoints.",
+        "properties": {
+          "access_token": {
+            "description": "JWT access token (for backward compatibility)",
+            "title": "Access Token",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Token expiry time in seconds",
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "refresh_token": {
+            "description": "JWT refresh token (for backward compatibility)",
+            "title": "Refresh Token",
+            "type": "string"
+          },
+          "token_type": {
+            "default": "Bearer",
+            "description": "Token type",
+            "title": "Token Type",
+            "type": "string"
+          },
+          "user": {
+            "additionalProperties": true,
+            "description": "User information",
+            "title": "User",
+            "type": "object"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in",
+          "user"
+        ],
+        "title": "AuthResponse",
+        "type": "object"
+      },
+      "Body_create_character_characters_post": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "equipment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipment"
+          },
+          "faction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "Independent",
+            "title": "Faction"
+          },
+          "files": {
+            "items": {
+              "format": "binary",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "Unknown",
+            "title": "Role"
+          },
+          "stats": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stats"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ],
+        "title": "Body_create_character_characters_post",
+        "type": "object"
+      },
+      "Body_import_workspace_zip_api_workspace_import_post": {
+        "properties": {
+          "archive": {
+            "format": "binary",
+            "title": "Archive",
+            "type": "string"
+          }
+        },
+        "required": [
+          "archive"
+        ],
+        "title": "Body_import_workspace_zip_api_workspace_import_post",
+        "type": "object"
+      },
+      "CSRFTokenResponse": {
+        "description": "Response model for CSRF token endpoint.",
+        "properties": {
+          "csrf_token": {
+            "description": "CSRF token for state-changing requests",
+            "title": "Csrf Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csrf_token"
+        ],
+        "title": "CSRFTokenResponse",
+        "type": "object"
+      },
+      "CampaignCreationRequest": {
+        "description": "Request model for campaign creation.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Participants",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "participants"
+        ],
+        "title": "CampaignCreationRequest",
+        "type": "object"
+      },
+      "CampaignCreationResponse": {
+        "description": "Response model for campaign creation.",
+        "properties": {
+          "campaign_id": {
+            "title": "Campaign Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "name",
+          "status",
+          "created_at"
+        ],
+        "title": "CampaignCreationResponse",
+        "type": "object"
+      },
+      "CampaignsListResponse": {
+        "description": "Response model for campaigns list.",
+        "properties": {
+          "campaigns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Campaigns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaigns"
+        ],
+        "title": "CampaignsListResponse",
+        "type": "object"
+      },
+      "CharacterDetailResponse": {
+        "description": "Response model for detailed character information.",
+        "properties": {
+          "background_summary": {
+            "title": "Background Summary",
+            "type": "string"
+          },
+          "character_id": {
+            "title": "Character Id",
+            "type": "string"
+          },
+          "character_name": {
+            "title": "Character Name",
+            "type": "string"
+          },
+          "current_location": {
+            "default": "",
+            "title": "Current Location",
+            "type": "string"
+          },
+          "current_status": {
+            "title": "Current Status",
+            "type": "string"
+          },
+          "inventory": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inventory",
+            "type": "array"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "narrative_context": {
+            "title": "Narrative Context",
+            "type": "string"
+          },
+          "personality_traits": {
+            "title": "Personality Traits",
+            "type": "string"
+          },
+          "relationships": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Relationships",
+            "type": "object"
+          },
+          "skills": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Skills",
+            "type": "object"
+          },
+          "structured_data": {
+            "additionalProperties": true,
+            "title": "Structured Data",
+            "type": "object"
+          }
+        },
+        "required": [
+          "character_id",
+          "character_name",
+          "name",
+          "background_summary",
+          "personality_traits",
+          "current_status",
+          "narrative_context"
+        ],
+        "title": "CharacterDetailResponse",
+        "type": "object"
+      },
+      "CharactersListResponse": {
+        "properties": {
+          "characters": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Characters",
+            "type": "array"
+          }
+        },
+        "required": [
+          "characters"
+        ],
+        "title": "CharactersListResponse",
+        "type": "object"
+      },
+      "ChunkInRequest": {
+        "properties": {
+          "data": {
+            "title": "Data",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "data"
+        ],
+        "title": "ChunkInRequest",
+        "type": "object"
+      },
+      "CoordinatesRequest": {
+        "description": "Request model for coordinate data.",
+        "properties": {
+          "x": {
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "title": "Y",
+            "type": "number"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 0.0,
+            "title": "Z"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "CoordinatesRequest",
+        "type": "object"
+      },
+      "DecisionResponseRequest": {
+        "description": "Request body for submitting a decision response.",
+        "properties": {
+          "decision_id": {
+            "description": "ID of the decision point",
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "free_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Free text input (for freetext type)",
+            "title": "Free Text"
+          },
+          "input_type": {
+            "description": "Type of input: 'option' or 'freetext'",
+            "title": "Input Type",
+            "type": "string"
+          },
+          "selected_option_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Selected option ID (for option type)",
+            "title": "Selected Option Id"
+          }
+        },
+        "required": [
+          "decision_id",
+          "input_type"
+        ],
+        "title": "DecisionResponseRequest",
+        "type": "object"
+      },
+      "EmitEventRequest": {
+        "description": "Request model for emitting dashboard events.",
+        "properties": {
+          "character_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Character name for character events",
+            "title": "Character Name"
+          },
+          "description": {
+            "description": "Event description",
+            "title": "Description",
+            "type": "string"
+          },
+          "severity": {
+            "default": "low",
+            "description": "Event severity: low, medium, high",
+            "title": "Severity",
+            "type": "string"
+          },
+          "title": {
+            "description": "Event title",
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "default": "system",
+            "description": "Event type: character, story, system, interaction",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "description"
+        ],
+        "title": "EmitEventRequest",
+        "type": "object"
+      },
+      "EntitiesByTypeResponse": {
+        "description": "Response model for entities by type queries.",
+        "properties": {
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/EntityResponse"
+            },
+            "title": "Entities",
+            "type": "array"
+          },
+          "entity_count": {
+            "title": "Entity Count",
+            "type": "integer"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "found": {
+            "title": "Found",
+            "type": "boolean"
+          },
+          "total_entities": {
+            "title": "Total Entities",
+            "type": "integer"
+          },
+          "world_id": {
+            "title": "World Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "world_id",
+          "found",
+          "entity_type",
+          "entity_count",
+          "total_entities"
+        ],
+        "title": "EntitiesByTypeResponse",
+        "type": "object"
+      },
+      "EntitiesInAreaResponse": {
+        "description": "Response model for entities in area queries.",
+        "properties": {
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/EntityResponse"
+            },
+            "title": "Entities",
+            "type": "array"
+          },
+          "entity_count": {
+            "title": "Entity Count",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "found": {
+            "title": "Found",
+            "type": "boolean"
+          },
+          "search_area": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Search Area",
+            "type": "object"
+          },
+          "total_entities": {
+            "title": "Total Entities",
+            "type": "integer"
+          },
+          "world_id": {
+            "title": "World Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "world_id",
+          "found",
+          "entity_count",
+          "total_entities",
+          "search_area"
+        ],
+        "title": "EntitiesInAreaResponse",
+        "type": "object"
+      },
+      "EntityOperationRequest": {
+        "description": "Request model for entity operations.",
+        "properties": {
+          "coordinates": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CoordinatesRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "entity_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Name"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Type"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "new_coordinates": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CoordinatesRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operation_type": {
+            "description": "Type of entity operation",
+            "title": "Operation Type",
+            "type": "string"
+          },
+          "properties": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Properties"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "operation_type"
+        ],
+        "title": "EntityOperationRequest",
+        "type": "object"
+      },
+      "EntityResponse": {
+        "description": "Response model for entity data.",
+        "properties": {
+          "coordinates": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Coordinates",
+            "type": "object"
+          },
+          "distance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "properties_summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Properties Summary"
+          }
+        },
+        "required": [
+          "id",
+          "entity_type",
+          "name",
+          "coordinates"
+        ],
+        "title": "EntityResponse",
+        "type": "object"
+      },
+      "EnvironmentOperationRequest": {
+        "description": "Request model for environment operations.",
+        "properties": {
+          "affected_area": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Area"
+          },
+          "environment_changes": {
+            "additionalProperties": true,
+            "description": "Environment changes to apply",
+            "title": "Environment Changes",
+            "type": "object"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "environment_changes"
+        ],
+        "title": "EnvironmentOperationRequest",
+        "type": "object"
+      },
+      "GuestSessionResponse": {
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "created"
+        ],
+        "title": "GuestSessionResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "InvalidationRequest": {
+        "properties": {
+          "all_of": {
+            "items": {
+              "type": "string"
+            },
+            "title": "All Of",
+            "type": "array"
+          }
+        },
+        "required": [
+          "all_of"
+        ],
+        "title": "InvalidationRequest",
+        "type": "object"
+      },
+      "LoginRequest": {
+        "description": "Request model for user login.",
+        "properties": {
+          "email": {
+            "description": "User email address",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "description": "User password",
+            "title": "Password",
+            "type": "string"
+          },
+          "remember_me": {
+            "default": false,
+            "description": "Whether to extend session duration",
+            "title": "Remember Me",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "type": "object"
+      },
+      "LogoutRequest": {
+        "description": "Request model for logout.",
+        "properties": {
+          "access_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional access token to invalidate",
+            "title": "Access Token"
+          }
+        },
+        "title": "LogoutRequest",
+        "type": "object"
+      },
+      "LogoutResponse": {
+        "description": "Response model for logout.",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "LogoutResponse",
+        "type": "object"
+      },
+      "NegotiationConfirmRequest": {
+        "description": "Request body for confirming negotiation result.",
+        "properties": {
+          "accepted": {
+            "description": "Whether user accepts the adjusted action",
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "decision_id": {
+            "description": "ID of the decision point",
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "insist_original": {
+            "default": false,
+            "description": "Whether user insists on original input",
+            "title": "Insist Original",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "decision_id",
+          "accepted"
+        ],
+        "title": "NegotiationConfirmRequest",
+        "type": "object"
+      },
+      "OptimizeRequest": {
+        "description": "Request to optimize a user prompt.",
+        "properties": {
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Genre for optimization",
+            "title": "Genre"
+          },
+          "language": {
+            "default": "en",
+            "description": "Language code",
+            "title": "Language",
+            "type": "string"
+          },
+          "max_iterations": {
+            "default": 3,
+            "description": "Maximum iterations",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Max Iterations",
+            "type": "integer"
+          },
+          "prompt": {
+            "description": "The prompt to optimize",
+            "minLength": 10,
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "title": "OptimizeRequest",
+        "type": "object"
+      },
+      "OptimizeResponse": {
+        "description": "Response from prompt optimization.",
+        "properties": {
+          "final_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Score"
+          },
+          "improvements_made": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Improvements Made",
+            "type": "array"
+          },
+          "iteration": {
+            "title": "Iteration",
+            "type": "integer"
+          },
+          "optimized_prompt": {
+            "title": "Optimized Prompt",
+            "type": "string"
+          },
+          "original_prompt": {
+            "title": "Original Prompt",
+            "type": "string"
+          },
+          "suggestions_applied": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggestions Applied",
+            "type": "array"
+          }
+        },
+        "required": [
+          "original_prompt",
+          "optimized_prompt",
+          "suggestions_applied",
+          "iteration",
+          "improvements_made",
+          "final_score"
+        ],
+        "title": "OptimizeResponse",
+        "type": "object"
+      },
+      "RefreshTokenRequest": {
+        "description": "Request model for token refresh.",
+        "properties": {
+          "refresh_token": {
+            "description": "Refresh token",
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest",
+        "type": "object"
+      },
+      "ResetOperationRequest": {
+        "description": "Request model for reset operations.",
+        "properties": {
+          "create_backup": {
+            "default": true,
+            "title": "Create Backup",
+            "type": "boolean"
+          },
+          "preserve_entities": {
+            "default": false,
+            "title": "Preserve Entities",
+            "type": "boolean"
+          },
+          "preserve_environment": {
+            "default": false,
+            "title": "Preserve Environment",
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "Reason for resetting world",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ResetOperationRequest",
+        "type": "object"
+      },
+      "SearchWorldsResponse": {
+        "description": "Response model for world search queries.",
+        "properties": {
+          "search_term": {
+            "title": "Search Term",
+            "type": "string"
+          },
+          "status_filter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Filter"
+          },
+          "total_worlds": {
+            "title": "Total Worlds",
+            "type": "integer"
+          },
+          "world_count": {
+            "title": "World Count",
+            "type": "integer"
+          },
+          "worlds": {
+            "items": {
+              "$ref": "#/components/schemas/WorldSearchResult"
+            },
+            "title": "Worlds",
+            "type": "array"
+          }
+        },
+        "required": [
+          "search_term",
+          "world_count",
+          "total_worlds"
+        ],
+        "title": "SearchWorldsResponse",
+        "type": "object"
+      },
+      "SimulationRequest": {
+        "properties": {
+          "character_names": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 2,
+            "title": "Character Names",
+            "type": "array"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario"
+          },
+          "setting": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setting"
+          },
+          "turns": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turns"
+          }
+        },
+        "required": [
+          "character_names"
+        ],
+        "title": "SimulationRequest",
+        "type": "object"
+      },
+      "SimulationResponse": {
+        "properties": {
+          "duration_seconds": {
+            "title": "Duration Seconds",
+            "type": "number"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Participants",
+            "type": "array"
+          },
+          "story": {
+            "title": "Story",
+            "type": "string"
+          },
+          "turns_executed": {
+            "title": "Turns Executed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "story",
+          "participants",
+          "turns_executed",
+          "duration_seconds"
+        ],
+        "title": "SimulationResponse",
+        "type": "object"
+      },
+      "SkipDecisionRequest": {
+        "description": "Request body for skipping a decision.",
+        "properties": {
+          "decision_id": {
+            "description": "ID of the decision point to skip",
+            "title": "Decision Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id"
+        ],
+        "title": "SkipDecisionRequest",
+        "type": "object"
+      },
+      "SnapshotOperationRequest": {
+        "description": "Request model for snapshot operations.",
+        "properties": {
+          "include_entities": {
+            "default": true,
+            "title": "Include Entities",
+            "type": "boolean"
+          },
+          "include_environment": {
+            "default": true,
+            "title": "Include Environment",
+            "type": "boolean"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "reason": {
+            "description": "Reason for creating snapshot",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "SnapshotOperationRequest",
+        "type": "object"
+      },
+      "TemplateDetailResponse": {
+        "description": "Detailed template information.",
+        "properties": {
+          "character_archetypes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Character Archetypes",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "example_opening": {
+            "title": "Example Opening",
+            "type": "string"
+          },
+          "genre": {
+            "title": "Genre",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "plot_devices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Plot Devices",
+            "type": "array"
+          },
+          "story_requirements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Story Requirements",
+            "type": "array"
+          },
+          "style_guidelines": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Style Guidelines",
+            "type": "array"
+          },
+          "system_prompt": {
+            "title": "System Prompt",
+            "type": "string"
+          },
+          "tone_descriptors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tone Descriptors",
+            "type": "array"
+          },
+          "world_building_elements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "World Building Elements",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "genre",
+          "language",
+          "description",
+          "system_prompt",
+          "story_requirements",
+          "style_guidelines",
+          "example_opening",
+          "world_building_elements",
+          "character_archetypes",
+          "plot_devices",
+          "tone_descriptors"
+        ],
+        "title": "TemplateDetailResponse",
+        "type": "object"
+      },
+      "TemplateInfo": {
+        "description": "Information about a prompt template.",
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "genre": {
+            "title": "Genre",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "genre",
+          "language",
+          "description"
+        ],
+        "title": "TemplateInfo",
+        "type": "object"
+      },
+      "TemplatesListResponse": {
+        "description": "Response for listing templates.",
+        "properties": {
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateInfo"
+            },
+            "title": "Templates",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "templates",
+          "total"
+        ],
+        "title": "TemplatesListResponse",
+        "type": "object"
+      },
+      "TimeOperationRequest": {
+        "description": "Request model for time operations.",
+        "properties": {
+          "new_time": {
+            "description": "New world time",
+            "format": "date-time",
+            "title": "New Time",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "new_time"
+        ],
+        "title": "TimeOperationRequest",
+        "type": "object"
+      },
+      "TokenValidationResponse": {
+        "description": "Response model for token validation.",
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Token expiry timestamp in milliseconds",
+            "title": "Expires At"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid"
+        ],
+        "title": "TokenValidationResponse",
+        "type": "object"
+      },
+      "UserPromptCreate": {
+        "description": "Request to create a user prompt.",
+        "properties": {
+          "content": {
+            "description": "Prompt content",
+            "minLength": 10,
+            "title": "Content",
+            "type": "string"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "language": {
+            "default": "en",
+            "title": "Language",
+            "type": "string"
+          },
+          "name": {
+            "description": "Prompt name",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "User identifier",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "name",
+          "content"
+        ],
+        "title": "UserPromptCreate",
+        "type": "object"
+      },
+      "UserPromptResponse": {
+        "description": "Response containing a user prompt.",
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_optimized": {
+            "title": "Is Optimized",
+            "type": "boolean"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "name",
+          "content",
+          "genre",
+          "language",
+          "is_optimized",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "UserPromptResponse",
+        "type": "object"
+      },
+      "UserPromptUpdate": {
+        "description": "Request to update a user prompt.",
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "UserPromptUpdate",
+        "type": "object"
+      },
+      "UserPromptsListResponse": {
+        "description": "Response for listing user prompts.",
+        "properties": {
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/UserPromptResponse"
+            },
+            "title": "Prompts",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "prompts",
+          "total"
+        ],
+        "title": "UserPromptsListResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WorkspaceCharacterCreateRequest": {
+        "properties": {
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional stable identifier for the character (defaults to a server-derived id).",
+            "title": "Agent Id"
+          },
+          "background_summary": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Background Summary",
+            "type": "string"
+          },
+          "current_location": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Location"
+          },
+          "inventory": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Inventory",
+            "type": "array"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          },
+          "personality_traits": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Personality Traits",
+            "type": "string"
+          },
+          "relationships": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Relationships",
+            "type": "object"
+          },
+          "skills": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Skills",
+            "type": "object"
+          },
+          "structured_data": {
+            "additionalProperties": true,
+            "title": "Structured Data",
+            "type": "object"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "WorkspaceCharacterCreateRequest",
+        "type": "object"
+      },
+      "WorkspaceCharacterUpdateRequest": {
+        "properties": {
+          "background_summary": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Summary"
+          },
+          "current_location": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Location"
+          },
+          "inventory": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inventory"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "personality_traits": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personality Traits"
+          },
+          "relationships": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relationships"
+          },
+          "skills": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skills"
+          },
+          "structured_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Data"
+          }
+        },
+        "title": "WorkspaceCharacterUpdateRequest",
+        "type": "object"
+      },
+      "WorldDeltaResponse": {
+        "description": "Response model for world delta operations.",
+        "properties": {
+          "command_id": {
+            "title": "Command Id",
+            "type": "string"
+          },
+          "correlation_id": {
+            "title": "Correlation Id",
+            "type": "string"
+          },
+          "execution_time_ms": {
+            "title": "Execution Time Ms",
+            "type": "number"
+          },
+          "operation_summary": {
+            "title": "Operation Summary",
+            "type": "string"
+          },
+          "operations_applied": {
+            "title": "Operations Applied",
+            "type": "integer"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "world_state_id": {
+            "title": "World State Id",
+            "type": "string"
+          },
+          "world_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "World Version"
+          }
+        },
+        "required": [
+          "command_id",
+          "world_state_id",
+          "success",
+          "operations_applied",
+          "operation_summary",
+          "execution_time_ms",
+          "correlation_id",
+          "timestamp"
+        ],
+        "title": "WorldDeltaResponse",
+        "type": "object"
+      },
+      "WorldHistoryEntry": {
+        "description": "Individual entry in world history.",
+        "properties": {
+          "changes": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changes"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "event_type",
+          "description"
+        ],
+        "title": "WorldHistoryEntry",
+        "type": "object"
+      },
+      "WorldHistoryResponse": {
+        "description": "Response model for world history queries.",
+        "properties": {
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/WorldHistoryEntry"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          },
+          "world_id": {
+            "title": "World Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "world_id",
+          "total_count"
+        ],
+        "title": "WorldHistoryResponse",
+        "type": "object"
+      },
+      "WorldSearchResult": {
+        "description": "Individual world search result.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "entity_types": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Types"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total_entities": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Entities"
+          },
+          "world_id": {
+            "title": "World Id",
+            "type": "string"
+          },
+          "world_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "World Time"
+          }
+        },
+        "required": [
+          "world_id",
+          "name",
+          "status"
+        ],
+        "title": "WorldSearchResult",
+        "type": "object"
+      },
+      "WorldSliceResponse": {
+        "description": "Response model for world slice queries.",
+        "properties": {
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/EntityResponse"
+            },
+            "title": "Entities",
+            "type": "array"
+          },
+          "entity_count": {
+            "title": "Entity Count",
+            "type": "integer"
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Environment"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "found": {
+            "title": "Found",
+            "type": "boolean"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "query_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Metadata"
+          },
+          "query_time_ms": {
+            "title": "Query Time Ms",
+            "type": "number"
+          },
+          "spatial_bounds": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spatial Bounds"
+          },
+          "total_entities": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Entities"
+          },
+          "world_id": {
+            "title": "World Id",
+            "type": "string"
+          },
+          "world_summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "World Summary"
+          }
+        },
+        "required": [
+          "world_id",
+          "found",
+          "entity_count",
+          "query_time_ms"
+        ],
+        "title": "WorldSliceResponse",
+        "type": "object"
+      },
+      "WorldSummaryResponse": {
+        "description": "Response model for world summary queries.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "entity_type_details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Type Details"
+          },
+          "entity_types": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Types"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "found": {
+            "title": "Found",
+            "type": "boolean"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "spatial_bounds": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spatial Bounds"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "total_entities": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Entities"
+          },
+          "world_id": {
+            "title": "World Id",
+            "type": "string"
+          },
+          "world_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "World Time"
+          }
+        },
+        "required": [
+          "world_id",
+          "found"
+        ],
+        "title": "WorldSummaryResponse",
+        "type": "object"
+      },
+      "WorldValidationResponse": {
+        "description": "Response model for world validation queries.",
+        "properties": {
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "world_id": {
+            "title": "World Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "world_id",
+          "valid"
+        ],
+        "title": "WorldValidationResponse",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "RESTful API for the StoryForge AI Interactive Story Engine.",
+    "title": "StoryForge AI API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/": {
+      "get": {
+        "description": "Provides a basic health check for the API.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Root"
+      }
+    },
+    "/api/analytics/metrics": {
+      "get": {
+        "description": "Get story analytics metrics for the dashboard.\n\nReturns metrics like story quality, engagement, coherence, and complexity\nbased on current orchestration state and cache performance.",
+        "operationId": "get_analytics_metrics_api_analytics_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Analytics Metrics",
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    },
+    "/api/auth/csrf-token": {
+      "get": {
+        "description": "Generate and return CSRF token for state-changing requests.\n\nThe CSRF token is set as a non-httpOnly cookie so JavaScript can read it\nand include it in request headers. This provides CSRF protection for\nstate-changing operations (POST, PUT, DELETE, PATCH).\n\nUsage:\n1. Call this endpoint to get a CSRF token\n2. Include the token in X-CSRF-Token header for mutations\n3. Backend validates the token matches the cookie value\n\nReturns:\n    CSRFTokenResponse with the generated CSRF token",
+        "operationId": "get_csrf_token_api_auth_csrf_token_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CSRFTokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Csrf Token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "description": "Authenticate user and set httpOnly cookies for token storage.\n\nThis endpoint implements SEC-001 security improvements:\n- Tokens stored in httpOnly cookies (XSS protection)\n- Secure flag for HTTPS-only transmission\n- SameSite=Lax for CSRF protection\n- Short-lived access tokens (15 min)\n- Long-lived refresh tokens (30 days)\n\nThe response also includes tokens in the body for backward compatibility\nduring the migration period.\n\nArgs:\n    credentials: User login credentials (email, password, remember_me)\n    response: FastAPI Response object for setting cookies\n\nReturns:\n    AuthResponse with tokens and user information",
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "description": "Logout endpoint to invalidate user session and clear httpOnly cookies.\n\nThis endpoint implements SEC-001 security improvements:\n- Clears all authentication cookies (access_token, refresh_token)\n- Logs the logout event for audit trail\n- Always returns success to ensure frontend can reliably clear state\n\nThe endpoint clears httpOnly cookies by setting them to expire immediately.\n\nIn a production environment with a session store, this would also:\n- Add tokens to a Redis blacklist with TTL matching token expiry\n- Mark session as inactive in database\n\nArgs:\n    request: FastAPI Request object for logging\n    response: FastAPI Response object for clearing cookies\n    body: Optional logout request body (for backward compatibility)\n\nReturns:\n    LogoutResponse with success status",
+        "operationId": "logout_api_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LogoutRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "description": "Refresh access token using refresh token.\n\nAccepts refresh token from:\n1. httpOnly cookie (preferred)\n2. Request body (for backward compatibility)\n\nReturns new access token and sets httpOnly cookie.\n\nArgs:\n    request: Refresh token request (optional, for backward compatibility)\n    response: FastAPI Response object for setting cookies\n    req: FastAPI Request object for reading cookies\n\nReturns:\n    AuthResponse with new tokens",
+        "operationId": "refresh_token_api_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refresh Token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/validate": {
+      "get": {
+        "description": "Validate the current access token.\n\nThis endpoint checks if the token in the Authorization header is valid.\nReturns token status and expiry information.\n\nReturns:\n    200 with valid=true if token is valid\n    401 with valid=false if token is invalid or expired",
+        "operationId": "validate_token_api_auth_validate_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenValidationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Validate Token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/characters": {
+      "get": {
+        "description": "Unversioned REST endpoint for characters list.",
+        "operationId": "get_characters_api_api_characters_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharactersListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Characters Api"
+      },
+      "post": {
+        "description": "Create a character inside the current guest workspace.",
+        "operationId": "create_workspace_character_api_characters_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCharacterCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Workspace Character"
+      }
+    },
+    "/api/characters/{character_id}": {
+      "delete": {
+        "description": "Delete a character from the current guest workspace.",
+        "operationId": "delete_workspace_character_api_characters__character_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "character_id",
+            "required": true,
+            "schema": {
+              "title": "Character Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Workspace Character"
+      },
+      "get": {
+        "description": "Unversioned REST endpoint for character detail.",
+        "operationId": "get_character_detail_api_api_characters__character_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "character_id",
+            "required": true,
+            "schema": {
+              "title": "Character Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Character Detail Api"
+      },
+      "put": {
+        "description": "Update a character inside the current guest workspace.",
+        "operationId": "update_workspace_character_api_characters__character_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "character_id",
+            "required": true,
+            "schema": {
+              "title": "Character Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCharacterUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Workspace Character"
+      }
+    },
+    "/api/characters/{character_id}/enhanced": {
+      "get": {
+        "description": "Unversioned REST endpoint for enhanced character detail.",
+        "operationId": "get_character_enhanced_api_api_characters__character_id__enhanced_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "character_id",
+            "required": true,
+            "schema": {
+              "title": "Character Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Character Enhanced Api Api Characters  Character Id  Enhanced Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Character Enhanced Api"
+      }
+    },
+    "/api/decision/confirm": {
+      "post": {
+        "description": "Confirm or reject a negotiation result.\n\nAfter free text input is evaluated and needs adjustment,\nthe user can accept the adjusted action or insist on original.",
+        "operationId": "confirm_negotiation_api_decision_confirm_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NegotiationConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Confirm Negotiation Api Decision Confirm Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Negotiation",
+        "tags": [
+          "decision"
+        ]
+      }
+    },
+    "/api/decision/history": {
+      "get": {
+        "description": "Get the history of decision points in the current session.",
+        "operationId": "get_decision_history_api_decision_history_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Decision History Api Decision History Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Decision History",
+        "tags": [
+          "decision"
+        ]
+      }
+    },
+    "/api/decision/respond": {
+      "post": {
+        "description": "Submit a response to a pending decision point.\n\nFor option selection, provide selected_option_id.\nFor free text input, provide free_text.",
+        "operationId": "submit_decision_response_api_decision_respond_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Submit Decision Response Api Decision Respond Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Decision Response",
+        "tags": [
+          "decision"
+        ]
+      }
+    },
+    "/api/decision/skip": {
+      "post": {
+        "description": "Skip the current decision point, using the default option.",
+        "operationId": "skip_decision_api_decision_skip_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkipDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Skip Decision Api Decision Skip Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Skip Decision",
+        "tags": [
+          "decision"
+        ]
+      }
+    },
+    "/api/decision/status": {
+      "get": {
+        "description": "Get the current status of the decision system.\n\nReturns the current pause state, pending decision point (if any),\nand negotiation state.",
+        "operationId": "get_decision_status_api_decision_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Decision Status Api Decision Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Decision Status",
+        "tags": [
+          "decision"
+        ]
+      }
+    },
+    "/api/events/emit": {
+      "post": {
+        "description": "Emit a dashboard event to all connected SSE clients.\n\nThis endpoint allows triggering real-time events that will appear\nin the dashboard's Real-Time Activity section.\n\nArgs:\n    request: Event details including type, title, description, severity\n\nReturns:\n    Success confirmation with event ID",
+        "operationId": "emit_dashboard_event_api_events_emit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmitEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Emit Dashboard Event",
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    },
+    "/api/events/stats": {
+      "get": {
+        "description": "Get SSE connection statistics.",
+        "operationId": "get_sse_stats_api_events_stats_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Sse Stats",
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    },
+    "/api/events/stream": {
+      "get": {
+        "description": "Server-Sent Events (SSE) endpoint for real-time dashboard events.\n\nStreams continuous event updates with automatic reconnection support.\nEvents include: character actions, story progression, system alerts, interactions.\n\nReturns:\n    StreamingResponse: text/event-stream with continuous event updates\n\nExample:\n    ```javascript\n    const eventSource = new EventSource('/api/events/stream');\n    eventSource.onmessage = (event) => {\n        const data = JSON.parse(event.data);\n        console.log('Event:', data);\n    };\n    ```",
+        "operationId": "stream_events_api_events_stream_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Stream Events",
+        "tags": [
+          "Dashboard"
+        ]
+      }
+    },
+    "/api/guest/session": {
+      "post": {
+        "description": "Create or resume a guest session backed by a filesystem workspace.",
+        "operationId": "create_or_resume_guest_session_api_guest_session_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Create Or Resume Guest Session",
+        "tags": [
+          "Guest"
+        ]
+      }
+    },
+    "/api/orchestration/narrative": {
+      "get": {
+        "description": "Get the generated story narrative from the last orchestration run.",
+        "operationId": "get_narrative_api_orchestration_narrative_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Narrative Api Orchestration Narrative Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Narrative"
+      }
+    },
+    "/api/orchestration/start": {
+      "post": {
+        "description": "Start real story generation orchestration pipeline.\ndelegates to ApiOrchestrationService.",
+        "operationId": "start_orchestration_api_orchestration_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Start Orchestration Api Orchestration Start Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Orchestration"
+      }
+    },
+    "/api/orchestration/status": {
+      "get": {
+        "description": "Get current orchestration/pipeline status for dashboard display.\nDelegates to ApiOrchestrationService.",
+        "operationId": "get_orchestration_status_api_orchestration_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Orchestration Status Api Orchestration Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Orchestration Status"
+      }
+    },
+    "/api/orchestration/stop": {
+      "post": {
+        "description": "Stop orchestration pipeline gracefully.",
+        "operationId": "stop_orchestration_api_orchestration_stop_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Stop Orchestration Api Orchestration Stop Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Stop Orchestration"
+      }
+    },
+    "/api/prompts/analyze": {
+      "post": {
+        "description": "Analyze a user prompt for quality and improvement opportunities.\n\nReturns scores and suggestions for improvement.",
+        "operationId": "analyze_user_prompt_api_prompts_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyze User Prompt",
+        "tags": [
+          "Prompts"
+        ]
+      }
+    },
+    "/api/prompts/apply-suggestion": {
+      "post": {
+        "description": "Apply a single improvement suggestion to a prompt.",
+        "operationId": "apply_single_suggestion_api_prompts_apply_suggestion_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplySuggestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplySuggestionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply Single Suggestion",
+        "tags": [
+          "Prompts"
+        ]
+      }
+    },
+    "/api/prompts/genres": {
+      "get": {
+        "description": "List all available story genres.",
+        "operationId": "list_genres_api_prompts_genres_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Genres Api Prompts Genres Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Genres",
+        "tags": [
+          "Prompts"
+        ]
+      }
+    },
+    "/api/prompts/optimize": {
+      "post": {
+        "description": "Optimize a user prompt using multi-round meta-prompting.\n\nIteratively improves the prompt based on analysis and suggestions.",
+        "operationId": "optimize_user_prompt_api_prompts_optimize_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptimizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptimizeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Optimize User Prompt",
+        "tags": [
+          "Prompts"
+        ]
+      }
+    },
+    "/api/prompts/templates": {
+      "get": {
+        "description": "List all available prompt templates.\n\nOptionally filter by genre and/or language.",
+        "operationId": "list_templates_api_prompts_templates_get",
+        "parameters": [
+          {
+            "description": "Filter by genre",
+            "in": "query",
+            "name": "genre",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by genre",
+              "title": "Genre"
+            }
+          },
+          {
+            "description": "Filter by language (en/zh)",
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by language (en/zh)",
+              "title": "Language"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatesListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Templates",
+        "tags": [
+          "Prompts"
+        ]
+      }
+    },
+    "/api/prompts/templates/{template_id}": {
+      "get": {
+        "description": "Get detailed information about a specific template.",
+        "operationId": "get_template_api_prompts_templates__template_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Template",
+        "tags": [
+          "Prompts"
+        ]
+      }
+    },
+    "/api/prompts/user": {
+      "get": {
+        "description": "List prompts saved by a user.",
+        "operationId": "list_user_prompts_api_prompts_user_get",
+        "parameters": [
+          {
+            "description": "User ID",
+            "in": "query",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "description": "User ID",
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by genre",
+            "in": "query",
+            "name": "genre",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by genre",
+              "title": "Genre"
+            }
+          },
+          {
+            "description": "Filter by language",
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by language",
+              "title": "Language"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPromptsListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List User Prompts",
+        "tags": [
+          "Prompts"
+        ]
+      },
+      "post": {
+        "description": "Save a new user prompt.",
+        "operationId": "create_user_prompt_api_prompts_user_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPromptCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPromptResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create User Prompt",
+        "tags": [
+          "Prompts"
+        ]
+      }
+    },
+    "/api/prompts/user/{prompt_id}": {
+      "delete": {
+        "description": "Delete a user prompt.",
+        "operationId": "delete_user_prompt_api_prompts_user__prompt_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prompt_id",
+            "required": true,
+            "schema": {
+              "title": "Prompt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Delete User Prompt Api Prompts User  Prompt Id  Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete User Prompt",
+        "tags": [
+          "Prompts"
+        ]
+      },
+      "get": {
+        "description": "Get a specific user prompt by ID.",
+        "operationId": "get_user_prompt_api_prompts_user__prompt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prompt_id",
+            "required": true,
+            "schema": {
+              "title": "Prompt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPromptResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get User Prompt",
+        "tags": [
+          "Prompts"
+        ]
+      },
+      "put": {
+        "description": "Update a user prompt.",
+        "operationId": "update_user_prompt_api_prompts_user__prompt_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prompt_id",
+            "required": true,
+            "schema": {
+              "title": "Prompt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPromptUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPromptResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update User Prompt",
+        "tags": [
+          "Prompts"
+        ]
+      }
+    },
+    "/api/search": {
+      "get": {
+        "description": "Search worlds by name, description, or content.\n\nThis endpoint provides full-text search capabilities across\nworld metadata for discovery and navigation.",
+        "operationId": "search_worlds_api_search_get",
+        "parameters": [
+          {
+            "description": "Search term for world names/descriptions",
+            "in": "query",
+            "name": "search_term",
+            "required": true,
+            "schema": {
+              "description": "Search term for world names/descriptions",
+              "minLength": 1,
+              "title": "Search Term",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Maximum worlds to return",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 200,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": 50,
+              "description": "Maximum worlds to return",
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "Number of worlds to skip",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Number of worlds to skip",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Include entity count information",
+            "in": "query",
+            "name": "include_entity_counts",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Include entity count information",
+              "title": "Include Entity Counts",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Filter by world status",
+            "in": "query",
+            "name": "status_filter",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by world status",
+              "title": "Status Filter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchWorldsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Worlds",
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/api/workspace/export": {
+      "get": {
+        "description": "Export the current workspace as a zip file.",
+        "operationId": "export_workspace_zip_api_workspace_export_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Export Workspace Zip",
+        "tags": [
+          "Guest"
+        ]
+      }
+    },
+    "/api/workspace/import": {
+      "post": {
+        "description": "Import a workspace zip and switch the current guest session to it.",
+        "operationId": "import_workspace_zip_api_workspace_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_workspace_zip_api_workspace_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Workspace Zip",
+        "tags": [
+          "Guest"
+        ]
+      }
+    },
+    "/api/{world_id}/delta": {
+      "post": {
+        "description": "Apply a set of changes (delta) to a world state.\n\nThis endpoint executes write operations on the world state through\nthe command side of CQRS. All changes are applied atomically.",
+        "operationId": "apply_world_delta_api__world_id__delta_post",
+        "parameters": [
+          {
+            "description": "ID of the world to modify",
+            "in": "path",
+            "name": "world_id",
+            "required": true,
+            "schema": {
+              "description": "ID of the world to modify",
+              "title": "World Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyWorldDeltaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldDeltaResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply World Delta",
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/api/{world_id}/entities": {
+      "get": {
+        "description": "Retrieve entities within a specific geographic area.\n\nThis endpoint provides efficient spatial queries for finding entities\nwithin a circular area around a center point.",
+        "operationId": "get_entities_in_area_api__world_id__entities_get",
+        "parameters": [
+          {
+            "description": "ID of the world to query",
+            "in": "path",
+            "name": "world_id",
+            "required": true,
+            "schema": {
+              "description": "ID of the world to query",
+              "title": "World Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Center X coordinate",
+            "in": "query",
+            "name": "center_x",
+            "required": true,
+            "schema": {
+              "description": "Center X coordinate",
+              "title": "Center X",
+              "type": "number"
+            }
+          },
+          {
+            "description": "Center Y coordinate",
+            "in": "query",
+            "name": "center_y",
+            "required": true,
+            "schema": {
+              "description": "Center Y coordinate",
+              "title": "Center Y",
+              "type": "number"
+            }
+          },
+          {
+            "description": "Search radius",
+            "in": "query",
+            "name": "radius",
+            "required": true,
+            "schema": {
+              "description": "Search radius",
+              "minimum": 0,
+              "title": "Radius",
+              "type": "number"
+            }
+          },
+          {
+            "description": "Filter by entity types",
+            "in": "query",
+            "name": "entity_types",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by entity types",
+              "title": "Entity Types"
+            }
+          },
+          {
+            "description": "Maximum entities to return",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1000,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum entities to return",
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "Number of entities to skip",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Number of entities to skip",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Include distance from center",
+            "in": "query",
+            "name": "include_distance",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Include distance from center",
+              "title": "Include Distance",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntitiesInAreaResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Entities In Area",
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/api/{world_id}/entities/type/{entity_type}": {
+      "get": {
+        "description": "Retrieve entities filtered by type.\n\nThis endpoint provides efficient queries for finding all entities\nof a specific type within a world.",
+        "operationId": "get_entities_by_type_api__world_id__entities_type__entity_type__get",
+        "parameters": [
+          {
+            "description": "ID of the world to query",
+            "in": "path",
+            "name": "world_id",
+            "required": true,
+            "schema": {
+              "description": "ID of the world to query",
+              "title": "World Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Type of entities to retrieve",
+            "in": "path",
+            "name": "entity_type",
+            "required": true,
+            "schema": {
+              "description": "Type of entities to retrieve",
+              "title": "Entity Type",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Maximum entities to return",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1000,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum entities to return",
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "Number of entities to skip",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Number of entities to skip",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Include entity coordinates",
+            "in": "query",
+            "name": "include_coordinates",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Include entity coordinates",
+              "title": "Include Coordinates",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntitiesByTypeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Entities By Type",
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/api/{world_id}/history": {
+      "get": {
+        "description": "Retrieve recent history of world state changes and events.\n\nReturns a list of recent changes/events from the world state, including\ntimestamps, event types, and descriptions of what changed.",
+        "operationId": "get_world_history_api__world_id__history_get",
+        "parameters": [
+          {
+            "description": "ID of the world to query",
+            "in": "path",
+            "name": "world_id",
+            "required": true,
+            "schema": {
+              "description": "ID of the world to query",
+              "title": "World Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Maximum history entries to return",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Maximum history entries to return",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of entries to skip",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Number of entries to skip",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldHistoryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get World History",
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/api/{world_id}/slice": {
+      "get": {
+        "description": "Retrieve a spatial slice of world data.\n\nThis endpoint provides high-performance access to world entity data\nwithin specified geographic bounds using the optimized read model.",
+        "operationId": "get_world_slice_api__world_id__slice_get",
+        "parameters": [
+          {
+            "description": "ID of the world to query",
+            "in": "path",
+            "name": "world_id",
+            "required": true,
+            "schema": {
+              "description": "ID of the world to query",
+              "title": "World Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Center X coordinate for circular query",
+            "in": "query",
+            "name": "center_x",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Center X coordinate for circular query",
+              "title": "Center X"
+            }
+          },
+          {
+            "description": "Center Y coordinate for circular query",
+            "in": "query",
+            "name": "center_y",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Center Y coordinate for circular query",
+              "title": "Center Y"
+            }
+          },
+          {
+            "description": "Radius for circular query",
+            "in": "query",
+            "name": "radius",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Radius for circular query",
+              "title": "Radius"
+            }
+          },
+          {
+            "description": "Minimum X coordinate for rectangular query",
+            "in": "query",
+            "name": "min_x",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Minimum X coordinate for rectangular query",
+              "title": "Min X"
+            }
+          },
+          {
+            "description": "Maximum X coordinate for rectangular query",
+            "in": "query",
+            "name": "max_x",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum X coordinate for rectangular query",
+              "title": "Max X"
+            }
+          },
+          {
+            "description": "Minimum Y coordinate for rectangular query",
+            "in": "query",
+            "name": "min_y",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Minimum Y coordinate for rectangular query",
+              "title": "Min Y"
+            }
+          },
+          {
+            "description": "Maximum Y coordinate for rectangular query",
+            "in": "query",
+            "name": "max_y",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum Y coordinate for rectangular query",
+              "title": "Max Y"
+            }
+          },
+          {
+            "description": "Minimum Z coordinate",
+            "in": "query",
+            "name": "min_z",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Minimum Z coordinate",
+              "title": "Min Z"
+            }
+          },
+          {
+            "description": "Maximum Z coordinate",
+            "in": "query",
+            "name": "max_z",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum Z coordinate",
+              "title": "Max Z"
+            }
+          },
+          {
+            "description": "Filter by entity types",
+            "in": "query",
+            "name": "entity_types",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by entity types",
+              "title": "Entity Types"
+            }
+          },
+          {
+            "description": "Include environment data",
+            "in": "query",
+            "name": "include_environment",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Include environment data",
+              "title": "Include Environment",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Include metadata",
+            "in": "query",
+            "name": "include_metadata",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Include metadata",
+              "title": "Include Metadata",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Include world summary",
+            "in": "query",
+            "name": "include_world_summary",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Include world summary",
+              "title": "Include World Summary",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Include spatial bounds",
+            "in": "query",
+            "name": "include_spatial_index",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Include spatial bounds",
+              "title": "Include Spatial Index",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Maximum entities to return",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1000,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum entities to return",
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "Number of entities to skip",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Number of entities to skip",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldSliceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get World Slice",
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/api/{world_id}/summary": {
+      "get": {
+        "description": "Retrieve summary statistics for a world.\n\nThis endpoint provides aggregated world information optimized\nfor dashboards and quick status checks.",
+        "operationId": "get_world_summary_api__world_id__summary_get",
+        "parameters": [
+          {
+            "description": "ID of the world to summarize",
+            "in": "path",
+            "name": "world_id",
+            "required": true,
+            "schema": {
+              "description": "ID of the world to summarize",
+              "title": "World Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Include detailed entity type information",
+            "in": "query",
+            "name": "include_entity_details",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Include detailed entity type information",
+              "title": "Include Entity Details",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Include spatial bounds",
+            "in": "query",
+            "name": "include_spatial_bounds",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Include spatial bounds",
+              "title": "Include Spatial Bounds",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get World Summary",
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/api/{world_id}/validate": {
+      "get": {
+        "description": "Validate world state consistency and integrity.\n\nPerforms basic validation checks on the world state including:\n- JSON structure validity\n- Required fields existence (entities, relationships, metadata)\n- Circular reference detection in relationships",
+        "operationId": "validate_world_state_api__world_id__validate_get",
+        "parameters": [
+          {
+            "description": "ID of the world to validate",
+            "in": "path",
+            "name": "world_id",
+            "required": true,
+            "schema": {
+              "description": "ID of the world to validate",
+              "title": "World Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldValidationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Validate World State",
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/cache/chunk/{key}": {
+      "post": {
+        "operationId": "cache_chunk_append_cache_chunk__key__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChunkInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cache Chunk Append Cache Chunk  Key  Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cache Chunk Append"
+      }
+    },
+    "/cache/chunk/{key}/complete": {
+      "post": {
+        "operationId": "cache_chunk_complete_cache_chunk__key__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cache Chunk Complete Cache Chunk  Key  Complete Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cache Chunk Complete"
+      }
+    },
+    "/cache/invalidate": {
+      "post": {
+        "description": "Invalidate cache entries that include all provided tags (intersection).",
+        "operationId": "cache_invalidate_cache_invalidate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvalidationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cache Invalidate Cache Invalidate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cache Invalidate"
+      }
+    },
+    "/cache/metrics": {
+      "get": {
+        "description": "Return cache/coordinator metrics snapshot (internal).",
+        "operationId": "cache_metrics_cache_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cache Metrics Cache Metrics Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cache Metrics"
+      }
+    },
+    "/cache/stream/{key}": {
+      "get": {
+        "operationId": "cache_stream_cache_stream__key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cache Stream"
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "description": "Retrieves a list of available campaigns.",
+        "operationId": "get_campaigns_campaigns_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignsListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Campaigns"
+      },
+      "post": {
+        "description": "Creates a new campaign.",
+        "operationId": "create_campaign_campaigns_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignCreationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignCreationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Campaign"
+      }
+    },
+    "/characters": {
+      "get": {
+        "description": "Retrieves a list of available characters.",
+        "operationId": "get_characters_characters_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharactersListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Characters"
+      },
+      "post": {
+        "description": "Creates a new character.",
+        "operationId": "create_character_characters_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_character_characters_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Character"
+      }
+    },
+    "/characters/{character_id}": {
+      "get": {
+        "description": "Retrieves detailed information about a specific character.",
+        "operationId": "get_character_detail_characters__character_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "character_id",
+            "required": true,
+            "schema": {
+              "title": "Character Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Character Detail"
+      }
+    },
+    "/characters/{character_id}/enhanced": {
+      "get": {
+        "description": "Retrieves enhanced character context and analysis data.",
+        "operationId": "get_character_enhanced_characters__character_id__enhanced_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "character_id",
+            "required": true,
+            "schema": {
+              "title": "Character Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Character Enhanced Characters  Character Id  Enhanced Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Character Enhanced"
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Comprehensive health check endpoint.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health Check Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Check"
+      }
+    },
+    "/meta/policy": {
+      "get": {
+        "operationId": "policy_info_meta_policy_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Policy Info Meta Policy Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Policy Info"
+      }
+    },
+    "/meta/system-status": {
+      "get": {
+        "operationId": "system_status_meta_system_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response System Status Meta System Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "System Status"
+      }
+    },
+    "/simulations": {
+      "post": {
+        "description": "Legacy-compatible simulation endpoint used by tests and clients.",
+        "operationId": "run_simulation_simulations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Simulation"
+      }
+    }
+  }
+}

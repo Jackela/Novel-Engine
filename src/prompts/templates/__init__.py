@@ -5,8 +5,8 @@ Pre-defined Prompt Templates.
 This module contains all pre-defined prompt templates for different story genres,
 supporting both English and Chinese languages.
 
-Templates are automatically registered with the PromptRegistry when this module
-is imported.
+Templates are registered with the PromptRegistry when `register_all_templates()`
+is called.
 """
 
 from __future__ import annotations
@@ -65,9 +65,6 @@ def register_all_templates() -> None:
     PromptRegistry.register(urban.URBAN_EN)
     PromptRegistry.register(urban.URBAN_ZH)
 
-
-# Auto-register on import
-register_all_templates()
 
 __all__ = [
     "register_all_templates",

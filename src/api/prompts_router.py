@@ -36,6 +36,22 @@ router = APIRouter(prefix="/prompts", tags=["Prompts"])
 
 # Global storage instance
 _storage: Optional[PromptStorage] = None
+_templates_registered = False
+
+
+def ensure_templates_registered() -> None:
+    global _templates_registered
+    if _templates_registered:
+        return
+    if PromptRegistry.count() > 0:
+        _templates_registered = True
+        return
+    try:
+        register_all_templates()
+        logger.info("Prompt templates registered: %s templates", PromptRegistry.count())
+    except Exception as exc:
+        logger.warning("Prompt templates registration failed: %s", exc)
+    _templates_registered = True
 
 
 def get_storage() -> PromptStorage:
@@ -195,6 +211,7 @@ async def list_templates(
 
     Optionally filter by genre and/or language.
     """
+    ensure_templates_registered()
     templates = PromptRegistry.list_all()
 
     # Apply filters
@@ -231,6 +248,7 @@ async def list_templates(
 @router.get("/templates/{template_id}", response_model=TemplateDetailResponse)
 async def get_template(template_id: str) -> TemplateDetailResponse:
     """Get detailed information about a specific template."""
+    ensure_templates_registered()
     template = PromptRegistry.get(template_id)
     if not template:
         raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
@@ -490,6 +508,4 @@ async def delete_user_prompt(prompt_id: str) -> Dict[str, Any]:
     return {"success": True, "message": f"Prompt {prompt_id} deleted"}
 
 
-# Ensure templates are registered
-register_all_templates()
-logger.info(f"Prompt templates registered: {PromptRegistry.count()} templates")
+__all__ = ["router", "ensure_templates_registered"]
