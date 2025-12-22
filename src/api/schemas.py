@@ -92,3 +92,36 @@ class InvalidationRequest(BaseModel):
 class ChunkInRequest(BaseModel):
     seq: int
     data: str
+
+
+class GuestSessionResponse(BaseModel):
+    workspace_id: str
+    created: bool
+
+
+class WorkspaceCharacterCreateRequest(BaseModel):
+    agent_id: Optional[str] = Field(
+        default=None,
+        description="Optional stable identifier for the character (defaults to a server-derived id).",
+    )
+    name: str = Field(..., min_length=2, max_length=100)
+    background_summary: str = Field("", max_length=1000)
+    personality_traits: str = Field("", max_length=500)
+    skills: Dict[str, float] = Field(default_factory=dict)
+    relationships: Dict[str, float] = Field(default_factory=dict)
+    current_location: Optional[str] = Field(default=None, max_length=200)
+    inventory: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    structured_data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class WorkspaceCharacterUpdateRequest(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    background_summary: Optional[str] = Field(default=None, max_length=1000)
+    personality_traits: Optional[str] = Field(default=None, max_length=500)
+    skills: Optional[Dict[str, float]] = None
+    relationships: Optional[Dict[str, float]] = None
+    current_location: Optional[str] = Field(default=None, max_length=200)
+    inventory: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    structured_data: Optional[Dict[str, Any]] = None
