@@ -7,7 +7,7 @@
 
 ## Talking Points
 - Emphasize documentation-first scope; no runtime breaking changes shipped.
-- Highlight new `/api/v1/*` endpoints available for contract consumers (beta).
+- Highlight canonical `/api/*` endpoints available for contract consumers (beta).
 - Share security/data-protection commitments with compliance stakeholders.
 
 ## Distribution List
@@ -19,4 +19,3 @@
 ## Next Steps
 - Schedule walkthrough session (45 minutes) for cross-team Q&A.
 - Track follow-up action items in Jira epic `NE-REFRACTOR-001`.
-

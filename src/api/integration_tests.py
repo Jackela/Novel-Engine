@@ -214,7 +214,7 @@ class IntegrationTestFramework:
                     )
 
             # Test detailed health endpoint if available
-            await client.get(f"{self.base_url}/api/v1/health/detailed")
+            await client.get(f"{self.base_url}/api/health/detailed")
 
             return TestResult(
                 scenario_name="health_check",
@@ -282,7 +282,7 @@ class IntegrationTestFramework:
             }
 
             create_response = await client.post(
-                f"{self.base_url}/api/v1/characters", json=character_data
+                f"{self.base_url}/api/characters", json=character_data
             )
 
             if create_response.status_code not in [200, 201]:
@@ -298,7 +298,7 @@ class IntegrationTestFramework:
 
             # Read character
             read_response = await client.get(
-                f"{self.base_url}/api/v1/characters/{character_id}"
+                f"{self.base_url}/api/characters/{character_id}"
             )
 
             if read_response.status_code != 200:
@@ -310,7 +310,7 @@ class IntegrationTestFramework:
                 )
 
             # List characters
-            list_response = await client.get(f"{self.base_url}/api/v1/characters")
+            list_response = await client.get(f"{self.base_url}/api/characters")
 
             if list_response.status_code != 200:
                 return TestResult(
@@ -323,7 +323,7 @@ class IntegrationTestFramework:
             # Update character
             update_data = {"name": "Updated Test Character"}
             update_response = await client.put(
-                f"{self.base_url}/api/v1/characters/{character_id}", json=update_data
+                f"{self.base_url}/api/characters/{character_id}", json=update_data
             )
 
             if update_response.status_code != 200:
@@ -360,7 +360,7 @@ class IntegrationTestFramework:
             }
 
             generation_response = await client.post(
-                f"{self.base_url}/api/v1/stories/generate", json=story_data
+                f"{self.base_url}/api/stories/generate", json=story_data
             )
 
             if generation_response.status_code not in [200, 202]:
@@ -391,7 +391,7 @@ class IntegrationTestFramework:
 
             # Check generation status
             status_response = await client.get(
-                f"{self.base_url}/api/v1/stories/status/{generation_id}"
+                f"{self.base_url}/api/stories/status/{generation_id}"
             )
 
             if status_response.status_code != 200:
@@ -415,7 +415,7 @@ class IntegrationTestFramework:
         try:
             # Test with a mock generation ID
             test_generation_id = f"test_{uuid.uuid4().hex[:8]}"
-            ws_url = f"ws://localhost:8000/api/v1/stories/progress/{test_generation_id}"
+            ws_url = f"ws://localhost:8000/api/stories/progress/{test_generation_id}"
 
             # Attempt WebSocket connection with timeout
             async with asyncio.timeout(5):
@@ -458,7 +458,7 @@ class IntegrationTestFramework:
         async with httpx.AsyncClient() as client:
             # Test 404 error
             response_404 = await client.get(
-                f"{self.base_url}/api/v1/characters/nonexistent"
+                f"{self.base_url}/api/characters/nonexistent"
             )
 
             if response_404.status_code != 404:
@@ -480,7 +480,7 @@ class IntegrationTestFramework:
             # Test validation error
             invalid_character = {"name": ""}  # Missing required fields
             validation_response = await client.post(
-                f"{self.base_url}/api/v1/characters", json=invalid_character
+                f"{self.base_url}/api/characters", json=invalid_character
             )
 
             if validation_response.status_code != 422:
@@ -560,7 +560,7 @@ class IntegrationTestFramework:
                 }
 
                 task = client.post(
-                    f"{self.base_url}/api/v1/characters", json=character_data
+                    f"{self.base_url}/api/characters", json=character_data
                 )
                 tasks.append(task)
 
@@ -610,7 +610,7 @@ class IntegrationTestFramework:
             # Test SQL injection attempt
             malicious_id = "'; DROP TABLE characters; --"
             response = await client.get(
-                f"{self.base_url}/api/v1/characters/{malicious_id}"
+                f"{self.base_url}/api/characters/{malicious_id}"
             )
 
             # Should return 404 or 400, not 500 (which might indicate SQL injection vulnerability)
@@ -629,7 +629,7 @@ class IntegrationTestFramework:
             }
 
             oversized_response = await client.post(
-                f"{self.base_url}/api/v1/characters", json=oversized_data
+                f"{self.base_url}/api/characters", json=oversized_data
             )
 
             # Should reject oversized payload

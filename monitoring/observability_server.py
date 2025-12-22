@@ -208,14 +208,14 @@ class ObservabilityServer:
                 "endpoints": {
                     "metrics": "/metrics",
                     "health": "/health",
-                    "alerts": "/api/v1/alerts",
-                    "dashboards": "/api/v1/dashboards",
-                    "synthetic": "/api/v1/synthetic"
+                    "alerts": "/api/alerts",
+                    "dashboards": "/api/dashboards",
+                    "synthetic": "/api/synthetic"
                 }
             }
         
         # Alert management APIs
-        @self.app.get("/api/v1/alerts")
+        @self.app.get("/api/alerts")
         async def get_alerts():
             """Get active alerts"""
             if not self.alert_manager:
@@ -241,7 +241,7 @@ class ObservabilityServer:
                 "count": len(active_alerts)
             }
         
-        @self.app.post("/api/v1/alerts/{alert_id}/acknowledge")
+        @self.app.post("/api/alerts/{alert_id}/acknowledge")
         async def acknowledge_alert(alert_id: str, user: str = "api"):
             """Acknowledge an alert"""
             if not self.alert_manager:
@@ -253,7 +253,7 @@ class ObservabilityServer:
             else:
                 raise HTTPException(status_code=404, detail="Alert not found")
         
-        @self.app.get("/api/v1/alerts/statistics")
+        @self.app.get("/api/alerts/statistics")
         async def get_alert_statistics():
             """Get alert statistics"""
             if not self.alert_manager:
@@ -262,7 +262,7 @@ class ObservabilityServer:
             return self.alert_manager.get_alert_statistics()
         
         # Dashboard APIs
-        @self.app.get("/api/v1/dashboards")
+        @self.app.get("/api/dashboards")
         async def list_dashboards():
             """List available dashboards"""
             if not self.dashboard_collector:
@@ -283,7 +283,7 @@ class ObservabilityServer:
                 ]
             }
         
-        @self.app.get("/api/v1/dashboards/{dashboard_id}")
+        @self.app.get("/api/dashboards/{dashboard_id}")
         async def get_dashboard(dashboard_id: str):
             """Get dashboard configuration and data"""
             if not self.dashboard_collector:
@@ -295,7 +295,7 @@ class ObservabilityServer:
             
             return dashboard_data
         
-        @self.app.get("/api/v1/dashboards/{dashboard_id}/export")
+        @self.app.get("/api/dashboards/{dashboard_id}/export")
         async def export_dashboard(dashboard_id: str):
             """Export dashboard data"""
             if not self.dashboard_collector:
@@ -307,7 +307,7 @@ class ObservabilityServer:
             else:
                 raise HTTPException(status_code=500, detail="Export failed")
         
-        @self.app.get("/api/v1/system/overview")
+        @self.app.get("/api/system/overview")
         async def get_system_overview():
             """Get system overview"""
             if not self.dashboard_collector:
@@ -316,7 +316,7 @@ class ObservabilityServer:
             return self.dashboard_collector.get_system_overview()
         
         # Synthetic monitoring APIs
-        @self.app.get("/api/v1/synthetic/checks")
+        @self.app.get("/api/synthetic/checks")
         async def list_synthetic_checks():
             """List synthetic checks"""
             if not self.synthetic_monitor:
@@ -337,7 +337,7 @@ class ObservabilityServer:
             
             return {"checks": checks}
         
-        @self.app.get("/api/v1/synthetic/checks/{check_name}/results")
+        @self.app.get("/api/synthetic/checks/{check_name}/results")
         async def get_check_results(check_name: str, limit: int = 100):
             """Get results for a synthetic check"""
             if not self.synthetic_monitor:
@@ -358,7 +358,7 @@ class ObservabilityServer:
                 ]
             }
         
-        @self.app.get("/api/v1/synthetic/statistics")
+        @self.app.get("/api/synthetic/statistics")
         async def get_synthetic_statistics():
             """Get overall synthetic monitoring statistics"""
             if not self.synthetic_monitor:
@@ -367,7 +367,7 @@ class ObservabilityServer:
             return self.synthetic_monitor.get_overall_statistics()
         
         # Observability status API
-        @self.app.get("/api/v1/status")
+        @self.app.get("/api/status")
         async def get_observability_status():
             """Get overall observability system status"""
             status = {

@@ -367,7 +367,7 @@ Campaign (Aggregate Root)
 - **Documentation**: Living API documentation from contracts
 
 #### API Versioning Strategy
-- **URL Versioning**: Version in URL path (`/api/v1/characters`)
+- **API Base Path**: Single stable prefix under `/api/*` (no path versioning)
 - **Header Versioning**: Accept-Version header for fine-grained control
 - **Backward Compatibility**: Minimum 2 versions supported simultaneously
 - **Deprecation Policy**: 6-month notice for breaking changes
@@ -398,12 +398,12 @@ Internal Services
 
 #### Story Engine API Endpoints
 ```
-POST /api/v1/stories              # Create new story
-GET  /api/v1/stories/{id}         # Retrieve story
-PUT  /api/v1/stories/{id}         # Update story
-DELETE /api/v1/stories/{id}       # Delete story
-POST /api/v1/stories/{id}/events  # Add story event
-GET  /api/v1/stories/{id}/analysis # Story analysis
+POST /api/stories              # Create new story
+GET  /api/stories/{id}         # Retrieve story
+PUT  /api/stories/{id}         # Update story
+DELETE /api/stories/{id}       # Delete story
+POST /api/stories/{id}/events  # Add story event
+GET  /api/stories/{id}/analysis # Story analysis
 ```
 
 #### Character Service API Endpoints
@@ -418,12 +418,12 @@ GET  /api/characters/{id}/memory # Character memory
 
 #### Campaign Manager API Endpoints
 ```
-POST /api/v1/campaigns            # Create campaign
-GET  /api/v1/campaigns/{id}       # Retrieve campaign
-PUT  /api/v1/campaigns/{id}       # Update campaign
-DELETE /api/v1/campaigns/{id}     # Delete campaign
-POST /api/v1/campaigns/{id}/sessions # Start session
-GET  /api/v1/campaigns/{id}/state # World state
+POST /api/campaigns            # Create campaign
+GET  /api/campaigns/{id}       # Retrieve campaign
+PUT  /api/campaigns/{id}       # Update campaign
+DELETE /api/campaigns/{id}     # Delete campaign
+POST /api/campaigns/{id}/sessions # Start session
+GET  /api/campaigns/{id}/state # World state
 ```
 
 ---

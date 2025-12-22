@@ -358,7 +358,7 @@ run_health_checks() {
     
     # API endpoint tests
     log_info "Testing API endpoints..."
-    local endpoints=("/health" "/api/v1/status" "/metrics")
+    local endpoints=("/health" "/api/orchestration/status" "/metrics")
     for endpoint in "${endpoints[@]}"; do
         if curl -f "$api_endpoint$endpoint" &> /dev/null; then
             log_success "Endpoint $endpoint: OK"

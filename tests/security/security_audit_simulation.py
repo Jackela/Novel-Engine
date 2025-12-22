@@ -213,7 +213,7 @@ class SecurityAuditor:
                 "/api/internal/config",
                 "/api/admin/system",
                 "/../../../etc/passwd",
-                "/api/v1/users?user_id=../admin",
+                "/api/users?user_id=../admin",
             ]
 
             for endpoint in test_endpoints:

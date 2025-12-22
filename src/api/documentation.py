@@ -109,8 +109,8 @@ Errors are returned with appropriate HTTP status codes and detailed information:
 
 Real-time features use WebSocket connections:
 
-- **Story Generation Progress**: `/api/v1/stories/progress/{generation_id}`
-- **Character Interactions**: `/api/v1/interactions/ws/{interaction_id}`
+- **Story Generation Progress**: `/api/stories/progress/{generation_id}`
+- **Character Interactions**: `/api/interactions/ws/{interaction_id}`
 
 ## SDK and Libraries
 
@@ -409,10 +409,10 @@ curl -X GET "http://localhost:8000/health"
 
             <h3>2. Create a Character</h3>
             <div class="endpoint">
-                <span class="method post">POST</span> <code>/api/v1/characters</code>
+                <span class="method post">POST</span> <code>/api/characters</code>
             </div>
             <div class="code-block">
-curl -X POST "http://localhost:8000/api/v1/characters" \\
+curl -X POST "http://localhost:8000/api/characters" \\
   -H "Content-Type: application/json" \\
   -d '{
     "agent_id": "wizard_gandalf",
@@ -429,10 +429,10 @@ curl -X POST "http://localhost:8000/api/v1/characters" \\
 
             <h3>3. Generate a Story</h3>
             <div class="endpoint">
-                <span class="method post">POST</span> <code>/api/v1/stories/generate</code>
+                <span class="method post">POST</span> <code>/api/stories/generate</code>
             </div>
             <div class="code-block">
-curl -X POST "http://localhost:8000/api/v1/stories/generate" \\
+curl -X POST "http://localhost:8000/api/stories/generate" \\
   -H "Content-Type: application/json" \\
   -d '{
     "characters": ["wizard_gandalf"],
@@ -447,13 +447,13 @@ curl -X POST "http://localhost:8000/api/v1/stories/generate" \\
 
             <h3>API Key Authentication</h3>
             <div class="code-block">
-curl -X GET "http://localhost:8000/api/v1/characters" \\
+curl -X GET "http://localhost:8000/api/characters" \\
   -H "X-API-Key: your-api-key-here"
             </div>
 
             <h3>Bearer Token Authentication</h3>
             <div class="code-block">
-curl -X GET "http://localhost:8000/api/v1/characters" \\
+curl -X GET "http://localhost:8000/api/characters" \\
   -H "Authorization: Bearer your-jwt-token-here"
             </div>
         </div>
@@ -463,22 +463,22 @@ curl -X GET "http://localhost:8000/api/v1/characters" \\
 
             <h3>Create Character</h3>
             <div class="endpoint">
-                <span class="method post">POST</span> <code>/api/v1/characters</code>
+                <span class="method post">POST</span> <code>/api/characters</code>
             </div>
 
             <h3>List Characters</h3>
             <div class="endpoint">
-                <span class="method get">GET</span> <code>/api/v1/characters</code>
+                <span class="method get">GET</span> <code>/api/characters</code>
             </div>
 
             <h3>Get Character Details</h3>
             <div class="endpoint">
-                <span class="method get">GET</span> <code>/api/v1/characters/{character_id}</code>
+                <span class="method get">GET</span> <code>/api/characters/{character_id}</code>
             </div>
 
             <h3>Update Character</h3>
             <div class="endpoint">
-                <span class="method put">PUT</span> <code>/api/v1/characters/{character_id}</code>
+                <span class="method put">PUT</span> <code>/api/characters/{character_id}</code>
             </div>
         </div>
 
@@ -487,12 +487,12 @@ curl -X GET "http://localhost:8000/api/v1/characters" \\
 
             <h3>Generate Story</h3>
             <div class="endpoint">
-                <span class="method post">POST</span> <code>/api/v1/stories/generate</code>
+                <span class="method post">POST</span> <code>/api/stories/generate</code>
             </div>
 
             <h3>Check Generation Status</h3>
             <div class="endpoint">
-                <span class="method get">GET</span> <code>/api/v1/stories/status/{generation_id}</code>
+                <span class="method get">GET</span> <code>/api/stories/status/{generation_id}</code>
             </div>
         </div>
 
@@ -502,7 +502,7 @@ curl -X GET "http://localhost:8000/api/v1/characters" \\
 
             <h3>Story Generation Progress</h3>
             <div class="code-block">
-const ws = new WebSocket('ws://localhost:8000/api/v1/stories/progress/story_12345678');
+const ws = new WebSocket('ws://localhost:8000/api/stories/progress/story_12345678');
 
 ws.onmessage = function(event) {
     const progress = JSON.parse(event.data);

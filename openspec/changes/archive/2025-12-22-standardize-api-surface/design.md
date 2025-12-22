@@ -7,25 +7,16 @@ This change standardizes the **product API surface** (the set of endpoints used 
 
 ### Canonical Prefix
 - Canonical prefix for the product API is **`/api`**.
-- The API MUST NOT require path-based versioning for first-party clients.
-
-### Versioned Alias
-- A versioned alias **`/api/v1`** MUST exist for v1 endpoints.
-- `/api/v1/*` MUST behave identically to `/api/*` for the v1 surface.
+- The product API MUST NOT use path-based versioning (`/api/v1`, `/api/v2`, …).
 
 ### Version Semantics
 - `/api/*` is defined as “current stable product API”.
-- Introducing a new stable version (e.g., v2) requires:
-  - explicit proposal
-  - migration guidance
-  - compatibility window for `/api/v1`
+- Introducing a new stable version requires an explicit proposal and migration plan, but this change does not introduce any versioned path prefixes.
 
 ## Practical Outcomes
-- Frontend defaults to `/api` to avoid churn when a new version is introduced.
-- External consumers can pin to `/api/v1` when stability is required.
+- Frontend and docs default to `/api`.
 
 ## Backward Compatibility
 - If any legacy paths exist (e.g., `/characters`), they MUST either:
   - remain as thin redirects/aliases with deprecation signals, or
   - be removed with an explicit breaking-change proposal.
-

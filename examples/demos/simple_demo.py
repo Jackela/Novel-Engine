@@ -46,11 +46,11 @@ try:
     print("   Story 6: ✅ Project Management & Collaboration")
     
     print("\n🚀 API Endpoints Available:")
-    print("   POST /api/v1/characters - Create characters")
-    print("   GET  /api/v1/characters - List characters")
-    print("   POST /api/v1/interactions - Start interactions")
-    print("   GET  /api/v1/interactions - Monitor interactions")
-    print("   POST /api/v1/stories/generate - Generate stories")
+    print("   POST /api/characters - Create characters")
+    print("   GET  /api/characters - List characters")
+    print("   POST /api/interactions - Start interactions")
+    print("   GET  /api/interactions - Monitor interactions")
+    print("   POST /api/stories/generate - Generate stories")
     print("   GET  /health - System health check")
     
     print("\n🌟 Architecture Highlights:")

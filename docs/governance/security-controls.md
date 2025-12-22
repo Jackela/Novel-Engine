@@ -36,7 +36,7 @@ Project Best-Practice Refactor specification (FR-002, FR-003, FR-004).
 
 ## 3. Rate Limiting & Idempotency
 
-- **Buckets**: Limits enforced per tenant, user, and IP on `/api/v1/*`.
+- **Buckets**: Limits enforced per tenant, user, and IP on `/api/*`.
   Default 120 requests/minute per user, 600/minute per tenant.
 - **Headers**: Responses MUST include `X-RateLimit-Limit`,
   `X-RateLimit-Remaining`, `X-RateLimit-Reset`.

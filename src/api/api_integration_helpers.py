@@ -300,7 +300,7 @@ class APIIntegrationManager:
     def _add_integration_endpoints(self):
         """Add integration-specific endpoints."""
 
-        @self.app.get("/api/v1/integration/examples/{endpoint_path:path}")
+        @self.app.get("/api/integration/examples/{endpoint_path:path}")
         async def get_endpoint_examples(endpoint_path: str):
             """Get Context7 examples for a specific endpoint."""
             try:
@@ -311,7 +311,7 @@ class APIIntegrationManager:
             except Exception as e:
                 return {"success": False, "error": str(e)}
 
-        @self.app.post("/api/v1/integration/validate")
+        @self.app.post("/api/integration/validate")
         async def validate_api_code(request: Dict[str, Any]):
             """Validate API code using Context7 patterns."""
             api_code = request.get("code", "")
@@ -327,7 +327,7 @@ class APIIntegrationManager:
             except Exception as e:
                 return {"success": False, "error": str(e)}
 
-        @self.app.get("/api/v1/integration/status")
+        @self.app.get("/api/integration/status")
         async def get_integration_status():
             """Get integration status and capabilities."""
             return {

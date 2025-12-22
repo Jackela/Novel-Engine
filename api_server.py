@@ -276,21 +276,12 @@ async def _cors_preflight_middleware(request: Request, call_next):
 
 
 
-# Include World Context Router
-if WORLD_ROUTER_AVAILABLE:
-    app.include_router(world_router, prefix="/api/v1")
-    logger.info("World context router included with prefix /api/v1/worlds")
-else:
-    logger.warning(
-        "World context router not available - endpoints will not be accessible"
-    )
-
 # Include Prompts Router
 try:
     from src.api.prompts_router import router as prompts_router
 
-    app.include_router(prompts_router)
-    logger.info("Prompts router included with prefix /api/prompts")
+    app.include_router(prompts_router, prefix="/api")
+    logger.info("Prompts router included with prefix /api")
 except ImportError as e:
     logger.warning(f"Prompts router not available: {e}")
 
@@ -314,9 +305,9 @@ try:
     _decision_negotiation_engine = NegotiationEngine()
 
     # Include router
-    app.include_router(decision_router)
+    app.include_router(decision_router, prefix="/api")
     DECISION_ROUTER_AVAILABLE = True
-    logger.info("Decision router included with prefix /api/decision")
+    logger.info("Decision router included with prefix /api")
 except ImportError as e:
     DECISION_ROUTER_AVAILABLE = False
     _decision_pause_controller = None
@@ -1938,6 +1929,16 @@ async def validate_token(request: Request):
                 error="Token validation failed"
             ).model_dump()
         )
+
+
+# Include World Context Router (registered late to avoid shadowing static /api/* endpoints)
+if WORLD_ROUTER_AVAILABLE:
+    app.include_router(world_router, prefix="/api")
+    logger.info("World context router included with prefix /api")
+else:
+    logger.warning(
+        "World context router not available - endpoints will not be accessible"
+    )
 
 
 def run_server(host: str = "127.0.0.1", port: int = 8000, debug: bool = False):

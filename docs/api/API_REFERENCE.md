@@ -25,8 +25,8 @@ Production-ready HTTP/JSON API for managing characters, running story simulation
 
 **Base URL**: `http://localhost:8000`  
 **Content Type**: `application/json`  
-**API Version**: v1 (`/api/v1/`)  
-**Authentication**: None (JWT planned for v2)
+**API Base Path**: `/api`  
+**Authentication**: None (JWT planned)
 
 ### Rate Limiting
 - **Default**: 100 requests per minute per IP
@@ -34,7 +34,7 @@ Production-ready HTTP/JSON API for managing characters, running story simulation
 - **Story Generation**: 5 concurrent simulations per user
 
 ### Versioning & Stability
-The v1 API is stable. Breaking changes will result in new versions (v2, v3). Non-breaking changes (optional fields) may be added to v1.
+The product API uses a single stable path (`/api/*`). Breaking changes require an explicit migration plan.
 
 ---
 

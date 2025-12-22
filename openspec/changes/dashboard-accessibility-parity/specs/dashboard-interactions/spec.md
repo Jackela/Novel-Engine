@@ -1,6 +1,6 @@
 ## MODIFIED Requirements
 ### Requirement: Entity selection reveals context panel
-- **ADDITION**: Spatial markers must expose roving-tabindex keyboard semantics and deterministic aria attributes.
+- **ADDITION**: Spatial markers MUST expose roving-tabindex keyboard semantics and deterministic aria attributes.
 
 #### Scenario: Map markers support Space/Enter activation
 - **GIVEN** focus is on any world-map marker (`data-role="hero-map" [data-location]`)
@@ -9,7 +9,7 @@
 - **AND** the marker exposes `role="button"`, `tabindex="0"`, and `aria-controls` referencing the details region so assistive tech can follow the context change.
 
 ### Requirement: Character network exposes actionable nodes
-- **ADDITION**: Character cards must be reachable via keyboard focus, announce status/ trust, and support Enter/Space to open their mini detail row.
+- **ADDITION**: Character cards MUST be reachable via keyboard focus, announce status/ trust, and support Enter/Space to open their mini detail row.
 
 #### Scenario: Character cards are operable without a mouse
 - **GIVEN** the user tabs through `[data-role="character-networks"]`
@@ -17,7 +17,7 @@
 - **THEN** the card element has `role="button"`, `tabindex="0"`, `aria-pressed`/`aria-expanded` to indicate activation, and pressing Enter/Space fires the same handler as clicking.
 
 ### Requirement: Timeline nodes are keyboard navigable
-- **ADDITION**: Each timeline node participates in a roving tablist so users can inspect `current`, `completed`, and `upcoming` entries with consistent aria metadata.
+- **ADDITION**: Each timeline node MUST participate in a roving tablist so users can inspect `current`, `completed`, and `upcoming` entries with consistent aria metadata.
 
 #### Scenario: Timeline exposes aria-current status
 - **GIVEN** focus is inside `[data-role="narrative-timeline"]`
@@ -25,7 +25,7 @@
 - **THEN** only the active node has `tabindex="0"` (`-1` for others), the `current` node exposes `aria-current="step"`, and Enter/Space triggers the same callbacks used for pointer events.
 
 ### Requirement: Live telemetry indicator refreshes on a timer
-- **ADDITION**: QuickActions/summary controls must not emit console warnings due to invalid DOM props and must present visible focus outlines.
+- **ADDITION**: QuickActions/summary controls MUST NOT emit console warnings due to invalid DOM props and MUST present visible focus outlines.
 
 #### Scenario: QuickActions render without DOM warnings
 - **GIVEN** QuickActions render in any state (idle/running)

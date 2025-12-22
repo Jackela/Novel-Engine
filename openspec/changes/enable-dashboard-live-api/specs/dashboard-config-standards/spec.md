@@ -5,13 +5,13 @@ All dashboard-specific environment variables MUST use the `VITE_DASHBOARD_*` pre
 
 #### Scenario: Events endpoint is configurable via environment variable
 - **GIVEN** the frontend is built or run in development mode
-- **WHEN** the `VITE_DASHBOARD_EVENTS_ENDPOINT` environment variable is set (e.g., `/api/v1/events/stream`)
-- **THEN** the `useRealtimeEvents` hook uses this value as the SSE endpoint, and falls back to `/api/v1/events/stream` if the variable is undefined
+- **WHEN** the `VITE_DASHBOARD_EVENTS_ENDPOINT` environment variable is set (e.g., `/api/events/stream`)
+- **THEN** the `useRealtimeEvents` hook uses this value as the SSE endpoint, and falls back to `/api/events/stream` if the variable is undefined
 
 #### Scenario: Characters endpoint follows canonical pattern
 - **GIVEN** the dashboard needs to fetch character data
-- **WHEN** the `VITE_DASHBOARD_CHARACTERS_ENDPOINT` environment variable is set (e.g., `/api/v1/characters`)
-- **THEN** the data fetching hook uses this value, defaulting to `/api/v1/characters` per dashboard-data-routing-hygiene spec
+- **WHEN** the `VITE_DASHBOARD_CHARACTERS_ENDPOINT` environment variable is set (e.g., `/api/characters`)
+- **THEN** the data fetching hook uses this value, defaulting to `/api/characters` per dashboard-data-routing-hygiene spec
 
 #### Scenario: API base URL is configurable
 - **GIVEN** the frontend needs to resolve absolute API URLs
@@ -46,10 +46,10 @@ All references to `REACT_APP_*` environment variables MUST be removed and migrat
 ## ADDED Requirements
 
 ### Requirement: Vite proxy configuration for SSE
-Vite dev server proxy MUST support SSE-specific headers and streaming for `/api/v1/events/stream` endpoint.
+Vite dev server proxy MUST support SSE-specific headers and streaming for `/api/events/stream` endpoint.
 
 #### Scenario: Proxy forwards SSE headers correctly
-- **GIVEN** a client requests `/api/v1/events/stream` through the Vite dev server
+- **GIVEN** a client requests `/api/events/stream` through the Vite dev server
 - **WHEN** the proxy forwards the request to the backend
 - **THEN** the proxy sets `Accept: text/event-stream`, `Cache-Control: no-cache`, and `Connection: keep-alive` headers on the proxied request
 
@@ -58,10 +58,10 @@ Vite dev server proxy MUST support SSE-specific headers and streaming for `/api/
 - **WHEN** the Vite proxy receives the streaming response
 - **THEN** the proxy does not buffer the response, streams events to the client in real-time, and maintains the connection until the client or server closes it
 
-#### Scenario: Proxy maps /api/v1/* to backend
+#### Scenario: Proxy maps /api/* to backend
 - **GIVEN** the Vite dev server is configured with proxy rules
-- **WHEN** a request is made to `/api/v1/characters`, `/api/v1/events/stream`, or any `/api/v1/*` path
-- **THEN** the proxy forwards the request to the backend at `VITE_API_BASE_URL` (default: `http://localhost:8000`), preserving the `/api/v1/*` path structure
+- **WHEN** a request is made to `/api/characters`, `/api/events/stream`, or any `/api/*` path
+- **THEN** the proxy forwards the request to the backend at `VITE_API_BASE_URL` (default: `http://localhost:8000`), preserving the `/api/*` path structure
 
 #### Scenario: Proxy handles backend unavailability
 - **GIVEN** the backend server at `VITE_API_BASE_URL` is not running

@@ -201,7 +201,7 @@ class EmergentNarrativeAPI:
         """Setup all emergent narrative API routes."""
 
         @app.post(
-            "/api/v1/narratives/emergent/generate",
+            "/api/narratives/emergent/generate",
             response_model=StandardResponse[EmergentNarrativeData],
             summary="Generate Emergent Narrative",
             description="Generate emergent narrative based on agent interactions and causal graph",
@@ -265,7 +265,7 @@ class EmergentNarrativeAPI:
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.post(
-            "/api/v1/narratives/build",
+            "/api/narratives/build",
             response_model=StandardResponse[EmergentNarrativeData],
             summary="Build Comprehensive Narrative",
             description="Build comprehensive narrative from existing story elements",
@@ -329,7 +329,7 @@ class EmergentNarrativeAPI:
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
-            "/api/v1/causality/graph",
+            "/api/causality/graph",
             response_model=StandardResponse[CausalGraphData],
             summary="Get Causal Graph",
             description="Access causal relationship graph",
@@ -377,7 +377,7 @@ class EmergentNarrativeAPI:
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
-            "/api/v1/narratives/emergent/{narrative_id}",
+            "/api/narratives/emergent/{narrative_id}",
             response_model=StandardResponse[EmergentNarrativeData],
             summary="Get Generated Narrative",
             description="Retrieve previously generated emergent narrative",

@@ -166,8 +166,8 @@ class PerformanceMonitor:
             "monitoring_endpoints",
             [
                 "http://localhost:8000/health",
-                "http://localhost:8000/api/v1/agents/status",
-                "http://localhost:8000/api/v1/narrative/generate",
+                "http://localhost:8000/api/characters",
+                "http://localhost:8000/api/orchestration/status",
             ],
         )
 
@@ -586,7 +586,7 @@ async def main():
             "optimization_cooldown_minutes": 30,
             "monitoring_endpoints": [
                 "http://localhost:8000/health",
-                "http://localhost:8000/api/v1/agents/status",
+                "http://localhost:8000/api/characters",
             ],
             "prometheus_pushgateway": "localhost:9091",
         }

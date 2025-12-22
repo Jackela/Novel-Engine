@@ -32,7 +32,7 @@ from src.prompts.templates import register_all_templates
 logger = logging.getLogger(__name__)
 
 # Create the router
-router = APIRouter(prefix="/api/prompts", tags=["Prompts"])
+router = APIRouter(prefix="/prompts", tags=["Prompts"])
 
 # Global storage instance
 _storage: Optional[PromptStorage] = None

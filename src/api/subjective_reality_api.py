@@ -188,7 +188,7 @@ class SubjectiveRealityAPI:
         """Setup all subjective reality API routes."""
 
         @app.get(
-            "/api/v1/turns/{turn_id}/briefs/{agent_id}",
+            "/api/turns/{turn_id}/briefs/{agent_id}",
             response_model=StandardResponse[TurnBriefData],
             summary="Get Agent Turn Brief",
             description="Retrieve personalized turn brief for a specific agent",
@@ -249,7 +249,7 @@ class SubjectiveRealityAPI:
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
-            "/api/v1/turns/{turn_id}/briefs",
+            "/api/turns/{turn_id}/briefs",
             response_model=StandardResponse[MultiBriefData],
             summary="Get All Agent Turn Briefs",
             description="Retrieve turn briefs for all agents in a turn",
@@ -318,7 +318,7 @@ class SubjectiveRealityAPI:
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
-            "/api/v1/agents/{agent_id}/beliefs",
+            "/api/agents/{agent_id}/beliefs",
             response_model=StandardResponse[BeliefModelData],
             summary="Get Agent Belief Model",
             description="Access agent's subjective belief model",

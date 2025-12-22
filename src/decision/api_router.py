@@ -19,7 +19,7 @@ from .negotiation_engine import NegotiationEngine
 logger = logging.getLogger(__name__)
 
 # Create router
-router = APIRouter(prefix="/api/decision", tags=["decision"])
+router = APIRouter(prefix="/decision", tags=["decision"])
 
 
 # ===================================================================

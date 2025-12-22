@@ -1,10 +1,10 @@
 ## ADDED Requirements
 
 ### Requirement: SSE-based real-time events hook
-Frontend MUST provide `useRealtimeEvents` hook that establishes SSE connection to `/api/v1/events/stream` and manages event state, connection lifecycle, and error handling.
+Frontend MUST provide `useRealtimeEvents` hook that establishes SSE connection to `/api/events/stream` and manages event state, connection lifecycle, and error handling.
 
 #### Scenario: Hook establishes SSE connection on mount
-- **GIVEN** the `useRealtimeEvents` hook is called with an endpoint parameter (default: `/api/v1/events/stream`)
+- **GIVEN** the `useRealtimeEvents` hook is called with an endpoint parameter (default: `/api/events/stream`)
 - **WHEN** the component mounts
 - **THEN** the hook creates an `EventSource` instance connecting to the endpoint, sets `connectionState` to 'connecting', and sets `loading` to true
 
@@ -67,7 +67,7 @@ Frontend SSE integration MUST handle network interruptions, reconnections, and b
 #### Scenario: Browser auto-reconnects after network interruption
 - **GIVEN** an active SSE connection is interrupted by network failure
 - **WHEN** the browser's EventSource detects the disconnection
-- **THEN** EventSource automatically attempts to reconnect to `/api/v1/events/stream`, sends `Last-Event-ID` header with the ID of the last received event, and the hook updates `connectionState` appropriately during reconnection
+- **THEN** EventSource automatically attempts to reconnect to `/api/events/stream`, sends `Last-Event-ID` header with the ID of the last received event, and the hook updates `connectionState` appropriately during reconnection
 
 #### Scenario: Hook handles page visibility changes
 - **GIVEN** the user switches to a different browser tab (page visibility: hidden)

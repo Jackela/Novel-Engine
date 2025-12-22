@@ -10,7 +10,7 @@
 
 | Context | Metric | Target | Notes |
 |---------|--------|--------|-------|
-| Simulation Orchestration | Request rate | Monitor per campaign | Derived from `/api/v1/simulations` submissions. |
+| Simulation Orchestration | Request rate | Monitor per campaign | Derived from `/simulations` submissions. |
 | Simulation Orchestration | Error rate | < 1% | Failed turns, persona load errors. |
 | Persona Intelligence | Latency (p95) | < 700ms | Includes Gemini ACL cache hit tracking. |
 | Narrative Delivery | Story publish latency (p95) | < 2s | From event ingestion to file persistence. |

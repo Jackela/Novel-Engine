@@ -2,11 +2,11 @@
 
 ## Overview
 
-The `/api/v1/events/stream` endpoint provides real-time dashboard events via Server-Sent Events (SSE). This allows the frontend to receive continuous updates without polling.
+The `/api/events/stream` endpoint provides real-time dashboard events via Server-Sent Events (SSE). This allows the frontend to receive continuous updates without polling.
 
 ## Endpoint Details
 
-- **Path**: `/api/v1/events/stream`
+- **Path**: `/api/events/stream`
 - **Method**: `GET`
 - **Protocol**: Server-Sent Events (SSE)
 - **Content-Type**: `text/event-stream`
@@ -17,7 +17,7 @@ The `/api/v1/events/stream` endpoint provides real-time dashboard events via Ser
 ### 1. Client Connection
 
 ```javascript
-const eventSource = new EventSource('/api/v1/events/stream');
+const eventSource = new EventSource('/api/events/stream');
 ```
 
 ### 2. Retry Directive
@@ -103,7 +103,7 @@ Each event contains the following fields:
 ### Basic Connection Test
 
 ```bash
-curl -N -H "Accept: text/event-stream" http://localhost:8000/api/v1/events/stream
+curl -N -H "Accept: text/event-stream" http://localhost:8000/api/events/stream
 ```
 
 Expected output:
@@ -120,7 +120,7 @@ data: {"id":"evt-2","type":"system",...}
 ### Timeout Test (10 seconds)
 
 ```bash
-timeout 10 curl -N -H "Accept: text/event-stream" http://localhost:8000/api/v1/events/stream
+timeout 10 curl -N -H "Accept: text/event-stream" http://localhost:8000/api/events/stream
 ```
 
 ## Frontend Integration
@@ -157,7 +157,7 @@ function MyComponent() {
 ### Raw EventSource API
 
 ```javascript
-const eventSource = new EventSource('/api/v1/events/stream');
+const eventSource = new EventSource('/api/events/stream');
 
 eventSource.onopen = () => {
   console.log('Connection opened');
@@ -279,7 +279,7 @@ For older browsers, use the [EventSource polyfill](https://github.com/Yaffle/Eve
 
 ### Connection Fails (404)
 
-**Problem**: `GET /api/v1/events/stream` returns 404
+**Problem**: `GET /api/events/stream` returns 404
 
 **Solution**: Ensure you're running `api_server.py` (not `main_api_server.py`). The SSE endpoint is only available in `api_server.py`.
 

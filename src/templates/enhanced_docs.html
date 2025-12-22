@@ -79,16 +79,16 @@
                 </div>
                 <div id="auth-curl" class="tab-content active">
                     <pre><code class="language-bash">curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-     http://localhost:8000/api/v1/endpoint</code></pre>
+     http://localhost:8000/api/endpoint</code></pre>
                 </div>
                 <div id="auth-python" class="tab-content">
                     <pre><code class="language-python">import httpx
 
 headers = {"Authorization": "Bearer YOUR_JWT_TOKEN"}
-response = httpx.get("http://localhost:8000/api/v1/endpoint", headers=headers)</code></pre>
+response = httpx.get("http://localhost:8000/api/endpoint", headers=headers)</code></pre>
                 </div>
                 <div id="auth-javascript" class="tab-content">
-                    <pre><code class="language-javascript">const response = await fetch('http://localhost:8000/api/v1/endpoint', {
+                    <pre><code class="language-javascript">const response = await fetch('http://localhost:8000/api/endpoint', {
     headers: {'Authorization': 'Bearer YOUR_JWT_TOKEN'}
 });</code></pre>
                 </div>
@@ -189,11 +189,11 @@ class NovelEngineClient:
     async def login(self, username: str, password: str):
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.base_url}/api/v1/auth/login",
+                f"{self.base_url}/api/auth/login",
                 json={"username": username, "password": password}
             )
             response.raise_for_status()
-            self.token = response.json()["token"]
+            self.token = response.json()["access_token"]
             
     def get_headers(self) -> Dict[str, str]:
         headers = {"Content-Type": "application/json"}
@@ -210,8 +210,8 @@ async def character_examples(client: NovelEngineClient):
     
     async with httpx.AsyncClient() as http_client:
         # List all characters
-        response = await http_client.get(
-            f"{client.base_url}/api/v1/characters",
+            response = await http_client.get(
+            f"{client.base_url}/api/characters",
             headers=headers
         )
         characters = response.json()["data"]
@@ -224,7 +224,7 @@ async def character_examples(client: NovelEngineClient):
         }
         
         response = await http_client.post(
-            f"{client.base_url}/api/v1/characters",
+            f"{client.base_url}/api/characters",
             json=new_character,
             headers=headers
         )
@@ -249,7 +249,7 @@ async def story_examples(client: NovelEngineClient):
         
         # Start generation
         response = await http_client.post(
-            f"{client.base_url}/api/v1/stories/generate",
+            f"{client.base_url}/api/stories/generate",
             json=story_request,
             headers=headers
         )
@@ -257,7 +257,7 @@ async def story_examples(client: NovelEngineClient):
         
         # Check progress
         progress_response = await http_client.get(
-            f"{client.base_url}/api/v1/stories/generate/{generation_id}/progress",
+            f"{client.base_url}/api/stories/status/{generation_id}",
             headers=headers
         )
 print("Progress:", progress_response.json())</code></pre>
@@ -329,7 +329,7 @@ novel-engine stories generate --title "My Story"</code></pre>
                 <div class="feature-card">
                     <h3>Postman Collection</h3>
                     <p>Ready-to-use Postman collection with example requests and environments.</p>
-                    <a href="/api/v1/postman/collection" style="color: #007bff;">Download Collection</a>
+                    <a href="/api/postman/collection" style="color: #007bff;">Download Collection</a>
                 </div>
             </div>
         </div>

@@ -1,10 +1,10 @@
 ## ADDED Requirements
 
 ### Requirement: Real-time event streaming endpoint
-Backend API MUST provide Server-Sent Events (SSE) endpoint at `/api/v1/events/stream` that streams real-time dashboard events following the canonical `/api/v1/*` versioning pattern.
+Backend API MUST provide Server-Sent Events (SSE) endpoint at `/api/events/stream` that streams real-time dashboard events following the canonical `/api/*` product API surface.
 
 #### Scenario: SSE endpoint returns event stream
-- **GIVEN** a client connects to `/api/v1/events/stream` with `Accept: text/event-stream` header
+- **GIVEN** a client connects to `/api/events/stream` with `Accept: text/event-stream` header
 - **WHEN** the endpoint processes the request
 - **THEN** it responds with HTTP 200, `Content-Type: text/event-stream`, `Cache-Control: no-cache`, and `Connection: keep-alive` headers, and begins streaming events in SSE format
 
@@ -37,7 +37,7 @@ Backend MUST generate events from application state changes and deliver them to 
 - **THEN** a corresponding event is created with unique ID, appropriate type, descriptive title/description, current timestamp, and severity level, and queued for delivery to SSE clients
 
 #### Scenario: Events are delivered to all connected clients
-- **GIVEN** multiple clients are connected to `/api/v1/events/stream`
+- **GIVEN** multiple clients are connected to `/api/events/stream`
 - **WHEN** a new event is added to the event queue
 - **THEN** the event is delivered to all active SSE connections within 2 seconds of generation
 
@@ -50,7 +50,7 @@ Backend MUST generate events from application state changes and deliver them to 
 Backend MUST provide logging and monitoring for SSE connections and event delivery.
 
 #### Scenario: Connection lifecycle is logged
-- **GIVEN** a client connects to or disconnects from `/api/v1/events/stream`
+- **GIVEN** a client connects to or disconnects from `/api/events/stream`
 - **WHEN** the connection state changes
 - **THEN** the backend logs the event with timestamp, client identifier (IP/session), and connection state (connected/disconnected)
 

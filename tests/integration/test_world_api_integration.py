@@ -33,7 +33,7 @@ class TestWorldAPIIntegration:
             pytest.skip("World router not available")
 
         app = FastAPI(title="Test World API")
-        app.include_router(world_router, prefix="/api/v1")
+        app.include_router(world_router, prefix="/api")
         return app
 
     @pytest.fixture

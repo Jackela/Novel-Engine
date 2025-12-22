@@ -3,7 +3,7 @@
 ## Phase 1: Backend SSE Endpoint Implementation ✅ COMPLETED
 
 ### 1.1 Create SSE endpoint structure ✅
-- [x] Add `/api/v1/events/stream` route to `src/api/main_api_server.py`
+- [x] Add `/api/events/stream` route to `src/api/main_api_server.py`
 - [x] Implement `StreamingResponse` with `media_type="text/event-stream"`
 - [x] Add required headers: `Cache-Control: no-cache`, `Connection: keep-alive`, `X-Accel-Buffering: no`
 - [x] Verify endpoint returns HTTP 200 with correct content-type
@@ -121,8 +121,8 @@
 - [x] Open `config/env/.env.example` or create `frontend/.env.example`
 - [x] Add "Dashboard Configuration" section with header comment
 - [x] Document `VITE_API_BASE_URL` (default: `http://localhost:8000`)
-- [x] Document `VITE_DASHBOARD_EVENTS_ENDPOINT` (default: `/api/v1/events/stream`)
-- [x] Document `VITE_DASHBOARD_CHARACTERS_ENDPOINT` (default: `/api/v1/characters`)
+- [x] Document `VITE_DASHBOARD_EVENTS_ENDPOINT` (default: `/api/events/stream`)
+- [x] Document `VITE_DASHBOARD_CHARACTERS_ENDPOINT` (default: `/api/characters`)
 - [x] Document `VITE_DASHBOARD_DEBUG` (default: `false`)
 - [x] Document `VITE_SHOW_PERFORMANCE_METRICS` (fallback control, default: `false`)
 - [x] Add inline comments explaining each variable's purpose and default
@@ -130,7 +130,7 @@
 
 ### 4.3 Update Vite proxy configuration ✅
 - [x] Open `frontend/vite.config.ts`
-- [x] Update proxy rule for `/api/v1/*` to forward to `VITE_API_BASE_URL || 'http://localhost:8000'`
+- [x] Update proxy rule for `/api/*` to forward to `VITE_API_BASE_URL || 'http://localhost:8000'`
 - [x] Add SSE-specific proxy configuration:
   - Preserve `Accept: text/event-stream` header
   - Set `Cache-Control: no-cache` and `Connection: keep-alive`
@@ -183,7 +183,7 @@
 ## Phase 6: Documentation & Deployment ✅ COMPLETED
 
 ### 6.1 Update API documentation ✅
-- [x] Document `/api/v1/events/stream` endpoint in API reference (if exists)
+- [x] Document `/api/events/stream` endpoint in API reference (if exists)
 - [x] Include SSE format, event payload structure, retry directive
 - [x] Add example curl command and EventSource JavaScript code
 - **Validation**: ✅ Created comprehensive `docs/api/sse-events-endpoint.md` with examples, troubleshooting, and security considerations

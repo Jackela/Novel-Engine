@@ -19,7 +19,7 @@ tags:
   - name: Simulations
     description: Execute campaign turns and retrieve results
 paths:
-  /api/v1/campaigns:
+  /api/campaigns:
     get:
       tags: [Campaigns]
       summary: List campaigns
@@ -84,7 +84,7 @@ paths:
           $ref: '#/components/responses/ProblemResponse'
         '400':
           $ref: '#/components/responses/ProblemResponse'
-  /api/v1/simulations:
+  /api/simulations:
     post:
       tags: [Simulations]
       summary: Execute simulation turns
@@ -120,7 +120,7 @@ paths:
           $ref: '#/components/responses/ProblemResponse'
         '400':
           $ref: '#/components/responses/ProblemResponse'
-  /api/v1/simulations/{simulationId}:
+  /api/simulations/{simulationId}:
     get:
       tags: [Simulations]
       summary: Retrieve simulation outcome

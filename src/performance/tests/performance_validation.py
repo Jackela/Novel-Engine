@@ -98,7 +98,7 @@ async def test_api_endpoints(base_url: str = "http://localhost:8000"):
         ("GET", "/health", "Health check"),
         ("GET", "/metrics", "Performance metrics"),
         ("GET", "/characters", "Legacy characters"),
-        ("GET", "/api/v1/characters/optimized", "Optimized characters"),
+        ("GET", "/api/characters", "Characters API"),
     ]
 
     results = []
