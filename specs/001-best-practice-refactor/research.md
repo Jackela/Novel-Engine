@@ -15,7 +15,7 @@
   - *Delay port inventory until implementation*: would block contract-first workflow; principle I demands documentation upfront.
 
 ### 3. Experience API Contract Alignment
-- **Decision**: Produce OpenAPI fragment (`contracts/openapi-refactor.yaml`) covering `/api/v1/campaigns` and `/api/v1/simulations` with rate limit headers, Idempotency-Key requirements, pagination, and RFC 7807 errors; run contract linting in CI.  
+- **Decision**: Produce OpenAPI fragment (`contracts/openapi-refactor.yaml`) covering `/api/campaigns` and `/api/simulations` with rate limit headers, Idempotency-Key requirements, pagination, and RFC 7807 errors; run contract linting in CI.  
 - **Rationale**: Satisfies Contract-First Experience APIs principle and ensures refactor does not break integrators (front-end dashboards, automation scripts).  
 - **Alternatives Considered**:  
   - *GraphQL-only refactor*: front-end still depends on REST; forcing GraphQL now would expand scope.  

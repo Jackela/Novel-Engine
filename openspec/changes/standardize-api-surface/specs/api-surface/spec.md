@@ -7,13 +7,13 @@ The system MUST expose the product API under the canonical prefix `/api/*`.
 - **WHEN** a client sends a request to a product endpoint under `/api/*` (e.g., `GET /api/characters`)
 - **THEN** the server responds using the canonical contract for that endpoint and includes stable error handling and response shapes.
 
-### Requirement: Versioned v1 alias for the product API
-The system MUST expose a versioned alias for the v1 product API under `/api/v1/*`, with behavior identical to `/api/*` for the v1 surface.
+### Requirement: No path-based API versioning for product endpoints
+The product API MUST NOT be served under versioned path prefixes such as `/api/v1/*` or `/api/v2/*`.
 
-#### Scenario: Client calls versioned alias
+#### Scenario: Versioned path is not available
 - **GIVEN** a product endpoint exists under `/api/*`
-- **WHEN** a client sends the same request to `/api/v1/*` (e.g., `GET /api/v1/characters`)
-- **THEN** the response status, payload shape, and semantics match the canonical `/api/*` response for v1.
+- **WHEN** a client calls the equivalent versioned path (e.g., `GET /api/v1/characters`)
+- **THEN** the server responds with 404 (or an explicitly documented deprecation response) and does not serve product behavior under the versioned path.
 
 ### Requirement: API discovery output is accurate
 Any endpoint map, discovery document, or “available endpoints” output MUST only list routes that are actually served by the running application.
@@ -21,4 +21,3 @@ Any endpoint map, discovery document, or “available endpoints” output MUST o
 #### Scenario: Endpoint map contains no stale routes
 - **WHEN** a client reads the API’s published endpoint map (if present)
 - **THEN** every listed route can be called and returns a non-404 response when invoked with valid inputs.
-

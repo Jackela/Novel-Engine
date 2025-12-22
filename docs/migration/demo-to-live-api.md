@@ -14,7 +14,7 @@ This guide explains how to migrate the Emergent Narrative Dashboard from **demo 
 - ❌ Local state management for demo data
 
 ### After (Live API Mode)
-- ✅ Server-Sent Events (SSE) via `/api/v1/events/stream`
+- ✅ Server-Sent Events (SSE) via `/api/events/stream`
 - ✅ Real-time push from backend (no polling)
 - ✅ `source: 'api'` with connection status indicator
 - ✅ Web Vitals only (removed fake backend metrics)
@@ -104,8 +104,8 @@ REACT_APP_WS_URL=ws://localhost:8001/ws
 **New** (Vite-style):
 ```bash
 VITE_API_BASE_URL=http://localhost:8000
-VITE_DASHBOARD_EVENTS_ENDPOINT=/api/v1/events/stream
-VITE_DASHBOARD_CHARACTERS_ENDPOINT=/api/v1/characters
+VITE_DASHBOARD_EVENTS_ENDPOINT=/api/events/stream
+VITE_DASHBOARD_CHARACTERS_ENDPOINT=/api/characters
 VITE_DASHBOARD_DEBUG=false
 VITE_SHOW_PERFORMANCE_METRICS=false
 ```
@@ -141,14 +141,14 @@ cd /path/to/Novel-Engine
 python api_server.py
 ```
 
-The SSE endpoint (`/api/v1/events/stream`) is only available in `api_server.py`.
+The SSE endpoint (`/api/events/stream`) is only available in `api_server.py`.
 
 **Verify backend is running**:
 ```bash
 curl http://localhost:8000/health
 # Should return: {"status":"healthy",...}
 
-curl -N -H "Accept: text/event-stream" http://localhost:8000/api/v1/events/stream
+curl -N -H "Accept: text/event-stream" http://localhost:8000/api/events/stream
 # Should stream: retry: 3000 + events every 2 seconds
 ```
 
@@ -159,7 +159,7 @@ cd frontend
 npm run dev
 ```
 
-Vite will automatically proxy `/api/v1/*` requests to `VITE_API_BASE_URL`.
+Vite will automatically proxy `/api/*` requests to `VITE_API_BASE_URL`.
 
 ### Step 4: Verify Live Connection
 
@@ -172,7 +172,7 @@ Vite will automatically proxy `/api/v1/*` requests to `VITE_API_BASE_URL`.
 
 3. Open browser console (F12):
    - ✅ No SSE connection errors
-   - ✅ Network tab shows `GET /api/v1/events/stream [success - 200]`
+   - ✅ Network tab shows `GET /api/events/stream [success - 200]`
 
 4. Test error handling:
    - Stop backend server
@@ -216,17 +216,17 @@ npm run preview  # Test production build locally
 
 2. **Verify endpoint exists**:
    ```bash
-   curl http://localhost:8000/api/v1/events/stream
+   curl http://localhost:8000/api/events/stream
    # Should NOT return 404
    ```
 
 3. **Check proxy configuration**:
-   - Ensure `vite.config.ts` has proxy for `/api/v1/*`
+   - Ensure `vite.config.ts` has proxy for `/api/*`
    - Restart Vite dev server if config changed
 
 ### Problem: 404 on SSE Endpoint
 
-**Error**: `GET /api/v1/events/stream [failed - 404]`
+**Error**: `GET /api/events/stream [failed - 404]`
 
 **Cause**: Running wrong backend server
 
@@ -260,7 +260,7 @@ python api_server.py
 
 3. **Test connection stability**:
    ```bash
-   timeout 600 curl -N http://localhost:8000/api/v1/events/stream
+   timeout 600 curl -N http://localhost:8000/api/events/stream
    # Should run for 10 minutes without errors
    ```
 
@@ -293,7 +293,7 @@ python api_server.py
 
 ### Problem: CORS Errors
 
-**Error**: `Access to fetch at 'http://localhost:8000/api/v1/events/stream' from origin 'http://localhost:3000' has been blocked by CORS`
+**Error**: `Access to fetch at 'http://localhost:8000/api/events/stream' from origin 'http://localhost:3000' has been blocked by CORS`
 
 **Fix**: CORS should already be configured in `api_server.py`:
 
@@ -368,7 +368,7 @@ git revert <commit-hash>
 After migration, verify:
 
 - [ ] Backend `/health` endpoint returns 200
-- [ ] SSE endpoint `/api/v1/events/stream` streams data
+- [ ] SSE endpoint `/api/events/stream` streams data
 - [ ] Dashboard shows "● Live" connection status
 - [ ] Events display in Real-time Activity widget
 - [ ] Event count badge updates correctly

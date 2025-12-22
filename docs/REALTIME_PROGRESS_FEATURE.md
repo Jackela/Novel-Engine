@@ -10,15 +10,16 @@ This feature enhancement adds WebSocket-based real-time progress monitoring to t
 
 #### 1. Enhanced Story Generation API (`src/api/story_generation_api.py`)
 
-- **Added WebSocket Support**: New endpoint `/api/v1/stories/progress/{generation_id}` for real-time updates
+- **Added WebSocket Support**: New endpoint `/api/stories/progress/{generation_id}` for real-time updates
 - **Progress Updates**: Enhanced `_generate_story_async` with detailed progress tracking
 - **Backward Compatibility**: Maintains existing REST API functionality as fallback
 - **Connection Management**: Automatic WebSocket connection cleanup and error handling
 
 **New Endpoints:**
-- `POST /api/v1/stories/generate` - Start story generation with WebSocket support
-- `WebSocket /api/v1/stories/progress/{generation_id}` - Real-time progress updates  
-- `GET /api/v1/stories/status/{generation_id}` - REST fallback for progress status
+- `POST /api/stories/generate` - Start story generation with WebSocket support
+- `POST /api/stories/generate` - Start story generation with WebSocket support
+- `WebSocket /api/stories/progress/{generation_id}` - Real-time progress updates  
+- `GET /api/stories/status/{generation_id}` - REST fallback for progress status
 
 #### 2. Progress Data Model
 

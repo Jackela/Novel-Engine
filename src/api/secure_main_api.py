@@ -644,10 +644,10 @@ def create_secure_app() -> FastAPI:
                 "endpoints": {
                     "health": "/health",
                     "authentication": "/auth/*",
-                    "characters": "/api/v1/characters",
-                    "stories": "/api/v1/stories",
+                    "characters": "/api/characters",
+                    "stories": "/api/stories",
                     "simulations": "/simulations",
-                    "interactions": "/api/v1/interactions",
+                    "interactions": "/api/interactions",
                 },
             },
             max_age=300,  # Cache for 5 minutes

@@ -91,16 +91,16 @@ rate_limiting:
   
   # Endpoint-specific limits
   endpoints:
-    "/api/v1/auth/login":
+    "/api/auth/login":
       requests: 5
       window: 300
-    "/api/v1/auth/register":
+    "/api/auth/register":
       requests: 3
       window: 600
-    "/api/v1/characters":
+    "/api/characters":
       requests: 50
       window: 60
-    "/api/v1/stories/generate":
+    "/api/stories/generate":
       requests: 10
       window: 300
     "/simulations":

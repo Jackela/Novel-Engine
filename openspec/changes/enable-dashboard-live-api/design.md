@@ -29,7 +29,7 @@ This change transitions the dashboard from demo/sample data to live API-driven r
 │                   Backend API Server                        │
 │                                                             │
 │  ┌──────────────────────────────────────────────┐          │
-│  │  /api/v1/events/stream                       │          │
+│  │  /api/events/stream                          │          │
 │  │  (SSE endpoint)                              │          │
 │  │                                              │          │
 │  │  ┌────────────────┐      ┌────────────────┐ │          │
@@ -67,7 +67,7 @@ This change transitions the dashboard from demo/sample data to live API-driven r
 ```
 Client                                    Server
   │                                         │
-  │  GET /api/v1/events/stream             │
+  │  GET /api/events/stream                │
   │  Accept: text/event-stream             │
   │────────────────────────────────────────>│
   │                                         │
@@ -89,7 +89,7 @@ Client                                    Server
   │  X───────────────────────────────────X  │
   │                                         │
   │  [EventSource auto-reconnects]         │
-  │  GET /api/v1/events/stream             │
+  │  GET /api/events/stream                │
   │  Last-Event-ID: evt-2                  │
   │────────────────────────────────────────>│
   │                                         │
@@ -108,7 +108,7 @@ from typing import AsyncGenerator
 import asyncio
 import json
 
-@app.get("/api/v1/events/stream")
+@app.get("/api/events/stream")
 async def stream_events() -> StreamingResponse:
     """
     Server-Sent Events endpoint for real-time dashboard events.
@@ -205,7 +205,7 @@ interface UseRealtimeEventsReturn {
 }
 
 export function useRealtimeEvents(
-  endpoint: string = import.meta.env.VITE_DASHBOARD_EVENTS_ENDPOINT || '/api/v1/events/stream',
+  endpoint: string = import.meta.env.VITE_DASHBOARD_EVENTS_ENDPOINT || '/api/events/stream',
   maxEvents: number = 50
 ): UseRealtimeEventsReturn {
   const [events, setEvents] = useState<RealtimeEvent[]>([]);
@@ -391,10 +391,10 @@ This design assumes an authentication system exists with:
 VITE_API_BASE_URL=http://localhost:8000
 
 # Real-time events SSE endpoint (relative to VITE_API_BASE_URL or absolute)
-VITE_DASHBOARD_EVENTS_ENDPOINT=/api/v1/events/stream
+VITE_DASHBOARD_EVENTS_ENDPOINT=/api/events/stream
 
 # Characters data endpoint (canonical endpoint per dashboard-data-routing-hygiene)
-VITE_DASHBOARD_CHARACTERS_ENDPOINT=/api/v1/characters
+VITE_DASHBOARD_CHARACTERS_ENDPOINT=/api/characters
 
 # Enable debug logging for dashboard components
 VITE_DASHBOARD_DEBUG=false
@@ -406,11 +406,11 @@ VITE_DASHBOARD_DEBUG=false
 export default defineConfig({
   server: {
     proxy: {
-      // Proxy all /api/v1/* requests to backend
-      '/api/v1': {
+      // Proxy all /api/* requests to backend
+      '/api': {
         target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/v1/, '/api/v1'),
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
         // SSE-specific configuration
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, req, _res) => {
@@ -466,7 +466,7 @@ describe('useRealtimeEvents', () => {
   it('shows error state when connection fails', async () => {
     // Mock SSE endpoint failure
     server.use(
-      rest.get('/api/v1/events/stream', (_req, res, ctx) => {
+      rest.get('/api/events/stream', (_req, res, ctx) => {
         return res(ctx.status(500));
       })
     );
@@ -550,14 +550,14 @@ def client():
     return TestClient(app)
 
 def test_events_stream_endpoint_exists(client):
-    """Verify /api/v1/events/stream endpoint is available"""
-    response = client.get("/api/v1/events/stream")
+    """Verify /api/events/stream endpoint is available"""
+    response = client.get("/api/events/stream")
     assert response.status_code == 200
     assert response.headers["content-type"] == "text/event-stream"
 
 def test_events_stream_returns_sse_format(client):
     """Verify SSE format: 'data: {...}\n\n'"""
-    with client.stream("GET", "/api/v1/events/stream") as response:
+    with client.stream("GET", "/api/events/stream") as response:
         for line in response.iter_lines():
             if line.startswith("data: "):
                 data = json.loads(line[6:])  # Strip "data: " prefix
@@ -568,7 +568,7 @@ def test_events_stream_returns_sse_format(client):
 
 def test_events_stream_includes_retry_header(client):
     """Verify retry directive in SSE stream"""
-    with client.stream("GET", "/api/v1/events/stream") as response:
+    with client.stream("GET", "/api/events/stream") as response:
         first_line = next(response.iter_lines())
         assert first_line.startswith("retry:")
 ```
@@ -577,11 +577,11 @@ def test_events_stream_includes_retry_header(client):
 
 ### Alignment with dashboard-data-routing-hygiene
 
-This change extends the canonical `/api/v1/*` pattern established by dashboard-data-routing-hygiene:
+This change extends the canonical `/api/*` pattern established by dashboard-data-routing-hygiene:
 
-- Characters: `/api/v1/characters` ✓ (existing)
-- Events: `/api/v1/events/stream` ✓ (new)
-- Consistent Vite proxy: `/api/v1/*` → backend ✓
+- Characters: `/api/characters` ✓ (existing)
+- Events: `/api/events/stream` ✓ (new)
+- Consistent Vite proxy: `/api/*` → backend ✓
 
 ### Authentication System Integration
 
@@ -630,7 +630,7 @@ If authentication doesn't exist, Performance metrics visibility can be controlle
 1. **Event Filtering**: Allow users to filter events by type/severity
 2. **Event Persistence**: Store events in database for historical analysis
 3. **Event Acknowledgment**: Mark events as "read" with Last-Event-ID tracking
-4. **Backend Metrics Endpoint**: Add `/api/v1/metrics` for system health (separate from Web Vitals)
+4. **Backend Metrics Endpoint**: Add `/metrics` for system health (separate from Web Vitals)
 5. **WebSocket Migration**: Upgrade to WebSocket if bidirectional communication needed (e.g., event acknowledgment from client)
 6. **Event Search**: Full-text search across historical events
 7. **Event Notifications**: Browser notifications for high-severity events

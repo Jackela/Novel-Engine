@@ -92,8 +92,8 @@ python -m monitoring.observability_server --config observability_config.json
 
 - **Metrics**: http://localhost:9090/metrics
 - **Health**: http://localhost:9090/health
-- **Dashboards**: http://localhost:9090/api/v1/dashboards
-- **Alerts**: http://localhost:9090/api/v1/alerts
+- **Dashboards**: http://localhost:9090/api/dashboards
+- **Alerts**: http://localhost:9090/api/alerts
 
 ## 📈 Metrics Collection
 
@@ -491,18 +491,18 @@ volumes:
 
 2. **Check Active Alerts**
    ```bash
-   curl http://localhost:9090/api/v1/alerts
+   curl http://localhost:9090/api/alerts
    ```
 
 3. **Review Performance Metrics**
    ```bash
-   curl http://localhost:9090/api/v1/system/overview
+   curl http://localhost:9090/api/system/overview
    ```
 
 ### Incident Response
 
 1. **Alert Investigation**
-   - Check alert details in `/api/v1/alerts`
+   - Check alert details in `/api/alerts`
    - Review related logs and traces
    - Examine performance dashboards
 
@@ -621,13 +621,13 @@ artillery run monitoring/tests/load/observability_load_test.yml
 curl http://localhost:9090/metrics
 
 # Verify health status
-curl http://localhost:9090/api/v1/status
+curl http://localhost:9090/api/status
 
 # Test alert manager
-curl http://localhost:9090/api/v1/alerts/statistics
+curl http://localhost:9090/api/alerts/statistics
 
 # Check synthetic monitoring
-curl http://localhost:9090/api/v1/synthetic/statistics
+curl http://localhost:9090/api/synthetic/statistics
 ```
 
 ## 🤝 Contributing

@@ -138,11 +138,11 @@ def create_knowledge_api() -> APIRouter:
     Create Knowledge Management API router.
 
     Provides Admin API endpoints for:
-    - POST /api/v1/knowledge/entries (FR-002)
-    - GET /api/v1/knowledge/entries
-    - GET /api/v1/knowledge/entries/{id}
-    - PUT /api/v1/knowledge/entries/{id} (FR-003)
-    - DELETE /api/v1/knowledge/entries/{id} (FR-004)
+    - POST /api/knowledge/entries (FR-002)
+    - GET /api/knowledge/entries
+    - GET /api/knowledge/entries/{id}
+    - PUT /api/knowledge/entries/{id} (FR-003)
+    - DELETE /api/knowledge/entries/{id} (FR-004)
 
     Constitution Compliance:
     - Article II (Hexagonal): API adapter for use cases

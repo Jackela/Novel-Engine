@@ -210,7 +210,7 @@ def get_active_alerts(severity: Optional[str] = None) -> List[Dict[str, Any]]:
             'labels': {
                 'service': 'novel-engine-api',
                 'environment': 'production',
-                'endpoint': '/api/v1/users'
+                'endpoint': '/api/characters'
             },
             'annotations': {
                 'summary': 'High latency detected',

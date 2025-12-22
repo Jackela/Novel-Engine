@@ -123,16 +123,16 @@ class EnhancedDocumentationSystem:
                 </div>
                 <div id="auth-curl" class="tab-content active">
                     <pre><code class="language-bash">curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \\
-     http://localhost:8000/api/v1/endpoint</code></pre>
+     http://localhost:8000/api/endpoint</code></pre>
                 </div>
                 <div id="auth-python" class="tab-content">
                     <pre><code class="language-python">import httpx
 
 headers = {"Authorization": "Bearer YOUR_JWT_TOKEN"}
-response = httpx.get("http://localhost:8000/api/v1/endpoint", headers=headers)</code></pre>
+response = httpx.get("http://localhost:8000/api/endpoint", headers=headers)</code></pre>
                 </div>
                 <div id="auth-javascript" class="tab-content">
-                    <pre><code class="language-javascript">const response = await fetch('http://localhost:8000/api/v1/endpoint', {
+                    <pre><code class="language-javascript">const response = await fetch('http://localhost:8000/api/endpoint', {
     headers: {'Authorization': 'Bearer YOUR_JWT_TOKEN'}
 });</code></pre>
                 </div>
@@ -233,7 +233,7 @@ class NovelEngineClient:
     async def login(self, username: str, password: str):
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.base_url}/api/v1/auth/login",
+                f"{self.base_url}/api/auth/login",
                 json={"username": username, "password": password}
             )
             response.raise_for_status()
@@ -255,7 +255,7 @@ async def character_examples(client: NovelEngineClient):
     async with httpx.AsyncClient() as http_client:
         # List all characters
         response = await http_client.get(
-            f"{client.base_url}/api/v1/characters",
+            f"{client.base_url}/api/characters",
             headers=headers
         )
         characters = response.json()["data"]
@@ -268,7 +268,7 @@ async def character_examples(client: NovelEngineClient):
         }
         
         response = await http_client.post(
-            f"{client.base_url}/api/v1/characters",
+            f"{client.base_url}/api/characters",
             json=new_character,
             headers=headers
         )
@@ -293,7 +293,7 @@ async def story_examples(client: NovelEngineClient):
         
         # Start generation
         response = await http_client.post(
-            f"{client.base_url}/api/v1/stories/generate",
+            f"{client.base_url}/api/stories/generate",
             json=story_request,
             headers=headers
         )
@@ -301,7 +301,7 @@ async def story_examples(client: NovelEngineClient):
         
         # Check progress
         progress_response = await http_client.get(
-            f"{client.base_url}/api/v1/stories/generate/{generation_id}/progress",
+            f"{client.base_url}/api/stories/generate/{generation_id}/progress",
             headers=headers
         )
 print("Progress:", progress_response.json())</code></pre>
@@ -373,7 +373,7 @@ novel-engine stories generate --title "My Story"</code></pre>
                 <div class="feature-card">
                     <h3>Postman Collection</h3>
                     <p>Ready-to-use Postman collection with example requests and environments.</p>
-                    <a href="/api/v1/postman/collection" style="color: #007bff;">Download Collection</a>
+                    <a href="/api/postman/collection" style="color: #007bff;">Download Collection</a>
                 </div>
             </div>
         </div>
@@ -420,42 +420,42 @@ novel-engine stories generate --title "My Story"</code></pre>
         return {
             "endpoints": [
                 {
-                    "path": "/api/v1/characters",
+                    "path": "/api/characters",
                     "method": "GET",
                     "summary": "List all characters",
                     "description": "Retrieve a list of all available characters",
                     "category": "Characters",
                 },
                 {
-                    "path": "/api/v1/characters",
+                    "path": "/api/characters",
                     "method": "POST",
                     "summary": "Create new character",
                     "description": "Create a new character with detailed attributes",
                     "category": "Characters",
                 },
                 {
-                    "path": "/api/v1/stories/generate",
+                    "path": "/api/stories/generate",
                     "method": "POST",
                     "summary": "Generate story",
                     "description": "Generate a new story with specified parameters",
                     "category": "Stories",
                 },
                 {
-                    "path": "/api/v1/interactions",
+                    "path": "/api/interactions",
                     "method": "POST",
                     "summary": "Create interaction",
                     "description": "Create a new character interaction",
                     "category": "Interactions",
                 },
                 {
-                    "path": "/api/v1/turns/{turn_id}/briefs/{agent_id}",
+                    "path": "/api/turns/{turn_id}/briefs/{agent_id}",
                     "method": "GET",
                     "summary": "Get turn brief",
                     "description": "Get personalized turn brief for an agent",
                     "category": "Narrative",
                 },
                 {
-                    "path": "/api/v1/narratives/emergent/generate",
+                    "path": "/api/narratives/emergent/generate",
                     "method": "POST",
                     "summary": "Generate emergent narrative",
                     "description": "Generate emergent narrative based on interactions",
@@ -675,7 +675,7 @@ console.log(data);"""
             """API documentation endpoint."""
             return await self.generate_enhanced_documentation()
 
-        @app.get("/api/v1/postman/collection")
+        @app.get("/api/postman/collection")
         async def get_postman_collection():
             """Get Postman collection for API testing."""
             collection = {
@@ -705,7 +705,7 @@ console.log(data);"""
                                 {"key": "Authorization", "value": "Bearer {{token}}"}
                             ],
                             "url": {
-                                "raw": "{{base_url}}/api/v1/characters",
+                                "raw": "{{base_url}}/api/characters",
                                 "host": ["{{base_url}}"],
                                 "path": ["api", "v1", "characters"],
                             },

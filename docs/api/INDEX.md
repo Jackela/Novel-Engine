@@ -57,8 +57,8 @@ Engine  Service   Manager
 
 1. **RESTful Design** - Standard HTTP methods and resource-based URLs
 2. **Consistent Responses** - Uniform response formats across all endpoints
-3. **Authentication** - Secure authentication (JWT planned for v2)
-4. **Versioning** - API versioning for backward compatibility (`/api/v1/`)
+3. **Authentication** - Secure authentication (JWT planned)
+4. **Versioning** - Single stable API surface under `/api/*` (no path-based versioning)
 5. **Documentation** - Living documentation with examples
 
 ---
