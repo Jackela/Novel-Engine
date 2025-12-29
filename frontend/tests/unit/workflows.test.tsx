@@ -40,10 +40,51 @@ global.EventSource = vi.fn(function () { return mockEventSource; }) as unknown a
 (global.EventSource as any).CLOSED = 2;
 
 // Mock the API module with both default and named exports
+const mockCharacterSummaries = [
+  {
+    id: 'aria-shadowbane',
+    name: 'Aria Shadowbane',
+    status: 'active',
+    type: 'protagonist',
+    updated_at: '2025-12-29T01:00:00Z',
+    workspace_id: 'workspace-main',
+  },
+  {
+    id: 'captain-lyra',
+    name: 'Captain Lyra',
+    status: 'active',
+    type: 'protagonist',
+    updated_at: '2025-12-29T01:01:00Z',
+    workspace_id: 'workspace-main',
+  },
+  {
+    id: 'mage-obscura',
+    name: 'Mage Obscura',
+    status: 'inactive',
+    type: 'npc',
+    updated_at: '2025-12-29T01:02:00Z',
+    workspace_id: 'workspace-main',
+  },
+];
+
 vi.mock('@/services/api', () => ({
   default: {
-    getCharacters: vi.fn(() => Promise.resolve(['krieg', 'ork_warboss', 'isabella_varr'])),
+    getCharacters: vi.fn(() => Promise.resolve(mockCharacterSummaries)),
     getCampaigns: vi.fn(() => Promise.resolve(['default', 'Novel Engine_40k'])),
+    getCharacterDetails: vi.fn((name: string) => Promise.resolve({
+      id: name,
+      name,
+      faction: 'Mock Faction',
+      role: 'Agent',
+      description: 'Mock character',
+      stats: { strength: 5, intelligence: 5, charisma: 5, dexterity: 5, willpower: 5, perception: 5 },
+      equipment: [],
+      relationships: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })),
+    updateCharacter: vi.fn(() => Promise.resolve({ success: true })),
+    deleteCharacter: vi.fn(() => Promise.resolve({ success: true })),
     getHealth: vi.fn(() => Promise.resolve({
       api: 'healthy',
       config: 'loaded',
@@ -198,12 +239,27 @@ vi.mock('@/services/api/dashboardAPI', () => ({
     }),
     getAnalyticsMetrics: vi.fn().mockResolvedValue({
       data: { success: true, data: {} }
+    }),
+    getNarrative: vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          story: 'Test narrative output',
+          participants: ['agent'],
+          turns_completed: 1,
+          has_content: true,
+        },
+      },
     })
   }
 }));
 
 // Mock queries
 vi.mock('@/services/queries', () => ({
+  queryKeys: {
+    characters: ['characters', 'list'],
+    characterDetails: (name: string) => ['characters', 'detail', name],
+  },
   useCharactersQuery: vi.fn(() => ({
     data: ['char1', 'char2'],
     isLoading: false,

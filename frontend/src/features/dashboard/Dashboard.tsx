@@ -20,9 +20,12 @@ import { fetchDashboardData } from '@/store/slices/dashboardSlice';
 import type { AppDispatch } from '@/store/store';
 import { useCharactersQuery } from '@/services/queries';
 import EmptyState from '@/components/common/EmptyState';
+import { ApiError } from '@/lib/api/errors';
+import { FALLBACK_DASHBOARD_CHARACTERS } from '@/hooks/useDashboardCharactersDataset';
 
 // Import panels
 import WorldPanel from './panels/WorldPanel';
+import NarrativePanel from './panels/NarrativePanel';
 import CharacterNetworks from './CharacterNetworks';
 import NarrativeTimeline from './NarrativeTimeline';
 import TurnPipelineStatus from './TurnPipelineStatus';
@@ -39,6 +42,7 @@ import {
   Map as MapIcon,
   Hub as HubIcon,
   Timeline as TimelineIcon,
+  AutoStories as StoryIcon,
   Refresh as RefreshIcon,
   Analytics as AnalyticsIcon,
   AccountTree as FlowIcon,
@@ -46,7 +50,7 @@ import {
 } from '@mui/icons-material';
 
 type PipelineState = 'idle' | 'running' | 'paused' | 'stopped';
-type DashboardView = 'world' | 'network' | 'timeline' | 'analytics' | 'signals';
+type DashboardView = 'world' | 'network' | 'timeline' | 'narrative' | 'analytics' | 'signals';
 
 interface DashboardProps {
   userId?: string;
@@ -78,7 +82,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   // Data Query
-  const { data: characters, isLoading: isLoadingChars } = useCharactersQuery();
+  const { data: characters, isLoading: isLoadingChars, isError: isCharactersError, error: charactersError, refetch: refetchChars } = useCharactersQuery();
+
+  const isConnectionError = charactersError instanceof ApiError &&
+    (charactersError.kind === 'network' || charactersError.kind === 'timeout');
+
+  const shouldShowFallbackAlert = isCharactersError || Boolean(charactersError);
+
+  const effectiveCharacters = (characters && characters.length > 0)
+    ? characters.map((c) => c.id)
+    : FALLBACK_DASHBOARD_CHARACTERS.map((c) => c.name);
 
 
 
@@ -192,24 +205,24 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
   const handleStartOrchestration = async () => {
     setLoading(true);
     try {
-      const characterNames = characters || [];
-      if (characterNames.length === 0) {
+      if (effectiveCharacters.length === 0) {
         showNotification('No characters available to start simulation');
         setLoading(false);
         return;
       }
 
       const response = await dashboardAPI.startOrchestration({
-        character_names: characterNames,
-        total_turns: 3
+        character_names: effectiveCharacters,
+        total_turns: 3,
       });
 
       if (response.data.success) {
         const status = response.data.data?.status || 'running';
         setPipelineStatus(status as PipelineState);
         setIsLiveMode(status === 'running');
+        setActiveView('narrative');
         dispatch(fetchDashboardData());
-        showNotification(`Orchestration started with ${characterNames.length} characters`);
+        showNotification(`Orchestration started with ${effectiveCharacters.length} characters`);
       } else {
         showNotification('Failed to start orchestration');
       }
@@ -291,7 +304,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
       />
 
       {/* Main Content Area */}
-      {!isLoadingChars && (!characters || characters.length === 0) ? (
+      {!isLoadingChars && (effectiveCharacters.length === 0) ? (
         <Box sx={{ height: 'calc(100vh - 120px)', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <EmptyState
             title="System Standby: No Operatives Detected"
@@ -303,6 +316,26 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
         </Box>
       ) : (
         <div className="bento-grid" data-testid="bento-grid">
+          {shouldShowFallbackAlert && (
+            <div data-testid="fallback-dataset-alert">
+              <Alert
+                severity="warning"
+                sx={{ gridColumn: '1 / -1', mb: 2 }}
+              >
+                Live character data unavailable; showing fallback dataset. {isConnectionError ? 'Offline mode detected.' : ''}
+              </Alert>
+            </div>
+          )}
+          {shouldShowFallbackAlert && (
+            <div data-testid="fallback-dataset-alert">
+              <Alert
+                severity="warning"
+                sx={{ gridColumn: '1 / -1', mb: 2 }}
+              >
+                Live character data unavailable; showing fallback dataset. {isConnectionError ? 'Offline mode detected.' : ''}
+              </Alert>
+            </div>
+          )}
 
           {/* LEFT COLUMN: Main World State Visualization (Span 5) */}
           <GridTile
@@ -324,6 +357,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
                   <Tab icon={<MapIcon fontSize="small" />} iconPosition="start" label="Map" value="world" sx={{ minHeight: '36px', textTransform: 'none', fontWeight: 600 }} />
                   <Tab icon={<HubIcon fontSize="small" />} iconPosition="start" label="Network" value="network" sx={{ minHeight: '36px', textTransform: 'none', fontWeight: 600 }} />
                   <Tab icon={<TimelineIcon fontSize="small" />} iconPosition="start" label="Timeline" value="timeline" sx={{ minHeight: '36px', textTransform: 'none', fontWeight: 600 }} />
+                  <Tab icon={<StoryIcon fontSize="small" />} iconPosition="start" label="Narrative" value="narrative" sx={{ minHeight: '36px', textTransform: 'none', fontWeight: 600 }} />
                   <Tab icon={<AnalyticsIcon fontSize="small" />} iconPosition="start" label="Analytics" value="analytics" sx={{ minHeight: '36px', textTransform: 'none', fontWeight: 600 }} />
                   <Tab icon={<FlowIcon fontSize="small" />} iconPosition="start" label="Signals" value="signals" sx={{ minHeight: '36px', textTransform: 'none', fontWeight: 600 }} />
                 </Tabs>
@@ -342,6 +376,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
             {activeView === 'world' && <WorldPanel loading={loading} error={!!error} />}
             {activeView === 'network' && <CharacterNetworks loading={loading} error={!!error} />}
             {activeView === 'timeline' && <NarrativeTimeline loading={loading} error={!!error} />}
+            {activeView === 'narrative' && <NarrativePanel pipelineStatus={pipelineStatus} onStart={handleStartOrchestration} />}
             {activeView === 'analytics' && <AnalyticsDashboard loading={loading} error={!!error} />}
             {activeView === 'signals' && <EventCascadeFlow loading={loading} error={!!error} />}
           </GridTile>
