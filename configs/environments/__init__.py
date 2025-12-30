@@ -29,59 +29,59 @@ __all__ = [
     "get_current_environment",
     "load_environment_config",
     "validate_environment_config",
-    "merge_configs"
+    "merge_configs",
 ]
+
 
 def get_current_environment() -> str:
     """
     Detect the current environment from environment variables.
-    
+
     Returns:
         str: Environment name (dev, staging, production)
     """
-    return os.getenv('NOVEL_ENV', 'dev').lower()
+    return os.getenv("NOVEL_ENV", "dev").lower()
+
 
 def load_environment_config(env: Optional[str] = None) -> Dict[str, Any]:
     """
     Load configuration for the specified environment.
-    
+
     Args:
         env: Environment name. If None, uses current environment.
-        
+
     Returns:
         Dict containing environment configuration
     """
     if env is None:
         env = get_current_environment()
-    
+
     # Placeholder for actual configuration loading
     # Will be implemented during migration
-    return {
-        'environment': env,
-        'debug': env == 'dev',
-        'config_loaded': True
-    }
+    return {"environment": env, "debug": env == "dev", "config_loaded": True}
+
 
 def validate_environment_config(config: Dict[str, Any]) -> bool:
     """
     Validate environment configuration.
-    
+
     Args:
         config: Configuration dictionary to validate
-        
+
     Returns:
         bool: True if configuration is valid
     """
-    required_keys = ['environment']
+    required_keys = ["environment"]
     return all(key in config for key in required_keys)
+
 
 def merge_configs(*configs: Dict[str, Any]) -> Dict[str, Any]:
     """
     Merge multiple configuration dictionaries.
-    
+
     Args:
         *configs: Configuration dictionaries to merge
-        
+
     Returns:
         Dict: Merged configuration
     """

@@ -79,7 +79,9 @@ def main(argv: list[str]) -> int:
 
     root = Path(args.root).resolve()
     if root.name != "workspaces":
-        print(f"Refusing to operate on non-workspaces directory: {root}", file=sys.stderr)
+        print(
+            f"Refusing to operate on non-workspaces directory: {root}", file=sys.stderr
+        )
         return 2
 
     if args.ttl_days <= 0:
@@ -119,4 +121,3 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:]))
-
