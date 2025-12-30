@@ -201,11 +201,11 @@
 - [x] Include steps for configuring backend event generation (when moving beyond simulated events)
 - **Validation**: ✅ Created comprehensive `docs/migration/demo-to-live-api.md` with troubleshooting section and rollback plan
 
-### 6.4 Update openspec documentation ⏳
-- [ ] Run `openspec validate enable-dashboard-live-api --strict` and fix any issues
+### 6.4 Update openspec documentation ✅
+- [x] Run `openspec validate enable-dashboard-live-api --strict` and fix any issues
 - [x] Update UAT log with validation results
-- [ ] Mark change as ready for review
-- **Validation**: ⏳ UAT logs updated; openspec validation pending
+- [x] Mark change as ready for review
+- **Validation**: ✅ All tasks completed and validated.
 
 ## Dependencies & Sequencing
 
