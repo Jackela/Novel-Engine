@@ -304,9 +304,8 @@ async function cleanupExpiredCaches() {
 
 // Message handling for cache management
 self.addEventListener('message', event => {
-  if (!event.source || !('url' in event.source)) return;
-  const sourceUrl = new URL(event.source.url);
-  if (sourceUrl.origin !== self.location.origin) return;
+  const origin = event.origin || (event.source && 'url' in event.source ? new URL(event.source.url).origin : null);
+  if (origin !== self.location.origin) return;
   if (!event.data) return;
 
   if (event.data.type === 'CLEAR_CACHE') {

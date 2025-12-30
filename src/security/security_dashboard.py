@@ -768,7 +768,7 @@ class SecurityDashboard:
         try:
             async with aiosqlite.connect(self.database_path) as conn:
                 reports = {}
-                for framework in ComplianceFramework:
+                for framework in ComplianceFramework.__members__.values():
                     cursor = await conn.execute(
                         """
                         SELECT compliance_score, passed_controls, failed_controls, report_date

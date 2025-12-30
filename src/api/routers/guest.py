@@ -20,6 +20,7 @@ from src.api.deps import (
 from src.api.schemas import GuestSessionResponse
 from src.api.settings import APISettings
 from src.workspaces import FilesystemWorkspaceStore, GuestSessionManager
+from src.workspaces.filesystem import _validate_workspace_id
 
 router = APIRouter(tags=["Guest"])
 
@@ -35,9 +36,10 @@ async def create_or_resume_guest_session(
     token = request.cookies.get(manager.cookie_name)
     result = manager.resolve_or_create(token)
     if result.created:
+        safe_workspace_id = _validate_workspace_id(result.workspace_id)
         response.set_cookie(
             manager.cookie_name,
-            manager.encode(result.workspace_id),
+            manager.encode(safe_workspace_id),
             httponly=True,
             secure=settings.cookie_secure,
             samesite=settings.cookie_samesite,
@@ -79,9 +81,10 @@ async def import_workspace_zip(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
+    safe_workspace_id = _validate_workspace_id(workspace.id)
     response.set_cookie(
         manager.cookie_name,
-        manager.encode(workspace.id),
+        manager.encode(safe_workspace_id),
         httponly=True,
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,

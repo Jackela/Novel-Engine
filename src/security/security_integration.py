@@ -475,9 +475,13 @@ class EnterpriseSecuritySuite:
                 },
             }
 
-        except Exception as e:
-            logger.error(f"Error getting security status: {e}")
-            return {"status": "error", "error": str(e), "components_status": "degraded"}
+        except Exception:
+            logger.exception("Error getting security status.")
+            return {
+                "status": "error",
+                "error": "unavailable",
+                "components_status": "degraded",
+            }
 
     async def cleanup(self):
         """Cleanup security suite resources"""
