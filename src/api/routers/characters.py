@@ -5,20 +5,17 @@ import json
 import logging
 import os
 import re
-import uuid
 from datetime import datetime, timezone
 from email.utils import format_datetime, parsedate_to_datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import (
     APIRouter,
     Depends,
-    File,
-    Form,
     HTTPException,
     Request,
     Response,
-    UploadFile,
 )
 
 from src.api.deps import get_optional_workspace_id, require_workspace_id
@@ -48,6 +45,19 @@ def _normalize_character_id(value: str) -> str:
     if not normalized or normalized in {".", ".."}:
         raise HTTPException(status_code=400, detail="Invalid character name")
     return normalized
+
+
+def _require_public_character_id(value: str) -> str:
+    raw_value = (value or "").strip().replace("\\", "/")
+    safe_value = os.path.basename(raw_value)
+    if (
+        not safe_value
+        or safe_value in {".", ".."}
+        or safe_value != raw_value
+        or not _CHARACTER_DIRNAME_RE.fullmatch(safe_value)
+    ):
+        raise HTTPException(status_code=400, detail="Invalid character_id")
+    return safe_value
 
 
 def _structured_defaults(
@@ -98,38 +108,43 @@ def _infer_character_type_from_record(record: Dict[str, Any]) -> str:
 
 
 def _gather_filesystem_character_info(character_id: str, characters_path: str) -> Tuple[str, str, str, datetime]:
-    character_dir = os.path.join(characters_path, character_id)
-    character_file = os.path.join(character_dir, f"character_{character_id}.md")
-    stats_file = os.path.join(character_dir, "stats.yaml")
+    safe_character_id = _require_public_character_id(character_id)
+    base_dir = Path(characters_path).resolve()
+    character_dir = (base_dir / safe_character_id).resolve()
+    if base_dir not in character_dir.parents and base_dir != character_dir:
+        raise HTTPException(status_code=400, detail="Invalid character_id")
+
+    character_file = character_dir / f"character_{safe_character_id}.md"
+    stats_file = character_dir / "stats.yaml"
 
     updated_ts: Optional[float] = None
-    if os.path.isdir(character_dir):
-        updated_ts = max(updated_ts or 0.0, os.path.getmtime(character_dir))
+    if character_dir.is_dir():
+        updated_ts = max(updated_ts or 0.0, character_dir.stat().st_mtime)
 
-    display_name = _display_name_from_id(character_id)
+    display_name = _display_name_from_id(safe_character_id)
     status = "active"
     type_value = "npc"
 
-    if os.path.exists(character_file):
-        updated_ts = max(updated_ts or 0.0, os.path.getmtime(character_file))
+    if character_file.exists():
+        updated_ts = max(updated_ts or 0.0, character_file.stat().st_mtime)
         try:
-            with open(character_file, "r", encoding="utf-8") as fh:
+            with character_file.open("r", encoding="utf-8") as fh:
                 for line in fh:
                     trimmed = line.strip()
                     if trimmed.startswith("# "):
                         display_name = trimmed[2:].strip() or display_name
                         if updated_ts is None:
-                            updated_ts = os.path.getmtime(character_file)
+                            updated_ts = character_file.stat().st_mtime
                         break
         except Exception:
-            logger.debug("Failed to parse character markdown for %s", character_id, exc_info=True)
+            logger.debug("Failed to parse character markdown.", exc_info=True)
 
-    if os.path.exists(stats_file):
-        updated_ts = max(updated_ts or 0.0, os.path.getmtime(stats_file))
+    if stats_file.exists():
+        updated_ts = max(updated_ts or 0.0, stats_file.stat().st_mtime)
         try:
             import yaml
 
-            with open(stats_file, "r", encoding="utf-8") as fh:
+            with stats_file.open("r", encoding="utf-8") as fh:
                 stats_payload = yaml.safe_load(fh)
                 if isinstance(stats_payload, dict):
                     metadata = stats_payload.get("metadata", {}) or {}
@@ -146,7 +161,7 @@ def _gather_filesystem_character_info(character_id: str, characters_path: str) -
                         if isinstance(type_candidate, str) and type_candidate.strip():
                             type_value = type_candidate.strip().lower()
         except Exception:
-            logger.debug("Failed to parse stats for %s", character_id, exc_info=True)
+            logger.debug("Failed to parse stats.", exc_info=True)
 
     updated_dt = datetime.fromtimestamp(updated_ts or datetime.now(timezone.utc).timestamp(), tz=timezone.utc)
     return display_name, status.lower(), type_value, updated_dt
@@ -290,9 +305,9 @@ async def get_characters_api(
                         summary, timestamp = _summarize_workspace_character(record, workspace_id)
                         workspace_entries.append((timestamp, summary))
                     except ValueError:
-                        logger.warning("Skipping malformed workspace character record: %s", char_id)
+                        logger.warning("Skipping malformed workspace character record.")
         except Exception:
-            logger.warning("Failed to load workspace characters for %s", workspace_id, exc_info=True)
+            logger.warning("Failed to load workspace characters.", exc_info=True)
 
     merged: Dict[str, Tuple[datetime, CharacterSummary]] = {}
     for entry in public_entries:
@@ -341,9 +356,10 @@ async def get_character_detail_api(
 
     event_bus = getattr(request.app.state, "event_bus", None)
     characters_path = get_characters_directory_path()
-    _, _, _, updated_dt = _gather_filesystem_character_info(character_id, characters_path)
-    _apply_entity_cache_headers(response, character_id, updated_dt)
-    return await get_character_detail(character_id, event_bus)
+    safe_character_id = _require_public_character_id(character_id)
+    _, _, _, updated_dt = _gather_filesystem_character_info(safe_character_id, characters_path)
+    _apply_entity_cache_headers(response, safe_character_id, updated_dt)
+    return await get_character_detail(safe_character_id, event_bus)
 
 
 @router.post("/characters", response_model=CharacterDetailResponse, status_code=201)
@@ -486,16 +502,7 @@ async def get_character_detail(
     """Retrieve character details from the filesystem for the public catalog."""
 
     characters_path = get_characters_directory_path()
-    raw_character_id = (character_id or "").strip()
-    safe_character_id = os.path.basename(raw_character_id)
-
-    if (
-        not safe_character_id
-        or safe_character_id in {".", ".."}
-        or safe_character_id != raw_character_id
-        or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
-    ):
-        raise HTTPException(status_code=400, detail="Invalid character_id")
+    safe_character_id = _require_public_character_id(character_id)
 
     if not os.path.isdir(characters_path):
         raise HTTPException(
@@ -580,7 +587,7 @@ async def get_character_detail(
         factory = CharacterFactory(bus)
         factory.create_character(safe_character_id)
     except Exception as exc:
-        logger.warning("CharacterFactory failed to load %s: %s", safe_character_id, exc)
+        logger.warning("CharacterFactory failed to load character.", exc_info=True)
         character_data["background_summary"] = (
             f"Character {safe_character_id} could not be loaded"
         )

@@ -43,6 +43,7 @@ from src.core.system_orchestrator import (
     SystemOrchestrator,
 )
 
+
 # Import our secure components
 from src.security import (
     Permission,
@@ -535,13 +536,11 @@ def create_secure_app() -> FastAPI:
             # Create token pair
             token_pair = await security_service.create_token_pair(user)
 
-            logger.info(
-                f"User registered successfully: {user.username} ({user.role.value})"
-            )
+            logger.info("User registered successfully.")
             return token_pair
 
         except Exception as e:
-            logger.error(f"User registration failed: {e}")
+            logger.exception("User registration failed.")
             raise HTTPException(status_code=400, detail=str(e))
 
     @app.post("/auth/login", response_model=TokenPair, tags=["Authentication"])
@@ -568,13 +567,13 @@ def create_secure_app() -> FastAPI:
             # Create token pair
             token_pair = await security_service.create_token_pair(user)
 
-            logger.info(f"User login successful: {user.username}")
+            logger.info("User login successful.")
             return token_pair
 
         except HTTPException:
             raise
-        except Exception as e:
-            logger.error(f"User login failed: {e}")
+        except Exception:
+            logger.exception("User login failed.")
             raise HTTPException(status_code=500, detail="Login failed")
 
     @app.post("/auth/refresh", response_model=TokenPair, tags=["Authentication"])
@@ -586,8 +585,8 @@ def create_secure_app() -> FastAPI:
             security_service = get_security_service()
             token_pair = await security_service.refresh_access_token(refresh_token)
             return token_pair
-        except Exception as e:
-            logger.error(f"Token refresh failed: {e}")
+        except Exception:
+            logger.exception("Token refresh failed.")
             raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     @app.post("/auth/logout", tags=["Authentication"])
@@ -596,7 +595,7 @@ def create_secure_app() -> FastAPI:
     ):
         """User Logout Endpoint"""
         # In a production system, you would revoke the token here
-        logger.info(f"User logout: {current_user.username}")
+        logger.info("User logout.")
         return OptimizedSecureJSONResponse(
             content={"message": "Logged out successfully"}
         )
@@ -612,12 +611,12 @@ def create_secure_app() -> FastAPI:
             security_service = get_security_service()
             api_key = await security_service.generate_api_key(current_user.id)
 
-            logger.info(f"API key generated: {current_user.username}")
+            logger.info("API key generated.")
             return ApiKeyResponse(
                 api_key=api_key, message="API key generated successfully"
             )
-        except Exception as e:
-            logger.error(f"API key generation failed: {e}")
+        except Exception:
+            logger.exception("API key generation failed.")
             raise HTTPException(status_code=500, detail="Failed to generate API key")
 
     # SYSTEM ROUTES
@@ -678,8 +677,8 @@ def create_secure_app() -> FastAPI:
                 rate_limit_stats=rate_limit_stats,
             )
 
-        except Exception as e:
-            logger.error(f"Health check failed: {e}")
+        except Exception:
+            logger.exception("Health check failed.")
             return OptimizedSecureJSONResponse(
                 status_code=503,
                 content={
@@ -701,9 +700,7 @@ def create_secure_app() -> FastAPI:
         start_time = datetime.now(timezone.utc)
         simulation_id = secrets.token_urlsafe(16)
 
-        logger.info(
-            f"Simulation requested: {request.character_names} | User: {current_user.username}"
-        )
+        logger.info("Simulation requested.")
 
         try:
             orchestrator = getattr(app.state, "orchestrator", None)
@@ -769,15 +766,13 @@ def create_secure_app() -> FastAPI:
                 user_id=current_user.id,
             )
 
-            logger.info(
-                f"Simulation completed: {generation_id} | Duration: {duration:.2f}s"
-            )
+            logger.info("Simulation completed in %.2fs.", duration)
             return response
 
         except HTTPException:
             raise
-        except Exception as e:
-            logger.error(f"Simulation failed: {e}")
+        except Exception:
+            logger.exception("Simulation failed.")
             raise HTTPException(status_code=500, detail="Simulation execution failed")
 
     # REGISTER API ROUTES

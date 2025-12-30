@@ -20,6 +20,7 @@ Features:
 
 import asyncio
 import base64
+import bcrypt
 import hashlib
 import json
 import logging
@@ -1275,8 +1276,17 @@ class ExportIntegrationEngine:
 
     def _verify_password(self, password: str, password_hash: str) -> bool:
         """Verify password against hash."""
-        # This would use proper password hashing
-        return hashlib.sha256(password.encode()).hexdigest() == password_hash
+        if not password_hash:
+            return False
+        try:
+            stored_hash = (
+                password_hash.encode("utf-8")
+                if isinstance(password_hash, str)
+                else password_hash
+            )
+            return bcrypt.checkpw(password.encode("utf-8"), stored_hash)
+        except (ValueError, TypeError):
+            return False
 
     async def _track_share_access(
         self, share_config: ShareConfiguration, access_token: Optional[str]
