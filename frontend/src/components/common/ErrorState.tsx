@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button, useTheme, Stack, Paper } from '@mui/material';
+import { Box, Typography, Button, useTheme, Paper } from '@mui/material';
 import { motion } from 'framer-motion';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CloudOffIcon from '@mui/icons-material/CloudOff';

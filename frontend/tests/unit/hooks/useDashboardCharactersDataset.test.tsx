@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, waitFor, act } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { useDashboardCharactersDataset } from '@/hooks/useDashboardCharactersDataset';
 import { charactersAPI } from '@/services/api/charactersAPI';
 

@@ -82,7 +82,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId: _userId, campaignId: _cam
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   // Data Query
-  const { data: characters, isLoading: isLoadingChars, isError: isCharactersError, error: charactersError, refetch: refetchChars } = useCharactersQuery();
+  const { data: characters, isLoading: isLoadingChars, isError: isCharactersError, error: charactersError } = useCharactersQuery();
 
   const isConnectionError = charactersError instanceof ApiError &&
     (charactersError.kind === 'network' || charactersError.kind === 'timeout');
