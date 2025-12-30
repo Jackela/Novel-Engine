@@ -340,11 +340,7 @@ class InteractionPauseController:
             self._pending.decision_point.is_resolved = True
             self._pending.decision_point.resolution = "user_input"
 
-            logger.info(
-                "Negotiation confirmed for decision: accepted=%s, insist=%s",
-                accepted,
-                insist_original,
-            )
+            logger.info("Negotiation confirmed for decision.")
 
         self._resume_event.set()
         return True

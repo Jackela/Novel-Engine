@@ -110,18 +110,25 @@ def _infer_character_type_from_record(record: Dict[str, Any]) -> str:
 def _gather_filesystem_character_info(character_id: str, characters_path: str) -> Tuple[str, str, str, datetime]:
     safe_character_id = _require_public_character_id(character_id)
     base_dir = Path(characters_path).resolve()
-    character_dir = (base_dir / safe_character_id).resolve()
-    if base_dir not in character_dir.parents and base_dir != character_dir:
-        raise HTTPException(status_code=400, detail="Invalid character_id")
+    character_dir = next(
+        (
+            item
+            for item in base_dir.iterdir()
+            if item.is_dir() and item.name == safe_character_id
+        ),
+        None,
+    )
+    if character_dir is None:
+        raise HTTPException(status_code=404, detail="Character not found")
 
-    character_file = character_dir / f"character_{safe_character_id}.md"
+    character_file = character_dir / f"character_{character_dir.name}.md"
     stats_file = character_dir / "stats.yaml"
 
     updated_ts: Optional[float] = None
     if character_dir.is_dir():
         updated_ts = max(updated_ts or 0.0, character_dir.stat().st_mtime)
 
-    display_name = _display_name_from_id(safe_character_id)
+    display_name = _display_name_from_id(character_dir.name)
     status = "active"
     type_value = "npc"
 
