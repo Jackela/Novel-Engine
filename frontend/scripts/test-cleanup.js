@@ -3,7 +3,8 @@
  * Ensures proper cleanup of test processes and handles
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -20,12 +21,32 @@ function killPortProcesses() {
   for (const port of PORTS_TO_KILL) {
     try {
       if (process.platform === 'win32') {
-        // Windows
-        execSync(`netstat -ano | findstr :${port}`, { stdio: 'pipe' });
-        execSync(`for /f "tokens=5" %a in ('netstat -ano ^| findstr :${port}') do taskkill /f /pid %a`, { stdio: 'pipe' });
+        const output = execFileSync('netstat', ['-ano'], { encoding: 'utf8' });
+        const pids = new Set();
+        output.split(/\r?\n/).forEach(line => {
+          if (!line.includes(`:${port}`)) return;
+          const parts = line.trim().split(/\s+/);
+          const pid = parts[parts.length - 1];
+          if (pid && /^\d+$/.test(pid)) {
+            pids.add(pid);
+          }
+        });
+        for (const pid of pids) {
+          execFileSync('taskkill', ['/f', '/pid', pid], { stdio: 'pipe' });
+        }
       } else {
-        // Unix-like systems
-        execSync(`lsof -ti:${port} | xargs kill -9`, { stdio: 'pipe' });
+        const output = execFileSync('lsof', ['-ti', `:${port}`], { encoding: 'utf8' }).trim();
+        if (output) {
+          output.split(/\r?\n/).forEach(pid => {
+            if (/^\d+$/.test(pid)) {
+              try {
+                process.kill(Number(pid), 'SIGKILL');
+              } catch {
+                // Process already terminated
+              }
+            }
+          });
+        }
       }
       console.log(`✅ Cleaned up port ${port}`);
     } catch (error) {
@@ -42,25 +63,43 @@ function killNodeProcesses() {
     const currentDir = process.cwd();
     
     if (process.platform === 'win32') {
-      // Windows - kill node processes in current directory
-      const cmd = `wmic process where "name='node.exe' and commandline like '%${currentDir.replace(/\\/g, '\\\\')}%'" get processid /value`;
-      const output = execSync(cmd, { encoding: 'utf8', stdio: 'pipe' });
-      
-      const pids = output.match(/ProcessId=(\d+)/g);
-      if (pids) {
-        pids.forEach(pidMatch => {
-          const pid = pidMatch.split('=')[1];
+      const output = execFileSync(
+        'wmic',
+        ['process', 'where', 'name="node.exe"', 'get', 'ProcessId,CommandLine', '/value'],
+        { encoding: 'utf8' }
+      );
+      const entries = output.split(/\r?\n\r?\n/);
+      entries.forEach(block => {
+        const lines = block.split(/\r?\n/);
+        const commandLine = lines.find(line => line.startsWith('CommandLine='))?.slice('CommandLine='.length) || '';
+        const pidLine = lines.find(line => line.startsWith('ProcessId=')) || '';
+        const pid = pidLine.split('=')[1];
+        if (pid && commandLine.includes(currentDir)) {
           try {
-            execSync(`taskkill /f /pid ${pid}`, { stdio: 'pipe' });
+            execFileSync('taskkill', ['/f', '/pid', pid], { stdio: 'pipe' });
             console.log(`✅ Killed process ${pid}`);
-          } catch (err) {
+          } catch {
             // Process already terminated
           }
-        });
-      }
+        }
+      });
     } else {
-      // Unix-like systems
-      execSync(`pkill -f "node.*${currentDir}"`, { stdio: 'pipe' });
+      const output = execFileSync('ps', ['-eo', 'pid=,command='], { encoding: 'utf8' });
+      output.split(/\r?\n/).forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        const [pidPart, ...commandParts] = trimmed.split(/\s+/);
+        const command = commandParts.join(' ');
+        if (!pidPart || !/^\d+$/.test(pidPart)) return;
+        if (command.includes('node') && command.includes(currentDir)) {
+          try {
+            process.kill(Number(pidPart), 'SIGKILL');
+            console.log(`✅ Killed process ${pidPart}`);
+          } catch {
+            // Process already terminated
+          }
+        }
+      });
       console.log('✅ Cleaned up Node.js processes');
     }
   } catch (error) {
@@ -83,13 +122,9 @@ function clearTempFiles() {
     tempDirs.forEach(dir => {
       try {
         const fullPath = path.join(process.cwd(), dir);
-        if (process.platform === 'win32') {
-          execSync(`if exist "${fullPath}" rmdir /s /q "${fullPath}"`, { stdio: 'pipe' });
-        } else {
-          execSync(`rm -rf "${fullPath}"`, { stdio: 'pipe' });
-        }
+        fs.rmSync(fullPath, { recursive: true, force: true });
         console.log(`✅ Cleaned up ${dir}`);
-      } catch (err) {
+      } catch {
         // Directory doesn't exist or already cleaned
       }
     });

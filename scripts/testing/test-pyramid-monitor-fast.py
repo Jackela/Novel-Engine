@@ -445,6 +445,8 @@ def main():
         report = monitor.generate_html_report(distribution, score)
     elif args.format == "markdown":
         report = monitor.generate_markdown_report(distribution, score)
+    else:
+        report = monitor.generate_console_report(distribution, score)
 
     # Output
     if args.output:

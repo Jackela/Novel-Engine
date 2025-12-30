@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readdirSync, statSync, readFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import { resolve, join } from 'path';
 
 const root = resolve(process.cwd(), 'src');
@@ -38,10 +38,9 @@ function hasNonFallbackHex(text) {
 }
 
 function walk(dir) {
-  for (const entry of readdirSync(dir)) {
-    const p = join(dir, entry);
-    const st = statSync(p);
-    if (st.isDirectory()) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name);
+    if (entry.isDirectory()) {
       walk(p);
     } else if (/\.(tsx)$/.test(p)) {
       const rel = p.replace(process.cwd() + '/', '').replace(/\\/g, '/');
