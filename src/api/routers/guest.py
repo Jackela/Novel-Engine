@@ -71,6 +71,7 @@ async def import_workspace_zip(
     archive: UploadFile = File(...),
     settings: APISettings = Depends(get_settings),
     store: FilesystemWorkspaceStore = Depends(get_workspace_store),
+    manager: GuestSessionManager = Depends(get_guest_session_manager),
 ) -> GuestSessionResponse:
     zip_bytes = await archive.read()
     try:
@@ -78,4 +79,12 @@ async def import_workspace_zip(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
+    response.set_cookie(
+        manager.cookie_name,
+        manager.encode(workspace.id),
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        max_age=manager.cookie_max_age_seconds(),
+    )
     return GuestSessionResponse(workspace_id=workspace.id, created=True)
