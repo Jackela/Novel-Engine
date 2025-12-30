@@ -519,8 +519,11 @@ class DirectorAgentLoopOptimizationTest:
             original_time = time.time() - start_time
 
             # Test asynchronous logging (optimized)
+            with tempfile.NamedTemporaryFile(delete=False) as temp_log:
+                async_log_path = temp_log.name
+
             async_logger = AsyncCampaignLogger(
-                log_path=tempfile.mktemp(), batch_size=50, flush_interval=1.0
+                log_path=async_log_path, batch_size=50, flush_interval=1.0
             )
 
             await async_logger.start()

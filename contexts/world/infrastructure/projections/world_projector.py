@@ -53,11 +53,12 @@ class WorldProjector:
     def __init__(self):
         """Initialize the world projector service."""
         self.logger = logger.getChild(self.__class__.__name__)
-        self._metrics = ProjectorMetrics("world_projector")
+        self._metrics = ProjectorMetrics()
         self._processed_events: Set[str] = set()  # Simple deduplication
         self._batch_size = 50
         self._max_retries = 3
         self._is_running = False
+        self._handler_id: Optional[str] = None
 
         # Event type handlers mapping
         self._event_handlers = {
@@ -89,7 +90,7 @@ class WorldProjector:
                 handler_id="world_projector_handler",
             )
 
-            await event_bus.subscribe("world.state_changed", handler)
+            self._handler_id = event_bus.subscribe("world.state_changed", handler)
 
             self._is_running = True
             self.logger.info("World projector started successfully")
@@ -108,9 +109,9 @@ class WorldProjector:
         try:
             # Unregister from event bus
             event_bus = get_event_bus()
-            await event_bus.unsubscribe(
-                "world.state_changed", "world_projector_handler"
-            )
+            if self._handler_id:
+                event_bus.unsubscribe(self._handler_id)
+                self._handler_id = None
 
             self._is_running = False
             self.logger.info("World projector stopped successfully")

@@ -460,7 +460,7 @@ class SecurityDashboard:
                 await asyncio.sleep(3600)  # Check hourly
 
                 # Generate compliance reports
-                for framework in ComplianceFramework:
+                for framework in ComplianceFramework.__members__.values():
                     report = await self._generate_compliance_report(framework)
                     if report:
                         await self._save_compliance_report(report)

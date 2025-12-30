@@ -538,9 +538,10 @@ def create_secure_app(
         try:
             suite = get_security_suite()
             return await suite.get_security_status()
-        except Exception as e:
+        except Exception:
+            logger.exception("Security health check failed.")
             return JSONResponse(
-                status_code=503, content={"status": "error", "error": str(e)}
+                status_code=503, content={"status": "error", "error": "unavailable"}
             )
 
     return app

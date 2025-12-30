@@ -408,7 +408,7 @@ def rollback():
     try:
         subprocess.run(["pkill", "-f", "api_server.py"], check=False)
     except (FileNotFoundError, OSError, shutil.Error) as e:
-        logger.warning(f"Failed to stop services: {e}")
+        logger.warning(f"Failed to stop services: {{e}}")
     
     # Restore configuration files
     config_files = ["configs/environments/development.yaml", "configs/environments/settings.yaml", "requirements.txt"]
@@ -446,7 +446,7 @@ if __name__ == "__main__":
                 f.write(rollback_script)
 
             # Make executable
-            os.chmod(rollback_file, 0o755)
+            os.chmod(rollback_file, 0o700)
 
             logger.info(f"✅ Rollback script created: {rollback_file}")
             return True
