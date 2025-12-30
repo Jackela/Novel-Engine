@@ -243,7 +243,7 @@ def display_narrative_preview(narrative: str, max_lines: int = 20):
     print()
 
 
-def validate_Novel Engine_atmosphere(narrative: str) -> dict:
+def validate_novel_engine_atmosphere(narrative: str) -> dict:
     """
     Validate the Novel Engine atmospheric elements in the narrative.
     

@@ -46,35 +46,32 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 
 ### Architectural Principles
 
-#### 1. Domain-Driven Design (DDD)
-- **Bounded Contexts**: Clear domain boundaries with well-defined interfaces
-- **Ubiquitous Language**: Consistent terminology across all domains
-- **Domain Events**: Event-driven communication between contexts
-- **Aggregate Root Patterns**: Consistent data integrity within domain boundaries
+#### 1. Functional Core, Imperative Shell
+- **Predictability**: Core business logic is implemented as pure functions with no side effects.
+- **Isolation**: State mutation and I/O (filesystem, network) are pushed to the "imperative shell" (e.g., API routers, persistence services).
+- **Testability**: Pure core logic is easily verified via unit tests without complex mocking.
 
-#### 2. Microservices Architecture
-- **Service Autonomy**: Independent deployments and scaling
-- **API-First Design**: Contract-driven development with OpenAPI specifications
-- **Event-Driven Communication**: Asynchronous messaging between services
-- **Distributed Data Management**: Service-owned data with eventual consistency
+#### 2. Modular Monolith (M1 Phase)
+- **Unified Runtime**: All services run within a single process/container for simplicity and performance.
+- **Logical Boundaries**: Code is structured into strict domains (`src/contexts/`), simulating microservices boundaries without the network overhead.
+- **Event Bus**: Internal communication uses an in-memory event bus (`src/event_bus.py`) rather than external message queues.
 
-#### 3. Platform Engineering
-- **Shared Services**: Reusable platform capabilities across all applications
-- **Infrastructure as Code**: Complete automation of environments and deployments
-- **Observability by Design**: Comprehensive monitoring, logging, and tracing
-- **Security by Default**: Security integrated at every architectural layer
+#### 3. Pragmatic Persistence (Filesystem-Backed)
+- **Zero Database**: Persistence is handled via the filesystem (Markdown, YAML, JSON) for portability and simplicity.
+- **Guest Workspaces**: Data is scoped to isolated filesystem workspaces, enabling "guest-first" usage.
+- **Atomic Operations**: Ensure data integrity through atomic writes and schema versioning.
 
 ### Layered Architecture Model
 
 ```
 ┌─────────────────────────────────────────────────────┐
 │                 Presentation Layer                   │
-│           Web UI | Mobile App | CLI Tools           │
+│           Web UI (React) | CLI Tools                │
 └─────────────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────────────┐
 │               Application Services Layer             │
-│  API Gateway | Story Engine | Character Service     │
-│  Campaign Manager | Memory Service | Monitoring     │
+│          FastAPI Routers (src/api/routers)          │
+│       Guest Session Manager | Workspace Store       │
 └─────────────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────────────┐
 │                Domain Contexts Layer                │
@@ -82,14 +79,8 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 │  Orchestration | Shared (Kernel)                    │
 └─────────────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────────────┐
-│               Platform Services Layer               │
-│  AI Services | Caching | Memory | Validation        │
-│  Security | Monitoring | Infrastructure             │
-└─────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────┐
-│              Infrastructure Layer                   │
-│  Kubernetes | Docker | Terraform | Monitoring       │
-│  Security | Scripts | Environments                  │
+│               Infrastructure Layer                  │
+│  Filesystem I/O | Event Bus | AI Service Adapter    │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -97,58 +88,35 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 
 ## System Components
 
-### Application Services (`apps/`)
+### Application Services (`src/api/`)
 
-#### API Gateway (`apps/api-gateway/`)
-**Purpose**: Central API orchestration, routing, and cross-cutting concerns
+> **Note**: While the `apps/` directory exists for future microservice extraction, the current M1 implementation resides centrally in `src/api` and `src/agents`.
 
-**Responsibilities**:
-- API request routing and load balancing
-- Authentication and authorization enforcement
-- Rate limiting and request validation
-- API versioning and backward compatibility
-- Service discovery and health monitoring
-
-**Key Interfaces**:
-- REST API endpoints for all service operations
-- GraphQL gateway for complex queries
-- WebSocket connections for real-time features
-- Server-Sent Events (SSE) for dashboard updates (`/api/events/stream`)
-- Authentication providers (OAuth2, JWT, etc.)
-
-#### Story Engine (`apps/story-engine/`)
-**Purpose**: Core narrative generation and story orchestration service
+#### API Gateway (Logical)
+**Purpose**: Central API routing and cross-cutting concerns.
+**Implementation**: `src/api/app.py` acts as the gateway, aggregating all routers under the `/api` prefix.
 
 **Responsibilities**:
-- Dynamic story generation using AI models
-- Plot development and narrative coherence management
-- Event orchestration and story progression
-- Narrative quality validation and enhancement
-- Story context preservation across sessions
+- Request routing to appropriate domain routers.
+- Global middleware (CORS, GZip, Error Handling).
+- Session cookie management for Guest Mode.
 
-**Key Interfaces**:
-- Story generation API with customization parameters
-- Narrative event streaming for real-time updates
-- Plot analysis and validation endpoints
-- Story template and theme management
-- Integration with AI platform services
-
-#### Character Service (`apps/character-service/`)
-**Purpose**: Character lifecycle management and persona agent coordination
+#### Story Engine (`src/agents/`)
+**Purpose**: Core narrative generation and orchestration.
+**Implementation**: `DirectorAgent` and `ChroniclerAgent`.
 
 **Responsibilities**:
-- Character creation, configuration, and development
-- Persona agent deployment and orchestration
-- Character interaction processing and validation
-- Character memory and relationship management
-- Agent behavior analysis and optimization
+- Dynamic story generation using AI models.
+- Managing turn-based narrative flow.
+- Transcribing simulation logs into readable formats.
 
-**Key Interfaces**:
-- Character management CRUD operations
-- Persona agent deployment and monitoring
-- Character interaction processing endpoints
-- Memory and relationship query interfaces
-- Behavior analysis and reporting APIs
+#### Character Service (`src/contexts/characters/`)
+**Purpose**: Character lifecycle and logic.
+**Implementation**: `src/api/routers/characters.py` and `CharacterFactory`.
+
+**Responsibilities**:
+- CRUD operations for character profiles (Markdown/YAML).
+- Loading and instantiating `PersonaAgent` instances.
 
 #### Campaign Manager (`apps/campaign-manager/`)
 **Purpose**: Campaign orchestration, session management, and world state coordination
@@ -367,10 +335,10 @@ Campaign (Aggregate Root)
 - **Documentation**: Living API documentation from contracts
 
 #### API Versioning Strategy
-- **API Base Path**: Single stable prefix under `/api/*` (no path versioning)
-- **Header Versioning**: Accept-Version header for fine-grained control
-- **Backward Compatibility**: Minimum 2 versions supported simultaneously
-- **Deprecation Policy**: 6-month notice for breaking changes
+- **API Base Path**: Single stable prefix under `/api/*`.
+- **No Path Versioning**: Explicitly avoid `/api/v1` or `/api/v2` in the URL path for first-party clients.
+- **Backward Compatibility**: Handle breaking changes via headers or evolutionary schema changes (e.g., optional fields).
+- **Canonical Decision**: See `openspec/changes/archive/2025-12-22-standardize-api-surface` for details.
 
 ### API Gateway Architecture
 
@@ -432,107 +400,53 @@ GET  /api/campaigns/{id}/state # World state
 
 ### Data Management Principles
 
-#### Service-Owned Data
-- **Data Ownership**: Each service owns its data and schema
-- **No Shared Databases**: Services cannot directly access other service databases
-- **API-Based Access**: All cross-service data access through APIs
-- **Data Consistency**: Eventual consistency through event-driven updates
+#### Filesystem as Source of Truth
+- **Human-Readable**: All critical data (Characters, Campaigns) is stored as Markdown (with YAML frontmatter) or JSON.
+- **Git-Friendly**: The entire world state can be version-controlled using standard Git workflows.
+- **Portability**: Workspaces are self-contained folders that can be easily zipped, shared, or backed up.
 
-#### Polyglot Persistence
-- **PostgreSQL**: Relational data requiring ACID properties
-- **MongoDB**: Document storage for flexible schemas
-- **Redis**: Caching and session storage
-- **Elasticsearch**: Search and analytics
-- **S3/MinIO**: Large file and media storage
+#### Logical Separation
+- **Data Ownership**: Each domain context (`contexts/`) manages its own file schemas and directory structures.
+- **No Shared Mutability**: Domains interact via the Event Bus or public Service Interfaces, never by directly modifying another domain's files.
 
-### Data Models by Service
+### Data Models (Filesystem)
 
 #### Character Service Data Model
-```sql
--- Characters table (PostgreSQL)
-CREATE TABLE characters (
-    id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    type CHARACTER_TYPE NOT NULL,
-    personality_traits JSONB,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
-);
+```yaml
+# characters/{id}/profile.md
+---
+name: "Aria"
+faction: "Alliance"
+role: "Pilot"
+stats:
+  piloting: 8
+  diplomacy: 4
+---
 
--- Character Memory (MongoDB)
+# Narrative content continues here...
+Aria is a skilled pilot...
+```
+
+#### Story Engine Data Model
+```json
+// campaigns/{id}/session_log.json
 {
-  "_id": "character_id",
-  "memories": [
+  "id": "session_123",
+  "turns": [
     {
-      "id": "memory_id",
-      "type": "interaction|event|knowledge",
-      "content": "...",
-      "timestamp": "ISO_DATE",
-      "significance": 0.8,
-      "associations": ["related_memory_ids"]
+      "id": "turn_1",
+      "action": "...",
+      "outcome": "..."
     }
   ]
 }
 ```
 
-#### Story Engine Data Model
-```sql
--- Stories table (PostgreSQL)
-CREATE TABLE stories (
-    id UUID PRIMARY KEY,
-    title VARCHAR(500) NOT NULL,
-    genre STORY_GENRE NOT NULL,
-    themes TEXT[],
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
-);
-
--- Story Content (MongoDB)
-{
-  "_id": "story_id",
-  "plot": {
-    "structure": "three_act|hero_journey|...",
-    "events": [
-      {
-        "id": "event_id",
-        "type": "...",
-        "content": "...",
-        "timestamp": "...",
-        "participants": ["character_ids"]
-      }
-    ]
-  }
-}
-```
-
-#### Campaign Manager Data Model
-```sql
--- Campaigns table (PostgreSQL)
-CREATE TABLE campaigns (
-    id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    configuration JSONB,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
-);
-
--- World State (Redis + PostgreSQL)
--- Real-time state in Redis, persistent state in PostgreSQL
-```
-
 ### Data Synchronization Patterns
 
 #### Event-Driven Updates
-- **Domain Events**: Published when aggregate state changes
-- **Event Store**: Persistent event log for audit and replay
-- **Projections**: Read models updated from event streams
-- **Saga Patterns**: Long-running transactions across services
-
-#### Caching Strategy
-- **L1 Cache**: In-memory application cache
-- **L2 Cache**: Redis distributed cache
-- **L3 Cache**: CDN for static content
-- **Cache Invalidation**: Event-driven cache updates
+- **In-Memory Bus**: `src/event_bus.py` handles synchronous domain events.
+- **SSE Streaming**: Real-time updates are pushed to the frontend via `/api/events/stream`.
 
 ---
 
