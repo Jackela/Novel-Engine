@@ -269,7 +269,6 @@ class TestAIIntelligenceIntegration:
                 "track_event",
                 new_callable=AsyncMock,
             ) as mock_analytics:
-
                 result = await integration_orchestrator.generate_story_content(
                     prompt="Generate an AI-enhanced story",
                     user_id="test_user",
@@ -446,7 +445,6 @@ class TestAIIntelligenceIntegration:
             "track_event",
             new_callable=AsyncMock,
         ) as mock_track:
-
             await integration_orchestrator.generate_story_content(
                 prompt="Test story for analytics",
                 user_id="analytics_test_user",

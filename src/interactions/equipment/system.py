@@ -70,9 +70,9 @@ class DynamicEquipmentSystem:
         self._equipment_registry: Dict[str, DynamicEquipment] = {}
         self._agent_equipment: Dict[str, List[str]] = {}  # agent_id -> equipment_ids
         self._equipment_templates: Dict[str, Dict[str, Any]] = {}
-        self._maintenance_queue: List[Tuple[datetime, str]] = (
-            []
-        )  # scheduled maintenance
+        self._maintenance_queue: List[
+            Tuple[datetime, str]
+        ] = []  # scheduled maintenance
 
         # Blessed equipment processors
         self._category_processors = {
@@ -200,9 +200,9 @@ class DynamicEquipmentSystem:
                 )
 
                 # Register enhanced equipment
-                self._equipment_registry[equipment_item.equipment_id] = (
-                    dynamic_equipment
-                )
+                self._equipment_registry[
+                    equipment_item.equipment_id
+                ] = dynamic_equipment
 
                 # Associate enhanced equipment with agent
                 if agent_id not in self._agent_equipment:
@@ -826,9 +826,9 @@ class DynamicEquipmentSystem:
                 eq.performance_metrics.get("reliability", 0.9)
                 for eq in self._equipment_registry.values()
             )
-            self.system_metrics["average_equipment_reliability"] = (
-                total_reliability / len(self._equipment_registry)
-            )
+            self.system_metrics[
+                "average_equipment_reliability"
+            ] = total_reliability / len(self._equipment_registry)
 
         return {
             **self.system_metrics,

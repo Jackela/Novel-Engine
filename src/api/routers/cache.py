@@ -38,4 +38,3 @@ async def cache_chunk_complete(key: str):
 @router.get("/cache/stream/{key}")
 async def cache_stream(key: str):
     return StreamingResponse(stream_chunks(key), media_type="text/event-stream")
-

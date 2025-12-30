@@ -523,9 +523,9 @@ class SecurityAuditor:
     async def _test_security_misconfiguration(self):
         """Test for security misconfigurations"""
         test_name = "security_misconfiguration"
-        self.test_results[test_name] = (
-            True  # Security configuration is properly implemented
-        )
+        self.test_results[
+            test_name
+        ] = True  # Security configuration is properly implemented
 
     async def _test_vulnerable_components(self):
         """Test for vulnerable components"""

@@ -29,10 +29,14 @@ async def get_orchestration_status(request: Request) -> Dict[str, Any]:
 
 
 @router.post("/api/orchestration/start")
-async def start_orchestration(request: Request, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+async def start_orchestration(
+    request: Request, payload: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     api_service = getattr(request.app.state, "api_service", None)
     if not api_service:
-        raise HTTPException(status_code=503, detail="Orchestration service not initialized")
+        raise HTTPException(
+            status_code=503, detail="Orchestration service not initialized"
+        )
 
     params = payload or {}
     total_turns = params.get("total_turns", 3)
@@ -95,4 +99,3 @@ async def get_narrative(request: Request) -> Dict[str, Any]:
             "has_content": bool(narrative.get("story", "")),
         },
     }
-

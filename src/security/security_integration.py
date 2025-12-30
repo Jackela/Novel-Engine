@@ -73,7 +73,6 @@ class EnterpriseSecuritySuite:
         enable_behavioral_analytics: bool = True,
         security_config: SecurityConfig = None,
     ):
-
         self.database_path = database_path
         self.secret_key = secret_key or secrets.token_urlsafe(32)
         self.redis_url = redis_url
@@ -285,10 +284,12 @@ class EnterpriseSecuritySuite:
                         pass  # Not authenticated, continue with anonymous evaluation
 
                 # Evaluate request security
-                is_allowed, security_actions, threat_level = (
-                    await self.security_manager.evaluate_request_security(
-                        request, user_id
-                    )
+                (
+                    is_allowed,
+                    security_actions,
+                    threat_level,
+                ) = await self.security_manager.evaluate_request_security(
+                    request, user_id
                 )
 
                 if not is_allowed:

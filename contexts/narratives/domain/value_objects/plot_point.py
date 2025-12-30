@@ -99,7 +99,9 @@ class PlotPoint:
         if self.involved_characters is None:
             object.__setattr__(self, "involved_characters", frozenset())
         elif isinstance(self.involved_characters, set):
-            object.__setattr__(self, "involved_characters", frozenset(self.involved_characters))
+            object.__setattr__(
+                self, "involved_characters", frozenset(self.involved_characters)
+            )
 
         if self.affected_themes is None:
             object.__setattr__(self, "affected_themes", frozenset())
@@ -157,6 +159,7 @@ class PlotPoint:
 
     def __hash__(self) -> int:
         """Custom hash implementation for frozen dataclass with Dict and List fields."""
+
         def _dict_to_hashable(d):
             if not d:
                 return frozenset()
@@ -170,31 +173,35 @@ class PlotPoint:
                     v = float(v)
                 items.append((k, v))
             return frozenset(items)
-        
-        return hash((
-            self.plot_point_id,
-            self.plot_point_type,
-            self.importance,
-            self.title,
-            self.description,
-            self.sequence_order,
-            self.estimated_duration,
-            self.involved_characters,
-            self.affected_themes,
-            self.location_context,
-            self.emotional_intensity,
-            self.dramatic_tension,
-            self.story_significance,
-            tuple(self.prerequisite_events) if self.prerequisite_events else (),
-            tuple(self.triggered_consequences) if self.triggered_consequences else (),
-            self.reveals_information,
-            self.changes_character_relationships,
-            self.advances_main_plot,
-            self.advances_subplot,
-            self.tags,
-            self.narrative_notes,
-            _dict_to_hashable(self.metadata),
-        ))
+
+        return hash(
+            (
+                self.plot_point_id,
+                self.plot_point_type,
+                self.importance,
+                self.title,
+                self.description,
+                self.sequence_order,
+                self.estimated_duration,
+                self.involved_characters,
+                self.affected_themes,
+                self.location_context,
+                self.emotional_intensity,
+                self.dramatic_tension,
+                self.story_significance,
+                tuple(self.prerequisite_events) if self.prerequisite_events else (),
+                tuple(self.triggered_consequences)
+                if self.triggered_consequences
+                else (),
+                self.reveals_information,
+                self.changes_character_relationships,
+                self.advances_main_plot,
+                self.advances_subplot,
+                self.tags,
+                self.narrative_notes,
+                _dict_to_hashable(self.metadata),
+            )
+        )
 
     @property
     def is_major_plot_point(self) -> bool:

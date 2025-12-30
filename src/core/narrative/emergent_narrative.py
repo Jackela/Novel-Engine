@@ -171,17 +171,14 @@ class EmergentNarrativeEngine:
                 existing_node.timestamp >= cutoff_time
                 and existing_node.node_id != event_node.node_id
             ):
-
                 # 基于位置的关联
                 if existing_node.location == event_node.location or (
                     existing_node.agent_id == event_node.agent_id
                 ):
-
                     causal_strength = self._calculate_causal_strength(
                         existing_node, event_node
                     )
                     if causal_strength > 0.3:
-
                         # 确定关系类型
                         relation_type = self._determine_relation_type(
                             existing_node, event_node
@@ -340,7 +337,6 @@ class EmergentNarrativeEngine:
                 )
                 < 300
             ):  # 5分钟内
-
                 conflict_score = self._calculate_conflict_score(
                     existing_event, event_node
                 )

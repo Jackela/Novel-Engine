@@ -19,20 +19,20 @@ from src.shared_types import KnowledgeEntryId, UserId
 class KnowledgeEntryUpdated:
     """
     Domain event indicating a knowledge entry was updated.
-    
+
     This event is emitted by KnowledgeEntry.update_content() after successful mutation.
     It is published to Kafka for event-driven processing and audit trail.
-    
+
     Attributes:
         entry_id: Unique identifier of the updated knowledge entry
         updated_by: User ID who performed the update
         timestamp: When the update occurred (UTC)
         event_id: Unique identifier for this event instance
-    
+
     Constitution Compliance:
     - Article VI (EDA): Immutable domain event for event-driven architecture
     - Article I (DDD): Pure domain model with no infrastructure coupling
-    
+
     Example:
         >>> event = KnowledgeEntryUpdated(
         ...     entry_id="550e8400-e29b-41d4-a716-446655440000",
@@ -40,7 +40,7 @@ class KnowledgeEntryUpdated:
         ...     timestamp=datetime.now(timezone.utc)
         ... )
     """
-    
+
     entry_id: KnowledgeEntryId
     updated_by: UserId
     timestamp: datetime

@@ -200,7 +200,9 @@ class DecisionPointDetector:
         characters: Optional[List[Dict[str, Any]]],
     ) -> DecisionPoint:
         """Create a decision point from a plot point."""
-        pp_type = plot_point.get("plot_point_type", plot_point.get("type", "turning_point"))
+        pp_type = plot_point.get(
+            "plot_point_type", plot_point.get("type", "turning_point")
+        )
 
         # Map plot point type to decision point type
         type_mapping = {
@@ -260,52 +262,180 @@ class DecisionPointDetector:
         # Base options by decision type
         options_by_type: Dict[DecisionPointType, List[Dict[str, str]]] = {
             DecisionPointType.TURNING_POINT: [
-                {"label": "Investigate", "description": "Look deeper into the situation", "icon": "🔍"},
-                {"label": "Retreat", "description": "Fall back and reassess", "icon": "⬅️"},
-                {"label": "Confront", "description": "Face the challenge head-on", "icon": "⚔️"},
-                {"label": "Seek Help", "description": "Call for assistance", "icon": "📡"},
+                {
+                    "label": "Investigate",
+                    "description": "Look deeper into the situation",
+                    "icon": "🔍",
+                },
+                {
+                    "label": "Retreat",
+                    "description": "Fall back and reassess",
+                    "icon": "⬅️",
+                },
+                {
+                    "label": "Confront",
+                    "description": "Face the challenge head-on",
+                    "icon": "⚔️",
+                },
+                {
+                    "label": "Seek Help",
+                    "description": "Call for assistance",
+                    "icon": "📡",
+                },
             ],
             DecisionPointType.CRISIS: [
-                {"label": "Bold Action", "description": "Take decisive, risky action", "icon": "🎯"},
-                {"label": "Defensive Stance", "description": "Prioritize safety and defense", "icon": "🛡️"},
-                {"label": "Strategic Retreat", "description": "Withdraw to fight another day", "icon": "🏃"},
-                {"label": "Negotiate", "description": "Attempt to resolve through dialogue", "icon": "🤝"},
+                {
+                    "label": "Bold Action",
+                    "description": "Take decisive, risky action",
+                    "icon": "🎯",
+                },
+                {
+                    "label": "Defensive Stance",
+                    "description": "Prioritize safety and defense",
+                    "icon": "🛡️",
+                },
+                {
+                    "label": "Strategic Retreat",
+                    "description": "Withdraw to fight another day",
+                    "icon": "🏃",
+                },
+                {
+                    "label": "Negotiate",
+                    "description": "Attempt to resolve through dialogue",
+                    "icon": "🤝",
+                },
             ],
             DecisionPointType.CLIMAX: [
-                {"label": "Ultimate Sacrifice", "description": "Risk everything for victory", "icon": "💫"},
-                {"label": "Unexpected Alliance", "description": "Form a surprising partnership", "icon": "🤝"},
-                {"label": "Reveal Truth", "description": "Expose hidden information", "icon": "💡"},
-                {"label": "Final Stand", "description": "Make a last desperate effort", "icon": "🔥"},
+                {
+                    "label": "Ultimate Sacrifice",
+                    "description": "Risk everything for victory",
+                    "icon": "💫",
+                },
+                {
+                    "label": "Unexpected Alliance",
+                    "description": "Form a surprising partnership",
+                    "icon": "🤝",
+                },
+                {
+                    "label": "Reveal Truth",
+                    "description": "Expose hidden information",
+                    "icon": "💡",
+                },
+                {
+                    "label": "Final Stand",
+                    "description": "Make a last desperate effort",
+                    "icon": "🔥",
+                },
             ],
             DecisionPointType.REVELATION: [
-                {"label": "Accept Truth", "description": "Embrace the new information", "icon": "✅"},
-                {"label": "Deny It", "description": "Refuse to believe what's revealed", "icon": "❌"},
-                {"label": "Investigate More", "description": "Seek additional confirmation", "icon": "🔍"},
-                {"label": "Share Discovery", "description": "Tell others what you've learned", "icon": "📢"},
+                {
+                    "label": "Accept Truth",
+                    "description": "Embrace the new information",
+                    "icon": "✅",
+                },
+                {
+                    "label": "Deny It",
+                    "description": "Refuse to believe what's revealed",
+                    "icon": "❌",
+                },
+                {
+                    "label": "Investigate More",
+                    "description": "Seek additional confirmation",
+                    "icon": "🔍",
+                },
+                {
+                    "label": "Share Discovery",
+                    "description": "Tell others what you've learned",
+                    "icon": "📢",
+                },
             ],
             DecisionPointType.CHARACTER_CHOICE: [
-                {"label": "Follow Heart", "description": "Act on emotional impulse", "icon": "❤️"},
-                {"label": "Use Logic", "description": "Make a rational decision", "icon": "🧠"},
-                {"label": "Consult Others", "description": "Seek advice from companions", "icon": "👥"},
-                {"label": "Wait and See", "description": "Let events unfold naturally", "icon": "⏳"},
+                {
+                    "label": "Follow Heart",
+                    "description": "Act on emotional impulse",
+                    "icon": "❤️",
+                },
+                {
+                    "label": "Use Logic",
+                    "description": "Make a rational decision",
+                    "icon": "🧠",
+                },
+                {
+                    "label": "Consult Others",
+                    "description": "Seek advice from companions",
+                    "icon": "👥",
+                },
+                {
+                    "label": "Wait and See",
+                    "description": "Let events unfold naturally",
+                    "icon": "⏳",
+                },
             ],
             DecisionPointType.RELATIONSHIP_CHANGE: [
-                {"label": "Strengthen Bond", "description": "Deepen the relationship", "icon": "💪"},
-                {"label": "Create Distance", "description": "Pull back emotionally", "icon": "↔️"},
-                {"label": "Have Confrontation", "description": "Address issues directly", "icon": "💬"},
-                {"label": "Accept Change", "description": "Let the relationship evolve", "icon": "🌱"},
+                {
+                    "label": "Strengthen Bond",
+                    "description": "Deepen the relationship",
+                    "icon": "💪",
+                },
+                {
+                    "label": "Create Distance",
+                    "description": "Pull back emotionally",
+                    "icon": "↔️",
+                },
+                {
+                    "label": "Have Confrontation",
+                    "description": "Address issues directly",
+                    "icon": "💬",
+                },
+                {
+                    "label": "Accept Change",
+                    "description": "Let the relationship evolve",
+                    "icon": "🌱",
+                },
             ],
             DecisionPointType.CONFLICT_ESCALATION: [
-                {"label": "Escalate", "description": "Intensify the conflict", "icon": "📈"},
-                {"label": "De-escalate", "description": "Try to calm things down", "icon": "📉"},
-                {"label": "Switch Tactics", "description": "Try a different approach", "icon": "🔄"},
-                {"label": "Call Truce", "description": "Propose a temporary ceasefire", "icon": "🕊️"},
+                {
+                    "label": "Escalate",
+                    "description": "Intensify the conflict",
+                    "icon": "📈",
+                },
+                {
+                    "label": "De-escalate",
+                    "description": "Try to calm things down",
+                    "icon": "📉",
+                },
+                {
+                    "label": "Switch Tactics",
+                    "description": "Try a different approach",
+                    "icon": "🔄",
+                },
+                {
+                    "label": "Call Truce",
+                    "description": "Propose a temporary ceasefire",
+                    "icon": "🕊️",
+                },
             ],
             DecisionPointType.TRANSFORMATION: [
-                {"label": "Embrace Change", "description": "Fully accept the transformation", "icon": "🦋"},
-                {"label": "Resist", "description": "Fight against the change", "icon": "⛔"},
-                {"label": "Adapt Gradually", "description": "Take a measured approach", "icon": "📊"},
-                {"label": "Seek Reversal", "description": "Try to undo the change", "icon": "⏪"},
+                {
+                    "label": "Embrace Change",
+                    "description": "Fully accept the transformation",
+                    "icon": "🦋",
+                },
+                {
+                    "label": "Resist",
+                    "description": "Fight against the change",
+                    "icon": "⛔",
+                },
+                {
+                    "label": "Adapt Gradually",
+                    "description": "Take a measured approach",
+                    "icon": "📊",
+                },
+                {
+                    "label": "Seek Reversal",
+                    "description": "Try to undo the change",
+                    "icon": "⏪",
+                },
             ],
         }
 

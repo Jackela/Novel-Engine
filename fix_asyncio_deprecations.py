@@ -34,12 +34,12 @@ def is_inside_async_function(lines: list[str], line_num: int) -> bool:
     for i in range(line_num - 1, -1, -1):
         line = lines[i].strip()
         # Found function definition
-        if line.startswith('async def ') or line.startswith('async def\t'):
+        if line.startswith("async def ") or line.startswith("async def\t"):
             return True
-        if line.startswith('def ') or line.startswith('def\t'):
+        if line.startswith("def ") or line.startswith("def\t"):
             return False
         # Stop at class definition
-        if line.startswith('class '):
+        if line.startswith("class "):
             return False
     return False
 
@@ -54,10 +54,10 @@ def fix_file(filepath: Path) -> tuple[bool, int]:
         return False, 0
 
     content = filepath.read_text()
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     # Find all occurrences
-    count = len(re.findall(r'asyncio\.get_event_loop\(\)', content))
+    count = len(re.findall(r"asyncio\.get_event_loop\(\)", content))
 
     if count == 0:
         return False, 0
@@ -66,9 +66,7 @@ def fix_file(filepath: Path) -> tuple[bool, int]:
     # For simplicity, we'll replace all with get_running_loop since the pattern
     # shows they're all in async functions
     new_content = re.sub(
-        r'asyncio\.get_event_loop\(\)',
-        'asyncio.get_running_loop()',
-        content
+        r"asyncio\.get_event_loop\(\)", "asyncio.get_running_loop()", content
     )
 
     if new_content != content:
@@ -94,11 +92,15 @@ def main():
             total_replacements += count
             print(f"✓ Fixed {filepath.relative_to(base_path)}: {count} replacements")
         elif filepath.exists():
-            print(f"- Skipped {filepath.relative_to(base_path)}: already fixed or no occurrences")
+            print(
+                f"- Skipped {filepath.relative_to(base_path)}: already fixed or no occurrences"
+            )
         else:
             print(f"✗ Not found: {filepath.relative_to(base_path)}")
 
-    print(f"\n✓ Total: Fixed {total_files} files with {total_replacements} replacements")
+    print(
+        f"\n✓ Total: Fixed {total_files} files with {total_replacements} replacements"
+    )
 
 
 if __name__ == "__main__":

@@ -39,4 +39,3 @@ async def policy_info() -> Dict[str, Any]:
         },
         "last_reviewed": datetime.now(UTC).isoformat(),
     }
-

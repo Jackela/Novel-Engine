@@ -24,8 +24,10 @@ def _get_llm_service() -> Any:
     global _llm_service_instance
     if _llm_service_instance is None:
         from src.llm_service import UnifiedLLMService
+
         _llm_service_instance = UnifiedLLMService()
     return _llm_service_instance
+
 
 logger = logging.getLogger(__name__)
 
@@ -369,7 +371,9 @@ REASONING: As a dedicated envoy of the Founders' Council, my duty requires me to
             llm_service = _get_llm_service()
 
             if LLMProvider.GEMINI not in llm_service.providers:
-                logger.warning(f"Agent {self.agent_id}: Gemini not configured, using fallback")
+                logger.warning(
+                    f"Agent {self.agent_id}: Gemini not configured, using fallback"
+                )
                 response = fallback_response
             else:
                 request = LLMRequest(
@@ -394,11 +398,15 @@ REASONING: As a dedicated envoy of the Founders' Council, my duty requires me to
                     logger.warning(f"Agent {self.agent_id}: LLM error, using fallback")
                     response = fallback_response
                 else:
-                    logger.info(f"Agent {self.agent_id}: LLM call successful ({llm_response.tokens_used} tokens)")
+                    logger.info(
+                        f"Agent {self.agent_id}: LLM call successful ({llm_response.tokens_used} tokens)"
+                    )
                     response = llm_response.content
 
         except Exception as e:
-            logger.warning(f"Agent {self.agent_id}: LLM call failed ({e}), using fallback")
+            logger.warning(
+                f"Agent {self.agent_id}: LLM call failed ({e}), using fallback"
+            )
             response = fallback_response
 
         # Store in history

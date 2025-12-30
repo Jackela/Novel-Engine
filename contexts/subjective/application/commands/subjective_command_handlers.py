@@ -444,12 +444,14 @@ class UpdateFogOfWarCommandHandler:
 
         try:
             # Use fog of war service to calculate visibility changes
-            newly_revealed, newly_concealed, visibility_changes = (
-                self.fog_of_war_service.update_visible_subjects_for_turn_brief(
-                    turn_brief,
-                    command.world_positions,
-                    command.environmental_conditions,
-                )
+            (
+                newly_revealed,
+                newly_concealed,
+                visibility_changes,
+            ) = self.fog_of_war_service.update_visible_subjects_for_turn_brief(
+                turn_brief,
+                command.world_positions,
+                command.environmental_conditions,
             )
 
             # Update the TurnBrief with the changes

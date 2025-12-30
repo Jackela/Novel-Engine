@@ -571,9 +571,9 @@ class EnhancedMultiAgentBridge:
 
             # Update stats
             self.coordination_stats["total_llm_calls"] += 1
-            self.coordination_stats["cost_per_request"] = (
-                self.cost_tracker.average_cost_per_request
-            )
+            self.coordination_stats[
+                "cost_per_request"
+            ] = self.cost_tracker.average_cost_per_request
 
             # Calculate cost savings from not using individual requests
             estimated_individual_cost = (
@@ -2073,9 +2073,10 @@ async def create_enhanced_bridge(
             self.narrative_intelligence["last_insights"] = post_turn_analysis[
                 "narrative_insights"
             ]
-            self.narrative_intelligence["insight_count"] = (
-                self.narrative_intelligence.get("insight_count", 0)
-                + len(post_turn_analysis["narrative_insights"])
+            self.narrative_intelligence[
+                "insight_count"
+            ] = self.narrative_intelligence.get("insight_count", 0) + len(
+                post_turn_analysis["narrative_insights"]
             )
 
         # Update story progression tracking

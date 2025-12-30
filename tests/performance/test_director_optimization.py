@@ -666,7 +666,9 @@ DETAILED RESULTS:
                 improvement_emoji = (
                     "🔥"
                     if result.improvement_percentage > 80
-                    else "⚡" if result.improvement_percentage > 50 else "✅"
+                    else "⚡"
+                    if result.improvement_percentage > 50
+                    else "✅"
                 )
 
                 report += f"""

@@ -441,9 +441,9 @@ class TestProposalOperations:
             "submitted_by": uuid4(),
             "events": ["proposal_submitted"],
         }
-        mock_dependencies["command_handler"].handle_submit_proposal.return_value = (
-            mock_submission_result
-        )
+        mock_dependencies[
+            "command_handler"
+        ].handle_submit_proposal.return_value = mock_submission_result
 
         result = await service.submit_proposal(
             session_id=session_id,
@@ -994,9 +994,9 @@ class TestProposalOptimization:
         service.command_handler = mock_dependencies["command_handler"]
 
         session_id = uuid4()
-        mock_dependencies["repository"].get_by_id.return_value = (
-            mock_negotiation_session
-        )
+        mock_dependencies[
+            "repository"
+        ].get_by_id.return_value = mock_negotiation_session
 
         # Mock analysis results for each proposal
         proposal_ids = list(mock_negotiation_session.active_proposals.keys())

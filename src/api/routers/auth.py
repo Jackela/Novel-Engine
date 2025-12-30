@@ -12,7 +12,12 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from src.api.deps import get_settings
-from src.api.schemas import AuthResponse, CSRFTokenResponse, LoginRequest, RefreshTokenRequest
+from src.api.schemas import (
+    AuthResponse,
+    CSRFTokenResponse,
+    LoginRequest,
+    RefreshTokenRequest,
+)
 from src.api.settings import APISettings
 
 logger = logging.getLogger(__name__)
@@ -21,7 +26,9 @@ router = APIRouter(tags=["Authentication"])
 
 
 class LogoutRequest(BaseModel):
-    access_token: Optional[str] = Field(None, description="Optional access token to invalidate")
+    access_token: Optional[str] = Field(
+        None, description="Optional access token to invalidate"
+    )
 
 
 class LogoutResponse(BaseModel):
@@ -31,7 +38,9 @@ class LogoutResponse(BaseModel):
 
 class TokenValidationResponse(BaseModel):
     valid: bool
-    expires_at: Optional[int] = Field(None, description="Token expiry timestamp in milliseconds")
+    expires_at: Optional[int] = Field(
+        None, description="Token expiry timestamp in milliseconds"
+    )
     user_id: Optional[str] = None
     error: Optional[str] = None
 
@@ -44,7 +53,9 @@ async def login(
 ):
     try:
         if not credentials.email or not credentials.password:
-            raise HTTPException(status_code=400, detail="Email and password are required")
+            raise HTTPException(
+                status_code=400, detail="Email and password are required"
+            )
 
         user_data = {
             "id": str(uuid.uuid4()),
@@ -77,10 +88,14 @@ async def login(
         }
 
         access_token = jwt.encode(
-            access_token_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm
+            access_token_payload,
+            settings.jwt_secret_key,
+            algorithm=settings.jwt_algorithm,
         )
         refresh_token = jwt.encode(
-            refresh_token_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm
+            refresh_token_payload,
+            settings.jwt_secret_key,
+            algorithm=settings.jwt_algorithm,
         )
 
         cookie_max_age = (
@@ -131,7 +146,9 @@ async def refresh_token(
     settings: APISettings = Depends(get_settings),
 ):
     try:
-        refresh_token_value = request.cookies.get(settings.refresh_cookie_name) or payload.refresh_token
+        refresh_token_value = (
+            request.cookies.get(settings.refresh_cookie_name) or payload.refresh_token
+        )
         if not refresh_token_value:
             raise HTTPException(status_code=401, detail="No refresh token provided")
 
@@ -229,7 +246,9 @@ async def get_csrf_token(
 
     except Exception as exc:
         logger.error("CSRF token generation failed: %s", exc, exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to generate CSRF token: {exc}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate CSRF token: {exc}"
+        )
 
 
 @router.post("/api/auth/logout", response_model=LogoutResponse)
@@ -304,11 +323,15 @@ async def validate_token(
         if not token:
             return JSONResponse(
                 status_code=401,
-                content=TokenValidationResponse(valid=False, error="No token provided").model_dump(),
+                content=TokenValidationResponse(
+                    valid=False, error="No token provided"
+                ).model_dump(),
             )
 
         try:
-            payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+            payload = jwt.decode(
+                token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]
+            )
 
             exp = payload.get("exp")
             user_id = payload.get("user_id") or payload.get("sub")
@@ -322,29 +345,38 @@ async def validate_token(
                 if now > exp_datetime:
                     return JSONResponse(
                         status_code=401,
-                        content=TokenValidationResponse(valid=False, error="Token has expired").model_dump(),
+                        content=TokenValidationResponse(
+                            valid=False, error="Token has expired"
+                        ).model_dump(),
                     )
 
                 expires_at_ms = int(exp * 1000)
-                return TokenValidationResponse(valid=True, expires_at=expires_at_ms, user_id=user_id)
+                return TokenValidationResponse(
+                    valid=True, expires_at=expires_at_ms, user_id=user_id
+                )
 
             return TokenValidationResponse(valid=True, user_id=user_id)
 
         except jwt.ExpiredSignatureError:
             return JSONResponse(
                 status_code=401,
-                content=TokenValidationResponse(valid=False, error="Token has expired").model_dump(),
+                content=TokenValidationResponse(
+                    valid=False, error="Token has expired"
+                ).model_dump(),
             )
         except jwt.InvalidTokenError as exc:
             return JSONResponse(
                 status_code=401,
-                content=TokenValidationResponse(valid=False, error=f"Invalid token: {exc}").model_dump(),
+                content=TokenValidationResponse(
+                    valid=False, error=f"Invalid token: {exc}"
+                ).model_dump(),
             )
 
     except Exception as exc:
         logger.error("Token validation error: %s", exc)
         return JSONResponse(
             status_code=401,
-            content=TokenValidationResponse(valid=False, error="Token validation failed").model_dump(),
+            content=TokenValidationResponse(
+                valid=False, error="Token validation failed"
+            ).model_dump(),
         )
-

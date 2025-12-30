@@ -194,7 +194,9 @@ class NovelEngineTracer:
                 self.tracer_provider.add_span_processor(
                     BatchSpanProcessor(jaeger_exporter)
                 )
-                logger.info(f"Jaeger exporter configured: {self.config.jaeger_endpoint}")
+                logger.info(
+                    f"Jaeger exporter configured: {self.config.jaeger_endpoint}"
+                )
             except (TypeError, Exception) as e:
                 logger.warning(
                     f"Failed to initialize Jaeger exporter: {e}. Tracing will continue without Jaeger."

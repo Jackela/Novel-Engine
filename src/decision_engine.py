@@ -57,6 +57,7 @@ def _get_llm_service() -> Any:
     global _llm_service_instance
     if _llm_service_instance is None:
         from src.llm_service import UnifiedLLMService
+
         _llm_service_instance = UnifiedLLMService()
     return _llm_service_instance
 
@@ -603,23 +604,27 @@ class DecisionEngine:
 
             # Check if Gemini provider is available
             if LLMProvider.GEMINI not in llm_service.providers:
-                logger.debug("Gemini provider not configured, falling back to algorithmic")
+                logger.debug(
+                    "Gemini provider not configured, falling back to algorithmic"
+                )
                 return None
 
             # Build decision-making prompt
             agent_id = self.agent_core.agent_id
-            character_name = getattr(self.agent_core, 'name', agent_id)
-            morale = getattr(self.agent_core, 'morale_level', 0.5)
+            character_name = getattr(self.agent_core, "name", agent_id)
+            morale = getattr(self.agent_core, "morale_level", 0.5)
 
             # Format available actions
-            action_list = "\n".join([
-                f"  {i+1}. {action.get('type', 'unknown')}: {action.get('description', 'No description')}"
-                for i, action in enumerate(available_actions)
-            ])
+            action_list = "\n".join(
+                [
+                    f"  {i+1}. {action.get('type', 'unknown')}: {action.get('description', 'No description')}"
+                    for i, action in enumerate(available_actions)
+                ]
+            )
 
             # Extract threat level from situation assessment
-            threat_level = situation_assessment.get('threat_level', 'unknown')
-            nearby_entities = situation_assessment.get('nearby_entities', [])
+            threat_level = situation_assessment.get("threat_level", "unknown")
+            nearby_entities = situation_assessment.get("nearby_entities", [])
 
             prompt = f"""You are {character_name}, an AI agent in an interactive story simulation.
 
@@ -671,15 +676,19 @@ REASONING: [brief explanation in 1-2 sentences from your character's perspective
             action_match = re.search(r"ACTION:\s*(.+)", llm_text, re.IGNORECASE)
             target_match = re.search(r"TARGET:\s*(.+)", llm_text, re.IGNORECASE)
             priority_match = re.search(r"PRIORITY:\s*(.+)", llm_text, re.IGNORECASE)
-            reasoning_match = re.search(r"REASONING:\s*(.+)", llm_text, re.IGNORECASE | re.DOTALL)
+            reasoning_match = re.search(
+                r"REASONING:\s*(.+)", llm_text, re.IGNORECASE | re.DOTALL
+            )
 
             if not action_match:
-                logger.warning(f"Could not parse ACTION from LLM response for {agent_id}")
+                logger.warning(
+                    f"Could not parse ACTION from LLM response for {agent_id}"
+                )
                 return None
 
             action_type = action_match.group(1).strip().lower()
             target = target_match.group(1).strip() if target_match else None
-            if target and target.lower() == 'none':
+            if target and target.lower() == "none":
                 target = None
 
             # Parse priority
@@ -687,14 +696,18 @@ REASONING: [brief explanation in 1-2 sentences from your character's perspective
             if priority_match:
                 priority_str = priority_match.group(1).strip().lower()
                 priority_map = {
-                    'low': ActionPriority.LOW,
-                    'normal': ActionPriority.NORMAL,
-                    'high': ActionPriority.HIGH,
-                    'critical': ActionPriority.CRITICAL,
+                    "low": ActionPriority.LOW,
+                    "normal": ActionPriority.NORMAL,
+                    "high": ActionPriority.HIGH,
+                    "critical": ActionPriority.CRITICAL,
                 }
                 priority = priority_map.get(priority_str, ActionPriority.NORMAL)
 
-            reasoning = reasoning_match.group(1).strip() if reasoning_match else "[LLM-Guided] Decision made based on situation analysis."
+            reasoning = (
+                reasoning_match.group(1).strip()
+                if reasoning_match
+                else "[LLM-Guided] Decision made based on situation analysis."
+            )
 
             # Create and return CharacterAction
             return CharacterAction(
@@ -705,7 +718,9 @@ REASONING: [brief explanation in 1-2 sentences from your character's perspective
             )
 
         except Exception as e:
-            logger.warning(f"LLM enhanced decision-making failed for {self.agent_core.agent_id}: {e}")
+            logger.warning(
+                f"LLM enhanced decision-making failed for {self.agent_core.agent_id}: {e}"
+            )
             return None
 
     def _process_narrative_situation_update(

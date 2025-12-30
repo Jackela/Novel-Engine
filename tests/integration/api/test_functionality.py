@@ -192,9 +192,7 @@ def test_api_endpoints(base_url="http://127.0.0.1:8000"):
                 )
                 if response.status_code == 200:
                     data = response.json()
-                    print(
-                        f"✅ /simulations - 模拟完成，故事长度: {len(data.get('story', ''))}"
-                    )
+                    print(f"✅ /simulations - 模拟完成，故事长度: {len(data.get('story', ''))}")
                     test_results.append(("simulations", True, data))
                 else:
                     print(f"❌ /simulations - 状态码: {response.status_code}")

@@ -20,4 +20,3 @@ def get_characters_directory_path() -> str:
         project_root = find_project_root()
         return str(project_root / base_character_path)
     return base_character_path
-

@@ -10,19 +10,28 @@ def check_datetime_utcnow():
     """Check for datetime.utcnow() usage."""
     print("\n1. Checking for datetime.utcnow() usage...")
     result = subprocess.run(
-        ["grep", "-r", "datetime\\.utcnow()", "--include=*.py", ".",
-         "--exclude-dir=.git", "--exclude-dir=__pycache__"],
+        [
+            "grep",
+            "-r",
+            "datetime\\.utcnow()",
+            "--include=*.py",
+            ".",
+            "--exclude-dir=.git",
+            "--exclude-dir=__pycache__",
+        ],
         capture_output=True,
         text=True,
-        cwd="/mnt/d/Code/novel-engine"
+        cwd="/mnt/d/Code/novel-engine",
     )
 
     # Filter out our fix scripts and utility docs
     lines = [
-        line for line in result.stdout.split('\n')
-        if line and 'fix_datetime_deprecations.py' not in line
-        and 'datetime_utils.py' not in line
-        and 'verify_deprecation_fixes.py' not in line
+        line
+        for line in result.stdout.split("\n")
+        if line
+        and "fix_datetime_deprecations.py" not in line
+        and "datetime_utils.py" not in line
+        and "verify_deprecation_fixes.py" not in line
     ]
 
     if lines:
@@ -31,7 +40,9 @@ def check_datetime_utcnow():
             print(f"      {line}")
         return False
     else:
-        print("   ✓ No datetime.utcnow() found (replaced with datetime.now(timezone.utc))")
+        print(
+            "   ✓ No datetime.utcnow() found (replaced with datetime.now(timezone.utc))"
+        )
         return True
 
 
@@ -39,18 +50,27 @@ def check_asyncio_get_event_loop():
     """Check for asyncio.get_event_loop() usage."""
     print("\n2. Checking for asyncio.get_event_loop() usage...")
     result = subprocess.run(
-        ["grep", "-r", "asyncio\\.get_event_loop()", "--include=*.py", ".",
-         "--exclude-dir=.git", "--exclude-dir=__pycache__"],
+        [
+            "grep",
+            "-r",
+            "asyncio\\.get_event_loop()",
+            "--include=*.py",
+            ".",
+            "--exclude-dir=.git",
+            "--exclude-dir=__pycache__",
+        ],
         capture_output=True,
         text=True,
-        cwd="/mnt/d/Code/novel-engine"
+        cwd="/mnt/d/Code/novel-engine",
     )
 
     # Filter out our fix scripts
     lines = [
-        line for line in result.stdout.split('\n')
-        if line and 'fix_asyncio_deprecations.py' not in line
-        and 'verify_deprecation_fixes.py' not in line
+        line
+        for line in result.stdout.split("\n")
+        if line
+        and "fix_asyncio_deprecations.py" not in line
+        and "verify_deprecation_fixes.py" not in line
     ]
 
     if lines:
@@ -59,7 +79,9 @@ def check_asyncio_get_event_loop():
             print(f"      {line}")
         return False
     else:
-        print("   ✓ No asyncio.get_event_loop() found (replaced with asyncio.get_running_loop())")
+        print(
+            "   ✓ No asyncio.get_event_loop() found (replaced with asyncio.get_running_loop())"
+        )
         return True
 
 
@@ -67,14 +89,21 @@ def check_pkg_resources():
     """Check for pkg_resources usage."""
     print("\n3. Checking for pkg_resources import...")
     result = subprocess.run(
-        ["grep", "-r", "import pkg_resources", "--include=*.py", ".",
-         "--exclude-dir=.git", "--exclude-dir=__pycache__"],
+        [
+            "grep",
+            "-r",
+            "import pkg_resources",
+            "--include=*.py",
+            ".",
+            "--exclude-dir=.git",
+            "--exclude-dir=__pycache__",
+        ],
         capture_output=True,
         text=True,
-        cwd="/mnt/d/Code/novel-engine"
+        cwd="/mnt/d/Code/novel-engine",
     )
 
-    lines = [line for line in result.stdout.split('\n') if line]
+    lines = [line for line in result.stdout.split("\n") if line]
 
     if lines:
         print(f"   ❌ Found {len(lines)} occurrences of pkg_resources import")
@@ -90,14 +119,21 @@ def check_fastapi_on_event():
     """Check for FastAPI on_event decorator usage."""
     print("\n4. Checking for FastAPI @app.on_event() usage...")
     result = subprocess.run(
-        ["grep", "-r", "@app\\.on_event", "--include=*.py", ".",
-         "--exclude-dir=.git", "--exclude-dir=__pycache__"],
+        [
+            "grep",
+            "-r",
+            "@app\\.on_event",
+            "--include=*.py",
+            ".",
+            "--exclude-dir=.git",
+            "--exclude-dir=__pycache__",
+        ],
         capture_output=True,
         text=True,
-        cwd="/mnt/d/Code/novel-engine"
+        cwd="/mnt/d/Code/novel-engine",
     )
 
-    lines = [line for line in result.stdout.split('\n') if line]
+    lines = [line for line in result.stdout.split("\n") if line]
 
     if lines:
         print(f"   ❌ Found {len(lines)} occurrences of @app.on_event()")
@@ -113,21 +149,29 @@ def check_emergent_narrative_imports():
     """Check for deprecated emergent_narrative imports."""
     print("\n5. Checking for deprecated emergent_narrative imports...")
     result = subprocess.run(
-        ["grep", "-r", "from.*emergent_narrative import", "--include=*.py", ".",
-         "--exclude-dir=.git", "--exclude-dir=__pycache__"],
+        [
+            "grep",
+            "-r",
+            "from.*emergent_narrative import",
+            "--include=*.py",
+            ".",
+            "--exclude-dir=.git",
+            "--exclude-dir=__pycache__",
+        ],
         capture_output=True,
         text=True,
-        cwd="/mnt/d/Code/novel-engine"
+        cwd="/mnt/d/Code/novel-engine",
     )
 
     # Filter out the deprecated module itself and the new narrative module
     lines = [
-        line for line in result.stdout.split('\n')
+        line
+        for line in result.stdout.split("\n")
         if line
-        and 'src/core/emergent_narrative.py' not in line
-        and 'src/core/narrative/' not in line
-        and 'scripts/refactor_emergent_narrative.py' not in line
-        and 'verify_deprecation_fixes.py' not in line
+        and "src/core/emergent_narrative.py" not in line
+        and "src/core/narrative/" not in line
+        and "scripts/refactor_emergent_narrative.py" not in line
+        and "verify_deprecation_fixes.py" not in line
     ]
 
     if lines:
@@ -136,7 +180,9 @@ def check_emergent_narrative_imports():
             print(f"      {line}")
         return False
     else:
-        print("   ✓ No deprecated emergent_narrative imports (using src.core.narrative)")
+        print(
+            "   ✓ No deprecated emergent_narrative imports (using src.core.narrative)"
+        )
         return True
 
 
@@ -144,11 +190,17 @@ def run_pytest_deprecation_check():
     """Run pytest with deprecation warnings to check for any runtime issues."""
     print("\n6. Running pytest with deprecation warnings...")
     result = subprocess.run(
-        ["pytest", "tests/unit/agents/test_persona_modular.py",
-         "-W", "default::DeprecationWarning", "--tb=no", "-q"],
+        [
+            "pytest",
+            "tests/unit/agents/test_persona_modular.py",
+            "-W",
+            "default::DeprecationWarning",
+            "--tb=no",
+            "-q",
+        ],
         capture_output=True,
         text=True,
-        cwd="/mnt/d/Code/novel-engine"
+        cwd="/mnt/d/Code/novel-engine",
     )
 
     # Check output for our fixed deprecations
@@ -157,7 +209,7 @@ def run_pytest_deprecation_check():
         "asyncio.get_event_loop",
         "pkg_resources",
         "on_event is deprecated",
-        "emergent_narrative is deprecated"
+        "emergent_narrative is deprecated",
     ]
 
     found_warnings = []

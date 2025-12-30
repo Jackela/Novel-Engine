@@ -40,6 +40,12 @@ SAMPLE_SIMULATION_REQUEST = {
 }
 
 
+def _character_ids(characters):
+    return [
+        entry["id"] if isinstance(entry, dict) else entry for entry in characters
+    ]
+
+
 class TestHealthEndpoints:
     """Test health check and system status endpoints"""
 
@@ -91,7 +97,7 @@ class TestCharacterEndpoints:
         data = response.json()
 
         # Should contain our generic characters
-        characters = data["characters"]
+        characters = _character_ids(data["characters"])
         assert "pilot" in characters
         assert "scientist" in characters
         assert "engineer" in characters

@@ -507,7 +507,9 @@ class DefaultCostTracker(ICostTracker):
             confidence = (
                 "high"
                 if days_with_data > 20
-                else "medium" if days_with_data > 10 else "low"
+                else "medium"
+                if days_with_data > 10
+                else "low"
             )
 
             # Simple trend analysis (compare first half vs second half)

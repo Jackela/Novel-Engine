@@ -1271,9 +1271,7 @@ class ExportIntegrationEngine:
 
     async def _setup_share_analytics(self, share_config: ShareConfiguration):
         """Set up analytics for a shared story."""
-        logger.info(
-            "Share analytics initialized for %s", share_config.share_id
-        )
+        logger.info("Share analytics initialized for %s", share_config.share_id)
 
     def _verify_password(self, password: str, password_hash: str) -> bool:
         """Verify password against hash."""

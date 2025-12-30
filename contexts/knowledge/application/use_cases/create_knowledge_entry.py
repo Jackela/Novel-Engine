@@ -22,25 +22,28 @@ from ...domain.models.knowledge_type import KnowledgeType
 from ...domain.models.access_control_rule import AccessControlRule
 from ...domain.models.access_level import AccessLevel
 from ...domain.events.knowledge_entry_created import KnowledgeEntryCreated
-from ...infrastructure.logging_config import get_knowledge_logger, log_knowledge_entry_created
+from ...infrastructure.logging_config import (
+    get_knowledge_logger,
+    log_knowledge_entry_created,
+)
 
 
 class CreateKnowledgeEntryUseCase:
     """
     Use case for creating new knowledge entries.
-    
+
     Orchestrates:
     1. Domain model creation (KnowledgeEntry aggregate)
     2. Persistence via repository port
     3. Domain event publishing via event publisher port
-    
+
     Constitution Compliance:
     - Article I (DDD): Application service with domain orchestration
     - Article II (Hexagonal): Depends on ports (IKnowledgeRepository, IEventPublisher)
     - Article VI (EDA): Publishes KnowledgeEntryCreated event
     - Article V (SOLID): SRP - Single responsibility (create knowledge entry)
     """
-    
+
     def __init__(
         self,
         repository: IKnowledgeRepository,
@@ -48,17 +51,17 @@ class CreateKnowledgeEntryUseCase:
     ):
         """
         Initialize use case with required ports.
-        
+
         Args:
             repository: Knowledge repository port for persistence
             event_publisher: Event publisher port for domain events
-        
+
         Constitution Compliance:
         - Article V (SOLID): DIP - Depend on abstractions (ports), not concretions
         """
         self._repository = repository
         self._event_publisher = event_publisher
-    
+
     async def execute(
         self,
         content: str,
@@ -71,7 +74,7 @@ class CreateKnowledgeEntryUseCase:
     ) -> KnowledgeEntryId:
         """
         Create a new knowledge entry.
-        
+
         Args:
             content: Knowledge content text (must not be empty)
             knowledge_type: Category of knowledge
@@ -80,15 +83,15 @@ class CreateKnowledgeEntryUseCase:
             allowed_roles: Roles permitted (for ROLE_BASED access)
             allowed_character_ids: Character IDs permitted (for CHARACTER_SPECIFIC)
             created_by: User ID creating this entry
-        
+
         Returns:
             KnowledgeEntryId of the created entry
-        
+
         Raises:
             ValueError: If domain invariants are violated
             RepositoryError: If persistence fails
             EventPublishError: If event publishing fails (non-blocking warning)
-        
+
         Constitution Compliance:
         - Article I (DDD): Domain model enforces invariants
         - Article VI (EDA): Publishes KnowledgeEntryCreated event
@@ -99,13 +102,13 @@ class CreateKnowledgeEntryUseCase:
             allowed_roles=allowed_roles,
             allowed_character_ids=allowed_character_ids,
         )
-        
+
         # Generate unique ID
         entry_id = str(uuid4())
-        
+
         # Create timestamp
         now = datetime.now(timezone.utc)
-        
+
         # Create KnowledgeEntry aggregate (validates invariants)
         entry = KnowledgeEntry(
             id=entry_id,
@@ -117,7 +120,7 @@ class CreateKnowledgeEntryUseCase:
             updated_at=now,
             created_by=created_by,
         )
-        
+
         # Log operation start (Article VII - Observability)
         logger = get_knowledge_logger(
             component="CreateKnowledgeEntryUseCase",
@@ -128,10 +131,10 @@ class CreateKnowledgeEntryUseCase:
             knowledge_type=knowledge_type.value,
             access_level=access_level.value,
         )
-        
+
         # Persist to repository (SSOT)
         await self._repository.save(entry)
-        
+
         # Log successful creation
         log_knowledge_entry_created(
             entry_id=entry.id,
@@ -142,7 +145,7 @@ class CreateKnowledgeEntryUseCase:
                 "owning_character_id": entry.owning_character_id,
             },
         )
-        
+
         # Create and publish domain event
         event = KnowledgeEntryCreated(
             entry_id=entry.id,
@@ -151,7 +154,7 @@ class CreateKnowledgeEntryUseCase:
             created_by=entry.created_by,
             timestamp=entry.created_at,
         )
-        
+
         # Publish event to Kafka (non-blocking, best-effort)
         try:
             await self._event_publisher.publish(
@@ -173,6 +176,8 @@ class CreateKnowledgeEntryUseCase:
             logger.info("Domain event published successfully", event_id=event.event_id)
         except Exception as e:
             # Event publishing failure is non-blocking (log warning)
-            logger.warning("Failed to publish domain event", error=str(e), event_id=event.event_id)
-        
+            logger.warning(
+                "Failed to publish domain event", error=str(e), event_id=event.event_id
+            )
+
         return entry.id

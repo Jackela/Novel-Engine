@@ -102,9 +102,9 @@ class NarrativeProcessor:
 
                 # Initialize story state phase from campaign brief
                 if hasattr(self.campaign_brief, "initial_phase"):
-                    self.story_state["current_phase"] = (
-                        self.campaign_brief.initial_phase
-                    )
+                    self.story_state[
+                        "current_phase"
+                    ] = self.campaign_brief.initial_phase
                 else:
                     self.story_state["current_phase"] = "investigation"
 

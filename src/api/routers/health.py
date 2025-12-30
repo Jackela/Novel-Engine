@@ -63,4 +63,3 @@ async def health_check(request: Request) -> Dict[str, Any]:
 
     logger.debug("Health check response: %s", health_data)
     return health_data
-

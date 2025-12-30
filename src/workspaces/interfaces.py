@@ -40,11 +40,15 @@ class CharacterStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def create(self, workspace_id: str, character_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def create(
+        self, workspace_id: str, character_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         raise NotImplementedError
 
     @abstractmethod
-    def update(self, workspace_id: str, character_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+    def update(
+        self, workspace_id: str, character_id: str, updates: Dict[str, Any]
+    ) -> Dict[str, Any]:
         raise NotImplementedError
 
     @abstractmethod
@@ -56,4 +60,3 @@ class RunStore(ABC):
     @abstractmethod
     def list_ids(self, workspace_id: str) -> List[str]:
         raise NotImplementedError
-

@@ -697,7 +697,6 @@ class MemoryInterface:
                     memory.get("significance", 0.0) >= self.significance_threshold
                     and memory not in self.agent_core.long_term_memory
                 ):
-
                     self.agent_core.long_term_memory.append(memory)
                     consolidated_count += 1
 

@@ -26,14 +26,14 @@ logger = logging.getLogger(__name__)
 class KafkaEventPublisher(IEventPublisher):
     """
     Kafka-based implementation of the IEventPublisher port.
-    
+
     Features:
     - Asynchronous event publishing with at-least-once delivery
     - Automatic retry with exponential backoff
     - Batch publishing support for improved throughput
     - Health monitoring and connection management
     - Idempotency through event_id in message payload
-    
+
     Usage:
         publisher = KafkaEventPublisher()
         await publisher.publish(
@@ -52,7 +52,7 @@ class KafkaEventPublisher(IEventPublisher):
     def __init__(self, kafka_client: KafkaClient | None = None):
         """
         Initialize Kafka event publisher.
-        
+
         Args:
             kafka_client: Optional Kafka client instance (uses global if None)
         """
@@ -68,13 +68,13 @@ class KafkaEventPublisher(IEventPublisher):
     ) -> None:
         """
         Publish a single domain event to Kafka topic.
-        
+
         Args:
             topic: Target topic name (e.g., "knowledge.entry.created")
             event: Domain event data as dictionary
             key: Optional partition key for ordering (typically entry_id)
             headers: Optional message headers
-            
+
         Raises:
             EventPublishException: If publishing fails after retries
         """
@@ -133,15 +133,15 @@ class KafkaEventPublisher(IEventPublisher):
     ) -> None:
         """
         Publish multiple domain events to Kafka topic in a batch.
-        
+
         Batch publishing improves throughput for bulk operations.
-        
+
         Args:
             topic: Target topic name
             events: List of domain event data dictionaries
             keys: Optional list of partition keys (same length as events)
             headers: Optional list of headers (same length as events)
-            
+
         Raises:
             EventPublishException: If batch publishing fails after retries
         """
@@ -193,7 +193,7 @@ class KafkaEventPublisher(IEventPublisher):
     async def health_check(self) -> Dict[str, Any]:
         """
         Check the health status of Kafka event publishing infrastructure.
-        
+
         Returns:
             Dictionary with health status:
             {

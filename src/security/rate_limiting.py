@@ -732,6 +732,7 @@ class RateLimitMiddleware:
             return
 
         from fastapi import Request
+
         request = Request(scope)
 
         try:
@@ -776,18 +777,35 @@ class RateLimitMiddleware:
                 if message["type"] == "http.response.start":
                     headers = message.setdefault("headers", [])
                     # Remove existing headers if any (to avoid dups, though unlikely for unique keys)
-                    headers = [h for h in headers if h[0].decode("latin-1").lower() not in [
-                        "x-ratelimit-limit", 
-                        "x-ratelimit-remaining", 
-                        "x-ratelimit-reset"
-                    ]]
-                    
-                    headers.append((b"x-ratelimit-limit", str(self.config.requests_per_minute).encode()))
-                    headers.append((b"x-ratelimit-remaining", str(max(limit_result.remaining, 0)).encode()))
-                    headers.append((b"x-ratelimit-reset", str(int(time.time()) + 60).encode()))
-                    
+                    headers = [
+                        h
+                        for h in headers
+                        if h[0].decode("latin-1").lower()
+                        not in [
+                            "x-ratelimit-limit",
+                            "x-ratelimit-remaining",
+                            "x-ratelimit-reset",
+                        ]
+                    ]
+
+                    headers.append(
+                        (
+                            b"x-ratelimit-limit",
+                            str(self.config.requests_per_minute).encode(),
+                        )
+                    )
+                    headers.append(
+                        (
+                            b"x-ratelimit-remaining",
+                            str(max(limit_result.remaining, 0)).encode(),
+                        )
+                    )
+                    headers.append(
+                        (b"x-ratelimit-reset", str(int(time.time()) + 60).encode())
+                    )
+
                     message["headers"] = headers
-                
+
                 await send(message)
 
             await self.app(scope, receive, send_wrapper)
@@ -801,21 +819,22 @@ class RateLimitMiddleware:
             )
 
             status_code = 429 if e.threat_level != ThreatLevel.CRITICAL else 403
-            
+
             from fastapi.responses import JSONResponse
+
             content = {"detail": e.message}
             headers = {
                 "Retry-After": str(e.retry_after),
-                "X-RateLimit-Limit": str(
-                    self.rate_limiter.config.requests_per_minute
-                ),
+                "X-RateLimit-Limit": str(self.rate_limiter.config.requests_per_minute),
                 "X-RateLimit-Remaining": "0",
                 "X-RateLimit-Reset": str(int(time.time()) + e.retry_after),
             }
-            
-            response = JSONResponse(content=content, status_code=status_code, headers=headers)
+
+            response = JSONResponse(
+                content=content, status_code=status_code, headers=headers
+            )
             await response(scope, receive, send)
-            
+
         except Exception:
             # Re-raise other exceptions to let downstream/upstream handle them
             raise

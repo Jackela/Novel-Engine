@@ -490,9 +490,9 @@ class RecommendationEngine:
                     adapted_context["genre"] = preferred_genre
 
             # Adapt character preferences
-            adapted_context["character_suggestions"] = (
-                await self._get_preferred_characters(profile)
-            )
+            adapted_context[
+                "character_suggestions"
+            ] = await self._get_preferred_characters(profile)
 
             # Adapt writing style
             preferred_style = await self._get_preferred_style(profile)
@@ -1283,9 +1283,7 @@ class RecommendationEngine:
         profile.feedback_history[recommendation.recommendation_id] = feedback
 
         await self._update_preference_weights(profile, recommendation, feedback)
-        await self._update_collaborative_data(
-            profile.user_id, recommendation, feedback
-        )
+        await self._update_collaborative_data(profile.user_id, recommendation, feedback)
 
     async def _update_preference_weights(
         self, profile: UserProfile, recommendation: Recommendation, feedback: str
@@ -1302,7 +1300,9 @@ class RecommendationEngine:
         if delta == 0.0:
             return
 
-        key = f"{recommendation.recommendation_type.value}:{recommendation.target_value}"
+        key = (
+            f"{recommendation.recommendation_type.value}:{recommendation.target_value}"
+        )
         pref = profile.preferences.get(
             key,
             UserPreference(
@@ -1387,7 +1387,9 @@ class RecommendationEngine:
         if not profile.behavioral_patterns.get("usage_patterns"):
             suggestions.append("Record a few sessions to refine behavioral patterns.")
         if not profile.similarity_groups:
-            suggestions.append("Engage with community content to build similarity data.")
+            suggestions.append(
+                "Engage with community content to build similarity data."
+            )
         return suggestions or ["Profile is sufficiently populated."]
 
     def _get_top_preferences(self, profile: UserProfile) -> List[Dict[str, Any]]:

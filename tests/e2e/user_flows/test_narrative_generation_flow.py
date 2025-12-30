@@ -151,7 +151,9 @@ class TestNarrativeGenerationFlow:
                         pytest.skip("SSE endpoint not available in test mode")
                         return
 
-                    assert response.status_code == 200, f"SSE endpoint returned {response.status_code}"
+                    assert (
+                        response.status_code == 200
+                    ), f"SSE endpoint returned {response.status_code}"
 
                     # Verify content type
                     content_type = response.headers.get("content-type", "")

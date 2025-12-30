@@ -169,6 +169,7 @@ knowledge_entries_count = Gauge(
 # Metric Helper Functions
 # ==============================================================================
 
+
 def record_knowledge_entry_created(knowledge_type: str, access_level: str) -> None:
     """Record knowledge entry creation metric."""
     knowledge_entry_created_total.labels(
@@ -198,11 +199,11 @@ def record_knowledge_retrieval(
         agent_character_id=agent_character_id,
         turn_number=str(turn_number),
     ).inc()
-    
+
     knowledge_entries_retrieved_total.labels(
         agent_character_id=agent_character_id,
     ).observe(entry_count)
-    
+
     knowledge_retrieval_duration_seconds.labels(
         operation="retrieve_agent_context",
     ).observe(duration_seconds)
@@ -232,14 +233,18 @@ def record_admin_operation(
     status: str,
 ) -> None:
     """Record admin operation metrics."""
-    admin_operation_duration_seconds.labels(operation=operation).observe(duration_seconds)
+    admin_operation_duration_seconds.labels(operation=operation).observe(
+        duration_seconds
+    )
     admin_operation_total.labels(operation=operation, status=status).inc()
 
 
 def record_event_published(event_type: str, duration_seconds: float) -> None:
     """Record event publishing metrics."""
     event_published_total.labels(event_type=event_type).inc()
-    event_publish_duration_seconds.labels(event_type=event_type).observe(duration_seconds)
+    event_publish_duration_seconds.labels(event_type=event_type).observe(
+        duration_seconds
+    )
 
 
 def record_event_publish_failed(event_type: str, error_type: str) -> None:

@@ -42,24 +42,26 @@ def fix_file(filepath: Path) -> tuple[bool, int]:
     original_content = content
 
     # Count replacements
-    count = len(re.findall(r'datetime\.utcnow\(\)', content))
+    count = len(re.findall(r"datetime\.utcnow\(\)", content))
 
     if count == 0:
         return False, 0
 
     # Fix import statement - add timezone if not present
-    if 'from datetime import' in content:
+    if "from datetime import" in content:
         # Check if timezone is already imported
-        if not re.search(r'from datetime import.*timezone', content):
+        if not re.search(r"from datetime import.*timezone", content):
             # Add timezone to existing import
             content = re.sub(
-                r'(from datetime import [^;\n]+)',
-                lambda m: m.group(1) + ', timezone' if 'timezone' not in m.group(1) else m.group(1),
-                content
+                r"(from datetime import [^;\n]+)",
+                lambda m: m.group(1) + ", timezone"
+                if "timezone" not in m.group(1)
+                else m.group(1),
+                content,
             )
 
     # Replace datetime.utcnow() with datetime.now(timezone.utc)
-    content = re.sub(r'datetime\.utcnow\(\)', 'datetime.now(timezone.utc)', content)
+    content = re.sub(r"datetime\.utcnow\(\)", "datetime.now(timezone.utc)", content)
 
     if content != original_content:
         filepath.write_text(content)
@@ -84,11 +86,15 @@ def main():
             total_replacements += count
             print(f"✓ Fixed {filepath.relative_to(base_path)}: {count} replacements")
         elif filepath.exists():
-            print(f"- Skipped {filepath.relative_to(base_path)}: already fixed or no occurrences")
+            print(
+                f"- Skipped {filepath.relative_to(base_path)}: already fixed or no occurrences"
+            )
         else:
             print(f"✗ Not found: {filepath.relative_to(base_path)}")
 
-    print(f"\n✓ Total: Fixed {total_files} files with {total_replacements} replacements")
+    print(
+        f"\n✓ Total: Fixed {total_files} files with {total_replacements} replacements"
+    )
 
 
 if __name__ == "__main__":

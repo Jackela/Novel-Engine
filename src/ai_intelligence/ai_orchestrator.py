@@ -198,9 +198,9 @@ class AIIntelligenceOrchestrator:
         self.optimization_suggestions: List[str] = []
 
         # Resource management
-        self.resource_allocation: Dict[str, float] = (
-            self.config.resource_allocation.copy()
-        )
+        self.resource_allocation: Dict[
+            str, float
+        ] = self.config.resource_allocation.copy()
         self.load_balancer: Dict[str, float] = defaultdict(float)
         self.performance_history: Dict[str, deque] = defaultdict(
             lambda: deque(maxlen=100)

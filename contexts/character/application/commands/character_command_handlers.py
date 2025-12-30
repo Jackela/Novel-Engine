@@ -109,7 +109,6 @@ class CreateCharacterCommandHandler:
                     command.education,
                 ]
             ):
-
                 # Create updated physical traits
                 physical_traits = PhysicalTraits(
                     height_cm=command.height_cm,

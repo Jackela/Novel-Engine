@@ -283,9 +283,9 @@ class BasePhaseImplementation(ABC):
         """
         # Add execution timing
         result.performance_metrics.update(context.performance_metrics)
-        result.performance_metrics["execution_time_ms"] = (
-            context.get_execution_time_ms()
-        )
+        result.performance_metrics[
+            "execution_time_ms"
+        ] = context.get_execution_time_ms()
 
         # Add cross-context call data
         result.cross_context_calls = context.cross_context_calls.copy()

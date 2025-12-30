@@ -201,9 +201,7 @@ test('字符选择功能测试', async ({ page }) => {
             with open(test_results_file, "r", encoding="utf-8") as f:
                 test_data = json.load(f)
                 results["test_data"] = test_data
-                print(
-                    f"OK: 找到测试结果数据 - {len(test_data.get('tests', []))} 个测试"
-                )
+                print(f"OK: 找到测试结果数据 - {len(test_data.get('tests', []))} 个测试")
         except Exception as e:
             print(f"WARN: 无法解析测试结果: {e}")
 

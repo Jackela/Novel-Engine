@@ -38,6 +38,7 @@ except ImportError as tracing_error:  # pragma: no cover - fallback when otel mi
     def setup_fastapi_tracing(app, *_args, **_kwargs):
         return app
 
+
 __all__ = [
     "PrometheusMetricsCollector",
     "PrometheusMiddleware",

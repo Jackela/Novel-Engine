@@ -151,7 +151,9 @@ def sample_negotiation_result():
 # ===================================================================
 
 
-@pytest.mark.skipif(not DECISION_MODULE_AVAILABLE, reason="Decision module not available")
+@pytest.mark.skipif(
+    not DECISION_MODULE_AVAILABLE, reason="Decision module not available"
+)
 class TestDecisionModels:
     """Tests for decision data models."""
 
@@ -370,7 +372,9 @@ class TestDecisionModels:
 # ===================================================================
 
 
-@pytest.mark.skipif(not DECISION_MODULE_AVAILABLE, reason="Decision module not available")
+@pytest.mark.skipif(
+    not DECISION_MODULE_AVAILABLE, reason="Decision module not available"
+)
 class TestRequestModels:
     """Tests for API request models."""
 
@@ -443,7 +447,9 @@ class TestRequestModels:
 # ===================================================================
 
 
-@pytest.mark.skipif(not DECISION_MODULE_AVAILABLE, reason="Decision module not available")
+@pytest.mark.skipif(
+    not DECISION_MODULE_AVAILABLE, reason="Decision module not available"
+)
 class TestDecisionAPIEndpoints:
     """Tests for Decision API endpoints."""
 
@@ -506,9 +512,7 @@ class TestDecisionAPIEndpoints:
             "negotiation_result": None,
         }
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ):
+        with patch("src.decision.api_router._pause_controller", mock_pause_controller):
             from src.decision.api_router import get_decision_status
 
             result = await get_decision_status()
@@ -553,9 +557,7 @@ class TestDecisionAPIEndpoints:
         """Test POST /api/decision/respond - no pending decision."""
         mock_pause_controller.is_paused = False
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ):
+        with patch("src.decision.api_router._pause_controller", mock_pause_controller):
             from src.decision.api_router import submit_decision_response
 
             request = DecisionResponseRequest(
@@ -577,9 +579,7 @@ class TestDecisionAPIEndpoints:
         """Test POST /api/decision/respond - option type without option_id."""
         mock_pause_controller.is_paused = True
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ):
+        with patch("src.decision.api_router._pause_controller", mock_pause_controller):
             from src.decision.api_router import submit_decision_response
 
             request = DecisionResponseRequest(
@@ -601,9 +601,7 @@ class TestDecisionAPIEndpoints:
         """Test POST /api/decision/respond - freetext type without text."""
         mock_pause_controller.is_paused = True
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ):
+        with patch("src.decision.api_router._pause_controller", mock_pause_controller):
             from src.decision.api_router import submit_decision_response
 
             request = DecisionResponseRequest(
@@ -669,9 +667,7 @@ class TestDecisionAPIEndpoints:
         mock_pause_controller.current_decision_point = sample_decision_point
         mock_pause_controller.submit_response = AsyncMock(return_value=False)
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ):
+        with patch("src.decision.api_router._pause_controller", mock_pause_controller):
             from src.decision.api_router import submit_decision_response
 
             request = DecisionResponseRequest(
@@ -747,9 +743,7 @@ class TestDecisionAPIEndpoints:
         """Test POST /api/decision/confirm - failure."""
         mock_pause_controller.confirm_negotiation = AsyncMock(return_value=False)
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ):
+        with patch("src.decision.api_router._pause_controller", mock_pause_controller):
             from src.decision.api_router import confirm_negotiation
 
             request = NegotiationConfirmRequest(
@@ -790,9 +784,7 @@ class TestDecisionAPIEndpoints:
         """Test POST /api/decision/skip - failure."""
         mock_pause_controller.skip_decision = AsyncMock(return_value=False)
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ):
+        with patch("src.decision.api_router._pause_controller", mock_pause_controller):
             from src.decision.api_router import skip_decision
 
             request = SkipDecisionRequest(decision_id="test-001")
@@ -838,7 +830,9 @@ class TestDecisionAPIEndpoints:
 # ===================================================================
 
 
-@pytest.mark.skipif(not DECISION_MODULE_AVAILABLE, reason="Decision module not available")
+@pytest.mark.skipif(
+    not DECISION_MODULE_AVAILABLE, reason="Decision module not available"
+)
 class TestDecisionSystemIntegration:
     """Integration tests for the decision system."""
 
@@ -895,11 +889,12 @@ class TestDecisionSystemIntegration:
         """Test complete workflow: decision detected -> option selected -> resolved."""
         # 1. Initial state - running
         mock_pause_controller.is_paused = False
-        mock_pause_controller.get_status.return_value = {"state": "running", "is_paused": False}
+        mock_pause_controller.get_status.return_value = {
+            "state": "running",
+            "is_paused": False,
+        }
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ):
+        with patch("src.decision.api_router._pause_controller", mock_pause_controller):
             from src.decision.api_router import get_decision_status
 
             result = await get_decision_status()
@@ -914,9 +909,7 @@ class TestDecisionSystemIntegration:
             "current_decision": sample_decision_point.to_dict(),
         }
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ):
+        with patch("src.decision.api_router._pause_controller", mock_pause_controller):
             result = await get_decision_status()
             assert result["data"]["state"] == "awaiting_input"
             assert result["data"]["current_decision"] is not None

@@ -337,8 +337,13 @@ class InteractionPauseController:
 
                 # Set final action
                 if accepted and self._pending.negotiation_result.adjusted_action:
-                    self._pending.final_action = self._pending.negotiation_result.adjusted_action
-                elif self._pending.user_response and self._pending.user_response.free_text:
+                    self._pending.final_action = (
+                        self._pending.negotiation_result.adjusted_action
+                    )
+                elif (
+                    self._pending.user_response
+                    and self._pending.user_response.free_text
+                ):
                     self._pending.final_action = self._pending.user_response.free_text
 
             self._pending.decision_point.is_resolved = True
@@ -360,9 +365,7 @@ class InteractionPauseController:
             "state": self._state.value,
             "is_paused": self.is_paused,
             "pending_decision": (
-                self._pending.decision_point.to_dict()
-                if self._pending
-                else None
+                self._pending.decision_point.to_dict() if self._pending else None
             ),
             "negotiation": (
                 self._pending.negotiation_result.to_dict()

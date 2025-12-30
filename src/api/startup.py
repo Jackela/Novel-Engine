@@ -21,6 +21,39 @@ from src.workspaces import (
 
 logger = logging.getLogger(__name__)
 
+
+def ensure_workspace_services(
+    app: FastAPI, settings: Optional[APISettings] = None
+) -> None:
+    """Prepare workspace persistence stores and guest sessions."""
+
+    resolved_settings = settings or APISettings.from_env()
+
+    if getattr(app.state, "workspace_store", None) is None:
+        try:
+            workspace_root = find_project_root(os.getcwd()) / "data" / "workspaces"
+            workspace_store = FilesystemWorkspaceStore(workspace_root)
+            character_store = FilesystemCharacterStore(workspace_store)
+            guest_session_manager = GuestSessionManager(
+                workspace_store,
+                secret_key=resolved_settings.jwt_secret_key,
+                algorithm=resolved_settings.jwt_algorithm,
+            )
+            app.state.workspace_store = workspace_store
+            app.state.workspace_character_store = character_store
+            app.state.guest_session_manager = guest_session_manager
+            logger.info("Guest workspace store initialized")
+        except Exception as exc:
+            logger.error(
+                "Failed to initialize guest workspace store: %s", exc, exc_info=True
+            )
+            app.state.workspace_store = None
+            app.state.workspace_character_store = None
+            app.state.guest_session_manager = None
+    else:
+        logger.info("Guest workspace store preconfigured; skipping initialization")
+
+
 async def initialize_app_state(app: FastAPI) -> None:
     logger.info("Starting StoryForge AI API server...")
     settings: APISettings = getattr(app.state, "settings", APISettings.from_env())
@@ -30,27 +63,7 @@ async def initialize_app_state(app: FastAPI) -> None:
 
     container = get_service_container()
 
-    if getattr(app.state, "workspace_store", None) is None:
-        try:
-            workspace_root = find_project_root(os.getcwd()) / "data" / "workspaces"
-            workspace_store = FilesystemWorkspaceStore(workspace_root)
-            character_store = FilesystemCharacterStore(workspace_store)
-            guest_session_manager = GuestSessionManager(
-                workspace_store,
-                secret_key=settings.jwt_secret_key,
-                algorithm=settings.jwt_algorithm,
-            )
-            app.state.workspace_store = workspace_store
-            app.state.workspace_character_store = character_store
-            app.state.guest_session_manager = guest_session_manager
-            logger.info("Guest workspace store initialized")
-        except Exception as exc:
-            logger.error("Failed to initialize guest workspace store: %s", exc, exc_info=True)
-            app.state.workspace_store = None
-            app.state.workspace_character_store = None
-            app.state.guest_session_manager = None
-    else:
-        logger.info("Guest workspace store preconfigured; skipping initialization")
+    ensure_workspace_services(app, settings)
 
     global_event_bus: Optional[object] = None
     try:
@@ -83,7 +96,9 @@ async def initialize_app_state(app: FastAPI) -> None:
             from src.config.character_factory import CharacterFactory
 
             character_factory = CharacterFactory(global_event_bus)
-            api_service = ApiOrchestrationService(orchestrator, global_event_bus, character_factory)
+            api_service = ApiOrchestrationService(
+                orchestrator, global_event_bus, character_factory
+            )
             container.register_singleton(ApiOrchestrationService, api_service)
             app.state.api_service = api_service
             logger.info("ApiOrchestrationService initialized")
@@ -91,7 +106,9 @@ async def initialize_app_state(app: FastAPI) -> None:
             app.state.api_service = None
             logger.info("ApiOrchestrationService skipped due to missing dependencies")
     except Exception as exc:
-        logger.error("Failed to initialize ApiOrchestrationService: %s", exc, exc_info=True)
+        logger.error(
+            "Failed to initialize ApiOrchestrationService: %s", exc, exc_info=True
+        )
         app.state.api_service = None
 
     try:

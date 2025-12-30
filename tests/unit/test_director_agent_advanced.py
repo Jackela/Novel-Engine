@@ -143,7 +143,9 @@ class TestDirectorAgentKnowledgeSystem:
             fragment.tags = (
                 ["combat", "imperial"]
                 if i == 0
-                else ["ork", "combat"] if i == 1 else ["warfare"]
+                else ["ork", "combat"]
+                if i == 1
+                else ["warfare"]
             )
             mock_fragments.append(fragment)
 

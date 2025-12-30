@@ -29,9 +29,14 @@ class APISettings:
 
     @staticmethod
     def from_env() -> "APISettings":
-        cookie_secure = os.getenv("COOKIE_SECURE", "true").lower() in ("true", "1", "yes")
+        cookie_secure = os.getenv("COOKIE_SECURE", "true").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
         jwt_secret_key = os.getenv(
-            "JWT_SECRET_KEY", os.getenv("SECRET_KEY", "development-secret-key-change-in-production")
+            "JWT_SECRET_KEY",
+            os.getenv("SECRET_KEY", "development-secret-key-change-in-production"),
         )
 
         ttl_days_raw = os.getenv("GUEST_WORKSPACE_TTL_DAYS", "30").strip()
@@ -62,4 +67,3 @@ class APISettings:
             jwt_access_token_expire_minutes=15,
             guest_workspace_ttl_days=ttl_days,
         )
-

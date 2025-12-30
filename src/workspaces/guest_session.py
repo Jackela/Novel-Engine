@@ -7,7 +7,11 @@ from typing import Optional
 
 import jwt
 
-from .filesystem import FilesystemWorkspaceStore, _new_workspace_id, _validate_workspace_id
+from .filesystem import (
+    FilesystemWorkspaceStore,
+    _new_workspace_id,
+    _validate_workspace_id,
+)
 
 
 GUEST_SESSION_COOKIE_NAME = "guest_session"

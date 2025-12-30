@@ -277,9 +277,9 @@ class ContextIntegrator:
                 hasattr(stats_context.combat_stats, "primary_stats")
                 and stats_context.combat_stats.primary_stats
             ):
-                merged_data["enhanced_combat_stats"] = (
-                    stats_context.combat_stats.primary_stats
-                )
+                merged_data[
+                    "enhanced_combat_stats"
+                ] = stats_context.combat_stats.primary_stats
 
             # Update psychological profile
             if (

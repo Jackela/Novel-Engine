@@ -513,9 +513,15 @@ class PersonaAgent:
                             stats[key] = self._agent.character_data[key]
                     if "character" not in stats:
                         stats["character"] = {
-                            "name": self._agent.character_data.get("name", self._agent.character_name),
-                            "faction": self._agent.character_data.get("faction", "Independent"),
-                            "specialization": self._agent.character_data.get("specialization", "Unknown"),
+                            "name": self._agent.character_data.get(
+                                "name", self._agent.character_name
+                            ),
+                            "faction": self._agent.character_data.get(
+                                "faction", "Independent"
+                            ),
+                            "specialization": self._agent.character_data.get(
+                                "specialization", "Unknown"
+                            ),
                         }
                 return {"stats": stats}
 

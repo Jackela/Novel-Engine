@@ -351,11 +351,11 @@ async def apply_world_delta(
         # In a real app, this would be injected via dependency injection
         from apps.api.infrastructure.command_bus import CommandBus
         from contexts.world.application.commands.handlers import ApplyWorldDeltaHandler
-        
+
         # Setup bus (temporary manual setup until DI is in place)
         bus = CommandBus()
         bus.register(type(command), ApplyWorldDeltaHandler())
-        
+
         result = await bus.execute(command)
 
         execution_time = (datetime.now() - start_time).total_seconds() * 1000
@@ -520,7 +520,9 @@ async def get_world_summary(
 )
 async def get_world_history(
     world_id: str = Path(..., description="ID of the world to query"),
-    limit: int = Query(20, ge=1, le=100, description="Maximum history entries to return"),
+    limit: int = Query(
+        20, ge=1, le=100, description="Maximum history entries to return"
+    ),
     offset: int = Query(0, ge=0, description="Number of entries to skip"),
 ) -> WorldHistoryResponse:
     """
@@ -584,7 +586,9 @@ async def get_world_history(
                             event_type="world_created",
                             description="World state initialized",
                             changes={
-                                "in_game_time": time_info.get("in_game_time", "Unknown"),
+                                "in_game_time": time_info.get(
+                                    "in_game_time", "Unknown"
+                                ),
                                 "weather": env.get("weather", {}),
                             },
                         )
@@ -794,7 +798,9 @@ async def validate_world_state(
         # Validate entity data integrity
         for entity_id, entity in entities.items():
             if not isinstance(entity, dict):
-                errors.append(f"Invalid entity structure for {entity_id}: expected dict")
+                errors.append(
+                    f"Invalid entity structure for {entity_id}: expected dict"
+                )
             elif "id" in entity and entity["id"] != entity_id:
                 warnings.append(
                     f"Entity ID mismatch: key={entity_id}, id={entity.get('id')}"
@@ -1056,6 +1062,10 @@ def _check_circular_references(world_state: Dict[str, Any]) -> List[str]:
                 break
             visited.add(current)
             current_loc = locations.get(current, {})
-            current = current_loc.get("parent_location") if isinstance(current_loc, dict) else None
+            current = (
+                current_loc.get("parent_location")
+                if isinstance(current_loc, dict)
+                else None
+            )
 
     return circular_refs

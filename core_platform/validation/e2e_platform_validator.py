@@ -560,7 +560,6 @@ class PlatformValidator:
         """Test database migrations."""
         import os
 
-
         # Check if migration directory exists
         migration_dir = "platform/persistence/migrations"
         assert os.path.exists(migration_dir), "Migration directory not found"

@@ -227,9 +227,7 @@ async def list_templates(
             lang_enum = Language(language)
             templates = [t for t in templates if t.language == lang_enum]
         except ValueError:
-            raise HTTPException(
-                status_code=400, detail=f"Invalid language: {language}"
-            )
+            raise HTTPException(status_code=400, detail=f"Invalid language: {language}")
 
     template_infos = [
         TemplateInfo(
@@ -251,7 +249,9 @@ async def get_template(template_id: str) -> TemplateDetailResponse:
     ensure_templates_registered()
     template = PromptRegistry.get(template_id)
     if not template:
-        raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Template not found: {template_id}"
+        )
 
     return TemplateDetailResponse(
         id=template.id,

@@ -21,6 +21,7 @@ try:
     from contexts.knowledge.infrastructure.config.feature_flags import (
         KnowledgeFeatureFlags,
     )
+
     KNOWLEDGE_SYSTEM_AVAILABLE = True
 except ImportError:
     KNOWLEDGE_SYSTEM_AVAILABLE = False
@@ -46,7 +47,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
     ):
         """
         Initialize SubjectiveBriefPhase with optional knowledge adapter.
-        
+
         Args:
             knowledge_adapter: Optional adapter for knowledge retrieval (FR-007)
                               If None, falls back to legacy Markdown-based approach
@@ -55,10 +56,10 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         self.execution_timeout_ms = 15000  # 15 seconds for AI operations
         self.ai_gateway_endpoint = "ai_gateway"
         self.agent_service_endpoint = "agent_context"
-        
+
         # Knowledge system integration (FR-007)
         self._knowledge_adapter = knowledge_adapter
-    
+
     @classmethod
     def create_with_feature_flags(
         cls,
@@ -66,34 +67,34 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
     ) -> "SubjectiveBriefPhase":
         """
         Factory method to create SubjectiveBriefPhase with feature flag control.
-        
+
         Automatically determines whether to use knowledge base or Markdown files
         based on NOVEL_ENGINE_USE_KNOWLEDGE_BASE environment variable.
-        
+
         Args:
             knowledge_adapter_factory: Optional callable that returns configured
                                       SubjectiveBriefPhaseAdapter instance.
                                       Only called if feature flag is enabled.
-        
+
         Returns:
             SubjectiveBriefPhase instance with appropriate knowledge adapter
-        
+
         Example:
             # With feature flag enabled
             os.environ["NOVEL_ENGINE_USE_KNOWLEDGE_BASE"] = "true"
             phase = SubjectiveBriefPhase.create_with_feature_flags(
                 knowledge_adapter_factory=lambda: create_knowledge_adapter()
             )
-            
+
             # With feature flag disabled (default)
             phase = SubjectiveBriefPhase.create_with_feature_flags()
-        
+
         Constitution Compliance:
             - FR-018: Enables rollback to Markdown-based operation
             - Article VII (Observability): Logs knowledge source selection
         """
         knowledge_adapter = None
-        
+
         # Check if knowledge system is available and feature flag is enabled
         if KNOWLEDGE_SYSTEM_AVAILABLE and KnowledgeFeatureFlags.use_knowledge_base():
             if knowledge_adapter_factory is not None:
@@ -103,7 +104,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                     # Log error but continue with Markdown fallback
                     # Actual logging would go here in production
                     pass
-        
+
         return cls(knowledge_adapter=knowledge_adapter)
 
     async def _execute_phase_implementation(
@@ -125,7 +126,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         briefs_generated = 0
         total_ai_cost = Decimal("0.00")
         failed_generations = 0
-        
+
         # Record knowledge source for observability (FR-007, Article VII)
         knowledge_source = "knowledge_base" if self._knowledge_adapter else "markdown"
         context.record_performance_metric("knowledge_source", knowledge_source)
@@ -437,7 +438,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
             "get_agent_goals",
             {"agent_id": agent_id},
         )
-        
+
         # FR-007: Get agent's knowledge context from knowledge base
         # (Replaces Markdown file reads per FR-006)
         knowledge_context = None
@@ -447,17 +448,20 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                 agent_roles = agent_config.get("roles", ())
                 if isinstance(agent_roles, list):
                     agent_roles = tuple(agent_roles)
-                
-                knowledge_context = await self._knowledge_adapter.get_agent_knowledge_context(
-                    character_id=agent_id,
-                    roles=agent_roles,
-                    turn_number=context.turn_id,
+
+                knowledge_context = (
+                    await self._knowledge_adapter.get_agent_knowledge_context(
+                        character_id=agent_id,
+                        roles=agent_roles,
+                        turn_number=context.turn_id,
+                    )
                 )
             except Exception as e:
                 # Log warning but don't fail - knowledge is enhancement not requirement
                 context.record_performance_metric(
                     "knowledge_retrieval_errors",
-                    context.performance_metrics.get("knowledge_retrieval_errors", 0) + 1,
+                    context.performance_metrics.get("knowledge_retrieval_errors", 0)
+                    + 1,
                 )
 
         return {
@@ -504,7 +508,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
 
         # Build memories context
         memories_text = self._format_memories_for_prompt(recent_memories)
-        
+
         # Build knowledge context section (FR-007: PostgreSQL-backed knowledge)
         knowledge_text = ""
         if knowledge_context:

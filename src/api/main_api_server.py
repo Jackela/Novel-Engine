@@ -107,6 +107,7 @@ global_structured_logger = None
 
 _CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
+
 class OptimizedJSONResponse(JSONResponse):
     """Optimized JSON response with performance enhancements."""
 
@@ -118,7 +119,6 @@ class OptimizedJSONResponse(JSONResponse):
         cache_control: Optional[str] = None,
         max_age: Optional[int] = None,
     ):
-
         # Add performance headers
         if headers is None:
             headers = {}
@@ -825,7 +825,11 @@ def _register_legacy_routes(app: FastAPI):
                 if os.path.isdir(os.path.join(characters_path, item))
             ]
             matched_name = next(
-                (item for item in available_character_dirs if item == safe_character_id),
+                (
+                    item
+                    for item in available_character_dirs
+                    if item == safe_character_id
+                ),
                 None,
             )
             if not matched_name:
@@ -862,7 +866,10 @@ def _register_legacy_routes(app: FastAPI):
                         for line in lines:
                             if line.startswith("# "):
                                 character_data["name"] = line[2:].strip()
-                            elif "background" in line.lower() or "summary" in line.lower():
+                            elif (
+                                "background" in line.lower()
+                                or "summary" in line.lower()
+                            ):
                                 character_data["background_summary"] = line.strip()
                 except Exception:
                     logger.warning("Could not read character file", exc_info=True)
@@ -937,7 +944,7 @@ def _register_legacy_routes(app: FastAPI):
                     f"SSE client connected: {client_id}", category=LogCategory.SYSTEM
                 )
             else:
-                 logger.info(f"SSE client connected: {client_id}")
+                logger.info(f"SSE client connected: {client_id}")
 
             active_sse_connections["count"] += 1
 
@@ -946,7 +953,10 @@ def _register_legacy_routes(app: FastAPI):
                 # Check limit
                 if effective_limit is not None and events_generated >= effective_limit:
                     if global_structured_logger:
-                        global_structured_logger.info(f"SSE limit reached for {client_id}", category=LogCategory.SYSTEM)
+                        global_structured_logger.info(
+                            f"SSE limit reached for {client_id}",
+                            category=LogCategory.SYSTEM,
+                        )
                     else:
                         logger.info(f"SSE limit reached for {client_id}")
                     break
@@ -1000,7 +1010,9 @@ def _register_legacy_routes(app: FastAPI):
                             category=LogCategory.ERROR,
                         )
                     else:
-                        logger.error(f"SSE event generation error for client {client_id}: {e}")
+                        logger.error(
+                            f"SSE event generation error for client {client_id}: {e}"
+                        )
 
                     error_event = {
                         "id": f"err-{event_id}",
@@ -1022,7 +1034,7 @@ def _register_legacy_routes(app: FastAPI):
                     category=LogCategory.ERROR,
                 )
             else:
-                 logger.error(f"Fatal SSE error for client {client_id}: {fatal_error}")
+                logger.error(f"Fatal SSE error for client {client_id}: {fatal_error}")
             active_sse_connections["count"] -= 1
             raise
 
@@ -1094,7 +1106,9 @@ def _register_legacy_routes(app: FastAPI):
                     or safe_char_name != raw_char_name
                     or not _CHARACTER_DIRNAME_RE.fullmatch(safe_char_name)
                 ):
-                    raise HTTPException(status_code=400, detail="Invalid character_name")
+                    raise HTTPException(
+                        status_code=400, detail="Invalid character_name"
+                    )
                 if safe_char_name not in available_character_dirs:
                     missing_characters.append(char_name)
 

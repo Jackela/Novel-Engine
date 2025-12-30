@@ -106,7 +106,9 @@ async def event_generator(app, client_id: str):
         while True:
             try:
                 try:
-                    event_data = await asyncio.wait_for(client_queue.get(), timeout=30.0)
+                    event_data = await asyncio.wait_for(
+                        client_queue.get(), timeout=30.0
+                    )
                     yield f"id: {event_data['id']}\n"
                     yield f"data: {json.dumps(event_data)}\n\n"
                 except asyncio.TimeoutError:
@@ -117,7 +119,9 @@ async def event_generator(app, client_id: str):
                 break
 
             except Exception as exc:
-                logger.error("SSE event generation error for client %s: %s", client_id, exc)
+                logger.error(
+                    "SSE event generation error for client %s: %s", client_id, exc
+                )
                 error_event = create_sse_event(
                     app,
                     event_type="system",
@@ -133,9 +137,10 @@ async def event_generator(app, client_id: str):
         logger.info("SSE client %s cleaned up", client_id)
 
 
-@router.get("/api/events/stream")
+@router.get("/events/stream")
 async def stream_events(request: Request):
     client_id = secrets.token_hex(8)
+
     return StreamingResponse(
         event_generator(request.app, client_id),
         media_type="text/event-stream",
@@ -148,14 +153,25 @@ async def stream_events(request: Request):
 
 
 class EmitEventRequest(BaseModel):
-    type: str = Field(default="system", description="Event type: character, story, system, interaction")
+    type: str = Field(
+        default="system",
+        description="Event type: character, story, system, interaction",
+    )
+
     title: str = Field(description="Event title")
+
     description: str = Field(description="Event description")
-    severity: str = Field(default="low", description="Event severity: low, medium, high")
-    character_name: Optional[str] = Field(default=None, description="Character name for character events")
+
+    severity: str = Field(
+        default="low", description="Event severity: low, medium, high"
+    )
+
+    character_name: Optional[str] = Field(
+        default=None, description="Character name for character events"
+    )
 
 
-@router.post("/api/events/emit")
+@router.post("/events/emit")
 async def emit_dashboard_event(request: Request, payload: EmitEventRequest):
     event_data = create_sse_event(
         request.app,
@@ -165,8 +181,11 @@ async def emit_dashboard_event(request: Request, payload: EmitEventRequest):
         severity=payload.severity,
         character_name=payload.character_name,
     )
+
     broadcast_sse_event(request.app, event_data)
+
     _ensure_state(request.app)
+
     return {
         "success": True,
         "message": "Event broadcast to all connected clients",
@@ -175,9 +194,10 @@ async def emit_dashboard_event(request: Request, payload: EmitEventRequest):
     }
 
 
-@router.get("/api/events/stats")
+@router.get("/events/stats")
 async def get_sse_stats(request: Request):
     _ensure_state(request.app)
+
     return {
         "connected_clients": request.app.state.active_sse_connections,
         "total_events_sent": request.app.state.sse_event_id_counter,
@@ -185,7 +205,7 @@ async def get_sse_stats(request: Request):
     }
 
 
-@router.get("/api/analytics/metrics")
+@router.get("/analytics/metrics")
 async def get_analytics_metrics(request: Request):
     api_service = getattr(request.app.state, "api_service", None)
     orch_data: Dict[str, Any] = {}
@@ -202,7 +222,9 @@ async def get_analytics_metrics(request: Request):
                 cache_metrics_raw = chunk_cache.get_metrics()
             elif hasattr(chunk_cache, "_cache"):
                 cache_metrics_raw = {
-                    "cache_size": len(chunk_cache._cache) if hasattr(chunk_cache._cache, "__len__") else 0,
+                    "cache_size": len(chunk_cache._cache)
+                    if hasattr(chunk_cache._cache, "__len__")
+                    else 0,
                     "cache_semantic_hits": 0,
                     "cache_exact_hits": 0,
                 }
@@ -224,9 +246,9 @@ async def get_analytics_metrics(request: Request):
     total_events = request.app.state.sse_event_id_counter
     engagement = min(100, 70 + active_clients * 10 + min(total_events, 30))
 
-    cache_hits = cache_metrics_raw.get("cache_semantic_hits", 0) + cache_metrics_raw.get(
-        "cache_exact_hits", 0
-    )
+    cache_hits = cache_metrics_raw.get(
+        "cache_semantic_hits", 0
+    ) + cache_metrics_raw.get("cache_exact_hits", 0)
     cache_size = cache_metrics_raw.get("cache_size", 0)
     coherence = (
         min(100, 85 + (cache_hits / max(1, cache_size)) * 15) if cache_size > 0 else 90
@@ -248,4 +270,3 @@ async def get_analytics_metrics(request: Request):
             "last_updated": datetime.now(UTC).isoformat(),
         },
     }
-

@@ -125,7 +125,9 @@ class InteractionEngine:
             "Generate a short dialogue beat with intent and subtext.",
         )
         outcome.generated_content.append(content)
-        return StandardResponse(success=True, metadata={"blessing": "dialogue_processed"})
+        return StandardResponse(
+            success=True, metadata={"blessing": "dialogue_processed"}
+        )
 
     async def _process_combat_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
@@ -147,7 +149,9 @@ class InteractionEngine:
             "Show a collaborative effort and its tangible outcome.",
         )
         outcome.generated_content.append(content)
-        return StandardResponse(success=True, metadata={"blessing": "cooperation_processed"})
+        return StandardResponse(
+            success=True, metadata={"blessing": "cooperation_processed"}
+        )
 
     async def _process_negotiation_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
@@ -158,7 +162,9 @@ class InteractionEngine:
             "Create an exchange of offers and counteroffers with a clear shift in leverage.",
         )
         outcome.generated_content.append(content)
-        return StandardResponse(success=True, metadata={"blessing": "negotiation_processed"})
+        return StandardResponse(
+            success=True, metadata={"blessing": "negotiation_processed"}
+        )
 
     async def _process_instruction_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
@@ -169,7 +175,9 @@ class InteractionEngine:
             "Deliver concise instructions and the recipient's immediate reaction.",
         )
         outcome.generated_content.append(content)
-        return StandardResponse(success=True, metadata={"blessing": "instruction_processed"})
+        return StandardResponse(
+            success=True, metadata={"blessing": "instruction_processed"}
+        )
 
     async def _process_ritual_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
@@ -191,7 +199,9 @@ class InteractionEngine:
             "Summarize a discovery moment with location cues and newfound information.",
         )
         outcome.generated_content.append(content)
-        return StandardResponse(success=True, metadata={"blessing": "exploration_processed"})
+        return StandardResponse(
+            success=True, metadata={"blessing": "exploration_processed"}
+        )
 
     async def _process_maintenance_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
@@ -202,7 +212,9 @@ class InteractionEngine:
             "Narrate a maintenance task and how it stabilizes the system or equipment.",
         )
         outcome.generated_content.append(content)
-        return StandardResponse(success=True, metadata={"blessing": "maintenance_processed"})
+        return StandardResponse(
+            success=True, metadata={"blessing": "maintenance_processed"}
+        )
 
     async def _process_emergency_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
@@ -213,7 +225,9 @@ class InteractionEngine:
             "Write an urgent response sequence with clear risks and immediate actions.",
         )
         outcome.generated_content.append(content)
-        return StandardResponse(success=True, metadata={"blessing": "emergency_processed"})
+        return StandardResponse(
+            success=True, metadata={"blessing": "emergency_processed"}
+        )
 
     async def _render_text(
         self, interaction_kind: str, context: InteractionContext, guidance: str
@@ -257,9 +271,9 @@ class InteractionEngine:
                         f"INTERACTION PREREQUISITES NOT MET: {context.interaction_id}"
                     )
                     # Continue with warnings rather than failing
-                    context.metadata["prerequisite_warnings"] = (
-                        prerequisite_result.error.message
-                    )
+                    context.metadata[
+                        "prerequisite_warnings"
+                    ] = prerequisite_result.error.message
 
                 # Register enhanced active interaction
                 self._active_interactions[context.interaction_id] = context

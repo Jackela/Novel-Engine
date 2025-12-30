@@ -43,4 +43,3 @@ def test_character_store_atomic_write_leaves_no_tmp_files(tmp_path):
 
     tmp_files = list((workspace.root / "characters").glob(".char_1.json.tmp.*"))
     assert tmp_files == []
-

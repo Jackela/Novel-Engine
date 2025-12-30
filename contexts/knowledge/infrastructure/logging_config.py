@@ -17,6 +17,7 @@ from src.core.logging_system import (
     StructuredLogger,
 )
 
+
 def get_knowledge_logger(
     component: str,
     correlation_id: Optional[str] = None,

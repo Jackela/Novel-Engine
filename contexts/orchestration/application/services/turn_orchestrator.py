@@ -597,9 +597,9 @@ class TurnOrchestrator:
 
             # Basic phase metrics
             metrics[f"{phase_prefix}_success"] = 1.0 if result.success else 0.0
-            metrics[f"{phase_prefix}_execution_time_ms"] = (
-                result.performance_metrics.get("execution_time_ms", 0.0)
-            )
+            metrics[
+                f"{phase_prefix}_execution_time_ms"
+            ] = result.performance_metrics.get("execution_time_ms", 0.0)
             metrics[f"{phase_prefix}_events_processed"] = float(result.events_processed)
             metrics[f"{phase_prefix}_events_generated"] = float(
                 len(result.events_generated)

@@ -52,9 +52,7 @@ class PromptRegistry:
             ValueError: If a template with the same ID already exists
         """
         if template.id in cls._templates:
-            logger.warning(
-                f"Template '{template.id}' already exists, overwriting"
-            )
+            logger.warning(f"Template '{template.id}' already exists, overwriting")
         cls._templates[template.id] = template
         logger.debug(f"Registered template: {template.id}")
 

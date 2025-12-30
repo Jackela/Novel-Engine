@@ -322,7 +322,9 @@ class TestExportImportFlow:
                 relationships = char_b.get("relationships", {})
                 # Skip assertion if relationships couldn't be stored (test mode limitation)
                 if relationships:
-                    assert "char_a" in relationships, "Relationship reference should exist"
+                    assert (
+                        "char_a" in relationships
+                    ), "Relationship reference should exist"
                 # Otherwise, test passes - the API endpoint works, just storage is limited
 
     def test_large_dataset_export_performance(

@@ -121,9 +121,7 @@ class DecisionPoint:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DecisionPoint":
         """Create from dictionary."""
-        options = [
-            DecisionOption(**opt) for opt in data.get("options", [])
-        ]
+        options = [DecisionOption(**opt) for opt in data.get("options", [])]
         return cls(
             decision_id=data.get("decision_id", f"dp-{uuid4().hex[:8]}"),
             decision_type=DecisionPointType(data.get("decision_type", "turning_point")),

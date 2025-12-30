@@ -155,7 +155,8 @@ class NegotiationEngine:
                 )
 
             prompt = EVALUATION_PROMPT.format(
-                narrative_context=decision_point.narrative_context or "Story in progress",
+                narrative_context=decision_point.narrative_context
+                or "Story in progress",
                 characters=characters_str,
                 decision_type=decision_point.decision_type.value,
                 decision_description=decision_point.description,
@@ -184,7 +185,7 @@ class NegotiationEngine:
         """Parse LLM response into NegotiationResult."""
         try:
             # Extract JSON from response
-            json_match = re.search(r'\{[\s\S]*\}', response)
+            json_match = re.search(r"\{[\s\S]*\}", response)
             if not json_match:
                 raise ValueError("No JSON found in response")
 
@@ -239,8 +240,13 @@ class NegotiationEngine:
 
         # Check for problematic keywords
         rejected_keywords = [
-            "kill everyone", "destroy world", "god mode", "cheat",
-            "teleport", "time travel", "become immortal",
+            "kill everyone",
+            "destroy world",
+            "god mode",
+            "cheat",
+            "teleport",
+            "time travel",
+            "become immortal",
         ]
         for keyword in rejected_keywords:
             if keyword in user_input_lower:
@@ -253,7 +259,10 @@ class NegotiationEngine:
 
         # Check for actions that might need adjustment
         adjustment_keywords = [
-            "fly", "magic", "superpowers", "instantly",
+            "fly",
+            "magic",
+            "superpowers",
+            "instantly",
         ]
         for keyword in adjustment_keywords:
             if keyword in user_input_lower:
@@ -283,7 +292,7 @@ class NegotiationEngine:
         }
         result = user_input
         for old, new in replacements.items():
-            result = re.sub(rf'\b{old}\b', new, result, flags=re.IGNORECASE)
+            result = re.sub(rf"\b{old}\b", new, result, flags=re.IGNORECASE)
         return result
 
     def _get_default_alternatives(self) -> List[DecisionOption]:
