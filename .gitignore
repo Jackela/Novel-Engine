@@ -35,6 +35,11 @@ MANIFEST
 *.manifest
 *.spec
 
+# Local tooling artifacts
+.gemini/
+codex/
+codql-annotations*.json
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
