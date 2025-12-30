@@ -564,8 +564,7 @@ def setup_logging(
         except RuntimeError as exc:
             # Application may already be running (e.g., during hot reload); skip middleware injection
             logger.warning(
-                "Logging middleware already active; skipping middleware injection (%s)",
-                exc,
+                f"Logging middleware already active; skipping middleware injection ({exc})"
             )
 
     # Store logger in app state for access from endpoints

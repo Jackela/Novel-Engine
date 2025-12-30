@@ -390,7 +390,7 @@ Return ONLY the optimized prompt, no explanations."""
         suggestions_applied: List[str] = []
 
         for iteration in range(1, max_iterations + 1):
-            logger.info(f"Optimization iteration {iteration}/{max_iterations}")
+            logger.info("Optimization iteration in progress")
 
             # Analyze current prompt
             analysis = await self.analyze(current_prompt, genre, language)

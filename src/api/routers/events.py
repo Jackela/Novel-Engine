@@ -118,15 +118,13 @@ async def event_generator(app, client_id: str):
                 logger.info("SSE client disconnected: %s", client_id)
                 break
 
-            except Exception as exc:
-                logger.error(
-                    "SSE event generation error for client %s: %s", client_id, exc
-                )
+            except Exception:
+                logger.exception("SSE event generation error.")
                 error_event = create_sse_event(
                     app,
                     event_type="system",
                     title="Stream Error",
-                    description=f"Internal error: {exc}",
+                    description="Internal error while streaming events.",
                     severity="high",
                 )
                 yield f"id: {error_event['id']}\n"

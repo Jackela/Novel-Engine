@@ -34,14 +34,15 @@ async def create_or_resume_guest_session(
 ) -> GuestSessionResponse:
     token = request.cookies.get(manager.cookie_name)
     result = manager.resolve_or_create(token)
-    response.set_cookie(
-        manager.cookie_name,
-        manager.encode(result.workspace_id),
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
-        max_age=manager.cookie_max_age_seconds(),
-    )
+    if result.created:
+        response.set_cookie(
+            manager.cookie_name,
+            manager.encode(result.workspace_id),
+            httponly=True,
+            secure=settings.cookie_secure,
+            samesite=settings.cookie_samesite,
+            max_age=manager.cookie_max_age_seconds(),
+        )
     return GuestSessionResponse(
         workspace_id=result.workspace_id, created=result.created
     )
@@ -53,21 +54,12 @@ async def export_workspace_zip(
     workspace_id: str = Depends(require_workspace_id),
     settings: APISettings = Depends(get_settings),
     store: FilesystemWorkspaceStore = Depends(get_workspace_store),
-    manager: GuestSessionManager = Depends(get_guest_session_manager),
 ) -> StreamingResponse:
     zip_bytes = store.export_zip(workspace_id)
     filename = f"workspace-{workspace_id}.zip"
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
     streaming = StreamingResponse(
         iter([zip_bytes]), media_type="application/zip", headers=headers
-    )
-    streaming.set_cookie(
-        manager.cookie_name,
-        manager.encode(workspace_id),
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
-        max_age=manager.cookie_max_age_seconds(),
     )
     return streaming
 
@@ -79,7 +71,6 @@ async def import_workspace_zip(
     archive: UploadFile = File(...),
     settings: APISettings = Depends(get_settings),
     store: FilesystemWorkspaceStore = Depends(get_workspace_store),
-    manager: GuestSessionManager = Depends(get_guest_session_manager),
 ) -> GuestSessionResponse:
     zip_bytes = await archive.read()
     try:
@@ -87,12 +78,4 @@ async def import_workspace_zip(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
-    response.set_cookie(
-        manager.cookie_name,
-        manager.encode(workspace.id),
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
-        max_age=manager.cookie_max_age_seconds(),
-    )
     return GuestSessionResponse(workspace_id=workspace.id, created=True)

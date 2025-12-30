@@ -594,7 +594,7 @@ async def get_turn_status(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting turn status for {turn_id}: {e}")
+        logger.exception("Error getting turn status.")
         raise HTTPException(status_code=500, detail="Failed to retrieve turn status")
 
 
@@ -681,7 +681,7 @@ async def cleanup_turn(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error cleaning up turn {turn_id}: {e}")
+        logger.exception("Error cleaning up turn.")
         raise HTTPException(status_code=500, detail="Failed to cleanup turn resources")
 
 

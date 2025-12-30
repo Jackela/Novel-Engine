@@ -216,16 +216,14 @@ class InteractionAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting interaction {interaction_id}: {e}")
+                logger.exception("Error getting interaction.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
     async def _process_interaction_async(self, interaction_id: str):
         """Processes an interaction asynchronously."""
         try:
             if not self.orchestrator:
-                logger.error(
-                    f"No orchestrator available for interaction {interaction_id}"
-                )
+                logger.error("No orchestrator available for interaction.")
                 if interaction_id in self.active_interactions:
                     self.active_interactions[interaction_id]["status"] = "error"
                 return
@@ -244,16 +242,14 @@ class InteractionAPI:
                 state["status"] = "completed"
                 state["completed_at"] = datetime.now()
 
-                logger.info(f"Interaction {interaction_id} completed successfully")
+                logger.info("Interaction completed successfully")
             except Exception as process_error:
-                logger.error(
-                    f"Interaction processing failed for {interaction_id}: {process_error}"
-                )
+                logger.exception("Interaction processing failed.")
                 state["status"] = "failed"
                 state["error"] = str(process_error)
 
         except Exception as e:
-            logger.error(f"Error processing interaction {interaction_id}: {e}")
+            logger.exception("Error processing interaction.")
             if interaction_id in self.active_interactions:
                 self.active_interactions[interaction_id]["status"] = "error"
 

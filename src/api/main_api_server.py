@@ -1005,20 +1005,18 @@ def _register_legacy_routes(app: FastAPI):
                     # Internal error - send error event but continue streaming
                     if global_structured_logger:
                         global_structured_logger.error(
-                            f"SSE event generation error for client {client_id}: {e}",
+                            "SSE event generation error.",
                             exc_info=e,
                             category=LogCategory.ERROR,
                         )
                     else:
-                        logger.error(
-                            f"SSE event generation error for client {client_id}: {e}"
-                        )
+                        logger.exception("SSE event generation error.")
 
                     error_event = {
                         "id": f"err-{event_id}",
                         "type": "system",
                         "title": "Stream Error",
-                        "description": f"Internal error: {str(e)}",
+                        "description": "Internal error while streaming events.",
                         "timestamp": int(time.time() * 1000),
                         "severity": "high",
                     }
@@ -1029,12 +1027,12 @@ def _register_legacy_routes(app: FastAPI):
             # Fatal error - log and terminate
             if global_structured_logger:
                 global_structured_logger.error(
-                    f"Fatal SSE error for client {client_id}: {fatal_error}",
+                    "Fatal SSE error.",
                     exc_info=fatal_error,
                     category=LogCategory.ERROR,
                 )
             else:
-                logger.error(f"Fatal SSE error for client {client_id}: {fatal_error}")
+                logger.exception("Fatal SSE error.")
             active_sse_connections["count"] -= 1
             raise
 

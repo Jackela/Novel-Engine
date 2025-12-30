@@ -144,10 +144,10 @@ async def get_decision_status() -> Dict[str, Any]:
             "success": True,
             "data": controller.get_status(),
         }
-    except RuntimeError as e:
+    except RuntimeError:
         return {
             "success": False,
-            "message": str(e),
+            "message": "Decision system unavailable.",
             "data": None,
         }
 
@@ -261,8 +261,8 @@ async def submit_decision_response(request: DecisionResponseRequest) -> Dict[str
                 detail="Failed to submit response - decision may have expired",
             )
 
-    except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except RuntimeError:
+        raise HTTPException(status_code=500, detail="Decision system unavailable.")
 
 
 @router.post("/confirm")
@@ -354,9 +354,9 @@ async def get_decision_history() -> Dict[str, Any]:
                 "total_decisions": detector.decision_count,
             },
         }
-    except RuntimeError as e:
+    except RuntimeError:
         return {
             "success": False,
-            "message": str(e),
+            "message": "Decision history unavailable.",
             "data": None,
         }

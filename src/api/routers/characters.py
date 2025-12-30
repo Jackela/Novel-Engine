@@ -511,28 +511,27 @@ async def get_character_detail(
     characters_path = get_characters_directory_path()
     safe_character_id = _require_public_character_id(character_id)
 
-    if not os.path.isdir(characters_path):
+    base_dir = Path(characters_path).resolve()
+    if not base_dir.is_dir():
         raise HTTPException(
             status_code=404, detail=f"Character '{safe_character_id}' not found"
         )
 
-    available_character_dirs = [
-        item
-        for item in os.listdir(characters_path)
-        if os.path.isdir(os.path.join(characters_path, item))
-    ]
-    matched_name = next(
-        (item for item in available_character_dirs if item == safe_character_id), None
+    character_dir = next(
+        (
+            item
+            for item in base_dir.iterdir()
+            if item.is_dir() and item.name == safe_character_id
+        ),
+        None,
     )
-
-    if not matched_name:
+    if character_dir is None:
         raise HTTPException(
             status_code=404, detail=f"Character '{safe_character_id}' not found"
         )
 
-    character_dir = os.path.join(characters_path, matched_name)
-    character_file = os.path.join(character_dir, f"character_{matched_name}.md")
-    stats_file = os.path.join(character_dir, "stats.yaml")
+    character_file = character_dir / f"character_{character_dir.name}.md"
+    stats_file = character_dir / "stats.yaml"
 
     character_name = safe_character_id
     display_name = safe_character_id.replace("_", " ").title()

@@ -63,15 +63,15 @@ async def start_orchestration(
     try:
         result = await api_service.start_simulation(sim_request)
         return result
-    except ValueError as val_err:
+    except ValueError:
         return {
             "success": False,
-            "message": str(val_err),
+            "message": "Invalid orchestration request.",
             "data": await api_service.get_status(),
         }
-    except Exception as exc:
-        logger.error("Failed to start orchestration: %s", exc)
-        raise HTTPException(status_code=500, detail=str(exc))
+    except Exception:
+        logger.exception("Failed to start orchestration.")
+        raise HTTPException(status_code=500, detail="Failed to start orchestration.")
 
 
 @router.post("/api/orchestration/stop")
