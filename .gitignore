@@ -15,6 +15,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+# Allow frontend-specific libraries
+!frontend/src/lib/
+!frontend/tests/unit/lib/
 lib64/
 parts/
 sdist/
