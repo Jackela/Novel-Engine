@@ -12,6 +12,9 @@ import {
   IconButton,
   Tooltip,
   Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Fab,
 } from '@mui/material';
 import {
@@ -24,33 +27,81 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from 'react-query';
 import api from '@/services/api';
+import { queryKeys } from '@/services/queries';
 import CharacterCreationDialog from './CharacterCreationDialog';
 import CharacterDetailsDialog from './CharacterDetailsDialog';
 import type { Character } from '@/types';
+import { useDeleteCharacter } from '@/hooks/useCharacters';
 
 const CharacterStudio: React.FC = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
 
+  const deleteCharacter = useDeleteCharacter();
+
   // Fetch characters list
-  const { data: characterNames, isLoading, refetch } = useQuery(
-    'characters',
+  const { data: characterSummaries, isLoading, isError: isCharactersError, error: charactersError, refetch } = useQuery(
+    queryKeys.characters,
     api.getCharacters
   );
 
+  const characterNames = (characterSummaries ?? []).map((summary) => summary.id);
+
   // Fetch detailed character data when needed
   const { data: characterDetails } = useQuery(
-    ['character-details', selectedCharacter],
-    () => selectedCharacter ? api.getCharacterDetails(selectedCharacter) : null,
+    queryKeys.characterDetails(selectedCharacter || ''),
+    () => selectedCharacter ? api.getCharacter(selectedCharacter) : null,
     {
       enabled: !!selectedCharacter,
     }
   );
 
+  const editInitialData = React.useMemo(() => {
+    if (!characterDetails) return undefined;
+    return {
+      name: characterDetails.name,
+      faction: characterDetails.faction,
+      role: characterDetails.role,
+      description: characterDetails.description,
+      stats: characterDetails.stats,
+      equipment: characterDetails.equipment.map(({ id: _id, ...rest }) => rest),
+      relationships: characterDetails.relationships.map(({ targetCharacterId: _targetCharacterId, ...rest }) => rest),
+    };
+  }, [characterDetails]);
+
   const handleViewCharacter = (characterName: string) => {
     setSelectedCharacter(characterName);
     setDetailsDialogOpen(true);
+  };
+
+  const handleEditCharacter = (characterName: string) => {
+    setSelectedCharacter(characterName);
+    setEditDialogOpen(true);
+  };
+
+  const handleRequestDeleteCharacter = (characterName: string) => {
+    setPendingDelete(characterName);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return;
+    try {
+      await deleteCharacter.mutateAsync(pendingDelete);
+      setDeleteDialogOpen(false);
+      setPendingDelete(null);
+      if (selectedCharacter === pendingDelete) {
+        setSelectedCharacter(null);
+        setDetailsDialogOpen(false);
+        setEditDialogOpen(false);
+      }
+    } catch {
+      // Error handled by mutation state
+    }
   };
 
   const handleCharacterCreated = () => {
@@ -100,20 +151,27 @@ const CharacterStudio: React.FC = () => {
             Loading characters...
           </Typography>
         </Box>
-      ) : characterNames && characterNames.length > 0 ? (
+      ) : isCharactersError ? (
+        <Card sx={{ p: 4, textAlign: 'center', bgcolor: 'action.hover' }}>
+          <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
+            Failed to load characters
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            {(charactersError as Error | undefined)?.message || 'Please try again.'}
+          </Typography>
+          <Button variant="contained" onClick={() => refetch()} sx={{ fontWeight: 600 }}>
+            Retry
+          </Button>
+        </Card>
+      ) : characterNames.length > 0 ? (
         <Grid container spacing={3}>
           {characterNames.map((characterName) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={characterName}>
               <CharacterCard
                 characterName={characterName}
                 onView={() => handleViewCharacter(characterName)}
-                onEdit={() => {
-                  setSelectedCharacter(characterName);
-                  // Future: Open edit dialog
-                }}
-                onDelete={() => {
-                  // Future: Implement delete functionality
-                }}
+                onEdit={() => handleEditCharacter(characterName)}
+                onDelete={() => handleRequestDeleteCharacter(characterName)}
               />
             </Grid>
           ))}
@@ -162,6 +220,19 @@ const CharacterStudio: React.FC = () => {
         onCharacterCreated={handleCharacterCreated}
       />
 
+      {/* Character Edit Dialog */}
+      <CharacterCreationDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        onCharacterCreated={() => {
+          refetch();
+          setEditDialogOpen(false);
+        }}
+        mode="edit"
+        characterId={selectedCharacter ?? undefined}
+        initialData={editInitialData}
+      />
+
       {/* Character Details Dialog */}
       <CharacterDetailsDialog
         open={detailsDialogOpen}
@@ -171,7 +242,49 @@ const CharacterStudio: React.FC = () => {
         }}
         character={characterDetails}
         characterName={selectedCharacter}
+        onEdit={() => {
+          if (!selectedCharacter) return;
+          setDetailsDialogOpen(false);
+          setEditDialogOpen(true);
+        }}
+        onDelete={() => {
+          if (!selectedCharacter) return;
+          setDetailsDialogOpen(false);
+          handleRequestDeleteCharacter(selectedCharacter);
+        }}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="confirm-delete-character-title"
+      >
+        <DialogTitle id="confirm-delete-character-title">Delete character?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            This will permanently delete <strong>{pendingDelete || 'this character'}</strong> from your current workspace.
+          </Typography>
+          {deleteCharacter.isError && (
+            <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+              {(deleteCharacter.error as Error | undefined)?.message || 'Failed to delete character'}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleteCharacter.isLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
+            variant="contained"
+            disabled={deleteCharacter.isLoading}
+          >
+            {deleteCharacter.isLoading ? 'Deleting…' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
@@ -193,14 +306,16 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
   const [imageError, setImageError] = useState(false);
 
   // Fetch real character data from API
-  const { data: characterData, isLoading: isLoadingDetails } = useQuery(
+  const { data: response, isLoading: isLoadingDetails } = useQuery(
     ['character-card', characterName],
-    () => api.getCharacterDetails(characterName),
+    () => api.getCharacter(characterName),
     {
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
       retry: 1,
     }
   );
+
+  const characterData = response?.data;
 
   // Use real data from API, with sensible defaults
   const displayData = {

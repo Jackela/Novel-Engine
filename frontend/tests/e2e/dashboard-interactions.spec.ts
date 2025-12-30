@@ -57,4 +57,14 @@ test.describe('Dashboard Interactions', () => {
     await expect(indicator).toHaveAttribute('data-status', /live|online|standby|idle/);
     await expect(liveLabel).not.toHaveText(/offline/i);
   });
+
+  test('@experience-offline renders fallback dataset when characters API fails', async ({ page }) => {
+    // Force characters API to fail so fallback dataset renders
+    dashboardPage = new DashboardPage(page);
+    await dashboardPage.navigateToDashboard({ mockAPIs: true, failCharacters: true });
+
+    await dashboardPage.waitForDashboardLoad();
+    await expect(dashboardPage.worldStateMap).toBeVisible();
+    await expect(page.getByTestId('fallback-dataset-alert').first()).toBeVisible();
+  });
 });

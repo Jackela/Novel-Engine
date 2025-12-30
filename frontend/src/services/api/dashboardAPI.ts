@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import apiClient from './apiClient';
 import type { AxiosResponse } from 'axios';
 
 // Types matching backend responses
@@ -72,27 +72,38 @@ export interface OrchestrationStatusResponse {
   };
 }
 
+export interface NarrativeResponse {
+  success: boolean;
+  data: {
+    story: string;
+    participants: string[];
+    turns_completed: number;
+    last_generated?: string | null;
+    has_content: boolean;
+  };
+}
+
 // Dashboard API client
 export const dashboardAPI = {
   /**
-   * Get system status from /meta/system-status
+   * Get system status from /api/meta/system-status
    */
   getSystemStatus: async (): Promise<AxiosResponse<SystemStatusResponse>> => {
-    return apiClient.get('/meta/system-status', { params: { _t: Date.now() } });
+    return apiClient.get('/api/meta/system-status', { params: { _t: Date.now() } });
   },
 
   /**
-   * Get health check from /health
+   * Get health check from /api/health
    */
   getHealth: async (): Promise<AxiosResponse<HealthResponse>> => {
-    return apiClient.get('/health', { params: { _t: Date.now() } });
+    return apiClient.get('/api/health', { params: { _t: Date.now() } });
   },
 
   /**
-   * Get cache metrics from /cache/metrics
+   * Get cache metrics from /api/cache/metrics
    */
   getCacheMetrics: async (): Promise<AxiosResponse<CacheMetricsResponse>> => {
-    return apiClient.get('/cache/metrics');
+    return apiClient.get('/api/cache/metrics');
   },
 
   /**
@@ -114,6 +125,13 @@ export const dashboardAPI = {
    */
   stopOrchestration: async (): Promise<AxiosResponse<OrchestrationStatusResponse>> => {
     return apiClient.post('/api/orchestration/stop');
+  },
+
+  /**
+   * Get the latest narrative output from the orchestration pipeline
+   */
+  getNarrative: async (): Promise<AxiosResponse<NarrativeResponse>> => {
+    return apiClient.get('/api/orchestration/narrative', { params: { _t: Date.now() } });
   },
 
   /**

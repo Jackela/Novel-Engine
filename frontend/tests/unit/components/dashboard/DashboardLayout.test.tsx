@@ -25,6 +25,7 @@ describe('DashboardLayout', () => {
     // Default mock implementation
     mockUseAuthContext.mockReturnValue({
       isGuest: false,
+      workspaceId: null,
       user: { id: 'test-user', role: 'admin' },
     });
   });
@@ -47,6 +48,7 @@ describe('DashboardLayout', () => {
   it('shows demo mode chip and banner when isGuest is true', () => {
     mockUseAuthContext.mockReturnValue({
       isGuest: true,
+      workspaceId: 'ws-test',
       user: { id: 'guest', role: 'guest' },
     });
 

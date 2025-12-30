@@ -74,8 +74,8 @@ export const fetchCharacters = createAsyncThunk(
     limit?: number;
     type?: Character['type'];
     created_after?: string;
-    sort?: string;
-    order?: string;
+    sort?: 'created_at' | 'updated_at' | 'name';
+    order?: 'asc' | 'desc';
   }) => {
     const response = await charactersAPI.getCharacters(params);
     return response;
@@ -92,13 +92,7 @@ export const fetchCharacterById = createAsyncThunk(
 
 export const createCharacter = createAsyncThunk(
   'characters/createCharacter',
-  async (characterData: {
-    name: string;
-    type: Character['type'];
-    personality_traits: PersonalityTraits;
-    background?: string;
-    configuration?: Partial<Character['configuration']>;
-  }) => {
+  async (characterData: any) => {
     const response = await charactersAPI.createCharacter(characterData);
     return response;
   }
@@ -111,7 +105,7 @@ export const updateCharacter = createAsyncThunk(
     updates,
   }: {
     characterId: string;
-    updates: Partial<Character>;
+    updates: any;
   }) => {
     const response = await charactersAPI.updateCharacter(characterId, updates);
     return response;
@@ -156,8 +150,10 @@ const charactersSlice = createSlice({
       })
       .addCase(fetchCharacters.fulfilled, (state, action) => {
         state.loading = false;
-        state.characters = action.payload.data.characters;
-        state.pagination = action.payload.data.pagination;
+        if (action.payload.data) {
+          state.characters = action.payload.data.characters;
+          state.pagination = action.payload.data.pagination;
+        }
         state.error = null;
       })
       .addCase(fetchCharacters.rejected, (state, action) => {
@@ -171,7 +167,7 @@ const charactersSlice = createSlice({
       })
       .addCase(fetchCharacterById.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedCharacter = action.payload.data;
+        state.selectedCharacter = action.payload.data || null;
         state.error = null;
       })
       .addCase(fetchCharacterById.rejected, (state, action) => {
@@ -185,7 +181,9 @@ const charactersSlice = createSlice({
       })
       .addCase(createCharacter.fulfilled, (state, action) => {
         state.loading = false;
-        state.characters.unshift(action.payload.data);
+        if (action.payload.data) {
+          state.characters.unshift(action.payload.data);
+        }
         state.error = null;
       })
       .addCase(createCharacter.rejected, (state, action) => {
@@ -200,12 +198,14 @@ const charactersSlice = createSlice({
       .addCase(updateCharacter.fulfilled, (state, action) => {
         state.loading = false;
         const updatedCharacter = action.payload.data;
-        const index = state.characters.findIndex((c) => c.id === updatedCharacter.id);
-        if (index !== -1) {
-          state.characters[index] = updatedCharacter;
-        }
-        if (state.selectedCharacter?.id === updatedCharacter.id) {
-          state.selectedCharacter = updatedCharacter;
+        if (updatedCharacter) {
+          const index = state.characters.findIndex((c) => c.id === updatedCharacter.id);
+          if (index !== -1) {
+            state.characters[index] = updatedCharacter;
+          }
+          if (state.selectedCharacter?.id === updatedCharacter.id) {
+            state.selectedCharacter = updatedCharacter;
+          }
         }
         state.error = null;
       })

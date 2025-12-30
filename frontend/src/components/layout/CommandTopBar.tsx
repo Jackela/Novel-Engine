@@ -9,6 +9,7 @@ import {
   AccessTime as TimeIcon,
 } from '@mui/icons-material';
 import { tokens } from '@/styles/tokens';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 interface CommandTopBarProps {
   pipelineStatus: 'idle' | 'running' | 'paused' | 'stopped';
@@ -72,6 +73,9 @@ const CommandTopBar: React.FC<CommandTopBarProps> = ({
   isLive: _isLive,
   lastUpdate,
 }) => {
+  const { isGuest, workspaceId } = useAuthContext();
+  const workspaceLabel = workspaceId ? `WS: ${workspaceId}` : 'GUEST SESSION';
+
   return (
     <TopBarContainer component="header">
       {/* LEFT: Brand & System Identity */}
@@ -129,10 +133,10 @@ const CommandTopBar: React.FC<CommandTopBarProps> = ({
         <Stack direction="row" spacing={1} alignItems="center" sx={{ borderLeft: `1px solid ${tokens.colors.border.secondary}`, pl: 3 }}>
           <Box sx={{ textAlign: 'right' }}>
             <Typography variant="caption" display="block" sx={{ fontWeight: 700, color: tokens.colors.text.primary }}>
-              COMMANDER
+              {isGuest ? 'GUEST' : 'COMMANDER'}
             </Typography>
             <Typography variant="caption" display="block" sx={{ fontSize: 9, color: tokens.colors.text.tertiary }}>
-              LEVEL 5 ACCESS
+              {isGuest ? workspaceLabel : 'LEVEL 5 ACCESS'}
             </Typography>
           </Box>
           <Box

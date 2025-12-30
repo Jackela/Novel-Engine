@@ -137,13 +137,15 @@ export class AuthAPI {
       const response = await apiClient.get('/api/auth/validate');
       const data = response.data as TokenValidationData;
 
+      const validationPayload: { valid: boolean; expires_at?: number; user_id?: string } = {
+        valid: data.valid,
+        ...(data.expires_at !== undefined ? { expires_at: data.expires_at } : {}),
+        ...(data.user_id ? { user_id: data.user_id } : {}),
+      };
+
       return {
         success: data.valid,
-        data: {
-          valid: data.valid,
-          expires_at: data.expires_at,
-          user_id: data.user_id,
-        },
+        data: validationPayload,
         metadata: {
           timestamp: new Date().toISOString(),
           request_id: `req_${Date.now()}`,
@@ -156,11 +158,7 @@ export class AuthAPI {
         const errorData = axiosError.response.data;
         return {
           success: false,
-          data: {
-            valid: false,
-            expires_at: undefined,
-            user_id: undefined,
-          },
+          data: { valid: false },
           error: {
             code: 'TOKEN_INVALID',
             message: errorData?.error || 'Token is invalid or expired',

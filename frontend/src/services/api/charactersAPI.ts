@@ -82,50 +82,74 @@ export interface GetCharactersParams {
  * Handles character management operations
  */
 export class CharactersAPI {
-  /**
-   * List all characters with optional filtering and sorting
-   * GET /characters
-   */
-  async getCharacters(params?: GetCharactersParams): Promise<BaseAPIResponse<CharacterListResponse>> {
-    try {
-      const response = await apiClient.get('/api/characters', { params });
-      const payload = response.data as { characters: string[] };
-      const characterIds = payload.characters || [];
+    /**
+     * List all characters with optional filtering and sorting
+     * GET /api/characters
+     */
+    async getCharacters(params?: GetCharactersParams): Promise<BaseAPIResponse<CharacterListResponse>> {    
+      try {
+        const response = await apiClient.get('/api/characters', { params });
+        const payload = response.data as { characters: Array<{ id: string; name?: string }> };
+        const summaries = payload.characters || [];
+        const characterIds = summaries.map((entry) => entry.id);
 
-      // Fetch detailed info for each character from /api/characters/{id}
-      const detailedCharacters = await Promise.all(
-        characterIds.map(async (name) => {
-          try {
-            const detailResponse = await apiClient.get(`/api/characters/${encodeURIComponent(name)}`);
-            const detail = detailResponse.data as Record<string, unknown>;
-            return this.transformCharacterDetail(name, detail);
-          } catch {
-            // If detail fetch fails, return basic character with ID
-            return this.createBasicCharacter(name);
-          }
-        })
-      );
+        const detailedCharacters = await Promise.all(
+          characterIds.map(async (name) => {
+            try {
+              const detailResponse = await apiClient.get(`/api/characters/${encodeURIComponent(name)}`);    
+              const detail = detailResponse.data as Record<string, unknown>;
+              return this.transformCharacterDetail(name, detail);
+            } catch {
+              const summary = summaries.find((entry) => entry.id === name);
+              if (summary) {
+                return {
+                  id: summary.id,
+                  name: summary.name || name,
+                  type: 'npc',
+                  personality_traits: {
+                    openness: 0.5,
+                    conscientiousness: 0.5,
+                    extraversion: 0.5,
+                    agreeableness: 0.5,
+                    neuroticism: 0.5,
+                  },
+                  background: '',
+                  configuration: {
+                    ai_model: 'gpt-4',
+                    response_style: 'formal',
+                    memory_retention: 'medium',
+                  },
+                  status: 'active',
+                  relationships: {},
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                  created_by: 'self',
+                } as Character;
+              }
+              return this.createBasicCharacter(name);
+            }
+          })
+        );
 
-      return handleAPIResponse({
-        ...response,
-        data: {
-          characters: detailedCharacters,
-          pagination: {
-            page: 1,
-            limit: detailedCharacters.length,
-            total_items: detailedCharacters.length,
-            total_pages: 1,
-            has_next: false,
-            has_previous: false,
+        return handleAPIResponse({
+          ...response,
+          data: {
+            characters: detailedCharacters,
+            pagination: {
+              page: 1,
+              limit: detailedCharacters.length,
+              total_items: detailedCharacters.length,
+              total_pages: 1,
+              has_next: false,
+              has_previous: false,
+            },
           },
-        },
-      } as unknown as typeof response);
-    } catch (error) {
-      return handleAPIError(error);
+        } as unknown as typeof response);
+      } catch (error) {
+        return handleAPIError(error);
+      }
     }
-  }
-
-  /**
+    /**
    * Transform backend character detail response to frontend Character type
    */
   private transformCharacterDetail(characterId: string, detail: Record<string, unknown>): Character {
@@ -225,75 +249,74 @@ export class CharactersAPI {
     return 'active';
   }
 
-  /**
-   * Get character by ID
-   * GET /characters/{characterId}
-   */
-  async getCharacter(characterId: string): Promise<BaseAPIResponse<Character>> {
-    try {
-      const response = await apiClient.get(`/characters/${characterId}`);
-      return handleAPIResponse(response);
-    } catch (error) {
-      return handleAPIError(error);
+    /**
+     * Get character by ID
+     * GET /api/characters/{characterId}
+     */
+    async getCharacter(characterId: string): Promise<BaseAPIResponse<Character>> {
+      try {
+        const response = await apiClient.get(`/api/characters/${characterId}`);
+        return handleAPIResponse(response);
+      } catch (error) {
+        return handleAPIError(error);
+      }
     }
-  }
-
-  /**
-   * Create a new character
-   * POST /characters
-   */
-  async createCharacter(characterData: CreateCharacterRequest): Promise<BaseAPIResponse<Character>> {
-    try {
-      const response = await apiClient.post('/api/characters', characterData);
-      const payload = response.data as Record<string, unknown>;
-
-      // Use the actual response data from the backend
-      const mapped: Character = this.transformCharacterDetail(
-        (payload.id as string) || (payload.name as string) || characterData.name,
-        {
-          ...payload,
-          name: payload.name || characterData.name,
-          background_summary: payload.background_summary || characterData.background_summary,
-          personality_traits: payload.personality_traits || characterData.personality_traits,
-        }
-      );
-
-      return handleAPIResponse({ ...response, data: mapped } as unknown as typeof response);
-    } catch (error) {
-      return handleAPIError(error);
+  
+    /**
+     * Create a new character
+     * POST /api/characters
+     */
+    async createCharacter(characterData: CreateCharacterRequest): Promise<BaseAPIResponse<Character>> {     
+      try {
+        const response = await apiClient.post('/api/characters', characterData);
+        const payload = response.data as Record<string, unknown>;
+  
+        // Use the actual response data from the backend
+        const mapped: Character = this.transformCharacterDetail(
+          (payload.id as string) || (payload.name as string) || characterData.name,
+          {
+            ...payload,
+            name: payload.name || characterData.name,
+            background_summary: payload.background_summary || characterData.background_summary,
+            personality_traits: payload.personality_traits || characterData.personality_traits,
+          }
+        );
+  
+        return handleAPIResponse({ ...response, data: mapped } as unknown as typeof response);
+      } catch (error) {
+        return handleAPIError(error);
+      }
     }
-  }
-
-  /**
-   * Update character information
-   * PUT /characters/{characterId}
-   */
-  async updateCharacter(
-    characterId: string,
-    updates: UpdateCharacterRequest
-  ): Promise<BaseAPIResponse<Character>> {
-    try {
-      const response = await apiClient.put(`/characters/${characterId}`, updates);
-      return handleAPIResponse(response);
-    } catch (error) {
-      return handleAPIError(error);
+  
+    /**
+     * Update character information
+     * PUT /api/characters/{characterId}
+     */
+    async updateCharacter(
+      characterId: string,
+      updates: UpdateCharacterRequest
+    ): Promise<BaseAPIResponse<Character>> {
+      try {
+        const response = await apiClient.put(`/api/characters/${characterId}`, updates);
+        return handleAPIResponse(response);
+      } catch (error) {
+        return handleAPIError(error);
+      }
     }
-  }
-
-  /**
-   * Delete character permanently
-   * DELETE /characters/{characterId}
-   */
-  async deleteCharacter(characterId: string): Promise<BaseAPIResponse<void>> {
-    try {
-      const response = await apiClient.delete(`/characters/${characterId}`);
-      return handleAPIResponse(response);
-    } catch (error) {
-      return handleAPIError(error);
+  
+    /**
+     * Delete character permanently
+     * DELETE /api/characters/{characterId}
+     */
+    async deleteCharacter(characterId: string): Promise<BaseAPIResponse<void>> {
+      try {
+        const response = await apiClient.delete(`/api/characters/${characterId}`);
+        return handleAPIResponse(response);
+      } catch (error) {
+        return handleAPIError(error);
+      }
     }
-  }
-
-  /**
+    /**
    * Batch update multiple characters in parallel
    * Uses Promise.all since batch endpoint doesn't exist yet
    * Handles partial failures gracefully
@@ -318,7 +341,11 @@ export class CharactersAPI {
       const failed: Array<{ id: string; error: string }> = [];
 
       results.forEach((result, index) => {
-        const { id } = updates[index];
+        const sourceUpdate = updates[index];
+        if (!sourceUpdate) {
+          return;
+        }
+        const { id } = sourceUpdate;
         if (result.status === 'fulfilled' && result.value.character) {
           succeeded.push(result.value.character);
         } else {
@@ -555,10 +582,10 @@ export class CharactersAPI {
 
         const exportData: CharacterExportData = {
           character,
-          relationships: relationships?.length ? relationships : undefined,
-          history: history?.length ? history : undefined,
           exported_at: new Date().toISOString(),
           format,
+          ...(relationships?.length ? { relationships } : {}),
+          ...(history?.length ? { history } : {}),
         };
 
         return {

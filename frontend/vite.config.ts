@@ -126,21 +126,6 @@ export default defineConfig({
         target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
-      // Proxy /cache/* to backend
-      '/cache': {
-        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
-        changeOrigin: true,
-      },
-      // Proxy /characters/* to backend
-      '/characters': {
-        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
-        changeOrigin: true,
-      },
-      // Proxy /simulations/* to backend
-      '/simulations': {
-        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
-        changeOrigin: true,
-      },
     },
   },
 
@@ -204,12 +189,31 @@ export default defineConfig({
   appType: 'spa',
 
   // Vitest Configuration
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.ts',
-    css: false, // Disable CSS processing for faster tests
-    fileParallelism: false, // Disable parallelism to prevent hangs on limited resources
+      test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './src/setupTests.ts',
+        css: false, // Disable CSS processing for faster tests
+        coverage: {
+          provider: 'v8',
+          reporter: ['text', 'json', 'html'],
+          thresholds: {
+            lines: 80,
+            functions: 80,
+            branches: 80,
+            statements: 80,
+          },
+          exclude: [
+            'node_modules/',
+            'src/setupTests.ts',
+            '**/*.test.tsx',
+            '**/*.test.ts',
+            '**/*.spec.ts',
+            'dist/',
+          ],
+        },
+        fileParallelism: false, // Disable parallelism to prevent hangs on limited resources
+  
     pool: 'forks', // Use forks instead of threads for better isolation
     poolOptions: {
       forks: {

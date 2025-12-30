@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container, Stack, Typography, Button, Grid, Paper } from '@mui/material';
+import { Alert, Box, Container, Stack, Typography, Button, Grid, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import LiveTvIcon from '@mui/icons-material/LiveTv';
@@ -30,7 +30,7 @@ const itemVariants = {
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { enterGuestMode, isAuthenticated } = useAuthContext();
+  const { enterGuestMode, isAuthenticated, isLoading, error } = useAuthContext();
 
   React.useEffect(() => {
     if (isAuthenticated) {
@@ -162,12 +162,26 @@ const LandingPage: React.FC = () => {
               </motion.div>
 
               <motion.div variants={itemVariants}>
+                {error && (
+                  <Alert
+                    severity="error"
+                    sx={{ mb: 2, textAlign: 'left', maxWidth: 640, mx: 'auto' }}
+                    action={
+                      <Button color="inherit" size="small" onClick={() => void enterGuestMode()} disabled={isLoading}>
+                        Retry
+                      </Button>
+                    }
+                  >
+                    {error.message || 'Failed to connect to backend.'}
+                  </Alert>
+                )}
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={() => enterGuestMode()}
+                  onClick={() => void enterGuestMode()}
                   startIcon={<RocketLaunchIcon />}
                   data-testid="cta-launch"
+                  disabled={isLoading}
                   sx={{
                     py: 2,
                     px: 6,
@@ -183,7 +197,7 @@ const LandingPage: React.FC = () => {
                     },
                   }}
                 >
-                  LAUNCH ENGINE
+                  {isLoading ? 'LAUNCHING…' : 'LAUNCH ENGINE'}
                 </Button>
               </motion.div>
 

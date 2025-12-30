@@ -54,6 +54,8 @@ interface Props {
   onClose: () => void;
   character: Character | null;
   characterName: string | null;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 interface TabPanelProps {
@@ -89,7 +91,9 @@ export default function CharacterDetailsDialog({
   open,
   onClose,
   character,
-  characterName
+  characterName,
+  onEdit,
+  onDelete,
 }: Props) {
   const [activeTab, setActiveTab] = useState(0);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
@@ -115,13 +119,19 @@ export default function CharacterDetailsDialog({
 
   const handleEdit = () => {
     handleMenuClose();
-    // TODO: Implement edit functionality
+    if (onEdit) {
+      onEdit();
+      return;
+    }
     logger.info('Edit character:', characterName);
   };
 
   const handleDelete = () => {
     handleMenuClose();
-    // TODO: Implement delete functionality with confirmation
+    if (onDelete) {
+      onDelete();
+      return;
+    }
     logger.info('Delete character:', characterName);
   };
 
