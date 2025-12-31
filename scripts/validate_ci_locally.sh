@@ -17,6 +17,7 @@ NC='\033[0m' # No Color
 
 PY_BIN=${PY_BIN:-python3}
 VENV_DIR=${VENV_DIR:-.venv-ci}
+MIN_PYRAMID_SCORE=${MIN_PYRAMID_SCORE:-5.5}
 DEFAULT_FLAKE8_TARGETS=("config_loader.py" "contexts/knowledge" "src/api")
 DEFAULT_MYPY_TARGETS=("contexts/knowledge/application/use_cases/retrieve_agent_context.py")
 
@@ -89,32 +90,64 @@ fi
 echo -e "${GREEN}✓ Formatting/lint checks passed${NC}"
 echo ""
 
-echo "🧪 Running tests with coverage (this matches GitHub Actions exactly)..."
-"$VENV_PY" -m pytest \
-  --cov=src \
-  --cov-config=.coveragerc \
-  --cov-report=xml \
-  --cov-report=html \
-  --cov-report=term-missing \
-  --junitxml=test-results.xml \
-  --maxfail=10 \
-  -v \
-  --tb=short \
-  --durations=10
+echo "🧪 Running backend CI gates (parity with GitHub Actions)..."
+mkdir -p reports
+export PYTHONPATH="$PWD:$PWD/src"
 
-# Capture exit code
-test_exit_code=$?
+set +e
+"$VENV_PY" scripts/testing/validate-test-markers.py --all --verbose
+MARKERS_EXIT=$?
+
+"$VENV_PY" scripts/testing/test-pyramid-monitor-fast.py --format json --save-history > pyramid-report.json
+PYRAMID_EXIT=$?
+if [ $PYRAMID_EXIT -eq 0 ]; then
+  SCORE=$("$VENV_PY" - <<'PY'
+import json
+data=json.load(open("pyramid-report.json"))
+print(data["score"])
+PY
+  )
+  SCORE_OK=$("$VENV_PY" - <<PY
+score=float("$SCORE")
+minimum=float("$MIN_PYRAMID_SCORE")
+print("1" if score >= minimum else "0")
+PY
+  )
+  if [ "$SCORE_OK" -ne 1 ]; then
+    echo -e "${RED}❌ Test pyramid score ($SCORE) below threshold ($MIN_PYRAMID_SCORE)${NC}"
+    PYRAMID_EXIT=1
+  fi
+fi
+
+"$VENV_PY" -m pytest -m "unit" --tb=short --durations=10 --junitxml=reports/unit-tests.xml
+UNIT_EXIT=$?
+"$VENV_PY" -m pytest -m "integration" --tb=short --durations=10 --junitxml=reports/integration-tests.xml
+INTEGRATION_EXIT=$?
+"$VENV_PY" -m pytest -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
+E2E_EXIT=$?
+"$VENV_PY" -m pytest -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py --junitxml=reports/smoke-tests.xml
+SMOKE_EXIT=$?
+set -e
+
+test_exit_code=0
+if [ $MARKERS_EXIT -ne 0 ] || [ $PYRAMID_EXIT -ne 0 ] || [ $UNIT_EXIT -ne 0 ] || [ $INTEGRATION_EXIT -ne 0 ] || [ $E2E_EXIT -ne 0 ] || [ $SMOKE_EXIT -ne 0 ]; then
+    test_exit_code=1
+fi
 
 echo ""
-echo "🌐 Running frontend tests (Vitest)..."
+echo "🌐 Running frontend CI checks..."
 FRONTEND_DIR="frontend"
 if [ -d "$FRONTEND_DIR" ]; then
     cd "$FRONTEND_DIR"
     if [ -f "package.json" ] && grep -q '"test"' package.json; then
-        npm test -- --run 2>&1
-        frontend_exit_code=$?
+        npm test --if-present --silent
+        frontend_test_exit=$?
+        npm run build --if-present
+        frontend_build_exit=$?
+        PYTHONPATH="..:../src" npm run test:e2e:smoke
+        frontend_smoke_exit=$?
         cd ..
-        if [ $frontend_exit_code -ne 0 ]; then
+        if [ $frontend_test_exit -ne 0 ] || [ $frontend_build_exit -ne 0 ] || [ $frontend_smoke_exit -ne 0 ]; then
             echo -e "${RED}❌ Frontend tests failed${NC}"
             test_exit_code=1
         else
