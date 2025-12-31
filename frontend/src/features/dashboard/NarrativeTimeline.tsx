@@ -1,25 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Stack,
-  LinearProgress,
-  Avatar,
-  useTheme,
-  useMediaQuery,
-  Fade,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+import LinearProgress from '@mui/material/LinearProgress';
+import Avatar from '@mui/material/Avatar';
+import Fade from '@mui/material/Fade';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { styled, useTheme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
-import {
-  CheckCircle as CompletedIcon,
-  RadioButtonUnchecked as PendingIcon,
-  PlayCircle as ActiveIcon,
-  MenuBook as ChapterIcon,
-  AutoStories as StoryIcon,
-  TrendingFlat as ConnectionIcon,
-} from '@mui/icons-material';
+import CompletedIcon from '@mui/icons-material/CheckCircle';
+import PendingIcon from '@mui/icons-material/RadioButtonUnchecked';
+import ActiveIcon from '@mui/icons-material/PlayCircle';
+import ChapterIcon from '@mui/icons-material/MenuBook';
+import StoryIcon from '@mui/icons-material/AutoStories';
+import ConnectionIcon from '@mui/icons-material/TrendingFlat';
 import GridTile from '@/components/layout/GridTile';
 
 const TimelineContainer = styled(Box)(({ theme }) => ({

@@ -1,29 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  List,
-  ListItem,
-  Typography,
-  Chip,
-  Avatar,
-  Stack,
-  Badge,
-  useTheme,
-  useMediaQuery,
-  Fade,
-  Button,
-  Alert,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import Avatar from '@mui/material/Avatar';
+import Stack from '@mui/material/Stack';
+import Badge from '@mui/material/Badge';
+import Fade from '@mui/material/Fade';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { styled, useTheme } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Person as PersonIcon,
-  AutoStories as StoryIcon,
-  Psychology as BrainIcon,
-  Speed as ActivityIcon,
-  Notifications as NotificationIcon,
-  Error as AlertCircleIcon,
-} from '@mui/icons-material';
+import PersonIcon from '@mui/icons-material/Person';
+import StoryIcon from '@mui/icons-material/AutoStories';
+import BrainIcon from '@mui/icons-material/Psychology';
+import ActivityIcon from '@mui/icons-material/Speed';
+import NotificationIcon from '@mui/icons-material/Notifications';
+import AlertCircleIcon from '@mui/icons-material/Error';
 import GridTile from '@/components/layout/GridTile';
 import { useRealtimeEvents } from '../../hooks/useRealtimeEvents';
 

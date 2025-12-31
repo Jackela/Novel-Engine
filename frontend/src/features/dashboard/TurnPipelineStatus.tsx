@@ -263,6 +263,8 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
               color="success"
               size="small"
               data-testid="pipeline-live-indicator"
+              aria-live="polite"
+              aria-atomic="true"
               sx={{
                 fontWeight: 700,
                 letterSpacing: '0.04em',
@@ -276,6 +278,8 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
                label="ONLINE"
                size="small"
                data-testid="pipeline-live-indicator"
+               aria-live="polite"
+               aria-atomic="true"
                sx={{
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 color: (theme) => theme.palette.text.secondary,
@@ -292,6 +296,8 @@ const TurnPipelineStatus: React.FC<TurnPipelineStatusProps> = ({
               color="error"
               size="small"
               data-testid="pipeline-live-indicator"
+              aria-live="polite"
+              aria-atomic="true"
               sx={{
                 fontWeight: 700,
                 letterSpacing: '0.04em',

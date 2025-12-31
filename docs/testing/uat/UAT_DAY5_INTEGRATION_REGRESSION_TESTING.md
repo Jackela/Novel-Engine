@@ -223,6 +223,20 @@
 结论: Bug修复不仅解决了功能问题，还带来了性能改善
 ```
 
+#### Dashboard Accessibility Parity 回归验证 (2025-12-31)
+```
+验证范围: Dashboard 键盘可达性 + API 数据回填 + aria-live 通知
+
+执行步骤:
+- Vitest: frontend/src/features/dashboard/__tests__/dashboard-accessibility.test.tsx
+- Playwright: tests/e2e/accessibility.spec.ts
+
+验证结果:
+✅ 关键控件支持键盘操作 (Enter/Space)
+✅ World Map + Character Networks 使用 /api/characters 数据源并显示 API feed
+✅ pipeline live indicator 带 aria-live="polite" 且状态变更可观察
+```
+
 ## 第5天测试总结
 
 ### 集成测试结果

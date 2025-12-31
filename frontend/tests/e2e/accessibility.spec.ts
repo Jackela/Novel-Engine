@@ -25,6 +25,8 @@ const focusViaTab = async (page: Page, locator: Locator, maxPresses = 40) => {
 };
 
 const activateDemoCtaWithKeyboard = async (page: Page) => {
+  const dashboardPage = new DashboardPage(page);
+  await dashboardPage.setupDefaultMocks();
   const skipLink = page.getByText('Skip to main content');
   await skipLink.waitFor({ state: 'visible' });
   await page.evaluate(() => {
@@ -44,7 +46,6 @@ const activateDemoCtaWithKeyboard = async (page: Page) => {
   await expect(ctaButton).toBeFocused();
   await page.keyboard.press('Enter');
 
-  const dashboardPage = new DashboardPage(page);
   await dashboardPage.waitForDashboardLoad();
   return dashboardPage;
 };
@@ -114,7 +115,7 @@ test.describe('Keyboard-Only User Journey', () => {
    */
   test('should have no accessibility violations on Dashboard', async ({ page }) => {
     const dashboardPage = new DashboardPage(page);
-    await dashboardPage.navigateToDashboard();
+    await dashboardPage.navigateToDashboard({ mockAPIs: true });
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .disableRules(ACCESSIBILITY_IGNORED_RULES)
@@ -157,22 +158,10 @@ test.describe('Keyboard-Only User Journey', () => {
     const dashboardPage = await activateDemoCtaWithKeyboard(page);
     await focusViaTab(page, dashboardPage.playButton.first());
 
-    await page.evaluate(() => {
-      (window as any).announcements = [];
-      const target = document.querySelector('[data-testid="live-indicator"]');
-      if (!target) return;
-      const observer = new MutationObserver(() => {
-        if (target.textContent) {
-          (window as any).announcements.push(target.textContent);
-        }
-      });
-      observer.observe(target, { childList: true, subtree: true, characterData: true });
-    });
-
+    const indicator = page.locator('[data-testid="pipeline-live-indicator"]');
+    await expect(indicator).toHaveAttribute('aria-live', 'polite');
+    const initialLabel = await indicator.textContent();
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
-
-    const announcements = await page.evaluate(() => (window as any).announcements);
-    expect(announcements.length).toBeGreaterThan(0);
+    await expect(indicator).not.toHaveText(initialLabel || '');
   });
 });

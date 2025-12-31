@@ -5,6 +5,15 @@
 - Quick Actions leak the custom `active` prop down to native `<button>` elements (`frontend/src/components/dashboard/QuickActions.tsx:27-55`), triggering persistent React console warnings (`list_console_messages` msgid 141) and offering inconsistent focus outlines.
 - Spatial/Network tiles still ship with hard-coded demo data (`WorldStateMapV2` locations array, `CharacterNetworks` `useState` stub) and never reconcile against `GET /characters` or related endpoints, so the UI cannot meet audit step §9 (API validation). The dashboard has effectively never rendered real payloads.
 
+## Evidence
+- MCP audit snapshot: `mcp__chrome-devtools__take_snapshot` ids 8_85-8_219
+- Console warnings: `list_console_messages` msgid 141 (invalid DOM props)
+
+## Acceptance Criteria
+- Keyboard users can activate map markers, character cards, and timeline entries with Enter/Space; focus/ARIA states update without console warnings.
+- Map + network tiles render API-sourced character data from `/api/characters` (with fallback data if offline), and show the correct “API feed” or “Demo data” badge.
+- Quick Actions renders without leaking custom props and exposes consistent `:focus-visible` styling and `aria-pressed` state changes.
+
 ## What Changes
 1. **Keyboard semantics** – Implement roving tab index/focus management for map markers, character cards, and timeline nodes. Support Space/Enter activation, `aria-selected`/`aria-expanded` states, and deterministic selectors so Playwright/MCP can assert them.
 2. **QuickAction hygiene** – Prevent custom props from leaking to DOM, add explicit `:focus-visible` styles, and ensure telemetry buttons announce state changes via `aria-pressed` or text updates without console noise.

@@ -1,23 +1,18 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import {
-  Box,
-  Chip,
-  Stack,
-  Typography,
-  Avatar,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  useTheme,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Avatar from '@mui/material/Avatar';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemText from '@mui/material/ListItemText';
+import { styled, useTheme } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  LocationOn as LocationIcon,
-  Person as PersonIcon,
-  Timeline as ActivityIcon,
-} from '@mui/icons-material';
+import LocationIcon from '@mui/icons-material/LocationOn';
+import PersonIcon from '@mui/icons-material/Person';
+import ActivityIcon from '@mui/icons-material/Timeline';
 import GridTile from '@/components/layout/GridTile';
 import { useDashboardCharactersDataset, type DashboardCharacter } from '@/hooks/useDashboardCharactersDataset';
 
