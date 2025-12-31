@@ -4,25 +4,13 @@
 TBD - created by archiving change update-dashboard-responsive. Update Purpose after archive.
 ## Requirements
 ### Requirement: Responsive Bento Grid Layout
-The dashboard grid MUST use class-based column spans so “large”, “medium”, and “small” tiles render the intended arrangement across desktop, tablet, and mobile breakpoints without inline overrides.
+- **ADDITION**: Control cluster (summary + quick actions) MUST share a single row that does not exceed 180px height on desktop/tablet. `data-role="control-cluster"` wraps both KPI cards and action buttons so automation treats them as one zone.
 
-#### Scenario: Desktop 12-column layout
-- **GIVEN** the viewport width is ≥ 1200px
-- **WHEN** the dashboard renders the `.tile-large`, `.tile-medium`, and `.tile-small` elements
-- **THEN** `.tile-large` spans 6 of 12 columns, `.tile-medium` spans 4 of 12, and `.tile-small` spans 3 of 12 (wrapping as needed)
-- **AND** the grid uses the shared spacing/padding defined in the design system or `<BentoGrid>` component.
-
-#### Scenario: Tablet 8-column layout
-- **GIVEN** the viewport width is between 768px and 1199px
-- **WHEN** the dashboard renders the same tiles
-- **THEN** large and medium tiles expand to span the full 8-column width, while small tiles span 4 columns so two fit per row
-- **AND** no horizontal scrolling is required to view any tile.
-
-#### Scenario: Mobile single-column layout
-- **GIVEN** the viewport width is ≤ 767px
-- **WHEN** the dashboard renders
-- **THEN** every tile spans the single available column with consistent vertical spacing and padding
-- **AND** content within each tile remains fully visible without horizontal scrolling.
+#### Scenario: Compressed control band
+- **GIVEN** the viewport width is ≥ 768px
+- **WHEN** the dashboard renders the control band
+- **THEN** Summary KPIs and quick-action buttons reside inside one `data-role="control-cluster"` container laid out with `grid-template-columns` (minmax 160px, auto-fit)
+- **AND** the band height does not exceed 180px, with buttons right-aligned and no duplicate connection indicator tiles.
 
 ### Requirement: Adaptive Header Controls
 The dashboard header MUST keep the status info and quick-action buttons accessible on tablets and phones by wrapping/stacking instead of overflowing.
@@ -71,30 +59,21 @@ The dashboard MUST present a first-row summary strip plus a dedicated `quick-act
 - **THEN** the buttons arrange in a horizontal scroll list or stacked rows with ≥44px touch targets, without overflowing the viewport.
 
 ### Requirement: Zone-based Responsive Layout
-The dashboard MUST group tiles into clearly defined zones (Summary, Spatial, Streams, Backlog) with breakpoint-specific ordering so high-priority information stays above the fold.
+- **ADDITION**: Desktop first fold MUST include both Streams and Pipeline zones directly beneath the control band, ahead of the Spatial/Backlog zones.
 
-#### Scenario: Desktop zones
+#### Scenario: First fold telemetry density
 - **GIVEN** the viewport width is ≥ 1200px
-- **WHEN** the layout engine computes grid placements
-- **THEN** the summary strip spans the full width, the Spatial zone (map, networks, timeline) occupies the primary columns, Streams (activity, pipeline, metrics) align adjacent, and Backlog tiles (recent projects, characters) stay in the rightmost/lowest zone.
-
-#### Scenario: Tablet reflow
-- **GIVEN** the viewport width is between 768px and 1199px
-- **WHEN** the layout renders
-- **THEN** Summary + Quick Actions stay on the first row, Spatial and Streams stack into two columns with balanced heights, and Backlog collapses into accordions below them.
-
-#### Scenario: Mobile condensed view
-- **GIVEN** the viewport width is ≤ 767px
-- **WHEN** the layout renders
-- **THEN** Summary cards and Quick Actions appear first, Spatial/Streams content is accessible via tabs or accordions (one active view at a time), and backlog sections are collapsed by default to limit scroll length.
+- **WHEN** the dashboard renders the row under the control band
+- **THEN** Activity Stream (`data-role="stream-feed"`) and Turn Pipeline (`data-role="pipeline"`) occupy that row, ensuring users see live telemetry without scrolling
+- **AND** Spatial tiles (WorldStateMap, CharacterNetworks) share the same fold by capping map height at ≤420px so at least two zones remain visible above the fold.
 
 ### Requirement: Flow-based Adaptive Zones
-The dashboard MUST organize controls and telemetry into semantic zones rendered via flow layout so panels expand or collapse based on content density rather than fixed tile classes.
+The dashboard MUST organize controls and telemetry into semantic zones rendered via flow layout so panels expand or collapse based on content density rather than fixed tile classes, and the control/pipeline zones stay prominent without duplicating tiles.
 
 #### Scenario: Desktop auto-fit columns
 - **GIVEN** the viewport width is ≥ 1200px
 - **WHEN** the dashboard renders the Control, Streams, Signals, and Pipeline zones
-- **THEN** the layout uses `auto-fit`/`minmax()` columns (≥260px) with `grid-auto-flow: dense` so high-priority zones (Control, Pipeline) may span ≥2 columns while lower-priority zones wrap automatically
+- **THEN** the layout uses `auto-fit`/`minmax()` columns (≥320px) with `grid-auto-flow: dense` so high-priority zones (Control, Pipeline) may span ≥2 columns while lower-priority zones wrap automatically
 - **AND** adjacent zones maintain ≥24px horizontal/vertical gaps regardless of the number of cards inside.
 
 #### Scenario: Tablet stacked flow
@@ -105,19 +84,24 @@ The dashboard MUST organize controls and telemetry into semantic zones rendered 
 #### Scenario: Mobile tabbed flow
 - **GIVEN** the viewport width is ≤ 767px
 - **WHEN** the dashboard renders
-- **THEN** Control, Streams, and Signals zones appear as tabs/accordions in `MobileTabbedDashboard`, ensuring only one high-density panel is expanded at a time and each control keeps ≥44px touch targets.
+- **THEN** Control, Streams, and Signals zones appear as tabs/accordions in `MobileTabbedDashboard`
+- **AND** Control/Pipeline panels can grow vertically without a hard `max-height` clamp while low-priority feeds default to collapsed states.
+
+#### Scenario: Control band pinned above fold
+- **WHEN** the viewport width is ≥ 768px
+- **THEN** the summary strip and quick-action controls render inside a dedicated control band that spans the full width of the grid (no gaps on desktop/tablet)
+- **AND** the band height stays ≤ 240px because quick actions lay out horizontally (two rows max) instead of forming a vertical tower.
+
+#### Scenario: Unique pipeline tile
+- **WHEN** the pipeline zone renders
+- **THEN** exactly one `<TurnPipelineStatus>` tile is mounted
+- **AND** it shares the same auto-fit flow columns as the Streams/System Signals zones so tiles no longer stack twice in the same column.
 
 ### Requirement: Semantic Zone Markers
-Each zone MUST expose semantic identifiers so automation/AI routines and tests can target them without relying on visual ordering.
+- **ADDITION**: Streams and Pipeline zones MUST expose condensed-mode attributes so tests can distinguish desktop density changes.
 
-#### Scenario: Data-role attributes
-- **GIVEN** the dashboard renders
-- **WHEN** inspecting the DOM
-- **THEN** each zone container provides a stable `data-role` (e.g., `data-role="control-cluster"`, `data-role="stream-feed"`, `data-role="system-signals"`, `data-role="pipeline"`)
-- **AND** critical child controls (quick actions, pipeline steps) retain deterministic `data-testid`s nested within those zones.
-
-#### Scenario: Overflow-friendly feeds
-- **GIVEN** the Streams or Signals zone receives more than 6 activity/event items
-- **WHEN** the zone renders
-- **THEN** it caps visual height via internal scroll or virtualization so the overall layout does not push lower zones off-screen, while the zone’s `data-role` container remains intact for interaction hooks.
+#### Scenario: Streams condensed marker
+- **GIVEN** the viewport width is ≥ 1200px
+- **WHEN** Activity Stream renders the condensed two-column layout
+- **THEN** the zone root provides `data-density="condensed"` and each entry exposes deterministic selectors so automation can verify the first fold density target.
 
