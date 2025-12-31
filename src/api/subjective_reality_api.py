@@ -245,7 +245,7 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting turn brief for agent {agent_id}: {e}")
+                logger.exception("Error getting turn brief.")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -314,7 +314,7 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting all turn briefs for turn {turn_id}: {e}")
+                logger.exception("Error getting all turn briefs.")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -368,7 +368,7 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting belief model for agent {agent_id}: {e}")
+                logger.exception("Error getting belief model.")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
 

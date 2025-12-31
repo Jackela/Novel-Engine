@@ -16,12 +16,6 @@ interface DashboardCharactersState {
   source: 'api' | 'fallback';
 }
 
-const API_BASE_URL = resolveApiBaseUrl(
-  (import.meta.env.VITE_NOVEL_ENGINE_API_BASE_URL as string | undefined) ?? 'http://127.0.0.1:8000'
-);
-// API_BASE_URL already normalizes to an /api prefix; avoid double-prefixing
-const CHARACTER_ENDPOINT = joinUrl(API_BASE_URL, '/characters');
-
 // Empty default state - no mock data
 const DEFAULT_STATE: DashboardCharactersState = {
   characters: [],
@@ -29,6 +23,15 @@ const DEFAULT_STATE: DashboardCharactersState = {
   error: null,
   source: 'fallback',
 };
+
+export const FALLBACK_DASHBOARD_CHARACTERS: DashboardCharacter[] = [
+  { id: 'aria-shadowbane', name: 'Aria Shadowbane', status: 'active', role: 'protagonist', trust: 82 },
+  { id: 'elder-thorne', name: 'Elder Thorne', status: 'active', role: 'npc', trust: 67 },
+  { id: 'merchant-aldric', name: 'Merchant Aldric', status: 'inactive', role: 'npc', trust: 55 },
+  { id: 'kael-voss', name: 'Kael Voss', status: 'active', role: 'antagonist', trust: 40 },
+  { id: 'captain-lyra', name: 'Captain Lyra', status: 'active', role: 'protagonist', trust: 73 },
+  { id: 'seer-mara', name: 'Seer Mara', status: 'inactive', role: 'narrator', trust: 64 },
+];
 
 function toTitle(name: string) {
   return name
@@ -43,33 +46,46 @@ export function useDashboardCharactersDataset() {
 
   useEffect(() => {
     let cancelled = false;
-    const controller = new AbortController();
+    let fallbackTimer: NodeJS.Timeout | null = null;
 
     const load = async () => {
-      const endpoints = buildCharacterEndpoints();
-      let lastError: string | null = 'Failed to load dashboard data';
+      // Ensure the dashboard can render with fallback data quickly in offline/guest contexts
+      fallbackTimer = setTimeout(() => {
+        if (cancelled) return;
+        setState({
+          characters: FALLBACK_DASHBOARD_CHARACTERS,
+          loading: false,
+          error: 'Using fallback dataset',
+          source: 'fallback',
+        });
+      }, 3000);
 
-      for (const endpoint of endpoints) {
-        try {
-          const mapped = await fetchCharacters(endpoint, controller.signal);
-          if (cancelled) {
-            return;
-          }
-          if (mapped.length) {
-            setState({ characters: mapped, loading: false, error: null, source: 'api' });
-            return;
-          }
-          lastError = 'Empty dataset from API';
-        } catch (err) {
-          if (cancelled) {
-            return;
-          }
-          lastError = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      try {
+        const response = await charactersAPI.getCharacters();
+        const payload = response.data;
+        const characters = (payload?.characters ?? []).map((char, index) => ({
+          id: char.id || String(index),
+          name: char.name || toTitle(char.id || `Character ${index + 1}`),
+          status: mapCharacterStatus(char.status),
+          role: mapCharacterType(char.type),
+          trust: calculateTrustFromRelationships(char.relationships) ?? 50,
+        }));
+
+        if (!cancelled) {
+          if (fallbackTimer) clearTimeout(fallbackTimer);
+          setState({ characters, loading: false, error: null, source: 'api' });
         }
-      }
-
-      if (!cancelled) {
-        setState((prev) => ({ ...prev, loading: false, error: lastError, source: 'fallback' }));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
+        if (!cancelled) {
+          if (fallbackTimer) clearTimeout(fallbackTimer);
+          setState({
+            characters: FALLBACK_DASHBOARD_CHARACTERS,
+            loading: false,
+            error: message,
+            source: 'fallback',
+          });
+        }
       }
     };
 
@@ -77,113 +93,13 @@ export function useDashboardCharactersDataset() {
 
     return () => {
       cancelled = true;
-      controller.abort();
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
     };
   }, []);
 
   return useMemo(() => state, [state]);
-}
-
-function joinUrl(base: string, path: string) {
-  const normalizedBase = base.replace(/\/+$/, '');
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${normalizedBase}${normalizedPath}`;
-}
-
-function resolveApiBaseUrl(base: string) {
-  const normalizedBase = base.replace(/\/+$/, '');
-  if (/\/api\/v\d+$/i.test(normalizedBase)) {
-    return normalizedBase.replace(/\/v\d+$/i, '');
-  }
-  if (/\/api$/i.test(normalizedBase)) {
-    return normalizedBase;
-  }
-  return `${normalizedBase}/api`;
-}
-
-function buildCharacterEndpoints() {
-  // Use /api/characters endpoints without versioning
-  const endpoints: string[] = [];
-
-  // Primary endpoint: configured API base + /api/characters
-  endpoints.push(CHARACTER_ENDPOINT);
-
-  // Same-origin proxy fallback: /api/characters
-  // This allows Vite proxy to rewrite /api/* → backend /api/*
-  endpoints.push('/api/characters');
-
-  return endpoints;
-}
-
-async function fetchCharacters(endpoint: string, signal: AbortSignal): Promise<DashboardCharacter[]> {
-  // Prefer axios client to include auth headers
-  try {
-    const axiosResponse = await charactersAPI.getCharacters();
-    const payload = axiosResponse.data;
-    if (!payload || !Array.isArray(payload.characters)) {
-      throw new Error('Malformed /api/characters payload');
-    }
-
-    // charactersAPI.getCharacters() now returns fully detailed Character objects
-    // Transform them to DashboardCharacter format
-    return payload.characters.map((char, index) => ({
-      id: char.id || String(index),
-      name: char.name || toTitle(char.id || `Character ${index + 1}`),
-      status: mapCharacterStatus(char.status),
-      role: mapCharacterType(char.type),
-      trust: calculateTrustFromRelationships(char.relationships) ?? 50, // Default trust if missing
-    }));
-  } catch {
-    // Fallback to fetch if axios fails (e.g., interceptor issues)
-    const response = await fetch(endpoint, {
-      signal,
-      headers: {
-        Accept: 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API responded with ${response.status}`);
-    }
-
-    const payload = await response.json();
-    if (!payload || !Array.isArray(payload.characters)) {
-      throw new Error('Malformed /api/characters payload');
-    }
-
-    // Fetch detailed info for each character ID
-    const characterDetails = await Promise.all(
-      payload.characters.map(async (rawId: string, index: number) => {
-        const id = String(rawId).trim().toLowerCase();
-        try {
-          const detailEndpoint = `${endpoint}/${id}`;
-          const detailResponse = await fetch(detailEndpoint, {
-            signal,
-            headers: { Accept: 'application/json' },
-          });
-          if (!detailResponse.ok) throw new Error('Detail fetch failed');
-          const detail = await detailResponse.json();
-          return {
-            id,
-            name: detail.name || toTitle(id || `Character ${index + 1}`),
-            status: mapCurrentStatusToStatus(detail.current_status),
-            role: inferRoleFromCharacter(detail),
-            trust: calculateTrustFromRelationships(detail.relationships) ?? 50,
-          };
-        } catch {
-          // If detail fetch fails, return minimal info but NO fake data
-          return {
-            id,
-            name: toTitle(id || `Character ${index + 1}`),
-            status: 'active' as const,
-            role: 'npc' as const,
-            trust: 50,
-          };
-        }
-      })
-    );
-    return characterDetails;
-  }
 }
 
 // Map Character status to DashboardCharacter status
@@ -199,37 +115,6 @@ function mapCharacterType(type: string | undefined): DashboardCharacter['role'] 
   if (type === 'protagonist') return 'protagonist';
   if (type === 'antagonist') return 'antagonist';
   if (type === 'narrator') return 'narrator';
-  return 'npc';
-}
-
-// Map backend current_status to frontend status enum
-function mapCurrentStatusToStatus(currentStatus: string | undefined): DashboardCharacter['status'] {
-  if (!currentStatus) return 'active';
-  const lower = currentStatus.toLowerCase();
-  if (lower.includes('hostile') || lower.includes('enemy') || lower.includes('antagonist')) {
-    return 'hostile';
-  }
-  if (lower.includes('inactive') || lower.includes('dormant') || lower.includes('unavailable')) {
-    return 'inactive';
-  }
-  return 'active';
-}
-
-// Infer role from character detail data
-function inferRoleFromCharacter(detail: Record<string, unknown>): DashboardCharacter['role'] {
-  const narrativeContext = String(detail.narrative_context || '').toLowerCase();
-  const backgroundSummary = String(detail.background_summary || '').toLowerCase();
-  const combined = `${narrativeContext} ${backgroundSummary}`;
-
-  if (combined.includes('protagonist') || combined.includes('hero') || combined.includes('main character')) {
-    return 'protagonist';
-  }
-  if (combined.includes('antagonist') || combined.includes('villain') || combined.includes('enemy')) {
-    return 'antagonist';
-  }
-  if (combined.includes('narrator') || combined.includes('chronicler')) {
-    return 'narrator';
-  }
   return 'npc';
 }
 

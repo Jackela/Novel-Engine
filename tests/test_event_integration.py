@@ -9,7 +9,6 @@ from src.persona_agent import PersonaAgent
 
 
 class TestEventIntegration(unittest.TestCase):
-
     @pytest.mark.integration
     def test_full_turn_event_flow(self):
         """
@@ -25,7 +24,6 @@ class TestEventIntegration(unittest.TestCase):
             "builtins.open",
             unittest.mock.mock_open(read_data="# Character Sheet: Test Agent"),
         ):
-
             # Instantiate the agents and director with the real event bus
             director = DirectorAgent(event_bus=event_bus)
             agent = PersonaAgent(

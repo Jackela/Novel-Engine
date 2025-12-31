@@ -68,9 +68,9 @@ class NarrativeContext:
 
     # Character context
     affected_characters: FrozenSet[UUID] = None
-    character_knowledge_required: FrozenSet[UUID] = (
-        None  # Characters who must know this context
-    )
+    character_knowledge_required: FrozenSet[
+        UUID
+    ] = None  # Characters who must know this context
     character_reactions: Dict[UUID, str] = None  # Expected character reactions
 
     # Contextual details
@@ -122,17 +122,25 @@ class NarrativeContext:
         if self.affected_regions is None:
             object.__setattr__(self, "affected_regions", frozenset())
         elif isinstance(self.affected_regions, set):
-            object.__setattr__(self, "affected_regions", frozenset(self.affected_regions))
+            object.__setattr__(
+                self, "affected_regions", frozenset(self.affected_regions)
+            )
 
         if self.affected_characters is None:
             object.__setattr__(self, "affected_characters", frozenset())
         elif isinstance(self.affected_characters, set):
-            object.__setattr__(self, "affected_characters", frozenset(self.affected_characters))
+            object.__setattr__(
+                self, "affected_characters", frozenset(self.affected_characters)
+            )
 
         if self.character_knowledge_required is None:
             object.__setattr__(self, "character_knowledge_required", frozenset())
         elif isinstance(self.character_knowledge_required, set):
-            object.__setattr__(self, "character_knowledge_required", frozenset(self.character_knowledge_required))
+            object.__setattr__(
+                self,
+                "character_knowledge_required",
+                frozenset(self.character_knowledge_required),
+            )
 
         if self.character_reactions is None:
             object.__setattr__(self, "character_reactions", {})
@@ -167,17 +175,23 @@ class NarrativeContext:
         if self.prerequisite_contexts is None:
             object.__setattr__(self, "prerequisite_contexts", frozenset())
         elif isinstance(self.prerequisite_contexts, set):
-            object.__setattr__(self, "prerequisite_contexts", frozenset(self.prerequisite_contexts))
+            object.__setattr__(
+                self, "prerequisite_contexts", frozenset(self.prerequisite_contexts)
+            )
 
         if self.conflicting_contexts is None:
             object.__setattr__(self, "conflicting_contexts", frozenset())
         elif isinstance(self.conflicting_contexts, set):
-            object.__setattr__(self, "conflicting_contexts", frozenset(self.conflicting_contexts))
+            object.__setattr__(
+                self, "conflicting_contexts", frozenset(self.conflicting_contexts)
+            )
 
         if self.reinforcing_contexts is None:
             object.__setattr__(self, "reinforcing_contexts", frozenset())
         elif isinstance(self.reinforcing_contexts, set):
-            object.__setattr__(self, "reinforcing_contexts", frozenset(self.reinforcing_contexts))
+            object.__setattr__(
+                self, "reinforcing_contexts", frozenset(self.reinforcing_contexts)
+            )
 
         if self.tags is None:
             object.__setattr__(self, "tags", frozenset())
@@ -249,6 +263,7 @@ class NarrativeContext:
 
     def __hash__(self) -> int:
         """Custom hash implementation for frozen dataclass with Dict fields."""
+
         def _dict_to_hashable(d):
             if not d:
                 return frozenset()
@@ -264,44 +279,46 @@ class NarrativeContext:
                     v = float(v)
                 items.append((k_hash, v))
             return frozenset(items)
-        
-        return hash((
-            self.context_id,
-            self.context_type,
-            self.scope,
-            self.name,
-            self.description,
-            self.applies_from_sequence,
-            self.applies_to_sequence,
-            self.is_persistent,
-            self.locations,
-            self.affected_regions,
-            self.geographical_scope,
-            self.affected_characters,
-            self.character_knowledge_required,
-            _dict_to_hashable(self.character_reactions),
-            tuple(self.key_facts) if self.key_facts else (),
-            tuple(self.implicit_knowledge) if self.implicit_knowledge else (),
-            tuple(self.hidden_information) if self.hidden_information else (),
-            tuple(self.narrative_constraints) if self.narrative_constraints else (),
-            tuple(self.behavioral_influences) if self.behavioral_influences else (),
-            tuple(self.plot_implications) if self.plot_implications else (),
-            _dict_to_hashable(self.mood_influences),
-            _dict_to_hashable(self.tension_modifiers),
-            _dict_to_hashable(self.pacing_effects),
-            self.prerequisite_contexts,
-            self.conflicting_contexts,
-            self.reinforcing_contexts,
-            self.narrative_importance,
-            self.visibility_level,
-            self.complexity_level,
-            self.evolution_rate,
-            self.stability,
-            self.tags,
-            self.source_material,
-            self.research_notes,
-            _dict_to_hashable(self.metadata),
-        ))
+
+        return hash(
+            (
+                self.context_id,
+                self.context_type,
+                self.scope,
+                self.name,
+                self.description,
+                self.applies_from_sequence,
+                self.applies_to_sequence,
+                self.is_persistent,
+                self.locations,
+                self.affected_regions,
+                self.geographical_scope,
+                self.affected_characters,
+                self.character_knowledge_required,
+                _dict_to_hashable(self.character_reactions),
+                tuple(self.key_facts) if self.key_facts else (),
+                tuple(self.implicit_knowledge) if self.implicit_knowledge else (),
+                tuple(self.hidden_information) if self.hidden_information else (),
+                tuple(self.narrative_constraints) if self.narrative_constraints else (),
+                tuple(self.behavioral_influences) if self.behavioral_influences else (),
+                tuple(self.plot_implications) if self.plot_implications else (),
+                _dict_to_hashable(self.mood_influences),
+                _dict_to_hashable(self.tension_modifiers),
+                _dict_to_hashable(self.pacing_effects),
+                self.prerequisite_contexts,
+                self.conflicting_contexts,
+                self.reinforcing_contexts,
+                self.narrative_importance,
+                self.visibility_level,
+                self.complexity_level,
+                self.evolution_rate,
+                self.stability,
+                self.tags,
+                self.source_material,
+                self.research_notes,
+                _dict_to_hashable(self.metadata),
+            )
+        )
 
     @property
     def has_sequence_range(self) -> bool:

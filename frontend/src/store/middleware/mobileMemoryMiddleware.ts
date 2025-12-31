@@ -11,6 +11,7 @@
 
 import type { Middleware } from '@reduxjs/toolkit';
 import type { RootState } from '@/store/store';
+import { logger } from '@/services/logging/LoggerFactory';
 
 // Mobile memory limits
 const MOBILE_MEMORY_LIMITS = {
@@ -152,7 +153,7 @@ export const mobileMemoryMiddleware: Middleware<{}, RootState> =
 
       // Check if any slice needs cleanup
       let needsCleanup = false;
-      const cleanedSlices: Partial<RootState> = {};
+      const cleanedSlices: Partial<Record<(typeof MONITORED_SLICES)[number], unknown>> = {};
 
       MONITORED_SLICES.forEach(sliceName => {
         const sliceState = state[sliceName];

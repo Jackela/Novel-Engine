@@ -535,9 +535,7 @@ novel-engine stories generate --title "My Story"</code></pre>
                 examples.append(
                     {
                         "format": format_type,
-                        "language": (
-                            format_type if format_type != "curl" else "bash"
-                        ),
+                        "language": (format_type if format_type != "curl" else "bash"),
                         "code": example_data["code"],
                         "explanation": example_data.get(
                             "explanation", f"Example usage in {format_type}"

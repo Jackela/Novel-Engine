@@ -149,6 +149,7 @@ class TestKnowledgeEntryUpdateContent:
 
         # Act - Second update
         import time
+
         time.sleep(0.001)
         event2 = sample_knowledge_entry.update_content("Second update", updated_by)
         timestamp2 = sample_knowledge_entry.updated_at

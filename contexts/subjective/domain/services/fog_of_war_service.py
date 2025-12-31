@@ -395,7 +395,6 @@ class FogOfWarService:
                 if (
                     item.is_current() and item.get_reliability_score() >= 0.5
                 ):  # Minimum for sharing
-
                     # Create new knowledge item with reduced reliability
                     propagated_item = KnowledgeItem(
                         subject=item.subject,

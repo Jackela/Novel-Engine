@@ -239,9 +239,9 @@ def enhance_api_with_context7(context7_api=None, config: APIEnhancementConfig = 
                         result.metadata, "__dict__"
                     ):
                         result.metadata.__dict__["context7_enhanced"] = True
-                        result.metadata.__dict__["enhanced_at"] = (
-                            datetime.now().isoformat()
-                        )
+                        result.metadata.__dict__[
+                            "enhanced_at"
+                        ] = datetime.now().isoformat()
                 except Exception as e:
                     logger.debug(f"Failed to add Context7 metadata: {e}")
 

@@ -83,11 +83,14 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.error("Unhandled exception for %s: %s", request.url.path, exc, exc_info=True)
+    async def _unhandled_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
+        logger.error(
+            "Unhandled exception for %s: %s", request.url.path, exc, exc_info=True
+        )
         detail = str(exc) if debug else "Internal server error."
         return JSONResponse(
             status_code=500,
             content=_envelope(status_code=500, detail=detail),
         )
-

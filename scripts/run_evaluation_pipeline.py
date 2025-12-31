@@ -447,7 +447,9 @@ class AlertSystem:
         alert_level = (
             "CRITICAL"
             if not results.pipeline_success
-            else "WARNING" if regressions else "INFO"
+            else "WARNING"
+            if regressions
+            else "INFO"
         )
 
         # Generate alert message
@@ -547,9 +549,10 @@ class EvaluationPipeline:
             )
 
             # Check quality gates
-            results.quality_gates_passed, results.gate_failures = (
-                self._check_quality_gates(results)
-            )
+            (
+                results.quality_gates_passed,
+                results.gate_failures,
+            ) = self._check_quality_gates(results)
             results.pipeline_success = results.quality_gates_passed
 
             # Detect performance regressions

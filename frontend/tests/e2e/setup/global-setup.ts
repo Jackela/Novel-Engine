@@ -22,11 +22,23 @@ async function globalSetup(config: FullConfig) {
   // Seed test database with consistent data
   await seedTestData();
 
-  // Skip verification if PLAYWRIGHT_SKIP_VERIFY is set (useful for WSL/CI environments)
-  if (process.env.PLAYWRIGHT_SKIP_VERIFY === 'true') {
-    console.log('ℹ️ Skipping dashboard verification (PLAYWRIGHT_SKIP_VERIFY=true)');
+  const baseUrl = config.use?.baseURL || 'http://localhost:3000';
+  const forceVerify = process.env.PLAYWRIGHT_FORCE_VERIFY === 'true';
+  const skipVerify =
+    process.env.PLAYWRIGHT_SKIP_VERIFY === 'true' ||
+    (process.env.MOCK_API_ENABLED === 'true' && !forceVerify);
+
+  if (skipVerify) {
+    console.log('ℹ️ Skipping dashboard verification (mock API or skip flag active)');
   } else {
-    await verifyDashboardAccessibilityWithRetry(config.use?.baseURL || 'http://localhost:3000');
+    const reachable = await isServerReachable(baseUrl);
+    if (!reachable) {
+      console.log(
+        'ℹ️ Dashboard server not reachable before webServer start; skipping preflight verification.'
+      );
+    } else {
+      await verifyDashboardAccessibilityWithRetry(baseUrl);
+    }
   }
 
   console.log('✅ Global setup completed successfully');
@@ -139,6 +151,19 @@ async function seedTestData() {
   process.env.TEST_CAMPAIGN = JSON.stringify(testCampaign);
 
   console.log('🌱 Test data seeded successfully');
+}
+
+async function isServerReachable(baseUrl: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const response = await fetch(baseUrl, { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeout);
+    return response.ok;
+  } catch (error) {
+    void error;
+    return false;
+  }
 }
 
 /**

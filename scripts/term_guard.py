@@ -281,9 +281,7 @@ class TermGuard:
             except re.error as e:
                 logger.warning(f"⚠️ Invalid regex pattern '{rule.pattern}': {e}")
 
-        logger.info(
-            f"🔍 Analyzed content: found {len(violations)} potential violations"
-        )
+        logger.info(f"🔍 Analyzed content: found {len(violations)} potential violations")
         return violations
 
     def clean_content(

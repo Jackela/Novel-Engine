@@ -71,6 +71,8 @@ class InteractionId:
     def __hash__(self) -> int:
         """Return hash of the UUID value."""
         return hash(self.value)
+
+
 UUID_PATTERN = re.compile(
     r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 )

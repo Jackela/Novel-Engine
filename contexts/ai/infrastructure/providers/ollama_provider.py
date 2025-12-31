@@ -130,7 +130,6 @@ class OllamaProvider(ILLMProvider):
                 json=api_request,
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 if response.status == 200:
                     # Ollama streams by default, collect full response
                     full_response = await self._collect_full_response(response)
@@ -188,7 +187,6 @@ class OllamaProvider(ILLMProvider):
                 json=api_request,
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 if response.status != 200:
                     yield f"Error: HTTP {response.status}"
                     return
@@ -288,7 +286,6 @@ class OllamaProvider(ILLMProvider):
             async with session.get(
                 f"{self._base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
-
                 is_healthy = response.status == 200
 
                 if is_healthy:
@@ -341,7 +338,6 @@ class OllamaProvider(ILLMProvider):
             async with session.get(
                 f"{self._base_url}/api/tags", timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
-
                 if response.status == 200:
                     data = await response.json()
                     models = data.get("models", [])

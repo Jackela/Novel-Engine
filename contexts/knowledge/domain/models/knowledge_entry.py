@@ -54,7 +54,9 @@ class KnowledgeEntry:
         object.__setattr__(self, "updated_at", updated_at)
         object.__setattr__(self, "content", self.content.strip())
 
-    def update_content(self, new_content: str, updated_by: str) -> KnowledgeEntryUpdated:
+    def update_content(
+        self, new_content: str, updated_by: str
+    ) -> KnowledgeEntryUpdated:
         _validate_content(new_content)
         if not updated_by:
             raise ValueError("updated_by is required")

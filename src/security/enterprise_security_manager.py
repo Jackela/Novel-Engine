@@ -46,6 +46,7 @@ try:
 except ImportError:
     if os.getenv("ALLOW_MOCK_GEOIP", "false").lower() != "true":
         raise
+
     # Stub implementation when geoip2 is not available and mocks are allowed
     class MockGeoIP2Database:
         def __init__(self, *args, **kwargs):
@@ -81,6 +82,7 @@ try:
 except ImportError:
     if os.getenv("ALLOW_MOCK_USER_AGENTS", "false").lower() != "true":
         raise
+
     # Stub implementation when user_agents is not available and mocks are allowed
     class MockUserAgent:
         def __init__(self):

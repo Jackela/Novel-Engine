@@ -755,7 +755,7 @@ class TestTurnOrchestrationE2E:
         # Narrative arcs should reference valid characters
         for narrative_data in final_state["narrative_arcs"]:
             if "participants" in narrative_data and narrative_data["participants"]:
-                for participant_id in narrative_data["participants"]:
+                for _ in narrative_data["participants"]:
                     # Participant should exist in character data
                     character_ids = [
                         c.get("character_id", c.get("id"))

@@ -1,8 +1,8 @@
 // Novel Engine API Service
 // Centralized API communication layer
 
-import axios, { isAxiosError } from 'axios';
 import type { AxiosInstance } from 'axios';
+import apiClient, { handleAPIError } from '@/services/api/apiClient';
 import type {
   Character,
   StoryProject,
@@ -13,6 +13,7 @@ import type {
   ExportOptions
 } from '@/types';
 import type {
+  CharacterSummary,
   CharactersListResponse,
   CharacterDetailResponse,
   EnhancedCharacterResponse,
@@ -29,99 +30,57 @@ import {
 // Note: Custom in-memory cache removed; server-state caching handled by consumers (e.g., React Query).
 
 class NovelEngineAPI {
-  private client: AxiosInstance;
-  private baseURL: string;
-  // No internal caches; rely on consumer-level caching.
+  private readonly client: AxiosInstance;
 
-  constructor(baseURL: string = 'http://localhost:8000') {
-    this.baseURL = baseURL;
-    this.client = axios.create({
-      baseURL,
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    });
-
-    // Request interceptor for logging and auth
-    this.client.interceptors.request.use(
-      (config) => {
-        logger.debug(`API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-          component: 'NovelEngineAPI',
-          action: 'request',
-        });
-        return config;
-      },
-      (error) => {
-        logger.error('API Request Error', error as Error, {
-          component: 'NovelEngineAPI',
-          action: 'request',
-        });
-        return Promise.reject(error);
-      }
-    );
-
-    // Response interceptor for error handling
-    this.client.interceptors.response.use(
-      (response) => {
-        logger.debug(`API Response: ${response.status} ${response.config.url}`, {
-          component: 'NovelEngineAPI',
-          action: 'response',
-        });
-        return response;
-      },
-      (error) => {
-        logger.error('API Response Error', error as Error, {
-          component: 'NovelEngineAPI',
-          action: 'response',
-          errorData: error.response?.data || error.message,
-        });
-        return Promise.reject(this.handleError(error));
-      }
-    );
+  constructor(client: AxiosInstance = apiClient) {
+    this.client = client;
   }
 
-  private handleError(error: unknown): Error {
-    if (isAxiosError(error)) {
-      if (error.response) {
-        const data = error.response.data as { detail?: string; message?: string } | undefined;
-        const message = data?.detail || data?.message || 'Server error';
-        return new Error(`API Error (${error.response.status}): ${message}`);
-      }
-      if (error.request) {
-        return new Error('Network error: Unable to connect to server');
-      }
-      return new Error(`Request error: ${error.message}`);
-    }
-    return new Error('Unknown error');
+  private fail(error: unknown): never {
+    return handleAPIError(error);
   }
 
   // System and Health APIs
   async getHealth(): Promise<SystemStatus> {
-    const response = await this.client.get<SystemStatus>('/health');
-    return response.data;
+    try {
+      const response = await this.client.get<SystemStatus>('/health');
+      return response.data;
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   async getSystemStatus(): Promise<SystemStatus> {
-    const response = await this.client.get<SystemStatus>('/meta/system-status');
-    return response.data;
+    try {
+      const response = await this.client.get<SystemStatus>('/meta/system-status');
+      return response.data;
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   // Enhanced Character APIs with caching
-  async getCharacters(): Promise<string[]> {
-    const response = await this.client.get<CharactersListResponse>('/characters');
-    return response.data.characters;
+  async getCharacters(): Promise<CharacterSummary[]> {
+    try {
+      const response = await this.client.get<CharactersListResponse>('/api/characters');
+      return response.data.characters;
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   async getCharacterDetails(name: string): Promise<Character> {
-    const response = await this.client.get<CharacterDetailResponse>(`/characters/${encodeURIComponent(name)}`);
-    return transformCharacterResponse(response.data, name);
+    try {
+      const response = await this.client.get<CharacterDetailResponse>(`/api/characters/${encodeURIComponent(name)}`);
+      return transformCharacterResponse(response.data, name);
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   async getEnhancedCharacterData(name: string): Promise<Character> {
     try {
-      const response = await this.client.get<EnhancedCharacterResponse>(`/characters/${encodeURIComponent(name)}/enhanced`);
+      const response = await this.client.get<EnhancedCharacterResponse>(`/api/characters/${encodeURIComponent(name)}/enhanced`);
       return transformEnhancedCharacterResponse(response.data);
     } catch (error) {
       logger.warn(`Enhanced character data failed for ${name}, falling back: ${(error as Error).message}`);
@@ -130,80 +89,146 @@ class NovelEngineAPI {
   }
 
   async createCharacter(characterData: CharacterFormData, files?: File[]): Promise<ApiResponse<Character>> {
-    const formData = new FormData();
-    formData.append('name', characterData.name);
-    formData.append('description', characterData.description);
-    formData.append('faction', characterData.faction);
-    formData.append('role', characterData.role);
-    formData.append('stats', JSON.stringify(characterData.stats));
-    formData.append('equipment', JSON.stringify(characterData.equipment));
+    void files;
 
-    if (files && files.length > 0) {
-      files.forEach(file => {
-        formData.append('files', file);
-      });
-    }
-
-    const response = await this.client.post<unknown>('/characters', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
+    const request = {
+      name: characterData.name,
+      background_summary: characterData.description,
+      personality_traits: characterData.role,
+      skills: characterData.stats,
+      inventory: characterData.equipment.map((item) => item.name),
+      metadata: {
+        faction: characterData.faction,
+        role: characterData.role,
       },
-    });
-
-    const character = transformCharacterCreationResponse(response.data as Record<string, unknown>, characterData);
-
-    // Client caches managed by consumers (e.g., React Query). No internal cache.
-
-    return {
-      success: true,
-      data: character,
-      timestamp: new Date().toISOString(),
+      structured_data: {
+        faction: characterData.faction,
+        role: characterData.role,
+        stats: characterData.stats,
+        equipment: characterData.equipment,
+        relationships: characterData.relationships,
+      },
     };
+
+    try {
+      const response = await this.client.post<Record<string, unknown>>('/api/characters', request);
+      const character = transformCharacterCreationResponse(response.data, characterData);
+      return {
+        success: true,
+        data: character,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
+  async updateCharacter(characterId: string, characterData: CharacterFormData, files?: File[]): Promise<ApiResponse<Character>> {
+    void files;
+
+    const request = {
+      name: characterData.name,
+      background_summary: characterData.description,
+      personality_traits: characterData.role,
+      skills: characterData.stats,
+      inventory: characterData.equipment.map((item) => item.name),
+      metadata: {
+        faction: characterData.faction,
+        role: characterData.role,
+      },
+      structured_data: {
+        faction: characterData.faction,
+        role: characterData.role,
+        stats: characterData.stats,
+        equipment: characterData.equipment,
+        relationships: characterData.relationships,
+      },
+    };
+
+    try {
+      const response = await this.client.put<CharacterDetailResponse>(
+        `/api/characters/${encodeURIComponent(characterId)}`,
+        request
+      );
+
+      return {
+        success: true,
+        data: transformCharacterResponse(response.data, characterId),
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
+  async deleteCharacter(characterId: string): Promise<ApiResponse<void>> {
+    try {
+      await this.client.delete(`/api/characters/${encodeURIComponent(characterId)}`);
+      return { success: true, timestamp: new Date().toISOString() };
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   // Story and Simulation APIs
   async runSimulation(storyData: StoryFormData): Promise<ApiResponse<StoryProject> & { generation_id?: string }> {
-    const orchestrationRequest = {
-      character_names: storyData.characters,
-      total_turns: storyData.settings.turns || 3,
-      start_turn: 1
-    };
+    try {
+      const orchestrationRequest = {
+        character_names: storyData.characters,
+        total_turns: storyData.settings.turns || 3,
+        start_turn: 1
+      };
 
-    // Call the orchestration start endpoint
-    const response = await this.client.post<any>('/api/orchestration/start', orchestrationRequest);
+      // Call the orchestration start endpoint
+      const response = await this.client.post<any>('/api/orchestration/start', orchestrationRequest);
 
-    const storyProject = transformSimulationResponse(response.data.data, storyData);
+      const storyProject = transformSimulationResponse(response.data.data, storyData);
 
-    return {
-      success: response.data.success,
-      generation_id: 'orchestration_active', // Singleton state, so ID is static/irrelevant
-      data: storyProject,
-      timestamp: new Date().toISOString(),
-    };
+      return {
+        success: response.data.success,
+        generation_id: 'orchestration_active', // Singleton state, so ID is static/irrelevant
+        data: storyProject,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   async getGenerationStatus(generationId: string): Promise<{ generation_id: string; status: string; progress: number; stage: string; estimated_time_remaining: number; }> {
-    const response = await this.client.get<{ generation_id: string; status: string; progress: number; stage: string; estimated_time_remaining: number; }>(`/api/stories/status/${generationId}`);
-    return response.data;
+    try {
+      const response = await this.client.get<{ generation_id: string; status: string; progress: number; stage: string; estimated_time_remaining: number; }>(`/api/stories/status/${generationId}`);
+      return response.data;
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   // Campaign APIs
   async getCampaigns(): Promise<string[]> {
-    const response = await this.client.get<{ campaigns: string[] }>('/campaigns');
-    return response.data.campaigns;
+    try {
+      const response = await this.client.get<{ campaigns: string[] }>('/campaigns');
+      return response.data.campaigns;
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   async createCampaign(name: string, description?: string): Promise<ApiResponse<{ id: string; name: string; description: string }>> {
-    const response = await this.client.post<{ id: string; name: string; description: string }>('/campaigns', {
-      campaign_name: name,
-      description: description || '',
-    });
+    try {
+      const response = await this.client.post<{ id: string; name: string; description: string }>('/campaigns', {
+        campaign_name: name,
+        description: description || '',
+      });
 
-    return {
-      success: true,
-      data: response.data,
-      timestamp: new Date().toISOString(),
-    };
+      return {
+        success: true,
+        data: response.data,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   // Cache management methods removed (use consumer-level caching)
@@ -219,7 +244,7 @@ class NovelEngineAPI {
   }
 
   getBaseURL(): string {
-    return this.baseURL;
+    return this.client.defaults.baseURL || '';
   }
 
   // Connection quality monitoring
@@ -256,5 +281,3 @@ class NovelEngineAPI {
 
 export const api = new NovelEngineAPI();
 export default api;
-
-

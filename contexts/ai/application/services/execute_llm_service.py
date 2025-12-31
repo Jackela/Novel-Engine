@@ -269,8 +269,10 @@ class ExecuteLLMService:
             Comprehensive execution result
         """
         start_time = asyncio.get_running_loop().time()
+
         def _elapsed() -> float:
             return max(asyncio.get_running_loop().time() - start_time, 1e-6)
+
         config = config or LLMExecutionConfig()
 
         # Initialize result
@@ -291,7 +293,9 @@ class ExecuteLLMService:
             if config.enable_caching and self._cache_service:
                 cache_start = asyncio.get_running_loop().time()
                 cached_response = await self._cache_service.get_async(request)
-                result.cache_lookup_time = asyncio.get_running_loop().time() - cache_start
+                result.cache_lookup_time = (
+                    asyncio.get_running_loop().time() - cache_start
+                )
 
                 if cached_response:
                     result.response = cached_response

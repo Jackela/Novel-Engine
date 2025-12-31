@@ -59,7 +59,7 @@ except ImportError:
         async def __anext__(self):
             raise StopAsyncIteration
 
-    def create_ssl_context():
+    def create_ssl_context(*_args, **_kwargs):
         return None
 
     KAFKA_AVAILABLE = False

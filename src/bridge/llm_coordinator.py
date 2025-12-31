@@ -118,6 +118,7 @@ class LLMCoordinator:
                 callback=callback,
             )
 
+            cache_key = None
             # Check cache first
             if self.config.enable_caching:
                 cache_key = self._generate_cache_key(request)
@@ -132,7 +133,7 @@ class LLMCoordinator:
                     self.cache_stats["misses"] += 1
 
             # Negative cache/backoff
-            backoff_until = self._negative_cache.get(cache_key)
+            backoff_until = self._negative_cache.get(cache_key) if cache_key else None
             if backoff_until and time.time() < backoff_until:
                 result = {
                     "request_id": request.request_id,
@@ -145,7 +146,7 @@ class LLMCoordinator:
                 return request.request_id
 
             # Single-flight deduplication
-            if cache_key in self._inflight:
+            if cache_key and cache_key in self._inflight:
                 # attach waiter to existing future
                 fut = self._inflight[cache_key]
                 self._waiters_count[cache_key] = (

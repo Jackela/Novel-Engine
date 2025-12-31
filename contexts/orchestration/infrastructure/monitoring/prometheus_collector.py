@@ -22,7 +22,9 @@ try:
         Info,
         generate_latest,
     )
-except ImportError as prometheus_error:  # pragma: no cover - exercised in dependency-light env
+except (
+    ImportError
+) as prometheus_error:  # pragma: no cover - exercised in dependency-light env
     logging.getLogger(__name__).warning(
         "prometheus_client unavailable (%s); using no-op collectors.", prometheus_error
     )
@@ -68,6 +70,7 @@ except ImportError as prometheus_error:  # pragma: no cover - exercised in depen
 
     def generate_latest(_registry) -> bytes:
         return b""
+
 
 logger = logging.getLogger(__name__)
 

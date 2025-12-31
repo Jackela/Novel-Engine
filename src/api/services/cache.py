@@ -63,4 +63,3 @@ async def stream_chunks(key: str) -> AsyncIterator[str]:
         if idle > 300:  # ~60s timeout
             break
     yield "event: done\ndata: complete\n\n"
-

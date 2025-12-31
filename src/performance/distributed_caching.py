@@ -483,7 +483,6 @@ class DistributedCache:
         enable_write_through: bool = True,
         enable_read_through: bool = True,
     ):
-
         self.l1_cache = l1_cache or MemoryCache()
         self.l2_cache = l2_cache or RedisCache()
         self.enable_write_through = enable_write_through

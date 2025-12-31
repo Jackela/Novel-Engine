@@ -21,11 +21,20 @@ class AccessControlRule:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "allowed_roles", _normalize(self.allowed_roles))
-        object.__setattr__(self, "allowed_character_ids", tuple(v.strip() for v in self.allowed_character_ids if v))
+        object.__setattr__(
+            self,
+            "allowed_character_ids",
+            tuple(v.strip() for v in self.allowed_character_ids if v),
+        )
         if self.access_level == AccessLevel.ROLE_BASED and not self.allowed_roles:
             raise ValueError("ROLE_BASED access requires at least one allowed role")
-        if self.access_level == AccessLevel.CHARACTER_SPECIFIC and not self.allowed_character_ids:
-            raise ValueError("CHARACTER_SPECIFIC access requires at least one allowed character ID")
+        if (
+            self.access_level == AccessLevel.CHARACTER_SPECIFIC
+            and not self.allowed_character_ids
+        ):
+            raise ValueError(
+                "CHARACTER_SPECIFIC access requires at least one allowed character ID"
+            )
 
     def permits(self, agent: AgentIdentity) -> bool:
         if self.access_level == AccessLevel.PUBLIC:

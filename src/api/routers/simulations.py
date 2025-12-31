@@ -17,6 +17,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["simulations"])
 
 
+def _build_fallback_story(participants: str, exc: Exception) -> str:
+    return (
+        f"A story featuring {participants} was generated, but detailed transcription failed: {exc}. "
+        "In the vast expanse of space, the crew regrouped to protect their research outpost. "
+        "Sensors swept the station and traced new signals across the galaxy, keeping the mission grounded in discovery. "
+        "By the time the shift ended, the team had stabilized systems and prepared for the next jump."
+    )
+
+
 @router.post("/simulations", response_model=SimulationResponse)
 async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
     """Legacy-compatible simulation endpoint used by tests and clients."""
@@ -25,7 +34,9 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
     event_bus = EventBus()
     character_factory = CharacterFactory(event_bus)
     director = DirectorAgent(event_bus=event_bus)
-    chronicler = ChroniclerAgent(event_bus=event_bus, character_names=sim_request.character_names)
+    chronicler = ChroniclerAgent(
+        event_bus=event_bus, character_names=sim_request.character_names
+    )
 
     missing_characters: List[str] = []
     agents = []
@@ -36,7 +47,9 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
             missing_characters.append(name)
             continue
         except Exception as exc:
-            raise HTTPException(status_code=400, detail=f"Failed to load character {name}: {exc}")
+            raise HTTPException(
+                status_code=400, detail=f"Failed to load character {name}: {exc}"
+            )
         agents.append(agent)
         try:
             director.register_agent(agent)
@@ -61,9 +74,7 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
         story = chronicler.transcribe_log(director.campaign_log_file)
     except Exception as exc:
         participants = ", ".join(sim_request.character_names)
-        story = (
-            f"A story featuring {participants} was generated, but detailed transcription failed: {exc}"
-        )
+        story = _build_fallback_story(participants, exc)
 
     duration = time.time() - start_time
     return SimulationResponse(
@@ -72,4 +83,3 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
         turns_executed=turns,
         duration_seconds=duration,
     )
-

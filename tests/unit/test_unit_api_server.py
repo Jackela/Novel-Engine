@@ -19,6 +19,12 @@ except ImportError:
     app = None
 
 
+def _character_ids(characters):
+    return [
+        entry["id"] if isinstance(entry, dict) else entry for entry in characters
+    ]
+
+
 @pytest.mark.skipif(not API_SERVER_AVAILABLE, reason="API server not available")
 class TestAPIServerEndpoints:
     """API服务器端点测试"""
@@ -103,8 +109,9 @@ class TestAPIServerEndpoints:
             data = response.json()
             assert "characters" in data
             assert len(data["characters"]) == 4
-            assert "engineer" in data["characters"]
-            assert "pilot" in data["characters"]
+            character_ids = _character_ids(data["characters"])
+            assert "engineer" in character_ids
+            assert "pilot" in character_ids
 
     @pytest.mark.api
     @pytest.mark.unit
@@ -135,7 +142,6 @@ class TestAPIServerEndpoints:
             with patch("src.api.routers.characters.EventBus"), patch(
                 "src.api.routers.characters.CharacterFactory"
             ) as mock_factory:
-
                 # 模拟CharacterFactory失败，但仍应返回基础信息
                 mock_factory.return_value.create_character.side_effect = Exception(
                     "Factory error"
@@ -179,10 +185,11 @@ class TestAPIServerEndpoints:
         ):
             with patch("src.api.routers.simulations.EventBus"), patch(
                 "src.api.routers.simulations.CharacterFactory"
-            ) as mock_factory, patch("src.api.routers.simulations.DirectorAgent"), patch(
+            ) as mock_factory, patch(
+                "src.api.routers.simulations.DirectorAgent"
+            ), patch(
                 "src.api.routers.simulations.ChroniclerAgent"
             ) as mock_chronicler:
-
                 # 模拟成功的组件创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
@@ -418,7 +425,6 @@ class TestAPIServerEndpoints:
             ) as mock_director, patch(
                 "src.api.routers.simulations.ChroniclerAgent"
             ) as mock_chronicler:
-
                 # 设置成功的角色创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
@@ -457,10 +463,11 @@ class TestAPIServerEndpoints:
         ):
             with patch("src.api.routers.simulations.EventBus"), patch(
                 "src.api.routers.simulations.CharacterFactory"
-            ) as mock_factory, patch("src.api.routers.simulations.DirectorAgent"), patch(
+            ) as mock_factory, patch(
+                "src.api.routers.simulations.DirectorAgent"
+            ), patch(
                 "src.api.routers.simulations.ChroniclerAgent"
             ) as mock_chronicler:
-
                 # 设置成功的角色创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
@@ -499,7 +506,6 @@ class TestAPIServerEndpoints:
             with patch("src.api.routers.characters.EventBus"), patch(
                 "src.api.routers.characters.CharacterFactory"
             ) as mock_factory:
-
                 mock_factory.return_value.create_character.side_effect = Exception(
                     "Unexpected character error"
                 )
@@ -533,7 +539,6 @@ class TestAPIServerEndpoints:
     def test_create_campaign_endpoint_file_creation_failure(self):
         """测试创建活动端点 - 文件创建失败"""
         with patch("os.makedirs"), patch("builtins.open") as mock_open:
-
             mock_open.side_effect = Exception("Failed to create campaign file")
 
             campaign_data = {

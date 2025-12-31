@@ -51,6 +51,12 @@ SIMULATION_REQUEST = {
 }
 
 
+def _character_ids(characters):
+    return [
+        entry["id"] if isinstance(entry, dict) else entry for entry in characters
+    ]
+
+
 class TestFullSystemIntegration:
     """Test complete system integration scenarios"""
 
@@ -60,7 +66,7 @@ class TestFullSystemIntegration:
         # Step 1: Get available characters via API
         char_response = client.get("/characters")
         assert char_response.status_code == 200
-        characters = char_response.json()["characters"]
+        characters = _character_ids(char_response.json()["characters"])
         assert "pilot" in characters
         assert "scientist" in characters
 

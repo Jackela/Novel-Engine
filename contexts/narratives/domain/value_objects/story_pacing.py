@@ -137,7 +137,7 @@ class StoryPacing:
         ]:
             if not (Decimal("0") <= ratio_value <= Decimal("1")):
                 raise ValueError(f"{ratio_name} must be between 0 and 1")
-        
+
         # Then check sum
         ratio_total = self.dialogue_ratio + self.action_ratio + self.reflection_ratio
         if not (Decimal("0.9") <= ratio_total <= Decimal("1.1")):
@@ -200,6 +200,7 @@ class StoryPacing:
 
     def __hash__(self) -> int:
         """Custom hash implementation for frozen dataclass with Dict fields."""
+
         def _dict_to_hashable(d):
             if not d:
                 return frozenset()
@@ -213,36 +214,38 @@ class StoryPacing:
                     v = float(v)
                 items.append((k, v))
             return frozenset(items)
-        
-        return hash((
-            self.pacing_id,
-            self.pacing_type,
-            self.base_intensity,
-            self.start_sequence,
-            self.end_sequence,
-            self.segment_name,
-            self.segment_description,
-            self.event_density,
-            self.dialogue_ratio,
-            self.action_ratio,
-            self.reflection_ratio,
-            self.scene_transitions,
-            self.time_jumps,
-            self.average_scene_length,
-            self.tension_curve,
-            self.emotional_peaks,
-            self.rest_periods,
-            self.revelation_frequency,
-            self.cliffhanger_intensity,
-            self.curiosity_hooks,
-            self.sentence_complexity,
-            self.paragraph_length,
-            self.vocabulary_density,
-            self.target_reading_time,
-            self.emotional_target,
-            self.pacing_notes,
-            _dict_to_hashable(self.metadata),
-        ))
+
+        return hash(
+            (
+                self.pacing_id,
+                self.pacing_type,
+                self.base_intensity,
+                self.start_sequence,
+                self.end_sequence,
+                self.segment_name,
+                self.segment_description,
+                self.event_density,
+                self.dialogue_ratio,
+                self.action_ratio,
+                self.reflection_ratio,
+                self.scene_transitions,
+                self.time_jumps,
+                self.average_scene_length,
+                self.tension_curve,
+                self.emotional_peaks,
+                self.rest_periods,
+                self.revelation_frequency,
+                self.cliffhanger_intensity,
+                self.curiosity_hooks,
+                self.sentence_complexity,
+                self.paragraph_length,
+                self.vocabulary_density,
+                self.target_reading_time,
+                self.emotional_target,
+                self.pacing_notes,
+                _dict_to_hashable(self.metadata),
+            )
+        )
 
     @property
     def segment_length(self) -> int:

@@ -304,14 +304,22 @@ async function cleanupExpiredCaches() {
 
 // Message handling for cache management
 self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
+  const origin = event.origin || (event.source && 'url' in event.source ? new URL(event.source.url).origin : null);
+  if (origin !== self.location.origin) return;
+  if (!event.data) return;
+
+  if (event.data.type === 'CLEAR_CACHE') {
     event.waitUntil(clearAllCaches());
-    event.ports[0].postMessage({ success: true });
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage({ success: true });
+    }
   }
-  
-  if (event.data && event.data.type === 'GET_CACHE_STATS') {
+
+  if (event.data.type === 'GET_CACHE_STATS') {
     event.waitUntil(getCacheStats().then(stats => {
-      event.ports[0].postMessage(stats);
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage(stats);
+      }
     }));
   }
 });

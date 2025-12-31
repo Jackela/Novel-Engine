@@ -281,9 +281,9 @@ class TestCharacterManagementFlow:
         """Test character validation and error handling."""
         # Test 1: Invalid agent_id format
         invalid_char = data_factory.create_character_data()
-        invalid_char["agent_id"] = (
-            "invalid character id!"  # Contains invalid characters
-        )
+        invalid_char[
+            "agent_id"
+        ] = "invalid character id!"  # Contains invalid characters
 
         response = client.post("/api/characters", json=invalid_char)
         # Accept both 400 (Bad Request) and 422 (Unprocessable Entity) for validation errors

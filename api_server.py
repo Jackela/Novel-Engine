@@ -53,4 +53,3 @@ if __name__ == "__main__":
     port = int(os.getenv("API_PORT", "8000"))
     debug_flag = os.getenv("API_DEBUG", "1")
     run_server(host=host, port=port, debug=debug_flag not in {"0", "false", "False"})
-

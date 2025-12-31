@@ -88,6 +88,69 @@ export interface DecisionState {
   error: string | null;
 }
 
+const DECISION_TYPES: DecisionPointType[] = [
+  'turning_point',
+  'crisis',
+  'climax',
+  'revelation',
+  'character_choice',
+  'relationship_change',
+  'conflict_escalation',
+  'transformation',
+];
+
+const PAUSE_STATES: PauseState[] = ['running', 'paused', 'awaiting_input', 'negotiating'];
+
+const FEASIBILITY_RESULTS: FeasibilityResult[] = [
+  'accepted',
+  'minor_adjustment',
+  'alternative_required',
+  'rejected',
+];
+
+const asString = (value: unknown, fallback = ''): string =>
+  typeof value === 'string' ? value : fallback;
+
+const asNumber = (value: unknown, fallback = 0): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+};
+
+const asPauseState = (value: unknown): PauseState =>
+  PAUSE_STATES.includes(value as PauseState) ? (value as PauseState) : 'running';
+
+const asDecisionPointType = (value: unknown): DecisionPointType =>
+  DECISION_TYPES.includes(value as DecisionPointType)
+    ? (value as DecisionPointType)
+    : 'turning_point';
+
+const asFeasibilityResult = (value: unknown): FeasibilityResult =>
+  FEASIBILITY_RESULTS.includes(value as FeasibilityResult)
+    ? (value as FeasibilityResult)
+    : 'accepted';
+
+const normalizeDecisionOption = (opt: unknown, fallbackIndex: number): DecisionOption | null => {
+  if (!opt || typeof opt !== 'object') return null;
+
+  const option = opt as Record<string, unknown>;
+  const optionId = asNumber(option.option_id, fallbackIndex);
+  const label = asString(option.label, `Option ${fallbackIndex}`);
+  const description = asString(option.description);
+
+  return {
+    optionId,
+    label,
+    description,
+    ...(typeof option.icon === 'string' ? { icon: option.icon } : {}),
+    ...(typeof option.impact_preview === 'string' ? { impactPreview: option.impact_preview } : {}),
+    ...(typeof option.is_default === 'boolean' ? { isDefault: option.is_default } : {}),
+  };
+};
+
 const initialState: DecisionState = {
   currentDecision: null,
   pauseState: 'running',
@@ -278,34 +341,34 @@ const decisionSlice = createSlice({
       })
       .addCase(fetchDecisionStatus.fulfilled, (state, action) => {
         state.isLoading = false;
-        if (action.payload?.data) {
-          const data = action.payload.data;
-          state.pauseState = data.pause_state || 'running';
-          if (data.pending_decision) {
-            // Transform snake_case to camelCase
-            state.currentDecision = {
-              decisionId: data.pending_decision.decision_id,
-              decisionType: data.pending_decision.decision_type,
-              turnNumber: data.pending_decision.turn_number,
-              title: data.pending_decision.title,
-              description: data.pending_decision.description,
-              narrativeContext: data.pending_decision.narrative_context,
-              options: data.pending_decision.options.map((opt: Record<string, unknown>) => ({
-                optionId: opt.option_id,
-                label: opt.label,
-                description: opt.description,
-                icon: opt.icon,
-                impactPreview: opt.impact_preview,
-                isDefault: opt.is_default,
-              })),
-              defaultOptionId: data.pending_decision.default_option_id,
-              timeoutSeconds: data.pending_decision.timeout_seconds,
-              dramaticTension: data.pending_decision.dramatic_tension,
-              emotionalIntensity: data.pending_decision.emotional_intensity,
-              createdAt: data.pending_decision.created_at,
-              expiresAt: data.pending_decision.expires_at,
-            };
-          }
+        const payloadData = action.payload?.data as Record<string, unknown> | undefined;
+        state.pauseState = asPauseState(payloadData?.pause_state);
+
+        const pending = payloadData?.pending_decision as Record<string, unknown> | undefined;
+        if (pending) {
+          const options = Array.isArray(pending.options)
+            ? pending.options
+                .map((opt, index) => normalizeDecisionOption(opt, index + 1))
+                .filter((opt): opt is DecisionOption => !!opt)
+            : [];
+          const defaultOptionId =
+            typeof pending.default_option_id === 'number' ? pending.default_option_id : undefined;
+
+          state.currentDecision = {
+            decisionId: asString(pending.decision_id),
+            decisionType: asDecisionPointType(pending.decision_type),
+            turnNumber: asNumber(pending.turn_number),
+            title: asString(pending.title, 'Decision'),
+            description: asString(pending.description),
+            narrativeContext: asString(pending.narrative_context),
+            options,
+            ...(defaultOptionId !== undefined ? { defaultOptionId } : {}),
+            timeoutSeconds: asNumber(pending.timeout_seconds),
+            dramaticTension: asNumber(pending.dramatic_tension),
+            emotionalIntensity: asNumber(pending.emotional_intensity),
+            createdAt: asString(pending.created_at),
+            expiresAt: asString(pending.expires_at),
+          };
         }
       })
       .addCase(fetchDecisionStatus.rejected, (state, action) => {
@@ -320,20 +383,24 @@ const decisionSlice = createSlice({
       })
       .addCase(submitDecisionResponse.fulfilled, (state, action) => {
         state.isSubmitting = false;
-        if (action.payload?.data?.needs_negotiation) {
+        const payloadData = action.payload?.data as Record<string, unknown> | undefined;
+        const negotiation = payloadData?.negotiation as Record<string, unknown> | undefined;
+
+        if (payloadData?.needs_negotiation && negotiation) {
           // Negotiation required
-          const negData = action.payload.data.negotiation;
           state.isNegotiating = true;
           state.negotiationResult = {
-            decisionId: negData.decision_id,
-            feasibility: negData.feasibility,
-            explanation: negData.explanation,
-            adjustedAction: negData.adjusted_action,
-            alternatives: negData.alternatives?.map((alt: Record<string, unknown>) => ({
-              optionId: alt.option_id,
-              label: alt.label,
-              description: alt.description,
-            })) || [],
+            decisionId: asString(negotiation.decision_id),
+            feasibility: asFeasibilityResult(negotiation.feasibility),
+            explanation: asString(negotiation.explanation),
+            ...(typeof negotiation.adjusted_action === 'string'
+              ? { adjustedAction: negotiation.adjusted_action }
+              : {}),
+            alternatives: Array.isArray(negotiation.alternatives)
+              ? negotiation.alternatives
+                  .map((alt, index) => normalizeDecisionOption(alt, index + 1))
+                  .filter((opt): opt is DecisionOption => !!opt)
+              : [],
           };
           state.pauseState = 'negotiating';
         } else {
@@ -343,8 +410,8 @@ const decisionSlice = createSlice({
               decisionId: state.currentDecision.decisionId,
               turnNumber: state.currentDecision.turnNumber,
               inputType: state.selectedOptionId !== null ? 'option' : 'freetext',
-              selectedOptionId: state.selectedOptionId ?? undefined,
-              freeText: state.freeTextInput || undefined,
+              ...(state.selectedOptionId !== null ? { selectedOptionId: state.selectedOptionId } : {}),
+              ...(state.freeTextInput ? { freeText: state.freeTextInput } : {}),
               timestamp: new Date().toISOString(),
             });
           }

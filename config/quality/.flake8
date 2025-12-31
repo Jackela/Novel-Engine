@@ -1,0 +1,27 @@
+[flake8]
+max-line-length = 120
+extend-ignore = E203,W503
+filename =
+    contexts/orchestration/*.py,
+    contexts/orchestration/**/*.py
+exclude =
+    .git,
+    .trunk,
+    .venv-ci,
+    .venv,
+    build,
+    dist,
+    node_modules,
+    coverage,
+    htmlcov,
+    logs,
+    reports,
+    ai_testing/validation_reports,
+    ai_testing/reports,
+    specs,
+    docs,
+    scripts/contracts
+per-file-ignores =
+    tests/*:E501,E402,F401,F821,W291,W293,W504
+    ai_testing/*:E501,E402,F401,W291,W293,W504
+    scripts/*:E501

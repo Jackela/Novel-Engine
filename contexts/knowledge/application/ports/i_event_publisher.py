@@ -17,10 +17,10 @@ from typing import Any, Dict
 class IEventPublisher(ABC):
     """
     Port interface for publishing domain events.
-    
+
     This abstraction allows the domain and application layers to remain
     independent of specific messaging infrastructure (Kafka, RabbitMQ, etc.).
-    
+
     Implementations must:
     - Serialize domain events to message format
     - Handle connection failures with appropriate retry logic
@@ -38,13 +38,13 @@ class IEventPublisher(ABC):
     ) -> None:
         """
         Publish a single domain event to the specified topic.
-        
+
         Args:
             topic: Target topic name (e.g., "knowledge.entry.created")
             event: Domain event data as dictionary
             key: Optional partition key for ordering guarantees
             headers: Optional message headers for metadata
-            
+
         Raises:
             EventPublishException: If publishing fails after retries
         """
@@ -60,15 +60,15 @@ class IEventPublisher(ABC):
     ) -> None:
         """
         Publish multiple domain events to the specified topic in a batch.
-        
+
         Batch publishing improves throughput for bulk operations.
-        
+
         Args:
             topic: Target topic name
             events: List of domain event data dictionaries
             keys: Optional list of partition keys (same length as events)
             headers: Optional list of headers (same length as events)
-            
+
         Raises:
             EventPublishException: If batch publishing fails after retries
         """
@@ -78,7 +78,7 @@ class IEventPublisher(ABC):
     async def health_check(self) -> Dict[str, Any]:
         """
         Check the health status of the event publishing infrastructure.
-        
+
         Returns:
             Dictionary with health status information:
             {
@@ -92,4 +92,5 @@ class IEventPublisher(ABC):
 
 class EventPublishException(Exception):
     """Raised when event publishing fails."""
+
     pass

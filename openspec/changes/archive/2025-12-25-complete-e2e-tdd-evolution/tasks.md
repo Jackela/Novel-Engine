@@ -59,13 +59,13 @@
 - [x] Document test-first development process
 - [x] Add examples of proper test structure (E2E and Unit templates)
 
-### 3.2 Pre-commit Hooks
-- [ ] Add pre-commit hook for type-check
-- [ ] Add pre-commit hook for lint
+### 3.2 Pre-commit Hooks ✅
+- [x] Add pre-commit hook for type-check
+- [x] Add pre-commit hook for lint
 - [ ] Configure selective test running on changed files
 
-### 3.3 Coverage Enforcement
-- [ ] Configure Vitest coverage thresholds
+### 3.3 Coverage Enforcement ✅
+- [x] Configure Vitest coverage thresholds
 - [ ] Configure Playwright coverage reporting
 - [ ] Add CI check for coverage regression
 
@@ -73,7 +73,7 @@
 
 ### 4.1 SOLID Compliance ✅
 - [x] Document SOLID principles in CLAUDE.md with examples
-- [ ] Add linting rules for single responsibility
+- [x] Add linting rules for single responsibility
 - [ ] Review and refactor any violations found
 
 ### 4.2 SSOT Enforcement ✅

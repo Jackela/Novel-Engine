@@ -866,7 +866,6 @@ class ContextRenderer:
                     or focus_area.lower() in section.content.lower()
                     or focus_area.lower() in section.section_type.lower()
                 ):
-
                     # Boost enhanced relevance and priority
                     section.relevance_score = min(1.0, section.relevance_score + 0.2)
 

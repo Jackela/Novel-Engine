@@ -202,9 +202,7 @@ class PersonaAgent(_PersonaAgentImpl):
                     f"Character directory not found: {character_directory_path}"
                 )
             available_character_dirs = [
-                item
-                for item in os.listdir(base_dir)
-                if (base_dir / item).is_dir()
+                item for item in os.listdir(base_dir) if (base_dir / item).is_dir()
             ]
             matched_name = next(
                 (item for item in available_character_dirs if item == safe_name), None
@@ -221,7 +219,9 @@ class PersonaAgent(_PersonaAgentImpl):
             )
 
         if not os.path.isdir(resolved_path_obj):
-            raise FileNotFoundError(f"Character directory not found: {resolved_path_obj}")
+            raise FileNotFoundError(
+                f"Character directory not found: {resolved_path_obj}"
+            )
 
         if event_bus is None:
             event_bus = EventBus()

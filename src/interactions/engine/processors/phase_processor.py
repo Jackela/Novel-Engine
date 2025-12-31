@@ -129,9 +129,9 @@ class PhaseProcessor:
         # For now, we'll define basic templates for each interaction type
 
         for interaction_type in InteractionType:
-            self._interaction_templates[interaction_type] = (
-                self._create_default_phases_for_type(interaction_type)
-            )
+            self._interaction_templates[
+                interaction_type
+            ] = self._create_default_phases_for_type(interaction_type)
 
     def _create_default_phases(
         self, context: InteractionContext

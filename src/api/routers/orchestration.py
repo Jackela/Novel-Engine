@@ -29,10 +29,14 @@ async def get_orchestration_status(request: Request) -> Dict[str, Any]:
 
 
 @router.post("/api/orchestration/start")
-async def start_orchestration(request: Request, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+async def start_orchestration(
+    request: Request, payload: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     api_service = getattr(request.app.state, "api_service", None)
     if not api_service:
-        raise HTTPException(status_code=503, detail="Orchestration service not initialized")
+        raise HTTPException(
+            status_code=503, detail="Orchestration service not initialized"
+        )
 
     params = payload or {}
     total_turns = params.get("total_turns", 3)
@@ -59,15 +63,15 @@ async def start_orchestration(request: Request, payload: Optional[Dict[str, Any]
     try:
         result = await api_service.start_simulation(sim_request)
         return result
-    except ValueError as val_err:
+    except ValueError:
         return {
             "success": False,
-            "message": str(val_err),
+            "message": "Invalid orchestration request.",
             "data": await api_service.get_status(),
         }
-    except Exception as exc:
-        logger.error("Failed to start orchestration: %s", exc)
-        raise HTTPException(status_code=500, detail=str(exc))
+    except Exception:
+        logger.exception("Failed to start orchestration.")
+        raise HTTPException(status_code=500, detail="Failed to start orchestration.")
 
 
 @router.post("/api/orchestration/stop")
@@ -95,4 +99,3 @@ async def get_narrative(request: Request) -> Dict[str, Any]:
             "has_content": bool(narrative.get("story", "")),
         },
     }
-

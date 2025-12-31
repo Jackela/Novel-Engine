@@ -395,9 +395,9 @@ class DynamicContext:
         relevant_relationships = {}
         for agent_id in target_agents:
             if agent_id in self.character_state.active_relationships:
-                relevant_relationships[agent_id] = (
-                    self.character_state.active_relationships[agent_id]
-                )
+                relevant_relationships[
+                    agent_id
+                ] = self.character_state.active_relationships[agent_id]
 
         return relevant_relationships
 
@@ -677,6 +677,7 @@ class LegacyWorldState:
         # Add any additional kwargs as attributes
         for key, value in kwargs.items():
             setattr(self, key, value)
+
 
 # ENHANCED MODULE INITIALIZATION
 if __name__ == "__main__":

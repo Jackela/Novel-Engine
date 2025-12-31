@@ -32,6 +32,8 @@ class CommandBus:
         handler = self._handlers.get(command_type)
 
         if not handler:
-            raise ValueError(f"No handler registered for command type: {command_type.__name__}")
+            raise ValueError(
+                f"No handler registered for command type: {command_type.__name__}"
+            )
 
         return await handler.handle(command)

@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import axios from 'axios';
 import config from '@/config/env';
 import { logger } from '@/services/logging/LoggerFactory';
 import type { IAuthenticationService } from '@/services/auth/IAuthenticationService';
 import { TokenStorage } from '@/services/auth/TokenStorage';
 import { JWTAuthService } from '@/services/auth/JWTAuthService';
 import type { LoginRequest, AuthToken } from '@/types/auth';
+import { createHttpClient } from '@/lib/api/httpClient';
+import { guestAPI } from '@/services/api/guestAPI';
 
 // Define missing types locally
 export interface AuthProviderProps {
@@ -18,6 +19,7 @@ export interface AuthInternalState {
   isAuthenticated: boolean;
   isGuest: boolean;
   token: AuthToken | null;
+  workspaceId: string | null;
   isLoading: boolean;
   error: Error | null;
 }
@@ -26,7 +28,7 @@ export interface AuthContextState extends AuthInternalState {
   login: (credentials: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
-  enterGuestMode: () => void;
+  enterGuestMode: () => Promise<void>;
 }
 
 const GUEST_SESSION_KEY = 'guest_session_active';
@@ -56,10 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
     }
 
     const tokenStorage = new TokenStorage();
-    const httpClient = axios.create({
-      baseURL: config.apiBaseUrl,
-      timeout: config.apiTimeout,
-    });
+    const httpClient = createHttpClient({ baseURL: config.apiBaseUrl, timeout: config.apiTimeout });
 
     return new JWTAuthService(httpClient, tokenStorage);
   });
@@ -68,6 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
     isAuthenticated: false,
     isGuest: false,
     token: null,
+    workspaceId: null,
     isLoading: true,
     error: null,
   });
@@ -77,9 +77,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
       let shouldResumeGuestSession = false;
       if (enableGuestMode && typeof window !== 'undefined') {
         try {
-          shouldResumeGuestSession = window.sessionStorage.getItem(GUEST_SESSION_KEY) === '1';
+          shouldResumeGuestSession = window.localStorage.getItem(GUEST_SESSION_KEY) === '1';
         } catch (e) {
-          logger.warn('Failed to read guest session from sessionStorage', e as Error, { component: 'AuthProvider' });
+          logger.warn('Failed to read guest session from localStorage', e as Error, { component: 'AuthProvider' });
           shouldResumeGuestSession = false;
         }
       }
@@ -99,22 +99,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
             isGuest: false,
             // @ts-ignore - JWTAuthService might return a slightly different token shape or null, safe to cast or ignore for now if structure matches enough
             token: token as AuthToken | null,
+            workspaceId: null,
             isLoading: false,
             error: null,
           });
         } else if (shouldResumeGuestSession) {
-          setState({
-            isAuthenticated: true,
-            isGuest: true,
-            token: createGuestToken(),
-            isLoading: false,
-            error: null,
-          });
+          try {
+            const session = await guestAPI.createOrResumeSession();
+            setState({
+              isAuthenticated: true,
+              isGuest: true,
+              token: createGuestToken(),
+              workspaceId: session.workspace_id,
+              isLoading: false,
+              error: null,
+            });
+          } catch (error) {
+            logger.error('Failed to resume guest session', error as Error, {
+              component: 'AuthProvider',
+              action: 'initialize',
+            });
+            if (typeof window !== 'undefined') {
+              try {
+                window.sessionStorage.removeItem(GUEST_SESSION_KEY);
+              } catch {
+                // ignore storage errors
+              }
+            }
+            setState({
+              isAuthenticated: false,
+              isGuest: false,
+              token: null,
+              workspaceId: null,
+              isLoading: false,
+              error: error as Error,
+            });
+          }
         } else {
           setState({
             isAuthenticated: false,
             isGuest: false,
             token: null,
+            workspaceId: null,
             isLoading: false,
             error: null,
           });
@@ -140,18 +166,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
         });
 
         if (enableGuestMode && shouldResumeGuestSession) {
-          setState({
-            isAuthenticated: true,
-            isGuest: true,
-            token: createGuestToken(),
-            isLoading: false,
-            error: null,
-          });
+          try {
+            const session = await guestAPI.createOrResumeSession();
+            setState({
+              isAuthenticated: true,
+              isGuest: true,
+              token: createGuestToken(),
+              workspaceId: session.workspace_id,
+              isLoading: false,
+              error: null,
+            });
+          } catch (guestError) {
+            setState({
+              isAuthenticated: false,
+              isGuest: false,
+              token: null,
+              workspaceId: null,
+              isLoading: false,
+              error: guestError as Error,
+            });
+          }
         } else {
           setState({
             isAuthenticated: false,
             isGuest: false,
             token: null,
+            workspaceId: null,
             isLoading: false,
             error: error as Error,
           });
@@ -177,6 +217,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
           isGuest: false,
           // @ts-ignore
           token: authService.getToken() as AuthToken | null,
+          workspaceId: null,
         }));
       } else if (enableGuestMode) {
         setState(prev => ({
@@ -184,6 +225,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
           isAuthenticated: true,
           isGuest: true,
           token: createGuestToken(),
+          workspaceId: prev.workspaceId,
         }));
       } else {
         setState(prev => ({
@@ -191,6 +233,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
           isAuthenticated: false,
           isGuest: false,
           token: null,
+          workspaceId: null,
         }));
       }
     });
@@ -232,6 +275,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
         isGuest: false,
         // @ts-ignore
         token: token as AuthToken,
+        workspaceId: null,
         isLoading: false,
         error: null,
       });
@@ -252,6 +296,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
         isAuthenticated: false,
         isGuest: false,
         token: null,
+        workspaceId: null,
         isLoading: false,
         error: error as Error,
       });
@@ -272,9 +317,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
       if (state.isGuest && enableGuestMode) {
         if (typeof window !== 'undefined') {
           try {
-            window.sessionStorage.removeItem(GUEST_SESSION_KEY);
+            window.localStorage.removeItem(GUEST_SESSION_KEY);
           } catch (e) {
-            logger.warn('Failed to remove guest session from sessionStorage during logout', e as Error, { component: 'AuthProvider' });
+            logger.warn('Failed to remove guest session from localStorage during logout', e as Error, { component: 'AuthProvider' });
           }
         }
         setState(prev => ({
@@ -282,6 +327,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
           isAuthenticated: false,
           isGuest: false,
           token: null,
+          workspaceId: null,
           isLoading: false,
           error: null,
         }));
@@ -295,6 +341,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
           isAuthenticated: false,
           isGuest: false,
           token: null,
+          workspaceId: null,
           isLoading: false,
           error: null,
         });
@@ -336,6 +383,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
         isGuest: false,
         // @ts-ignore
         token: token as AuthToken,
+        workspaceId: null,
         isLoading: false,
         error: null,
       });
@@ -354,6 +402,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
         isAuthenticated: false,
         isGuest: false,
         token: null,
+        workspaceId: null,
         isLoading: false,
         error: error as Error,
       });
@@ -362,27 +411,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
     }
   };
 
-  const enterGuestMode = () => {
+  const enterGuestMode = async () => {
     if (!enableGuestMode) {
       logger.warn('Guest mode is disabled; ignoring enterGuestMode call');
       return;
     }
 
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+
     if (typeof window !== 'undefined') {
       try {
-        window.sessionStorage.setItem(GUEST_SESSION_KEY, '1');
+        window.localStorage.setItem(GUEST_SESSION_KEY, '1');
       } catch (e) {
-        logger.warn('Failed to set guest session in sessionStorage', e as Error, { component: 'AuthProvider' });
+        logger.warn('Failed to set guest session in localStorage', e as Error, { component: 'AuthProvider' });
       }
     }
 
-    setState({
-      isAuthenticated: true,
-      isGuest: true,
-      token: createGuestToken(),
-      isLoading: false,
-      error: null,
-    });
+    try {
+      const session = await guestAPI.createOrResumeSession();
+      setState({
+        isAuthenticated: true,
+        isGuest: true,
+        token: createGuestToken(),
+        workspaceId: session.workspace_id,
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      logger.error('Failed to create guest session', error as Error, { component: 'AuthProvider', action: 'enterGuestMode' });
+      setState({
+        isAuthenticated: false,
+        isGuest: false,
+        token: null,
+        workspaceId: null,
+        isLoading: false,
+        error: error as Error,
+      });
+      throw error;
+    }
   };
 
   const contextValue: AuthContextState = {

@@ -526,7 +526,9 @@ class PerformanceRegression:
             "severity": (
                 "high"
                 if z_score > self.sensitivity * 1.5
-                else "medium" if is_regression else "low"
+                else "medium"
+                if is_regression
+                else "low"
             ),
         }
 
@@ -744,7 +746,9 @@ class PerformanceMonitor:
                 trend = (
                     "up"
                     if values[-1] > values[0]
-                    else "down" if values[-1] < values[0] else "stable"
+                    else "down"
+                    if values[-1] < values[0]
+                    else "stable"
                 )
                 trends[metric] = {
                     "trend": trend,

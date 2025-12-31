@@ -140,11 +140,15 @@ async function waitForDebugger(port, timeoutMs) {
   throw new Error(`Chrome debugger not ready on port ${port}`);
 }
 
+function escapeSelector(selector) {
+  return selector.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 async function waitForSelector(Runtime, selector, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const { result } = await Runtime.evaluate({
-      expression: `document.querySelector('${selector.replace(/'/g, "\\'")}') !== null`,
+      expression: `document.querySelector('${escapeSelector(selector)}') !== null`,
       returnByValue: true,
     });
     if (result.value === true) {
@@ -219,7 +223,7 @@ async function run() {
       let layoutReady = false;
       while (Date.now() < layoutDeadline) {
         const { result } = await Runtime.evaluate({
-          expression: `document.querySelector('${layoutSelector.replace(/'/g, "\\'")}') !== null`,
+          expression: `document.querySelector('${escapeSelector(layoutSelector)}') !== null`,
           returnByValue: true,
         });
         if (result.value === true) {

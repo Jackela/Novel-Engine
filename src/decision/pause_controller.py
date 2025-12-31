@@ -21,6 +21,7 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
+
 class InteractionPauseController:
     """
     Controls the pause/resume flow for user decision points.
@@ -204,9 +205,7 @@ class InteractionPauseController:
 
             if self._pending.decision_point.decision_id != decision_id:
                 logger.warning(
-                    "Decision ID mismatch: expected %s, got %s",
-                    self._pending.decision_point.decision_id,
-                    decision_id,
+                    "Decision ID mismatch during response submission.",
                 )
                 return False
 
@@ -225,11 +224,7 @@ class InteractionPauseController:
             self._pending.decision_point.is_resolved = True
             self._pending.decision_point.resolution = "user_input"
 
-            logger.info(
-                "User response submitted for decision %s: %s",
-                decision_id,
-                input_type,
-            )
+            logger.info("User response submitted for decision.")
 
         # Signal resume
         self._resume_event.set()
@@ -262,7 +257,7 @@ class InteractionPauseController:
             self._pending.decision_point.is_resolved = True
             self._pending.decision_point.resolution = "skipped"
 
-            logger.info("Decision point %s skipped", decision_id)
+            logger.info("Decision point skipped.")
 
         self._resume_event.set()
         return True
@@ -296,11 +291,7 @@ class InteractionPauseController:
             self._pending.state = PauseState.NEGOTIATING
             self._state = PauseState.NEGOTIATING
 
-            logger.info(
-                "Started negotiation for decision %s: %s",
-                decision_id,
-                negotiation_result.feasibility.value,
-            )
+            logger.info("Started negotiation for decision.")
 
         return True
 
@@ -337,19 +328,19 @@ class InteractionPauseController:
 
                 # Set final action
                 if accepted and self._pending.negotiation_result.adjusted_action:
-                    self._pending.final_action = self._pending.negotiation_result.adjusted_action
-                elif self._pending.user_response and self._pending.user_response.free_text:
+                    self._pending.final_action = (
+                        self._pending.negotiation_result.adjusted_action
+                    )
+                elif (
+                    self._pending.user_response
+                    and self._pending.user_response.free_text
+                ):
                     self._pending.final_action = self._pending.user_response.free_text
 
             self._pending.decision_point.is_resolved = True
             self._pending.decision_point.resolution = "user_input"
 
-            logger.info(
-                "Negotiation confirmed for decision %s: accepted=%s, insist=%s",
-                decision_id,
-                accepted,
-                insist_original,
-            )
+            logger.info("Negotiation confirmed for decision.")
 
         self._resume_event.set()
         return True
@@ -360,9 +351,7 @@ class InteractionPauseController:
             "state": self._state.value,
             "is_paused": self.is_paused,
             "pending_decision": (
-                self._pending.decision_point.to_dict()
-                if self._pending
-                else None
+                self._pending.decision_point.to_dict() if self._pending else None
             ),
             "negotiation": (
                 self._pending.negotiation_result.to_dict()
@@ -376,8 +365,7 @@ class InteractionPauseController:
         async with self._lock:
             if self._pending:
                 logger.warning(
-                    "Resetting with pending decision: %s",
-                    self._pending.decision_point.decision_id,
+                    "Resetting with pending decision.",
                 )
             self._pending = None
             self._state = PauseState.RUNNING

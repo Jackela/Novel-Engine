@@ -73,7 +73,6 @@ class EnterpriseSecuritySuite:
         enable_behavioral_analytics: bool = True,
         security_config: SecurityConfig = None,
     ):
-
         self.database_path = database_path
         self.secret_key = secret_key or secrets.token_urlsafe(32)
         self.redis_url = redis_url
@@ -285,10 +284,12 @@ class EnterpriseSecuritySuite:
                         pass  # Not authenticated, continue with anonymous evaluation
 
                 # Evaluate request security
-                is_allowed, security_actions, threat_level = (
-                    await self.security_manager.evaluate_request_security(
-                        request, user_id
-                    )
+                (
+                    is_allowed,
+                    security_actions,
+                    threat_level,
+                ) = await self.security_manager.evaluate_request_security(
+                    request, user_id
                 )
 
                 if not is_allowed:
@@ -474,9 +475,13 @@ class EnterpriseSecuritySuite:
                 },
             }
 
-        except Exception as e:
-            logger.error(f"Error getting security status: {e}")
-            return {"status": "error", "error": str(e), "components_status": "degraded"}
+        except Exception:
+            logger.exception("Error getting security status.")
+            return {
+                "status": "error",
+                "error": "unavailable",
+                "components_status": "degraded",
+            }
 
     async def cleanup(self):
         """Cleanup security suite resources"""
@@ -537,9 +542,10 @@ def create_secure_app(
         try:
             suite = get_security_suite()
             return await suite.get_security_status()
-        except Exception as e:
+        except Exception:
+            logger.exception("Security health check failed.")
             return JSONResponse(
-                status_code=503, content={"status": "error", "error": str(e)}
+                status_code=503, content={"status": "error", "error": "unavailable"}
             )
 
     return app

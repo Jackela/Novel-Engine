@@ -26,23 +26,33 @@ router = APIRouter(prefix="/decision", tags=["decision"])
 # Request/Response Models
 # ===================================================================
 
+
 class DecisionResponseRequest(BaseModel):
     """Request body for submitting a decision response."""
+
     decision_id: str = Field(..., description="ID of the decision point")
     input_type: str = Field(..., description="Type of input: 'option' or 'freetext'")
-    selected_option_id: Optional[int] = Field(None, description="Selected option ID (for option type)")
-    free_text: Optional[str] = Field(None, description="Free text input (for freetext type)")
+    selected_option_id: Optional[int] = Field(
+        None, description="Selected option ID (for option type)"
+    )
+    free_text: Optional[str] = Field(
+        None, description="Free text input (for freetext type)"
+    )
 
 
 class NegotiationConfirmRequest(BaseModel):
     """Request body for confirming negotiation result."""
+
     decision_id: str = Field(..., description="ID of the decision point")
     accepted: bool = Field(..., description="Whether user accepts the adjusted action")
-    insist_original: bool = Field(False, description="Whether user insists on original input")
+    insist_original: bool = Field(
+        False, description="Whether user insists on original input"
+    )
 
 
 class SkipDecisionRequest(BaseModel):
     """Request body for skipping a decision."""
+
     decision_id: str = Field(..., description="ID of the decision point to skip")
 
 
@@ -102,20 +112,23 @@ def get_negotiation_engine() -> NegotiationEngine:
 def broadcast_decision_event(event_type: str, data: Dict[str, Any]):
     """Broadcast a decision-related SSE event."""
     if _broadcast_sse_event:
-        _broadcast_sse_event({
-            "id": f"decision-{data.get('decision_id', 'unknown')}",
-            "type": event_type,
-            "title": f"Decision: {event_type}",
-            "description": data.get("description", ""),
-            "severity": "medium",
-            "timestamp": data.get("timestamp"),
-            "data": data,
-        })
+        _broadcast_sse_event(
+            {
+                "id": f"decision-{data.get('decision_id', 'unknown')}",
+                "type": event_type,
+                "title": f"Decision: {event_type}",
+                "description": data.get("description", ""),
+                "severity": "medium",
+                "timestamp": data.get("timestamp"),
+                "data": data,
+            }
+        )
 
 
 # ===================================================================
 # API Endpoints
 # ===================================================================
+
 
 @router.get("/status")
 async def get_decision_status() -> Dict[str, Any]:
@@ -131,10 +144,10 @@ async def get_decision_status() -> Dict[str, Any]:
             "success": True,
             "data": controller.get_status(),
         }
-    except RuntimeError as e:
+    except RuntimeError:
         return {
             "success": False,
-            "message": str(e),
+            "message": "Decision system unavailable.",
             "data": None,
         }
 
@@ -195,13 +208,18 @@ async def submit_decision_response(request: DecisionResponseRequest) -> Dict[str
                     )
 
                     # Broadcast negotiation event
-                    broadcast_decision_event("negotiation_required", {
-                        "decision_id": request.decision_id,
-                        "feasibility": negotiation_result.feasibility.value,
-                        "explanation": negotiation_result.explanation,
-                        "adjusted_action": negotiation_result.adjusted_action,
-                        "alternatives": [alt.to_dict() for alt in negotiation_result.alternatives],
-                    })
+                    broadcast_decision_event(
+                        "negotiation_required",
+                        {
+                            "decision_id": request.decision_id,
+                            "feasibility": negotiation_result.feasibility.value,
+                            "explanation": negotiation_result.explanation,
+                            "adjusted_action": negotiation_result.adjusted_action,
+                            "alternatives": [
+                                alt.to_dict() for alt in negotiation_result.alternatives
+                            ],
+                        },
+                    )
 
                     return {
                         "success": True,
@@ -222,10 +240,13 @@ async def submit_decision_response(request: DecisionResponseRequest) -> Dict[str
 
         if success:
             # Broadcast acceptance event
-            broadcast_decision_event("decision_accepted", {
-                "decision_id": request.decision_id,
-                "input_type": request.input_type,
-            })
+            broadcast_decision_event(
+                "decision_accepted",
+                {
+                    "decision_id": request.decision_id,
+                    "input_type": request.input_type,
+                },
+            )
 
             return {
                 "success": True,
@@ -240,8 +261,8 @@ async def submit_decision_response(request: DecisionResponseRequest) -> Dict[str
                 detail="Failed to submit response - decision may have expired",
             )
 
-    except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except RuntimeError:
+        raise HTTPException(status_code=500, detail="Decision system unavailable.")
 
 
 @router.post("/confirm")
@@ -263,11 +284,14 @@ async def confirm_negotiation(request: NegotiationConfirmRequest) -> Dict[str, A
 
         if success:
             # Broadcast finalization event
-            broadcast_decision_event("decision_finalized", {
-                "decision_id": request.decision_id,
-                "accepted_adjustment": request.accepted,
-                "insisted_original": request.insist_original,
-            })
+            broadcast_decision_event(
+                "decision_finalized",
+                {
+                    "decision_id": request.decision_id,
+                    "accepted_adjustment": request.accepted,
+                    "insisted_original": request.insist_original,
+                },
+            )
 
             return {
                 "success": True,
@@ -295,10 +319,13 @@ async def skip_decision(request: SkipDecisionRequest) -> Dict[str, Any]:
 
         if success:
             # Broadcast skip event
-            broadcast_decision_event("decision_resolved", {
-                "decision_id": request.decision_id,
-                "resolution": "skipped",
-            })
+            broadcast_decision_event(
+                "decision_resolved",
+                {
+                    "decision_id": request.decision_id,
+                    "resolution": "skipped",
+                },
+            )
 
             return {
                 "success": True,
@@ -327,9 +354,9 @@ async def get_decision_history() -> Dict[str, Any]:
                 "total_decisions": detector.decision_count,
             },
         }
-    except RuntimeError as e:
+    except RuntimeError:
         return {
             "success": False,
-            "message": str(e),
+            "message": "Decision history unavailable.",
             "data": None,
         }

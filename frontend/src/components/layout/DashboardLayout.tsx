@@ -32,7 +32,7 @@ interface DashboardLayoutProps {
 const GUEST_BANNER_KEY = 'novel-engine-guest-banner-dismissed';
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { isGuest } = useAuthContext();
+  const { isGuest, workspaceId } = useAuthContext();
   const [bannerDismissed, setBannerDismissed] = useState(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -71,9 +71,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             Emergent Narrative Dashboard
           </Typography>
           {isGuest && (
-            <Tooltip title="Demo mode: curated sci-fi data">
+            <Tooltip title={workspaceId ? `Guest workspace: ${workspaceId}` : 'Guest session active'}>
               <Chip
-                label="Demo Mode"
+                label="Guest Mode"
                 color="warning"
                 size="small"
                 icon={<InfoOutlinedIcon fontSize="small" />}
@@ -100,7 +100,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               }
               data-testid="guest-mode-banner"
             >
-              You&apos;re in the demo shell. Actions remain simulated; data may include live API feeds for Maps/Networks.
+              You&apos;re in guest mode. Your workspace is persisted and should survive refreshes in this browser session.
             </Alert>
           </Collapse>
         </Box>

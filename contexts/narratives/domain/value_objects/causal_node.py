@@ -124,7 +124,9 @@ class CausalNode:
         if self.indirect_effects is None:
             object.__setattr__(self, "indirect_effects", frozenset())
         elif isinstance(self.indirect_effects, set):
-            object.__setattr__(self, "indirect_effects", frozenset(self.indirect_effects))
+            object.__setattr__(
+                self, "indirect_effects", frozenset(self.indirect_effects)
+            )
 
         if self.causal_relationships is None:
             object.__setattr__(self, "causal_relationships", {})
@@ -132,12 +134,16 @@ class CausalNode:
         if self.prerequisite_conditions is None:
             object.__setattr__(self, "prerequisite_conditions", frozenset())
         elif isinstance(self.prerequisite_conditions, set):
-            object.__setattr__(self, "prerequisite_conditions", frozenset(self.prerequisite_conditions))
+            object.__setattr__(
+                self, "prerequisite_conditions", frozenset(self.prerequisite_conditions)
+            )
 
         if self.blocking_conditions is None:
             object.__setattr__(self, "blocking_conditions", frozenset())
         elif isinstance(self.blocking_conditions, set):
-            object.__setattr__(self, "blocking_conditions", frozenset(self.blocking_conditions))
+            object.__setattr__(
+                self, "blocking_conditions", frozenset(self.blocking_conditions)
+            )
 
         if self.tags is None:
             object.__setattr__(self, "tags", frozenset())
@@ -200,6 +206,7 @@ class CausalNode:
 
     def __hash__(self) -> int:
         """Custom hash implementation for frozen dataclass with Dict fields."""
+
         # Convert nested dict to hashable form
         def _dict_to_hashable(d):
             if not d:
@@ -212,38 +219,40 @@ class CausalNode:
                     v = tuple(v)
                 items.append((k, v))
             return frozenset(items)
-        
-        return hash((
-            self.node_id,
-            self.event_id,
-            self.plot_point_id,
-            self.character_id,
-            self.title,
-            self.description,
-            self.node_type,
-            self.direct_causes,
-            self.direct_effects,
-            self.indirect_causes,
-            self.indirect_effects,
-            _dict_to_hashable(self.causal_relationships),
-            self.sequence_order,
-            self.temporal_delay,
-            self.duration,
-            self.is_root_cause,
-            self.is_terminal_effect,
-            self.is_branch_point,
-            self.is_convergence_point,
-            self.occurrence_probability,
-            self.causal_certainty,
-            self.narrative_importance,
-            self.character_impact_level,
-            self.story_arc_impact,
-            self.prerequisite_conditions,
-            self.blocking_conditions,
-            self.tags,
-            self.narrative_context,
-            _dict_to_hashable(self.metadata),
-        ))
+
+        return hash(
+            (
+                self.node_id,
+                self.event_id,
+                self.plot_point_id,
+                self.character_id,
+                self.title,
+                self.description,
+                self.node_type,
+                self.direct_causes,
+                self.direct_effects,
+                self.indirect_causes,
+                self.indirect_effects,
+                _dict_to_hashable(self.causal_relationships),
+                self.sequence_order,
+                self.temporal_delay,
+                self.duration,
+                self.is_root_cause,
+                self.is_terminal_effect,
+                self.is_branch_point,
+                self.is_convergence_point,
+                self.occurrence_probability,
+                self.causal_certainty,
+                self.narrative_importance,
+                self.character_impact_level,
+                self.story_arc_impact,
+                self.prerequisite_conditions,
+                self.blocking_conditions,
+                self.tags,
+                self.narrative_context,
+                _dict_to_hashable(self.metadata),
+            )
+        )
 
     @property
     def total_causes(self) -> int:

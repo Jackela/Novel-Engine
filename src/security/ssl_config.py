@@ -153,7 +153,7 @@ class SSLCertificateManager:
 
         # Set secure permissions
         os.chmod(key_file, 0o600)
-        os.chmod(cert_file, 0o644)
+        os.chmod(cert_file, 0o600)
 
         logger.info(f"SELF-SIGNED CERTIFICATE GENERATED: {cert_file}, {key_file}")
         return str(cert_file), str(key_file)

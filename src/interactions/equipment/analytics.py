@@ -186,7 +186,9 @@ class EquipmentAnalyzer:
                 else (
                     "High"
                     if total_risk > 0.5
-                    else "Medium" if total_risk > 0.2 else "Low"
+                    else "Medium"
+                    if total_risk > 0.2
+                    else "Low"
                 )
             ),
         }

@@ -563,9 +563,9 @@ class WorldSliceReadModel(BaseModel):
                 self.min_z = min(c[2] for c in coordinates)
                 self.max_z = max(c[2] for c in coordinates)
             else:
-                self.min_x = self.max_x = self.min_y = self.max_y = self.min_z = (
-                    self.max_z
-                ) = None
+                self.min_x = (
+                    self.max_x
+                ) = self.min_y = self.max_y = self.min_z = self.max_z = None
 
         # Update timestamps
         self.last_event_timestamp = datetime.now()

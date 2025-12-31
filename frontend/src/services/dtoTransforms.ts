@@ -29,14 +29,15 @@ export function extractStatsFromData(structuredData: CharacterStructuredData | u
     // Try to extract from various possible structures
     const combatStats = structuredData.combat_stats ?? {};
     const psychProfile = structuredData.psychological_profile ?? {};
+    const directStats = structuredData.stats ?? {};
 
     return {
-        strength: combatStats.strength ?? combatStats.melee ?? DEFAULT_STATS.strength,
-        dexterity: combatStats.dexterity ?? combatStats.pilot ?? DEFAULT_STATS.dexterity,
-        intelligence: combatStats.intelligence ?? combatStats.tactics ?? DEFAULT_STATS.intelligence,
-        willpower: psychProfile.morale ?? psychProfile.loyalty ?? DEFAULT_STATS.willpower,
-        perception: combatStats.perception ?? combatStats.marksmanship ?? DEFAULT_STATS.perception,
-        charisma: combatStats.leadership ?? psychProfile.charisma ?? DEFAULT_STATS.charisma,
+        strength: directStats.strength ?? combatStats.strength ?? combatStats.melee ?? DEFAULT_STATS.strength,
+        dexterity: directStats.dexterity ?? combatStats.dexterity ?? combatStats.pilot ?? DEFAULT_STATS.dexterity,
+        intelligence: directStats.intelligence ?? combatStats.intelligence ?? combatStats.tactics ?? DEFAULT_STATS.intelligence,
+        willpower: directStats.willpower ?? combatStats.willpower ?? psychProfile.morale ?? psychProfile.loyalty ?? DEFAULT_STATS.willpower,
+        perception: directStats.perception ?? combatStats.perception ?? combatStats.marksmanship ?? DEFAULT_STATS.perception,
+        charisma: directStats.charisma ?? combatStats.charisma ?? combatStats.leadership ?? psychProfile.charisma ?? DEFAULT_STATS.charisma,
     };
 }
 
@@ -46,7 +47,34 @@ export function extractEquipmentFromData(structuredData: CharacterStructuredData
     const equipment = structuredData.equipment;
     const items: Equipment[] = [];
 
+    if (Array.isArray(equipment)) {
+        equipment.forEach((item, index) => {
+            if (!item?.name) return;
+            items.push({
+                id: item.name ? `${item.name}_${index}` : `equipment_${index}`,
+                name: item.name,
+                type: item.type ?? 'unknown',
+                description: item.description ?? '',
+                condition: item.condition ?? 1.0,
+            });
+        });
+        return items;
+    }
+
     // Handle different equipment structures
+    if (typeof equipment === 'object' && equipment && 'items' in equipment && Array.isArray(equipment.items)) {
+        equipment.items.forEach((item, index) => {
+            if (!item?.name) return;
+            items.push({
+                id: item.name ? `${item.name}_${index}` : `equipment_${index}`,
+                name: item.name,
+                type: item.type ?? 'unknown',
+                description: item.description ?? '',
+                condition: item.condition ?? 1.0,
+            });
+        });
+    }
+
     if (equipment.primary_weapon) {
         items.push({
             id: 'primary_weapon',
@@ -83,12 +111,19 @@ export function extractEquipmentFromData(structuredData: CharacterStructuredData
 }
 
 export function transformCharacterResponse(data: CharacterDetailResponse, name: string): Character {
+    const structuredData = data.structured_data as (CharacterStructuredData & Record<string, unknown>) | undefined;
+    const metadata = (data.metadata ?? {}) as Record<string, unknown>;
+
+    const faction = (metadata.faction as string | undefined) ?? (structuredData?.faction as string | undefined) ?? 'Unknown';
+    const role = (metadata.role as string | undefined) ?? (structuredData?.role as string | undefined) ?? 'Character';
+    const description = data.background_summary || data.narrative_context || '';
+
     return {
         id: name,
         name: data.name || name,
-        faction: 'Unknown', // Extract from narrative_context if available
-        role: 'Character',
-        description: data.narrative_context || '',
+        faction,
+        role,
+        description,
         stats: extractStatsFromData(data.structured_data),
         equipment: extractEquipmentFromData(data.structured_data),
         relationships: [],

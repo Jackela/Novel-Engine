@@ -101,7 +101,9 @@ def downgrade() -> None:
     """Downgrade database schema - Remove knowledge_audit_log table."""
 
     # Drop indexes
-    op.drop_index("ix_knowledge_audit_log_change_type", table_name="knowledge_audit_log")
+    op.drop_index(
+        "ix_knowledge_audit_log_change_type", table_name="knowledge_audit_log"
+    )
     op.drop_index("ix_knowledge_audit_log_user_id", table_name="knowledge_audit_log")
     op.drop_index("ix_knowledge_audit_log_timestamp", table_name="knowledge_audit_log")
     op.drop_index("ix_knowledge_audit_log_entry_id", table_name="knowledge_audit_log")

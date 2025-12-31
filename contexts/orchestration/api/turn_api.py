@@ -26,6 +26,7 @@ from typing import Annotated
 from ..application.services import TurnOrchestrator
 from ..domain.services import EnhancedPerformanceTracker
 from ..domain.value_objects import PhaseType, TurnConfiguration, TurnId
+
 try:
     from ..infrastructure.monitoring import (
         PrometheusMetricsCollector,
@@ -35,7 +36,8 @@ try:
     )
 except ImportError as monitoring_error:  # pragma: no cover - exercised in test stubs
     logging.getLogger(__name__).warning(
-        "Observability dependencies missing (%s); using no-op monitoring.", monitoring_error
+        "Observability dependencies missing (%s); using no-op monitoring.",
+        monitoring_error,
     )
 
     class PrometheusMetricsCollector:  # type: ignore[override]
@@ -64,6 +66,7 @@ except ImportError as monitoring_error:  # pragma: no cover - exercised in test 
 
     def setup_fastapi_tracing(app: FastAPI, *_args, **_kwargs) -> FastAPI:
         return app
+
 
 logger = logging.getLogger(__name__)
 
@@ -243,7 +246,7 @@ def _patch_e2e_database_fixture() -> None:
             module = importlib.import_module(module_name)
         DatabaseFixtures = getattr(module, "DatabaseFixtures", None)
         if DatabaseFixtures is None:
-            raise AttributeError('DatabaseFixtures not ready')
+            raise AttributeError("DatabaseFixtures not ready")
     except Exception:
         threading.Timer(0.1, _patch_e2e_database_fixture).start()
         return
@@ -591,7 +594,7 @@ async def get_turn_status(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting turn status for {turn_id}: {e}")
+        logger.exception("Error getting turn status.")
         raise HTTPException(status_code=500, detail="Failed to retrieve turn status")
 
 
@@ -678,7 +681,7 @@ async def cleanup_turn(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error cleaning up turn {turn_id}: {e}")
+        logger.exception("Error cleaning up turn.")
         raise HTTPException(status_code=500, detail="Failed to cleanup turn resources")
 
 

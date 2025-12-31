@@ -11,7 +11,6 @@ module.exports = {
     'alpha-value-notation': null,
     'shorthand-property-no-redundant-values': null,
     'media-feature-range-notation': null,
-    'selector-class-pattern': null,
     'property-no-vendor-prefix': true,
     'value-keyword-case': null,
     // Re-enable keyframe name check; fixed in index.css

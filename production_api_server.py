@@ -366,9 +366,7 @@ async def run_simulation(
     start_time = time.time()
     request_id = secrets.token_hex(8)
 
-    logger.info(
-        f"Simulation requested by {current_user}: {simulation_request.character_names} (ID: {request_id})"
-    )
+    logger.info("Simulation requested (ID: %s).", request_id)
 
     try:
         config = get_config()

@@ -5,7 +5,11 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Request, Response
 
 from src.api.settings import APISettings
-from src.workspaces import FilesystemCharacterStore, FilesystemWorkspaceStore, GuestSessionManager
+from src.workspaces import (
+    FilesystemCharacterStore,
+    FilesystemWorkspaceStore,
+    GuestSessionManager,
+)
 
 
 def get_settings(request: Request) -> APISettings:

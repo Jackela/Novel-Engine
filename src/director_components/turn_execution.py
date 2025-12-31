@@ -128,9 +128,9 @@ class TurnExecutionEngine:
             # Phase 2: Agent Decisions
             decision_result = await self._execute_decision_phase(context)
             if not decision_result["success"]:
-                turn_result["error"] = (
-                    f"Decision phase failed: {decision_result['error']}"
-                )
+                turn_result[
+                    "error"
+                ] = f"Decision phase failed: {decision_result['error']}"
                 return turn_result
 
             # Phase 3: Conflict Resolution

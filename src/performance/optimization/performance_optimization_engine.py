@@ -417,9 +417,9 @@ class BatchProcessor:
 
     def __init__(self, config: OptimizationConfig):
         self.config = config
-        self.pending_operations: Dict[str, List[Tuple[Any, asyncio.Future]]] = (
-            defaultdict(list)
-        )
+        self.pending_operations: Dict[
+            str, List[Tuple[Any, asyncio.Future]]
+        ] = defaultdict(list)
         self.batch_timers: Dict[str, asyncio.Task] = {}
         self.batch_lock = asyncio.Lock()
 

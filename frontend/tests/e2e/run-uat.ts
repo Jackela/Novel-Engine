@@ -95,8 +95,8 @@ class UATTestRunner {
     
     // Validate dashboard accessibility
     try {
-      const { stdout, stderr } = await execAsync(`curl -f ${this.config.baseURL} > /dev/null 2>&1 || echo "FAILED"`);
-      if (stdout.includes('FAILED')) {
+      const response = await fetch(this.config.baseURL, { method: 'GET' });
+      if (!response.ok) {
         throw new Error(`Dashboard not accessible at ${this.config.baseURL}`);
       }
     } catch (error) {

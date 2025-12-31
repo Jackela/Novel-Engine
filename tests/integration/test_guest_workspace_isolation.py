@@ -4,7 +4,17 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api_server
-from src.workspaces import FilesystemCharacterStore, FilesystemWorkspaceStore, GuestSessionManager
+from src.workspaces import (
+    FilesystemCharacterStore,
+    FilesystemWorkspaceStore,
+    GuestSessionManager,
+)
+
+
+def _character_ids(characters):
+    return [
+        entry["id"] if isinstance(entry, dict) else entry for entry in characters
+    ]
 
 
 @pytest.fixture
@@ -21,7 +31,9 @@ def guest_app(tmp_path):
 
     old_state = {
         "workspace_store": getattr(app.state, "workspace_store", None),
-        "workspace_character_store": getattr(app.state, "workspace_character_store", None),
+        "workspace_character_store": getattr(
+            app.state, "workspace_character_store", None
+        ),
         "guest_session_manager": getattr(app.state, "guest_session_manager", None),
     }
     app.state.workspace_store = workspace_store
@@ -78,11 +90,13 @@ def test_guest_sessions_are_isolated_and_portable(guest_app):
 
     characters_a = list_a.json()["characters"]
     characters_b = list_b.json()["characters"]
+    character_ids_a = _character_ids(characters_a)
+    character_ids_b = _character_ids(characters_b)
 
-    assert char_a_id in characters_a
-    assert char_b_id not in characters_a
-    assert char_b_id in characters_b
-    assert char_a_id not in characters_b
+    assert char_a_id in character_ids_a
+    assert char_b_id not in character_ids_a
+    assert char_b_id in character_ids_b
+    assert char_a_id not in character_ids_b
 
     exported = client_a.get("/api/workspace/export")
     assert exported.status_code == 200
@@ -96,5 +110,4 @@ def test_guest_sessions_are_isolated_and_portable(guest_app):
 
     list_b_after = client_b.get("/api/characters")
     assert list_b_after.status_code == 200
-    assert char_a_id in list_b_after.json()["characters"]
-
+    assert char_a_id in _character_ids(list_b_after.json()["characters"])

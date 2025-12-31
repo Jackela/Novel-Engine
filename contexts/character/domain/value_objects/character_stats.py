@@ -239,23 +239,31 @@ class CombatStats:
                 else (
                     "Skilled"
                     if self.base_attack_bonus > 10
-                    else "Average" if self.base_attack_bonus > 5 else "Novice"
+                    else "Average"
+                    if self.base_attack_bonus > 5
+                    else "Novice"
                 )
             ),
             "initiative": (
                 "Fast"
                 if self.initiative_modifier > 3
-                else "Average" if self.initiative_modifier > -1 else "Slow"
+                else "Average"
+                if self.initiative_modifier > -1
+                else "Slow"
             ),
             "durability": (
                 "Tough"
                 if self.damage_reduction > 5
-                else "Average" if self.damage_reduction > 0 else "Fragile"
+                else "Average"
+                if self.damage_reduction > 0
+                else "Fragile"
             ),
             "magic_resistance": (
                 "High"
                 if self.spell_resistance > 15
-                else "Some" if self.spell_resistance > 0 else "None"
+                else "Some"
+                if self.spell_resistance > 0
+                else "None"
             ),
         }
 

@@ -451,42 +451,47 @@ class AgentLifecycleManager:
                     law_violations = violations_by_law[law_code]
 
                     if law_code == "E001":
-                        modified_action, causality_repairs = (
-                            self._repair_causality_violations(
-                                modified_action, law_violations
-                            )
+                        (
+                            modified_action,
+                            causality_repairs,
+                        ) = self._repair_causality_violations(
+                            modified_action, law_violations
                         )
                         repair_log.extend(causality_repairs)
 
                     elif law_code == "E002":
-                        modified_action, resource_repairs = (
-                            self._repair_resource_violations(
-                                modified_action, law_violations, character_data
-                            )
+                        (
+                            modified_action,
+                            resource_repairs,
+                        ) = self._repair_resource_violations(
+                            modified_action, law_violations, character_data
                         )
                         repair_log.extend(resource_repairs)
 
                     elif law_code == "E003":
-                        modified_action, physics_repairs = (
-                            self._repair_physics_violations(
-                                modified_action, law_violations, character_data
-                            )
+                        (
+                            modified_action,
+                            physics_repairs,
+                        ) = self._repair_physics_violations(
+                            modified_action, law_violations, character_data
                         )
                         repair_log.extend(physics_repairs)
 
                     elif law_code == "E004":
-                        modified_action, narrative_repairs = (
-                            self._repair_narrative_violations(
-                                modified_action, law_violations
-                            )
+                        (
+                            modified_action,
+                            narrative_repairs,
+                        ) = self._repair_narrative_violations(
+                            modified_action, law_violations
                         )
                         repair_log.extend(narrative_repairs)
 
                     elif law_code == "E005":
-                        modified_action, social_repairs = (
-                            self._repair_social_violations(
-                                modified_action, law_violations
-                            )
+                        (
+                            modified_action,
+                            social_repairs,
+                        ) = self._repair_social_violations(
+                            modified_action, law_violations
                         )
                         repair_log.extend(social_repairs)
 

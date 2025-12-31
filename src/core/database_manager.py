@@ -448,9 +448,9 @@ class DatabaseConnectionPool:
                     wait_time = time.time() - wait_start
                     self._pool_metrics["connection_wait_times"].append(wait_time)
                     if len(self._pool_metrics["connection_wait_times"]) > 1000:
-                        self._pool_metrics["connection_wait_times"] = (
-                            self._pool_metrics["connection_wait_times"][-1000:]
-                        )
+                        self._pool_metrics[
+                            "connection_wait_times"
+                        ] = self._pool_metrics["connection_wait_times"][-1000:]
 
                     return connection
                 else:

@@ -727,9 +727,7 @@ class Turn:
             phase_results.append(phase_result)
 
         total_execution_time = (
-            completed_at - self.started_at
-            if self.started_at
-            else timedelta(seconds=0)
+            completed_at - self.started_at if self.started_at else timedelta(seconds=0)
         )
 
         error_summary = {

@@ -338,7 +338,6 @@ spec:
   - type: redis
     metadata:
       address: redis-service:6379
-      password: 
       listName: narrative_generation_queue
       listLength: '10'
       enableTLS: 'false'

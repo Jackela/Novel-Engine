@@ -250,7 +250,7 @@ export class PerformanceBenchmark {
   static generateReport(): Record<string, any> {
     const report: Record<string, any> = {};
     
-    for (const [operation, measurements] of this.benchmarks.entries()) {
+    for (const [operation] of this.benchmarks.entries()) {
       report[operation] = this.getStats(operation);
     }
     

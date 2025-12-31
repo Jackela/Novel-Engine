@@ -1,0 +1,31 @@
+# General build artifacts
+dist/
+build/
+coverage/
+*.min.js
+
+# Package managers
+node_modules/
+.pnpm-debug.log*
+.npm/
+.yarn/
+
+# Generated lockfiles
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Frontend bundles
+frontend/dist/
+frontend/build/
+frontend/out/
+frontend/.next/
+
+# Config and environment overrides
+.env
+.env.*
+
+# StoryForge project specifics
+web-bundles/
+playwright-report/
+test-results/

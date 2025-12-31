@@ -197,7 +197,6 @@ class MemoryCache(CacheBackend):
             self.memory_usage + required_memory > self.max_memory_bytes
             or len(self.entries) >= self.max_size
         ):
-
             if not self.entries:
                 break
 

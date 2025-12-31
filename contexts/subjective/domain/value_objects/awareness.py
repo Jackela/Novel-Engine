@@ -62,9 +62,9 @@ class AwarenessState:
     current_alertness: AlertnessLevel
     attention_focus: AttentionFocus
     focus_target: Optional[str] = None  # What/who is being focused on
-    awareness_modifiers: Dict[AwarenessModifier, float] = (
-        None  # Modifier -> effect strength
-    )
+    awareness_modifiers: Dict[
+        AwarenessModifier, float
+    ] = None  # Modifier -> effect strength
     fatigue_level: float = 0.0  # 0.0 = fresh, 1.0 = exhausted
     stress_level: float = 0.0  # 0.0 = calm, 1.0 = maximum stress
 

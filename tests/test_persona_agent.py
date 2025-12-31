@@ -14,7 +14,6 @@ from src.persona_agent import PersonaAgent
 
 
 class TestPersonaAgent(unittest.TestCase):
-
     def setUp(self):
         self.event_bus = Mock(spec=EventBus)
         # Mock the file system operations
@@ -114,7 +113,6 @@ psychological_profile:
         ) as mock_file, patch(
             "yaml.safe_load", return_value=self.test_character_data
         ):
-
             # Configure mock_open to return different content based on filename
             def file_side_effect(*args, **kwargs):
                 if "character.md" in args[0]:
@@ -135,7 +133,6 @@ psychological_profile:
             ), patch.object(
                 PersonaAgent, "_initialize_subjective_worldview"
             ):
-
                 agent = PersonaAgent(
                     character_directory_path="characters/test",
                     event_bus=self.event_bus,
@@ -181,7 +178,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test_char",
                 event_bus=self.event_bus,
@@ -214,7 +210,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -245,7 +240,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test_character",
                 event_bus=self.event_bus,
@@ -278,7 +272,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -330,7 +323,6 @@ psychological_profile:
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -367,7 +359,6 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -393,7 +384,6 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         ) as mock_assess, patch.object(
             self.agent, "_identify_available_actions"
         ) as mock_actions:
-
             mock_action = CharacterAction(
                 action_type="tactical_move", reasoning="Strategic positioning required"
             )
@@ -427,7 +417,6 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         ), patch.object(
             self.agent, "_select_best_action"
         ) as mock_select:
-
             fallback_action = CharacterAction(
                 action_type="hold_position", reasoning="Maintaining defensive stance"
             )
@@ -485,7 +474,6 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         ), patch.object(
             self.agent, "_select_best_action"
         ) as mock_select:
-
             mock_actions.return_value = [
                 {"action_type": "retreat", "target": "safe_zone"},
                 {"action_type": "attack", "target": "enemy"},
@@ -521,7 +509,6 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
             "_assess_environmental_factors",
             return_value={"weather": "clear"},
         ):
-
             result = self.agent._assess_current_situation()
             self.assertIsInstance(result, dict)
             self.assertIn("threat_level", result)
@@ -599,7 +586,6 @@ class TestPersonaAgentWorldInterpretation(unittest.TestCase):
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -684,7 +670,6 @@ class TestPersonaAgentAIIntegration(unittest.TestCase):
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,
@@ -757,7 +742,6 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
         ), patch.object(
             PersonaAgent, "_initialize_subjective_worldview"
         ):
-
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
                 event_bus=self.event_bus,

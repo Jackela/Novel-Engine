@@ -53,7 +53,8 @@ class TestSpeedAnalyzer:
             "-m",
             "pytest",
             self.test_path,
-            "-m", "unit",  # Only analyze unit tests for speed (fast subset)
+            "-m",
+            "unit",  # Only analyze unit tests for speed (fast subset)
             "--durations=0",  # Show all test durations
             "--durations-min=0",  # Include even extremely fast tests
             "-v",
@@ -74,7 +75,11 @@ class TestSpeedAnalyzer:
 
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=300, env=env  # 5 min timeout
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                env=env,  # 5 min timeout
             )
 
             # Parse timing output from both stdout and stderr
@@ -257,8 +262,12 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Test Speed Analysis Tool")
-    parser.add_argument("test_path", nargs="?", default="tests/", help="Path to tests directory")
-    parser.add_argument("--format", choices=["text", "json"], default="text", help="Output format")
+    parser.add_argument(
+        "test_path", nargs="?", default="tests/", help="Path to tests directory"
+    )
+    parser.add_argument(
+        "--format", choices=["text", "json"], default="text", help="Output format"
+    )
     args = parser.parse_args()
 
     analyzer = TestSpeedAnalyzer(args.test_path)
@@ -272,12 +281,16 @@ def main():
     if not analyzer.run_tests_with_timing(silent=silent):
         if args.format == "json":
             # Output minimal JSON even on failure
-            print(json.dumps({
-                "test_path": args.test_path,
-                "total_tests": 0,
-                "slow_tests": {"count": 0},
-                "error": "Failed to collect test timing data"
-            }))
+            print(
+                json.dumps(
+                    {
+                        "test_path": args.test_path,
+                        "total_tests": 0,
+                        "slow_tests": {"count": 0},
+                        "error": "Failed to collect test timing data",
+                    }
+                )
+            )
             sys.exit(0)  # Don't fail for JSON format
         else:
             print("Failed to collect test timing data.", file=sys.stderr)
@@ -305,15 +318,24 @@ def main():
             "distribution": {
                 "fast": {
                     "count": len(analyzer.categorized_tests["fast"]),
-                    "percentage": (len(analyzer.categorized_tests["fast"]) / max(total_tests, 1)) * 100,
+                    "percentage": (
+                        len(analyzer.categorized_tests["fast"]) / max(total_tests, 1)
+                    )
+                    * 100,
                 },
                 "medium": {
                     "count": len(analyzer.categorized_tests["medium"]),
-                    "percentage": (len(analyzer.categorized_tests["medium"]) / max(total_tests, 1)) * 100,
+                    "percentage": (
+                        len(analyzer.categorized_tests["medium"]) / max(total_tests, 1)
+                    )
+                    * 100,
                 },
                 "slow": {
                     "count": len(analyzer.categorized_tests["slow"]),
-                    "percentage": (len(analyzer.categorized_tests["slow"]) / max(total_tests, 1)) * 100,
+                    "percentage": (
+                        len(analyzer.categorized_tests["slow"]) / max(total_tests, 1)
+                    )
+                    * 100,
                 },
             },
         }

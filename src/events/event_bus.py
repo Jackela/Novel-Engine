@@ -586,7 +586,6 @@ class EventBus:
             if from_time <= event.timestamp <= to_time and (
                 not event_types or event.event_type in event_types
             ):
-
                 event.status = EventStatus.REPLAYING
                 await self._process_event(event)
                 replayed_count += 1

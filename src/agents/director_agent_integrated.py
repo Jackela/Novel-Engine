@@ -52,7 +52,13 @@ try:
     IRON_LAWS_AVAILABLE = True
 except ImportError:
     IRON_LAWS_AVAILABLE = False
-    ActionTarget = ActionType = CharacterData = EntityType = (
+    ActionTarget = (
+        ActionType
+    ) = (
+        CharacterData
+    ) = (
+        EntityType
+    ) = (
         ProposedAction
     ) = IronLawsViolation = ValidatedAction = ValidationResult = Any  # type: ignore
 

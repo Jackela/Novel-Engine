@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -25,6 +25,7 @@ import {
   Divider,
   FormHelperText,
   LinearProgress,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -34,7 +35,7 @@ import {
   Person as PersonIcon,
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
-import { useCreateCharacter } from '@/hooks/useCharacters';
+import { useCreateCharacter, useUpdateCharacter } from '@/hooks/useCharacters';
 import type { CharacterFormData, CharacterStats, Equipment } from '@/types';
 import { useFocusTrap } from '@/utils/focusManagement';
 
@@ -42,6 +43,9 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onCharacterCreated: () => void;
+  mode?: 'create' | 'edit';
+  characterId?: string;
+  initialData?: CharacterFormData;
 }
 
 interface ValidationErrors {
@@ -70,7 +74,14 @@ const EQUIPMENT_TYPES = [
   'special',
 ];
 
-export default function CharacterCreationDialog({ open, onClose, onCharacterCreated }: Props) {
+export default function CharacterCreationDialog({
+  open,
+  onClose,
+  onCharacterCreated,
+  mode = 'create',
+  characterId,
+  initialData,
+}: Props) {
   const [formData, setFormData] = useState<CharacterFormData>({
     name: '',
     description: '',
@@ -106,6 +117,9 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
   });
 
   const createCharacter = useCreateCharacter();
+  const updateCharacter = useUpdateCharacter();
+  const characterMutation = mode === 'edit' ? updateCharacter : createCharacter;
+  const isBootstrappingEdit = mode === 'edit' && !initialData;
 
   // File upload configuration
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -128,6 +142,15 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
       }));
     },
   });
+
+  useEffect(() => {
+    if (!open) return;
+    if (mode !== 'edit' || !initialData) return;
+
+    setFormData(initialData);
+    setUploadedFiles([]);
+    setValidationErrors({});
+  }, [open, mode, initialData]);
 
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
@@ -256,30 +279,43 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
     }
 
     try {
-      await createCharacter.mutateAsync({
-        data: formData,
-        files: uploadedFiles,
-      });
+      if (mode === 'edit') {
+        if (!characterId) {
+          throw new Error('Missing character id for edit');
+        }
+        await updateCharacter.mutateAsync({
+          characterId,
+          data: formData,
+          files: uploadedFiles,
+        });
+      } else {
+        await createCharacter.mutateAsync({
+          data: formData,
+          files: uploadedFiles,
+        });
+      }
 
       // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        faction: '',
-        role: '',
-        stats: {
-          strength: 5,
-          dexterity: 5,
-          intelligence: 5,
-          willpower: 5,
-          perception: 5,
-          charisma: 5,
-        },
-        equipment: [],
-        relationships: [],
-      });
-      setUploadedFiles([]);
-      setValidationErrors({});
+      if (mode === 'create') {
+        setFormData({
+          name: '',
+          description: '',
+          faction: '',
+          role: '',
+          stats: {
+            strength: 5,
+            dexterity: 5,
+            intelligence: 5,
+            willpower: 5,
+            perception: 5,
+            charisma: 5,
+          },
+          equipment: [],
+          relationships: [],
+        });
+        setUploadedFiles([]);
+        setValidationErrors({});
+      }
 
       onCharacterCreated();
       onClose();
@@ -289,7 +325,7 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
   };
 
   const handleClose = () => {
-    if (!createCharacter.isLoading) {
+    if (!characterMutation.isLoading) {
       onClose();
     }
   };
@@ -314,19 +350,19 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
         <PersonIcon color="primary" />
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
-            Create New Character
+            {mode === 'edit' ? 'Edit Character' : 'Create New Character'}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Design a character for your stories with AI-enhanced profiles
+            {mode === 'edit' ? 'Update this character in your workspace' : 'Design a character for your stories with AI-enhanced profiles'}
           </Typography>
         </Box>
-        <IconButton onClick={handleClose} disabled={createCharacter.isLoading}>
+        <IconButton onClick={handleClose} disabled={characterMutation.isLoading}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
       {/* Test Helper Button */}
-      {process.env.NODE_ENV === 'development' && (
+      {mode === 'create' && process.env.NODE_ENV === 'development' && (
         <Box sx={{ px: 3, py: 1 }}>
           <Button
             size="small"
@@ -357,15 +393,30 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
         </Box>
       )}
 
-      {createCharacter.isLoading && <LinearProgress />}
+      {characterMutation.isLoading && <LinearProgress />}
 
-      <form onSubmit={handleSubmit}>
-        <DialogContent sx={{ pb: 1 }}>
-          {createCharacter.isError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {createCharacter.error?.message || 'Failed to create character'}
-            </Alert>
-          )}
+      {isBootstrappingEdit ? (
+        <>
+          <DialogContent sx={{ py: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
+            <CircularProgress />
+            <Typography variant="body2" color="text.secondary">
+              Loading character…
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={handleClose} size="large">
+              Cancel
+            </Button>
+          </DialogActions>
+        </>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <DialogContent sx={{ pb: 1 }}>
+            {characterMutation.isError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {characterMutation.error?.message || (mode === 'edit' ? 'Failed to update character' : 'Failed to create character')}
+              </Alert>
+            )}
 
           {/* Basic Information */}
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
@@ -381,7 +432,7 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 error={!!validationErrors.name}
                 helperText={validationErrors.name || 'Use letters, numbers, underscores, and spaces'}
-                disabled={createCharacter.isLoading}
+                disabled={characterMutation.isLoading || mode === 'edit'}
               />
             </Grid>
 
@@ -392,7 +443,7 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
                   value={formData.faction}
                   label="Faction"
                   onChange={(e) => setFormData({ ...formData, faction: e.target.value })}
-                  disabled={createCharacter.isLoading}
+                  disabled={characterMutation.isLoading}
                   data-testid="faction-select"
                 >
                   {FACTIONS.map((faction) => (
@@ -416,7 +467,7 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
                 error={!!validationErrors.role}
                 helperText={validationErrors.role}
                 placeholder="e.g., Sentinel, Collective Captain"
-                disabled={createCharacter.isLoading}
+                disabled={characterMutation.isLoading}
               />
             </Grid>
 
@@ -433,7 +484,7 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
                   validationErrors.description ||
                   `Describe your character's background and personality (${formData.description.length}/2000)`
                 }
-                disabled={createCharacter.isLoading}
+                disabled={characterMutation.isLoading}
               />
             </Grid>
           </Grid>
@@ -678,27 +729,28 @@ export default function CharacterCreationDialog({ open, onClose, onCharacterCrea
               </List>
             )}
           </Box>
-        </DialogContent>
+          </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button
-            onClick={handleClose}
-            disabled={createCharacter.isLoading}
-            size="large"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={createCharacter.isLoading}
-            size="large"
-            sx={{ minWidth: 120 }}
-          >
-            {createCharacter.isLoading ? 'Creating...' : 'Create Character'}
-          </Button>
-        </DialogActions>
-      </form>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button
+              onClick={handleClose}
+              disabled={characterMutation.isLoading}
+              size="large"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={characterMutation.isLoading}
+              size="large"
+              sx={{ minWidth: 120 }}
+            >
+              {characterMutation.isLoading ? (mode === 'edit' ? 'Saving...' : 'Creating...') : (mode === 'edit' ? 'Save Changes' : 'Create Character')}
+            </Button>
+          </DialogActions>
+        </form>
+      )}
     </Dialog>
   );
 }

@@ -258,7 +258,7 @@ class CharacterAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting character {character_id}: {e}")
+                logger.exception("Error getting character.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.put("/api/characters/{character_id}", response_model=dict)
@@ -296,7 +296,7 @@ class CharacterAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error updating character {character_id}: {e}")
+                logger.exception("Error updating character.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.delete("/api/characters/{character_id}", response_model=dict)
@@ -319,7 +319,7 @@ class CharacterAPI:
                 del active_agents[character_id]
 
                 # Log deletion
-                logger.info(f"Character {character_id} deleted successfully")
+                logger.info("Character deleted successfully.")
 
                 return {
                     "message": "Character deleted successfully.",
@@ -329,7 +329,7 @@ class CharacterAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error deleting character {character_id}: {e}")
+                logger.exception("Error deleting character.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
 

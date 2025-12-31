@@ -10,7 +10,6 @@ from src.persona_agent import PersonaAgent
 
 
 class TestDirectorAgent(unittest.TestCase):
-
     def setUp(self):
         self.event_bus = Mock(spec=EventBus)
         self.director = DirectorAgent(event_bus=self.event_bus)

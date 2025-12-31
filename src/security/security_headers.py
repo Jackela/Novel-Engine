@@ -448,6 +448,7 @@ class SecurityHeadersMiddleware:
         # Create Request object from scope to access headers/url helpers
         # We don't pass 'receive' to avoid consuming the body stream
         from fastapi import Request
+
         request = Request(scope)
 
         try:
@@ -455,7 +456,10 @@ class SecurityHeadersMiddleware:
             # Note: This checks headers/URL only, does not consume body
             if not self.security_headers.validate_request_security(request):
                 from fastapi.responses import PlainTextResponse
-                response = PlainTextResponse("Request failed security validation", status_code=400)
+
+                response = PlainTextResponse(
+                    "Request failed security validation", status_code=400
+                )
                 await response(scope, receive, send)
                 return
 
@@ -464,34 +468,43 @@ class SecurityHeadersMiddleware:
                 if message["type"] == "http.response.start":
                     # Create a dummy response to calculate security headers
                     from starlette.responses import Response
+
                     dummy_response = Response()
-                    
+
                     # Apply headers logic
                     try:
-                        dummy_response = self.security_headers.apply_headers(dummy_response, request)
-                        
+                        dummy_response = self.security_headers.apply_headers(
+                            dummy_response, request
+                        )
+
                         # Merge headers into the ASGI message
                         headers = message.setdefault("headers", [])
-                        
+
                         # Convert dummy_response headers to list of (bytes, bytes)
                         # and remove any existing security headers to avoid duplication
                         secure_headers_dict = dict(dummy_response.headers)
-                        
+
                         # Filter out existing headers that we are about to set
-                        existing_keys = set(k.lower() for k in secure_headers_dict.keys())
-                        headers = [h for h in headers if h[0].decode("latin-1").lower() not in existing_keys]
-                        
+                        existing_keys = set(
+                            k.lower() for k in secure_headers_dict.keys()
+                        )
+                        headers = [
+                            h
+                            for h in headers
+                            if h[0].decode("latin-1").lower() not in existing_keys
+                        ]
+
                         # Add new security headers
                         for k, v in secure_headers_dict.items():
                             headers.append((k.encode("latin-1"), v.encode("latin-1")))
-                            
+
                         message["headers"] = headers
-                        
+
                     except Exception as e:
                         logger.error(f"Error applying security headers: {e}")
                         # Proceed without headers if calculation fails, or could raise
                         pass
-                        
+
                 await send(message)
 
             await self.app(scope, receive, send_wrapper)
@@ -499,9 +512,9 @@ class SecurityHeadersMiddleware:
         except Exception as e:
             logger.error(f"SECURITY HEADERS MIDDLEWARE ERROR: {e}")
             from fastapi.responses import PlainTextResponse
+
             response = PlainTextResponse("Internal Server Error", status_code=500)
             await response(scope, receive, send)
-
 
 
 def create_security_headers_middleware(

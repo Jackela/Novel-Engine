@@ -1,5 +1,5 @@
 import type { AxiosResponse } from 'axios';
-import { apiClient, handleAPIError } from './apiClient';
+import apiClient, { handleAPIError } from './apiClient';
 import type { BaseAPIResponse } from './apiClient';
 
 // API Response types for decision endpoints

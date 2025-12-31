@@ -51,7 +51,21 @@ export class LandingPage {
    */
   async navigateToLanding() {
     // Set up mocks needed for dashboard navigation (must be before goto)
+    await this.page.route(/\/api\/guest\/session/, async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ workspace_id: 'ws-mock', created: false }),
+      });
+    });
+
     await this.page.addInitScript(() => {
+      try {
+        window.sessionStorage.setItem('guest_session_active', '1');
+      } catch {
+        // ignore storage failures
+      }
+
       // Mock EventSource for SSE testing
       class MockEventSource extends EventTarget {
         url: string;

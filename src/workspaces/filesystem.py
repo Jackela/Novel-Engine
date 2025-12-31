@@ -50,7 +50,9 @@ def _atomic_write_bytes(path: Path, data: bytes) -> None:
 
 
 def _atomic_write_json(path: Path, payload: Dict[str, Any]) -> None:
-    data = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True).encode("utf-8")
+    data = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True).encode(
+        "utf-8"
+    )
     _atomic_write_bytes(path, data)
 
 
@@ -93,11 +95,17 @@ class WorkspaceManifest:
     def create(now: Optional[datetime] = None) -> "WorkspaceManifest":
         now_dt = now or _utc_now()
         iso = now_dt.isoformat()
-        return WorkspaceManifest(schemaVersion=SCHEMA_VERSION, createdAt=iso, lastAccessedAt=iso)
+        return WorkspaceManifest(
+            schemaVersion=SCHEMA_VERSION, createdAt=iso, lastAccessedAt=iso
+        )
 
     def touch(self, now: Optional[datetime] = None) -> "WorkspaceManifest":
         iso = (now or _utc_now()).isoformat()
-        return WorkspaceManifest(schemaVersion=self.schemaVersion, createdAt=self.createdAt, lastAccessedAt=iso)
+        return WorkspaceManifest(
+            schemaVersion=self.schemaVersion,
+            createdAt=self.createdAt,
+            lastAccessedAt=iso,
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -111,7 +119,11 @@ class WorkspaceManifest:
         schema_version = int(payload.get("schemaVersion", SCHEMA_VERSION))
         created_at = str(payload.get("createdAt", _utc_now().isoformat()))
         last_accessed = str(payload.get("lastAccessedAt", created_at))
-        return WorkspaceManifest(schemaVersion=schema_version, createdAt=created_at, lastAccessedAt=last_accessed)
+        return WorkspaceManifest(
+            schemaVersion=schema_version,
+            createdAt=created_at,
+            lastAccessedAt=last_accessed,
+        )
 
 
 class FilesystemWorkspaceStore(WorkspaceStore):
@@ -198,7 +210,9 @@ class FilesystemCharacterStore(CharacterStore):
         payload.setdefault("id", char_id)
         return payload
 
-    def create(self, workspace_id: str, character_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def create(
+        self, workspace_id: str, character_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         workspace = self._workspace_store.get_or_create(workspace_id)
         char_id = _validate_resource_id(character_id, "character")
         path = workspace.root / "characters" / f"{char_id}.json"
@@ -212,7 +226,9 @@ class FilesystemCharacterStore(CharacterStore):
         _atomic_write_json(path, record)
         return record
 
-    def update(self, workspace_id: str, character_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+    def update(
+        self, workspace_id: str, character_id: str, updates: Dict[str, Any]
+    ) -> Dict[str, Any]:
         workspace = self._workspace_store.get_or_create(workspace_id)
         char_id = _validate_resource_id(character_id, "character")
         path = workspace.root / "characters" / f"{char_id}.json"

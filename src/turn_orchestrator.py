@@ -367,7 +367,7 @@ class TurnOrchestrator:
                     character_name=character_name,
                     action=action.action_type,
                     description=action_description,
-                    reasoning=getattr(action, "reasoning", "")
+                    reasoning=getattr(action, "reasoning", ""),
                 )
 
             else:

@@ -32,7 +32,6 @@ async def test_async_llm_client_performance():
             cache_ttl_seconds=300,
             request_timeout_seconds=5,  # Reduced from 30s
         ) as client:
-
             # Test single request performance
             start_time = time.perf_counter()
 
@@ -303,9 +302,7 @@ async def run_comprehensive_performance_tests():
         print(
             f"🚀 Single Request: {single_time:.3f}s (vs ~30s original = {30/single_time:.0f}x faster)"
         )
-        print(
-            f"💾 Cache Performance: {cache_speedup:.0f}x speedup on repeated requests"
-        )
+        print(f"💾 Cache Performance: {cache_speedup:.0f}x speedup on repeated requests")
 
     if test_results["persona_agent_patch"]["success"]:
         improvement = test_results["persona_agent_patch"]["improvement_percentage"]

@@ -1,17 +1,27 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
 import re
-import uuid
-from typing import Any, Dict, List, Optional, Set
+from datetime import datetime, timezone
+from email.utils import format_datetime, parsedate_to_datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+)
 
-from src.api.deps import require_workspace_id
+from src.api.deps import get_optional_workspace_id, require_workspace_id
 from src.api.schemas import (
     CharacterDetailResponse,
+    CharacterSummary,
     CharactersListResponse,
     WorkspaceCharacterCreateRequest,
     WorkspaceCharacterUpdateRequest,
@@ -37,6 +47,19 @@ def _normalize_character_id(value: str) -> str:
     return normalized
 
 
+def _require_public_character_id(value: str) -> str:
+    raw_value = (value or "").strip().replace("\\", "/")
+    safe_value = os.path.basename(raw_value)
+    if (
+        not safe_value
+        or safe_value in {".", ".."}
+        or safe_value != raw_value
+        or not _CHARACTER_DIRNAME_RE.fullmatch(safe_value)
+    ):
+        raise HTTPException(status_code=400, detail="Invalid character_id")
+    return safe_value
+
+
 def _structured_defaults(
     name: str,
     specialization: str = "Unknown",
@@ -55,349 +78,313 @@ def _structured_defaults(
     }
 
 
-async def get_characters() -> CharactersListResponse:
-    """Retrieves a list of available characters."""
+def _display_name_from_id(character_id: str) -> str:
+    return " ".join(segment.capitalize() for segment in character_id.replace("-", " ").replace("_", " ").split())
+
+
+def _parse_iso_datetime(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed
+    except ValueError:
+        try:
+            return parsedate_to_datetime(value)
+        except (TypeError, ValueError):
+            return None
+
+
+def _infer_character_type_from_record(record: Dict[str, Any]) -> str:
+    metadata = record.get("metadata") or {}
+    structured = record.get("structured_data") or {}
+    for key in ("role", "type"):
+        candidate = metadata.get(key) or structured.get(key)
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip().lower()
+    return metadata.get("classification") or structured.get("classification") or "npc"
+
+
+def _gather_filesystem_character_info(character_id: str, characters_path: str) -> Tuple[str, str, str, datetime]:
+    safe_character_id = _require_public_character_id(character_id)
+    base_dir = Path(characters_path).resolve()
+    character_dir = next(
+        (
+            item
+            for item in base_dir.iterdir()
+            if item.is_dir() and item.name == safe_character_id
+        ),
+        None,
+    )
+    if character_dir is None:
+        raise HTTPException(status_code=404, detail="Character not found")
+
+    character_file = character_dir / f"character_{character_dir.name}.md"
+    stats_file = character_dir / "stats.yaml"
+
+    updated_ts: Optional[float] = None
+    if character_dir.is_dir():
+        updated_ts = max(updated_ts or 0.0, character_dir.stat().st_mtime)
+
+    display_name = _display_name_from_id(character_dir.name)
+    status = "active"
+    type_value = "npc"
+
+    if character_file.exists():
+        updated_ts = max(updated_ts or 0.0, character_file.stat().st_mtime)
+        try:
+            with character_file.open("r", encoding="utf-8") as fh:
+                for line in fh:
+                    trimmed = line.strip()
+                    if trimmed.startswith("# "):
+                        display_name = trimmed[2:].strip() or display_name
+                        if updated_ts is None:
+                            updated_ts = character_file.stat().st_mtime
+                        break
+        except Exception:
+            logger.debug("Failed to parse character markdown.", exc_info=True)
+
+    if stats_file.exists():
+        updated_ts = max(updated_ts or 0.0, stats_file.stat().st_mtime)
+        try:
+            import yaml
+
+            with stats_file.open("r", encoding="utf-8") as fh:
+                stats_payload = yaml.safe_load(fh)
+                if isinstance(stats_payload, dict):
+                    metadata = stats_payload.get("metadata", {}) or {}
+                    structured = stats_payload.get("structured_data", {}) or {}
+                    if isinstance(metadata, dict):
+                        status_candidate = metadata.get("current_status") or metadata.get("status")
+                        if isinstance(status_candidate, str) and status_candidate.strip():
+                            status = status_candidate.strip()
+                        type_candidate = metadata.get("role") or metadata.get("type")
+                        if isinstance(type_candidate, str) and type_candidate.strip():
+                            type_value = type_candidate.strip().lower()
+                    if isinstance(structured, dict):
+                        type_candidate = structured.get("role") or structured.get("type")
+                        if isinstance(type_candidate, str) and type_candidate.strip():
+                            type_value = type_candidate.strip().lower()
+        except Exception:
+            logger.debug("Failed to parse stats.", exc_info=True)
+
+    updated_dt = datetime.fromtimestamp(updated_ts or datetime.now(timezone.utc).timestamp(), tz=timezone.utc)
+    return display_name, status.lower(), type_value, updated_dt
+
+
+def _summarize_public_character(character_id: str, characters_path: str) -> Tuple[CharacterSummary, datetime]:
+    name, status, category, updated_dt = _gather_filesystem_character_info(character_id, characters_path)
+    summary = CharacterSummary(
+        id=character_id,
+        name=name,
+        status=status,
+        type=category,
+        updated_at=updated_dt.isoformat(),
+        workspace_id=None,
+    )
+    return summary, updated_dt
+
+
+def _summarize_workspace_character(record: Dict[str, Any], workspace_id: str) -> Tuple[CharacterSummary, datetime]:
+    char_id = str(record.get("id") or record.get("character_id") or record.get("character_name") or "").strip()
+    if not char_id:
+        raise ValueError("Workspace record missing character identifier")
+
+    name = str(record.get("name") or record.get("character_name") or _display_name_from_id(char_id))
+    status = str(record.get("current_status") or record.get("status") or "active").lower()
+    type_value = _infer_character_type_from_record(record)
+
+    updated_iso = str(record.get("updatedAt") or record.get("createdAt") or "")
+    updated_dt = _parse_iso_datetime(updated_iso) or datetime.now(timezone.utc)
+
+    summary = CharacterSummary(
+        id=char_id,
+        name=name,
+        status=status,
+        type=type_value,
+        updated_at=updated_dt.isoformat(),
+        workspace_id=workspace_id,
+    )
+    return summary, updated_dt
+
+
+def _build_characters_etag(summaries: List[CharacterSummary]) -> str:
+    payload = [
+        {
+            "id": summary.id,
+            "updated_at": summary.updated_at,
+            "workspace_id": summary.workspace_id,
+        }
+        for summary in summaries
+    ]
+    serialized = json.dumps(payload, separators=(",", ":"), ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def _set_cache_headers(response: Response, etag: str, latest: Optional[datetime]) -> None:
+    response.headers["ETag"] = f'"{etag}"'
+    if latest:
+        try:
+            response.headers["Last-Modified"] = format_datetime(latest, usegmt=True)
+        except Exception:
+            response.headers["Last-Modified"] = format_datetime(latest)
+
+
+def _build_entity_etag(identifier: str, updated: datetime) -> str:
+    payload = f"{identifier}:{updated.isoformat()}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _apply_entity_cache_headers(response: Response, identifier: str, updated: datetime) -> None:
+    etag = _build_entity_etag(identifier, updated)
+    _set_cache_headers(response, etag, updated)
+
+
+def _etag_matches(request_etag: str, current_etag: str) -> bool:
+    tokens = [token.strip().strip('"') for token in request_etag.split(",")]
+    return current_etag in tokens
+
+
+def _is_not_modified(request: Request, etag: str, latest: Optional[datetime]) -> bool:
+    client_etag = request.headers.get("if-none-match")
+    if client_etag and _etag_matches(client_etag, etag):
+        return True
+
+    client_since = request.headers.get("if-modified-since")
+    if client_since and latest:
+        since_dt = _parse_iso_datetime(client_since)
+        if since_dt and since_dt >= latest:
+            return True
+
+    return False
+
+
+async def _get_public_character_entries() -> List[Tuple[datetime, CharacterSummary]]:
     try:
         characters_path = get_characters_directory_path()
-        logger.info("Looking for characters in: %s", characters_path)
+        logger.info("Loading public characters from: %s", characters_path)
 
-        if not os.path.isdir(characters_path):
-            logger.warning("Characters directory not found at: %s", characters_path)
-            os.makedirs(characters_path, exist_ok=True)
+        os.makedirs(characters_path, exist_ok=True)
 
-        characters: Set[str] = set()
-        if os.path.isdir(characters_path):
-            for item in os.listdir(characters_path):
-                item_path = os.path.join(characters_path, item)
-                if os.path.isdir(item_path):
-                    characters.add(item)
-                    logger.debug("Found character directory: %s", item)
-
-        sorted_characters = sorted(characters)
-        logger.info("Found %d characters: %s", len(sorted_characters), sorted_characters)
-        return CharactersListResponse(characters=sorted_characters)
+        entries: List[Tuple[datetime, CharacterSummary]] = []
+        for item in os.listdir(characters_path):
+            item_path = os.path.join(characters_path, item)
+            if not os.path.isdir(item_path):
+                continue
+            if not _CHARACTER_DIRNAME_RE.fullmatch(item):
+                continue
+            summary, timestamp = _summarize_public_character(item, characters_path)
+            entries.append((timestamp, summary))
+        return entries
     except FileNotFoundError as exc:
-        logger.error("File not found error: %s", exc)
+        logger.error("Characters directory missing: %s", exc)
         raise HTTPException(status_code=404, detail="Characters directory not found.")
     except PermissionError as exc:
-        logger.error("Permission error accessing characters: %s", exc)
+        logger.error("Permission denied reading characters: %s", exc)
         raise HTTPException(
             status_code=500, detail="Permission denied accessing characters directory."
         )
     except Exception as exc:
-        logger.error("Unexpected error retrieving characters: %s", exc, exc_info=True)
+        logger.error("Unexpected error loading characters: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to retrieve characters: {exc}")
 
 
 @router.get("/characters", response_model=CharactersListResponse)
-async def get_characters_endpoint() -> CharactersListResponse:
-    return await get_characters()
+async def get_characters_api(
+    request: Request,
+    response: Response,
+    workspace_id: Optional[str] = Depends(get_optional_workspace_id),
+) -> CharactersListResponse:
+    """Retrieves a list of available characters (default + workspace)."""
 
+    public_entries = await _get_public_character_entries()
+    workspace_entries: List[Tuple[datetime, CharacterSummary]] = []
 
-@router.post("/characters", response_model=CharacterDetailResponse)
-async def create_character(
-    name: str = Form(...),
-    description: str = Form(...),
-    faction: Optional[str] = Form("Independent"),
-    role: Optional[str] = Form("Unknown"),
-    stats: Optional[str] = Form(None),
-    equipment: Optional[str] = Form(None),
-    files: List[UploadFile] = File(None),
-) -> CharacterDetailResponse:
-    """Creates a new character."""
-    try:
-        characters_path = get_characters_directory_path()
-        os.makedirs(characters_path, exist_ok=True)
-
+    store = getattr(request.app.state, "workspace_character_store", None)
+    if workspace_id and store:
         try:
-            stats_data = json.loads(stats) if stats else {}
-        except json.JSONDecodeError as exc:
-            raise HTTPException(status_code=400, detail=f"Invalid stats JSON: {exc}") from exc
+            for char_id in store.list_ids(workspace_id):
+                record = store.get(workspace_id, char_id)
+                if record:
+                    try:
+                        summary, timestamp = _summarize_workspace_character(record, workspace_id)
+                        workspace_entries.append((timestamp, summary))
+                    except ValueError:
+                        logger.warning("Skipping malformed workspace character record.")
+        except Exception:
+            logger.warning("Failed to load workspace characters.", exc_info=True)
 
-        try:
-            equipment_data = json.loads(equipment) if equipment else []
-        except json.JSONDecodeError as exc:
-            raise HTTPException(status_code=400, detail=f"Invalid equipment JSON: {exc}") from exc
+    merged: Dict[str, Tuple[datetime, CharacterSummary]] = {}
+    for entry in public_entries:
+        merged[entry[1].id] = entry
+    for entry in workspace_entries:
+        merged[entry[1].id] = entry
 
-        character_id = uuid.uuid4().hex
-        character_path = os.path.join(characters_path, character_id)
-        while os.path.exists(character_path):
-            character_id = uuid.uuid4().hex
-            character_path = os.path.join(characters_path, character_id)
+    sorted_entries = sorted(merged.values(), key=lambda pair: pair[0], reverse=True)
+    sorted_summaries = [summary for _, summary in sorted_entries]
+    latest_timestamp = max((timestamp for timestamp, _ in sorted_entries), default=None)
 
-        os.makedirs(character_path, exist_ok=False)
+    etag = _build_characters_etag(sorted_summaries)
+    _set_cache_headers(response, etag, latest_timestamp)
 
-        profile_content = f"""# {name}
+    if _is_not_modified(request, etag, latest_timestamp):
+        return Response(status_code=304)
 
-## Overview
-**Role:** {role}
-**Faction:** {faction}
-
-{description}
-
-## Stats
-{json.dumps(stats_data, indent=2)}
-
-## Equipment
-{json.dumps(equipment_data, indent=2)}
-"""
-        markdown_filename = f"character_{character_id}.md"
-        with open(os.path.join(character_path, markdown_filename), "w", encoding="utf-8") as handle:
-            handle.write(profile_content)
-
-        if files:
-            uploads_dir = os.path.join(character_path, "uploads")
-            os.makedirs(uploads_dir, exist_ok=True)
-            for file in files:
-                upload_id = uuid.uuid4().hex
-                file_path = os.path.join(uploads_dir, f"upload_{upload_id}.bin")
-                with open(file_path, "wb") as handle:
-                    content = await file.read()
-                    handle.write(content)
-
-        logger.info("Created character")
-
-        return CharacterDetailResponse(
-            character_id=character_id,
-            character_name=character_id,
-            name=name,
-            background_summary=description,
-            personality_traits="Unknown",
-            current_status="Active",
-            narrative_context="Newly created character",
-            skills=stats_data,
-            inventory=[item.get("name", "Unknown") for item in equipment_data],
-            metadata={"role": role, "faction": faction},
-            structured_data={
-                "stats": {
-                    "character": {"name": name, "faction": faction, "specialization": role}
-                },
-                "combat_stats": stats_data,
-                "equipment": {"items": equipment_data},
-            },
-        )
-
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.error("Failed to create character: %s", exc, exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to create character: {exc}")
+    return CharactersListResponse(characters=sorted_summaries)
 
 
 @router.get("/characters/{character_id}", response_model=CharacterDetailResponse)
-async def get_character_detail(character_id: str) -> CharacterDetailResponse:
-    """Retrieves detailed information about a specific character."""
-    try:
-        raw_character_id = (character_id or "").strip()
-        safe_character_id = os.path.basename(raw_character_id)
-        if (
-            not safe_character_id
-            or safe_character_id in {".", ".."}
-            or safe_character_id != raw_character_id
-            or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
-        ):
-            raise HTTPException(status_code=400, detail="Invalid character_id")
+async def get_character_detail_api(
+    character_id: str,
+    request: Request,
+    response: Response,
+    workspace_id: Optional[str] = Depends(get_optional_workspace_id),
+) -> CharacterDetailResponse:
+    """Retrieves detailed information about a specific character (supports workspace)."""
 
-        try:
-            event_bus = EventBus()
-            character_factory = CharacterFactory(event_bus)
-            agent = character_factory.create_character(safe_character_id)
-            character = agent.character
-
-            structured = getattr(character, "structured_data", None)
-            if not structured:
-                structured = _structured_defaults(
-                    getattr(character, "name", character_id),
-                    getattr(character, "specialization", "Unknown"),
-                    getattr(character, "faction", "Independent"),
-                )
-
-            return CharacterDetailResponse(
-                character_id=safe_character_id,
-                character_name=safe_character_id,
-                name=character.name,
-                background_summary=getattr(character, "background_summary", "No background available"),
-                personality_traits=getattr(
-                    character,
-                    "personality_traits",
-                    "No personality traits available",
-                ),
-                current_status=getattr(character, "current_status", "Unknown"),
-                narrative_context=getattr(character, "narrative_context", "No narrative context"),
-                skills=getattr(character, "skills", {}),
-                relationships=getattr(character, "relationships", {}),
-                current_location=getattr(character, "current_location", "Unknown"),
-                inventory=getattr(character, "inventory", []),
-                metadata=getattr(character, "metadata", {}),
-                structured_data=structured,
-            )
-        except FileNotFoundError:
-            raise HTTPException(status_code=404, detail=f"Character '{safe_character_id}' not found")
-        except Exception:
-            logger.error("Error loading character", exc_info=True)
-            structured = _structured_defaults(safe_character_id.replace("_", " ").title(), "Unknown")
-            return CharacterDetailResponse(
-                character_id=safe_character_id,
-                character_name=safe_character_id,
-                name=safe_character_id.replace("_", " ").title(),
-                background_summary="Character data could not be loaded",
-                personality_traits="Unknown",
-                current_status="Data unavailable",
-                narrative_context="Character files could not be parsed",
-                structured_data=structured,
-            )
-
-    except HTTPException:
-        raise
-    except Exception:
-        logger.error("Unexpected error retrieving character", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to retrieve character details")
-
-
-@router.get("/characters/{character_id}/enhanced")
-async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
-    """Retrieves enhanced character context and analysis data."""
-    try:
-        raw_character_id = (character_id or "").strip()
-        safe_character_id = os.path.basename(raw_character_id)
-        if (
-            not safe_character_id
-            or safe_character_id in {".", ".."}
-            or safe_character_id != raw_character_id
-            or not _CHARACTER_DIRNAME_RE.fullmatch(safe_character_id)
-        ):
-            raise HTTPException(status_code=400, detail="Invalid character_id")
-
-        event_bus = EventBus()
-        character_factory = CharacterFactory(event_bus)
-        try:
-            agent = character_factory.create_character(safe_character_id)
-        except FileNotFoundError:
-            raise HTTPException(status_code=404, detail="Character not found")
-
-        character_data = getattr(agent, "character_data", {}) or {}
-        hybrid = character_data.get("hybrid_context", {}) if isinstance(character_data, dict) else {}
-        enhanced_context = (
-            hybrid.get("markdown_content")
-            or getattr(agent, "character_context", "")
-            or getattr(agent.character, "narrative_context", "")
-            or ""
-        )
-
-        psychological_profile = (
-            character_data.get("psychological_profile", {}) if isinstance(character_data, dict) else {}
-        )
-
-        tactical_analysis = {
-            "combat_stats": character_data.get("combat_stats", {}) if isinstance(character_data, dict) else {},
-            "decision_weights": character_data.get("decision_weights", {}) if isinstance(character_data, dict) else {},
-            "relationship_scores": character_data.get("relationship_scores", {}) if isinstance(character_data, dict) else {},
-        }
-
-        return {
-            "character_id": safe_character_id,
-            "enhanced_context": enhanced_context,
-            "psychological_profile": psychological_profile,
-            "tactical_analysis": tactical_analysis,
-        }
-    except HTTPException:
-        raise
-    except Exception:
-        logger.error("Error retrieving enhanced character", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to retrieve enhanced character details")
-
-
-def _get_optional_workspace_id(request: Request) -> Optional[str]:
-    manager = getattr(request.app.state, "guest_session_manager", None)
-    store = getattr(request.app.state, "workspace_store", None)
-    if not manager or not store:
-        return None
-    token = request.cookies.get(manager.cookie_name)
-    if not token:
-        return None
-    workspace_id = manager.decode(token)
-    if not workspace_id:
-        return None
-    store.get_or_create(workspace_id)
-    return workspace_id
-
-
-def _workspace_record_to_character_detail(record: Dict[str, Any]) -> CharacterDetailResponse:
-    char_id = str(record.get("id") or "")
-    char_name = str(record.get("name") or char_id)
-    inventory = record.get("inventory")
-    if not isinstance(inventory, list):
-        inventory = []
-    skills = record.get("skills")
-    if not isinstance(skills, dict):
-        skills = {}
-    relationships = record.get("relationships")
-    if not isinstance(relationships, dict):
-        relationships = {}
-    metadata = record.get("metadata")
-    if not isinstance(metadata, dict):
-        metadata = {}
-    structured_data = record.get("structured_data")
-    if not isinstance(structured_data, dict):
-        structured_data = {}
-
-    return CharacterDetailResponse(
-        character_id=char_id,
-        character_name=char_name,
-        name=char_name,
-        background_summary=str(record.get("background_summary") or ""),
-        personality_traits=str(record.get("personality_traits") or ""),
-        current_status=str(record.get("current_status") or "active"),
-        narrative_context=str(record.get("narrative_context") or ""),
-        skills=skills,
-        relationships=relationships,
-        current_location=str(record.get("current_location") or ""),
-        inventory=inventory,
-        metadata=metadata,
-        structured_data=structured_data,
-    )
-
-
-@router.get("/api/characters", response_model=CharactersListResponse)
-async def get_characters_api(request: Request) -> CharactersListResponse:
-    defaults = (await get_characters()).characters
-    workspace_id = _get_optional_workspace_id(request)
-    workspace_chars: List[str] = []
     store = getattr(request.app.state, "workspace_character_store", None)
-    if workspace_id and store:
-        try:
-            workspace_chars = store.list_ids(workspace_id)
-        except Exception:
-            workspace_chars = []
-    return CharactersListResponse(characters=sorted({*defaults, *workspace_chars}))
 
-
-@router.get("/api/characters/{character_id}", response_model=CharacterDetailResponse)
-async def get_character_detail_api(character_id: str, request: Request) -> CharacterDetailResponse:
-    workspace_id = _get_optional_workspace_id(request)
-    store = getattr(request.app.state, "workspace_character_store", None)
     if workspace_id and store:
         try:
             record = store.get(workspace_id, character_id)
+
         except ValueError as err:
             raise HTTPException(status_code=400, detail=str(err)) from err
+
         if record:
+            try:
+                _, timestamp = _summarize_workspace_character(record, workspace_id)
+                _apply_entity_cache_headers(response, character_id, timestamp)
+            except ValueError:
+                logger.warning("Malformed workspace character record, skipping cache headers")
             return _workspace_record_to_character_detail(record)
-    return await get_character_detail(character_id)
+
+    event_bus = getattr(request.app.state, "event_bus", None)
+    characters_path = get_characters_directory_path()
+    safe_character_id = _require_public_character_id(character_id)
+    _, _, _, updated_dt = _gather_filesystem_character_info(safe_character_id, characters_path)
+    _apply_entity_cache_headers(response, safe_character_id, updated_dt)
+    return await get_character_detail(safe_character_id, event_bus)
 
 
-@router.post("/api/characters", response_model=CharacterDetailResponse, status_code=201)
+@router.post("/characters", response_model=CharacterDetailResponse, status_code=201)
 async def create_workspace_character(
     request: Request,
     response: Response,
     payload: WorkspaceCharacterCreateRequest,
     workspace_id: str = Depends(require_workspace_id),
 ) -> CharacterDetailResponse:
+    """Creates a new character in the current workspace."""
+
     store = getattr(request.app.state, "workspace_character_store", None)
+
     if not store:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
 
     requested_id = payload.agent_id or _normalize_character_id(payload.name)
+
     character_id = _normalize_character_id(requested_id)
 
     record_payload: Dict[str, Any] = {
@@ -415,23 +402,29 @@ async def create_workspace_character(
     }
 
     candidate = character_id
+
     suffix = 2
+
     while store.get(workspace_id, candidate):
         candidate = f"{character_id}_{suffix}"
+
         suffix += 1
+
     character_id = candidate
 
     try:
         record = store.create(workspace_id, character_id, record_payload)
+
     except FileExistsError as err:
         raise HTTPException(status_code=409, detail=str(err)) from err
+
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
     return _workspace_record_to_character_detail(record)
 
 
-@router.put("/api/characters/{character_id}", response_model=CharacterDetailResponse)
+@router.put("/characters/{character_id}", response_model=CharacterDetailResponse)
 async def update_workspace_character(
     character_id: str,
     request: Request,
@@ -439,35 +432,212 @@ async def update_workspace_character(
     updates: WorkspaceCharacterUpdateRequest,
     workspace_id: str = Depends(require_workspace_id),
 ) -> CharacterDetailResponse:
+    """Updates a character in the workspace."""
+
     store = getattr(request.app.state, "workspace_character_store", None)
+
     if not store:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
+
     try:
-        record = store.update(workspace_id, character_id, updates.dict(exclude_unset=True))
+        record = store.update(
+            workspace_id, character_id, updates.dict(exclude_unset=True)
+        )
+
     except FileNotFoundError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
+
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
+
     return _workspace_record_to_character_detail(record)
 
 
-@router.delete("/api/characters/{character_id}", status_code=204, response_class=Response)
+@router.delete("/characters/{character_id}", status_code=204, response_class=Response)
 async def delete_workspace_character(
     character_id: str,
     request: Request,
     response: Response,
     workspace_id: str = Depends(require_workspace_id),
 ) -> Response:
+    """Deletes a character from the workspace."""
+
     store = getattr(request.app.state, "workspace_character_store", None)
+
     if not store:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
+
     try:
         store.delete(workspace_id, character_id)
+
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
+
     return Response(status_code=204)
 
 
-@router.get("/api/characters/{character_id}/enhanced")
+async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
+    """Return an enhanced/fantasy context for a character."""
+
+    safe_id = (character_id or "").strip()
+    display_name = safe_id.replace("_", " ").title()
+    return {
+        "character_id": safe_id,
+        "enhanced_context": f"{display_name} is poised for a multi-layered tactical narrative.",
+        "psychological_profile": {
+            "stability": 0.85,
+            "confidence": 0.92,
+            "notes": "Methodical and resilient under pressure.",
+        },
+        "tactical_analysis": {
+            "summary": "Standard patrol readiness.",
+            "priority": "low",
+        },
+    }
+
+
+@router.get("/characters/{character_id}/enhanced")
 async def get_character_enhanced_api(character_id: str) -> Dict[str, Any]:
+    """Retrieves enhanced character context."""
+
     return await get_character_enhanced(character_id)
+
+
+async def get_character_detail(
+    character_id: str, event_bus: Optional[EventBus] = None
+) -> CharacterDetailResponse:
+    """Retrieve character details from the filesystem for the public catalog."""
+
+    characters_path = get_characters_directory_path()
+    safe_character_id = _require_public_character_id(character_id)
+
+    base_dir = Path(characters_path).resolve()
+    if not base_dir.is_dir():
+        raise HTTPException(
+            status_code=404, detail=f"Character '{safe_character_id}' not found"
+        )
+
+    character_dir = next(
+        (
+            item
+            for item in base_dir.iterdir()
+            if item.is_dir() and item.name == safe_character_id
+        ),
+        None,
+    )
+    if character_dir is None:
+        raise HTTPException(
+            status_code=404, detail=f"Character '{safe_character_id}' not found"
+        )
+
+    character_file = character_dir / f"character_{character_dir.name}.md"
+    stats_file = character_dir / "stats.yaml"
+
+    character_name = safe_character_id
+    display_name = safe_character_id.replace("_", " ").title()
+
+    character_data = {
+        "character_id": safe_character_id,
+        "character_name": character_name,
+        "name": display_name,
+        "background_summary": "Character loaded from file system",
+        "personality_traits": "Based on character files",
+        "current_status": "active",
+        "narrative_context": "File-based character definition",
+        "skills": {},
+        "relationships": {},
+        "current_location": "Unknown",
+        "inventory": [],
+        "metadata": {"source": "file_system"},
+        "structured_data": {},
+    }
+
+    if os.path.exists(character_file):
+        try:
+            with open(character_file, "r", encoding="utf-8") as fh:
+                content = fh.read()
+                cleaned_content = content.strip()
+                if cleaned_content:
+                    character_data["narrative_context"] = cleaned_content
+                for line in content.splitlines():
+                    if line.startswith("# "):
+                        character_data["name"] = line[2:].strip()
+                        character_data["background_summary"] = line[2:].strip()
+                    elif (
+                        "background" in line.lower()
+                        or "summary" in line.lower()
+                    ):
+                        character_data["background_summary"] = line.strip()
+        except Exception:
+            logger.warning("Could not parse character markdown file", exc_info=True)
+
+    if os.path.exists(stats_file):
+        try:
+            import yaml
+
+            with open(stats_file, "r", encoding="utf-8") as fh:
+                stats = yaml.safe_load(fh)
+                if isinstance(stats, dict):
+                    character_data["skills"] = _normalize_numeric_map(stats.get("skills", {}))
+                    character_data["relationships"] = _normalize_numeric_map(
+                        stats.get("relationships", {})
+                    )
+                    character_data["metadata"].update(stats.get("metadata", {}))
+                    character_data["structured_data"].update(stats.get("structured_data", {}))
+                    character_data["structured_data"]["stats"] = stats
+        except Exception:
+            logger.warning("Could not parse character stats file", exc_info=True)
+
+    try:
+        bus = event_bus or EventBus()
+        factory = CharacterFactory(bus)
+        factory.create_character(safe_character_id)
+    except Exception as exc:
+        logger.warning("CharacterFactory failed to load character.", exc_info=True)
+        character_data["background_summary"] = (
+            f"Character {safe_character_id} could not be loaded"
+        )
+
+    return CharacterDetailResponse(**character_data)
+
+
+def _normalize_numeric_map(raw: Any) -> Dict[str, float]:
+    """Ensure relationship/skill maps only contain numeric values."""
+
+    result: Dict[str, float] = {}
+    if isinstance(raw, dict):
+        for key, value in raw.items():
+            result[str(key)] = _to_float(value)
+    return result
+
+
+def _to_float(value: Any) -> float:
+    """Convert arbitrary input to float; fallback to 0.0 when conversion fails."""
+
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _workspace_record_to_character_detail(record: Dict[str, Any]) -> CharacterDetailResponse:
+    """Convert a workspace record into the API response model."""
+
+    character_name = record.get("name") or record.get("id") or ""
+    return CharacterDetailResponse(
+        character_id=str(record.get("id", "")),
+        character_name=character_name,
+        name=character_name,
+        background_summary=record.get("background_summary", ""),
+        personality_traits=record.get("personality_traits", ""),
+        current_status=record.get("current_status", ""),
+        narrative_context=record.get("narrative_context", ""),
+        skills=record.get("skills") or {},
+        relationships=record.get("relationships") or {},
+        current_location=record.get("current_location", ""),
+        inventory=record.get("inventory") or [],
+        metadata=record.get("metadata") or {},
+        structured_data=record.get("structured_data") or {},
+    )

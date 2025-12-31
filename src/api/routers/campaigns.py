@@ -9,7 +9,11 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from src.api.schemas import CampaignCreationRequest, CampaignCreationResponse, CampaignsListResponse
+from src.api.schemas import (
+    CampaignCreationRequest,
+    CampaignCreationResponse,
+    CampaignsListResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,4 +76,3 @@ async def create_campaign(request: CampaignCreationRequest) -> CampaignCreationR
     except Exception as exc:
         logger.error("Error creating campaign: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to create campaign: {exc}")
-

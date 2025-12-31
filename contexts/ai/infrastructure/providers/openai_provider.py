@@ -148,7 +148,6 @@ class OpenAIProvider(ILLMProvider):
                 headers=self._get_headers(),
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 response_data = await response.json()
 
                 if response.status == 200:
@@ -204,7 +203,6 @@ class OpenAIProvider(ILLMProvider):
                 headers=self._get_headers(),
                 timeout=aiohttp.ClientTimeout(total=self._timeout_seconds),
             ) as response:
-
                 if response.status != 200:
                     yield f"Error: HTTP {response.status}"
                     return
@@ -328,7 +326,6 @@ class OpenAIProvider(ILLMProvider):
                 headers=self._get_headers(),
                 timeout=aiohttp.ClientTimeout(total=10),
             ) as response:
-
                 is_healthy = response.status == 200
 
                 return {

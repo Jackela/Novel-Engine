@@ -136,10 +136,12 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.user = action.payload.data.user;
-        state.accessToken = action.payload.data.access_token;
-        state.refreshToken = action.payload.data.refresh_token;
-        state.tokenExpiry = Date.now() + (action.payload.data.expires_in * 1000);
+        if (action.payload.data) {
+          state.user = action.payload.data.user;
+          state.accessToken = action.payload.data.access_token;
+          state.refreshToken = action.payload.data.refresh_token;
+          state.tokenExpiry = Date.now() + (action.payload.data.expires_in * 1000);
+        }
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -156,11 +158,13 @@ const authSlice = createSlice({
       })
       .addCase(refreshUserToken.fulfilled, (state, action) => {
         state.loading = false;
-        state.accessToken = action.payload.data.access_token;
-        if (action.payload.data.refresh_token) {
-          state.refreshToken = action.payload.data.refresh_token;
+        if (action.payload.data) {
+          state.accessToken = action.payload.data.access_token;
+          if (action.payload.data.refresh_token) {
+            state.refreshToken = action.payload.data.refresh_token;
+          }
+          state.tokenExpiry = Date.now() + (action.payload.data.expires_in * 1000);
         }
-        state.tokenExpiry = Date.now() + (action.payload.data.expires_in * 1000);
         state.isAuthenticated = true;
         state.error = null;
       })

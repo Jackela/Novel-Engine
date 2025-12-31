@@ -285,11 +285,9 @@ class StoryGenerationAPI:
                         break
 
             except WebSocketDisconnect:
-                logger.info(
-                    f"WebSocket connection closed for generation {generation_id}"
-                )
+                logger.info("WebSocket connection closed for generation")
             except Exception as e:
-                logger.error(f"WebSocket error for generation {generation_id}: {e}")
+                logger.exception("WebSocket error for generation")
             finally:
                 self.connection_pool.remove_connection(generation_id, websocket)
 
