@@ -1,27 +1,23 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  Box,
-  IconButton,
-  Tooltip,
-  Stack,
-  Typography,
-  useMediaQuery,
-  Fade,
-  Chip,
-} from '@mui/material';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Fade from '@mui/material/Fade';
+import Chip from '@mui/material/Chip';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
-import {
-  PlayArrow as PlayIcon,
-  Pause as PauseIcon,
-  Stop as StopIcon,
-  Refresh as RefreshIcon,
-  Save as SaveIcon,
-  Settings as SettingsIcon,
-  Fullscreen as FullscreenIcon,
-  Download as DownloadIcon,
-  PersonAdd as PersonAddIcon,
-} from '@mui/icons-material';
+import PlayIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import StopIcon from '@mui/icons-material/Stop';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import SaveIcon from '@mui/icons-material/Save';
+import SettingsIcon from '@mui/icons-material/Settings';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import DownloadIcon from '@mui/icons-material/Download';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import GridTile from '@/components/layout/GridTile';
 import { telemetry } from '../../utils/telemetry';
 

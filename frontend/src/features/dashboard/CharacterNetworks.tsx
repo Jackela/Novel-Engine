@@ -1,24 +1,19 @@
 import React, { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Stack,
-  List,
-  Avatar,
-  LinearProgress,
-  useTheme,
-  useMediaQuery,
-  Fade,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+import List from '@mui/material/List';
+import Avatar from '@mui/material/Avatar';
+import LinearProgress from '@mui/material/LinearProgress';
+import Fade from '@mui/material/Fade';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { styled, useTheme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
-import {
-  Person as PersonIcon,
-  Groups as GroupIcon,
-  Link as LinkIcon,
-  Diversity3 as NetworkIcon,
-} from '@mui/icons-material';
+import PersonIcon from '@mui/icons-material/Person';
+import GroupIcon from '@mui/icons-material/Groups';
+import LinkIcon from '@mui/icons-material/Link';
+import NetworkIcon from '@mui/icons-material/Diversity3';
 import GridTile from '@/components/layout/GridTile';
 import { useDashboardCharactersDataset } from '@/hooks/useDashboardCharactersDataset';
 
