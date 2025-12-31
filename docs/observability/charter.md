@@ -45,4 +45,4 @@
 - Docker daemon running locally (required for `act`)
 - `act` CLI installed (`/usr/local/bin/act`)
 - Playwright browsers installed via `python3 -m playwright install`
-- Optional: use `.venv-ci` virtual environment created by `scripts/validate_ci_locally.sh`
+- Optional: use `.venv-ci` virtual environment created by `scripts/validate_ci_locally.sh` or `scripts/validate_ci_locally.ps1`

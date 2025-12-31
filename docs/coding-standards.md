@@ -42,11 +42,15 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
 ## 3. Backend (Python)
 
 ### Formatting, Linting, Tests
-- Use the CI parity script to run the exact GitHub workflow locally:
+- Use the CI parity script to run the same GitHub Actions gates locally (markers, pyramid, unit/integration/e2e/smoke, plus frontend checks):
   ```bash
   bash scripts/validate_ci_locally.sh
   ```
-  This script creates `.venv-ci/`, installs requirements, runs Black, Isort, Flake8, Mypy, and the pytest suite with coverage.
+  On Windows PowerShell:
+  ```powershell
+  .\scripts\validate_ci_locally.ps1
+  ```
+- Formatting/type-checks are still required for Python changes; run `black`, `isort`, `flake8`, and `mypy` as needed.
 - For focused suites (security/quality), the canonical commands are:
   ```bash
   pytest tests/test_security_framework.py tests/test_quality_framework.py
@@ -58,7 +62,10 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
 - Use `act` to mirror both workflows before pushing:
   ```bash
   act --pull=false -W .github/workflows/frontend-ci.yml -j build-and-test   # Vite + Vitest + Playwright smoke
-  act --pull=false -W .github/workflows/ci.yml -j tests                      # Backend pytest
+  act --pull=false -W .github/workflows/ci.yml -j unit-tests
+  act --pull=false -W .github/workflows/ci.yml -j integration-tests
+  act --pull=false -W .github/workflows/ci.yml -j e2e-tests
+  act --pull=false -W .github/workflows/ci.yml -j smoke-tests
   ```
   Save logs locally (e.g., `tmp/act-frontend.log`, `tmp/act-ci.log`) and attach them to PRs/issues when needed.
 - Lighthouse CI must be run with a real Chrome binary defined explicitly:
