@@ -4,12 +4,20 @@ import { runCleanups as runUtilCleanups } from './utils/cleanup';
 
 // Ensure globals expected by browser-only libraries (e.g., web-vitals) exist
 if (typeof globalThis.self === 'undefined') {
-  (globalThis as any).self = globalThis;
+  const globalWithSelf = globalThis as typeof globalThis & { self?: typeof globalThis };
+  globalWithSelf.self = globalThis;
 }
 
 // Polyfills
 if (typeof window !== 'undefined') {
   window.scrollTo = vi.fn();
+
+  // Mock scrollTop for MUI Fade component compatibility with jsdom
+  Object.defineProperty(HTMLElement.prototype, 'scrollTop', {
+    configurable: true,
+    get() { return 0; },
+    set() {}
+  });
 }
 
 global.EventSource = vi.fn(() => ({
@@ -20,7 +28,7 @@ global.EventSource = vi.fn(() => ({
   CONNECTING: 0,
   OPEN: 1,
   CLOSED: 2,
-})) as any;
+})) as unknown as typeof EventSource;
 
 // Global test setup for Novel Engine frontend tests
 
@@ -90,7 +98,7 @@ class MockWebSocket {
   }
 
   // Mock message simulation for testing
-  simulateMessage(data: any) {
+  simulateMessage(data: unknown) {
     if (this.readyState === MockWebSocket.OPEN && this.onmessage) {
       this.onmessage({
         data: JSON.stringify(data),
@@ -180,6 +188,11 @@ vi.mock('../hooks/useWebSocketProgress', () => ({
   })),
 }));
 
+// Mock MUI transitions reflow function to avoid jsdom scrollTop errors
+vi.mock('@mui/material/transitions/utils', () => ({
+  reflow: vi.fn((node: HTMLElement) => node),
+}));
+
 // Global test cleanup - run after each test
 beforeEach(() => {
   // Clear all timers
@@ -204,7 +217,7 @@ afterAll(async () => {
 
 // Suppress console warnings during tests
 const originalConsoleWarn = console.warn;
-console.warn = (...args: any[]) => {
+console.warn = (...args: unknown[]) => {
   // Filter out specific warnings that are expected in test environment
   const message = args[0];
   if (
@@ -219,7 +232,7 @@ console.warn = (...args: any[]) => {
 };
 
 const originalConsoleError = console.error;
-console.error = (...args: any[]) => {
+console.error = (...args: unknown[]) => {
   const message = args[0];
   if (typeof message === 'string' && message.includes('ReactDOMTestUtils.act')) {
     return;
