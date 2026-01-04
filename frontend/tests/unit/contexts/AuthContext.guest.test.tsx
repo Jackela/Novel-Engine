@@ -40,7 +40,8 @@ describe('AuthProvider guest bootstrap', () => {
   });
 
   it('resumes guest session when session flag is present', async () => {
-    const { AuthProvider, useAuthContext } = await import('@/contexts/AuthContext');
+    const { AuthProvider } = await import('@/contexts/AuthContext');
+    const { useAuthContext } = await import('@/contexts/useAuthContext');
     const { guestAPI: mockedGuestAPI } = await import('@/services/api/guestAPI');
     const envConfig = (await import('@/config/env')).default;
     expect(envConfig.enableGuestMode).toBe(true);

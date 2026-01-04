@@ -6,7 +6,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 
 // Mock useAuthContext
 const mockUseAuthContext = vi.fn();
-vi.mock('@/contexts/AuthContext', () => ({
+vi.mock('@/contexts/useAuthContext', () => ({
   useAuthContext: () => mockUseAuthContext(),
 }));
 
