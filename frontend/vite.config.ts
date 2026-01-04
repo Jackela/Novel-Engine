@@ -192,7 +192,7 @@ export default defineConfig({
       test: {
         globals: true,
         environment: 'jsdom',
-        setupFiles: './src/setupTests.ts',
+        setupFiles: './src/test/setup.ts',
         css: false, // Disable CSS processing for faster tests
         coverage: {
           provider: 'v8',
@@ -205,7 +205,7 @@ export default defineConfig({
           },
           exclude: [
             'node_modules/',
-            'src/setupTests.ts',
+            'src/test/setup.ts',
             '**/*.test.tsx',
             '**/*.test.ts',
             '**/*.spec.ts',
