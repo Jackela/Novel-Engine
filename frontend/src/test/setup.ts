@@ -136,10 +136,36 @@ Object.defineProperty(window, 'fetch', {
   ),
 });
 
-// Mock axios for any direct usage
-vi.mock('axios', () => ({
-  default: {
-    create: vi.fn(() => ({
+// Mock axios for any direct usage - using importOriginal to preserve AxiosError
+vi.mock('axios', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('axios')>();
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      create: vi.fn(() => ({
+        get: vi.fn(() => Promise.resolve({
+          data: {
+            api: 'healthy',
+            config: 'loaded',
+            version: '1.0.0',
+          },
+        })),
+        post: vi.fn(() => Promise.resolve({
+          data: { success: true },
+        })),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+        getSystemStatus: vi.fn(() => Promise.resolve({
+          data: {
+            api: 'healthy',
+            config: 'loaded',
+            version: '1.0.0',
+          },
+        })),
+      })),
       get: vi.fn(() => Promise.resolve({
         data: {
           api: 'healthy',
@@ -150,30 +176,9 @@ vi.mock('axios', () => ({
       post: vi.fn(() => Promise.resolve({
         data: { success: true },
       })),
-      interceptors: {
-        request: { use: vi.fn() },
-        response: { use: vi.fn() },
-      },
-      getSystemStatus: vi.fn(() => Promise.resolve({
-        data: {
-          api: 'healthy',
-          config: 'loaded',
-          version: '1.0.0',
-        },
-      })),
-    })),
-    get: vi.fn(() => Promise.resolve({
-      data: {
-        api: 'healthy',
-        config: 'loaded',
-        version: '1.0.0',
-      },
-    })),
-    post: vi.fn(() => Promise.resolve({
-      data: { success: true },
-    })),
-  },
-}));
+    },
+  };
+});
 
 // Mock the WebSocket hook to prevent real connections during tests
 vi.mock('../hooks/useWebSocketProgress', () => ({
