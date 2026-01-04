@@ -3,13 +3,18 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from '@/styles/theme';
 
-// Mock useAuthContext
-const mockUseAuthContext = vi.hoisted(() => vi.fn());
 vi.mock('@/contexts/useAuthContext', () => ({
-  useAuthContext: mockUseAuthContext,
+  useAuthContext: vi.fn(() => ({
+    isGuest: false,
+    workspaceId: null,
+    user: { id: 'test-user', role: 'admin' },
+  })),
 }));
 
+import { useAuthContext } from '@/contexts/useAuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+
+const mockUseAuthContext = vi.mocked(useAuthContext);
 
 // Test wrapper with theme
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
