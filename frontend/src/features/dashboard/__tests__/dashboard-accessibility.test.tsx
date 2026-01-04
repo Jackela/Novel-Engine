@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
+import type { FadeProps } from '@mui/material/Fade';
 import QuickActions from '../QuickActions';
 import WorldStateMap from '../WorldStateMap';
 import CharacterNetworks from '../CharacterNetworks';
@@ -12,8 +13,8 @@ vi.mock('@mui/material/Fade', () => {
   const actual = vi.importActual('@mui/material/Fade');
   return {
     ...actual as object,
-    default: ({ children, in: inProp, ...props }: any) =>
-      inProp ? children : null,
+    default: ({ children, in: inProp }: FadeProps) =>
+      (inProp ? <>{children}</> : null),
   };
 });
 

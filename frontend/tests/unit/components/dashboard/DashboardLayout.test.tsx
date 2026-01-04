@@ -2,13 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from '@/styles/theme';
-import DashboardLayout from '@/components/layout/DashboardLayout';
 
 // Mock useAuthContext
-const mockUseAuthContext = vi.fn();
+const mockUseAuthContext = vi.hoisted(() => vi.fn());
 vi.mock('@/contexts/useAuthContext', () => ({
-  useAuthContext: () => mockUseAuthContext(),
+  useAuthContext: mockUseAuthContext,
 }));
+
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 // Test wrapper with theme
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (

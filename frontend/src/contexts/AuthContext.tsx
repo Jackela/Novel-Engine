@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import config from '@/config/env';
 import { logger } from '@/services/logging/LoggerFactory';
 import type { IAuthenticationService } from '@/services/auth/IAuthenticationService';
@@ -420,12 +420,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authServic
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuthContext = (): AuthContextState => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
-  }
-  return context;
 };

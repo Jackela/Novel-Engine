@@ -10,9 +10,12 @@ export const queryKeys = {
   campaigns: ['campaigns', 'list'] as const,
 };
 
+const shouldDisableQueryRetry = import.meta.env.VITE_DISABLE_QUERY_RETRY === 'true';
+
 export function useCharactersQuery() {
   return useQuery(queryKeys.characters, () => api.getCharacters(), {
     staleTime: 60_000,
+    ...(shouldDisableQueryRetry ? { retry: false } : {}),
   });
 }
 
