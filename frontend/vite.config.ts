@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
+const devPort = Number(process.env.VITE_DEV_PORT || process.env.PORT || 3000);
+
 export default defineConfig({
   plugins: [
     react(),
@@ -81,7 +83,7 @@ export default defineConfig({
 
   // Development server optimizations
   server: {
-    port: 3000,
+    port: devPort,
     host: '0.0.0.0', // Enable network access for WSL2/Docker
     strictPort: true, // Fail if port is already in use
     cors: true,
@@ -89,8 +91,8 @@ export default defineConfig({
     hmr: {
       protocol: 'ws',
       host: 'localhost',
-      port: 3000,
-      clientPort: 3000, // Prevent port mapping confusion
+      port: devPort,
+      clientPort: devPort, // Prevent port mapping confusion
     },
     // WSL2 file watching fix - use polling with faster interval
     watch: {

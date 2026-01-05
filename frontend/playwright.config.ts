@@ -14,6 +14,8 @@ import os from 'node:os';
 
 const enableFullMatrix =
   (process.env.PLAYWRIGHT_ENABLE_FULL_MATRIX || '').toLowerCase() === 'true';
+const playwrightPort = Number(process.env.PLAYWRIGHT_PORT || process.env.VITE_DEV_PORT || 3000);
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${playwrightPort}`;
 
 const browserProjects = [
   {
@@ -106,7 +108,7 @@ export default defineConfig({
   // Global test settings
   use: {
     // Base URL for testing
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    baseURL: baseUrl,
 
     // Browser settings
     headless: process.env.CI ? true : false,
@@ -133,12 +135,13 @@ export default defineConfig({
   // Development server configuration
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:3000',
+    url: baseUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2 minutes to start dev server
     env: {
       NODE_ENV: 'test',
-      VITE_API_BASE_URL: process.env.TEST_API_URL || 'http://127.0.0.1:8000',
+      VITE_DEV_PORT: String(playwrightPort),
+      VITE_API_BASE_URL: process.env.TEST_API_URL || 'http://127.0.0.1:8000',   
       VITE_WS_URL: process.env.TEST_WS_URL || 'ws://localhost:8001/ws',
       VITE_DISABLE_QUERY_RETRY: 'true',
       VITE_SHOW_PERFORMANCE_METRICS: 'true',
