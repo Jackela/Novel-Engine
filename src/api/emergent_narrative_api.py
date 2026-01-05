@@ -440,7 +440,7 @@ class EmergentNarrativeAPI:
 
             except HTTPException:
                 raise
-            except Exception as e:
+            except Exception:
                 logger.exception("Error getting narrative.")
                 raise HTTPException(status_code=500, detail="Internal server error")
 

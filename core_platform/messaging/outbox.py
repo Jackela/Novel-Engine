@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 class OutboxException(Exception):
     """Base exception for outbox operations."""
 
-    pass
 
 
 class OutboxPublisher:
@@ -88,7 +87,7 @@ class OutboxPublisher:
             try:
                 await self._publisher_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Outbox publisher task cancelled during stop")
 
         logger.info("Outbox publisher stopped")
 

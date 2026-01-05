@@ -67,7 +67,6 @@ class IKnowledgeRetriever(ABC):
         Constitution Compliance:
         - Article IV (SSOT): Must retrieve from PostgreSQL (no cache layer for MVP)
         """
-        pass
 
     @abstractmethod
     async def retrieve_for_agent(
@@ -116,7 +115,6 @@ class IKnowledgeRetriever(ABC):
         - FR-005: Access control filtering enforced
         - FR-009: Agents only retrieve permitted knowledge
         """
-        pass
 
     @abstractmethod
     async def retrieve_for_agent_semantic(
@@ -172,4 +170,3 @@ class IKnowledgeRetriever(ABC):
             - FR-020: Semantic search with vector similarity
             - FR-021: Fallback available when embeddings not present
         """
-        pass

@@ -447,9 +447,7 @@ class AlertSystem:
         alert_level = (
             "CRITICAL"
             if not results.pipeline_success
-            else "WARNING"
-            if regressions
-            else "INFO"
+            else "WARNING" if regressions else "INFO"
         )
 
         # Generate alert message
@@ -762,14 +760,14 @@ def load_pipeline_config(config_path: Path) -> PipelineConfig:
             config_data = yaml.safe_load(f)
 
         # Convert paths
-        for field in [
+        for path_key in [
             "seeds_directory",
             "results_directory",
             "archive_directory",
             "performance_baseline_file",
         ]:
-            if field in config_data:
-                config_data[field] = Path(config_data[field])
+            if path_key in config_data:
+                config_data[path_key] = Path(config_data[path_key])
 
         return PipelineConfig(**config_data)
     else:

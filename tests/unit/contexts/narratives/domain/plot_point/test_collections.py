@@ -5,9 +5,7 @@ PlotPoint Collections Tests
 Split from test_plot_point_value_object.py for maintainability.
 """
 
-from datetime import datetime, timezone
 from decimal import Decimal
-from uuid import uuid4
 
 import pytest
 
@@ -152,7 +150,6 @@ class TestPlotPointCollectionsAndComparison:
         )
 
         assert plot1 != plot2
-        assert not (plot1 == plot2)
 
     @pytest.mark.unit
     def test_plot_point_hashing_consistency(self):

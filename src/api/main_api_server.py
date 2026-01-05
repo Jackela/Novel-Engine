@@ -20,7 +20,7 @@ import secrets
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, AsyncGenerator, Dict, Optional
+from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -569,7 +569,7 @@ def create_app() -> FastAPI:
                 if cached_health:
                     health_status = cached_health.status.value
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
         content = {
             "name": "Novel Engine API",

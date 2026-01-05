@@ -198,9 +198,9 @@ class AIIntelligenceOrchestrator:
         self.optimization_suggestions: List[str] = []
 
         # Resource management
-        self.resource_allocation: Dict[
-            str, float
-        ] = self.config.resource_allocation.copy()
+        self.resource_allocation: Dict[str, float] = (
+            self.config.resource_allocation.copy()
+        )
         self.load_balancer: Dict[str, float] = defaultdict(float)
         self.performance_history: Dict[str, deque] = defaultdict(
             lambda: deque(maxlen=100)
@@ -314,9 +314,9 @@ class AIIntelligenceOrchestrator:
                     try:
                         await task
                     except asyncio.CancelledError:
-                        pass
-
-            # Shutdown analytics platform
+                        logging.getLogger(__name__).debug(
+                            "Suppressed exception", exc_info=True
+                        )
             if self.analytics:
                 await self.analytics.stop_background_processing()
                 shutdown_results["analytics"] = True
@@ -1079,7 +1079,6 @@ class AIIntelligenceOrchestrator:
     async def _handle_story_generated(self, story_data: Dict[str, Any]):
         """Handle story generation events."""
         # Process story through AI intelligence pipeline
-        pass
 
     async def _handle_user_feedback(self, feedback_data: Dict[str, Any]):
         """Handle user feedback events."""
@@ -1096,7 +1095,6 @@ class AIIntelligenceOrchestrator:
     async def _handle_agent_action(self, action_data: Dict[str, Any]):
         """Handle agent action events."""
         # Coordinate agent actions if needed
-        pass
 
     async def _handle_system_alert(self, alert_data: Dict[str, Any]):
         """Handle system alert events."""
@@ -1162,7 +1160,6 @@ class AIIntelligenceOrchestrator:
     async def _balance_system_resources(self):
         """Balance resources across AI systems."""
         # Implement dynamic resource balancing
-        pass
 
     async def _save_final_state(self):
         """Save final system state before shutdown."""

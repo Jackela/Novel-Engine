@@ -1,7 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
-from src.services.api_service import ApiOrchestrationService
+
 from src.api.schemas import SimulationRequest
+from src.services.api_service import ApiOrchestrationService
 
 
 # BDD-style test naming

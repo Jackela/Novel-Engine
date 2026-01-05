@@ -28,25 +28,21 @@ logger = logging.getLogger(__name__)
 class AuthenticationException(Exception):
     """Base exception for authentication errors."""
 
-    pass
 
 
 class InvalidCredentialsException(AuthenticationException):
     """Raised when credentials are invalid."""
 
-    pass
 
 
 class TokenExpiredException(AuthenticationException):
     """Raised when JWT token has expired."""
 
-    pass
 
 
 class InsufficientPermissionsException(AuthenticationException):
     """Raised when user lacks required permissions."""
 
-    pass
 
 
 # Database Models

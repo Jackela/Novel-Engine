@@ -10,7 +10,6 @@ import {
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 // Removed unused imports: PerformanceIcon, MemoryIcon, StorageIcon, NetworkIcon, StatusIcon
-import GridTile from '@/components/layout/GridTile';
 import { usePerformance, type PerformanceMetric } from '@/hooks/usePerformance';
 
 // Try importing useAuth - may not be available yet

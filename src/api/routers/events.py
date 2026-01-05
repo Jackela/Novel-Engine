@@ -220,9 +220,11 @@ async def get_analytics_metrics(request: Request):
                 cache_metrics_raw = chunk_cache.get_metrics()
             elif hasattr(chunk_cache, "_cache"):
                 cache_metrics_raw = {
-                    "cache_size": len(chunk_cache._cache)
-                    if hasattr(chunk_cache._cache, "__len__")
-                    else 0,
+                    "cache_size": (
+                        len(chunk_cache._cache)
+                        if hasattr(chunk_cache._cache, "__len__")
+                        else 0
+                    ),
                     "cache_semantic_hits": 0,
                     "cache_exact_hits": 0,
                 }

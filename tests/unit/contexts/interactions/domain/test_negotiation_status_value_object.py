@@ -786,7 +786,6 @@ class TestNegotiationStatusEquality:
         )
 
         assert status1 == status2
-        assert not (status1 != status2)
 
     @pytest.mark.unit
     def test_equality_different_phases(self):
@@ -808,7 +807,6 @@ class TestNegotiationStatusEquality:
         )
 
         assert status1 != status2
-        assert not (status1 == status2)
 
     @pytest.mark.unit
     def test_equality_different_timestamps(self):

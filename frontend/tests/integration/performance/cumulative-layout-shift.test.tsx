@@ -8,11 +8,6 @@
  * Target: CLS < 0.1 (good), < 0.25 (needs improvement), >= 0.25 (poor)
  */
 
-import React from 'react';
-import { render, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { BrowserRouter } from 'react-router-dom';
-
 // Import will work once components are implemented
 // import CharacterSelection from '../../../src/components/CharacterSelection';
 

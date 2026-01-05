@@ -185,54 +185,59 @@ class NarrativeTheme:
         if len(self.description) > 1000:
             raise ValueError("Theme description too long (max 1000 characters)")
 
-    def __hash__(self) -> int:
-        """Custom hash implementation for frozen dataclass with Dict fields."""
-
-        def _dict_to_hashable(d):
-            if not d:
+    def _hash_components(self) -> tuple:
+        def _dict_to_hashable(values):
+            if not values:
                 return frozenset()
             items = []
-            for k, v in sorted(d.items()):
-                if isinstance(v, dict):
-                    v = _dict_to_hashable(v)
-                elif isinstance(v, list):
-                    v = tuple(v)
-                elif isinstance(v, Decimal):
-                    v = float(v)
-                items.append((k, v))
+            for key, value in sorted(values.items()):
+                if isinstance(value, dict):
+                    value = _dict_to_hashable(value)
+                elif isinstance(value, list):
+                    value = tuple(value)
+                elif isinstance(value, Decimal):
+                    value = float(value)
+                items.append((key, value))
             return frozenset(items)
 
-        return hash(
-            (
-                self.theme_id,
-                self.theme_type,
-                self.intensity,
-                self.name,
-                self.description,
-                self.symbolic_elements,
-                self.related_motifs,
-                self.character_archetypes,
-                self.introduction_sequence,
-                self.resolution_sequence,
-                self.peak_intensity_sequence,
-                self.development_trajectory,
-                self.conflicts_with_themes,
-                self.reinforces_themes,
-                self.moral_complexity,
-                self.emotional_resonance,
-                self.universal_appeal,
-                self.expressed_through_dialogue,
-                self.expressed_through_action,
-                self.expressed_through_symbolism,
-                self.expressed_through_setting,
-                self.expressed_through_character_arc,
-                self.cultural_context,
-                self.historical_context,
-                _dict_to_hashable(self.target_audience_relevance),
-                self.tags,
-                _dict_to_hashable(self.metadata),
-            )
+        return (
+            self.theme_id,
+            self.theme_type,
+            self.intensity,
+            self.name,
+            self.description,
+            self.symbolic_elements,
+            self.related_motifs,
+            self.character_archetypes,
+            self.introduction_sequence,
+            self.resolution_sequence,
+            self.peak_intensity_sequence,
+            self.development_trajectory,
+            self.conflicts_with_themes,
+            self.reinforces_themes,
+            self.moral_complexity,
+            self.emotional_resonance,
+            self.universal_appeal,
+            self.expressed_through_dialogue,
+            self.expressed_through_action,
+            self.expressed_through_symbolism,
+            self.expressed_through_setting,
+            self.expressed_through_character_arc,
+            self.cultural_context,
+            self.historical_context,
+            _dict_to_hashable(self.target_audience_relevance),
+            self.tags,
+            _dict_to_hashable(self.metadata),
         )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, NarrativeTheme):
+            return NotImplemented
+        return self._hash_components() == other._hash_components()
+
+    def __hash__(self) -> int:
+        """Custom hash implementation for frozen dataclass with Dict fields."""
+        return hash(self._hash_components())
 
     @property
     def is_major_theme(self) -> bool:

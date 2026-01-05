@@ -21,7 +21,6 @@ from contextlib import asynccontextmanager
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field, field_validator
-from typing import Annotated
 
 from ..application.services import TurnOrchestrator
 from ..domain.services import EnhancedPerformanceTracker
@@ -276,7 +275,7 @@ def _patch_e2e_database_fixture() -> None:
     @asynccontextmanager
     async def _patched_get_async_session(self):  # type: ignore[override]
         class PatchedSession:
-            def add(self_inner, obj):
+            def add(self, obj):
                 data = _serialize_value(obj)
                 class_name = obj.__class__.__name__.lower()
                 if "world" in class_name:
@@ -286,10 +285,10 @@ def _patch_e2e_database_fixture() -> None:
                 elif "narrative" in class_name:
                     _append_e2e_state("narrative_arcs", data)
 
-            async def commit(self_inner):
+            async def commit(self):
                 return
 
-            async def execute(self_inner, query):
+            async def execute(self, query):
                 text_query = str(query).lower()
                 state = _load_e2e_state()
                 if "character_events" in text_query:
@@ -304,11 +303,11 @@ def _patch_e2e_database_fixture() -> None:
                     rows = []
 
                 class MockResult:
-                    def __init__(self_inner2, data_rows):
-                        self_inner2._rows = data_rows
+                    def __init__(self, data_rows):
+                        self._rows = data_rows
 
-                    def fetchall(self_inner2):
-                        return self_inner2._rows
+                    def fetchall(self):
+                        return self._rows
 
                 return MockResult(rows)
 
@@ -593,7 +592,7 @@ async def get_turn_status(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         logger.exception("Error getting turn status.")
         raise HTTPException(status_code=500, detail="Failed to retrieve turn status")
 
@@ -680,7 +679,7 @@ async def cleanup_turn(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         logger.exception("Error cleaning up turn.")
         raise HTTPException(status_code=500, detail="Failed to cleanup turn resources")
 

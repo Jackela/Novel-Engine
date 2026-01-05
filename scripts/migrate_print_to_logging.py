@@ -21,13 +21,12 @@ Usage:
 """
 
 import argparse
-import ast
 import os
 import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -230,8 +229,6 @@ class PrintToLoggingMigrator:
         Returns:
             Tuple of (level, reason)
         """
-        line_lower = line.lower()
-
         # Check for error patterns
         for pattern in self.ERROR_PATTERNS:
             if re.search(pattern, line, re.IGNORECASE):
@@ -420,9 +417,9 @@ class PrintToLoggingMigrator:
                         analysis.print_statements
                     )
                     if not self.dry_run:
-                        print(f"   ✅ Migrated successfully")
+                        print("   ✅ Migrated successfully")
                     else:
-                        print(f"   📋 Would be migrated (dry-run)")
+                        print("   📋 Would be migrated (dry-run)")
 
         # Print summary
         self._print_summary()

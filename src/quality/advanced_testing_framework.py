@@ -598,37 +598,30 @@ class TestFramework:
     async def _test_sql_injection(self):
         """Test SQL injection protection"""
         # This would test actual SQL injection protection
-        pass
 
     async def _test_xss_protection(self):
         """Test XSS protection"""
         # This would test actual XSS protection
-        pass
 
     async def _test_auth_bypass(self):
         """Test authentication bypass protection"""
         # This would test actual authentication bypass protection
-        pass
 
     async def _test_input_validation(self):
         """Test input validation"""
         # This would test actual input validation
-        pass
 
     async def _test_character_invariants(self):
         """Test character data invariants using property-based testing"""
         # This would use Hypothesis for property-based testing
-        pass
 
     async def _test_api_response_properties(self):
         """Test API response properties"""
         # This would test API response properties
-        pass
 
     async def _test_serialization_roundtrip(self):
         """Test serialization roundtrip properties"""
         # This would test serialization/deserialization invariants
-        pass
 
     # Benchmark implementation methods
     async def _benchmark_character_creation(self) -> float:

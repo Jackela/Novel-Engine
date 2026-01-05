@@ -392,9 +392,9 @@ class SystemOrchestrator:
                     try:
                         await task
                     except asyncio.CancelledError:
-                        pass
-
-            # Save final system state
+                        logging.getLogger(__name__).debug(
+                            "Suppressed exception", exc_info=True
+                        )
             await self._save_system_state()
 
             # Perform final backup if enabled

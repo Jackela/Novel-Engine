@@ -4,12 +4,13 @@ Content generation for interactions.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
-from src.core.data_models import CharacterState, MemoryItem, StandardResponse
+from src.core.data_models import ErrorInfo, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (
     InteractionContext,
     InteractionOutcome,
+    InteractionPriority,
     InteractionType,
 )
 from src.templates.context_renderer import ContextRenderer, RenderFormat
@@ -153,8 +154,6 @@ class ContentGenerator:
         self, context: InteractionContext, participant: str
     ) -> float:
         """Calculate enhanced emotional impact of interaction on participant"""
-        base_impact = 1.0
-
         # Adjust based on interaction type
         type_impacts = {
             InteractionType.DIALOGUE: 1.0,

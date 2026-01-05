@@ -5,14 +5,10 @@ PlotPoint Enum Tests
 Split from test_plot_point_value_object.py for maintainability.
 """
 
-from datetime import datetime, timezone
-from decimal import Decimal
-from uuid import uuid4
 
 import pytest
 
 from contexts.narratives.domain.value_objects.plot_point import (
-    PlotPoint,
     PlotPointImportance,
     PlotPointType,
 )

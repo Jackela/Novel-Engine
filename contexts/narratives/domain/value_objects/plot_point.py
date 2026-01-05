@@ -157,51 +157,56 @@ class PlotPoint:
         if len(self.description) > 2000:
             raise ValueError("Plot point description too long (max 2000 characters)")
 
-    def __hash__(self) -> int:
-        """Custom hash implementation for frozen dataclass with Dict and List fields."""
-
-        def _dict_to_hashable(d):
-            if not d:
+    def _hash_components(self) -> tuple:
+        def _dict_to_hashable(values):
+            if not values:
                 return frozenset()
             items = []
-            for k, v in sorted(d.items()):
-                if isinstance(v, dict):
-                    v = _dict_to_hashable(v)
-                elif isinstance(v, list):
-                    v = tuple(v)
-                elif isinstance(v, Decimal):
-                    v = float(v)
-                items.append((k, v))
+            for key, value in sorted(values.items()):
+                if isinstance(value, dict):
+                    value = _dict_to_hashable(value)
+                elif isinstance(value, list):
+                    value = tuple(value)
+                elif isinstance(value, Decimal):
+                    value = float(value)
+                items.append((key, value))
             return frozenset(items)
 
-        return hash(
-            (
-                self.plot_point_id,
-                self.plot_point_type,
-                self.importance,
-                self.title,
-                self.description,
-                self.sequence_order,
-                self.estimated_duration,
-                self.involved_characters,
-                self.affected_themes,
-                self.location_context,
-                self.emotional_intensity,
-                self.dramatic_tension,
-                self.story_significance,
-                tuple(self.prerequisite_events) if self.prerequisite_events else (),
-                tuple(self.triggered_consequences)
-                if self.triggered_consequences
-                else (),
-                self.reveals_information,
-                self.changes_character_relationships,
-                self.advances_main_plot,
-                self.advances_subplot,
-                self.tags,
-                self.narrative_notes,
-                _dict_to_hashable(self.metadata),
-            )
+        return (
+            self.plot_point_id,
+            self.plot_point_type,
+            self.importance,
+            self.title,
+            self.description,
+            self.sequence_order,
+            self.estimated_duration,
+            self.involved_characters,
+            self.affected_themes,
+            self.location_context,
+            self.emotional_intensity,
+            self.dramatic_tension,
+            self.story_significance,
+            tuple(self.prerequisite_events) if self.prerequisite_events else (),
+            tuple(self.triggered_consequences)
+            if self.triggered_consequences
+            else (),
+            self.reveals_information,
+            self.changes_character_relationships,
+            self.advances_main_plot,
+            self.advances_subplot,
+            self.tags,
+            self.narrative_notes,
+            _dict_to_hashable(self.metadata),
         )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, PlotPoint):
+            return NotImplemented
+        return self._hash_components() == other._hash_components()
+
+    def __hash__(self) -> int:
+        """Custom hash implementation for frozen dataclass with Dict and List fields."""
+        return hash(self._hash_components())
 
     @property
     def is_major_plot_point(self) -> bool:

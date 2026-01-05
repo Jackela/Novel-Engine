@@ -1602,7 +1602,6 @@ class TestCausalNodeCollectionsAndComparison:
         node2 = CausalNode(node_id="different-2", title="Second Node")
 
         assert node1 != node2
-        assert not (node1 == node2)
 
     @pytest.mark.unit
     @pytest.mark.unit

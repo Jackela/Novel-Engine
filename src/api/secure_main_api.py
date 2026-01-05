@@ -16,7 +16,6 @@ import json
 import logging
 import os
 import secrets
-import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -31,7 +30,6 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from src.api.character_api import create_character_api
 from src.api.interaction_api import create_interaction_api
 from src.api.story_generation_api import (
     StoryGenerationRequest,
@@ -42,7 +40,6 @@ from src.core.system_orchestrator import (
     OrchestratorMode,
     SystemOrchestrator,
 )
-
 
 # Import our secure components
 from src.security import (
@@ -291,7 +288,7 @@ def _get_default_characters() -> List[str]:
         if base_path.exists() and base_path.is_dir():
             return sorted({p.name for p in base_path.iterdir() if p.is_dir()})
     except Exception:
-        pass
+        logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
     return ["aria", "engineer", "pilot", "scientist", "test"]
 
 
@@ -698,8 +695,6 @@ def create_secure_app() -> FastAPI:
     ):
         """Secure Simulation Execution Endpoint"""
         start_time = datetime.now(timezone.utc)
-        simulation_id = secrets.token_urlsafe(16)
-
         logger.info("Simulation requested.")
 
         try:

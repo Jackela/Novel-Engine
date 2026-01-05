@@ -21,8 +21,8 @@ from fastapi import (
 from src.api.deps import get_optional_workspace_id, require_workspace_id
 from src.api.schemas import (
     CharacterDetailResponse,
-    CharacterSummary,
     CharactersListResponse,
+    CharacterSummary,
     WorkspaceCharacterCreateRequest,
     WorkspaceCharacterUpdateRequest,
 )
@@ -79,7 +79,10 @@ def _structured_defaults(
 
 
 def _display_name_from_id(character_id: str) -> str:
-    return " ".join(segment.capitalize() for segment in character_id.replace("-", " ").replace("_", " ").split())
+    return " ".join(
+        segment.capitalize()
+        for segment in character_id.replace("-", " ").replace("_", " ").split()
+    )
 
 
 def _parse_iso_datetime(value: Optional[str]) -> Optional[datetime]:
@@ -107,7 +110,9 @@ def _infer_character_type_from_record(record: Dict[str, Any]) -> str:
     return metadata.get("classification") or structured.get("classification") or "npc"
 
 
-def _gather_filesystem_character_info(character_id: str, characters_path: str) -> Tuple[str, str, str, datetime]:
+def _gather_filesystem_character_info(
+    character_id: str, characters_path: str
+) -> Tuple[str, str, str, datetime]:
     safe_character_id = _require_public_character_id(character_id)
     base_dir = Path(characters_path).resolve()
     character_dir = next(
@@ -157,25 +162,38 @@ def _gather_filesystem_character_info(character_id: str, characters_path: str) -
                     metadata = stats_payload.get("metadata", {}) or {}
                     structured = stats_payload.get("structured_data", {}) or {}
                     if isinstance(metadata, dict):
-                        status_candidate = metadata.get("current_status") or metadata.get("status")
-                        if isinstance(status_candidate, str) and status_candidate.strip():
+                        status_candidate = metadata.get(
+                            "current_status"
+                        ) or metadata.get("status")
+                        if (
+                            isinstance(status_candidate, str)
+                            and status_candidate.strip()
+                        ):
                             status = status_candidate.strip()
                         type_candidate = metadata.get("role") or metadata.get("type")
                         if isinstance(type_candidate, str) and type_candidate.strip():
                             type_value = type_candidate.strip().lower()
                     if isinstance(structured, dict):
-                        type_candidate = structured.get("role") or structured.get("type")
+                        type_candidate = structured.get("role") or structured.get(
+                            "type"
+                        )
                         if isinstance(type_candidate, str) and type_candidate.strip():
                             type_value = type_candidate.strip().lower()
         except Exception:
             logger.debug("Failed to parse stats.", exc_info=True)
 
-    updated_dt = datetime.fromtimestamp(updated_ts or datetime.now(timezone.utc).timestamp(), tz=timezone.utc)
+    updated_dt = datetime.fromtimestamp(
+        updated_ts or datetime.now(timezone.utc).timestamp(), tz=timezone.utc
+    )
     return display_name, status.lower(), type_value, updated_dt
 
 
-def _summarize_public_character(character_id: str, characters_path: str) -> Tuple[CharacterSummary, datetime]:
-    name, status, category, updated_dt = _gather_filesystem_character_info(character_id, characters_path)
+def _summarize_public_character(
+    character_id: str, characters_path: str
+) -> Tuple[CharacterSummary, datetime]:
+    name, status, category, updated_dt = _gather_filesystem_character_info(
+        character_id, characters_path
+    )
     summary = CharacterSummary(
         id=character_id,
         name=name,
@@ -187,13 +205,26 @@ def _summarize_public_character(character_id: str, characters_path: str) -> Tupl
     return summary, updated_dt
 
 
-def _summarize_workspace_character(record: Dict[str, Any], workspace_id: str) -> Tuple[CharacterSummary, datetime]:
-    char_id = str(record.get("id") or record.get("character_id") or record.get("character_name") or "").strip()
+def _summarize_workspace_character(
+    record: Dict[str, Any], workspace_id: str
+) -> Tuple[CharacterSummary, datetime]:
+    char_id = str(
+        record.get("id")
+        or record.get("character_id")
+        or record.get("character_name")
+        or ""
+    ).strip()
     if not char_id:
         raise ValueError("Workspace record missing character identifier")
 
-    name = str(record.get("name") or record.get("character_name") or _display_name_from_id(char_id))
-    status = str(record.get("current_status") or record.get("status") or "active").lower()
+    name = str(
+        record.get("name")
+        or record.get("character_name")
+        or _display_name_from_id(char_id)
+    )
+    status = str(
+        record.get("current_status") or record.get("status") or "active"
+    ).lower()
     type_value = _infer_character_type_from_record(record)
 
     updated_iso = str(record.get("updatedAt") or record.get("createdAt") or "")
@@ -219,11 +250,15 @@ def _build_characters_etag(summaries: List[CharacterSummary]) -> str:
         }
         for summary in summaries
     ]
-    serialized = json.dumps(payload, separators=(",", ":"), ensure_ascii=False, sort_keys=True)
+    serialized = json.dumps(
+        payload, separators=(",", ":"), ensure_ascii=False, sort_keys=True
+    )
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
-def _set_cache_headers(response: Response, etag: str, latest: Optional[datetime]) -> None:
+def _set_cache_headers(
+    response: Response, etag: str, latest: Optional[datetime]
+) -> None:
     response.headers["ETag"] = f'"{etag}"'
     if latest:
         try:
@@ -237,7 +272,9 @@ def _build_entity_etag(identifier: str, updated: datetime) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def _apply_entity_cache_headers(response: Response, identifier: str, updated: datetime) -> None:
+def _apply_entity_cache_headers(
+    response: Response, identifier: str, updated: datetime
+) -> None:
     etag = _build_entity_etag(identifier, updated)
     _set_cache_headers(response, etag, updated)
 
@@ -288,7 +325,9 @@ async def _get_public_character_entries() -> List[Tuple[datetime, CharacterSumma
         )
     except Exception as exc:
         logger.error("Unexpected error loading characters: %s", exc, exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve characters: {exc}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve characters: {exc}"
+        )
 
 
 @router.get("/characters", response_model=CharactersListResponse)
@@ -309,7 +348,9 @@ async def get_characters_api(
                 record = store.get(workspace_id, char_id)
                 if record:
                     try:
-                        summary, timestamp = _summarize_workspace_character(record, workspace_id)
+                        summary, timestamp = _summarize_workspace_character(
+                            record, workspace_id
+                        )
                         workspace_entries.append((timestamp, summary))
                     except ValueError:
                         logger.warning("Skipping malformed workspace character record.")
@@ -358,13 +399,17 @@ async def get_character_detail_api(
                 _, timestamp = _summarize_workspace_character(record, workspace_id)
                 _apply_entity_cache_headers(response, character_id, timestamp)
             except ValueError:
-                logger.warning("Malformed workspace character record, skipping cache headers")
+                logger.warning(
+                    "Malformed workspace character record, skipping cache headers"
+                )
             return _workspace_record_to_character_detail(record)
 
     event_bus = getattr(request.app.state, "event_bus", None)
     characters_path = get_characters_directory_path()
     safe_character_id = _require_public_character_id(character_id)
-    _, _, _, updated_dt = _gather_filesystem_character_info(safe_character_id, characters_path)
+    _, _, _, updated_dt = _gather_filesystem_character_info(
+        safe_character_id, characters_path
+    )
     _apply_entity_cache_headers(response, safe_character_id, updated_dt)
     return await get_character_detail(safe_character_id, event_bus)
 
@@ -563,10 +608,7 @@ async def get_character_detail(
                     if line.startswith("# "):
                         character_data["name"] = line[2:].strip()
                         character_data["background_summary"] = line[2:].strip()
-                    elif (
-                        "background" in line.lower()
-                        or "summary" in line.lower()
-                    ):
+                    elif "background" in line.lower() or "summary" in line.lower():
                         character_data["background_summary"] = line.strip()
         except Exception:
             logger.warning("Could not parse character markdown file", exc_info=True)
@@ -578,12 +620,16 @@ async def get_character_detail(
             with open(stats_file, "r", encoding="utf-8") as fh:
                 stats = yaml.safe_load(fh)
                 if isinstance(stats, dict):
-                    character_data["skills"] = _normalize_numeric_map(stats.get("skills", {}))
+                    character_data["skills"] = _normalize_numeric_map(
+                        stats.get("skills", {})
+                    )
                     character_data["relationships"] = _normalize_numeric_map(
                         stats.get("relationships", {})
                     )
                     character_data["metadata"].update(stats.get("metadata", {}))
-                    character_data["structured_data"].update(stats.get("structured_data", {}))
+                    character_data["structured_data"].update(
+                        stats.get("structured_data", {})
+                    )
                     character_data["structured_data"]["stats"] = stats
         except Exception:
             logger.warning("Could not parse character stats file", exc_info=True)
@@ -592,7 +638,7 @@ async def get_character_detail(
         bus = event_bus or EventBus()
         factory = CharacterFactory(bus)
         factory.create_character(safe_character_id)
-    except Exception as exc:
+    except Exception:
         logger.warning("CharacterFactory failed to load character.", exc_info=True)
         character_data["background_summary"] = (
             f"Character {safe_character_id} could not be loaded"
@@ -622,7 +668,9 @@ def _to_float(value: Any) -> float:
         return 0.0
 
 
-def _workspace_record_to_character_detail(record: Dict[str, Any]) -> CharacterDetailResponse:
+def _workspace_record_to_character_detail(
+    record: Dict[str, Any],
+) -> CharacterDetailResponse:
     """Convert a workspace record into the API response model."""
 
     character_name = record.get("name") or record.get("id") or ""

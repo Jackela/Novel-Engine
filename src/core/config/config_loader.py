@@ -203,8 +203,6 @@ class ConfigurationError(Exception):
     Raised when configuration loading, parsing, or validation fails.
     """
 
-    pass
-
 
 class ConfigLoader:
     """

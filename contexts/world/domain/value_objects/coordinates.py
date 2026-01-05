@@ -127,7 +127,7 @@ class Coordinates:
         dx = self.x - other.x
         dy = self.y - other.y
 
-        return math.sqrt(dx * dx + dy * dy)
+        return math.hypot(dx, dy)
 
     def manhattan_distance_to(self, other: "Coordinates") -> float:
         """

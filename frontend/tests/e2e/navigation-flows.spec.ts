@@ -116,8 +116,6 @@ test.describe('Navigation Flows E2E Tests', () => {
 
     test('should handle back-forward-back cycle', async ({ page }) => {
       const landingPage = new LandingPage(page);
-      const dashboardPage = new DashboardPage(page);
-
       // Navigate to dashboard
       await landingPage.navigateToLanding();
       await landingPage.clickLaunchEngine();
@@ -201,12 +199,10 @@ test.describe('Navigation Flows E2E Tests', () => {
       await expect(landingPage.mainTitle).toBeVisible();
 
       // Going back should go to about:blank or previous page, not create loop
-      const beforeBackUrl = page.url();
       await page.goBack();
       await page.waitForTimeout(500);
 
       // URL should have changed (not stuck in redirect loop)
-      const afterBackUrl = page.url();
       // Either we went back or there's no history to go back to
       expect(true).toBe(true); // Test passes if no infinite loop
     });

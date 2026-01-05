@@ -34,7 +34,6 @@ class NegotiationService:
 
     def __init__(self):
         """Initialize negotiation service."""
-        pass
 
     def assess_party_compatibility(
         self,

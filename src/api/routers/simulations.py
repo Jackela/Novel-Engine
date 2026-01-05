@@ -54,7 +54,7 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
         try:
             director.register_agent(agent)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     if missing_characters:
         raise HTTPException(

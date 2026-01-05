@@ -12,7 +12,6 @@ import {
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import {
-  PlayArrow as EventIcon,
   TrendingFlat as ConnectionIcon,
   AccountTree as BranchIcon,
   CheckCircle as CompleteIcon,

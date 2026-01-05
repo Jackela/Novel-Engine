@@ -15,7 +15,7 @@ import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { UATReporter, UATTestResult, UATPhaseResult, UATValidation } from './utils/UATReporter';
+import { UATReporter, UATTestResult } from './utils/UATReporter';
 import { PerformanceBenchmark, TestDataGenerator } from './utils/TestDataHelpers';
 
 const execAsync = promisify(exec);
@@ -126,7 +126,7 @@ class UATTestRunner {
     
     try {
       // Run main UAT test file
-      const { stdout, stderr } = await execAsync(
+      const { stdout } = await execAsync(
         `npx playwright test tests/e2e/dashboard-core-uat.spec.ts --project=chromium-desktop --reporter=json`,
         { 
           cwd: process.cwd(),

@@ -3,7 +3,7 @@
  * Runs tests with proper cleanup and timeout handling
  */
 
-import { spawn, execSync } from 'child_process';
+import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { runCleanup } from './test-cleanup.js';

@@ -204,55 +204,59 @@ class CausalNode:
         if len(self.description) > 1000:
             raise ValueError("Node description too long (max 1000 characters)")
 
-    def __hash__(self) -> int:
-        """Custom hash implementation for frozen dataclass with Dict fields."""
-
-        # Convert nested dict to hashable form
-        def _dict_to_hashable(d):
-            if not d:
+    def _hash_components(self) -> tuple:
+        def _dict_to_hashable(values):
+            if not values:
                 return frozenset()
             items = []
-            for k, v in sorted(d.items()):
-                if isinstance(v, dict):
-                    v = _dict_to_hashable(v)
-                elif isinstance(v, list):
-                    v = tuple(v)
-                items.append((k, v))
+            for key, value in sorted(values.items()):
+                if isinstance(value, dict):
+                    value = _dict_to_hashable(value)
+                elif isinstance(value, list):
+                    value = tuple(value)
+                items.append((key, value))
             return frozenset(items)
 
-        return hash(
-            (
-                self.node_id,
-                self.event_id,
-                self.plot_point_id,
-                self.character_id,
-                self.title,
-                self.description,
-                self.node_type,
-                self.direct_causes,
-                self.direct_effects,
-                self.indirect_causes,
-                self.indirect_effects,
-                _dict_to_hashable(self.causal_relationships),
-                self.sequence_order,
-                self.temporal_delay,
-                self.duration,
-                self.is_root_cause,
-                self.is_terminal_effect,
-                self.is_branch_point,
-                self.is_convergence_point,
-                self.occurrence_probability,
-                self.causal_certainty,
-                self.narrative_importance,
-                self.character_impact_level,
-                self.story_arc_impact,
-                self.prerequisite_conditions,
-                self.blocking_conditions,
-                self.tags,
-                self.narrative_context,
-                _dict_to_hashable(self.metadata),
-            )
+        return (
+            self.node_id,
+            self.event_id,
+            self.plot_point_id,
+            self.character_id,
+            self.title,
+            self.description,
+            self.node_type,
+            self.direct_causes,
+            self.direct_effects,
+            self.indirect_causes,
+            self.indirect_effects,
+            _dict_to_hashable(self.causal_relationships),
+            self.sequence_order,
+            self.temporal_delay,
+            self.duration,
+            self.is_root_cause,
+            self.is_terminal_effect,
+            self.is_branch_point,
+            self.is_convergence_point,
+            self.occurrence_probability,
+            self.causal_certainty,
+            self.narrative_importance,
+            self.character_impact_level,
+            self.story_arc_impact,
+            self.prerequisite_conditions,
+            self.blocking_conditions,
+            self.tags,
+            self.narrative_context,
+            _dict_to_hashable(self.metadata),
         )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, CausalNode):
+            return NotImplemented
+        return self._hash_components() == other._hash_components()
+
+    def __hash__(self) -> int:
+        """Custom hash implementation for frozen dataclass with Dict fields."""
+        return hash(self._hash_components())
 
     @property
     def total_causes(self) -> int:

@@ -6,9 +6,14 @@ Persona persistence and file I/O.
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List
 
-from .persona_models import CharacterArchetype, CharacterPersona
+from src.templates.context_renderer import RenderFormat
+
+from .persona_models import (
+    CharacterArchetype,
+    CharacterContextProfile,
+    CharacterPersona,
+)
 
 logger = logging.getLogger(__name__)
 

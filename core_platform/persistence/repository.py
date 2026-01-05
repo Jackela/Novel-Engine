@@ -26,25 +26,21 @@ T = TypeVar("T", bound=BaseModel)
 class RepositoryException(Exception):
     """Base exception for repository operations."""
 
-    pass
 
 
 class EntityNotFoundException(RepositoryException):
     """Raised when an entity is not found."""
 
-    pass
 
 
 class EntityAlreadyExistsException(RepositoryException):
     """Raised when attempting to create an entity that already exists."""
 
-    pass
 
 
 class RepositoryOperationException(RepositoryException):
     """Raised when a repository operation fails."""
 
-    pass
 
 
 class BaseRepository(Generic[T], ABC):

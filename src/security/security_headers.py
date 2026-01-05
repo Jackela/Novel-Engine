@@ -20,7 +20,6 @@ from enum import Enum
 from typing import Dict, List, Optional
 
 from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 # Comprehensive logging configuration
@@ -427,7 +426,7 @@ class SecurityHeaders:
             # Basic host header validation
             if "localhost" not in host and "127.0.0.1" not in host:
                 # In production, validate against allowed hosts
-                pass
+                logger.debug("Host header validation skipped for %s", host)
 
         return True
 
@@ -503,7 +502,6 @@ class SecurityHeadersMiddleware:
                     except Exception as e:
                         logger.error(f"Error applying security headers: {e}")
                         # Proceed without headers if calculation fails, or could raise
-                        pass
 
                 await send(message)
 

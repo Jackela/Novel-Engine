@@ -235,7 +235,7 @@ def create_knowledge_api() -> APIRouter:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
                 )
-            except Exception as e:
+            except Exception:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal server error",
@@ -303,7 +303,7 @@ def create_knowledge_api() -> APIRouter:
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception:
             # TODO: Log error with structured logging
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -371,7 +371,7 @@ def create_knowledge_api() -> APIRouter:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
                 )
-            except Exception as e:
+            except Exception:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal server error",
@@ -435,7 +435,7 @@ def create_knowledge_api() -> APIRouter:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
                 )
-            except Exception as e:
+            except Exception:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal server error",

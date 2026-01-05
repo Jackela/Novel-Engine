@@ -1,6 +1,6 @@
 import pytest
-from pydantic import BaseModel
 from apps.api.infrastructure.command_bus import CommandBus, CommandHandler
+from pydantic import BaseModel
 
 
 class MockCommand(BaseModel):

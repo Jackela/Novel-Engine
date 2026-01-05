@@ -281,7 +281,9 @@ class EnterpriseSecuritySuite:
                         payload = self.auth_service._decode_token(token)
                         user_id = payload.get("sub")
                     except Exception:
-                        pass  # Not authenticated, continue with anonymous evaluation
+                        logging.getLogger(__name__).debug(
+                            "Suppressed exception", exc_info=True
+                        )
 
                 # Evaluate request security
                 (

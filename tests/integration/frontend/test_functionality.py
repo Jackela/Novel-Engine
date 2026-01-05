@@ -3,8 +3,8 @@
 UI功能验证测试脚本
 使用Playwright测试前端用户交互
 """
-
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -81,7 +81,7 @@ def start_api_server():
             print("OK: API服务器已在运行")
             return None  # 服务器已存在，不需要启动新的
     except Exception:
-        pass  # 服务器未运行，需要启动
+        logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     # 启动最小化API服务器
     if not Path("minimal_api_server.py").exists():
@@ -201,7 +201,9 @@ test('字符选择功能测试', async ({ page }) => {
             with open(test_results_file, "r", encoding="utf-8") as f:
                 test_data = json.load(f)
                 results["test_data"] = test_data
-                print(f"OK: 找到测试结果数据 - {len(test_data.get('tests', []))} 个测试")
+                print(
+                    f"OK: 找到测试结果数据 - {len(test_data.get('tests', []))} 个测试"
+                )
         except Exception as e:
             print(f"WARN: 无法解析测试结果: {e}")
 

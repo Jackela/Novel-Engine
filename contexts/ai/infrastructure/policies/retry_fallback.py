@@ -253,7 +253,6 @@ class IRetryPolicy(ABC):
         Returns:
             Retry result with final response and attempt details
         """
-        pass
 
     @abstractmethod
     async def should_retry_async(
@@ -270,7 +269,6 @@ class IRetryPolicy(ABC):
         Returns:
             Tuple of (should_retry, retry_reason)
         """
-        pass
 
     @abstractmethod
     async def get_circuit_breaker_status_async(
@@ -285,7 +283,6 @@ class IRetryPolicy(ABC):
         Returns:
             Current circuit breaker state
         """
-        pass
 
 
 class ExponentialBackoffRetry(IRetryPolicy):

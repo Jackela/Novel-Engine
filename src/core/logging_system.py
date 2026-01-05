@@ -209,7 +209,7 @@ class StructuredLogger:
         try:
             self.close()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     def _setup_handlers(self) -> None:
         """Setup log handlers based on configuration."""

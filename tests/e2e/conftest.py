@@ -6,22 +6,20 @@ E2E Test Fixtures and Configuration
 Shared fixtures for end-to-end testing of the Novel Engine API.
 Provides test client setup, data factories, and cleanup utilities.
 """
-
-import asyncio
 import json
+import logging
 import os
 import shutil
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 from src.api.main_api_server import create_app
-
 
 # Note: event_loop fixture removed - pytest-asyncio 0.21+ handles this automatically
 # Defining a custom event_loop fixture is deprecated and causes conflicts
@@ -47,7 +45,7 @@ def api_app():
         try:
             db_path.unlink()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
 
 @pytest.fixture(scope="module")
@@ -234,7 +232,7 @@ class APITestHelper:
                     ]:
                         return True
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
             time.sleep(1)
 

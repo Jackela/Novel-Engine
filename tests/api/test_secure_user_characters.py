@@ -1,3 +1,4 @@
+import logging
 import os
 from unittest.mock import AsyncMock, MagicMock
 
@@ -54,7 +55,7 @@ def build_client(character_names: list[str] | None = None):
         try:
             api.USER_CHARACTER_STORE_PATH.unlink()
         except OSError:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
     app = api.create_secure_app()
 
     # Set mock orchestrator and story_api to avoid 503 errors

@@ -21,25 +21,21 @@ from ..value_objects.subjective_id import SubjectiveId
 class TurnBriefRepositoryException(Exception):
     """Base exception for TurnBrief repository operations."""
 
-    pass
 
 
 class TurnBriefNotFoundException(TurnBriefRepositoryException):
     """Raised when a requested TurnBrief is not found."""
 
-    pass
 
 
 class ConcurrencyException(TurnBriefRepositoryException):
     """Raised when a concurrency conflict occurs during save operations."""
 
-    pass
 
 
 class RepositoryException(TurnBriefRepositoryException):
     """Raised when a general repository error occurs."""
 
-    pass
 
 
 class ITurnBriefRepository(ABC):
@@ -66,7 +62,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def get_by_entity_id(self, entity_id: str) -> Optional["TurnBrief"]:
@@ -82,7 +77,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def save(self, turn_brief: "TurnBrief") -> None:
@@ -96,7 +90,6 @@ class ITurnBriefRepository(ABC):
             ConcurrencyException: If a concurrency conflict occurs
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def delete(self, turn_brief_id: SubjectiveId) -> bool:
@@ -112,7 +105,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def find_by_world_state_version(
@@ -130,7 +122,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def find_by_alertness_level(self, alertness: AlertnessLevel) -> List["TurnBrief"]:
@@ -146,7 +137,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def find_stale_turn_briefs(self, cutoff_time: datetime) -> List["TurnBrief"]:
@@ -162,7 +152,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def find_entities_with_knowledge_about(
@@ -181,7 +170,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def find_entities_in_perception_range_of_location(
@@ -200,7 +188,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def find_entities_with_perception_type(
@@ -218,7 +205,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def get_knowledge_sharing_candidates(
@@ -241,7 +227,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def count_total_turn_briefs(self) -> int:
@@ -254,7 +239,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def count_active_turn_briefs(self, cutoff_time: Optional[datetime] = None) -> int:
@@ -271,7 +255,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def get_entities_needing_updates(self, world_state_version: int) -> List[str]:
@@ -287,7 +270,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def batch_update_world_state_version(
@@ -306,7 +288,6 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass
 
     @abstractmethod
     def cleanup_expired_turn_briefs(self, expiration_time: datetime) -> int:
@@ -322,4 +303,3 @@ class ITurnBriefRepository(ABC):
         Raises:
             RepositoryException: If a repository error occurs
         """
-        pass

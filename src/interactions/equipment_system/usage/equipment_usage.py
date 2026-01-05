@@ -641,9 +641,7 @@ class EquipmentUsageProcessor:
             try:
                 return EquipmentCategory(equipment.base_equipment.category)
             except (ValueError, AttributeError):
-                pass
-
-        # Fallback based on equipment name/type
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
         name_lower = getattr(equipment.base_equipment, "name", "").lower()
 
         # Basic category inference

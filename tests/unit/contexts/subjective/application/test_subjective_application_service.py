@@ -146,9 +146,9 @@ class TestTurnBriefOperations:
         # Mock command handler
         expected_id = SubjectiveId.generate()
         service.command_handlers = mock_dependencies["command_handlers"]
-        mock_dependencies[
-            "command_handlers"
-        ].handle_create_turn_brief.return_value = expected_id
+        mock_dependencies["command_handlers"].handle_create_turn_brief.return_value = (
+            expected_id
+        )
 
         result = service.create_turn_brief_for_entity(
             entity_id="test_entity",
@@ -187,9 +187,9 @@ class TestTurnBriefOperations:
 
         expected_id = SubjectiveId.generate()
         service.command_handlers = mock_dependencies["command_handlers"]
-        mock_dependencies[
-            "command_handlers"
-        ].handle_create_turn_brief.return_value = expected_id
+        mock_dependencies["command_handlers"].handle_create_turn_brief.return_value = (
+            expected_id
+        )
 
         result = service.create_turn_brief_for_entity(
             entity_id="test_entity",
@@ -216,10 +216,8 @@ class TestTurnBriefOperations:
         )
 
         service.command_handlers = mock_dependencies["command_handlers"]
-        mock_dependencies[
-            "command_handlers"
-        ].handle_create_turn_brief.side_effect = SubjectiveCommandHandlerException(
-            "Creation failed"
+        mock_dependencies["command_handlers"].handle_create_turn_brief.side_effect = (
+            SubjectiveCommandHandlerException("Creation failed")
         )
 
         with pytest.raises(SubjectiveCommandHandlerException, match="Creation failed"):
@@ -316,9 +314,9 @@ class TestTurnBriefOperations:
         mock_turn_brief = Mock(spec=TurnBrief)
         mock_turn_brief.turn_brief_id = SubjectiveId.generate()
         mock_dependencies["repository"].get_by_entity_id.return_value = mock_turn_brief
-        mock_dependencies[
-            "repository"
-        ].delete.return_value = False  # Repository delete failed
+        mock_dependencies["repository"].delete.return_value = (
+            False  # Repository delete failed
+        )
 
         result = service.delete_turn_brief("test_entity")
 
@@ -505,10 +503,8 @@ class TestPerceptionOperations:
         )
 
         service.command_handlers = mock_dependencies["command_handlers"]
-        mock_dependencies[
-            "command_handlers"
-        ].handle_add_perception.side_effect = EntityNotFoundException(
-            "Entity not found"
+        mock_dependencies["command_handlers"].handle_add_perception.side_effect = (
+            EntityNotFoundException("Entity not found")
         )
 
         with pytest.raises(EntityNotFoundException, match="Entity not found"):
@@ -529,10 +525,8 @@ class TestPerceptionOperations:
         )
 
         service.command_handlers = mock_dependencies["command_handlers"]
-        mock_dependencies[
-            "command_handlers"
-        ].handle_add_perception.side_effect = InvalidCommandException(
-            "Invalid distance"
+        mock_dependencies["command_handlers"].handle_add_perception.side_effect = (
+            InvalidCommandException("Invalid distance")
         )
 
         with pytest.raises(InvalidCommandException, match="Invalid distance"):
@@ -726,10 +720,8 @@ class TestErrorHandling:
         )
 
         service.command_handlers = mock_dependencies["command_handlers"]
-        mock_dependencies[
-            "command_handlers"
-        ].handle_create_turn_brief.side_effect = SubjectiveCommandHandlerException(
-            "Handler error"
+        mock_dependencies["command_handlers"].handle_create_turn_brief.side_effect = (
+            SubjectiveCommandHandlerException("Handler error")
         )
 
         visual_range = PerceptionRange(
@@ -761,10 +753,8 @@ class TestErrorHandling:
 
         # Test with None entity_id (should be caught by command validation)
         service.command_handlers = mock_dependencies["command_handlers"]
-        mock_dependencies[
-            "command_handlers"
-        ].handle_add_perception.side_effect = InvalidCommandException(
-            "Entity ID cannot be None"
+        mock_dependencies["command_handlers"].handle_add_perception.side_effect = (
+            InvalidCommandException("Entity ID cannot be None")
         )
 
         with pytest.raises(InvalidCommandException, match="Entity ID cannot be None"):
@@ -847,9 +837,9 @@ class TestIntegrationScenarios:
         mock_turn_brief = Mock(spec=TurnBrief)
         mock_turn_brief.turn_brief_id = created_id
 
-        mock_dependencies[
-            "command_handlers"
-        ].handle_create_turn_brief.return_value = created_id
+        mock_dependencies["command_handlers"].handle_create_turn_brief.return_value = (
+            created_id
+        )
         mock_dependencies[
             "command_handlers"
         ].handle_update_perception_capabilities.return_value = None
@@ -954,9 +944,9 @@ class TestIntegrationScenarios:
 
         # First operation succeeds
         created_id = SubjectiveId.generate()
-        mock_dependencies[
-            "command_handlers"
-        ].handle_create_turn_brief.return_value = created_id
+        mock_dependencies["command_handlers"].handle_create_turn_brief.return_value = (
+            created_id
+        )
 
         result_id = service.create_turn_brief_for_entity(
             entity_id=entity_id,
@@ -967,10 +957,8 @@ class TestIntegrationScenarios:
         assert result_id == created_id
 
         # Second operation fails
-        mock_dependencies[
-            "command_handlers"
-        ].handle_add_perception.side_effect = SubjectiveCommandHandlerException(
-            "Perception validation failed"
+        mock_dependencies["command_handlers"].handle_add_perception.side_effect = (
+            SubjectiveCommandHandlerException("Perception validation failed")
         )
 
         with pytest.raises(

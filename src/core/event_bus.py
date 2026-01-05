@@ -105,7 +105,7 @@ class EventHandler(Protocol):
         Returns:
             bool: True if handled successfully, False otherwise
         """
-        ...
+        pass
 
 
 @dataclass
@@ -817,3 +817,4 @@ async def event_bus_context(event_bus: EventBus):
         yield event_bus
     finally:
         await event_bus.stop()
+

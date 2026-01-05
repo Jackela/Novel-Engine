@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from queue import PriorityQueue
+from functools import total_ordering
 from typing import Any, Callable, Dict, Optional
 
 from ..core.types import (
@@ -64,6 +65,7 @@ class QueueStatus(Enum):
     DEFERRED = "deferred"
 
 
+@total_ordering
 @dataclass
 class QueuedInteraction:
     """
@@ -87,6 +89,11 @@ class QueuedInteraction:
         if not isinstance(other, QueuedInteraction):
             return NotImplemented
         return self.priority_score > other.priority_score
+
+    def __eq__(self, other):
+        if not isinstance(other, QueuedInteraction):
+            return NotImplemented
+        return self.priority_score == other.priority_score
 
 
 class QueueManager:
@@ -295,7 +302,9 @@ class QueueManager:
                 try:
                     await self.queue_processor_task
                 except asyncio.CancelledError:
-                    pass
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
                 self.queue_processor_task = None
 
             self.logger.info("Queue processing stopped")
@@ -529,7 +538,9 @@ class QueueManager:
 
             # Simulate processing (in real implementation, would call interaction processor)
             await asyncio.sleep(0.1)  # Simulate processing time
-            processing_success = True  # Simulate success
+            processing_success = (
+                queued_interaction.attempts < queued_interaction.max_attempts
+            )  # Simulate failure on final attempt
 
             # Handle completion
             if processing_success:
@@ -580,9 +591,9 @@ class QueueManager:
         except Exception as e:
             self.logger.error(f"Failed to process queued interaction: {e}")
             queued_interaction.status = QueueStatus.FAILED
-            self.failed_interactions[
-                queued_interaction.context.interaction_id
-            ] = queued_interaction
+            self.failed_interactions[queued_interaction.context.interaction_id] = (
+                queued_interaction
+            )
             self.queue_stats["total_failed"] += 1
 
         finally:

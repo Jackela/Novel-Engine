@@ -10,7 +10,7 @@ import json
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from src.llm_service import (
     LLMRequest,
@@ -25,7 +25,7 @@ LLMService = UnifiedLLMService
 from .causal_graph import CausalGraph
 from .narrative_coherence import NarrativeCoherenceEngine
 from .negotiation import AgentNegotiationEngine
-from .types import CausalEdge, CausalNode, CausalRelationType, EventPriority
+from .types import CausalEdge, CausalNode, CausalRelationType
 
 logger = logging.getLogger(__name__)
 

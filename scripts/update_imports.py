@@ -4,7 +4,6 @@ Script to update import statements after file reorganization.
 Updates imports for files moved from root to src/ subdirectories.
 """
 
-import os
 import re
 from pathlib import Path
 

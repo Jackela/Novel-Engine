@@ -318,8 +318,7 @@ def demonstrate_tracing_middleware():
     print("=" * 70)
 
     try:
-        from fastapi import FastAPI, Request
-        from fastapi.responses import JSONResponse
+        from fastapi import FastAPI
 
         # Create demo FastAPI app
         demo_app = FastAPI(title="Tracing Demo")

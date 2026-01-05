@@ -12,7 +12,6 @@ Testing Coverage:
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import List
 
 import pytest
 import pytest_asyncio
@@ -400,8 +399,6 @@ class TestLayeredMemorySystem:
 
     async def test_update_performance_metrics(self, layered_memory):
         """Test performance metrics updating."""
-        initial_avg = layered_memory.performance_metrics["average_query_time"]
-
         layered_memory.total_queries = 1
         layered_memory._update_performance_metrics(100.0, 5)
 

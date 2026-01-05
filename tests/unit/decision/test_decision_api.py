@@ -13,16 +13,23 @@ Test Coverage:
 - GET /api/decision/history - Get decision history
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
 
 # Import decision module components
 try:
+    from src.decision.api_router import (
+        DecisionResponseRequest,
+        NegotiationConfirmRequest,
+        SkipDecisionRequest,
+        broadcast_decision_event,
+        initialize_decision_system,
+    )
+    from src.decision.decision_point_detector import DecisionPointDetector
     from src.decision.models import (
         DecisionOption,
         DecisionPoint,
@@ -33,20 +40,8 @@ try:
         PendingDecision,
         UserDecision,
     )
-    from src.decision.api_router import (
-        DecisionResponseRequest,
-        NegotiationConfirmRequest,
-        SkipDecisionRequest,
-        router,
-        initialize_decision_system,
-        get_pause_controller,
-        get_decision_detector,
-        get_negotiation_engine,
-        broadcast_decision_event,
-    )
-    from src.decision.pause_controller import InteractionPauseController
-    from src.decision.decision_point_detector import DecisionPointDetector
     from src.decision.negotiation_engine import NegotiationEngine
+    from src.decision.pause_controller import InteractionPauseController
 
     DECISION_MODULE_AVAILABLE = True
 except ImportError:

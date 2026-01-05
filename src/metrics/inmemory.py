@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Dict
 
 from . import MetricsPublisher, MetricsSnapshot
 

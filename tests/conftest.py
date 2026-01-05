@@ -3,9 +3,8 @@
 pytest配置文件和共享fixture
 提供测试环境的通用设置和数据
 """
-
 import asyncio
-import importlib.util
+import logging
 import os
 import shutil
 import sys
@@ -259,23 +258,19 @@ def pytest_sessionfinish(session, exitstatus):
                 continue
             t.join(timeout=1.0)
     except Exception:
-        pass
-
-    # Terminate any active multiprocessing children
+        logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
     try:
         for p in active_children():
             try:
                 p.terminate()
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
             try:
                 p.join(timeout=2.0)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
     except Exception:
-        pass
-
-    # Best-effort cancellation of pending asyncio tasks on a running loop
+        logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
     try:
         try:
             loop = asyncio.get_running_loop()

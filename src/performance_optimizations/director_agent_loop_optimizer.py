@@ -441,9 +441,9 @@ class DirectorAgentPerformanceOptimizer:
 
         try:
             # Capture before metrics
-            optimization_results[
-                "before_metrics"
-            ] = DirectorAgentPerformanceOptimizer._capture_metrics(director_instance)
+            optimization_results["before_metrics"] = (
+                DirectorAgentPerformanceOptimizer._capture_metrics(director_instance)
+            )
 
             # Optimization 1: Replace agent registry with optimized version
             original_agents = getattr(director_instance, "registered_agents", [])
@@ -517,16 +517,16 @@ class DirectorAgentPerformanceOptimizer:
             )
 
             # Capture after metrics
-            optimization_results[
-                "after_metrics"
-            ] = DirectorAgentPerformanceOptimizer._capture_metrics(director_instance)
+            optimization_results["after_metrics"] = (
+                DirectorAgentPerformanceOptimizer._capture_metrics(director_instance)
+            )
 
             # Calculate performance improvements
-            optimization_results[
-                "performance_improvements"
-            ] = DirectorAgentPerformanceOptimizer._calculate_improvements(
-                optimization_results["before_metrics"],
-                optimization_results["after_metrics"],
+            optimization_results["performance_improvements"] = (
+                DirectorAgentPerformanceOptimizer._calculate_improvements(
+                    optimization_results["before_metrics"],
+                    optimization_results["after_metrics"],
+                )
             )
 
             logger.info(
@@ -579,9 +579,9 @@ class DirectorAgentPerformanceOptimizer:
                 ) * 100
                 improvements["memory_reduction"] = f"{memory_improvement:.1f}%"
 
-            improvements[
-                "optimizations_active"
-            ] = "Hash-based lookups, async I/O, intelligent caching"
+            improvements["optimizations_active"] = (
+                "Hash-based lookups, async I/O, intelligent caching"
+            )
             improvements["expected_response_time_improvement"] = "85%+"
             improvements["expected_complexity_reduction"] = "O(n³) → O(n)"
 

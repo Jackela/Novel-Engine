@@ -60,7 +60,6 @@ class IKnowledgeRepository(ABC):
         Constitution Compliance:
         - Article IV (SSOT): Must persist to PostgreSQL as authoritative source
         """
-        pass
 
     @abstractmethod
     async def get_by_id(self, entry_id: KnowledgeEntryId) -> KnowledgeEntry | None:
@@ -79,7 +78,6 @@ class IKnowledgeRepository(ABC):
         Constitution Compliance:
         - Article IV (SSOT): Must retrieve from PostgreSQL (no cache layer for MVP)
         """
-        pass
 
     @abstractmethod
     async def retrieve_for_agent(
@@ -114,7 +112,6 @@ class IKnowledgeRepository(ABC):
         - Article IV (SSOT): Retrieve from PostgreSQL with proper indexes
         - Article I (DDD): Business logic (access control) applied via domain model
         """
-        pass
 
     @abstractmethod
     async def delete(self, entry_id: KnowledgeEntryId) -> None:
@@ -134,4 +131,3 @@ class IKnowledgeRepository(ABC):
         Constitution Compliance:
         - Article IV (SSOT): Delete from PostgreSQL (CASCADE on audit log)
         """
-        pass

@@ -67,13 +67,12 @@ class AsyncDatabasePool:
             yield conn
         finally:
             async with self._lock:
-                if conn not in self._busy_connections:
-                    return
-                self._busy_connections.discard(conn)
-                if len(self._pool) < self.max_connections:
-                    self._pool.append(conn)
-                else:
-                    await conn.close()
+                if conn in self._busy_connections:
+                    self._busy_connections.discard(conn)
+                    if len(self._pool) < self.max_connections:
+                        self._pool.append(conn)
+                    else:
+                        await conn.close()
 
 
 class AdvancedCache:

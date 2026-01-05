@@ -253,7 +253,7 @@ class MemoryOptimizer:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
             self.monitoring_task = None
 
         # Restore original GC thresholds

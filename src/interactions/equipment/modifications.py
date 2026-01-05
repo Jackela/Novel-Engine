@@ -4,8 +4,9 @@ Equipment modification system.
 """
 
 import logging
-from datetime import datetime
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
+
+from src.core.data_models import EquipmentCondition
 
 from .models import DynamicEquipment, EquipmentCategory, EquipmentModification
 

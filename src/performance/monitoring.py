@@ -700,16 +700,18 @@ class PerformanceMonitor:
                 try:
                     await self._monitoring_task
                 except asyncio.CancelledError:
-                    pass
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
 
             if self._cleanup_task:
                 self._cleanup_task.cancel()
                 try:
                     await self._cleanup_task
                 except asyncio.CancelledError:
-                    pass
-
-            # Final export
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             if self.config.export_metrics:
                 await self._export_metrics()
 

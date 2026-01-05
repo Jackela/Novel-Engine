@@ -149,7 +149,7 @@ Developed expertise in systematic validation and quality assurance.
         try:
             shutil.rmtree(self.temp_dir)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     def create_test_character_files(
         self, character_id: str, include_files: Dict[str, bool] = None
@@ -854,7 +854,7 @@ class TestContextLoaderServiceIntegration(unittest.IsolatedAsyncioTestCase):
         try:
             shutil.rmtree(self.temp_dir)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     async def test_load_aria_shadowbane_context(self):
@@ -944,7 +944,7 @@ class TestContextLoaderPerformance(unittest.IsolatedAsyncioTestCase):
         try:
             shutil.rmtree(self.temp_dir)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     @pytest.mark.medium

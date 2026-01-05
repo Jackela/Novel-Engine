@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 
 class PacingType(Enum):
@@ -198,54 +198,59 @@ class StoryPacing:
         if len(self.segment_name) > 200:
             raise ValueError("Segment name too long (max 200 characters)")
 
-    def __hash__(self) -> int:
-        """Custom hash implementation for frozen dataclass with Dict fields."""
-
-        def _dict_to_hashable(d):
-            if not d:
+    def _hash_components(self) -> tuple:
+        def _dict_to_hashable(values):
+            if not values:
                 return frozenset()
             items = []
-            for k, v in sorted(d.items()):
-                if isinstance(v, dict):
-                    v = _dict_to_hashable(v)
-                elif isinstance(v, list):
-                    v = tuple(v)
-                elif isinstance(v, Decimal):
-                    v = float(v)
-                items.append((k, v))
+            for key, value in sorted(values.items()):
+                if isinstance(value, dict):
+                    value = _dict_to_hashable(value)
+                elif isinstance(value, list):
+                    value = tuple(value)
+                elif isinstance(value, Decimal):
+                    value = float(value)
+                items.append((key, value))
             return frozenset(items)
 
-        return hash(
-            (
-                self.pacing_id,
-                self.pacing_type,
-                self.base_intensity,
-                self.start_sequence,
-                self.end_sequence,
-                self.segment_name,
-                self.segment_description,
-                self.event_density,
-                self.dialogue_ratio,
-                self.action_ratio,
-                self.reflection_ratio,
-                self.scene_transitions,
-                self.time_jumps,
-                self.average_scene_length,
-                self.tension_curve,
-                self.emotional_peaks,
-                self.rest_periods,
-                self.revelation_frequency,
-                self.cliffhanger_intensity,
-                self.curiosity_hooks,
-                self.sentence_complexity,
-                self.paragraph_length,
-                self.vocabulary_density,
-                self.target_reading_time,
-                self.emotional_target,
-                self.pacing_notes,
-                _dict_to_hashable(self.metadata),
-            )
+        return (
+            self.pacing_id,
+            self.pacing_type,
+            self.base_intensity,
+            self.start_sequence,
+            self.end_sequence,
+            self.segment_name,
+            self.segment_description,
+            self.event_density,
+            self.dialogue_ratio,
+            self.action_ratio,
+            self.reflection_ratio,
+            self.scene_transitions,
+            self.time_jumps,
+            self.average_scene_length,
+            self.tension_curve,
+            self.emotional_peaks,
+            self.rest_periods,
+            self.revelation_frequency,
+            self.cliffhanger_intensity,
+            self.curiosity_hooks,
+            self.sentence_complexity,
+            self.paragraph_length,
+            self.vocabulary_density,
+            self.target_reading_time,
+            self.emotional_target,
+            self.pacing_notes,
+            _dict_to_hashable(self.metadata),
         )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, StoryPacing):
+            return NotImplemented
+        return self._hash_components() == other._hash_components()
+
+    def __hash__(self) -> int:
+        """Custom hash implementation for frozen dataclass with Dict fields."""
+        return hash(self._hash_components())
 
     @property
     def segment_length(self) -> int:

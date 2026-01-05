@@ -21,20 +21,9 @@ from .state_management.state_manager import StateManager
 from .type_processors.interaction_type_processors import InteractionTypeProcessorManager
 from .validation.interaction_validator import InteractionValidator
 
-# Import enhanced core systems
+# Import enhanced core systems used in responses
 try:
-    from src.core.character_manager import CharacterManager
-    from src.core.data_models import (
-        CharacterInteraction,
-        CharacterState,
-        ErrorInfo,
-        InteractionResult,
-        MemoryItem,
-        StandardResponse,
-    )
-    from src.core.equipment_manager import EquipmentManager
-    from src.core.memory_system import MemoryManager
-    from src.core.types import AgentID
+    from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
     class StandardResponse:
@@ -55,15 +44,6 @@ except ImportError:
             self.code = code
             self.message = message
             self.recoverable = recoverable
-
-    CharacterState = dict
-    MemoryItem = dict
-    CharacterInteraction = dict
-    InteractionResult = dict
-    AgentID = str
-    MemoryManager = None
-    CharacterManager = None
-    EquipmentManager = None
 
 __all__ = [
     "InteractionEngine",

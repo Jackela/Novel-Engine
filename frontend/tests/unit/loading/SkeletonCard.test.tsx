@@ -5,15 +5,8 @@
  * Tests verify skeleton loading state has proper ARIA attributes and no a11y violations
  */
 
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { axe, toHaveNoViolations } from 'jest-axe';
-
 // Import will fail initially - component doesn't exist yet (RED phase)
 // import { SkeletonCard } from '../../../src/components/loading/SkeletonCard';
-
-expect.extend(toHaveNoViolations);
 
 describe('SkeletonCard - Accessibility Tests', () => {
   /**

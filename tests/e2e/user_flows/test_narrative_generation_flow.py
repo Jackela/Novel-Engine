@@ -17,8 +17,8 @@ Coverage:
 - Narrative generation quality
 - Resource cleanup
 """
-
 import json
+import logging
 import time
 
 import pytest
@@ -184,7 +184,9 @@ class TestNarrativeGenerationFlow:
                                 if len(events_received) >= 3:
                                     break
                             except json.JSONDecodeError:
-                                pass
+                                logging.getLogger(__name__).debug(
+                                    "Suppressed exception", exc_info=True
+                                )
 
                         if lines_read > max_lines:
                             break

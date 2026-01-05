@@ -10,14 +10,12 @@ Constitution Compliance:
 
 import shutil
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 
 import pytest
 
 from contexts.knowledge.domain.models.access_level import AccessLevel
-from contexts.knowledge.domain.models.agent_identity import AgentIdentity
 from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 from contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import (
     MarkdownMigrationAdapter,

@@ -315,7 +315,7 @@ class EnhancedSystemOrchestrator:
             try:
                 await self.shutdown()
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
             return {
                 "success": False,

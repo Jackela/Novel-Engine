@@ -173,7 +173,7 @@ class StoryGenerationAPI:
             try:
                 await self.cleanup_task
             except asyncio.CancelledError:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     async def _cleanup_loop(self):
         """Background cleanup for stale connections and completed generations."""
@@ -286,7 +286,7 @@ class StoryGenerationAPI:
 
             except WebSocketDisconnect:
                 logger.info("WebSocket connection closed for generation")
-            except Exception as e:
+            except Exception:
                 logger.exception("WebSocket error for generation")
             finally:
                 self.connection_pool.remove_connection(generation_id, websocket)
@@ -517,12 +517,9 @@ class StoryGenerationAPI:
         start_time = state.get("start_time", datetime.now())
         elapsed = (datetime.now() - start_time).total_seconds()
 
-        if progress > 0:
-            total_estimated = elapsed * (100 / progress)
-            remaining = max(0, total_estimated - elapsed)
-            return int(remaining)
-
-        return 120
+        total_estimated = elapsed * (100 / progress)
+        remaining = max(0, total_estimated - elapsed)
+        return int(remaining)
 
     # PERFORMANCE OPTIMIZATION METHODS
 

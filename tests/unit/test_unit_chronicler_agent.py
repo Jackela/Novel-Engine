@@ -3,7 +3,7 @@
 记录代理单元测试套件
 测试故事生成、日志转录、叙述整合等核心功能
 """
-
+import logging
 import os
 import time
 from unittest.mock import Mock, patch
@@ -13,7 +13,6 @@ import pytest
 # 导入被测试的模块
 try:
     from src.agents.chronicler_agent import ChroniclerAgent
-    from src.event_bus import EventBus
 
     CHRONICLER_AGENT_AVAILABLE = True
 except ImportError:
@@ -52,7 +51,7 @@ class TestChroniclerAgent:
             if os.path.exists(self.temp_log_file):
                 os.remove(self.temp_log_file)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     @pytest.mark.unit
@@ -155,7 +154,7 @@ class TestChroniclerAgent:
                 if os.path.exists(empty_log_file):
                     os.remove(empty_log_file)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     def test_transcribe_log_api_failure(self):
@@ -336,7 +335,7 @@ class TestChroniclerAgentAdvanced:
                 if os.path.exists(complex_log_file):
                     os.remove(complex_log_file)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     def test_different_character_configurations(self):
@@ -407,7 +406,7 @@ class TestChroniclerAgentAdvanced:
                 if os.path.exists(large_log_file):
                     os.remove(large_log_file)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
 
 @pytest.mark.skipif(
@@ -470,7 +469,7 @@ class TestChroniclerAgentPerformance:
                 if os.path.exists(perf_log_file):
                     os.remove(perf_log_file)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.performance
     @pytest.mark.unit
@@ -519,10 +518,11 @@ class TestChroniclerAgentPerformance:
                     if os.path.exists(log_file):
                         os.remove(log_file)
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
 
 
-# 运行测试的辅助函数
 def run_chronicler_agent_tests():
     """运行所有记录代理测试的辅助函数"""
     import subprocess

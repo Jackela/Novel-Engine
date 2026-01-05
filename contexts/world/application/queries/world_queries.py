@@ -32,19 +32,16 @@ logger = logging.getLogger(__name__)
 class QueryException(Exception):
     """Base exception for query operations."""
 
-    pass
 
 
 class QueryValidationException(QueryException):
     """Raised when query parameters are invalid."""
 
-    pass
 
 
 class QueryExecutionException(QueryException):
     """Raised when query execution fails."""
 
-    pass
 
 
 # Query Objects (Command Pattern for Queries)

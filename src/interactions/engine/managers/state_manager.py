@@ -4,11 +4,9 @@ State and memory management for interactions.
 """
 
 import logging
-from datetime import datetime
-from typing import Any, Dict, List
 
 from src.core.data_models import (
-    CharacterState,
+    ErrorInfo,
     MemoryItem,
     MemoryType,
     StandardResponse,

@@ -20,29 +20,21 @@ May the System protect all operations from threats 🛡️
 
 import ipaddress
 import json
-import time
 import os
+import time
 
 try:
     import aioredis
-
-    AIOREDIS_AVAILABLE = True
 except ImportError:
-    AIOREDIS_AVAILABLE = False
     aioredis = None
 
 try:
     import aiosqlite
-
-    AIOSQLITE_AVAILABLE = True
 except ImportError:
-    AIOSQLITE_AVAILABLE = False
     aiosqlite = None
 
 try:
     import geoip2.database
-
-    GEOIP2_AVAILABLE = True
 except ImportError:
     if os.getenv("ALLOW_MOCK_GEOIP", "false").lower() != "true":
         raise
@@ -62,7 +54,6 @@ except ImportError:
     geoip2 = type(
         "", (), {"database": type("", (), {"Reader": MockGeoIP2Database})()}
     )()
-    GEOIP2_AVAILABLE = False
 import logging
 import re
 import secrets
@@ -77,8 +68,6 @@ from fastapi import Request
 
 try:
     import user_agents
-
-    USER_AGENTS_AVAILABLE = True
 except ImportError:
     if os.getenv("ALLOW_MOCK_USER_AGENTS", "false").lower() != "true":
         raise
@@ -90,7 +79,6 @@ except ImportError:
             self.os = type("", (), {"family": "Unknown"})()
 
     user_agents = type("", (), {"parse": lambda ua: MockUserAgent()})()
-    USER_AGENTS_AVAILABLE = False
 
 # Enhanced logging configuration
 logging.basicConfig(level=logging.INFO)

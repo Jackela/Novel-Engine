@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import weakref
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from src.metrics.global_metrics import metrics as global_metrics
 

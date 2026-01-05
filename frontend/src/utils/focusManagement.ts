@@ -1,4 +1,4 @@
-export const useFocusTrap = () => { };
+export const useFocusTrap = (..._args: unknown[]) => { };
 export const announceToScreenReader = () => { };
 export const skipToElement = () => { };
 export const manageFocus = {};

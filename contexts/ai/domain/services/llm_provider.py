@@ -452,25 +452,21 @@ class LLMProviderError(Exception):
 class RateLimitError(LLMProviderError):
     """Exception for rate limiting errors."""
 
-    pass
 
 
 class QuotaExceededError(LLMProviderError):
     """Exception for quota exceeded errors."""
 
-    pass
 
 
 class ModelUnavailableError(LLMProviderError):
     """Exception for model unavailability."""
 
-    pass
 
 
 class InvalidRequestError(LLMProviderError):
     """Exception for invalid request parameters."""
 
-    pass
 
 
 class ILLMProvider(ABC):
@@ -508,19 +504,16 @@ class ILLMProvider(ABC):
     @abstractmethod
     def provider_id(self) -> ProviderId:
         """Get the provider identifier."""
-        pass
 
     @property
     @abstractmethod
     def supported_models(self) -> List[ModelId]:
         """Get list of models supported by this provider."""
-        pass
 
     @property
     @abstractmethod
     def is_available(self) -> bool:
         """Check if provider is currently available."""
-        pass
 
     @abstractmethod
     async def generate_async(
@@ -554,7 +547,6 @@ class ILLMProvider(ABC):
         - Must track usage statistics accurately
         - Must handle streaming vs non-streaming requests
         """
-        pass
 
     def generate(
         self, request: LLMRequest, budget: Optional[TokenBudget] = None
@@ -606,7 +598,6 @@ class ILLMProvider(ABC):
         - Must provide final usage statistics
         - Must support cancellation/interruption
         """
-        pass
 
     @abstractmethod
     def estimate_tokens(self, text: str) -> int:
@@ -628,7 +619,6 @@ class ILLMProvider(ABC):
         - Must handle different languages and encodings
         - Should account for special tokens
         """
-        pass
 
     @abstractmethod
     def validate_request(self, request: LLMRequest) -> bool:
@@ -650,7 +640,6 @@ class ILLMProvider(ABC):
         - Must verify capability requirements
         - Should provide detailed error information
         """
-        pass
 
     @abstractmethod
     def get_model_info(self, model_name: str) -> Optional[ModelId]:
@@ -663,7 +652,6 @@ class ILLMProvider(ABC):
         Returns:
             ModelId with capabilities and limits, or None if not found
         """
-        pass
 
     @abstractmethod
     async def health_check_async(self) -> Dict[str, Any]:
@@ -686,7 +674,6 @@ class ILLMProvider(ABC):
             "quota_utilization": 0.45
         }
         """
-        pass
 
     def health_check(self) -> Dict[str, Any]:
         """Synchronous health check wrapper."""

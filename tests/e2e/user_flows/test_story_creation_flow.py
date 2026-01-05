@@ -59,7 +59,6 @@ class TestStoryCreationFlow:
             200,
             201,
         ], f"Failed to create character: {response.text}"
-        char1_result = response.json()
         performance_tracker.record("create_character_1", time.time() - start_time)
 
         # Step 3: Create second character
@@ -75,7 +74,6 @@ class TestStoryCreationFlow:
             200,
             201,
         ], f"Failed to create character: {response.text}"
-        char2_result = response.json()
         performance_tracker.record("create_character_2", time.time() - start_time)
 
         # Step 4: Verify characters were created

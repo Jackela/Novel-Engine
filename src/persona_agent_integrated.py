@@ -206,9 +206,6 @@ class PersonaAgent:
     def _integrate_decision_engine(self) -> None:
         """Integrate decision engine with core turn handling."""
         try:
-            # Store original handle_turn_start method
-            original_handle_turn_start = self.core.handle_turn_start
-
             # Create new integrated turn handler
             def integrated_turn_handler(world_state_update: Dict[str, Any]) -> None:
                 try:
@@ -665,7 +662,9 @@ class PersonaAgent:
                     if isinstance(self.decision_engine, EnhancedDecisionEngine):
                         decision_engine_type = "enhanced"
                 except ImportError:
-                    pass
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
 
             status = {
                 "context_loader_available": CONTEXT_LOADER_AVAILABLE,

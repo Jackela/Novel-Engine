@@ -690,7 +690,6 @@ class AgentCoordinationEngine:
     def handle_action_request(self, agent_id: str, action: CharacterAction):
         """Handle action requests from agents."""
         # Validate consistency and coordinate if needed
-        pass
 
     def handle_state_change(self, agent_id: str, new_state: str):
         """Handle agent state changes."""
@@ -701,12 +700,10 @@ class AgentCoordinationEngine:
     def handle_coordination_request(self, request_data: Dict[str, Any]):
         """Handle coordination requests."""
         # Process coordination requests
-        pass
 
     def handle_consistency_check(self, agent_id: str, action_data: Dict[str, Any]):
         """Handle consistency check requests."""
         # Perform consistency validation
-        pass
 
 
 def create_coordination_engine(

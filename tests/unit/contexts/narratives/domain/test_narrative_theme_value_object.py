@@ -1627,7 +1627,6 @@ class TestNarrativeThemeCollectionsAndComparison:
         )
 
         assert theme1 != theme2
-        assert not (theme1 == theme2)
 
     @pytest.mark.unit
     def test_theme_hashing_consistency(self):

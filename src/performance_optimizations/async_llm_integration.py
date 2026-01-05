@@ -160,7 +160,7 @@ class AsyncLLMClient:
             try:
                 await self._batch_task
             except asyncio.CancelledError:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
         if self._session:
             await self._session.close()

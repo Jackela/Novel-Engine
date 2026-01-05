@@ -29,7 +29,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 
 class TestPyramidMonitor:
@@ -152,7 +152,7 @@ class TestPyramidMonitor:
                     os.unlink(tmp_path)
 
         except subprocess.TimeoutExpired:
-            print(f"Warning: Test collection timed out", file=sys.stderr)
+            print("Warning: Test collection timed out", file=sys.stderr)
         except Exception as e:
             print(f"Warning: Could not parse detailed test info: {e}", file=sys.stderr)
 

@@ -6,16 +6,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import DecisionPointDialog from '../../../../src/components/decision/DecisionPointDialog';
 import decisionReducer, {
   setDecisionPoint,
-  clearDecisionPoint,
-  selectOption,
-  setFreeTextInput,
   type DecisionPoint,
 } from '../../../../src/store/slices/decisionSlice';
 
@@ -209,9 +205,6 @@ describe('DecisionPointDialog', () => {
       renderWithStore(<DecisionPointDialog />, store);
 
       // Check icon appears on selected option
-      const checkIcons = screen.getAllByTestId ?
-        screen.queryAllByRole('img', { hidden: true }) : [];
-
       // The selected option should have some visual indicator
       const selectedOption = screen.getByText('Investigate Signal').closest('button');
       expect(selectedOption).toBeInTheDocument();

@@ -28,18 +28,12 @@ from typing import Any, Dict, List, Optional
 
 try:
     import aioredis
-
-    AIOREDIS_AVAILABLE = True
 except ImportError:
-    AIOREDIS_AVAILABLE = False
     aioredis = None
 
 try:
     import aiosqlite
-
-    AIOSQLITE_AVAILABLE = True
 except ImportError:
-    AIOSQLITE_AVAILABLE = False
     aiosqlite = None
 
 from fastapi import WebSocket, WebSocketDisconnect

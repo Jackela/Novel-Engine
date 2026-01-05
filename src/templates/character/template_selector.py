@@ -8,7 +8,7 @@ from typing import Optional
 
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 
-from .persona_models import CharacterContextProfile, CharacterTemplate
+from .persona_models import CharacterTemplate
 
 logger = logging.getLogger(__name__)
 

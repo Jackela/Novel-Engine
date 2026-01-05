@@ -15,7 +15,7 @@ import { FixedSizeList as List } from 'react-window';
 import { useWebSocketContext } from '../../hooks/useWebSocket';
 import { usePerformanceOptimizer } from '../../hooks/usePerformanceOptimizer';
 import { Button } from '../ui/Button';
-import { Card, CardHeader, CardTitle, CardContent, StatCard } from '../ui/Card';
+import { Card, CardHeader, CardContent, StatCard } from '../ui/Card';
 import { Badge, StatusBadge } from '../ui/Badge';
 import { cn, formatRelativeTime, generateId, PerformanceMonitor } from '../../lib/utils';
 import './EnhancedNarrativeDisplay.css';

@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 class WorldProjectorException(Exception):
     """Base exception for world projector operations."""
 
-    pass
 
 
 class WorldProjector:

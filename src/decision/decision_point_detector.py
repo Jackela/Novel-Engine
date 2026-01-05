@@ -137,7 +137,6 @@ class DecisionPointDetector:
         # Try to extract plot point data
         plot_points = turn_result.get("plot_points", [])
         events = turn_result.get("events", [])
-        world_state = turn_result.get("world_state", {})
 
         # Check plot points
         for pp in plot_points:
@@ -450,7 +449,7 @@ class DecisionPointDetector:
                 label=opt["label"],
                 description=opt["description"],
                 icon=opt.get("icon", ""),
-                impact_preview=f"This choice will influence the next turn's direction.",
+                impact_preview="This choice will influence the next turn's direction.",
             )
             for i, opt in enumerate(base_options)
         ]

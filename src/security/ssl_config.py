@@ -229,7 +229,7 @@ class SSLCertificateManager:
                     elif isinstance(name, x509.IPAddress):
                         info["san_ip_addresses"].append(str(name.value))
             except x509.ExtensionNotFound:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
             return info
 

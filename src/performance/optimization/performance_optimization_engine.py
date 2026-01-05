@@ -120,7 +120,7 @@ class PerformanceMonitor:
             try:
                 await self._monitoring_task
             except asyncio.CancelledError:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     async def _monitor_loop(self):
         """Background monitoring loop."""
@@ -417,9 +417,9 @@ class BatchProcessor:
 
     def __init__(self, config: OptimizationConfig):
         self.config = config
-        self.pending_operations: Dict[
-            str, List[Tuple[Any, asyncio.Future]]
-        ] = defaultdict(list)
+        self.pending_operations: Dict[str, List[Tuple[Any, asyncio.Future]]] = (
+            defaultdict(list)
+        )
         self.batch_timers: Dict[str, asyncio.Task] = {}
         self.batch_lock = asyncio.Lock()
 
@@ -450,7 +450,7 @@ class BatchProcessor:
                 if operation_type in self.pending_operations:
                     await self._process_batch(operation_type)
         except asyncio.CancelledError:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     async def _process_batch(self, operation_type: str):
         """Process a batch of operations."""

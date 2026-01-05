@@ -200,11 +200,9 @@ class DatabaseFixtures:
 
             def add(self, obj):
                 """Mock add operation."""
-                pass
 
             async def commit(self):
                 """Mock commit operation."""
-                pass
 
             async def execute(self, query):
                 """Mock execute operation."""
@@ -913,17 +911,14 @@ class TestTurnOrchestrationErrorHandling:
         """Test handling of database connection failures."""
         # This would test error handling when database is unavailable
         # Implementation depends on specific error handling patterns
-        pass
 
     async def test_invalid_character_references(self):
         """Test handling of invalid character references in turn execution."""
         # This would test what happens when turn references non-existent characters
-        pass
 
     async def test_concurrent_turn_execution(self):
         """Test handling of concurrent turn executions."""
         # This would test resource locking and concurrency control
-        pass
 
 
 # Helper function for running tests manually

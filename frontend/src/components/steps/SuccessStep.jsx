@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import './SuccessStep.css';
 
 /**
@@ -56,12 +56,12 @@ function SuccessStep({
 
     const goals = suggestUserGoals(userPreferences);
     setUserGoals(goals);
-  }, [setupData, userPreferences, calculateAchievements]);
+  }, [setupData, userPreferences]);
 
   /**
    * Calculate user achievements
    */
-  const calculateAchievements = useCallback((setup, preferences) => {
+  function calculateAchievements(setup, preferences) {
     const achievements = [];
 
     // Environment achievement
@@ -157,7 +157,7 @@ function SuccessStep({
     });
 
     return achievements;
-  }, []);
+  }
 
   /**
    * Calculate approximate setup time

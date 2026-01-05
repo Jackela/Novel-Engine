@@ -48,7 +48,6 @@ class IEventPublisher(ABC):
         Raises:
             EventPublishException: If publishing fails after retries
         """
-        pass
 
     @abstractmethod
     async def publish_batch(
@@ -72,7 +71,6 @@ class IEventPublisher(ABC):
         Raises:
             EventPublishException: If batch publishing fails after retries
         """
-        pass
 
     @abstractmethod
     async def health_check(self) -> Dict[str, Any]:
@@ -87,10 +85,7 @@ class IEventPublisher(ABC):
                 "errors": list[str]
             }
         """
-        pass
 
 
 class EventPublishException(Exception):
     """Raised when event publishing fails."""
-
-    pass

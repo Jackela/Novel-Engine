@@ -328,13 +328,11 @@ class TestFrontendOptimizations:
         """Test API request deduplication prevents duplicate calls."""
         # This would require a more complex test setup with actual HTTP mocking
         # For now, we can test the cache logic
-        pass
 
     @pytest.mark.unit
     def test_mobile_responsive_behavior(self):
         """Test mobile-responsive UI adaptations."""
         # This would require React Testing Library setup
-        pass
 
 
 if __name__ == "__main__":

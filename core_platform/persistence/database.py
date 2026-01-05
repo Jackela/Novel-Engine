@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
 
-    pass
 
 
 class DatabaseManager:

@@ -19,6 +19,7 @@ import time
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
+from functools import total_ordering
 from datetime import datetime
 from enum import IntEnum
 from typing import Any, Callable, Dict, List, Optional, Set
@@ -35,6 +36,7 @@ class EventPriority(IntEnum):
     CRITICAL = 3
 
 
+@total_ordering
 @dataclass
 class Event:
     """Represents an event in the system."""
@@ -51,9 +53,16 @@ class Event:
 
     def __lt__(self, other: "Event") -> bool:
         """Compare events by priority (higher first) then timestamp (older first)."""
+        if not isinstance(other, Event):
+            return NotImplemented
         if self.priority != other.priority:
             return self.priority > other.priority  # Higher priority first
         return self.timestamp < other.timestamp  # Older events first
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Event):
+            return NotImplemented
+        return self.event_id == other.event_id
 
 
 @dataclass

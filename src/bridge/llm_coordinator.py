@@ -159,7 +159,9 @@ class LLMCoordinator:
                         if callback:
                             await callback(res)
                     except Exception:
-                        pass
+                        self.logger.debug(
+                            "Single-flight callback failed", exc_info=True
+                        )
 
                 asyncio.create_task(_await_and_callback())
                 # record single-flight merge metric
@@ -168,7 +170,9 @@ class LLMCoordinator:
 
                     _metrics.record_single_flight_merged(1)
                 except Exception:
-                    pass
+                    self.logger.debug(
+                        "Single-flight metrics update failed", exc_info=True
+                    )
                 return request.request_id
 
             # Handle critical priority requests immediately
@@ -342,7 +346,9 @@ class LLMCoordinator:
                 try:
                     fut.set_result(result)
                 except Exception:
-                    pass
+                    self.logger.debug(
+                        "Failed to resolve inflight future", exc_info=True
+                    )
                 finally:
                     self._inflight.pop(cache_key, None)
                     self._waiters_count.pop(cache_key, None)
@@ -359,7 +365,7 @@ class LLMCoordinator:
                 backoff = min(60, 2 ** min(cnt, 5))  # cap 60s
                 self._negative_cache[key] = time.time() + backoff
             except Exception:
-                pass
+                self.logger.debug("Negative cache backoff update failed", exc_info=True)
             return {
                 "request_id": request.request_id,
                 "agent_id": request.agent_id,
@@ -486,14 +492,20 @@ class LLMCoordinator:
                 try:
                     await self._batch_processor_task
                 except asyncio.CancelledError:
-                    pass
+                    self.logger.debug(
+                        "Batch processor task cancelled during shutdown",
+                        exc_info=True,
+                    )
 
             if self._cache_cleanup_task:
                 self._cache_cleanup_task.cancel()
                 try:
                     await self._cache_cleanup_task
                 except asyncio.CancelledError:
-                    pass
+                    self.logger.debug(
+                        "Cache cleanup task cancelled during shutdown",
+                        exc_info=True,
+                    )
 
             # Process any remaining pending requests
             await self._flush_pending_requests()

@@ -139,8 +139,6 @@ test.describe('Error Boundary E2E Tests', () => {
 
   test.describe('Scenario: Graceful degradation', () => {
     test('should show fallback UI when component fails to load', async ({ page }) => {
-      const landingPage = new LandingPage(page);
-
       // Block specific resources to simulate component load failure
       await page.route('**/*.chunk.js', route => {
         // Allow some chunks but block others

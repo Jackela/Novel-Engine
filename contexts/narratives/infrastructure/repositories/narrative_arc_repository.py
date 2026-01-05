@@ -54,7 +54,6 @@ logger = logging.getLogger(__name__)
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
 
-    pass
 
 
 # Association tables for many-to-many relationships
@@ -354,7 +353,6 @@ class INarrativeArcRepository(ABC):
         Args:
             narrative_arc: NarrativeArc aggregate to save
         """
-        pass
 
     @abstractmethod
     def get_by_id(self, arc_id: NarrativeId) -> Optional[NarrativeArc]:
@@ -367,7 +365,6 @@ class INarrativeArcRepository(ABC):
         Returns:
             NarrativeArc if found, None otherwise
         """
-        pass
 
     @abstractmethod
     def get_by_type(
@@ -389,7 +386,6 @@ class INarrativeArcRepository(ABC):
         Returns:
             List of matching NarrativeArc objects
         """
-        pass
 
     @abstractmethod
     def search(
@@ -416,7 +412,6 @@ class INarrativeArcRepository(ABC):
         Returns:
             Tuple of (matching arcs, total count)
         """
-        pass
 
     @abstractmethod
     def delete(self, arc_id: NarrativeId) -> bool:
@@ -429,7 +424,6 @@ class INarrativeArcRepository(ABC):
         Returns:
             True if deleted, False if not found
         """
-        pass
 
     @abstractmethod
     def exists(self, arc_id: NarrativeId) -> bool:
@@ -442,7 +436,6 @@ class INarrativeArcRepository(ABC):
         Returns:
             True if exists, False otherwise
         """
-        pass
 
 
 class NarrativeArcRepository(INarrativeArcRepository):

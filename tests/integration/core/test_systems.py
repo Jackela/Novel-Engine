@@ -152,7 +152,7 @@ async def test_integration():
         # Simulate application error
         try:
             # Intentional error for testing
-            pass
+            1 / 0
         except ZeroDivisionError as e:
             # Handle error through centralized system
             error_record = await error_handler.handle_error(e, context)

@@ -65,6 +65,11 @@ class _ReportWrapper(dict):
     def __dir__(self) -> List[str]:
         return sorted(set(super().__dir__()) | set(self._report.__dir__()))
 
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, _ReportWrapper):
+            return dict.__eq__(self, other) and self._report == other._report
+        return dict.__eq__(self, other)
+
 
 class IronLawsProcessor:
     """

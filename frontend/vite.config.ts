@@ -214,12 +214,8 @@ export default defineConfig({
         },
         fileParallelism: false, // Disable parallelism to prevent hangs on limited resources
   
-    pool: 'forks', // Use forks instead of threads for better isolation
-    poolOptions: {
-      forks: {
-        singleFork: true, // Run tests sequentially in a single fork
-      },
-    },
+    pool: 'threads', // Threads are more reliable in WSL test runs
+    singleThread: true, // Run tests sequentially in a single thread
     testTimeout: 10000,
     hookTimeout: 10000,
     reporters: ['verbose'],

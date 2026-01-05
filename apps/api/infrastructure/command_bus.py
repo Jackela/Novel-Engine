@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, Type, TypeVar
+from typing import Dict, Generic, Type, TypeVar
 
 from pydantic import BaseModel
 
@@ -13,7 +13,6 @@ class CommandHandler(ABC, Generic[C, R]):
     @abstractmethod
     async def handle(self, command: C) -> R:
         """Handle the command and return a result."""
-        pass
 
 
 class CommandBus:

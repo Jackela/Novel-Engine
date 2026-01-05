@@ -34,7 +34,6 @@ except ImportError:
     class Base(DeclarativeBase):
         """Base class for all SQLAlchemy models."""
 
-        pass
 
     class BaseModel(Base):
         __abstract__ = True

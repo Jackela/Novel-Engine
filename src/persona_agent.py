@@ -146,8 +146,6 @@ def _generate_fallback_response(
     """Generate a deterministic fallback response string for tests."""
     action_index = 1
     target = "none"
-    reasoning = "Fallback response generated without LLM guidance."
-
     if available_actions:
         # Prefer a non-observe action; otherwise use the first option
         prioritized = [

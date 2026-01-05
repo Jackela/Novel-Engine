@@ -91,8 +91,6 @@ class ServiceInstance:
 class DependencyResolutionError(Exception):
     """Raised when dependency resolution fails."""
 
-    pass
-
 
 class ServiceContainer:
     """
@@ -118,9 +116,9 @@ class ServiceContainer:
 
         # Service registry
         self._services: Dict[Type, ServiceDescriptor] = {}
-        self._instances: Dict[
-            Type, Dict[str, ServiceInstance]
-        ] = {}  # Type -> {scope_key: instance}
+        self._instances: Dict[Type, Dict[str, ServiceInstance]] = (
+            {}
+        )  # Type -> {scope_key: instance}
         self._singletons: Dict[Type, ServiceInstance] = {}
 
         # Lifecycle management

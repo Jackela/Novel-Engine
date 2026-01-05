@@ -24,9 +24,12 @@ import tempfile
 import pytest
 
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
+pytestmark = [pytest.mark.story, pytest.mark.narrative, pytest.mark.integration]
 if not FULL_INTEGRATION:
-    pytestmark = pytest.mark.skip(
-        reason="Story generation comprehensive suite requires NOVEL_ENGINE_FULL_INTEGRATION=1"
+    pytestmark.append(
+        pytest.mark.skip(
+            reason="Story generation comprehensive suite requires NOVEL_ENGINE_FULL_INTEGRATION=1"
+        )
     )
 from src.agents.chronicler_agent import CampaignEvent, ChroniclerAgent, NarrativeSegment
 
@@ -1001,7 +1004,6 @@ def sample_events():
 
 
 # Test markers
-pytestmark = [pytest.mark.story, pytest.mark.narrative, pytest.mark.integration]
 
 
 if __name__ == "__main__":

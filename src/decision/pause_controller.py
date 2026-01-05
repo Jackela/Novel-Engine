@@ -21,7 +21,6 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
-
 class InteractionPauseController:
     """
     Controls the pause/resume flow for user decision points.
@@ -174,7 +173,6 @@ class InteractionPauseController:
                         logger.error("Error in resolution callback: %s", e)
 
             self._state = PauseState.RUNNING
-            pending = self._pending
             self._pending = None
 
         return response

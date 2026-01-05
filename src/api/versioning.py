@@ -159,7 +159,7 @@ class VersionExtractor:
                 ].split("+")[0]
                 return APIVersion(version_part)
             except (IndexError, ValueError):
-                pass
+                logger.debug("Invalid Accept header API version", exc_info=True)
 
         # Method 2: Custom header
         version_header = request.headers.get("X-API-Version")
@@ -167,7 +167,7 @@ class VersionExtractor:
             try:
                 return APIVersion(version_header)
             except ValueError:
-                pass
+                logger.debug("Invalid X-API-Version header", exc_info=True)
 
         # Method 3: Query parameter
         version_param = request.query_params.get("version")
@@ -175,7 +175,7 @@ class VersionExtractor:
             try:
                 return APIVersion(version_param)
             except ValueError:
-                pass
+                logger.debug("Invalid version query parameter", exc_info=True)
 
         # Method 4: URL path (if using path-based versioning)
         path = request.url.path
@@ -187,7 +187,7 @@ class VersionExtractor:
                     version_part += ".0"
                 return APIVersion(version_part)
             except (IndexError, ValueError):
-                pass
+                logger.debug("Invalid path-based API version", exc_info=True)
 
         return self.default_version
 
@@ -290,9 +290,9 @@ class VersionMiddleware:
                     "%a, %d %b %Y %H:%M:%S GMT"
                 )
             if version_info.migration_guide_url:
-                response.headers[
-                    "Link"
-                ] = f'<{version_info.migration_guide_url}>; rel="migration-guide"'
+                response.headers["Link"] = (
+                    f'<{version_info.migration_guide_url}>; rel="migration-guide"'
+                )
 
         return response
 

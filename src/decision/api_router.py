@@ -11,10 +11,10 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from .models import FeasibilityResult, UserDecision
-from .pause_controller import InteractionPauseController
 from .decision_point_detector import DecisionPointDetector
+from .models import FeasibilityResult, UserDecision
 from .negotiation_engine import NegotiationEngine
+from .pause_controller import InteractionPauseController
 
 logger = logging.getLogger(__name__)
 

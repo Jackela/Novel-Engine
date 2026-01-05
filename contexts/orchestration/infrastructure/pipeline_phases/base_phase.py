@@ -228,7 +228,6 @@ class BasePhaseImplementation(ABC):
         Returns:
             PhaseResult with execution results
         """
-        pass
 
     @abstractmethod
     def _validate_preconditions(self, context: PhaseExecutionContext) -> None:
@@ -241,7 +240,6 @@ class BasePhaseImplementation(ABC):
         Raises:
             ValueError: If preconditions are not met
         """
-        pass
 
     def _validate_phase_result(
         self, result: PhaseResult, context: PhaseExecutionContext

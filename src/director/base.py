@@ -18,11 +18,11 @@ class ComponentInitializer(Protocol):
 
     async def initialize(self) -> bool:
         """Initialize the component."""
-        ...
+        pass
 
     async def cleanup(self) -> None:
         """Cleanup component resources."""
-        ...
+        pass
 
 
 @dataclass
@@ -44,3 +44,4 @@ class LogLevel(Enum):
     WARNING = "warning"
     ERROR = "error"
     CRITICAL = "critical"
+

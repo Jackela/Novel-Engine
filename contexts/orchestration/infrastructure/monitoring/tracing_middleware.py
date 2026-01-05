@@ -222,7 +222,7 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
             try:
                 span.set_attribute("http.request_content_length", int(content_length))
             except (ValueError, TypeError):
-                pass
+                logger.debug("Invalid request content-length header")
 
         # Trace request payload if configured
         if self.trace_request_payload:
@@ -251,7 +251,7 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
             try:
                 span.set_attribute("http.response_content_length", int(content_length))
             except (ValueError, TypeError):
-                pass
+                logger.debug("Invalid response content-length header")
 
         # Response content type
         content_type = response.headers.get("content-type")

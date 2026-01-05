@@ -313,7 +313,9 @@ class MemoryManager:
                         if not self.memory_by_entity[entity]:
                             del self.memory_by_entity[entity]
                     except ValueError:
-                        pass  # Memory not in index
+                        logging.getLogger(__name__).debug(
+                            "Suppressed exception", exc_info=True
+                        )
 
             # Remove from location index
             location = memory.get("location")
@@ -323,9 +325,9 @@ class MemoryManager:
                     if not self.memory_by_location[location]:
                         del self.memory_by_location[location]
                 except ValueError:
-                    pass
-
-            # Remove from event type index
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             event_type = memory.get("event_type")
             if event_type and event_type in self.memory_by_event_type:
                 try:
@@ -333,4 +335,6 @@ class MemoryManager:
                     if not self.memory_by_event_type[event_type]:
                         del self.memory_by_event_type[event_type]
                 except ValueError:
-                    pass
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )

@@ -4,12 +4,11 @@ Character archetype configurations and preferences.
 """
 
 import logging
-from typing import Dict, List
+from typing import Dict
 
-from src.templates.context_renderer import RenderFormat, RenderingConstraints
 from src.templates.dynamic_template_engine import TemplateType
 
-from .persona_models import CharacterArchetype, CharacterPersona
+from .persona_models import CharacterArchetype
 
 logger = logging.getLogger(__name__)
 
@@ -91,83 +90,7 @@ The warrior's determination is unwavering, a beacon of Alliance strength in dark
             CharacterArchetype.GUARDIAN: {"relationship": 0.2, "equipment": 0.1},
             CharacterArchetype.SURVIVOR: {"environment": 0.2, "memory": 0.1},
         }
-
-        archetype_format_preferences = {
-            CharacterArchetype.WARRIOR: {
-                RenderFormat.CONVERSATIONAL: 0.3,
-                RenderFormat.NARRATIVE: 0.2,
-            },
-            CharacterArchetype.SCHOLAR: {
-                RenderFormat.TECHNICAL: 0.4,
-                RenderFormat.SUMMARY: 0.2,
-            },
-            CharacterArchetype.LEADER: {
-                RenderFormat.NARRATIVE: 0.3,
-                RenderFormat.CONVERSATIONAL: 0.2,
-            },
-            CharacterArchetype.MYSTIC: {
-                RenderFormat.NARRATIVE: 0.4,
-                RenderFormat.CONVERSATIONAL: 0.1,
-            },
-            CharacterArchetype.ENGINEER: {
-                RenderFormat.TECHNICAL: 0.4,
-                RenderFormat.DEBUG: 0.2,
-            },
-            CharacterArchetype.DIPLOMAT: {
-                RenderFormat.CONVERSATIONAL: 0.4,
-                RenderFormat.SUMMARY: 0.1,
-            },
-            CharacterArchetype.GUARDIAN: {
-                RenderFormat.NARRATIVE: 0.2,
-                RenderFormat.TECHNICAL: 0.2,
-            },
-            CharacterArchetype.SURVIVOR: {
-                RenderFormat.SUMMARY: 0.3,
-                RenderFormat.TECHNICAL: 0.2,
-            },
-        }
-
-        if persona.archetype in archetype_format_preferences:
-            for fmt, bonus in archetype_format_preferences[persona.archetype].items():
-                format_scores[fmt] = format_scores.get(fmt, 0.5) + bonus
-
-        # Select enhanced highest scoring format
-        best_format = max(format_scores, key=format_scores.get)
-        return best_format
-
-        archetype_constraints = {
-            CharacterArchetype.WARRIOR: {"max_memories": 6, "emotional_threshold": 2.0},
-            CharacterArchetype.SCHOLAR: {
-                "max_memories": 12,
-                "relevance_threshold": 0.6,
-            },
-            CharacterArchetype.LEADER: {
-                "max_participants": 10,
-                "emotional_threshold": 1.0,
-            },
-            CharacterArchetype.MYSTIC: {
-                "emotional_threshold": 1.5,
-                "include_technical_details": False,
-            },
-            CharacterArchetype.ENGINEER: {
-                "include_technical_details": True,
-                "max_memories": 8,
-            },
-            CharacterArchetype.DIPLOMAT: {
-                "max_participants": 15,
-                "relevance_threshold": 0.3,
-            },
-            CharacterArchetype.GUARDIAN: {
-                "max_memories": 8,
-                "emotional_threshold": 2.5,
-            },
-            CharacterArchetype.SURVIVOR: {"max_memories": 5, "time_window_hours": 12},
-        }
-
-        if persona.archetype in archetype_constraints:
-            archetype_prefs = archetype_constraints[persona.archetype]
-            for key, value in archetype_prefs.items():
-                if hasattr(constraints, key):
-                    setattr(constraints, key, value)
-
-        return constraints
+        for key, delta in archetype_modifiers.get(archetype, {}).items():
+            base_emphasis[key] = max(0.0, base_emphasis.get(key, 0.0) + delta)
+        total = sum(base_emphasis.values()) or 1.0
+        return {key: value / total for key, value in base_emphasis.items()}

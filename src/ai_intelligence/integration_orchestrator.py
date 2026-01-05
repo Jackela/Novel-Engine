@@ -34,16 +34,13 @@ Features:
     - Event-driven cross-system coordination
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from src.core.data_models import (
-    CharacterState,
-    DynamicContext,
     ErrorInfo,
     StandardResponse,
 )
@@ -51,23 +48,17 @@ from src.core.data_models import (
 # Import Novel Engine core systems
 from src.core.event_coordinator import EventCoordinator
 from src.core.metrics_coordinator import IntegrationMetrics, MetricsCoordinator
-from src.core.system_orchestrator import OrchestratorConfig, SystemOrchestrator
+from src.core.system_orchestrator import OrchestratorConfig
 from src.core.traditional_system_coordinator import TraditionalSystemCoordinator
-from src.event_bus import EventBus
-
-from .agent_coordination_engine import AgentContext
 
 # Import AI intelligence systems
 from .ai_orchestrator import (
-    AIIntelligenceOrchestrator,
     AISystemConfig,
     IntelligenceLevel,
 )
 from .ai_subsystem_coordinator import AISubsystemCoordinator
-from .analytics_platform import AnalyticsEvent
 from .character_action_processor import CharacterActionProcessor
 from .content_generation_coordinator import ContentGenerationCoordinator
-from .recommendation_engine import UserProfile
 
 logger = logging.getLogger(__name__)
 
@@ -723,7 +714,6 @@ class IntegrationOrchestrator:
     async def _start_integration_monitoring(self):
         """Start background monitoring of integration performance."""
         # This would typically start background tasks for monitoring
-        pass
 
     async def _generate_integration_metrics(self) -> IntegrationMetrics:
         """Generate current integration performance metrics (delegated to coordinator)."""

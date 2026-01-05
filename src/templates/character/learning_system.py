@@ -5,12 +5,10 @@ Usage learning and optimization system.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from src.templates.context_renderer import RenderFormat
 from src.templates.dynamic_template_engine import TemplateContext
-
-from .persona_models import CharacterContextProfile
 
 logger = logging.getLogger(__name__)
 

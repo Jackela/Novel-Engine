@@ -5,9 +5,9 @@ import logging
 import os
 from typing import Optional
 
+from config_loader import get_config
 from fastapi import FastAPI
 
-from config_loader import get_config
 from src.api.services.paths import find_project_root
 from src.api.settings import APISettings
 from src.core.service_container import get_service_container

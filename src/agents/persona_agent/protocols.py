@@ -13,10 +13,9 @@ from typing import Any, Dict, List, Optional, Protocol
 
 # Import shared types
 try:
-    from shared_types import ActionPriority, CharacterAction
+    from shared_types import CharacterAction
 except ImportError:
     CharacterAction = Dict
-    ActionPriority = str
 
 
 class ThreatLevel(Enum):
@@ -86,17 +85,17 @@ class CharacterDataManagerProtocol(Protocol):
         self, character_directory_path: str
     ) -> Dict[str, Any]:
         """Load character data from directory."""
-        ...
+        pass
 
     @abstractmethod
     async def validate_character_data(self, character_data: Dict[str, Any]) -> bool:
         """Validate character data structure."""
-        ...
+        pass
 
     @abstractmethod
     async def get_character_trait(self, trait_name: str) -> Any:
         """Get specific character trait value."""
-        ...
+        pass
 
 
 class DecisionEngineProtocol(Protocol):
@@ -107,21 +106,21 @@ class DecisionEngineProtocol(Protocol):
         self, world_state: Dict[str, Any], character_context: Dict[str, Any]
     ) -> CharacterAction:
         """Make a decision based on current world state and character context."""
-        ...
+        pass
 
     @abstractmethod
     async def evaluate_threat(
         self, event: WorldEvent, character_data: Dict[str, Any]
     ) -> ThreatLevel:
         """Evaluate threat level of an event."""
-        ...
+        pass
 
     @abstractmethod
     async def prioritize_goals(
         self, goals: List[Dict[str, Any]], context: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Prioritize character goals based on context."""
-        ...
+        pass
 
 
 class WorldInterpretationProtocol(Protocol):
@@ -132,19 +131,19 @@ class WorldInterpretationProtocol(Protocol):
         self, event: WorldEvent, character_context: Dict[str, Any]
     ) -> SubjectiveInterpretation:
         """Interpret a world event from character's perspective."""
-        ...
+        pass
 
     @abstractmethod
     async def update_worldview(self, interpretation: SubjectiveInterpretation) -> None:
         """Update character's worldview based on event interpretation."""
-        ...
+        pass
 
     @abstractmethod
     async def get_relevant_memories(
         self, context: Dict[str, Any], limit: int = 10
     ) -> List[Dict[str, Any]]:
         """Get relevant memories for decision making."""
-        ...
+        pass
 
 
 class MemoryManagerProtocol(Protocol):
@@ -155,19 +154,19 @@ class MemoryManagerProtocol(Protocol):
         self, memory: Dict[str, Any], memory_type: str = "short_term"
     ) -> bool:
         """Store a memory."""
-        ...
+        pass
 
     @abstractmethod
     async def retrieve_memories(
         self, query: Dict[str, Any], limit: int = 10
     ) -> List[Dict[str, Any]]:
         """Retrieve memories based on query."""
-        ...
+        pass
 
     @abstractmethod
     async def consolidate_memories(self) -> None:
         """Move important short-term memories to long-term storage."""
-        ...
+        pass
 
 
 class LLMIntegrationProtocol(Protocol):
@@ -178,19 +177,19 @@ class LLMIntegrationProtocol(Protocol):
         self, prompt: str, context: Dict[str, Any]
     ) -> str:
         """Generate character response using LLM."""
-        ...
+        pass
 
     @abstractmethod
     async def validate_api_connection(self) -> bool:
         """Validate LLM API connection."""
-        ...
+        pass
 
     @abstractmethod
     async def format_prompt(
         self, base_prompt: str, character_data: Dict[str, Any]
     ) -> str:
         """Format prompt with character-specific context."""
-        ...
+        pass
 
 
 class AgentStateManagerProtocol(Protocol):
@@ -199,19 +198,20 @@ class AgentStateManagerProtocol(Protocol):
     @abstractmethod
     async def update_state(self, state_updates: Dict[str, Any]) -> None:
         """Update agent state."""
-        ...
+        pass
 
     @abstractmethod
     async def get_state(self) -> Dict[str, Any]:
         """Get current agent state."""
-        ...
+        pass
 
     @abstractmethod
     async def save_state(self, file_path: str) -> bool:
         """Save agent state to file."""
-        ...
+        pass
 
     @abstractmethod
     async def load_state(self, file_path: str) -> bool:
         """Load agent state from file."""
-        ...
+        pass
+

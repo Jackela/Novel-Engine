@@ -7,7 +7,6 @@ import {
   Typography,
   Chip,
   Stack,
-  Badge,
   useTheme,
   useMediaQuery,
 } from '@mui/material';

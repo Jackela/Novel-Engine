@@ -34,19 +34,16 @@ logger = logging.getLogger(__name__)
 class SubjectiveCommandHandlerException(Exception):
     """Base exception for command handler errors."""
 
-    pass
 
 
 class EntityNotFoundException(SubjectiveCommandHandlerException):
     """Raised when an entity is not found."""
 
-    pass
 
 
 class InvalidCommandException(SubjectiveCommandHandlerException):
     """Raised when a command is invalid or cannot be processed."""
 
-    pass
 
 
 class CreateTurnBriefCommandHandler:

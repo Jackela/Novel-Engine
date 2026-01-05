@@ -42,7 +42,6 @@ class SubjectiveCommand(ABC):
         Raises:
             ValueError: If the command is invalid
         """
-        pass
 
 
 @dataclass(frozen=True)

@@ -537,13 +537,11 @@ class TestSecurityMonitoring:
         """Test security event logging functionality"""
         # This would test the security logging system
         # Implementation depends on the logging backend
-        pass
 
     async def test_audit_trail(self):
         """Test audit trail functionality"""
         # This would test audit logging for sensitive operations
         # Implementation depends on the audit logging system
-        pass
 
 
 # Performance and Load Testing

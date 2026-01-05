@@ -4,9 +4,7 @@ Equipment maintenance system.
 """
 
 import logging
-import random
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
 from src.core.data_models import EquipmentCondition
 

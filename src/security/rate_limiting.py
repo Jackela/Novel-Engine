@@ -23,8 +23,7 @@ from dataclasses import dataclass, field
 from enum import Enum, EnumMeta
 from typing import Any, Dict, List, Optional, Set
 
-from fastapi import HTTPException, Request
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import Request
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)

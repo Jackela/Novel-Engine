@@ -231,7 +231,6 @@ class TestSubjectiveIdEquality:
         id2 = SubjectiveId(uuid_value)
 
         assert id1 == id2
-        assert not (id1 != id2)
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -244,7 +243,6 @@ class TestSubjectiveIdEquality:
         id2 = SubjectiveId(uuid2)
 
         assert id1 != id2
-        assert not (id1 == id2)
 
     @pytest.mark.unit
     def test_equality_with_non_subjective_id(self):
@@ -254,11 +252,9 @@ class TestSubjectiveIdEquality:
 
         # Should not be equal to UUID directly
         assert subjective_id != uuid_value
-        assert not (subjective_id == uuid_value)
 
         # Should not be equal to string representation
         assert subjective_id != str(uuid_value)
-        assert not (subjective_id == str(uuid_value))
 
         # Should not be equal to other types
         assert subjective_id != 123
@@ -272,7 +268,7 @@ class TestSubjectiveIdEquality:
     def test_equality_reflexive(self):
         """Test that equality is reflexive (a == a)."""
         subjective_id = SubjectiveId.generate()
-        assert subjective_id == subjective_id
+        assert subjective_id == SubjectiveId(subjective_id.value)
 
     @pytest.mark.unit
     @pytest.mark.fast

@@ -30,7 +30,6 @@ from sqlalchemy.orm import DeclarativeBase, relationship, validates
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
 
-    pass
 
 
 class CharacterORM(Base):
