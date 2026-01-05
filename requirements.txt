@@ -53,6 +53,7 @@ bandit[toml]>=1.7.0
 PyJWT>=2.8.0  # JWT token handling for security tests
 bcrypt>=4.0.0  # Password hashing for auth_system
 bleach>=6.0.0  # HTML sanitization for security_middleware
+slowapi>=0.1.9  # Rate limiting middleware for production_api_server
 networkx>=3.0  # Graph library for causal graph
 aiosqlite>=0.19.0  # Async SQLite for context database
 

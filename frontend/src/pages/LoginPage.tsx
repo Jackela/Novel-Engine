@@ -1,38 +1,355 @@
 import React, { useState } from 'react';
-import { Box, Container, Stack, Typography, Button, TextField, Alert, Paper } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Container,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Paper,
+  Divider,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  Link,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { tokens } from '../styles/tokens';
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuthContext } from '@/contexts/useAuthContext';
 import config from '../config/env';
 import LockPersonIcon from '@mui/icons-material/LockPerson';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-// Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.2 },
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 100, damping: 15 },
+    transition: { duration: 0.4, ease: 'easeOut' },
   },
 };
+
+const LoginIntroPanel: React.FC = () => (
+  <motion.div variants={itemVariants}>
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 4, md: 5 },
+        borderRadius: 4,
+        border: `1px solid ${tokens.colors.border.primary}`,
+        backgroundColor: tokens.colors.background.paper,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+      }}
+    >
+      <Stack spacing={3}>
+        <Box
+          sx={{
+            width: 52,
+            height: 52,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: tokens.colors.background.interactive,
+            color: tokens.colors.primary[500],
+          }}
+        >
+          <LockPersonIcon sx={{ fontSize: 28 }} />
+        </Box>
+        <Box>
+          <Typography
+            variant="h3"
+            component="h1"
+            sx={{
+              fontFamily: tokens.typography.headingFamily,
+              fontWeight: 600,
+            }}
+          >
+            Access console
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+            Sign in to resume your operational workspace and manage live narratives.
+          </Typography>
+        </Box>
+      </Stack>
+    </Paper>
+  </motion.div>
+);
+
+const LoginSupportPanel: React.FC<{ demoMode: boolean }> = ({ demoMode }) => (
+  <Stack spacing={1.5}>
+    <Typography variant="overline" sx={{ letterSpacing: '0.2em', color: 'text.secondary' }}>
+      Support
+    </Typography>
+    {demoMode ? (
+      <Alert severity="info" variant="outlined">
+        Demo mode is enabled. Guest sessions are available and do not require credentials.
+      </Alert>
+    ) : (
+      <Typography variant="body2" color="text.secondary">
+        Need access? Email{' '}
+        <Link href="mailto:ops@novel.engine" underline="hover" color="primary">
+          ops@novel.engine
+        </Link>{' '}
+        or request credentials in the operator handbook.
+      </Typography>
+    )}
+  </Stack>
+);
+
+const LoginFormFields: React.FC<{
+  email: string;
+  password: string;
+  showPassword: boolean;
+  rememberMe: boolean;
+  emailError: boolean;
+  passwordError: boolean;
+  error: Error | null;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onEmailBlur: () => void;
+  onPasswordBlur: () => void;
+  onTogglePassword: () => void;
+  onRememberMeChange: (value: boolean) => void;
+}> = ({
+  email,
+  password,
+  showPassword,
+  rememberMe,
+  emailError,
+  passwordError,
+  error,
+  onEmailChange,
+  onPasswordChange,
+  onEmailBlur,
+  onPasswordBlur,
+  onTogglePassword,
+  onRememberMeChange,
+}) => (
+  <>
+    {error && (
+      <Alert severity="error" variant="outlined">
+        {error.message || 'Authentication failed'}
+      </Alert>
+    )}
+
+    <TextField
+      label="Email"
+      type="email"
+      fullWidth
+      required
+      value={email}
+      onChange={(e) => onEmailChange(e.target.value)}
+      onBlur={onEmailBlur}
+      error={emailError}
+      helperText={emailError ? 'Email is required.' : ' '}
+      variant="outlined"
+    />
+
+    <TextField
+      label="Password"
+      type={showPassword ? 'text' : 'password'}
+      fullWidth
+      required
+      value={password}
+      onChange={(e) => onPasswordChange(e.target.value)}
+      onBlur={onPasswordBlur}
+      error={passwordError}
+      helperText={passwordError ? 'Password is required.' : ' '}
+      variant="outlined"
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              onClick={onTogglePassword}
+              edge="end"
+            >
+              {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+            </IconButton>
+          </InputAdornment>
+        ),
+      }}
+    />
+
+    <FormControlLabel
+      control={
+        <Checkbox checked={rememberMe} onChange={(e) => onRememberMeChange(e.target.checked)} />
+      }
+      label="Remember this device"
+    />
+  </>
+);
+
+const LoginFormActions: React.FC<{
+  isLoading: boolean;
+  demoMode: boolean;
+  onGuest: () => void;
+}> = ({ isLoading, demoMode, onGuest }) => (
+  <>
+    <Button
+      type="submit"
+      variant="contained"
+      size="large"
+      fullWidth
+      disabled={isLoading}
+      sx={{
+        py: 1.5,
+        fontSize: '1rem',
+        fontWeight: 600,
+      }}
+    >
+      {isLoading ? 'Authenticating...' : 'Sign in'}
+    </Button>
+
+    {demoMode && (
+      <Button
+        variant="outlined"
+        size="large"
+        fullWidth
+        onClick={onGuest}
+        sx={{
+          py: 1.5,
+          fontWeight: 600,
+        }}
+      >
+        Continue as guest
+      </Button>
+    )}
+  </>
+);
+
+const LoginFormPanel: React.FC<{
+  email: string;
+  password: string;
+  showPassword: boolean;
+  rememberMe: boolean;
+  emailError: boolean;
+  passwordError: boolean;
+  error: Error | null;
+  isLoading: boolean;
+  demoMode: boolean;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onEmailBlur: () => void;
+  onPasswordBlur: () => void;
+  onTogglePassword: () => void;
+  onRememberMeChange: (value: boolean) => void;
+  onSubmit: (event: React.FormEvent) => void;
+  onGuest: () => void;
+  onReturn: () => void;
+}> = ({
+  email,
+  password,
+  showPassword,
+  rememberMe,
+  emailError,
+  passwordError,
+  error,
+  isLoading,
+  demoMode,
+  onEmailChange,
+  onPasswordChange,
+  onEmailBlur,
+  onPasswordBlur,
+  onTogglePassword,
+  onRememberMeChange,
+  onSubmit,
+  onGuest,
+  onReturn,
+}) => (
+  <motion.div variants={itemVariants}>
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 4, md: 5 },
+        borderRadius: 4,
+        border: `1px solid ${tokens.colors.border.primary}`,
+        backgroundColor: tokens.colors.background.paper,
+        height: '100%',
+      }}
+    >
+      <Stack spacing={3}>
+        <Box>
+          <Typography variant="overline" sx={{ letterSpacing: '0.2em', color: 'text.secondary' }}>
+            Operator login
+          </Typography>
+          <Typography variant="h5" sx={{ fontFamily: tokens.typography.headingFamily, fontWeight: 600 }}>
+            Welcome back
+          </Typography>
+        </Box>
+
+        <form onSubmit={onSubmit}>
+          <Stack spacing={3}>
+            <LoginFormFields
+              email={email}
+              password={password}
+              showPassword={showPassword}
+              rememberMe={rememberMe}
+              emailError={emailError}
+              passwordError={passwordError}
+              error={error}
+              onEmailChange={onEmailChange}
+              onPasswordChange={onPasswordChange}
+              onEmailBlur={onEmailBlur}
+              onPasswordBlur={onPasswordBlur}
+              onTogglePassword={onTogglePassword}
+              onRememberMeChange={onRememberMeChange}
+            />
+            <LoginFormActions isLoading={isLoading} demoMode={demoMode} onGuest={onGuest} />
+          </Stack>
+        </form>
+
+        <LoginSupportPanel demoMode={demoMode} />
+
+        <Divider />
+
+        <Button variant="text" onClick={onReturn} sx={{ color: 'text.secondary' }}>
+          Return to overview
+        </Button>
+      </Stack>
+    </Paper>
+  </motion.div>
+);
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, enterGuestMode, isLoading, error } = useAuthContext();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [touched, setTouched] = useState({ email: false, password: false });
+  const [submitted, setSubmitted] = useState(false);
+
+  const demoMode = config.enableGuestMode;
+
+  const emailError = (touched.email || submitted) && email.trim().length === 0;
+  const passwordError = (touched.password || submitted) && password.trim().length === 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(true);
+
+    if (emailError || passwordError) {
+      return;
+    }
+
     try {
       await login({ username: email, password });
       navigate('/dashboard');
@@ -43,165 +360,51 @@ const LoginPage: React.FC = () => {
 
   return (
     <Box
+      component="main"
       sx={{
         minHeight: '100vh',
-        position: 'relative',
-        overflow: 'hidden',
-        color: 'text.primary',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        py: { xs: 6, md: 10 },
       }}
     >
-      {/* Dynamic Background Elements */}
-      <Box
-        component={motion.div}
-        animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-        sx={{
-          position: 'absolute',
-          top: '-20%',
-          left: '-10%',
-          width: '60vw',
-          height: '60vw',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-          zIndex: 0,
-        }}
-      />
-
-      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="lg">
         <motion.div variants={containerVariants} initial="hidden" animate="visible">
-          <Paper
-            elevation={24}
+          <Box
             sx={{
-              p: 6,
-              borderRadius: 6,
-              background: tokens.glass.high,
-              backdropFilter: 'blur(20px)',
-              border: `1px solid ${tokens.glass.border}`,
-              boxShadow: tokens.elevation.xxl,
+              display: 'grid',
+              gap: { xs: 4, md: 6 },
+              alignItems: 'stretch',
+              '@media (min-width:960px)': {
+                gridTemplateColumns: '1fr 1fr',
+              },
             }}
           >
-            <Stack spacing={4} alignItems="center">
-              <motion.div variants={itemVariants}>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: '50%',
-                    background: 'rgba(99, 102, 241, 0.1)',
-                    color: tokens.colors.primary[500],
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: `1px solid ${tokens.colors.primary[500]}20`,
-                    boxShadow: `0 0 20px ${tokens.colors.primary[500]}20`,
-                  }}
-                >
-                  <LockPersonIcon sx={{ fontSize: 32 }} />
-                </Box>
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <Typography variant="h4" component="h1" fontWeight="bold" textAlign="center" sx={{ fontFamily: 'Orbitron', letterSpacing: '0.05em' }}>
-                  ACCESS COMMAND
-                </Typography>
-                <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 1 }}>
-                  Enter credentials to access restricted systems.
-                </Typography>
-              </motion.div>
-
-              <motion.div variants={itemVariants} style={{ width: '100%' }}>
-                <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-                  <Stack spacing={3}>
-                    {error && (
-                      <Alert severity="error" variant="outlined" sx={{ borderRadius: 2 }}>
-                        {error.message || 'Authentication failed'}
-                      </Alert>
-                    )}
-
-                    <TextField
-                      label="EMAIL ID"
-                      type="email"
-                      fullWidth
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true, sx: { fontFamily: 'Orbitron', fontSize: '0.75rem' } }}
-                    />
-
-                    <TextField
-                      label="ACCESS CODE"
-                      type="password"
-                      fullWidth
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true, sx: { fontFamily: 'Orbitron', fontSize: '0.75rem' } }}
-                    />
-
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      fullWidth
-                      disabled={isLoading}
-                      sx={{
-                        py: 1.5,
-                        fontSize: '1rem',
-                        fontWeight: 700,
-                        background: tokens.gradients.primary,
-                        boxShadow: `0 0 20px ${tokens.colors.primary[500]}40`,
-                        '&:hover': {
-                          boxShadow: `0 0 30px ${tokens.colors.primary[500]}60`,
-                        }
-                      }}
-                    >
-                      {isLoading ? 'AUTHENTICATING...' : 'INITIATE SESSION'}
-                    </Button>
-
-                    {config.enableGuestMode && (
-                      <Button
-                        variant="outlined"
-                        size="large"
-                        fullWidth
-                        onClick={() => {
-                          enterGuestMode();
-                          navigate('/dashboard');
-                        }}
-                        sx={{
-                          py: 1.5,
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          borderColor: tokens.colors.secondary[500],
-                          color: tokens.colors.secondary[500],
-                          '&:hover': {
-                            borderColor: tokens.colors.secondary[400],
-                            background: `${tokens.colors.secondary[500]}10`,
-                          }
-                        }}
-                      >
-                        CONTINUE AS GUEST
-                      </Button>
-                    )}
-                  </Stack>
-                </form>
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <Button
-                  variant="text"
-                  onClick={() => navigate('/')}
-                  sx={{ color: 'text.secondary', fontFamily: 'Orbitron', fontSize: '0.75rem' }}
-                >
-                  ABORT SEQUENCE
-                </Button>
-              </motion.div>
-            </Stack>
-          </Paper>
+            <LoginIntroPanel />
+            <LoginFormPanel
+              email={email}
+              password={password}
+              showPassword={showPassword}
+              rememberMe={rememberMe}
+              emailError={emailError}
+              passwordError={passwordError}
+              error={error}
+              isLoading={isLoading}
+              demoMode={demoMode}
+              onEmailChange={setEmail}
+              onPasswordChange={setPassword}
+              onEmailBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+              onPasswordBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+              onTogglePassword={() => setShowPassword((prev) => !prev)}
+              onRememberMeChange={setRememberMe}
+              onSubmit={handleSubmit}
+              onGuest={() => {
+                enterGuestMode();
+                navigate('/dashboard');
+              }}
+              onReturn={() => navigate('/')}
+            />
+          </Box>
         </motion.div>
       </Container>
     </Box>

@@ -45,13 +45,24 @@ class TokenValidationResponse(BaseModel):
     error: Optional[str] = None
 
 
+def _reject_query_credentials(request: Request) -> None:
+    query_params = request.query_params
+    if any(key in query_params for key in ("email", "password", "username")):
+        raise HTTPException(
+            status_code=400, detail="Credentials must be sent in the request body."
+        )
+
+
 @router.post("/api/auth/login", response_model=AuthResponse)
 async def login(
     credentials: LoginRequest,
     response: Response,
+    request: Request,
     settings: APISettings = Depends(get_settings),
 ):
     try:
+        _reject_query_credentials(request)
+
         if not credentials.email or not credentials.password:
             raise HTTPException(
                 status_code=400, detail="Email and password are required"

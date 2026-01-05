@@ -1,4 +1,5 @@
 import { type Page, type Locator, expect } from '@playwright/test';
+import { prepareGuestSession } from '../utils/auth';
 
 /**
  * Dashboard Page Object Model
@@ -82,10 +83,63 @@ export class DashboardPage {
    * @param options Configuration options for navigation
    * @param options.mockAPIs If true, sets up default API mocks before navigation
    */
-  async navigateToDashboard(options: { mockAPIs?: boolean; failCharacters?: boolean } = {}) {
+  async navigateToDashboard(options: { mockAPIs?: boolean; failCharacters?: boolean; waitForLoad?: boolean } = {}) {
+    await this.prepareDashboard(options);
+
+    let onDashboard = false;
+    try {
+      await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 45000 });
+      onDashboard = true;
+    } catch (error) {
+      console.warn('⚠️ Direct dashboard navigation failed, falling back to landing CTA', error);
+    }
+
+    if (!onDashboard) {
+      try {
+        await this.page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      } catch (error) {
+        console.warn('⚠️ Landing page navigation timed out, retrying once more', error);
+        await this.page.goto('/', { waitUntil: 'commit', timeout: 30000 });
+      }
+
+      const demoCta = this.page.locator('[data-testid="cta-launch"]');
+      const ctaReady = await demoCta.waitFor({ state: 'visible', timeout: 10000 }).then(() => true).catch(() => false);
+      if (ctaReady) {
+        await demoCta.click();
+      }
+
+      await this.page.waitForURL('**/dashboard', { timeout: 20000 }).catch(async () => {
+        await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      });
+    }
+
+    let navigated = false;
+    try {
+      await this.page.waitForURL('**/dashboard', { timeout: 20000 });
+      navigated = true;
+    } catch {
+      // fall through and try direct navigation
+    }
+
+    if (!navigated) {
+      await this.page.goto('/dashboard', { waitUntil: 'load' });
+      await this.page.waitForURL('**/dashboard', { timeout: 15000 });
+    }
+
+    if (options.waitForLoad ?? true) {
+      await this.waitForDashboardLoad();
+    }
+  }
+
+  async prepareDashboard(options: { mockAPIs?: boolean; failCharacters?: boolean } = {}) {
+    await prepareGuestSession(this.page);
     if (options.mockAPIs) {
       await this.setupDefaultMocks(options);
     }
+    await this.applyDashboardInitScripts();
+  }
+
+  private async applyDashboardInitScripts() {
     await this.page.addInitScript(() => {
       try {
         window.localStorage.setItem('guest_session_active', '1');
@@ -176,48 +230,6 @@ export class DashboardPage {
 
       (window as any).EventSource = MockEventSource;
     });
-
-    let onDashboard = false;
-    try {
-      await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 45000 });
-      onDashboard = true;
-    } catch (error) {
-      console.warn('⚠️ Direct dashboard navigation failed, falling back to landing CTA', error);
-    }
-
-    if (!onDashboard) {
-      try {
-        await this.page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30000 });
-      } catch (error) {
-        console.warn('⚠️ Landing page navigation timed out, retrying once more', error);
-        await this.page.goto('/', { waitUntil: 'commit', timeout: 30000 });
-      }
-
-      const demoCta = this.page.locator('[data-testid="cta-demo"]');
-      const ctaReady = await demoCta.waitFor({ state: 'visible', timeout: 10000 }).then(() => true).catch(() => false);
-      if (ctaReady) {
-        await demoCta.click();
-      }
-
-      await this.page.waitForURL('**/dashboard', { timeout: 20000 }).catch(async () => {
-        await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 30000 });
-      });
-    }
-
-    let navigated = false;
-    try {
-      await this.page.waitForURL('**/dashboard', { timeout: 20000 });
-      navigated = true;
-    } catch {
-      // fall through and try direct navigation
-    }
-
-    if (!navigated) {
-      await this.page.goto('/dashboard', { waitUntil: 'load' });
-      await this.page.waitForURL('**/dashboard', { timeout: 15000 });
-    }
-
-    await this.waitForDashboardLoad();
   }
 
   /**
@@ -427,7 +439,12 @@ export class DashboardPage {
     }
 
     const markerCount = await component.locator('[data-location]').count();
-    const avatarCount = await component.locator('.MuiAvatar-root').count();
+    const avatarLocator = component.locator('.MuiAvatar-root');
+    let avatarCount = await avatarLocator.count();
+    if (avatarCount === 0) {
+      await avatarLocator.first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
+      avatarCount = await avatarLocator.count();
+    }
     const updates = {
       hasActivityIndicators: markerCount > 0,
       hasCharacterMarkers: avatarCount > 0,
@@ -513,7 +530,9 @@ export class DashboardPage {
       await nodesLocator.first().waitFor({ state: 'attached', timeout: 2000 }).catch(() => { });
     }
 
-    const connectionCount = await component.locator('[data-character-id] svg, line, path').count();
+    const connectionCount = await component.locator(
+      '[data-testid="character-connection-icon"], [data-testid="character-connection-count"]'
+    ).count();
     const updates = {
       hasCharacterNodes: nodeCount > 0,
       hasConnections: connectionCount > 0,
@@ -682,7 +701,7 @@ export class DashboardPage {
 
     // Characters Mock with persistence across refreshes
     let characters = ['char-1', 'char-2'];
-    await page.route(url => !url.pathname.includes('/src/') && /\/characters(\/|\?|$)/.test(url.pathname), async route => {
+    await page.route(url => !url.pathname.includes('/src/') && /\/api\/characters(\/|\?|$)/.test(url.pathname), async route => {
       if (options?.failCharacters) {
         await route.fulfill({
           status: 500,
@@ -702,7 +721,9 @@ export class DashboardPage {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ characters }),
+          body: JSON.stringify({
+            characters: characters.map((id) => ({ id, name: id })),
+          }),
         });
         return;
       }
@@ -728,7 +749,12 @@ export class DashboardPage {
       }
 
       if (request.method() === 'POST') {
-        const payload = await request.postDataJSON().catch(() => ({}));
+        let payload: Record<string, unknown> = {};
+        try {
+          payload = request.postDataJSON() as Record<string, unknown>;
+        } catch {
+          payload = {};
+        }
         const name = payload?.name || payload?.character_name || `char-${Date.now()}`;
         if (!characters.includes(name)) {
           characters.push(name);
@@ -742,7 +768,12 @@ export class DashboardPage {
       }
 
       if (request.method() === 'PUT' && characterId) {
-        const payload = await request.postDataJSON().catch(() => ({}));
+        let payload: Record<string, unknown> = {};
+        try {
+          payload = request.postDataJSON() as Record<string, unknown>;
+        } catch {
+          payload = {};
+        }
         const name = payload?.name || characterId;
         if (!characters.includes(name)) {
           characters.push(name);

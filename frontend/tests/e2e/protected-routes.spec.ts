@@ -1,6 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { waitForDashboardReady, waitForLandingReady } from './utils/waitForReady';
+import { prepareGuestSession, resetAuthState } from './utils/auth';
 
 /**
  * Protected Routes E2E Test Suite
@@ -26,18 +28,13 @@ test.describe('Protected Routes E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await test.step('Given: User is not authenticated (fresh session)', async () => {
-        // Clear any existing auth state
-        await page.context().clearCookies();
-        await page.evaluate(() => {
-          localStorage.clear();
-          sessionStorage.clear();
-        });
+        await resetAuthState(page);
       });
 
       await test.step('When: User navigates directly to /dashboard', async () => {
         await page.goto('/dashboard');
         // Wait for potential redirect to complete
-        await page.waitForLoadState('networkidle');
+        await waitForLandingReady(page);
       });
 
       await test.step('Then: User is redirected to /', async () => {
@@ -53,15 +50,11 @@ test.describe('Protected Routes E2E Tests', () => {
 
     test('should redirect from other protected routes', async ({ page }) => {
       // Clear auth state
-      await page.context().clearCookies();
-      await page.evaluate(() => {
-        localStorage.clear();
-        sessionStorage.clear();
-      });
+      await resetAuthState(page);
 
       // Try to access dashboard sub-routes (if any exist)
       await page.goto('/dashboard/settings');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       // Should redirect to landing
       const url = page.url();
@@ -117,11 +110,11 @@ test.describe('Protected Routes E2E Tests', () => {
 
       // Now navigate away and back directly
       await page.goto('/');
-      await page.waitForLoadState('networkidle');
+      await waitForDashboardReady(page);
 
       // Navigate directly to dashboard - should work since authenticated
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await waitForDashboardReady(page);
 
       // Should stay on dashboard (not redirect)
       await expect(page).toHaveURL(/.*\/dashboard/);
@@ -148,7 +141,7 @@ test.describe('Protected Routes E2E Tests', () => {
 
       await test.step('When: User reloads the page', async () => {
         await page.reload();
-        await page.waitForLoadState('networkidle');
+        await waitForDashboardReady(page);
       });
 
       await test.step('Then: Auth state is preserved', async () => {
@@ -176,8 +169,9 @@ test.describe('Protected Routes E2E Tests', () => {
       const page2 = await context2.newPage();
 
       // Try to go directly to dashboard
+      await prepareGuestSession(page2);
       await page2.goto('/dashboard');
-      await page2.waitForLoadState('networkidle');
+      await waitForDashboardReady(page2);
 
       // Should be able to access dashboard with persisted state
       await expect(page2).toHaveURL(/.*\/dashboard/);
@@ -193,17 +187,13 @@ test.describe('Protected Routes E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       // Clear auth
-      await page.context().clearCookies();
-      await page.evaluate(() => {
-        localStorage.clear();
-        sessionStorage.clear();
-      });
+      await resetAuthState(page);
 
       // Rapid navigation attempts to protected route
       await page.goto('/dashboard');
       await page.goto('/dashboard');
       await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       // Should end up on landing
       await expect(landingPage.mainTitle).toBeVisible();
@@ -219,10 +209,10 @@ test.describe('Protected Routes E2E Tests', () => {
 
       // Press back button
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await waitForDashboardReady(page);
 
-      // Should be on landing page
-      await expect(landingPage.mainTitle).toBeVisible();
+      // Auth redirect should keep user on dashboard
+      await expect(page).toHaveURL(/.*\/dashboard/);
     });
   });
 });

@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient from '@/lib/api/apiClient';
 import type { AxiosResponse } from 'axios';
 
 // Types matching backend responses
@@ -181,3 +181,4 @@ export const dashboardAPI = {
 };
 
 export default dashboardAPI;
+

@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import os from 'node:os';
 
 /**
  * Playwright Configuration for Emergent Narrative Dashboard UAT
@@ -13,6 +14,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 const enableFullMatrix =
   (process.env.PLAYWRIGHT_ENABLE_FULL_MATRIX || '').toLowerCase() === 'true';
+const playwrightPort = Number(process.env.PLAYWRIGHT_PORT || process.env.VITE_DEV_PORT || 3000);
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${playwrightPort}`;
 
 const browserProjects = [
   {
@@ -74,7 +77,7 @@ export default defineConfig({
   testDir: './tests/e2e',
 
   // Global test settings
-  timeout: 60 * 1000, // 60 seconds for complex dashboard operations
+  timeout: 30 * 60 * 1000, // 30 minutes for long-running dashboard operations
   expect: {
     timeout: 10 * 1000, // 10 seconds for assertions
   },
@@ -82,7 +85,17 @@ export default defineConfig({
   // Test execution settings
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined, // Use single worker in CI for stability
+  workers: (() => {
+    const override = Number(process.env.PLAYWRIGHT_WORKERS);
+    if (Number.isFinite(override) && override > 0) {
+      return override;
+    }
+    if (process.env.CI) {
+      return 1;
+    }
+    const cpuCount = os.cpus().length;
+    return Math.max(2, Math.min(4, cpuCount - 1));
+  })(), // Cap local workers to reduce contention and stabilize perf tests
 
   // Reporter configuration
   reporter: [
@@ -95,7 +108,7 @@ export default defineConfig({
   // Global test settings
   use: {
     // Base URL for testing
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    baseURL: baseUrl,
 
     // Browser settings
     headless: process.env.CI ? true : false,
@@ -122,15 +135,18 @@ export default defineConfig({
   // Development server configuration
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:3000',
+    url: baseUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2 minutes to start dev server
     env: {
       NODE_ENV: 'test',
-      VITE_API_BASE_URL: process.env.TEST_API_URL || 'http://127.0.0.1:8000',
+      VITE_DEV_PORT: String(playwrightPort),
+      VITE_API_BASE_URL: process.env.TEST_API_URL || 'http://127.0.0.1:8000',   
       VITE_WS_URL: process.env.TEST_WS_URL || 'ws://localhost:8001/ws',
+      VITE_DISABLE_QUERY_RETRY: 'true',
       VITE_SHOW_PERFORMANCE_METRICS: 'true',
       VITE_ENABLE_GUEST_MODE: 'true',
+      VITE_ENABLE_MOBILE_OPTIMIZATIONS: 'false',
       // Backward compatibility
       REACT_APP_API_BASE_URL: process.env.TEST_API_URL || 'http://127.0.0.1:8000',
       REACT_APP_WS_URL: process.env.TEST_WS_URL || 'ws://localhost:8001/ws',

@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios';
-import apiClient, { handleAPIError } from './apiClient';
-import type { BaseAPIResponse } from './apiClient';
+import apiClient, { handleAPIError } from '@/lib/api/apiClient';
+import type { BaseAPIResponse } from '@/lib/api/apiClient';
 
 // API Response types for decision endpoints
 interface DecisionStatusResponse {
@@ -176,3 +176,4 @@ export const decisionAPI = {
 };
 
 export default decisionAPI;
+

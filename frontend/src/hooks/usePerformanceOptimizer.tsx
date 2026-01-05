@@ -38,249 +38,336 @@ interface OptimizationState {
   recommendations: string[];
 }
 
-export const usePerformanceOptimizer = () => {
-  const performanceObserverRef = useRef<PerformanceObserver | null>(null);
-  const frameStatsRef = useRef({ frameCount: 0, lastTime: 0 });
-  const memoryCheckInterval = useRef<NodeJS.Timeout | null>(null);
-  const _interactionTimeRef = useRef<number>(0);
-  
-  const [optimizationState, setOptimizationState] = useState<OptimizationState>({
-    isOptimized: false,
-    currentMetrics: {
-      renderTime: 0,
-      memoryUsage: 0,
-      bundleSize: 0,
-      networkLatency: 0,
-      frameDrops: 0,
-      interactionDelay: 0
-    },
-    optimizationLevel: 'none',
-    recommendations: []
-  });
+const createInitialOptimizationState = (): OptimizationState => ({
+  isOptimized: false,
+  currentMetrics: {
+    renderTime: 0,
+    memoryUsage: 0,
+    bundleSize: 0,
+    networkLatency: 0,
+    frameDrops: 0,
+    interactionDelay: 0,
+  },
+  optimizationLevel: 'none',
+  recommendations: [],
+});
 
-  // Performance thresholds
-  const thresholds: PerformanceThresholds = useMemo(() => ({
-    maxRenderTime: 16.67, // 60fps target
-    maxMemoryUsage: 100 * 1024 * 1024, // 100MB
-    maxInteractionDelay: 100, // 100ms
-    targetFPS: 60
-  }), []);
+const usePerformanceThresholds = () => {
+  return useMemo(
+    () => ({
+      maxRenderTime: 16.67, // 60fps target
+      maxMemoryUsage: 100 * 1024 * 1024, // 100MB
+      maxInteractionDelay: 100, // 100ms
+      targetFPS: 60,
+    }),
+    []
+  );
+};
 
-  // Memory usage monitoring
-  const checkMemoryUsage = useCallback((): number => {
+const buildRecommendations = (metrics: PerformanceMetrics, thresholds: PerformanceThresholds): string[] => {
+  const recommendations: string[] = [];
+
+  if (metrics.renderTime > thresholds.maxRenderTime) {
+    recommendations.push('Enable React Concurrent Mode');
+    recommendations.push('Use React.memo() for expensive components');
+    recommendations.push('Implement virtualization for large lists');
+  }
+
+  if (metrics.memoryUsage > thresholds.maxMemoryUsage) {
+    recommendations.push('Implement component cleanup in useEffect');
+    recommendations.push('Use weak references for cached data');
+    recommendations.push('Enable garbage collection hints');
+  }
+
+  if (metrics.interactionDelay > thresholds.maxInteractionDelay) {
+    recommendations.push('Use React.startTransition() for non-urgent updates');
+    recommendations.push('Implement debouncing for rapid user inputs');
+    recommendations.push('Split large components into smaller chunks');
+  }
+
+  if (metrics.frameDrops > 5) {
+    recommendations.push('Reduce DOM manipulation frequency');
+    recommendations.push('Use CSS transforms instead of layout changes');
+    recommendations.push('Implement frame budgeting for animations');
+  }
+
+  return recommendations;
+};
+
+const calculateOptimizationLevel = (
+  metrics: PerformanceMetrics,
+  thresholds: PerformanceThresholds
+): OptimizationState['optimizationLevel'] => {
+  let issueCount = 0;
+
+  if (metrics.renderTime > thresholds.maxRenderTime) issueCount++;
+  if (metrics.memoryUsage > thresholds.maxMemoryUsage) issueCount++;
+  if (metrics.interactionDelay > thresholds.maxInteractionDelay) issueCount++;
+  if (metrics.frameDrops > 3) issueCount++;
+
+  if (issueCount === 0) return 'none';
+  if (issueCount <= 1) return 'basic';
+  if (issueCount <= 2) return 'aggressive';
+  return 'extreme';
+};
+
+const useMemoryUsage = () => {
+  return useCallback((): number => {
     const perf = performance as unknown as { memory?: { usedJSHeapSize: number } };
     return perf.memory?.usedJSHeapSize ?? 0;
   }, []);
+};
 
-  // Frame rate monitoring
-  const monitorFrameRate = useCallback(() => {
+const useFrameRateMonitor = (params: {
+  thresholds: PerformanceThresholds;
+  setOptimizationState: React.Dispatch<React.SetStateAction<OptimizationState>>;
+  frameStatsRef: React.MutableRefObject<{ frameCount: number; lastTime: number }>;
+}) => {
+  const { thresholds, setOptimizationState, frameStatsRef } = params;
+
+  return useCallback(function monitorFrameRate() {
     const now = performance.now();
-    
+
     if (frameStatsRef.current.lastTime > 0) {
       const delta = now - frameStatsRef.current.lastTime;
       const fps = 1000 / delta;
-      
-      if (fps < thresholds.targetFPS * 0.9) { // 10% tolerance
-        setOptimizationState(prev => ({
+
+      if (fps < thresholds.targetFPS * 0.9) {
+        setOptimizationState((prev) => ({
           ...prev,
           currentMetrics: {
             ...prev.currentMetrics,
-            frameDrops: prev.currentMetrics.frameDrops + 1
-          }
+            frameDrops: prev.currentMetrics.frameDrops + 1,
+          },
         }));
       }
     }
-    
+
     frameStatsRef.current.lastTime = now;
     frameStatsRef.current.frameCount++;
-    
-    requestAnimationFrame(monitorFrameRate);
-  }, [thresholds.targetFPS]);
 
-  // Performance observer for render timing
-  const initPerformanceObserver = useCallback(() => {
+    requestAnimationFrame(monitorFrameRate);
+  }, [thresholds, setOptimizationState, frameStatsRef]);
+};
+
+const usePerformanceObserverInit = (params: {
+  setOptimizationState: React.Dispatch<React.SetStateAction<OptimizationState>>;
+  performanceObserverRef: React.MutableRefObject<PerformanceObserver | null>;
+}) => {
+  const { setOptimizationState, performanceObserverRef } = params;
+
+  return useCallback(() => {
     if ('PerformanceObserver' in window) {
       try {
         performanceObserverRef.current = new PerformanceObserver((list) => {
           const entries = list.getEntries();
-          
+
           for (const entry of entries) {
             if (entry.entryType === 'measure' && entry.name.includes('react')) {
-              setOptimizationState(prev => ({
+              setOptimizationState((prev) => ({
                 ...prev,
                 currentMetrics: {
                   ...prev.currentMetrics,
-                  renderTime: entry.duration
-                }
+                  renderTime: entry.duration,
+                },
               }));
             }
-            
+
             if (entry.entryType === 'navigation') {
               const navEntry = entry as PerformanceNavigationTiming;
               const networkLatency = navEntry.responseEnd - navEntry.requestStart;
-              
-              setOptimizationState(prev => ({
+
+              setOptimizationState((prev) => ({
                 ...prev,
                 currentMetrics: {
                   ...prev.currentMetrics,
-                  networkLatency
-                }
+                  networkLatency,
+                },
               }));
             }
           }
         });
-        
-        performanceObserverRef.current.observe({ 
-          entryTypes: ['measure', 'navigation', 'paint'] 
+
+        performanceObserverRef.current.observe({
+          entryTypes: ['measure', 'navigation', 'paint'],
         });
       } catch (error) {
         logger.warn('Performance Observer not supported:', error);
       }
     }
-  }, []);
+  }, [performanceObserverRef, setOptimizationState]);
+};
 
-  // Interaction timing measurement
-  const measureInteractionDelay = useCallback((callback: () => void) => {
-    const startTime = performance.now();
-    
-    unstable_scheduleCallback(unstable_LowPriority, () => {
-      const endTime = performance.now();
-      const delay = endTime - startTime;
-      
-      setOptimizationState(prev => ({
-        ...prev,
-        currentMetrics: {
-          ...prev.currentMetrics,
-          interactionDelay: Math.max(prev.currentMetrics.interactionDelay, delay)
-        }
-      }));
-      
-      callback();
-    });
-  }, []);
-
-  // Optimization recommendations engine
-  const generateRecommendations = useCallback((metrics: PerformanceMetrics): string[] => {
-    const recommendations: string[] = [];
-    
-    if (metrics.renderTime > thresholds.maxRenderTime) {
-      recommendations.push('Enable React Concurrent Mode');
-      recommendations.push('Use React.memo() for expensive components');
-      recommendations.push('Implement virtualization for large lists');
-    }
-    
-    if (metrics.memoryUsage > thresholds.maxMemoryUsage) {
-      recommendations.push('Implement component cleanup in useEffect');
-      recommendations.push('Use weak references for cached data');
-      recommendations.push('Enable garbage collection hints');
-    }
-    
-    if (metrics.interactionDelay > thresholds.maxInteractionDelay) {
-      recommendations.push('Use React.startTransition() for non-urgent updates');
-      recommendations.push('Implement debouncing for rapid user inputs');
-      recommendations.push('Split large components into smaller chunks');
-    }
-    
-    if (metrics.frameDrops > 5) {
-      recommendations.push('Reduce DOM manipulation frequency');
-      recommendations.push('Use CSS transforms instead of layout changes');
-      recommendations.push('Implement frame budgeting for animations');
-    }
-    
-    return recommendations;
-  }, [thresholds]);
-
-  // Automatic optimization strategies
-  const optimizeForRealTime = useCallback(() => {
-    setOptimizationState(prev => {
-      const newOptimizationLevel = determineOptimizationLevel(prev.currentMetrics);
-      const recommendations = generateRecommendations(prev.currentMetrics);
-      
-      return {
-        ...prev,
-        isOptimized: true,
-        optimizationLevel: newOptimizationLevel,
-        recommendations
-      };
-    });
-    
-    // Apply performance optimizations
-    const win = window as unknown as { scheduler?: { postTask: (cb: () => void, opts?: { priority: string }) => void } };
-    win.scheduler?.postTask(() => {
-      logger.info('Performance optimization activated');
-    }, { priority: 'background' });
-    
-    // Enable React concurrent features if available
-    if (document.documentElement) {
-      document.documentElement.style.setProperty('--react-concurrent', 'enabled');
-    }
-    // Intentionally excluding `determineOptimizationLevel` from deps:
-    // - This function is stable (only depends on thresholds which is memoized)
-    // - Including it would not change behavior since thresholds never change
-    // - The function is called within setOptimizationState callback, not as a direct dependency
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generateRecommendations]);
-
-  const determineOptimizationLevel = useCallback((metrics: PerformanceMetrics): OptimizationState['optimizationLevel'] => {
-    let issueCount = 0;
-    
-    if (metrics.renderTime > thresholds.maxRenderTime) issueCount++;
-    if (metrics.memoryUsage > thresholds.maxMemoryUsage) issueCount++;
-    if (metrics.interactionDelay > thresholds.maxInteractionDelay) issueCount++;
-    if (metrics.frameDrops > 3) issueCount++;
-    
-    if (issueCount === 0) return 'none';
-    if (issueCount <= 1) return 'basic';
-    if (issueCount <= 2) return 'aggressive';
-    return 'extreme';
-  }, [thresholds]);
-
-  // Bundle size analysis
-  const analyzeBundleSize = useCallback(async (): Promise<number> => {
+const useBundleAnalyzer = (
+  setOptimizationState: React.Dispatch<React.SetStateAction<OptimizationState>>
+) => {
+  return useCallback(async (): Promise<number> => {
     try {
       const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
       let totalSize = 0;
-      
+
       for (const resource of resources) {
         if (resource.name.includes('.js') || resource.name.includes('.css')) {
           totalSize += resource.transferSize || 0;
         }
       }
-      
-      setOptimizationState(prev => ({
+
+      setOptimizationState((prev) => ({
         ...prev,
         currentMetrics: {
           ...prev.currentMetrics,
-          bundleSize: totalSize
-        }
+          bundleSize: totalSize,
+        },
       }));
-      
+
       return totalSize;
     } catch (error) {
       logger.warn('Bundle size analysis failed:', error);
       return 0;
     }
-  }, []);
+  }, [setOptimizationState]);
+};
 
-  // Virtual scrolling helper
-  const createVirtualScrollConfig = useCallback((
-    itemCount: number,
-    itemHeight: number,
-    containerHeight: number
-  ) => {
-    const visibleItems = Math.ceil(containerHeight / itemHeight);
-    const bufferSize = Math.max(5, Math.ceil(visibleItems * 0.5));
-    
-    return {
-      itemCount,
-      itemHeight,
-      visibleItems,
-      bufferSize,
-      overscan: bufferSize
+const usePerformanceMonitoring = (params: {
+  initPerformanceObserver: () => void;
+  monitorFrameRate: () => void;
+  checkMemoryUsage: () => number;
+  analyzeBundleSize: () => Promise<number>;
+  setOptimizationState: React.Dispatch<React.SetStateAction<OptimizationState>>;
+  performanceObserverRef: React.MutableRefObject<PerformanceObserver | null>;
+  memoryCheckInterval: React.MutableRefObject<NodeJS.Timeout | null>;
+}) => {
+  const {
+    initPerformanceObserver,
+    monitorFrameRate,
+    checkMemoryUsage,
+    analyzeBundleSize,
+    setOptimizationState,
+    performanceObserverRef,
+    memoryCheckInterval,
+  } = params;
+
+  useEffect(() => {
+    const observer = performanceObserverRef.current;
+    initPerformanceObserver();
+    monitorFrameRate();
+
+    memoryCheckInterval.current = setInterval(() => {
+      const memoryUsage = checkMemoryUsage();
+      setOptimizationState((prev) => ({
+        ...prev,
+        currentMetrics: {
+          ...prev.currentMetrics,
+          memoryUsage,
+        },
+      }));
+    }, 5000);
+
+    analyzeBundleSize();
+
+    return () => {
+      observer?.disconnect();
+      if (memoryCheckInterval.current) {
+        clearInterval(memoryCheckInterval.current);
+      }
     };
-  }, []);
+  }, [
+    initPerformanceObserver,
+    monitorFrameRate,
+    checkMemoryUsage,
+    analyzeBundleSize,
+    setOptimizationState,
+    performanceObserverRef,
+    memoryCheckInterval,
+  ]);
+};
 
-  // Memory cleanup utilities
+const useOptimizationActions = (params: {
+  thresholds: PerformanceThresholds;
+  setOptimizationState: React.Dispatch<React.SetStateAction<OptimizationState>>;
+}) => {
+  const { thresholds, setOptimizationState } = params;
+
+  const generateRecommendations = useCallback(
+    (metrics: PerformanceMetrics) => buildRecommendations(metrics, thresholds),
+    [thresholds]
+  );
+
+  const optimizeForRealTime = useCallback(() => {
+    setOptimizationState((prev) => {
+      const newOptimizationLevel = calculateOptimizationLevel(prev.currentMetrics, thresholds);
+      const recommendations = generateRecommendations(prev.currentMetrics);
+
+      return {
+        ...prev,
+        isOptimized: true,
+        optimizationLevel: newOptimizationLevel,
+        recommendations,
+      };
+    });
+
+    const win = window as unknown as {
+      scheduler?: { postTask: (cb: () => void, opts?: { priority: string }) => void };
+    };
+    win.scheduler?.postTask(() => {
+      logger.info('Performance optimization activated');
+    }, { priority: 'background' });
+
+    if (document.documentElement) {
+      document.documentElement.style.setProperty('--react-concurrent', 'enabled');
+    }
+  }, [generateRecommendations, setOptimizationState, thresholds]);
+
+  const cleanupOptimizations = useCallback(() => {
+    setOptimizationState(createInitialOptimizationState());
+  }, [setOptimizationState]);
+
+  return {
+    optimizeForRealTime,
+    cleanupOptimizations,
+  };
+};
+
+const useInteractionDelay = (
+  setOptimizationState: React.Dispatch<React.SetStateAction<OptimizationState>>
+) => {
+  return useCallback((callback: () => void) => {
+    const startTime = performance.now();
+
+    unstable_scheduleCallback(unstable_LowPriority, () => {
+      const endTime = performance.now();
+      const delay = endTime - startTime;
+
+      setOptimizationState((prev) => ({
+        ...prev,
+        currentMetrics: {
+          ...prev.currentMetrics,
+          interactionDelay: Math.max(prev.currentMetrics.interactionDelay, delay),
+        },
+      }));
+
+      callback();
+    });
+  }, [setOptimizationState]);
+};
+
+const usePerformanceUtilities = () => {
+  const createVirtualScrollConfig = useCallback(
+    (itemCount: number, itemHeight: number, containerHeight: number) => {
+      const visibleItems = Math.ceil(containerHeight / itemHeight);
+      const bufferSize = Math.max(5, Math.ceil(visibleItems * 0.5));
+
+      return {
+        itemCount,
+        itemHeight,
+        visibleItems,
+        bufferSize,
+        overscan: bufferSize,
+      };
+    },
+    []
+  );
+
   const scheduleCleanup = useCallback((cleanupFn: () => void, delay = 5000) => {
     return setTimeout(() => {
       if ('requestIdleCallback' in window) {
@@ -291,7 +378,6 @@ export const usePerformanceOptimizer = () => {
     }, delay);
   }, []);
 
-  // React Concurrent Mode helpers
   const deferUpdate = useCallback((updateFn: () => void) => {
     if (typeof startTransition === 'function') {
       startTransition(updateFn);
@@ -300,55 +386,18 @@ export const usePerformanceOptimizer = () => {
     setTimeout(updateFn, 0);
   }, []);
 
-  // Performance monitoring initialization
-  useEffect(() => {
-    initPerformanceObserver();
-    monitorFrameRate();
-    
-    // Start memory monitoring
-    memoryCheckInterval.current = setInterval(() => {
-      const memoryUsage = checkMemoryUsage();
-      setOptimizationState(prev => ({
-        ...prev,
-        currentMetrics: {
-          ...prev.currentMetrics,
-          memoryUsage
-        }
-      }));
-    }, 5000);
-    
-    // Initial bundle analysis
-    analyzeBundleSize();
-    
-    return () => {
-      performanceObserverRef.current?.disconnect();
-      if (memoryCheckInterval.current) {
-        clearInterval(memoryCheckInterval.current);
-      }
-    };
-  }, [initPerformanceObserver, monitorFrameRate, checkMemoryUsage, analyzeBundleSize]);
+  return { createVirtualScrollConfig, scheduleCleanup, deferUpdate };
+};
 
-  // Cleanup optimization
-  const cleanupOptimizations = useCallback(() => {
-    setOptimizationState({
-      isOptimized: false,
-      currentMetrics: {
-        renderTime: 0,
-        memoryUsage: 0,
-        bundleSize: 0,
-        networkLatency: 0,
-        frameDrops: 0,
-        interactionDelay: 0
-      },
-      optimizationLevel: 'none',
-      recommendations: []
-    });
-  }, []);
+const usePerformanceReport = (params: {
+  optimizationState: OptimizationState;
+  thresholds: PerformanceThresholds;
+}) => {
+  const { optimizationState, thresholds } = params;
 
-  // Performance debugging utilities
-  const getPerformanceReport = useCallback((): string => {
+  return useCallback((): string => {
     const { currentMetrics, optimizationLevel, recommendations } = optimizationState;
-    
+
     return `
 Performance Report:
 ==================
@@ -362,9 +411,43 @@ Bundle Size: ${(currentMetrics.bundleSize / 1024).toFixed(2)}KB
 Optimization Level: ${optimizationLevel}
 
 Recommendations:
-${recommendations.map(rec => `- ${rec}`).join('\n')}
+${recommendations.map((rec) => `- ${rec}`).join('\n')}
     `;
   }, [optimizationState, thresholds]);
+};
+
+export const usePerformanceOptimizer = () => {
+  const performanceObserverRef = useRef<PerformanceObserver | null>(null);
+  const frameStatsRef = useRef({ frameCount: 0, lastTime: 0 });
+  const memoryCheckInterval = useRef<NodeJS.Timeout | null>(null);
+  const [optimizationState, setOptimizationState] =
+    useState<OptimizationState>(createInitialOptimizationState());
+
+  const thresholds = usePerformanceThresholds();
+  const checkMemoryUsage = useMemoryUsage();
+  const monitorFrameRate = useFrameRateMonitor({ thresholds, setOptimizationState, frameStatsRef });
+  const initPerformanceObserver = usePerformanceObserverInit({ setOptimizationState, performanceObserverRef });
+  const analyzeBundleSize = useBundleAnalyzer(setOptimizationState);
+  usePerformanceMonitoring({
+    initPerformanceObserver,
+    monitorFrameRate,
+    checkMemoryUsage,
+    analyzeBundleSize,
+    setOptimizationState,
+    performanceObserverRef,
+    memoryCheckInterval,
+  });
+
+  const {
+    optimizeForRealTime,
+    cleanupOptimizations,
+  } = useOptimizationActions({
+    thresholds,
+    setOptimizationState,
+  });
+  const measureInteractionDelay = useInteractionDelay(setOptimizationState);
+  const { createVirtualScrollConfig, scheduleCleanup, deferUpdate } = usePerformanceUtilities();
+  const getPerformanceReport = usePerformanceReport({ optimizationState, thresholds });
 
   return {
     optimizationState,
@@ -376,7 +459,7 @@ ${recommendations.map(rec => `- ${rec}`).join('\n')}
     deferUpdate,
     analyzeBundleSize,
     getPerformanceReport,
-    thresholds
+    thresholds,
   };
 };
 

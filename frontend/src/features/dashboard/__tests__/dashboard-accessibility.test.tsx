@@ -1,11 +1,22 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
+import type { FadeProps } from '@mui/material/Fade';
 import QuickActions from '../QuickActions';
 import WorldStateMap from '../WorldStateMap';
 import CharacterNetworks from '../CharacterNetworks';
 import NarrativeTimeline from '../NarrativeTimeline';
 import RealTimeActivity from '../RealTimeActivity';
+
+// Mock MUI Fade's reflow function to avoid jsdom scrollTop errors
+vi.mock('@mui/material/Fade', () => {
+  const actual = vi.importActual('@mui/material/Fade');
+  return {
+    ...actual as object,
+    default: ({ children, in: inProp }: FadeProps) =>
+      (inProp ? <>{children}</> : null),
+  };
+});
 
 const mockDashboardDataset = vi.fn();
 const mockRealtimeEvents = vi.fn();
@@ -24,23 +35,44 @@ const sampleCharacters = [
   { id: 'kael', name: 'Kael Voss', status: 'hostile', role: 'antagonist', trust: 40 },
 ];
 
-describe('Dashboard accessibility + data parity', () => {
-  let errorSpy: ReturnType<typeof vi.spyOn>;
-  let warnSpy: ReturnType<typeof vi.spyOn>;
+const setupMockData = (source: 'api' | 'fallback', error: string | null = null) => {
+  mockDashboardDataset.mockReturnValue({
+    characters: sampleCharacters,
+    loading: false,
+    error,
+    source,
+  });
+  mockRealtimeEvents.mockReturnValue({
+    events: [],
+    loading: false,
+    error: null,
+    connectionState: 'connected',
+  });
+};
 
+const renderSpatialTiles = () => {
+  render(
+    <>
+      <WorldStateMap />
+      <CharacterNetworks />
+    </>
+  );
+  const mapTile = screen.getByTestId('world-state-map');
+  const networkTile = screen.getByTestId('character-networks');
+  return { mapTile, networkTile };
+};
+
+const hasConsoleMessage = (
+  spy: ReturnType<typeof vi.spyOn>,
+  matcher: (message: string) => boolean
+) => spy.mock.calls.some(([message]) => typeof message === 'string' && matcher(message));
+
+let errorSpy: ReturnType<typeof vi.spyOn>;
+let warnSpy: ReturnType<typeof vi.spyOn>;
+
+const setupConsoleSpies = () => {
   beforeEach(() => {
-    mockDashboardDataset.mockReturnValue({
-      characters: sampleCharacters,
-      loading: false,
-      error: null,
-      source: 'api',
-    });
-    mockRealtimeEvents.mockReturnValue({
-      events: [],
-      loading: false,
-      error: null,
-      connectionState: 'connected',
-    });
+    setupMockData('api');
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -49,13 +81,17 @@ describe('Dashboard accessibility + data parity', () => {
     errorSpy.mockRestore();
     warnSpy.mockRestore();
   });
+};
+
+describe('Dashboard accessibility + data parity', () => {
+  setupConsoleSpies();
 
   it('renders QuickActions without leaking invalid DOM props', () => {
     render(<QuickActions />);
 
-    const hasInvalidPropWarning = errorSpy.mock.calls.some(([message]) =>
-      typeof message === 'string' &&
-      (message.includes('React does not recognize the') || message.includes('Invalid DOM property'))
+    const hasInvalidPropWarning = hasConsoleMessage(
+      errorSpy,
+      (message) => message.includes('React does not recognize the') || message.includes('Invalid DOM property')
     );
 
     expect(hasInvalidPropWarning).toBe(false);
@@ -67,17 +103,13 @@ describe('Dashboard accessibility + data parity', () => {
     expect(screen.getByTestId('connection-status')).toHaveAttribute('data-status', 'online');
     expect(screen.getByTestId('live-indicator')).toHaveTextContent('ONLINE');
   });
+});
+
+describe('Dashboard data fallback', () => {
+  setupConsoleSpies();
 
   it('fetches characters for spatial + network tiles and surfaces API data', () => {
-    render(
-      <>
-        <WorldStateMap />
-        <CharacterNetworks />
-      </>
-    );
-
-    const mapTile = screen.getByTestId('world-state-map');
-    const networkTile = screen.getByTestId('character-networks');
+    const { mapTile, networkTile } = renderSpatialTiles();
 
     expect(within(mapTile).getByText('3 Characters')).toBeInTheDocument();
     expect(within(networkTile).getByText('3 Characters')).toBeInTheDocument();
@@ -86,26 +118,16 @@ describe('Dashboard accessibility + data parity', () => {
   });
 
   it('falls back to demo data when the API request fails without showing tile errors', () => {
-    mockDashboardDataset.mockReturnValue({
-      characters: sampleCharacters,
-      loading: false,
-      error: 'offline',
-      source: 'fallback',
-    });
-
-    render(
-      <>
-        <WorldStateMap />
-        <CharacterNetworks />
-      </>
-    );
-
-    const mapTile = screen.getByTestId('world-state-map');
-    const networkTile = screen.getByTestId('character-networks');
+    setupMockData('fallback', 'offline');
+    const { mapTile, networkTile } = renderSpatialTiles();
 
     expect(within(mapTile).getByText('Demo data')).toBeInTheDocument();
     expect(within(networkTile).getByText('Demo data')).toBeInTheDocument();
   });
+});
+
+describe('Dashboard interaction affordances', () => {
+  setupConsoleSpies();
 
   it('supports keyboard activation for world map markers', () => {
     render(<WorldStateMap />);
@@ -148,9 +170,7 @@ describe('Dashboard accessibility + data parity', () => {
       </>
     );
 
-    const hasWarning = warnSpy.mock.calls.some(([message]) =>
-      typeof message === 'string' && message.includes('Warning')
-    );
+    const hasWarning = hasConsoleMessage(warnSpy, (message) => message.includes('Warning'));
 
     expect(hasWarning).toBe(false);
   });
@@ -158,8 +178,9 @@ describe('Dashboard accessibility + data parity', () => {
   it('renders RealTimeActivity without DOM nesting warnings', () => {
     render(<RealTimeActivity />);
 
-    const hasNestingWarning = errorSpy.mock.calls.some(([message]) =>
-      typeof message === 'string' && message.includes('validateDOMNesting')
+    const hasNestingWarning = hasConsoleMessage(
+      errorSpy,
+      (message) => message.includes('validateDOMNesting')
     );
 
     expect(hasNestingWarning).toBe(false);

@@ -10,6 +10,20 @@
 import type { Metric } from 'web-vitals'
 import type { IPerformanceMonitor, PerformanceMetric } from '@/types/accessibility'
 
+const METRIC_THRESHOLDS: Record<
+  Metric['name'],
+  { good: number; needsImprovement: number }
+> = {
+  // Rating thresholds based on Web Vitals recommendations
+  // Source: https://web.dev/vitals/
+  LCP: { good: 2500, needsImprovement: 4000 },
+  FID: { good: 100, needsImprovement: 300 },
+  CLS: { good: 0.1, needsImprovement: 0.25 },
+  FCP: { good: 1800, needsImprovement: 3000 },
+  TTFB: { good: 600, needsImprovement: 1500 },
+  INP: { good: 200, needsImprovement: 500 },
+}
+
 export class WebVitalsMonitor implements IPerformanceMonitor {
   private metrics: Map<string, PerformanceMetric> = new Map()
   private reportToConsole: boolean
@@ -80,38 +94,31 @@ export class WebVitalsMonitor implements IPerformanceMonitor {
     this.reportMetric(performanceMetric)
   }
 
+  private getMetricRating(name: Metric['name'], value: number): PerformanceMetric['rating'] {
+    const thresholds = METRIC_THRESHOLDS[name]
+    if (!thresholds) {
+      return 'needs-improvement'
+    }
+
+    if (value <= thresholds.good) {
+      return 'good'
+    }
+
+    if (value <= thresholds.needsImprovement) {
+      return 'needs-improvement'
+    }
+
+    return 'poor'
+  }
+
   /**
    * Convert Web Vitals metric to PerformanceMetric format
    */
   private convertWebVitalsMetric(metric: Metric): PerformanceMetric {
-    let rating: 'good' | 'needs-improvement' | 'poor'
-
-    // Rating thresholds based on Web Vitals recommendations
-    // Source: https://web.dev/vitals/
-    switch (metric.name) {
-      case 'LCP': // Largest Contentful Paint
-        rating = metric.value <= 2500 ? 'good' : metric.value <= 4000 ? 'needs-improvement' : 'poor'
-        break
-      case 'FID': // First Input Delay
-        rating = metric.value <= 100 ? 'good' : metric.value <= 300 ? 'needs-improvement' : 'poor'
-        break
-      case 'CLS': // Cumulative Layout Shift
-        rating = metric.value <= 0.1 ? 'good' : metric.value <= 0.25 ? 'needs-improvement' : 'poor'
-        break
-      case 'FCP': // First Contentful Paint
-        rating = metric.value <= 1800 ? 'good' : metric.value <= 3000 ? 'needs-improvement' : 'poor'
-        break
-      case 'TTFB': // Time to First Byte
-        rating = metric.value <= 600 ? 'good' : metric.value <= 1500 ? 'needs-improvement' : 'poor'
-        break
-      default:
-        rating = 'needs-improvement'
-    }
-
     return {
       name: metric.name,
       value: metric.value,
-      rating,
+      rating: this.getMetricRating(metric.name, metric.value),
       delta: metric.delta,
       id: metric.id,
     }

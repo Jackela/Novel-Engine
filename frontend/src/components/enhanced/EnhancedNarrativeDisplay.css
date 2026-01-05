@@ -60,7 +60,7 @@
 
 .narrative-event-card.critical {
   @apply ring-1 ring-red-500 border-red-500;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 10px rgba(180, 35, 24, 0.25);
 }
 
 .narrative-event-card.high {
@@ -134,7 +134,7 @@
 
 /* Priority indicators */
 .priority-critical {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 15px rgba(180, 35, 24, 0.3);
   animation: critical-pulse 2s ease-in-out infinite;
 }
 
@@ -144,10 +144,10 @@
 
 @keyframes critical-pulse {
   0%, 100% { 
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 15px rgba(180, 35, 24, 0.3);
   }
   50% { 
-    box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 25px rgba(180, 35, 24, 0.45);
   }
 }
 

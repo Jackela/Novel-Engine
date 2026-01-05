@@ -86,6 +86,16 @@ if (Test-Path $frontendDir) {
         if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
 
         $env:PYTHONPATH = "..;..\src"
+        $playwrightPort = 3000
+        try {
+            $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, 3000)
+            $listener.Start()
+            $listener.Stop()
+        } catch {
+            $playwrightPort = 3001
+        }
+        $env:PLAYWRIGHT_PORT = $playwrightPort
+        $env:VITE_DEV_PORT = $playwrightPort
         npm run test:e2e:smoke
         if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
     } else {

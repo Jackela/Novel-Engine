@@ -3,7 +3,7 @@ import { Box, AppBar, Toolbar, Typography, Container, Chip, Tooltip, Alert, Butt
 import { styled } from '@mui/material/styles';
 import BentoGrid from './BentoGrid';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuthContext } from '@/contexts/useAuthContext';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   position: 'sticky',
@@ -67,7 +67,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     >
       <StyledAppBar data-testid="header-navigation" role="banner">
         <Toolbar sx={{ gap: 2 }}>
-          <Typography variant="h6" component="h1" sx={{ flexGrow: 1, fontWeight: 600 }}>
+          <Typography variant="h6" component="h1" sx={{ flexGrow: 1, fontWeight: 600, fontFamily: 'var(--font-heading)' }}>
             Emergent Narrative Dashboard
           </Typography>
           {isGuest && (

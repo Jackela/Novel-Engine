@@ -43,6 +43,10 @@ import {
   skipDecision,
 } from '../../store/slices/decisionSlice';
 
+type Decision = NonNullable<RootState['decision']['currentDecision']>;
+type DecisionOption = Decision['options'][number];
+type NegotiationResult = NonNullable<RootState['decision']['negotiationResult']>;
+
 interface OptionCardProps {
   optionId: number;
   label: string;
@@ -151,27 +155,462 @@ function CountdownTimer({ seconds, totalSeconds }: CountdownTimerProps) {
   );
 }
 
-export default function DecisionPointDialog() {
-  const dispatch = useDispatch<AppDispatch>();
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const [inputMode, setInputMode] = useState<'options' | 'freetext'>('options');
+const DecisionHeader: React.FC<{
+  decision: Decision;
+  remainingSeconds: number;
+  isSubmitting: boolean;
+  onSkip: () => void;
+}> = ({ decision, remainingSeconds, isSubmitting, onSkip }) => (
+  <DialogTitle
+    id="decision-dialog-title"
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      bgcolor: 'primary.main',
+      color: 'primary.contrastText',
+      pb: 1,
+    }}
+  >
+    <Box>
+      <Typography variant="h6" component="span">
+        {decision.title}
+      </Typography>
+      <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+        <Chip
+          size="small"
+          label={`Turn ${decision.turnNumber}`}
+          sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'inherit' }}
+        />
+        <Chip
+          size="small"
+          label={decision.decisionType.replace('_', ' ')}
+          sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'inherit' }}
+        />
+      </Box>
+    </Box>
+    <Box display="flex" alignItems="center" gap={2}>
+      <CountdownTimer
+        seconds={remainingSeconds}
+        totalSeconds={decision.timeoutSeconds}
+      />
+      <IconButton
+        onClick={onSkip}
+        disabled={isSubmitting}
+        size="small"
+        sx={{ color: 'inherit' }}
+        aria-label="Skip decision"
+      >
+        <CloseIcon />
+      </IconButton>
+    </Box>
+  </DialogTitle>
+);
 
-  // Redux state
-  const {
-    currentDecision,
-    pauseState,
-    isNegotiating,
-    negotiationResult,
-    remainingSeconds,
-    selectedOptionId,
-    freeTextInput,
-    isSubmitting,
-    error,
-  } = useSelector((state: RootState) => state.decision);
+const DecisionDescription: React.FC<{ description: string }> = ({ description }) => (
+  <Typography
+    id="decision-dialog-description"
+    variant="body1"
+    color="text.secondary"
+    sx={{ mb: 3 }}
+  >
+    {description}
+  </Typography>
+);
 
-  const isOpen = currentDecision !== null && pauseState !== 'running';
+const NarrativeContext: React.FC<{ narrativeContext: string }> = ({ narrativeContext }) => (
+  <Box
+    sx={{
+      bgcolor: 'action.hover',
+      borderRadius: 1,
+      p: 2,
+      mb: 3,
+      borderLeft: 4,
+      borderColor: 'primary.main',
+    }}
+  >
+    <Typography variant="body2" fontStyle="italic">
+      {narrativeContext}
+    </Typography>
+  </Box>
+);
 
-  // Countdown timer
+const NegotiationAlert: React.FC<{ result: NegotiationResult | null }> = ({ result }) => (
+  <Collapse in={result !== null}>
+    <Alert
+      severity={
+        result?.feasibility === 'accepted'
+          ? 'success'
+          : result?.feasibility === 'minor_adjustment'
+            ? 'info'
+            : 'warning'
+      }
+      icon={<NegotiateIcon />}
+      sx={{ mb: 3 }}
+    >
+      <Typography variant="subtitle2" fontWeight="bold">
+        {result?.feasibility === 'accepted'
+          ? 'Action Accepted'
+          : result?.feasibility === 'minor_adjustment'
+            ? 'Adjustment Suggested'
+            : 'Alternatives Required'}
+      </Typography>
+      <Typography variant="body2">
+        {result?.explanation}
+      </Typography>
+      {result?.adjustedAction && (
+        <Typography
+          variant="body2"
+          sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary' }}
+        >
+          Suggested: "{result.adjustedAction}"
+        </Typography>
+      )}
+    </Alert>
+  </Collapse>
+);
+
+const InputModeToggle: React.FC<{
+  inputMode: 'options' | 'freetext';
+  isNegotiating: boolean;
+  onSelectMode: (mode: 'options' | 'freetext') => void;
+}> = ({ inputMode, isNegotiating, onSelectMode }) => (
+  <Box display="flex" gap={1} mb={2}>
+    <Button
+      variant={inputMode === 'options' ? 'contained' : 'outlined'}
+      size="small"
+      onClick={() => onSelectMode('options')}
+      disabled={isNegotiating}
+      startIcon={<CheckIcon />}
+    >
+      Choose Option
+    </Button>
+    <Button
+      variant={inputMode === 'freetext' ? 'contained' : 'outlined'}
+      size="small"
+      onClick={() => onSelectMode('freetext')}
+      disabled={isNegotiating}
+      startIcon={<EditIcon />}
+    >
+      Custom Action
+    </Button>
+  </Box>
+);
+
+const OptionsGrid: React.FC<{
+  options: DecisionOption[];
+  selectedOptionId: number | null;
+  onSelect: (id: number) => void;
+  isSubmitting: boolean;
+  hidden: boolean;
+}> = ({ options, selectedOptionId, onSelect, isSubmitting, hidden }) => (
+  <Fade in={!hidden}>
+    <Box sx={{ display: hidden ? 'none' : 'block' }}>
+      <Grid container spacing={2}>
+        {options.map((option) => (
+          <Grid item xs={12} sm={6} key={option.optionId}>
+            <OptionCard
+              optionId={option.optionId}
+              label={option.label}
+              description={option.description}
+              icon={option.icon}
+              impactPreview={option.impactPreview}
+              isSelected={selectedOptionId === option.optionId}
+              onSelect={onSelect}
+              disabled={isSubmitting}
+            />
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
+  </Fade>
+);
+
+const FreeTextInput: React.FC<{
+  value: string;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  isSubmitting: boolean;
+  hidden: boolean;
+}> = ({ value, onChange, isSubmitting, hidden }) => (
+  <Fade in={!hidden}>
+    <Box sx={{ display: hidden ? 'none' : 'block' }}>
+      <TextField
+        fullWidth
+        multiline
+        rows={3}
+        variant="outlined"
+        placeholder="Describe what you want the characters to do..."
+        value={value}
+        onChange={onChange}
+        disabled={isSubmitting}
+        inputProps={{
+          'aria-label': 'Custom action input',
+          maxLength: 500,
+        }}
+        helperText={`${value.length}/500 characters (minimum 5)`}
+      />
+    </Box>
+  </Fade>
+);
+
+const NegotiationAlternatives: React.FC<{
+  alternatives: DecisionOption[] | undefined;
+  selectedOptionId: number | null;
+  onSelect: (id: number) => void;
+  isSubmitting: boolean;
+  isNegotiating: boolean;
+}> = ({ alternatives, selectedOptionId, onSelect, isSubmitting, isNegotiating }) => (
+  <Collapse in={isNegotiating && !!alternatives?.length}>
+    <Box mt={2}>
+      <Typography variant="subtitle2" gutterBottom>
+        Alternative Actions:
+      </Typography>
+      <Grid container spacing={2}>
+        {alternatives?.map((alt) => (
+          <Grid item xs={12} sm={6} key={alt.optionId}>
+            <OptionCard
+              optionId={alt.optionId}
+              label={alt.label}
+              description={alt.description}
+              isSelected={selectedOptionId === alt.optionId}
+              onSelect={onSelect}
+              disabled={isSubmitting}
+            />
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
+  </Collapse>
+);
+
+const DecisionActions: React.FC<{
+  isNegotiating: boolean;
+  isSubmitting: boolean;
+  canSubmit: boolean;
+  onSkip: () => void;
+  onSubmit: () => void;
+  onAcceptNegotiation: () => void;
+  onInsistOriginal: () => void;
+}> = ({
+  isNegotiating,
+  isSubmitting,
+  canSubmit,
+  onSkip,
+  onSubmit,
+  onAcceptNegotiation,
+  onInsistOriginal,
+}) => (
+  <DialogActions sx={{ p: 2, gap: 1 }}>
+    <Button
+      onClick={onSkip}
+      disabled={isSubmitting}
+      startIcon={<SkipIcon />}
+      color="inherit"
+    >
+      Skip (Default)
+    </Button>
+
+    <Box flex={1} />
+
+    {isNegotiating ? (
+      <>
+        <Button
+          variant="outlined"
+          onClick={onInsistOriginal}
+          disabled={isSubmitting}
+        >
+          Keep Original
+        </Button>
+        <Button
+          variant="contained"
+          onClick={onAcceptNegotiation}
+          disabled={isSubmitting}
+          startIcon={isSubmitting ? <CircularProgress size={16} /> : <CheckIcon />}
+        >
+          Accept Suggestion
+        </Button>
+      </>
+    ) : (
+      <Button
+        variant="contained"
+        onClick={onSubmit}
+        disabled={!canSubmit || isSubmitting}
+        startIcon={isSubmitting ? <CircularProgress size={16} /> : <SendIcon />}
+      >
+        Confirm
+      </Button>
+    )}
+  </DialogActions>
+);
+
+const DecisionDialogContent: React.FC<{
+  error: string | null;
+  decision: Decision;
+  isNegotiating: boolean;
+  negotiationResult: NegotiationResult | null;
+  inputMode: 'options' | 'freetext';
+  onSelectMode: (mode: 'options' | 'freetext') => void;
+  selectedOptionId: number | null;
+  onOptionSelect: (id: number) => void;
+  freeTextInput: string;
+  onFreeTextChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  isSubmitting: boolean;
+}> = ({
+  error,
+  decision,
+  isNegotiating,
+  negotiationResult,
+  inputMode,
+  onSelectMode,
+  selectedOptionId,
+  onOptionSelect,
+  freeTextInput,
+  onFreeTextChange,
+  isSubmitting,
+}) => (
+  <DialogContent dividers sx={{ p: 3 }}>
+    {error && (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        {error}
+      </Alert>
+    )}
+
+    <DecisionDescription description={decision.description} />
+
+    {decision.narrativeContext && (
+      <NarrativeContext narrativeContext={decision.narrativeContext} />
+    )}
+
+    <NegotiationAlert result={isNegotiating ? negotiationResult : null} />
+
+    <InputModeToggle
+      inputMode={inputMode}
+      isNegotiating={isNegotiating}
+      onSelectMode={onSelectMode}
+    />
+
+    <OptionsGrid
+      options={decision.options}
+      selectedOptionId={selectedOptionId}
+      onSelect={onOptionSelect}
+      isSubmitting={isSubmitting}
+      hidden={inputMode !== 'options' || isNegotiating}
+    />
+
+    <FreeTextInput
+      value={freeTextInput}
+      onChange={onFreeTextChange}
+      isSubmitting={isSubmitting}
+      hidden={inputMode !== 'freetext' || isNegotiating}
+    />
+
+    <NegotiationAlternatives
+      alternatives={negotiationResult?.alternatives}
+      selectedOptionId={selectedOptionId}
+      onSelect={onOptionSelect}
+      isSubmitting={isSubmitting}
+      isNegotiating={isNegotiating}
+    />
+  </DialogContent>
+);
+
+const DecisionDialog: React.FC<{
+  dialogRef: React.RefObject<HTMLDivElement>;
+  isOpen: boolean;
+  isSubmitting: boolean;
+  onClose: (_event: unknown, reason?: 'backdropClick' | 'escapeKeyDown') => void;
+  decision: Decision;
+  remainingSeconds: number;
+  onSkip: () => void;
+  error: string | null;
+  isNegotiating: boolean;
+  negotiationResult: NegotiationResult | null;
+  inputMode: 'options' | 'freetext';
+  onSelectMode: (mode: 'options' | 'freetext') => void;
+  selectedOptionId: number | null;
+  onOptionSelect: (id: number) => void;
+  freeTextInput: string;
+  onFreeTextChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  canSubmit: boolean;
+  onSubmit: () => void;
+  onAcceptNegotiation: () => void;
+  onInsistOriginal: () => void;
+}> = ({
+  dialogRef,
+  isOpen,
+  isSubmitting,
+  onClose,
+  decision,
+  remainingSeconds,
+  onSkip,
+  error,
+  isNegotiating,
+  negotiationResult,
+  inputMode,
+  onSelectMode,
+  selectedOptionId,
+  onOptionSelect,
+  freeTextInput,
+  onFreeTextChange,
+  canSubmit,
+  onSubmit,
+  onAcceptNegotiation,
+  onInsistOriginal,
+}) => (
+  <Dialog
+    ref={dialogRef}
+    open={isOpen}
+    maxWidth="md"
+    fullWidth
+    disableEscapeKeyDown={isSubmitting}
+    onClose={onClose}
+    aria-labelledby="decision-dialog-title"
+    aria-describedby="decision-dialog-description"
+    PaperProps={{
+      sx: {
+        borderRadius: 2,
+        maxHeight: '90vh',
+      },
+    }}
+  >
+    <DecisionHeader
+      decision={decision}
+      remainingSeconds={remainingSeconds}
+      isSubmitting={isSubmitting}
+      onSkip={onSkip}
+    />
+
+    <DecisionDialogContent
+      error={error}
+      decision={decision}
+      isNegotiating={isNegotiating}
+      negotiationResult={negotiationResult}
+      inputMode={inputMode}
+      onSelectMode={onSelectMode}
+      selectedOptionId={selectedOptionId}
+      onOptionSelect={onOptionSelect}
+      freeTextInput={freeTextInput}
+      onFreeTextChange={onFreeTextChange}
+      isSubmitting={isSubmitting}
+    />
+
+    <DecisionActions
+      isNegotiating={isNegotiating}
+      isSubmitting={isSubmitting}
+      canSubmit={canSubmit}
+      onSkip={onSkip}
+      onSubmit={onSubmit}
+      onAcceptNegotiation={onAcceptNegotiation}
+      onInsistOriginal={onInsistOriginal}
+    />
+  </Dialog>
+);
+
+const useDecisionCountdown = (
+  isOpen: boolean,
+  remainingSeconds: number,
+  dispatch: AppDispatch
+) => {
   useEffect(() => {
     if (!isOpen || remainingSeconds <= 0) return;
 
@@ -181,15 +620,28 @@ export default function DecisionPointDialog() {
 
     return () => clearInterval(timer);
   }, [isOpen, remainingSeconds, dispatch]);
+};
 
-  // Auto-skip when timeout
+const useDecisionAutoSkip = (
+  isOpen: boolean,
+  remainingSeconds: number,
+  currentDecision: Decision | null,
+  dispatch: AppDispatch
+) => {
   useEffect(() => {
     if (isOpen && remainingSeconds === 0 && currentDecision) {
       dispatch(skipDecision(currentDecision.decisionId));
     }
   }, [remainingSeconds, isOpen, currentDecision, dispatch]);
+};
 
-  // Focus trap for accessibility
+const useDecisionFocus = (
+  isOpen: boolean,
+  dialogRef: React.RefObject<HTMLDivElement>,
+  currentDecision: Decision | null,
+  isSubmitting: boolean,
+  dispatch: AppDispatch
+) => {
   useFocusTrap(isOpen, dialogRef, {
     onEscape: () => {
       if (currentDecision && !isSubmitting) {
@@ -197,7 +649,15 @@ export default function DecisionPointDialog() {
       }
     },
   });
+};
 
+const useDecisionHandlers = (
+  dispatch: AppDispatch,
+  currentDecision: Decision | null,
+  inputMode: 'options' | 'freetext',
+  selectedOptionId: number | null,
+  freeTextInput: string
+) => {
   const handleOptionSelect = useCallback(
     (id: number) => {
       dispatch(selectOption(id));
@@ -240,6 +700,18 @@ export default function DecisionPointDialog() {
     }
   }, [currentDecision, dispatch]);
 
+  return {
+    handleOptionSelect,
+    handleFreeTextChange,
+    handleSubmit,
+    handleSkip,
+  };
+};
+
+const useNegotiationHandlers = (
+  dispatch: AppDispatch,
+  currentDecision: Decision | null
+) => {
   const handleAcceptNegotiation = useCallback(() => {
     if (currentDecision) {
       dispatch(
@@ -264,6 +736,105 @@ export default function DecisionPointDialog() {
     }
   }, [currentDecision, dispatch]);
 
+  return { handleAcceptNegotiation, handleInsistOriginal };
+};
+
+const useDecisionDialogState = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const [inputMode, setInputMode] = useState<'options' | 'freetext'>('options');
+
+  const decisionState = useSelector((state: RootState) => state.decision);
+  const {
+    currentDecision,
+    pauseState,
+    isNegotiating,
+    negotiationResult,
+    remainingSeconds,
+    selectedOptionId,
+    freeTextInput,
+    isSubmitting,
+    error,
+  } = decisionState;
+
+  const isOpen = currentDecision !== null && pauseState !== 'running';
+
+  useDecisionCountdown(isOpen, remainingSeconds, dispatch);
+  useDecisionAutoSkip(isOpen, remainingSeconds, currentDecision, dispatch);
+  useDecisionFocus(isOpen, dialogRef, currentDecision, isSubmitting, dispatch);
+
+  const {
+    handleOptionSelect,
+    handleFreeTextChange,
+    handleSubmit,
+    handleSkip,
+  } = useDecisionHandlers(
+    dispatch,
+    currentDecision,
+    inputMode,
+    selectedOptionId,
+    freeTextInput
+  );
+
+  const { handleAcceptNegotiation, handleInsistOriginal } = useNegotiationHandlers(
+    dispatch,
+    currentDecision
+  );
+
+  return {
+    dialogRef,
+    inputMode,
+    setInputMode,
+    currentDecision,
+    isOpen,
+    isNegotiating,
+    negotiationResult,
+    remainingSeconds,
+    selectedOptionId,
+    freeTextInput,
+    isSubmitting,
+    error,
+    handleOptionSelect,
+    handleFreeTextChange,
+    handleSubmit,
+    handleSkip,
+    handleAcceptNegotiation,
+    handleInsistOriginal,
+  };
+};
+
+export default function DecisionPointDialog() {
+  const {
+    dialogRef,
+    inputMode,
+    setInputMode,
+    currentDecision,
+    isOpen,
+    isNegotiating,
+    negotiationResult,
+    remainingSeconds,
+    selectedOptionId,
+    freeTextInput,
+    isSubmitting,
+    error,
+    handleOptionSelect,
+    handleFreeTextChange,
+    handleSubmit,
+    handleSkip,
+    handleAcceptNegotiation,
+    handleInsistOriginal,
+  } = useDecisionDialogState();
+
+  const handleDialogClose = useCallback(
+    (_event: unknown, reason?: 'backdropClick' | 'escapeKeyDown') => {
+      if (isSubmitting) return;
+      if (reason === 'escapeKeyDown' || reason === 'backdropClick') {
+        handleSkip();
+      }
+    },
+    [handleSkip, isSubmitting]
+  );
+
   if (!currentDecision) return null;
 
   const canSubmit =
@@ -271,268 +842,27 @@ export default function DecisionPointDialog() {
     (inputMode === 'freetext' && freeTextInput.trim().length >= 5);
 
   return (
-    <Dialog
-      ref={dialogRef}
-      open={isOpen}
-      maxWidth="md"
-      fullWidth
-      disableEscapeKeyDown={isSubmitting}
-      aria-labelledby="decision-dialog-title"
-      aria-describedby="decision-dialog-description"
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          maxHeight: '90vh',
-        },
-      }}
-    >
-      {/* Header */}
-      <DialogTitle
-        id="decision-dialog-title"
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          pb: 1,
-        }}
-      >
-        <Box>
-          <Typography variant="h6" component="span">
-            {currentDecision.title}
-          </Typography>
-          <Box display="flex" alignItems="center" gap={1} mt={0.5}>
-            <Chip
-              size="small"
-              label={`Turn ${currentDecision.turnNumber}`}
-              sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'inherit' }}
-            />
-            <Chip
-              size="small"
-              label={currentDecision.decisionType.replace('_', ' ')}
-              sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'inherit' }}
-            />
-          </Box>
-        </Box>
-        <Box display="flex" alignItems="center" gap={2}>
-          <CountdownTimer
-            seconds={remainingSeconds}
-            totalSeconds={currentDecision.timeoutSeconds}
-          />
-          <IconButton
-            onClick={handleSkip}
-            disabled={isSubmitting}
-            size="small"
-            sx={{ color: 'inherit' }}
-            aria-label="Skip decision"
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-
-      <DialogContent dividers sx={{ p: 3 }}>
-        {/* Error display */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Description */}
-        <Typography
-          id="decision-dialog-description"
-          variant="body1"
-          color="text.secondary"
-          sx={{ mb: 3 }}
-        >
-          {currentDecision.description}
-        </Typography>
-
-        {/* Narrative context */}
-        {currentDecision.narrativeContext && (
-          <Box
-            sx={{
-              bgcolor: 'action.hover',
-              borderRadius: 1,
-              p: 2,
-              mb: 3,
-              borderLeft: 4,
-              borderColor: 'primary.main',
-            }}
-          >
-            <Typography variant="body2" fontStyle="italic">
-              {currentDecision.narrativeContext}
-            </Typography>
-          </Box>
-        )}
-
-        {/* Negotiation result */}
-        <Collapse in={isNegotiating && negotiationResult !== null}>
-          <Alert
-            severity={
-              negotiationResult?.feasibility === 'accepted'
-                ? 'success'
-                : negotiationResult?.feasibility === 'minor_adjustment'
-                  ? 'info'
-                  : 'warning'
-            }
-            icon={<NegotiateIcon />}
-            sx={{ mb: 3 }}
-          >
-            <Typography variant="subtitle2" fontWeight="bold">
-              {negotiationResult?.feasibility === 'accepted'
-                ? 'Action Accepted'
-                : negotiationResult?.feasibility === 'minor_adjustment'
-                  ? 'Adjustment Suggested'
-                  : 'Alternatives Required'}
-            </Typography>
-            <Typography variant="body2">
-              {negotiationResult?.explanation}
-            </Typography>
-            {negotiationResult?.adjustedAction && (
-              <Typography
-                variant="body2"
-                sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary' }}
-              >
-                Suggested: "{negotiationResult.adjustedAction}"
-              </Typography>
-            )}
-          </Alert>
-        </Collapse>
-
-        {/* Input mode toggle */}
-        <Box display="flex" gap={1} mb={2}>
-          <Button
-            variant={inputMode === 'options' ? 'contained' : 'outlined'}
-            size="small"
-            onClick={() => setInputMode('options')}
-            disabled={isNegotiating}
-            startIcon={<CheckIcon />}
-          >
-            Choose Option
-          </Button>
-          <Button
-            variant={inputMode === 'freetext' ? 'contained' : 'outlined'}
-            size="small"
-            onClick={() => setInputMode('freetext')}
-            disabled={isNegotiating}
-            startIcon={<EditIcon />}
-          >
-            Custom Action
-          </Button>
-        </Box>
-
-        {/* Options grid */}
-        <Fade in={inputMode === 'options' && !isNegotiating}>
-          <Box sx={{ display: inputMode === 'options' && !isNegotiating ? 'block' : 'none' }}>
-            <Grid container spacing={2}>
-              {currentDecision.options.map((option) => (
-                <Grid item xs={12} sm={6} key={option.optionId}>
-                  <OptionCard
-                    optionId={option.optionId}
-                    label={option.label}
-                    description={option.description}
-                    icon={option.icon}
-                    impactPreview={option.impactPreview}
-                    isSelected={selectedOptionId === option.optionId}
-                    onSelect={handleOptionSelect}
-                    disabled={isSubmitting}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Fade>
-
-        {/* Free text input */}
-        <Fade in={inputMode === 'freetext' && !isNegotiating}>
-          <Box sx={{ display: inputMode === 'freetext' && !isNegotiating ? 'block' : 'none' }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              variant="outlined"
-              placeholder="Describe what you want the characters to do..."
-              value={freeTextInput}
-              onChange={handleFreeTextChange}
-              disabled={isSubmitting}
-              inputProps={{
-                'aria-label': 'Custom action input',
-                maxLength: 500,
-              }}
-              helperText={`${freeTextInput.length}/500 characters (minimum 5)`}
-            />
-          </Box>
-        </Fade>
-
-        {/* Negotiation alternatives */}
-        <Collapse in={isNegotiating && negotiationResult?.alternatives?.length > 0}>
-          <Box mt={2}>
-            <Typography variant="subtitle2" gutterBottom>
-              Alternative Actions:
-            </Typography>
-            <Grid container spacing={2}>
-              {negotiationResult?.alternatives?.map((alt) => (
-                <Grid item xs={12} sm={6} key={alt.optionId}>
-                  <OptionCard
-                    optionId={alt.optionId}
-                    label={alt.label}
-                    description={alt.description}
-                    isSelected={selectedOptionId === alt.optionId}
-                    onSelect={handleOptionSelect}
-                    disabled={isSubmitting}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Collapse>
-      </DialogContent>
-
-      {/* Actions */}
-      <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button
-          onClick={handleSkip}
-          disabled={isSubmitting}
-          startIcon={<SkipIcon />}
-          color="inherit"
-        >
-          Skip (Default)
-        </Button>
-
-        <Box flex={1} />
-
-        {isNegotiating ? (
-          <>
-            <Button
-              variant="outlined"
-              onClick={handleInsistOriginal}
-              disabled={isSubmitting}
-            >
-              Keep Original
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleAcceptNegotiation}
-              disabled={isSubmitting}
-              startIcon={isSubmitting ? <CircularProgress size={16} /> : <CheckIcon />}
-            >
-              Accept Suggestion
-            </Button>
-          </>
-        ) : (
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={!canSubmit || isSubmitting}
-            startIcon={isSubmitting ? <CircularProgress size={16} /> : <SendIcon />}
-          >
-            Confirm
-          </Button>
-        )}
-      </DialogActions>
-    </Dialog>
+    <DecisionDialog
+      dialogRef={dialogRef}
+      isOpen={isOpen}
+      isSubmitting={isSubmitting}
+      onClose={handleDialogClose}
+      decision={currentDecision}
+      remainingSeconds={remainingSeconds}
+      onSkip={handleSkip}
+      error={error}
+      isNegotiating={isNegotiating}
+      negotiationResult={negotiationResult}
+      inputMode={inputMode}
+      onSelectMode={setInputMode}
+      selectedOptionId={selectedOptionId}
+      onOptionSelect={handleOptionSelect}
+      freeTextInput={freeTextInput}
+      onFreeTextChange={handleFreeTextChange}
+      canSubmit={canSubmit}
+      onSubmit={handleSubmit}
+      onAcceptNegotiation={handleAcceptNegotiation}
+      onInsistOriginal={handleInsistOriginal}
+    />
   );
 }

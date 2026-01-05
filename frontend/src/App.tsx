@@ -13,18 +13,51 @@ import { CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import theme from './styles/theme';
 import { store } from './store/store';
-// Route-based code splitting
-const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
-const LandingPage = lazy(() => import('./pages/LandingPage'));
-const CharactersPage = lazy(() => import('./pages/CharactersPage'));
-const StoriesPage = lazy(() => import('./pages/StoriesPage'));
-const CampaignsPage = lazy(() => import('./pages/CampaignsPage'));
-const LoginPage = lazy(() => import('./pages/LoginPage'));
+const lazyWithRetry = <T extends React.ComponentType<unknown>>(
+  factory: () => Promise<{ default: T }>,
+  options: { retries?: number; delayMs?: number } = {}
+) => {
+  const { retries = 1, delayMs = 300 } = options;
+
+  const attemptImport = (remaining: number): Promise<{ default: T }> =>
+    factory().catch((error) => {
+      if (typeof window !== 'undefined' && !navigator.onLine) {
+        return new Promise((resolve, reject) => {
+          const retry = () => {
+            window.removeEventListener('online', retry);
+            attemptImport(remaining).then(resolve).catch(reject);
+          };
+          window.addEventListener('online', retry, { once: true });
+        });
+      }
+
+      if (remaining <= 0) {
+        throw error;
+      }
+
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          attemptImport(remaining - 1).then(resolve).catch(reject);
+        }, delayMs);
+      });
+    });
+
+  return lazy(() => attemptImport(retries));
+};
+
+// Route-based code splitting with offline retry
+const Dashboard = lazyWithRetry(() => import('./features/dashboard/Dashboard'));
+const LandingPage = lazyWithRetry(() => import('./pages/LandingPage'));
+const CharactersPage = lazyWithRetry(() => import('./pages/CharactersPage'));
+const StoriesPage = lazyWithRetry(() => import('./pages/StoriesPage'));
+const CampaignsPage = lazyWithRetry(() => import('./pages/CampaignsPage'));
+const LoginPage = lazyWithRetry(() => import('./pages/LoginPage'));
 
 import { initializeMobileOptimizations } from './utils/serviceWorkerRegistration';
 import { logger } from './services/logging/LoggerFactory';
 import { ErrorBoundary } from './components/error-boundaries/ErrorBoundary';
-import { AuthProvider, useAuthContext } from './contexts/AuthContext';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { useAuthContext } from '@/contexts/useAuthContext';
 import { SkipLink } from './components/a11y';
 import { SkeletonDashboard } from './components/loading';
 import { usePerformance } from './hooks/usePerformance';
@@ -32,7 +65,16 @@ import CommandLayout from './components/layout/CommandLayout'; // Import Layout
 import './styles/design-system.generated.css';
 import './styles/design-system.css';
 
-const queryClient = new QueryClient();
+const shouldDisableQueryRetry = import.meta.env.VITE_DISABLE_QUERY_RETRY === 'true';
+
+const queryClient = new QueryClient({
+  defaultOptions: shouldDisableQueryRetry
+    ? {
+        queries: { retry: false },
+        mutations: { retry: false },
+      }
+    : undefined,
+});
 
 // Protected route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {

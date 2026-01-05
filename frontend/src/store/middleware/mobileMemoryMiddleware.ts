@@ -10,7 +10,7 @@
  */
 
 import type { Middleware } from '@reduxjs/toolkit';
-import type { RootState } from '@/store/store';
+import type { RootState } from '@/store/rootReducer';
 import { logger } from '@/services/logging/LoggerFactory';
 
 // Mobile memory limits

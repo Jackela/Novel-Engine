@@ -24,6 +24,33 @@ if (!window.matchMedia) {
     }) as MediaQueryList;
 }
 
+const createTestRouter = (routes: { path: string; element: React.ReactNode }[]) =>
+  createMemoryRouter(
+    [
+      {
+        element: <TestLayout />,
+        children: routes,
+      },
+    ],
+    {
+      initialEntries: ['/'],
+      future: {
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      },
+    }
+  );
+
+const renderRouter = (router: ReturnType<typeof createTestRouter>) =>
+  render(
+    <RouterProvider
+      router={router}
+      future={{
+        v7_startTransition: true,
+      }}
+    />
+  );
+
 describe('App router configuration', () => {
   // Store original console methods to restore after each test
   let originalWarn: typeof console.warn;
@@ -53,37 +80,11 @@ describe('App router configuration', () => {
   });
 
   it('does not emit React Router Future Flag warnings with current configuration', () => {
-    // Create a memory router with configuration similar to App.tsx
-    // This tests the router setup without needing the full App with all its dependencies
-    const router = createMemoryRouter(
-      [
-        {
-          element: <TestLayout />,
-          children: [
-            { path: '/', element: <TestPage /> },
-            { path: '/dashboard', element: <TestPage /> },
-          ],
-        },
-      ],
-      {
-        initialEntries: ['/'],
-        // Enable v7 future flags to avoid deprecation warnings
-        // These prepare the app for React Router v7 migration
-        future: {
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        },
-      }
-    );
-
-    render(
-      <RouterProvider
-        router={router}
-        future={{
-          v7_startTransition: true,
-        }}
-      />
-    );
+    const router = createTestRouter([
+      { path: '/', element: <TestPage /> },
+      { path: '/dashboard', element: <TestPage /> },
+    ]);
+    renderRouter(router);
 
     // Check for React Router Future Flag warnings
     const hasFutureFlagWarning = warnSpy.mock.calls.some(([message]: [unknown]) =>
@@ -94,32 +95,8 @@ describe('App router configuration', () => {
   });
 
   it('does not emit act-wrapping warnings during router initialization', () => {
-    const router = createMemoryRouter(
-      [
-        {
-          element: <TestLayout />,
-          children: [
-            { path: '/', element: <TestPage /> },
-          ],
-        },
-      ],
-      {
-        initialEntries: ['/'],
-        future: {
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        },
-      }
-    );
-
-    render(
-      <RouterProvider
-        router={router}
-        future={{
-          v7_startTransition: true,
-        }}
-      />
-    );
+    const router = createTestRouter([{ path: '/', element: <TestPage /> }]);
+    renderRouter(router);
 
     // Check for act-wrapping warnings
     const hasActWarning = errorSpy.mock.calls.some(([message]: [unknown]) => {

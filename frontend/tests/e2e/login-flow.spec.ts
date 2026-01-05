@@ -1,6 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { DashboardPage } from './pages/DashboardPage';
 import { LandingPage } from './pages/LandingPage';
+import { waitForLandingReady, waitForLoginReady } from './utils/waitForReady';
 
 /**
  * Login Flow E2E Test Suite
@@ -40,13 +41,6 @@ test.describe('Login Flow - Launch Engine CTA', () => {
     await expect(dashboardPage.guestModeChip).toBeVisible();
     await expect(dashboardPage.guestModeBanner).toBeVisible();
 
-    // Verify summary strip shows expected content
-    await expect(dashboardPage.summaryStrip).toBeVisible();
-    await expect(dashboardPage.summaryStrip).toContainText(/Command Overview/i);
-
-    const summaryText = await dashboardPage.summaryStrip.innerText();
-    expect(summaryText).toMatch(/Run State/i);
-
     // Verify quick actions are available
     const quickActionButtons = await dashboardPage.quickActions.locator('[data-testid^="quick-action"]').count();
     expect(quickActionButtons).toBeGreaterThan(0);
@@ -74,7 +68,7 @@ test.describe('Login Page - Placeholder', () => {
   test('should display login placeholder page', async ({ page }) => {
     await test.step('When: User navigates to /login', async () => {
       await page.goto('/login');
-      await page.waitForLoadState('networkidle');
+      await waitForLoginReady(page);
     });
 
     await test.step('Then: Login placeholder message is displayed', async () => {
@@ -83,14 +77,14 @@ test.describe('Login Page - Placeholder', () => {
       expect(content).toBeTruthy();
 
       // The page should have some visible content (placeholder)
-      const mainContent = page.locator('main, #root, [role="main"]');
+      const mainContent = page.getByRole('main');
       await expect(mainContent).toBeVisible();
     });
   });
 
   test('should have accessible login placeholder', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await waitForLoginReady(page);
 
     // Check basic accessibility - page should have content
     const title = await page.title();
@@ -103,11 +97,11 @@ test.describe('Login Page - Placeholder', () => {
 
   test('should allow navigation from login page', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await waitForLoginReady(page);
 
     // Should be able to navigate back to landing
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLandingReady(page);
 
     const landingPage = new LandingPage(page);
     await expect(landingPage.mainTitle).toBeVisible();

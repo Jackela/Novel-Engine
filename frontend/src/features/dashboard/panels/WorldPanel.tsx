@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Button, styled } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import WorldStateMap from '../WorldStateMap';
 import { ErrorBoundary } from '@/components/error-boundaries/ErrorBoundary';
@@ -21,12 +22,12 @@ const ExpandButton = styled(Button)(({ theme }) => ({
   fontSize: '10px',
   fontFamily: 'var(--font-primary)',
   textTransform: 'uppercase',
-  backgroundColor: 'rgba(0, 240, 255, 0.1)',
-  borderColor: 'var(--color-primary)',
-  color: 'var(--color-primary)',
+  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+  borderColor: theme.palette.primary.main,
+  color: theme.palette.primary.main,
   '&:hover': {
-    backgroundColor: 'rgba(0, 240, 255, 0.2)',
-    borderColor: 'var(--color-primary)',
+    backgroundColor: alpha(theme.palette.primary.main, 0.14),
+    borderColor: theme.palette.primary.main,
   },
   '&:focus-visible': {
     outline: '2px solid var(--color-primary)',

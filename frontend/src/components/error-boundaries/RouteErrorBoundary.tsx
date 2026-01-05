@@ -26,6 +26,141 @@ interface RouteErrorBoundaryProps extends Omit<ErrorBoundaryProps, 'componentNam
   children: React.ReactNode;
 }
 
+const RouteErrorDetails: React.FC<{
+  route: string;
+  routeName?: string;
+  error: Error;
+}> = ({ route, routeName, error }) => (
+  <details style={{ marginTop: '2rem', color: 'var(--color-text-secondary)' }}>
+    <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+      Technical Details (Development Only)
+    </summary>
+    <pre
+      style={{
+        marginTop: '1rem',
+        padding: '1rem',
+        backgroundColor: 'var(--color-bg-secondary)',
+        borderRadius: '4px',
+        overflow: 'auto',
+        fontSize: '0.875rem',
+      }}
+    >
+      <strong>Route:</strong> {route}
+      {'\n'}
+      <strong>Route Name:</strong> {routeName || 'Unknown'}
+      {'\n\n'}
+      <strong>Error:</strong> {error.message}
+      {'\n\n'}
+      <strong>Stack:</strong>
+      {'\n'}
+      {error.stack}
+    </pre>
+  </details>
+);
+
+const RouteErrorActions: React.FC<{
+  onBack: () => void;
+  onHome: () => void;
+  onReset: () => void;
+}> = ({ onBack, onHome, onReset }) => (
+  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+    <button
+      onClick={onBack}
+      style={{
+        padding: '0.5rem 1rem',
+        backgroundColor: 'var(--color-info)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '1rem',
+      }}
+    >
+      Go Back
+    </button>
+    <button
+      onClick={onHome}
+      style={{
+        padding: '0.5rem 1rem',
+        backgroundColor: 'var(--color-info)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '1rem',
+      }}
+    >
+      Return to Home
+    </button>
+    <button
+      onClick={onReset}
+      style={{
+        padding: '0.5rem 1rem',
+        backgroundColor: 'var(--color-text-tertiary)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '1rem',
+      }}
+    >
+      Try Again
+    </button>
+    <button
+      onClick={() => window.location.reload()}
+      style={{
+        padding: '0.5rem 1rem',
+        backgroundColor: 'var(--color-text-tertiary)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '1rem',
+      }}
+    >
+      Refresh Page
+    </button>
+  </div>
+);
+
+const RouteFallback: React.FC<{
+  error: Error;
+  reset: () => void;
+  route: string;
+  routeName?: string;
+  onBack: () => void;
+  onHome: () => void;
+}> = ({ error, reset, route, routeName, onBack, onHome }) => (
+  <div
+    role="alert"
+    style={{
+      padding: '2rem',
+      margin: '2rem',
+      border: '2px solid var(--color-error)',
+      borderRadius: '8px',
+      backgroundColor: 'var(--color-error-bg)',
+      fontFamily: 'var(--font-primary)',
+    }}
+  >
+    <h2 style={{ color: 'var(--color-error)', marginTop: 0 }}>
+      Something went wrong on this page
+    </h2>
+    <p style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
+      We're sorry, but an error occurred while loading this page. You can:
+    </p>
+    <ul style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
+      <li>Try going back to the previous page</li>
+      <li>Return to the home page</li>
+      <li>Refresh the page</li>
+    </ul>
+    <RouteErrorActions onBack={onBack} onHome={onHome} onReset={reset} />
+
+    {process.env.NODE_ENV === 'development' && (
+      <RouteErrorDetails route={route} routeName={routeName} error={error} />
+    )}
+  </div>
+);
+
 /**
  * RouteErrorBoundary wrapper component
  * 
@@ -66,116 +201,14 @@ export const RouteErrorBoundary: React.FC<RouteErrorBoundaryProps> = ({
   // Custom fallback UI with navigation options
   const fallback = (error: Error, reset: () => void) => {
     return (
-      <div
-        role="alert"
-        style={{
-          padding: '2rem',
-          margin: '2rem',
-          border: '2px solid var(--color-error)',
-          borderRadius: '8px',
-          backgroundColor: 'rgba(239, 68, 68, 0.08)',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}
-      >
-        <h2 style={{ color: 'var(--color-error)', marginTop: 0 }}>
-          Something went wrong on this page
-        </h2>
-        <p style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
-          We're sorry, but an error occurred while loading this page. You can:
-        </p>
-        <ul style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
-          <li>Try going back to the previous page</li>
-          <li>Return to the home page</li>
-          <li>Refresh the page</li>
-        </ul>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--color-info)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            Go Back
-          </button>
-          <button
-            onClick={() => navigate('/')}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--color-info)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            Return to Home
-          </button>
-          <button
-            onClick={reset}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--color-text-tertiary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            Try Again
-          </button>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--color-text-tertiary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            Refresh Page
-          </button>
-        </div>
-
-        {/* Technical details - only show in development */}
-        {process.env.NODE_ENV === 'development' && (
-          <details style={{ marginTop: '2rem', color: 'var(--color-text-secondary)' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
-              Technical Details (Development Only)
-            </summary>
-            <pre
-              style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                backgroundColor: 'var(--color-bg-secondary)',
-                borderRadius: '4px',
-                overflow: 'auto',
-                fontSize: '0.875rem',
-              }}
-            >
-              <strong>Route:</strong> {location.pathname}
-              {'\n'}
-              <strong>Route Name:</strong> {routeName || 'Unknown'}
-              {'\n\n'}
-              <strong>Error:</strong> {error.message}
-              {'\n\n'}
-              <strong>Stack:</strong>
-              {'\n'}
-              {error.stack}
-            </pre>
-          </details>
-        )}
-      </div>
+      <RouteFallback
+        error={error}
+        reset={reset}
+        route={location.pathname}
+        routeName={routeName}
+        onBack={() => navigate(-1)}
+        onHome={() => navigate('/')}
+      />
     );
   };
 

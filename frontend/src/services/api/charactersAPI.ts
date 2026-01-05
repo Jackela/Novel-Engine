@@ -1,5 +1,5 @@
-import { apiClient, handleAPIResponse, handleAPIError } from './apiClient';
-import type { BaseAPIResponse } from './apiClient';
+import { apiClient, handleAPIResponse, handleAPIError } from '@/lib/api/apiClient';
+import type { BaseAPIResponse } from '@/lib/api/apiClient';
 import type { Character, PersonalityTraits, CharacterListResponse } from '@/store/slices/charactersSlice';
 
 // Character API request types based on OpenAPI spec
@@ -77,11 +77,70 @@ export interface GetCharactersParams {
   order?: 'asc' | 'desc';
 }
 
+type CharacterSummary = { id: string; name?: string };
+
 /**
  * Characters API service
  * Handles character management operations
  */
 export class CharactersAPI {
+    private buildCharacterSummaries(rawPayload: unknown): CharacterSummary[] {
+      const payload = rawPayload as { characters?: Array<string | { id?: string; name?: string }> };
+      const normalizeCharacterSummary = (
+        entry: string | { id?: string; name?: string }
+      ): CharacterSummary | null => {
+        if (typeof entry === 'string') {
+          return { id: entry, name: entry };
+        }
+        if (entry && typeof entry.id === 'string') {
+          if (typeof entry.name === 'string') {
+            return { id: entry.id, name: entry.name };
+          }
+          return { id: entry.id };
+        }
+        if (entry && typeof entry.name === 'string') {
+          return { id: entry.name, name: entry.name };
+        }
+        return null;
+      };
+
+      return (payload.characters ?? [])
+        .map(normalizeCharacterSummary)
+        .filter((entry): entry is CharacterSummary => entry !== null);
+    }
+
+    private async fetchCharacterDetail(name: string): Promise<Character> {
+      const detailResponse = await apiClient.get(`/api/characters/${encodeURIComponent(name)}`);
+      const detail = detailResponse.data as Record<string, unknown>;
+      return this.transformCharacterDetail(name, detail);
+    }
+
+    private createSummaryFallback(summary: CharacterSummary, name: string): Character {
+      return {
+        id: summary.id,
+        name: summary.name || name,
+        type: 'npc',
+        personality_traits: {
+          openness: 0.5,
+          conscientiousness: 0.5,
+          extraversion: 0.5,
+          agreeableness: 0.5,
+          neuroticism: 0.5,
+        },
+        background: '',
+        configuration: {
+          ai_model: 'gpt-4',
+          response_style: 'formal',
+          memory_retention: 'medium',
+        },
+        status: 'active',
+        relationships: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        created_by: 'self',
+      } as Character;
+    }
+
     /**
      * List all characters with optional filtering and sorting
      * GET /api/characters
@@ -89,50 +148,30 @@ export class CharactersAPI {
     async getCharacters(params?: GetCharactersParams): Promise<BaseAPIResponse<CharacterListResponse>> {    
       try {
         const response = await apiClient.get('/api/characters', { params });
-        const payload = response.data as { characters: Array<{ id: string; name?: string }> };
-        const summaries = payload.characters || [];
+        const rawPayload = response.data as unknown;
+        if (rawPayload && typeof rawPayload === 'object' && 'success' in rawPayload) {
+          return rawPayload as BaseAPIResponse<CharacterListResponse>;
+        }
+
+        const summaries = this.buildCharacterSummaries(rawPayload);
         const characterIds = summaries.map((entry) => entry.id);
 
         const detailedCharacters = await Promise.all(
           characterIds.map(async (name) => {
             try {
-              const detailResponse = await apiClient.get(`/api/characters/${encodeURIComponent(name)}`);    
-              const detail = detailResponse.data as Record<string, unknown>;
-              return this.transformCharacterDetail(name, detail);
+              return await this.fetchCharacterDetail(name);
             } catch {
               const summary = summaries.find((entry) => entry.id === name);
               if (summary) {
-                return {
-                  id: summary.id,
-                  name: summary.name || name,
-                  type: 'npc',
-                  personality_traits: {
-                    openness: 0.5,
-                    conscientiousness: 0.5,
-                    extraversion: 0.5,
-                    agreeableness: 0.5,
-                    neuroticism: 0.5,
-                  },
-                  background: '',
-                  configuration: {
-                    ai_model: 'gpt-4',
-                    response_style: 'formal',
-                    memory_retention: 'medium',
-                  },
-                  status: 'active',
-                  relationships: {},
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                  created_by: 'self',
-                } as Character;
+                return this.createSummaryFallback(summary, name);
               }
               return this.createBasicCharacter(name);
             }
           })
         );
 
-        return handleAPIResponse({
-          ...response,
+        return {
+          success: true,
           data: {
             characters: detailedCharacters,
             pagination: {
@@ -144,7 +183,11 @@ export class CharactersAPI {
               has_previous: false,
             },
           },
-        } as unknown as typeof response);
+          metadata: {
+            timestamp: new Date().toISOString(),
+            request_id: response.config.metadata?.correlationId ?? `req_${Date.now()}`,
+          },
+        };
       } catch (error) {
         return handleAPIError(error);
       }
@@ -671,3 +714,4 @@ export class CharactersAPI {
 
 // Export singleton instance
 export const charactersAPI = new CharactersAPI();
+
