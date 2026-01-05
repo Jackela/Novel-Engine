@@ -1,4 +1,4 @@
-import apiClient, { handleAPIError } from './apiClient';
+import apiClient, { handleAPIError } from '@/lib/api/apiClient';
 
 export interface GuestSessionResponse {
   workspace_id: string;
@@ -15,4 +15,5 @@ export const guestAPI = {
     }
   },
 };
+
 

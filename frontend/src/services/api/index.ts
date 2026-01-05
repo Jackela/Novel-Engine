@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient from '@/lib/api/apiClient';
 import { charactersAPI } from './charactersAPI';
 import { dashboardAPI } from './dashboardAPI';
 import { guestAPI } from './guestAPI';
@@ -20,3 +20,4 @@ export const api = {
 };
 
 export default api;
+
