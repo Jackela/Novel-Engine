@@ -5,7 +5,7 @@ import { logger } from '@/services/logging/LoggerFactory';
 import { queryKeys } from '@/services/queries';
 
 export function useCharacters() {
-  return useQuery(queryKeys.characters, api.getCharacters, {
+  return useQuery(queryKeys.characters, () => api.getCharacters(), {
     staleTime: 2 * 60 * 1000, // 2 minutes
     cacheTime: 5 * 60 * 1000, // 5 minutes
   });

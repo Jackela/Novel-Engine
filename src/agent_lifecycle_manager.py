@@ -116,7 +116,8 @@ class AgentLifecycleManager:
         self.validation_success_rate = 0.0
 
         logger.info(
-            f"AgentLifecycleManager initialized (Iron Laws: {'enabled' if self.validation_enabled else 'disabled'})"
+            f"AgentLifecycleManager initialized "
+            f"(Iron Laws: {'enabled' if self.validation_enabled else 'disabled'})"
         )
 
     def adjudicate_agent_action(
@@ -186,7 +187,8 @@ class AgentLifecycleManager:
 
             # Violations found - attempt repairs
             logger.warning(
-                f"Action {proposed_action.action_id} has {len(violations)} violations, attempting repairs"
+                f"Action {proposed_action.action_id} has {len(violations)} "
+                f"violations, attempting repairs"
             )
 
             validated_action, repair_log = self._attempt_action_repairs(

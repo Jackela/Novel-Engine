@@ -1,5 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
+import { waitForDashboardReady, waitForLandingReady } from './utils/waitForReady';
 
 /**
  * Navigation & Wildcard Route E2E Test Suite
@@ -26,7 +27,7 @@ test.describe('Wildcard Route E2E Tests', () => {
 
       await test.step('When: User navigates to /unknown-route', async () => {
         await page.goto('/unknown-route');
-        await page.waitForLoadState('networkidle');
+        await waitForLandingReady(page);
       });
 
       await test.step('Then: User is redirected to /', async () => {
@@ -44,7 +45,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await page.goto('/random-page');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
     });
@@ -53,7 +54,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await page.goto('/settings');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
     });
@@ -70,7 +71,7 @@ test.describe('Wildcard Route E2E Tests', () => {
 
       await test.step('When: User navigates to /some/deep/unknown/path', async () => {
         await page.goto('/some/deep/unknown/path');
-        await page.waitForLoadState('networkidle');
+        await waitForLandingReady(page);
       });
 
       await test.step('Then: User is redirected to /', async () => {
@@ -82,7 +83,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await page.goto('/a/b/c/d/e');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
     });
@@ -91,7 +92,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await page.goto('/unknown?foo=bar&baz=qux');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
     });
@@ -100,7 +101,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await page.goto('/unknown#section');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
     });
@@ -111,7 +112,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await page.goto('/page-with-dash');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
     });
@@ -120,7 +121,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await page.goto('/page123');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
     });
@@ -129,7 +130,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await page.goto('/page_underscore');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
     });
@@ -138,7 +139,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await page.goto('/page%20with%20spaces');
-      await page.waitForLoadState('networkidle');
+      await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
     });
@@ -155,11 +156,11 @@ test.describe('Valid Routes Navigation', () => {
 
     // Navigate to dashboard via CTA
     await landingPage.clickLaunchEngine();
-    await expect(page).toHaveURL(/.*\/dashboard/);
+    await waitForDashboardReady(page);
 
     // Navigate back to landing (should redirect to dashboard)
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForDashboardReady(page);
     await expect(page).toHaveURL(/.*\/dashboard/);
   });
 
@@ -170,7 +171,7 @@ test.describe('Valid Routes Navigation', () => {
     await page.goto('/');
     await page.goto('/login');
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLandingReady(page);
 
     // Should end up on landing
     await expect(landingPage.mainTitle).toBeVisible();

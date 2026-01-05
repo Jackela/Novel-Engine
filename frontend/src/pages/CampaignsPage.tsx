@@ -1,12 +1,12 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Container } from '@mui/material';
 import { CampaignList } from '@/features/campaigns';
 
 const CampaignsPage: React.FC = () => {
   return (
-    <Box sx={{ p: 3 }}>
+    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 4 } }}>
       <CampaignList />
-    </Box>
+    </Container>
   );
 };
 

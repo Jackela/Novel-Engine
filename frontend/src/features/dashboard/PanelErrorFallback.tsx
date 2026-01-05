@@ -67,7 +67,7 @@ const PanelErrorFallback: React.FC<PanelErrorFallbackProps> = ({
             color: 'var(--color-error)',
             '&:hover': {
               borderColor: 'var(--color-error-text)',
-              bgcolor: 'rgba(239, 68, 68, 0.1)',
+              bgcolor: 'var(--color-error-bg)',
             },
           }}
         >

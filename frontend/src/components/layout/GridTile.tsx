@@ -74,13 +74,14 @@ const StyledPaper = styled(Paper, {
       ...getGridStyles(),
       position: 'relative',
       overflow: 'hidden',
-      // VisionOS Glass Panel
-      ...tokens.glass.panel,
-      borderRadius: theme.shape.borderRadius * 2,
+      backgroundColor: tokens.colors.background.paper,
+      border: `1px solid ${tokens.colors.border.primary}`,
+      borderRadius: theme.shape.borderRadius * 1.5,
+      boxShadow: tokens.elevation.sm,
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       '&:hover': {
-        borderColor: tokens.colors.border.hover,
-        boxShadow: tokens.elevation.lg,
+        borderColor: tokens.colors.border.secondary,
+        boxShadow: tokens.elevation.md,
       }
     };
   }
@@ -91,7 +92,7 @@ const TileHeader = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: theme.spacing(2, 2.5, 1.5),
-  borderBottom: tokens.glass.border,
+  borderBottom: `1px solid ${tokens.colors.border.primary}`,
   minHeight: '60px',
 
   [theme.breakpoints.down('md')]: {
@@ -130,8 +131,8 @@ const LoadingOverlay = styled(Box)({
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(10, 10, 11, 0.6)',
-  backdropFilter: 'blur(8px)',
+  backgroundColor: 'rgba(247, 246, 242, 0.75)',
+  backdropFilter: 'blur(4px)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',

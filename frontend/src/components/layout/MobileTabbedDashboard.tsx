@@ -33,7 +33,7 @@ const DesktopLayout = styled(Box)(({ theme: _theme }) => ({
 
 const CompactTabs = styled(Tabs)(({ theme }) => ({
   minHeight: '48px',
-  backgroundColor: theme.palette.background.paper,
+  backgroundColor: theme.palette.background.default,
   borderBottom: `1px solid ${theme.palette.divider}`,
 
   '& .MuiTab-root': {
@@ -107,96 +107,163 @@ interface MobileTabbedDashboardProps {
   };
 }
 
+const buildTabs = (components?: MobileTabbedDashboardProps['components']) => [
+  {
+    label: 'Overview',
+    icon: <MapIcon fontSize="small" />,
+    components: [...(components?.essential || []), ...(components?.activity || []).slice(0, 1)],
+  },
+  {
+    label: 'Activity',
+    icon: <ActivityIcon fontSize="small" />,
+    components: components?.activity || [],
+  },
+  {
+    label: 'Story',
+    icon: <PeopleIcon fontSize="small" />,
+    components: [...(components?.characters || []), ...(components?.timeline || [])],
+  },
+  {
+    label: 'Analytics',
+    icon: <AnalyticsIcon fontSize="small" />,
+    components: components?.analytics || [],
+  },
+];
+
+const getPanelLabel = (component: React.ReactNode, fallback: string) => {
+  if (React.isValidElement(component)) {
+    if (component.props?.title) {
+      return component.props.title as string;
+    }
+    if (component.props?.['data-role']) {
+      return component.props['data-role'] as string;
+    }
+  }
+  return fallback;
+};
+
+const PanelWrapper: React.FC<{
+  component: React.ReactNode;
+  label: string;
+  highPriority: boolean;
+}> = ({ component, label, highPriority }) => {
+  const theme = useTheme();
+  if (highPriority) {
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          overflow: 'hidden',
+          backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: theme.shape.borderRadius,
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        {component}
+      </Paper>
+    );
+  }
+
+  return (
+    <Accordion
+      disableGutters
+      defaultExpanded={false}
+      sx={{
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: `${theme.shape.borderRadius}px`,
+        backgroundColor: theme.palette.background.paper,
+        '&:before': { display: 'none' },
+      }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
+        <Typography variant="subtitle2" fontWeight={600}>
+          {label}
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        {component}
+      </AccordionDetails>
+    </Accordion>
+  );
+};
+
+const MobileHeader: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <Box sx={{
+      p: 1.5,
+      textAlign: 'center',
+      backgroundColor: theme.palette.background.default,
+      borderBottom: `1px solid ${theme.palette.divider}`,
+    }}>
+      <Typography variant="subtitle1" sx={{ fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+        Novel Engine M1
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        AI-Powered Story Creation
+      </Typography>
+    </Box>
+  );
+};
+
+const TabsBar: React.FC<{
+  activeTab: number;
+  tabs: ReturnType<typeof buildTabs>;
+  onChange: (event: React.SyntheticEvent, value: number) => void;
+}> = ({ activeTab, tabs, onChange }) => (
+  <CompactTabs
+    value={activeTab}
+    onChange={onChange}
+    variant="fullWidth"
+    indicatorColor="primary"
+  >
+    {tabs.map((tab, index) => (
+      <Tab
+        key={index}
+        icon={tab.icon}
+        label={tab.label}
+        id={`mobile-tab-${index}`}
+        aria-controls={`mobile-tabpanel-${index}`}
+      />
+    ))}
+  </CompactTabs>
+);
+
+const TabPanels: React.FC<{
+  activeTab: number;
+  tabs: ReturnType<typeof buildTabs>;
+}> = ({ activeTab, tabs }) => (
+  <>
+    {tabs.map((tab, index) => (
+      <TabPanel key={index} value={activeTab} index={index}>
+        <Stack spacing={1}>
+          {tab.components.map((component, compIndex) => {
+            const label = getPanelLabel(component, `${tab.label} Panel ${compIndex + 1}`);
+            const highPriority = tab.label === 'Overview' && compIndex <= 2;
+            return (
+              <PanelWrapper
+                key={`${index}-${compIndex}`}
+                component={component}
+                label={label}
+                highPriority={highPriority}
+              />
+            );
+          })}
+        </Stack>
+      </TabPanel>
+    ))}
+  </>
+);
+
 const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
   children,
   components
 }) => {
-  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const tabs = buildTabs(components);
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
-  };
-
-  const tabs = [
-    {
-      label: 'Overview',
-      icon: <MapIcon fontSize="small" />,
-      components: [...(components?.essential || []), ...(components?.activity || []).slice(0, 1)],
-    },
-    {
-      label: 'Activity',
-      icon: <ActivityIcon fontSize="small" />,
-      components: components?.activity || [],
-    },
-    {
-      label: 'Story',
-      icon: <PeopleIcon fontSize="small" />,
-      components: [...(components?.characters || []), ...(components?.timeline || [])],
-    },
-    {
-      label: 'Analytics',
-      icon: <AnalyticsIcon fontSize="small" />,
-      components: components?.analytics || [],
-    },
-  ];
-
-  const getPanelLabel = (component: React.ReactNode, fallback: string) => {
-    if (React.isValidElement(component)) {
-      if (component.props?.title) {
-        return component.props.title as string;
-      }
-      if (component.props?.['data-role']) {
-        return component.props['data-role'] as string;
-      }
-    }
-    return fallback;
-  };
-
-  const renderPanel = (component: React.ReactNode, compIndex: number, tabLabel: string, key: string) => {
-    const label = getPanelLabel(component, `${tabLabel} Panel ${compIndex + 1}`);
-    const isHighPriorityOverview = tabLabel === 'Overview' && compIndex <= 2;
-
-    if (isHighPriorityOverview) {
-      return (
-        <Paper
-          key={key}
-          elevation={0}
-          sx={{
-            overflow: 'hidden',
-            backgroundColor: theme.palette.background.paper,
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: theme.shape.borderRadius,
-            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
-          {component}
-        </Paper>
-      );
-    }
-
-    return (
-      <Accordion
-        key={key}
-        disableGutters
-        defaultExpanded={false}
-        sx={{
-          border: `1px solid ${theme.palette.divider}`,
-          borderRadius: `${theme.shape.borderRadius}px`,
-          backgroundColor: theme.palette.background.paper,
-          '&:before': { display: 'none' },
-        }}
-      >
-        <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
-          <Typography variant="subtitle2" fontWeight={600}>
-            {label}
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          {component}
-        </AccordionDetails>
-      </Accordion>
-    );
   };
 
   if (components?.essential === undefined && React.Children.count(children) > 0) {
@@ -206,48 +273,13 @@ const MobileTabbedDashboard: React.FC<MobileTabbedDashboardProps> = ({
   return (
     <MobileTabbedContainer>
       {/* Mobile Header */}
-      <Box sx={{
-        p: 1.5,
-        textAlign: 'center',
-        backgroundColor: theme.palette.background.paper,
-        borderBottom: `1px solid ${theme.palette.divider}`,
-      }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.main' }}>
-          Novel Engine M1
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          AI-Powered Story Creation
-        </Typography>
-      </Box>
+      <MobileHeader />
 
       {/* Tabs */}
-      <CompactTabs
-        value={activeTab}
-        onChange={handleTabChange}
-        variant="fullWidth"
-        indicatorColor="primary"
-      >
-        {tabs.map((tab, index) => (
-          <Tab
-            key={index}
-            icon={tab.icon}
-            label={tab.label}
-            id={`mobile-tab-${index}`}
-            aria-controls={`mobile-tabpanel-${index}`}
-          />
-        ))}
-      </CompactTabs>
+      <TabsBar activeTab={activeTab} tabs={tabs} onChange={handleTabChange} />
 
       {/* Tab Content */}
-      {tabs.map((tab, index) => (
-        <TabPanel key={index} value={activeTab} index={index}>
-          <Stack spacing={1}>
-            {tab.components.map((component, compIndex) =>
-              renderPanel(component, compIndex, tab.label, `${index}-${compIndex}`)
-            )}
-          </Stack>
-        </TabPanel>
-      ))}
+      <TabPanels activeTab={activeTab} tabs={tabs} />
     </MobileTabbedContainer>
   );
 };

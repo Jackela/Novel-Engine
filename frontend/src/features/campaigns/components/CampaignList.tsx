@@ -56,7 +56,7 @@ const CampaignList: React.FC = () => {
   return (
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" sx={{ fontFamily: 'Orbitron', color: 'text.primary' }}>
+        <Typography variant="h4" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 600, color: 'text.primary' }}>
           Active Campaigns
         </Typography>
         <Button

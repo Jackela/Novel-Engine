@@ -23,6 +23,12 @@ export interface EnvConfig {
    * Default: 10000
    */
   apiTimeout: number;
+
+  /**
+   * Enable mobile optimizations (service worker + mobile hints).
+   * Default: true in production, false otherwise.
+   */
+  enableMobileOptimizations: boolean;
 }
 
 const getEnvVar = (key: string, fallback: string): string => {
@@ -48,10 +54,21 @@ const getNumberEnvVar = (key: string, fallback: number): number => {
   return isNaN(parsed) ? fallback : parsed;
 };
 
+const getDefaultProdFlag = (): boolean => {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return Boolean(import.meta.env.PROD);
+  }
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env.NODE_ENV === 'production';
+  }
+  return false;
+};
+
 export const config: EnvConfig = {
   enableGuestMode: getBoolEnvVar('VITE_ENABLE_GUEST_MODE', true), // Default to true as per existing logic
   apiBaseUrl: getEnvVar('VITE_API_BASE_URL', ''),
   apiTimeout: getNumberEnvVar('VITE_API_TIMEOUT', 10000),
+  enableMobileOptimizations: getBoolEnvVar('VITE_ENABLE_MOBILE_OPTIMIZATIONS', getDefaultProdFlag()),
 };
 
 export default config;

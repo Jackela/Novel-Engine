@@ -113,6 +113,111 @@ const normalizeFastApiValidation = (detail: unknown): ApiFieldError[] | undefine
   return fields.length > 0 ? fields : undefined;
 };
 
+type AxiosMetadata = {
+  startTime?: number;
+  correlationId?: string;
+  attemptCount?: number;
+};
+
+const getAxiosMetadata = (config: AxiosRequestConfig | undefined): AxiosMetadata | undefined =>
+  (config?.metadata as AxiosMetadata | undefined) ?? undefined;
+
+const getApiErrorCode = (data: BackendErrorEnvelope | undefined, status: number): string =>
+  asNonEmptyString(data?.code) ??
+  asNonEmptyString((data?.error as Record<string, unknown> | undefined)?.code) ??
+  `HTTP_${status}`;
+
+const getApiErrorMessage = (data: BackendErrorEnvelope | undefined, fallback: string): string => {
+  const detailText = asNonEmptyString(data?.detail);
+  const errorText = asNonEmptyString(data?.error);
+  const messageText = asNonEmptyString((data as Record<string, unknown> | undefined)?.message);
+
+  return detailText ?? messageText ?? errorText ?? fallback ?? 'Request failed';
+};
+
+const getApiErrorFields = (data: BackendErrorEnvelope | undefined): ApiFieldError[] | undefined => {
+  const record = data as Record<string, unknown> | undefined;
+  return normalizeValidationFields(data?.fields) ?? normalizeFastApiValidation(record?.detail);
+};
+
+const getApiErrorKind = (status: number): ApiErrorKind => {
+  if (status === 401 || status === 403) {
+    return 'auth';
+  }
+
+  if (status === 422) {
+    return 'validation';
+  }
+
+  return 'http';
+};
+
+const getRetryable = (status: number, data: BackendErrorEnvelope | undefined): boolean => {
+  const retryable = status === 408 || status === 429 || status >= 500;
+  const serverRetryable = typeof data?.retryable === 'boolean' ? data.retryable : undefined;
+  return serverRetryable ?? retryable;
+};
+
+const getHeaderValue = (
+  headers: Record<string, string | undefined>,
+  keys: string[]
+): string | undefined => {
+  for (const key of keys) {
+    const value = asNonEmptyString(headers[key]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
+};
+
+const getCorrelationId = (
+  headers: Record<string, string | undefined>,
+  metadata: AxiosMetadata | undefined
+): string | undefined =>
+  getHeaderValue(headers, ['x-correlation-id', 'X-Request-ID', 'x-request-id']) ??
+  metadata?.correlationId;
+
+const getRequestAttempts = (
+  headers: Record<string, string | undefined>,
+  metadata: AxiosMetadata | undefined
+): number | undefined => {
+  if (typeof metadata?.attemptCount === 'number') {
+    return metadata.attemptCount;
+  }
+
+  const headerAttempt = Number(headers['x-attempt']);
+  return Number.isNaN(headerAttempt) ? undefined : headerAttempt;
+};
+
+const getRequestDuration = (
+  headers: Record<string, string | undefined>,
+  metadata: AxiosMetadata | undefined
+): number | undefined => {
+  if (typeof metadata?.startTime === 'number') {
+    return Date.now() - metadata.startTime;
+  }
+
+  const headerDuration = Number(headers['x-request-duration']);
+  return Number.isNaN(headerDuration) ? undefined : headerDuration;
+};
+
+const buildNetworkApiError = (error: unknown): ApiError => {
+  const axiosError = error as { message?: string; code?: unknown };
+  const rawCode = asNonEmptyString(axiosError.code);
+  const message = typeof axiosError.message === 'string' ? axiosError.message : '';
+  const isTimeout = rawCode === 'ECONNABORTED' || /timeout/i.test(message);
+
+  return new ApiError({
+    message: isTimeout ? 'Request timed out' : 'Unable to connect to server',
+    kind: isTimeout ? 'timeout' : 'network',
+    code: rawCode ?? (isTimeout ? 'ECONNABORTED' : 'NETWORK_ERROR'),
+    retryable: true,
+    details: { message },
+  });
+};
+
 export const normalizeApiError = (error: unknown): ApiError => {
   if (error instanceof ApiError) return error;
 
@@ -121,58 +226,15 @@ export const normalizeApiError = (error: unknown): ApiError => {
       const status = error.response.status;
       const data = error.response.data as BackendErrorEnvelope | undefined;
       const headers = (error.response.headers ?? {}) as Record<string, string | undefined>;
-      const requestConfig = error.config as AxiosRequestConfig | undefined;
-      const metadata = requestConfig?.metadata as {
-        startTime?: number;
-        correlationId?: string;
-        attemptCount?: number;
-      } | undefined;
-
-      const code =
-        asNonEmptyString(data?.code) ??
-        asNonEmptyString((data?.error as Record<string, unknown> | undefined)?.code) ??
-        `HTTP_${status}`;
-
-      const detailText = asNonEmptyString(data?.detail);
-      const errorText = asNonEmptyString(data?.error);
-      const messageText = asNonEmptyString((data as Record<string, unknown> | undefined)?.message);
-
-      const message = detailText ?? messageText ?? errorText ?? error.message ?? 'Request failed';
-
-      const fields =
-        normalizeValidationFields(data?.fields) ??
-        normalizeFastApiValidation((data as Record<string, unknown> | undefined)?.detail);
-
-      const kind: ApiErrorKind =
-        status === 401 || status === 403
-          ? 'auth'
-          : status === 422
-            ? 'validation'
-            : 'http';
-
-      const retryable = status === 408 || status === 429 || status >= 500;
-      const serverRetryable = typeof data?.retryable === 'boolean' ? data.retryable : undefined;
-      const finalRetryable = serverRetryable ?? retryable;
-
-      const headerCorrelationId =
-        asNonEmptyString(headers['x-correlation-id']) ||
-        asNonEmptyString(headers['X-Request-ID']) ||
-        asNonEmptyString(headers['x-request-id']) ||
-        metadata?.correlationId;
-      const headerAttempt = Number(headers['x-attempt']);
-      const requestAttempts =
-        typeof metadata?.attemptCount === 'number'
-          ? metadata.attemptCount
-          : !Number.isNaN(headerAttempt)
-            ? headerAttempt
-            : undefined;
-      const headerDuration = Number(headers['x-request-duration']);
-      const requestDuration =
-        typeof metadata?.startTime === 'number'
-          ? Date.now() - metadata.startTime
-          : !Number.isNaN(headerDuration)
-            ? headerDuration
-            : undefined;
+      const metadata = getAxiosMetadata(error.config as AxiosRequestConfig | undefined);
+      const code = getApiErrorCode(data, status);
+      const message = getApiErrorMessage(data, error.message ?? '');
+      const fields = getApiErrorFields(data);
+      const kind = getApiErrorKind(status);
+      const finalRetryable = getRetryable(status, data);
+      const headerCorrelationId = getCorrelationId(headers, metadata);
+      const requestAttempts = getRequestAttempts(headers, metadata);
+      const requestDuration = getRequestDuration(headers, metadata);
 
       return new ApiError({
         message,
@@ -189,16 +251,7 @@ export const normalizeApiError = (error: unknown): ApiError => {
     }
 
     if (error.request) {
-      const rawCode = asNonEmptyString((error as unknown as { code?: unknown }).code);
-      const isTimeout = rawCode === 'ECONNABORTED' || /timeout/i.test(error.message || '');
-
-      return new ApiError({
-        message: isTimeout ? 'Request timed out' : 'Unable to connect to server',
-        kind: isTimeout ? 'timeout' : 'network',
-        code: rawCode ?? (isTimeout ? 'ECONNABORTED' : 'NETWORK_ERROR'),
-        retryable: true,
-        details: { message: error.message },
-      });
+      return buildNetworkApiError(error);
     }
   }
 

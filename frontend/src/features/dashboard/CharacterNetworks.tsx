@@ -8,7 +8,7 @@ import Avatar from '@mui/material/Avatar';
 import LinearProgress from '@mui/material/LinearProgress';
 import Fade from '@mui/material/Fade';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme, alpha } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Groups';
@@ -16,6 +16,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import NetworkIcon from '@mui/icons-material/Diversity3';
 import GridTile from '@/components/layout/GridTile';
 import { useDashboardCharactersDataset } from '@/hooks/useDashboardCharactersDataset';
+import type { DashboardCharacter } from '@/hooks/useDashboardCharactersDataset';
 
 const NetworkContainer = styled(Box)(({ theme }) => ({
   width: '100%',
@@ -52,10 +53,10 @@ const CharacterCard = styled(motion.button, {
           : theme.palette.warning.main,
     transform: 'translateY(-2px)',
     boxShadow: `0 4px 8px ${status === 'active'
-      ? 'rgba(16, 185, 129, 0.2)'
+      ? alpha(theme.palette.success.main, 0.2)
       : status === 'hostile'
-        ? 'rgba(239, 68, 68, 0.2)'
-        : 'rgba(245, 158, 11, 0.2)'
+        ? alpha(theme.palette.error.main, 0.2)
+        : alpha(theme.palette.warning.main, 0.2)
       }`,
   },
   '&:focus-visible': {
@@ -108,23 +109,22 @@ interface CharacterNetworksProps {
   error?: boolean;
 }
 
-const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { characters, loading: charactersLoading, error: charactersError, source } = useDashboardCharactersDataset();
+interface NetworkCharacter extends DashboardCharacter {
+  roleLabel: string;
+  connections: number;
+}
+
+const buildNetworkCharacters = (characters: DashboardCharacter[]): NetworkCharacter[] =>
+  characters.map((character, index) => ({
+    ...character,
+    roleLabel: character.role.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()),
+    connections: Math.max(2, (index % 5) + 2),
+  }));
+
+const useCharacterNetworkSelection = (networkCharacters: NetworkCharacter[]) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const cardRefs = useRef<Array<HTMLButtonElement | null>>([]);
-
-  const networkCharacters = useMemo(
-    () =>
-      characters.map((character, index) => ({
-        ...character,
-        roleLabel: character.role.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()),
-        connections: Math.max(2, (index % 5) + 2),
-      })),
-    [characters]
-  );
 
   useEffect(() => {
     if (!networkCharacters.length) {
@@ -143,39 +143,18 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
     }
   }, [activeIndex]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return theme.palette.success.main;
-      case 'hostile':
-        return theme.palette.error.main;
-      case 'inactive':
-      default:
-        return theme.palette.warning.main;
-    }
-  };
-
-  const totalConnections = networkCharacters.reduce((sum, character) => sum + character.connections, 0);
-  const activeCount = networkCharacters.filter((character) => character.status === 'active').length;
-  const averageTrust = networkCharacters.length
-    ? Math.round(networkCharacters.reduce((sum, character) => sum + character.trust, 0) / networkCharacters.length)
-    : 0;
-
   const handleMoveFocus = useCallback(
     (direction: 1 | -1) => {
       if (!networkCharacters.length) {
         return;
       }
-      setActiveIndex((prev) => {
-        const next = (prev + direction + networkCharacters.length) % networkCharacters.length;
-        return next;
-      });
+      setActiveIndex((prev) => (prev + direction + networkCharacters.length) % networkCharacters.length);
     },
     [networkCharacters.length]
   );
 
   const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent, index: number, characterId: string) => {
+    (event: React.KeyboardEvent, characterId: string) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         setSelectedCharacterId((prev) => (prev === characterId ? null : characterId));
@@ -193,6 +172,355 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
     },
     [handleMoveFocus]
   );
+
+  const handleSelect = useCallback((characterId: string) => {
+    setSelectedCharacterId((prev) => (prev === characterId ? null : characterId));
+  }, []);
+
+  return {
+    activeIndex,
+    selectedCharacterId,
+    cardRefs,
+    setActiveIndex,
+    handleKeyDown,
+    handleSelect,
+  };
+};
+
+const getStatusColor = (status: string, theme: ReturnType<typeof useTheme>) => {
+  if (status === 'active') return theme.palette.success.main;
+  if (status === 'hostile') return theme.palette.error.main;
+  return theme.palette.warning.main;
+};
+
+const getNetworkMetrics = (networkCharacters: NetworkCharacter[]) => {
+  const totalConnections = networkCharacters.reduce((sum, character) => sum + character.connections, 0);
+  const activeCount = networkCharacters.filter((character) => character.status === 'active').length;
+  const averageTrust = networkCharacters.length
+    ? Math.round(networkCharacters.reduce((sum, character) => sum + character.trust, 0) / networkCharacters.length)
+    : 0;
+
+  return {
+    totalConnections,
+    activeCount,
+    averageTrust,
+  };
+};
+
+const CharacterNetworkSummary: React.FC<{
+  characterCount: number;
+  totalConnections: number;
+  activeCount: number;
+  source: string;
+}> = ({ characterCount, totalConnections, activeCount, source }) => (
+  <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 1.5, flexShrink: 0, flexWrap: 'wrap' }}>
+    <Chip
+      icon={<PersonIcon sx={{ fontSize: '16px' }} />}
+      label={`${characterCount} Characters`}
+      size="small"
+      sx={{
+        backgroundColor: (theme) => theme.palette.background.paper,
+        borderColor: (theme) => theme.palette.divider,
+        color: (theme) => theme.palette.text.secondary,
+        fontSize: '0.7rem',
+        height: '22px',
+        '& .MuiChip-icon': { color: (theme) => theme.palette.primary.main },
+      }}
+    />
+    <Chip
+      icon={<LinkIcon sx={{ fontSize: '16px' }} />}
+      label={`${totalConnections} Links`}
+      size="small"
+      sx={{
+        backgroundColor: (theme) => theme.palette.background.paper,
+        borderColor: (theme) => theme.palette.divider,
+        color: (theme) => theme.palette.text.secondary,
+        fontSize: '0.7rem',
+        height: '22px',
+        '& .MuiChip-icon': { color: (theme) => theme.palette.secondary.main },
+      }}
+    />
+    <Chip
+      icon={<GroupIcon sx={{ fontSize: '16px' }} />}
+      label={`${activeCount} Active`}
+      size="small"
+      sx={{
+        backgroundColor: (theme) => alpha(theme.palette.success.main, 0.12),
+        borderColor: (theme) => theme.palette.success.main,
+        color: (theme) => theme.palette.success.main,
+        fontSize: '0.7rem',
+        height: '22px',
+        '& .MuiChip-icon': { color: (theme) => theme.palette.success.main },
+      }}
+    />
+    <Chip
+      label={source === 'api' ? 'API feed' : 'Demo data'}
+      size="small"
+      color={source === 'api' ? 'success' : 'default'}
+      sx={{ fontSize: '0.7rem', height: '22px', fontWeight: 600 }}
+    />
+  </Stack>
+);
+
+const CharacterNetworkItem: React.FC<{
+  character: NetworkCharacter;
+  isMobile: boolean;
+  isActive: boolean;
+  isSelected: boolean;
+  theme: ReturnType<typeof useTheme>;
+  cardRef: (node: HTMLButtonElement | null) => void;
+  onFocus: () => void;
+  onKeyDown: (event: React.KeyboardEvent) => void;
+  onClick: () => void;
+}> = ({
+  character,
+  isMobile,
+  isActive,
+  isSelected,
+  theme,
+  cardRef,
+  onFocus,
+  onKeyDown,
+  onClick,
+}) => (
+  <CharacterCard
+    status={character.status}
+    data-character-id={character.id}
+    data-character-status={character.status}
+    data-character-name={character.name}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+    whileHover={{ scale: 1.02 }}
+    data-testid="character-node"
+    role="button"
+    type="button"
+    aria-pressed={isSelected}
+    aria-controls={`character-detail-${character.id}`}
+    tabIndex={isActive ? 0 : -1}
+    ref={cardRef}
+    onFocus={onFocus}
+    onKeyDown={onKeyDown}
+    onClick={onClick}
+  >
+    <CharacterNetworkAvatar character={character} isMobile={isMobile} theme={theme} />
+    <CharacterNetworkInfo
+      character={character}
+      isMobile={isMobile}
+      isSelected={isSelected}
+      theme={theme}
+    />
+  </CharacterCard>
+);
+
+const CharacterNetworkAvatar: React.FC<{
+  character: NetworkCharacter;
+  isMobile: boolean;
+  theme: ReturnType<typeof useTheme>;
+}> = ({ character, isMobile, theme }) => (
+  <Avatar
+    sx={{
+      width: isMobile ? 32 : 36,
+      height: isMobile ? 32 : 36,
+      backgroundColor: getStatusColor(character.status, theme),
+      border: (themeInner) => `2px solid ${themeInner.palette.background.default}`,
+      mr: 1.5,
+      position: 'relative',
+    }}
+  >
+    <PersonIcon fontSize="small" />
+    <StatusBadge
+      status={character.status}
+      sx={{
+        position: 'absolute',
+        bottom: -2,
+        right: -2,
+        border: (themeInner) => `2px solid ${themeInner.palette.background.default}`,
+      }}
+    />
+  </Avatar>
+);
+
+const CharacterNetworkInfo: React.FC<{
+  character: NetworkCharacter;
+  isMobile: boolean;
+  isSelected: boolean;
+  theme: ReturnType<typeof useTheme>;
+}> = ({ character, isMobile, isSelected, theme }) => (
+  <Box sx={{ flex: 1, minWidth: 0 }}>
+    <CharacterNetworkHeader character={character} isMobile={isMobile} />
+    <CharacterNetworkTrust character={character} />
+    <CharacterNetworkMeta character={character} theme={theme} />
+    <CharacterNetworkDetail character={character} isSelected={isSelected} />
+  </Box>
+);
+
+const CharacterNetworkHeader: React.FC<{
+  character: NetworkCharacter;
+  isMobile: boolean;
+}> = ({ character, isMobile }) => (
+  <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.25 }}>
+    <Typography
+      variant={isMobile ? 'caption' : 'body2'}
+      fontWeight={600}
+      noWrap
+      sx={{ color: 'var(--color-text-primary)' }}
+    >
+      {character.name}
+    </Typography>
+    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+      • {character.roleLabel}
+    </Typography>
+  </Stack>
+);
+
+const CharacterNetworkTrust: React.FC<{ character: NetworkCharacter }> = ({ character }) => (
+  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', minWidth: '50px' }}>
+      Trust: {character.trust}%
+    </Typography>
+    <TrustProgress
+      variant="determinate"
+      value={character.trust}
+      trustlevel={character.trust}
+      sx={{ flex: 1 }}
+      aria-label={`${character.name} trust level ${character.trust} percent`}
+      data-testid="character-trust-progress"
+    />
+  </Stack>
+);
+
+const CharacterNetworkMeta: React.FC<{
+  character: NetworkCharacter;
+  theme: ReturnType<typeof useTheme>;
+}> = ({ character, theme }) => (
+  <Stack direction="row" alignItems="center" spacing={0.5}>
+    <LinkIcon sx={{ fontSize: '12px', color: 'secondary.main' }} data-testid="character-connection-icon" />
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      sx={{ fontSize: '0.7rem' }}
+      data-testid="character-connection-count"
+    >
+      {character.connections} connections
+    </Typography>
+    <Chip
+      label={character.status}
+      size="small"
+      sx={{
+        height: '16px',
+        fontSize: '0.6rem',
+        ml: 'auto',
+        backgroundColor: alpha(getStatusColor(character.status, theme), 0.12),
+        color: getStatusColor(character.status, theme),
+        borderColor: getStatusColor(character.status, theme),
+      }}
+      data-testid="character-status"
+    />
+  </Stack>
+);
+
+const CharacterNetworkDetail: React.FC<{
+  character: NetworkCharacter;
+  isSelected: boolean;
+}> = ({ character, isSelected }) => (
+  <Box
+    id={`character-detail-${character.id}`}
+    sx={{
+      mt: 0.5,
+      color: isSelected ? 'text.primary' : 'text.disabled',
+      fontSize: '0.65rem',
+    }}
+  >
+    <Typography variant="caption">
+      {isSelected ? `${character.name} ready for orchestration` : 'Select to inspect network details'}
+    </Typography>
+  </Box>
+);
+
+const CharacterNetworkList: React.FC<{
+  characters: NetworkCharacter[];
+  isMobile: boolean;
+  activeIndex: number;
+  selectedCharacterId: string | null;
+  theme: ReturnType<typeof useTheme>;
+  cardRefs: React.MutableRefObject<Array<HTMLButtonElement | null>>;
+  onFocusIndex: (index: number) => void;
+  onKeyDown: (event: React.KeyboardEvent, characterId: string) => void;
+  onSelect: (characterId: string) => void;
+}> = ({
+  characters,
+  isMobile,
+  activeIndex,
+  selectedCharacterId,
+  theme,
+  cardRefs,
+  onFocusIndex,
+  onKeyDown,
+  onSelect,
+}) => (
+  <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+    <List dense sx={{ py: 0 }}>
+      {characters.slice(0, isMobile ? 3 : 5).map((character, index) => (
+        <Fade in key={character.id} timeout={300 + index * 100}>
+          <CharacterNetworkItem
+            character={character}
+            isMobile={isMobile}
+            isActive={activeIndex === index}
+            isSelected={selectedCharacterId === character.id}
+            theme={theme}
+            cardRef={(node: HTMLButtonElement | null) => {
+              cardRefs.current[index] = node;
+            }}
+            onFocus={() => onFocusIndex(index)}
+            onKeyDown={(event) => onKeyDown(event, character.id)}
+            onClick={() => onSelect(character.id)}
+          />
+        </Fade>
+      ))}
+    </List>
+  </Box>
+);
+
+const CharacterNetworkFooter: React.FC<{
+  averageTrust: number;
+  theme: ReturnType<typeof useTheme>;
+}> = ({ averageTrust, theme }) => (
+  <Box
+    sx={{
+      pt: 1,
+      mt: 1,
+      borderTop: (themeInner) => `1px solid ${themeInner.palette.divider}`,
+      flexShrink: 0,
+    }}
+  >
+    <Stack direction="row" justifyContent="space-between" alignItems="center" data-testid="network-health">
+      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+        Network Health
+      </Typography>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <NetworkIcon
+          sx={{
+            fontSize: '16px',
+            color: getStatusColor(averageTrust >= 60 ? 'active' : 'inactive', theme),
+          }}
+        />
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+          {averageTrust}% Avg Trust
+        </Typography>
+      </Stack>
+    </Stack>
+  </Box>
+);
+
+const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { characters, loading: charactersLoading, error: charactersError, source } =
+    useDashboardCharactersDataset();
+  const networkCharacters = useMemo(() => buildNetworkCharacters(characters), [characters]);
+  const { totalConnections, activeCount, averageTrust } = getNetworkMetrics(networkCharacters);
+  const selection = useCharacterNetworkSelection(networkCharacters);
 
   const combinedLoading = loading || charactersLoading;
   const combinedError = error || charactersError;
@@ -213,208 +541,26 @@ const CharacterNetworks: React.FC<CharacterNetworksProps> = ({ loading, error })
       error={shouldShowError}
     >
       <NetworkContainer>
-        <Stack
-          direction="row"
-          spacing={1}
-          justifyContent="center"
-          sx={{ mb: 1.5, flexShrink: 0, flexWrap: 'wrap' }}
-        >
-          <Chip
-            icon={<PersonIcon sx={{ fontSize: '16px' }} />}
-            label={`${networkCharacters.length} Characters`}
-            size="small"
-            sx={{
-              backgroundColor: (theme) => theme.palette.background.paper,
-              borderColor: (theme) => theme.palette.divider,
-              color: (theme) => theme.palette.text.secondary,
-              fontSize: '0.7rem',
-              height: '22px',
-              '& .MuiChip-icon': { color: (theme) => theme.palette.primary.main },
-            }}
-          />
-          <Chip
-            icon={<LinkIcon sx={{ fontSize: '16px' }} />}
-            label={`${totalConnections} Links`}
-            size="small"
-            sx={{
-              backgroundColor: (theme) => theme.palette.background.paper,
-              borderColor: (theme) => theme.palette.divider,
-              color: (theme) => theme.palette.text.secondary,
-              fontSize: '0.7rem',
-              height: '22px',
-              '& .MuiChip-icon': { color: (theme) => theme.palette.secondary.main },
-            }}
-          />
-          <Chip
-            icon={<GroupIcon sx={{ fontSize: '16px' }} />}
-            label={`${activeCount} Active`}
-            size="small"
-            sx={{
-              backgroundColor: 'rgba(0, 255, 157, 0.12)',
-              borderColor: (theme) => theme.palette.success.main,
-              color: 'rgba(0, 255, 157, 0.8)',
-              fontSize: '0.7rem',
-              height: '22px',
-              '& .MuiChip-icon': { color: (theme) => theme.palette.success.main },
-            }}
-          />
-          <Chip
-            label={source === 'api' ? 'API feed' : 'Demo data'}
-            size="small"
-            color={source === 'api' ? 'success' : 'default'}
-            sx={{
-              fontSize: '0.7rem',
-              height: '22px',
-              fontWeight: 600,
-            }}
-          />
-        </Stack>
+        <CharacterNetworkSummary
+          characterCount={networkCharacters.length}
+          totalConnections={totalConnections}
+          activeCount={activeCount}
+          source={source}
+        />
 
-        <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-          <List dense sx={{ py: 0 }}>
-            {networkCharacters.slice(0, isMobile ? 3 : 5).map((character, index) => (
-              <Fade in key={character.id} timeout={300 + index * 100}>
-                <CharacterCard
-                  status={character.status}
-                  data-character-id={character.id}
-                  data-character-status={character.status}
-                  data-character-name={character.name}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  whileHover={{ scale: 1.02 }}
-                  data-testid="character-node"
-                  role="button"
-                  type="button"
-                  aria-pressed={selectedCharacterId === character.id}
-                  aria-controls={`character-detail-${character.id}`}
-                  tabIndex={activeIndex === index ? 0 : -1}
-                  ref={(node: HTMLButtonElement | null) => {
-                    cardRefs.current[index] = node;
-                  }}
-                  onFocus={() => setActiveIndex(index)}
-                  onKeyDown={(event) => handleKeyDown(event, index, character.id)}
-                  onClick={() => setSelectedCharacterId((prev) => (prev === character.id ? null : character.id))}
-                >
-                  <Avatar
-                    sx={{
-                      width: isMobile ? 32 : 36,
-                      height: isMobile ? 32 : 36,
-                      backgroundColor: getStatusColor(character.status),
-                      border: (theme) => `2px solid ${theme.palette.background.default}`,
-                      mr: 1.5,
-                      position: 'relative',
-                    }}
-                  >
-                    <PersonIcon fontSize="small" />
-                    <StatusBadge
-                      status={character.status}
-                      sx={{
-                        position: 'absolute',
-                        bottom: -2,
-                        right: -2,
-                        border: (theme) => `2px solid ${theme.palette.background.default}`,
-                      }}
-                    />
-                  </Avatar>
+        <CharacterNetworkList
+          characters={networkCharacters}
+          isMobile={isMobile}
+          activeIndex={selection.activeIndex}
+          selectedCharacterId={selection.selectedCharacterId}
+          theme={theme}
+          cardRefs={selection.cardRefs}
+          onFocusIndex={selection.setActiveIndex}
+          onKeyDown={selection.handleKeyDown}
+          onSelect={selection.handleSelect}
+        />
 
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.25 }}>
-                      <Typography
-                        variant={isMobile ? 'caption' : 'body2'}
-                        fontWeight={600}
-                        noWrap
-                        sx={{ color: 'var(--color-text-primary)' }}
-                      >
-                        {character.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                        • {character.roleLabel}
-                      </Typography>
-                    </Stack>
-
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', minWidth: '50px' }}>
-                        Trust: {character.trust}%
-                      </Typography>
-                      <TrustProgress
-                        variant="determinate"
-                        value={character.trust}
-                        trustlevel={character.trust}
-                        sx={{ flex: 1 }}
-                        aria-label={`${character.name} trust level ${character.trust} percent`}
-                        data-testid="character-trust-progress"
-                      />
-                    </Stack>
-
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <LinkIcon sx={{ fontSize: '12px', color: 'secondary.main' }} data-testid="character-connection-icon" />
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ fontSize: '0.7rem' }}
-                        data-testid="character-connection-count"
-                      >
-                        {character.connections} connections
-                      </Typography>
-                      <Chip
-                        label={character.status}
-                        size="small"
-                        sx={{
-                          height: '16px',
-                          fontSize: '0.6rem',
-                          ml: 'auto',
-                          backgroundColor: 'rgba(0, 240, 255, 0.12)',
-                          color: getStatusColor(character.status),
-                          borderColor: getStatusColor(character.status),
-                        }}
-                        data-testid="character-status"
-                      />
-                    </Stack>
-
-                    <Box
-                      id={`character-detail-${character.id}`}
-                      sx={{
-                        mt: 0.5,
-                        color: selectedCharacterId === character.id ? 'text.primary' : 'text.disabled',
-                        fontSize: '0.65rem',
-                      }}
-                    >
-                      <Typography variant="caption">
-                        {selectedCharacterId === character.id
-                          ? `${character.name} ready for orchestration`
-                          : 'Select to inspect network details'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CharacterCard>
-              </Fade>
-            ))}
-          </List>
-        </Box>
-
-        {!isMobile && (
-          <Box
-            sx={{
-              pt: 1,
-              mt: 1,
-              borderTop: (theme) => `1px solid ${theme.palette.divider}`,
-              flexShrink: 0,
-            }}
-          >
-            <Stack direction="row" justifyContent="space-between" alignItems="center" data-testid="network-health">
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                Network Health
-              </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <NetworkIcon sx={{ fontSize: '16px', color: getStatusColor(averageTrust >= 60 ? 'active' : 'inactive') }} />
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                  {averageTrust}% Avg Trust
-                </Typography>
-              </Stack>
-            </Stack>
-          </Box>
-        )}
+        {!isMobile && <CharacterNetworkFooter averageTrust={averageTrust} theme={theme} />}
       </NetworkContainer>
     </GridTile>
   );

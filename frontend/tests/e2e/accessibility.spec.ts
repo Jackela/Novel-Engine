@@ -8,7 +8,8 @@
  * using only keyboard (no mouse required)
  */
 
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import { test, expect } from './fixtures';
+import type { Locator, Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { DashboardPage } from './pages/DashboardPage';
 

@@ -12,6 +12,66 @@ interface ErrorStateProps {
   isConnectionError?: boolean;
 }
 
+const ErrorIcon: React.FC<{ isConnectionError: boolean }> = ({ isConnectionError }) => (
+  <Box
+    component={motion.div}
+    animate={{ 
+      rotate: [0, -5, 5, -5, 5, 0],
+      opacity: [1, 0.8, 1] 
+    }}
+    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+    sx={{ mb: 3, color: 'error.main' }}
+  >
+    {isConnectionError ? <CloudOffIcon sx={{ fontSize: 80 }} /> : <ReportProblemIcon sx={{ fontSize: 80 }} />}
+  </Box>
+);
+
+const Troubleshooting: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <Box
+      sx={{
+        mt: 2,
+        p: 2,
+        bgcolor: theme.palette.background.default,
+        borderRadius: 2,
+        textAlign: 'left',
+        border: `1px solid ${theme.palette.divider}`
+      }}
+    >
+      <Typography
+        variant="caption"
+        display="block"
+        sx={{ fontWeight: 'bold', mb: 1, color: 'text.primary', letterSpacing: '0.12em' }}
+      >
+        Troubleshooting
+      </Typography>
+      <Typography variant="caption" display="block">• Ensure the backend server is running (Port 8000)</Typography>
+      <Typography variant="caption" display="block">• Check your local network connection</Typography>
+      <Typography variant="caption" display="block">• Verify API endpoint settings in .env</Typography>
+    </Box>
+  );
+};
+
+const RetryButton: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
+  <Button
+    variant="contained"
+    color="error"
+    size="large"
+    startIcon={<RefreshIcon />}
+    onClick={onRetry}
+    sx={{
+      px: 6,
+      py: 1.5,
+      borderRadius: 2,
+      fontWeight: 600,
+      boxShadow: 'none',
+    }}
+  >
+    Reconnect System
+  </Button>
+);
+
 const ErrorState: React.FC<ErrorStateProps> = ({
   title = "System Anomaly Detected",
   message = "An unexpected error occurred during data retrieval.",
@@ -42,62 +102,22 @@ const ErrorState: React.FC<ErrorStateProps> = ({
           p: 6,
           maxWidth: 600,
           borderRadius: 4,
-          background: 'rgba(255, 0, 0, 0.05)',
-          border: `1px solid rgba(255, 0, 0, 0.1)`,
-          backdropFilter: 'blur(10px)',
+          background: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
         }}
       >
-        <Box
-          component={motion.div}
-          animate={{ 
-            rotate: [0, -5, 5, -5, 5, 0],
-            opacity: [1, 0.8, 1] 
-          }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          sx={{ mb: 3, color: 'error.main' }}
-        >
-          {isConnectionError ? <CloudOffIcon sx={{ fontSize: 80 }} /> : <ReportProblemIcon sx={{ fontSize: 80 }} />}
-        </Box>
+        <ErrorIcon isConnectionError={isConnectionError} />
 
-        <Typography variant="h4" color="error.main" gutterBottom sx={{ fontWeight: 700, fontFamily: 'Orbitron' }}>
+        <Typography variant="h4" color="error.main" gutterBottom sx={{ fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
           {title}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem' }}>
           {message}
-          {isConnectionError && (
-            <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2, textAlign: 'left' }}>
-              <Typography variant="caption" display="block" sx={{ fontWeight: 'bold', mb: 1, color: 'primary.main' }}>
-                TROUBLESHOOTING:
-              </Typography>
-              <Typography variant="caption" display="block">• Ensure the backend server is running (Port 8000)</Typography>
-              <Typography variant="caption" display="block">• Check your local network connection</Typography>
-              <Typography variant="caption" display="block">• Verify API endpoint settings in .env</Typography>
-            </Box>
-          )}
+          {isConnectionError && <Troubleshooting />}
         </Typography>
 
-        {onRetry && (
-          <Button
-            variant="contained"
-            color="error"
-            size="large"
-            startIcon={<RefreshIcon />}
-            onClick={onRetry}
-            sx={{
-              px: 6,
-              py: 1.5,
-              borderRadius: 2,
-              fontWeight: 'bold',
-              boxShadow: `0 0 20px ${theme.palette.error.main}40`,
-              '&:hover': {
-                boxShadow: `0 0 30px ${theme.palette.error.main}60`,
-              }
-            }}
-          >
-            Reconnect System
-          </Button>
-        )}
+        {onRetry && <RetryButton onRetry={onRetry} />}
       </Paper>
     </Box>
   );

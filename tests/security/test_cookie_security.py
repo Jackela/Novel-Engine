@@ -107,6 +107,19 @@ class TestCookieSecurity:
         assert "SameSite=Lax" in refresh_cookie or "SameSite=lax" in refresh_cookie
 
     @pytest.mark.unit
+    def test_login_rejects_query_credentials(self, client, mock_credentials):
+        """
+        Test that login rejects credentials supplied via query parameters.
+        """
+        response = client.post(
+            "/api/auth/login?email=leak@example.com&password=leak",
+            json=mock_credentials,
+        )
+
+        assert response.status_code == 400
+        assert "Credentials must be sent" in response.json()["detail"]
+
+    @pytest.mark.unit
     def test_remember_me_extends_cookie_duration(self, client):
         """
         Test that remember_me flag extends refresh token cookie duration.
@@ -385,11 +398,14 @@ class TestCookieSecurity:
         - Cookies can be sent cross-origin (for frontend-backend separation)
         """
         # Make an OPTIONS request to check CORS
-        response = client.options("/api/auth/login")
+        response = client.options(
+            "/api/auth/login", headers={"Origin": "http://localhost:3000"}
+        )
 
         # Verify CORS headers
         assert response.status_code == 204
         assert "Access-Control-Allow-Origin" in response.headers
+        assert response.headers["Access-Control-Allow-Origin"] != "*"
         assert "Access-Control-Allow-Methods" in response.headers
 
 

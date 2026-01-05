@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
+import type { ActionReducerMapBuilder, PayloadAction } from '@reduxjs/toolkit';
 import { charactersAPI } from '@/services/api/charactersAPI';
+import type { CreateCharacterRequest, UpdateCharacterRequest } from '@/services/api/charactersAPI';
 
 export interface PersonalityTraits {
   openness: number;
@@ -92,7 +93,7 @@ export const fetchCharacterById = createAsyncThunk(
 
 export const createCharacter = createAsyncThunk(
   'characters/createCharacter',
-  async (characterData: any) => {
+  async (characterData: CreateCharacterRequest) => {
     const response = await charactersAPI.createCharacter(characterData);
     return response;
   }
@@ -105,7 +106,7 @@ export const updateCharacter = createAsyncThunk(
     updates,
   }: {
     characterId: string;
-    updates: any;
+    updates: UpdateCharacterRequest;
   }) => {
     const response = await charactersAPI.updateCharacter(characterId, updates);
     return response;
@@ -119,6 +120,118 @@ export const deleteCharacter = createAsyncThunk(
     return characterId;
   }
 );
+
+const addFetchCharactersReducers = (
+  builder: ActionReducerMapBuilder<CharactersState>
+) => {
+  builder
+    .addCase(fetchCharacters.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(fetchCharacters.fulfilled, (state, action) => {
+      state.loading = false;
+      if (action.payload.data) {
+        state.characters = action.payload.data.characters;
+        state.pagination = action.payload.data.pagination;
+      }
+      state.error = null;
+    })
+    .addCase(fetchCharacters.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to fetch characters';
+    });
+};
+
+const addFetchCharacterByIdReducers = (
+  builder: ActionReducerMapBuilder<CharactersState>
+) => {
+  builder
+    .addCase(fetchCharacterById.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(fetchCharacterById.fulfilled, (state, action) => {
+      state.loading = false;
+      state.selectedCharacter = action.payload.data || null;
+      state.error = null;
+    })
+    .addCase(fetchCharacterById.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to fetch character';
+    });
+};
+
+const addCreateCharacterReducers = (
+  builder: ActionReducerMapBuilder<CharactersState>
+) => {
+  builder
+    .addCase(createCharacter.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(createCharacter.fulfilled, (state, action) => {
+      state.loading = false;
+      if (action.payload.data) {
+        state.characters.unshift(action.payload.data);
+      }
+      state.error = null;
+    })
+    .addCase(createCharacter.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to create character';
+    });
+};
+
+const addUpdateCharacterReducers = (
+  builder: ActionReducerMapBuilder<CharactersState>
+) => {
+  builder
+    .addCase(updateCharacter.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(updateCharacter.fulfilled, (state, action) => {
+      state.loading = false;
+      const updatedCharacter = action.payload.data;
+      if (updatedCharacter) {
+        const index = state.characters.findIndex((c) => c.id === updatedCharacter.id);
+        if (index !== -1) {
+          state.characters[index] = updatedCharacter;
+        }
+        if (state.selectedCharacter?.id === updatedCharacter.id) {
+          state.selectedCharacter = updatedCharacter;
+        }
+      }
+      state.error = null;
+    })
+    .addCase(updateCharacter.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to update character';
+    });
+};
+
+const addDeleteCharacterReducers = (
+  builder: ActionReducerMapBuilder<CharactersState>
+) => {
+  builder
+    .addCase(deleteCharacter.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(deleteCharacter.fulfilled, (state, action) => {
+      state.loading = false;
+      state.characters = state.characters.filter((c) => c.id !== action.payload);
+      if (state.selectedCharacter?.id === action.payload) {
+        state.selectedCharacter = null;
+      }
+      state.error = null;
+    })
+    .addCase(deleteCharacter.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message || 'Failed to delete character';
+    });
+};
 
 const charactersSlice = createSlice({
   name: 'characters',
@@ -142,94 +255,11 @@ const charactersSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder
-      // Fetch characters
-      .addCase(fetchCharacters.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchCharacters.fulfilled, (state, action) => {
-        state.loading = false;
-        if (action.payload.data) {
-          state.characters = action.payload.data.characters;
-          state.pagination = action.payload.data.pagination;
-        }
-        state.error = null;
-      })
-      .addCase(fetchCharacters.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch characters';
-      })
-      // Fetch character by ID
-      .addCase(fetchCharacterById.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchCharacterById.fulfilled, (state, action) => {
-        state.loading = false;
-        state.selectedCharacter = action.payload.data || null;
-        state.error = null;
-      })
-      .addCase(fetchCharacterById.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch character';
-      })
-      // Create character
-      .addCase(createCharacter.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(createCharacter.fulfilled, (state, action) => {
-        state.loading = false;
-        if (action.payload.data) {
-          state.characters.unshift(action.payload.data);
-        }
-        state.error = null;
-      })
-      .addCase(createCharacter.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to create character';
-      })
-      // Update character
-      .addCase(updateCharacter.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateCharacter.fulfilled, (state, action) => {
-        state.loading = false;
-        const updatedCharacter = action.payload.data;
-        if (updatedCharacter) {
-          const index = state.characters.findIndex((c) => c.id === updatedCharacter.id);
-          if (index !== -1) {
-            state.characters[index] = updatedCharacter;
-          }
-          if (state.selectedCharacter?.id === updatedCharacter.id) {
-            state.selectedCharacter = updatedCharacter;
-          }
-        }
-        state.error = null;
-      })
-      .addCase(updateCharacter.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to update character';
-      })
-      // Delete character
-      .addCase(deleteCharacter.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deleteCharacter.fulfilled, (state, action) => {
-        state.loading = false;
-        state.characters = state.characters.filter((c) => c.id !== action.payload);
-        if (state.selectedCharacter?.id === action.payload) {
-          state.selectedCharacter = null;
-        }
-        state.error = null;
-      })
-      .addCase(deleteCharacter.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to delete character';
-      });
+    addFetchCharactersReducers(builder);
+    addFetchCharacterByIdReducers(builder);
+    addCreateCharacterReducers(builder);
+    addUpdateCharacterReducers(builder);
+    addDeleteCharacterReducers(builder);
   },
 });
 

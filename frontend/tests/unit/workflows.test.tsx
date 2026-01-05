@@ -347,7 +347,7 @@ describe('Feature: Novel Engine Workflows', () => {
       await waitFor(() => {
         expect(document.body).toBeInTheDocument();
       });
-      expect(screen.getByText('Novel Engine')).toBeInTheDocument();
+      expect(screen.getAllByText('Novel Engine').length).toBeGreaterThan(0);
     });
 
     it('Given the application is launched, Then all main navigation buttons should be present', async () => {

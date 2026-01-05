@@ -39,6 +39,30 @@ export interface UsePerformanceOptions {
   reportToAnalytics?: boolean
 }
 
+const METRIC_THRESHOLDS: Record<string, { good: number; ok: number }> = {
+  LCP: { good: 2500, ok: 4000 },
+  FID: { good: 100, ok: 300 },
+  CLS: { good: 0.1, ok: 0.25 },
+  FCP: { good: 1800, ok: 3000 },
+  TTFB: { good: 600, ok: 1500 },
+}
+
+const getRatingForMetric = (name: string, value: number): PerformanceMetric['rating'] => {
+  const thresholds = METRIC_THRESHOLDS[name]
+  if (!thresholds) return 'needs-improvement'
+  if (value <= thresholds.good) return 'good'
+  if (value <= thresholds.ok) return 'needs-improvement'
+  return 'poor'
+}
+
+const convertWebVitalsMetric = (metric: Metric): PerformanceMetric => ({
+  name: metric.name,
+  value: metric.value,
+  rating: getRatingForMetric(metric.name, metric.value),
+  delta: metric.delta,
+  id: metric.id,
+})
+
 export function usePerformance(options: UsePerformanceOptions = {}): IPerformanceMonitor {
   const { onMetric, reportToAnalytics = false } = options
   const renderCount = useRef(0)
@@ -70,39 +94,6 @@ export function usePerformance(options: UsePerformanceOptions = {}): IPerformanc
     if (reportToAnalytics) {
       // Future: Send to LoggerFactory or analytics service
       // LoggerFactory.info('web_vitals', { metric })
-    }
-  }
-
-  const convertWebVitalsMetric = (metric: Metric): PerformanceMetric => {
-    let rating: 'good' | 'needs-improvement' | 'poor'
-
-    // Rating thresholds based on Web Vitals recommendations
-    switch (metric.name) {
-      case 'LCP':
-        rating = metric.value <= 2500 ? 'good' : metric.value <= 4000 ? 'needs-improvement' : 'poor'
-        break
-      case 'FID':
-        rating = metric.value <= 100 ? 'good' : metric.value <= 300 ? 'needs-improvement' : 'poor'
-        break
-      case 'CLS':
-        rating = metric.value <= 0.1 ? 'good' : metric.value <= 0.25 ? 'needs-improvement' : 'poor'
-        break
-      case 'FCP':
-        rating = metric.value <= 1800 ? 'good' : metric.value <= 3000 ? 'needs-improvement' : 'poor'
-        break
-      case 'TTFB':
-        rating = metric.value <= 600 ? 'good' : metric.value <= 1500 ? 'needs-improvement' : 'poor'
-        break
-      default:
-        rating = 'needs-improvement'
-    }
-
-    return {
-      name: metric.name,
-      value: metric.value,
-      rating,
-      delta: metric.delta,
-      id: metric.id,
     }
   }
 

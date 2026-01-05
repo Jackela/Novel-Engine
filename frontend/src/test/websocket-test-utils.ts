@@ -10,7 +10,7 @@ interface WebSocketTestUtilities {
   mockWebSocket: typeof MockWebSocket;
   createMockWebSocketInstance: (url: string) => MockWebSocket;
   simulateWebSocketConnection: (ws: MockWebSocket) => void;
-  simulateWebSocketMessage: (ws: MockWebSocket, data: any) => void;
+  simulateWebSocketMessage: (ws: MockWebSocket, data: unknown) => void;
   simulateWebSocketError: (ws: MockWebSocket) => void;
   simulateWebSocketClose: (ws: MockWebSocket, code?: number, reason?: string) => void;
 }
@@ -35,7 +35,7 @@ export function simulateWebSocketConnection(ws: MockWebSocket): void {
 /**
  * Simulate receiving a WebSocket message
  */
-export function simulateWebSocketMessage(ws: MockWebSocket, data: any): void {
+export function simulateWebSocketMessage(ws: MockWebSocket, data: unknown): void {
   ws.simulateMessage(data);
 }
 
@@ -60,7 +60,7 @@ export function simulateWebSocketClose(
 /**
  * Create a complete mock of useWebSocketProgress hook for testing
  */
-export function createMockWebSocketHook(overrides: any = {}) {
+export function createMockWebSocketHook(overrides: Record<string, unknown> = {}) {
   return vi.fn(() => ({
     isConnected: false,
     lastUpdate: null,
@@ -73,10 +73,20 @@ export function createMockWebSocketHook(overrides: any = {}) {
   }));
 }
 
+interface ProgressUpdate {
+  generation_id: string;
+  progress: number;
+  stage: string;
+  stage_detail: string;
+  estimated_time_remaining: number;
+  active_agents: string[];
+  timestamp: string;
+}
+
 /**
  * Mock WebSocket progress update data for testing
  */
-export function createMockProgressUpdate(overrides: any = {}) {
+export function createMockProgressUpdate(overrides: Partial<ProgressUpdate> = {}): ProgressUpdate {
   return {
     generation_id: 'test-123',
     progress: 50,

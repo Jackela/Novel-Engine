@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
+import type { ActionReducerMapBuilder, PayloadAction } from '@reduxjs/toolkit';
 import { decisionAPI } from '@/services/api/decisionAPI';
 
 // Decision point types from backend
@@ -151,6 +151,11 @@ const normalizeDecisionOption = (opt: unknown, fallbackIndex: number): DecisionO
   };
 };
 
+const toDecisionOptions = (options: unknown[]): DecisionOption[] =>
+  options
+    .map((opt, index) => normalizeDecisionOption(opt, index + 1))
+    .filter((opt): opt is DecisionOption => !!opt);
+
 const initialState: DecisionState = {
   currentDecision: null,
   pauseState: 'running',
@@ -236,6 +241,158 @@ export const skipDecision = createAsyncThunk(
     }
   }
 );
+
+const addFetchDecisionStatusReducers = (
+  builder: ActionReducerMapBuilder<DecisionState>
+) => {
+  builder
+    .addCase(fetchDecisionStatus.pending, (state) => {
+      state.isLoading = true;
+    })
+    .addCase(fetchDecisionStatus.fulfilled, (state, action) => {
+      state.isLoading = false;
+      const payloadData = action.payload?.data as Record<string, unknown> | undefined;
+      state.pauseState = asPauseState(payloadData?.pause_state);
+
+      const pending = payloadData?.pending_decision as Record<string, unknown> | undefined;
+      if (pending) {
+        const options = Array.isArray(pending.options) ? toDecisionOptions(pending.options) : [];
+        const defaultOptionId =
+          typeof pending.default_option_id === 'number' ? pending.default_option_id : undefined;
+
+        state.currentDecision = {
+          decisionId: asString(pending.decision_id),
+          decisionType: asDecisionPointType(pending.decision_type),
+          turnNumber: asNumber(pending.turn_number),
+          title: asString(pending.title, 'Decision'),
+          description: asString(pending.description),
+          narrativeContext: asString(pending.narrative_context),
+          options,
+          ...(defaultOptionId !== undefined ? { defaultOptionId } : {}),
+          timeoutSeconds: asNumber(pending.timeout_seconds),
+          dramaticTension: asNumber(pending.dramatic_tension),
+          emotionalIntensity: asNumber(pending.emotional_intensity),
+          createdAt: asString(pending.created_at),
+          expiresAt: asString(pending.expires_at),
+        };
+      }
+    })
+    .addCase(fetchDecisionStatus.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload as string;
+    });
+};
+
+const addSubmitDecisionReducers = (
+  builder: ActionReducerMapBuilder<DecisionState>
+) => {
+  builder
+    .addCase(submitDecisionResponse.pending, (state) => {
+      state.isSubmitting = true;
+      state.error = null;
+    })
+    .addCase(submitDecisionResponse.fulfilled, (state, action) => {
+      state.isSubmitting = false;
+      const payloadData = action.payload?.data as Record<string, unknown> | undefined;
+      const negotiation = payloadData?.negotiation as Record<string, unknown> | undefined;
+
+      if (payloadData?.needs_negotiation && negotiation) {
+        state.isNegotiating = true;
+        state.negotiationResult = {
+          decisionId: asString(negotiation.decision_id),
+          feasibility: asFeasibilityResult(negotiation.feasibility),
+          explanation: asString(negotiation.explanation),
+          ...(typeof negotiation.adjusted_action === 'string'
+            ? { adjustedAction: negotiation.adjusted_action }
+            : {}),
+          alternatives: Array.isArray(negotiation.alternatives)
+            ? toDecisionOptions(negotiation.alternatives)
+            : [],
+        };
+        state.pauseState = 'negotiating';
+      } else {
+        if (state.currentDecision) {
+          state.decisionHistory.unshift({
+            decisionId: state.currentDecision.decisionId,
+            turnNumber: state.currentDecision.turnNumber,
+            inputType: state.selectedOptionId !== null ? 'option' : 'freetext',
+            ...(state.selectedOptionId !== null ? { selectedOptionId: state.selectedOptionId } : {}),
+            ...(state.freeTextInput ? { freeText: state.freeTextInput } : {}),
+            timestamp: new Date().toISOString(),
+          });
+        }
+        state.currentDecision = null;
+        state.pauseState = 'running';
+        state.selectedOptionId = null;
+        state.freeTextInput = '';
+        state.remainingSeconds = 0;
+      }
+    })
+    .addCase(submitDecisionResponse.rejected, (state, action) => {
+      state.isSubmitting = false;
+      state.error = action.payload as string;
+    });
+};
+
+const addConfirmNegotiationReducers = (
+  builder: ActionReducerMapBuilder<DecisionState>
+) => {
+  builder
+    .addCase(confirmNegotiation.pending, (state) => {
+      state.isSubmitting = true;
+    })
+    .addCase(confirmNegotiation.fulfilled, (state) => {
+      state.isSubmitting = false;
+      if (state.currentDecision) {
+        state.decisionHistory.unshift({
+          decisionId: state.currentDecision.decisionId,
+          turnNumber: state.currentDecision.turnNumber,
+          inputType: 'freetext',
+          freeText: state.freeTextInput,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      state.currentDecision = null;
+      state.pauseState = 'running';
+      state.isNegotiating = false;
+      state.negotiationResult = null;
+      state.freeTextInput = '';
+      state.remainingSeconds = 0;
+    })
+    .addCase(confirmNegotiation.rejected, (state, action) => {
+      state.isSubmitting = false;
+      state.error = action.payload as string;
+    });
+};
+
+const addSkipDecisionReducers = (
+  builder: ActionReducerMapBuilder<DecisionState>
+) => {
+  builder
+    .addCase(skipDecision.pending, (state) => {
+      state.isSubmitting = true;
+    })
+    .addCase(skipDecision.fulfilled, (state) => {
+      state.isSubmitting = false;
+      if (state.currentDecision) {
+        state.decisionHistory.unshift({
+          decisionId: state.currentDecision.decisionId,
+          turnNumber: state.currentDecision.turnNumber,
+          inputType: 'skipped',
+          timestamp: new Date().toISOString(),
+        });
+      }
+      state.currentDecision = null;
+      state.pauseState = 'running';
+      state.selectedOptionId = null;
+      state.freeTextInput = '';
+      state.remainingSeconds = 0;
+    })
+    .addCase(skipDecision.rejected, (state, action) => {
+      state.isSubmitting = false;
+      state.error = action.payload as string;
+    });
+};
 
 const decisionSlice = createSlice({
   name: 'decision',
@@ -334,150 +491,10 @@ const decisionSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder
-      // fetchDecisionStatus
-      .addCase(fetchDecisionStatus.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(fetchDecisionStatus.fulfilled, (state, action) => {
-        state.isLoading = false;
-        const payloadData = action.payload?.data as Record<string, unknown> | undefined;
-        state.pauseState = asPauseState(payloadData?.pause_state);
-
-        const pending = payloadData?.pending_decision as Record<string, unknown> | undefined;
-        if (pending) {
-          const options = Array.isArray(pending.options)
-            ? pending.options
-                .map((opt, index) => normalizeDecisionOption(opt, index + 1))
-                .filter((opt): opt is DecisionOption => !!opt)
-            : [];
-          const defaultOptionId =
-            typeof pending.default_option_id === 'number' ? pending.default_option_id : undefined;
-
-          state.currentDecision = {
-            decisionId: asString(pending.decision_id),
-            decisionType: asDecisionPointType(pending.decision_type),
-            turnNumber: asNumber(pending.turn_number),
-            title: asString(pending.title, 'Decision'),
-            description: asString(pending.description),
-            narrativeContext: asString(pending.narrative_context),
-            options,
-            ...(defaultOptionId !== undefined ? { defaultOptionId } : {}),
-            timeoutSeconds: asNumber(pending.timeout_seconds),
-            dramaticTension: asNumber(pending.dramatic_tension),
-            emotionalIntensity: asNumber(pending.emotional_intensity),
-            createdAt: asString(pending.created_at),
-            expiresAt: asString(pending.expires_at),
-          };
-        }
-      })
-      .addCase(fetchDecisionStatus.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      })
-
-      // submitDecisionResponse
-      .addCase(submitDecisionResponse.pending, (state) => {
-        state.isSubmitting = true;
-        state.error = null;
-      })
-      .addCase(submitDecisionResponse.fulfilled, (state, action) => {
-        state.isSubmitting = false;
-        const payloadData = action.payload?.data as Record<string, unknown> | undefined;
-        const negotiation = payloadData?.negotiation as Record<string, unknown> | undefined;
-
-        if (payloadData?.needs_negotiation && negotiation) {
-          // Negotiation required
-          state.isNegotiating = true;
-          state.negotiationResult = {
-            decisionId: asString(negotiation.decision_id),
-            feasibility: asFeasibilityResult(negotiation.feasibility),
-            explanation: asString(negotiation.explanation),
-            ...(typeof negotiation.adjusted_action === 'string'
-              ? { adjustedAction: negotiation.adjusted_action }
-              : {}),
-            alternatives: Array.isArray(negotiation.alternatives)
-              ? negotiation.alternatives
-                  .map((alt, index) => normalizeDecisionOption(alt, index + 1))
-                  .filter((opt): opt is DecisionOption => !!opt)
-              : [],
-          };
-          state.pauseState = 'negotiating';
-        } else {
-          // Decision accepted
-          if (state.currentDecision) {
-            state.decisionHistory.unshift({
-              decisionId: state.currentDecision.decisionId,
-              turnNumber: state.currentDecision.turnNumber,
-              inputType: state.selectedOptionId !== null ? 'option' : 'freetext',
-              ...(state.selectedOptionId !== null ? { selectedOptionId: state.selectedOptionId } : {}),
-              ...(state.freeTextInput ? { freeText: state.freeTextInput } : {}),
-              timestamp: new Date().toISOString(),
-            });
-          }
-          state.currentDecision = null;
-          state.pauseState = 'running';
-          state.selectedOptionId = null;
-          state.freeTextInput = '';
-          state.remainingSeconds = 0;
-        }
-      })
-      .addCase(submitDecisionResponse.rejected, (state, action) => {
-        state.isSubmitting = false;
-        state.error = action.payload as string;
-      })
-
-      // confirmNegotiation
-      .addCase(confirmNegotiation.pending, (state) => {
-        state.isSubmitting = true;
-      })
-      .addCase(confirmNegotiation.fulfilled, (state) => {
-        state.isSubmitting = false;
-        if (state.currentDecision) {
-          state.decisionHistory.unshift({
-            decisionId: state.currentDecision.decisionId,
-            turnNumber: state.currentDecision.turnNumber,
-            inputType: 'freetext',
-            freeText: state.freeTextInput,
-            timestamp: new Date().toISOString(),
-          });
-        }
-        state.currentDecision = null;
-        state.pauseState = 'running';
-        state.isNegotiating = false;
-        state.negotiationResult = null;
-        state.freeTextInput = '';
-        state.remainingSeconds = 0;
-      })
-      .addCase(confirmNegotiation.rejected, (state, action) => {
-        state.isSubmitting = false;
-        state.error = action.payload as string;
-      })
-
-      // skipDecision
-      .addCase(skipDecision.pending, (state) => {
-        state.isSubmitting = true;
-      })
-      .addCase(skipDecision.fulfilled, (state) => {
-        state.isSubmitting = false;
-        if (state.currentDecision) {
-          state.decisionHistory.unshift({
-            decisionId: state.currentDecision.decisionId,
-            turnNumber: state.currentDecision.turnNumber,
-            inputType: 'skipped',
-            timestamp: new Date().toISOString(),
-          });
-        }
-        state.currentDecision = null;
-        state.pauseState = 'running';
-        state.selectedOptionId = null;
-        state.freeTextInput = '';
-        state.remainingSeconds = 0;
-      })
-      .addCase(skipDecision.rejected, (state, action) => {
-        state.isSubmitting = false;
-        state.error = action.payload as string;
-      });
+    addFetchDecisionStatusReducers(builder);
+    addSubmitDecisionReducers(builder);
+    addConfirmNegotiationReducers(builder);
+    addSkipDecisionReducers(builder);
   },
 });
 

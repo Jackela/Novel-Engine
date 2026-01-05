@@ -27,6 +27,7 @@ const CommandLayout: React.FC<CommandLayoutProps> = ({ children }) => {
         flexDirection: 'row',
         overflow: 'hidden' 
       }}
+      className={isMobile ? 'dashboard-layout dashboard-layout--mobile' : 'dashboard-layout'}
       data-testid="dashboard-layout"
     >
       {/* Mobile Menu Button - Floating */}
@@ -36,15 +37,16 @@ const CommandLayout: React.FC<CommandLayoutProps> = ({ children }) => {
           aria-label="open drawer"
           edge="start"
           onClick={handleDrawerToggle}
+          data-testid="mobile-menu-toggle"
           sx={{
             position: 'fixed',
             left: 16,
             bottom: 16, // Bottom left thumb-friendly
             zIndex: 1300,
-            bgcolor: tokens.colors.primary[600],
-            color: 'white',
-            boxShadow: tokens.elevation.lg,
-            '&:hover': { bgcolor: tokens.colors.primary[700] }
+            bgcolor: tokens.colors.primary[500],
+            color: tokens.colors.text.inverse,
+            boxShadow: tokens.elevation.md,
+            '&:hover': { bgcolor: tokens.colors.primary[600] }
           }}
         >
           <MenuIcon />

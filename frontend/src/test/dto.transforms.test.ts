@@ -28,7 +28,7 @@ describe('DTO transforms', () => {
         special_gear: ['Grappling Hook'],
       },
     });
-    expect(items.map((i: any) => i.name)).toEqual(['Rifle', 'Kevlar', 'Grappling Hook']);
+    expect(items.map((item) => item.name)).toEqual(['Rifle', 'Kevlar', 'Grappling Hook']);
   });
 
   it('transforms character response with fallback fields', () => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { logger } from '@/services/logging/LoggerFactory';
 
 export interface RealtimeEvent {
@@ -60,16 +60,205 @@ interface ConnectionStats {
   totalReconnections: number;
 }
 
-export function useRealtimeEvents({
-  endpoint = (import.meta.env.VITE_DASHBOARD_EVENTS_ENDPOINT as string | undefined) ?? '/api/events/stream',
-  maxEvents = 50,
-  enabled = true,
-  maxRetries = 10,
-  initialRetryDelay = 1000,
-  maxRetryDelay = 30000,
-  heartbeatTimeout = 60000,
-  onDecisionEvent,
-}: UseRealtimeEventsOptions = {}) {
+const DECISION_EVENT_TYPES: ReadonlySet<RealtimeEvent['type']> = new Set([
+  'decision_required',
+  'decision_accepted',
+  'decision_finalized',
+  'negotiation_required',
+]);
+
+const parseRealtimeEvent = (raw: string): RealtimeEvent | null => {
+  try {
+    const eventData: RealtimeEvent = JSON.parse(raw);
+    if (!eventData.id || !eventData.type || !eventData.title) {
+      logger.warn('Received malformed SSE event, skipping:', { data: raw });
+      return null;
+    }
+    return eventData;
+  } catch (error) {
+    logger.error('Failed to parse SSE event data:', error as Error);
+    return null;
+  }
+};
+
+const pushBufferedEvent = (
+  bufferRef: React.MutableRefObject<RealtimeEvent[]>,
+  eventData: RealtimeEvent,
+  maxEvents: number
+) => {
+  bufferRef.current = [eventData, ...bufferRef.current].slice(0, maxEvents);
+  return bufferRef.current;
+};
+
+const updateStatsOnOpen = (
+  setStats: React.Dispatch<React.SetStateAction<ConnectionStats>>,
+  wasReconnection: boolean
+) => {
+  setStats(prev => ({
+    ...prev,
+    retryCount: 0,
+    lastConnectedAt: Date.now(),
+    totalReconnections: wasReconnection ? prev.totalReconnections + 1 : prev.totalReconnections,
+  }));
+};
+
+const updateStatsOnError = (
+  setStats: React.Dispatch<React.SetStateAction<ConnectionStats>>,
+  retryCount: number
+) => {
+  setStats(prev => ({
+    ...prev,
+    lastErrorAt: Date.now(),
+    retryCount,
+  }));
+};
+
+const clearTimeoutRef = (ref: React.MutableRefObject<NodeJS.Timeout | null>) => {
+  if (ref.current) {
+    clearTimeout(ref.current);
+    ref.current = null;
+  }
+};
+
+const closeEventSource = (eventSourceRef: React.MutableRefObject<EventSource | null>) => {
+  if (eventSourceRef.current) {
+    eventSourceRef.current.close();
+    eventSourceRef.current = null;
+  }
+};
+
+const buildReconnectError = (retryCount: number, maxRetries: number) =>
+  new Error(`Connection lost. Reconnecting (attempt ${retryCount}/${maxRetries})...`);
+
+const buildMaxRetryError = (maxRetries: number) =>
+  new Error(
+    `Failed to connect after ${maxRetries} attempts. Please check your connection and refresh the page.`
+  );
+
+const createDecisionHandler = (onDecisionEvent?: (event: RealtimeEvent) => void) => {
+  return (eventData: RealtimeEvent) => {
+    if (!DECISION_EVENT_TYPES.has(eventData.type) || !onDecisionEvent) {
+      return;
+    }
+    logger.info('Decision event received:', { type: eventData.type, id: eventData.id });
+    onDecisionEvent(eventData);
+  };
+};
+
+const createMessageHandler = (params: {
+  isUnmountedRef: React.MutableRefObject<boolean>;
+  resetHeartbeatTimer: () => void;
+  handleDecisionEvent: (eventData: RealtimeEvent) => void;
+  eventsBufferRef: React.MutableRefObject<RealtimeEvent[]>;
+  maxEvents: number;
+  setEvents: React.Dispatch<React.SetStateAction<RealtimeEvent[]>>;
+}) => {
+  return (event: MessageEvent) => {
+    if (params.isUnmountedRef.current) return;
+    params.resetHeartbeatTimer();
+
+    const eventData = parseRealtimeEvent(event.data);
+    if (!eventData) return;
+
+    params.handleDecisionEvent(eventData);
+    const updated = pushBufferedEvent(params.eventsBufferRef, eventData, params.maxEvents);
+    params.setEvents([...updated]);
+  };
+};
+
+const handleConnectionOpen = (params: {
+  isUnmountedRef: React.MutableRefObject<boolean>;
+  retryCountRef: React.MutableRefObject<number>;
+  setConnectionState: React.Dispatch<React.SetStateAction<ConnectionState>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+  setStats: React.Dispatch<React.SetStateAction<ConnectionStats>>;
+  resetHeartbeatTimer: () => void;
+  endpoint: string;
+}) => {
+  if (params.isUnmountedRef.current) return;
+  const wasReconnection = params.retryCountRef.current > 0;
+  params.setConnectionState('connected');
+  params.setLoading(false);
+  params.setError(null);
+  updateStatsOnOpen(params.setStats, wasReconnection);
+  params.retryCountRef.current = 0;
+  params.resetHeartbeatTimer();
+  logger.info('SSE connection established', {
+    endpoint: params.endpoint,
+    wasReconnection,
+  });
+};
+
+const scheduleReconnect = (params: {
+  retryCountRef: React.MutableRefObject<number>;
+  maxRetries: number;
+  calculateRetryDelay: (retryCount: number) => number;
+  setConnectionState: React.Dispatch<React.SetStateAction<ConnectionState>>;
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+  retryTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  isUnmountedRef: React.MutableRefObject<boolean>;
+  createConnection: () => void;
+}) => {
+  const delay = params.calculateRetryDelay(params.retryCountRef.current);
+  params.retryCountRef.current += 1;
+
+  logger.warn('SSE connection error, scheduling reconnect', {
+    retryCount: params.retryCountRef.current,
+    maxRetries: params.maxRetries,
+    delayMs: delay,
+  });
+
+  params.setConnectionState('reconnecting');
+  params.setError(buildReconnectError(params.retryCountRef.current, params.maxRetries));
+
+  params.retryTimeoutRef.current = setTimeout(() => {
+    if (!params.isUnmountedRef.current) {
+      params.createConnection();
+    }
+  }, delay);
+};
+
+const handleConnectionError = (params: {
+  isUnmountedRef: React.MutableRefObject<boolean>;
+  heartbeatTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  eventSourceRef: React.MutableRefObject<EventSource | null>;
+  setStats: React.Dispatch<React.SetStateAction<ConnectionStats>>;
+  retryCountRef: React.MutableRefObject<number>;
+  maxRetries: number;
+  calculateRetryDelay: (retryCount: number) => number;
+  setConnectionState: React.Dispatch<React.SetStateAction<ConnectionState>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+  retryTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  createConnection: () => void;
+}) => {
+  if (params.isUnmountedRef.current) return;
+  clearTimeoutRef(params.heartbeatTimeoutRef);
+  closeEventSource(params.eventSourceRef);
+  updateStatsOnError(params.setStats, params.retryCountRef.current);
+
+  if (params.retryCountRef.current < params.maxRetries) {
+    scheduleReconnect({
+      retryCountRef: params.retryCountRef,
+      maxRetries: params.maxRetries,
+      calculateRetryDelay: params.calculateRetryDelay,
+      setConnectionState: params.setConnectionState,
+      setError: params.setError,
+      retryTimeoutRef: params.retryTimeoutRef,
+      isUnmountedRef: params.isUnmountedRef,
+      createConnection: params.createConnection,
+    });
+    return;
+  }
+
+  logger.error(`SSE max retries exceeded (${params.maxRetries}), giving up`);
+  params.setConnectionState('error');
+  params.setLoading(false);
+  params.setError(buildMaxRetryError(params.maxRetries));
+};
+
+const useRealtimeEventState = () => {
   const [events, setEvents] = useState<RealtimeEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -89,25 +278,67 @@ export function useRealtimeEvents({
   const isUnmountedRef = useRef(false);
   const connectionStateRef = useRef<ConnectionState>(connectionState);
 
-  // Calculate exponential backoff delay
-  const calculateRetryDelay = useCallback((retryCount: number): number => {
-    const delay = Math.min(
-      initialRetryDelay * Math.pow(2, retryCount),
-      maxRetryDelay
-    );
-    // Add jitter (10-20% random variance) to prevent thundering herd
-    const jitter = delay * (0.1 + Math.random() * 0.1);
-    return Math.floor(delay + jitter);
-  }, [initialRetryDelay, maxRetryDelay]);
+  return {
+    events,
+    setEvents,
+    loading,
+    setLoading,
+    error,
+    setError,
+    connectionState,
+    setConnectionState,
+    stats,
+    setStats,
+    eventSourceRef,
+    eventsBufferRef,
+    retryCountRef,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    isUnmountedRef,
+    connectionStateRef,
+  };
+};
 
-  // Keep connectionStateRef in sync with state
-  connectionStateRef.current = connectionState;
+const useRealtimeEventHandlers = (params: {
+  initialRetryDelay: number;
+  maxRetryDelay: number;
+  heartbeatTimeout: number;
+  onDecisionEvent?: (event: RealtimeEvent) => void;
+  maxEvents: number;
+  setEvents: React.Dispatch<React.SetStateAction<RealtimeEvent[]>>;
+  eventsBufferRef: React.MutableRefObject<RealtimeEvent[]>;
+  eventSourceRef: React.MutableRefObject<EventSource | null>;
+  isUnmountedRef: React.MutableRefObject<boolean>;
+  connectionStateRef: React.MutableRefObject<ConnectionState>;
+  setConnectionState: React.Dispatch<React.SetStateAction<ConnectionState>>;
+  heartbeatTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+}) => {
+  const {
+    initialRetryDelay,
+    maxRetryDelay,
+    heartbeatTimeout,
+    onDecisionEvent,
+    maxEvents,
+    setEvents,
+    eventsBufferRef,
+    eventSourceRef,
+    isUnmountedRef,
+    connectionStateRef,
+    setConnectionState,
+    heartbeatTimeoutRef,
+  } = params;
 
-  // Reset heartbeat timer on message received
+  const calculateRetryDelay = useCallback(
+    (retryCount: number): number => {
+      const delay = Math.min(initialRetryDelay * Math.pow(2, retryCount), maxRetryDelay);
+      const jitter = delay * (0.1 + Math.random() * 0.1);
+      return Math.floor(delay + jitter);
+    },
+    [initialRetryDelay, maxRetryDelay]
+  );
+
   const resetHeartbeatTimer = useCallback(() => {
-    if (heartbeatTimeoutRef.current) {
-      clearTimeout(heartbeatTimeoutRef.current);
-    }
+    clearTimeoutRef(heartbeatTimeoutRef);
     heartbeatTimeoutRef.current = setTimeout(() => {
       if (!isUnmountedRef.current && connectionStateRef.current === 'connected') {
         logger.warn('SSE heartbeat timeout - no message received, reconnecting');
@@ -115,145 +346,177 @@ export function useRealtimeEvents({
         setConnectionState('reconnecting');
       }
     }, heartbeatTimeout);
-  }, [heartbeatTimeout]);
+  }, [
+    heartbeatTimeout,
+    heartbeatTimeoutRef,
+    isUnmountedRef,
+    connectionStateRef,
+    setConnectionState,
+    eventSourceRef,
+  ]);
 
-  // Create connection with retry logic
-  const createConnection = useCallback(() => {
-    if (isUnmountedRef.current || !enabled) return;
+  const handleDecisionEvent = useMemo(() => createDecisionHandler(onDecisionEvent), [onDecisionEvent]);
 
-    // Close existing connection if any
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
-    }
+  const handleMessage = useMemo(
+    () =>
+      createMessageHandler({
+        isUnmountedRef,
+        resetHeartbeatTimer,
+        handleDecisionEvent,
+        eventsBufferRef,
+        maxEvents,
+        setEvents,
+      }),
+    [handleDecisionEvent, maxEvents, resetHeartbeatTimer, isUnmountedRef, eventsBufferRef, setEvents]
+  );
 
-    setConnectionState(retryCountRef.current > 0 ? 'reconnecting' : 'connecting');
+  return { calculateRetryDelay, resetHeartbeatTimer, handleMessage };
+};
 
-    try {
-      const eventSource = new EventSource(endpoint);
-      eventSourceRef.current = eventSource;
+const createConnectionErrorHandler = (params: {
+  isUnmountedRef: React.MutableRefObject<boolean>;
+  heartbeatTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  eventSourceRef: React.MutableRefObject<EventSource | null>;
+  setStats: React.Dispatch<React.SetStateAction<ConnectionStats>>;
+  retryCountRef: React.MutableRefObject<number>;
+  maxRetries: number;
+  calculateRetryDelay: (retryCount: number) => number;
+  setConnectionState: React.Dispatch<React.SetStateAction<ConnectionState>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+  retryTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  reconnect: () => void;
+}) => {
+  const {
+    isUnmountedRef,
+    heartbeatTimeoutRef,
+    eventSourceRef,
+    setStats,
+    retryCountRef,
+    maxRetries,
+    calculateRetryDelay,
+    setConnectionState,
+    setLoading,
+    setError,
+    retryTimeoutRef,
+    reconnect,
+  } = params;
 
-      // Connection opened successfully
-      eventSource.onopen = () => {
-        if (isUnmountedRef.current) return;
+  return () =>
+    handleConnectionError({
+      isUnmountedRef,
+      heartbeatTimeoutRef,
+      eventSourceRef,
+      setStats,
+      retryCountRef,
+      maxRetries,
+      calculateRetryDelay,
+      setConnectionState,
+      setLoading,
+      setError,
+      retryTimeoutRef,
+      createConnection: reconnect,
+    });
+};
 
-        const wasReconnection = retryCountRef.current > 0;
+const createEventSourceConnection = (params: {
+  endpoint: string;
+  maxRetries: number;
+  calculateRetryDelay: (retryCount: number) => number;
+  resetHeartbeatTimer: () => void;
+  handleMessage: (event: MessageEvent) => void;
+  setConnectionState: React.Dispatch<React.SetStateAction<ConnectionState>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+  setStats: React.Dispatch<React.SetStateAction<ConnectionStats>>;
+  eventSourceRef: React.MutableRefObject<EventSource | null>;
+  retryCountRef: React.MutableRefObject<number>;
+  retryTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  heartbeatTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  isUnmountedRef: React.MutableRefObject<boolean>;
+  reconnect: () => void;
+}) => {
+  const {
+    endpoint,
+    maxRetries,
+    calculateRetryDelay,
+    resetHeartbeatTimer,
+    handleMessage,
+    setConnectionState,
+    setLoading,
+    setError,
+    setStats,
+    eventSourceRef,
+    retryCountRef,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    isUnmountedRef,
+    reconnect,
+  } = params;
 
-        setConnectionState('connected');
-        setLoading(false);
-        setError(null);
+  closeEventSource(eventSourceRef);
+  setConnectionState(retryCountRef.current > 0 ? 'reconnecting' : 'connecting');
 
-        setStats(prev => ({
-          ...prev,
-          retryCount: 0,
-          lastConnectedAt: Date.now(),
-          totalReconnections: wasReconnection ? prev.totalReconnections + 1 : prev.totalReconnections,
-        }));
+  try {
+    const eventSource = new EventSource(endpoint);
+    eventSourceRef.current = eventSource;
 
-        retryCountRef.current = 0;
-        resetHeartbeatTimer();
+    eventSource.onopen = () =>
+      handleConnectionOpen({
+        isUnmountedRef,
+        retryCountRef,
+        setConnectionState,
+        setLoading,
+        setError,
+        setStats,
+        resetHeartbeatTimer,
+        endpoint,
+      });
 
-        logger.info('SSE connection established', {
-          endpoint,
-          wasReconnection,
-        });
-      };
+    eventSource.onmessage = handleMessage;
 
-      // Receive event messages
-      eventSource.onmessage = (event) => {
-        if (isUnmountedRef.current) return;
+    eventSource.onerror = createConnectionErrorHandler({
+      isUnmountedRef,
+      heartbeatTimeoutRef,
+      eventSourceRef,
+      setStats,
+      retryCountRef,
+      maxRetries,
+      calculateRetryDelay,
+      setConnectionState,
+      setLoading,
+      setError,
+      retryTimeoutRef,
+      reconnect,
+    });
+  } catch (err) {
+    logger.error(`Failed to create SSE EventSource for ${endpoint}:`, err as Error);
+    setConnectionState('error');
+    setLoading(false);
+    setError(new Error('Failed to initialize event stream connection.'));
+  }
+};
 
-        // Reset heartbeat on any message
-        resetHeartbeatTimer();
-
-        try {
-          const eventData: RealtimeEvent = JSON.parse(event.data);
-
-          // Validate required fields
-          if (!eventData.id || !eventData.type || !eventData.title) {
-            logger.warn('Received malformed SSE event, skipping:', { data: event.data });
-            return;
-          }
-
-          // Handle decision-related events via callback
-          const decisionEventTypes = ['decision_required', 'decision_accepted', 'decision_finalized', 'negotiation_required'];
-          if (decisionEventTypes.includes(eventData.type) && onDecisionEvent) {
-            logger.info('Decision event received:', { type: eventData.type, id: eventData.id });
-            onDecisionEvent(eventData);
-          }
-
-          // Add to buffer and maintain max size (newest first)
-          eventsBufferRef.current = [eventData, ...eventsBufferRef.current].slice(0, maxEvents);
-          setEvents([...eventsBufferRef.current]);
-
-        } catch (err) {
-          logger.error('Failed to parse SSE event data:', err as Error);
-        }
-      };
-
-      // Connection error or disconnection
-      eventSource.onerror = () => {
-        if (isUnmountedRef.current) return;
-
-        // Clear heartbeat timer
-        if (heartbeatTimeoutRef.current) {
-          clearTimeout(heartbeatTimeoutRef.current);
-        }
-
-        eventSource.close();
-        eventSourceRef.current = null;
-
-        setStats(prev => ({
-          ...prev,
-          lastErrorAt: Date.now(),
-          retryCount: retryCountRef.current,
-        }));
-
-        // Check if we should retry
-        if (retryCountRef.current < maxRetries) {
-          const delay = calculateRetryDelay(retryCountRef.current);
-          retryCountRef.current += 1;
-
-          logger.warn('SSE connection error, scheduling reconnect', {
-            retryCount: retryCountRef.current,
-            maxRetries,
-            delayMs: delay,
-          });
-
-          setConnectionState('reconnecting');
-          setError(new Error(`Connection lost. Reconnecting (attempt ${retryCountRef.current}/${maxRetries})...`));
-
-          retryTimeoutRef.current = setTimeout(() => {
-            if (!isUnmountedRef.current) {
-              createConnection();
-            }
-          }, delay);
-        } else {
-          // Max retries exceeded
-          logger.error(`SSE max retries exceeded (${maxRetries}), giving up - endpoint: ${endpoint}`);
-
-          setConnectionState('error');
-          setLoading(false);
-          setError(new Error(
-            `Failed to connect after ${maxRetries} attempts. Please check your connection and refresh the page.`
-          ));
-        }
-      };
-
-    } catch (err) {
-      logger.error(`Failed to create SSE EventSource for ${endpoint}:`, err as Error);
-      setConnectionState('error');
-      setLoading(false);
-      setError(new Error('Failed to initialize event stream connection.'));
-    }
-  }, [endpoint, enabled, maxRetries, calculateRetryDelay, resetHeartbeatTimer, maxEvents, onDecisionEvent]);
-
-  // Manual reconnect function exposed to consumers
-  const reconnect = useCallback(() => {
-    retryCountRef.current = 0;
-    setError(null);
-    createConnection();
-  }, [createConnection]);
+const useEventSourceLifecycle = (params: {
+  enabled: boolean;
+  createConnection: () => void;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setConnectionState: React.Dispatch<React.SetStateAction<ConnectionState>>;
+  retryTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  heartbeatTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  eventSourceRef: React.MutableRefObject<EventSource | null>;
+  isUnmountedRef: React.MutableRefObject<boolean>;
+}) => {
+  const {
+    enabled,
+    createConnection,
+    setLoading,
+    setConnectionState,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    eventSourceRef,
+    isUnmountedRef,
+  } = params;
 
   useEffect(() => {
     isUnmountedRef.current = false;
@@ -266,28 +529,238 @@ export function useRealtimeEvents({
 
     createConnection();
 
-    // Cleanup on unmount
     return () => {
       isUnmountedRef.current = true;
 
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-        retryTimeoutRef.current = null;
-      }
-
-      if (heartbeatTimeoutRef.current) {
-        clearTimeout(heartbeatTimeoutRef.current);
-        heartbeatTimeoutRef.current = null;
-      }
-
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
-
+      clearTimeoutRef(retryTimeoutRef);
+      clearTimeoutRef(heartbeatTimeoutRef);
+      closeEventSource(eventSourceRef);
       setConnectionState('disconnected');
     };
-  }, [enabled, createConnection]);
+  }, [
+    enabled,
+    createConnection,
+    setConnectionState,
+    setLoading,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    eventSourceRef,
+    isUnmountedRef,
+  ]);
+};
+
+const useEventSourceConnector = (params: {
+  enabled: boolean;
+  endpoint: string;
+  maxRetries: number;
+  calculateRetryDelay: (retryCount: number) => number;
+  resetHeartbeatTimer: () => void;
+  handleMessage: (event: MessageEvent) => void;
+  setConnectionState: React.Dispatch<React.SetStateAction<ConnectionState>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+  setStats: React.Dispatch<React.SetStateAction<ConnectionStats>>;
+  eventSourceRef: React.MutableRefObject<EventSource | null>;
+  retryCountRef: React.MutableRefObject<number>;
+  retryTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  heartbeatTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  isUnmountedRef: React.MutableRefObject<boolean>;
+}) => {
+  const {
+    enabled,
+    endpoint,
+    maxRetries,
+    calculateRetryDelay,
+    resetHeartbeatTimer,
+    handleMessage,
+    setConnectionState,
+    setLoading,
+    setError,
+    setStats,
+    eventSourceRef,
+    retryCountRef,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    isUnmountedRef,
+  } = params;
+
+  const createConnection = useCallback(() => {
+    if (isUnmountedRef.current || !enabled) return;
+    createEventSourceConnection({
+      endpoint,
+      maxRetries,
+      calculateRetryDelay,
+      resetHeartbeatTimer,
+      handleMessage,
+      setConnectionState,
+      setLoading,
+      setError,
+      setStats,
+      eventSourceRef,
+      retryCountRef,
+      retryTimeoutRef,
+      heartbeatTimeoutRef,
+      isUnmountedRef,
+      reconnect: createConnection,
+    });
+  }, [
+    calculateRetryDelay,
+    enabled,
+    endpoint,
+    handleMessage,
+    heartbeatTimeoutRef,
+    isUnmountedRef,
+    maxRetries,
+    resetHeartbeatTimer,
+    retryCountRef,
+    retryTimeoutRef,
+    setConnectionState,
+    setError,
+    setLoading,
+    setStats,
+    eventSourceRef,
+  ]);
+
+  return createConnection;
+};
+
+const useRealtimeEventsConnection = (params: {
+  enabled: boolean;
+  endpoint: string;
+  maxRetries: number;
+  calculateRetryDelay: (retryCount: number) => number;
+  resetHeartbeatTimer: () => void;
+  handleMessage: (event: MessageEvent) => void;
+  setConnectionState: React.Dispatch<React.SetStateAction<ConnectionState>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setError: React.Dispatch<React.SetStateAction<Error | null>>;
+  setStats: React.Dispatch<React.SetStateAction<ConnectionStats>>;
+  eventSourceRef: React.MutableRefObject<EventSource | null>;
+  retryCountRef: React.MutableRefObject<number>;
+  retryTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  heartbeatTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  isUnmountedRef: React.MutableRefObject<boolean>;
+}) => {
+  const {
+    enabled,
+    endpoint,
+    maxRetries,
+    calculateRetryDelay,
+    resetHeartbeatTimer,
+    handleMessage,
+    setConnectionState,
+    setLoading,
+    setError,
+    setStats,
+    eventSourceRef,
+    retryCountRef,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    isUnmountedRef,
+  } = params;
+
+  const createConnection = useEventSourceConnector({
+    enabled,
+    endpoint,
+    maxRetries,
+    calculateRetryDelay,
+    resetHeartbeatTimer,
+    handleMessage,
+    setConnectionState,
+    setLoading,
+    setError,
+    setStats,
+    eventSourceRef,
+    retryCountRef,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    isUnmountedRef,
+  });
+
+  const reconnect = useCallback(() => {
+    retryCountRef.current = 0;
+    setError(null);
+    createConnection();
+  }, [createConnection, retryCountRef, setError]);
+
+  useEventSourceLifecycle({
+    enabled,
+    createConnection,
+    setLoading,
+    setConnectionState,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    eventSourceRef,
+    isUnmountedRef,
+  });
+
+  return { reconnect };
+};
+
+export function useRealtimeEvents({
+  endpoint = (import.meta.env.VITE_DASHBOARD_EVENTS_ENDPOINT as string | undefined) ?? '/api/events/stream',
+  maxEvents = 50,
+  enabled = true,
+  maxRetries = 10,
+  initialRetryDelay = 1000,
+  maxRetryDelay = 30000,
+  heartbeatTimeout = 60000,
+  onDecisionEvent,
+}: UseRealtimeEventsOptions = {}) {
+  const {
+    events,
+    setEvents,
+    loading,
+    setLoading,
+    error,
+    setError,
+    connectionState,
+    setConnectionState,
+    stats,
+    setStats,
+    eventSourceRef,
+    eventsBufferRef,
+    retryCountRef,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    isUnmountedRef,
+    connectionStateRef,
+  } = useRealtimeEventState();
+
+  connectionStateRef.current = connectionState;
+
+  const { calculateRetryDelay, resetHeartbeatTimer, handleMessage } = useRealtimeEventHandlers({
+    initialRetryDelay,
+    maxRetryDelay,
+    heartbeatTimeout,
+    onDecisionEvent,
+    maxEvents,
+    setEvents,
+    eventsBufferRef,
+    eventSourceRef,
+    isUnmountedRef,
+    connectionStateRef,
+    setConnectionState,
+    heartbeatTimeoutRef,
+  });
+
+  const { reconnect } = useRealtimeEventsConnection({
+    enabled,
+    endpoint,
+    maxRetries,
+    calculateRetryDelay,
+    resetHeartbeatTimer,
+    handleMessage,
+    setConnectionState,
+    setLoading,
+    setError,
+    setStats,
+    eventSourceRef,
+    retryCountRef,
+    retryTimeoutRef,
+    heartbeatTimeoutRef,
+    isUnmountedRef,
+  });
 
   return {
     events,

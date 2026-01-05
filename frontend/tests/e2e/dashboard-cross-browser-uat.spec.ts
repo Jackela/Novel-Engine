@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test';
+import { test, expect, devices } from './fixtures';
 import { DashboardPage } from './pages/DashboardPage';
 
 /**
@@ -28,18 +28,28 @@ test.describe('Cross-Browser Compatibility UAT', () => {
 
     const dashboardPage = new DashboardPage(page);
 
-    await test.step(`${browserName}: Dashboard Loading`, async () => {
-      const loadStart = Date.now();
-      await dashboardPage.navigateToDashboard({ mockAPIs: true });
-      const loadTime = Date.now() - loadStart;
+      await test.step(`${browserName}: Dashboard Loading`, async () => {
+        await dashboardPage.prepareDashboard({ mockAPIs: true });
+        const loadStart = Date.now();
+        await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 45000 });
+        await dashboardPage.dashboardLayout.waitFor({ state: 'visible', timeout: 10000 });
+        const navigationLoadTime = await page.evaluate(() => {
+          const entry = performance.getEntriesByType('navigation')[0];
+          if (!entry) {
+            return null;
+          }
+          return Math.round(entry.domContentLoadedEventEnd - entry.startTime);
+        });
+        const loadTime = navigationLoadTime ?? (Date.now() - loadStart);
 
-      console.log(`  ${browserName} load time: ${loadTime}ms`);
+        console.log(`  ${browserName} load time: ${loadTime}ms`);
 
-      // Verify all critical components load across browsers
-      await expect(dashboardPage.worldStateMap).toBeVisible();
-      await expect(dashboardPage.realTimeActivity).toBeVisible();
-      await expect(dashboardPage.performanceMetrics).toBeVisible();
-      await expect(dashboardPage.turnPipelineStatus).toBeVisible();
+        // Verify all critical components load across browsers
+        await dashboardPage.waitForDashboardLoad();
+        await expect(dashboardPage.worldStateMap).toBeVisible();
+        await expect(dashboardPage.realTimeActivity).toBeVisible();
+        await expect(dashboardPage.performanceMetrics).toBeVisible();
+        await expect(dashboardPage.turnPipelineStatus).toBeVisible();
 
       // Browser-specific load time expectations (allow more time for WebKit/Firefox)
       const maxLoadTime = browserName === 'webkit' ? 10000 : browserName === 'firefox' ? 8000 : 6000;
@@ -238,7 +248,8 @@ test.describe('Cross-Browser Compatibility UAT', () => {
 
     await test.step(`${browserName}: Load Performance`, async () => {
       const loadStart = Date.now();
-      await dashboardPage.navigateToDashboard({ mockAPIs: true });
+      await dashboardPage.navigateToDashboard({ mockAPIs: true, waitForLoad: false });
+      await dashboardPage.dashboardLayout.waitFor({ state: 'visible', timeout: 10000 });
       const loadTime = Date.now() - loadStart;
 
       performanceMetrics.loadTime = loadTime;

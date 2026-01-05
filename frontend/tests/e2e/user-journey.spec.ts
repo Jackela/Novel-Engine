@@ -1,6 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { waitForDashboardReady, waitForLandingReady } from './utils/waitForReady';
+import { resetAuthState } from './utils/auth';
 
 /**
  * User Journey E2E Test Suite
@@ -31,17 +33,11 @@ test.describe('Complete User Journey E2E Tests', () => {
       const dashboardPage = new DashboardPage(page);
 
       await test.step('Given: User is not authenticated (fresh session)', async () => {
-        // Clear any existing auth state
-        await page.context().clearCookies();
-        await page.evaluate(() => {
-          localStorage.clear();
-          sessionStorage.clear();
-        });
+        await resetAuthState(page);
       });
 
       await test.step('When: User visits the application', async () => {
-        await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        await landingPage.navigateToLanding();
       });
 
       await test.step('Then: Landing page is displayed', async () => {
@@ -68,6 +64,7 @@ test.describe('Complete User Journey E2E Tests', () => {
       });
 
       await test.step('And: Character list/network is visible', async () => {
+        await dashboardPage.switchDashboardTab('Network');
         // Character networks component should be present
         await expect(dashboardPage.characterNetworks).toBeVisible();
       });
@@ -122,7 +119,7 @@ test.describe('Complete User Journey E2E Tests', () => {
 
       await test.step('When: User returns to the application (reload)', async () => {
         await page.reload();
-        await page.waitForLoadState('networkidle');
+        await waitForDashboardReady(page);
       });
 
       await test.step('Then: Previous auth state is restored', async () => {
@@ -134,11 +131,11 @@ test.describe('Complete User Journey E2E Tests', () => {
       await test.step('And: User can navigate directly to dashboard', async () => {
         // Navigate away and back
         await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        await waitForDashboardReady(page);
 
         // Should be able to go back to dashboard
         await page.goto('/dashboard');
-        await page.waitForLoadState('networkidle');
+        await waitForDashboardReady(page);
 
         await expect(page).toHaveURL(/.*\/dashboard/);
       });
@@ -155,9 +152,9 @@ test.describe('Complete User Journey E2E Tests', () => {
       // Multiple navigations
       for (let i = 0; i < 3; i++) {
         await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        await waitForDashboardReady(page);
         await page.goto('/dashboard');
-        await page.waitForLoadState('networkidle');
+        await waitForDashboardReady(page);
 
         // Should remain authenticated
         await expect(page).toHaveURL(/.*\/dashboard/);

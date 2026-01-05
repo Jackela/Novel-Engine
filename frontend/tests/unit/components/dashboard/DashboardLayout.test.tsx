@@ -3,18 +3,19 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { theme } from '@/styles/theme';
 
-vi.mock('@/contexts/useAuthContext', () => ({
-  useAuthContext: vi.fn(() => ({
+const guestBannerKey = 'novel-engine-guest-banner-dismissed';
+const mockUseAuthContext = vi.hoisted(() =>
+  vi.fn(() => ({
     isGuest: false,
     workspaceId: null,
-    user: { id: 'test-user', role: 'admin' },
-  })),
+  }))
+);
+
+vi.mock('@/contexts/useAuthContext', () => ({
+  useAuthContext: mockUseAuthContext,
 }));
 
-import { useAuthContext } from '@/contexts/useAuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-
-const mockUseAuthContext = vi.mocked(useAuthContext);
 
 // Test wrapper with theme
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -28,11 +29,11 @@ const renderWithTheme = (component: React.ReactElement) => {
 describe('DashboardLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.removeItem(guestBannerKey);
     // Default mock implementation
     mockUseAuthContext.mockReturnValue({
       isGuest: false,
       workspaceId: null,
-      user: { id: 'test-user', role: 'admin' },
     });
   });
 
@@ -55,7 +56,6 @@ describe('DashboardLayout', () => {
     mockUseAuthContext.mockReturnValue({
       isGuest: true,
       workspaceId: 'ws-test',
-      user: { id: 'guest', role: 'guest' },
     });
 
     renderWithTheme(<DashboardLayout>Content</DashboardLayout>);
@@ -67,7 +67,6 @@ describe('DashboardLayout', () => {
   it('does not show demo mode chip and banner when isGuest is false', () => {
     mockUseAuthContext.mockReturnValue({
       isGuest: false,
-      user: { id: 'user', role: 'user' },
     });
 
     renderWithTheme(<DashboardLayout>Content</DashboardLayout>);
@@ -79,7 +78,6 @@ describe('DashboardLayout', () => {
   it('dismisses banner on click', () => {
     mockUseAuthContext.mockReturnValue({
       isGuest: true,
-      user: { id: 'guest', role: 'guest' },
     });
 
     renderWithTheme(<DashboardLayout>Content</DashboardLayout>);
@@ -90,11 +88,6 @@ describe('DashboardLayout', () => {
     const dismissButton = screen.getByRole('button', { name: /dismiss/i });
     fireEvent.click(dismissButton);
 
-    // Banner should disappear (using queryByTestId for checking absence)
-    // Note: It might need waitFor if it's animated, but React state update should be immediate in tests mostly.
-    // Collapse component animation might delay it, but checking logic:
-    // guestBannerVisible depends on bannerDismissed state.
-    // However, Collapse usually keeps element in DOM but hidden or unmounts it onExited.
-    // Let's assume it removes or we can check visibility.
+    expect(window.localStorage.getItem(guestBannerKey)).toBe('1');
   });
 });

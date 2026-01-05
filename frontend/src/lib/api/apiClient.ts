@@ -107,6 +107,11 @@ export const getRetryDelayMs = (attempt: number): number => {
   return Math.min(ApiClientConstants.MAX_BACKOFF_MS, ApiClientConstants.BACKOFF_BASE_MS * 2 ** (normalized - 1));
 };
 
+const getAttemptConfig = (metadata?: ApiRequestMetadata): { attemptCount: number; maxAttempts: number } => ({
+  attemptCount: metadata?.attemptCount ?? 1,
+  maxAttempts: metadata?.maxAttempts ?? ApiClientConstants.DEFAULT_MAX_ATTEMPTS,
+});
+
 const isRetryableStatus = (status?: number): boolean => {
   if (status === undefined) return false;
   if (status === 408 || status === 429) return true;
@@ -115,24 +120,29 @@ const isRetryableStatus = (status?: number): boolean => {
 
 const isNetworkError = (error: AxiosError): boolean => !error.response;
 
-export const shouldAutoRetryRequest = (config: AxiosRequestConfig, error: AxiosError): boolean => {
-  const metadata = config.metadata;
-  const attemptCount = metadata?.attemptCount ?? 1;
-  const maxAttempts = metadata?.maxAttempts ?? ApiClientConstants.DEFAULT_MAX_ATTEMPTS;
+const isUnauthorizedError = (error: AxiosError): boolean => error.response?.status === 401;
 
-  if (attemptCount >= maxAttempts) return false;
-  if (error.response?.status === 401) return false;
+const isRetryableError = (error: AxiosError): boolean =>
+  isRetryableStatus(error.response?.status) || isNetworkError(error);
 
-  const retryableStatus = isRetryableStatus(error.response?.status) || isNetworkError(error);
-  if (!retryableStatus) return false;
-
+const isRetryableMethod = (config: AxiosRequestConfig): boolean => {
   const method = config.method?.toLowerCase();
-  if (method && isMutationMethod(method)) {
+  if (!method) return false;
+
+  if (isMutationMethod(method)) {
+    const metadata = config.metadata;
     return Boolean(metadata?.allowMutationRetry) || hasIdempotencyHeader(config.headers as Record<string, unknown>);
   }
 
-  if (method && !isIdempotentMethod(method)) return false;
-  return true;
+  return isIdempotentMethod(method);
+};
+
+export const shouldAutoRetryRequest = (config: AxiosRequestConfig, error: AxiosError): boolean => {
+  const { attemptCount, maxAttempts } = getAttemptConfig(config.metadata);
+  if (attemptCount >= maxAttempts) return false;
+  if (isUnauthorizedError(error)) return false;
+  if (!isRetryableError(error)) return false;
+  return isRetryableMethod(config);
 };
 
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -156,6 +166,111 @@ const logRequest = (config: AxiosRequestConfig, status?: number, success = true,
   }
 };
 
+const ensureHeaders = (config: AxiosRequestConfig): AxiosRequestHeaders => {
+  if (!config.headers) {
+    config.headers = {} as AxiosRequestHeaders;
+  }
+  return config.headers as AxiosRequestHeaders;
+};
+
+const setAuthHeader = (headers: AxiosRequestHeaders, authService?: IAuthenticationService): void => {
+  if (authService) {
+    const token = authService.getToken();
+    if (token) {
+      headers.Authorization = `${token.tokenType} ${token.accessToken}`;
+    }
+    return;
+  }
+
+  const state = store.getState();
+  const token = state.auth.accessToken;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+};
+
+const shouldApplyCsrf = (method?: string): boolean => {
+  if (!method) return false;
+  return isMutationMethod(method);
+};
+
+const setCsrfHeader = (headers: AxiosRequestHeaders, method?: string): void => {
+  if (!shouldApplyCsrf(method)) return;
+  const csrfToken = getCsrfTokenFromCookie();
+  if (csrfToken) {
+    headers['X-CSRF-Token'] = csrfToken;
+  }
+};
+
+const updateMetadata = (config: AxiosRequestConfig): ApiRequestMetadata => {
+  const now = Date.now();
+  const metadata = (config.metadata ?? {}) as ApiRequestMetadata;
+  metadata.maxAttempts ??= ApiClientConstants.DEFAULT_MAX_ATTEMPTS;
+  metadata.startTime ??= now;
+  metadata.attemptCount = (metadata.attemptCount ?? 0) + 1;
+  metadata.correlationId ??= generateRequestId();
+  config.metadata = metadata;
+  return metadata;
+};
+
+const setRequestMetadataHeaders = (headers: AxiosRequestHeaders, metadata: ApiRequestMetadata): void => {
+  const now = Date.now();
+  const durationSoFar = Math.max(now - (metadata.startTime ?? now), 0);
+  headers['X-Request-ID'] = metadata.correlationId ?? generateRequestId();
+  headers['X-Correlation-ID'] = metadata.correlationId ?? generateRequestId();
+  headers['X-Client'] = ApiClientConstants.CLIENT_IDENTIFIER;
+  headers['X-Attempt'] = String(metadata.attemptCount ?? 1);
+  headers['X-Request-Duration'] = String(durationSoFar);
+};
+
+const updateMetadataCorrelationId = (
+  metadata: ApiRequestMetadata | undefined,
+  headers?: Record<string, string | undefined>
+): void => {
+  if (!metadata || !headers) return;
+  const serverCorrelationId = extractCorrelationIdFromHeaders(headers);
+  if (serverCorrelationId) {
+    metadata.correlationId = serverCorrelationId;
+  }
+};
+
+const refreshAuthToken = async (
+  originalRequest: RetryableRequestConfig,
+  client: AxiosInstance,
+  authService?: IAuthenticationService
+): Promise<AxiosResponse | null> => {
+  if (originalRequest._retry) {
+    return null;
+  }
+
+  originalRequest._retry = true;
+
+  try {
+    if (authService) {
+      const newToken = await authService.refreshToken();
+      if (originalRequest.headers) {
+        originalRequest.headers.Authorization = `${newToken.tokenType} ${newToken.accessToken}`;
+      }
+    } else {
+      await store.dispatch(refreshUserToken());
+      const state = store.getState();
+      if (state.auth.accessToken && originalRequest.headers) {
+        originalRequest.headers.Authorization = `Bearer ${state.auth.accessToken}`;
+      }
+    }
+    return client(originalRequest);
+  } catch (refreshError) {
+    logger.error('Token refresh failed, logging out', refreshError as Error);
+    if (authService) {
+      await authService.logout();
+    } else {
+      store.dispatch(logoutUser());
+    }
+    if (typeof window !== 'undefined') window.location.href = '/login';
+    throw refreshError;
+  }
+};
+
 export const createHttpClient = (options: AxiosRequestConfig = {}): AxiosInstance => {
   return axios.create({
     baseURL: options.baseURL ?? (config.apiBaseUrl || '/'),
@@ -174,46 +289,11 @@ export const createAPIClient = (authService?: IAuthenticationService): AxiosInst
 
   client.interceptors.request.use(
     (config) => {
-      if (!config.headers) {
-        config.headers = {} as AxiosRequestHeaders;
-      }
-      const headers = config.headers as AxiosRequestHeaders;
-
-      if (authService) {
-        const token = authService.getToken();
-        if (token) {
-          headers.Authorization = `${token.tokenType} ${token.accessToken}`;
-        }
-      } else {
-        const state = store.getState();
-        const token = state.auth.accessToken;
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
-      }
-
-      const method = config.method?.toLowerCase();
-      if (method && ['post', 'put', 'delete', 'patch'].includes(method)) {
-        const csrfToken = getCsrfTokenFromCookie();
-        if (csrfToken) {
-          headers['X-CSRF-Token'] = csrfToken;
-        }
-      }
-
-      const now = Date.now();
-      const metadata = (config.metadata ?? {}) as ApiRequestMetadata;
-      metadata.maxAttempts ??= ApiClientConstants.DEFAULT_MAX_ATTEMPTS;
-      metadata.startTime ??= now;
-      metadata.attemptCount = (metadata.attemptCount ?? 0) + 1;
-      metadata.correlationId ??= generateRequestId();
-      config.metadata = metadata;
-
-      const durationSoFar = Math.max(now - metadata.startTime, 0);
-      headers['X-Request-ID'] = metadata.correlationId;
-      headers['X-Correlation-ID'] = metadata.correlationId;
-      headers['X-Client'] = ApiClientConstants.CLIENT_IDENTIFIER;
-      headers['X-Attempt'] = String(metadata.attemptCount);
-      headers['X-Request-Duration'] = String(durationSoFar);
+      const headers = ensureHeaders(config);
+      setAuthHeader(headers, authService);
+      setCsrfHeader(headers, config.method);
+      const metadata = updateMetadata(config);
+      setRequestMetadataHeaders(headers, metadata);
 
       return config;
     },
@@ -222,13 +302,7 @@ export const createAPIClient = (authService?: IAuthenticationService): AxiosInst
 
   client.interceptors.response.use(
     (response: AxiosResponse) => {
-      const metadata = response.config.metadata;
-      if (metadata) {
-        const serverCorrelationId = extractCorrelationIdFromHeaders(response.headers as Record<string, string | undefined>);
-        if (serverCorrelationId) {
-          metadata.correlationId = serverCorrelationId;
-        }
-      }
+      updateMetadataCorrelationId(response.config.metadata, response.headers as Record<string, string | undefined>);
       logRequest(response.config, response.status, true);
       return response;
     },
@@ -238,31 +312,10 @@ export const createAPIClient = (authService?: IAuthenticationService): AxiosInst
         return Promise.reject(normalizeApiError(error));
       }
 
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        try {
-          if (authService) {
-            const newToken = await authService.refreshToken();
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `${newToken.tokenType} ${newToken.accessToken}`;
-            }
-          } else {
-            await store.dispatch(refreshUserToken());
-            const state = store.getState();
-            if (state.auth.accessToken && originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${state.auth.accessToken}`;
-            }
-          }
-          return client(originalRequest);
-        } catch (refreshError) {
-          logger.error('Token refresh failed, logging out', refreshError as Error);
-          if (authService) {
-            await authService.logout();
-          } else {
-            store.dispatch(logoutUser());
-          }
-          if (typeof window !== 'undefined') window.location.href = '/login';
-          return Promise.reject(refreshError);
+      if (isUnauthorizedError(error)) {
+        const refreshed = await refreshAuthToken(originalRequest, client, authService);
+        if (refreshed) {
+          return refreshed;
         }
       }
 
@@ -272,12 +325,10 @@ export const createAPIClient = (authService?: IAuthenticationService): AxiosInst
         return client(originalRequest);
       }
 
-      const serverCorrelationId = extractCorrelationIdFromHeaders(
+      updateMetadataCorrelationId(
+        originalRequest.metadata,
         (error.response?.headers ?? {}) as Record<string, string | undefined>
       );
-      if (serverCorrelationId && originalRequest.metadata) {
-        originalRequest.metadata.correlationId = serverCorrelationId;
-      }
 
       logRequest(originalRequest, error.response?.status, false, error);
       return Promise.reject(normalizeApiError(error));
