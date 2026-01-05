@@ -2,7 +2,7 @@
 // Centralized API communication layer
 
 import type { AxiosInstance } from 'axios';
-import apiClient, { handleAPIError } from '@/services/api/apiClient';
+import apiClient, { handleAPIError } from '@/lib/api/apiClient';
 import type {
   Character,
   StoryProject,
@@ -76,6 +76,10 @@ class NovelEngineAPI {
     } catch (error) {
       return this.fail(error);
     }
+  }
+
+  async getCharacter(name: string): Promise<Character> {
+    return this.getCharacterDetails(name);
   }
 
   async getEnhancedCharacterData(name: string): Promise<Character> {
@@ -180,7 +184,14 @@ class NovelEngineAPI {
       };
 
       // Call the orchestration start endpoint
-      const response = await this.client.post<any>('/api/orchestration/start', orchestrationRequest);
+      type OrchestrationStartResponse = {
+        success: boolean;
+        data: Record<string, unknown>;
+      };
+      const response = await this.client.post<OrchestrationStartResponse>(
+        '/api/orchestration/start',
+        orchestrationRequest
+      );
 
       const storyProject = transformSimulationResponse(response.data.data, storyData);
 
