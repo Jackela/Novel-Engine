@@ -30,7 +30,10 @@ try:
     from apps.api.http import world_router as _world_router  # noqa: F401
 
     WORLD_ROUTER_AVAILABLE = True
-    logger.debug("World context router loaded: %s", _world_router.__name__)
+    logger.debug(
+        "World context router loaded: %s",
+        getattr(_world_router, "__name__", _world_router.__class__.__name__),
+    )
 except ImportError as exc:
     WORLD_ROUTER_AVAILABLE = False
     logger.warning("World context router not available: %s", exc)
