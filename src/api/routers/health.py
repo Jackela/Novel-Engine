@@ -4,9 +4,9 @@ import logging
 from datetime import UTC, datetime
 from typing import Any, Dict
 
+from config_loader import get_config
 from fastapi import APIRouter, HTTPException, Request
 
-from config_loader import get_config
 from src.api.schemas import HealthResponse
 
 logger = logging.getLogger(__name__)

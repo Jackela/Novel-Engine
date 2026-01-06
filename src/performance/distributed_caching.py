@@ -113,32 +113,26 @@ class CacheInterface(ABC):
     @abstractmethod
     async def get(self, key: str) -> Optional[Any]:
         """Get value from cache"""
-        pass
 
     @abstractmethod
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """Set value in cache"""
-        pass
 
     @abstractmethod
     async def delete(self, key: str) -> bool:
         """Delete value from cache"""
-        pass
 
     @abstractmethod
     async def exists(self, key: str) -> bool:
         """Check if key exists in cache"""
-        pass
 
     @abstractmethod
     async def clear(self) -> bool:
         """Clear all cache entries"""
-        pass
 
     @abstractmethod
     def get_metrics(self) -> CacheMetrics:
         """Get cache performance metrics"""
-        pass
 
 
 class MemoryCache(CacheInterface):

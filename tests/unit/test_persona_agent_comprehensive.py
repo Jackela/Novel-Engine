@@ -6,7 +6,7 @@ PersonaAgent Comprehensive Test Suite
 Systematic testing for src/persona_agent.py covering character initialization,
 decision-making, world event interpretation, AI integration, and character evolution.
 """
-
+import logging
 import os
 from unittest.mock import Mock, mock_open, patch
 
@@ -14,13 +14,12 @@ import pytest
 
 # Import the modules under test
 try:
-    from narrative_actions import NarrativeActionType
+    pass
 
-    from shared_types import ActionPriority, CharacterAction
+    from shared_types import CharacterAction
     from src.event_bus import EventBus
     from src.persona_agent import (
         PersonaAgent,
-        SubjectiveInterpretation,
         ThreatLevel,
         WorldEvent,
     )
@@ -71,7 +70,7 @@ class TestPersonaAgentInitialization:
                 if os.path.exists(filename):
                     os.remove(filename)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     def test_initialization_with_valid_character_directory(self):

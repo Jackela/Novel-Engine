@@ -6,8 +6,8 @@ Director Agent Advanced Feature Test Suite
 Advanced testing for director_agent.py covering knowledge retrieval, narrative engine,
 world state management, and agent orchestration systems.
 """
-
 import json
+import logging
 import os
 from datetime import datetime
 from unittest.mock import Mock, patch
@@ -45,7 +45,7 @@ class TestDirectorAgentKnowledgeSystem:
             if os.path.exists(self.temp_log_path):
                 os.remove(self.temp_log_path)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     def create_mock_agent(self):
         """Create a mock PersonaAgent for testing"""
@@ -143,9 +143,7 @@ class TestDirectorAgentKnowledgeSystem:
             fragment.tags = (
                 ["combat", "imperial"]
                 if i == 0
-                else ["ork", "combat"]
-                if i == 1
-                else ["warfare"]
+                else ["ork", "combat"] if i == 1 else ["warfare"]
             )
             mock_fragments.append(fragment)
 
@@ -181,7 +179,7 @@ class TestDirectorAgentNarrativeEngine:
             if os.path.exists(self.temp_log_path):
                 os.remove(self.temp_log_path)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -253,7 +251,7 @@ class TestDirectorAgentWorldStateManagement:
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -342,7 +340,7 @@ class TestDirectorAgentAgentOrchestration:
             if os.path.exists(self.temp_log_path):
                 os.remove(self.temp_log_path)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     def create_mock_agent(self, agent_id="test_agent"):
         """Create a mock PersonaAgent for orchestration testing"""
@@ -471,7 +469,7 @@ class TestDirectorAgentEventHandling:
             if os.path.exists(self.temp_log_path):
                 os.remove(self.temp_log_path)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     @pytest.mark.fast

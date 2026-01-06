@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import os
 import re
 import shutil
@@ -11,14 +12,14 @@ import zipfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
-from typing import Any, Dict, List, Optional
-from typing import cast
+from typing import Any, Dict, List, Optional, cast
 
 from .interfaces import CharacterStore, Workspace, WorkspaceStore
 
-
 _WORKSPACE_ID_RE = re.compile(r"^[0-9a-f]{32}$")
 _RESOURCE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
+
+logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION = 1
 
@@ -39,14 +40,14 @@ def _atomic_write_bytes(path: Path, data: bytes) -> None:
                 os.fsync(handle.fileno())
             except OSError:
                 # Best-effort: some filesystems or environments may not support fsync.
-                pass
+                logger.debug("fsync not supported for %s", path, exc_info=True)
         os.replace(tmp_path, path)
     finally:
         try:
             if tmp_path.exists():
                 tmp_path.unlink()
         except OSError:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
 
 def _atomic_write_json(path: Path, payload: Dict[str, Any]) -> None:

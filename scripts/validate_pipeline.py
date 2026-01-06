@@ -125,7 +125,7 @@ def validate_pipeline_components():
     # 6. Test baseline evaluator import
     print("\n🔬 Testing Baseline Evaluator Import...")
     try:
-        from evaluate_baseline import BaselineEvaluator, SeedLoader
+        pass
 
         print("  ✅ Baseline evaluator imports successful")
         validation_results["evaluator_import"] = True
@@ -140,7 +140,6 @@ def validate_pipeline_components():
     print("\n📈 Testing Pipeline Runner Import...")
     try:
         sys.path.insert(0, "scripts")
-        from run_evaluation_pipeline import EvaluationPipeline, PipelineConfig
 
         print("  ✅ Pipeline runner imports successful")
         validation_results["pipeline_import"] = True

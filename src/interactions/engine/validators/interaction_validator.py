@@ -4,10 +4,12 @@ Interaction context validation and prerequisite checking.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.data_models import ErrorInfo, StandardResponse
-from src.interactions.interaction_engine_system.core.types import InteractionContext
+from src.interactions.interaction_engine_system.core.types import (
+    InteractionContext,
+    InteractionType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +99,6 @@ class InteractionValidator:
                 # Check temporal requirements
                 prerequisite.split(":", 1)[1]
                 # Placeholder logic for time checks
-                pass
 
         if unmet_prerequisites:
             return StandardResponse(

@@ -776,9 +776,9 @@ class SystemErrorHandler:
                 try:
                     await self._health_check_task
                 except asyncio.CancelledError:
-                    pass
-
-            # Clear data structures
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             self._error_records.clear()
             self._suppressed_errors.clear()
 

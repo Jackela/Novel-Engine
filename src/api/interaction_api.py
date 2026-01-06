@@ -215,7 +215,7 @@ class InteractionAPI:
                 }
             except HTTPException:
                 raise
-            except Exception as e:
+            except Exception:
                 logger.exception("Error getting interaction.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
@@ -248,7 +248,7 @@ class InteractionAPI:
                 state["status"] = "failed"
                 state["error"] = str(process_error)
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error processing interaction.")
             if interaction_id in self.active_interactions:
                 self.active_interactions[interaction_id]["status"] = "error"

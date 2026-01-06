@@ -19,6 +19,8 @@ Key Components:
 
 from __future__ import annotations
 
+# Auto-register all templates on import.
+from . import templates
 from .base import (
     Language,
     PromptTemplate,
@@ -34,8 +36,7 @@ from .optimizer import (
 from .registry import PromptRegistry
 from .storage import PromptStorage, UserPrompt
 
-# Auto-register all templates on import (via templates/__init__.py)
-from . import templates  # noqa: F401 - triggers auto-registration
+templates.register_all_templates()
 
 __all__ = [
     "Language",

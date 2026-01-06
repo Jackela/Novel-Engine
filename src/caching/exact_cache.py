@@ -6,7 +6,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass
 from threading import RLock
-from typing import Dict, Iterable, Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 from .interfaces import CacheEntryMeta
 

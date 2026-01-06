@@ -438,7 +438,6 @@ test.describe('Decision Dialog', () => {
       await page.waitForTimeout(100);
 
       // Check for error (may not appear depending on reducer handling)
-      const hasError = await decisionDialog.hasError();
       // Error display depends on implementation
     });
   });

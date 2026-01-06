@@ -217,9 +217,9 @@ export default defineConfig({
         },
         fileParallelism: false, // Disable parallelism to prevent hangs on limited resources
 
-    pool: 'forks', // Use forks instead of threads for better isolation
-    // Vitest 4: poolOptions moved to top-level
-    singleFork: true, // Run tests sequentially in a single fork
+        pool: 'forks', // Use forks instead of threads for better isolation
+        // Vitest 4: poolOptions moved to top-level
+        singleFork: true, // Run tests sequentially in a single fork
     testTimeout: 10000,
     hookTimeout: 10000,
     reporters: ['verbose'],

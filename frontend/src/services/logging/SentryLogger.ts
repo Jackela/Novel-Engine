@@ -15,16 +15,6 @@ import type { LogLevel, LogContext, LoggerConfig } from '@/types/logging';
 import { Sanitizer } from './Sanitizer';
 
 /**
- * Map LogLevel to Sentry Severity
- */
-const LOG_LEVEL_TO_SENTRY_SEVERITY: Record<LogLevel, Sentry.SeverityLevel> = {
-  DEBUG: 'debug',
-  INFO: 'info',
-  WARN: 'warning',
-  ERROR: 'error',
-};
-
-/**
  * SentryLogger class
  * 
  * Production logger that sends errors and messages to Sentry

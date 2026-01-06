@@ -24,9 +24,12 @@ import pytest
 import yaml
 
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
+pytestmark = []
 if not FULL_INTEGRATION:
-    pytestmark = pytest.mark.skip(
-        reason="Character system comprehensive suite requires NOVEL_ENGINE_FULL_INTEGRATION=1"
+    pytestmark.append(
+        pytest.mark.skip(
+            reason="Character system comprehensive suite requires NOVEL_ENGINE_FULL_INTEGRATION=1"
+        )
     )
 from src.agents.director_agent import DirectorAgent
 from src.config.character_factory import CharacterFactory

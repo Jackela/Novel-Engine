@@ -106,15 +106,8 @@ class TestEventsStreamEndpoint:
                 ):
                     break
 
-            # Find first "data:" line - this is the essential part of SSE
-            data_lines = [l for l in lines_collected if l.startswith("data:")]
             # Data lines may not appear immediately; this is acceptable for test
             # The SSE stream is valid if it follows the protocol format
-
-            # id: lines are optional in SSE spec, but if present should be properly formatted
-            # The implementation may use different id formats
-            id_lines = [l for l in lines_collected if l.startswith("id:")]
-            # Note: id lines are optional in SSE, just verify stream is working
 
     @pytest.mark.integration
     def test_event_payload_includes_required_fields(self, client):
@@ -162,7 +155,6 @@ class TestEventsStreamEndpoint:
         with client.stream(
             "GET", "/api/events/stream", params={"limit": 10}
         ) as response:
-            found_character_event = False
             lines_read = 0
             max_lines = 50
 
@@ -179,7 +171,6 @@ class TestEventsStreamEndpoint:
                         assert "characterName" in event_data
                         assert isinstance(event_data["characterName"], str)
                         assert len(event_data["characterName"]) > 0
-                        found_character_event = True
                         break
 
                 # Safety limit - don't read forever

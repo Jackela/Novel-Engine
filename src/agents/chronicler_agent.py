@@ -25,8 +25,8 @@ from typing import Any, Dict, List, Optional
 from src.core.config.config_loader import get_config
 from src.core.types.shared_types import CharacterAction
 from src.event_bus import EventBus
+from src.llm_service import LLMProvider, LLMRequest, ResponseFormat, UnifiedLLMService
 from src.persona_agent import PersonaAgent
-from src.llm_service import UnifiedLLMService, LLMRequest, LLMProvider, ResponseFormat
 from src.prompts import (
     Language,
     PromptRegistry,
@@ -355,7 +355,7 @@ class ChroniclerAgent:
             try:
                 tmp_file.unlink()
             except FileNotFoundError:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
             logger.info(f"Output directory validated: {self.output_directory}")
         except Exception as e:
             raise OSError(f"Output directory initialization failed: {e}")
@@ -560,7 +560,7 @@ just the pure narrative prose that could be published in an anthology.
         try:
             asyncio.get_running_loop()
         except RuntimeError:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
         else:
             logger.warning(
                 "Skipping LLM call because an event loop is already running."

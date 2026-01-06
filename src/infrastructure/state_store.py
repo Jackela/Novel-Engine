@@ -94,37 +94,30 @@ class StateStore(ABC):
     @abstractmethod
     async def get(self, key: StateKey) -> Optional[Any]:
         """Retrieve value by key"""
-        pass
 
     @abstractmethod
     async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
         """Store value with key"""
-        pass
 
     @abstractmethod
     async def delete(self, key: StateKey) -> bool:
         """Delete value by key"""
-        pass
 
     @abstractmethod
     async def exists(self, key: StateKey) -> bool:
         """Check if key exists"""
-        pass
 
     @abstractmethod
     async def list_keys(self, pattern: str) -> List[StateKey]:
         """List keys matching pattern"""
-        pass
 
     @abstractmethod
     async def health_check(self) -> bool:
         """Check store health"""
-        pass
 
     @abstractmethod
     async def close(self):
         """Close connections"""
-        pass
 
 
 class RedisStateStore(StateStore):

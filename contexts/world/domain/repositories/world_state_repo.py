@@ -50,7 +50,6 @@ class IWorldStateRepository(ABC):
             RepositoryException: If save operation fails
             ConcurrencyException: If version conflict occurs
         """
-        pass
 
     @abstractmethod
     async def get_by_id(self, world_state_id: str) -> Optional[WorldState]:
@@ -66,7 +65,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
     async def get_by_id_or_raise(self, world_state_id: str) -> WorldState:
@@ -83,7 +81,6 @@ class IWorldStateRepository(ABC):
             EntityNotFoundException: If world state not found
             RepositoryException: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
     async def delete(self, world_state_id: str) -> bool:
@@ -99,7 +96,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If deletion operation fails
         """
-        pass
 
     @abstractmethod
     async def exists(self, world_state_id: str) -> bool:
@@ -115,7 +111,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If existence check fails
         """
-        pass
 
     # Query Operations
 
@@ -134,7 +129,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If query operation fails
         """
-        pass
 
     @abstractmethod
     async def find_by_name(self, name: str) -> Optional[WorldState]:
@@ -150,7 +144,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If query operation fails
         """
-        pass
 
     @abstractmethod
     async def find_by_criteria(
@@ -170,7 +163,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If query operation fails
         """
-        pass
 
     @abstractmethod
     async def count(self, criteria: Optional[Dict[str, Any]] = None) -> int:
@@ -186,7 +178,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If count operation fails
         """
-        pass
 
     # Entity-specific Operations
 
@@ -209,7 +200,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If query operation fails
         """
-        pass
 
     @abstractmethod
     async def find_entities_in_area(
@@ -234,7 +224,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If spatial query operation fails
         """
-        pass
 
     @abstractmethod
     async def find_entities_by_coordinates(
@@ -254,7 +243,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If coordinate query operation fails
         """
-        pass
 
     # Versioning and History Operations
 
@@ -275,7 +263,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If version query fails
         """
-        pass
 
     @abstractmethod
     async def get_version_history(
@@ -294,7 +281,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If version history query fails
         """
-        pass
 
     @abstractmethod
     async def rollback_to_version(
@@ -314,7 +300,6 @@ class IWorldStateRepository(ABC):
             EntityNotFoundException: If world state or version not found
             RepositoryException: If rollback operation fails
         """
-        pass
 
     # Snapshot and Backup Operations
 
@@ -339,7 +324,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If snapshot creation fails
         """
-        pass
 
     @abstractmethod
     async def restore_from_snapshot(
@@ -359,7 +343,6 @@ class IWorldStateRepository(ABC):
             EntityNotFoundException: If world state or snapshot not found
             RepositoryException: If restore operation fails
         """
-        pass
 
     @abstractmethod
     async def list_snapshots(self, world_state_id: str) -> List[Dict[str, Any]]:
@@ -375,7 +358,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If snapshot listing fails
         """
-        pass
 
     @abstractmethod
     async def delete_snapshot(self, snapshot_id: str) -> bool:
@@ -391,7 +373,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If deletion operation fails
         """
-        pass
 
     # Batch Operations
 
@@ -409,7 +390,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If batch save operation fails
         """
-        pass
 
     @abstractmethod
     async def delete_batch(self, world_state_ids: List[str]) -> Dict[str, bool]:
@@ -425,7 +405,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If batch delete operation fails
         """
-        pass
 
     # Performance and Optimization
 
@@ -446,7 +425,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If optimization fails
         """
-        pass
 
     @abstractmethod
     async def get_statistics(
@@ -464,7 +442,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If statistics gathering fails
         """
-        pass
 
     # Event Sourcing Support
 
@@ -485,7 +462,6 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If event query fails
         """
-        pass
 
     @abstractmethod
     async def replay_events(
@@ -504,19 +480,16 @@ class IWorldStateRepository(ABC):
         Raises:
             RepositoryException: If event replay fails
         """
-        pass
 
 
 class RepositoryException(Exception):
     """Base exception for repository operations."""
 
-    pass
 
 
 class EntityNotFoundException(RepositoryException):
     """Raised when a requested entity is not found."""
 
-    pass
 
 
 class ConcurrencyException(RepositoryException):

@@ -25,7 +25,6 @@ from pathlib import Path as FilePath
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
 # World Context CQRS Imports

@@ -8,6 +8,7 @@ Handles local API communication and response mapping for Ollama's REST API.
 
 import asyncio
 import json
+import logging
 from decimal import Decimal
 from typing import Any, AsyncIterator, Dict, List, Optional
 
@@ -27,6 +28,8 @@ from ...domain.value_objects.common import (
     ProviderType,
     TokenBudget,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class OllamaProvider(ILLMProvider):
@@ -580,7 +583,7 @@ class OllamaProvider(ILLMProvider):
             if "error" in error_data:
                 error_message = error_data["error"]
         except (json.JSONDecodeError, TypeError):
-            pass
+            logger.debug("Ollama error response was not valid JSON")
 
         return LLMResponse.create_error(
             request_id=request.request_id,

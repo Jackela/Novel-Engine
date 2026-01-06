@@ -19,8 +19,10 @@ import pytest
 
 # Import components to test
 try:
-    from src.agents.director_agent import DirectorAgent
+    from src.agents.context_manager import CharacterContextManager
+    from src.agents.decision_engine import DecisionEngine
     from src.agents.persona_agent import PersonaAgent
+    from src.agents.persona_core import PersonaCore
 
     print("✅ Component imports successful")
     AGENTS_AVAILABLE = True

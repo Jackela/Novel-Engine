@@ -154,6 +154,11 @@ class WorldState(Entity):
         if self.status == WorldStatus.INITIALIZING:
             self.activate()
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, WorldState):
+            return False
+        return super().__eq__(other)
+
     def _validate_business_rules(self) -> List[str]:
         """Validate world-specific business rules."""
         errors = []
@@ -659,7 +664,7 @@ class WorldState(Entity):
                 if not self.spatial_index[grid_key]:
                     del self.spatial_index[grid_key]
             except ValueError:
-                pass  # Entity wasn't in the grid cell
+                return  # Entity wasn't in the grid cell
 
     def _get_entities_from_spatial_index(
         self, center: Coordinates, radius: float

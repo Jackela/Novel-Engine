@@ -244,7 +244,7 @@ class SubjectiveRealityAPI:
 
             except HTTPException:
                 raise
-            except Exception as e:
+            except Exception:
                 logger.exception("Error getting turn brief.")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -313,7 +313,7 @@ class SubjectiveRealityAPI:
 
             except HTTPException:
                 raise
-            except Exception as e:
+            except Exception:
                 logger.exception("Error getting all turn briefs.")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
@@ -367,7 +367,7 @@ class SubjectiveRealityAPI:
 
             except HTTPException:
                 raise
-            except Exception as e:
+            except Exception:
                 logger.exception("Error getting belief model.")
                 raise HTTPException(status_code=500, detail="Internal server error")
 

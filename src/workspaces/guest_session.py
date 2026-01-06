@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -13,11 +14,11 @@ from .filesystem import (
     _validate_workspace_id,
 )
 
-
 GUEST_SESSION_COOKIE_NAME = "guest_session"
 GUEST_SESSION_TOKEN_TYPE = "guest"
 
 DEFAULT_GUEST_TTL_DAYS = 30
+_COOKIE_VALUE_RE = re.compile(r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$")
 
 
 def _utc_now() -> datetime:
@@ -35,6 +36,12 @@ def _ttl_seconds() -> int:
     except ValueError:
         days = DEFAULT_GUEST_TTL_DAYS
     return days * 24 * 60 * 60
+
+
+def _assert_safe_cookie_value(token: str) -> str:
+    if not _COOKIE_VALUE_RE.fullmatch(token):
+        raise ValueError("Unsafe guest session cookie value")
+    return token
 
 
 @dataclass(frozen=True)
@@ -85,7 +92,9 @@ class GuestSessionManager:
             "exp": int((now + timedelta(seconds=_ttl_seconds())).timestamp()),
         }
         token = jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
-        return str(token)
+        if isinstance(token, bytes):
+            token = token.decode("utf-8")
+        return _assert_safe_cookie_value(str(token))
 
     def resolve_or_create(self, token: Optional[str]) -> GuestSessionResult:
         if token:

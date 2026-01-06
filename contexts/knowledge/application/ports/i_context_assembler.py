@@ -50,4 +50,3 @@ class IContextAssembler(ABC):
         Raises:
             ValueError: If agent is invalid or entries are inaccessible
         """
-        pass

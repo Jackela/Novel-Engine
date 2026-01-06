@@ -155,7 +155,6 @@ class MetricsCoordinator:
 
         # Calculate averages
         avg_response_time = self.get_average_response_time()
-        error_rate = self.get_error_rate()
         health_score = self.get_system_health_score()
 
         # Determine AI enhancement rate based on mode

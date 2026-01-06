@@ -2,8 +2,8 @@
 """
 简化的UI功能验证测试
 """
-
 import json
+import logging
 import subprocess
 import sys
 import time
@@ -25,13 +25,11 @@ def start_frontend_server():
 
     # 检查5173端口是否被占用
     try:
-        response = requests.get("http://localhost:5173", timeout=2)
+        requests.get("http://localhost:5173", timeout=2)
         print("OK: 前端服务器已在运行")
         return None
     except Exception:
-        pass
-
-    # 启动开发服务器
+        logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
     process = subprocess.Popen(
         ["npm", "run", "dev"],
         cwd=frontend_dir,
@@ -104,7 +102,7 @@ def test_frontend_basic():
                 if resp.status_code < 400:
                     accessible_resources += 1
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
         if accessible_resources > 0:
             print(f"OK: {accessible_resources}/{len(static_urls)} 静态资源可访问")

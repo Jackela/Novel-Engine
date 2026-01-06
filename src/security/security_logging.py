@@ -698,7 +698,6 @@ class SecurityLogger:
         """STANDARD THREAT INTELLIGENCE UPDATE"""
         # This would integrate with external threat feeds
         # For now, it's a placeholder
-        pass
 
     async def _clean_old_data(self):
         """STANDARD OLD DATA CLEANUP"""
@@ -921,7 +920,9 @@ class SecurityLogger:
                     try:
                         handler.close()
                     except Exception:
-                        pass
+                        logging.getLogger(__name__).debug(
+                            "Suppressed exception", exc_info=True
+                        )
 
             self._security_file_handler = None
             self._audit_file_handler = None

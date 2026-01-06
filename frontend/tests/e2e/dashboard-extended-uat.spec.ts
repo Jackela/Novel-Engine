@@ -103,8 +103,6 @@ test.describe('Extended UAT Scenarios', () => {
 
     await test.step('Cross-Component Data Validation', async () => {
       // Get initial component states
-      const initialUpdates = await dashboardPage.observeComponentUpdates();
-
       // Trigger orchestration and monitor updates
       await dashboardPage.triggerTurnOrchestration();
       await page.waitForTimeout(3000);

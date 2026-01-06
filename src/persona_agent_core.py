@@ -246,9 +246,9 @@ class PersonaAgentCore:
 
                 # Keep only recent events (last 10)
                 if len(self.subjective_worldview["recent_events"]) > 10:
-                    self.subjective_worldview[
-                        "recent_events"
-                    ] = self.subjective_worldview["recent_events"][-10:]
+                    self.subjective_worldview["recent_events"] = (
+                        self.subjective_worldview["recent_events"][-10:]
+                    )
 
                 logger.debug(
                     f"Agent {self.agent_id} processed world state update for turn {event_summary['turn_number']}"

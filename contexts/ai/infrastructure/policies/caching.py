@@ -120,7 +120,6 @@ class ICacheService(ABC):
         Returns:
             Cached response if found and valid, None otherwise
         """
-        pass
 
     @abstractmethod
     async def put_async(
@@ -134,7 +133,6 @@ class ICacheService(ABC):
             response: Response to cache
             ttl_seconds: Time-to-live in seconds (0 = no expiry)
         """
-        pass
 
     @abstractmethod
     async def invalidate_async(self, request: LLMRequest) -> bool:
@@ -147,7 +145,6 @@ class ICacheService(ABC):
         Returns:
             True if entry was found and removed, False otherwise
         """
-        pass
 
     @abstractmethod
     async def clear_async(self) -> int:
@@ -157,7 +154,6 @@ class ICacheService(ABC):
         Returns:
             Number of entries cleared
         """
-        pass
 
     @abstractmethod
     async def get_stats_async(self) -> Dict[str, Any]:
@@ -167,7 +163,6 @@ class ICacheService(ABC):
         Returns:
             Dictionary with cache performance metrics
         """
-        pass
 
 
 class InMemoryCacheService(ICacheService):

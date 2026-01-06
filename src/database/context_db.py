@@ -51,8 +51,6 @@ logger = logging.getLogger(__name__)
 class SacredDatabaseError(Exception):
     """ENHANCED DATABASE EXCEPTION SANCTIFIED BY ERROR HANDLING"""
 
-    pass
-
 
 class ContextDatabase:
     """

@@ -231,7 +231,9 @@ class TestAPIServerIntegration:
             # Check if WORLD_ROUTER_AVAILABLE is set correctly
             if hasattr(api_server, "WORLD_ROUTER_AVAILABLE"):
                 assert isinstance(api_server.WORLD_ROUTER_AVAILABLE, bool)
-                print(f"✅ WORLD_ROUTER_AVAILABLE = {api_server.WORLD_ROUTER_AVAILABLE}")
+                print(
+                    f"✅ WORLD_ROUTER_AVAILABLE = {api_server.WORLD_ROUTER_AVAILABLE}"
+                )
 
             # Check if the app exists
             if hasattr(api_server, "app"):

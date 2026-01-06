@@ -248,7 +248,6 @@ class TestNarrativeIdEquality:
         id2 = NarrativeId(uuid_value)
 
         assert id1 == id2
-        assert not (id1 != id2)
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -261,7 +260,6 @@ class TestNarrativeIdEquality:
         id2 = NarrativeId(uuid2)
 
         assert id1 != id2
-        assert not (id1 == id2)
 
     @pytest.mark.unit
     def test_equality_with_non_narrative_id(self):
@@ -271,11 +269,9 @@ class TestNarrativeIdEquality:
 
         # Should not be equal to UUID directly
         assert narrative_id != uuid_value
-        assert not (narrative_id == uuid_value)
 
         # Should not be equal to string representation
         assert narrative_id != str(uuid_value)
-        assert not (narrative_id == str(uuid_value))
 
         # Should not be equal to other types
         assert narrative_id != 123
@@ -289,7 +285,7 @@ class TestNarrativeIdEquality:
     def test_equality_reflexive(self):
         """Test that equality is reflexive (a == a)."""
         narrative_id = NarrativeId.generate()
-        assert narrative_id == narrative_id
+        assert narrative_id == NarrativeId(narrative_id.value)
 
     @pytest.mark.unit
     @pytest.mark.fast

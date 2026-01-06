@@ -17,17 +17,9 @@ from ..core.types import (
     InteractionType,
 )
 
-# Import enhanced core systems
+# Import enhanced core systems used in responses
 try:
-    from src.core.character_manager import CharacterManager
-    from src.core.data_models import (
-        CharacterState,
-        ErrorInfo,
-        MemoryItem,
-        StandardResponse,
-    )
-    from src.core.equipment_manager import EquipmentManager
-    from src.core.types import AgentID
+    from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
     class StandardResponse:
@@ -48,12 +40,6 @@ except ImportError:
             self.code = code
             self.message = message
             self.recoverable = recoverable
-
-    CharacterState = dict
-    MemoryItem = dict
-    AgentID = str
-    CharacterManager = None
-    EquipmentManager = None
 
 __all__ = ["InteractionTypeProcessorManager", "BaseInteractionProcessor"]
 
@@ -89,7 +75,6 @@ class BaseInteractionProcessor(ABC):
     @abstractmethod
     def supported_type(self) -> InteractionType:
         """Return the interaction type this processor handles."""
-        pass
 
     @abstractmethod
     async def process_interaction(
@@ -104,7 +89,6 @@ class BaseInteractionProcessor(ABC):
         Returns:
             StandardResponse with processing results
         """
-        pass
 
     @abstractmethod
     async def validate_context(self, context: InteractionContext) -> StandardResponse:
@@ -117,7 +101,6 @@ class BaseInteractionProcessor(ABC):
         Returns:
             StandardResponse with validation results
         """
-        pass
 
     def get_processing_statistics(self) -> Dict[str, Any]:
         """Get processing statistics for this processor."""

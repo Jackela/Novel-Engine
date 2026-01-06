@@ -715,9 +715,9 @@ class CampaignLoggingService:
                 try:
                     file_handle.close()
                 except Exception:
-                    pass
-
-            # Clear memory
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             self._log_entries.clear()
             self._log_files.clear()
 

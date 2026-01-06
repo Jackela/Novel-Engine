@@ -21,13 +21,12 @@ import logging
 from decimal import Decimal
 from typing import Any, Dict
 
-from src.core.data_models import ErrorInfo, StandardResponse
+from src.core.data_models import StandardResponse
 from src.event_bus import EventBus
 
 from .ai_orchestrator import (
     AIIntelligenceOrchestrator,
     AISystemConfig,
-    IntelligenceLevel,
 )
 
 logger = logging.getLogger(__name__)

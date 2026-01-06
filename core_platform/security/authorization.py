@@ -62,25 +62,21 @@ class SystemRole(Enum):
 class AuthorizationException(Exception):
     """Base exception for authorization errors."""
 
-    pass
 
 
 class InsufficientPermissionsException(AuthorizationException):
     """Raised when user lacks required permissions."""
 
-    pass
 
 
 class RoleNotFoundException(AuthorizationException):
     """Raised when role is not found."""
 
-    pass
 
 
 class PermissionNotFoundException(AuthorizationException):
     """Raised when permission is not found."""
 
-    pass
 
 
 class PermissionManager:

@@ -20,9 +20,7 @@ except ImportError:
 
 
 def _character_ids(characters):
-    return [
-        entry["id"] if isinstance(entry, dict) else entry for entry in characters
-    ]
+    return [entry["id"] if isinstance(entry, dict) else entry for entry in characters]
 
 
 @pytest.mark.skipif(not API_SERVER_AVAILABLE, reason="API server not available")

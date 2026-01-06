@@ -321,9 +321,9 @@ class StoryQualityEngine:
             genre_consistency_score = await self._analyze_genre_consistency(
                 story_text, genre
             )
-            dimension_scores[
-                QualityDimension.GENRE_CONSISTENCY
-            ] = genre_consistency_score
+            dimension_scores[QualityDimension.GENRE_CONSISTENCY] = (
+                genre_consistency_score
+            )
 
             # Store dimension scores
             report.dimension_scores = dimension_scores

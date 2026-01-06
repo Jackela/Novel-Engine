@@ -812,9 +812,7 @@ class EnterpriseStorageManager:
             try:
                 await self._health_check_task
             except asyncio.CancelledError:
-                pass
-
-        # Close backends
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
         if self.postgresql:
             await self.postgresql.close()
 

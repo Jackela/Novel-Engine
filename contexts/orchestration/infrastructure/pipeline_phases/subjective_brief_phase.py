@@ -456,7 +456,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
                         turn_number=context.turn_id,
                     )
                 )
-            except Exception as e:
+            except Exception:
                 # Log warning but don't fail - knowledge is enhancement not requirement
                 context.record_performance_metric(
                     "knowledge_retrieval_errors",

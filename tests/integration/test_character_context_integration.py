@@ -567,6 +567,9 @@ def run_character_context_integration_tests():
             CharacterRace,
             Gender,
         )
+        from contexts.character.domain.value_objects.character_stats import (
+            CoreAbilities,
+        )
 
         print("✅ Domain layer imports successful")
 
@@ -582,15 +585,13 @@ def run_character_context_integration_tests():
         print("✅ Infrastructure layer imports successful")
 
         # Test basic character creation
-        core_abilities = (
-            contexts.character.domain.value_objects.character_stats.CoreAbilities(
-                strength=15,
-                dexterity=12,
-                constitution=14,
-                intelligence=10,
-                wisdom=11,
-                charisma=13,
-            )
+        core_abilities = CoreAbilities(
+            strength=15,
+            dexterity=12,
+            constitution=14,
+            intelligence=10,
+            wisdom=11,
+            charisma=13,
         )
 
         character = Character.create_new_character(

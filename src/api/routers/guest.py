@@ -22,6 +22,7 @@ from src.api.deps import (
 from src.api.schemas import GuestSessionResponse
 from src.api.settings import APISettings
 from src.workspaces import FilesystemWorkspaceStore, GuestSessionManager
+from src.workspaces.guest_session import _assert_safe_cookie_value
 from src.workspaces.filesystem import _safe_extract_zip_bytes, _validate_workspace_id
 
 router = APIRouter(tags=["Guest"])
@@ -42,9 +43,12 @@ async def create_or_resume_guest_session(
         return GuestSessionResponse(workspace_id=workspace_id, created=False)
 
     workspace = store.create()
+    safe_cookie = _assert_safe_cookie_value(
+        manager.encode(_validate_workspace_id(workspace.id))
+    )
     response.set_cookie(
         manager.cookie_name,
-        manager.encode(_validate_workspace_id(workspace.id)),
+        safe_cookie,
         httponly=True,
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,
@@ -91,9 +95,10 @@ async def import_workspace_zip(
         raise HTTPException(status_code=500, detail="Import failed") from err
 
     safe_workspace_id = _validate_workspace_id(workspace.id)
+    safe_cookie = _assert_safe_cookie_value(manager.encode(safe_workspace_id))
     response.set_cookie(
         manager.cookie_name,
-        manager.encode(safe_workspace_id),
+        safe_cookie,
         httponly=True,
         secure=settings.cookie_secure,
         samesite=settings.cookie_samesite,

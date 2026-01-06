@@ -21,7 +21,6 @@ from src.prompts import (
     PromptRegistry,
     PromptStorage,
     StoryGenre,
-    UserPrompt,
     analyze_prompt,
     optimize_prompt,
 )

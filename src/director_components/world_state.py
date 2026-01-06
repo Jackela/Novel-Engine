@@ -510,9 +510,9 @@ class WorldStateManager:
                 try:
                     await self._auto_save_task
                 except asyncio.CancelledError:
-                    pass
-
-            # Final save if dirty
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             if self._dirty:
                 await self.save_world_state()
 

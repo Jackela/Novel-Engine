@@ -6,6 +6,7 @@ Data models and types for the enhanced multi-agent bridge system.
 """
 
 from dataclasses import dataclass, field
+from functools import total_ordering
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -86,6 +87,7 @@ class LLMCoordinationConfig:
     enable_performance_monitoring: bool = True
 
 
+@total_ordering
 @dataclass
 class LLMBatchRequest:
     """Request for batched LLM processing."""
@@ -102,7 +104,14 @@ class LLMBatchRequest:
 
     def __lt__(self, other):
         """Enable priority queue ordering."""
+        if not isinstance(other, LLMBatchRequest):
+            return NotImplemented
         return self.priority.value < other.priority.value
+
+    def __eq__(self, other):
+        if not isinstance(other, LLMBatchRequest):
+            return NotImplemented
+        return self.priority.value == other.priority.value
 
 
 @dataclass

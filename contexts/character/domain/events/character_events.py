@@ -40,12 +40,10 @@ class CharacterEvent(ABC):
     @abstractmethod
     def get_event_type(self) -> str:
         """Get the type of this event."""
-        pass
 
     @abstractmethod
     def to_dict(self) -> Dict[str, Any]:
         """Convert event to dictionary for serialization."""
-        pass
 
 
 @dataclass(frozen=True)

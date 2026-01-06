@@ -1,18 +1,18 @@
 import asyncio
 import logging
-import uuid
 import time
-from typing import List, Optional, Dict, Any
-from datetime import datetime, UTC
+import uuid
+from datetime import UTC, datetime
+from typing import Any, Dict, List, Optional
 
-from src.core.system_orchestrator import SystemOrchestrator
-from src.api.schemas import SimulationRequest, SimulationResponse
-from src.event_bus import EventBus
+from src.agents.chronicler_agent import ChroniclerAgent
+from src.agents.director_agent import DirectorAgent
+from src.api.schemas import SimulationRequest
 
 # Import legacy components for backward compatibility until fully replaced
 from src.config.character_factory import CharacterFactory
-from src.agents.director_agent import DirectorAgent
-from src.agents.chronicler_agent import ChroniclerAgent
+from src.core.system_orchestrator import SystemOrchestrator
+from src.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +155,7 @@ class ApiOrchestrationService:
                 )
 
                 # Run turn (offload to thread if blocking)
-                turn_result = await asyncio.to_thread(director.run_turn)
+                await asyncio.to_thread(director.run_turn)
 
                 duration = time.time() - turn_start_time
                 turn_times.append(duration)

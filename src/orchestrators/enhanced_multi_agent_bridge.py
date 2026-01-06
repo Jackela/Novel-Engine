@@ -24,6 +24,7 @@ import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
+from functools import total_ordering
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -124,6 +125,7 @@ class LLMCoordinationConfig:
     cost_alert_threshold: float = 0.8  # Alert when 80% of budget used
 
 
+@total_ordering
 @dataclass
 class LLMBatchRequest:
     """Represents a batched LLM request."""
@@ -141,7 +143,17 @@ class LLMBatchRequest:
 
     def __lt__(self, other):
         """For priority queue ordering."""
+        if not isinstance(other, LLMBatchRequest):
+            return NotImplemented
         return (self.priority.value, self.created_at) < (
+            other.priority.value,
+            other.created_at,
+        )
+
+    def __eq__(self, other):
+        if not isinstance(other, LLMBatchRequest):
+            return NotImplemented
+        return (self.priority.value, self.created_at) == (
             other.priority.value,
             other.created_at,
         )
@@ -349,15 +361,7 @@ class EnhancedMultiAgentBridge:
             "performance_score": 1.0,
         }
 
-        # Initialize AI Intelligence Orchestrator
-        ai_config = AISystemConfig(
-            intelligence_level=IntelligenceLevel.ADVANCED,
-            enable_agent_coordination=True,
-            enable_story_quality=True,
-            enable_analytics=True,
-            max_concurrent_operations=15,
-            optimization_enabled=True,
-        )
+        # Initialize AI Intelligence Orchestrator lazily in initialize()
         self.ai_orchestrator = None
 
         # Enhanced communication systems
@@ -569,9 +573,9 @@ class EnhancedMultiAgentBridge:
 
             # Update stats
             self.coordination_stats["total_llm_calls"] += 1
-            self.coordination_stats[
-                "cost_per_request"
-            ] = self.cost_tracker.average_cost_per_request
+            self.coordination_stats["cost_per_request"] = (
+                self.cost_tracker.average_cost_per_request
+            )
 
             # Calculate cost savings from not using individual requests
             estimated_individual_cost = (
@@ -992,9 +996,9 @@ class EnhancedMultiAgentBridge:
                 try:
                     await self._batch_processor_task
                 except asyncio.CancelledError:
-                    pass
-
-            # Process any remaining requests
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             if self.llm_request_queue:
                 logger.info(
                     f"Processing {len(self.llm_request_queue)} remaining requests"
@@ -1162,58 +1166,6 @@ class EnhancedMultiAgentBridge:
                 "performance_budget_exceeded": self.performance_budget.is_budget_exceeded(),
             }
 
-    # --- Minimal async helpers expected by tests ---
-    async def _analyze_pre_turn_state(self) -> Dict[str, Any]:
-        return {"status": "ok"}
-
-    async def _prepare_enhanced_world_state(self, turn_number: int) -> Dict[str, Any]:
-        base = getattr(self.director_agent, "world_state", {}) or {}
-        return {
-            "turn_number": turn_number,
-            "base_world_state": base,
-        }
-
-    async def _identify_dialogue_opportunities(self) -> List[Dict[str, Any]]:
-        # Keep simple: no automatic dialogues
-        return []
-
-    async def _initiate_agent_dialogue(
-        self, participants, communication_type, context
-    ) -> Dict[str, Any]:
-        # Return a minimal successful dialogue result
-        return {
-            "success": True,
-            "participants": participants,
-            "type": str(communication_type),
-        }
-
-    async def _analyze_post_turn_results(
-        self, base_turn_result, dialogue_results
-    ) -> Dict[str, Any]:
-        return {"narrative_insights": [], "ai_insights": []}
-
-    async def _update_agent_relationships(self, dialogue_results) -> None:
-        return None
-
-    async def _update_narrative_intelligence(self, post_turn_analysis) -> None:
-        return None
-
-    async def _generate_enhanced_turn_summary(
-        self, turn_number, base_turn_result, dialogue_results, pre_turn, post_turn
-    ) -> str:
-        return f"Turn {turn_number} summary"
-
-    def _generate_fast_turn_summary(
-        self, turn_number, base_turn_result, dialogue_results
-    ) -> str:
-        return f"Turn {turn_number} fast summary"
-
-    async def _update_communication_metrics(
-        self, dialogue_results, execution_time
-    ) -> None:
-        self.turn_history.append({"execution_time": execution_time})
-        return None
-
     async def _process_active_dialogues(self) -> Dict[str, Any]:
         # Minimal implementation for tests that patch DialogueManager
         status = {"active": 0}
@@ -1311,34 +1263,11 @@ class EnhancedMultiAgentBridge:
                     if asyncio.iscoroutine(coro):
                         await coro
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
         await self.shutdown_coordination_systems()
 
-
-@dataclass
-class BridgeConfiguration:
-    """Test-facing bridge configuration wrapper."""
-
-    enable_advanced_coordination: bool = True
-    enable_smart_batching: bool = True
-    enable_dialogue_system: bool = True
-    enable_performance_monitoring: bool = True
-    max_concurrent_agents: int = 20
-    turn_timeout_seconds: int = 30
-    llm_coordination: LLMCoordinationConfig = field(
-        default_factory=LLMCoordinationConfig
-    )
-
-
-async def create_enhanced_bridge(
-    director_agent: Any, config: Optional[BridgeConfiguration] = None
-) -> EnhancedMultiAgentBridge:
-    """Factory to create and initialize the enhanced bridge for tests."""
-    bridge = EnhancedMultiAgentBridge(director_agent, config)
-    success = await bridge.initialize()
-    if not success:
-        raise RuntimeError("Failed to initialize enhanced multi-agent bridge")
-    return bridge
 
     async def initiate_agent_dialogue(
         self,
@@ -2071,10 +2000,9 @@ async def create_enhanced_bridge(
             self.narrative_intelligence["last_insights"] = post_turn_analysis[
                 "narrative_insights"
             ]
-            self.narrative_intelligence[
-                "insight_count"
-            ] = self.narrative_intelligence.get("insight_count", 0) + len(
-                post_turn_analysis["narrative_insights"]
+            self.narrative_intelligence["insight_count"] = (
+                self.narrative_intelligence.get("insight_count", 0)
+                + len(post_turn_analysis["narrative_insights"])
             )
 
         # Update story progression tracking
@@ -2340,6 +2268,32 @@ async def create_enhanced_bridge(
             "performance_score": performance_score,
         }
 
+
+
+@dataclass
+class BridgeConfiguration:
+    """Test-facing bridge configuration wrapper."""
+
+    enable_advanced_coordination: bool = True
+    enable_smart_batching: bool = True
+    enable_dialogue_system: bool = True
+    enable_performance_monitoring: bool = True
+    max_concurrent_agents: int = 20
+    turn_timeout_seconds: int = 30
+    llm_coordination: LLMCoordinationConfig = field(
+        default_factory=LLMCoordinationConfig
+    )
+
+
+async def create_enhanced_bridge(
+    director_agent: Any, config: Optional[BridgeConfiguration] = None
+) -> EnhancedMultiAgentBridge:
+    """Factory to create and initialize the enhanced bridge for tests."""
+    bridge = EnhancedMultiAgentBridge(director_agent, config)
+    success = await bridge.initialize()
+    if not success:
+        raise RuntimeError("Failed to initialize enhanced multi-agent bridge")
+    return bridge
 
 # Factory function for easy instantiation with LLM coordination
 def create_enhanced_multi_agent_bridge(

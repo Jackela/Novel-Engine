@@ -252,7 +252,6 @@ class IRateLimiter(ABC):
         Returns:
             Rate limit check result
         """
-        pass
 
     @abstractmethod
     async def record_request_async(
@@ -269,7 +268,6 @@ class IRateLimiter(ABC):
             actual_tokens: Actual tokens consumed
             client_id: Optional client identifier
         """
-        pass
 
     @abstractmethod
     async def get_limits_async(self, provider_id: ProviderId) -> RateLimitConfig:
@@ -282,7 +280,6 @@ class IRateLimiter(ABC):
         Returns:
             Current rate limit configuration
         """
-        pass
 
     @abstractmethod
     async def update_limits_async(
@@ -295,7 +292,6 @@ class IRateLimiter(ABC):
             provider_id: LLM provider identifier
             config: New rate limit configuration
         """
-        pass
 
 
 class TokenBucketRateLimiter(IRateLimiter):

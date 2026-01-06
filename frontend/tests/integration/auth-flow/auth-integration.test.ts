@@ -9,7 +9,7 @@
  * - Article VII (Observability): End-to-end auth monitoring
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe } from 'vitest';
 
 // Skip entire test suite - requires complex apiClient mocking (documented as deferred work)
 describe.skip('Auth Integration Tests', () => {});

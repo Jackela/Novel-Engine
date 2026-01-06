@@ -302,7 +302,9 @@ async def run_comprehensive_performance_tests():
         print(
             f"🚀 Single Request: {single_time:.3f}s (vs ~30s original = {30/single_time:.0f}x faster)"
         )
-        print(f"💾 Cache Performance: {cache_speedup:.0f}x speedup on repeated requests")
+        print(
+            f"💾 Cache Performance: {cache_speedup:.0f}x speedup on repeated requests"
+        )
 
     if test_results["persona_agent_patch"]["success"]:
         improvement = test_results["persona_agent_patch"]["improvement_percentage"]

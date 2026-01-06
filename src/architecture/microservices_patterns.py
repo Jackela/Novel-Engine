@@ -342,7 +342,9 @@ class EventBus:
                     if not self._subscribers[event_type]:
                         del self._subscribers[event_type]
                 except ValueError:
-                    pass
+                    logger.debug(
+                        "Handler already removed for event type %s", event_type
+                    )
 
     async def publish(
         self, event_type: str, data: Any, metadata: Optional[Dict] = None

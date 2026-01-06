@@ -14,7 +14,6 @@ while maintaining separation from character data and memory management.
 """
 
 import asyncio
-import json
 import logging
 import random
 import re

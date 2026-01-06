@@ -4,8 +4,8 @@ Director Agent Comprehensive Test Suite
 Systematic testing for director_agent.py covering initialization, agent management,
 turn execution, logging, and world state management
 """
-
 import json
+import logging
 import os
 from unittest.mock import Mock, patch
 
@@ -44,7 +44,7 @@ class TestDirectorAgentInitialization:
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     def test_initialization_with_valid_config(self):
@@ -163,7 +163,7 @@ class TestDirectorAgentRegistration:
             if os.path.exists("test_registration.md"):
                 os.remove("test_registration.md")
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     def create_mock_agent(self, agent_id="test_agent", character_name="Test Character"):
         """Create a properly mocked PersonaAgent"""
@@ -297,7 +297,7 @@ class TestDirectorAgentTurnExecution:
             if os.path.exists("test_turns.md"):
                 os.remove("test_turns.md")
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     def create_mock_agent(self, agent_id="test_agent", character_name="Test Character"):
         """Create a properly mocked PersonaAgent for turn execution"""
@@ -401,7 +401,7 @@ class TestDirectorAgentLogging:
             if os.path.exists(f"{self.temp_log_path}.backup"):
                 os.remove(f"{self.temp_log_path}.backup")
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -499,7 +499,7 @@ class TestDirectorAgentWorldState:
             if os.path.exists(self.temp_world_state):
                 os.remove(self.temp_world_state)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     @pytest.mark.integration

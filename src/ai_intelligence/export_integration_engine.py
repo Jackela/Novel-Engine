@@ -20,7 +20,6 @@ Features:
 
 import asyncio
 import base64
-import bcrypt
 import hashlib
 import json
 import logging
@@ -32,6 +31,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import bcrypt
 
 logger = logging.getLogger(__name__)
 
@@ -1372,7 +1373,6 @@ class ExportIntegrationEngine:
     async def _schedule_integration_sync(self, connection: IntegrationConnection):
         """Schedule automatic sync for integration."""
         # This would set up scheduled sync
-        pass
 
     async def _handle_publishing_integration(
         self, connection: IntegrationConnection, operation: str

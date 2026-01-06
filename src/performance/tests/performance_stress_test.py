@@ -102,7 +102,9 @@ class PerformanceStressTester:
         finally:
             # Stop system monitoring
             self.monitoring_active = False
-            await monitoring_task
+            monitoring_result = await monitoring_task
+            if monitoring_result is not None:
+                logger.debug("Monitoring task returned: %s", monitoring_result)
 
         return self._generate_stress_test_report()
 

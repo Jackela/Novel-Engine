@@ -28,6 +28,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+logger = logging.getLogger(__name__)
+
 
 class LogLevel(Enum):
     """Structured log levels"""
@@ -347,15 +349,19 @@ class StructuredLogger:
                     context["trace_id"] = f"{span_context.trace_id:032x}"
                     context["span_id"] = f"{span_context.span_id:016x}"
             except Exception:
-                pass  # OpenTelemetry not available or no active span
+                self.logger.debug(
+                    "OpenTelemetry context extraction failed", exc_info=True
+                )
 
         if self.config.extract_user_context:
             try:
                 # Try to extract user context from various sources
-                # This would be customized based on your authentication system
-                pass
+                # This should be customized based on the authentication system.
+                self.logger.debug("User context extraction not configured")
             except Exception:
-                pass
+                self.logger.debug(
+                    "User context extraction failed", exc_info=True
+                )
 
         return context
 
@@ -648,7 +654,6 @@ class RemoteLogHandler(logging.Handler):
         # Placeholder implementation
         # In production, this would use the appropriate client library
         # for your log aggregation system
-        pass
 
 
 # Context manager for performance logging

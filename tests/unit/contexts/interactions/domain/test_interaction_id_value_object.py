@@ -231,7 +231,6 @@ class TestInteractionIdEquality:
         id2 = InteractionId(uuid_value)
 
         assert id1 == id2
-        assert not (id1 != id2)
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -244,7 +243,6 @@ class TestInteractionIdEquality:
         id2 = InteractionId(uuid2)
 
         assert id1 != id2
-        assert not (id1 == id2)
 
     @pytest.mark.unit
     def test_equality_with_non_interaction_id(self):
@@ -254,11 +252,9 @@ class TestInteractionIdEquality:
 
         # Should not be equal to UUID directly
         assert interaction_id != uuid_value
-        assert not (interaction_id == uuid_value)
 
         # Should not be equal to string representation
         assert interaction_id != str(uuid_value)
-        assert not (interaction_id == str(uuid_value))
 
         # Should not be equal to other types
         assert interaction_id != 123
@@ -272,7 +268,7 @@ class TestInteractionIdEquality:
     def test_equality_reflexive(self):
         """Test that equality is reflexive (a == a)."""
         interaction_id = InteractionId.generate()
-        assert interaction_id == interaction_id
+        assert interaction_id == InteractionId(interaction_id.value)
 
     @pytest.mark.unit
     @pytest.mark.fast

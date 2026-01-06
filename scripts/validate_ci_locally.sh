@@ -69,10 +69,14 @@ echo -e "${GREEN}✓ Dependencies installed${NC}"
 echo ""
 
 echo "🧹 Running formatting and lint checks..."
+FORMAT_PATHS=(src tests scripts)
+if [ -d "ai_testing" ]; then
+    FORMAT_PATHS+=("ai_testing")
+fi
 set +e
-"$VENV_PY" -m black --check src tests ai_testing scripts
+"$VENV_PY" -m black --check "${FORMAT_PATHS[@]}"
 BLACK_EXIT=$?
-"$VENV_PY" -m isort --check-only src tests ai_testing scripts
+"$VENV_PY" -m isort --check-only "${FORMAT_PATHS[@]}"
 ISORT_EXIT=$?
 echo "   flake8 targets: ${FLAKE8_PATHS[*]}"
 "$VENV_PY" -m flake8 "${FLAKE8_PATHS[@]}"
@@ -140,12 +144,29 @@ FRONTEND_DIR="frontend"
 if [ -d "$FRONTEND_DIR" ]; then
     cd "$FRONTEND_DIR"
     if [ -f "package.json" ] && grep -q '"test"' package.json; then
-        npm test --if-present --silent
-        frontend_test_exit=$?
-        npm run build --if-present
-        frontend_build_exit=$?
-        PYTHONPATH="..:../src" npm run test:e2e:smoke
-        frontend_smoke_exit=$?
+        win_cmd=""
+        if [ -x /mnt/c/Windows/System32/cmd.exe ]; then
+            win_cmd="/mnt/c/Windows/System32/cmd.exe"
+        elif command -v cmd.exe >/dev/null 2>&1; then
+            win_cmd="cmd.exe"
+        fi
+        if grep -qi microsoft /proc/version 2>/dev/null && [ -n "$win_cmd" ]; then
+            win_frontend_dir=$(wslpath -w "$PWD")
+            "$win_cmd" /c "cd /d $win_frontend_dir && npm test --if-present --silent"
+            frontend_test_exit=$?
+            "$win_cmd" /c "cd /d $win_frontend_dir && npm run build --if-present"
+            frontend_build_exit=$?
+            "$win_cmd" /c "cd /d $win_frontend_dir && node scripts/test-cleanup.js"
+            "$win_cmd" /c "cd /d $win_frontend_dir && set PYTHONPATH=..;..\\src && npm run test:e2e:smoke"
+            frontend_smoke_exit=$?
+        else
+            npm test --if-present --silent
+            frontend_test_exit=$?
+            npm run build --if-present
+            frontend_build_exit=$?
+            PYTHONPATH="..:../src" npm run test:e2e:smoke
+            frontend_smoke_exit=$?
+        fi
         cd ..
         if [ $frontend_test_exit -ne 0 ] || [ $frontend_build_exit -ne 0 ] || [ $frontend_smoke_exit -ne 0 ]; then
             echo -e "${RED}❌ Frontend tests failed${NC}"

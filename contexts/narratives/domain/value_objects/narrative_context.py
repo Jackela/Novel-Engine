@@ -261,64 +261,68 @@ class NarrativeContext:
         if len(self.description) > 2000:
             raise ValueError("Context description too long (max 2000 characters)")
 
-    def __hash__(self) -> int:
-        """Custom hash implementation for frozen dataclass with Dict fields."""
-
-        def _dict_to_hashable(d):
-            if not d:
+    def _hash_components(self) -> tuple:
+        def _dict_to_hashable(values):
+            if not values:
                 return frozenset()
             items = []
-            for k, v in sorted(d.items(), key=lambda x: (str(x[0]), str(x[1]))):
-                # Convert UUID keys to strings for hashing
-                k_hash = str(k) if isinstance(k, UUID) else k
-                if isinstance(v, dict):
-                    v = _dict_to_hashable(v)
-                elif isinstance(v, list):
-                    v = tuple(v)
-                elif isinstance(v, Decimal):
-                    v = float(v)
-                items.append((k_hash, v))
+            for key, value in sorted(values.items(), key=lambda item: (str(item[0]), str(item[1]))):
+                key_hash = str(key) if isinstance(key, UUID) else key
+                if isinstance(value, dict):
+                    value = _dict_to_hashable(value)
+                elif isinstance(value, list):
+                    value = tuple(value)
+                elif isinstance(value, Decimal):
+                    value = float(value)
+                items.append((key_hash, value))
             return frozenset(items)
 
-        return hash(
-            (
-                self.context_id,
-                self.context_type,
-                self.scope,
-                self.name,
-                self.description,
-                self.applies_from_sequence,
-                self.applies_to_sequence,
-                self.is_persistent,
-                self.locations,
-                self.affected_regions,
-                self.geographical_scope,
-                self.affected_characters,
-                self.character_knowledge_required,
-                _dict_to_hashable(self.character_reactions),
-                tuple(self.key_facts) if self.key_facts else (),
-                tuple(self.implicit_knowledge) if self.implicit_knowledge else (),
-                tuple(self.hidden_information) if self.hidden_information else (),
-                tuple(self.narrative_constraints) if self.narrative_constraints else (),
-                tuple(self.behavioral_influences) if self.behavioral_influences else (),
-                tuple(self.plot_implications) if self.plot_implications else (),
-                _dict_to_hashable(self.mood_influences),
-                _dict_to_hashable(self.tension_modifiers),
-                _dict_to_hashable(self.pacing_effects),
-                self.prerequisite_contexts,
-                self.conflicting_contexts,
-                self.reinforcing_contexts,
-                self.narrative_importance,
-                self.visibility_level,
-                self.complexity_level,
-                self.evolution_rate,
-                self.stability,
-                self.tags,
-                self.source_material,
-                self.research_notes,
-                _dict_to_hashable(self.metadata),
-            )
+        return (
+            self.context_id,
+            self.context_type,
+            self.scope,
+            self.name,
+            self.description,
+            self.applies_from_sequence,
+            self.applies_to_sequence,
+            self.is_persistent,
+            self.locations,
+            self.affected_regions,
+            self.geographical_scope,
+            self.affected_characters,
+            self.character_knowledge_required,
+            _dict_to_hashable(self.character_reactions),
+            tuple(self.key_facts) if self.key_facts else (),
+            tuple(self.implicit_knowledge) if self.implicit_knowledge else (),
+            tuple(self.hidden_information) if self.hidden_information else (),
+            tuple(self.narrative_constraints) if self.narrative_constraints else (),
+            tuple(self.behavioral_influences) if self.behavioral_influences else (),
+            tuple(self.plot_implications) if self.plot_implications else (),
+            _dict_to_hashable(self.mood_influences),
+            _dict_to_hashable(self.tension_modifiers),
+            _dict_to_hashable(self.pacing_effects),
+            self.prerequisite_contexts,
+            self.conflicting_contexts,
+            self.reinforcing_contexts,
+            self.narrative_importance,
+            self.visibility_level,
+            self.complexity_level,
+            self.evolution_rate,
+            self.stability,
+            self.tags,
+            self.source_material,
+            self.research_notes,
+            _dict_to_hashable(self.metadata),
         )
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, NarrativeContext):
+            return NotImplemented
+        return self._hash_components() == other._hash_components()
+
+    def __hash__(self) -> int:
+        """Custom hash implementation for frozen dataclass with Dict fields."""
+        return hash(self._hash_components())
 
     @property
     def has_sequence_range(self) -> bool:

@@ -567,9 +567,9 @@ class LLMBatchProcessor:
                 try:
                     await self._batch_processor_task
                 except asyncio.CancelledError:
-                    pass
-
-            # Process remaining requests
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             if self._request_queue:
                 self.logger.info(
                     f"Processing {len(self._request_queue)} remaining requests"

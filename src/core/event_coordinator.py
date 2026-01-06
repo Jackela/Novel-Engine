@@ -134,7 +134,6 @@ class EventCoordinator:
         )
         # Default implementation is a no-op
         # Subclasses or configuration can provide custom handlers
-        pass
 
     async def handle_story_generation(self, event_data: Dict[str, Any]):
         """
@@ -149,7 +148,6 @@ class EventCoordinator:
         logger.debug("Story generation event received")
         # Default implementation is a no-op
         # Subclasses or configuration can provide custom handlers
-        pass
 
     async def handle_user_interaction(self, event_data: Dict[str, Any]):
         """
@@ -166,7 +164,6 @@ class EventCoordinator:
         )
         # Default implementation is a no-op
         # Subclasses or configuration can provide custom handlers
-        pass
 
 
 __all__ = ["EventCoordinator"]

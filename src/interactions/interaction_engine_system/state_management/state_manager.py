@@ -18,20 +18,9 @@ from ..core.types import (
     InteractionType,
 )
 
-# Import enhanced core systems
+# Import enhanced core systems used in responses
 try:
-    from src.core.character_manager import CharacterManager
-    from src.core.data_models import (
-        CharacterState,
-        EmotionalState,
-        ErrorInfo,
-        InteractionResult,
-        MemoryItem,
-        MemoryType,
-        StandardResponse,
-    )
-    from src.core.memory_system import MemoryManager
-    from src.core.types import AgentID
+    from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 except ImportError:
     # Fallback for testing
     class StandardResponse:
@@ -53,23 +42,12 @@ except ImportError:
             self.message = message
             self.recoverable = recoverable
 
-    CharacterState = dict
     MemoryItem = dict
-    InteractionResult = dict
-    AgentID = str
-    MemoryManager = None
-    CharacterManager = None
 
     class MemoryType:
         EPISODIC = "episodic"
         SEMANTIC = "semantic"
         PROCEDURAL = "procedural"
-
-    class EmotionalState:
-        CALM = "calm"
-        EXCITED = "excited"
-        ANGRY = "angry"
-        FEARFUL = "fearful"
 
 
 __all__ = ["StateManager", "StateUpdate", "MemoryUpdate"]

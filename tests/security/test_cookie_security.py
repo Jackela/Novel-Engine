@@ -17,7 +17,6 @@ Test Categories:
 6. Token Validation
 """
 
-import os
 from datetime import UTC, datetime, timedelta
 
 import jwt

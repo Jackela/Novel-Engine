@@ -464,9 +464,7 @@ class EquipmentRegistry:
             try:
                 return EquipmentCategory(equipment_item.category)
             except ValueError:
-                pass
-
-        # Fallback based on equipment name/type
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
         name_lower = getattr(equipment_item, "name", "").lower()
 
         # Basic category inference
@@ -504,4 +502,3 @@ class EquipmentRegistry:
 
         # This would save equipment registration as a memory item
         # Implementation depends on the specific ContextDatabase interface
-        pass

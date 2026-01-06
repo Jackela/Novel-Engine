@@ -434,7 +434,7 @@ def main():
     create_init_module(target_dir)
 
     logger.info("✅ Refactoring complete!")
-    logger.info(f"📊 Original: 1495 lines → Refactored: 9 focused modules")
+    logger.info("📊 Original: 1495 lines → Refactored: 9 focused modules")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 导演代理单元测试套件
 测试游戏导演、回合管理、代理协调等核心功能
 """
-
+import logging
 import os
 import time
 from unittest.mock import Mock
@@ -13,7 +13,6 @@ import pytest
 # 导入被测试的模块
 try:
     from src.agents.director_agent import DirectorAgent
-    from src.event_bus import EventBus
 
     DIRECTOR_AGENT_AVAILABLE = True
 except ImportError:
@@ -39,7 +38,7 @@ class TestDirectorAgent:
             if os.path.exists(self.temp_log_path):
                 os.remove(self.temp_log_path)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -229,7 +228,9 @@ class TestDirectorAgent:
                     try:
                         self.director.run_turn()
                     except Exception:
-                        pass  # 即使失败，也可能创建了日志
+                        logging.getLogger(__name__).debug(
+                            "Suppressed exception", exc_info=True
+                        )
 
                 # 检查日志文件是否存在或可以创建
                 log_path = getattr(
@@ -266,7 +267,7 @@ class TestDirectorAgentAdvanced:
             if os.path.exists("advanced_test_log.md"):
                 os.remove("advanced_test_log.md")
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -357,7 +358,7 @@ class TestDirectorAgentAdvanced:
                 if os.path.exists(different_log_path):
                     os.remove(different_log_path)
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
 
 @pytest.mark.skipif(not DIRECTOR_AGENT_AVAILABLE, reason="Director agent not available")
@@ -377,7 +378,7 @@ class TestDirectorAgentPerformance:
             if os.path.exists("performance_test_log.md"):
                 os.remove("performance_test_log.md")
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.performance
     @pytest.mark.unit

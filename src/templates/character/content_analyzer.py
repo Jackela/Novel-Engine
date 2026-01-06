@@ -4,11 +4,11 @@ Content analysis and archetype detection.
 """
 
 import logging
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional
 
 from src.templates.dynamic_template_engine import TemplateType
 
-from .persona_models import CharacterArchetype, CharacterPersona
+from .persona_models import CharacterArchetype
 
 logger = logging.getLogger(__name__)
 

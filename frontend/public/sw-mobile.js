@@ -106,8 +106,6 @@ self.addEventListener('fetch', event => {
 
 // Request handling with mobile-optimized strategies
 async function handleRequest(request) {
-  const url = new URL(request.url);
-  
   try {
     // Static assets - Cache First strategy
     if (isStaticAsset(request)) {

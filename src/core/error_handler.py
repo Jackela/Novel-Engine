@@ -617,9 +617,9 @@ async def handle_error(
     extra_kwargs = dict(kwargs)
 
     context_kwargs = {}
-    for field in ("user_id", "session_id", "request_id"):
-        if field in extra_kwargs:
-            context_kwargs[field] = extra_kwargs.pop(field)
+    for context_key in ("user_id", "session_id", "request_id"):
+        if context_key in extra_kwargs:
+            context_kwargs[context_key] = extra_kwargs.pop(context_key)
 
     metadata_param = extra_kwargs.pop("metadata", None)
     metadata: Dict[str, Any] = {}

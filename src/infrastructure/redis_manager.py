@@ -619,7 +619,7 @@ class RedisConnectionPool:
             try:
                 await self._health_check_task
             except asyncio.CancelledError:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
         if self.redis:
             await self.redis.close()

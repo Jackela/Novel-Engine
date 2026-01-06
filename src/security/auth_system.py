@@ -282,13 +282,9 @@ class OperationResult:
 class AuthenticationError(Exception):
     """ENHANCED AUTHENTICATION EXCEPTION"""
 
-    pass
-
 
 class AuthorizationError(Exception):
     """ENHANCED AUTHORIZATION EXCEPTION"""
-
-    pass
 
 
 class SecurityService:
@@ -412,7 +408,7 @@ class SecurityService:
             try:
                 os.remove(self._temp_db_path)
             except OSError:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
             self._temp_db_path = None
 
     def _hash_password(self, password: str) -> str:

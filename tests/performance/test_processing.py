@@ -107,9 +107,9 @@ class AsyncProcessingTest:
             avg_performance_improvement = sum(
                 r["performance_improvement_percent"] for r in successful_tests
             ) / len(successful_tests)
-            test_results[
-                "average_performance_improvement"
-            ] = avg_performance_improvement
+            test_results["average_performance_improvement"] = (
+                avg_performance_improvement
+            )
 
         logger.info("=== Async Processing Tests Completed ===")
         logger.info(
@@ -256,7 +256,9 @@ class AsyncProcessingTest:
                         )
                         sequential_responses += 1
                     except Exception:
-                        pass
+                        logging.getLogger(__name__).debug(
+                            "Suppressed exception", exc_info=True
+                        )
                     await temp_client.close()
                 sequential_time = time.time() - start_time
             except Exception:
@@ -375,9 +377,9 @@ class AsyncProcessingTest:
                 try:
                     filepath.unlink()
                 except OSError:
-                    pass
-
-            # Measure async file operations
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             start_time = time.time()
 
             # Async batch write
@@ -403,9 +405,9 @@ class AsyncProcessingTest:
                 try:
                     Path(filename).unlink()
                 except OSError:
-                    pass
-
-            # Calculate performance improvement
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             performance_improvement = (
                 ((sync_time - async_time) / sync_time) * 100 if sync_time > 0 else 0
             )
@@ -683,9 +685,9 @@ class AsyncProcessingTest:
                 try:
                     Path(filename).unlink()
                 except OSError:
-                    pass
-
-            # Cleanup async processing
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             await cleanup_async_processing()
 
             # Calculate pipeline metrics

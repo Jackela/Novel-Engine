@@ -230,7 +230,6 @@ class ICostTracker(ABC):
         Args:
             entry: Cost entry to record
         """
-        pass
 
     @abstractmethod
     async def check_budget_async(
@@ -246,7 +245,6 @@ class ICostTracker(ABC):
         Returns:
             Tuple of (is_allowed, budget_status)
         """
-        pass
 
     @abstractmethod
     async def get_usage_summary_async(
@@ -268,7 +266,6 @@ class ICostTracker(ABC):
         Returns:
             Usage summary with aggregated metrics
         """
-        pass
 
     @abstractmethod
     async def get_budget_status_async(self, budget_id: str) -> Optional[BudgetStatus]:
@@ -281,7 +278,6 @@ class ICostTracker(ABC):
         Returns:
             Budget status if found, None otherwise
         """
-        pass
 
     @abstractmethod
     async def get_cost_projection_async(
@@ -297,7 +293,6 @@ class ICostTracker(ABC):
         Returns:
             Dictionary with projection data and confidence metrics
         """
-        pass
 
 
 class DefaultCostTracker(ICostTracker):

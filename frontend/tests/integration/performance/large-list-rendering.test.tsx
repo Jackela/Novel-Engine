@@ -7,45 +7,10 @@
  * Following TDD approach: Write tests first, ensure they FAIL before implementation
  */
 
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { BrowserRouter } from 'react-router-dom';
-
 // Import will fail initially - optimizations don't exist yet (RED phase)
 // import CharacterSelection from '../../../src/components/CharacterSelection';
 
 describe('Large List Rendering Performance', () => {
-  /**
-   * Mock 100 characters for performance testing
-   */
-  const mockLargeCharacterList = Array.from({ length: 100 }, (_, i) => `character_${i + 1}`);
-
-  /**
-   * Helper to count renders using React DevTools Profiler API
-   */
-  const countRenders = (component: React.ReactElement): Promise<number> => {
-    return new Promise((resolve) => {
-      let renderCount = 0;
-
-      const ProfiledComponent = (
-        <React.Profiler
-          id="performance-test"
-          onRender={() => {
-            renderCount++;
-          }}
-        >
-          {component}
-        </React.Profiler>
-      );
-
-      render(ProfiledComponent);
-
-      // Allow render to complete
-      setTimeout(() => resolve(renderCount), 100);
-    });
-  };
-
   /**
    * Test 1: Verify component can render large list without crashing
    */

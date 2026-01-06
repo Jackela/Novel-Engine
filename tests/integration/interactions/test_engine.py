@@ -24,19 +24,10 @@ try:
         InteractionContext,
         InteractionEngine,
         InteractionEngineConfig,
-        InteractionOutcome,
-        InteractionPhase,
         InteractionPriority,
         InteractionType,
         create_interaction_engine,
         create_performance_optimized_config,
-    )
-    from src.interactions.interaction_engine_system.queue_management.queue_manager import (
-        QueueManager,
-        QueueStatus,
-    )
-    from src.interactions.interaction_engine_system.validation.interaction_validator import (
-        InteractionValidator,
     )
 
     REAL_ENGINE = True

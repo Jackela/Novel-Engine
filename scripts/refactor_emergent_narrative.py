@@ -12,7 +12,6 @@ Extracts large monolithic file into focused modules:
 Maintains backward compatibility through __init__.py exports.
 """
 
-import re
 import shutil
 from pathlib import Path
 

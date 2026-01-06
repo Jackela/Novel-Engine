@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """
-import logging
 Event Store Implementation
-
 =========================
-logger = logging.getLogger(__name__)
-
 Simple event store implementation for persisting and retrieving events.
 This is a minimal implementation to resolve import dependencies.
 """
 
+import logging
 import os
 from dataclasses import dataclass
 from typing import List, Optional
 
 from .event_bus import Event
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass

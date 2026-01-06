@@ -8,7 +8,6 @@
  */
 
 import { useCallback, type KeyboardEvent } from 'react'
-import { KeyboardKey } from '@/types/accessibility'
 
 export interface IKeyboardHandler {
   handleEnterKey: (event: KeyboardEvent) => void

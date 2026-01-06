@@ -490,9 +490,9 @@ class RecommendationEngine:
                     adapted_context["genre"] = preferred_genre
 
             # Adapt character preferences
-            adapted_context[
-                "character_suggestions"
-            ] = await self._get_preferred_characters(profile)
+            adapted_context["character_suggestions"] = (
+                await self._get_preferred_characters(profile)
+            )
 
             # Adapt writing style
             preferred_style = await self._get_preferred_style(profile)
@@ -1435,12 +1435,10 @@ class RecommendationEngine:
     ):
         """Update a single preference."""
         # Implementation would update individual preference
-        pass
 
     async def _batch_update_similarity_matrix(self, user_ids: List[str]):
         """Update similarity matrix for multiple users."""
         # Implementation would update similarity calculations
-        pass
 
     # Additional placeholder methods for completeness...
 

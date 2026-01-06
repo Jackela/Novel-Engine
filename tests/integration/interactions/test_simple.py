@@ -22,7 +22,6 @@ try:
         InteractionEngineConfig,
         InteractionPriority,
         InteractionType,
-        create_interaction_engine,
     )
 
     REAL_ENGINE = True

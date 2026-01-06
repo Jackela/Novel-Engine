@@ -262,7 +262,6 @@ def set_audit_create(mapper, connection, target):
     """Set audit fields on creation."""
     # This would typically get user context from request context
     # For now, we'll leave it as None - implement based on your auth system
-    pass
 
 
 @event.listens_for(AuditableModel, "before_update", propagate=True)
@@ -270,4 +269,3 @@ def set_audit_update(mapper, connection, target):
     """Set audit fields on update."""
     # This would typically get user context from request context
     # For now, we'll leave it as None - implement based on your auth system
-    pass

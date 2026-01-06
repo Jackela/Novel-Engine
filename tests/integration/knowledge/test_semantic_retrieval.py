@@ -9,7 +9,7 @@ Constitution Compliance:
 """
 
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -175,22 +175,6 @@ class TestSemanticKnowledgeRetrieval:
         """
         # Create agent with specific role
         agent = AgentIdentity(character_id="char-002", roles=("pilot",))
-
-        # Create entry with role-based access
-        now = datetime.now(timezone.utc)
-        role_restricted_entry = KnowledgeEntry(
-            id="entry-005",
-            content="The secret military spacecraft has classified weapons",
-            knowledge_type=KnowledgeType.LORE,
-            owning_character_id=None,
-            access_control=AccessControlRule(
-                access_level=AccessLevel.ROLE_BASED,
-                allowed_roles=("military",),  # Agent doesn't have this role
-            ),
-            created_at=now,
-            updated_at=now,
-            created_by="admin-001",
-        )
 
         repository = PostgreSQLKnowledgeRepository(session=AsyncMock())
 

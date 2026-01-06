@@ -150,7 +150,7 @@ class TestSpeedAnalyzer:
             "=" * 80,
             f"\nTest Path: {self.test_path}",
             f"Total Tests Analyzed: {total_tests}",
-            f"\nSpeed Thresholds:",
+            "\nSpeed Thresholds:",
             f"  - Fast:   < {self.FAST_THRESHOLD * 1000:.0f}ms",
             f"  - Medium: {self.FAST_THRESHOLD * 1000:.0f}ms - {self.MEDIUM_THRESHOLD * 1000:.0f}ms",
             f"  - Slow:   > {self.MEDIUM_THRESHOLD * 1000:.0f}ms",

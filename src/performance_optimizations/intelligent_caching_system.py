@@ -546,7 +546,6 @@ class IntelligentCache:
         """Optimize cache level distributions based on access patterns."""
         # This could include dynamic resizing of cache levels
         # based on hit rates and access patterns
-        pass
 
     def get_comprehensive_stats(self) -> Dict[str, Any]:
         """Get comprehensive cache statistics."""
@@ -952,9 +951,9 @@ async def get_comprehensive_caching_report() -> Dict[str, Any]:
 
     # World State Cache stats
     if _global_world_state_cache:
-        report[
-            "world_state_cache"
-        ] = _global_world_state_cache.get_comprehensive_stats()
+        report["world_state_cache"] = (
+            _global_world_state_cache.get_comprehensive_stats()
+        )
 
     # System memory usage
     process = psutil.Process()

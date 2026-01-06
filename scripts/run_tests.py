@@ -5,6 +5,7 @@ Provides multiple test execution modes with detailed reporting.
 """
 
 import argparse
+import importlib.util
 import json
 import os
 import shutil
@@ -75,9 +76,7 @@ class TestRunner:
         coverage_args = []
         enable_coverage = os.getenv("NOVEL_ENGINE_ENABLE_COVERAGE", "0").lower()
         if enable_coverage not in {"", "0", "false", "off"}:
-            try:
-                import pytest_cov  # type: ignore  # noqa: F401
-
+            if importlib.util.find_spec("pytest_cov") is not None:
                 coverage_args = [
                     "-p",
                     "pytest_cov",
@@ -87,7 +86,7 @@ class TestRunner:
                     "--cov-report=json:coverage.json",
                     "--cov-report=xml:coverage.xml",
                 ]
-            except ImportError:
+            else:
                 self.log(
                     "pytest-cov not installed; running unit tests without coverage",
                     "WARNING",

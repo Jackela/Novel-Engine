@@ -13,54 +13,10 @@ from typing import Any, Dict, List, Optional
 
 # Import enhanced systems
 try:
-    from src.core.data_models import (
-        CharacterInteraction,
-        CharacterState,
-        EmotionalState,
-        ErrorInfo,
-        InteractionResult,
-        MemoryItem,
-        MemoryType,
-        StandardResponse,
-    )
-    from src.core.types import AgentID
+    from src.core.data_models import MemoryItem
 except ImportError:
     # Fallback for testing
     MemoryItem = dict
-    CharacterState = dict
-    CharacterInteraction = dict
-    InteractionResult = dict
-    AgentID = str
-
-    class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
-            self.success = success
-            self.data = data or {}
-            self.error = error
-            self.metadata = metadata or {}
-
-        def get(self, key, default=None):
-            return getattr(self, key, default)
-
-        def __getitem__(self, key):
-            return getattr(self, key)
-
-    class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
-            self.code = code
-            self.message = message
-            self.recoverable = recoverable
-
-    class MemoryType(Enum):
-        EPISODIC = "episodic"
-        SEMANTIC = "semantic"
-        PROCEDURAL = "procedural"
-
-    class EmotionalState(Enum):
-        CALM = "calm"
-        EXCITED = "excited"
-        ANGRY = "angry"
-        FEARFUL = "fearful"
 
 
 __all__ = [

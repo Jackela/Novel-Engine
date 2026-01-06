@@ -34,7 +34,6 @@ class SubjectiveDomainEvent(ABC):
     @abstractmethod
     def get_event_type(self) -> str:
         """Return the event type identifier."""
-        pass
 
 
 @dataclass(frozen=True)

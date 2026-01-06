@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, TypeVar
 import yaml
 
 try:
-    from typing import Any, Callable, Tuple
+    from typing import Callable
 
     from pydantic import ConfigDict
     from pydantic_settings import BaseSettings

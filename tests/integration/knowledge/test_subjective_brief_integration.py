@@ -11,7 +11,7 @@ Constitution Compliance:
 
 import time
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -121,22 +121,6 @@ class TestSubjectiveBriefPhaseAdapter:
         self, adapter, mock_use_case, sample_agent
     ):
         """Test that access control is enforced through use case."""
-        # Setup - restricted entry should be filtered by use case
-        now = datetime.now(timezone.utc)
-        restricted_entry = KnowledgeEntry(
-            id="entry-restricted",
-            content="Secret information",
-            knowledge_type=KnowledgeType.LORE,
-            owning_character_id=None,
-            access_control=AccessControlRule(
-                access_level=AccessLevel.ROLE_BASED,
-                allowed_roles=("admin",),  # Agent doesn't have this role
-            ),
-            created_at=now,
-            updated_at=now,
-            created_by="admin-001",
-        )
-
         # Mock use case returns empty (access denied)
         empty_context = AgentContext(
             agent=sample_agent,

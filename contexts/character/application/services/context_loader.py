@@ -47,31 +47,26 @@ logger = logging.getLogger(__name__)
 class ContextLoaderError(Exception):
     """Base exception for context loading errors."""
 
-    pass
 
 
 class FileParsingError(ContextLoaderError):
     """Exception raised when file parsing fails."""
 
-    pass
 
 
 class ValidationError(ContextLoaderError):
     """Exception raised when data validation fails."""
 
-    pass
 
 
 class SecurityError(ContextLoaderError):
     """Exception raised when security violations are detected."""
 
-    pass
 
 
 class ServiceUnavailableError(ContextLoaderError):
     """Exception raised when service is temporarily unavailable."""
 
-    pass
 
 
 class ContextLoaderService:

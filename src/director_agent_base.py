@@ -413,7 +413,7 @@ class DirectorAgentBase:
         try:
             self.log_event(f"ERROR: {error_message}")
         except Exception:
-            pass  # Avoid cascading errors
+            logger.debug("Failed to log error event", exc_info=True)
 
     def get_config(self) -> Optional[Any]:
         """

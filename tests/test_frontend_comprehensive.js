@@ -16,8 +16,8 @@
  * 8. Accessibility & Usability
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
@@ -709,10 +709,6 @@ describe('StoryForge AI Frontend Application', () => {
       await user.click(screen.getByText(/scientist/i));
       
       // State should be maintained
-      // Look for visual indicators or selection state
-      const selectionIndicators = screen.getAllByTestId ? 
-        screen.queryAllByTestId(/selected/i) : [];
-      
       // Some form of state persistence should be visible
       expect(document.body.innerHTML).toContain('pilot');
       expect(document.body.innerHTML).toContain('scientist');
@@ -732,11 +728,6 @@ describe('StoryForge AI Frontend Application', () => {
       // Should provide visual feedback
       // This could be selection highlighting, state changes, etc.
       await waitFor(() => {
-        // Check for any change in the interface
-        const feedbackElement = screen.queryByTestId(/selected/i) || 
-                              screen.queryByText(/selected/i) ||
-                              document.querySelector('[class*=\"selected\"]');
-        
         // Some form of feedback should be present
         expect(document.body.innerHTML.length).toBeGreaterThan(100);
       });

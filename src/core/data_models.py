@@ -25,18 +25,6 @@ T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
-# Import existing types for compatibility
-try:
-    from shared_types import WorldState
-except ImportError:
-    try:
-        # Try src.shared_types
-        from src.shared_types import WorldState
-    except ImportError:
-        # Try relative import as last resort
-        from ..shared_types import WorldState
-
-
 class MemoryType(Enum):
     """Memory classification types for the layered memory system."""
 
@@ -395,9 +383,9 @@ class DynamicContext:
         relevant_relationships = {}
         for agent_id in target_agents:
             if agent_id in self.character_state.active_relationships:
-                relevant_relationships[
-                    agent_id
-                ] = self.character_state.active_relationships[agent_id]
+                relevant_relationships[agent_id] = (
+                    self.character_state.active_relationships[agent_id]
+                )
 
         return relevant_relationships
 

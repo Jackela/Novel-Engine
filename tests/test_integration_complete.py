@@ -40,15 +40,12 @@ try:
         ActionParameters,
         ActionTarget,
         ActionType,
-        CharacterData,
         CharacterResources,
         CharacterStats,
         EntityType,
-        IronLawsReport,
         Position,
         ProposedAction,
         ResourceValue,
-        ValidationStatus,
     )
 
     CORE_ENGINE_AVAILABLE = True
@@ -58,7 +55,7 @@ except ImportError as e:
 
 # Evaluation system imports
 try:
-    from evaluate_baseline import BaselineEvaluator, NovelEngineRunner, SeedLoader
+    from evaluate_baseline import SeedLoader
 
     EVALUATION_SYSTEM_AVAILABLE = True
 except ImportError:

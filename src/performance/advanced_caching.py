@@ -557,7 +557,6 @@ class IntelligentCacheManager:
         """Prefetch related keys based on access patterns."""
         # This would implement intelligent prefetching based on access patterns
         # For now, it's a placeholder
-        pass
 
     async def _optimize_slow_keys(self):
         """Optimize cache keys with slow access times."""
@@ -577,9 +576,9 @@ class IntelligentCacheManager:
                             entry.size_bytes = len(compressed_value)
                             logger.debug(f"Optimized slow key: {key}")
                     except Exception:
-                        pass
-
-        # Clear slow keys set periodically
+                        logging.getLogger(__name__).debug(
+                            "Suppressed exception", exc_info=True
+                        )
         self.slow_keys.clear()
 
     def _update_cache_statistics(self):
@@ -683,16 +682,18 @@ class IntelligentCacheManager:
                 try:
                     await self._cleanup_task
                 except asyncio.CancelledError:
-                    pass
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
 
             if self._metrics_task:
                 self._metrics_task.cancel()
                 try:
                     await self._metrics_task
                 except asyncio.CancelledError:
-                    pass
-
-            # Final cleanup
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             self._cleanup_expired()
 
             logger.info("Cache shutdown complete")

@@ -1,4 +1,4 @@
-import { test, expect, devices } from './fixtures';
+import { test, expect } from './fixtures';
 import { DashboardPage } from './pages/DashboardPage';
 
 /**
@@ -11,15 +11,6 @@ import { DashboardPage } from './pages/DashboardPage';
  * - Edge compatibility
  * - Mobile browser compatibility
  */
-
-// Test configuration for different browser projects
-const browserProjects = [
-  { name: 'chromium-desktop', displayName: 'Chrome Desktop' },
-  { name: 'firefox-desktop', displayName: 'Firefox Desktop' },
-  { name: 'webkit-desktop', displayName: 'Safari Desktop' },
-  { name: 'tablet', displayName: 'Tablet Safari' },
-  { name: 'mobile', displayName: 'Mobile Safari' }
-];
 
 test.describe('Cross-Browser Compatibility UAT', () => {
 

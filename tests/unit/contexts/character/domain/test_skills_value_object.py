@@ -571,7 +571,6 @@ class TestSkillGroup:
         group = SkillGroup("Test", SkillCategory.COMBAT, 0, skills)
 
         # Manually test the logic by clearing skills (bypassing validation)
-        group = SkillGroup("Test", SkillCategory.COMBAT, 0, skills)
         object.__setattr__(group, "skills", {})
 
         avg = group.get_average_proficiency()

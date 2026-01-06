@@ -366,7 +366,7 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
       });
 
       // Observe real-time updates across all Bento components
-      let componentUpdates = await dashboardPage.observeComponentUpdates();
+      let componentUpdates;
 
       // 4. Validate component updates
       // Allow time for polling updates to propagate

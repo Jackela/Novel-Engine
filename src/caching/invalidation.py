@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List
+from typing import Dict
 
 from .registry import invalidate_by_tags
 

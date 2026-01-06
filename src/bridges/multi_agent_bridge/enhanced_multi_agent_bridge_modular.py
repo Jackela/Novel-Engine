@@ -10,6 +10,16 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+# Import existing Novel Engine components (no legacy fallbacks)
+from src.agents.chronicler_agent import ChroniclerAgent
+from src.agents.director_agent import DirectorAgent
+
+# Import advanced AI intelligence systems (required)
+from src.ai_intelligence.agent_coordination_engine import AgentCoordinationEngine
+from src.ai_intelligence.ai_orchestrator import AIIntelligenceOrchestrator
+from src.event_bus import EventBus
+from src.persona_agent import PersonaAgent
+
 # Import modular components
 from .core.types import (
     CommunicationType,
@@ -19,17 +29,6 @@ from .core.types import (
 from .dialogue import DialogueManager
 from .llm_processing import LLMBatchProcessor
 from .performance import CostTracker, PerformanceBudget, PerformanceMetrics
-
-# Import existing Novel Engine components (no legacy fallbacks)
-from shared_types import CharacterAction
-from src.agents.chronicler_agent import ChroniclerAgent
-from src.agents.director_agent import DirectorAgent
-from src.event_bus import EventBus
-from src.persona_agent import PersonaAgent
-
-# Import advanced AI intelligence systems (required)
-from src.ai_intelligence.agent_coordination_engine import AgentCoordinationEngine
-from src.ai_intelligence.ai_orchestrator import AIIntelligenceOrchestrator
 
 __all__ = ["EnhancedMultiAgentBridge"]
 

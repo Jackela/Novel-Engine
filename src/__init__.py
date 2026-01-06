@@ -24,16 +24,15 @@ try:
     from .infrastructure.observability import MetricsCollector  # noqa: F401
     from .infrastructure.state_store import UnifiedStateManager  # noqa: F401
 
-    # Add legacy exports to __all__
-    LEGACY_EXPORTS = [
-        "SubjectiveRealityEngine",
-        "EmergentNarrativeEngine",
-        "UnifiedStateManager",
-        "MetricsCollector",
-    ]
+    LEGACY_EXPORTS = {
+        "SubjectiveRealityEngine": SubjectiveRealityEngine,
+        "EmergentNarrativeEngine": EmergentNarrativeEngine,
+        "UnifiedStateManager": UnifiedStateManager,
+        "MetricsCollector": MetricsCollector,
+    }
 except ImportError:
     # Legacy components not available
-    LEGACY_EXPORTS = []
+    LEGACY_EXPORTS = {}
 
 from .event_bus import EventBus  # noqa: F401
 
@@ -47,14 +46,14 @@ try:
     from .turn_orchestrator import TurnOrchestrator  # noqa: F401
     from .world_state_coordinator import WorldStateCoordinator  # noqa: F401
 
-    DIRECTOR_COMPONENTS = [
-        "DirectorAgentBase",
-        "TurnOrchestrator",
-        "WorldStateCoordinator",
-        "AgentLifecycleManager",
-    ]
+    DIRECTOR_COMPONENTS = {
+        "DirectorAgentBase": DirectorAgentBase,
+        "TurnOrchestrator": TurnOrchestrator,
+        "WorldStateCoordinator": WorldStateCoordinator,
+        "AgentLifecycleManager": AgentLifecycleManager,
+    }
 except ImportError:
-    DIRECTOR_COMPONENTS = []
+    DIRECTOR_COMPONENTS = {}
 
 # PersonaAgent components - Exposed modularly
 try:
@@ -63,14 +62,14 @@ try:
     from .memory_interface import MemoryInterface  # noqa: F401
     from .persona_agent_core import PersonaAgentCore  # noqa: F401
 
-    PERSONA_COMPONENTS = [
-        "PersonaAgentCore",
-        "DecisionEngine",
-        "CharacterInterpreter",
-        "MemoryInterface",
-    ]
+    PERSONA_COMPONENTS = {
+        "PersonaAgentCore": PersonaAgentCore,
+        "DecisionEngine": DecisionEngine,
+        "CharacterInterpreter": CharacterInterpreter,
+        "MemoryInterface": MemoryInterface,
+    }
 except ImportError:
-    PERSONA_COMPONENTS = []
+    PERSONA_COMPONENTS = {}
 
 # Integrated architecture - Main exports
 try:
@@ -81,18 +80,21 @@ try:
         PersonaAgent as PersonaAgentIntegrated,
     )
 
-    INTEGRATED_EXPORTS = ["PersonaAgentIntegrated", "DirectorAgentIntegrated"]
+    INTEGRATED_EXPORTS = {
+        "PersonaAgentIntegrated": PersonaAgentIntegrated,
+        "DirectorAgentIntegrated": DirectorAgentIntegrated,
+    }
 except ImportError:
-    INTEGRATED_EXPORTS = []
+    INTEGRATED_EXPORTS = {}
 
 # Core agent interface
-CORE_EXPORTS = ["PersonaAgent", "EventBus"]
+CORE_EXPORTS = {"PersonaAgent": PersonaAgent, "EventBus": EventBus}
 
 # Build complete export list
 __all__ = (
-    CORE_EXPORTS
-    + DIRECTOR_COMPONENTS
-    + PERSONA_COMPONENTS
-    + INTEGRATED_EXPORTS
-    + LEGACY_EXPORTS
+    list(CORE_EXPORTS)
+    + list(DIRECTOR_COMPONENTS)
+    + list(PERSONA_COMPONENTS)
+    + list(INTEGRATED_EXPORTS)
+    + list(LEGACY_EXPORTS)
 )

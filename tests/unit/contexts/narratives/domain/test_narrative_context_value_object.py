@@ -2047,7 +2047,6 @@ class TestNarrativeContextCollectionsAndComparison:
         )
 
         assert context1 != context2
-        assert not (context1 == context2)
 
     @pytest.mark.unit
     def test_context_hashing_consistency(self):

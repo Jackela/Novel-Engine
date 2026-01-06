@@ -44,7 +44,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If retrieval fails due to infrastructure issues
         """
-        pass
 
     @abstractmethod
     async def save(self, character: Character) -> None:
@@ -62,7 +61,6 @@ class ICharacterRepository(ABC):
             ConcurrencyException: If the character version conflicts
             RepositoryException: If save operation fails
         """
-        pass
 
     @abstractmethod
     async def delete(self, character_id: CharacterID) -> bool:
@@ -78,7 +76,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If deletion fails due to infrastructure issues
         """
-        pass
 
     @abstractmethod
     async def exists(self, character_id: CharacterID) -> bool:
@@ -94,7 +91,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If check fails due to infrastructure issues
         """
-        pass
 
     # ==================== Query Operations ====================
 
@@ -112,7 +108,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If search fails
         """
-        pass
 
     @abstractmethod
     async def find_by_class(self, character_class: CharacterClass) -> List[Character]:
@@ -128,7 +123,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If search fails
         """
-        pass
 
     @abstractmethod
     async def find_by_race(self, race: CharacterRace) -> List[Character]:
@@ -144,7 +138,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If search fails
         """
-        pass
 
     @abstractmethod
     async def find_by_level_range(
@@ -163,7 +156,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If search fails
         """
-        pass
 
     @abstractmethod
     async def find_alive_characters(self) -> List[Character]:
@@ -176,7 +168,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If search fails
         """
-        pass
 
     @abstractmethod
     async def find_by_created_date_range(
@@ -195,7 +186,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If search fails
         """
-        pass
 
     # ==================== Advanced Query Operations ====================
 
@@ -217,7 +207,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If search fails
         """
-        pass
 
     @abstractmethod
     async def count_by_criteria(self, criteria: Dict[str, Any]) -> int:
@@ -233,7 +222,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If count fails
         """
-        pass
 
     @abstractmethod
     async def get_statistics(self) -> Dict[str, Any]:
@@ -252,7 +240,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If statistics calculation fails
         """
-        pass
 
     # ==================== Bulk Operations ====================
 
@@ -268,7 +255,6 @@ class ICharacterRepository(ABC):
             ConcurrencyException: If any character version conflicts
             RepositoryException: If save operation fails
         """
-        pass
 
     @abstractmethod
     async def delete_multiple(self, character_ids: List[CharacterID]) -> int:
@@ -284,7 +270,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If deletion fails
         """
-        pass
 
     # ==================== Version Control Operations ====================
 
@@ -302,7 +287,6 @@ class ICharacterRepository(ABC):
         Raises:
             RepositoryException: If version retrieval fails
         """
-        pass
 
     @abstractmethod
     async def get_character_history(
@@ -322,13 +306,11 @@ class ICharacterRepository(ABC):
             RepositoryException: If history retrieval fails
             NotSupportedException: If history tracking is not supported
         """
-        pass
 
 
 class RepositoryException(Exception):
     """Base exception for repository operations."""
 
-    pass
 
 
 class ConcurrencyException(RepositoryException):
@@ -343,4 +325,3 @@ class ConcurrencyException(RepositoryException):
 class NotSupportedException(RepositoryException):
     """Exception raised when an operation is not supported by the implementation."""
 
-    pass

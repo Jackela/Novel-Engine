@@ -6,10 +6,13 @@ Contains enums and dataclasses used across narrative modules.
 """
 
 import logging
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+import networkx as nx
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +67,11 @@ class CausalNode:
 
     def __hash__(self):
         return hash(self.node_id)
+
+    def __eq__(self, other):
+        if not isinstance(other, CausalNode):
+            return NotImplemented
+        return self.node_id == other.node_id
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""

@@ -61,7 +61,6 @@ class IVisibilityCalculator(ABC):
         Returns:
             Dictionary mapping perception types to visibility levels
         """
-        pass
 
 
 class BasicVisibilityCalculator(IVisibilityCalculator):

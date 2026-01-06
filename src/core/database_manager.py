@@ -241,9 +241,9 @@ class DatabaseConnection:
                 try:
                     await self._health_check_task
                 except asyncio.CancelledError:
-                    pass
-
-            # Close connection
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             await self.connection.close()
             logger.debug("Database connection closed")
 
@@ -448,9 +448,9 @@ class DatabaseConnectionPool:
                     wait_time = time.time() - wait_start
                     self._pool_metrics["connection_wait_times"].append(wait_time)
                     if len(self._pool_metrics["connection_wait_times"]) > 1000:
-                        self._pool_metrics[
-                            "connection_wait_times"
-                        ] = self._pool_metrics["connection_wait_times"][-1000:]
+                        self._pool_metrics["connection_wait_times"] = (
+                            self._pool_metrics["connection_wait_times"][-1000:]
+                        )
 
                     return connection
                 else:
@@ -559,9 +559,9 @@ class DatabaseConnectionPool:
                 try:
                     await self._maintenance_task
                 except asyncio.CancelledError:
-                    pass
-
-            # Close all available connections
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
             for connection in self._available_connections:
                 await self._close_connection(connection)
 

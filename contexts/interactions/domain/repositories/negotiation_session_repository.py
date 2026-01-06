@@ -30,7 +30,6 @@ class NegotiationSessionRepository(ABC):
         Args:
             session: The NegotiationSession aggregate to persist
         """
-        pass
 
     @abstractmethod
     async def get_by_id(
@@ -45,7 +44,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             The NegotiationSession if found, None otherwise
         """
-        pass
 
     @abstractmethod
     async def find_by_filters(
@@ -69,7 +67,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of matching NegotiationSession objects
         """
-        pass
 
     @abstractmethod
     async def find_by_created_by(self, created_by: UUID) -> List[NegotiationSession]:
@@ -82,7 +79,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of NegotiationSession objects created by the user
         """
-        pass
 
     @abstractmethod
     async def find_by_participant(
@@ -97,7 +93,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of NegotiationSession objects with the participant
         """
-        pass
 
     @abstractmethod
     async def find_active_sessions(self) -> List[NegotiationSession]:
@@ -107,7 +102,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of active NegotiationSession objects
         """
-        pass
 
     @abstractmethod
     async def find_sessions_by_status(
@@ -123,7 +117,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of matching NegotiationSession objects
         """
-        pass
 
     @abstractmethod
     async def find_sessions_by_domain(self, domain: str) -> List[NegotiationSession]:
@@ -136,7 +129,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of NegotiationSession objects in the domain
         """
-        pass
 
     @abstractmethod
     async def find_sessions_by_type(
@@ -151,7 +143,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of NegotiationSession objects of the specified type
         """
-        pass
 
     @abstractmethod
     async def find_sessions_requiring_attention(
@@ -166,7 +157,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of NegotiationSession objects requiring attention
         """
-        pass
 
     @abstractmethod
     async def count_sessions_by_criteria(self, filters: Dict[str, Any]) -> int:
@@ -179,7 +169,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             Number of sessions matching the criteria
         """
-        pass
 
     @abstractmethod
     async def delete(self, session_id: InteractionId) -> bool:
@@ -192,7 +181,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             True if the session was deleted, False if not found
         """
-        pass
 
     @abstractmethod
     async def exists(self, session_id: InteractionId) -> bool:
@@ -205,7 +193,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             True if the session exists, False otherwise
         """
-        pass
 
     @abstractmethod
     async def get_session_statistics(self) -> Dict[str, Any]:
@@ -215,7 +202,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             Dictionary containing session statistics
         """
-        pass
 
     @abstractmethod
     async def find_sessions_by_date_range(
@@ -232,7 +218,6 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of NegotiationSession objects within the date range
         """
-        pass
 
     @abstractmethod
     async def batch_update_sessions(
@@ -247,4 +232,3 @@ class NegotiationSessionRepository(ABC):
         Returns:
             List of session IDs that were successfully updated
         """
-        pass

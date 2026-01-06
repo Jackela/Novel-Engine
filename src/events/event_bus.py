@@ -137,13 +137,11 @@ class EventHandler(ABC):
         Returns:
             True if event was handled successfully, False otherwise
         """
-        pass
 
     @property
     @abstractmethod
     def handled_event_types(self) -> Set[str]:
         """Set of event types this handler can process."""
-        pass
 
     @property
     def handler_id(self) -> str:
@@ -381,9 +379,7 @@ class EventBus:
             try:
                 await task
             except asyncio.CancelledError:
-                pass
-
-        # Close Redis connection
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
         if self.redis:
             await self.redis.close()
 

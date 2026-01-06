@@ -16,7 +16,7 @@ Test Categories:
 7. Error Propagation & Recovery
 8. Security & Validation Integration
 """
-
+import logging
 import os
 import tempfile
 import time
@@ -26,9 +26,12 @@ from pathlib import Path
 import pytest
 
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
+pytestmark = [pytest.mark.integration, pytest.mark.system, pytest.mark.e2e]
 if not FULL_INTEGRATION:
-    pytestmark = pytest.mark.skip(
-        reason="Comprehensive integration suite requires NOVEL_ENGINE_FULL_INTEGRATION=1"
+    pytestmark.append(
+        pytest.mark.skip(
+            reason="Comprehensive integration suite requires NOVEL_ENGINE_FULL_INTEGRATION=1"
+        )
     )
 
 # Import system components
@@ -52,9 +55,7 @@ SIMULATION_REQUEST = {
 
 
 def _character_ids(characters):
-    return [
-        entry["id"] if isinstance(entry, dict) else entry for entry in characters
-    ]
+    return [entry["id"] if isinstance(entry, dict) else entry for entry in characters]
 
 
 class TestFullSystemIntegration:
@@ -787,11 +788,9 @@ def clean_test_environment():
         try:
             temp_file.unlink()
         except FileNotFoundError:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
 
-# Test markers
-pytestmark = [pytest.mark.integration, pytest.mark.system, pytest.mark.e2e]
 
 
 if __name__ == "__main__":

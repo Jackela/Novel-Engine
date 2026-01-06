@@ -750,7 +750,7 @@ def emergency_memory_cleanup():
 
         functools._CacheInfo.cache_clear()  # This won't work, but shows intent
     except Exception:
-        pass
+        logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     logger.info("Emergency memory cleanup completed")
 

@@ -244,7 +244,9 @@ class CharacterAPI:
                         if agent_info and agent_info.get("character_name"):
                             character_name = agent_info["character_name"]
                 except Exception:
-                    pass  # Fall back to character_id as name
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
 
                 # Get character information from orchestrator
                 return {
@@ -257,7 +259,7 @@ class CharacterAPI:
                 }
             except HTTPException:
                 raise
-            except Exception as e:
+            except Exception:
                 logger.exception("Error getting character.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
@@ -295,7 +297,7 @@ class CharacterAPI:
                 }
             except HTTPException:
                 raise
-            except Exception as e:
+            except Exception:
                 logger.exception("Error updating character.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
@@ -328,7 +330,7 @@ class CharacterAPI:
                 }
             except HTTPException:
                 raise
-            except Exception as e:
+            except Exception:
                 logger.exception("Error deleting character.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 

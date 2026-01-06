@@ -22,9 +22,12 @@ import time
 import pytest
 
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
+pytestmark = [pytest.mark.api, pytest.mark.integration]
 if not FULL_INTEGRATION:
-    pytestmark = pytest.mark.skip(
-        reason="API comprehensive tests require NOVEL_ENGINE_FULL_INTEGRATION=1"
+    pytestmark.append(
+        pytest.mark.skip(
+            reason="API comprehensive tests require NOVEL_ENGINE_FULL_INTEGRATION=1"
+        )
     )
 from api_server import app
 from fastapi.testclient import TestClient
@@ -41,9 +44,7 @@ SAMPLE_SIMULATION_REQUEST = {
 
 
 def _character_ids(characters):
-    return [
-        entry["id"] if isinstance(entry, dict) else entry for entry in characters
-    ]
+    return [entry["id"] if isinstance(entry, dict) else entry for entry in characters]
 
 
 class TestHealthEndpoints:
@@ -585,7 +586,6 @@ def sample_simulation_result():
 
 
 # Test execution markers
-pytestmark = [pytest.mark.api, pytest.mark.integration]
 
 
 if __name__ == "__main__":

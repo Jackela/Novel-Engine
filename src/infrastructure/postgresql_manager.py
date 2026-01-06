@@ -519,7 +519,7 @@ class PostgreSQLConnectionPool:
                     {"type": "ModelConfigChanged", "model_name": str(value)}
                 )
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
         return True
 
     async def close(self) -> None:

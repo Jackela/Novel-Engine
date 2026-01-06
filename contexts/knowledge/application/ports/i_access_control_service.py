@@ -91,7 +91,6 @@ class IAccessControlService(ABC):
         - Article I (DDD): Business logic in domain service
         - FR-005: Access control filtering enforced
         """
-        pass
 
     @abstractmethod
     def can_access_entry(
@@ -126,4 +125,3 @@ class IAccessControlService(ABC):
         - Article I (DDD): Delegates to aggregate root business logic
         - Article V (SOLID): OCP - Open for extension with additional rules
         """
-        pass

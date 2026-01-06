@@ -2,15 +2,12 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import MarkdownIt from 'markdown-it';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FRONTEND_ROOT = path.resolve(__dirname, '..');
 const REPORT_DIR = path.join(FRONTEND_ROOT, 'reports');
 const TEST_RESULTS_PATH = path.join(FRONTEND_ROOT, 'test-results.json');
 const REPORT_RETENTION_COUNT = Number(process.env.EXPERIENCE_REPORT_RETENTION ?? '10');
-
-const md = new MarkdownIt();
 
 function formatSection(title, lines = []) {
   return `## ${title}\n\n${lines.join('\n')}\n`;
@@ -212,7 +209,6 @@ async function pruneOldReports(maxCount) {
       return acc;
     }, {});
     const timestamps = Object.keys(grouped).map(Number).sort((a, b) => b - a);
-    const rowsToKeep = timestamps.slice(0, maxCount);
     const rowsToDelete = timestamps.slice(maxCount);
     for (const ts of rowsToDelete) {
       for (const file of grouped[ts]) {

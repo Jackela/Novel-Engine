@@ -67,7 +67,6 @@ class CacheBackend(ABC):
         Returns:
             The cached value if found, None otherwise
         """
-        pass
 
     @abstractmethod
     async def set(self, key: str, value: Any, ttl: Optional[float] = None) -> bool:
@@ -82,7 +81,6 @@ class CacheBackend(ABC):
         Returns:
             True if successfully stored, False otherwise
         """
-        pass
 
     @abstractmethod
     async def delete(self, key: str) -> bool:
@@ -95,7 +93,6 @@ class CacheBackend(ABC):
         Returns:
             True if key was found and removed, False otherwise
         """
-        pass
 
     @abstractmethod
     async def clear(self) -> bool:
@@ -105,7 +102,6 @@ class CacheBackend(ABC):
         Returns:
             True if cache was successfully cleared
         """
-        pass
 
 
 class MemoryCache(CacheBackend):
@@ -309,7 +305,7 @@ class PerformanceCache:
             try:
                 await self.cleanup_task
             except asyncio.CancelledError:
-                pass
+                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     async def _cleanup_loop(self):
         """Background cleanup for expired entries."""

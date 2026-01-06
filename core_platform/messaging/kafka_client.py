@@ -13,7 +13,6 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 try:
-    import aiokafka
     from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
     from aiokafka.errors import KafkaConnectionError, KafkaError, KafkaTimeoutError
     from aiokafka.helpers import create_ssl_context
@@ -73,25 +72,21 @@ logger = logging.getLogger(__name__)
 class KafkaClientException(Exception):
     """Base exception for Kafka client operations."""
 
-    pass
 
 
 class KafkaConnectionException(KafkaClientException):
     """Raised when Kafka connection fails."""
 
-    pass
 
 
 class KafkaPublishException(KafkaClientException):
     """Raised when message publishing fails."""
 
-    pass
 
 
 class KafkaConsumeException(KafkaClientException):
     """Raised when message consumption fails."""
 
-    pass
 
 
 class KafkaClient:

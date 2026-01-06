@@ -247,7 +247,9 @@ class AnalyticsPlatform:
                 try:
                     await task
                 except asyncio.CancelledError:
-                    pass
+                    logging.getLogger(__name__).debug(
+                        "Suppressed exception", exc_info=True
+                    )
         self.background_tasks.clear()
         logger.info("Stopped all background analytics tasks")
 

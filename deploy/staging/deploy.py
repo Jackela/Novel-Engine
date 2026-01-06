@@ -57,6 +57,7 @@ class StagingDeployment:
         self.deployment_id = f"staging-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
         self.backup_dir = project_root / "staging" / "backups" / self.deployment_id
         self.health_check_url = "http://localhost:8000/health"
+        self.server_log_handle = None
 
         # Create necessary directories
         self._ensure_directories()
@@ -269,10 +270,11 @@ except ImportError as e:
             server_log = self.staging_dir / "logs" / "api_server.log"
 
             # Use subprocess to start server
+            self.server_log_handle = open(server_log, "w")
             self.server_process = subprocess.Popen(
                 [sys.executable, "api_server.py"],
                 cwd=self.project_root,
-                stdout=open(server_log, "w"),
+                stdout=self.server_log_handle,
                 stderr=subprocess.STDOUT,
             )
 
@@ -283,6 +285,9 @@ except ImportError as e:
             # Check if process is still running
             if self.server_process.poll() is not None:
                 logger.error("❌ Server process terminated during startup")
+                if self.server_log_handle:
+                    self.server_log_handle.close()
+                    self.server_log_handle = None
                 return False
 
             logger.info("✅ API server started")
@@ -290,6 +295,9 @@ except ImportError as e:
 
         except Exception as e:
             logger.error(f"❌ Service startup failed: {e}")
+            if self.server_log_handle:
+                self.server_log_handle.close()
+                self.server_log_handle = None
             return False
 
     def run_health_checks(self) -> bool:
@@ -511,6 +519,9 @@ if __name__ == "__main__":
             if hasattr(self, "server_process"):
                 self.server_process.terminate()
                 self.server_process.wait(timeout=10)
+            if self.server_log_handle:
+                self.server_log_handle.close()
+                self.server_log_handle = None
 
             # Execute rollback script if it exists
             rollback_script = self.backup_dir / "rollback.py"
