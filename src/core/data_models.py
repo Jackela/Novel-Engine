@@ -25,6 +25,7 @@ T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
+
 class MemoryType(Enum):
     """Memory classification types for the layered memory system."""
 
@@ -678,6 +679,7 @@ if __name__ == "__main__":
         faction=["Bastion Cohort", "Alliance Network"],
         personality_traits=["Fatalistic", "Grim", "Loyal"],
     )
+    logger.debug("Test identity: %s", test_identity)
 
     # Test enhanced memory item
     test_memory = MemoryItem(
@@ -694,6 +696,7 @@ if __name__ == "__main__":
         memory_context=[test_memory],
         situation_description="Combat engagement with xenos filth",
     )
+    logger.debug("Test context: %s", test_context)
 
     logger.info("ALL STANDARD DATA MODELS ENHANCED AND FUNCTIONAL")
     logger.info("MACHINE GOD PROTECTS THE STANDARD STRUCTURES")

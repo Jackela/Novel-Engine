@@ -11,9 +11,15 @@ Development Phase: Phase 1 Validation - Import Compatibility
 
 try:
     # Try to import from the core config module
-    from src.core.config.config_loader import *  # noqa: F403
+    from src.core.config.config_loader import ConfigLoader, get_config as _get_config
 
     CORE_CONFIG_AVAILABLE = True
+
+    def get_config():
+        return _get_config()
+
+    def load_config(config_path=None):
+        return ConfigLoader.get_instance().load_config(config_path=config_path)
 except ImportError:
     # Fallback implementation if core config not available
     CORE_CONFIG_AVAILABLE = False

@@ -11,7 +11,6 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import DecisionPointDialog from '../../../../src/components/decision/DecisionPointDialog';
 import decisionReducer, {
-  setDecisionPoint,
   type DecisionPoint,
 } from '../../../../src/store/slices/decisionSlice';
 

@@ -1088,6 +1088,8 @@ __all__ = [
     "ConsistencyCheck",
     # Test compatibility
     "SharedTypes",
+    "MODEL_REGISTRY",
+    "get_model_registry",
 ]
 
 # Model validation registry for runtime type checking
@@ -1102,6 +1104,11 @@ MODEL_REGISTRY = {
     "turn_result": TurnResult,
     "api_response": APIResponse,
 }
+
+
+def get_model_registry() -> dict:
+    return dict(MODEL_REGISTRY)
+
 
 # =============================================================================
 # SharedTypes class for test compatibility

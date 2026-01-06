@@ -18,8 +18,7 @@ from ..core.types import (
 
 # Import enhanced core systems
 try:
-    from src.core.data_models import CharacterState, ErrorInfo, StandardResponse
-    from src.core.types import AgentID
+    from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
     class StandardResponse:
@@ -38,8 +37,6 @@ except ImportError:
             self.message = message
             self.recoverable = recoverable
 
-    CharacterState = dict
-    AgentID = str
 
 __all__ = ["InteractionValidator"]
 

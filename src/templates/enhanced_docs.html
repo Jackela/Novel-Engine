@@ -114,14 +114,14 @@ response = httpx.get("http://localhost:8000/api/endpoint", headers=headers)</cod
                         <div class="tab-container">
                             <div class="tab-headers">
                                 {% for example in endpoint.examples %}
-                                <div class="tab-header{% if loop.first %} active{% endif %}" 
-                                     onclick="showTab(this, '{{ endpoint.path|replace('/', '_') }}_{{ example.format }}')">
+                                 <div class="tab-header{% if loop.first %} active{% endif %}" 
+                                      onclick="showTab(this, '{{ endpoint.path|replace(\"/\", \"_\") }}_{{ example.format }}')">
                                      {{ example.format|title }}
                                 </div>
                                 {% endfor %}
                             </div>
                             {% for example in endpoint.examples %}
-                            <div id="{{ endpoint.path|replace('/', '_') }}_{{ example.format }}" 
+                            <div id="{{ endpoint.path|replace(\"/\", \"_\") }}_{{ example.format }}"
                                  class="tab-content{% if loop.first %} active{% endif %}">
                                 <pre><code class="language-{{ example.language }}">{{ example.code }}</code></pre>
                                 {% if example.explanation %}

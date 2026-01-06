@@ -509,7 +509,7 @@ Developed expertise in systematic validation and quality assurance.
 
         # Load to populate cache
         await self.service.load_character_context(character_id)
-        self.assertTrue(len(self.service._cache) > 0)
+        self.assertGreater(len(self.service._cache), 0)
 
         # Clear cache
         await self.service.clear_cache()
@@ -590,7 +590,7 @@ Developed expertise in systematic validation and quality assurance.
         # Some should complete successfully
         results = await asyncio.gather(*tasks, return_exceptions=True)
         successful_results = [r for r in results if isinstance(r, CharacterContext)]
-        self.assertTrue(len(successful_results) > 0)
+        self.assertGreater(len(successful_results), 0)
 
     @pytest.mark.unit
     async def test_load_timeout_handling(self):
@@ -635,7 +635,7 @@ Developed expertise in systematic validation and quality assurance.
         result = await self.service.load_character_context(character_id)
 
         # Should have validation warnings
-        self.assertTrue(len(result.validation_warnings) > 0)
+        self.assertGreater(len(result.validation_warnings), 0)
         self.assertFalse(result.context_integrity)
 
     @pytest.mark.unit
@@ -663,7 +663,7 @@ Developed expertise in systematic validation and quality assurance.
 
         # Should have validation warnings for age inconsistency
         age_warnings = [w for w in result.validation_warnings if "age" in w.lower()]
-        self.assertTrue(len(age_warnings) > 0)
+        self.assertGreater(len(age_warnings), 0)
 
     # ==================== Service Monitoring Tests ====================
 

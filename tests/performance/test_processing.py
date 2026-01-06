@@ -279,15 +279,14 @@ class AsyncProcessingTest:
 
             # Execute concurrent requests
             if concurrent_tasks:
-                responses = await asyncio.gather(
+                results = await asyncio.gather(
                     *concurrent_tasks, return_exceptions=True
                 )
                 successful_responses = sum(
-                    1 for r in responses if not isinstance(r, Exception)
+                    1 for r in results if not isinstance(r, Exception)
                 )
             else:
                 successful_responses = 0
-                responses = []
 
             concurrent_time = time.time() - start_time
 
@@ -304,7 +303,8 @@ class AsyncProcessingTest:
                 performance_improvement = 0
 
             logger.info(
-                f"HTTP Client: {sequential_time:.3f}s sequential vs {concurrent_time:.3f}s concurrent"
+                f"HTTP Client: {sequential_time:.3f}s sequential "
+                f"({sequential_responses} responses) vs {concurrent_time:.3f}s concurrent"
             )
             logger.info(
                 f"Successful responses: {successful_responses}/{len(concurrent_tasks)}"

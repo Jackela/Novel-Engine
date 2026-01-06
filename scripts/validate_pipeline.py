@@ -9,6 +9,7 @@ before running full evaluation suite.
 Development Phase: Work Order PR-07.3 - Pipeline Validation
 """
 
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -125,7 +126,8 @@ def validate_pipeline_components():
     # 6. Test baseline evaluator import
     print("\n🔬 Testing Baseline Evaluator Import...")
     try:
-        pass
+        if importlib.util.find_spec("evaluate_baseline") is None:
+            raise ImportError("evaluate_baseline not found")
 
         print("  ✅ Baseline evaluator imports successful")
         validation_results["evaluator_import"] = True

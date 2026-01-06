@@ -83,7 +83,7 @@ class LogEntry:
     attributes: Dict[str, Any] = field(default_factory=dict)
 
     # System information
-    hostname: str = field(default_factory=lambda: socket.gethostname())
+    hostname: str = field(default_factory=socket.gethostname)
     process_id: int = field(default_factory=os.getpid)
     thread_id: int = field(default_factory=threading.get_ident)
 

@@ -486,3 +486,4 @@ def main():
 
 if __name__ == "__main__":
     results = main()
+    sys.exit(0 if results.get("success") else 1)

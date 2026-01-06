@@ -181,7 +181,7 @@ def demonstrate_ai_enhanced_transcription():
         print(
             "Please ensure the campaign log has been generated with real AI decisions."
         )
-        return
+        return None
 
     # Analyze the quality of the AI-generated content
     log_analysis = analyze_campaign_log_quality(campaign_log_path)
@@ -221,7 +221,7 @@ def demonstrate_ai_enhanced_transcription():
 
     except Exception as e:
         print(f"❌ Failed to initialize ChroniclerAgent: {str(e)}")
-        return
+        return None
 
     # Step 3: Process the AI-enhanced campaign log
     print("\n" + "=" * 60)
@@ -252,7 +252,7 @@ def demonstrate_ai_enhanced_transcription():
 
     except Exception as e:
         print(f"❌ Transcription failed: {str(e)}")
-        return
+        return None
 
     # Step 4: Display the complete AI-powered narrative
     print("\n" + "=" * 60)

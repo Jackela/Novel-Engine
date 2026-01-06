@@ -12,8 +12,8 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from queue import PriorityQueue
 from functools import total_ordering
+from queue import PriorityQueue
 from typing import Any, Callable, Dict, Optional
 
 from ..core.types import (
@@ -25,8 +25,7 @@ from ..core.types import (
 
 # Import enhanced core systems
 try:
-    from src.core.data_models import CharacterState, ErrorInfo, StandardResponse
-    from src.core.types import AgentID
+    from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
     class StandardResponse:
@@ -48,8 +47,6 @@ except ImportError:
             self.message = message
             self.recoverable = recoverable
 
-    CharacterState = dict
-    AgentID = str
 
 __all__ = ["QueueManager", "QueuedInteraction", "QueueStatus"]
 

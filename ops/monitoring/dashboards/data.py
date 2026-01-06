@@ -213,14 +213,14 @@ class DashboardDataCollector:
             try:
                 await self.aggregation_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Aggregation task cancelled", exc_info=True)
 
         if self.cleanup_task:
             self.cleanup_task.cancel()
             try:
                 await self.cleanup_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Cleanup task cancelled", exc_info=True)
 
         logger.info("Dashboard data collector stopped")
 

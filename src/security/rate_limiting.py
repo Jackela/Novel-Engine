@@ -33,12 +33,12 @@ logger = logging.getLogger(__name__)
 class _RateLimitStrategyMeta(EnumMeta):
     """Enum meta class that provides a sensible default when instantiated without a value."""
 
-    def __call__(cls, value=None, *args, **kwargs):
-        if isinstance(value, cls):
+    def __call__(self, value=None, *args, **kwargs):
+        if isinstance(value, self):
             return value
         if value is None:
             # Default to the first declared enum member (TOKEN_BUCKET for this enum)
-            return next(iter(cls))
+            return next(iter(self))
         return super().__call__(value, *args, **kwargs)
 
 

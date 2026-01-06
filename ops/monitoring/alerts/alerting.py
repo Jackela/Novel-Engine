@@ -303,14 +303,14 @@ class AlertManager:
             try:
                 await self.evaluation_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Evaluation task cancelled", exc_info=True)
 
         if self.notification_task:
             self.notification_task.cancel()
             try:
                 await self.notification_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Notification task cancelled", exc_info=True)
 
         logger.info("Alert manager stopped")
 

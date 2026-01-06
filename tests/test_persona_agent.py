@@ -333,7 +333,7 @@ psychological_profile:
             result = agent._parse_character_sheet_content(test_markdown)
             self.assertIsInstance(result, dict)
             # The parsing should extract sections even if they're not fully populated
-            self.assertTrue(len(result) >= 0)
+            self.assertGreaterEqual(len(result), 0)
 
 
 class TestPersonaAgentDecisionMaking(unittest.TestCase):

@@ -415,12 +415,20 @@ class S3StorageManager:
                 # Progress tracking for multipart uploads to be implemented
                 async with aiofiles.open(local_path, "rb") as f:
                     await self.s3_client.upload_fileobj(
-                        f, self.config.bucket_name, s3_key, ExtraArgs=extra_args
+                        f,
+                        self.config.bucket_name,
+                        s3_key,
+                        ExtraArgs=extra_args,
+                        Callback=progress_handler,
                     )
             else:
                 async with aiofiles.open(local_path, "rb") as f:
                     await self.s3_client.upload_fileobj(
-                        f, self.config.bucket_name, s3_key, ExtraArgs=extra_args
+                        f,
+                        self.config.bucket_name,
+                        s3_key,
+                        ExtraArgs=extra_args,
+                        Callback=progress_handler,
                     )
 
             # Get object info

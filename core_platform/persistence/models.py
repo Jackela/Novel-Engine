@@ -58,7 +58,7 @@ class AuditMixin:
     version = Column(String(50), nullable=True)
 
     @declared_attr
-    def audit_data(cls):
+    def audit_data(self):
         return Column(JSON, nullable=True)
 
 

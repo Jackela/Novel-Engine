@@ -12,20 +12,6 @@ from typing import Any, Dict, List, Optional
 
 from ..core.types import DynamicEquipment, EquipmentSystemConfig
 
-# Import enhanced core systems
-try:
-    from src.core.data_models import EquipmentCondition
-except ImportError:
-    # Fallback for testing
-    class EquipmentCondition:
-        EXCELLENT = "excellent"
-        GOOD = "good"
-        FAIR = "fair"
-        POOR = "poor"
-        DAMAGED = "damaged"
-        BROKEN = "broken"
-
-
 __all__ = ["PerformanceMonitor"]
 
 

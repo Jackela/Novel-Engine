@@ -718,7 +718,10 @@ async def run_multi_agent_demo():
         enterprise_init = await demo.initialize_enterprise_system()
         if not enterprise_init.get("success", False):
             print(f"❌ Enterprise system initialization failed: {enterprise_init}")
-            return
+            return {
+                "success": False,
+                "error": "Enterprise system initialization failed",
+            }
 
         print(
             f"✅ Enterprise system initialized - Health: {enterprise_init.get('health')}"

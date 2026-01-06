@@ -162,4 +162,3 @@ class ErrorHandlerProtocol(Protocol):
     async def get_error_statistics(self) -> Dict[str, Any]:
         """Get error statistics."""
         pass
-

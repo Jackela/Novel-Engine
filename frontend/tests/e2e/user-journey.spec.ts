@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { waitForDashboardReady, waitForLandingReady } from './utils/waitForReady';
+import { waitForDashboardReady } from './utils/waitForReady';
 import { resetAuthState } from './utils/auth';
 
 /**

@@ -507,6 +507,7 @@ class AsyncHttpClient:
         # Should not reach here, but just in case
         if last_exception:
             raise last_exception
+        raise RuntimeError("HTTP POST failed without an exception")
 
     async def get_json(
         self,
@@ -566,6 +567,7 @@ class AsyncHttpClient:
 
         if last_exception:
             raise last_exception
+        raise RuntimeError("HTTP GET failed without an exception")
 
     def get_stats(self) -> Dict[str, Any]:
         """Get HTTP client statistics."""

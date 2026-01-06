@@ -21,6 +21,15 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _alembic_revision_ids() -> tuple[
+    str,
+    Union[str, None],
+    Union[str, Sequence[str], None],
+    Union[str, Sequence[str], None],
+]:
+    return revision, down_revision, branch_labels, depends_on
+
+
 def upgrade() -> None:
     """Upgrade database schema - Create knowledge_audit_log table."""
 

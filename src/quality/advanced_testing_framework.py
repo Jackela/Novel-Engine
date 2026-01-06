@@ -232,7 +232,19 @@ class TestFramework:
             )
 
             stdout, stderr = await process.communicate()
-            time.time() - start_time
+            duration = time.time() - start_time
+            if process.returncode != 0:
+                logger.warning(
+                    "Unit test subprocess failed in %.2fs: %s",
+                    duration,
+                    stderr.decode(errors="ignore").strip(),
+                )
+            else:
+                logger.debug(
+                    "Unit test subprocess completed in %.2fs: %s",
+                    duration,
+                    stdout.decode(errors="ignore").strip(),
+                )
 
             # Parse results if JSON report exists
             json_report_path = self.project_root / "test_results.json"

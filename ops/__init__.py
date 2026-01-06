@@ -31,9 +31,6 @@ Usage:
 __version__ = "1.0.0"
 __author__ = "Novel Engine SRE Team"
 
-# Operations module exports
-__all__ = ["monitoring"]
-
 # Import submodules for easier access
 try:
     from . import monitoring
@@ -46,3 +43,17 @@ SLO_AVAILABILITY_TARGET = 99.9  # 99.9% uptime SLO
 SLO_LATENCY_P95_MS = 200  # 95th percentile latency SLO
 SLO_ERROR_RATE_PERCENT = 0.1  # Error rate SLO
 MONITORING_RETENTION_DAYS = 90  # Default metrics retention
+
+SLO_CONFIG = {
+    "availability_target": SLO_AVAILABILITY_TARGET,
+    "latency_p95_ms": SLO_LATENCY_P95_MS,
+    "error_rate_percent": SLO_ERROR_RATE_PERCENT,
+    "retention_days": MONITORING_RETENTION_DAYS,
+}
+
+
+def get_slo_config() -> dict[str, float]:
+    return dict(SLO_CONFIG)
+
+
+__all__ = ["monitoring", "SLO_CONFIG", "get_slo_config"]

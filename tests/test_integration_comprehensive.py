@@ -791,7 +791,5 @@ def clean_test_environment():
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
 
-
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])

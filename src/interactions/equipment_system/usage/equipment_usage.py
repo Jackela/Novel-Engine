@@ -20,8 +20,7 @@ from ..core.types import (
 
 # Import enhanced core systems
 try:
-    from src.core.data_models import EquipmentCondition, ErrorInfo, StandardResponse
-    from src.core.types import AgentID
+    from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
     class StandardResponse:
@@ -42,16 +41,6 @@ except ImportError:
             self.code = code
             self.message = message
             self.recoverable = recoverable
-
-    AgentID = str
-
-    class EquipmentCondition:
-        EXCELLENT = "excellent"
-        GOOD = "good"
-        FAIR = "fair"
-        POOR = "poor"
-        DAMAGED = "damaged"
-        BROKEN = "broken"
 
 
 __all__ = ["EquipmentUsageProcessor"]

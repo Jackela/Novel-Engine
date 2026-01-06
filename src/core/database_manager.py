@@ -166,7 +166,9 @@ class DatabaseConnection:
                 self.metrics.failed_queries += 1
                 self.metrics.last_error = str(e)
 
-                logger.error(f"Query execution failed: {e}")
+                logger.error(
+                    "Query execution failed after %.4fs: %s", execution_time, e
+                )
                 raise
 
             finally:

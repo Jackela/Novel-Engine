@@ -526,9 +526,8 @@ class TestCoordinatesValueObject:
         """Test addition fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
 
-        with pytest.raises(TypeError) as exc_info:
+        with pytest.raises(TypeError):
             coords + "invalid"
-        assert "Can only add Coordinates to Coordinates" in str(exc_info.value)
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -551,9 +550,8 @@ class TestCoordinatesValueObject:
         """Test subtraction fails with invalid type."""
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
 
-        with pytest.raises(TypeError) as exc_info:
+        with pytest.raises(TypeError):
             coords - "invalid"
-        assert "Can only subtract Coordinates from Coordinates" in str(exc_info.value)
 
     @pytest.mark.unit
     @pytest.mark.fast

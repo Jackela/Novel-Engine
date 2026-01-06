@@ -24,6 +24,7 @@ if os.environ.get("PYTEST_PLUGINS") in (None, ""):
         if importlib.util.find_spec("pytest_asyncio") is not None:
             os.environ["PYTEST_PLUGINS"] = "pytest_asyncio"
     except Exception:
+        # Optional dependency; ignore if pytest_asyncio is unavailable.
         pass
 
 _addopts = os.environ.get("PYTEST_ADDOPTS", "")

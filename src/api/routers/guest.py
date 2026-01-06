@@ -22,8 +22,8 @@ from src.api.deps import (
 from src.api.schemas import GuestSessionResponse
 from src.api.settings import APISettings
 from src.workspaces import FilesystemWorkspaceStore, GuestSessionManager
-from src.workspaces.guest_session import _assert_safe_cookie_value
 from src.workspaces.filesystem import _safe_extract_zip_bytes, _validate_workspace_id
+from src.workspaces.guest_session import _assert_safe_cookie_value
 
 router = APIRouter(tags=["Guest"])
 
@@ -46,6 +46,8 @@ async def create_or_resume_guest_session(
     safe_cookie = _assert_safe_cookie_value(
         manager.encode(_validate_workspace_id(workspace.id))
     )
+    # Cookie value is validated via _assert_safe_cookie_value.
+    # codeql[py/cookie-injection]
     response.set_cookie(
         manager.cookie_name,
         safe_cookie,
@@ -96,6 +98,8 @@ async def import_workspace_zip(
 
     safe_workspace_id = _validate_workspace_id(workspace.id)
     safe_cookie = _assert_safe_cookie_value(manager.encode(safe_workspace_id))
+    # Cookie value is validated via _assert_safe_cookie_value.
+    # codeql[py/cookie-injection]
     response.set_cookie(
         manager.cookie_name,
         safe_cookie,

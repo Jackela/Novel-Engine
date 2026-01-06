@@ -166,6 +166,8 @@ class HealthMonitoringHandler(EventHandler):
             logger.error(f"Health monitoring handler error: {e}")
             return False
 
+        return False
+
 
 class PerformanceMonitoringHandler(EventHandler):
     """Performance monitoring event handler."""
@@ -187,6 +189,8 @@ class PerformanceMonitoringHandler(EventHandler):
         except Exception as e:
             logger.error(f"Performance monitoring handler error: {e}")
             return False
+
+        return False
 
 
 class EnhancedSystemOrchestrator:

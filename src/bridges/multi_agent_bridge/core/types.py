@@ -6,9 +6,9 @@ Data models and types for the enhanced multi-agent bridge system.
 """
 
 from dataclasses import dataclass, field
-from functools import total_ordering
 from datetime import datetime
 from enum import Enum
+from functools import total_ordering
 from typing import Any, Dict, List, Optional
 
 __all__ = [

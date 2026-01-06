@@ -111,8 +111,6 @@ class TestAIIntelligenceIntegration:
         # Ensure proper cleanup - but use asyncio.run if needed
         try:
             if orchestrator.integration_active:
-                import asyncio
-
                 asyncio.create_task(orchestrator.shutdown())
         except Exception as e:
             print(f"Warning: Error during orchestrator cleanup: {e}")

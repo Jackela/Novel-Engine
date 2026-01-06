@@ -67,11 +67,9 @@ except ImportError:
 
 # Import agent types
 try:
-    from src.core.types.shared_types import CharacterAction
     from src.persona_agent import PersonaAgent
 except ImportError:
     PersonaAgent = None
-    CharacterAction = None
 
 # Configure logging
 logger = logging.getLogger(__name__)

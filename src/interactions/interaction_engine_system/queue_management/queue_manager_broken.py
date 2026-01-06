@@ -48,6 +48,7 @@ except ImportError:
             self.message = message
             self.recoverable = recoverable
 
+
 __all__ = ["QueueManager", "QueuedInteraction", "QueueStatus"]
 
 
