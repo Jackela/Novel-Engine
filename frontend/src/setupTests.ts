@@ -21,15 +21,21 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     }) as unknown as MediaQueryList;
 }
 
+type WindowWithTesting = Window & typeof globalThis & {
+  scrollTo?: (options?: ScrollToOptions | number, y?: number) => void;
+  ResizeObserver?: typeof ResizeObserver;
+};
+
 if (typeof window !== 'undefined') {
-  (window as any).scrollTo = () => {};
+  const testWindow = window as WindowWithTesting;
+  testWindow.scrollTo = () => {};
 }
 
-if (typeof window !== 'undefined' && !(window as any).ResizeObserver) {
-  class ResizeObserverMock {
+if (typeof window !== 'undefined' && !(window as WindowWithTesting).ResizeObserver) {
+  class ResizeObserverMock implements ResizeObserver {
     observe() {}
     unobserve() {}
     disconnect() {}
   }
-  (window as any).ResizeObserver = ResizeObserverMock;
+  (window as WindowWithTesting).ResizeObserver = ResizeObserverMock;
 }

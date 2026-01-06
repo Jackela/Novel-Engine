@@ -21,6 +21,98 @@ const SENSITIVE_KEYS = [
 ];
 
 const REDACTED = '[REDACTED]';
+const MAX_DEPTH_MARKER = { '[MAX_DEPTH]': true };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isSensitiveKey = (key: string): boolean => {
+  const lowerKey = key.toLowerCase();
+  return SENSITIVE_KEYS.some((sensitive) => lowerKey.includes(sensitive));
+};
+
+const isEmailKey = (key: string): boolean =>
+  key.toLowerCase().includes('email');
+
+const maskEmail = (value: string): string => {
+  const parts = value.split('@');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    return value;
+  }
+  const prefix = parts[0].substring(0, 2);
+  return `${prefix}**@${parts[1]}`;
+};
+
+const sanitizeEntryValue = (
+  key: string,
+  value: unknown,
+  maxDepth: number,
+  seen: WeakSet<object>
+): unknown => {
+  if (isSensitiveKey(key)) {
+    return REDACTED;
+  }
+
+  if (isEmailKey(key) && typeof value === 'string') {
+    return maskEmail(value);
+  }
+
+  if (isRecord(value)) {
+    return sanitizeValue(value, maxDepth - 1, seen);
+  }
+
+  return value;
+};
+
+const sanitizeObject = (
+  obj: Record<string, unknown>,
+  maxDepth: number,
+  seen: WeakSet<object>
+): Record<string, unknown> => {
+  const sanitized: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    sanitized[key] = sanitizeEntryValue(key, value, maxDepth, seen);
+  }
+
+  return sanitized;
+};
+
+const sanitizeArray = (
+  values: unknown[],
+  maxDepth: number,
+  seen: WeakSet<object>
+): unknown[] => values.map((item) => sanitizeValue(item, maxDepth - 1, seen));
+
+const sanitizeValue = (
+  obj: unknown,
+  maxDepth: number,
+  seen: WeakSet<object>
+): unknown => {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (!isRecord(obj)) {
+    return obj;
+  }
+
+  if (seen.has(obj)) {
+    return '[CIRCULAR]';
+  }
+
+  if (maxDepth === 0) {
+    return MAX_DEPTH_MARKER;
+  }
+
+  seen.add(obj);
+
+  if (Array.isArray(obj)) {
+    return sanitizeArray(obj, maxDepth, seen);
+  }
+
+  return sanitizeObject(obj, maxDepth, seen);
+};
 
 /**
  * Sanitizer utility for removing PII and sensitive data from log entries
@@ -46,64 +138,6 @@ export class Sanitizer {
    * @returns Sanitized copy of the object
    */
   static sanitize(obj: unknown, maxDepth = 5, seen = new WeakSet()): unknown {
-    // Handle non-object inputs
-    if (obj === null || obj === undefined) {
-      return obj;
-    }
-
-    if (typeof obj !== 'object') {
-      return obj;
-    }
-
-    // Handle circular references
-    if (seen.has(obj)) {
-      return '[CIRCULAR]';
-    }
-
-    // Max depth protection
-    if (maxDepth === 0) {
-      return { '[MAX_DEPTH]': true };
-    }
-
-    // Mark this object as seen for circular reference detection
-    seen.add(obj);
-
-    // Handle arrays
-    if (Array.isArray(obj)) {
-      return obj.map((item) => this.sanitize(item, maxDepth - 1, seen));
-    }
-
-    // Handle objects
-    const sanitized: Record<string, unknown> = {};
-
-    for (const [key, value] of Object.entries(obj)) {
-      // Sanitize sensitive keys (case-insensitive)
-      const lowerKey = key.toLowerCase();
-      if (SENSITIVE_KEYS.some((sensitive) => lowerKey.includes(sensitive))) {
-        sanitized[key] = REDACTED;
-        continue;
-      }
-
-      // Sanitize email addresses (partial masking)
-      if (lowerKey.includes('email') && typeof value === 'string') {
-        const parts = value.split('@');
-        if (parts.length === 2 && parts[0] && parts[1]) {
-          const prefix = parts[0].substring(0, 2);
-          sanitized[key] = `${prefix}**@${parts[1]}`;
-        } else {
-          sanitized[key] = value;
-        }
-        continue;
-      }
-
-      // Recursively sanitize nested objects and arrays
-      if (typeof value === 'object' && value !== null) {
-        sanitized[key] = this.sanitize(value, maxDepth - 1, seen);
-      } else {
-        sanitized[key] = value;
-      }
-    }
-
-    return sanitized;
+    return sanitizeValue(obj, maxDepth, seen);
   }
 }

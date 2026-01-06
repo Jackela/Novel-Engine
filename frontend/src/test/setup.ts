@@ -4,12 +4,20 @@ import { runCleanups as runUtilCleanups } from './utils/cleanup';
 
 // Ensure globals expected by browser-only libraries (e.g., web-vitals) exist
 if (typeof globalThis.self === 'undefined') {
-  (globalThis as any).self = globalThis;
+  const globalWithSelf = globalThis as typeof globalThis & { self?: typeof globalThis };
+  globalWithSelf.self = globalThis;
 }
 
 // Polyfills
 if (typeof window !== 'undefined') {
   window.scrollTo = vi.fn();
+
+  // Mock scrollTop for MUI Fade component compatibility with jsdom
+  Object.defineProperty(HTMLElement.prototype, 'scrollTop', {
+    configurable: true,
+    get() { return 0; },
+    set() {}
+  });
 }
 
 global.EventSource = vi.fn(() => ({
@@ -20,7 +28,7 @@ global.EventSource = vi.fn(() => ({
   CONNECTING: 0,
   OPEN: 1,
   CLOSED: 2,
-})) as any;
+})) as unknown as typeof EventSource;
 
 // Global test setup for Novel Engine frontend tests
 
@@ -90,7 +98,7 @@ class MockWebSocket {
   }
 
   // Mock message simulation for testing
-  simulateMessage(data: any) {
+  simulateMessage(data: unknown) {
     if (this.readyState === MockWebSocket.OPEN && this.onmessage) {
       this.onmessage({
         data: JSON.stringify(data),
@@ -128,10 +136,36 @@ Object.defineProperty(window, 'fetch', {
   ),
 });
 
-// Mock axios for any direct usage
-vi.mock('axios', () => ({
-  default: {
-    create: vi.fn(() => ({
+// Mock axios for any direct usage - using importOriginal to preserve AxiosError
+vi.mock('axios', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('axios')>();
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      create: vi.fn(() => ({
+        get: vi.fn(() => Promise.resolve({
+          data: {
+            api: 'healthy',
+            config: 'loaded',
+            version: '1.0.0',
+          },
+        })),
+        post: vi.fn(() => Promise.resolve({
+          data: { success: true },
+        })),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+        getSystemStatus: vi.fn(() => Promise.resolve({
+          data: {
+            api: 'healthy',
+            config: 'loaded',
+            version: '1.0.0',
+          },
+        })),
+      })),
       get: vi.fn(() => Promise.resolve({
         data: {
           api: 'healthy',
@@ -142,30 +176,9 @@ vi.mock('axios', () => ({
       post: vi.fn(() => Promise.resolve({
         data: { success: true },
       })),
-      interceptors: {
-        request: { use: vi.fn() },
-        response: { use: vi.fn() },
-      },
-      getSystemStatus: vi.fn(() => Promise.resolve({
-        data: {
-          api: 'healthy',
-          config: 'loaded',
-          version: '1.0.0',
-        },
-      })),
-    })),
-    get: vi.fn(() => Promise.resolve({
-      data: {
-        api: 'healthy',
-        config: 'loaded',
-        version: '1.0.0',
-      },
-    })),
-    post: vi.fn(() => Promise.resolve({
-      data: { success: true },
-    })),
-  },
-}));
+    },
+  };
+});
 
 // Mock the WebSocket hook to prevent real connections during tests
 vi.mock('../hooks/useWebSocketProgress', () => ({
@@ -178,6 +191,11 @@ vi.mock('../hooks/useWebSocketProgress', () => ({
     disconnect: vi.fn(),
     sendMessage: vi.fn(),
   })),
+}));
+
+// Mock MUI transitions reflow function to avoid jsdom scrollTop errors
+vi.mock('@mui/material/transitions/utils', () => ({
+  reflow: vi.fn((node: HTMLElement) => node),
 }));
 
 // Global test cleanup - run after each test
@@ -204,7 +222,7 @@ afterAll(async () => {
 
 // Suppress console warnings during tests
 const originalConsoleWarn = console.warn;
-console.warn = (...args: any[]) => {
+console.warn = (...args: unknown[]) => {
   // Filter out specific warnings that are expected in test environment
   const message = args[0];
   if (
@@ -219,7 +237,7 @@ console.warn = (...args: any[]) => {
 };
 
 const originalConsoleError = console.error;
-console.error = (...args: any[]) => {
+console.error = (...args: unknown[]) => {
   const message = args[0];
   if (typeof message === 'string' && message.includes('ReactDOMTestUtils.act')) {
     return;

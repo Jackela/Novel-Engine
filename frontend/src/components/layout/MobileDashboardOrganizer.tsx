@@ -87,6 +87,153 @@ interface SectionConfig {
   priority: 'high' | 'medium' | 'low';
 }
 
+const SECTIONS: SectionConfig[] = [
+  {
+    id: 'essential',
+    title: 'Map & Controls',
+    icon: <MapIcon fontSize="small" />,
+    badge: 'Always Visible',
+    defaultExpanded: true,
+    priority: 'high',
+  },
+  {
+    id: 'activity',
+    title: 'System Status',
+    icon: <ActivityIcon fontSize="small" />,
+    badge: 'Live Data',
+    defaultExpanded: true,
+    priority: 'high',
+  },
+  {
+    id: 'characters',
+    title: 'Characters & Events',
+    icon: <PeopleIcon fontSize="small" />,
+    badge: '5 Active',
+    priority: 'medium',
+  },
+  {
+    id: 'timeline',
+    title: 'Narrative Arc',
+    icon: <StoryIcon fontSize="small" />,
+    badge: '31% Complete',
+    priority: 'medium',
+  },
+  {
+    id: 'analytics',
+    title: 'Analytics',
+    icon: <AnalyticsIcon fontSize="small" />,
+    badge: 'Quality Metrics',
+    priority: 'low',
+  },
+];
+
+const MobileHeader: React.FC<{ expandedCount: number; total: number }> = ({
+  expandedCount,
+  total,
+}) => (
+  <Box sx={{ mb: 2, textAlign: 'center' }}>
+    <Typography variant="h6" color="primary" gutterBottom>
+      Emergent Narrative Dashboard
+    </Typography>
+    <Stack direction="row" spacing={1} justifyContent="center">
+      <Chip 
+        label="Mobile View" 
+        size="small" 
+        color="primary" 
+        variant="outlined" 
+      />
+      <Chip 
+        label={`${expandedCount}/${total} Sections`}
+        size="small" 
+        variant="outlined" 
+      />
+    </Stack>
+  </Box>
+);
+
+const EssentialSection: React.FC<{ components: React.ReactNode[] }> = ({ components }) => (
+  <Box sx={{ mb: 2 }}>
+    {components.map((component, index) => (
+      <Box key={`essential-${index}`} sx={{ mb: 1 }}>
+        {component}
+      </Box>
+    ))}
+  </Box>
+);
+
+const SectionAccordion: React.FC<{
+  section: SectionConfig;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}> = ({ section, expanded, onToggle, children }) => {
+  const theme = useTheme();
+  const sectionBg = section.priority === 'high' 
+    ? theme.palette.primary.main + '08'
+    : section.priority === 'medium'
+      ? theme.palette.warning.main + '06'
+      : theme.palette.action.hover;
+
+  return (
+    <CompactAccordion
+      expanded={expanded}
+      onChange={onToggle}
+      elevation={1}
+    >
+      <CompactAccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        sx={{ backgroundColor: sectionBg }}
+      >
+        <Stack 
+          direction="row" 
+          spacing={1.5} 
+          alignItems="center" 
+          sx={{ flex: 1 }}
+        >
+          <Box sx={{ color: theme.palette.text.secondary }}>
+            {section.icon}
+          </Box>
+          <Typography 
+            variant="subtitle2" 
+            fontWeight={600}
+            sx={{ flex: 1 }}
+          >
+            {section.title}
+          </Typography>
+          {section.badge && (
+            <Chip
+              label={section.badge}
+              size="small"
+              variant="outlined"
+              sx={{ 
+                height: '24px', 
+                fontSize: '0.7rem',
+                color: section.priority === 'high' 
+                  ? theme.palette.primary.main 
+                  : theme.palette.text.secondary
+              }}
+            />
+          )}
+        </Stack>
+      </CompactAccordionSummary>
+      
+      <CompactAccordionDetails>
+        <Stack spacing={1}>
+          {children}
+        </Stack>
+      </CompactAccordionDetails>
+    </CompactAccordion>
+  );
+};
+
+const MobileFooter: React.FC = () => (
+  <Box sx={{ mt: 2, textAlign: 'center' }}>
+    <Typography variant="caption" color="text.secondary">
+      Tap sections to expand • Optimized for mobile
+    </Typography>
+  </Box>
+);
+
 const MobileDashboardOrganizer: React.FC<MobileDashboardOrganizerProps> = ({ 
   children, 
   components 
@@ -95,48 +242,8 @@ const MobileDashboardOrganizer: React.FC<MobileDashboardOrganizerProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['essential', 'activity']) // Default expanded sections
+    new Set(['essential', 'activity'])
   );
-
-  const sections: SectionConfig[] = [
-    {
-      id: 'essential',
-      title: 'Map & Controls',
-      icon: <MapIcon fontSize="small" />,
-      badge: 'Always Visible',
-      defaultExpanded: true,
-      priority: 'high',
-    },
-    {
-      id: 'activity',
-      title: 'System Status',
-      icon: <ActivityIcon fontSize="small" />,
-      badge: 'Live Data',
-      defaultExpanded: true,
-      priority: 'high',
-    },
-    {
-      id: 'characters',
-      title: 'Characters & Events',
-      icon: <PeopleIcon fontSize="small" />,
-      badge: '5 Active',
-      priority: 'medium',
-    },
-    {
-      id: 'timeline',
-      title: 'Narrative Arc',
-      icon: <StoryIcon fontSize="small" />,
-      badge: '31% Complete',
-      priority: 'medium',
-    },
-    {
-      id: 'analytics',
-      title: 'Analytics',
-      icon: <AnalyticsIcon fontSize="small" />,
-      badge: 'Quality Metrics',
-      priority: 'low',
-    },
-  ];
 
   const handleSectionToggle = (sectionId: string) => {
     const newExpanded = new Set(expandedSections);
@@ -148,9 +255,8 @@ const MobileDashboardOrganizer: React.FC<MobileDashboardOrganizerProps> = ({
     setExpandedSections(newExpanded);
   };
 
-  const getSectionComponents = (sectionId: string): React.ReactNode[] => {
-    return components?.[sectionId as keyof typeof components] || [];
-  };
+  const getSectionComponents = (sectionId: string): React.ReactNode[] =>
+    components?.[sectionId as keyof typeof components] || [];
 
   if (!isMobile) {
     return <DesktopLayout>{children}</DesktopLayout>;
@@ -160,103 +266,29 @@ const MobileDashboardOrganizer: React.FC<MobileDashboardOrganizerProps> = ({
     <MobileOrganizer>
       <Box sx={{ p: 1 }}>
         {/* Mobile Header */}
-        <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Typography variant="h6" color="primary" gutterBottom>
-            Emergent Narrative Dashboard
-          </Typography>
-          <Stack direction="row" spacing={1} justifyContent="center">
-            <Chip 
-              label="Mobile View" 
-              size="small" 
-              color="primary" 
-              variant="outlined" 
-            />
-            <Chip 
-              label={`${expandedSections.size}/${sections.length} Sections`}
-              size="small" 
-              variant="outlined" 
-            />
-          </Stack>
-        </Box>
+        <MobileHeader expandedCount={expandedSections.size} total={SECTIONS.length} />
 
         {/* Essential Section - Always Visible */}
-        <Box sx={{ mb: 2 }}>
-          {getSectionComponents('essential').map((component, index) => (
-            <Box key={`essential-${index}`} sx={{ mb: 1 }}>
-              {component}
-            </Box>
-          ))}
-        </Box>
+        <EssentialSection components={getSectionComponents('essential')} />
 
         {/* Collapsible Sections */}
-        {sections.slice(1).map((section) => (
-          <CompactAccordion
+        {SECTIONS.slice(1).map((section) => (
+          <SectionAccordion
             key={section.id}
+            section={section}
             expanded={expandedSections.has(section.id)}
-            onChange={() => handleSectionToggle(section.id)}
-            elevation={1}
+            onToggle={() => handleSectionToggle(section.id)}
           >
-            <CompactAccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              sx={{
-                backgroundColor: section.priority === 'high' 
-                  ? theme.palette.primary.main + '08'
-                  : section.priority === 'medium'
-                  ? theme.palette.warning.main + '06'
-                  : theme.palette.action.hover,
-              }}
-            >
-              <Stack 
-                direction="row" 
-                spacing={1.5} 
-                alignItems="center" 
-                sx={{ flex: 1 }}
-              >
-                <Box sx={{ color: theme.palette.text.secondary }}>
-                  {section.icon}
-                </Box>
-                <Typography 
-                  variant="subtitle2" 
-                  fontWeight={600}
-                  sx={{ flex: 1 }}
-                >
-                  {section.title}
-                </Typography>
-                {section.badge && (
-                  <Chip
-                    label={section.badge}
-                    size="small"
-                    variant="outlined"
-                    sx={{ 
-                      height: '24px', 
-                      fontSize: '0.7rem',
-                      color: section.priority === 'high' 
-                        ? theme.palette.primary.main 
-                        : theme.palette.text.secondary
-                    }}
-                  />
-                )}
-              </Stack>
-            </CompactAccordionSummary>
-            
-            <CompactAccordionDetails>
-              <Stack spacing={1}>
-                {getSectionComponents(section.id).map((component, index) => (
-                  <Box key={`${section.id}-${index}`}>
-                    {component}
-                  </Box>
-                ))}
-              </Stack>
-            </CompactAccordionDetails>
-          </CompactAccordion>
+            {getSectionComponents(section.id).map((component, index) => (
+              <Box key={`${section.id}-${index}`}>
+                {component}
+              </Box>
+            ))}
+          </SectionAccordion>
         ))}
 
         {/* Mobile Footer */}
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary">
-            Tap sections to expand • Optimized for mobile
-          </Typography>
-        </Box>
+        <MobileFooter />
       </Box>
     </MobileOrganizer>
   );

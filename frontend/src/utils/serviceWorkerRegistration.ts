@@ -1,4 +1,6 @@
 import { logger } from '../services/logging/LoggerFactory';
+import config from '../config/env';
+import { isMobileDevice } from './deviceDetection';
 
 /**
  * Service Worker Registration for Mobile Optimization
@@ -12,14 +14,7 @@ import { logger } from '../services/logging/LoggerFactory';
 const isServiceWorkerSupported = 'serviceWorker' in navigator;
 
 // Detect mobile devices
-const isMobileDevice = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-         window.innerWidth <= 768 ||
-         'ontouchstart' in window ||
-         navigator.maxTouchPoints > 0;
-};
+const isMobileDeviceLocal = (): boolean => isMobileDevice();
 
 // Service worker registration configuration
 interface SWConfig {
@@ -29,9 +24,9 @@ interface SWConfig {
 }
 
 // Register service worker
-export const registerServiceWorker = (config?: SWConfig): Promise<ServiceWorkerRegistration | null> => {
-  // Only register on mobile devices in production
-  if (!isServiceWorkerSupported || !isMobileDevice()) {
+export const registerServiceWorker = (configOverride?: SWConfig): Promise<ServiceWorkerRegistration | null> => {
+  // Only register on mobile devices when optimizations are enabled
+  if (!config.enableMobileOptimizations || !isServiceWorkerSupported || !isMobileDeviceLocal()) {
     logger.info('Service Worker: Not registering (desktop or unsupported)');
     return Promise.resolve(null);
   }
@@ -53,12 +48,12 @@ export const registerServiceWorker = (config?: SWConfig): Promise<ServiceWorkerR
               if (navigator.serviceWorker.controller) {
                 // New content available
                 logger.info('Service Worker: New content available');
-                config?.onUpdate?.(registration);
+                configOverride?.onUpdate?.(registration);
               } else {
                 // Content cached for offline use
                 logger.info('Service Worker: Content cached for offline use');
-                config?.onSuccess?.(registration);
-                config?.onOfflineReady?.();
+                configOverride?.onSuccess?.(registration);
+                configOverride?.onOfflineReady?.();
               }
             }
           });
@@ -228,8 +223,8 @@ export const monitorMobilePerformance = (): void => {
 };
 
 // Initialize mobile optimizations
-export const initializeMobileOptimizations = (config?: SWConfig): void => {
-  if (!isMobileDevice()) return;
+export const initializeMobileOptimizations = (configOverride?: SWConfig): void => {
+  if (!config.enableMobileOptimizations || !isMobileDeviceLocal()) return;
 
   logger.info('Initializing mobile optimizations...');
   
@@ -240,7 +235,7 @@ export const initializeMobileOptimizations = (config?: SWConfig): void => {
   monitorMobilePerformance();
   
   // Register service worker
-  registerServiceWorker(config);
+  registerServiceWorker(configOverride);
 };
 
 export default {

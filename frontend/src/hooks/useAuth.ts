@@ -32,6 +32,125 @@ export interface UseAuthReturn extends UseAuthState {
   refreshToken: () => Promise<void>;
 }
 
+const setAuthenticatedState = (
+  setState: React.Dispatch<React.SetStateAction<UseAuthState>>,
+  isAuthenticated: boolean,
+  token: AuthToken | null
+) => {
+  setState({
+    isAuthenticated,
+    token,
+    isLoading: false,
+    error: null,
+  });
+};
+
+const setLoadingState = (
+  setState: React.Dispatch<React.SetStateAction<UseAuthState>>
+) => {
+  setState(prev => ({ ...prev, isLoading: true, error: null }));
+};
+
+const setErrorState = (
+  setState: React.Dispatch<React.SetStateAction<UseAuthState>>,
+  error: Error,
+  isAuthenticated = false
+) => {
+  setState({
+    isAuthenticated,
+    token: null,
+    isLoading: false,
+    error,
+  });
+};
+
+const useInitializeAuth = (
+  authService: IAuthenticationService,
+  setState: React.Dispatch<React.SetStateAction<UseAuthState>>
+) => {
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const isAuth = await authService.isAuthenticated();
+        const token = authService.getToken();
+
+        setAuthenticatedState(setState, isAuth, token);
+
+        if (isAuth) {
+          authService.startTokenRefresh();
+        }
+      } catch (error) {
+        setErrorState(setState, error as Error);
+      }
+    };
+
+    initializeAuth();
+  }, [authService, setState]);
+};
+
+const useAuthStateSubscription = (
+  authService: IAuthenticationService,
+  setState: React.Dispatch<React.SetStateAction<UseAuthState>>
+) => {
+  useEffect(() => {
+    const unsubscribe = authService.onAuthStateChange((authState) => {
+      setState(prev => ({
+        ...prev,
+        isAuthenticated: authState.isAuthenticated,
+        token: authState.isAuthenticated ? authService.getToken() : null,
+      }));
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [authService, setState]);
+};
+
+const useAuthActions = (
+  authService: IAuthenticationService,
+  setState: React.Dispatch<React.SetStateAction<UseAuthState>>
+) => {
+  const login = useCallback(async (credentials: LoginRequest): Promise<void> => {
+    try {
+      setLoadingState(setState);
+      const token = await authService.login(credentials);
+      setAuthenticatedState(setState, true, token);
+    } catch (error) {
+      setErrorState(setState, error as Error);
+      throw error;
+    }
+  }, [authService, setState]);
+
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      setLoadingState(setState);
+      await authService.logout();
+      setAuthenticatedState(setState, false, null);
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error as Error,
+      }));
+      throw error;
+    }
+  }, [authService, setState]);
+
+  const refreshToken = useCallback(async (): Promise<void> => {
+    try {
+      setLoadingState(setState);
+      const token = await authService.refreshToken();
+      setAuthenticatedState(setState, true, token);
+    } catch (error) {
+      setErrorState(setState, error as Error);
+      throw error;
+    }
+  }, [authService, setState]);
+
+  return { login, logout, refreshToken };
+};
+
 /**
  * useAuth hook
  * 
@@ -48,132 +167,9 @@ export const useAuth = (authService: IAuthenticationService): UseAuthReturn => {
     error: null,
   });
 
-  /**
-   * Initialize auth state from storage
-   */
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const isAuth = await authService.isAuthenticated();
-        const token = authService.getToken();
-
-        setState({
-          isAuthenticated: isAuth,
-          token,
-          isLoading: false,
-          error: null,
-        });
-
-        // Start automatic token refresh if authenticated
-        if (isAuth) {
-          authService.startTokenRefresh();
-        }
-      } catch (error) {
-        setState({
-          isAuthenticated: false,
-          token: null,
-          isLoading: false,
-          error: error as Error,
-        });
-      }
-    };
-
-    initializeAuth();
-  }, [authService]);
-
-  /**
-   * Subscribe to auth state changes
-   */
-  useEffect(() => {
-    const unsubscribe = authService.onAuthStateChange((authState) => {
-      setState(prev => ({
-        ...prev,
-        isAuthenticated: authState.isAuthenticated,
-        token: authState.isAuthenticated ? authService.getToken() : null,
-      }));
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [authService]);
-
-  /**
-   * Login with credentials
-   */
-  const login = useCallback(async (credentials: LoginRequest): Promise<void> => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-      const token = await authService.login(credentials);
-
-      setState({
-        isAuthenticated: true,
-        token,
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      setState({
-        isAuthenticated: false,
-        token: null,
-        isLoading: false,
-        error: error as Error,
-      });
-      throw error;
-    }
-  }, [authService]);
-
-  /**
-   * Logout
-   */
-  const logout = useCallback(async (): Promise<void> => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-      await authService.logout();
-
-      setState({
-        isAuthenticated: false,
-        token: null,
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: error as Error,
-      }));
-      throw error;
-    }
-  }, [authService]);
-
-  /**
-   * Manually refresh token
-   */
-  const refreshToken = useCallback(async (): Promise<void> => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-      const token = await authService.refreshToken();
-
-      setState({
-        isAuthenticated: true,
-        token,
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      setState({
-        isAuthenticated: false,
-        token: null,
-        isLoading: false,
-        error: error as Error,
-      });
-      throw error;
-    }
-  }, [authService]);
+  useInitializeAuth(authService, setState);
+  useAuthStateSubscription(authService, setState);
+  const { login, logout, refreshToken } = useAuthActions(authService, setState);
 
   return {
     ...state,

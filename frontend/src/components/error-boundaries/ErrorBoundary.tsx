@@ -25,6 +25,102 @@ interface ErrorInfo {
   componentStack: string;
 }
 
+const TechnicalDetails: React.FC<{ error: Error; errorInfo: ErrorInfo | null }> = ({ error, errorInfo }) => (
+  <details style={{ marginTop: '2rem', color: 'var(--color-text-secondary)' }}>
+    <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+      Technical Details (Development Only)
+    </summary>
+    <pre
+      style={{
+        marginTop: '1rem',
+        padding: '1rem',
+        backgroundColor: 'var(--color-bg-secondary)',
+        borderRadius: '4px',
+        overflow: 'auto',
+        fontSize: '0.875rem',
+      }}
+    >
+      <strong>Error:</strong> {error.message}
+      {'\n\n'}
+      <strong>Stack:</strong>
+      {'\n'}
+      {error.stack}
+      {errorInfo?.componentStack && (
+        <>
+          {'\n\n'}
+          <strong>Component Stack:</strong>
+          {'\n'}
+          {errorInfo.componentStack}
+        </>
+      )}
+    </pre>
+  </details>
+);
+
+const DefaultFallback: React.FC<{
+  error: Error;
+  errorInfo: ErrorInfo | null;
+  onReset: () => void;
+}> = ({ error, errorInfo, onReset }) => (
+  <div
+    role="alert"
+    style={{
+      padding: '2rem',
+      margin: '2rem',
+      border: '2px solid var(--color-error)',
+      borderRadius: '8px',
+      backgroundColor: 'var(--color-error-bg)',
+      fontFamily: 'var(--font-primary)',
+    }}
+  >
+    <h2 style={{ color: 'var(--color-error)', marginTop: 0 }}>
+      Something went wrong
+    </h2>
+    <p style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
+      We're sorry, but an unexpected error occurred. Please try one of the following:
+    </p>
+    <ul style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
+      <li>Refresh the page</li>
+      <li>Go back and try again</li>
+      <li>Contact support if the problem persists</li>
+    </ul>
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <button
+        onClick={onReset}
+        style={{
+          padding: '0.5rem 1rem',
+          backgroundColor: 'var(--color-info)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '1rem',
+        }}
+      >
+        Try Again
+      </button>
+      <button
+        onClick={() => window.location.reload()}
+        style={{
+          padding: '0.5rem 1rem',
+          backgroundColor: 'var(--color-text-tertiary)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '1rem',
+        }}
+      >
+        Refresh Page
+      </button>
+    </div>
+
+    {process.env.NODE_ENV === 'development' && (
+      <TechnicalDetails error={error} errorInfo={errorInfo} />
+    )}
+  </div>
+);
+
 /**
  * ErrorBoundary class component
  * 
@@ -109,92 +205,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default fallback UI
       return (
-        <div
-          role="alert"
-          style={{
-            padding: '2rem',
-            margin: '2rem',
-            border: '2px solid var(--color-error)',
-            borderRadius: '8px',
-            backgroundColor: 'rgba(239, 68, 68, 0.08)',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          }}
-        >
-          <h2 style={{ color: 'var(--color-error)', marginTop: 0 }}>
-            Something went wrong
-          </h2>
-          <p style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
-            We're sorry, but an unexpected error occurred. Please try one of the following:
-          </p>
-          <ul style={{ color: 'var(--color-text-tertiary)', marginBottom: '1.5rem' }}>
-            <li>Refresh the page</li>
-            <li>Go back and try again</li>
-            <li>Contact support if the problem persists</li>
-          </ul>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button
-              onClick={this.handleReset}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'var(--color-info)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-              }}
-            >
-              Try Again
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'var(--color-text-tertiary)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-              }}
-            >
-              Refresh Page
-            </button>
-          </div>
-
-          {/* Technical details - only show in development */}
-          {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details style={{ marginTop: '2rem', color: 'var(--color-text-secondary)' }}>
-              <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
-                Technical Details (Development Only)
-              </summary>
-              <pre
-                style={{
-                  marginTop: '1rem',
-                  padding: '1rem',
-                  backgroundColor: 'var(--color-bg-secondary)',
-                  borderRadius: '4px',
-                  overflow: 'auto',
-                  fontSize: '0.875rem',
-                }}
-              >
-                <strong>Error:</strong> {this.state.error.message}
-                {'\n\n'}
-                <strong>Stack:</strong>
-                {'\n'}
-                {this.state.error.stack}
-                {this.state.errorInfo?.componentStack && (
-                  <>
-                    {'\n\n'}
-                    <strong>Component Stack:</strong>
-                    {'\n'}
-                    {this.state.errorInfo.componentStack}
-                  </>
-                )}
-              </pre>
-            </details>
-          )}
-        </div>
+        <DefaultFallback
+          error={this.state.error!}
+          errorInfo={this.state.errorInfo}
+          onReset={this.handleReset}
+        />
       );
     }
 

@@ -30,26 +30,27 @@ export class LandingPage {
 
     // Main layout
     this.mainContent = page.locator('#main-content, [id="main-content"], main');
-    this.heroSection = page.locator('.MuiStack-root').first();
+    this.heroSection = page.locator('main');
 
     // Hero elements
-    this.versionChip = page.locator('.MuiChip-root');
+    this.versionChip = page.locator('[data-testid="version-chip"]');
     this.mainTitle = page.locator('h1');
     this.subtitle = page.locator('h5');
     this.launchEngineButton = page.locator('[data-testid="cta-launch"], button:has-text("Launch Engine")');
 
     // Feature cards
-    this.featureCards = page.locator('.glass-card');
-    this.liveOrchestrationCard = page.locator('text=Live Orchestration').locator('xpath=ancestor::div[contains(@class, "glass-card")]');
-    this.adaptiveAnalyticsCard = page.locator('text=Adaptive Analytics').locator('xpath=ancestor::div[contains(@class, "glass-card")]');
-    this.secureEnvironmentCard = page.locator('text=Secure Environment').locator('xpath=ancestor::div[contains(@class, "glass-card")]');
+    this.featureCards = page.locator('[data-testid="feature-card"]');
+    this.liveOrchestrationCard = this.featureCards.filter({ hasText: 'Live Orchestration' });
+    this.adaptiveAnalyticsCard = this.featureCards.filter({ hasText: 'Adaptive Analytics' });
+    this.secureEnvironmentCard = this.featureCards.filter({ hasText: 'Secure Environment' });
   }
 
   /**
    * Navigate to landing page and wait for full load
    * Also sets up mocks needed for dashboard navigation in CI environment
    */
-  async navigateToLanding() {
+  async navigateToLanding(options: { timeoutMs?: number } = {}) {
+    const timeoutMs = options.timeoutMs ?? 30000;
     // Set up mocks needed for dashboard navigation (must be before goto)
     await this.page.route(/\/api\/guest\/session/, async route => {
       await route.fulfill({
@@ -104,10 +105,9 @@ export class LandingPage {
       (window as any).EventSource = MockEventSource;
     });
 
-    await this.page.goto('/');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.goto('/', { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     // Wait for main content to be visible
-    await this.mainTitle.waitFor({ state: 'visible', timeout: 30000 });
+    await this.mainTitle.waitFor({ state: 'visible', timeout: timeoutMs });
   }
 
   /**

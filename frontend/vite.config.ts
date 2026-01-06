@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
+const devPort = Number(process.env.VITE_DEV_PORT || process.env.PORT || 3000);
+
 export default defineConfig({
   plugins: [
     react(),
@@ -81,7 +83,7 @@ export default defineConfig({
 
   // Development server optimizations
   server: {
-    port: 3000,
+    port: devPort,
     host: '0.0.0.0', // Enable network access for WSL2/Docker
     strictPort: true, // Fail if port is already in use
     cors: true,
@@ -89,8 +91,8 @@ export default defineConfig({
     hmr: {
       protocol: 'ws',
       host: 'localhost',
-      port: 3000,
-      clientPort: 3000, // Prevent port mapping confusion
+      port: devPort,
+      clientPort: devPort, // Prevent port mapping confusion
     },
     // WSL2 file watching fix - use polling with faster interval
     watch: {
@@ -192,7 +194,8 @@ export default defineConfig({
       test: {
         globals: true,
         environment: 'jsdom',
-        setupFiles: './src/setupTests.ts',
+        setupFiles: './src/test/setup.ts',
+        isolate: true,
         css: false, // Disable CSS processing for faster tests
         coverage: {
           provider: 'v8',
@@ -205,7 +208,7 @@ export default defineConfig({
           },
           exclude: [
             'node_modules/',
-            'src/setupTests.ts',
+            'src/test/setup.ts',
             '**/*.test.tsx',
             '**/*.test.ts',
             '**/*.spec.ts',
@@ -213,9 +216,10 @@ export default defineConfig({
           ],
         },
         fileParallelism: false, // Disable parallelism to prevent hangs on limited resources
-  
-    pool: 'threads', // Threads are more reliable in WSL test runs
-    singleThread: true, // Run tests sequentially in a single thread
+
+        pool: 'forks', // Use forks instead of threads for better isolation
+        // Vitest 4: poolOptions moved to top-level
+        singleFork: true, // Run tests sequentially in a single fork
     testTimeout: 10000,
     hookTimeout: 10000,
     reporters: ['verbose'],

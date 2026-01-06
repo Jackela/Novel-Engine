@@ -8,7 +8,7 @@
  * to user response submission.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { DecisionDialogPage, type MockDecisionPoint } from './pages/DecisionDialogPage';
 import { DashboardPage } from './pages/DashboardPage';
 

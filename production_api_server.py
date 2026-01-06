@@ -7,6 +7,7 @@ This module implements a security-hardened FastAPI server with comprehensive
 security measures for production deployment.
 """
 
+import asyncio
 import logging
 import os
 import secrets
@@ -30,6 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, field_validator
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -53,13 +55,10 @@ JWT_EXPIRATION_HOURS = 24
 limiter = Limiter(key_func=get_remote_address)
 
 
-class SecurityHeaders:
+class SecurityHeaders(BaseHTTPMiddleware):
     """Security headers middleware."""
 
-    def __init__(self, app: FastAPI):
-        self.app = app
-
-    async def __call__(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
 
         # Security headers
@@ -173,6 +172,11 @@ class SimulationResponse(BaseModel):
     request_id: str
 
 
+class TokenRequest(BaseModel):
+    username: str
+    password: str
+
+
 # Security dependency
 security = HTTPBearer()
 
@@ -238,9 +242,39 @@ if os.getenv("ENVIRONMENT") == "production":
     )
 
 # CORS with restricted origins for production
-allowed_origins = (
-    ["https://your-domain.com"] if os.getenv("ENVIRONMENT") == "production" else ["*"]
-)
+def _parse_cors_origins(raw: Optional[str]) -> List[str]:
+    if not raw:
+        return []
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+def _resolve_cors_origins() -> List[str]:
+    environment = os.getenv("ENVIRONMENT", "development")
+    if environment == "production":
+        origins = _parse_cors_origins(os.getenv("CORS_ORIGINS"))
+        if not origins:
+            logger.warning(
+                "CORS_ORIGINS is empty in production; defaulting to https://your-domain.com."
+            )
+            origins = ["https://your-domain.com"]
+    else:
+        origins = [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ]
+
+    if "*" in origins:
+        logger.warning("Removing wildcard CORS origin because credentials are enabled.")
+        origins = [origin for origin in origins if origin != "*"]
+        if not origins:
+            origins = ["https://your-domain.com"]
+
+    return origins
+
+
+allowed_origins = _resolve_cors_origins()
 
 app.add_middleware(
     CORSMiddleware,
@@ -262,7 +296,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     if exc.status_code in [401, 403, 429]:
         logger.warning(f"Security event: {exc.status_code} from {request.client.host}")
 
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exc.status_code,
         content={
             "error": "Request failed",
@@ -270,6 +304,35 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             "request_id": secrets.token_hex(8),
         },
     )
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    return response
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Fallback exception handler with security headers."""
+    logger.exception("Unhandled error", exc_info=exc)
+    response = JSONResponse(
+        status_code=500,
+        content={
+            "error": "Request failed",
+            "detail": "Internal Server Error",
+            "request_id": secrets.token_hex(8),
+        },
+    )
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    return response
+
+
+def _reject_query_credentials(request: Request) -> None:
+    query_params = request.query_params
+    if any(key in query_params for key in ("username", "password", "email")):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Credentials must be sent in the request body.",
+        )
 
 
 @app.get("/")
@@ -293,10 +356,12 @@ async def health_check(request: Request) -> Dict[str, Any]:
 
 @app.post("/auth/token")
 @limiter.limit("5/minute")
-async def login(request: Request, username: str, password: str) -> Dict[str, str]:
+async def login(request: Request, credentials: TokenRequest) -> Dict[str, str]:
     """Authentication endpoint (implement your authentication logic)."""
     # TODO: Implement proper authentication against your user database
     # This is a placeholder implementation
+
+    _reject_query_credentials(request)
 
     admin_username = os.getenv("ADMIN_USERNAME", "admin")
     admin_password = os.getenv("ADMIN_PASSWORD")
@@ -308,12 +373,17 @@ async def login(request: Request, username: str, password: str) -> Dict[str, str
             detail="Service configuration error",
         )
 
-    if username == admin_username and password == admin_password:
-        access_token = AuthenticationManager.create_access_token(data={"sub": username})
+    if (
+        credentials.username == admin_username
+        and credentials.password == admin_password
+    ):
+        access_token = AuthenticationManager.create_access_token(
+            data={"sub": credentials.username}
+        )
         return {"access_token": access_token, "token_type": "bearer"}
 
     # Rate limit failed attempts more aggressively
-    time.sleep(1)  # Prevent timing attacks
+    await asyncio.sleep(1)  # Prevent timing attacks
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
     )

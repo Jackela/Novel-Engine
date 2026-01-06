@@ -7,7 +7,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 // Removed unused imports: PerformanceIcon, MemoryIcon, StorageIcon, NetworkIcon, StatusIcon
 import { usePerformance, type PerformanceMetric } from '@/hooks/usePerformance';
@@ -33,7 +33,7 @@ const MetricCard = styled(motion.div)(({ theme }) => ({
     borderColor: theme.palette.primary.main,
     backgroundColor: 'var(--color-bg-tertiary)',
     transform: 'translateY(-2px)',
-    boxShadow: '0 4px 8px rgba(99, 102, 241, 0.2)',
+    boxShadow: `0 4px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
   },
 
   // Mobile: more compact layout
@@ -65,6 +65,121 @@ interface PerformanceMetricsProps {
   sourceLabel?: string;
 }
 
+type MetricName = 'LCP' | 'FID' | 'CLS' | 'FCP' | 'TTFB';
+type MetricKey = keyof WebVitalsState;
+type MetricRating = 'good' | 'needs-improvement' | 'poor';
+
+type MetricsWindow = Window & { __FORCE_SHOW_METRICS__?: boolean };
+
+const METRIC_THRESHOLDS: Record<MetricName, { good: number; ok: number }> = {
+  LCP: { good: 2500, ok: 4000 },
+  FID: { good: 100, ok: 300 },
+  CLS: { good: 0.1, ok: 0.25 },
+  FCP: { good: 1800, ok: 3000 },
+  TTFB: { good: 600, ok: 1500 },
+};
+
+const MOBILE_METRICS: Array<{
+  key: MetricKey;
+  label: string;
+  decimals: number;
+  grid: number;
+  metricName: MetricName;
+}> = [
+  { key: 'lcp', label: 'LCP', decimals: 0, grid: 6, metricName: 'LCP' },
+  { key: 'fid', label: 'FID', decimals: 0, grid: 6, metricName: 'FID' },
+  { key: 'cls', label: 'CLS', decimals: 3, grid: 4, metricName: 'CLS' },
+  { key: 'fcp', label: 'FCP', decimals: 0, grid: 4, metricName: 'FCP' },
+  { key: 'ttfb', label: 'TTFB', decimals: 0, grid: 4, metricName: 'TTFB' },
+];
+
+const DESKTOP_METRICS: Array<{
+  key: MetricKey;
+  label: string;
+  decimals: number;
+  grid: number;
+  metricName: MetricName;
+}> = [
+  { key: 'lcp', label: 'LCP (Largest Contentful Paint)', decimals: 0, grid: 6, metricName: 'LCP' },
+  { key: 'fid', label: 'FID (First Input Delay)', decimals: 0, grid: 6, metricName: 'FID' },
+  { key: 'cls', label: 'CLS', decimals: 3, grid: 4, metricName: 'CLS' },
+  { key: 'fcp', label: 'FCP', decimals: 0, grid: 4, metricName: 'FCP' },
+  { key: 'ttfb', label: 'TTFB', decimals: 0, grid: 4, metricName: 'TTFB' },
+];
+
+const formatNumber = (num: number | undefined, decimals = 1) => {
+  if (num === undefined) return '-';
+  return num.toFixed(decimals);
+};
+
+const getRating = (metricName: MetricName, value: number | undefined): MetricRating => {
+  if (value === undefined) return 'needs-improvement';
+  const thresholds = METRIC_THRESHOLDS[metricName];
+  if (value <= thresholds.good) return 'good';
+  if (value <= thresholds.ok) return 'needs-improvement';
+  return 'poor';
+};
+
+const getRatingColor = (rating: MetricRating, theme: ReturnType<typeof useTheme>) => {
+  switch (rating) {
+    case 'good':
+      return theme.palette.success.main;
+    case 'poor':
+      return theme.palette.error.main;
+    default:
+      return theme.palette.warning.main;
+  }
+};
+
+const MetricItem: React.FC<{
+  label: string;
+  value: number | undefined;
+  decimals: number;
+  ratingColor: string;
+  variant: 'body1' | 'h6';
+}> = ({ label, value, decimals, ratingColor, variant }) => (
+  <MetricCard>
+    <Typography variant="caption" color="text.secondary">
+      {label}
+    </Typography>
+    <Typography
+      variant={variant}
+      fontWeight={600}
+      data-testid="performance-metric-value"
+      sx={{ color: ratingColor }}
+    >
+      {formatNumber(value, decimals)}{decimals === 0 ? 'ms' : ''}
+    </Typography>
+  </MetricCard>
+);
+
+const MetricsGrid: React.FC<{
+  metrics: typeof MOBILE_METRICS;
+  webVitals: WebVitalsState;
+  theme: ReturnType<typeof useTheme>;
+  variant: 'body1' | 'h6';
+}> = ({ metrics, webVitals, theme, variant }) => (
+  <Grid container spacing={1}>
+    {metrics.map((metric) => (
+      <Grid item xs={metric.grid} key={metric.key}>
+        {(() => {
+          const value = webVitals[metric.key];
+          const rating = getRating(metric.metricName, value);
+          return (
+        <MetricItem
+          label={metric.label}
+          value={value}
+          decimals={metric.decimals}
+          ratingColor={getRatingColor(rating, theme)}
+          variant={variant}
+        />
+          );
+        })()}
+      </Grid>
+    ))}
+  </Grid>
+);
+
 const PerformanceMetrics: React.FC<PerformanceMetricsProps> = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -88,50 +203,16 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = () => {
     authResult?.user?.roles?.includes('admin');
 
   // Prefer real RBAC if available, otherwise allow opt-in via env flag or test override
-  const canViewMetrics = hasDevAccess || (import.meta.env.VITE_SHOW_PERFORMANCE_METRICS === 'true') || (window as any).__FORCE_SHOW_METRICS__;
+  const canViewMetrics = hasDevAccess ||
+    (import.meta.env.VITE_SHOW_PERFORMANCE_METRICS === 'true') ||
+    (window as MetricsWindow).__FORCE_SHOW_METRICS__;
 
   // Hide widget if user doesn't have access
   if (!canViewMetrics) {
     return null;
   }
 
-  const formatNumber = (num: number | undefined, decimals = 1) => {
-    if (num === undefined) return '-';
-    return num.toFixed(decimals);
-  };
-
-  const getRating = (metricName: string, value: number | undefined): 'good' | 'needs-improvement' | 'poor' => {
-    if (value === undefined) return 'needs-improvement';
-
-    switch (metricName) {
-      case 'LCP':
-        return value <= 2500 ? 'good' : value <= 4000 ? 'needs-improvement' : 'poor';
-      case 'FID':
-        return value <= 100 ? 'good' : value <= 300 ? 'needs-improvement' : 'poor';
-      case 'CLS':
-        return value <= 0.1 ? 'good' : value <= 0.25 ? 'needs-improvement' : 'poor';
-      case 'FCP':
-        return value <= 1800 ? 'good' : value <= 3000 ? 'needs-improvement' : 'poor';
-      case 'TTFB':
-        return value <= 600 ? 'good' : value <= 1500 ? 'needs-improvement' : 'poor';
-      default:
-        return 'needs-improvement';
-    }
-  };
-
-  const getRatingColor = (rating: 'good' | 'needs-improvement' | 'poor') => {
-    switch (rating) {
-      case 'good':
-        return theme.palette.success.main;
-      case 'poor':
-        return theme.palette.error.main;
-      default:
-        return theme.palette.warning.main;
-    }
-  };
-
   return (
-
     <Box sx={{ height: '100%', overflow: 'hidden' }} className="h-full" data-testid="performance-metrics">
       {isMobile ? (
         // Mobile: Web Vitals display
@@ -142,83 +223,12 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = () => {
             </Typography>
 
             {/* Web Vitals Grid */}
-            <Grid container spacing={1}>
-              <Grid item xs={6}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    LCP
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('LCP', webVitals.lcp)) }}
-                  >
-                    {formatNumber(webVitals.lcp, 0)}ms
-                  </Typography>
-                </MetricCard>
-              </Grid>
-              <Grid item xs={6}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    FID
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('FID', webVitals.fid)) }}
-                  >
-                    {formatNumber(webVitals.fid, 0)}ms
-                  </Typography>
-                </MetricCard>
-              </Grid>
-              <Grid item xs={4}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    CLS
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('CLS', webVitals.cls)) }}
-                  >
-                    {formatNumber(webVitals.cls, 3)}
-                  </Typography>
-                </MetricCard>
-              </Grid>
-              <Grid item xs={4}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    FCP
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('FCP', webVitals.fcp)) }}
-                  >
-                    {formatNumber(webVitals.fcp, 0)}ms
-                  </Typography>
-                </MetricCard>
-              </Grid>
-              <Grid item xs={4}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    TTFB
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('TTFB', webVitals.ttfb)) }}
-                  >
-                    {formatNumber(webVitals.ttfb, 0)}ms
-                  </Typography>
-                </MetricCard>
-              </Grid>
-            </Grid>
+            <MetricsGrid
+              metrics={MOBILE_METRICS}
+              webVitals={webVitals}
+              theme={theme}
+              variant="body1"
+            />
           </Stack>
         </Box>
       ) : (
@@ -230,87 +240,12 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = () => {
             </Typography>
 
             {/* Web Vitals Grid */}
-            <Grid container spacing={1}>
-              <Grid item xs={6}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    LCP (Largest Contentful Paint)
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('LCP', webVitals.lcp)) }}
-                  >
-                    {formatNumber(webVitals.lcp, 0)}ms
-                  </Typography>
-                </MetricCard>
-              </Grid>
-
-              <Grid item xs={6}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    FID (First Input Delay)
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('FID', webVitals.fid)) }}
-                  >
-                    {formatNumber(webVitals.fid, 0)}ms
-                  </Typography>
-                </MetricCard>
-              </Grid>
-
-              <Grid item xs={4}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    CLS
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('CLS', webVitals.cls)) }}
-                  >
-                    {formatNumber(webVitals.cls, 3)}
-                  </Typography>
-                </MetricCard>
-              </Grid>
-
-              <Grid item xs={4}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    FCP
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('FCP', webVitals.fcp)) }}
-                  >
-                    {formatNumber(webVitals.fcp, 0)}ms
-                  </Typography>
-                </MetricCard>
-              </Grid>
-
-              <Grid item xs={4}>
-                <MetricCard>
-                  <Typography variant="caption" color="text.secondary">
-                    TTFB
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    fontWeight={600}
-                    data-testid="performance-metric-value"
-                    sx={{ color: getRatingColor(getRating('TTFB', webVitals.ttfb)) }}
-                  >
-                    {formatNumber(webVitals.ttfb, 0)}ms
-                  </Typography>
-                </MetricCard>
-              </Grid>
-            </Grid>
+            <MetricsGrid
+              metrics={DESKTOP_METRICS}
+              webVitals={webVitals}
+              theme={theme}
+              variant="h6"
+            />
           </Stack>
         </Box>
       )}

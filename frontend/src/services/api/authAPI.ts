@@ -1,5 +1,5 @@
-import { apiClient, handleAPIResponse, handleAPIError } from './apiClient';
-import type { BaseAPIResponse } from './apiClient';
+import { apiClient, handleAPIResponse, handleAPIError } from '@/lib/api/apiClient';
+import type { BaseAPIResponse } from '@/lib/api/apiClient';
 import type { User } from '@/store/slices/authSlice';
 
 // Authentication request/response types based on OpenAPI spec
@@ -210,3 +210,4 @@ export class AuthAPI {
 
 // Export singleton instance
 export const authAPI = new AuthAPI();
+

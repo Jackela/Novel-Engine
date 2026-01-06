@@ -11,6 +11,88 @@ interface EmptyStateProps {
   icon?: React.ReactNode;
 }
 
+const EmptyStateIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => {
+  const theme = useTheme();
+  return (
+    <Box
+      component={motion.div}
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0.2, duration: 0.5 }}
+      sx={{
+        mb: 3,
+        color: theme.palette.text.secondary,
+        '& svg': { fontSize: 64 },
+      }}
+    >
+      {icon}
+    </Box>
+  );
+};
+
+const EmptyStateTitle: React.FC<{ title: string }> = ({ title }) => {
+  const theme = useTheme();
+  return (
+    <Typography
+      variant="h4"
+      component={motion.h4}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.3 }}
+      sx={{ 
+        mb: 2, 
+        fontWeight: 600,
+        background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+        backgroundClip: 'text',
+        textFillColor: 'transparent',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+      }}
+    >
+      {title}
+    </Typography>
+  );
+};
+
+const EmptyStateDescription: React.FC<{ description: string }> = ({ description }) => (
+  <Typography
+    variant="body1"
+    color="text.secondary"
+    component={motion.p}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ delay: 0.4 }}
+    sx={{ mb: 4, maxWidth: '500px' }}
+  >
+    {description}
+  </Typography>
+);
+
+const EmptyStateAction: React.FC<{ label: string; onAction: () => void }> = ({ label, onAction }) => {
+  const theme = useTheme();
+  return (
+    <Button
+      component={motion.button}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      variant="contained"
+      size="large"
+      startIcon={<AddIcon />}
+      onClick={onAction}
+      sx={{
+        px: 4,
+        py: 1.5,
+        borderRadius: 2,
+        fontSize: '1.1rem',
+        textTransform: 'none',
+        boxShadow: `0 8px 16px ${theme.palette.primary.main}40`,
+      }}
+    >
+      {label}
+    </Button>
+  );
+};
+
 const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
@@ -40,73 +122,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         border: `1px dashed ${theme.palette.divider}`,
       }}
     >
-      {icon && (
-        <Box
-          component={motion.div}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          sx={{
-            mb: 3,
-            color: theme.palette.text.secondary,
-            '& svg': { fontSize: 64 },
-          }}
-        >
-          {icon}
-        </Box>
-      )}
-
-      <Typography
-        variant="h4"
-        component={motion.h4}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        sx={{ 
-          mb: 2, 
-          fontWeight: 600,
-          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-          backgroundClip: 'text',
-          textFillColor: 'transparent',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        }}
-      >
-        {title}
-      </Typography>
-
-      <Typography
-        variant="body1"
-        color="text.secondary"
-        component={motion.p}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        sx={{ mb: 4, maxWidth: '500px' }}
-      >
-        {description}
-      </Typography>
-
+      {icon && <EmptyStateIcon icon={icon} />}
+      <EmptyStateTitle title={title} />
+      <EmptyStateDescription description={description} />
       {actionLabel && onAction && (
-        <Button
-          component={motion.button}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          variant="contained"
-          size="large"
-          startIcon={<AddIcon />}
-          onClick={onAction}
-          sx={{
-            px: 4,
-            py: 1.5,
-            borderRadius: 2,
-            fontSize: '1.1rem',
-            textTransform: 'none',
-            boxShadow: `0 8px 16px ${theme.palette.primary.main}40`,
-          }}
-        >
-          {actionLabel}
-        </Button>
+        <EmptyStateAction label={actionLabel} onAction={onAction} />
       )}
     </Box>
   );

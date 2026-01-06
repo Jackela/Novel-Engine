@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { DashboardPage } from './pages/DashboardPage';
 
 /**
@@ -238,7 +238,8 @@ test.describe('Extended UAT Scenarios', () => {
       const navigationStart = Date.now();
 
       // Navigate and measure render time
-      await dashboardPage.navigateToDashboard();
+      await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+      await dashboardPage.dashboardLayout.waitFor({ state: 'visible', timeout: 10000 });
 
       const renderComplete = Date.now();
       const totalRenderTime = renderComplete - navigationStart;

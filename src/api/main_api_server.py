@@ -510,6 +510,9 @@ def create_app() -> FastAPI:
             logger.error(f"Failed to initialize security service: {exc}")
             raise
 
+    def _normalize_cors_origins(origins: list[str]) -> list[str]:
+        return [origin.strip() for origin in origins if origin and origin.strip()]
+
     # Configure CORS more securely
     if config.debug:
         # Development: Allow localhost origins with proper validation
@@ -521,11 +524,12 @@ def create_app() -> FastAPI:
         ]
     else:
         # Production: Use specific origins from environment
-        cors_origins = (
-            config.cors_origins
-            if config.cors_origins != ["*"]
-            else ["https://novel-engine.app"]
-        )
+        cors_origins = _normalize_cors_origins(config.cors_origins)
+        if not cors_origins or "*" in cors_origins:
+            logger.warning(
+                "CORS_ORIGINS is empty or contains '*'; defaulting to https://novel-engine.app."
+            )
+            cors_origins = ["https://novel-engine.app"]
 
     app.add_middleware(
         CORSMiddleware,
@@ -915,7 +919,7 @@ def _register_legacy_routes(app: FastAPI):
     # Track active SSE connections for monitoring
     active_sse_connections = {"count": 0}
 
-    def event_generator(client_id: str, limit: Optional[int] = None):
+    async def event_generator(client_id: str, limit: Optional[int] = None):
         """
         Async generator yielding SSE-formatted events for real-time dashboard updates.
 
@@ -934,6 +938,8 @@ def _register_legacy_routes(app: FastAPI):
         event_id = 0
         events_generated = 0
         effective_limit = 1 if limit is not None else None
+
+        disconnected_logged = False
 
         try:
             # Send retry directive for client reconnection interval (3 seconds)
@@ -962,7 +968,7 @@ def _register_legacy_routes(app: FastAPI):
                     break
 
                 try:
-                    time.sleep(2)  # Event frequency
+                    await asyncio.sleep(2)  # Event frequency
 
                     event_id += 1
                     events_generated += 1
@@ -989,7 +995,7 @@ def _register_legacy_routes(app: FastAPI):
                     yield f"id: evt-{event_id}\n"
                     yield f"data: {json.dumps(event_data)}\n\n"
 
-                except GeneratorExit:
+                except asyncio.CancelledError:
                     # Client disconnected - clean up and exit gracefully
                     if global_structured_logger:
                         global_structured_logger.info(
@@ -998,8 +1004,8 @@ def _register_legacy_routes(app: FastAPI):
                         )
                     else:
                         logger.info(f"SSE client disconnected: {client_id}")
-                    active_sse_connections["count"] -= 1
-                    break
+                    disconnected_logged = True
+                    raise
 
                 except Exception as e:
                     # Internal error - send error event but continue streaming
@@ -1023,6 +1029,16 @@ def _register_legacy_routes(app: FastAPI):
 
                     yield f"data: {json.dumps(error_event)}\n\n"
 
+        except asyncio.CancelledError:
+            if not disconnected_logged:
+                if global_structured_logger:
+                    global_structured_logger.info(
+                        f"SSE client disconnected: {client_id}",
+                        category=LogCategory.SYSTEM,
+                    )
+                else:
+                    logger.info(f"SSE client disconnected: {client_id}")
+            raise
         except Exception as fatal_error:
             # Fatal error - log and terminate
             if global_structured_logger:
@@ -1033,8 +1049,11 @@ def _register_legacy_routes(app: FastAPI):
                 )
             else:
                 logger.exception("Fatal SSE error.")
-            active_sse_connections["count"] -= 1
             raise
+        finally:
+            active_sse_connections["count"] = max(
+                0, active_sse_connections["count"] - 1
+            )
 
     @app.get("/api/events/stream", tags=["Dashboard"])
     async def stream_events(limit: Optional[int] = None):

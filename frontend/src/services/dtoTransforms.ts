@@ -23,6 +23,15 @@ const DEFAULT_STATS: CharacterStats = {
     charisma: 5,
 };
 
+const pickFirstNumber = (fallback: number, ...values: Array<number | null | undefined>): number => {
+    for (const value of values) {
+        if (typeof value === 'number') {
+            return value;
+        }
+    }
+    return fallback;
+};
+
 export function extractStatsFromData(structuredData: CharacterStructuredData | undefined): CharacterStats {
     if (!structuredData) return { ...DEFAULT_STATS };
 
@@ -32,12 +41,44 @@ export function extractStatsFromData(structuredData: CharacterStructuredData | u
     const directStats = structuredData.stats ?? {};
 
     return {
-        strength: directStats.strength ?? combatStats.strength ?? combatStats.melee ?? DEFAULT_STATS.strength,
-        dexterity: directStats.dexterity ?? combatStats.dexterity ?? combatStats.pilot ?? DEFAULT_STATS.dexterity,
-        intelligence: directStats.intelligence ?? combatStats.intelligence ?? combatStats.tactics ?? DEFAULT_STATS.intelligence,
-        willpower: directStats.willpower ?? combatStats.willpower ?? psychProfile.morale ?? psychProfile.loyalty ?? DEFAULT_STATS.willpower,
-        perception: directStats.perception ?? combatStats.perception ?? combatStats.marksmanship ?? DEFAULT_STATS.perception,
-        charisma: directStats.charisma ?? combatStats.charisma ?? combatStats.leadership ?? psychProfile.charisma ?? DEFAULT_STATS.charisma,
+        strength: pickFirstNumber(
+            DEFAULT_STATS.strength,
+            directStats.strength,
+            combatStats.strength,
+            combatStats.melee
+        ),
+        dexterity: pickFirstNumber(
+            DEFAULT_STATS.dexterity,
+            directStats.dexterity,
+            combatStats.dexterity,
+            combatStats.pilot
+        ),
+        intelligence: pickFirstNumber(
+            DEFAULT_STATS.intelligence,
+            directStats.intelligence,
+            combatStats.intelligence,
+            combatStats.tactics
+        ),
+        willpower: pickFirstNumber(
+            DEFAULT_STATS.willpower,
+            directStats.willpower,
+            combatStats.willpower,
+            psychProfile.morale,
+            psychProfile.loyalty
+        ),
+        perception: pickFirstNumber(
+            DEFAULT_STATS.perception,
+            directStats.perception,
+            combatStats.perception,
+            combatStats.marksmanship
+        ),
+        charisma: pickFirstNumber(
+            DEFAULT_STATS.charisma,
+            directStats.charisma,
+            combatStats.charisma,
+            combatStats.leadership,
+            psychProfile.charisma
+        ),
     };
 }
 
@@ -193,7 +234,7 @@ export function transformCharacterCreationResponse(data: Record<string, unknown>
 }
 
 export function transformSimulationResponse(
-    orchestrationData: any,
+    _orchestrationData: Record<string, unknown> | null,
     storyData: StoryFormData
 ): StoryProject {
     // orchestrationData is effectively unused in the current mapping logic in api.ts

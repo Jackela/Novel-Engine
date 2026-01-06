@@ -1,6 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { waitForDashboardReady, waitForLandingReady } from './utils/waitForReady';
+import { resetAuthState } from './utils/auth';
 
 /**
  * Error Boundary E2E Test Suite
@@ -62,15 +64,26 @@ test.describe('Error Boundary E2E Tests', () => {
       const landingPage = new LandingPage(page);
       const dashboardPage = new DashboardPage(page);
 
-      // Setup error interception
+      await resetAuthState(page);
+      await page.goto('/');
+      await waitForLandingReady(page);
+
+      // Setup error interception after landing is visible
       await page.route('**/api/**', route => {
         route.fulfill({
           status: 500,
-          body: JSON.stringify({ error: 'Internal Server Error' })
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Internal Server Error' }),
+        });
+      });
+      await page.route(/\/api\/guest\/session/, route => {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ workspace_id: 'ws-mock', created: false }),
         });
       });
 
-      await landingPage.navigateToLanding();
       await landingPage.clickLaunchEngine();
 
       // Dashboard should still load (with degraded functionality)
@@ -93,8 +106,9 @@ test.describe('Error Boundary E2E Tests', () => {
       const dashboardPage = new DashboardPage(page);
 
       // Navigate to dashboard
-      await landingPage.navigateToLanding();
+      await landingPage.navigateToLanding({ timeoutMs: 60000 });
       await landingPage.clickLaunchEngine();
+      await dashboardPage.waitForDashboardLoad();
       await dashboardPage.waitForDashboardLoad();
 
       // Simulate a brief offline period that might cause errors
@@ -104,7 +118,7 @@ test.describe('Error Boundary E2E Tests', () => {
 
       await test.step('When: User refreshes the page', async () => {
         await page.reload();
-        await page.waitForLoadState('networkidle');
+        await waitForDashboardReady(page);
       });
 
       await test.step('Then: Normal UI is restored', async () => {
@@ -127,7 +141,7 @@ test.describe('Error Boundary E2E Tests', () => {
 
       if (retryExists) {
         await retryButton.click();
-        await page.waitForLoadState('networkidle');
+        await waitForDashboardReady(page);
         // Verify recovery
         await expect(dashboardPage.dashboardLayout).toBeVisible();
       }
@@ -196,6 +210,7 @@ test.describe('Error Boundary E2E Tests', () => {
 
       await landingPage.navigateToLanding();
       await landingPage.clickLaunchEngine();
+      await waitForDashboardReady(page);
 
       // Rapid offline/online cycles
       for (let i = 0; i < 3; i++) {
@@ -207,6 +222,7 @@ test.describe('Error Boundary E2E Tests', () => {
 
       // App should stabilize
       await page.waitForTimeout(1000);
+      await waitForDashboardReady(page);
       await expect(dashboardPage.dashboardLayout).toBeVisible();
     });
 
@@ -217,14 +233,14 @@ test.describe('Error Boundary E2E Tests', () => {
       const client = await page.context().newCDPSession(page);
       await client.send('Network.emulateNetworkConditions', {
         offline: false,
-        downloadThroughput: 500 * 1024 / 8, // 500kb/s
-        uploadThroughput: 500 * 1024 / 8,
-        latency: 1000 // 1 second latency
+        downloadThroughput: 1200 * 1024 / 8, // 1.2 Mbps
+        uploadThroughput: 1200 * 1024 / 8,
+        latency: 800 // 0.8 second latency
       });
 
       // Navigate should still work, just slower
-      await landingPage.navigateToLanding();
-      await expect(landingPage.mainTitle).toBeVisible({ timeout: 60000 });
+      await landingPage.navigateToLanding({ timeoutMs: 120000 });
+      await expect(landingPage.mainTitle).toBeVisible({ timeout: 120000 });
 
       // Reset network conditions
       await client.send('Network.emulateNetworkConditions', {

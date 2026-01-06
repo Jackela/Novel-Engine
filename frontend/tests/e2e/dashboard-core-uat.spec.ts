@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 test.setTimeout(120_000);
 import { DashboardPage } from './pages/DashboardPage';
 
@@ -36,7 +36,7 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
 
     // ===== MOCK SETUP =====
     // Setup API mocks early to ensure consistent state throughout the test
-    await page.route(url => !url.pathname.includes('/src/') && /\/characters(\/|\?|$)/.test(url.pathname), async route => {
+    await page.route(url => !url.pathname.includes('/src/') && /\/api\/characters(\/|\?|$)/.test(url.pathname), async route => {
       console.log('MOCK HIT: characters');
       const url = route.request().url();
 
@@ -45,7 +45,12 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ characters: ['1', '2'] })
+          body: JSON.stringify({
+            characters: [
+              { id: '1', name: 'Character 1' },
+              { id: '2', name: 'Character 2' }
+            ]
+          })
         });
       } else {
         // Detail endpoint - extract ID
@@ -221,7 +226,6 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
   });
 
   test('Core User Story: Turn Orchestration Flow', async ({ page }) => {
-    test.setTimeout(60000);
     console.log('🎯 Starting Core User Story UAT: Turn Orchestration Flow');
 
     // Mock SSE endpoint to provide activity data
@@ -373,6 +377,8 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
       componentUpdates = await dashboardPage.observeComponentUpdates();
 
       console.log('Validating World State Map (Default View)...');
+      await dashboardPage.switchDashboardTab('Map');
+      componentUpdates = await dashboardPage.observeComponentUpdates();
       // WorldStateMap returns hasCharacterMarkers, not hasNodes
       expect(componentUpdates.worldStateMap.hasCharacterMarkers).toBe(true);
 
@@ -543,16 +549,22 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
       }
 
       await page.evaluate(async (endpoints) => {
-        await Promise.all(
+        const timeoutMs = 5000;
+        await Promise.allSettled(
           endpoints.map(async (endpoint: { url: string; method: string }) => {
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
             try {
               await fetch(endpoint.url, {
                 method: endpoint.method as string,
                 headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal,
                 ...(endpoint.method === 'POST' ? { body: JSON.stringify({ test: true }) } : {}),
               });
             } catch (error) {
               console.warn('API validation fetch failed', endpoint.url, error);
+            } finally {
+              window.clearTimeout(timeoutId);
             }
           })
         );
@@ -614,7 +626,8 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
       const loadStart = Date.now();
 
       // Navigate and measure full load time
-      await dashboardPage.navigateToDashboard();
+      await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+      await dashboardPage.dashboardLayout.waitFor({ state: 'visible', timeout: 10000 });
 
       const loadEnd = Date.now();
       const loadTime = loadEnd - loadStart;
