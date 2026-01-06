@@ -24,9 +24,9 @@ import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from functools import total_ordering
 from datetime import datetime
 from enum import Enum
+from functools import total_ordering
 from typing import Any, Dict, List, Optional, Union
 
 from src.agents.director_agent import DirectorAgent
@@ -1268,7 +1268,6 @@ class EnhancedMultiAgentBridge:
                     )
         await self.shutdown_coordination_systems()
 
-
     async def initiate_agent_dialogue(
         self,
         initiator_id: str,
@@ -2269,7 +2268,6 @@ class EnhancedMultiAgentBridge:
         }
 
 
-
 @dataclass
 class BridgeConfiguration:
     """Test-facing bridge configuration wrapper."""
@@ -2294,6 +2292,7 @@ async def create_enhanced_bridge(
     if not success:
         raise RuntimeError("Failed to initialize enhanced multi-agent bridge")
     return bridge
+
 
 # Factory function for easy instantiation with LLM coordination
 def create_enhanced_multi_agent_bridge(

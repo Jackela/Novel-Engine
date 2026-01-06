@@ -214,4 +214,3 @@ class AgentStateManagerProtocol(Protocol):
     async def load_state(self, file_path: str) -> bool:
         """Load agent state from file."""
         pass
-

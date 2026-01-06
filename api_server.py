@@ -38,6 +38,8 @@ except ImportError as exc:
     WORLD_ROUTER_AVAILABLE = False
     logger.warning("World context router not available: %s", exc)
 
+logger.debug("World context router availability: %s", WORLD_ROUTER_AVAILABLE)
+
 
 def create_app():
     return _create_app(settings=_SETTINGS)

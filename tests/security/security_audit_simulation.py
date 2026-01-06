@@ -205,7 +205,12 @@ class SecurityAuditor:
 
         # Check if security middleware is properly implemented
         try:
-            pass
+            from src.security.enhanced_security import EnhancedSecurityMiddleware
+
+            logger.debug(
+                "Enhanced security middleware available: %s",
+                EnhancedSecurityMiddleware,
+            )
 
             # Simulate testing various unauthorized access attempts
             test_endpoints = [
@@ -269,7 +274,12 @@ class SecurityAuditor:
 
         # Check if role-based access control is properly implemented
         try:
-            pass
+            from src.security.auth_system import AuthenticationManager
+
+            logger.debug(
+                "Authentication manager available: %s",
+                AuthenticationManager,
+            )
 
             # If auth system exists, assume it's properly implemented
             return None
@@ -294,7 +304,12 @@ class SecurityAuditor:
 
         # Check for input validation
         try:
-            pass
+            from src.security.input_validation import ValidationMiddleware
+
+            logger.debug(
+                "Validation middleware available: %s",
+                ValidationMiddleware,
+            )
 
             # If input validation exists, path traversal is likely protected
             return None
@@ -319,7 +334,9 @@ class SecurityAuditor:
 
         # Check API server CORS configuration
         try:
-            pass
+            from src.api.main_api_server import app
+
+            logger.debug("API server app available for CORS check: %s", app)
 
             # If API server exists and imports successfully, assume CORS is configured
             return None
@@ -371,7 +388,9 @@ class SecurityAuditor:
 
         # Check for SSL/TLS configuration
         try:
-            pass
+            from src.security.ssl_config import setup_production_ssl
+
+            logger.debug("SSL configuration available: %s", setup_production_ssl)
 
             return None
         except ImportError:
@@ -439,7 +458,12 @@ class SecurityAuditor:
 
         # Check if input validation protects against SQL injection
         try:
-            pass
+            from src.security.enhanced_security import EnhancedSecurityMiddleware
+
+            logger.debug(
+                "Enhanced security middleware available: %s",
+                EnhancedSecurityMiddleware,
+            )
 
             # Enhanced security middleware includes SQL injection protection
             return None
@@ -547,7 +571,9 @@ class SecurityAuditor:
         test_name = "logging_failures"
 
         try:
-            pass
+            from src.api.logging_system import setup_logging
+
+            logger.debug("Logging setup available: %s", setup_logging)
 
             self.test_results[test_name] = True
         except ImportError:

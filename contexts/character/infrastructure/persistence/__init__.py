@@ -24,18 +24,21 @@ try:
         CharacterStatsORM,
     )
 
-    _MODELS_AVAILABLE = True
 except ImportError:
     # Handle platform naming conflict gracefully
     CharacterORM = None
     CharacterProfileORM = None
     CharacterStatsORM = None
     CharacterSkillsORM = None
-    _MODELS_AVAILABLE = False
+
+
+def models_available() -> bool:
+    return CharacterORM is not None
 
 __all__ = [
     "CharacterORM",
     "CharacterProfileORM",
     "CharacterStatsORM",
     "CharacterSkillsORM",
+    "models_available",
 ]

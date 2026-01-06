@@ -19,9 +19,9 @@ import time
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
-from functools import total_ordering
 from datetime import datetime
 from enum import IntEnum
+from functools import total_ordering
 from typing import Any, Callable, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)

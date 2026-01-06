@@ -16,7 +16,7 @@ import asyncio
 import pytest
 import pytest_asyncio
 
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio  # codeql[py/unused-global-variable]
 
 from src.core.data_models import MemoryItem, MemoryType
 from src.database.context_db import ContextDatabase

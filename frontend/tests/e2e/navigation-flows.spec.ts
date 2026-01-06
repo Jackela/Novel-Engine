@@ -27,7 +27,6 @@ test.describe('Navigation Flows E2E Tests', () => {
      */
     test('should navigate back from dashboard to landing', async ({ page }) => {
       const landingPage = new LandingPage(page);
-      const dashboardPage = new DashboardPage(page);
 
       await test.step('Given: User navigates from landing to dashboard', async () => {
         await landingPage.navigateToLanding();
@@ -89,7 +88,6 @@ test.describe('Navigation Flows E2E Tests', () => {
      */
     test('should navigate forward to dashboard after going back', async ({ page }) => {
       const landingPage = new LandingPage(page);
-      const dashboardPage = new DashboardPage(page);
 
       await test.step('Given: User navigates to dashboard then goes back', async () => {
         await landingPage.navigateToLanding();

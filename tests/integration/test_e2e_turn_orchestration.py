@@ -68,21 +68,15 @@ except ImportError as e:
 
 # World context imports (with extensive fallback for import issues)
 try:
-    from contexts.world.domain.aggregates.world_state import WorldState
     from contexts.world.infrastructure.persistence.models import WorldStateModel
 except ImportError as e:
-    # Create mock classes if not available
+    # Create mock class if not available
     print(f"Warning: World context not available, using mocks: {e}")
 
     class WorldStateModel:
         def __init__(self, **kwargs):
             for k, v in kwargs.items():
                 setattr(self, k, v)
-
-    class WorldState:
-        @classmethod
-        def create_new_world(cls, name, description):
-            return cls()
 
 except Exception as e:
     # Handle any other import errors (like SQLAlchemy issues)
@@ -92,35 +86,6 @@ except Exception as e:
         def __init__(self, **kwargs):
             for k, v in kwargs.items():
                 setattr(self, k, v)
-
-    class WorldState:
-        @classmethod
-        def create_new_world(cls, name, description):
-            return cls()
-
-
-# Orchestration imports (with fallbacks for missing components)
-try:
-    from contexts.orchestration.application.services.turn_orchestrator import (
-        TurnOrchestrator,
-    )
-except ImportError:
-    # Mock TurnOrchestrator if not available
-    class TurnOrchestrator:
-        def execute_turn(self, **kwargs):
-            return {"success": True}
-
-
-try:
-    from contexts.orchestration.domain.value_objects.turn_configuration import (
-        TurnConfiguration,
-    )
-except ImportError:
-    # Mock TurnConfiguration if not available
-    class TurnConfiguration:
-        @classmethod
-        def create_default(cls):
-            return cls()
 
 
 try:
@@ -753,13 +718,16 @@ class TestTurnOrchestrationE2E:
         # Narrative arcs should reference valid characters
         for narrative_data in final_state["narrative_arcs"]:
             if "participants" in narrative_data and narrative_data["participants"]:
-                for _ in narrative_data["participants"]:
-                    # Participant should exist in character data
-                    character_ids = [
-                        c.get("character_id", c.get("id"))
-                        for c in final_state["characters"]
-                    ]
+                character_ids = [
+                    c.get("character_id", c.get("id"))
+                    for c in final_state["characters"]
+                ]
+                for participant in narrative_data["participants"]:
                     # Soft validation as participant format may vary
+                    if isinstance(participant, str) and participant:
+                        assert (
+                            participant in character_ids
+                        ), f"Narrative participant not found: {participant}"
 
         # === PHASE 7: Quality and Completeness Validation ===
 

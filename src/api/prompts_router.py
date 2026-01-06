@@ -10,6 +10,7 @@ user-defined prompts.
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
@@ -35,22 +36,17 @@ router = APIRouter(prefix="/prompts", tags=["Prompts"])
 
 # Global storage instance
 _storage: Optional[PromptStorage] = None
-_templates_registered = False
 
 
+@lru_cache(maxsize=1)
 def ensure_templates_registered() -> None:
-    global _templates_registered
-    if _templates_registered:
-        return
     if PromptRegistry.count() > 0:
-        _templates_registered = True
         return
     try:
         register_all_templates()
         logger.info("Prompt templates registered: %s templates", PromptRegistry.count())
     except Exception as exc:
         logger.warning("Prompt templates registration failed: %s", exc)
-    _templates_registered = True
 
 
 def get_storage() -> PromptStorage:

@@ -59,21 +59,17 @@ except ImportError:
 
 # Import configuration and narrative components
 try:
-    from campaign_brief import CampaignBrief, CampaignBriefLoader, NarrativeEvent
+    from campaign_brief import CampaignBrief, CampaignBriefLoader
 
-    from src.core.config.config_loader import get_campaign_log_filename, get_config
+    from src.core.config.config_loader import get_config
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
 
     def get_config():
         return None
 
-    def get_campaign_log_filename():
-        return "campaign_log.md"
-
     CampaignBrief = None
     CampaignBriefLoader = None
-    NarrativeEvent = None
 
     class NarrativeActionResolver:
         def __init__(self):

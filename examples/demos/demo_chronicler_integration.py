@@ -41,7 +41,7 @@ def demonstrate_basic_transcription():
             print(
                 "! No campaign log found. Run a simulation first to generate content."
             )
-            return
+            return False
 
         # Transcribe the campaign log
         print(f"Transcribing campaign log: {log_path}")

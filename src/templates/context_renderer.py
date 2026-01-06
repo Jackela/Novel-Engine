@@ -284,9 +284,6 @@ class ContextRenderer:
                 relevance_threshold=0.5,
             )
 
-            # Determine enhanced optimal format for AI prompts
-            render_format = RenderFormat.CONVERSATIONAL
-
             # Generate enhanced focused context sections
             context_sections = await self._generate_context_sections(
                 context, adaptive_constraints
@@ -300,7 +297,10 @@ class ContextRenderer:
 
             # Render enhanced adaptive context
             render_result = await self.render_context(
-                context, render_format, adaptive_constraints
+                context,
+                RenderFormat.CONVERSATIONAL,
+                adaptive_constraints,
+                custom_sections=context_sections,
             )
 
             if render_result.success:

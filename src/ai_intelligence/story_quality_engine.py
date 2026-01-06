@@ -680,8 +680,6 @@ class StoryQualityEngine:
         """Analyze character development and depth."""
         try:
             # Extract potential character names (capitalized words not at sentence start)
-            import re
-
             character_pattern = r"\b[A-Z][a-z]+\b"
             potential_characters = re.findall(character_pattern, story_text)
             character_frequency = Counter(potential_characters)

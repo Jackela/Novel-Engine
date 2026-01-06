@@ -7,7 +7,6 @@ Enhanced with WebSocket support for real-time progress monitoring.
 """
 
 import asyncio
-import asyncio.queues
 import logging
 import time
 import uuid

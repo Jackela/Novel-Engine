@@ -866,7 +866,6 @@ const Dashboard: React.FC<DashboardProps> = () => {
     isLoading: isLoadingChars,
     effectiveCharacters,
     shouldShowFallbackAlert,
-    isError: isCharactersError,
     error: charactersError,
   } = useDashboardCharacters();
 

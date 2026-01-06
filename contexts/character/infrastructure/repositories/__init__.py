@@ -19,10 +19,12 @@ providing concrete persistence capabilities for domain aggregates.
 try:
     from .character_repository import SQLAlchemyCharacterRepository
 
-    _REPOSITORY_AVAILABLE = True
 except ImportError:
     # Handle platform naming conflict gracefully
     SQLAlchemyCharacterRepository = None
-    _REPOSITORY_AVAILABLE = False
 
-__all__ = ["SQLAlchemyCharacterRepository"]
+
+def repository_available() -> bool:
+    return SQLAlchemyCharacterRepository is not None
+
+__all__ = ["SQLAlchemyCharacterRepository", "repository_available"]

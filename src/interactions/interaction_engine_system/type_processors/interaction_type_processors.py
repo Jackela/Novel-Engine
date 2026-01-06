@@ -41,6 +41,7 @@ except ImportError:
             self.message = message
             self.recoverable = recoverable
 
+
 __all__ = ["InteractionTypeProcessorManager", "BaseInteractionProcessor"]
 
 
@@ -258,17 +259,13 @@ class DialogueProcessor(BaseInteractionProcessor):
         self, context: InteractionContext, dialogue_content: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process conversation flow and dynamics."""
-        try:
-            return {
-                "flow_type": "sequential",
-                "turn_taking": "balanced",
-                "interruptions": 0,
-                "topic_changes": 1,
-                "engagement_level": 0.85,
-            }
-        except Exception as e:
-            self.logger.error(f"Conversation flow processing failed: {e}")
-            return {"flow_type": "error", "error": str(e)}
+        return {
+            "flow_type": "sequential",
+            "turn_taking": "balanced",
+            "interruptions": 0,
+            "topic_changes": 1,
+            "engagement_level": 0.85,
+        }
 
     async def _calculate_emotional_impacts(
         self, context: InteractionContext, dialogue_content: Dict[str, Any]

@@ -54,7 +54,6 @@ def fix_file(filepath: Path) -> tuple[bool, int]:
         return False, 0
 
     content = filepath.read_text()
-    lines = content.split("\n")
 
     # Find all occurrences
     count = len(re.findall(r"asyncio\.get_event_loop\(\)", content))

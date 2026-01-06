@@ -84,15 +84,6 @@ const setAuthState = (
   setState(next);
 };
 
-const clearGuestSessionFlag = () => {
-  if (typeof window === 'undefined') return;
-  try {
-    window.sessionStorage.removeItem(GUEST_SESSION_KEY);
-  } catch {
-    // ignore storage errors
-  }
-};
-
 const setGuestSessionFlag = () => {
   if (typeof window === 'undefined') return;
   try {

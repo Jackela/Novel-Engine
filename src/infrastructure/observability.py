@@ -582,7 +582,7 @@ class PerformanceProfiler:
         """Finish timing an operation"""
         if operation_id not in self.start_times:
             logger.warning(f"Attempted to finish unknown operation: {operation_id}")
-            return
+            return 0.0
 
         duration = (datetime.now() - self.start_times[operation_id]).total_seconds()
 

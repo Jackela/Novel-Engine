@@ -29,7 +29,6 @@ from .usage import EquipmentUsageProcessor
 # Import enhanced core systems
 try:
     from src.core.data_models import EquipmentItem, ErrorInfo, StandardResponse
-    from src.core.types import AgentID
     from src.database.context_db import ContextDatabase
 except ImportError:
     # Fallback for testing
@@ -54,7 +53,6 @@ except ImportError:
             self.message = message
             self.recoverable = recoverable
 
-    AgentID = str
     ContextDatabase = type("ContextDatabase", (), {})
 
 __all__ = ["DynamicEquipmentSystem"]

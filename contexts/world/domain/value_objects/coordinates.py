@@ -330,7 +330,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            raise TypeError("Can only add Coordinates to Coordinates")
+            return NotImplemented
 
         return Coordinates(
             x=self.x + other.x,
@@ -353,7 +353,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            raise TypeError("Can only subtract Coordinates from Coordinates")
+            return NotImplemented
 
         return Coordinates(
             x=self.x - other.x,

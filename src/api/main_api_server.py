@@ -27,8 +27,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from src.api.character_api import create_character_api
 
@@ -377,24 +376,6 @@ def create_app() -> FastAPI:
 
     # Add middleware (order matters - last added = first executed)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-    # Always-on header guard to ensure minimal security headers on all responses
-    class HeaderGuardMiddleware(BaseHTTPMiddleware):
-        def __init__(self, app, headers: Dict[str, str]):
-            super().__init__(app)
-            self._headers = headers
-
-        async def dispatch(self, request, call_next):
-            try:
-                response = await call_next(request)
-            except Exception:
-                # Fallback to 400 if an error bubbles up before other middleware
-                response = PlainTextResponse("Bad Request", status_code=400)
-            # Ensure headers are present
-            for k, v in self._headers.items():
-                if k not in response.headers:
-                    response.headers[k] = v
-            return response
 
     # Define and add a raw ASGI middleware to ensure headers even on early errors
     class RawHeaderASGIMiddleware:

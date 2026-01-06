@@ -14,21 +14,11 @@ from typing import Any, Callable, Dict, List, Optional
 
 try:
     from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-    from aiokafka.errors import KafkaConnectionError, KafkaError, KafkaTimeoutError
     from aiokafka.helpers import create_ssl_context
 
     KAFKA_AVAILABLE = True
 except ImportError:
     # Stub implementations when aiokafka is not available
-    class KafkaError(Exception):
-        pass
-
-    class KafkaConnectionError(Exception):
-        pass
-
-    class KafkaTimeoutError(Exception):
-        pass
-
     class AIOKafkaProducer:
         def __init__(self, *args, **kwargs):
             pass

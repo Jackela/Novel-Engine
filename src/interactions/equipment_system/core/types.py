@@ -17,11 +17,9 @@ try:
         EquipmentCondition,
         EquipmentItem,
     )
-    from src.core.types import AgentID
 except ImportError:
     # Fallback for testing
     EquipmentItem = dict
-    AgentID = str
 
     class EquipmentCondition(Enum):
         EXCELLENT = "excellent"

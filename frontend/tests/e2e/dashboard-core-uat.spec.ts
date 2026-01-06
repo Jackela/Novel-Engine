@@ -374,7 +374,6 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
 
       // *** VALIDATE ALWAYS VISIBLE COMPONENTS ***
       // We grab standard updates first
-      componentUpdates = await dashboardPage.observeComponentUpdates();
 
       console.log('Validating World State Map (Default View)...');
       await dashboardPage.switchDashboardTab('Map');

@@ -24,24 +24,20 @@ from src.persona_agent import PersonaAgent
 
 # Try to import configuration loader
 try:
-    from src.core.config.config_loader import get_campaign_log_filename, get_config
+    from src.core.config.config_loader import get_config
 except ImportError:
 
     def get_config():
         return None
 
-    def get_campaign_log_filename():
-        return "campaign_log.md"
-
 
 # Import narrative components
 try:
-    from campaign_brief import CampaignBrief, CampaignBriefLoader, NarrativeEvent
+    from campaign_brief import CampaignBrief, NarrativeEvent
 
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
     CampaignBrief = None
-    CampaignBriefLoader = None
     NarrativeEvent = None
 
     class NarrativeActionResolver:
