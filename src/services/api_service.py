@@ -82,6 +82,18 @@ class ApiOrchestrationService:
         self._state["status"] = "stopping"
         return {"success": True, "status": "stopping"}
 
+    async def pause_simulation(self) -> Dict[str, Any]:
+        """Pause the current simulation."""
+        if not self._orchestration_active:
+            return {"success": False, "message": "No simulation running"}
+
+        if self._state["status"] == "paused":
+            return {"success": False, "message": "Simulation is already paused"}
+
+        self._state["status"] = "paused"
+        logger.info("Simulation paused")
+        return {"success": True, "status": "paused", "message": "Simulation paused successfully"}
+
     async def get_status(self) -> Dict[str, Any]:
         """Get current orchestration status."""
         return self._state
@@ -106,11 +118,28 @@ class ApiOrchestrationService:
 
             # 2. Create Agents
             for name in character_names:
-                agent = self.character_factory.create_character(name)
-                agents.append(agent)
-                await self._broadcast_sse(
-                    "character", f"Agent Created: {name}", f"Initialized {name}", "low"
-                )
+                try:
+                    agent = self.character_factory.create_character(name)
+                    agents.append(agent)
+                    await self._broadcast_sse(
+                        "character", f"Agent Created: {name}", f"Initialized {name}", "low"
+                    )
+                except FileNotFoundError:
+                    logger.error(f"Character '{name}' not found in characters directory")
+                    await self._broadcast_sse(
+                        "system", f"Character Not Found: {name}", f"Skipping '{name}' - file not found", "high"
+                    )
+                    continue
+                except Exception as e:
+                    logger.error(f"Failed to create agent '{name}': {e}", exc_info=True)
+                    await self._broadcast_sse(
+                        "system", f"Agent Creation Failed: {name}", str(e), "high"
+                    )
+                    continue
+
+            # Check if we have at least one agent
+            if not agents:
+                raise ValueError("No valid agents could be created. Please check character names and character files.")
 
             # 3. Setup Director
             log_path = f"logs/orchestration_{uuid.uuid4().hex[:8]}.md"
@@ -140,9 +169,26 @@ class ApiOrchestrationService:
             # 4. Turn Loop
             turn_times = []
             for turn_num in range(1, total_turns + 1):
+                # Check for stop flag
                 if self._stop_flag:
                     logger.info("Orchestration stopped by user request")
                     break
+
+                # Check for pause - wait while paused
+                while self._state["status"] == "paused":
+                    await asyncio.sleep(0.5)
+                    # Allow stopping even when paused
+                    if self._stop_flag:
+                        logger.info("Orchestration stopped during pause")
+                        break
+
+                # Resume if we broke out of pause
+                if self._stop_flag:
+                    break
+
+                # Resume running status if coming out of pause
+                if self._state["status"] == "paused":
+                    self._state["status"] = "running"
 
                 turn_start_time = time.time()
                 self._state["current_turn"] = turn_num

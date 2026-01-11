@@ -29,6 +29,50 @@ import {
 
 // Note: Custom in-memory cache removed; server-state caching handled by consumers (e.g., React Query).
 
+/**
+ * Generate agent_id from character name
+ * Matches backend logic in persona_core.py:230-243
+ */
+const generateAgentId = (name: string): string => {
+  // Convert to lowercase and replace spaces/hyphens with underscores
+  let agentId = name.toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/-/g, '_')
+    .replace(/[^a-z0-9_]/g, '');
+
+  // Ensure doesn't start with a number
+  if (agentId && /^\d/.test(agentId)) {
+    agentId = `agent_${agentId}`;
+  }
+
+  // Fallback for empty string
+  if (!agentId) {
+    agentId = `agent_${Date.now() % 10000}`;
+  }
+
+  // Ensure minimum length of 3 characters
+  if (agentId.length < 3) {
+    agentId = `agent_${agentId}`;
+  }
+
+  // Ensure maximum length of 50 characters
+  if (agentId.length > 50) {
+    agentId = agentId.substring(0, 50);
+  }
+
+  return agentId;
+};
+
+/**
+ * Normalize skill value from 1-10 range to 0.0-1.0 range
+ * Backend expects skills in 0.0-1.0 range
+ */
+const normalizeSkillValue = (value: number): number => {
+  // Transform from 1-10 to 0.0-1.0
+  // Using (value - 1) / 9 to map: 1→0.0, 5→0.444, 10→1.0
+  return Math.max(0.0, Math.min(1.0, (value - 1) / 9));
+};
+
 class NovelEngineAPI {
   private readonly client: AxiosInstance;
 
@@ -95,11 +139,24 @@ class NovelEngineAPI {
   async createCharacter(characterData: CharacterFormData, files?: File[]): Promise<ApiResponse<Character>> {
     void files;
 
+    // Generate agent_id from character name
+    const agentId = generateAgentId(characterData.name);
+
+    // Normalize skills from 1-10 range to 0.0-1.0 range
+    const normalizedSkills = Object.entries(characterData.stats).reduce(
+      (acc, [key, value]) => ({
+        ...acc,
+        [key]: normalizeSkillValue(value),
+      }),
+      {} as Record<string, number>
+    );
+
     const request = {
+      agent_id: agentId,
       name: characterData.name,
       background_summary: characterData.description,
       personality_traits: characterData.role,
-      skills: characterData.stats,
+      skills: normalizedSkills,
       inventory: characterData.equipment.map((item) => item.name),
       metadata: {
         faction: characterData.faction,
@@ -130,11 +187,24 @@ class NovelEngineAPI {
   async updateCharacter(characterId: string, characterData: CharacterFormData, files?: File[]): Promise<ApiResponse<Character>> {
     void files;
 
+    // Generate agent_id from character name (for consistency)
+    const agentId = generateAgentId(characterData.name);
+
+    // Normalize skills from 1-10 range to 0.0-1.0 range
+    const normalizedSkills = Object.entries(characterData.stats).reduce(
+      (acc, [key, value]) => ({
+        ...acc,
+        [key]: normalizeSkillValue(value),
+      }),
+      {} as Record<string, number>
+    );
+
     const request = {
+      agent_id: agentId,
       name: characterData.name,
       background_summary: characterData.description,
       personality_traits: characterData.role,
-      skills: characterData.stats,
+      skills: normalizedSkills,
       inventory: characterData.equipment.map((item) => item.name),
       metadata: {
         faction: characterData.faction,

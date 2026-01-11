@@ -4,6 +4,7 @@ import { useQuery } from 'react-query';
 import { ErrorBoundary } from '@/components/error-boundaries/ErrorBoundary';
 import PanelErrorFallback from '../PanelErrorFallback';
 import { dashboardAPI } from '@/services/api/dashboardAPI';
+import { HelpTooltip } from '@/components/ui/HelpTooltip';
 
 interface NarrativePanelProps {
   pipelineStatus: 'idle' | 'running' | 'paused' | 'stopped';
@@ -17,10 +18,11 @@ const NarrativePanelHeader: React.FC<{
   onStart?: () => void | Promise<void>;
 }> = ({ pipelineStatus, isFetching, onRefresh, onStart }) => (
   <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-    <Stack direction="row" spacing={1} alignItems="center">
+    <Stack direction="row" spacing={0.5} alignItems="center">
       <Typography variant="caption" sx={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}>
         OUTPUT
       </Typography>
+      <HelpTooltip title="AI 生成的故事内容和叙事文本" />
       {isFetching && <CircularProgress size={14} aria-label="Loading narrative" />}
     </Stack>
     <Stack direction="row" spacing={1}>

@@ -14,7 +14,7 @@ from src.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["simulations"])
+router = APIRouter(tags=["Simulations"])
 
 
 def _build_fallback_story(participants: str, exc: Exception) -> str:

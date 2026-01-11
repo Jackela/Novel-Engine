@@ -20,6 +20,7 @@ import { fetchDashboardData } from '@/store/slices/dashboardSlice';
 import type { AppDispatch } from '@/store/store';
 import { useCharactersQuery } from '@/services/queries';
 import EmptyState from '@/components/common/EmptyState';
+import { SkeletonDashboard } from '@/components/loading/SkeletonDashboard';
 import { ApiError } from '@/lib/api/errors';
 import { FALLBACK_DASHBOARD_CHARACTERS } from '@/hooks/useDashboardCharactersDataset';
 import { useAuthContext } from '@/contexts/useAuthContext';
@@ -107,7 +108,7 @@ const useSnackbar = () => {
 
 const useDashboardCharacters = () => {
   const { data: characters, isLoading, isError, error } = useCharactersQuery();
-  const effectiveCharacters = characters && characters.length > 0
+  const effectiveCharacters = characters && Array.isArray(characters) && characters.length > 0
     ? characters.map((character) => character.id)
     : FALLBACK_DASHBOARD_CHARACTERS.map((character) => character.name);
   const shouldShowFallbackAlert = isError || Boolean(error);
@@ -174,6 +175,35 @@ const useAutoRefreshTimestamp = () => {
   const refreshNow = () => setLastUpdate(new Date());
 
   return { lastUpdate, refreshNow };
+};
+
+const useBackendStatus = () => {
+  const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'error'>('offline');
+  const [backendVersion, setBackendVersion] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const checkBackendStatus = async () => {
+      try {
+        const response = await dashboardAPI.getHealth();
+        if (response.data && response.data.status === 'healthy') {
+          setBackendStatus('online');
+          setBackendVersion(response.data.version || undefined);
+        } else {
+          setBackendStatus('error');
+        }
+      } catch (error) {
+        logger.error('Backend health check failed', error as Error);
+        setBackendStatus('offline');
+        setBackendVersion(undefined);
+      }
+    };
+
+    checkBackendStatus();
+    const interval = setInterval(checkBackendStatus, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return { backendStatus, backendVersion };
 };
 
 const useLivePolling = (isLiveMode: boolean, dispatch: AppDispatch) => {
@@ -426,7 +456,9 @@ const DashboardViewTabs: React.FC<{
   activeView: DashboardView;
   onChange: (_event: React.SyntheticEvent, view: DashboardView) => void;
   onRefresh: () => void;
-}> = ({ activeView, onChange, onRefresh }) => (
+  backendStatus?: 'online' | 'offline' | 'error';
+  backendVersion?: string;
+}> = ({ activeView, onChange, onRefresh, backendStatus, backendVersion }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
     <Tabs
       value={activeView}
@@ -442,6 +474,7 @@ const DashboardViewTabs: React.FC<{
       <Tab icon={<AnalyticsIcon fontSize="small" />} iconPosition="start" label="Analytics" value="analytics" sx={{ minHeight: '36px', textTransform: 'none', fontWeight: 600 }} />
       <Tab icon={<FlowIcon fontSize="small" />} iconPosition="start" label="Signals" value="signals" sx={{ minHeight: '36px', textTransform: 'none', fontWeight: 600 }} />
     </Tabs>
+    {backendStatus === 'error' && <BackendStatusIndicator version={backendVersion} status={backendStatus} />}
     <IconButton
       onClick={onRefresh}
       size="small"
@@ -456,6 +489,44 @@ const DashboardViewTabs: React.FC<{
     </IconButton>
   </Box>
 );
+
+const BackendStatusIndicator: React.FC<{ version?: string; status?: 'online' | 'offline' | 'error' }> = ({ version, status = 'offline' }) => {
+  const statusColors = {
+    online: 'var(--color-success)',
+    offline: 'var(--color-text-tertiary)',
+    error: 'var(--color-error)',
+  };
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        fontSize: '0.75rem',
+        color: 'var(--color-text-secondary)',
+        px: 1,
+        py: 0.5,
+        bgcolor: 'var(--color-bg-tertiary)',
+        borderRadius: 'var(--radius-sm)',
+        border: '1px solid var(--color-border-primary)',
+      }}
+      data-testid="backend-status"
+    >
+      <Box
+        sx={{
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          bgcolor: statusColors[status],
+          boxShadow: status === 'online' ? `0 0 8px ${statusColors[status]}` : 'none',
+        }}
+      />
+      <span>Backend: {status === 'online' ? 'Online' : status === 'error' ? 'Error' : 'Offline'}</span>
+      {version && <span style={{ color: 'var(--color-text-tertiary)' }}>v{version}</span>}
+    </Box>
+  );
+};
 
 const SystemLogPanel: React.FC<{ events: RealtimeEvent[] }> = ({ events }) => (
   <Box
@@ -569,7 +640,9 @@ const DashboardPrimaryTile: React.FC<{
   error: boolean;
   pipelineStatus: PipelineState;
   onStart: () => void;
-}> = ({ activeView, onViewChange, onRefresh, loading, error, pipelineStatus, onStart }) => (
+  backendStatus?: 'online' | 'offline' | 'error';
+  backendVersion?: string;
+}> = ({ activeView, onViewChange, onRefresh, loading, error, pipelineStatus, onStart, backendStatus, backendVersion }) => (
   <GridTile
     title="World State Visualization"
     position={{
@@ -577,7 +650,7 @@ const DashboardPrimaryTile: React.FC<{
       tablet: { column: 'span 8', height: '500px' },
       mobile: { column: 'span 1', height: '400px' },
     }}
-    headerAction={<DashboardViewTabs activeView={activeView} onChange={onViewChange} onRefresh={onRefresh} />}
+    headerAction={<DashboardViewTabs activeView={activeView} onChange={onViewChange} onRefresh={onRefresh} backendStatus={backendStatus} backendVersion={backendVersion} />}
   >
     {activeView === 'world' && <WorldPanel loading={loading} error={error} />}
     {activeView === 'network' && <CharacterNetworks loading={loading} error={error} />}
@@ -686,6 +759,8 @@ const DashboardGrid: React.FC<{
   onPause: () => void;
   onStop: () => void;
   onCreateCharacter: () => void;
+  backendStatus?: 'online' | 'offline' | 'error';
+  backendVersion?: string;
 }> = ({
   showFallbackAlert,
   isConnectionError,
@@ -702,6 +777,8 @@ const DashboardGrid: React.FC<{
   onPause,
   onStop,
   onCreateCharacter,
+  backendStatus,
+  backendVersion,
 }) => (
   <div className="bento-grid" data-testid="bento-grid">
     {showFallbackAlert && <DashboardFallbackAlert isConnectionError={isConnectionError} />}
@@ -713,6 +790,8 @@ const DashboardGrid: React.FC<{
       error={error}
       pipelineStatus={pipelineStatus}
       onStart={onStart}
+      backendStatus={backendStatus}
+      backendVersion={backendVersion}
     />
     <DashboardSecondaryTiles
       loading={loading}
@@ -748,6 +827,8 @@ const DashboardContent: React.FC<{
   onPause: () => void;
   onStop: () => void;
   realtimeEvents: RealtimeEvent[];
+  backendStatus?: 'online' | 'offline' | 'error';
+  backendVersion?: string;
 }> = ({
   isGuest,
   workspaceId,
@@ -767,6 +848,8 @@ const DashboardContent: React.FC<{
   onPause,
   onStop,
   realtimeEvents,
+  backendStatus,
+  backendVersion,
 }) => (
   <>
     {isGuest && <DashboardGuestBanner workspaceId={workspaceId} />}
@@ -789,6 +872,8 @@ const DashboardContent: React.FC<{
         onPause={onPause}
         onStop={onStop}
         onCreateCharacter={onCreateCharacter}
+        backendStatus={backendStatus}
+        backendVersion={backendVersion}
       />
     )}
   </>
@@ -856,6 +941,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const { snackbarOpen, snackbarMessage, showNotification, handleSnackbarClose } = useSnackbar();
   const { lastUpdate, refreshNow } = useAutoRefreshTimestamp();
   const characterDialog = useCharacterDialog(showNotification);
+  const { backendStatus, backendVersion } = useBackendStatus();
 
   const [loading, setLoading] = useState(false);
   const [pipelineStatus, setPipelineStatus] = useState<PipelineState>('idle');
@@ -863,6 +949,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const [activeView, setActiveView] = useState<DashboardView>('world');
 
   const {
+    characters,
     isLoading: isLoadingChars,
     effectiveCharacters,
     shouldShowFallbackAlert,
@@ -891,7 +978,22 @@ const Dashboard: React.FC<DashboardProps> = () => {
       setLoading,
     });
 
-  const showEmptyState = !isLoadingChars && effectiveCharacters.length === 0;
+  const showEmptyState = !isLoadingChars && (!characters || characters.length === 0);
+
+  // 加载时显示骨架屏
+  if (isLoadingChars || loading) {
+    return (
+      <>
+        <CommandTopBar
+          pipelineStatus={pipelineStatus}
+          isOnline={onlineStatus}
+          isLive={isLiveMode}
+          lastUpdate={lastUpdate}
+        />
+        <SkeletonDashboard />
+      </>
+    );
+  }
 
   return (
     <>
@@ -921,6 +1023,8 @@ const Dashboard: React.FC<DashboardProps> = () => {
         onPause={handlePauseOrchestration}
         onStop={handleStopOrchestration}
         realtimeEvents={realtimeEvents}
+        backendStatus={backendStatus}
+        backendVersion={backendVersion}
       />
 
       <DashboardDialogs

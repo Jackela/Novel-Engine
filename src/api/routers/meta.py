@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, Request
 
-router = APIRouter(tags=["meta"])
+router = APIRouter(tags=["Meta"])
 
 
 def _uptime_seconds(request: Request) -> float:

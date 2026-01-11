@@ -12,7 +12,7 @@ from src.api.services.cache import (
     stream_chunks,
 )
 
-router = APIRouter(tags=["cache"])
+router = APIRouter(tags=["Cache"])
 
 
 @router.get("/cache/metrics")

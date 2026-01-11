@@ -17,7 +17,7 @@ from src.api.schemas import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["campaigns"])
+router = APIRouter(tags=["Campaigns"])
 
 
 @router.get("/campaigns", response_model=CampaignsListResponse)

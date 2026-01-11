@@ -11,6 +11,14 @@ This server provides a comprehensive, production-ready API with:
 - Security enhancements and monitoring
 """
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Load .env file (system environment variables take precedence)
+env_path = Path(__file__).parent.parent.parent / '.env'
+load_dotenv(dotenv_path=env_path, override=False)
+
 import asyncio
 import json
 import logging
@@ -162,7 +170,7 @@ class APIServerConfig:
         self.ssl_key_file = os.getenv("SSL_KEY_FILE")
         self.jwt_secret = os.getenv("JWT_SECRET", secrets.token_urlsafe(32))
         self.enable_rate_limiting = (
-            os.getenv("ENABLE_RATE_LIMITING", "true").lower() == "true"
+            os.getenv("ENABLE_RATE_LIMITING", "false").lower() == "true"
         )
         self.enable_auth = (
             os.getenv("ENABLE_AUTH", "false").lower() == "true"
@@ -746,6 +754,43 @@ def _register_legacy_routes(app: FastAPI):
     """Register legacy routes for backward compatibility."""
     import os
 
+    # Import all router modules
+    from src.api.routers.auth import router as auth_router
+    from src.api.routers.cache import router as cache_router
+    from src.api.routers.campaigns import router as campaigns_router
+    from src.api.routers.characters import router as characters_router
+    from src.api.routers.events import router as events_router
+    from src.api.routers.guest import router as guest_router
+    from src.api.routers.health import router as health_router
+    from src.api.routers.meta import router as meta_router
+    from src.api.routers.orchestration import router as orchestration_router
+    from src.api.routers.simulations import router as simulations_router
+
+    # Register all routers with and without /api prefix for backward compatibility
+    # Order matters: register without prefix first, then with prefix
+    app.include_router(auth_router)
+    app.include_router(cache_router)
+    app.include_router(campaigns_router)
+    app.include_router(characters_router)
+    app.include_router(events_router)
+    app.include_router(guest_router)
+    app.include_router(health_router)
+    app.include_router(meta_router)
+    app.include_router(orchestration_router)
+    app.include_router(simulations_router)
+
+    # Register with /api prefix
+    app.include_router(auth_router, prefix="/api")
+    app.include_router(cache_router, prefix="/api")
+    app.include_router(campaigns_router, prefix="/api")
+    app.include_router(characters_router, prefix="/api")
+    app.include_router(events_router, prefix="/api")
+    app.include_router(guest_router, prefix="/api")
+    app.include_router(health_router, prefix="/api")
+    app.include_router(meta_router, prefix="/api")
+    app.include_router(orchestration_router, prefix="/api")
+    app.include_router(simulations_router, prefix="/api")
+
     @app.get("/", response_model=dict)
     async def root_index():
         """Root endpoint for basic availability with explicit security headers.
@@ -1284,4 +1329,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-__all__ = ["create_app", "main"]
+# Create app instance at module level for uvicorn to import
+app = create_app()
+
+__all__ = ["create_app", "main", "app"]

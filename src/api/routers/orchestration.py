@@ -11,7 +11,7 @@ from src.api.services.paths import get_characters_directory_path
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["orchestration"])
+router = APIRouter(tags=["Orchestration"])
 
 
 @router.get("/api/orchestration/status")
@@ -80,6 +80,15 @@ async def stop_orchestration(request: Request) -> Dict[str, Any]:
     if not api_service:
         return {"success": False, "message": "Service unavailable"}
     return await api_service.stop_simulation()
+
+
+@router.post("/api/orchestration/pause")
+async def pause_orchestration(request: Request) -> Dict[str, Any]:
+    """Pause the current orchestration"""
+    api_service = getattr(request.app.state, "api_service", None)
+    if not api_service:
+        return {"success": False, "message": "Service unavailable"}
+    return await api_service.pause_simulation()
 
 
 @router.get("/api/orchestration/narrative")

@@ -1,0 +1,66 @@
+character:
+  name: "Marcus Kane"
+  age: 38
+  origin: "Corporate Research Lab - Neural Tech Division"
+  faction: "Cyber Police Independent Investigation Unit"
+  rank: "Senior Detective"
+  specialization: "Digital Forensics & Memory-Based Investigation"
+
+combat_stats:
+  digital_combat: 10
+  physical_combat: 6
+  tactics: 9
+  perception: 8
+  endurance: 7
+  technical_skill: 10
+
+equipment:
+  primary_tool: "Neural Database Interface (NDI-7)"
+  secondary_tool: "Holographic Evidence Projector"
+  defensive_gear: "Pain Suppressor Implant"
+  special_gear:
+    - "Encrypted Communicator"
+    - "Backup Power Core"
+    - "Data Analysis Suite"
+    - "AR Overlay Contacts"
+
+psychological_profile:
+  loyalty: 8
+  aggression: 4
+  caution: 9
+  morale: 5
+  corruption_resistance: 9
+  trust_threshold: 3
+  pain_tolerance: 10
+  stress_tolerance: 8
+
+medical_condition:
+  syndrome: "Memory Hypersensitivity Syndrome"
+  severity: "Chronic, Severe"
+  triggers: "Memory Recall, Emotional Stress"
+  management: "Neural Database Offloading, Pain Suppressors"
+  side_effects: "Social Isolation, Emotional Numbness"
+
+specializations:
+  - "Digital Forensics"
+  - "Pattern Recognition Analysis"
+  - "Infrastructure Hacking"
+  - "Data Reconstruction"
+  - "Memory Trace Analysis"
+
+relationships:
+  allies:
+    - "Cyber Police Technical Division"
+    - "Select Underground Informants"
+  neutral:
+    - "Corporate Security Departments"
+  suspects:
+    - "The Architect"
+    - "Tech Corporations"
+
+current_case:
+  name: "City-Wide Blackout Investigation"
+  priority: "Critical"
+  personal_stakes: "System Dependency, Pain Management"
+  lead_suspect: "The Architect"
+  status: "Active Investigation"

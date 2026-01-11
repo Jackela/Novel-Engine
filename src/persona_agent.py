@@ -118,6 +118,10 @@ def _make_gemini_api_request(prompt: str) -> Optional[str]:
     )
 
     # Run async call synchronously
+    # Enable nested event loops to avoid "event loop is already running" errors
+    import nest_asyncio
+    nest_asyncio.apply()
+
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
@@ -407,15 +411,51 @@ class PersonaAgent(_PersonaAgentImpl):
         return prompt
 
     def _call_llm(self, prompt: str) -> Optional[str]:
-        """Invoke the pluggable Gemini helper."""
+        """Invoke the pluggable Gemini helper with environment-aware error handling."""
+        from configs.config_environment_loader import (
+            get_environment_config_loader,
+            Environment
+        )
+
+        env_loader = get_environment_config_loader()
+        is_development = env_loader.environment in [
+            Environment.DEVELOPMENT,
+            Environment.TESTING
+        ]
+
         api_key = _validate_gemini_api_key()
         if not api_key:
-            return "[LLM-Fallback] Gemini API key not configured."
+            if is_development:
+                # 开发环境：立即崩溃
+                raise RuntimeError(
+                    "CRITICAL: GEMINI_API_KEY not configured. "
+                    "Please set the API key in .env file or system environment. "
+                    "In development mode, LLM fallback is disabled to catch configuration errors early."
+                )
+            else:
+                # 生产环境：允许 fallback
+                logger.warning("Gemini API key not configured, using fallback response")
+                return "[LLM-Fallback] Gemini API key not configured."
+
         try:
             response = _make_gemini_api_request(prompt)
         except Exception as exc:  # pragma: no cover - logging path
-            logger.warning("Gemini API request failed: %s", exc)
-            return "[LLM-Fallback] Gemini service unavailable."
+            if is_development:
+                # 开发环境：立即崩溃,显示完整错误
+                raise RuntimeError(
+                    f"CRITICAL: Gemini API request failed: {exc}\n"
+                    f"In development mode, LLM fallback is disabled. "
+                    f"Please check:\n"
+                    f"  1. API key validity\n"
+                    f"  2. Network connectivity\n"
+                    f"  3. API quota limits\n"
+                    f"Original error: {exc}"
+                ) from exc
+            else:
+                # 生产环境：记录错误但继续运行
+                logger.error("Gemini API request failed in production: %s", exc, exc_info=True)
+                return "[LLM-Fallback] Gemini service unavailable."
+
         if response:
             self._llm_response_history.append(response)
             self._llm_response_history[:] = self._llm_response_history[-50:]

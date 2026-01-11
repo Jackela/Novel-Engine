@@ -496,3 +496,4 @@ speed-report.json
 
 # Errant tool output (should never be committed)
 undefined:*/
+/.trunk

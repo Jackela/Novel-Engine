@@ -1,0 +1,6506 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Novel Engine API",
+    "description": "\n# Novel Engine API\n\nThe Novel Engine API provides comprehensive endpoints for character management,\nstory generation, and interactive narrative experiences. This RESTful API enables\ndevelopers to integrate advanced AI-driven storytelling capabilities into their applications.\n\n## Key Features\n\n- **Character Management**: Create, customize, and manage AI characters with detailed personalities\n- **Story Generation**: Generate dynamic stories through character interactions\n- **Real-time Interactions**: WebSocket-based real-time character interactions\n- **Health Monitoring**: Comprehensive system health and performance monitoring\n- **Versioning**: Full API versioning with backward compatibility\n- **Error Handling**: Standardized error responses with detailed information\n\n## Authentication\n\nCurrently, the API operates in open mode for development. Production deployments\nwill require API key authentication.\n\n## Rate Limiting\n\nThe API implements rate limiting to ensure fair usage:\n- **Development**: 1000 requests per hour per IP\n- **Production**: Custom limits based on subscription tier\n\n## Response Format\n\nAll API responses follow a standardized format:\n\n```json\n{\n  \"status\": \"success|error|partial|pending\",\n  \"data\": { /* response payload */ },\n  \"error\": { /* error information if status is error */ },\n  \"metadata\": {\n    \"timestamp\": \"2024-01-01T12:00:00Z\",\n    \"request_id\": \"uuid\",\n    \"api_version\": \"1.1\",\n    \"server_time\": 0.123\n  }\n}\n```\n\n## Error Handling\n\nErrors are returned with appropriate HTTP status codes and detailed information:\n\n- **400 Bad Request**: Invalid request parameters\n- **401 Unauthorized**: Authentication required\n- **403 Forbidden**: Insufficient permissions\n- **404 Not Found**: Resource not found\n- **422 Unprocessable Entity**: Validation errors\n- **429 Too Many Requests**: Rate limit exceeded\n- **500 Internal Server Error**: Server-side errors\n- **503 Service Unavailable**: System temporarily unavailable\n\n## WebSocket Connections\n\nReal-time features use WebSocket connections:\n\n- **Story Generation Progress**: `/api/stories/progress/{generation_id}`\n- **Character Interactions**: `/api/interactions/ws/{interaction_id}`\n\n## SDK and Libraries\n\nOfficial SDKs are available for:\n- Python: `pip install novel-engine-python`\n- JavaScript/TypeScript: `npm install novel-engine-js`\n- Java: Maven/Gradle support available\n\n## Support\n\n- **Documentation**: https://docs.novel-engine.app\n- **Support**: support@novel-engine.app\n- **GitHub**: https://github.com/novel-engine/api\n        ",
+    "version": "1.1.0",
+    "contact": {
+      "name": "Novel Engine API Support",
+      "url": "https://novel-engine.app/support",
+      "email": "support@novel-engine.app"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "paths": {
+    "/api/versions": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Get Api Versions",
+        "description": "Get information about all API versions.",
+        "operationId": "get_api_versions_api_versions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "tags": [
+          "Monitoring"
+        ],
+        "summary": "Get Metrics",
+        "description": "Get system metrics and statistics.",
+        "operationId": "get_metrics_api_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics/performance": {
+      "get": {
+        "tags": [
+          "Monitoring"
+        ],
+        "summary": "Get Performance Metrics",
+        "description": "Get detailed performance metrics.",
+        "operationId": "get_performance_metrics_api_metrics_performance_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root Index",
+        "description": "Root endpoint for basic availability with explicit security headers.\n\nAdding headers directly ensures compliance in test environments where\nmiddleware ordering or transport differences may bypass decoration.",
+        "operationId": "root_index__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Root Index  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Check Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/characters": {
+      "get": {
+        "summary": "Legacy Get Characters Api",
+        "description": "Unversioned REST endpoint for legacy characters list.",
+        "operationId": "legacy_get_characters_api_api_characters_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Legacy Get Characters Api Api Characters Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Create Workspace Character",
+        "description": "Creates a new character in the current workspace.",
+        "operationId": "create_workspace_character_api_characters_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCharacterCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/characters/{character_id}": {
+      "get": {
+        "summary": "Legacy Get Character Detail Api",
+        "description": "Unversioned REST endpoint for legacy character detail.",
+        "operationId": "legacy_get_character_detail_api_api_characters__character_id__get",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Character Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Legacy Get Character Detail Api Api Characters  Character Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Update Workspace Character",
+        "description": "Updates a character in the workspace.",
+        "operationId": "update_workspace_character_api_characters__character_id__put",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Character Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCharacterUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Delete Workspace Character",
+        "description": "Deletes a character from the workspace.",
+        "operationId": "delete_workspace_character_api_characters__character_id__delete",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Character Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories/generate": {
+      "post": {
+        "summary": "Generate Story",
+        "description": "Generates a story from character interactions.",
+        "operationId": "generate_story_api_stories_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories/status/{generation_id}": {
+      "get": {
+        "summary": "Get Generation Status",
+        "description": "Get current status of a story generation (REST fallback).",
+        "operationId": "get_generation_status_api_stories_status__generation_id__get",
+        "parameters": [
+          {
+            "name": "generation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Generation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/interactions": {
+      "get": {
+        "summary": "List Interactions",
+        "description": "List all active interactions.",
+        "operationId": "list_interactions_api_interactions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Interactions Api Interactions Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Interaction",
+        "description": "Initiates a new character interaction.",
+        "operationId": "create_interaction_api_interactions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InteractionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/interactions/{interaction_id}": {
+      "get": {
+        "summary": "Get Interaction",
+        "description": "Get detailed interaction information.",
+        "operationId": "get_interaction_api_interactions__interaction_id__get",
+        "parameters": [
+          {
+            "name": "interaction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Interaction Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Interaction Api Interactions  Interaction Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/turns/{turn_id}/briefs/{agent_id}": {
+      "get": {
+        "summary": "Get Agent Turn Brief",
+        "description": "Retrieve personalized turn brief for a specific agent",
+        "operationId": "get_turn_brief_api_turns__turn_id__briefs__agent_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "turn_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Turn identifier",
+              "title": "Turn Id"
+            },
+            "description": "Turn identifier"
+          },
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Agent identifier",
+              "title": "Agent Id"
+            },
+            "description": "Agent identifier"
+          },
+          {
+            "name": "include_context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Context"
+            }
+          },
+          {
+            "name": "confidence_threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "default": 0.3,
+              "title": "Confidence Threshold"
+            }
+          },
+          {
+            "name": "time_window_hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 24,
+              "minimum": 1,
+              "default": 2,
+              "title": "Time Window Hours"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_TurnBriefData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/turns/{turn_id}/briefs": {
+      "get": {
+        "summary": "Get All Agent Turn Briefs",
+        "description": "Retrieve turn briefs for all agents in a turn",
+        "operationId": "get_all_turn_briefs_api_turns__turn_id__briefs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "turn_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Turn identifier",
+              "title": "Turn Id"
+            },
+            "description": "Turn identifier"
+          },
+          {
+            "name": "include_context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Context"
+            }
+          },
+          {
+            "name": "confidence_threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "default": 0.3,
+              "title": "Confidence Threshold"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Agent Filter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_MultiBriefData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agents/{agent_id}/beliefs": {
+      "get": {
+        "summary": "Get Agent Belief Model",
+        "description": "Access agent's subjective belief model",
+        "operationId": "get_agent_beliefs_api_agents__agent_id__beliefs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Agent identifier",
+              "title": "Agent Id"
+            },
+            "description": "Agent identifier"
+          },
+          {
+            "name": "include_fragments",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Fragments"
+            }
+          },
+          {
+            "name": "reliability_threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "default": 0.0,
+              "title": "Reliability Threshold"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Category Filter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_BeliefModelData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/narratives/emergent/generate": {
+      "post": {
+        "summary": "Generate Emergent Narrative",
+        "description": "Generate emergent narrative based on agent interactions and causal graph",
+        "operationId": "generate_emergent_narrative_api_narratives_emergent_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmergentNarrativeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_EmergentNarrativeData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/narratives/build": {
+      "post": {
+        "summary": "Build Comprehensive Narrative",
+        "description": "Build comprehensive narrative from existing story elements",
+        "operationId": "build_narrative_api_narratives_build_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NarrativeBuildRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_EmergentNarrativeData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/causality/graph": {
+      "get": {
+        "summary": "Get Causal Graph",
+        "description": "Access causal relationship graph",
+        "operationId": "get_causal_graph_api_causality_graph_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_predictions",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Predictions"
+            }
+          },
+          {
+            "name": "min_confidence",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "default": 0.3,
+              "title": "Min Confidence"
+            }
+          },
+          {
+            "name": "max_depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 5,
+              "title": "Max Depth"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_get_causal_graph_api_causality_graph_get"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_CausalGraphData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/narratives/emergent/{narrative_id}": {
+      "get": {
+        "summary": "Get Generated Narrative",
+        "description": "Retrieve previously generated emergent narrative",
+        "operationId": "get_emergent_narrative_api_narratives_emergent__narrative_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "narrative_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Narrative identifier",
+              "title": "Narrative Id"
+            },
+            "description": "Narrative identifier"
+          },
+          {
+            "name": "include_events",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include detailed event list",
+              "default": true,
+              "title": "Include Events"
+            },
+            "description": "Include detailed event list"
+          },
+          {
+            "name": "include_causal_graph",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include causal relationship data",
+              "default": false,
+              "title": "Include Causal Graph"
+            },
+            "description": "Include causal relationship data"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Response format (structured, text, timeline)",
+              "default": "structured",
+              "title": "Format"
+            },
+            "description": "Response format (structured, text, timeline)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_EmergentNarrativeData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/context7/examples": {
+      "post": {
+        "summary": "Generate Code Examples",
+        "description": "Generate Context7-powered code examples for API endpoints",
+        "operationId": "generate_code_example_api_context7_examples_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeExampleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_CodeExampleResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/context7/validate": {
+      "post": {
+        "summary": "Validate API Patterns",
+        "description": "Validate API code against Context7 framework patterns",
+        "operationId": "validate_api_pattern_api_context7_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatternValidationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_PatternValidationResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/context7/documentation": {
+      "post": {
+        "summary": "Generate Enhanced Documentation",
+        "description": "Generate Context7-powered enhanced API documentation",
+        "operationId": "generate_enhanced_documentation_api_context7_documentation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_EnhancedDocumentationResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/context7/best-practices/{framework}": {
+      "get": {
+        "summary": "Get Framework Best Practices",
+        "description": "Get Context7-powered framework best practices",
+        "operationId": "get_best_practices_api_context7_best_practices__framework__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "framework",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FrameworkType",
+              "description": "Framework to get practices for"
+            },
+            "description": "Framework to get practices for"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Practice category",
+              "default": "general",
+              "title": "Category"
+            },
+            "description": "Practice category"
+          },
+          {
+            "name": "include_examples",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include code examples",
+              "default": true,
+              "title": "Include Examples"
+            },
+            "description": "Include code examples"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_BestPracticesResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/context7/status": {
+      "get": {
+        "summary": "Get Context7 Status",
+        "description": "Get Context7 MCP server status and capabilities",
+        "operationId": "get_context7_status_api_context7_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_Dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/postman/collection": {
+      "get": {
+        "summary": "Get Postman Collection",
+        "description": "Get Postman collection for API testing.",
+        "operationId": "get_postman_collection_api_postman_collection_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Refresh Token",
+        "operationId": "refresh_token_api_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/csrf-token": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Csrf Token",
+        "operationId": "get_csrf_token_api_auth_csrf_token_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CSRFTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LogoutRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/validate": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Validate Token",
+        "operationId": "validate_token_api_auth_validate_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenValidationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/metrics": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Metrics",
+        "operationId": "cache_metrics_cache_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/invalidate": {
+      "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Invalidate",
+        "operationId": "cache_invalidate_cache_invalidate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvalidationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/chunk/{key}": {
+      "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Chunk Append",
+        "operationId": "cache_chunk_append_cache_chunk__key__post",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChunkInRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/chunk/{key}/complete": {
+      "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Chunk Complete",
+        "operationId": "cache_chunk_complete_cache_chunk__key__complete_post",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cache/stream/{key}": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Stream",
+        "operationId": "cache_stream_cache_stream__key__get",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Get Campaigns",
+        "description": "Retrieves a list of available campaigns.",
+        "operationId": "get_campaigns_campaigns_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignsListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Create Campaign",
+        "description": "Creates a new campaign.",
+        "operationId": "create_campaign_campaigns_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignCreationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignCreationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/characters": {
+      "get": {
+        "summary": "Legacy Get Characters",
+        "description": "Legacy endpoint - List all characters from file system.",
+        "operationId": "legacy_get_characters_characters_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Legacy Get Characters Characters Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Create Workspace Character",
+        "description": "Creates a new character in the current workspace.",
+        "operationId": "create_workspace_character_characters_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCharacterCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/characters/{character_id}": {
+      "get": {
+        "summary": "Legacy Get Character Detail",
+        "description": "Legacy endpoint - Get character details from file system.",
+        "operationId": "legacy_get_character_detail_characters__character_id__get",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Character Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Legacy Get Character Detail Characters  Character Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Update Workspace Character",
+        "description": "Updates a character in the workspace.",
+        "operationId": "update_workspace_character_characters__character_id__put",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Character Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCharacterUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Delete Workspace Character",
+        "description": "Deletes a character from the workspace.",
+        "operationId": "delete_workspace_character_characters__character_id__delete",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Character Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/characters/{character_id}/enhanced": {
+      "get": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Get Character Enhanced Api",
+        "description": "Retrieves enhanced character context.",
+        "operationId": "get_character_enhanced_api_characters__character_id__enhanced_get",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Character Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Character Enhanced Api Characters  Character Id  Enhanced Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/stream": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Stream Events",
+        "operationId": "stream_events_events_stream_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/emit": {
+      "post": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Emit Dashboard Event",
+        "operationId": "emit_dashboard_event_events_emit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmitEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/stats": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get Sse Stats",
+        "operationId": "get_sse_stats_events_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/metrics": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get Analytics Metrics",
+        "operationId": "get_analytics_metrics_analytics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/guest/session": {
+      "post": {
+        "tags": [
+          "Guest"
+        ],
+        "summary": "Create Or Resume Guest Session",
+        "operationId": "create_or_resume_guest_session_guest_session_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspace/export": {
+      "get": {
+        "tags": [
+          "Guest"
+        ],
+        "summary": "Export Workspace Zip",
+        "operationId": "export_workspace_zip_workspace_export_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspace/import": {
+      "post": {
+        "tags": [
+          "Guest"
+        ],
+        "summary": "Import Workspace Zip",
+        "operationId": "import_workspace_zip_workspace_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_workspace_zip_workspace_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta/system-status": {
+      "get": {
+        "tags": [
+          "Meta"
+        ],
+        "summary": "System Status",
+        "operationId": "system_status_meta_system_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response System Status Meta System Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta/policy": {
+      "get": {
+        "tags": [
+          "Meta"
+        ],
+        "summary": "Policy Info",
+        "operationId": "policy_info_meta_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Policy Info Meta Policy Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestration/status": {
+      "get": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Get Orchestration Status",
+        "operationId": "get_orchestration_status_api_orchestration_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Orchestration Status Api Orchestration Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestration/start": {
+      "post": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Start Orchestration",
+        "operationId": "start_orchestration_api_orchestration_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Orchestration Api Orchestration Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestration/stop": {
+      "post": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Stop Orchestration",
+        "operationId": "stop_orchestration_api_orchestration_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Stop Orchestration Api Orchestration Stop Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestration/pause": {
+      "post": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Pause Orchestration",
+        "description": "Pause the current orchestration",
+        "operationId": "pause_orchestration_api_orchestration_pause_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Pause Orchestration Api Orchestration Pause Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestration/narrative": {
+      "get": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Get Narrative",
+        "operationId": "get_narrative_api_orchestration_narrative_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Narrative Api Orchestration Narrative Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/simulations": {
+      "post": {
+        "summary": "Legacy Run Simulation",
+        "description": "Legacy endpoint - Run story simulation with character interactions.",
+        "operationId": "legacy_run_simulation_simulations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Legacy Run Simulation Simulations Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Refresh Token",
+        "operationId": "refresh_token_api_api_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/auth/csrf-token": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Csrf Token",
+        "operationId": "get_csrf_token_api_api_auth_csrf_token_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CSRFTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_api_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LogoutRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/auth/validate": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Validate Token",
+        "operationId": "validate_token_api_api_auth_validate_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenValidationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cache/metrics": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Metrics",
+        "operationId": "cache_metrics_api_cache_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cache/invalidate": {
+      "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Invalidate",
+        "operationId": "cache_invalidate_api_cache_invalidate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvalidationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cache/chunk/{key}": {
+      "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Chunk Append",
+        "operationId": "cache_chunk_append_api_cache_chunk__key__post",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChunkInRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cache/chunk/{key}/complete": {
+      "post": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Chunk Complete",
+        "operationId": "cache_chunk_complete_api_cache_chunk__key__complete_post",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cache/stream/{key}": {
+      "get": {
+        "tags": [
+          "Cache"
+        ],
+        "summary": "Cache Stream",
+        "operationId": "cache_stream_api_cache_stream__key__get",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/campaigns": {
+      "get": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Get Campaigns",
+        "description": "Retrieves a list of available campaigns.",
+        "operationId": "get_campaigns_api_campaigns_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignsListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Campaigns"
+        ],
+        "summary": "Create Campaign",
+        "description": "Creates a new campaign.",
+        "operationId": "create_campaign_api_campaigns_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CampaignCreationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignCreationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/characters/{character_id}/enhanced": {
+      "get": {
+        "tags": [
+          "characters"
+        ],
+        "summary": "Get Character Enhanced Api",
+        "description": "Retrieves enhanced character context.",
+        "operationId": "get_character_enhanced_api_api_characters__character_id__enhanced_get",
+        "parameters": [
+          {
+            "name": "character_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Character Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Character Enhanced Api Api Characters  Character Id  Enhanced Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/stream": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Stream Events",
+        "description": "Server-Sent Events (SSE) endpoint for real-time dashboard events.\n\nStreams continuous event updates with automatic reconnection support.\nEvents include: character actions, story progression, system alerts, interactions.\n\nArgs:\n    limit: Optional maximum number of events to return (useful for testing)\n\nReturns:\n    StreamingResponse: text/event-stream with continuous event updates\n\nExample:\n    ```javascript\n    const eventSource = new EventSource('/api/events/stream');\n    eventSource.onmessage = (event) => {\n        const data = JSON.parse(event.data);\n        console.log('Event:', data);\n    };\n    ```",
+        "operationId": "stream_events_api_events_stream_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/emit": {
+      "post": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Emit Dashboard Event",
+        "operationId": "emit_dashboard_event_api_events_emit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmitEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/stats": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get Sse Stats",
+        "operationId": "get_sse_stats_api_events_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/metrics": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get Analytics Metrics",
+        "operationId": "get_analytics_metrics_api_analytics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guest/session": {
+      "post": {
+        "tags": [
+          "Guest"
+        ],
+        "summary": "Create Or Resume Guest Session",
+        "operationId": "create_or_resume_guest_session_api_guest_session_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspace/export": {
+      "get": {
+        "tags": [
+          "Guest"
+        ],
+        "summary": "Export Workspace Zip",
+        "operationId": "export_workspace_zip_api_workspace_export_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspace/import": {
+      "post": {
+        "tags": [
+          "Guest"
+        ],
+        "summary": "Import Workspace Zip",
+        "operationId": "import_workspace_zip_api_workspace_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_workspace_zip_api_workspace_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Root",
+        "operationId": "root_api__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Check Api Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/meta/system-status": {
+      "get": {
+        "tags": [
+          "Meta"
+        ],
+        "summary": "System Status",
+        "operationId": "system_status_api_meta_system_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response System Status Api Meta System Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/meta/policy": {
+      "get": {
+        "tags": [
+          "Meta"
+        ],
+        "summary": "Policy Info",
+        "operationId": "policy_info_api_meta_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Policy Info Api Meta Policy Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/orchestration/status": {
+      "get": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Get Orchestration Status",
+        "operationId": "get_orchestration_status_api_api_orchestration_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Orchestration Status Api Api Orchestration Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/orchestration/start": {
+      "post": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Start Orchestration",
+        "operationId": "start_orchestration_api_api_orchestration_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Orchestration Api Api Orchestration Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/orchestration/stop": {
+      "post": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Stop Orchestration",
+        "operationId": "stop_orchestration_api_api_orchestration_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Stop Orchestration Api Api Orchestration Stop Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/orchestration/pause": {
+      "post": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Pause Orchestration",
+        "description": "Pause the current orchestration",
+        "operationId": "pause_orchestration_api_api_orchestration_pause_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Pause Orchestration Api Api Orchestration Pause Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api/orchestration/narrative": {
+      "get": {
+        "tags": [
+          "Orchestration"
+        ],
+        "summary": "Get Narrative",
+        "operationId": "get_narrative_api_api_orchestration_narrative_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Narrative Api Api Orchestration Narrative Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/simulations": {
+      "post": {
+        "tags": [
+          "Simulations"
+        ],
+        "summary": "Run Simulation",
+        "description": "Legacy-compatible simulation endpoint used by tests and clients.",
+        "operationId": "run_simulation_api_simulations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "JWT access token (for backward compatibility)"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token",
+            "description": "JWT refresh token (for backward compatibility)"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "description": "Token type",
+            "default": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Token expiry time in seconds"
+          },
+          "user": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "User",
+            "description": "User information"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in",
+          "user"
+        ],
+        "title": "AuthResponse",
+        "description": "Response model for authentication endpoints."
+      },
+      "BeliefModelData": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id",
+            "description": "Agent identifier"
+          },
+          "personality_bias": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Personality Bias",
+            "description": "Personality biases affecting perception"
+          },
+          "trust_network": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Trust Network",
+            "description": "Trust levels for other agents"
+          },
+          "information_fragments": {
+            "items": {
+              "$ref": "#/components/schemas/InformationFragmentResponse"
+            },
+            "type": "array",
+            "title": "Information Fragments",
+            "description": "Known information fragments"
+          },
+          "active_hypotheses": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Active Hypotheses",
+            "description": "Active hypotheses and confidence levels"
+          },
+          "cognitive_filters": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Cognitive Filters",
+            "description": "Cognitive filtering preferences"
+          },
+          "total_fragments": {
+            "type": "integer",
+            "title": "Total Fragments",
+            "description": "Total information fragments"
+          },
+          "average_reliability": {
+            "type": "number",
+            "title": "Average Reliability",
+            "description": "Average information reliability"
+          },
+          "last_update": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Update",
+            "description": "Last belief model update"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id",
+          "personality_bias",
+          "trust_network",
+          "information_fragments",
+          "active_hypotheses",
+          "cognitive_filters",
+          "total_fragments",
+          "average_reliability",
+          "last_update"
+        ],
+        "title": "BeliefModelData",
+        "description": "Agent belief model data"
+      },
+      "BestPracticeItem": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Practice title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Practice description"
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale",
+            "description": "Why this practice is important"
+          },
+          "example": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Example",
+            "description": "Code example"
+          },
+          "anti_pattern": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anti Pattern",
+            "description": "What to avoid"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "References",
+            "description": "Reference links"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "rationale"
+        ],
+        "title": "BestPracticeItem",
+        "description": "Best practice item."
+      },
+      "BestPracticesResponse": {
+        "properties": {
+          "framework": {
+            "type": "string",
+            "title": "Framework",
+            "description": "Target framework"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Best practice category"
+          },
+          "practices": {
+            "items": {
+              "$ref": "#/components/schemas/BestPracticeItem"
+            },
+            "type": "array",
+            "title": "Practices",
+            "description": "Best practice items"
+          },
+          "framework_version": {
+            "type": "string",
+            "title": "Framework Version",
+            "description": "Framework version info"
+          },
+          "last_updated": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "framework",
+          "category",
+          "practices",
+          "framework_version"
+        ],
+        "title": "BestPracticesResponse",
+        "description": "Framework best practices response."
+      },
+      "Body_get_causal_graph_api_causality_graph_get": {
+        "properties": {
+          "time_window": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Window"
+          },
+          "agent_filter": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Filter"
+          }
+        },
+        "type": "object",
+        "title": "Body_get_causal_graph_api_causality_graph_get"
+      },
+      "Body_import_workspace_zip_api_workspace_import_post": {
+        "properties": {
+          "archive": {
+            "type": "string",
+            "format": "binary",
+            "title": "Archive"
+          }
+        },
+        "type": "object",
+        "required": [
+          "archive"
+        ],
+        "title": "Body_import_workspace_zip_api_workspace_import_post"
+      },
+      "Body_import_workspace_zip_workspace_import_post": {
+        "properties": {
+          "archive": {
+            "type": "string",
+            "format": "binary",
+            "title": "Archive"
+          }
+        },
+        "type": "object",
+        "required": [
+          "archive"
+        ],
+        "title": "Body_import_workspace_zip_workspace_import_post"
+      },
+      "CSRFTokenResponse": {
+        "properties": {
+          "csrf_token": {
+            "type": "string",
+            "title": "Csrf Token",
+            "description": "CSRF token for state-changing requests"
+          }
+        },
+        "type": "object",
+        "required": [
+          "csrf_token"
+        ],
+        "title": "CSRFTokenResponse",
+        "description": "Response model for CSRF token endpoint."
+      },
+      "CampaignCreationRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Participants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "participants"
+        ],
+        "title": "CampaignCreationRequest",
+        "description": "Request model for campaign creation."
+      },
+      "CampaignCreationResponse": {
+        "properties": {
+          "campaign_id": {
+            "type": "string",
+            "title": "Campaign Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "campaign_id",
+          "name",
+          "status",
+          "created_at"
+        ],
+        "title": "CampaignCreationResponse",
+        "description": "Response model for campaign creation."
+      },
+      "CampaignsListResponse": {
+        "properties": {
+          "campaigns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Campaigns"
+          }
+        },
+        "type": "object",
+        "required": [
+          "campaigns"
+        ],
+        "title": "CampaignsListResponse",
+        "description": "Response model for campaigns list."
+      },
+      "CausalGraphData": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Nodes",
+            "description": "Graph nodes (events)"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/CausalLinkResponse"
+            },
+            "type": "array",
+            "title": "Edges",
+            "description": "Graph edges (causal relationships)"
+          },
+          "statistics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Statistics",
+            "description": "Graph statistics"
+          },
+          "influential_events": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Influential Events",
+            "description": "Most influential event IDs"
+          },
+          "narrative_patterns": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Narrative Patterns",
+            "description": "Detected narrative patterns"
+          },
+          "predictions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Predictions",
+            "description": "Event predictions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes",
+          "edges",
+          "statistics",
+          "influential_events",
+          "narrative_patterns"
+        ],
+        "title": "CausalGraphData",
+        "description": "Causal graph data"
+      },
+      "CausalLinkResponse": {
+        "properties": {
+          "source_event": {
+            "type": "string",
+            "title": "Source Event",
+            "description": "Source event ID"
+          },
+          "target_event": {
+            "type": "string",
+            "title": "Target Event",
+            "description": "Target event ID"
+          },
+          "relation_type": {
+            "type": "string",
+            "title": "Relation Type",
+            "description": "Type of causal relation"
+          },
+          "strength": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Strength",
+            "description": "Causal strength"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "description": "Confidence in relation"
+          },
+          "narrative_significance": {
+            "type": "number",
+            "title": "Narrative Significance",
+            "description": "Significance to narrative"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_event",
+          "target_event",
+          "relation_type",
+          "strength",
+          "confidence",
+          "narrative_significance"
+        ],
+        "title": "CausalLinkResponse",
+        "description": "Causal relationship in narrative"
+      },
+      "CharacterArchetype": {
+        "type": "string",
+        "enum": [
+          "warrior",
+          "scholar",
+          "leader",
+          "mystic",
+          "engineer",
+          "diplomat",
+          "guardian",
+          "survivor"
+        ],
+        "title": "CharacterArchetype",
+        "description": "ENHANCED CHARACTER ARCHETYPES SANCTIFIED BY PERSONALITY CLASSIFICATION"
+      },
+      "CharacterCreationRequest": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 3,
+            "title": "Agent Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "background_summary": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Background Summary",
+            "default": ""
+          },
+          "personality_traits": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Personality Traits",
+            "default": ""
+          },
+          "archetype": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CharacterArchetype"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "current_mood": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Current Mood",
+            "default": 5
+          },
+          "dominant_emotion": {
+            "type": "string",
+            "title": "Dominant Emotion",
+            "default": "neutral"
+          },
+          "energy_level": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Energy Level",
+            "default": 5
+          },
+          "stress_level": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Stress Level",
+            "default": 5
+          },
+          "skills": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Skills"
+          },
+          "relationships": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Relationships"
+          },
+          "current_location": {
+            "type": "string",
+            "title": "Current Location",
+            "default": ""
+          },
+          "inventory": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Inventory"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id",
+          "name"
+        ],
+        "title": "CharacterCreationRequest",
+        "description": "Request model for character creation."
+      },
+      "CharacterDetailResponse": {
+        "properties": {
+          "character_id": {
+            "type": "string",
+            "title": "Character Id"
+          },
+          "character_name": {
+            "type": "string",
+            "title": "Character Name"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "background_summary": {
+            "type": "string",
+            "title": "Background Summary"
+          },
+          "personality_traits": {
+            "type": "string",
+            "title": "Personality Traits"
+          },
+          "current_status": {
+            "type": "string",
+            "title": "Current Status"
+          },
+          "narrative_context": {
+            "type": "string",
+            "title": "Narrative Context"
+          },
+          "skills": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Skills"
+          },
+          "relationships": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Relationships"
+          },
+          "current_location": {
+            "type": "string",
+            "title": "Current Location",
+            "default": ""
+          },
+          "inventory": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Inventory"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "structured_data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Structured Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "character_id",
+          "character_name",
+          "name",
+          "background_summary",
+          "personality_traits",
+          "current_status",
+          "narrative_context"
+        ],
+        "title": "CharacterDetailResponse",
+        "description": "Response model for detailed character information."
+      },
+      "CharacterListResponse": {
+        "properties": {
+          "characters": {
+            "items": {
+              "$ref": "#/components/schemas/CharacterResponse"
+            },
+            "type": "array",
+            "title": "Characters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "characters"
+        ],
+        "title": "CharacterListResponse",
+        "description": "Response model for character listings."
+      },
+      "CharacterResponse": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "current_status": {
+            "type": "string",
+            "title": "Current Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_updated": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id",
+          "name",
+          "current_status",
+          "created_at",
+          "last_updated"
+        ],
+        "title": "CharacterResponse",
+        "description": "Response model for character data."
+      },
+      "CharacterSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "workspace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "type",
+          "updated_at"
+        ],
+        "title": "CharacterSummary"
+      },
+      "CharacterUpdateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "background_summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Summary"
+          },
+          "personality_traits": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personality Traits"
+          },
+          "skills": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skills"
+          }
+        },
+        "type": "object",
+        "title": "CharacterUpdateRequest",
+        "description": "Request model for character updates."
+      },
+      "CharactersListResponse": {
+        "properties": {
+          "characters": {
+            "items": {
+              "$ref": "#/components/schemas/CharacterSummary"
+            },
+            "type": "array",
+            "title": "Characters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "characters"
+        ],
+        "title": "CharactersListResponse"
+      },
+      "ChunkInRequest": {
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "title": "Seq"
+          },
+          "data": {
+            "type": "string",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq",
+          "data"
+        ],
+        "title": "ChunkInRequest"
+      },
+      "CodeExampleRequest": {
+        "properties": {
+          "endpoint_path": {
+            "type": "string",
+            "title": "Endpoint Path",
+            "description": "API endpoint path"
+          },
+          "framework": {
+            "$ref": "#/components/schemas/FrameworkType",
+            "description": "Target framework",
+            "default": "python"
+          },
+          "format": {
+            "$ref": "#/components/schemas/ExampleFormat",
+            "description": "Example format",
+            "default": "python"
+          },
+          "include_auth": {
+            "type": "boolean",
+            "title": "Include Auth",
+            "description": "Include authentication examples",
+            "default": true
+          },
+          "include_error_handling": {
+            "type": "boolean",
+            "title": "Include Error Handling",
+            "description": "Include error handling",
+            "default": true
+          },
+          "complexity_level": {
+            "type": "string",
+            "title": "Complexity Level",
+            "description": "Example complexity level",
+            "default": "intermediate"
+          },
+          "use_case": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Use Case",
+            "description": "Specific use case scenario"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint_path"
+        ],
+        "title": "CodeExampleRequest",
+        "description": "Request for Context7-powered code examples."
+      },
+      "CodeExampleResponse": {
+        "properties": {
+          "endpoint_path": {
+            "type": "string",
+            "title": "Endpoint Path",
+            "description": "Target endpoint path"
+          },
+          "framework": {
+            "type": "string",
+            "title": "Framework",
+            "description": "Framework used"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "description": "Example format"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Example title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Example description"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Generated code example"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation",
+            "description": "Code explanation"
+          },
+          "requirements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Requirements",
+            "description": "Required dependencies"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes",
+            "description": "Implementation notes"
+          },
+          "related_patterns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Related Patterns",
+            "description": "Related framework patterns"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint_path",
+          "framework",
+          "format",
+          "title",
+          "description",
+          "code",
+          "explanation"
+        ],
+        "title": "CodeExampleResponse",
+        "description": "Context7-generated code example."
+      },
+      "DocumentationRequest": {
+        "properties": {
+          "doc_type": {
+            "$ref": "#/components/schemas/DocumentationType",
+            "description": "Documentation type"
+          },
+          "api_endpoints": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Endpoints",
+            "description": "Specific endpoints to document"
+          },
+          "framework_focus": {
+            "items": {
+              "$ref": "#/components/schemas/FrameworkType"
+            },
+            "type": "array",
+            "title": "Framework Focus",
+            "description": "Framework emphasis"
+          },
+          "audience_level": {
+            "type": "string",
+            "title": "Audience Level",
+            "description": "Target audience level",
+            "default": "intermediate"
+          },
+          "include_examples": {
+            "type": "boolean",
+            "title": "Include Examples",
+            "description": "Include code examples",
+            "default": true
+          },
+          "include_patterns": {
+            "type": "boolean",
+            "title": "Include Patterns",
+            "description": "Include framework patterns",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_type"
+        ],
+        "title": "DocumentationRequest",
+        "description": "Request for Context7-enhanced documentation."
+      },
+      "DocumentationSection": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Section title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Section content"
+          },
+          "code_examples": {
+            "items": {
+              "$ref": "#/components/schemas/CodeExampleResponse"
+            },
+            "type": "array",
+            "title": "Code Examples"
+          },
+          "subsections": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentationSection"
+            },
+            "type": "array",
+            "title": "Subsections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "content"
+        ],
+        "title": "DocumentationSection",
+        "description": "Documentation section."
+      },
+      "DocumentationType": {
+        "type": "string",
+        "enum": [
+          "api_reference",
+          "quick_start",
+          "best_practices",
+          "integration_guide",
+          "troubleshooting"
+        ],
+        "title": "DocumentationType",
+        "description": "Documentation types."
+      },
+      "EmergentNarrativeData": {
+        "properties": {
+          "narrative_id": {
+            "type": "string",
+            "title": "Narrative Id",
+            "description": "Unique narrative identifier"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Generated narrative title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Comprehensive narrative summary"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/NarrativeEventResponse"
+            },
+            "type": "array",
+            "title": "Events",
+            "description": "Sequence of narrative events"
+          },
+          "character_arcs": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Character Arcs",
+            "description": "Character development arcs"
+          },
+          "plot_threads": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Plot Threads",
+            "description": "Active plot threads"
+          },
+          "causal_graph_stats": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Causal Graph Stats",
+            "description": "Causal graph statistics"
+          },
+          "coherence_report": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Coherence Report",
+            "description": "Narrative coherence analysis"
+          },
+          "narrative_patterns": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Narrative Patterns",
+            "description": "Detected narrative patterns"
+          },
+          "predicted_events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Predicted Events",
+            "description": "Predicted future events"
+          },
+          "generation_metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Generation Metadata",
+            "description": "Generation process metadata"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Narrative creation timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "narrative_id",
+          "title",
+          "summary",
+          "events",
+          "character_arcs",
+          "plot_threads",
+          "causal_graph_stats",
+          "coherence_report",
+          "narrative_patterns",
+          "generation_metadata"
+        ],
+        "title": "EmergentNarrativeData",
+        "description": "Generated emergent narrative data"
+      },
+      "EmergentNarrativeRequest": {
+        "properties": {
+          "agents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Agents",
+            "description": "Participating agent IDs"
+          },
+          "time_range": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Range",
+            "description": "Time range for narrative"
+          },
+          "narrative_perspective": {
+            "type": "string",
+            "title": "Narrative Perspective",
+            "description": "Narrative perspective (omniscient, agent_specific, observer)",
+            "default": "omniscient"
+          },
+          "focus_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focus Agent",
+            "description": "Primary focus agent for agent_specific perspective"
+          },
+          "include_predictions": {
+            "type": "boolean",
+            "title": "Include Predictions",
+            "description": "Include predicted future events",
+            "default": true
+          },
+          "coherence_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Coherence Threshold",
+            "description": "Minimum coherence required",
+            "default": 0.7
+          },
+          "max_events": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 5.0,
+            "title": "Max Events",
+            "description": "Maximum events to include",
+            "default": 50
+          },
+          "narrative_style": {
+            "type": "string",
+            "title": "Narrative Style",
+            "description": "Narrative style (dramatic, documentary, poetic)",
+            "default": "dramatic"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agents"
+        ],
+        "title": "EmergentNarrativeRequest",
+        "description": "Request for emergent narrative generation"
+      },
+      "EmitEventRequest": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "Event type: character, story, system, interaction",
+            "default": "system"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Event title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Event description"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Event severity: low, medium, high",
+            "default": "low"
+          },
+          "character_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Character Name",
+            "description": "Character name for character events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "description"
+        ],
+        "title": "EmitEventRequest"
+      },
+      "EnhancedDocumentationResponse": {
+        "properties": {
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type",
+            "description": "Documentation type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Documentation title"
+          },
+          "overview": {
+            "type": "string",
+            "title": "Overview",
+            "description": "Documentation overview"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentationSection"
+            },
+            "type": "array",
+            "title": "Sections",
+            "description": "Documentation sections"
+          },
+          "quick_reference": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Quick Reference",
+            "description": "Quick reference links"
+          },
+          "external_resources": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "External Resources",
+            "description": "External resources"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_type",
+          "title",
+          "overview",
+          "sections"
+        ],
+        "title": "EnhancedDocumentationResponse",
+        "description": "Context7-enhanced documentation response."
+      },
+      "ErrorInfo": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "recoverable": {
+            "type": "boolean",
+            "title": "Recoverable",
+            "default": true
+          },
+          "standard_guidance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standard Guidance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorInfo"
+      },
+      "ExampleFormat": {
+        "type": "string",
+        "enum": [
+          "python",
+          "json",
+          "curl",
+          "javascript",
+          "typescript"
+        ],
+        "title": "ExampleFormat",
+        "description": "Code example formats."
+      },
+      "FrameworkType": {
+        "type": "string",
+        "enum": [
+          "fastapi",
+          "pydantic",
+          "asyncio",
+          "sqlalchemy",
+          "uvicorn",
+          "pytest",
+          "python"
+        ],
+        "title": "FrameworkType",
+        "description": "Supported framework types for Context7 integration."
+      },
+      "GuestSessionResponse": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "created"
+        ],
+        "title": "GuestSessionResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "HealthResponse"
+      },
+      "InformationFragmentResponse": {
+        "properties": {
+          "fragment_id": {
+            "type": "string",
+            "title": "Fragment Id",
+            "description": "Unique fragment identifier"
+          },
+          "content": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Content",
+            "description": "Fragment content"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Information source type"
+          },
+          "reliability": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Reliability",
+            "description": "Information reliability"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Knowledge category"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Information timestamp"
+          },
+          "location_context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Context",
+            "description": "Location context"
+          },
+          "current_reliability": {
+            "type": "number",
+            "title": "Current Reliability",
+            "description": "Time-adjusted reliability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fragment_id",
+          "content",
+          "source",
+          "reliability",
+          "category",
+          "timestamp",
+          "current_reliability"
+        ],
+        "title": "InformationFragmentResponse",
+        "description": "Information fragment in turn brief"
+      },
+      "InteractionPriority": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "urgent",
+          "high",
+          "normal",
+          "low"
+        ],
+        "title": "InteractionPriority",
+        "description": "STANDARD INTERACTION PRIORITIES ENHANCED BY URGENCY LEVELS"
+      },
+      "InteractionRequest": {
+        "properties": {
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 2,
+            "title": "Participants"
+          },
+          "interaction_type": {
+            "$ref": "#/components/schemas/InteractionType",
+            "default": "dialogue"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/InteractionPriority",
+            "default": "normal"
+          },
+          "topic": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Topic",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "participants"
+        ],
+        "title": "InteractionRequest",
+        "description": "Request model for initiating character interactions."
+      },
+      "InteractionResponse": {
+        "properties": {
+          "interaction_id": {
+            "type": "string",
+            "title": "Interaction Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "interaction_id",
+          "status",
+          "created_at"
+        ],
+        "title": "InteractionResponse",
+        "description": "Response model for interaction data."
+      },
+      "InteractionType": {
+        "type": "string",
+        "enum": [
+          "dialogue",
+          "combat",
+          "cooperation",
+          "negotiation",
+          "instruction",
+          "ritual",
+          "exploration",
+          "maintenance",
+          "emergency"
+        ],
+        "title": "InteractionType",
+        "description": "ENHANCED INTERACTION TYPES SANCTIFIED BY COMMUNICATION MODES"
+      },
+      "InvalidationRequest": {
+        "properties": {
+          "all_of": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "All Of"
+          }
+        },
+        "type": "object",
+        "required": [
+          "all_of"
+        ],
+        "title": "InvalidationRequest"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "description": "User password"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "title": "Remember Me",
+            "description": "Whether to extend session duration",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "description": "Request model for user login."
+      },
+      "LogoutRequest": {
+        "properties": {
+          "access_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Token",
+            "description": "Optional access token to invalidate"
+          }
+        },
+        "type": "object",
+        "title": "LogoutRequest"
+      },
+      "LogoutResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "LogoutResponse"
+      },
+      "MultiBriefData": {
+        "properties": {
+          "turn_number": {
+            "type": "integer",
+            "title": "Turn Number",
+            "description": "Turn sequence number"
+          },
+          "agent_briefs": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TurnBriefData"
+            },
+            "type": "object",
+            "title": "Agent Briefs",
+            "description": "Agent ID to brief mapping"
+          },
+          "global_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Global Context",
+            "description": "Shared global context"
+          },
+          "turn_summary": {
+            "type": "string",
+            "title": "Turn Summary",
+            "description": "Overall turn situation summary"
+          },
+          "conflicts_detected": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Conflicts Detected",
+            "description": "Detected agent conflicts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "turn_number",
+          "agent_briefs",
+          "global_context",
+          "turn_summary"
+        ],
+        "title": "MultiBriefData",
+        "description": "Multiple agent brief data"
+      },
+      "NarrativeBuildRequest": {
+        "properties": {
+          "story_elements": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Story Elements",
+            "description": "Story elements to incorporate"
+          },
+          "build_strategy": {
+            "type": "string",
+            "title": "Build Strategy",
+            "description": "Build strategy (chronological, thematic, character_focused)",
+            "default": "chronological"
+          },
+          "coherence_enforcement": {
+            "type": "boolean",
+            "title": "Coherence Enforcement",
+            "description": "Enforce narrative coherence",
+            "default": true
+          },
+          "auto_fill_gaps": {
+            "type": "boolean",
+            "title": "Auto Fill Gaps",
+            "description": "Automatically fill narrative gaps",
+            "default": true
+          },
+          "target_length": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Length",
+            "description": "Target narrative length in events"
+          },
+          "themes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Themes",
+            "description": "Thematic focuses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "story_elements"
+        ],
+        "title": "NarrativeBuildRequest",
+        "description": "Request to build narrative from story elements"
+      },
+      "NarrativeEventResponse": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "title": "Event Id",
+            "description": "Unique event identifier"
+          },
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Id",
+            "description": "Primary agent involved"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type",
+            "description": "Type of event"
+          },
+          "narrative_text": {
+            "type": "string",
+            "title": "Narrative Text",
+            "description": "Narrative description of event"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Event timestamp"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location",
+            "description": "Event location"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Participants",
+            "description": "All participants"
+          },
+          "causal_links": {
+            "items": {
+              "$ref": "#/components/schemas/CausalLinkResponse"
+            },
+            "type": "array",
+            "title": "Causal Links",
+            "description": "Causal relationships"
+          },
+          "narrative_weight": {
+            "type": "number",
+            "title": "Narrative Weight",
+            "description": "Importance to overall narrative"
+          },
+          "coherence_score": {
+            "type": "number",
+            "title": "Coherence Score",
+            "description": "Coherence with surrounding events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_id",
+          "event_type",
+          "narrative_text",
+          "timestamp",
+          "narrative_weight",
+          "coherence_score"
+        ],
+        "title": "NarrativeEventResponse",
+        "description": "Event in emergent narrative"
+      },
+      "PatternValidationRequest": {
+        "properties": {
+          "api_code": {
+            "type": "string",
+            "title": "Api Code",
+            "description": "API code to validate"
+          },
+          "framework": {
+            "$ref": "#/components/schemas/FrameworkType",
+            "description": "Framework to validate against",
+            "default": "fastapi"
+          },
+          "validation_rules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Validation Rules",
+            "description": "Specific validation rules"
+          },
+          "include_suggestions": {
+            "type": "boolean",
+            "title": "Include Suggestions",
+            "description": "Include improvement suggestions",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_code"
+        ],
+        "title": "PatternValidationRequest",
+        "description": "Request for API pattern validation using Context7."
+      },
+      "PatternValidationResponse": {
+        "properties": {
+          "is_valid": {
+            "type": "boolean",
+            "title": "Is Valid",
+            "description": "Overall validation status"
+          },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "Quality score"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Issues",
+            "description": "Identified issues"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suggestions",
+            "description": "General improvements"
+          },
+          "best_practices": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Best Practices",
+            "description": "Applicable best practices"
+          },
+          "framework_compliance": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Framework Compliance",
+            "description": "Framework compliance status"
+          },
+          "validated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Validated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_valid",
+          "score"
+        ],
+        "title": "PatternValidationResponse",
+        "description": "API pattern validation result."
+      },
+      "RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token",
+            "description": "Refresh token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest",
+        "description": "Request model for token refresh."
+      },
+      "SimulationRequest": {
+        "properties": {
+          "character_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "minItems": 2,
+            "title": "Character Names"
+          },
+          "turns": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turns"
+          },
+          "setting": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setting"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario"
+          }
+        },
+        "type": "object",
+        "required": [
+          "character_names"
+        ],
+        "title": "SimulationRequest"
+      },
+      "SimulationResponse": {
+        "properties": {
+          "story": {
+            "type": "string",
+            "title": "Story"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Participants"
+          },
+          "turns_executed": {
+            "type": "integer",
+            "title": "Turns Executed"
+          },
+          "duration_seconds": {
+            "type": "number",
+            "title": "Duration Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "story",
+          "participants",
+          "turns_executed",
+          "duration_seconds"
+        ],
+        "title": "SimulationResponse"
+      },
+      "StandardResponse_BeliefModelData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BeliefModelData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StandardResponse_BestPracticesResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BestPracticesResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StandardResponse_CausalGraphData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CausalGraphData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StandardResponse_CodeExampleResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CodeExampleResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StandardResponse_Dict_str__Any__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StandardResponse_EmergentNarrativeData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmergentNarrativeData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StandardResponse_EnhancedDocumentationResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EnhancedDocumentationResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StandardResponse_MultiBriefData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MultiBriefData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StandardResponse_PatternValidationResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PatternValidationResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StandardResponse_TurnBriefData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TurnBriefData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "StandardResponse"
+      },
+      "StoryGenerationRequest": {
+        "properties": {
+          "characters": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Characters"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": "A Generated Story"
+          }
+        },
+        "type": "object",
+        "required": [
+          "characters"
+        ],
+        "title": "StoryGenerationRequest",
+        "description": "Request model for story generation."
+      },
+      "StoryGenerationResponse": {
+        "properties": {
+          "generation_id": {
+            "type": "string",
+            "title": "Generation Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generation_id",
+          "status",
+          "message"
+        ],
+        "title": "StoryGenerationResponse",
+        "description": "Response model for story generation requests."
+      },
+      "TokenValidationResponse": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At",
+            "description": "Token expiry timestamp in milliseconds"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid"
+        ],
+        "title": "TokenValidationResponse"
+      },
+      "TurnBriefData": {
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "title": "Agent Id",
+            "description": "Target agent identifier"
+          },
+          "turn_number": {
+            "type": "integer",
+            "title": "Turn Number",
+            "description": "Turn sequence number"
+          },
+          "subjective_world_state": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Subjective World State",
+            "description": "Agent's filtered world view"
+          },
+          "available_information": {
+            "items": {
+              "$ref": "#/components/schemas/InformationFragmentResponse"
+            },
+            "type": "array",
+            "title": "Available Information",
+            "description": "Available information fragments"
+          },
+          "recommended_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommended Actions",
+            "description": "Recommended actions based on agent personality"
+          },
+          "narrative_context": {
+            "type": "string",
+            "title": "Narrative Context",
+            "description": "Narrative description of current situation"
+          },
+          "confidence_levels": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Confidence Levels",
+            "description": "Confidence in different information categories"
+          },
+          "visible_locations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Visible Locations",
+            "description": "Currently visible locations"
+          },
+          "known_agents": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Known Agents",
+            "description": "Known agents and their visibility"
+          },
+          "personality_factors": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Personality Factors",
+            "description": "Agent's personality influences"
+          },
+          "fog_of_war_status": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Fog Of War Status",
+            "description": "Information access limitations"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Brief generation timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agent_id",
+          "turn_number",
+          "subjective_world_state",
+          "available_information",
+          "recommended_actions",
+          "narrative_context",
+          "confidence_levels",
+          "visible_locations",
+          "known_agents",
+          "personality_factors",
+          "fog_of_war_status"
+        ],
+        "title": "TurnBriefData",
+        "description": "Personalized turn brief data"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ValidationIssue": {
+        "properties": {
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Issue severity (error, warning, info)"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Issue category"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Issue description"
+          },
+          "line_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line Number",
+            "description": "Line number if applicable"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion",
+            "description": "Improvement suggestion"
+          },
+          "pattern_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pattern Reference",
+            "description": "Reference to best practice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "severity",
+          "category",
+          "message"
+        ],
+        "title": "ValidationIssue",
+        "description": "API pattern validation issue."
+      },
+      "WorkspaceCharacterCreateRequest": {
+        "properties": {
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Id",
+            "description": "Optional stable identifier for the character (defaults to a server-derived id)."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "background_summary": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Background Summary",
+            "default": ""
+          },
+          "personality_traits": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Personality Traits",
+            "default": ""
+          },
+          "skills": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Skills"
+          },
+          "relationships": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Relationships"
+          },
+          "current_location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Location"
+          },
+          "inventory": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Inventory"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "structured_data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Structured Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "WorkspaceCharacterCreateRequest"
+      },
+      "WorkspaceCharacterUpdateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "background_summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Summary"
+          },
+          "personality_traits": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personality Traits"
+          },
+          "skills": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skills"
+          },
+          "relationships": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relationships"
+          },
+          "current_location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Location"
+          },
+          "inventory": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inventory"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "structured_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Data"
+          }
+        },
+        "type": "object",
+        "title": "WorkspaceCharacterUpdateRequest"
+      }
+    },
+    "securitySchemes": {
+      "APIKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for authenticated requests"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token for authenticated requests"
+      }
+    },
+    "examples": {
+      "CharacterSuccessResponse": {
+        "summary": "Successful character creation",
+        "value": {
+          "status": "success",
+          "data": {
+            "agent_id": "aragorn_ranger",
+            "name": "Aragorn",
+            "status": "active",
+            "created_at": "2024-01-01T12:00:00Z",
+            "background_summary": "A skilled ranger and heir to the throne of Gondor",
+            "skills": {
+              "combat": 0.9,
+              "leadership": 0.8,
+              "tracking": 0.95
+            }
+          },
+          "metadata": {
+            "timestamp": "2024-01-01T12:00:00Z",
+            "request_id": "req_123456",
+            "api_version": "1.1",
+            "server_time": 0.045
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "summary": "Validation error example",
+        "value": {
+          "status": "error",
+          "data": null,
+          "error": {
+            "type": "validation_error",
+            "message": "Character name is required",
+            "detail": "The 'name' field cannot be empty",
+            "field": "name"
+          },
+          "metadata": {
+            "timestamp": "2024-01-01T12:00:00Z",
+            "request_id": "req_123457",
+            "api_version": "1.1",
+            "server_time": 0.012
+          }
+        }
+      },
+      "CharacterCreationRequest": {
+        "summary": "Create a new character",
+        "value": {
+          "agent_id": "aragorn_ranger",
+          "name": "Aragorn",
+          "background_summary": "A skilled ranger and heir to the throne of Gondor",
+          "personality_traits": "Brave, noble, skilled in combat and leadership",
+          "skills": {
+            "combat": 0.9,
+            "leadership": 0.8,
+            "tracking": 0.95,
+            "diplomacy": 0.7
+          },
+          "current_location": "Rivendell",
+          "metadata": {
+            "source": "tolkien",
+            "category": "hero"
+          }
+        }
+      },
+      "StoryGenerationRequest": {
+        "summary": "Generate a story with multiple characters",
+        "value": {
+          "characters": [
+            "aragorn_ranger",
+            "legolas_elf",
+            "gimli_dwarf"
+          ],
+          "title": "The Fellowship's Journey"
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "System",
+      "description": "System health, version info, and API metadata endpoints"
+    },
+    {
+      "name": "Characters",
+      "description": "Character creation, management, and customization endpoints"
+    },
+    {
+      "name": "Stories",
+      "description": "Story generation, export, and narrative management endpoints"
+    },
+    {
+      "name": "Interactions",
+      "description": "Real-time character interactions and conversation management"
+    },
+    {
+      "name": "Monitoring",
+      "description": "Performance metrics, monitoring, and observability endpoints"
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.novel-engine.app",
+      "description": "Production server"
+    }
+  ],
+  "externalDocs": {
+    "description": "Full API Documentation",
+    "url": "https://docs.novel-engine.app"
+  }
+}

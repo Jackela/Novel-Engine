@@ -11,7 +11,7 @@ from src.api.schemas import HealthResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["health"])
+router = APIRouter(tags=["Health"])
 
 
 def _uptime_seconds(request: Request) -> float:

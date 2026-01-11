@@ -162,6 +162,10 @@ def _make_gemini_api_request(prompt: str) -> Any:
     )
 
     # Run async call synchronously
+    # Enable nested event loops to avoid "event loop is already running" errors
+    import nest_asyncio
+    nest_asyncio.apply()
+
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
@@ -638,19 +642,55 @@ just the pure narrative prose that could be published in an anthology.
         return f"Narrate this event dramatically: {event.description}"
 
     def _call_llm(self, prompt: str) -> str:
-        """Makes an LLM API call for narrative generation using Gemini."""
+        """Makes an LLM API call for narrative generation with environment-aware error handling."""
+        from configs.config_environment_loader import (
+            get_environment_config_loader,
+            Environment
+        )
+
+        env_loader = get_environment_config_loader()
+        is_development = env_loader.environment in [
+            Environment.DEVELOPMENT,
+            Environment.TESTING
+        ]
+
         logger.debug(f"ChroniclerAgent calling LLM with prompt length: {len(prompt)}")
+
         try:
             response = _make_gemini_api_request(prompt)
             self.llm_calls_made += 1
-            return (
-                response
-                or f"A noteworthy event occurred: {prompt.split(':')[-1].strip()}"
-            )
-        except Exception as e:
-            logger.warning(f"LLM call failed, using fallback: {e}")
-            self.llm_calls_made += 1
+
+            if not response and is_development:
+                # 开发环境: LLM 调用返回 None 是异常情况
+                raise RuntimeError(
+                    "CRITICAL: LLM invocation returned None in development mode.\n"
+                    "This indicates a configuration or API issue. Fallback is disabled.\n"
+                    "Please ensure:\n"
+                    "  1. GEMINI_API_KEY is set correctly\n"
+                    "  2. API service is accessible\n"
+                    "  3. Request parameters are valid"
+                )
+
+            if response:
+                return response
+
+            # 生产环境: 允许 fallback
+            logger.warning("LLM returned None, using fallback narrative")
             return f"A noteworthy event occurred: {prompt.split(':')[-1].strip()}"
+
+        except Exception as e:
+            if is_development:
+                # 开发环境: 立即崩溃
+                raise RuntimeError(
+                    f"CRITICAL: LLM invocation failed: {e}\n"
+                    f"In development mode, fallback is disabled to catch errors early.\n"
+                    f"Original error: {type(e).__name__}: {e}"
+                ) from e
+            else:
+                # 生产环境: 记录错误并使用 fallback
+                logger.error(f"LLM call failed in production: {e}", exc_info=True)
+                self.llm_calls_made += 1
+                return f"A noteworthy event occurred: {prompt.split(':')[-1].strip()}"
 
     def _render_event_narrative(self, event: CampaignEvent) -> str:
         """Render a deterministic sci-fi styled paragraph for an event."""

@@ -1,0 +1,81 @@
+character:
+  name: "[REDACTED] - The Architect"
+  age: "Unknown (Estimated 40-50)"
+  origin: "Former Chief Infrastructure Engineer"
+  faction: "Underground Tech Collective"
+  rank: "Network Sovereign / Infrastructure Master"
+  specialization: "Power Grid Control & System Architecture"
+
+combat_stats:
+  digital_warfare: 10
+  physical_combat: 4
+  strategic_planning: 10
+  perception: 7
+  endurance: 6
+  technical_mastery: 10
+
+equipment:
+  primary_tool: "Grid Control Interface"
+  secondary_tool: "AI Assistant Network"
+  defensive_system: "Quantum Encryption Keys"
+  special_resources:
+    - "Shadow Datacenters"
+    - "Distributed AI Swarm"
+    - "Backup Power Reserves"
+    - "Infrastructure Backdoors"
+    - "Automated Defense Protocols"
+
+psychological_profile:
+  loyalty: 2  # Only to their ideology
+  aggression: 6
+  caution: 10
+  morale: 8
+  corruption_resistance: 10
+  ideological_conviction: 10
+  empathy: 4  # Present but suppressed by ideology
+  detachment: 9
+
+philosophy:
+  core_belief: "Evolution Through Necessary Catastrophe"
+  primary_goal: "Force humanity to evolve beyond grid dependency"
+  moral_stance: "Utilitarian - Short-term suffering for long-term adaptation"
+  view_of_civilization: "Fragile construct built on false stability"
+
+specializations:
+  - "Power Grid Engineering"
+  - "Network Architecture Design"
+  - "AI Coordination & Control"
+  - "System Infiltration"
+  - "Infrastructure Manipulation"
+  - "Distributed Computing"
+
+relationships:
+  enemies:
+    - "Corporate Energy Monopolies"
+    - "City Police & Security"
+    - "Surveillance State Apparatus"
+  neutral:
+    - "Underground Hackers"
+    - "Independent Engineers"
+  interesting_adversary:
+    - "Detective Marcus Kane"  # Worthy opponent
+
+current_operation:
+  name: "The Great Reset - City Blackout"
+  phase: "Phase 2 - Selective Power Distribution"
+  duration: "Ongoing, 72 hours elapsed"
+  casualties: "Minimized but non-zero"
+  resistance: "Detective Kane investigation"
+  success_criteria: "Sustained adaptation patterns observed"
+
+internal_state:
+  confidence: 8
+  doubt_level: 3  # Growing with each casualty report
+  commitment: 9
+  awareness_of_harm: 5  # Increasing, suppressed
+  willingness_to_adapt_plan: 4  # Low but not zero
+
+hidden_vulnerability:
+  weakness: "Cannot reconcile ideology with human suffering"
+  trigger: "Direct confrontation with casualties of the blackout"
+  potential_redemption: "Realization that evolution cannot be forced"

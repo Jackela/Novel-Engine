@@ -41,6 +41,85 @@
 - Python 3.11+
 - Node.js 18+ & npm
 
+### ⚙️ 配置 LLM API 密钥
+
+Novel Engine 使用 Google Gemini API 进行 AI 叙事生成。首次使用前需要配置 API 密钥：
+
+1. **获取 API 密钥**：
+   - 访问 [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - 创建或选择项目
+   - 生成 API 密钥
+
+2. **配置环境变量**：
+   ```bash
+   # 复制示例文件
+   cp .env.example .env
+
+   # 编辑 .env 文件，添加你的密钥
+   # GEMINI_API_KEY=your_actual_api_key_here
+   ```
+
+3. **验证配置** (可选)：
+   ```bash
+   python scripts/verify_llm_api.py
+   ```
+
+   预期输出：
+   ```
+   ✅ GEMINI_API_KEY 已配置
+   ✅ Gemini provider 初始化成功
+   🎉 所有验证通过！LLM API 已成功配置
+   ```
+
+> **注意**: 没有 API 密钥时，系统会使用降级模式运行（生成占位符内容）。配置 API 密钥后，生成质量将显著提升。
+
+### 🛡️ 开发环境硬化 (Fail Fast)
+
+Novel Engine 在开发环境中采用 **Fail Fast** 策略，确保配置错误能够立即暴露，而非被降级机制掩盖:
+
+#### 开发环境 vs 生产环境
+
+| 行为 | 开发环境 | 生产环境 |
+|------|---------|---------|
+| API 密钥缺失 | **立即崩溃** ❌ | 使用 Fallback ✅ |
+| API 调用失败 | **立即崩溃** ❌ | 使用 Fallback ✅ |
+| 配置错误 | **立即崩溃** ❌ | 记录错误 + Fallback ✅ |
+
+#### 为什么需要 Fail Fast?
+
+1. **及早发现配置错误** - 不允许错误配置掩盖真实问题
+2. **更可靠的测试** - 单元测试不会因为 Fallback 而"虚假通过"
+3. **更好的开发体验** - 立即看到完整的错误堆栈
+4. **减少生产风险** - 在开发环境就发现并修复问题
+
+#### 环境配置
+
+设置环境变量以选择运行模式:
+
+```bash
+# 开发模式 (默认) - 启用 Fail Fast
+export NOVEL_ENGINE_ENV=development
+
+# 生产模式 - 启用 Fallback
+export NOVEL_ENGINE_ENV=production
+
+# 测试模式 - 启用 Fail Fast
+export NOVEL_ENGINE_ENV=testing
+```
+
+#### 常见错误和解决方案
+
+如果看到以下错误:
+
+```
+RuntimeError: CRITICAL: GEMINI_API_KEY not configured.
+```
+
+**解决方案**:
+1. 检查 `.env` 文件是否存在
+2. 确认文件中有 `GEMINI_API_KEY=<your_key>`
+3. 重启应用以重新加载环境变量
+
 ### 一键开发环境 (推荐)
 
 我们提供统一的脚本来同时管理前后端进程：

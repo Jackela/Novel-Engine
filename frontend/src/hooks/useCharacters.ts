@@ -3,6 +3,7 @@ import api from '@/services/api';
 import type { CharacterFormData } from '@/types';
 import { logger } from '@/services/logging/LoggerFactory';
 import { queryKeys } from '@/services/queries';
+import { ApiError } from '@/lib/api/errors';
 
 export function useCharacters() {
   return useQuery(queryKeys.characters, () => api.getCharacters(), {
@@ -30,12 +31,30 @@ export function useCreateCharacter() {
     ({ data }: { data: CharacterFormData; files?: File[] }) =>
       api.createCharacter(data),
     {
-      onSuccess: () => {
+      onSuccess: async () => {
         // Invalidate and refetch character list
-        queryClient.invalidateQueries(queryKeys.characters);
+        await queryClient.invalidateQueries(queryKeys.characters);
       },
       onError: (error) => {
         logger.error('Character creation failed', error as Error, { component: 'useCreateCharacter' });
+
+        // Extract and log validation errors for debugging
+        if (error instanceof ApiError && error.kind === 'validation' && error.fields) {
+          // Map backend field names to frontend field names
+          const fieldMap: Record<string, string> = {
+            'agent_id': 'name',
+            'background_summary': 'description',
+            'personality_traits': 'role',
+          };
+
+          const mappedErrors = error.fields.map(field => ({
+            ...field,
+            path: fieldMap[field.path] || field.path,
+            originalPath: field.path,
+          }));
+
+          logger.warn('Validation errors:', { errors: mappedErrors, component: 'useCreateCharacter' });
+        }
       },
     }
   );
@@ -64,6 +83,23 @@ export function useUpdateCharacter() {
       },
       onError: (error) => {
         logger.error('Character update failed', error as Error, { component: 'useUpdateCharacter' });
+
+        // Extract and log validation errors for debugging
+        if (error instanceof ApiError && error.kind === 'validation' && error.fields) {
+          const fieldMap: Record<string, string> = {
+            'agent_id': 'name',
+            'background_summary': 'description',
+            'personality_traits': 'role',
+          };
+
+          const mappedErrors = error.fields.map(field => ({
+            ...field,
+            path: fieldMap[field.path] || field.path,
+            originalPath: field.path,
+          }));
+
+          logger.warn('Validation errors:', { errors: mappedErrors, component: 'useUpdateCharacter' });
+        }
       },
     }
   );

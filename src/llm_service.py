@@ -277,21 +277,42 @@ class UnifiedLLMService:
             return response
 
         except Exception as e:
-            self.metrics.failed_requests += 1
-            logger.error(f"LLM request {request_id} failed: {str(e)}")
-
-            # Return error response
-            return LLMResponse(
-                content=f"[LLM Error: {str(e)}]",
-                provider=request.provider,
-                format_validated=False,
-                cached=False,
-                tokens_used=0,
-                response_time_ms=int((time.time() - start_time) * 1000),
-                cost_estimate=0.0,
-                timestamp=datetime.now(),
-                request_id=request_id,
+            from configs.config_environment_loader import (
+                get_environment_config_loader,
+                Environment
             )
+
+            env_loader = get_environment_config_loader()
+            is_development = env_loader.environment in [
+                Environment.DEVELOPMENT,
+                Environment.TESTING
+            ]
+
+            self.metrics.failed_requests += 1
+            logger.error(f"LLM request {request_id} failed: {str(e)}", exc_info=True)
+
+            if is_development:
+                # 开发环境: 抛出异常而不是返回错误响应
+                raise RuntimeError(
+                    f"CRITICAL: LLM request failed in development mode.\n"
+                    f"Error: {type(e).__name__}: {str(e)}\n"
+                    f"Request ID: {request_id}\n"
+                    f"Provider: {request.provider.value if request.provider else 'default'}\n"
+                    f"\nIn development, LLM errors are fatal to catch configuration issues early."
+                ) from e
+            else:
+                # 生产环境: 返回错误响应对象 (允许上层处理)
+                return LLMResponse(
+                    content=f"[LLM Error: {str(e)}]",
+                    provider=request.provider,
+                    format_validated=False,
+                    cached=False,
+                    tokens_used=0,
+                    response_time_ms=int((time.time() - start_time) * 1000),
+                    cost_estimate=0.0,
+                    timestamp=datetime.now(),
+                    request_id=request_id,
+                )
 
     async def _call_gemini(
         self, request: LLMRequest, provider_config: Dict[str, Any]
