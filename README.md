@@ -13,7 +13,7 @@
 
 ## 🚀 核心特性
 
-- **多智能体编排**：`DirectorAgent`（导演）、`PersonaAgent`（角色）、`ChroniclerAgent`（记录者）基于事件总线协作，而非硬编码调用。
+- **多智能体编排**：`DirectorAgent`（导演）、`PersonaAgent`（角色）、`ChroniclerAgent`（记录者）基于事件总线协作。
 - **访客优先架构**：无需注册数据库，基于**文件系统的工作空间 (Filesystem Workspaces)** 技术，支持零配置启动和即时演示。
 - **实时流式交互**：后端 `/api/events/stream` (SSE) 配合前端 `useRealtimeEvents` 钩子，提供毫秒级叙事反馈。
 - **统一 API 规范**：全站统一使用 `/api/*` 路由前缀，前端集成 SSOT（单一事实来源）API 客户端与自动错误处理。
@@ -21,7 +21,7 @@
   - 前端：TypeScript 严格模式 + ESLint (SOLID 原则) + Vitest (80% 覆盖率要求)。
   - 后端：Mypy 类型检查 + Pytest 单元/集成测试。
 
-![Dashboard Preview](docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png)
+
 
 ---
 
@@ -29,7 +29,7 @@
 
 本项目深受**领域驱动设计 (DDD)** 和 **“作者之死”** 叙事理论影响。
 
-- **逻辑微服务**：虽然代码位于单一仓库 (`src/`)，但业务逻辑按领域严格隔离 (`contexts/characters`, `contexts/narratives`)。
+- **逻辑微服务**：虽然代码位于单一仓库 (`src/`)，但业务逻辑按领域严格隔离 (`src/contexts/character`, `src/contexts/narratives`)。
 - **文件即数据**：为了极致的可移植性与本地优先体验，所有角色卡、战役状态和会话记录均以 Markdown/YAML/JSON 格式存储在本地文件系统中。
 - **API 优先**：前后端通过标准化的 REST API 通信，支持 OpenAPI (Swagger) 自动文档生成。
 
@@ -53,7 +53,7 @@ Novel Engine 使用 Google Gemini API 进行 AI 叙事生成。首次使用前�
 2. **配置环境变量**：
    ```bash
    # 复制示例文件
-   cp .env.example .env
+   cp config/env/.env.example .env
 
    # 编辑 .env 文件，添加你的密钥
    # GEMINI_API_KEY=your_actual_api_key_here
@@ -159,7 +159,7 @@ Novel-Engine/
 ├── src/                  # 后端核心代码 (FastAPI + Agents)
 │   ├── api/              # API 路由与应用工厂
 │   ├── agents/           # 智能体逻辑 (Director, Persona)
-│   ├── contexts/         # 领域边界 (DDD Contexts)
+│   ├── contexts/         # 领域边界 (DDD Contexts, src/contexts/)
 │   └── workspaces/       # 文件系统持久化层
 ├── frontend/             # 前端应用 (React + Vite)
 │   ├── src/lib/api/      # SSOT API 客户端
@@ -201,6 +201,14 @@ Novel-Engine/
 1. 遵循 `docs/coding-standards.md` 中的代码规范。
 2. 提交前请运行本地验证脚本：`scripts/validate_ci_locally.sh`。
 3. 重大架构变更需通过 `openspec` 提出提案。
+
+---
+
+## 🤖 AI 协作
+
+- `AGENTS.md` 是 AI 工作流与 SSoT 位置的唯一真相来源。
+- 任何包含提案/规格/架构变更的请求，先阅读 `openspec/AGENTS.md`。
+- 项目构建与测试命令请参考 `CLAUDE.md`。
 
 ---
 

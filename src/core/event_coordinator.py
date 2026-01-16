@@ -20,7 +20,7 @@ event coordination, separate from integration orchestration.
 import logging
 from typing import Any, Callable, Dict, Optional
 
-from src.event_bus import EventBus
+from src.core.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -167,3 +167,4 @@ class EventCoordinator:
 
 
 __all__ = ["EventCoordinator"]
+

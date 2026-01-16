@@ -32,8 +32,8 @@ The following deployment scripts have been migrated to improve organization and 
 
 ### Path Updates
 
-All internal paths within deployment scripts have been updated to reflect the new `configs/` directory structure:
-- Configuration file references updated to use `configs/environments/`, `configs/security/`, etc.
+All internal paths within deployment scripts have been updated to reflect the new `config/` directory structure:
+- Configuration file references updated to use `config/environments/`, `config/security/`, etc.
 - Project root path calculations adjusted for new script locations
 - Documentation references updated throughout the codebase
 
@@ -134,9 +134,9 @@ The following workflows have been updated to use the new deployment script locat
 
 All deployment scripts are integrated with the new unified configuration system:
 
-- **Environment Configs**: `configs/environments/` for environment-specific settings
-- **Security Configs**: `configs/security/` for security policies and SSL settings
-- **Infrastructure Configs**: `configs/nginx/`, `configs/prometheus/` for supporting services
+- **Environment Configs**: `config/environments/` for environment-specific settings
+- **Security Configs**: `config/security/` for security policies and SSL settings
+- **Infrastructure Configs**: `config/nginx/`, `config/prometheus/` for supporting services
 
 ## Rollback and Recovery
 
@@ -186,7 +186,7 @@ To verify the migration was successful:
 ### Common Issues
 
 1. **Module Not Found Errors**: Ensure all dependencies are installed
-2. **Configuration Not Found**: Verify config files exist in `configs/` directory
+2. **Configuration Not Found**: Verify config files exist in `config/` directory
 3. **Permission Errors**: Ensure deployment scripts are executable (`chmod +x`)
 4. **Environment Variables**: Check all required environment variables are set
 
@@ -217,3 +217,4 @@ Planned improvements to the deployment system:
 3. Integration with monitoring and alerting systems
 4. Automated security scanning in deployment pipeline
 5. Multi-cloud deployment support
+

@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from config_loader import get_campaign_log_filename
+from src.core.config.config_loader import get_campaign_log_filename
 
 logger = logging.getLogger(__name__)
 

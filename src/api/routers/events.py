@@ -80,12 +80,31 @@ def broadcast_sse_event(app, event_data: Dict[str, Any]) -> None:
             _safe_sse_put(queue, event_data, client_id)
 
 
-async def event_generator(app, client_id: str):
+def _resolve_event_interval(interval_seconds: Optional[float]) -> float:
+    default_interval = 2.0
+    if interval_seconds is None:
+        return default_interval
+    try:
+        interval_value = float(interval_seconds)
+    except (TypeError, ValueError):
+        return default_interval
+    return max(0.01, min(interval_value, 10.0))
+
+
+async def event_generator(
+    app,
+    client_id: str,
+    limit: Optional[int] = None,
+    interval_seconds: Optional[float] = None,
+):
     _ensure_state(app)
 
     queues: dict[str, asyncio.Queue] = app.state.sse_event_queues
     client_queue: asyncio.Queue = asyncio.Queue(maxsize=100)
     queues[client_id] = client_queue
+    events_sent = 0
+    simulated_index = 0
+    event_interval_seconds = _resolve_event_interval(interval_seconds)
 
     try:
         yield "retry: 3000\n\n"
@@ -102,17 +121,48 @@ async def event_generator(app, client_id: str):
         )
         yield f"id: {connect_event['id']}\n"
         yield f"data: {json.dumps(connect_event)}\n\n"
+        events_sent += 1
+        last_emit_time = time.monotonic()
+        if limit is not None and events_sent >= limit:
+            return
 
         while True:
             try:
                 try:
                     event_data = await asyncio.wait_for(
-                        client_queue.get(), timeout=30.0
+                        client_queue.get(), timeout=event_interval_seconds
                     )
-                    yield f"id: {event_data['id']}\n"
-                    yield f"data: {json.dumps(event_data)}\n\n"
                 except asyncio.TimeoutError:
-                    yield ": heartbeat\n\n"
+                    elapsed = time.monotonic() - last_emit_time
+                    if elapsed < event_interval_seconds:
+                        await asyncio.sleep(event_interval_seconds - elapsed)
+                    simulated_index += 1
+                    event_types = ["character", "story", "system", "interaction"]
+                    severities = ["low", "medium", "high"]
+                    event_type = event_types[simulated_index % len(event_types)]
+                    severity = severities[simulated_index % len(severities)]
+                    character_name = (
+                        f"Character-{simulated_index}"
+                        if event_type == "character"
+                        else None
+                    )
+                    event_data = create_sse_event(
+                        app,
+                        event_type=event_type,
+                        title=f"Event {simulated_index}",
+                        description=(
+                            f"Simulated dashboard event #{simulated_index}"
+                        ),
+                        severity=severity,
+                        character_name=character_name,
+                    )
+
+                yield f"id: {event_data['id']}\n"
+                yield f"data: {json.dumps(event_data)}\n\n"
+                events_sent += 1
+                last_emit_time = time.monotonic()
+                if limit is not None and events_sent >= limit:
+                    break
 
             except asyncio.CancelledError:
                 logger.info("SSE client disconnected: %s", client_id)
@@ -129,6 +179,9 @@ async def event_generator(app, client_id: str):
                 )
                 yield f"id: {error_event['id']}\n"
                 yield f"data: {json.dumps(error_event)}\n\n"
+                events_sent += 1
+                if limit is not None and events_sent >= limit:
+                    break
     finally:
         app.state.active_sse_connections = max(0, app.state.active_sse_connections - 1)
         queues.pop(client_id, None)
@@ -136,11 +189,20 @@ async def event_generator(app, client_id: str):
 
 
 @router.get("/events/stream")
-async def stream_events(request: Request):
+async def stream_events(
+    request: Request,
+    limit: Optional[int] = None,
+    interval: Optional[float] = None,
+):
     client_id = secrets.token_hex(8)
 
     return StreamingResponse(
-        event_generator(request.app, client_id),
+        event_generator(
+            request.app,
+            client_id,
+            limit=limit,
+            interval_seconds=interval,
+        ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

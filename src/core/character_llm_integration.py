@@ -23,7 +23,7 @@ def _get_llm_service() -> Any:
     """Get or create the LLM service singleton."""
     global _llm_service_instance
     if _llm_service_instance is None:
-        from src.llm_service import UnifiedLLMService
+        from src.core.llm_service import UnifiedLLMService
 
         _llm_service_instance = UnifiedLLMService()
     return _llm_service_instance
@@ -348,25 +348,31 @@ Agent State: Active and operational with current morale {morale_level:.2f}
         self, character_name: str, primary_faction: str
     ) -> str:
         """Build the decision request section of the prompt."""
-        return f"""DECISION REQUEST:
-As {character_name}, a {primary_faction} character with the personality and priorities described above, what action would you take in this situation? Consider your character's traits, faction loyalty, current goals, and the recent events.
-
-Please respond in the following format:
-ACTION: [choose one of the numbered available actions or 'wait_observe']
-TARGET: [specify target if applicable, or 'none']
-REASONING: [explain your decision from the character's perspective in 1-2 sentences]
-
-Example response:
-ACTION: 3
-TARGET: hostile_entity_alpha
-REASONING: As a dedicated envoy of the Founders' Council, my duty requires me to engage threats to protect innocent civilians. My decisive nature and high mission success priority compel me to take direct action."""
+        return (
+            "DECISION REQUEST:\n"
+            f"As {character_name}, a {primary_faction} character with the personality "
+            "and priorities described above, what action would you take in this situation? "
+            "Consider your character's traits, faction loyalty, current goals, and the "
+            "recent events.\n\n"
+            "Please respond in the following format:\n"
+            "ACTION: [choose one of the numbered available actions or 'wait_observe']\n"
+            "TARGET: [specify target if applicable, or 'none']\n"
+            "REASONING: [explain your decision from the character's perspective in 1-2 "
+            "sentences]\n\n"
+            "Example response:\n"
+            "ACTION: 3\n"
+            "TARGET: hostile_entity_alpha\n"
+            "REASONING: As a dedicated envoy of the Founders' Council, my duty requires me "
+            "to engage threats to protect innocent civilians. My decisive nature and high "
+            "mission success priority compel me to take direct action."
+        )
 
     def _call_llm(self, prompt: str) -> str:
         """Call LLM with the constructed prompt using UnifiedLLMService."""
         fallback_response = "ACTION: observe\nTARGET: none\nREASONING: Assessing situation before taking action."
 
         try:
-            from src.llm_service import LLMProvider, LLMRequest, ResponseFormat
+            from src.core.llm_service import LLMProvider, LLMRequest, ResponseFormat
 
             llm_service = _get_llm_service()
 
@@ -515,3 +521,4 @@ REASONING: As a dedicated envoy of the Founders' Council, my duty requires me to
             return ActionPriority.MEDIUM
         else:
             return ActionPriority.LOW
+

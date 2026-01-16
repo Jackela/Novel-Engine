@@ -47,7 +47,7 @@ Acceptance Criteria:
 
 ### Design
 - [Design Documents](../design/)
-- [UI Design Spec](../UI_Design_Spec.md)
+- [UI Design Spec](../specifications/ui-design-spec.md)
 
 ---
 

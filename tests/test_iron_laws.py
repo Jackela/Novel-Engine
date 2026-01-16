@@ -30,9 +30,9 @@ import pytest
 
 # Import system components
 try:
-    from src.agents.director_agent import DirectorAgent
-    from src.persona_agent import PersonaAgent
-    from src.shared_types import (
+    from src.agents.director_agent_integrated import DirectorAgent
+    from src.agents.persona_agent.agent import PersonaAgent
+    from src.core.types.shared_types import (
         ActionIntensity,
         ActionParameters,
         ActionTarget,
@@ -1016,3 +1016,6 @@ class TestIronLawsEdgeCases:
 if __name__ == "__main__":
     # Run the test suite
     pytest.main([__file__, "-v"])
+
+
+

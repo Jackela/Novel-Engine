@@ -96,10 +96,10 @@ sys.path.append(".")
 sys.path.insert(0, os.path.abspath("."))
 
 try:
-    from src.agents.director_agent import DirectorAgent
-    from src.persona_agent import PersonaAgent
+    from src.agents.director_agent_integrated import DirectorAgent
+    from src.agents.persona_agent.agent import PersonaAgent
     from src.caching import StateHasher, SemanticCache, TokenBudgetManager
-    from src.shared_types import CharacterData, WorldState, ProposedAction
+    from src.core.types.shared_types import CharacterData, WorldState, ProposedAction
     from api_server import app
     print("✅ All imports successful")
 except ImportError as e:
@@ -182,8 +182,8 @@ except ImportError as e:
 
             # Backup configuration files
             config_files = [
-                "configs/environments/development.yaml",
-                "configs/environments/settings.yaml",
+                "config/environments/development.yaml",
+                "config/environments/settings.yaml",
                 "requirements.txt",
             ]
 
@@ -233,7 +233,7 @@ except ImportError as e:
         try:
             # Copy staging settings to active configuration
             staging_settings = self.staging_dir / "settings_staging.yaml"
-            active_settings = self.project_root / "configs/environments/settings.yaml"
+            active_settings = self.project_root / "config/environments/settings.yaml"
 
             # Backup current settings
             if active_settings.exists():
@@ -408,40 +408,40 @@ from pathlib import Path
 def rollback():
     project_root = Path(__file__).parent.parent
     backup_dir = project_root / "staging" / "backups" / "{self.deployment_id}"
-    
+
     print(f"🔄 Rolling back deployment: {self.deployment_id}")
-    
+
     # Stop services
     print("⏹️  Stopping services...")
     try:
         subprocess.run(["pkill", "-f", "api_server.py"], check=False)
     except (FileNotFoundError, OSError, shutil.Error) as e:
         logger.warning(f"Failed to stop services: {{e}}")
-    
+
     # Restore configuration files
-    config_files = ["configs/environments/development.yaml", "configs/environments/settings.yaml", "requirements.txt"]
-    
+    config_files = ["config/environments/development.yaml", "config/environments/settings.yaml", "requirements.txt"]
+
     for config_file in config_files:
         backup_file = backup_dir / config_file
         target_file = project_root / config_file
-        
+
         if backup_file.exists():
             shutil.copy2(backup_file, target_file)
             print(f"📦 Restored: {{config_file}}")
-    
+
     # Restore directories  
     critical_dirs = ["private", "logs"]
-    
+
     for dir_name in critical_dirs:
         backup_dir_path = backup_dir / dir_name
         target_dir_path = project_root / dir_name
-        
+
         if backup_dir_path.exists():
             if target_dir_path.exists():
                 shutil.rmtree(target_dir_path)
             shutil.copytree(backup_dir_path, target_dir_path)
             print(f"📦 Restored directory: {{dir_name}}")
-    
+
     print("✅ Rollback completed")
     print("💡 Restart services manually if needed")
 
@@ -565,3 +565,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+

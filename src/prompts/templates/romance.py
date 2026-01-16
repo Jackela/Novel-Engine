@@ -51,7 +51,8 @@ Remember: The best romance stories are ultimately about two people choosing each
         "Build anticipation through pacing and timing",
         "Ground grand romantic gestures in authentic character",
     ],
-    example_opening="""Maya had sworn off love three years ago, the day she returned her engagement ring. Now, standing in the rain outside her flooded apartment, watching her ex-fiancé's brother offer his umbrella with that infuriatingly kind smile, she wondered if the universe had a particularly cruel sense of humor.
+    example_opening="""Maya had sworn off love three years ago, the day she returned her engagement ring.
+Now, standing in the rain outside her flooded apartment, watching her ex-fiancé's brother offer his umbrella with that infuriatingly kind smile, she wondered if the universe had a particularly cruel sense of humor.
 
 "You look like you could use some coffee," James said, tilting the umbrella to cover her completely while rain soaked his shoulders. "And possibly a lawyer. Water damage claims can be complicated."
 

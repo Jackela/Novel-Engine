@@ -33,9 +33,9 @@ if not FULL_INTEGRATION:
 
 # Core Novel Engine imports
 try:
-    from src.agents.director_agent import DirectorAgent
-    from src.persona_agent import PersonaAgent
-    from src.shared_types import (
+    from src.agents.director_agent_integrated import DirectorAgent
+    from src.agents.persona_agent.agent import PersonaAgent
+    from src.core.types.shared_types import (
         ActionIntensity,
         ActionParameters,
         ActionTarget,
@@ -894,3 +894,6 @@ class TestCompleteSystemIntegration:
 if __name__ == "__main__":
     # Run tests directly for debugging
     pytest.main([__file__, "-v", "-s"])
+
+
+

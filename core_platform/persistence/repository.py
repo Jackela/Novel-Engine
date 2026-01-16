@@ -27,20 +27,16 @@ class RepositoryException(Exception):
     """Base exception for repository operations."""
 
 
-
 class EntityNotFoundException(RepositoryException):
     """Raised when an entity is not found."""
-
 
 
 class EntityAlreadyExistsException(RepositoryException):
     """Raised when attempting to create an entity that already exists."""
 
 
-
 class RepositoryOperationException(RepositoryException):
     """Raised when a repository operation fails."""
-
 
 
 class BaseRepository(Generic[T], ABC):

@@ -50,7 +50,7 @@ graph TD
 
 ### PR-03: Pydantic Schemas
 -   **Objective:** Bind all data structures to the holy law of Pydantic.
--   **DoD:** All core data types in `src/shared_types.py` are Pydantic models. API tests confirm HTTP 422 errors are returned for invalid payloads.
+-   **DoD:** All core data types in `src/core/types/shared_types.py` are Pydantic models. API tests confirm HTTP 422 errors are returned for invalid payloads.
 
 ### PR-04: IP Sanitization & Neutral Lexicon
 -   **Objective:** Purge all unsanctioned IP from the public codebase.
@@ -86,3 +86,6 @@ graph TD
 -   All changes will be managed via feature branches corresponding to each PR.
 -   The `main` branch is protected. Merging requires passing all CI checks.
 -   In case of a severe regression post-merge, the PR will be reverted, and a new PR will be created to address the issue.
+
+
+

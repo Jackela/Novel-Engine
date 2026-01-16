@@ -24,9 +24,9 @@ from typing import Any, Dict, List, Optional
 
 from src.core.config.config_loader import get_config
 from src.core.types.shared_types import CharacterAction
-from src.event_bus import EventBus
-from src.llm_service import LLMProvider, LLMRequest, ResponseFormat, UnifiedLLMService
-from src.persona_agent import PersonaAgent
+from src.core.event_bus import EventBus
+from src.core.llm_service import LLMProvider, LLMRequest, ResponseFormat, UnifiedLLMService
+from src.agents.persona_agent.agent import PersonaAgent
 from src.prompts import (
     Language,
     PromptRegistry,
@@ -383,79 +383,6 @@ class ChroniclerAgent:
         self.narrative_style = normalized
         return True
 
-    def set_template(self, template_id: str) -> bool:
-        """
-        Set the active prompt template by ID.
-
-        Args:
-            template_id: The template ID to use (e.g., "fantasy_zh")
-
-        Returns:
-            True if template was found and set, False otherwise
-        """
-        template = PromptRegistry.get(template_id)
-        if template:
-            self._active_template = template
-            self._language = template.language
-            self._genre = template.genre
-            logger.info(f"Template set to: {template_id}")
-            return True
-        logger.warning(f"Template not found: {template_id}")
-        return False
-
-    def set_genre(self, genre: StoryGenre, language: Optional[Language] = None) -> bool:
-        """
-        Set the active template by genre and optionally language.
-
-        Args:
-            genre: The story genre to use
-            language: Optional language override
-
-        Returns:
-            True if a matching template was found
-        """
-        lang = language or self._language
-        template = PromptRegistry.get_by_genre_and_language(genre, lang)
-        if template:
-            self._active_template = template
-            self._genre = genre
-            self._language = lang
-            logger.info(f"Genre set to: {genre.value} ({lang.value})")
-            return True
-        logger.warning(
-            f"No template found for genre={genre.value}, language={lang.value}"
-        )
-        return False
-
-    def set_custom_prompt(self, prompt: str) -> None:
-        """
-        Set a custom prompt to use instead of templates.
-
-        Args:
-            prompt: The custom prompt text
-        """
-        self._custom_prompt = prompt
-        self._active_template = None  # Custom prompt takes precedence
-        logger.info("Custom prompt set")
-
-    def get_available_templates(self) -> List[Dict[str, Any]]:
-        """
-        Get list of all available prompt templates.
-
-        Returns:
-            List of template info dictionaries
-        """
-        return [
-            {
-                "id": t.id,
-                "name": t.name,
-                "genre": t.genre.value,
-                "language": t.language.value,
-                "description": t.description,
-            }
-            for t in PromptRegistry.list_all()
-        ]
-
     def _build_story_prompt(self, base_story: str) -> str:
         """Construct an enhanced instruction prompt for high-quality narrative generation."""
         participants = ", ".join(self.character_names)
@@ -643,10 +570,7 @@ just the pure narrative prose that could be published in an anthology.
 
     def _call_llm(self, prompt: str) -> str:
         """Makes an LLM API call for narrative generation with environment-aware error handling."""
-        from configs.config_environment_loader import (
-            get_environment_config_loader,
-            Environment
-        )
+        from src.core.config import Environment, get_environment_config_loader
 
         env_loader = get_environment_config_loader()
         is_development = env_loader.environment in [
@@ -983,3 +907,6 @@ def example_usage():
 
 if __name__ == "__main__":
     example_usage()
+
+
+

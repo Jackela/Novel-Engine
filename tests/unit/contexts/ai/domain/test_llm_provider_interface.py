@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import pytest
 
-from contexts.ai.domain.services.llm_provider import (
+from src.contexts.ai.domain.services.llm_provider import (
     ILLMProvider,
     InvalidRequestError,
     LLMProviderError,
@@ -25,7 +25,7 @@ from contexts.ai.domain.services.llm_provider import (
     QuotaExceededError,
     RateLimitError,
 )
-from contexts.ai.domain.value_objects.common import (
+from src.contexts.ai.domain.value_objects.common import (
     ModelCapability,
     ModelId,
     ProviderId,

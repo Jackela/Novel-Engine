@@ -11,6 +11,9 @@ The `/api/events/stream` endpoint provides real-time dashboard events via Server
 - **Protocol**: Server-Sent Events (SSE)
 - **Content-Type**: `text/event-stream`
 - **Authentication**: None (currently public for MVP)
+- **Query params**:
+  - `limit` (int, optional): max events for test clients.
+  - `interval` (float, optional): override simulated event interval in seconds (testing only; clamped 0.01–10.0).
 
 ## Connection Lifecycle
 
@@ -31,7 +34,7 @@ This instructs the browser to wait 3000ms (3 seconds) before reconnecting if the
 
 ### 3. Event Streaming
 
-Events are sent every 2 seconds in SSE format:
+Events are sent every 2 seconds in SSE format (or faster when `interval` is set):
 
 ```
 id: evt-1
@@ -121,6 +124,12 @@ data: {"id":"evt-2","type":"system",...}
 
 ```bash
 timeout 10 curl -N -H "Accept: text/event-stream" http://localhost:8000/api/events/stream
+```
+
+### Fast Test Stream (50ms interval)
+
+```bash
+curl -N -H "Accept: text/event-stream" "http://localhost:8000/api/events/stream?limit=5&interval=0.05"
 ```
 
 ## Frontend Integration
@@ -242,7 +251,7 @@ event_data = {
 
 ## Performance Considerations
 
-- **Event Frequency**: Current MVP sends events every 2 seconds
+- **Event Frequency**: Current MVP sends events every 2 seconds (override via `interval` for tests)
 - **Connection Limit**: No enforced limit (monitor `active_sse_connections["count"]`)
 - **Memory**: Events are generated on-demand, no server-side buffering
 - **Network**: Each event is ~150-200 bytes
@@ -281,14 +290,14 @@ For older browsers, use the [EventSource polyfill](https://github.com/Yaffle/Eve
 
 **Problem**: `GET /api/events/stream` returns 404
 
-**Solution**: Ensure you're running `api_server.py` (not `main_api_server.py`). The SSE endpoint is only available in `api_server.py`.
+**Solution**: Ensure you're running the main API entrypoint.
 
 ```bash
-# Correct
-python api_server.py
-
-# Wrong (endpoint not available)
+# Preferred
 python -m src.api.main_api_server
+
+# Legacy (still supported for compatibility)
+python api_server.py
 ```
 
 ### No Events Received

@@ -58,8 +58,7 @@ export default defineConfig({
           vendor: ['react', 'react-dom'],
           mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
           // Heavy libraries split for mobile optimization
-          three: ['three', '@react-three/fiber', '@react-three/drei'],
-          d3: ['d3'],
+
           animation: ['framer-motion'],
           utils: ['axios', 'socket.io-client', 'lodash-es'],
           query: ['react-query', '@reduxjs/toolkit', 'react-redux'],

@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import pytest
 
-from contexts.narratives.application.commands.narrative_arc_commands import (
+from src.contexts.narratives.application.commands.narrative_arc_commands import (
     ActivateContextCommand,
     AddCharacterToArcCommand,
     AddNarrativeContextCommand,
@@ -31,7 +31,7 @@ from contexts.narratives.application.commands.narrative_arc_commands import (
     UpdateNarrativeArcCommand,
     UpdatePlotPointCommand,
 )
-from contexts.narratives.application.queries.narrative_arc_queries import (
+from src.contexts.narratives.application.queries.narrative_arc_queries import (
     GetArcMetricsQuery,
     GetArcSummaryQuery,
     GetCausalAnalysisQuery,
@@ -44,7 +44,7 @@ from contexts.narratives.application.queries.narrative_arc_queries import (
     GetThemesAtSequenceQuery,
     SearchNarrativeArcsQuery,
 )
-from contexts.narratives.application.services.narrative_arc_application_service import (
+from src.contexts.narratives.application.services.narrative_arc_application_service import (
     NarrativeArcApplicationService,
 )
 
@@ -86,10 +86,10 @@ class TestNarrativeArcApplicationServiceInitialization:
         assert service.query_handler is not None
 
     @patch(
-        "contexts.narratives.application.services.narrative_arc_application_service.NarrativeFlowService"
+        "src.contexts.narratives.application.services.narrative_arc_application_service.NarrativeFlowService"
     )
     @patch(
-        "contexts.narratives.application.services.narrative_arc_application_service.CausalGraphService"
+        "src.contexts.narratives.application.services.narrative_arc_application_service.CausalGraphService"
     )
     @pytest.mark.unit
     def test_default_service_initialization(
@@ -110,7 +110,7 @@ class TestNarrativeArcApplicationServiceInitialization:
         assert service.causal_service == mock_causal_instance
 
     @patch(
-        "contexts.narratives.application.services.narrative_arc_application_service.logger"
+        "src.contexts.narratives.application.services.narrative_arc_application_service.logger"
     )
     @pytest.mark.unit
     @pytest.mark.fast

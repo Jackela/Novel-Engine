@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from contexts.interactions.domain.value_objects.interaction_id import InteractionId
+from src.contexts.interactions.domain.value_objects.interaction_id import InteractionId
 
 
 class TestInteractionIdCreation:

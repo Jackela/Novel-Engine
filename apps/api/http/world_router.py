@@ -28,7 +28,7 @@ from fastapi import APIRouter, HTTPException, Path, Query
 from pydantic import BaseModel, Field, field_validator
 
 # World Context CQRS Imports
-from contexts.world.application.commands.world_commands import (
+from src.contexts.world.application.commands.world_commands import (
     ApplyWorldDelta,
     EntityOperation,
     EnvironmentOperation,
@@ -37,7 +37,7 @@ from contexts.world.application.commands.world_commands import (
     TimeOperation,
     WorldOperationType,
 )
-from contexts.world.application.queries.world_queries import (
+from src.contexts.world.application.queries.world_queries import (
     GetEntitiesByType,
     GetEntitiesInArea,
     GetWorldSlice,
@@ -47,8 +47,8 @@ from contexts.world.application.queries.world_queries import (
     SearchWorlds,
     execute_query,
 )
-from contexts.world.domain.aggregates.world_state import EntityType
-from contexts.world.domain.value_objects.coordinates import Coordinates
+from src.contexts.world.domain.aggregates.world_state import EntityType
+from src.contexts.world.domain.value_objects.coordinates import Coordinates
 
 logger = logging.getLogger(__name__)
 
@@ -349,7 +349,7 @@ async def apply_world_delta(
         # Execute command through command bus
         # In a real app, this would be injected via dependency injection
         from apps.api.infrastructure.command_bus import CommandBus
-        from contexts.world.application.commands.handlers import ApplyWorldDeltaHandler
+        from src.contexts.world.application.commands.handlers import ApplyWorldDeltaHandler
 
         # Setup bus (temporary manual setup until DI is in place)
         bus = CommandBus()

@@ -34,8 +34,8 @@ from src.orchestrators.enterprise_multi_agent_orchestrator import (
 
 
 # Import Novel Engine core components
-from src.event_bus import EventBus
-from src.persona_agent import PersonaAgent
+from src.core.event_bus import EventBus
+from src.agents.persona_agent.agent import PersonaAgent
 
 # Setup logging
 logging.basicConfig(
@@ -678,7 +678,13 @@ The Novel Engine multi-agent enhancement system is **PRODUCTION READY** with ent
 
         rows = []
         for metric in metrics:
-            row = f"| {metric.get('turn', '-')} | {metric.get('execution_time', 0):.2f}s | {metric.get('system_health', 'unknown')} | {metric.get('quality_score', 0):.2f} | {'✅' if metric.get('coordination_success', False) else '❌'} |"
+            row = (
+                f"| {metric.get('turn', '-')} | "
+                f"{metric.get('execution_time', 0):.2f}s | "
+                f"{metric.get('system_health', 'unknown')} | "
+                f"{metric.get('quality_score', 0):.2f} | "
+                f"{'✅' if metric.get('coordination_success', False) else '❌'} |"
+            )
             rows.append(row)
 
         return "\n".join(rows)
@@ -759,3 +765,6 @@ async def run_multi_agent_demo():
 if __name__ == "__main__":
     # Run the demo
     asyncio.run(run_multi_agent_demo())
+
+
+

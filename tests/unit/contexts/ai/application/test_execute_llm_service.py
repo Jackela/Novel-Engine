@@ -12,19 +12,19 @@ from uuid import uuid4
 
 import pytest
 
-from contexts.ai.application.services.execute_llm_service import (
+from src.contexts.ai.application.services.execute_llm_service import (
     ExecuteLLMService,
     LLMExecutionConfig,
     LLMExecutionResult,
     ProviderRouter,
 )
-from contexts.ai.domain.services.llm_provider import (
+from src.contexts.ai.domain.services.llm_provider import (
     ILLMProvider,
     LLMRequest,
     LLMResponse,
     LLMResponseStatus,
 )
-from contexts.ai.domain.value_objects.common import (
+from src.contexts.ai.domain.value_objects.common import (
     ModelId,
     ProviderId,
     TokenBudget,
@@ -136,7 +136,7 @@ class TestLLMExecutionResult:
     @pytest.mark.unit
     def test_result_with_all_parameters(self):
         """Test creating execution result with all optional parameters."""
-        from contexts.ai.infrastructure.policies.cost_tracking import CostEntry
+        from src.contexts.ai.infrastructure.policies.cost_tracking import CostEntry
 
         cost_entry = Mock(spec=CostEntry)
         cost_entry.total_cost = Decimal("0.05")
@@ -209,7 +209,7 @@ class TestLLMExecutionResult:
     @pytest.mark.unit
     def test_total_cost_property(self):
         """Test total_cost property calculation."""
-        from contexts.ai.infrastructure.policies.cost_tracking import CostEntry
+        from src.contexts.ai.infrastructure.policies.cost_tracking import CostEntry
 
         cost_entry = Mock(spec=CostEntry)
         cost_entry.total_cost = Decimal("0.15")

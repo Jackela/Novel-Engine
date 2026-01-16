@@ -244,9 +244,9 @@ class TestDocumentationFoundation:
     def test_developer_documentation_exists(self):
         """Verify developer documentation files exist."""
         dev_docs = [
-            "docs/DEVELOPER_GUIDE.md",
-            "docs/IMPLEMENTATION_PATTERNS.md",
-            "docs/DEBUGGING.md",
+            "docs/onboarding/developer-guide.md",
+            "docs/implementation/IMPLEMENTATION_PATTERNS.md",
+            "docs/development/debugging.md",
         ]
 
         for doc_path in dev_docs:

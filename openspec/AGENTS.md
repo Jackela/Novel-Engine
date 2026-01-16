@@ -1,4 +1,5 @@
 # OpenSpec Instructions
+Project-wide agent workflow lives in `AGENTS.md`; this file only covers OpenSpec.
 
 Instructions for AI coding assistants using OpenSpec for spec-driven development.
 

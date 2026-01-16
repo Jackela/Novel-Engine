@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.event_bus import EventBus
+from src.core.event_bus import EventBus
 
 
 class TestEventBus(unittest.TestCase):
@@ -55,3 +55,4 @@ class TestEventBus(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

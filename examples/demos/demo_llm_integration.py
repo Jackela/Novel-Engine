@@ -19,7 +19,7 @@ Usage:
 import logging
 
 from src.config.character_factory import CharacterFactory
-from src.event_bus import EventBus
+from src.core.event_bus import EventBus
 
 
 # Configure logging to show LLM integration details
@@ -270,3 +270,4 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"Demo failed: {e}")
         raise
+

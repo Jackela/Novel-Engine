@@ -107,7 +107,7 @@ class QualityValidator:
         self.log("🧪 Validating Test Framework")
 
         test_files = [
-            ("tests/test_quality_framework.py", "Quality framework tests"),
+            ("tests/unit/quality", "Quality framework tests"),
         ]
 
         results = {}

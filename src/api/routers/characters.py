@@ -28,7 +28,7 @@ from src.api.schemas import (
 )
 from src.api.services.paths import get_characters_directory_path
 from src.config.character_factory import CharacterFactory
-from src.event_bus import EventBus
+from src.core.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -196,6 +196,7 @@ def _summarize_public_character(
     )
     summary = CharacterSummary(
         id=character_id,
+        agent_id=character_id,
         name=name,
         status=status,
         type=category,
@@ -232,6 +233,7 @@ def _summarize_workspace_character(
 
     summary = CharacterSummary(
         id=char_id,
+        agent_id=char_id,
         name=name,
         status=status,
         type=type_value,
@@ -428,8 +430,7 @@ async def create_workspace_character(
     if not store:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
 
-    requested_id = payload.agent_id or _normalize_character_id(payload.name)
-
+    requested_id = payload.agent_id
     character_id = _normalize_character_id(requested_id)
 
     record_payload: Dict[str, Any] = {
@@ -446,16 +447,11 @@ async def create_workspace_character(
         "narrative_context": "",
     }
 
-    candidate = character_id
-
-    suffix = 2
-
-    while store.get(workspace_id, candidate):
-        candidate = f"{character_id}_{suffix}"
-
-        suffix += 1
-
-    character_id = candidate
+    if store.get(workspace_id, character_id):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Character '{character_id}' already exists",
+        )
 
     try:
         record = store.create(workspace_id, character_id, record_payload)
@@ -465,6 +461,16 @@ async def create_workspace_character(
 
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
+
+    orchestrator = getattr(request.app.state, "orchestrator", None)
+    if orchestrator is not None:
+        try:
+            orchestrator.active_agents[character_id] = datetime.now()
+        except Exception:
+            logger.debug(
+                "Failed to register character with orchestrator.",
+                exc_info=True,
+            )
 
     return _workspace_record_to_character_detail(record)
 
@@ -517,6 +523,16 @@ async def delete_workspace_character(
 
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
+
+    orchestrator = getattr(request.app.state, "orchestrator", None)
+    if orchestrator is not None:
+        try:
+            orchestrator.active_agents.pop(character_id, None)
+        except Exception:
+            logger.debug(
+                "Failed to unregister character from orchestrator.",
+                exc_info=True,
+            )
 
     return Response(status_code=204)
 
@@ -582,6 +598,7 @@ async def get_character_detail(
     display_name = safe_character_id.replace("_", " ").title()
 
     character_data = {
+        "agent_id": safe_character_id,
         "character_id": safe_character_id,
         "character_name": character_name,
         "name": display_name,
@@ -675,6 +692,7 @@ def _workspace_record_to_character_detail(
 
     character_name = record.get("name") or record.get("id") or ""
     return CharacterDetailResponse(
+        agent_id=str(record.get("id", "")),
         character_id=str(record.get("id", "")),
         character_name=character_name,
         name=character_name,
@@ -689,3 +707,4 @@ def _workspace_record_to_character_detail(
         metadata=record.get("metadata") or {},
         structured_data=record.get("structured_data") or {},
     )
+

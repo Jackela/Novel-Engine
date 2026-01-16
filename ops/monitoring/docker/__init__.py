@@ -14,7 +14,7 @@ Features:
 
 Example:
     from ops.monitoring.docker import monitor_containers, get_container_metrics
-    
+
     container_status = monitor_containers()
     metrics = get_container_metrics('novel-engine-api')
 """

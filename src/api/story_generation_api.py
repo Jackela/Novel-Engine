@@ -26,7 +26,7 @@ from fastapi import (
 from pydantic import BaseModel, Field
 
 from src.core.system_orchestrator import SystemOrchestrator
-from src.llm_service import generate_narrative_content
+from src.core.llm_service import generate_narrative_content
 
 logger = logging.getLogger(__name__)
 
@@ -628,3 +628,4 @@ def create_story_generation_api(
 
 
 __all__ = ["StoryGenerationAPI", "create_story_generation_api"]
+

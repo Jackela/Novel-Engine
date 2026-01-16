@@ -16,10 +16,10 @@ import pytest
 
 # Import the modules under test
 try:
-    from shared_types import CharacterAction
-    from src.agents.director_agent import DirectorAgent
-    from src.event_bus import EventBus
-    from src.persona_agent import PersonaAgent
+    from src.core.types.shared_types import CharacterAction
+    from src.agents.director_agent_integrated import DirectorAgent
+    from src.core.event_bus import EventBus
+    from src.agents.persona_agent.agent import PersonaAgent
 
     DIRECTOR_AGENT_AVAILABLE = True
 except ImportError as e:
@@ -591,3 +591,6 @@ def run_director_advanced_tests():
 if __name__ == "__main__":
     # Direct execution runs all tests
     run_director_advanced_tests()
+
+
+

@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.persona_agent import PersonaAgent
+from src.agents.persona_agent.agent import PersonaAgent
 
 logger = logging.getLogger(__name__)
 
@@ -417,3 +417,5 @@ class SimulationCoordinator:
         """Update simulation tracking metrics."""
         self.current_turn_number = turn_number
         self.total_actions_processed = actions_processed
+
+

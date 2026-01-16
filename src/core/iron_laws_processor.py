@@ -14,11 +14,11 @@ from copy import deepcopy
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.persona_agent import PersonaAgent
+from src.agents.persona_agent.agent import PersonaAgent
 
 # Try to import Iron Laws types
 try:
-    from src.shared_types import (
+    from src.core.types.shared_types import (
         ActionIntensity,
         ActionParameters,
         ActionTarget,
@@ -971,3 +971,6 @@ class IronLawsProcessor:
         if hasattr(action, "model_copy"):
             return action.model_copy()
         return deepcopy(action)
+
+
+

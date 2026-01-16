@@ -56,7 +56,7 @@ class ValidationException(NovelEngineException):
         super().__init__(
             message=message,
             error_type=APIErrorType.VALIDATION_ERROR,
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=detail,
         )
         self.field = field
@@ -333,7 +333,7 @@ def setup_error_handlers(app, debug: bool = False):
         )
 
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content=error_response.model_dump(),
         )
 

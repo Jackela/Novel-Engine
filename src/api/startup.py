@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Optional
 
-from config_loader import get_config
+from src.core.config.config_loader import get_config
 from fastapi import FastAPI
 
 from src.api.services.paths import find_project_root
@@ -28,6 +28,7 @@ def ensure_workspace_services(
     """Prepare workspace persistence stores and guest sessions."""
 
     resolved_settings = settings or APISettings.from_env()
+    is_testing = os.getenv("ORCHESTRATOR_MODE", "").lower() == "testing"
 
     if getattr(app.state, "workspace_store", None) is None:
         try:
@@ -42,6 +43,8 @@ def ensure_workspace_services(
             app.state.workspace_store = workspace_store
             app.state.workspace_character_store = character_store
             app.state.guest_session_manager = guest_session_manager
+            if is_testing and not getattr(app.state, "default_workspace_id", None):
+                app.state.default_workspace_id = workspace_store.create().id
             logger.info("Guest workspace store initialized")
         except Exception as exc:
             logger.error(
@@ -67,7 +70,7 @@ async def initialize_app_state(app: FastAPI) -> None:
 
     global_event_bus: Optional[object] = None
     try:
-        from src.event_bus import EventBus
+        from src.core.event_bus import EventBus
 
         global_event_bus = EventBus()
         app.state.event_bus = global_event_bus
@@ -161,3 +164,4 @@ async def shutdown_app_state(app: FastAPI) -> None:
             await api_service.stop_simulation()
     except Exception as exc:
         logger.error("Error during shutdown: %s", exc, exc_info=True)
+

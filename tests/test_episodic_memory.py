@@ -16,8 +16,6 @@ from datetime import datetime, timedelta
 import pytest
 import pytest_asyncio
 
-pytestmark = pytest.mark.asyncio  # codeql[py/unused-global-variable]
-
 from src.core.data_models import MemoryItem, MemoryType
 from src.database.context_db import ContextDatabase
 from src.memory.episodic_memory import EpisodicEvent, EpisodicMemory
@@ -105,6 +103,7 @@ class TestEpisodicEvent:
         assert event.causal_links.count("leads_to:memory_b") == 1
 
 
+@pytest.mark.asyncio
 class TestEpisodicMemory:
     """Unit tests for EpisodicMemory system."""
 

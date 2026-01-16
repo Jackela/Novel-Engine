@@ -39,6 +39,19 @@ MANIFEST
 .gemini/
 codex/
 codql-annotations*.json
+.benchmarks/
+
+# Test reports (should not be committed)
+coverage.xml
+pytest-report.xml
+test-results.xml
+pyramid-report.json
+speed-report.json
+
+# Temporary files
+*_world_state.json
+*_REPORT.md
+*_STATUS.md
 
 # Installer logs
 pip-log.txt
@@ -497,3 +510,5 @@ speed-report.json
 # Errant tool output (should never be committed)
 undefined:*/
 /.trunk
+.worktrees/
+nul

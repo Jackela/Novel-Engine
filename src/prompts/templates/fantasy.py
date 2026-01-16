@@ -51,7 +51,8 @@ Remember: The best fantasy stories are grounded in emotional truth, even amid im
         "Build atmosphere through environmental details",
         "Maintain consistent tone throughout the narrative",
     ],
-    example_opening="""The ancient tower had stood for a thousand years, its obsidian spires piercing the eternal twilight of the Shadowlands. Kira pressed her palm against the cold stone, feeling the pulse of magic beneath-older than memory, patient as death.
+    example_opening="""The ancient tower had stood for a thousand years, its obsidian spires piercing the eternal twilight of the Shadowlands.
+Kira pressed her palm against the cold stone, feeling the pulse of magic beneath-older than memory, patient as death.
 
 "The seal is weakening," she whispered, and the words hung in the air like a prophecy.""",
     world_building_elements=[

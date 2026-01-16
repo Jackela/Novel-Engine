@@ -14,7 +14,7 @@ Features:
 
 Example:
     from ops.monitoring.synthetic import create_uptime_check, run_user_journey
-    
+
     check_id = create_uptime_check('https://api.novel-engine.com/health')
     journey_results = run_user_journey('user_login_flow')
 """

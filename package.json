@@ -1,4 +1,10 @@
 {
+  "name": "novel-engine",
+  "version": "0.1.1",
+  "description": "AI-Enhanced Interactive Novel Engine",
+  "private": true,
+  "author": "Jackela",
+  "license": "MIT",
   "scripts": {
     "dev:daemon": "bash scripts/dev_env_daemon.sh",
     "dev:stop": "bash scripts/stop_dev_env.sh"

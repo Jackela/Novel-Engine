@@ -14,7 +14,7 @@ Features:
 
 Example:
     from ops.monitoring.logging import configure_logging, create_logger
-    
+
     configure_logging('production')
     logger = create_logger('novel-engine-api')
     logger.info('Application started', extra={'version': '1.2.3'})

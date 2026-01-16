@@ -29,7 +29,7 @@ from pydantic import BaseModel, Field, ValidationError
 from fastapi import HTTPException, status
 
 # Local imports
-from src.shared_types import WorldState, PersonaCardV2, TurnBrief
+from src.core.types.shared_types import WorldState, PersonaCardV2, TurnBrief
 from src.engine.exceptions import AdjudicationError
 
 # Configure logging
@@ -353,7 +353,7 @@ def test_fan_mode_compliance_success():
 
 ### Schema Definition Pattern
 ```python
-# src/shared_types.py - Complete implementation
+# src/core/types/shared_types.py - Complete implementation
 from typing import List, Dict, Optional, Any, Literal
 from pydantic import BaseModel, Field, constr, ValidationError
 
@@ -509,7 +509,7 @@ class CanonRegistry(BaseModel):
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from typing import List
-from src.shared_types import (
+from src.core.types.shared_types import (
     PersonaCardV2, CharacterAction, WorldState, 
     ChronicleSpec, TurnBrief
 )
@@ -656,7 +656,7 @@ async def validation_exception_handler(request, exc: ValidationError):
 # tests/test_schemas.py
 import pytest
 from pydantic import ValidationError
-from src.shared_types import PersonaCardV2, CharacterAction, WorldState
+from src.core.types.shared_types import PersonaCardV2, CharacterAction, WorldState
 
 def test_persona_card_valid():
     """Test valid PersonaCardV2 creation."""
@@ -945,7 +945,7 @@ jobs:
 # src/engine/director.py - _build_turn_brief implementation
 from typing import List, Set
 import logging
-from src.shared_types import WorldState, PersonaCardV2, TurnBrief, DoctrineSnippet
+from src.core.types.shared_types import WorldState, PersonaCardV2, TurnBrief, DoctrineSnippet
 from src.engine.kb import KnowledgeBase
 
 logger = logging.getLogger(__name__)
@@ -1214,7 +1214,7 @@ class DirectorAgent:
 import pytest
 from src.engine.director import DirectorAgent
 from src.engine.kb import MockKnowledgeBase
-from src.shared_types import WorldState, PersonaCardV2, Entity, KnowledgeScope
+from src.core.types.shared_types import WorldState, PersonaCardV2, Entity, KnowledgeScope
 
 @pytest.fixture
 def mock_kb():
@@ -1325,7 +1325,7 @@ def test_multi_channel_knowledge_scope(director, sample_world_state):
 ```python
 # src/engine/director.py - _adjudicate_action implementation
 from typing import Dict, Any, Optional
-from src.shared_types import CharacterAction, WorldState, PersonaCardV2
+from src.core.types.shared_types import CharacterAction, WorldState, PersonaCardV2
 from src.engine.exceptions import AdjudicationError
 
 class AdjudicationError(Exception):
@@ -1602,7 +1602,7 @@ class DirectorAgent:
 # tests/test_director_agent.py - Adjudication tests
 import pytest
 from src.engine.director import DirectorAgent, AdjudicationError
-from src.shared_types import CharacterAction, WorldState, PersonaCardV2, Entity
+from src.core.types.shared_types import CharacterAction, WorldState, PersonaCardV2, Entity
 
 def test_iron_law_1_resource_negative(director, sample_world_state, test_persona):
     """Test Iron Law 1: Resource conservation."""
@@ -1791,7 +1791,7 @@ Each maintains the same code quality standards, comprehensive error handling, an
 4. **Run validation** against existing documentation
 
 ### Integration Points
-- All patterns integrate with `src/shared_types.py` schemas
+- All patterns integrate with `src/core/types/shared_types.py` schemas
 - Error handling follows consistent `AdjudicationError` patterns
 - Logging uses structured format with context
 - Tests use consistent fixtures and naming
@@ -1803,3 +1803,6 @@ Each maintains the same code quality standards, comprehensive error handling, an
 - **Error Handling**: Explicit error codes and messages
 
 These patterns provide the foundation for implementing all 8 Work Orders with consistency and quality.
+
+
+

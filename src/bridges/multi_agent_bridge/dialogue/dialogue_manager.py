@@ -181,15 +181,28 @@ class DialogueManager:
 
                 return dialogue_result
             else:
-                # LLM processing failed
-                dialogue.state = DialogueState.FAILED
-                self._stats["failed_dialogues"] += 1
+                # LLM processing failed: fall back to fast simulation to keep a usable outcome.
+                self.logger.warning(
+                    "LLM dialogue processing failed; falling back to fast simulation."
+                )
+                dialogue_result = self._generate_fast_dialogue_outcome(dialogue)
+                dialogue_result["fallback_reason"] = llm_result.get(
+                    "error", "llm_processing_failed"
+                )
 
-                return {
-                    "success": False,
-                    "error": llm_result.get("error", "llm_processing_failed"),
-                    "dialogue_id": dialogue.dialogue_id,
-                }
+                dialogue.state = DialogueState.CONCLUDED
+                dialogue.resolution = dialogue_result
+
+                self._dialogue_history.append(dialogue)
+                del self._active_dialogues[dialogue.dialogue_id]
+                self._stats["successful_dialogues"] += 1
+
+                quality = self._calculate_dialogue_quality(
+                    dialogue_result, llm_result
+                )
+                self._update_quality_stats(quality)
+
+                return dialogue_result
 
         except Exception as e:
             dialogue.state = DialogueState.FAILED

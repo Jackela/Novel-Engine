@@ -50,7 +50,7 @@ Novel Engine employs Domain-Driven Design (DDD) with explicit Bounded Contexts t
 
 ```
 Bounded Context Structure:
-contexts/[context-name]/
+src/contexts/[context-name]/
 ├── domain/              # Pure business logic (Article I - ZERO infrastructure)
 │   ├── models/          # Domain entities, aggregates, value objects
 │   ├── services/        # Domain services for cross-entity business logic
@@ -70,7 +70,7 @@ contexts/[context-name]/
 
 ```python
 # ❌ WRONG - Direct cross-context call creates tight coupling
-from contexts.character import CharacterService
+from src.contexts.character import CharacterService
 story.character = CharacterService.get_character(id)
 ```
 
@@ -88,7 +88,7 @@ story.publish_event(CharacterRequested(character_id=id))
 
 ### Event Serialization & Metadata
 
-- Events between contexts MUST be serialized via `src/event_bus.py`
+- Events between contexts MUST be serialized via `src/core/event_bus.py`
 - Events MUST include tenant metadata for multi-tenancy
 - Events MUST include correlation IDs for distributed tracing (Article VII)
 
@@ -103,7 +103,7 @@ story.publish_event(CharacterRequested(character_id=id))
 ### ✅ Pure Domain Model Characteristics
 
 - Only imports from within same bounded context
-- Only references shared value objects/enums from `src/shared_types.py`
+- Only references shared value objects/enums from `src/core/types/shared_types.py`
 - No `import sqlalchemy`, `import redis`, `import fastapi`, `import httpx`
 - No HTTP, database, or framework dependencies
 - Business logic expressed in domain terms only
@@ -121,9 +121,9 @@ story.publish_event(CharacterRequested(character_id=id))
 ### Example: Pure Domain Model
 
 ```python
-# ✅ CORRECT - Pure domain model (contexts/character/domain/models/character.py)
+# ✅ CORRECT - Pure domain model (src/contexts/character/domain/models/character.py)
 from typing import List
-from src.shared_types import CharacterId, PersonaType
+from src.core.types.shared_types import CharacterId, PersonaType
 
 class Character:
     """Pure domain model - no infrastructure dependencies."""
@@ -212,3 +212,9 @@ This architecture enforces:
 ---
 
 **Compliance**: This document reflects Constitution v2.0.0 requirements (Articles I, II, IV, VI).
+
+
+
+
+
+

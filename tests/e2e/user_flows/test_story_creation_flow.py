@@ -24,7 +24,6 @@ import pytest
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 class TestStoryCreationFlow:
     """E2E tests for complete story creation workflow."""
 

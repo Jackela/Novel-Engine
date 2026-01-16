@@ -15,7 +15,7 @@ Comprehensive guides for Novel Engine development, usage, and best practices.
 
 ## 📚 Available Guides
 
-### [Coding Standards](../coding-standards.md)
+### [Coding Standards](../development/coding-standards.md)
 Repository coding standards and CI parity expectations
 
 ### [Context Integration Design](./CONTEXT_INTEGRATION_DESIGN.md)
@@ -41,7 +41,7 @@ Guide to integrating with core Novel Engine systems
 
 ### API Documentation
 - [API Reference](../api/API_REFERENCE.md)
-- [Data Schemas](../SCHEMAS.md)
+- [Data Schemas](../api/schemas.md)
 
 ### Deployment
 - [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)
@@ -50,7 +50,7 @@ Guide to integrating with core Novel Engine systems
 ### Quick References
 - [Quick Start](../QUICK_START.md)
 - [Foundations](../FOUNDATIONS.md)
-- [Developer Guide](../DEVELOPER_GUIDE.md)
+- [Developer Guide](../onboarding/developer-guide.md)
 
 ---
 
@@ -58,7 +58,7 @@ Guide to integrating with core Novel Engine systems
 
 We welcome contributions to our documentation! To contribute:
 
-1. Follow the [Coding Standards](../coding-standards.md)
+1. Follow the [Coding Standards](../development/coding-standards.md)
 2. Use clear, concise language
 3. Include code examples where appropriate
 4. Add navigation breadcrumbs

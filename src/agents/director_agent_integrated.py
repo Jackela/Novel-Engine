@@ -23,22 +23,22 @@ from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from src.agent_lifecycle_manager import AgentLifecycleManager
+from src.agents.agent_lifecycle_manager import AgentLifecycleManager
 from src.core.iron_laws_processor import IronLawsProcessor
 from src.core.types.shared_types import CharacterAction
 
 # Import extracted components
-from src.director_agent_base import DirectorAgentBase
-from src.event_bus import EventBus
+from src.agents.director_agent_base import DirectorAgentBase
+from src.core.event_bus import EventBus
 
 # Import agent and shared types
-from src.persona_agent import PersonaAgent
-from src.turn_orchestrator import TurnOrchestrator
-from src.world_state_coordinator import WorldStateCoordinator
+from src.agents.persona_agent.agent import PersonaAgent
+from src.core.turn_orchestrator import TurnOrchestrator
+from src.core.world_state_coordinator import WorldStateCoordinator
 
 # Try to import Iron Laws types
 try:
-    from src.shared_types import (
+    from src.core.types.shared_types import (
         ActionTarget,
         ActionType,
         CharacterData,
@@ -79,6 +79,8 @@ except ImportError:
 # Configure logging
 logger = logging.getLogger(__name__)
 
+_EVENT_BUS_MISSING = object()
+
 
 class DirectorAgent:
     """
@@ -96,7 +98,7 @@ class DirectorAgent:
 
     def __init__(
         self,
-        event_bus: EventBus,
+        event_bus: Optional[EventBus] = _EVENT_BUS_MISSING,
         world_state_file_path: Optional[str] = None,
         campaign_log_path: Optional[str] = None,
         campaign_brief_path: Optional[str] = None,
@@ -111,7 +113,9 @@ class DirectorAgent:
             campaign_brief_path: Optional path to campaign brief file
         """
         logger.info("Initializing integrated DirectorAgent with modular components...")
-        if event_bus is None:
+        if event_bus is _EVENT_BUS_MISSING:
+            event_bus = EventBus()
+        elif event_bus is None:
             raise ValueError("DirectorAgent requires a valid EventBus instance")
 
         # Initialize core base component
@@ -947,7 +951,7 @@ class DirectorAgent:
 
         try:
             # Import required types for default values
-            from src.shared_types import (
+            from src.core.types.shared_types import (
                 CharacterResources,
                 CharacterStats,
                 Position,
@@ -1271,3 +1275,6 @@ class _AgentCollectionFacade:
 
     def __len__(self) -> int:
         return len(self._director._get_all_agent_instances())
+
+
+

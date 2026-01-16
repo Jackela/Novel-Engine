@@ -47,7 +47,7 @@ This epic represents a comprehensive refactoring initiative to establish the "Ro
 
 ### 4. Code Refactoring ✅
 - [ ] **api_server.py**: Replace hardcoded validation with constraints import
-- [ ] **persona_agent.py**: Use centralized constraints for character validation
+- [ ] **agents/persona_agent/agent.py**: Use centralized constraints for character validation
 - [ ] **CharacterCreation.jsx**: Implement i18n for all text and use centralized constraints
 - [ ] **CharacterSelection.jsx**: Implement i18n for all text content
 - [ ] **All test files**: Update to work with new constraint and i18n structure

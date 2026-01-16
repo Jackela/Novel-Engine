@@ -14,7 +14,7 @@ Features:
 
 Example:
     from ops.monitoring.grafana import provision_dashboard, configure_datasource
-    
+
     dashboard_id = provision_dashboard('api-performance', template_path='templates/api.json')
     datasource_id = configure_datasource('prometheus', url='http://prometheus:9090')
 """

@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from src.security.auth_system import User, UserRole, require_role
-from src.shared_types import CharacterId, KnowledgeEntryId, UserId
+from src.core.types.shared_types import CharacterId, KnowledgeEntryId, UserId
 
 # OpenTelemetry tracing (Article VII - Observability)
 try:
@@ -27,31 +27,32 @@ except ImportError:
     OTEL_AVAILABLE = False
     tracer = None
 
-from contexts.knowledge.application.ports.i_event_publisher import IEventPublisher
-from contexts.knowledge.application.ports.i_knowledge_repository import (
+from src.contexts.knowledge.application.ports.i_event_publisher import IEventPublisher
+from src.contexts.knowledge.application.ports.i_knowledge_repository import (
     IKnowledgeRepository,
 )
-from contexts.knowledge.application.use_cases.create_knowledge_entry import (
+from src.contexts.knowledge.application.use_cases.create_knowledge_entry import (
     CreateKnowledgeEntryUseCase,
 )
-from contexts.knowledge.application.use_cases.delete_knowledge_entry import (
+from src.contexts.knowledge.application.use_cases.delete_knowledge_entry import (
     DeleteKnowledgeEntryUseCase,
 )
-from contexts.knowledge.application.use_cases.migrate_markdown_files import (
+from src.contexts.knowledge.application.use_cases.migrate_markdown_files import (
     MigrateMarkdownFilesUseCase,
 )
-from contexts.knowledge.application.use_cases.update_knowledge_entry import (
+from src.contexts.knowledge.application.use_cases.update_knowledge_entry import (
     UpdateKnowledgeEntryUseCase,
 )
-from contexts.knowledge.domain.models.access_level import AccessLevel
-from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
-from contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import (
+from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+from src.contexts.knowledge.domain.models.access_level import AccessLevel
+from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+from src.contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import (
     MarkdownMigrationAdapter,
 )
-from contexts.knowledge.infrastructure.events.kafka_event_publisher import (
+from src.contexts.knowledge.infrastructure.events.kafka_event_publisher import (
     KafkaEventPublisher,
 )
-from contexts.knowledge.infrastructure.repositories.postgresql_knowledge_repository import (
+from src.contexts.knowledge.infrastructure.repositories.postgresql_knowledge_repository import (
     PostgreSQLKnowledgeRepository,
 )
 
@@ -61,12 +62,12 @@ from contexts.knowledge.infrastructure.repositories.postgresql_knowledge_reposit
 class CreateKnowledgeEntryRequest(BaseModel):
     """Request model for creating a knowledge entry."""
 
-    content: str = Field(..., min_length=1, description="Knowledge content text")
-    knowledge_type: KnowledgeType = Field(..., description="Category of knowledge")
+    content: str = Field(..., description="Knowledge content text")
+    knowledge_type: str = Field(..., description="Category of knowledge")
     owning_character_id: Optional[CharacterId] = Field(
         None, description="Character this belongs to (None for world knowledge)"
     )
-    access_level: AccessLevel = Field(..., description="Access control level")
+    access_level: str = Field(..., description="Access control level")
     allowed_roles: List[str] = Field(
         default_factory=list, description="Roles permitted (for ROLE_BASED access)"
     )
@@ -82,27 +83,65 @@ class CreateKnowledgeEntryResponse(BaseModel):
     entry_id: KnowledgeEntryId = Field(
         ..., description="Unique identifier of created entry"
     )
+    content: str
+    knowledge_type: str
+    owning_character_id: Optional[CharacterId]
+    access_level: str
+    allowed_roles: List[str]
+    allowed_character_ids: List[CharacterId]
+    created_at: str
+    updated_at: str
+    created_by: UserId
 
 
 class UpdateKnowledgeEntryRequest(BaseModel):
     """Request model for updating a knowledge entry."""
 
-    content: str = Field(..., min_length=1, description="New knowledge content text")
+    content: str = Field(..., description="New knowledge content text")
 
 
 class KnowledgeEntryResponse(BaseModel):
     """Response model for knowledge entry details."""
 
-    id: KnowledgeEntryId
+    entry_id: KnowledgeEntryId
     content: str
-    knowledge_type: KnowledgeType
+    knowledge_type: str
     owning_character_id: Optional[CharacterId]
-    access_level: AccessLevel
+    access_level: str
     allowed_roles: List[str]
     allowed_character_ids: List[CharacterId]
     created_at: str  # ISO 8601 timestamp
     updated_at: str  # ISO 8601 timestamp
     created_by: UserId
+
+
+def _parse_knowledge_type(value: str) -> KnowledgeType:
+    try:
+        return KnowledgeType(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+def _parse_access_level(value: str) -> AccessLevel:
+    try:
+        return AccessLevel(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+def _entry_to_response(entry: KnowledgeEntry) -> KnowledgeEntryResponse:
+    return KnowledgeEntryResponse(
+        entry_id=entry.id,
+        content=entry.content,
+        knowledge_type=entry.knowledge_type.value,
+        owning_character_id=entry.owning_character_id,
+        access_level=entry.access_control.access_level.value,
+        allowed_roles=list(entry.access_control.allowed_roles),
+        allowed_character_ids=list(entry.access_control.allowed_character_ids),
+        created_at=entry.created_at.isoformat(),
+        updated_at=entry.updated_at.isoformat(),
+        created_by=entry.created_by,
+    )
 
 
 # Dependency injection helpers
@@ -120,7 +159,7 @@ async def get_repository() -> IKnowledgeRepository:
 async def get_event_publisher() -> IEventPublisher:
     """Get event publisher instance (dependency injection)."""
     # TODO: Integrate with KafkaClient singleton
-    from contexts.orchestration.infrastructure.kafka.kafka_client import KafkaClient
+    from src.contexts.orchestration.infrastructure.kafka.kafka_client import KafkaClient
 
     kafka_client = KafkaClient()
     yield KafkaEventPublisher(kafka_client)
@@ -554,3 +593,4 @@ def create_knowledge_api() -> APIRouter:
         return report
 
     return router
+

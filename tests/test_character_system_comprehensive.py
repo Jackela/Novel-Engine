@@ -31,9 +31,9 @@ if not FULL_INTEGRATION:
             reason="Character system comprehensive suite requires NOVEL_ENGINE_FULL_INTEGRATION=1"
         )
     )
-from src.agents.director_agent import DirectorAgent
+from src.agents.director_agent_integrated import DirectorAgent
 from src.config.character_factory import CharacterFactory
-from src.event_bus import EventBus
+from src.core.event_bus import EventBus
 
 # Test Constants
 GENERIC_CHARACTERS = ["pilot", "scientist", "engineer", "test"]
@@ -742,3 +742,4 @@ pytestmark = [pytest.mark.character, pytest.mark.unit]
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+

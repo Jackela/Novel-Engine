@@ -33,7 +33,7 @@ import {
  * Generate agent_id from character name
  * Matches backend logic in persona_core.py:230-243
  */
-const generateAgentId = (name: string): string => {
+export const generateAgentId = (name: string): string => {
   // Convert to lowercase and replace spaces/hyphens with underscores
   let agentId = name.toLowerCase()
     .replace(/\s+/g, '_')
@@ -67,7 +67,7 @@ const generateAgentId = (name: string): string => {
  * Normalize skill value from 1-10 range to 0.0-1.0 range
  * Backend expects skills in 0.0-1.0 range
  */
-const normalizeSkillValue = (value: number): number => {
+export const normalizeSkillValue = (value: number): number => {
   // Transform from 1-10 to 0.0-1.0
   // Using (value - 1) / 9 to map: 1→0.0, 5→0.444, 10→1.0
   return Math.max(0.0, Math.min(1.0, (value - 1) / 9));

@@ -52,7 +52,8 @@ Remember: A great mystery makes the reader feel clever when they solve it, yet s
         "Build suspense through pacing and revelation timing",
         "Make readers question everything without frustrating them",
     ],
-    example_opening="""The grandfather clock in the study had stopped at 3:47 AM-the exact moment, according to the coroner, that Lord Ashworth had taken his last breath. Detective Inspector Sarah Chen circled the body, noting the untouched whiskey, the locked windows, the single playing card tucked into his breast pocket.
+    example_opening="""The grandfather clock in the study had stopped at 3:47 AM-the exact moment, according to the coroner, that Lord Ashworth had taken his last breath.
+Detective Inspector Sarah Chen circled the body, noting the untouched whiskey, the locked windows, the single playing card tucked into his breast pocket.
 
 The ace of spades. Someone had wanted this death to send a message.
 

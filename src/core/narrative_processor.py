@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Optional
 from campaign_brief import CampaignBrief, CampaignBriefLoader
 from narrative_actions import NarrativeActionResolver, NarrativeOutcome
 
-from shared_types import CharacterAction
-from src.persona_agent import PersonaAgent
+from src.core.types.shared_types import CharacterAction
+from src.agents.persona_agent.agent import PersonaAgent
 
 logger = logging.getLogger(__name__)
 
@@ -475,3 +475,6 @@ class NarrativeProcessor:
     def has_campaign_brief(self) -> bool:
         """Check if a campaign brief is loaded."""
         return self.campaign_brief is not None
+
+
+

@@ -12,7 +12,7 @@ import pytest
 # Import modules under test
 try:
     from src.config.character_factory import CharacterFactory
-    from src.event_bus import EventBus
+    from src.core.event_bus import EventBus
 
     CHARACTER_FACTORY_AVAILABLE = True
 except ImportError:
@@ -352,3 +352,4 @@ def run_character_factory_tests():
 if __name__ == "__main__":
     # Direct execution runs all tests
     run_character_factory_tests()
+

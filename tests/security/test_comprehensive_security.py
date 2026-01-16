@@ -562,7 +562,7 @@ class TestSecurityPerformance:
 
         tasks = []
         for i in range(1000):
-            task = backend.check_rate_limit(f"key_{i%100}", test_limit)
+            task = backend.check_rate_limit(f"key_{i % 100}", test_limit)
             tasks.append(task)
 
         results = await asyncio.gather(*tasks)

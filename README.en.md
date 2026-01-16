@@ -78,7 +78,7 @@ Novel-Engine/
 ├── src/                  # Backend Core (FastAPI + Agents)
 │   ├── api/              # API Routers & App Factory
 │   ├── agents/           # Agent Logic (Director, Persona)
-│   ├── contexts/         # DDD Context Boundaries
+│   ├── contexts/         # DDD Context Boundaries (src/contexts/)
 │   └── workspaces/       # Filesystem Persistence Layer
 ├── frontend/             # Frontend App (React + Vite)
 │   ├── src/lib/api/      # SSOT API Client
@@ -118,8 +118,16 @@ We enforce a strict TDD (Test-Driven Development) workflow.
 ## 🤝 Contributing
 
 1. Follow standards in `docs/coding-standards.md`.
-2. Run local validation: `scripts/validate_ci_locally.sh` before pushing.
+2. Run local validation: `scripts/validate_ci_locally.sh` before pushing.       
 3. Propose architectural changes via `openspec`.
+
+---
+
+## 🤖 AI Collaboration
+
+- `AGENTS.md` is the SSOT for AI workflow and repo guardrails.
+- Any proposal/spec/architecture change should start with `openspec/AGENTS.md`.
+- Build and test commands live in `CLAUDE.md`.
 
 ---
 

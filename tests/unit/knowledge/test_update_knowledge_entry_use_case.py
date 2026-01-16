@@ -16,18 +16,18 @@ import pytest
 
 # NOTE: These imports will fail until application layer is implemented
 try:
-    from contexts.knowledge.application.ports.i_event_publisher import IEventPublisher
-    from contexts.knowledge.application.ports.i_knowledge_repository import (
+    from src.contexts.knowledge.application.ports.i_event_publisher import IEventPublisher
+    from src.contexts.knowledge.application.ports.i_knowledge_repository import (
         IKnowledgeRepository,
     )
-    from contexts.knowledge.application.use_cases.update_knowledge_entry import (
+    from src.contexts.knowledge.application.use_cases.update_knowledge_entry import (
         UpdateKnowledgeEntryCommand,
         UpdateKnowledgeEntryUseCase,
     )
-    from contexts.knowledge.domain.models.access_control_rule import AccessControlRule
-    from contexts.knowledge.domain.models.access_level import AccessLevel
-    from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
-    from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+    from src.contexts.knowledge.domain.models.access_control_rule import AccessControlRule
+    from src.contexts.knowledge.domain.models.access_level import AccessLevel
+    from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+    from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 except ImportError:
     UpdateKnowledgeEntryUseCase = None
     UpdateKnowledgeEntryCommand = None

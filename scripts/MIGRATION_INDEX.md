@@ -86,7 +86,7 @@ Level Distribution:
 Top Files:
   templates/dynamic_template_engine.py        - 19 statements
   api/integration_tests.py                    - 17 statements
-  core/config/config_loader.py                - 15 statements
+  core/config/src/core/config/config_loader.py                - 15 statements
 ```
 
 ## 🎯 Use Cases
@@ -430,3 +430,4 @@ All criteria have been met:
 ```bash
 python scripts/migrate_print_to_logging.py --dry-run
 ```
+

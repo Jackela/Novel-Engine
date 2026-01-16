@@ -252,7 +252,7 @@ class ConfigLoader:
         Prevents multiple initialization in singleton pattern.
         """
         if not getattr(self, "_initialized", False):
-            self.config_file_path = "configs/environments/development.yaml"
+            self.config_file_path = "config/environments/development.yaml"
             self._config: Optional[AppConfig] = None
             self._load_lock = threading.RLock()
             self._initialized = True

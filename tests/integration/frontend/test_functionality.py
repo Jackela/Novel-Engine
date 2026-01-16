@@ -130,10 +130,10 @@ import { test, expect } from '@playwright/test';
 test('基础页面加载测试', async ({ page }) => {
   // 访问主页
   await page.goto('/');
-  
+
   // 检查页面标题
   await expect(page).toHaveTitle(/StoryForge/i);
-  
+
   // 检查是否有主要内容
   const body = await page.locator('body');
   await expect(body).toBeVisible();
@@ -142,10 +142,10 @@ test('基础页面加载测试', async ({ page }) => {
 test('API连接测试', async ({ page }) => {
   // 访问主页
   await page.goto('/');
-  
+
   // 等待页面加载
   await page.waitForTimeout(2000);
-  
+
   // 检查是否有API错误信息
   const errorMessages = await page.locator('.error, [class*="error"], [data-testid="error"]').count();
   expect(errorMessages).toBeLessThanOrEqual(0);
@@ -154,10 +154,10 @@ test('API连接测试', async ({ page }) => {
 test('字符选择功能测试', async ({ page }) => {
   // 访问主页
   await page.goto('/');
-  
+
   // 等待页面加载
   await page.waitForTimeout(3000);
-  
+
   // 尝试查找字符选择相关元素
   const characterElements = await page.locator('[class*="character"], [data-testid*="character"], button').count();
   expect(characterElements).toBeGreaterThan(0);

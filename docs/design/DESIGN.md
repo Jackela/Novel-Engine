@@ -45,7 +45,7 @@ The core of the Engine is the **Turn Execution Sequence**, a five-stage liturgy:
 | `/characters` | GET | - | `List[PersonaCardV2]` |
 | `/chronicle` | POST | `ChronicleRequest` | `ChronicleSpec` |
 
-*Refer to `API.md` and `SCHEMAS.md` for detailed specifications.*
+*Refer to `api/API_REFERENCE.md` and `api/schemas.md` for detailed specifications.*
 
 ## 5. Data Flow Diagram
 
@@ -79,5 +79,5 @@ The Engine operates in one of three modes, configured in `settings.yaml`:
 
 ## 8. Versioning & Evolution
 
--   All schemas (`SCHEMAS.md`) and APIs (`API.md`) will be versioned.
+-   All schemas (`api/schemas.md`) and APIs (`api/API_REFERENCE.md`) will be versioned.
 -   The `LLMClient` and `Knowledge Base` interfaces are designed to be pluggable to allow for future extension.

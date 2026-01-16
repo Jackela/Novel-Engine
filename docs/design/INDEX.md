@@ -64,7 +64,7 @@ Design specifications and architecture documents for Novel Engine features and c
 - [Implementation Guide](../implementation/IMPLEMENTATION.md)
 
 ### Development
-- [Developer Guide](../DEVELOPER_GUIDE.md)
+- [Developer Guide](../onboarding/developer-guide.md)
 - [API Reference](../api/API_REFERENCE.md)
 
 ---

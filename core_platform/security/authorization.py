@@ -63,20 +63,16 @@ class AuthorizationException(Exception):
     """Base exception for authorization errors."""
 
 
-
 class InsufficientPermissionsException(AuthorizationException):
     """Raised when user lacks required permissions."""
-
 
 
 class RoleNotFoundException(AuthorizationException):
     """Raised when role is not found."""
 
 
-
 class PermissionNotFoundException(AuthorizationException):
     """Raised when permission is not found."""
-
 
 
 class PermissionManager:

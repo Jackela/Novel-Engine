@@ -39,7 +39,7 @@ The context source is determined by the operating mode in `settings.yaml`.
 
 ## 5. Schema References
 
-This document specifies the *rules* for context engineering. The authoritative definitions for the data structures themselves are located in `docs/SCHEMAS.md` and implemented in `src/shared_types.py`. The key schemas governed by these rules are:
+This document specifies the *rules* for context engineering. The authoritative definitions for the data structures themselves are located in `docs/api/schemas.md` and implemented in `src/core/types/shared_types.py`. The key schemas governed by these rules are:
 -   `PersonaCardV2`
 -   `WorldState`
 -   `TurnBrief`
@@ -59,3 +59,6 @@ The quality of the context pipeline is measured by the following metrics, define
 -   **Canon Violation Rate:** The percentage of `CharacterActions` that contradict retrieved doctrine. Target: **≤ 5%**.
 -   **Persona Consistency Score:** The cosine similarity between an action's justification and the agent's core beliefs. Target: **≥ 0.75**.
 -   **TurnBrief Token Count:** The P95 token count for all generated briefs. Target: **≤ 2500**.
+
+
+

@@ -70,7 +70,7 @@ Novel Engine strictly enforces the **Hexagonal Architecture** (Ports and Adapter
 | **Narrative** | `ILLMService` | `OpenAIAdapter` | Outbound | OpenAI API (ACL) | Plot/scene generation via LLM |
 | **Narrative** | `INarrativeEventPublisher` | `KafkaNarrativeEventPublisher` | Outbound | Kafka | Domain events: PlotGenerated, SceneCreated |
 | **Simulation** | `DirectorAgent.turn_processor` | `src/director_agent.py` | Inbound | FastAPI | Orchestrates campaign turns |
-| **Simulation** | `EventBus.publish` | `src/event_bus.py` | Outbound | Kafka | Emits CampaignCreated, TurnAdvanced |
+| **Simulation** | `EventBus.publish` | `src/core/event_bus.py` | Outbound | Kafka | Emits CampaignCreated, TurnAdvanced |
 | **Persona** | `PersonaAgent.gemini_client` | `GeminiHTTPXAdapter` | Outbound | Gemini API (ACL) | HTTPX wrapper with retries, caching (Redis) |
 | **Persona** | `PersonaAgent.decision_port` | `LocalStrategyFallback` | Inbound | In-Memory | Deterministic decisions when Gemini unavailable |
 | **Chronicle** | `ChroniclerAgent.storage_gateway` | `S3StorageAdapter` | Outbound | AWS S3 / Local Files | Persists narrative markdown, media assets |
@@ -102,10 +102,10 @@ Novel Engine strictly enforces the **Hexagonal Architecture** (Ports and Adapter
 ### ✅ CORRECT: Domain Defines Abstractions (Ports)
 
 ```python
-# contexts/character/application/ports/character_repository.py
+# src/contexts/character/application/ports/character_repository.py
 from abc import ABC, abstractmethod
-from contexts.character.domain.models import Character
-from src.shared_types import CharacterId
+from src.contexts.character.domain.models import Character
+from src.core.types.shared_types import CharacterId
 
 class ICharacterRepository(ABC):
     """Port (abstraction) defined by application layer."""
@@ -124,11 +124,11 @@ class ICharacterRepository(ABC):
 ### ✅ CORRECT: Infrastructure Implements Adapters
 
 ```python
-# contexts/character/infrastructure/repositories/postgresql_character_repository.py
+# src/contexts/character/infrastructure/repositories/postgresql_character_repository.py
 from sqlalchemy.ext.asyncio import AsyncSession
-from contexts.character.application.ports import ICharacterRepository
-from contexts.character.domain.models import Character
-from src.shared_types import CharacterId
+from src.contexts.character.application.ports import ICharacterRepository
+from src.contexts.character.domain.models import Character
+from src.core.types.shared_types import CharacterId
 
 class PostgreSQLCharacterRepository(ICharacterRepository):
     """Adapter (concrete implementation) in infrastructure layer."""
@@ -172,9 +172,9 @@ External systems (Gemini API, OpenAI, LaunchDarkly) require ACL to translate bet
 ### Example: Gemini API ACL
 
 ```python
-# contexts/persona/infrastructure/adapters/gemini_persona_adapter.py
-from contexts.persona.application.ports import IPersonaGenerator
-from contexts.persona.domain.models import Persona
+# src/contexts/persona/infrastructure/adapters/gemini_persona_adapter.py
+from src.contexts.persona.application.ports import IPersonaGenerator
+from src.contexts.persona.domain.models import Persona
 import google.generativeai as genai  # External API client
 
 class GeminiPersonaAdapter(IPersonaGenerator):
@@ -306,3 +306,7 @@ This architecture enforces:
 ---
 
 **Compliance**: This document reflects Constitution v2.0.0 Article II requirements.
+
+
+
+

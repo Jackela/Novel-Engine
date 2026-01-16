@@ -22,6 +22,12 @@ from fastapi.testclient import TestClient
 
 from src.api.main_api_server import create_app
 
+TEST_INTERVAL_SECONDS = 0.05
+
+
+def _stream_params(limit: int) -> dict[str, float]:
+    return {"limit": limit, "interval": TEST_INTERVAL_SECONDS}
+
 
 class TestEventsStreamEndpoint:
     """Test SSE endpoint for real-time dashboard events"""
@@ -37,7 +43,7 @@ class TestEventsStreamEndpoint:
         """Verify /api/events/stream endpoint exists and returns HTTP 200"""
         # Use stream context to test streaming endpoint
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 1}
+            "GET", "/api/events/stream", params=_stream_params(1)
         ) as response:
             assert response.status_code == 200
 
@@ -45,7 +51,7 @@ class TestEventsStreamEndpoint:
     def test_endpoint_returns_correct_content_type(self, client):
         """Verify endpoint returns text/event-stream content type"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 1}
+            "GET", "/api/events/stream", params=_stream_params(1)
         ) as response:
             # Accept content-type with or without charset
             assert response.headers["content-type"].startswith("text/event-stream")
@@ -54,7 +60,7 @@ class TestEventsStreamEndpoint:
     def test_endpoint_returns_required_headers(self, client):
         """Verify SSE-required headers are present"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 1}
+            "GET", "/api/events/stream", params=_stream_params(1)
         ) as response:
             headers = response.headers
 
@@ -74,7 +80,7 @@ class TestEventsStreamEndpoint:
     def test_stream_returns_retry_directive(self, client):
         """Verify SSE stream includes retry directive in first message"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 1}
+            "GET", "/api/events/stream", params=_stream_params(1)
         ) as response:
             # Read first line from stream
             first_line = next(response.iter_lines())
@@ -89,7 +95,7 @@ class TestEventsStreamEndpoint:
     def test_stream_returns_sse_formatted_events(self, client):
         """Verify events are formatted according to SSE spec"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 5}
+            "GET", "/api/events/stream", params=_stream_params(5)
         ) as response:
             lines_collected = []
             line_count = 0
@@ -102,7 +108,8 @@ class TestEventsStreamEndpoint:
 
                 # Stop after collecting enough lines or finding a data line
                 if line_count > 30 or any(
-                    l.startswith("data:") for l in lines_collected
+                    collected_line.startswith("data:")
+                    for collected_line in lines_collected
                 ):
                     break
 
@@ -113,7 +120,7 @@ class TestEventsStreamEndpoint:
     def test_event_payload_includes_required_fields(self, client):
         """Verify event data includes all required fields"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 2}
+            "GET", "/api/events/stream", params=_stream_params(2)
         ) as response:
             # Skip retry directive
             for line in response.iter_lines():
@@ -153,7 +160,7 @@ class TestEventsStreamEndpoint:
     def test_character_events_include_character_name(self, client):
         """Verify character-type events include optional characterName field"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 10}
+            "GET", "/api/events/stream", params=_stream_params(10)
         ) as response:
             lines_read = 0
             max_lines = 50
@@ -187,7 +194,7 @@ class TestEventsStreamEndpoint:
         # In a real scenario, this would be tested with actual network interruption
 
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 10}
+            "GET", "/api/events/stream", params=_stream_params(10)
         ) as response:
             # Read a few lines
             lines_read = 0
@@ -203,7 +210,7 @@ class TestEventsStreamEndpoint:
     def test_event_ids_are_sequential(self, client):
         """Verify event IDs exist and follow some pattern (SSE id lines)"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 5}
+            "GET", "/api/events/stream", params=_stream_params(5)
         ) as response:
             event_ids = []
             lines_read = 0
@@ -231,13 +238,19 @@ class TestEventsStreamEndpoint:
     def test_events_arrive_at_expected_frequency(self, client):
         """Verify events are generated approximately every 2 seconds"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 3}
+            "GET", "/api/events/stream", params=_stream_params(3)
         ) as response:
             event_times = []
+            data_seen = 0
 
             for line in response.iter_lines():
                 if line.startswith("data:"):
-                    event_times.append(time.time())
+                    data_seen += 1
+                    if data_seen == 1:
+                        continue
+                    json_str = line[5:].strip()
+                    event_data = json.loads(json_str)
+                    event_times.append(event_data["timestamp"])
 
                     # Collect timestamps for 2 events
                     if len(event_times) >= 2:
@@ -245,16 +258,20 @@ class TestEventsStreamEndpoint:
 
             # Calculate interval between events
             if len(event_times) == 2:
-                interval = event_times[1] - event_times[0]
+                interval = (event_times[1] - event_times[0]) / 1000.0
+                min_interval = max(0.01, TEST_INTERVAL_SECONDS * 0.5)
+                max_interval = TEST_INTERVAL_SECONDS * 10
 
-                # Should be approximately 2 seconds (allow significant variance for CI/Test load)
-                assert 1.5 <= interval <= 4.0, f"Event interval {interval}s not near 2s"
+                # Should be approximately the configured interval, with room for CI variance.
+                assert (
+                    min_interval <= interval <= max_interval
+                ), f"Event interval {interval}s not near {TEST_INTERVAL_SECONDS}s"
 
     @pytest.mark.integration
     def test_timestamp_field_is_milliseconds_since_epoch(self, client):
         """Verify timestamp is in milliseconds and reasonably current"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 1}
+            "GET", "/api/events/stream", params=_stream_params(1)
         ) as response:
             for line in response.iter_lines():
                 if line.startswith("data:"):
@@ -292,7 +309,7 @@ class TestEventsStreamErrorHandling:
         """Verify endpoint is accessible without auth (for MVP)"""
         # No auth headers provided
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 1}
+            "GET", "/api/events/stream", params=_stream_params(1)
         ) as response:
             assert response.status_code == 200
             # If auth was required, would get 401 Unauthorized
@@ -307,7 +324,7 @@ class TestEventsStreamErrorHandling:
             # Establish 3 concurrent connections
             for i in range(3):
                 response_context = client.stream(
-                    "GET", "/api/events/stream", params={"limit": 1}
+                    "GET", "/api/events/stream", params=_stream_params(1)
                 )
                 response = response_context.__enter__()
                 responses.append((response_context, response))
@@ -324,7 +341,7 @@ class TestEventsStreamErrorHandling:
     def test_endpoint_returns_valid_json_in_data_field(self, client):
         """Verify data field always contains valid JSON"""
         with client.stream(
-            "GET", "/api/events/stream", params={"limit": 5}
+            "GET", "/api/events/stream", params=_stream_params(5)
         ) as response:
             json_parse_errors = 0
             lines_read = 0
@@ -348,3 +365,4 @@ class TestEventsStreamErrorHandling:
                     break
 
             assert json_parse_errors == 0, "Found invalid JSON in SSE data field"
+

@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from contexts.narratives.domain.value_objects.narrative_id import NarrativeId
+from src.contexts.narratives.domain.value_objects.narrative_id import NarrativeId
 
 
 class TestNarrativeIdCreation:

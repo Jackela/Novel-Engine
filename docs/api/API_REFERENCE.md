@@ -823,8 +823,8 @@ orchestrator, result = await setup_agent()
 
 ## See Also
 
-- [API Integration Guide](../guides/api-integration.md)
-- [Data Schemas](../SCHEMAS.md)
+- [Core Systems Integration Guide](../guides/CORE_SYSTEMS_INTEGRATION_GUIDE.md)
+- [Data Schemas](./schemas.md)
 - [Authentication Guide](./authentication.md) (Coming Soon)
 - [SDK Documentation](./sdks/) (Coming Soon)
 

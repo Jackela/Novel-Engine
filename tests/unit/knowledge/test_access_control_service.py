@@ -14,12 +14,12 @@ from uuid import uuid4
 import pytest
 
 try:
-    from contexts.knowledge.domain.models.access_control_rule import AccessControlRule
-    from contexts.knowledge.domain.models.access_level import AccessLevel
-    from contexts.knowledge.domain.models.agent_identity import AgentIdentity
-    from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
-    from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
-    from contexts.knowledge.domain.services.access_control_service import (
+    from src.contexts.knowledge.domain.models.access_control_rule import AccessControlRule
+    from src.contexts.knowledge.domain.models.access_level import AccessLevel
+    from src.contexts.knowledge.domain.models.agent_identity import AgentIdentity
+    from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+    from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+    from src.contexts.knowledge.domain.services.access_control_service import (
         AccessControlService,
     )
 except ImportError:

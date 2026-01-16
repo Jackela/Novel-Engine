@@ -15,9 +15,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from contexts.knowledge.domain.models.access_level import AccessLevel
-from contexts.knowledge.domain.models.knowledge_type import KnowledgeType
-from contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import (
+from src.contexts.knowledge.domain.models.access_level import AccessLevel
+from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+from src.contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import (
     MarkdownMigrationAdapter,
 )
 
@@ -520,10 +520,10 @@ Content for section 2
         async def mock_retrieve(agent, **kwargs):
             from datetime import datetime, timezone
 
-            from contexts.knowledge.domain.models.access_control_rule import (
+            from src.contexts.knowledge.domain.models.access_control_rule import (
                 AccessControlRule,
             )
-            from contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+            from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
 
             now = datetime.now(timezone.utc)
 

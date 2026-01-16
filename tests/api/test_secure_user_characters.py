@@ -73,13 +73,15 @@ def build_client(character_names: list[str] | None = None):
         api_key=None,
     )
     svc = api.get_security_service()
-    allow = lambda: dummy_user
+
+    def allow_user() -> api.User:
+        return dummy_user
     for perm in [
         api.Permission.CHARACTER_CREATE,
         api.Permission.CHARACTER_READ,
         api.Permission.SIMULATION_CREATE,
     ]:
-        app.dependency_overrides[svc.require_permission(perm)] = allow
+        app.dependency_overrides[svc.require_permission(perm)] = allow_user
 
     return TestClient(app)
 

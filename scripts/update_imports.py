@@ -10,7 +10,7 @@ from pathlib import Path
 # Mapping of old imports to new imports
 IMPORT_MAPPINGS = {
     # Agents
-    r"from director_agent import": "from src.agents.director_agent import",
+    r"from director_agent import": "from src.agents.director_agent_integrated import",
     r"import director_agent": "import src.agents.director_agent as director_agent",
     r"from director_agent_integrated import": "from src.agents.director_agent_integrated import",
     r"import director_agent_integrated": "import src.agents.director_agent_integrated as director_agent_integrated",

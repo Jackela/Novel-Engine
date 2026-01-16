@@ -170,8 +170,8 @@ The following API documentation is planned for future releases:
 
 ### Development
 - [Quick Start](../QUICK_START.md)
-- [Developer Guide](../DEVELOPER_GUIDE.md)
-- [Data Schemas](../SCHEMAS.md)
+- [Developer Guide](../onboarding/developer-guide.md)
+- [Data Schemas](./schemas.md)
 
 ### Deployment
 - [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)

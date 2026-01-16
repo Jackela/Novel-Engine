@@ -12,9 +12,9 @@ import pytest
 
 # NOTE: These imports will fail until domain models are implemented
 try:
-    from contexts.knowledge.domain.models.access_control_rule import AccessControlRule
-    from contexts.knowledge.domain.models.access_level import AccessLevel
-    from contexts.knowledge.domain.models.agent_identity import AgentIdentity
+    from src.contexts.knowledge.domain.models.access_control_rule import AccessControlRule
+    from src.contexts.knowledge.domain.models.access_level import AccessLevel
+    from src.contexts.knowledge.domain.models.agent_identity import AgentIdentity
 except ImportError:
     AccessControlRule = None
     AccessLevel = None

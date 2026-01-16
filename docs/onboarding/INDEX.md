@@ -17,8 +17,8 @@ Onboarding guides and resources for new team members and contributors to Novel E
 
 ### New Developers
 1. [Quick Start Guide](../QUICK_START.md)
-2. [Developer Guide](../DEVELOPER_GUIDE.md)
-3. [Coding Standards](../coding-standards.md)
+2. [Developer Guide](./developer-guide.md)
+3. [Coding Standards](../development/coding-standards.md)
 4. [System Architecture](../architecture/SYSTEM_ARCHITECTURE.md)
 
 ### New Operators
@@ -29,8 +29,8 @@ Onboarding guides and resources for new team members and contributors to Novel E
 
 ### New Contributors
 1. [Foundations](../FOUNDATIONS.md)
-2. [Project Vision](../Project_Vision.md)
-3. [Coding Standards](../coding-standards.md)
+2. [Project Vision](../planning/project-vision.md)
+3. [Coding Standards](../development/coding-standards.md)
 
 ---
 

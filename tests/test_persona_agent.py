@@ -4,13 +4,13 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from shared_types import CharacterAction
+from src.core.types.shared_types import CharacterAction
 from src.agents.persona_agent.protocols import (
     ThreatLevel,
     WorldEvent,
 )
-from src.event_bus import EventBus
-from src.persona_agent import PersonaAgent
+from src.core.event_bus import EventBus
+from src.agents.persona_agent.agent import PersonaAgent
 
 
 class TestPersonaAgent(unittest.TestCase):
@@ -699,7 +699,7 @@ class TestPersonaAgentAIIntegration(unittest.TestCase):
             self.assertIsNone(api_key)
 
             # Test fallback behavior when no API key
-            with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+            with patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None):
                 result = self.agent._call_llm("Test prompt")
                 # Should return fallback response or handle gracefully
                 self.assertIsInstance(result, str)
@@ -711,7 +711,7 @@ class TestPersonaAgentAIIntegration(unittest.TestCase):
 
         # Test that the LLM call handles errors gracefully
         with patch(
-            "src.persona_agent._make_gemini_api_request",
+            "src.agents.persona_agent.agent._make_gemini_api_request",
             side_effect=Exception("Network error"),
         ):
             result = self.agent._call_llm(test_prompt)
@@ -825,3 +825,6 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+

@@ -186,7 +186,7 @@ Source Directory: D:\Code\Novel-Engine\src
       After:      logger.info("MACHINE GOD PROTECTS THE STANDARD DATA FLOW")
    📋 Would be migrated (dry-run)
 
-📄 core\config\config_loader.py
+📄 core\config\src/core/config/config_loader.py
    Found 15 print statement(s)
    Line 820: INFO
       Reason: Default level for general output
@@ -1149,3 +1149,4 @@ Logging Level Distribution:
 
 💡 This was a DRY RUN. No files were modified.
    Run without --dry-run to apply changes.
+

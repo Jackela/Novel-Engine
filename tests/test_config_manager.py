@@ -48,9 +48,9 @@ class TestConfigurationPaths:
         """Test ConfigurationPaths default values."""
         paths = ConfigurationPaths()
 
-        assert paths.main_config == "configs/environments/development.yaml"
-        assert paths.security_config == "configs/security/security.yaml"
-        assert paths.settings == "configs/environments/settings.yaml"
+        assert paths.main_config == "config/environments/development.yaml"
+        assert paths.security_config == "config/security/security.yaml"
+        assert paths.settings == "config/environments/settings.yaml"
         assert paths.staging_settings == "staging/settings_staging.yaml"
 
     @pytest.mark.unit
@@ -60,8 +60,8 @@ class TestConfigurationPaths:
 
         assert isinstance(all_paths, list)
         assert len(all_paths) == 4
-        assert "configs/environments/development.yaml" in all_paths
-        assert "configs/security/security.yaml" in all_paths
+        assert "config/environments/development.yaml" in all_paths
+        assert "config/security/security.yaml" in all_paths
 
 
 class TestConfigDefaults:
@@ -141,7 +141,7 @@ class TestConfigurationManager:
     @pytest.mark.unit
     def test_load_yaml_config_file(self, temp_config_dir):
         """Test loading YAML configuration file."""
-        configs_dir = temp_config_dir / "configs" / "environments"
+        configs_dir = temp_config_dir / "config" / "environments"
         configs_dir.mkdir(parents=True, exist_ok=True)
 
         config_file = configs_dir / "development.yaml"
@@ -158,7 +158,7 @@ class TestConfigurationManager:
     @pytest.mark.unit
     def test_load_json_config_file(self, temp_config_dir):
         """Test loading JSON configuration file."""
-        configs_dir = temp_config_dir / "configs" / "environments"
+        configs_dir = temp_config_dir / "config" / "environments"
         configs_dir.mkdir(parents=True, exist_ok=True)
 
         config_file = configs_dir / "development.json"
@@ -172,7 +172,7 @@ class TestConfigurationManager:
             json.dump(config_data, f)
 
         manager = ConfigurationManager(base_path=str(temp_config_dir))
-        manager.paths.main_config = "configs/environments/development.json"
+        manager.paths.main_config = "config/environments/development.json"
         manager._load_configurations()
 
         assert manager.get("server.host") in ["192.168.1.1", "127.0.0.1"]

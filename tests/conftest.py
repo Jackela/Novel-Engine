@@ -16,6 +16,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from tests.helpers.postgres import ensure_postgres_service
+
 # Load pytest-asyncio plugin early so asyncio_mode=auto in pytest.ini is recognized.
 # This must happen before pytest parses config options.
 pytest_plugins = ("pytest_asyncio",)
@@ -28,6 +30,16 @@ pytest_plugins = ("pytest_asyncio",)
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+
+@pytest.fixture(scope="session")
+def postgres_service():
+    """Ensure PostgreSQL is available for integration tests."""
+    service = ensure_postgres_service()
+    try:
+        yield service
+    finally:
+        service.stop()
 
 
 @pytest.fixture(scope="session")
@@ -190,6 +202,13 @@ def clean_environment(request):
     os.environ.update(original_env)
 
 
+@pytest.fixture(autouse=True)
+def ensure_required_services(request):
+    """Start required infrastructure for tests marked requires_services."""
+    if request.node.get_closest_marker("requires_services"):
+        request.getfixturevalue("postgres_service")
+
+
 @pytest.fixture
 def characters_directory(temp_dir):
     """创建临时的角色目录结构"""
@@ -215,6 +234,8 @@ def characters_directory(temp_dir):
 # 测试标记辅助函数
 def pytest_configure(config):
     """pytest配置钩子"""
+    reports_dir = project_root / "reports" / "test-results"
+    reports_dir.mkdir(parents=True, exist_ok=True)
     config.addinivalue_line("markers", "unit: 单元测试")
     config.addinivalue_line("markers", "integration: 集成测试")
     config.addinivalue_line("markers", "api: API测试")

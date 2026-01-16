@@ -12,20 +12,20 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from src.llm_service import (
+from src.core.llm_service import (
     LLMRequest,
     ResponseFormat,
     UnifiedLLMService,
     get_llm_service,
 )
 
-# Type alias for compatibility
-LLMService = UnifiedLLMService
-
 from .causal_graph import CausalGraph
 from .narrative_coherence import NarrativeCoherenceEngine
 from .negotiation import AgentNegotiationEngine
 from .types import CausalEdge, CausalNode, CausalRelationType
+
+# Type alias for compatibility
+LLMService = UnifiedLLMService
 
 logger = logging.getLogger(__name__)
 
@@ -779,3 +779,4 @@ if __name__ == "__main__":
 
     # 运行示例
     # asyncio.run(example_usage())
+

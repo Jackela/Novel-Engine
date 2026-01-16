@@ -14,7 +14,7 @@ Features:
 
 Example:
     from ops.monitoring.grafana.dashboards import get_api_dashboard, get_infrastructure_dashboard
-    
+
     api_dashboard = get_api_dashboard()
     infra_dashboard = get_infrastructure_dashboard()
 """
@@ -150,7 +150,12 @@ def get_api_dashboard() -> Dict[str, Any]:
                     "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8},
                     "targets": [
                         {
-                            "expr": 'sum(rate(http_requests_total{environment="$environment",service=~"$service",status=~"5.."}[5m])) / sum(rate(http_requests_total{environment="$environment",service=~"$service"}[5m])) * 100',
+                            "expr": (
+                                'sum(rate(http_requests_total{environment="$environment",'
+                                'service=~"$service",status=~"5.."}[5m])) / '
+                                'sum(rate(http_requests_total{environment="$environment",'
+                                'service=~"$service"}[5m])) * 100'
+                            ),
                             "legendFormat": "Error Rate %",
                         }
                     ],

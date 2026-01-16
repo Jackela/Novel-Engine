@@ -1,0 +1,25 @@
+INFO:src.api.versioning:API versioning system initialized
+INFO:src.api.monitoring:Monitoring system initialized
+INFO:src.api.documentation:Enhanced API documentation initialized
+INFO:__main__:Security headers middleware enabled (outermost)
+INFO:__main__:Some security middleware disabled in debug mode
+INFO:src.security.auth_system:SECURITY DATABASE INITIALIZED SUCCESSFULLY
+INFO:__main__:Security service initialized for API routing.
+INFO:src.api.character_api:Character API initialized.
+INFO:src.api.story_generation_api:Story Generation API initialized with performance optimizations.
+INFO:src.api.interaction_api:Interaction API initialized.
+INFO:src.api.context7_integration_api:Context7 availability: False
+INFO:__main__:API routes registered successfully with Context7 integration.
+INFO:__main__:Legacy routes registered successfully.
+INFO:__main__:============================================================
+INFO:__main__:🚀 Starting Enhanced Novel Engine API Server
+INFO:__main__:============================================================
+INFO:__main__:📡 Server: 127.0.0.1:8000
+INFO:__main__:🔧 Mode: Development
+INFO:__main__:📊 Logging: INFO
+INFO:__main__:💾 Database: data/api_server.db
+INFO:__main__:🔒 Security: Enhanced
+INFO:__main__:📈 Monitoring: Enabled
+INFO:__main__:📚 Documentation: Enhanced
+INFO:__main__:============================================================
+WARNING:  You must pass the application as an import string to enable 'reload' or 'workers'.

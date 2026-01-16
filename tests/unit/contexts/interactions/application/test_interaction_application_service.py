@@ -12,32 +12,32 @@ from uuid import uuid4
 
 import pytest
 
-from contexts.interactions.application.commands.interaction_command_handlers import (
+from src.contexts.interactions.application.commands.interaction_command_handlers import (
     InteractionCommandHandler,
 )
-from contexts.interactions.application.services.interaction_application_service import (
+from src.contexts.interactions.application.services.interaction_application_service import (
     InteractionApplicationService,
 )
-from contexts.interactions.domain.aggregates.negotiation_session import (
+from src.contexts.interactions.domain.aggregates.negotiation_session import (
     NegotiationSession,
 )
-from contexts.interactions.domain.repositories.negotiation_session_repository import (
+from src.contexts.interactions.domain.repositories.negotiation_session_repository import (
     NegotiationSessionRepository,
 )
-from contexts.interactions.domain.services.negotiation_service import NegotiationService
-from contexts.interactions.domain.value_objects.interaction_id import InteractionId
-from contexts.interactions.domain.value_objects.negotiation_party import (
+from src.contexts.interactions.domain.services.negotiation_service import NegotiationService
+from src.contexts.interactions.domain.value_objects.interaction_id import InteractionId
+from src.contexts.interactions.domain.value_objects.negotiation_party import (
     NegotiationParty,
 )
-from contexts.interactions.domain.value_objects.negotiation_status import (
+from src.contexts.interactions.domain.value_objects.negotiation_status import (
     NegotiationOutcome,
     NegotiationPhase,
     TerminationReason,
 )
-from contexts.interactions.domain.value_objects.proposal_response import (
+from src.contexts.interactions.domain.value_objects.proposal_response import (
     ProposalResponse,
 )
-from contexts.interactions.domain.value_objects.proposal_terms import ProposalTerms
+from src.contexts.interactions.domain.value_objects.proposal_terms import ProposalTerms
 
 
 class TestInteractionApplicationServiceInitialization:
@@ -77,7 +77,7 @@ class TestInteractionApplicationServiceInitialization:
         mock_negotiation_service = Mock(spec=NegotiationService)
 
         with patch(
-            "contexts.interactions.application.services.interaction_application_service.InteractionCommandHandler"
+            "src.contexts.interactions.application.services.interaction_application_service.InteractionCommandHandler"
         ) as mock_handler_class:
             mock_handler = Mock()
             mock_handler_class.return_value = mock_handler

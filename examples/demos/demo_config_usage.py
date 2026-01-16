@@ -9,7 +9,7 @@ and how it can be used to customize simulation behavior without modifying code.
 
 import os
 
-from config_loader import ConfigLoader, get_config
+from src.core.config.config_loader import ConfigLoader, get_config
 
 
 def demo_basic_config():
@@ -34,7 +34,7 @@ def demo_convenience_functions():
     """Demonstrate convenience functions for common config values."""
     print("=== Convenience Functions ===")
 
-    from config_loader import (
+    from src.core.config.config_loader import (
         get_campaign_log_filename,
         get_character_sheets_path,
         get_default_character_sheets,
@@ -130,7 +130,7 @@ def demo_usage_in_components():
 
     # Show how DirectorAgent would use configuration
     from src.agents.chronicler_agent import ChroniclerAgent
-    from src.agents.director_agent import DirectorAgent
+    from src.agents.director_agent_integrated import DirectorAgent
 
     print("DirectorAgent configuration integration:")
     director = DirectorAgent()

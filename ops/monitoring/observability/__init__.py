@@ -14,7 +14,7 @@ Features:
 
 Example:
     from ops.monitoring.observability import instrument_app, create_span
-    
+
     instrument_app(app)
     with create_span('user_operation') as span:
         # Traced operation

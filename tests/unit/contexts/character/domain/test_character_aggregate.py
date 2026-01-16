@@ -24,9 +24,9 @@ event_bus_mock.Event = event_mock
 sys.modules["src.events.event_bus"] = event_bus_mock
 
 # Now import the actual modules we're testing
-from contexts.character.domain.aggregates.character import Character
-from contexts.character.domain.value_objects.character_id import CharacterID
-from contexts.character.domain.value_objects.character_profile import (
+from src.contexts.character.domain.aggregates.character import Character
+from src.contexts.character.domain.value_objects.character_id import CharacterID
+from src.contexts.character.domain.value_objects.character_profile import (
     Background,
     CharacterClass,
     CharacterProfile,
@@ -35,13 +35,13 @@ from contexts.character.domain.value_objects.character_profile import (
     PersonalityTraits,
     PhysicalTraits,
 )
-from contexts.character.domain.value_objects.character_stats import (
+from src.contexts.character.domain.value_objects.character_stats import (
     CharacterStats,
     CombatStats,
     CoreAbilities,
     VitalStats,
 )
-from contexts.character.domain.value_objects.skills import (
+from src.contexts.character.domain.value_objects.skills import (
     ProficiencyLevel,
     Skill,
     SkillCategory,

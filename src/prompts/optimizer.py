@@ -209,7 +209,7 @@ Return ONLY the optimized prompt, no explanations."""
     def _get_llm_service(self) -> Any:
         """Get or create the LLM service."""
         if self._llm_service is None:
-            from src.llm_service import UnifiedLLMService
+            from src.core.llm_service import UnifiedLLMService
 
             self._llm_service = UnifiedLLMService()
         return self._llm_service
@@ -233,7 +233,7 @@ Return ONLY the optimized prompt, no explanations."""
         """
         import json
 
-        from src.llm_service import LLMProvider, LLMRequest, ResponseFormat
+        from src.core.llm_service import LLMProvider, LLMRequest, ResponseFormat
 
         genre_name = genre.value if genre else "general fiction"
 
@@ -334,7 +334,7 @@ Return ONLY the optimized prompt, no explanations."""
         Returns:
             The improved prompt
         """
-        from src.llm_service import LLMProvider, LLMRequest, ResponseFormat
+        from src.core.llm_service import LLMProvider, LLMRequest, ResponseFormat
 
         genre_name = genre.value if genre else "general fiction"
 
@@ -383,7 +383,7 @@ Return ONLY the optimized prompt, no explanations."""
         Returns:
             OptimizationResult with the optimized prompt and details
         """
-        from src.llm_service import LLMProvider, LLMRequest, ResponseFormat
+        from src.core.llm_service import LLMProvider, LLMRequest, ResponseFormat
 
         current_prompt = user_prompt
         improvements_made: List[str] = []
@@ -568,3 +568,4 @@ __all__ = [
     "analyze_prompt",
     "optimize_prompt",
 ]
+

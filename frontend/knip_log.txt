@@ -1,0 +1,257 @@
+[93m[4mUnused files[24m[39m (43)
+public/sw-mobile.js                                     
+scripts/analyze-test-timing.cjs                         
+scripts/convert-auth-tests-to-green.cjs                 
+src/setupTests.ts                                       
+src/test-setup.js                                       
+tests/global-setup.js                                   
+tests/global-teardown.js                                
+src/hooks/redux.ts                                      
+src/hooks/useAuth.ts                                    
+src/hooks/useKeyboardNav.ts                             
+src/hooks/useLogger.ts                                  
+src/hooks/usePerformanceOptimizer.tsx                   
+src/hooks/useWebSocket.tsx                              
+src/hooks/useWebSocketProgress.ts                       
+src/test/act-env.ts                                     
+src/test/websocket-test-utils.ts                        
+src/utils/constraints.js                                
+src/utils/EnvironmentValidator.js                       
+src/utils/errorHandler.js                               
+src/utils/HealthMonitor.js                              
+src/utils/PortDetector.js                               
+tests/e2e/run-uat.ts                                    
+src/components/common/ErrorState.tsx                    
+src/components/enhanced/EnhancedAgentInterface.tsx      
+src/components/enhanced/EnhancedNarrativeDisplay.tsx    
+src/components/error-boundaries/RouteErrorBoundary.tsx  
+src/components/layout/MobileDashboardOrganizer.tsx      
+src/components/layout/MobileTabbedDashboard.tsx         
+src/components/steps/SuccessStep.jsx                    
+src/components/steps/SystemCheckStep.tsx                
+src/components/steps/WelcomeStep.jsx                    
+src/components/ui/Badge.tsx                             
+src/components/ui/Button.tsx                            
+src/components/ui/Card.tsx                              
+src/features/agent-interface/AgentInterface.tsx         
+src/features/dashboard/types.ts                         
+src/features/narrative/NarrativeDisplay.tsx             
+src/services/api/index.ts                               
+src/services/error-reporting/IErrorReporter.ts          
+src/services/logging/SentryLogger.ts                    
+src/services/performance/WebVitalsMonitor.ts            
+tests/e2e/utils/TestDataHelpers.ts                      
+tests/e2e/utils/UATReporter.ts                          
+[93m[4mUnused dependencies[24m[39m (12)
+@mui/x-data-grid              package.json:65:6
+@react-three/drei             package.json:66:6
+@react-three/fiber            package.json:67:6
+d3                            package.json:70:6
+date-fns                      package.json:71:6
+lodash-es                     package.json:75:6
+markdown-it                   package.json:76:6
+react-window                  package.json:85:6
+react-window-infinite-loader  package.json:86:6
+socket.io-client              package.json:87:6
+three                         package.json:88:6
+use-debounce                  package.json:89:6
+[93m[4mUnused devDependencies[24m[39m (5)
+@axe-core/react           package.json:94:6 
+@lhci/cli                 package.json:96:6 
+rollup                    package.json:115:6
+rollup-plugin-visualizer  package.json:116:6
+yaml                      package.json:126:6
+[93m[4mUnlisted dependencies[24m[39m (2)
+@vitest/coverage-v8  vite.config.ts                         
+@mui/system          src/components/layout/GridTile.tsx:4:31
+[93m[4mUnresolved imports[24m[39m (2)
+@/types/campaign  src/features/campaigns/components/CampaignCard.tsx:16:31
+@/types/campaign  src/features/campaigns/hooks/useCampaigns.ts:2:31       
+[93m[4mUnused exports[24m[39m (95)
+registerCleanup                              src/test/utils/cleanup.ts:5:14                          
+clearCleanups                                src/test/utils/cleanup.ts:20:14                         
+activateGuestSession                         tests/e2e/utils/auth.ts:25:14                           
+api                                          src/services/api.ts:363:14                              
+useCharacterDetailsQuery  queries  function  src/services/queries.ts:19:17                           
+useGenerationStatusQuery  queries  function  src/services/queries.ts:26:17                           
+useHealthQuery            queries  function  src/services/queries.ts:33:17                           
+useSystemStatusQuery      queries  function  src/services/queries.ts:37:17                           
+useCampaignsQuery         queries  function  src/services/queries.ts:41:17                           
+loginUser                                    src/store/slices/authSlice.ts:67:14                     
+refreshUserToken                             src/store/slices/authSlice.ts:79:14                     
+logoutUser                                   src/store/slices/authSlice.ts:99:14                     
+clearError                                   src/store/slices/authSlice.ts:193:16                    
+setTokens                                    src/store/slices/authSlice.ts:193:28                    
+fetchCharacters                              src/store/slices/charactersSlice.ts:71:14               
+fetchCharacterById                           src/store/slices/charactersSlice.ts:86:14               
+createCharacter                              src/store/slices/charactersSlice.ts:94:14               
+updateCharacter                              src/store/slices/charactersSlice.ts:102:14              
+deleteCharacter                              src/store/slices/charactersSlice.ts:116:14              
+clearError                                   src/store/slices/charactersSlice.ts:267:3               
+setSelectedCharacter                         src/store/slices/charactersSlice.ts:268:3               
+updateFilters                                src/store/slices/charactersSlice.ts:269:3               
+clearCharacters                              src/store/slices/charactersSlice.ts:270:3               
+setStories                                   src/store/slices/storiesSlice.ts:69:3                   
+setSelectedStory                             src/store/slices/storiesSlice.ts:70:3                   
+addStory                                     src/store/slices/storiesSlice.ts:71:3                   
+updateStory                                  src/store/slices/storiesSlice.ts:72:3                   
+removeStory                                  src/store/slices/storiesSlice.ts:73:3                   
+setLoading                                   src/store/slices/storiesSlice.ts:74:3                   
+setError                                     src/store/slices/storiesSlice.ts:75:3                   
+setCampaigns                                 src/store/slices/campaignsSlice.ts:67:3                 
+setSelectedCampaign                          src/store/slices/campaignsSlice.ts:68:3                 
+addCampaign                                  src/store/slices/campaignsSlice.ts:69:3                 
+updateCampaign                               src/store/slices/campaignsSlice.ts:70:3                 
+removeCampaign                               src/store/slices/campaignsSlice.ts:71:3                 
+setLoading                                   src/store/slices/campaignsSlice.ts:72:3                 
+setError                                     src/store/slices/campaignsSlice.ts:73:3                 
+setConnected                                 src/store/slices/dashboardSlice.ts:423:3                
+updateLastUpdate                             src/store/slices/dashboardSlice.ts:424:3                
+updateMetrics                                src/store/slices/dashboardSlice.ts:425:3                
+updateSystemStatus                           src/store/slices/dashboardSlice.ts:426:3                
+updateAnalytics                              src/store/slices/dashboardSlice.ts:427:3                
+addActivity                                  src/store/slices/dashboardSlice.ts:428:3                
+markActivitiesAsRead                         src/store/slices/dashboardSlice.ts:429:3                
+updatePipeline                               src/store/slices/dashboardSlice.ts:430:3                
+updatePipelineStep                           src/store/slices/dashboardSlice.ts:431:3                
+updateWorldNodes                             src/store/slices/dashboardSlice.ts:432:3                
+updateWorldNodeActivity                      src/store/slices/dashboardSlice.ts:433:3                
+toggleAnalytics                              src/store/slices/dashboardSlice.ts:434:3                
+setAnalyticsExpanded                         src/store/slices/dashboardSlice.ts:435:3                
+updateQuickActionsState                      src/store/slices/dashboardSlice.ts:436:3                
+addNotification                              src/store/slices/dashboardSlice.ts:437:3                
+markNotificationAsRead                       src/store/slices/dashboardSlice.ts:438:3                
+clearNotifications                           src/store/slices/dashboardSlice.ts:439:3                
+fetchDecisionStatus                          src/store/slices/decisionSlice.ts:174:14                
+setRemainingSeconds                          src/store/slices/decisionSlice.ts:505:3                 
+setPauseState                                src/store/slices/decisionSlice.ts:509:3                 
+default                                      src/services/api/dashboardAPI.ts:183:16                 
+config                                       src/config/env.ts:67:14                                 
+default                                      src/components/error-boundaries/ErrorBoundary.tsx:221:16
+LoggerFactory                      class     src/services/logging/LoggerFactory.ts:5:14              
+CharactersAPI                      class     src/services/api/charactersAPI.ts:86:14                 
+default                                      src/i18n.js:51:16                                       
+registerServiceWorker                        src/utils/serviceWorkerRegistration.ts:27:14            
+unregisterServiceWorker                      src/utils/serviceWorkerRegistration.ts:72:14            
+isStandalone                                 src/utils/serviceWorkerRegistration.ts:95:14            
+getCacheStats                                src/utils/serviceWorkerRegistration.ts:101:14           
+clearServiceWorkerCache                      src/utils/serviceWorkerRegistration.ts:121:14           
+applyMobileOptimizations                     src/utils/serviceWorkerRegistration.ts:141:14           
+monitorMobilePerformance                     src/utils/serviceWorkerRegistration.ts:176:14           
+default                                      src/utils/serviceWorkerRegistration.ts:241:16           
+KeyboardButton                               src/components/a11y/index.ts:1:10                       
+FocusTrap                                    src/components/a11y/index.ts:2:10                       
+VisuallyHidden                               src/components/a11y/index.ts:4:10                       
+SkeletonCard                                 src/components/loading/index.ts:2:10                    
+Activity                                     src/mui-icons.ts:2:22                                   
+useCharacters                      function  src/hooks/useCharacters.ts:8:17                         
+useCharacterDetails                function  src/hooks/useCharacters.ts:15:17                        
+CampaignCard                                 src/features/campaigns/index.ts:2:10                    
+useCampaigns                                 src/features/campaigns/index.ts:3:10                    
+checkMemoryPressure                          src/store/middleware/mobileMemoryMiddleware.ts:195:14   
+forceMemoryCleanup                           src/store/middleware/mobileMemoryMiddleware.ts:204:14   
+getMemoryStats                               src/store/middleware/mobileMemoryMiddleware.ts:210:14   
+default                                      src/store/middleware/mobileMemoryMiddleware.ts:216:16   
+announceToScreenReader                       src/utils/focusManagement.ts:2:14                       
+skipToElement                                src/utils/focusManagement.ts:3:14                       
+manageFocus                                  src/utils/focusManagement.ts:4:14                       
+default                                      src/utils/focusManagement.ts:5:16                       
+subscribe                          function  src/utils/telemetry.ts:47:17                            
+VisuallyHidden                               src/components/a11y/VisuallyHidden.tsx:9:14             
+SkeletonCard                                 src/components/loading/SkeletonCard.tsx:25:14           
+default                                      src/components/loading/SkeletonCard.tsx:45:16           
+default                                      src/components/loading/SkeletonDashboard.tsx:44:16      
+AuthAPI                            class     src/services/api/authAPI.ts:47:14                       
+default                                      src/services/api/decisionAPI.ts:178:16                  
+[93m[4mUnused exported types[24m[39m (79)
+CharacterStructuredDataEquipmentItem  interface  src/types/dto.ts:14:18                   
+GenerateStoryResponse                 interface  src/types/dto.ts:71:18                   
+GenerationStatusResponse              interface  src/types/dto.ts:77:18                   
+SimulationLegacyResponse              interface  src/types/dto.ts:85:18                   
+Tokens                                type       src/styles/tokens.ts:177:13              
+AuthState                             interface  src/store/slices/authSlice.ts:14:18      
+CharactersState                       interface  src/store/slices/charactersSlice.ts:44:18
+Story                                 interface  src/store/slices/storiesSlice.ts:5:18    
+StoriesState                          interface  src/store/slices/storiesSlice.ts:20:18   
+Campaign                              interface  src/store/slices/campaignsSlice.ts:5:18  
+CampaignsState                        interface  src/store/slices/campaignsSlice.ts:18:18 
+PerformanceMetrics                    interface  src/store/slices/dashboardSlice.ts:5:18  
+SystemStatus                          interface  src/store/slices/dashboardSlice.ts:16:18 
+ActivityEvent                         interface  src/store/slices/dashboardSlice.ts:23:18 
+TurnStep                              interface  src/store/slices/dashboardSlice.ts:33:18 
+PipelineData                          interface  src/store/slices/dashboardSlice.ts:42:18 
+WorldNode                             interface  src/store/slices/dashboardSlice.ts:50:18 
+AnalyticsMetrics                      interface  src/store/slices/dashboardSlice.ts:59:18 
+DashboardState                        interface  src/store/slices/dashboardSlice.ts:70:18 
+FeasibilityResult                     type       src/store/slices/decisionSlice.ts:16:13  
+SystemStatusResponse                  interface  src/services/api/dashboardAPI.ts:5:18    
+HealthResponse                        interface  src/services/api/dashboardAPI.ts:16:18   
+CacheMetricsResponse                  interface  src/services/api/dashboardAPI.ts:28:18   
+AnalyticsMetricsResponse              interface  src/services/api/dashboardAPI.ts:38:18   
+PipelineStep                          interface  src/services/api/dashboardAPI.ts:53:18   
+OrchestrationStatusResponse           interface  src/services/api/dashboardAPI.ts:62:18   
+NarrativeResponse                     interface  src/services/api/dashboardAPI.ts:75:18   
+WebVitalsMetrics                      interface  src/hooks/usePerformance.ts:29:18        
+DecisionEventData                     interface  src/hooks/useRealtimeEvents.ts:15:18     
+AuthState                             interface  src/types/auth.ts:15:18                  
+CharacterCardProps                    type       src/components/CharacterCard.tsx:98:15   
+GuestSessionResponse                  interface  src/services/api/guestAPI.ts:3:18        
+EnvConfig                             interface  src/config/env.ts:8:18                   
+BatchUpdateItem                       interface  src/services/api/charactersAPI.ts:23:18  
+BatchUpdateResult                     interface  src/services/api/charactersAPI.ts:28:18  
+CharacterRelationship                 interface  src/services/api/charactersAPI.ts:37:18  
+CharacterRelationshipsResponse        interface  src/services/api/charactersAPI.ts:45:18  
+CharacterHistoryEvent                 interface  src/services/api/charactersAPI.ts:51:18  
+CharacterHistoryResponse              interface  src/services/api/charactersAPI.ts:57:18  
+CharacterExportData                   interface  src/services/api/charactersAPI.ts:63:18  
+GetCharactersParams                   interface  src/services/api/charactersAPI.ts:71:18  
+AgentInteraction                      interface  src/types/index.ts:71:18                 
+GenerationSession                     interface  src/types/index.ts:81:18                 
+SessionPerformance                    interface  src/types/index.ts:93:18                 
+CreationTemplate                      interface  src/types/index.ts:122:18                
+PaginatedResponse                     interface  src/types/index.ts:147:18                
+UIState                               interface  src/types/index.ts:157:18                
+Notification                          interface  src/types/index.ts:165:18                
+WSEvent                               interface  src/types/index.ts:176:18                
+GenerationUpdate                      interface  src/types/index.ts:182:18                
+AgentStatusUpdate                     interface  src/types/index.ts:193:18                
+PerformanceMetric                     interface  src/types/index.ts:221:18                
+CharacterNetwork                      interface  src/types/index.ts:227:18                
+NetworkNode                           interface  src/types/index.ts:232:18                
+NetworkEdge                           interface  src/types/index.ts:240:18                
+AriaRole                              type       src/types/accessibility.ts:13:13         
+AriaLive                              type       src/types/accessibility.ts:39:13         
+KeyboardKey                           enum       src/types/accessibility.ts:44:13         
+FocusConfig                           interface  src/types/accessibility.ts:60:18         
+AccessibleProps                       interface  src/types/accessibility.ts:74:18         
+KeyboardNavConfig                     interface  src/types/accessibility.ts:90:18         
+ScreenReaderAnnouncement              interface  src/types/accessibility.ts:104:18        
+LoadingA11yMetadata                   interface  src/types/accessibility.ts:116:18        
+IAccessibleComponent                  interface  src/types/accessibility.ts:144:18        
+IKeyboardHandler                      interface  src/types/accessibility.ts:166:18        
+IFocusManager                         interface  src/types/accessibility.ts:178:18        
+IPerformanceMonitor                   interface  src/types/accessibility.ts:190:18        
+PerformanceMetric                     interface  src/types/accessibility.ts:198:18        
+IFocusManager                         interface  src/hooks/useFocusTrap.ts:13:18          
+ErrorReport                           interface  src/types/errors.ts:24:18                
+ErrorSeverity                         enum       src/types/errors.ts:35:13                
+ErrorContext                          interface  src/types/errors.ts:42:18                
+BreadcrumbCategory                    enum       src/types/errors.ts:51:13                
+TelemetryEvent                        type       src/utils/telemetry.ts:1:13              
+TelemetrySubscribe                    type       src/utils/telemetry.ts:45:13             
+LoginRequest                          interface  src/services/api/authAPI.ts:6:18         
+AuthResponse                          interface  src/services/api/authAPI.ts:14:18        
+RefreshTokenRequest                   interface  src/services/api/authAPI.ts:22:18        
+TokenValidationData                   interface  src/services/api/authAPI.ts:29:18        
+[93m[4mDuplicate exports[24m[39m (9)
+api|default                     src/services/api.ts                              
+theme|default                   src/styles/theme.ts                              
+dashboardAPI|default            src/services/api/dashboardAPI.ts                 
+config|default                  src/config/env.ts                                
+ErrorBoundary|default           src/components/error-boundaries/ErrorBoundary.tsx
+mobileMemoryMiddleware|default  src/store/middleware/mobileMemoryMiddleware.ts   
+SkeletonCard|default            src/components/loading/SkeletonCard.tsx          
+SkeletonDashboard|default       src/components/loading/SkeletonDashboard.tsx     
+decisionAPI|default             src/services/api/decisionAPI.ts                  
+[33m[4mConfiguration hints[24m (1)[39m
+. (root)      Create knip.json configuration file, and add entry and/or refine project files (43 unused files)

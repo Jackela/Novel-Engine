@@ -9,40 +9,22 @@ from typing import Optional
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 
 from src.api.deps import get_settings
 from src.api.schemas import (
     AuthResponse,
     CSRFTokenResponse,
     LoginRequest,
+    LogoutRequest,
+    LogoutResponse,
     RefreshTokenRequest,
+    TokenValidationResponse,
 )
 from src.api.settings import APISettings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Authentication"])
-
-
-class LogoutRequest(BaseModel):
-    access_token: Optional[str] = Field(
-        None, description="Optional access token to invalidate"
-    )
-
-
-class LogoutResponse(BaseModel):
-    success: bool
-    message: str
-
-
-class TokenValidationResponse(BaseModel):
-    valid: bool
-    expires_at: Optional[int] = Field(
-        None, description="Token expiry timestamp in milliseconds"
-    )
-    user_id: Optional[str] = None
-    error: Optional[str] = None
 
 
 def _reject_query_credentials(request: Request) -> None:

@@ -10,7 +10,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional
 
-from src.llm_service import LLMRequest, ResponseFormat, get_llm_service
+from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 
 from .causal_graph import CausalGraph
 from .types import CausalNode
@@ -548,3 +548,4 @@ class NarrativeCoherenceEngine:
                 tid: len(thread["events"]) for tid, thread in self.plot_threads.items()
             },
         }
+

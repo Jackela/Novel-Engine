@@ -296,7 +296,7 @@ async def optimize_simulation_execution(director, turns: int):
 @lru_cache(maxsize=128)
 def cached_config_loader():
     """Cached configuration loading."""
-    from config_loader import get_config
+    from src.core.config.config_loader import get_config
 
     return get_config()
 
@@ -325,9 +325,9 @@ class AsyncSimulationManager:
 
         try:
             # Initialize components asynchronously
-            from src.agents.director_agent import DirectorAgent
+            from src.agents.director_agent_integrated import DirectorAgent
             from src.config.character_factory import CharacterFactory
-            from src.event_bus import EventBus
+            from src.core.event_bus import EventBus
 
             event_bus = EventBus()
             character_factory = CharacterFactory(event_bus)
@@ -444,3 +444,4 @@ if __name__ == "__main__":
         logger.info("Performance optimization systems tested successfully")
 
     asyncio.run(test_performance())
+

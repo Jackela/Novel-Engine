@@ -56,7 +56,8 @@ Remember: The best contemporary fiction finds the extraordinary in ordinary live
 
 Jasmine read it three times, the blue glow of her phone illuminating the ceiling of her overpriced studio apartment. Twelve years at the company. Two promotions. One pivot to video that was supposed to save everything.
 
-By 3 AM, she had scrolled through seventeen LinkedIn posts about "exciting new chapters" from former colleagues. By 4, she had started a draft resignation letter she'd never need to send. By 5, the coffee was brewing and she was looking up coding bootcamps.
+By 3 AM, she had scrolled through seventeen LinkedIn posts about "exciting new chapters" from former colleagues.
+By 4, she had started a draft resignation letter she'd never need to send. By 5, the coffee was brewing and she was looking up coding bootcamps.
 
 "This is fine," she told her succulent, the only living thing that had survived her work schedule. "This is absolutely fine." """,
     world_building_elements=[

@@ -48,6 +48,10 @@ def get_optional_workspace_id(
 ) -> Optional[str]:
     token = request.cookies.get(manager.cookie_name)
     if not token:
+        default_workspace_id = getattr(request.app.state, "default_workspace_id", None)
+        if default_workspace_id:
+            store.get_or_create(default_workspace_id)
+            return default_workspace_id
         return None
     workspace_id = manager.decode(token)
     if not workspace_id:
@@ -64,6 +68,19 @@ def require_workspace_id(
     store: FilesystemWorkspaceStore = Depends(get_workspace_store),
 ) -> str:
     token = request.cookies.get(manager.cookie_name)
+    if not token:
+        default_workspace_id = getattr(request.app.state, "default_workspace_id", None)
+        if default_workspace_id:
+            response.set_cookie(
+                manager.cookie_name,
+                manager.encode(default_workspace_id),
+                httponly=settings.cookie_httponly,
+                secure=settings.cookie_secure,
+                samesite=settings.cookie_samesite,
+                max_age=manager.cookie_max_age_seconds(),
+            )
+            store.get_or_create(default_workspace_id)
+            return default_workspace_id
     result = manager.resolve_or_create(token)
 
     response.set_cookie(

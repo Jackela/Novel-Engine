@@ -29,7 +29,6 @@ class OutboxException(Exception):
     """Base exception for outbox operations."""
 
 
-
 class OutboxPublisher:
     """
     Outbox pattern publisher for reliable event delivery.

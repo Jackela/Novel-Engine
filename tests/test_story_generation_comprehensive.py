@@ -155,7 +155,7 @@ class TestChroniclerAgentCore:
         [Turn Begin] Starting simulation turn 1
         [Action] pilot: Navigate to research station
         [Turn End] Turn 1 completed
-        
+
         Turn 2 - 2024-01-01 12:05:00
         [Agent Registration] scientist registered as Dr. Maya Patel
         [Action] scientist: Begin xenobiology research
@@ -226,7 +226,7 @@ class TestStoryContentQuality:
         [Turn Begin] Starting simulation in deep space research facility
         [Action] pilot: Navigating through asteroid field to reach station
         [Turn End] Turn 1 completed successfully
-        
+
         Turn 2 - 2024-01-01 12:05:00
         [Agent Registration] scientist registered as Dr. Maya Patel - Research Institute
         [Action] scientist: Analyzing alien artifact discovered on asteroid
@@ -828,7 +828,7 @@ class TestPerformanceAndScalability:
         [Action] pilot: Multiple actions
         [Action] scientist: Detailed analysis
         [Turn End] Turn completed
-        
+
         Turn 2 - 2024-01-01 12:05:00
         [Action] pilot: Follow-up actions
         [Action] scientist: Continued research

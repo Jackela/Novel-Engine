@@ -935,6 +935,147 @@ const DashboardNotifications: React.FC<{
   </Snackbar>
 );
 
+type DashboardLayoutProps = {
+  isLoadingChars: boolean;
+  loading: boolean;
+  pipelineStatus: PipelineState;
+  isLiveMode: boolean;
+  isOnline: boolean;
+  lastUpdate: Date;
+  isGuest: boolean;
+  workspaceId?: string;
+  showEmptyState: boolean;
+  onCreateCharacter: () => void;
+  showFallbackAlert: boolean;
+  isConnectionError: boolean;
+  activeView: DashboardView;
+  onViewChange: (_event: React.SyntheticEvent, view: DashboardView) => void;
+  onRefresh: () => void;
+  error: boolean;
+  realtimeEvents: RealtimeEvent[];
+  onStart: () => void;
+  onPause: () => void;
+  onStop: () => void;
+  backendStatus?: 'online' | 'offline' | 'error';
+  backendVersion?: string;
+  characterDialogOpen: boolean;
+  onCloseCharacterDialog: () => void;
+  onCharacterCreated: () => void;
+  snackbarOpen: boolean;
+  snackbarMessage: string;
+  onCloseSnackbar: () => void;
+};
+
+type DashboardSkeletonProps = Pick<
+  DashboardLayoutProps,
+  'pipelineStatus' | 'isOnline' | 'isLiveMode' | 'lastUpdate'
+>;
+
+const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({
+  pipelineStatus,
+  isOnline,
+  isLiveMode,
+  lastUpdate,
+}) => (
+  <>
+    <CommandTopBar
+      pipelineStatus={pipelineStatus}
+      isOnline={isOnline}
+      isLive={isLiveMode}
+      lastUpdate={lastUpdate}
+    />
+    <SkeletonDashboard />
+  </>
+);
+
+type DashboardMainProps = Omit<DashboardLayoutProps, 'isLoadingChars' | 'loading'>;
+
+const DashboardMain: React.FC<DashboardMainProps> = ({
+  pipelineStatus,
+  isLiveMode,
+  isOnline,
+  lastUpdate,
+  isGuest,
+  workspaceId,
+  showEmptyState,
+  onCreateCharacter,
+  showFallbackAlert,
+  isConnectionError,
+  activeView,
+  onViewChange,
+  onRefresh,
+  error,
+  realtimeEvents,
+  onStart,
+  onPause,
+  onStop,
+  backendStatus,
+  backendVersion,
+  characterDialogOpen,
+  onCloseCharacterDialog,
+  onCharacterCreated,
+  snackbarOpen,
+  snackbarMessage,
+  onCloseSnackbar,
+}) => (
+  <>
+    <CommandTopBar
+      pipelineStatus={pipelineStatus}
+      isOnline={isOnline}
+      isLive={isLiveMode}
+      lastUpdate={lastUpdate}
+    />
+    <DashboardContent
+      isGuest={isGuest}
+      workspaceId={workspaceId}
+      showEmptyState={showEmptyState}
+      onCreateCharacter={onCreateCharacter}
+      showFallbackAlert={showFallbackAlert}
+      isConnectionError={isConnectionError}
+      activeView={activeView}
+      onViewChange={onViewChange}
+      onRefresh={onRefresh}
+      loading={false}
+      error={error}
+      pipelineStatus={pipelineStatus}
+      isLiveMode={isLiveMode}
+      isOnline={isOnline}
+      realtimeEvents={realtimeEvents}
+      onStart={onStart}
+      onPause={onPause}
+      onStop={onStop}
+      backendStatus={backendStatus}
+      backendVersion={backendVersion}
+    />
+    <DashboardDialogs
+      characterDialogOpen={characterDialogOpen}
+      onCloseCharacterDialog={onCloseCharacterDialog}
+      onCharacterCreated={onCharacterCreated}
+    />
+    <DashboardNotifications
+      snackbarOpen={snackbarOpen}
+      snackbarMessage={snackbarMessage}
+      onClose={onCloseSnackbar}
+    />
+  </>
+);
+
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+  isLoadingChars,
+  loading,
+  ...rest
+}) =>
+  isLoadingChars || loading ? (
+    <DashboardSkeleton
+      pipelineStatus={rest.pipelineStatus}
+      isOnline={rest.isOnline}
+      isLiveMode={rest.isLiveMode}
+      lastUpdate={rest.lastUpdate}
+    />
+  ) : (
+    <DashboardMain {...rest} />
+  );
+
 const Dashboard: React.FC<DashboardProps> = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isGuest, workspaceId } = useAuthContext();
@@ -980,65 +1121,37 @@ const Dashboard: React.FC<DashboardProps> = () => {
 
   const showEmptyState = !isLoadingChars && (!characters || characters.length === 0);
 
-  // 加载时显示骨架屏
-  if (isLoadingChars || loading) {
-    return (
-      <>
-        <CommandTopBar
-          pipelineStatus={pipelineStatus}
-          isOnline={onlineStatus}
-          isLive={isLiveMode}
-          lastUpdate={lastUpdate}
-        />
-        <SkeletonDashboard />
-      </>
-    );
-  }
-
   return (
-    <>
-      <CommandTopBar
-        pipelineStatus={pipelineStatus}
-        isOnline={onlineStatus}
-        isLive={isLiveMode}
-        lastUpdate={lastUpdate}
-      />
-
-      <DashboardContent
-        isGuest={isGuest}
-        workspaceId={workspaceId}
-        showEmptyState={showEmptyState}
-        onCreateCharacter={characterDialog.openDialog}
-        showFallbackAlert={shouldShowFallbackAlert}
-        isConnectionError={isConnectionError(charactersError)}
-        activeView={activeView}
-        onViewChange={(_event, view) => setActiveView(view)}
-        onRefresh={handleRefresh}
-        loading={loading}
-        error={Boolean(charactersError)}
-        pipelineStatus={pipelineStatus}
-        isLiveMode={isLiveMode}
-        isOnline={onlineStatus}
-        onStart={handleStartOrchestration}
-        onPause={handlePauseOrchestration}
-        onStop={handleStopOrchestration}
-        realtimeEvents={realtimeEvents}
-        backendStatus={backendStatus}
-        backendVersion={backendVersion}
-      />
-
-      <DashboardDialogs
-        characterDialogOpen={characterDialog.open}
-        onCloseCharacterDialog={characterDialog.closeDialog}
-        onCharacterCreated={characterDialog.handleCreated}
-      />
-
-      <DashboardNotifications
-        snackbarOpen={snackbarOpen}
-        snackbarMessage={snackbarMessage}
-        onClose={handleSnackbarClose}
-      />
-    </>
+    <DashboardLayout
+      isLoadingChars={isLoadingChars}
+      loading={loading}
+      pipelineStatus={pipelineStatus}
+      isLiveMode={isLiveMode}
+      isOnline={onlineStatus}
+      lastUpdate={lastUpdate}
+      isGuest={isGuest}
+      workspaceId={workspaceId}
+      showEmptyState={showEmptyState}
+      onCreateCharacter={characterDialog.openDialog}
+      showFallbackAlert={shouldShowFallbackAlert}
+      isConnectionError={isConnectionError(charactersError)}
+      activeView={activeView}
+      onViewChange={(_event, view) => setActiveView(view)}
+      onRefresh={handleRefresh}
+      error={Boolean(charactersError)}
+      realtimeEvents={realtimeEvents}
+      onStart={handleStartOrchestration}
+      onPause={handlePauseOrchestration}
+      onStop={handleStopOrchestration}
+      backendStatus={backendStatus}
+      backendVersion={backendVersion}
+      characterDialogOpen={characterDialog.open}
+      onCloseCharacterDialog={characterDialog.closeDialog}
+      onCharacterCreated={characterDialog.handleCreated}
+      snackbarOpen={snackbarOpen}
+      snackbarMessage={snackbarMessage}
+      onCloseSnackbar={handleSnackbarClose}
+    />
   );
 };
 

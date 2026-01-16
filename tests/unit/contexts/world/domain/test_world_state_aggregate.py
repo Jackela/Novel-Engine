@@ -60,12 +60,12 @@ class MockEventBusModule:
 sys.modules["src.events.event_bus"] = MockEventBusModule()
 
 # Now import the actual modules we're testing
-from contexts.world.domain.aggregates.world_state import (
+from src.contexts.world.domain.aggregates.world_state import (
     EntityType,
     WorldState,
     WorldStatus,
 )
-from contexts.world.domain.value_objects.coordinates import Coordinates
+from src.contexts.world.domain.value_objects.coordinates import Coordinates
 
 
 class TestWorldStateAggregate:

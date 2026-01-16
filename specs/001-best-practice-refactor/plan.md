@@ -57,7 +57,7 @@ specs/[###-feature]/
 
 ```text
 src/
-├── persona_agent.py              # Persona Intelligence context
+├── agents/persona_agent/agent.py              # Persona Intelligence context
 ├── director_agent.py             # Simulation Orchestration context
 ├── chronicler_agent.py           # Narrative Delivery context
 ├── event_bus.py                  # Platform Operations messaging port

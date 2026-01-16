@@ -10,8 +10,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from shared_types import CharacterAction
-from src.persona_agent import PersonaAgent
+from src.core.types.shared_types import CharacterAction
+from src.agents.persona_agent.agent import PersonaAgent
 
 logger = logging.getLogger(__name__)
 
@@ -273,3 +273,6 @@ class AgentCoordinator:
             if agent.agent_id == agent_id:
                 return agent
         return None
+
+
+

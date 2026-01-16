@@ -1,6 +1,6 @@
 # Novel Engine - Documentation Hub
 
-**Last Updated**: 2025-11-12  
+**Last Updated**: 2026-01-12  
 **Status**: Current (Flow Layout / Dev Daemon)  
 **Version**: 2.1.0
 
@@ -22,11 +22,17 @@ Get up and running with Novel Engine in minutes
 ### 📖 [Foundations](./FOUNDATIONS.md)
 Theoretical foundations and core concepts of Novel Engine
 
-### 👨‍💻 [Developer Guide](./DEVELOPER_GUIDE.md)
+### 👨‍💻 [Developer Guide](./onboarding/developer-guide.md)
 Comprehensive guide for developers working with Novel Engine
 
-### 📊 [Data Schemas](./SCHEMAS.md)
+### 📊 [Data Schemas](./api/schemas.md)
 Data models and schema documentation
+
+### 🤖 [Agent Guide](../AGENTS.md)
+Workflow rules and SSOT locations for AI contributors
+
+### 🧭 [Codex Guide](../CLAUDE.md)
+Build/test commands, stack overview, and coding conventions
 
 ---
 
@@ -143,9 +149,6 @@ Data models and schema documentation
 
 ## 🎯 Additional Resources
 
-### [Examples](./examples/)
-Code examples and sample implementations
-
 ### [Stories](./stories/)
 User stories and feature scenarios
 
@@ -160,7 +163,7 @@ Development environment and tooling
 ## 🎯 Quick Navigation
 
 **New to Novel Engine?**  
-→ [Foundations](./FOUNDATIONS.md) → [Quick Start](./QUICK_START.md) → [Developer Guide](./DEVELOPER_GUIDE.md)
+→ [Foundations](./FOUNDATIONS.md) → [Quick Start](./QUICK_START.md) → [Developer Guide](./onboarding/developer-guide.md)
 
 **Setting up deployment?**  
 → [Deployment Guide](./deployment/DEPLOYMENT_GUIDE.md) → [Operations Runbook](./operations/OPERATIONS_RUNBOOK.md)
@@ -202,7 +205,7 @@ Each documentation file includes:
 Documentation improvements and contributions are welcome!
 
 **To contribute**:
-1. Follow [Coding Standards](./coding-standards.md)
+1. Follow [Coding Standards](./development/coding-standards.md)
 2. Add navigation breadcrumbs
 3. Include metadata headers
 4. Update relevant INDEX files

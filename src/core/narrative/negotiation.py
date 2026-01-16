@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-from src.llm_service import LLMRequest, ResponseFormat, get_llm_service
+from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 
 from .types import (
     NegotiationProposal,
@@ -174,7 +174,7 @@ class AgentNegotiationEngine:
         原始提议：{session.proposals[-1].content}
         Agent性格特征：{responder_profile.get('style', {})}
         Agent优先级：{responder_profile.get('priorities', [])}
-        
+
         请生成一个JSON格式的反提议，包含：
         - type: 提议类型
         - content: 具体内容
@@ -438,3 +438,4 @@ class AgentNegotiationEngine:
             "created_at": session.created_at.isoformat(),
             "updated_at": session.updated_at.isoformat(),
         }
+

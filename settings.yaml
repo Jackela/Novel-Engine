@@ -1,16 +1,10 @@
-# Novel Engine Staging Configuration
-# =================================
-# Staging environment configuration with production-ready settings
-
-# System Configuration
 system:
   name: "Novel Engine"
-  version: "1.0.0"
-  environment: "staging"  # Changed from development
-  debug_mode: false      # Disabled for staging
-  log_level: "INFO"      # Production level logging
+  version: "1.1.0"
+  environment: "development"
+  debug_mode: true
+  log_level: "INFO"
 
-# Legal and Compliance Settings
 legal:
   enable_safeguards: true
   compliance_mode: "standard"
@@ -19,52 +13,25 @@ legal:
     enable: true
     severity: "moderate"
 
-# IP Filtering Configuration
-ip_filtering:
-  enable: true
-  auto_clean: true
-  confidence_threshold: 0.8
-  whitelist:
-    - "Imperial"
-    - "Guard"
-    - "Marine"
-    - "Warrior"
-    - "Commander"
-    - "Captain"
-    - "Regiment"
-    - "Company"
-  replacements:
-    "Space Marine": "Imperial Marine"
-    "Commissar": "Officer"
-    "Lasgun": "Energy Rifle"
-    "Bolter": "Combat Rifle"
-    "Chainsword": "Power Blade"
-    "Flamer": "Flame Unit"
-    "Melta": "Thermal Weapon"
-    "Plasma": "Energy Weapon"
-
-# API Server Configuration - Staging Settings
 api:
-  host: "0.0.0.0"      # Allow external connections in staging
+  host: "0.0.0.0"
   port: 8000
   cors_enabled: true
-  cors_origins: ["*"]   # Allow all origins for staging testing
+  cors_origins: ["*"]
   max_request_size: "10MB"
   timeout: 300
 
-# Database and Storage - Staging Paths
 storage:
   kb_type: "file"
-  kb_path: "staging/private/knowledge_base/"
+  kb_path: "private/knowledge_base/"
   session_storage: "file"
-  session_path: "staging/private/sessions/"
+  session_path: "private/sessions/"
   cache:
     enabled: true
-    type: "file"        # Use file-based cache for persistence
-    ttl: 7200           # Longer TTL for staging
-    max_size: "500MB"   # Larger cache for staging
+    type: "file"
+    ttl: 7200
+    max_size: "500MB"
 
-# AI/LLM Configuration
 ai:
   provider: "openai"
   models:
@@ -76,13 +43,12 @@ ai:
     per_session: 100000
     emergency_reserve: 2000
   rate_limits:
-    requests_per_minute: 120  # Higher for staging testing
+    requests_per_minute: 120
     tokens_per_minute: 60000
 
-# Simulation Engine Settings
 simulation:
   max_agents_per_turn: 20
-  turn_timeout: 180     # Longer timeout for staging
+  turn_timeout: 180
   max_world_entities: 1000
   entity_cleanup_threshold: 0.8
   iron_laws:
@@ -95,78 +61,42 @@ simulation:
     default_radio_range: 50
     default_intel_range: 100
 
-# Performance and Optimization - Staging Settings
 performance:
   semantic_cache:
     enabled: true
-    similarity_threshold: 0.90  # Slightly lower for testing
-    max_entries: 2000          # More entries for staging
-  max_workers: 8               # More workers for staging
+    similarity_threshold: 0.9
+    max_entries: 2000
+  max_workers: 8
   async_enabled: true
-  memory_limit: "4GB"          # Higher limit for staging
-  cpu_limit: 90                # Higher CPU limit
+  memory_limit: "4GB"
+  cpu_limit: 90
 
-# Monitoring and Logging - Enhanced for Staging
 monitoring:
   metrics_enabled: true
   metrics_port: 9090
   health_check_interval: 30
   error_reporting:
     enabled: true
-    level: "WARNING"           # More verbose for staging
+    level: "WARNING"
     include_traceback: true
 
-# Development and Testing - Staging Settings
-development:
-  hot_reload: false            # Disabled for staging
-  test_mode: false
-  mock_ai_responses: false
-  debug:
-    log_requests: true
-    log_responses: true        # Enabled for staging debugging
-    save_intermediate_states: true
-    profile_performance: true  # Enabled for performance monitoring
-
-# Security Settings - Staging Configuration
 security:
-  require_api_key: false       # Simplified for staging
+  require_api_key: false
   api_key_header: "X-API-Key"
   strict_validation: true
   sanitize_inputs: true
   client_rate_limits:
     enabled: true
-    requests_per_hour: 2000    # Higher limits for staging
+    requests_per_hour: 2000
     burst_size: 200
 
-# Feature Flags - All Features Enabled for Staging
-features:
-  experimental_features: true  # Test experimental features
-  modules:
-    evaluation_pipeline: true
-    metrics_collection: true
-    advanced_caching: true     # Enable advanced caching
-    multi_language_support: false
-
-# Paths and Directories - Staging Structure
 paths:
   src: "src/"
   tests: "tests/"
   docs: "docs/"
   scripts: "scripts/"
-  private: "staging/private/"
-  evaluation: "staging/evaluation/"
-  logs: "staging/logs/"
-  exports: "staging/exports/"
-  backups: "staging/backups/"
-
-# External Integrations
-integrations:
-  git:
-    enabled: true
-    auto_commit: false
-  ci:
-    provider: "github_actions"
-    enabled: false
-  external_monitoring:
-    enabled: false
-    provider: "none"
+  private: "private/"
+  evaluation: "evaluation/"
+  logs: "logs/"
+  exports: "exports/"
+  backups: "backups/"

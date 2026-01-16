@@ -47,10 +47,9 @@ async def test_bridge_infrastructure():
     print("\n🌉 Testing Bridge Infrastructure...")
 
     if not BRIDGE_AVAILABLE:
-        print(
-            "ℹ️ Bridge infrastructure not available, skipping test (expected after refactoring)"
+        pytest.skip(
+            "Bridge infrastructure not available after refactoring"
         )
-        return True  # Pass the test since this is expected
 
     try:
         # Test basic coordinator functionality if available
@@ -58,11 +57,10 @@ async def test_bridge_infrastructure():
         PerformanceTracker()
 
         print("✅ Bridge Infrastructure: Components instantiated successfully")
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Bridge Infrastructure failed: {e}")
-        return False
+        pytest.fail(f"Bridge infrastructure failed: {e}")
 
 
 @pytest.mark.integration
@@ -91,11 +89,10 @@ async def test_system_integration():
         print(
             f"✅ System Integration: Python {python_version.major}.{python_version.minor}, {platform_info}"
         )
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ System Integration failed: {e}")
-        return False
+        pytest.fail(f"System integration failed: {e}")
 
 
 async def run_component_tests():

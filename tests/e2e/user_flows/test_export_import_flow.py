@@ -26,7 +26,6 @@ import pytest
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 class TestExportImportFlow:
     """E2E tests for data export/import and portability."""
 
@@ -132,11 +131,7 @@ class TestExportImportFlow:
         start_time = time.time()
         import_response = client.post("/api/import/all", json=modified_data)
 
-        if import_response.status_code == 404:
-            # Import API not implemented - validate manually
-            pytest.skip("Import API not yet implemented - export validated")
-
-        performance_tracker.record("data_import", time.time() - start_time)
+        performance_tracker.record("data_import", time.time() - start_time)     
 
         # Step 6: Verify imported data
         if import_response.status_code in [200, 201]:
@@ -231,9 +226,6 @@ class TestExportImportFlow:
         }
 
         response = client.post("/api/import/all", json=invalid_import)
-
-        if response.status_code == 404:
-            pytest.skip("Import API not yet implemented")
 
         assert response.status_code in [400, 422], "Should reject invalid import data"
 
@@ -392,9 +384,6 @@ class TestExportImportFlow:
 
         # Try to import
         response = client.post("/api/import/all", json=export_data)
-
-        if response.status_code == 404:
-            pytest.skip("Import API not yet implemented")
 
         # Should either succeed or gracefully handle version
         assert response.status_code in [200, 201, 400]

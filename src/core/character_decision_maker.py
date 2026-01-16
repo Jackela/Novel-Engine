@@ -12,7 +12,7 @@ import time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.shared_types import ActionPriority, CharacterAction
+from src.core.types.shared_types import ActionPriority, CharacterAction
 
 
 # Define ThreatLevel locally to avoid circular import
@@ -500,3 +500,4 @@ class DecisionMaker:
             return ActionPriority.MEDIUM
         else:
             return ActionPriority.LOW
+

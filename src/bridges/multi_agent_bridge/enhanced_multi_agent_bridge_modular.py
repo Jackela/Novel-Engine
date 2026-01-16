@@ -12,13 +12,11 @@ from typing import Any, Dict, List, Optional
 
 # Import existing Novel Engine components (no legacy fallbacks)
 from src.agents.chronicler_agent import ChroniclerAgent
-from src.agents.director_agent import DirectorAgent
+from src.agents.director_agent_integrated import DirectorAgent
 
-# Import advanced AI intelligence systems (required)
-from src.ai_intelligence.agent_coordination_engine import AgentCoordinationEngine
-from src.ai_intelligence.ai_orchestrator import AIIntelligenceOrchestrator
-from src.event_bus import EventBus
-from src.persona_agent import PersonaAgent
+
+from src.core.event_bus import EventBus
+from src.agents.persona_agent.agent import PersonaAgent
 
 # Import modular components
 from .core.types import (
@@ -154,24 +152,7 @@ class EnhancedMultiAgentBridge:
                 self.logger.warning("LLM processor initialization failed")
 
             # Initialize AI orchestrator if available
-            try:
-                if AIIntelligenceOrchestrator is not type(
-                    "AIIntelligenceOrchestrator", (), {}
-                ):
-                    self._ai_orchestrator = AIIntelligenceOrchestrator()
-                    # Additional initialization would go here
-            except Exception as e:
-                self.logger.debug(f"AI orchestrator initialization failed: {e}")
 
-            # Initialize coordination engine if available
-            try:
-                if AgentCoordinationEngine is not type(
-                    "AgentCoordinationEngine", (), {}
-                ):
-                    self._coordination_engine = AgentCoordinationEngine()
-                    # Additional initialization would go here
-            except Exception as e:
-                self.logger.debug(f"Coordination engine initialization failed: {e}")
 
             self._is_initialized = True
             self._integration_stats["initialization_time"] = (
@@ -670,3 +651,6 @@ def create_performance_optimized_config(
         cost_optimization_level="balanced",
         enable_performance_monitoring=True,
     )
+
+
+

@@ -207,7 +207,7 @@ class EnterpriseHealthChecker:
         start_time = time.time()
         try:
             # Check if database configuration is available
-            from config_loader import ConfigLoader
+            from src.core.config.config_loader import ConfigLoader
 
             ConfigLoader.get_instance()
 

@@ -76,11 +76,10 @@ async def test_logging_system():
         logger.security("Security event test", context=context)
 
         print("✅ Structured logging system working correctly")
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Logging system test failed: {e}")
-        return False
+        pytest.fail(f"Logging system test failed: {e}")
 
 
 @pytest.mark.integration
@@ -123,12 +122,10 @@ async def test_error_handling_system():
         # Test error statistics
         stats = error_handler.get_error_statistics()
         print(f"✅ Error statistics: {stats['total_errors']} total errors")
-
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Error handling system test failed: {e}")
-        return False
+        pytest.fail(f"Error handling system test failed: {e}")
 
 
 @pytest.mark.integration
@@ -168,11 +165,10 @@ async def test_integration():
             )
 
         print("✅ Integration between systems working correctly")
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Integration test failed: {e}")
-        return False
+        pytest.fail(f"Integration test failed: {e}")
 
 
 async def main():

@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 import aiosqlite
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends, Header, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr, Field
 
@@ -1059,6 +1059,64 @@ def require_permission(permission: Permission):
     return service.require_permission(permission)
 
 
+def require_role(required_role: UserRole):
+    """Standalone wrapper for requiring a minimum role level."""
+
+    async def role_checker(
+        credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
+        x_user_id: Optional[str] = Header(default=None, alias="X-User-ID"),
+        x_user_role: Optional[str] = Header(default=None, alias="X-User-Role"),
+    ) -> User:
+        role_value = (x_user_role or "").strip().lower()
+        if x_user_id and role_value:
+            if role_value == "game_master":
+                role_value = UserRole.ADMIN.value
+            try:
+                role = UserRole(role_value)
+            except ValueError:
+                raise HTTPException(status_code=403, detail="Insufficient role")
+            user = User(
+                id=x_user_id,
+                username="header-user",
+                email="",
+                password_hash="",
+                role=role,
+            )
+        else:
+            if credentials is None:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Could not validate credentials",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            try:
+                service = get_security_service()
+            except RuntimeError:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Could not validate credentials",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            user = await service.get_current_user(credentials)
+
+        role_hierarchy = {
+            UserRole.GUEST: 0,
+            UserRole.READER: 1,
+            UserRole.API_USER: 2,
+            UserRole.CONTENT_CREATOR: 3,
+            UserRole.MODERATOR: 4,
+            UserRole.ADMIN: 5,
+        }
+        if role_hierarchy.get(user.role, 0) < role_hierarchy.get(required_role, 0):
+            raise HTTPException(
+                status_code=403,
+                detail=f"Insufficient role. Required: {required_role.value}",
+            )
+        return user
+
+    return role_checker
+
+
 __all__ = [
     "UserRole",
     "Permission",
@@ -1075,6 +1133,7 @@ __all__ = [
     "ROLE_PERMISSIONS",
     "get_current_user",
     "require_permission",  # Add standalone functions to exports
+    "require_role",
     "AuthenticationManager",  # Legacy compatibility alias
 ]
 

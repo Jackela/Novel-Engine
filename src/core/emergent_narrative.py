@@ -19,14 +19,6 @@ New module structure:
 
 import warnings
 
-# Issue deprecation warning
-warnings.warn(
-    "Importing from src.core.emergent_narrative is deprecated. "
-    "Please use: from src.core.narrative import EmergentNarrativeEngine, ...",
-    DeprecationWarning,
-    stacklevel=2,
-)
-
 # Re-export everything from new location for backward compatibility
 from src.core.narrative import (
     AgentNegotiationEngine,
@@ -42,6 +34,14 @@ from src.core.narrative import (
     NegotiationSession,
     NegotiationStatus,
     create_emergent_narrative_engine,
+)
+
+# Issue deprecation warning
+warnings.warn(
+    "Importing from src.core.emergent_narrative is deprecated. "
+    "Please use: from src.core.narrative import EmergentNarrativeEngine, ...",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
 __all__ = [

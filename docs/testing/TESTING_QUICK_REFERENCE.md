@@ -39,7 +39,7 @@ scripts/run_pytest.ps1 tests/unit/
 scripts/run_pytest.ps1 tests/integration/bridges/
 
 # Run specific test file
-scripts/run_pytest.ps1 tests/unit/contexts/ai/domain/test_llm_provider_interface.py
+scripts/run_pytest.ps1 tests/unit/src/contexts/ai/domain/test_llm_provider_interface.py
 
 # Run specific test function
 scripts/run_pytest.ps1 tests/unit/test_schemas.py::test_character_action_validation
@@ -121,8 +121,8 @@ PYTHONIOENCODING=UTF-8
 
 | Module | Tests | Status |
 |--------|-------|--------|
-| `contexts/ai/domain` | 86 | ✅ All passing |
-| `contexts/character` | 18 | ✅ 15 passing, 3 edge cases |
+| `src/contexts/ai/domain` | 86 | ✅ All passing |
+| `src/contexts/character` | 18 | ✅ 15 passing, 3 edge cases |
 | `integration/bridges` | 18 | ✅ All passing |
 | `integration/interactions` | 12 | ✅ All passing |
 | `contract` | 2 | ✅ All passing |
@@ -187,7 +187,7 @@ tests/
 │   └── interactions/       # Interaction engine
 └── unit/                    # Unit tests
     ├── agents/             # Agent tests
-    ├── contexts/           # Context tests
+    ├── src/contexts/           # Context tests
     │   ├── ai/            # AI domain
     │   └── character/     # Character domain
     └── ...
@@ -270,3 +270,4 @@ scripts/run_pytest.ps1 tests/unit/ -x
 - **Test Structure**: `docs/TESTING_STRUCTURE.md`
 - **Process Cleanup**: `PROCESS_CLEANUP_RULES.md`
 - **Pytest Docs**: https://docs.pytest.org/
+

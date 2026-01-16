@@ -14,7 +14,7 @@ Features:
 
 Example:
     from ops.monitoring.dashboards import create_dashboard, load_template
-    
+
     dashboard_id = create_dashboard('api_performance', template='api_metrics')
     template = load_template('infrastructure_overview')
 """

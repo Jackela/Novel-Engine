@@ -125,7 +125,7 @@ FILES REQUIRING MOST ATTENTION
 High Impact Files:
     templates/dynamic_template_engine.py        - 19 print statements
     api/integration_tests.py                    - 17 print statements
-    core/config/config_loader.py               - 15 print statements
+    core/config/src/core/config/config_loader.py               - 15 print statements
     api/enhanced_documentation_system.py        -  5 print statements
 
 Files with Special Cases:
@@ -271,3 +271,4 @@ Testing required:          Yes (run pytest after)
 ================================================================================
 END OF USAGE GUIDE
 ================================================================================
+

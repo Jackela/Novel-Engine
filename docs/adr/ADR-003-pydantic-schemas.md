@@ -23,7 +23,7 @@ We will use **Pydantic v2** as the foundation for all data schemas in the Novel 
 
 ### Core Design Principles
 
-**Single Source of Truth**: All schemas defined in `src/shared_types.py`  
+**Single Source of Truth**: All schemas defined in `src/core/types/shared_types.py`  
 **Comprehensive Validation**: Use Pydantic's constraint system for all business rules  
 **Type Safety**: Full type annotations with strict validation  
 **API Integration**: Native FastAPI integration for request/response validation  
@@ -139,7 +139,7 @@ Use Google's Protocol Buffers for schema definition.
 
 ### Schema Definition Pattern
 ```python
-# src/shared_types.py
+# src/core/types/shared_types.py
 from pydantic import BaseModel, Field, constr
 from typing import List, Optional, Literal
 
@@ -209,7 +209,7 @@ class PersonaCardV2(BaseModel):
 ### FastAPI Integration
 ```python
 from fastapi import FastAPI
-from src.shared_types import CharacterAction, WorldState
+from src.core.types.shared_types import CharacterAction, WorldState
 
 app = FastAPI()
 
@@ -254,3 +254,6 @@ async def execute_turn(
 
 ## Status Changes
 - 2025-08-11: Proposed and accepted during initial architecture design
+
+
+

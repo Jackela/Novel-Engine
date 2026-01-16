@@ -49,11 +49,11 @@ class CodeQualityTest:
 
             # Priority files analysis first (high-impact files)
             priority_files = [
-                "src/persona_agent.py",
+                "src/agents/persona_agent/agent.py",
                 "enhanced_multi_agent_bridge.py",
                 "src/director_agent_modular.py",
                 "director_agent.py",
-                "src/llm_service.py",
+                "src/core/llm_service.py",
             ]
 
             # Analyze priority files first
@@ -487,3 +487,4 @@ def main():
 if __name__ == "__main__":
     results = main()
     sys.exit(0 if results.get("success") else 1)
+

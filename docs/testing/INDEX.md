@@ -75,15 +75,15 @@ Comprehensive testing documentation including strategies, UAT procedures, and te
 ## Related Documentation
 
 ### Development
-- [Developer Guide](../DEVELOPER_GUIDE.md)
-- [Coding Standards](../coding-standards.md)
+- [Developer Guide](../onboarding/developer-guide.md)
+- [Coding Standards](../development/coding-standards.md)
 
 ### Operations
 - [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)
 - [Operations Runbook](../operations/OPERATIONS_RUNBOOK.md)
 
 ### Quality
-- [Code Quality Standards](../coding-standards.md)
+- [Code Quality Standards](../development/coding-standards.md)
 
 ---
 

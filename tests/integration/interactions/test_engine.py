@@ -863,7 +863,7 @@ class ComprehensiveTestSuite:
     # Error handling tests
 
     async def _test_invalid_contexts(self) -> bool:
-        """Test handling of invalid interaction contexts."""
+        """Test handling of invalid interaction src.contexts."""
         try:
             engine = create_interaction_engine()
             await asyncio.sleep(0.1)

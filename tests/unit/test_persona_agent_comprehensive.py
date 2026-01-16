@@ -3,7 +3,7 @@
 PersonaAgent Comprehensive Test Suite
 =====================================
 
-Systematic testing for src/persona_agent.py covering character initialization,
+Systematic testing for src/agents/persona_agent/agent.py covering character initialization,
 decision-making, world event interpretation, AI integration, and character evolution.
 """
 import logging
@@ -14,9 +14,9 @@ import pytest
 
 # Import the modules under test
 try:
-    from shared_types import CharacterAction
-    from src.event_bus import EventBus
-    from src.persona_agent import (
+    from src.core.types.shared_types import CharacterAction
+    from src.core.event_bus import EventBus
+    from src.agents.persona_agent.agent import (
         PersonaAgent,
         ThreatLevel,
         WorldEvent,
@@ -78,7 +78,7 @@ class TestPersonaAgentInitialization:
         ), patch("os.listdir", return_value=["character.md"]), patch(
             "builtins.open", mock_open(read_data=self.test_character_content)
         ), patch(
-            "src.persona_agent.PersonaAgent._read_cached_file",
+            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value=self.test_character_content,
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
@@ -114,7 +114,7 @@ class TestPersonaAgentInitialization:
         ), patch("os.listdir", return_value=["character.md"]), patch(
             "builtins.open", mock_open(read_data=self.test_character_content)
         ), patch(
-            "src.persona_agent.PersonaAgent._read_cached_file",
+            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value=self.test_character_content,
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
@@ -169,7 +169,7 @@ class TestPersonaAgentInitialization:
         ), patch("os.listdir", return_value=["character.md"]), patch(
             "builtins.open", mock_open(read_data=self.test_character_content)
         ), patch(
-            "src.persona_agent.PersonaAgent._read_cached_file",
+            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value=self.test_character_content,
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
@@ -210,7 +210,7 @@ class TestPersonaAgentCharacterLoading:
         ), patch("os.listdir", return_value=["character.md"]), patch(
             "builtins.open", mock_open(read_data=character_content)
         ), patch(
-            "src.persona_agent.PersonaAgent._read_cached_file",
+            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value=character_content,
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
@@ -299,10 +299,10 @@ Just random text"""
         ), patch(
             "builtins.open", mock_open(read_data="# Test Character")
         ), patch(
-            "src.persona_agent.PersonaAgent._read_cached_file",
+            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value="# Test Character",
         ), patch(
-            "src.persona_agent.PersonaAgent._parse_cached_yaml", return_value={}
+            "src.agents.persona_agent.agent.PersonaAgent._parse_cached_yaml", return_value={}
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
         ), patch.object(
@@ -353,7 +353,7 @@ class TestPersonaAgentDecisionMaking:
         ), patch("os.listdir", return_value=["character.md"]), patch(
             "builtins.open", mock_open(read_data=character_content)
         ), patch(
-            "src.persona_agent.PersonaAgent._read_cached_file",
+            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value=character_content,
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
@@ -419,7 +419,7 @@ class TestPersonaAgentDecisionMaking:
         agent = self.create_test_agent()
 
         # Mock AI integration to avoid external dependencies
-        with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+        with patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None):
             result = agent._make_decision(self.test_world_state)
 
             # Result should be CharacterAction or None
@@ -434,7 +434,7 @@ class TestPersonaAgentDecisionMaking:
         # Test with invalid world state
         invalid_world_state = None
 
-        with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+        with patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None):
             result = agent._make_decision(invalid_world_state)
             # Should handle gracefully
             assert result is None or isinstance(result, CharacterAction)
@@ -472,7 +472,7 @@ class TestPersonaAgentWorldInterpretation:
         ), patch("os.listdir", return_value=["character.md"]), patch(
             "builtins.open", mock_open(read_data=character_content)
         ), patch(
-            "src.persona_agent.PersonaAgent._read_cached_file",
+            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value=character_content,
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
@@ -564,7 +564,7 @@ class TestPersonaAgentAIIntegration:
         ), patch("os.listdir", return_value=["character.md"]), patch(
             "builtins.open", mock_open(read_data=character_content)
         ), patch(
-            "src.persona_agent.PersonaAgent._read_cached_file",
+            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value=character_content,
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
@@ -590,7 +590,7 @@ class TestPersonaAgentAIIntegration:
         """Test AI API key validation"""
         # Test the validation function directly
         with patch("os.getenv", return_value="test_api_key"):
-            from src.persona_agent import _validate_gemini_api_key
+            from src.agents.persona_agent.agent import _validate_gemini_api_key
 
             result = _validate_gemini_api_key()
             assert result == "test_api_key"
@@ -611,7 +611,7 @@ class TestPersonaAgentAIIntegration:
 
         # Decision making should use fallback logic
         world_state = {"current_turn": 1}
-        with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+        with patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None):
             result = agent._make_decision(world_state)
             # Should return None or basic CharacterAction
             assert result is None or isinstance(result, CharacterAction)
@@ -624,7 +624,7 @@ class TestPersonaAgentAIIntegration:
 
         # Test decision making without actual AI calls
         world_state = {"current_turn": 1, "threats": ["orks"]}
-        with patch("src.persona_agent._validate_gemini_api_key", return_value=None):
+        with patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None):
             result = agent._make_decision(world_state)
             # Should process appropriately without AI
             assert result is None or isinstance(result, CharacterAction)
@@ -653,7 +653,7 @@ class TestPersonaAgentMemoryAndEvolution:
         ), patch("os.listdir", return_value=["character.md"]), patch(
             "builtins.open", mock_open(read_data=character_content)
         ), patch(
-            "src.persona_agent.PersonaAgent._read_cached_file",
+            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value=character_content,
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
@@ -796,3 +796,6 @@ def run_all_persona_tests():
 if __name__ == "__main__":
     # Direct execution runs all tests
     run_all_persona_tests()
+
+
+

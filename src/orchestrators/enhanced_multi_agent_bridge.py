@@ -29,20 +29,15 @@ from enum import Enum
 from functools import total_ordering
 from typing import Any, Dict, List, Optional, Union
 
-from src.agents.director_agent import DirectorAgent
+from src.agents.director_agent_integrated import DirectorAgent
 
-# Import advanced AI intelligence systems
-from src.ai_intelligence.ai_orchestrator import (
-    AIIntelligenceOrchestrator,
-    AISystemConfig,
-    IntelligenceLevel,
-)
+
 
 # Import existing Novel Engine components
-from src.event_bus import EventBus
+from src.core.event_bus import EventBus
 
 # Import unified LLM service for smart coordination
-from src.llm_service import (
+from src.core.llm_service import (
     CostControl,
     LLMRequest,
     get_llm_service,
@@ -409,24 +404,8 @@ class EnhancedMultiAgentBridge:
 
     # Lightweight initialization used by tests
     async def initialize(self) -> bool:
-        try:
-            if self.ai_orchestrator is None:
-                # Create orchestrator lazily during initialization to satisfy tests
-                ai_config = AISystemConfig(
-                    intelligence_level=IntelligenceLevel.ADVANCED,
-                    enable_agent_coordination=True,
-                    enable_story_quality=True,
-                    enable_analytics=True,
-                    max_concurrent_operations=15,
-                    optimization_enabled=True,
-                )
-                self.ai_orchestrator = AIIntelligenceOrchestrator(
-                    self.event_bus, ai_config
-                )
-            self._initialized = True
-            return True
-        except Exception:
-            return False
+        self._initialized = True
+        return True
 
     async def queue_llm_request(
         self,
@@ -2361,3 +2340,4 @@ def create_performance_optimized_config(
         batch_priority_threshold=0.6,  # Lower threshold for more priority processing
         cost_alert_threshold=0.85,  # Higher threshold for cost alerts
     )
+

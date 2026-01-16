@@ -51,7 +51,8 @@ Remember: The best science fiction uses the future as a mirror to examine presen
         "Make alien or AI perspectives feel genuinely different",
         "Ground futuristic elements in recognizable human emotions",
     ],
-    example_opening="""The quantum distress beacon had been pulsing for thirty-seven years before anyone heard it. Captain Chen studied the signal pattern on her display, her reflection ghosting across stars that had already died.
+    example_opening="""The quantum distress beacon had been pulsing for thirty-seven years before anyone heard it.
+Captain Chen studied the signal pattern on her display, her reflection ghosting across stars that had already died.
 
 "It's not automated," she said. "Someone is still alive out there, in the Void Between."
 

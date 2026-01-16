@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from contexts.subjective.domain.value_objects.subjective_id import SubjectiveId
+from src.contexts.subjective.domain.value_objects.subjective_id import SubjectiveId
 
 
 class TestSubjectiveIdCreation:

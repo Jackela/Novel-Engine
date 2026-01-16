@@ -18,8 +18,8 @@ NC='\033[0m' # No Color
 PY_BIN=${PY_BIN:-python3}
 VENV_DIR=${VENV_DIR:-.venv-ci}
 MIN_PYRAMID_SCORE=${MIN_PYRAMID_SCORE:-5.5}
-DEFAULT_FLAKE8_TARGETS=("config_loader.py" "contexts/knowledge" "src/api")
-DEFAULT_MYPY_TARGETS=("contexts/knowledge/application/use_cases/retrieve_agent_context.py")
+DEFAULT_FLAKE8_TARGETS=("src/core/config/config_loader.py" "src/contexts/knowledge" "src/api")
+DEFAULT_MYPY_TARGETS=("src/contexts/knowledge/application/use_cases/retrieve_agent_context.py")
 
 if [[ -n "${FLAKE8_TARGETS:-}" ]]; then
     read -r -a FLAKE8_PATHS <<< "$FLAKE8_TARGETS"
@@ -39,7 +39,9 @@ if ! command -v "$PY_BIN" >/dev/null 2>&1; then
     exit 1
 fi
 python_version=$("$PY_BIN" --version 2>&1 | awk '{print $2}')
-if [[ ! "$python_version" =~ ^3\.1[1-9] ]]; then
+python_major=${python_version%%.*}
+python_minor=$(echo "$python_version" | cut -d. -f2)
+if [[ "$python_major" -ne 3 || "$python_minor" -lt 11 ]]; then
     echo -e "${RED}❌ Python 3.11+ required for local validation${NC}"
     echo -e "   ${YELLOW}Found: Python $python_version${NC}"
     echo -e "   ${YELLOW}Install: https://www.python.org/downloads/${NC}"

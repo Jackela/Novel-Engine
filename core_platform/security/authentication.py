@@ -29,20 +29,16 @@ class AuthenticationException(Exception):
     """Base exception for authentication errors."""
 
 
-
 class InvalidCredentialsException(AuthenticationException):
     """Raised when credentials are invalid."""
-
 
 
 class TokenExpiredException(AuthenticationException):
     """Raised when JWT token has expired."""
 
 
-
 class InsufficientPermissionsException(AuthenticationException):
     """Raised when user lacks required permissions."""
-
 
 
 # Database Models

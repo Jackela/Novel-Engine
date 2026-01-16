@@ -31,9 +31,9 @@ class ConfigFormat(Enum):
 class ConfigurationPaths:
     """Standard configuration file paths."""
 
-    main_config: str = "configs/environments/development.yaml"
-    security_config: str = "configs/security/security.yaml"
-    settings: str = "configs/environments/settings.yaml"
+    main_config: str = "config/environments/development.yaml"
+    security_config: str = "config/security/security.yaml"
+    settings: str = "config/environments/settings.yaml"
     staging_settings: str = "staging/settings_staging.yaml"
 
     @classmethod

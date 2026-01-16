@@ -10,10 +10,10 @@ import yaml
 # HACK: Force project root onto path to fix persistent import issue
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from shared_types import CharacterAction
+from src.core.types.shared_types import CharacterAction
 from src.agents.persona_agent.protocols import ThreatLevel
-from src.event_bus import EventBus
-from src.persona_agent import PersonaAgent
+from src.core.event_bus import EventBus
+from src.agents.persona_agent.agent import PersonaAgent
 
 
 class TestLLMIntegration(unittest.TestCase):
@@ -56,7 +56,7 @@ class TestLLMIntegration(unittest.TestCase):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
-    @patch("src.persona_agent._make_gemini_api_request")
+    @patch("src.agents.persona_agent.agent._make_gemini_api_request")
     @pytest.mark.integration
     def test_llm_decision_making_returns_action(self, mock_gemini_request):
         """Test _llm_enhanced_decision_making returns a CharacterAction for a valid response."""
@@ -70,7 +70,7 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Act
         with patch(
-            "src.persona_agent._validate_gemini_api_key", return_value="fake_key"
+            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value="fake_key"
         ):
             action = self.agent._llm_enhanced_decision_making(
                 world_state, situation_assessment, available_actions
@@ -85,7 +85,7 @@ class TestLLMIntegration(unittest.TestCase):
         )
         mock_gemini_request.assert_called_once()
 
-    @patch("src.persona_agent.PersonaAgent._call_llm")
+    @patch("src.agents.persona_agent.agent.PersonaAgent._call_llm")
     @pytest.mark.integration
     def test_llm_decision_making_handles_invalid_response(self, mock_call_llm):
         """Test _llm_enhanced_decision_making returns None for an invalid LLM response."""
@@ -105,8 +105,8 @@ class TestLLMIntegration(unittest.TestCase):
         self.assertIsNone(action)
         mock_call_llm.assert_called_once()
 
-    @patch("src.persona_agent._validate_gemini_api_key", return_value=None)
-    @patch("src.persona_agent._generate_fallback_response")
+    @patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None)
+    @patch("src.agents.persona_agent.agent._generate_fallback_response")
     @pytest.mark.integration
     def test_llm_uses_fallback_when_no_api_key(self, mock_fallback, mock_validate_key):
         """Test the agent uses the fallback mechanism when the API key is not available."""
@@ -133,7 +133,7 @@ class TestLLMIntegration(unittest.TestCase):
         mock_validate_key.assert_called_once()
         mock_fallback.assert_called_once()
 
-    @patch("src.persona_agent._make_gemini_api_request")
+    @patch("src.agents.persona_agent.agent._make_gemini_api_request")
     @pytest.mark.integration
     def test_llm_decision_making_handles_api_failure_and_uses_fallback(
         self, mock_gemini_request
@@ -148,10 +148,10 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Act
         with patch(
-            "src.persona_agent._validate_gemini_api_key", return_value="fake_key"
+            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value="fake_key"
         ):
             with patch(
-                "src.persona_agent._generate_fallback_response"
+                "src.agents.persona_agent.agent._generate_fallback_response"
             ) as mock_fallback:
                 fallback_response = "ACTION: 1\nTARGET: hostile_forces\nREASONING: Fallback response from API failure."
                 mock_fallback.return_value = fallback_response
@@ -170,7 +170,7 @@ class TestLLMIntegration(unittest.TestCase):
 
         mock_gemini_request.assert_called_once()
 
-    @patch("src.persona_agent._make_gemini_api_request")
+    @patch("src.agents.persona_agent.agent._make_gemini_api_request")
     @pytest.mark.integration
     def test_llm_decision_making_handles_observe_action(self, mock_gemini_request):
         """Test _llm_enhanced_decision_making returns None when LLM chooses to observe."""
@@ -184,7 +184,7 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Act
         with patch(
-            "src.persona_agent._validate_gemini_api_key", return_value="fake_key"
+            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value="fake_key"
         ):
             action = self.agent._llm_enhanced_decision_making(
                 world_state, situation_assessment, available_actions
@@ -197,3 +197,6 @@ class TestLLMIntegration(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+

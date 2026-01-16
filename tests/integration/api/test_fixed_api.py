@@ -68,20 +68,20 @@ async def health():
     """健康检查"""
     try:
         gemini_available = False
-        
+
         if GEMINI_API_KEY and GEMINI_API_KEY != 'your_key_here':
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=GEMINI_API_KEY)
-                
+
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 response = model.generate_content("hello")
-                
+
                 gemini_available = bool(response and response.text)
             except Exception as e:
                 logger.warning(f"Gemini API test failed: {e}")
                 gemini_available = False
-        
+
         return {
             "status": "healthy" if gemini_available else "limited",
             "timestamp": time.time(),
@@ -104,18 +104,18 @@ async def get_characters():
     """获取角色列表"""
     try:
         characters_dir = "characters"
-        
+
         if not os.path.isdir(characters_dir):
             os.makedirs(characters_dir, exist_ok=True)
             return {"characters": []}
-        
+
         characters = []
         for item in os.listdir(characters_dir):
             if os.path.isdir(os.path.join(characters_dir, item)):
                 characters.append(item)
-        
+
         return {"characters": sorted(characters)}
-        
+
     except Exception as e:
         logger.error(f"Get characters error: {e}")
         return {"characters": [], "error": str(e)}
@@ -126,15 +126,15 @@ async def test_gemini():
     """测试Gemini API"""
     if not GEMINI_API_KEY or GEMINI_API_KEY == 'your_key_here':
         return {"success": False, "error": "GEMINI_API_KEY not set"}
-    
+
     try:
         import google.generativeai as genai
 import pytest
         genai.configure(api_key=GEMINI_API_KEY)
-        
+
         model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content("Generate a simple test response")
-        
+
         if response and response.text:
             return {
                 "success": True, 
@@ -142,7 +142,7 @@ import pytest
             }
         else:
             return {"success": False, "error": "No response from Gemini"}
-            
+
     except Exception as e:
         logger.error(f"Gemini test error: {e}")
         return {"success": False, "error": str(e)}
@@ -254,7 +254,10 @@ def test_minimal_api():
             print(f"ERROR /test-gemini - {e}")
             results["gemini"] = {"success": False, "error": str(e)}
 
-        return results
+        assert results["root"]["success"]
+        assert results["health"]["success"]
+        assert results["characters"]["success"]
+        assert "gemini" in results
 
     finally:
         # 清理服务器

@@ -25,19 +25,19 @@ import pytest
 import pytest_asyncio
 
 # Character context imports
-from contexts.character import (
+from src.contexts.character import (
     Character,
     CharacterClass,
     CharacterRace,
     Gender,
 )
-from contexts.character.domain.value_objects.character_stats import CoreAbilities
+from src.contexts.character.domain.value_objects.character_stats import CoreAbilities
 
 # Core platform imports
 
 # Character ORM import with fallback
 try:
-    from contexts.character.infrastructure.persistence.character_models import (
+    from src.contexts.character.infrastructure.persistence.character_models import (
         CharacterORM,
     )
 except ImportError as e:
@@ -68,7 +68,7 @@ except ImportError as e:
 
 # World context imports (with extensive fallback for import issues)
 try:
-    from contexts.world.infrastructure.persistence.models import WorldStateModel
+    from src.contexts.world.infrastructure.persistence.models import WorldStateModel
 except ImportError as e:
     # Create mock class if not available
     print(f"Warning: World context not available, using mocks: {e}")
@@ -89,7 +89,7 @@ except Exception as e:
 
 
 try:
-    from contexts.orchestration.api.turn_api import app
+    from src.contexts.orchestration.api.turn_api import app
 except ImportError:
     # Create a mock FastAPI app for testing
     from fastapi import FastAPI
@@ -259,9 +259,20 @@ class TestTurnOrchestrationE2E:
         server_process.start()
 
         # Wait for server to start
-        time.sleep(2)
-
         base_url = f"http://127.0.0.1:{test_port}"
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            try:
+                response = httpx.get(
+                    f"{base_url}/v1/health", timeout=1.0, trust_env=False
+                )
+                if response.status_code == 200:
+                    break
+            except Exception:
+                time.sleep(0.2)
+        else:
+            raise RuntimeError("Turn orchestration API failed to start in time")
+
         yield base_url
 
         # Cleanup
@@ -373,7 +384,7 @@ class TestTurnOrchestrationE2E:
         initial_state = await self._capture_database_state(database_fixtures)
 
         # Step 3: Send HTTP POST request to /v1/turns:run
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=60.0, trust_env=False) as client:
             response = await client.post(
                 f"{api_server_url}/v1/turns:run", json=request_payload
             )
@@ -421,7 +432,7 @@ class TestTurnOrchestrationE2E:
             "async_execution": False,
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
             response = await client.post(
                 f"{api_server_url}/v1/turns:run", json=invalid_request
             )
@@ -451,7 +462,7 @@ class TestTurnOrchestrationE2E:
             "async_execution": True,  # Async execution
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
             response = await client.post(
                 f"{api_server_url}/v1/turns:run", json=request_payload
             )
@@ -538,7 +549,7 @@ class TestTurnOrchestrationE2E:
         """
         Comprehensive validation of database state changes after turn execution.
 
-        Validates data integrity, business rules, and consistency across contexts.
+        Validates data integrity, business rules, and consistency across src.contexts.
         """
 
         # Extract turn details for validation

@@ -848,7 +848,8 @@ CACHING SYSTEM VALIDATION:
    ✅ Multi-Level Active: {result.get('multi_level_active', False)}
    ✅ Store Time: {result.get('store_time_ms', 0):.1f}ms
    ✅ Retrieve Time: {result.get('retrieve_time_ms', 0):.1f}ms
-   🎯 Cache Levels: L1={result.get('cache_stats', {}).get('l1_stats', {}).get('entries', 0)}, L2={result.get('cache_stats', {}).get('l2_stats', {}).get('entries', 0)}, L3={result.get('cache_stats', {}).get('l3_stats', {}).get('entries', 0)}
+   🎯 Cache Levels: L1={result.get('cache_stats', {}).get('l1_stats', {}).get('entries', 0)}, L2={result.get('cache_stats', {}).get('l2_stats', {}).get('entries', 0)}
+   🎯 Cache Levels: L3={result.get('cache_stats', {}).get('l3_stats', {}).get('entries', 0)}
 """
 
                 elif "LLM Response Cache" in result["test_name"]:
@@ -933,7 +934,7 @@ RECOMMENDATION:
 🧠 CACHING SYSTEM: PRODUCTION READY
    Expected response time improvement: 50%+
    Memory efficiency improvement: 40%+
-   
+
 ═══════════════════════════════════════════════════════════════
 """
 

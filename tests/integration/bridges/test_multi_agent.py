@@ -94,11 +94,10 @@ async def test_bridge_initialization():
         print(
             f"   Components initialized: {len(bridge._integration_stats['component_status'])}"
         )
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Component initialization failed: {e}")
-        return False
+        pytest.fail(f"Component initialization failed: {e}")
 
 
 @pytest.mark.integration
@@ -122,11 +121,10 @@ async def test_ai_systems_initialization():
 
         print("✅ AI systems integration successful")
         print(f"   Initialization time: {result['initialization_time']:.3f}s")
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ AI systems integration failed: {e}")
-        return False
+        pytest.fail(f"AI systems integration failed: {e}")
 
 
 @pytest.mark.integration
@@ -159,11 +157,10 @@ async def test_agent_registration():
 
         print("✅ Agent registration successful")
         print(f"   Registered agents: {list(bridge._agents.keys())}")
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Agent registration failed: {e}")
-        return False
+        pytest.fail(f"Agent registration failed: {e}")
 
 
 @pytest.mark.integration
@@ -206,11 +203,10 @@ async def test_dialogue_management():
         print(
             f"   Dialogue result: {dialogue_result['result']['outcome'] if 'result' in dialogue_result else 'processed'}"
         )
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Dialogue management failed: {e}")
-        return False
+        pytest.fail(f"Dialogue management failed: {e}")
 
 
 @pytest.mark.integration
@@ -248,11 +244,10 @@ async def test_enhanced_turn_execution():
         print(f"   Turn time: {turn_result['total_time']:.3f}s")
         print(f"   Coordinations: {turn_result['coordination_count']}")
         print(f"   Summary: {turn_result['enhanced_summary']}")
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Enhanced turn execution failed: {e}")
-        return False
+        pytest.fail(f"Enhanced turn execution failed: {e}")
 
 
 @pytest.mark.integration
@@ -294,11 +289,10 @@ async def test_performance_tracking():
         print(
             f"   Total turns processed: {bridge._integration_stats['total_turns_processed']}"
         )
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Performance tracking failed: {e}")
-        return False
+        pytest.fail(f"Performance tracking failed: {e}")
 
 
 @pytest.mark.integration
@@ -339,11 +333,10 @@ async def test_cost_and_budget_management():
         print(
             f"   Remaining budget: ${bridge.cost_tracker.get_remaining_turn_budget():.4f}"
         )
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Cost and budget management failed: {e}")
-        return False
+        pytest.fail(f"Cost and budget management failed: {e}")
 
 
 @pytest.mark.integration
@@ -385,11 +378,10 @@ async def test_component_integration():
 
         print("✅ Component integration successful")
         print("   Components properly connected and communicating")
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Component integration failed: {e}")
-        return False
+        pytest.fail(f"Component integration failed: {e}")
 
 
 @pytest.mark.integration
@@ -438,11 +430,10 @@ async def test_backward_compatibility():
 
         print("✅ Backward compatibility successful")
         print("   Legacy interfaces and factory functions working")
-        return True
+        return
 
     except Exception as e:
-        print(f"❌ Backward compatibility failed: {e}")
-        return False
+        pytest.fail(f"Backward compatibility failed: {e}")
 
 
 async def run_comprehensive_test():

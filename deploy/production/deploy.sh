@@ -99,7 +99,7 @@ validate_environment() {
     
     # Validate configuration files
     local config_files=(
-        "$PROJECT_ROOT/configs/environments/environments.yaml"
+        "$PROJECT_ROOT/config/environments/environments.yaml"
         "$PROJECT_ROOT/k8s"
     )
     
@@ -384,7 +384,7 @@ run_performance_tests() {
     if [[ -f "$PROJECT_ROOT/scripts/performance_optimization.py" ]]; then
         log_info "Running performance optimization analysis..."
         python "$PROJECT_ROOT/scripts/performance_optimization.py" \
-            --mode report --config configs/performance/performance_config.json || {
+            --mode report --config config/performance/performance_config.json || {
             log_warning "Performance analysis completed with warnings"
         }
     fi
@@ -576,3 +576,4 @@ main() {
 
 # Run main function with all arguments
 main "$@"
+

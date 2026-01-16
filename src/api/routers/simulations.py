@@ -7,10 +7,10 @@ from typing import List
 from fastapi import APIRouter, HTTPException
 
 from src.agents.chronicler_agent import ChroniclerAgent
-from src.agents.director_agent import DirectorAgent
+from src.agents.director_agent_integrated import DirectorAgent
 from src.api.schemas import SimulationRequest, SimulationResponse
 from src.config.character_factory import CharacterFactory
-from src.event_bus import EventBus
+from src.core.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -83,3 +83,4 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
         turns_executed=turns,
         duration_seconds=duration,
     )
+

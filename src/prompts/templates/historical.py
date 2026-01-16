@@ -53,7 +53,8 @@ Remember: The best historical fiction illuminates the present by exploring the p
     ],
     example_opening="""Constantinople, 1453. The walls had stood for a thousand years, but tonight they trembled.
 
-Anna pressed her palm against the ancient stone, feeling the distant thunder of Ottoman cannons. Somewhere in the city, her brother wore the Emperor's colors. Somewhere beyond the walls, the man she had once loved commanded the siege.
+Anna pressed her palm against the ancient stone, feeling the distant thunder of Ottoman cannons.
+Somewhere in the city, her brother wore the Emperor's colors. Somewhere beyond the walls, the man she had once loved commanded the siege.
 
 "The ships," her servant whispered. "They say Mehmed has dragged his fleet overland. They're in the Golden Horn."
 

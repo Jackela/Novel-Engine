@@ -338,12 +338,12 @@ class PostgreSQLStateStore(StateStore):
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             expires_at TIMESTAMP WITH TIME ZONE
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_state_data_namespace ON state_data(namespace);
         CREATE INDEX IF NOT EXISTS idx_state_data_entity ON state_data(entity_type, entity_id);
         CREATE INDEX IF NOT EXISTS idx_state_data_created ON state_data(created_at);
         CREATE INDEX IF NOT EXISTS idx_state_data_expires ON state_data(expires_at) WHERE expires_at IS NOT NULL;
-        
+
         CREATE TABLE IF NOT EXISTS state_metadata (
             key_hash VARCHAR(64) PRIMARY KEY,
             metadata JSONB NOT NULL,
@@ -1004,9 +1004,9 @@ class ConfigurationManager:
 
     def __init__(self, config_paths: List[str] = None):
         self.config_paths = config_paths or [
-            "/etc/novel-engine/configs/environments/development.yaml",
-            "./configs/environments/development.yaml",
-            "./configs/environments/environments.yaml",
+            "/etc/novel-engine/config/environments/development.yaml",
+            "./config/environments/development.yaml",
+            "./config/environments/environments.yaml",
         ]
         self.config_data: Dict[str, Any] = {}
         self.environment = os.getenv("ENVIRONMENT", "development")

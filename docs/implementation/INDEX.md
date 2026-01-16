@@ -74,13 +74,13 @@ Implementation guides, patterns, and workflows for Novel Engine development.
 - [Ports & Adapters](../architecture/ports-adapters.md)
 
 ### Development
-- [Developer Guide](../DEVELOPER_GUIDE.md)
-- [Coding Standards](../coding-standards.md)
+- [Developer Guide](../onboarding/developer-guide.md)
+- [Coding Standards](../development/coding-standards.md)
 - [Core Systems Integration](../guides/CORE_SYSTEMS_INTEGRATION_GUIDE.md)
 
 ### Design
 - [Design Documents](../design/INDEX.md)
-- [UI Design Spec](../UI_Design_Spec.md)
+- [UI Design Spec](../specifications/ui-design-spec.md)
 
 ### Testing
 - [Testing Guide](../testing/TESTING.md)

@@ -81,8 +81,8 @@ Our testing strategy is composed of multiple layers to ensure quality at every l
         - Character context loading and validation
     -   **Mocks:** External dependencies (LLMClient, file system, network) are always mocked.
     -   **Key Test Files:**
-        - `tests/unit/contexts/ai/domain/` - AI domain models and interfaces
-        - `tests/unit/contexts/character/` - Character context services
+        - `tests/unit/src/contexts/ai/domain/` - AI domain models and interfaces
+        - `tests/unit/src/contexts/character/` - Character context services
         - `tests/unit/agents/` - Agent components and lifecycle
 
 -   **Level 2: Integration Tests (`/tests/integration`)**
@@ -203,7 +203,7 @@ jobs:
 - ✅ Fixed `CharacterContext.validate_character_consistency` validator
   - Now handles both dict and Pydantic model formats
   - Fixed `AttributeError: 'dict' object has no attribute 'name'`
-  - Location: `contexts/character/domain/value_objects/context_models.py:472-482`
+  - Location: `src/contexts/character/domain/value_objects/context_models.py:472-482`
 - ✅ Fixed 12 failing tests in `test_context_loader.py`:
   - Async mock configuration (9 tests)
   - Cache expiration timing (1 test)
@@ -222,3 +222,4 @@ jobs:
 - ✅ Documented test infrastructure and configuration
 - ✅ **NEW**: Added parallel execution guide
 - ✅ **NEW**: Documented all bug fixes and improvements
+

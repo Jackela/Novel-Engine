@@ -25,7 +25,6 @@ import pytest
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 class TestNarrativeGenerationFlow:
     """E2E tests for narrative generation and orchestration monitoring."""
 

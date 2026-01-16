@@ -9,7 +9,7 @@ from uuid import uuid4
 
 import pytest
 
-from contexts.narratives.domain.value_objects.plot_point import (
+from src.contexts.narratives.domain.value_objects.plot_point import (
     PlotPoint,
     PlotPointImportance,
     PlotPointType,

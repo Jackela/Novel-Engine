@@ -25,7 +25,6 @@ import pytest
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 class TestWorldBuildingFlow:
     """E2E tests for world building and configuration."""
 
@@ -104,10 +103,6 @@ class TestWorldBuildingFlow:
         # If /api/worlds doesn't exist, this test documents the desired API
         response = client.post("/api/worlds", json=world_data)
 
-        # If endpoint doesn't exist, mark as expected and skip detailed checks
-        if response.status_code == 404:
-            pytest.skip("World API endpoint not yet implemented")
-
         assert response.status_code in [
             200,
             201,
@@ -143,18 +138,12 @@ class TestWorldBuildingFlow:
         }
 
         response = client.put(f"/api/worlds/{world_id}", json=update_data)
-        if response.status_code == 404:
-            pytest.skip("World update API not yet implemented")
-
-        assert response.status_code in [200, 204], "Failed to update world"
+        assert response.status_code in [200, 204], "Failed to update world"     
         performance_tracker.record("world_update", time.time() - start_time)
 
         # Step 4: List all worlds
         start_time = time.time()
         response = client.get("/api/worlds")
-
-        if response.status_code == 404:
-            pytest.skip("World list API not yet implemented")
 
         assert response.status_code == 200, "Failed to list worlds"
         worlds_data = response.json()
@@ -171,9 +160,6 @@ class TestWorldBuildingFlow:
         minimal_world = {"name": "Minimal World", "description": "A simple world"}
 
         response = client.post("/api/worlds", json=minimal_world)
-
-        if response.status_code == 404:
-            pytest.skip("World API not yet implemented")
 
         assert response.status_code in [200, 201], "Minimal world should be valid"
 
@@ -198,9 +184,6 @@ class TestWorldBuildingFlow:
         world_data = data_factory.create_world_data(name="Location Test World")
         response = client.post("/api/worlds", json=world_data)
 
-        if response.status_code == 404:
-            pytest.skip("World API not yet implemented")
-
         assert response.status_code in [200, 201]
 
         world_id = response.json().get("data", {}).get("id") or "location_test_world"
@@ -218,9 +201,6 @@ class TestWorldBuildingFlow:
         for location in locations_to_add:
             update_data = {"locations": [location]}
             response = client.put(f"/api/worlds/{world_id}", json=update_data)
-
-            if response.status_code == 404:
-                pytest.skip("World update API not yet implemented")
 
             assert response.status_code in [200, 204]
 
@@ -246,9 +226,6 @@ class TestWorldBuildingFlow:
 
         response = client.post("/api/worlds", json=world_data)
 
-        if response.status_code == 404:
-            pytest.skip("World API not yet implemented")
-
         assert response.status_code in [200, 201]
 
         world_id = response.json().get("data", {}).get("id") or "rules_world"
@@ -268,9 +245,6 @@ class TestWorldBuildingFlow:
         # Create world
         world_data = data_factory.create_world_data(name="Character World")
         response = client.post("/api/worlds", json=world_data)
-
-        if response.status_code == 404:
-            pytest.skip("World API not yet implemented")
 
         assert response.status_code in [200, 201]
 
@@ -303,9 +277,6 @@ class TestWorldBuildingFlow:
         }
 
         response = client.post("/api/worlds", json=world_data)
-
-        if response.status_code == 404:
-            pytest.skip("World API not yet implemented")
 
         assert response.status_code in [200, 201]
 
@@ -344,9 +315,6 @@ class TestWorldBuildingFlow:
         world_data = data_factory.create_world_data(name="Delete Test World")
         response = client.post("/api/worlds", json=world_data)
 
-        if response.status_code == 404:
-            pytest.skip("World API not yet implemented")
-
         assert response.status_code in [200, 201]
 
         world_id = response.json().get("data", {}).get("id") or "delete_test_world"
@@ -354,10 +322,7 @@ class TestWorldBuildingFlow:
         # Delete world
         response = client.delete(f"/api/worlds/{world_id}")
 
-        if response.status_code == 404:
-            pytest.skip("World deletion API not yet implemented")
-
-        assert response.status_code in [200, 204], "Failed to delete world"
+        assert response.status_code in [200, 204], "Failed to delete world"     
 
         # Verify world no longer exists
         response = client.get(f"/api/worlds/{world_id}")
@@ -376,9 +341,6 @@ class TestWorldBuildingFlow:
             world_data = data_factory.create_world_data(name=name)
             response = client.post("/api/worlds", json=world_data)
 
-            if response.status_code == 404:
-                pytest.skip("World API not yet implemented")
-
             assert response.status_code in [200, 201]
 
             world_id = response.json().get("data", {}).get(
@@ -393,9 +355,6 @@ class TestWorldBuildingFlow:
 
         # Verify all worlds exist
         response = client.get("/api/worlds")
-
-        if response.status_code == 404:
-            pytest.skip("World list API not yet implemented")
 
         assert response.status_code == 200
 

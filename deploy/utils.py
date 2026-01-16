@@ -48,7 +48,7 @@ def check_deployment_prerequisites() -> Dict[str, bool]:
     project_root = get_project_root()
 
     # Check required directories
-    required_dirs = ["configs/environments", "configs/security", "staging", "data"]
+    required_dirs = ["config/environments", "config/security", "staging", "data"]
 
     for dir_name in required_dirs:
         dir_path = project_root / dir_name
@@ -56,9 +56,9 @@ def check_deployment_prerequisites() -> Dict[str, bool]:
 
     # Check required files
     required_files = [
-        "configs/environments/development.yaml",
-        "configs/environments/settings.yaml",
-        "configs/security/security.yaml",
+        "config/environments/development.yaml",
+        "config/environments/settings.yaml",
+        "config/security/security.yaml",
         "requirements.txt",
     ]
 

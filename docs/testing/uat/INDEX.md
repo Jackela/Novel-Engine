@@ -93,7 +93,7 @@ User Acceptance Testing documentation for Novel Engine, including daily test pla
 - [Operations Runbook](../../operations/OPERATIONS_RUNBOOK.md)
 
 ### Quality
-- [Coding Standards](../../coding-standards.md)
+- [Coding Standards](../../development/coding-standards.md)
 
 ---
 

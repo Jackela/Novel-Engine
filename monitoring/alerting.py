@@ -570,7 +570,7 @@ class AlertManager:
             - Current Value: {alert.current_value}
             - Threshold: {alert.threshold_value}
             - Fired At: {alert.fired_at.isoformat()}
-            
+
             Labels: {json.dumps(alert.labels, indent=2)}
             """
 

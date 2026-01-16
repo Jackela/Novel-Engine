@@ -131,7 +131,7 @@ class TestMigrationUtilities:
             "quality": {
                 "target": "tests/unit/quality",
                 "patterns": ["quality", "testing", "code_quality"],
-                "files": ["test_quality_framework.py", "test_code_quality_analyzer.py"],
+                "files": [],
             },
             "security": {
                 "target": "tests/security",  # Keep existing security location

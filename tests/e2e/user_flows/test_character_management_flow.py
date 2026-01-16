@@ -24,7 +24,6 @@ import pytest
 
 
 @pytest.mark.e2e
-@pytest.mark.asyncio
 class TestCharacterManagementFlow:
     """E2E tests for complete character management workflow."""
 

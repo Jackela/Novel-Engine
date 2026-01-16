@@ -47,7 +47,7 @@ class SecureDeploymentManager:
 
     def __init__(self, environment: str = "production"):
         self.environment = environment
-        self.config_path = Path("configs/security/security.yaml")
+        self.config_path = Path("config/security/security.yaml")
         self.cert_manager = SSLCertificateManager()
         self.deployment_config: Dict[str, Any] = {}
 

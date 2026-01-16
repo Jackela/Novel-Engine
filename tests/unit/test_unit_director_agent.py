@@ -12,7 +12,7 @@ import pytest
 
 # 导入被测试的模块
 try:
-    from src.agents.director_agent import DirectorAgent
+    from src.agents.director_agent_integrated import DirectorAgent
 
     DIRECTOR_AGENT_AVAILABLE = True
 except ImportError:

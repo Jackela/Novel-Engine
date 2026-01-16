@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
-from contexts.interactions.domain.value_objects.negotiation_status import (
+from src.contexts.interactions.domain.value_objects.negotiation_status import (
     NegotiationOutcome,
     NegotiationPhase,
     NegotiationStatus,
@@ -329,7 +329,7 @@ class TestNegotiationStatusFactoryMethods:
     def test_create_initial_default_time(self):
         """Test creating initial status with default timestamp."""
         with patch(
-            "contexts.interactions.domain.value_objects.negotiation_status.datetime"
+            "src.contexts.interactions.domain.value_objects.negotiation_status.datetime"
         ) as mock_datetime:
             mock_now = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
             mock_datetime.now.return_value = mock_now
@@ -485,7 +485,7 @@ class TestNegotiationStatusPhaseTransitions:
         status = NegotiationStatus.create_initial(started_at=now)
 
         with patch(
-            "contexts.interactions.domain.value_objects.negotiation_status.datetime"
+            "src.contexts.interactions.domain.value_objects.negotiation_status.datetime"
         ) as mock_datetime:
             mock_now = now + timedelta(hours=1)
             mock_datetime.now.return_value = mock_now
@@ -538,7 +538,7 @@ class TestNegotiationStatusCompletion:
         status = NegotiationStatus.create_initial(started_at=now)
 
         with patch(
-            "contexts.interactions.domain.value_objects.negotiation_status.datetime"
+            "src.contexts.interactions.domain.value_objects.negotiation_status.datetime"
         ) as mock_datetime:
             mock_completion = now + timedelta(days=5)
             mock_datetime.now.return_value = mock_completion
@@ -611,7 +611,7 @@ class TestNegotiationStatusActivityUpdate:
         status = NegotiationStatus.create_initial(started_at=now)
 
         with patch(
-            "contexts.interactions.domain.value_objects.negotiation_status.datetime"
+            "src.contexts.interactions.domain.value_objects.negotiation_status.datetime"
         ) as mock_datetime:
             mock_activity_time = now + timedelta(hours=3)
             mock_datetime.now.return_value = mock_activity_time
@@ -743,7 +743,7 @@ class TestNegotiationStatusProperties:
         )
 
         with patch(
-            "contexts.interactions.domain.value_objects.negotiation_status.datetime"
+            "src.contexts.interactions.domain.value_objects.negotiation_status.datetime"
         ) as mock_datetime:
             mock_datetime.now.return_value = mock_current_time
 

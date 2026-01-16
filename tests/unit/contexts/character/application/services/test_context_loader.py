@@ -19,13 +19,13 @@ import pytest
 import yaml
 
 # Assuming the service is imported from the correct path
-from contexts.character.application.services.context_loader import (
+from src.contexts.character.application.services.context_loader import (
     ContextLoaderError,
     ContextLoaderService,
     SecurityError,
     ServiceUnavailableError,
 )
-from contexts.character.domain.value_objects.context_models import (
+from src.contexts.character.domain.value_objects.context_models import (
     CharacterContext,
     MemoryContext,
     ObjectivesContext,
@@ -612,7 +612,7 @@ Developed expertise in systematic validation and quality assurance.
 
     @pytest.mark.unit
     async def test_name_consistency_validation(self):
-        """Test validation of name consistency across contexts."""
+        """Test validation of name consistency across src.contexts."""
         character_id = "inconsistent_name_test"
 
         # Create files with inconsistent names
@@ -641,7 +641,7 @@ Developed expertise in systematic validation and quality assurance.
     @pytest.mark.unit
     @pytest.mark.medium
     async def test_age_consistency_validation(self):
-        """Test validation of age consistency across contexts."""
+        """Test validation of age consistency across src.contexts."""
         character_id = "inconsistent_age_test"
 
         # Create files with inconsistent ages

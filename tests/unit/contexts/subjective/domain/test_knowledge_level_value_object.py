@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from contexts.subjective.domain.value_objects.knowledge_level import (
+from src.contexts.subjective.domain.value_objects.knowledge_level import (
     CertaintyLevel,
     KnowledgeBase,
     KnowledgeItem,

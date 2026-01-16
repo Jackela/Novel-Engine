@@ -93,7 +93,7 @@ Level Distribution:
 |------|-----------|----------|
 | `templates/dynamic_template_engine.py` | 19 | High |
 | `api/integration_tests.py` | 17 | High |
-| `core/config/config_loader.py` | 15 | Medium |
+| `core/config/src/core/config/config_loader.py` | 15 | Medium |
 | `api/enhanced_documentation_system.py` | 5 | Medium |
 | `core/types.py` | 4 | Low |
 | Others (26 files) | 191 | Varies |
@@ -334,3 +334,4 @@ The migration tool is complete and ready for use. All deliverables have been cre
 **Script Version**: 1.0  
 **Documentation Version**: 1.0  
 **Status**: Complete and ready for use
+

@@ -16,7 +16,7 @@ import pytest
 sys.modules["aioredis"] = MagicMock()
 
 # Import the value objects we're testing
-from contexts.character.domain.value_objects.skills import (
+from src.contexts.character.domain.value_objects.skills import (
     ProficiencyLevel,
     Skill,
     SkillCategory,

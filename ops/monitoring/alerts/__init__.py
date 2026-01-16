@@ -14,7 +14,7 @@ Features:
 
 Example:
     from ops.monitoring.alerts import create_alert_rule, setup_notification_channel
-    
+
     rule_id = create_alert_rule('high_error_rate', threshold=0.05)
     channel_id = setup_notification_channel('slack', webhook_url='...')
 """

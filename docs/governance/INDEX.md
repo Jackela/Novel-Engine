@@ -78,7 +78,7 @@ Governance policies, security controls, and compliance documentation for Novel E
 - [Incident Response](../runbooks/incident-response.md)
 
 ### Development
-- [Coding Standards](../coding-standards.md)
+- [Coding Standards](../development/coding-standards.md)
 - [API Reference](../api/API_REFERENCE.md)
 
 ---

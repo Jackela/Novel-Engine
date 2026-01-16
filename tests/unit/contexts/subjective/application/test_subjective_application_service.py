@@ -14,38 +14,38 @@ import pytest
 
 sys.modules["aioredis"] = MagicMock()
 
-from contexts.subjective.application.commands.subjective_command_handlers import (
+from src.contexts.subjective.application.commands.subjective_command_handlers import (
     EntityNotFoundException,
     InvalidCommandException,
     SubjectiveCommandHandlerException,
     SubjectiveCommandHandlerRegistry,
 )
-from contexts.subjective.application.commands.subjective_commands import (
+from src.contexts.subjective.application.commands.subjective_commands import (
     AddPerceptionCommand,
     CreateTurnBriefCommand,
     UpdateAwarenessStateCommand,
     UpdatePerceptionCapabilitiesCommand,
 )
-from contexts.subjective.application.services.subjective_application_service import (
+from src.contexts.subjective.application.services.subjective_application_service import (
     SubjectiveApplicationService,
 )
-from contexts.subjective.domain.aggregates.turn_brief import TurnBrief
-from contexts.subjective.domain.repositories.turn_brief_repository import (
+from src.contexts.subjective.domain.aggregates.turn_brief import TurnBrief
+from src.contexts.subjective.domain.repositories.turn_brief_repository import (
     ITurnBriefRepository,
 )
-from contexts.subjective.domain.services.fog_of_war_service import FogOfWarService
-from contexts.subjective.domain.value_objects.awareness import (
+from src.contexts.subjective.domain.services.fog_of_war_service import FogOfWarService
+from src.contexts.subjective.domain.value_objects.awareness import (
     AlertnessLevel,
     AttentionFocus,
     AwarenessModifier,
     AwarenessState,
 )
-from contexts.subjective.domain.value_objects.perception_range import (
+from src.contexts.subjective.domain.value_objects.perception_range import (
     PerceptionCapabilities,
     PerceptionRange,
     PerceptionType,
 )
-from contexts.subjective.domain.value_objects.subjective_id import SubjectiveId
+from src.contexts.subjective.domain.value_objects.subjective_id import SubjectiveId
 
 
 class TestSubjectiveApplicationServiceInitialization:
@@ -87,7 +87,7 @@ class TestSubjectiveApplicationServiceInitialization:
         mock_fog_service = Mock(spec=FogOfWarService)
 
         with patch(
-            "contexts.subjective.application.services.subjective_application_service.SubjectiveCommandHandlerRegistry"
+            "src.contexts.subjective.application.services.subjective_application_service.SubjectiveCommandHandlerRegistry"
         ) as mock_registry_class:
             mock_registry = Mock()
             mock_registry_class.return_value = mock_registry

@@ -8,7 +8,7 @@ Split from test_plot_point_value_object.py for maintainability.
 
 import pytest
 
-from contexts.narratives.domain.value_objects.plot_point import (
+from src.contexts.narratives.domain.value_objects.plot_point import (
     PlotPointImportance,
     PlotPointType,
 )

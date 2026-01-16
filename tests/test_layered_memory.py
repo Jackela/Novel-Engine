@@ -16,8 +16,6 @@ from datetime import datetime, timedelta
 import pytest
 import pytest_asyncio
 
-pytestmark = pytest.mark.asyncio  # codeql[py/unused-global-variable]
-
 from src.core.data_models import MemoryItem, MemoryType
 from src.database.context_db import ContextDatabase
 from src.memory.layered_memory import (
@@ -28,6 +26,7 @@ from src.memory.layered_memory import (
 )
 
 
+@pytest.mark.asyncio
 class TestLayeredMemorySystem:
     """Unit tests for LayeredMemorySystem unified memory architecture."""
 

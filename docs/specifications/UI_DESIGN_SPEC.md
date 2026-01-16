@@ -1264,7 +1264,7 @@ UserSession: {
 **Styling**: CSS-in-JS (Styled Components or Emotion) + CSS Custom Properties
 **State Management**: Redux Toolkit + RTK Query for API state
 **Real-time**: WebSocket connection with socket.io-client
-**Data Visualization**: D3.js for custom charts, Three.js for 3D world map
+**Data Visualization**: Recharts for charts (Note: D3.js/Three.js were considered but not implemented in current release)
 **Testing**: Jest + React Testing Library + Playwright for E2E
 
 ### 5.2 Performance Considerations

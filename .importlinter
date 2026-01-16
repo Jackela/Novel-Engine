@@ -1,0 +1,53 @@
+[importlinter]
+root_package = src
+
+# Rule 1: Functional Core Integrity
+# The Core domain logic must not depend on the API layer or Infrastructure (DB/External Services).
+[importlinter:contract:1]
+name = Functional Core Isolation
+type = forbidden
+source_modules =
+    src.core
+    src.agents
+    src.contexts
+forbidden_modules =
+    src.api
+    src.infrastructure
+    src.database
+
+# Rule 2: Character Context Isolation
+[importlinter:contract:2]
+name = Character Context Isolation
+type = forbidden
+source_modules = src.contexts.character
+forbidden_modules = 
+    src.contexts.narratives
+    src.contexts.campaigns
+    src.contexts.interactions
+    src.contexts.orchestration
+
+# Rule 3: Narrative Context Isolation
+[importlinter:contract:3]
+name = Narrative Context Isolation
+type = forbidden
+source_modules = src.contexts.narratives
+forbidden_modules = 
+    src.contexts.character
+    src.contexts.campaigns
+    src.contexts.interactions
+    src.contexts.orchestration
+
+# Rule 4: Campaign Context Isolation
+[importlinter:contract:4]
+name = Campaign Context Isolation
+type = forbidden
+source_modules = src.contexts.campaigns
+forbidden_modules = 
+    src.contexts.character
+    src.contexts.narratives
+    src.contexts.interactions
+    src.contexts.orchestration
+
+# Rule 5: API Layer Dependencies
+# The API layer is the entry point and can import from anywhere (Imperative Shell).
+# But we monitor it to ensure it doesn't have circular deps.

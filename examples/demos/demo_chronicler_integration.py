@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import logging
 
 from src.agents.chronicler_agent import ChroniclerAgent
-from src.agents.director_agent import DirectorAgent
+from src.agents.director_agent_integrated import DirectorAgent
 
 
 # Configure logging for demo output

@@ -19,7 +19,7 @@ from ..performance.performance_budget import PerformanceBudget
 
 # Import unified LLM service
 try:
-    from src.llm_service import LLMRequest, ResponseFormat, get_llm_service
+    from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 except ImportError:
     # Fallback for testing
     def get_llm_service():
@@ -580,3 +580,4 @@ class LLMBatchProcessor:
 
         except Exception as e:
             self.logger.error(f"Error during batch processor shutdown: {e}")
+

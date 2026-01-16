@@ -12,7 +12,7 @@ Refactor specification (FR-002, FR-004, NFR-003).
 |----------------|-----------------------------------------------|----------------------------------------------------|-----------------------------------------------------|
 | P0 – System Metadata | Non-sensitive operational data              | Feature flags, build numbers, job status           | Standard logging, no special controls               |
 | P1 – Narrative Content | Campaign logs, generated stories            | `demo_narratives/`, `campaign_log.md`              | Store in approved buckets; redact PII before export |
-| P2 – Persona Profiles | Character sheets, decision weights          | `characters/engineer`, `contexts/world`            | Encrypt at rest, restrict to persona owners         |
+| P2 – Persona Profiles | Character sheets, decision weights          | `characters/engineer`, `src/contexts/world`            | Encrypt at rest, restrict to persona owners         |
 | P3 – Tenant Identifiers | Customer names, tenant IDs, billing data      | `tenant_id` claims, billing configs                | Encrypt at rest, restrict access via ABAC           |
 | P4 – Credentials / Secrets | API keys, service tokens, refresh tokens    | Gemini API key, OIDC client secrets                | Vault/KMS storage only, never committed              |
 
@@ -80,3 +80,4 @@ Refactor specification (FR-002, FR-004, NFR-003).
 3. Review tenant isolation enforcement in repositories and caches.
 4. Ensure deletion job and audit logging flows are documented.
 5. Record review date and owner in `CHANGELOG.md`.
+

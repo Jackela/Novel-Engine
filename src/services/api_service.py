@@ -6,13 +6,13 @@ from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 
 from src.agents.chronicler_agent import ChroniclerAgent
-from src.agents.director_agent import DirectorAgent
+from src.agents.director_agent_integrated import DirectorAgent
 from src.api.schemas import SimulationRequest
 
 # Import legacy components for backward compatibility until fully replaced
 from src.config.character_factory import CharacterFactory
 from src.core.system_orchestrator import SystemOrchestrator
-from src.event_bus import EventBus
+from src.core.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 
@@ -259,3 +259,4 @@ class ApiOrchestrationService:
             )
         else:
             logger.warning(f"No EventBus available to broadcast: {title}")
+

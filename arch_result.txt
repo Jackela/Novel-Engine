@@ -1,0 +1,78 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.6, pytest-8.4.2, pluggy-1.5.0 -- C:\Python312\python.exe
+cachedir: .pytest_cache
+benchmark: 5.2.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+metadata: {'Python': '3.12.6', 'Platform': 'Windows-11-10.0.26120-SP0', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.5.0'}, 'Plugins': {'asyncio': '1.1.0', 'archon': '0.0.7', 'benchmark': '5.2.0', 'cov': '4.1.0', 'html': '4.1.1', 'metadata': '3.1.1', 'mock': '3.12.0', 'timeout': '2.4.0', 'xdist': '3.8.0', 'anyio': '4.8.0'}, 'JAVA_HOME': 'C:\\Program Files\\Java\\jdk-21'}
+rootdir: D:\Code\Novel-Engine
+configfile: pyproject.toml
+plugins: asyncio-1.1.0, archon-0.0.7, benchmark-5.2.0, cov-4.1.0, html-4.1.1, metadata-3.1.1, mock-3.12.0, timeout-2.4.0, xdist-3.8.0, anyio-4.8.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 4 items
+
+tests/test_architecture.py::test_functional_core_isolation FAILED        [ 25%]
+tests/test_architecture.py::test_character_context_isolation FAILED      [ 50%]
+tests/test_architecture.py::test_narrative_context_isolation FAILED      [ 75%]
+tests/test_architecture.py::test_api_layer_dependencies PASSED           [100%]
+
+================================== FAILURES ===================================
+_______________________ test_functional_core_isolation ________________________
+tests\test_architecture.py:14: in test_functional_core_isolation
+    .check("src")
+     ^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\pytest_archon\rule.py:207: in check
+    all_imports = collect_imports(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\pytest_archon\collect.py:39: in collect_imports
+    raise KeyError(f"WTF? duplicate module {name}")
+E   KeyError: 'WTF? duplicate module src.core.types'
+------------------------------ Captured log call ------------------------------
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if campaign_brief.CampaignBrief is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if campaign_brief.NarrativeEvent is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if campaign_brief.CampaignBrief is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if campaign_brief.CampaignBriefLoader is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if campaign_brief.CampaignBrief is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if campaign_brief.CampaignBriefLoader is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if narrative_actions.NarrativeActionResolver is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if narrative_actions.NarrativeOutcome is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.NovelEngineTracingConfig is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.initialize_tracing is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing_middleware.TracingDependency is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.IntelligentSampler is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing_middleware.setup_fastapi_tracing is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if api.turn_api.app is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.IntelligentSampler is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.NovelEngineTracingConfig is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.initialize_tracing is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.NovelEngineTracingConfig is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.initialize_tracing is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing_middleware.OpenTelemetryMiddleware is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing_middleware.TracingDependency is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.NovelEngineTracingConfig is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.initialize_tracing is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.NovelEngineTracingConfig is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.tracing.initialize_tracing is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if domain.services.EnhancedPerformanceTracker is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if infrastructure.monitoring.PrometheusMetricsCollector is a module or function. Assuming it is a module.
+WARNING  pytest_archon.collect:collect.py:125 Could not determine if api.turn_api.app is a module or function. Assuming it is a module.
+______________________ test_character_context_isolation _______________________
+tests\test_architecture.py:29: in test_character_context_isolation
+    .check("src")
+     ^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\pytest_archon\rule.py:207: in check
+    all_imports = collect_imports(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\pytest_archon\collect.py:39: in collect_imports
+    raise KeyError(f"WTF? duplicate module {name}")
+E   KeyError: 'WTF? duplicate module src.core.types'
+______________________ test_narrative_context_isolation _______________________
+tests\test_architecture.py:41: in test_narrative_context_isolation
+    .check("src")
+     ^^^^^^^^^^^^
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\pytest_archon\rule.py:207: in check
+    all_imports = collect_imports(
+C:\Users\k7407\AppData\Roaming\Python\Python312\site-packages\pytest_archon\collect.py:39: in collect_imports
+    raise KeyError(f"WTF? duplicate module {name}")
+E   KeyError: 'WTF? duplicate module src.core.types'
+=========================== short test summary info ===========================
+FAILED tests/test_architecture.py::test_functional_core_isolation - KeyError:...
+FAILED tests/test_architecture.py::test_character_context_isolation - KeyErro...
+FAILED tests/test_architecture.py::test_narrative_context_isolation - KeyErro...
+========================= 3 failed, 1 passed in 2.60s =========================

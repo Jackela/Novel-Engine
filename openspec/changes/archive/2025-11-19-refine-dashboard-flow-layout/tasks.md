@@ -13,6 +13,6 @@
    - [x] Capture a fresh MCP screenshot + JSON after the layout changes and update any references (README, UX docs).
 5. Validation
    - [x] Frontend: `npm run lint`, `npm run type-check`, `npx vitest run --reporter=dot`, Playwright suites (core UAT, extended, accessibility, cross-browser, interactions, login).
-   - [x] Backend focus pytest suites already in scope (`tests/test_security_framework.py`, `tests/test_quality_framework.py`).
+   - [x] Backend focus pytest suites already in scope (`tests/test_security_framework.py`, `tests/unit/quality`).
    - [x] CI parity: `scripts/validate_ci_locally.sh`, `act -W .github/workflows/frontend-ci.yml -j build-and-test`, `act -W .github/workflows/ci.yml -j tests`, `npx @lhci/cli@0.14.0 autorun`.
    - [x] Run `node scripts/mcp_chrome_runner.js ...` to confirm the automation still succeeds post-change.

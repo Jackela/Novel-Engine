@@ -63,9 +63,9 @@ Project Best-Practice Refactor specification (FR-002, FR-003, FR-004).
 | Artifact                                     | Owner Role       | Location                                      | Refresh Cadence |
 |----------------------------------------------|------------------|-----------------------------------------------|-----------------|
 | Security controls charter (this document)    | Delivery Lead    | `docs/governance/security-controls.md`        | Quarterly       |
-| OIDC / JWKS configuration record             | Platform Ops     | `configs/auth/oidc.yaml`                      | As needed       |
+| OIDC / JWKS configuration record             | Platform Ops     | `config/auth/oidc.yaml`                      | As needed       |
 | RBAC/ABAC policy bundle                      | Platform Ops     | `deploy/policies/opa/`                        | Each release    |
-| Rate-limit configuration                     | Platform Ops     | `configs/api/rate-limits.yaml`                | Quarterly       |
+| Rate-limit configuration                     | Platform Ops     | `config/api/rate-limits.yaml`                | Quarterly       |
 | Idempotency state retention plan             | Platform Ops     | `docs/governance/data-protection.md` (ref)    | Quarterly       |
 
 ## 7. Compliance Checklist (for T021 execution)
@@ -75,3 +75,4 @@ Project Best-Practice Refactor specification (FR-002, FR-003, FR-004).
 3. Confirm rate-limit tiers documented in API policies match gateway config.
 4. Ensure audit log expectations align with observability charter.
 5. Record review date and sign-off in changelog (`CHANGELOG.md`).
+

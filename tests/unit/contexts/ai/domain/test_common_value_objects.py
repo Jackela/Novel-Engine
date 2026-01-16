@@ -13,7 +13,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from contexts.ai.domain.value_objects.common import (
+from src.contexts.ai.domain.value_objects.common import (
     ModelCapability,
     ModelId,
     ProviderId,

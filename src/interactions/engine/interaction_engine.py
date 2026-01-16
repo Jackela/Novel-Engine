@@ -18,7 +18,7 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionPriority,
     InteractionType,
 )
-from src.llm_service import generate_narrative_content
+from src.core.llm_service import generate_narrative_content
 from src.memory.layered_memory import LayeredMemorySystem
 from src.templates.character import CharacterTemplateManager
 from src.templates.context_renderer import ContextRenderer
@@ -605,3 +605,4 @@ class InteractionEngine:
             )
             * 100,
         }
+

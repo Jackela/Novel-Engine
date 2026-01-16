@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import pytest
 
-from contexts.narratives.domain.value_objects.causal_node import (
+from src.contexts.narratives.domain.value_objects.causal_node import (
     CausalNode,
     CausalRelationType,
     CausalStrength,

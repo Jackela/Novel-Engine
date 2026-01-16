@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from contexts.narratives.domain.value_objects.story_pacing import (
+from src.contexts.narratives.domain.value_objects.story_pacing import (
     PacingIntensity,
     PacingType,
     StoryPacing,
@@ -260,7 +260,7 @@ class TestStoryPacingCreation:
         assert pacing.creation_timestamp == timestamp
         assert pacing.metadata == metadata
 
-    @patch("contexts.narratives.domain.value_objects.story_pacing.datetime")
+    @patch("src.contexts.narratives.domain.value_objects.story_pacing.datetime")
     @pytest.mark.unit
     def test_automatic_timestamp_generation(self, mock_datetime):
         """Test that creation_timestamp is auto-generated when not provided."""

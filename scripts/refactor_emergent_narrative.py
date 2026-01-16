@@ -113,7 +113,7 @@ def create_negotiation_module(source_file: Path, target_dir: Path):
         "from datetime import datetime, timedelta\n",
         "from typing import Any, Dict, List, Optional\n",
         "\n",
-        "from src.llm_service import LLMRequest, ResponseFormat, get_llm_service\n",
+        "from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service\n",
         "\n",
         "from .types import (\n",
         "    NegotiationProposal,\n",
@@ -153,7 +153,7 @@ def create_narrative_coherence_module(source_file: Path, target_dir: Path):
         "from datetime import datetime, timedelta\n",
         "from typing import Any, Callable, Dict, List, Optional\n",
         "\n",
-        "from src.llm_service import LLMRequest, ResponseFormat, get_llm_service\n",
+        "from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service\n",
         "\n",
         "from .causal_graph import CausalGraph\n",
         "from .types import CausalNode\n",
@@ -190,7 +190,7 @@ def create_emergent_narrative_module(source_file: Path, target_dir: Path):
         "from datetime import datetime, timedelta\n",
         "from typing import Any, Dict, List, Optional, Set, Tuple\n",
         "\n",
-        "from src.llm_service import LLMRequest, ResponseFormat, get_llm_service\n",
+        "from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service\n",
         "\n",
         "from .causal_graph import CausalGraph\n",
         "from .narrative_coherence import NarrativeCoherenceEngine\n",
@@ -393,3 +393,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

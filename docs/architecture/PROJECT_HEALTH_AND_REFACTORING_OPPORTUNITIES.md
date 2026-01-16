@@ -98,7 +98,7 @@ ModuleNotFoundError: No module named 'src.contexts.characters.domain'
 **Fix Required**:
 1. Create missing character context structure:
    ```
-   src/contexts/characters/
+   src/contexts/character/
    ├── domain/
    │   ├── models/
    │   ├── services/
@@ -182,7 +182,7 @@ This appears to be a duplicate marker definition issue. Investigation needed.
 
 **Top Offenders**:
 1. `src/__init__.py` - 16 unused imports
-2. `src/agent_lifecycle_manager.py` - 12 unused imports  
+2. `src/agents/agent_lifecycle_manager.py` - 12 unused imports  
 4. `src/core/iron_laws_processor.py` - 8 unused imports
 
 **Recommendation**:
@@ -205,19 +205,14 @@ __all__ = [
 
 ---
 
-### 7. Syntax Errors in Broken File
-**Impact**: Low - File intentionally broken  
-**File**: `src/interactions/interaction_engine_system/queue_management/queue_manager_broken.py`
+### 7. Legacy Broken File Cleanup
+**Impact**: Low - historical issue
 
-**Issue**: 15 syntax errors on line 155
+**Status**: The legacy broken queue manager file has been removed during repo cleanup.
 
-**Recommendation**: 
-- Exclude from linting: Add to `pyproject.toml`:
-  ```toml
-  [tool.ruff]
-  exclude = ["**/queue_manager_broken.py"]
-  ```
-- Or rename to `_queue_manager_broken.py.disabled`
+**Recommendation**:
+- Do not reintroduce intentionally broken modules.
+- Keep linting strict and avoid adding exclude rules for dead code.
 
 ---
 
@@ -225,7 +220,9 @@ __all__ = [
 
 ### IntegrationOrchestrator Analysis
 
-**File**: `src/ai_intelligence/integration_orchestrator.py` (880 lines)
+> **Note (Deprecated)**: The `src/ai_intelligence/` module was removed in the Golden Master release. The analysis below is preserved for historical reference. Equivalent functionality is now in `src/agents/` and `src/contexts/`.
+
+**File**: `src/ai_intelligence/integration_orchestrator.py` (880 lines) - *REMOVED*
 
 #### Strengths ✅
 1. **Well-Structured Integration**: Clear separation between traditional and AI systems
@@ -672,7 +669,7 @@ def report_turn_completion(
 ```
 tests/
 ├── unit/                       # Fast, isolated tests
-│   ├── contexts/
+│   ├── src/contexts/
 │   │   ├── narratives/        # ✅ Already good
 │   │   └── characters/        # ❌ Missing implementation
 │   ├── core/
@@ -791,7 +788,6 @@ def pytest_configure(config):
 1. **Linting Cleanup** (3 hours)
    - Run `ruff check --fix --select F401 src/` to remove unused imports
    - Add `__all__` exports where imports are intentional
-   - Exclude `queue_manager_broken.py` from linting
    - Target: <10 linting errors
 
 2. **IntegrationOrchestrator Refactoring** (8 hours)
@@ -939,9 +935,9 @@ def pytest_configure(config):
 
 ---
 
-#### `src/ai_intelligence/integration_orchestrator.py`
+#### `src/ai_intelligence/integration_orchestrator.py` *(REMOVED)*
 **Issues**: God class (880 lines), code duplication
-**Refactoring**: Split into 5 classes, extract methods
+**Status**: Module removed in Golden Master release. See `src/agents/` and `src/contexts/` for current implementations.
 
 ---
 
@@ -955,7 +951,7 @@ def pytest_configure(config):
 
 #### Unused Import Files (83 violations)
 - `src/__init__.py` (16)
-- `src/agent_lifecycle_manager.py` (12)
+- `src/agents/agent_lifecycle_manager.py` (12)
 - `src/core/iron_laws_processor.py` (8)
 - Others (31)
 
@@ -1007,7 +1003,7 @@ pytest -m "not requires_services"
 pytest --cov=src --cov-report=html
 
 # Run only V2 narrative tests
-pytest tests/unit/contexts/narratives/
+pytest tests/unit/src/contexts/narratives/
 ```
 
 ### Performance Profiling
@@ -1057,3 +1053,5 @@ Follow the **4-phase action plan** (12 days) to achieve:
 **Date**: 2025-10-20  
 **Version**: 1.0  
 **Status**: Comprehensive Health Assessment Complete ✅
+
+

@@ -1,8 +1,9 @@
+
 # Novel Engine M1 - Project Documentation
 
-**Version**: 1.1.0  
-**Last Updated**: 2025-12-01  
-**Status**: Production Ready  
+**Version**: 2.0.0  
+**Last Updated**: 2026-01-14  
+**Status**: Golden Master  
 **Maintainer**: Novel Engine Development Team
 
 ---
@@ -54,7 +55,7 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 #### 2. Modular Monolith (M1 Phase)
 - **Unified Runtime**: All services run within a single process/container for simplicity and performance.
 - **Logical Boundaries**: Code is structured into strict domains (`src/contexts/`), simulating microservices boundaries without the network overhead.
-- **Event Bus**: Internal communication uses an in-memory event bus (`src/event_bus.py`) rather than external message queues.
+- **Event Bus**: Internal communication uses an in-memory event bus (`src/core/event_bus.py`) rather than external message queues.
 
 #### 3. Pragmatic Persistence (Filesystem-Backed)
 - **Zero Database**: Persistence is handled via the filesystem (Markdown, YAML, JSON) for portability and simplicity.
@@ -110,7 +111,7 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 - Managing turn-based narrative flow.
 - Transcribing simulation logs into readable formats.
 
-#### Character Service (`src/contexts/characters/`)
+#### Character Service (`src/contexts/character/`)
 **Purpose**: Character lifecycle and logic.
 **Implementation**: `src/api/routers/characters.py` and `CharacterFactory`.
 
@@ -169,9 +170,9 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 - Alerting and notification management
 - Trace collection and analysis interfaces
 
-### Domain Contexts (`contexts/`)
+### Domain Contexts (`src/contexts/`)
 
-#### Characters Domain (`contexts/characters/`)
+#### Characters Domain (`src/contexts/character/`)
 **Domain Scope**: Character-related business logic and behavior
 
 **Core Concepts**:
@@ -187,7 +188,7 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 - Memory storage and retrieval coordination
 - Character development and progression tracking
 
-#### Narratives Domain (`contexts/narratives/`)
+#### Narratives Domain (`src/contexts/narratives/`)
 **Domain Scope**: Story generation, plot development, and narrative coherence
 
 **Core Concepts**:
@@ -203,7 +204,7 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 - Theme and quality validation interfaces
 - Integration with character and campaign contexts
 
-#### Campaigns Domain (`contexts/campaigns/`)
+#### Campaigns Domain (`src/contexts/campaigns/`)
 **Domain Scope**: Campaign management, sessions, and world state
 
 **Core Concepts**:
@@ -219,7 +220,7 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 - Participant coordination and access management
 - Integration with character and narrative contexts
 
-#### Interactions Domain (`contexts/interactions/`)
+#### Interactions Domain (`src/contexts/interactions/`)
 **Domain Scope**: Character interactions, dialogue, and action processing
 
 **Core Concepts**:
@@ -235,7 +236,7 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 - Action resolution and outcome calculation
 - Context sharing with other domains
 
-#### Orchestration Domain (`contexts/orchestration/`)
+#### Orchestration Domain (`src/contexts/orchestration/`)
 **Domain Scope**: Multi-agent coordination and system workflow management
 
 **Core Concepts**:
@@ -251,7 +252,7 @@ Novel Engine M1 transforms interactive storytelling through AI-driven narrative 
 - Policy enforcement and compliance
 - System optimization and performance monitoring
 
-#### Shared Domain (`contexts/shared/`)
+#### Shared Domain (`src/contexts/shared/`)
 **Domain Scope**: Common domain concepts and cross-cutting utilities
 
 **Core Concepts**:
@@ -406,7 +407,7 @@ GET  /api/campaigns/{id}/state # World state
 - **Portability**: Workspaces are self-contained folders that can be easily zipped, shared, or backed up.
 
 #### Logical Separation
-- **Data Ownership**: Each domain context (`contexts/`) manages its own file schemas and directory structures.
+- **Data Ownership**: Each domain context (`src/contexts/`) manages its own file schemas and directory structures.
 - **No Shared Mutability**: Domains interact via the Event Bus or public Service Interfaces, never by directly modifying another domain's files.
 
 ### Data Models (Filesystem)
@@ -445,7 +446,7 @@ Aria is a skilled pilot...
 ### Data Synchronization Patterns
 
 #### Event-Driven Updates
-- **In-Memory Bus**: `src/event_bus.py` handles synchronous domain events.
+- **In-Memory Bus**: `src/core/event_bus.py` handles synchronous domain events.
 - **SSE Streaming**: Real-time updates are pushed to the frontend via `/api/events/stream`.
 
 ---
@@ -679,3 +680,6 @@ This project documentation provides the foundational architecture and design pri
 **Last Review**: 2025-08-26  
 **Next Review**: 2025-11-26  
 **Reviewers**: Architecture Team, Development Team, Operations Team
+
+
+

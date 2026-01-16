@@ -235,29 +235,6 @@ class LayeredMemorySystem:
             all_sources = []
 
             async with self._memory_coordination_lock:
-                tasks = []
-                if query_request.include_working_memory:
-                    tasks.append(self._query_working_memory(query_request))
-
-                if (
-                    not query_request.memory_types
-                    or MemoryType.EPISODIC in query_request.memory_types
-                ):
-                    tasks.append(self._query_episodic_memory(query_request))
-
-                if (
-                    not query_request.memory_types
-                    or MemoryType.SEMANTIC in query_request.memory_types
-                ):
-                    tasks.append(self._query_semantic_memory(query_request))
-
-                if (
-                    query_request.include_emotional_context
-                    or MemoryType.EMOTIONAL in query_request.memory_types
-                ):
-                    # This part remains tricky to fully parallelize due to its logic
-                    pass
-
                 # Simplified query execution for now
                 if query_request.include_working_memory:
                     m, s, src = self._query_working_memory_sync(query_request)

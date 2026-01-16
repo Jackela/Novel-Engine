@@ -26,7 +26,6 @@ class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
 
 
-
 class DatabaseManager:
     """
     Centralized database connection and session management.

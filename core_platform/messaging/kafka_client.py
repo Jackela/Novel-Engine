@@ -63,20 +63,16 @@ class KafkaClientException(Exception):
     """Base exception for Kafka client operations."""
 
 
-
 class KafkaConnectionException(KafkaClientException):
     """Raised when Kafka connection fails."""
-
 
 
 class KafkaPublishException(KafkaClientException):
     """Raised when message publishing fails."""
 
 
-
 class KafkaConsumeException(KafkaClientException):
     """Raised when message consumption fails."""
-
 
 
 class KafkaClient:

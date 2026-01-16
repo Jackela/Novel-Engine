@@ -274,7 +274,7 @@ class LLMCoordinator:
         """Process a batch of requests using the LLM service."""
         try:
             # Import here to avoid circular dependencies
-            from src.llm_service import get_llm_service
+            from src.core.llm_service import get_llm_service
 
             get_llm_service()
             results = []
@@ -302,7 +302,7 @@ class LLMCoordinator:
         """Process a single LLM request."""
         try:
             # Import here to avoid circular dependencies
-            from src.llm_service import LLMRequest, ResponseFormat, get_llm_service
+            from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 
             llm_service = get_llm_service()
 
@@ -523,3 +523,4 @@ class LLMCoordinator:
                     await self._process_priority_batch(priority)
         except Exception as e:
             self.logger.error(f"Error flushing pending requests: {e}")
+

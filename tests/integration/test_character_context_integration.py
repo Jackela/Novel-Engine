@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 # Import Character context components
-from contexts.character import (
+from src.contexts.character import (
     Character,
     CharacterApplicationService,
     CharacterClass,
@@ -23,11 +23,11 @@ from contexts.character import (
 )
 
 # Import value objects for detailed testing
-from contexts.character.domain.value_objects.character_stats import (
+from src.contexts.character.domain.value_objects.character_stats import (
     AbilityScore,
     CoreAbilities,
 )
-from contexts.character.domain.value_objects.skills import (
+from src.contexts.character.domain.value_objects.skills import (
     ProficiencyLevel,
     SkillCategory,
     SkillGroup,
@@ -386,7 +386,7 @@ class TestCharacterContextIntegration:
     def test_character_skills_system(self):
         """Test the character skills system."""
         # Import for skill creation
-        from contexts.character.domain.value_objects.skills import Skill
+        from src.contexts.character.domain.value_objects.skills import Skill
 
         # Create a skill
         skill = Skill(
@@ -504,7 +504,7 @@ class TestCharacterRepositoryIntegration:
 
     def test_character_orm_models_import(self):
         """Test that ORM models can be imported successfully."""
-        from contexts.character.infrastructure.persistence.character_models import (
+        from src.contexts.character.infrastructure.persistence.character_models import (
             CharacterEventORM,
             CharacterORM,
             CharacterProfileORM,
@@ -527,7 +527,7 @@ class TestCharacterRepositoryIntegration:
 
     def test_sqlalchemy_character_repository_import(self):
         """Test that SQLAlchemy repository can be imported successfully."""
-        from contexts.character.infrastructure.repositories.character_repository import (
+        from src.contexts.character.infrastructure.repositories.character_repository import (
             SQLAlchemyCharacterRepository,
         )
 
@@ -561,20 +561,20 @@ def run_character_context_integration_tests():
     # Import and test key components
     try:
         # Test domain layer imports
-        from contexts.character import (
+        from src.contexts.character import (
             Character,
             CharacterClass,
             CharacterRace,
             Gender,
         )
-        from contexts.character.domain.value_objects.character_stats import (
+        from src.contexts.character.domain.value_objects.character_stats import (
             CoreAbilities,
         )
 
         print("✅ Domain layer imports successful")
 
         # Test application layer imports
-        from contexts.character import (
+        from src.contexts.character import (
             CreateCharacterCommand,
         )
 

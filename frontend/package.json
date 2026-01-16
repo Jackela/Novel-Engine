@@ -1,7 +1,7 @@
 {
   "name": "storyforge-ai-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -62,12 +62,8 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.3",
     "@mui/material": "^5.14.5",
-    "@mui/x-data-grid": "^6.10.1",
-    "@react-three/drei": "^9.82.0",
-    "@react-three/fiber": "^8.13.6",
     "@reduxjs/toolkit": "^1.9.5",
     "axios": "^1.11.0",
-    "d3": "^7.8.5",
     "date-fns": "^2.30.0",
     "framer-motion": "^10.16.1",
     "i18next": "^23.5.1",
@@ -85,7 +81,6 @@
     "react-window": "^1.8.8",
     "react-window-infinite-loader": "^1.0.9",
     "socket.io-client": "^4.7.2",
-    "three": "^0.155.0",
     "use-debounce": "^9.0.4",
     "web-vitals": "^4.2.4"
   },

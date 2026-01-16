@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def find_project_root(start_path: str | None = None) -> Path:
-    markers = ["persona_agent.py", "director_agent.py", "configs", ".git"]
+    markers = ["pyproject.toml", "src", ".git"]
     current = Path(start_path or os.getcwd()).resolve()
     while current != current.parent:
         if any((current / marker).exists() for marker in markers):

@@ -187,7 +187,7 @@ class DirectorAgent:
 
 ### 2. Configuration System
 
-**Implementation**: `config_loader.py`, `config.yaml`
+**Implementation**: `src/core/config/config_loader.py`, `config.yaml`
 
 **Configuration Hierarchy**:
 ```yaml
@@ -575,7 +575,7 @@ Development:
 
 - [API Reference](../api/API_REFERENCE.md)
 - [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)
-- [Developer Guide](../DEVELOPER_GUIDE.md)
+- [Developer Guide](../onboarding/developer-guide.md)
 - [Bounded Contexts](./bounded-contexts.md)
 - [Context Mapping](./context-mapping.md)
 - [Ports & Adapters](./ports-adapters.md)
@@ -586,3 +586,4 @@ Development:
 **Last Updated**: 2024-11-04  
 **Maintained by**: Novel Engine Architecture Team  
 **License**: MIT
+

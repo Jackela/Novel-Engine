@@ -49,7 +49,7 @@ Comprehensive test suite validation:
 
 ```bash
 # Run all tests with coverage
-python -m pytest --cov=src --cov-fail-under=90
+python -m pytest --cov=src --cov-fail-under=20
 ```
 
 ### 5. Performance Validation

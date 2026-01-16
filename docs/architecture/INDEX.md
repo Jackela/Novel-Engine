@@ -246,8 +246,8 @@ The following architecture documentation is planned:
 
 ### API & Development
 - [API Reference](../api/API_REFERENCE.md)
-- [Developer Guide](../DEVELOPER_GUIDE.md)
-- [Coding Standards](../coding-standards.md)
+- [Developer Guide](../onboarding/developer-guide.md)
+- [Coding Standards](../development/coding-standards.md)
 
 ### Operations
 - [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)

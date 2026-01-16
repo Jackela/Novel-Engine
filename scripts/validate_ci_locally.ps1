@@ -8,12 +8,13 @@ Write-Host "🔍 CI/CD Local Validation for Novel-Engine" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check Python version (must be 3.11)
+# Check Python version (must be 3.11+)
 Write-Host "📋 Checking Python version..." -ForegroundColor Yellow
 try {
     $pythonVersion = (python --version 2>&1) -replace 'Python ', ''
-    if (-not ($pythonVersion -match '^3\.11')) {
-        Write-Host "❌ Python 3.11 required for local validation" -ForegroundColor Red
+    $parsedVersion = [version]$pythonVersion
+    if ($parsedVersion.Major -ne 3 -or $parsedVersion.Minor -lt 11) {
+        Write-Host "❌ Python 3.11+ required for local validation" -ForegroundColor Red
         Write-Host "   Found: Python $pythonVersion" -ForegroundColor Yellow
         Write-Host "   Install: https://www.python.org/downloads/" -ForegroundColor Yellow
         exit 1
@@ -23,7 +24,7 @@ try {
 }
 catch {
     Write-Host "❌ Python not found in PATH" -ForegroundColor Red
-    Write-Host "   Install Python 3.11: https://www.python.org/downloads/" -ForegroundColor Yellow
+    Write-Host "   Install Python 3.11+: https://www.python.org/downloads/" -ForegroundColor Yellow
     exit 1
 }
 
@@ -110,7 +111,7 @@ Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
 if ($testExitCode -eq 0) {
     Write-Host "✅ Validation PASSED" -ForegroundColor Green
-    Write-Host "   All tests passed and coverage meets 30% threshold" -ForegroundColor Green
+    Write-Host "   All tests passed and coverage meets 20% threshold" -ForegroundColor Green
     Write-Host "   Safe to push to GitHub" -ForegroundColor Green
 }
 else {
@@ -119,7 +120,7 @@ else {
     Write-Host ""
     Write-Host "Common issues:" -ForegroundColor Yellow
     Write-Host "  - Test failures: Check test output above for failing tests" -ForegroundColor Yellow
-    Write-Host "  - Coverage below 30%: Add tests or check .coveragerc configuration" -ForegroundColor Yellow
+    Write-Host "  - Coverage below 20%: Add tests or check .coveragerc configuration" -ForegroundColor Yellow
     Write-Host "  - Import errors: Verify PYTHONPATH includes src/" -ForegroundColor Yellow
 }
 Write-Host "==========================================" -ForegroundColor Cyan

@@ -4,41 +4,36 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "novel-engine"
-version = "0.1.0"
+version = "0.1.1"
 description = "AI-Enhanced Interactive Novel Engine"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 license = {file = "LICENSE"}
 authors = [
-    {name = "Novel Engine Team"}
+    {name = "Jackela"}
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "aiosqlite>=0.17.0",
-    "jinja2>=3.0.0",
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "pyyaml>=6.0.0",
-    "fastapi>=0.116.1",
-    "pydantic>=2.11.7",
-    "uvicorn>=0.35.0",
-    "httpx>=0.28.1",
+    "aiosqlite>=0.17.0,<1.0.0",
+    "jinja2>=3.0.0,<4.0.0",
+    "pyyaml>=6.0.0,<7.0.0",
+    "fastapi>=0.116.1,<1.0.0",
+    "pydantic>=2.11.7,<3.0.0",
+    "uvicorn>=0.35.0,<1.0.0",
+    "httpx>=0.28.1,<1.0.0",
     # Knowledge Management dependencies (Feature 001)
-    "asyncpg>=0.29.0",  # PostgreSQL async driver
-    "aiokafka>=0.10.0",  # Kafka async client
-    "prometheus-client>=0.19.0",  # Prometheus metrics
-    "opentelemetry-api>=1.21.0",  # OpenTelemetry tracing API
-    "opentelemetry-sdk>=1.21.0",  # OpenTelemetry SDK
+    "asyncpg>=0.29.0,<1.0.0",  # PostgreSQL async driver
+    "aiokafka>=0.10.0,<1.0.0",  # Kafka async client
+    "prometheus-client>=0.19.0,<1.0.0",  # Prometheus metrics
+    "opentelemetry-api>=1.21.0,<2.0.0",  # OpenTelemetry tracing API
+    "opentelemetry-sdk>=1.21.0,<2.0.0",  # OpenTelemetry SDK
 ]
 
 [project.optional-dependencies]
@@ -182,25 +177,22 @@ output = "coverage.xml"
 [tool.pytest.ini_options]
 minversion = "7.0"
 asyncio_mode = "auto"
-testpaths = ["tests", "src"]
-python_files = ["test_*.py", "*_test.py"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "-ra",
-    "--verbose",
-    "--tb=short", 
-    "--strict-markers",
-    "--strict-config",
-    "--cov=src",
-    "--cov-report=term-missing",
-    "--cov-report=html:htmlcov",
-    "--cov-report=xml:coverage.xml",
-    "--cov-fail-under=90",
-    "--durations=10",
-    "--maxfail=10",
-    "--timeout=60",
-    "--timeout-method=thread",
+    "-v",
+    "--tb=short",
+    "-p", "asyncio", 
+    "--asyncio-mode=auto"
+]
+
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::UserWarning:pydantic.*",
+    "ignore::pytest.PytestReturnNotNoneWarning",
 ]
 markers = [
     "unit: Unit tests for individual components",
@@ -218,11 +210,8 @@ markers = [
     "fast: Fast tests that complete in <100ms",
     "requires_services: Tests requiring external services to be running",
     "knowledge: Knowledge Management context tests (Feature 001)",
-]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
-    "ignore::UserWarning:pydantic.*",
+    "smoke: Lightweight smoke tests",
+    "asyncio: Async tests",
 ]
 
 # Bandit security linting

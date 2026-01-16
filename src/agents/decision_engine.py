@@ -70,13 +70,17 @@ class DecisionEngine:
     - Reasoning generation
     """
 
-    def __init__(self, core: "PersonaCore", context_manager: "CharacterContextManager"):
+    def __init__(
+        self,
+        core: "PersonaCore",
+        context_manager: Optional["CharacterContextManager"] = None,
+    ):
         """
         Initialize decision engine.
 
         Args:
             core: PersonaCore instance
-            context_manager: Character context manager
+            context_manager: Optional character context manager
         """
         self.core = core
         self.context_manager = context_manager
@@ -184,7 +188,7 @@ class DecisionEngine:
         )
 
     def _identify_available_actions(
-        self, situation: SituationAssessment
+        self, situation: SituationAssessment | Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """
         Identify actions available in the current situation.
@@ -195,6 +199,9 @@ class DecisionEngine:
         Returns:
             List[Dict]: Available actions
         """
+        if not isinstance(situation, SituationAssessment):
+            situation = self._coerce_situation_assessment(situation or {})
+
         available_actions = []
 
         # Basic actions always available
@@ -279,13 +286,51 @@ class DecisionEngine:
             priority=priority,
         )
 
+    def _evaluate_action_option(
+        self, action: Dict[str, Any], situation: SituationAssessment | Dict[str, Any]
+    ) -> float:
+        """Return a normalized score for a potential action option."""
+        if not isinstance(situation, SituationAssessment):
+            situation = self._coerce_situation_assessment(situation or {})
+        evaluation = self._evaluate_action(action, situation)
+        return float(evaluation.modified_score)
+
+    def _coerce_situation_assessment(
+        self, situation: Dict[str, Any]
+    ) -> SituationAssessment:
+        """Build a SituationAssessment from legacy dict-shaped input."""
+        threat_value = situation.get("threat_level")
+        threat_level = ThreatLevel.NEGLIGIBLE
+        if isinstance(threat_value, ThreatLevel):
+            threat_level = threat_value
+        elif hasattr(threat_value, "value"):
+            try:
+                threat_level = ThreatLevel(str(threat_value.value).lower())
+            except ValueError:
+                threat_level = ThreatLevel.NEGLIGIBLE
+        elif isinstance(threat_value, str):
+            try:
+                threat_level = ThreatLevel(threat_value.lower())
+            except ValueError:
+                threat_level = ThreatLevel.NEGLIGIBLE
+
+        return SituationAssessment(
+            current_location=situation.get("current_location"),
+            threat_level=threat_level,
+            available_resources=situation.get("available_resources", {}) or {},
+            active_goals=situation.get("active_goals", []) or [],
+            social_obligations=situation.get("social_obligations", []) or [],
+            environmental_factors=situation.get("environmental_factors", {}) or {},
+            mission_status=situation.get("mission_status", {}) or {},
+        )
+
     def _calculate_base_score(
         self, action: Dict[str, Any], situation: SituationAssessment
     ) -> float:
         """Calculate base score for an action."""
         base_score = 0.5  # Neutral base
 
-        action_type = action.get("type", "")
+        action_type = action.get("type") or action.get("action_type", "")
 
         # Score based on current goals alignment
         for goal in situation.active_goals:
@@ -315,7 +360,7 @@ class DecisionEngine:
         personality = self.core.character_data.get("psychological", {}).get(
             "personality_traits", {}
         )
-        action_type = action.get("type", "")
+        action_type = action.get("type") or action.get("action_type", "")
 
         # Apply trait modifiers
         trait_modifiers = {
@@ -338,7 +383,7 @@ class DecisionEngine:
     ) -> float:
         """Apply situation-specific modifiers."""
         modified_score = base_score
-        action_type = action.get("type", "")
+        action_type = action.get("type") or action.get("action_type", "")
 
         # Threat-based modifiers
         if situation.threat_level == ThreatLevel.CRITICAL:
@@ -519,7 +564,11 @@ class DecisionEngine:
         self, action: Dict[str, Any], base_score: float, modified_score: float
     ) -> str:
         """Generate reasoning for action selection."""
-        return f"Selected {action['type']}: base score {base_score:.2f}, final score {modified_score:.2f}"
+        action_type = action.get("type") or action.get("action_type", "unknown")
+        return (
+            f"Selected {action_type}: base score {base_score:.2f}, "
+            f"final score {modified_score:.2f}"
+        )
 
     def _determine_action_priority(
         self, action: Dict[str, Any], score: float

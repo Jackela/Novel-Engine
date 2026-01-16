@@ -23,7 +23,7 @@ from src.templates.dynamic_template_engine import DynamicTemplateEngine
 from .config_manager import ConfigurationManager
 from .database_manager import DatabaseConfig, DatabaseManager, DatabaseType
 from .error_handler import CentralizedErrorHandler
-from .event_bus import Event, EventBus, EventHandler, EventPriority
+from .event_bus_advanced import Event, EventBus, EventHandler, EventPriority
 from .narrative import EmergentNarrativeEngine
 
 # Import new architectural components

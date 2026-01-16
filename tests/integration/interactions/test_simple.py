@@ -104,11 +104,10 @@ async def test_engine_initialization():
         assert "engine_status" in status
 
         logger.info("✅ Engine initialization test passed")
-        return True
+        return
 
     except Exception as e:
-        logger.error(f"❌ Engine initialization test failed: {e}")
-        return False
+        pytest.fail(f"Engine initialization test failed: {e}")
 
 
 @pytest.mark.integration
@@ -148,11 +147,10 @@ async def test_dialogue_interaction():
 
         # Cleanup
         await engine.shutdown_engine()
-        return True
+        return
 
     except Exception as e:
-        logger.error(f"❌ Dialogue interaction test failed: {e}")
-        return False
+        pytest.fail(f"Dialogue interaction test failed: {e}")
 
 
 @pytest.mark.integration
@@ -185,11 +183,10 @@ async def test_cooperation_interaction():
 
         # Cleanup
         await engine.shutdown_engine()
-        return True
+        return
 
     except Exception as e:
-        logger.error(f"❌ Cooperation interaction test failed: {e}")
-        return False
+        pytest.fail(f"Cooperation interaction test failed: {e}")
 
 
 @pytest.mark.integration
@@ -225,11 +222,10 @@ async def test_engine_statistics():
 
         # Cleanup
         await engine.shutdown_engine()
-        return True
+        return
 
     except Exception as e:
-        logger.error(f"❌ Performance monitoring test failed: {e}")
-        return False
+        pytest.fail(f"Performance monitoring test failed: {e}")
 
 
 async def run_simple_tests():

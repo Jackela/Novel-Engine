@@ -130,7 +130,7 @@ The script identifies 31 files containing print statements:
 - `api/integration_tests.py` (17 statements)
 
 ### Core Systems
-- `core/config/config_loader.py`
+- `core/config/src/core/config/config_loader.py`
 - `core/data_models.py`
 - `core/emergent_narrative.py`
 - `core/subjective_reality.py`
@@ -331,3 +331,4 @@ For issues or questions about the migration:
 - Review the script source code: `scripts/migrate_print_to_logging.py`
 - Check git history for examples
 - Test on a single file first
+

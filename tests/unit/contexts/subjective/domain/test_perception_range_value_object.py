@@ -9,7 +9,7 @@ and awareness zone management in the Subjective Context domain layer.
 
 import pytest
 
-from contexts.subjective.domain.value_objects.perception_range import (
+from src.contexts.subjective.domain.value_objects.perception_range import (
     PerceptionCapabilities,
     PerceptionRange,
     PerceptionType,

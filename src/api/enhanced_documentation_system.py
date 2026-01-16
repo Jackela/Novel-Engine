@@ -87,7 +87,7 @@ class EnhancedDocumentationSystem:
                 <span style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px;">v{{ version }}</span>
             {% endif %}
         </div>
-        
+
         <div class="nav">
             <a href="#overview">Overview</a>
             <a href="#authentication">Authentication</a>
@@ -96,11 +96,11 @@ class EnhancedDocumentationSystem:
             <a href="#best-practices">Best Practices</a>
             <a href="#sdk">SDK & Tools</a>
         </div>
-        
+
         <div id="overview" class="section">
             <h2>Overview</h2>
             <p>{{ overview }}</p>
-            
+
             <div class="features">
                 {% for feature in features %}
                 <div class="feature-card">
@@ -110,11 +110,11 @@ class EnhancedDocumentationSystem:
                 {% endfor %}
             </div>
         </div>
-        
+
         <div id="authentication" class="section">
             <h2>Authentication</h2>
             <p>The Novel Engine API uses JWT tokens for authentication.</p>
-            
+
             <div class="tab-container">
                 <div class="tab-headers">
                     <div class="tab-header active" onclick="showTab(this, 'auth-curl')">cURL</div>
@@ -138,7 +138,7 @@ response = httpx.get("http://localhost:8000/api/endpoint", headers=headers)</cod
                 </div>
             </div>
         </div>
-        
+
         <div id="endpoints" class="section">
             <h2>API Endpoints</h2>
             {% for endpoint in endpoints %}
@@ -154,7 +154,7 @@ response = httpx.get("http://localhost:8000/api/endpoint", headers=headers)</cod
                     {% if endpoint.description %}
                         <p>{{ endpoint.description }}</p>
                     {% endif %}
-                    
+
                     {% if endpoint.examples %}
                     <div class="code-example">
                         <h4>Examples</h4>
@@ -183,11 +183,11 @@ response = httpx.get("http://localhost:8000/api/endpoint", headers=headers)</cod
             </div>
             {% endfor %}
         </div>
-        
+
         <div id="examples" class="section">
             <h2>Code Examples</h2>
             <p>Interactive code examples powered by Context7 integration.</p>
-            
+
             <div class="tab-container">
                 <div class="tab-headers">
                     <div class="tab-header active" onclick="showTab(this, 'example-quickstart')">Quick Start</div>
@@ -195,7 +195,7 @@ response = httpx.get("http://localhost:8000/api/endpoint", headers=headers)</cod
                     <div class="tab-header" onclick="showTab(this, 'example-characters')">Characters</div>
                     <div class="tab-header" onclick="showTab(this, 'example-stories')">Stories</div>
                 </div>
-                
+
                 <div id="example-quickstart" class="tab-content active">
                     <h3>Quick Start Guide</h3>
                     <pre><code class="language-python"># Install dependencies
@@ -210,7 +210,7 @@ async def main():
         # Get API status
         response = await client.get("http://localhost:8000/")
         logger.info("API Status:", response.json())
-        
+
         # Get health check
         health = await client.get("http://localhost:8000/health")
         logger.info("Health:", health.json())
@@ -218,7 +218,7 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())</code></pre>
                 </div>
-                
+
                 <div id="example-auth" class="tab-content">
                     <h3>Authentication Example</h3>
                     <pre><code class="language-python"># Authentication workflow
@@ -229,7 +229,7 @@ class NovelEngineClient:
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
         self.token: Optional[str] = None
-        
+
     async def login(self, username: str, password: str):
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -238,20 +238,20 @@ class NovelEngineClient:
             )
             response.raise_for_status()
             self.token = response.json()["token"]
-            
+
     def get_headers(self) -> Dict[str, str]:
         headers = {"Content-Type": "application/json"}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers</code></pre>
                 </div>
-                
+
                 <div id="example-characters" class="tab-content">
                     <h3>Character Management</h3>
                     <pre><code class="language-python"># Character operations
 async def character_examples(client: NovelEngineClient):
     headers = client.get_headers()
-    
+
     async with httpx.AsyncClient() as http_client:
         # List all characters
         response = await http_client.get(
@@ -259,14 +259,14 @@ async def character_examples(client: NovelEngineClient):
             headers=headers
         )
         characters = response.json()["data"]
-        
+
         # Create new character
         new_character = {
             "name": "Hero Protagonist",
             "background_summary": "A brave adventurer",
             "personality_traits": ["brave", "curious", "loyal"]
         }
-        
+
         response = await http_client.post(
             f"{client.base_url}/api/characters",
             json=new_character,
@@ -274,13 +274,13 @@ async def character_examples(client: NovelEngineClient):
         )
         character_id = response.json()["data"]["character_id"]</code></pre>
                 </div>
-                
+
                 <div id="example-stories" class="tab-content">
                     <h3>Story Generation</h3>
                     <pre><code class="language-python"># Story generation workflow
 async def story_examples(client: NovelEngineClient):
     headers = client.get_headers()
-    
+
     async with httpx.AsyncClient() as http_client:
         # Generate new story
         story_request = {
@@ -290,7 +290,7 @@ async def story_examples(client: NovelEngineClient):
             "genre": "fantasy",
             "complexity_level": "intermediate"
         }
-        
+
         # Start generation
         response = await http_client.post(
             f"{client.base_url}/api/stories/generate",
@@ -298,7 +298,7 @@ async def story_examples(client: NovelEngineClient):
             headers=headers
         )
         generation_id = response.json()["data"]["generation_id"]
-        
+
         # Check progress
         progress_response = await http_client.get(
             f"{client.base_url}/api/stories/generate/{generation_id}/progress",
@@ -308,11 +308,11 @@ print("Progress:", progress_response.json())</code></pre>
                 </div>
             </div>
         </div>
-        
+
         <div id="best-practices" class="section">
             <h2>Best Practices</h2>
             <p>Framework best practices powered by Context7 integration.</p>
-            
+
             <div class="features">
                 <div class="feature-card">
                     <h3>Error Handling</h3>
@@ -324,7 +324,7 @@ except httpx.HTTPError as e:
     logger.error(f"API call failed: {e}")
     return None</code></pre>
                 </div>
-                
+
                 <div class="feature-card">
                     <h3>Rate Limiting</h3>
                     <p>Implement backoff strategies and respect rate limits to ensure stable API usage.</p>
@@ -336,7 +336,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 async def api_call_with_retry():
     return await client.get("/api/endpoint")</code></pre>
                 </div>
-                
+
                 <div class="feature-card">
                     <h3>Authentication</h3>
                     <p>Store tokens securely and implement proper token refresh mechanisms.</p>
@@ -351,25 +351,25 @@ if response.status_code == 401:
                 </div>
             </div>
         </div>
-        
+
         <div id="sdk" class="section">
             <h2>SDK & Tools</h2>
             <p>Official SDKs and development tools for the Novel Engine API.</p>
-            
+
             <div class="features">
                 <div class="feature-card">
                     <h3>Python SDK</h3>
                     <p>Official Python SDK with async support and comprehensive type hints.</p>
                     <pre><code class="language-bash">pip install novel-engine-sdk</code></pre>
                 </div>
-                
+
                 <div class="feature-card">
                     <h3>CLI Tool</h3>
                     <p>Command-line interface for quick API interactions and testing.</p>
                     <pre><code class="language-bash">novel-engine characters list
 novel-engine stories generate --title "My Story"</code></pre>
                 </div>
-                
+
                 <div class="feature-card">
                     <h3>Postman Collection</h3>
                     <p>Ready-to-use Postman collection with example requests and environments.</p>
@@ -378,22 +378,22 @@ novel-engine stories generate --title "My Story"</code></pre>
             </div>
         </div>
     </div>
-    
+
     <script>
         function showTab(element, tabId) {
             // Hide all tabs in the same container
             const container = element.closest('.tab-container');
             const tabs = container.querySelectorAll('.tab-content');
             const headers = container.querySelectorAll('.tab-header');
-            
+
             tabs.forEach(tab => tab.classList.remove('active'));
             headers.forEach(header => header.classList.remove('active'));
-            
+
             // Show selected tab
             document.getElementById(tabId).classList.add('active');
             element.classList.add('active');
         }
-        
+
         // Smooth scrolling for navigation links
         document.addEventListener('DOMContentLoaded', function() {
             const navLinks = document.querySelectorAll('.nav a');

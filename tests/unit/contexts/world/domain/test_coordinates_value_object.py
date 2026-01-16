@@ -16,7 +16,7 @@ import pytest
 sys.modules["aioredis"] = MagicMock()
 
 # Import the value object we're testing
-from contexts.world.domain.value_objects.coordinates import Coordinates
+from src.contexts.world.domain.value_objects.coordinates import Coordinates
 
 
 class TestCoordinatesValueObject:

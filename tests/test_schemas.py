@@ -2,7 +2,7 @@
 Test Shared Types and Schemas for Novel Engine
 ===============================================
 
-Comprehensive test suite for the Pydantic model definitions in src.shared_types.
+Comprehensive test suite for the Pydantic model definitions in src.core.types.shared_types.
 Tests ensure that all data structures provide proper validation, serialization,
 and type safety for the Novel Engine system components.
 
@@ -25,7 +25,10 @@ import pytest
 
 # Import all shared types for comprehensive testing
 try:
-    from src.shared_types import (  # Enums; Spatial Types; Resource Types; Character Types; Action Types; Iron Laws Types; World Types; Fog of War Types; Turn Brief Types; Simulation Types; API Types; Performance Types; Consistency Types; Registry
+    # Enums; Spatial Types; Resource Types; Character Types; Action Types; Iron Laws Types;
+    # World Types; Fog of War Types; Turn Brief Types; Simulation Types; API Types;
+    # Performance Types; Consistency Types; Registry.
+    from src.core.types.shared_types import (
         MODEL_REGISTRY,
         ActionIntensity,
         ActionParameters,
@@ -1481,3 +1484,5 @@ class TestJSONSerialization:
 if __name__ == "__main__":
     # Allow running tests directly
     pytest.main([__file__, "-v"])
+
+

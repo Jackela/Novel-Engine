@@ -22,8 +22,8 @@ import os
 import re
 from typing import Optional
 
-from src.event_bus import EventBus
-from src.persona_agent import PersonaAgent
+from src.core.event_bus import EventBus
+from src.agents.persona_agent.agent import PersonaAgent
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ class CharacterFactory:
             FileNotFoundError: If project root cannot be determined
         """
         # 寻找常见项目标记文件，识别神圣领域的在界证据...
-        markers = ["persona_agent.py", "director_agent.py", "configs/", ".git"]
+        markers = ["pyproject.toml", "src", ".git"]
 
         current_path = os.path.abspath(start_path)
         while current_path != os.path.dirname(current_path):  # Not at filesystem root
@@ -195,3 +195,6 @@ class CharacterFactory:
 
         logger.info(f"Found {len(characters)} available characters: {characters}")
         return sorted(characters)
+
+
+

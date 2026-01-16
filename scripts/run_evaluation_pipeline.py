@@ -316,7 +316,7 @@ class ReportGenerator:
         <p>Generated: {results.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</p>
         <p class="status-{status_color}">Status: {'SUCCESS' if results.pipeline_success else 'FAILED'}</p>
     </div>
-    
+
     <div class="summary">
         <div class="metric-card">
             <div class="metric-value">{results.pass_rate:.1%}</div>
@@ -335,7 +335,7 @@ class ReportGenerator:
             <div class="metric-label">Pipeline Time</div>
         </div>
     </div>
-    
+
     <div class="seed-results">
         <h2>Iron Laws Violations by Type</h2>
         <table class="violations-table">
@@ -350,7 +350,7 @@ class ReportGenerator:
         html += """
         </table>
     </div>
-    
+
     <div class="seed-results">
         <h2>Individual Seed Results</h2>
         <table class="violations-table">

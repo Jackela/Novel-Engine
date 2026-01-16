@@ -136,10 +136,10 @@ test('简单页面测试', async ({ page }) => {
     await page.goto('http://localhost:5173', { timeout: 10000 });
     const title = await page.title();
     console.log('页面标题:', title);
-    
+
     // 截图
     await page.screenshot({ path: 'simple-test-screenshot.png' });
-    
+
     expect(title).toBeTruthy();
   } catch (error) {
     console.log('测试警告:', error.message);
