@@ -23,7 +23,7 @@ type WeaverNode = Node<WeaverNodeData>;
 type WeaverState = {
   nodes: WeaverNode[];
   edges: Edge[];
-  startParams: Pick<OrchestrationStartRequest, 'turns' | 'setting' | 'scenario'>;
+  startParams: Pick<OrchestrationStartRequest, 'total_turns' | 'setting' | 'scenario'>;
   setNodes: (nodes: WeaverNode[]) => void;
   setEdges: (edges: Edge[]) => void;
   setStartParams: (params: Partial<WeaverState['startParams']>) => void;
@@ -99,7 +99,7 @@ const buildOrchestrationStartRequest = (
 
   return {
     character_names,
-    turns: overrides.turns,
+    total_turns: overrides.total_turns,
     setting: overrides.setting ?? (settingNode?.data as LocationNodeData | undefined)?.name,
     scenario: overrides.scenario ?? (scenarioNode?.data as EventNodeData | undefined)?.title,
   };
@@ -109,7 +109,7 @@ export const useWeaverStore = create<WeaverState>((set, get) => ({
   nodes: defaultNodes,
   edges: defaultEdges,
   startParams: {
-    turns: 3,
+    total_turns: 3,
     setting: undefined,
     scenario: undefined,
   },

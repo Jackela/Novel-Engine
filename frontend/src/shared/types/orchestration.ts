@@ -12,7 +12,7 @@ export interface OrchestrationState {
 
 export interface OrchestrationStartRequest {
   character_names: string[];
-  turns?: number;
+  total_turns?: number;
   setting?: string;
   scenario?: string;
 }
