@@ -142,6 +142,8 @@ export const useWeaverAddNode = () => useWeaverStore((state) => state.addNode);
 export const useWeaverStartParams = () => useWeaverStore((state) => state.startParams);
 export const useWeaverOrchestrationRequest = () =>
   useWeaverStore((state) => state.getOrchestrationStartRequest());
+export const useWeaverNodeCount = () => useWeaverStore((state) => state.nodes.length);
+export const useWeaverEdgeCount = () => useWeaverStore((state) => state.edges.length);
 
 if ((import.meta.env.DEV || import.meta.env.VITE_E2E_EXPOSE_WEAVER === 'true') && typeof window !== 'undefined') {
   (window as { __weaverStore?: typeof useWeaverStore }).__weaverStore = useWeaverStore;
