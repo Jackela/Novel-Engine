@@ -9,7 +9,7 @@ import {
   useTheme,
   useMediaQuery
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon

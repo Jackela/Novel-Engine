@@ -1,18 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Avatar from '@mui/material/Avatar';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemText from '@mui/material/ListItemText';
-import { styled, useTheme, alpha } from '@mui/material/styles';
+import { Box } from '@mui/material';
+import { Chip } from '@mui/material';
+import { Stack } from '@mui/material';
+import { Typography } from '@mui/material';
+import { Avatar } from '@mui/material';
+import { List } from '@mui/material';
+import { ListItem } from '@mui/material';
+import { ListItemAvatar } from '@mui/material';
+import { ListItemText } from '@mui/material';
+import { styled, useTheme, alpha } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
-import LocationIcon from '@mui/icons-material/LocationOn';
-import PersonIcon from '@mui/icons-material/Person';
-import ActivityIcon from '@mui/icons-material/Timeline';
+import { LocationOn as LocationIcon } from '@mui/icons-material';
+import { Person as PersonIcon } from '@mui/icons-material';
+import { Timeline as ActivityIcon } from '@mui/icons-material';
 import GridTile from '@/components/layout/GridTile';
 import { useDashboardCharactersDataset, type DashboardCharacter } from '@/hooks/useDashboardCharactersDataset';
 
@@ -547,7 +547,7 @@ const WorldStateMap: React.FC<WorldStateMapProps> = ({ loading, error }) => {
             position: 'absolute',
             bottom: 8,
             right: 8,
-            color: 'rgba(255, 255, 255, 0.7)',
+            color: alpha(theme.palette.text.primary, 0.7),
             fontSize: '0.65rem',
           }}
         >

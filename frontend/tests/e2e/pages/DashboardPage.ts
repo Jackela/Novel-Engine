@@ -15,16 +15,18 @@ export class DashboardPage {
   readonly headerNavigation: Locator;
   readonly bentoGrid: Locator;
 
-  // Bento Grid Components (following UI spec naming)
-  readonly worldStateMap: Locator;           // Component A
-  readonly realTimeActivity: Locator;       // Component B  
-  readonly performanceMetrics: Locator;     // Component C
-  readonly turnPipelineStatus: Locator;     // Component D
-  readonly quickActions: Locator;           // Component E
-  readonly characterNetworks: Locator;      // Component F
-  readonly eventCascadeFlow: Locator;       // Component G
-  readonly narrativeTimeline: Locator;      // Component H
-  readonly analyticsPanel: Locator;         // Component I
+  // Dashboard panels
+  readonly worldStateMap: Locator;
+  readonly realTimeActivity: Locator;
+  readonly performanceMetrics: Locator;
+  readonly turnPipelineStatus: Locator;
+  readonly quickActions: Locator;
+  readonly characterNetworks: Locator;
+  readonly eventCascadeFlow: Locator;
+  readonly narrativeTimeline: Locator;
+  readonly analyticsPanel: Locator;
+  readonly narrativePanel: Locator;
+  readonly signalsPanel: Locator;
 
   // Control elements
   readonly playButton: Locator;
@@ -41,27 +43,30 @@ export class DashboardPage {
   readonly guestModeBanner: Locator;
   readonly summaryStrip: Locator;
   readonly pipelineStageMarkers: Locator;
+  readonly pageTitle: Locator;
 
   constructor(page: Page) {
     this.page = page;
 
     // Main layout
-    this.dashboardLayout = page.locator('[data-testid="dashboard-layout"]');
+    this.dashboardLayout = page.locator('[data-testid="dashboard-layout"], #main-content').first();
     this.headerNavigation = page.locator('[data-testid="sidebar-navigation"]');
     this.bentoGrid = page.locator('[data-testid="bento-grid"]');
 
-    // Bento components - using semantic selectors based on UI spec
-    this.worldStateMap = page.locator('[data-testid="world-state-map"]');
+    // Dashboard panels - support legacy and current selectors
+    this.worldStateMap = page.locator('[data-testid="world-state-map"], [data-testid="world-panel"]');
     this.realTimeActivity = page.locator('[data-testid="system-log"]');
     this.performanceMetrics = page.locator('[data-testid="performance-metrics"]');
     this.turnPipelineStatus = page.locator('[data-testid="turn-pipeline-status"]').first();
     this.quickActions = page.locator('[data-testid="quick-actions"]');
-    this.characterNetworks = page.locator('[data-testid="character-networks"]');
+    this.characterNetworks = page.locator('[data-testid="character-networks"], [data-testid="network-panel"]');
     this.eventCascadeFlow = page.locator('[data-testid="event-cascade-flow"]');
-    this.narrativeTimeline = page.locator('[data-testid="narrative-timeline"]');
+    this.narrativeTimeline = page.locator('[data-testid="narrative-timeline"], [data-testid="timeline-panel"]');
     this.analyticsPanel = page.locator('[data-testid="analytics-panel"]');
+    this.narrativePanel = page.locator('[data-testid="narrative-panel"]');
+    this.signalsPanel = page.locator('[data-testid="signals-panel"]');
 
-    // Controls based on UI spec
+    // Controls based on legacy UI spec
     this.playButton = page.locator('[data-testid="quick-action-play"], [aria-label*="Start"], [title*="Start"]');
     this.pauseButton = page.locator('[data-testid="quick-action-pause"], [aria-label*="Pause"], [title*="Pause"]');
     this.stopButton = page.locator('[data-testid="quick-action-stop"], [aria-label*="Stop"], [title*="Stop"]');
@@ -75,7 +80,8 @@ export class DashboardPage {
     this.guestModeChip = page.locator('[data-testid="guest-mode-chip"]');
     this.guestModeBanner = page.locator('[data-testid="guest-mode-banner"]');
     this.summaryStrip = page.locator('[data-testid="summary-strip"]');
-    this.pipelineStageMarkers = this.turnPipelineStatus.locator('[data-testid="pipeline-stage-marker"]');
+    this.pipelineStageMarkers = this.page.locator('[data-testid="turn-pipeline-status"] [data-testid="pipeline-stage-marker"]');
+    this.pageTitle = page.locator('[data-testid="dashboard-layout"] h1').first();
   }
 
   /**
@@ -142,8 +148,31 @@ export class DashboardPage {
   private async applyDashboardInitScripts() {
     await this.page.addInitScript(() => {
       try {
-        window.localStorage.setItem('guest_session_active', '1');
-        window.sessionStorage.setItem('guest_session_active', '1');
+        const guestToken = {
+          accessToken: 'guest',
+          refreshToken: '',
+          tokenType: 'Guest',
+          expiresAt: Date.now() + 60 * 60 * 1000,
+          refreshExpiresAt: 0,
+          user: {
+            id: 'guest',
+            username: 'guest',
+            email: '',
+            roles: ['guest'],
+          },
+        };
+        const payload = {
+          state: {
+            token: guestToken,
+            isGuest: true,
+            workspaceId: 'ws-mock',
+          },
+          version: 0,
+        };
+        window.localStorage.setItem('novel-engine-auth', JSON.stringify(payload));
+        window.localStorage.setItem('novelengine_guest_session', '1');
+        window.sessionStorage.setItem('novelengine_guest_session', '1');
+        window.localStorage.setItem('e2e_bypass_auth', '1');
         (window as any).__FORCE_SHOW_METRICS__ = true;
       } catch {
         // ignore storage failures in CI
@@ -237,7 +266,10 @@ export class DashboardPage {
    */
   async waitForDashboardLoad() {
     // Wait for main layout
-    await this.dashboardLayout.waitFor({ state: 'visible', timeout: 45000 });
+    await Promise.race([
+      this.dashboardLayout.waitFor({ state: 'visible', timeout: 45000 }),
+      this.pageTitle.waitFor({ state: 'visible', timeout: 45000 }),
+    ]);
 
     // Give Suspense/skeleton time to resolve
     const skeleton = this.page.locator('[data-testid="skeleton-dashboard"]');
@@ -248,19 +280,22 @@ export class DashboardPage {
     // Wait for key widgets but don't fail hard if a single panel is slow to render
     const componentWaits = [
       this.worldStateMap.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
-        console.warn('⚠️ world-state-map not visible within timeout; proceeding');
+        console.warn('⚠️ world panel not visible within timeout; proceeding');
       }),
-      this.turnPipelineStatus.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
-        console.warn('⚠️ turn-pipeline-status not visible within timeout; proceeding');
+      this.characterNetworks.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
+        console.warn('⚠️ network panel not visible within timeout; proceeding');
       }),
-      this.realTimeActivity.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
-        console.warn('⚠️ system-log not visible within timeout; proceeding');
+      this.narrativeTimeline.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
+        console.warn('⚠️ timeline panel not visible within timeout; proceeding');
       }),
-      this.performanceMetrics.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
-        console.warn('⚠️ performance-metrics not visible within timeout; proceeding');
+      this.narrativePanel.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
+        console.warn('⚠️ narrative panel not visible within timeout; proceeding');
       }),
-      this.connectionStatus.waitFor({ state: 'attached', timeout: 15000 }).catch(() => {
-        console.warn('⚠️ connection-status not attached within timeout; proceeding');
+      this.analyticsPanel.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
+        console.warn('⚠️ analytics panel not visible within timeout; proceeding');
+      }),
+      this.signalsPanel.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
+        console.warn('⚠️ signals panel not visible within timeout; proceeding');
       }),
     ];
     await Promise.all(componentWaits);
@@ -691,7 +726,7 @@ export class DashboardPage {
     page.on('pageerror', err => console.log(`[BROWSER ERROR]: ${err.message}`));
 
     // Guest session bootstrap
-    await page.route(/\/api\/guest\/session/, async route => {
+    await page.route(/\/api\/guest\/sessions/, async route => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',

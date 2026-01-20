@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
-import { vi, beforeEach, afterEach, afterAll } from 'vitest';
+import { vi, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
+import { server } from '../mocks/server';
 import { runCleanups as runUtilCleanups } from './utils/cleanup';
 
 // Ensure globals expected by browser-only libraries (e.g., web-vitals) exist
@@ -120,20 +121,8 @@ Object.defineProperty(window, 'WebSocket', {
   value: MockWebSocket,
 });
 
-// Mock all network requests at the global level
-Object.defineProperty(window, 'fetch', {
-  writable: true,
-  value: vi.fn(() =>
-    Promise.resolve({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({
-        api: 'healthy',
-        config: 'loaded',
-        version: '1.0.0',
-      }),
-    })
-  ),
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'warn' });
 });
 
 // Mock axios for any direct usage - using importOriginal to preserve AxiosError
@@ -208,6 +197,7 @@ beforeEach(() => {
 afterEach(async () => {
   // Run cleanup functions
   await runCleanups();
+  server.resetHandlers();
   // Clear all mocks
   vi.clearAllMocks();
   // Clear all timers
@@ -218,6 +208,7 @@ afterEach(async () => {
 afterAll(async () => {
   // Final cleanup after all tests
   await runCleanups();
+  server.close();
 });
 
 // Suppress console warnings during tests

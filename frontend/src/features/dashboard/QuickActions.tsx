@@ -1,23 +1,23 @@
 import React, { useEffect, useRef } from 'react';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import Fade from '@mui/material/Fade';
-import Chip from '@mui/material/Chip';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { styled, alpha } from '@mui/material/styles';
+import { Box } from '@mui/material';
+import { IconButton } from '@mui/material';
+import { Tooltip } from '@mui/material';
+import { Stack } from '@mui/material';
+import { Typography } from '@mui/material';
+import { Fade } from '@mui/material';
+import { Chip } from '@mui/material';
+import { useMediaQuery } from '@mui/material';
+import { styled, alpha } from '@mui/material';
 import { motion } from 'framer-motion';
-import PlayIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import StopIcon from '@mui/icons-material/Stop';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import SaveIcon from '@mui/icons-material/Save';
-import SettingsIcon from '@mui/icons-material/Settings';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import DownloadIcon from '@mui/icons-material/Download';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { PlayArrow as PlayIcon } from '@mui/icons-material';
+import { Pause as PauseIcon } from '@mui/icons-material';
+import { Stop as StopIcon } from '@mui/icons-material';
+import { Refresh as RefreshIcon } from '@mui/icons-material';
+import { Save as SaveIcon } from '@mui/icons-material';
+import { Settings as SettingsIcon } from '@mui/icons-material';
+import { Fullscreen as FullscreenIcon } from '@mui/icons-material';
+import { Download as DownloadIcon } from '@mui/icons-material';
+import { PersonAdd as PersonAddIcon } from '@mui/icons-material';
 import GridTile from '@/components/layout/GridTile';
 import { telemetry } from '../../utils/telemetry';
 
@@ -186,7 +186,7 @@ const ConnectionIndicator: React.FC<{
       py: isCompact ? 0.25 : 0.5,
       borderRadius: 1,
       border: (theme) => `1px solid ${theme.palette.divider}`,
-      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.6),
       backdropFilter: 'blur(4px)',
       width: '100%',
     }}

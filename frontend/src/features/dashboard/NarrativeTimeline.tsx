@@ -1,20 +1,20 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Chip from '@mui/material/Chip';
-import Stack from '@mui/material/Stack';
-import LinearProgress from '@mui/material/LinearProgress';
-import Avatar from '@mui/material/Avatar';
-import Fade from '@mui/material/Fade';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { styled, useTheme, alpha } from '@mui/material/styles';
+import { Box } from '@mui/material';
+import { Typography } from '@mui/material';
+import { Chip } from '@mui/material';
+import { Stack } from '@mui/material';
+import { LinearProgress } from '@mui/material';
+import { Avatar } from '@mui/material';
+import { Fade } from '@mui/material';
+import { useMediaQuery } from '@mui/material';
+import { styled, useTheme, alpha } from '@mui/material';
 import { motion } from 'framer-motion';
-import CompletedIcon from '@mui/icons-material/CheckCircle';
-import PendingIcon from '@mui/icons-material/RadioButtonUnchecked';
-import ActiveIcon from '@mui/icons-material/PlayCircle';
-import ChapterIcon from '@mui/icons-material/MenuBook';
-import StoryIcon from '@mui/icons-material/AutoStories';
-import ConnectionIcon from '@mui/icons-material/TrendingFlat';
+import { CheckCircle as CompletedIcon } from '@mui/icons-material';
+import { RadioButtonUnchecked as PendingIcon } from '@mui/icons-material';
+import { PlayCircle as ActiveIcon } from '@mui/icons-material';
+import { MenuBook as ChapterIcon } from '@mui/icons-material';
+import { AutoStories as StoryIcon } from '@mui/icons-material';
+import { TrendingFlat as ConnectionIcon } from '@mui/icons-material';
 import GridTile from '@/components/layout/GridTile';
 
 const TimelineContainer = styled(Box)(({ theme }) => ({

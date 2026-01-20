@@ -4,80 +4,26 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 const devPort = Number(process.env.VITE_DEV_PORT || process.env.PORT || 3000);
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    // nodePolyfills removed for debugging
-  ],
+  plugins: [react()],
 
-  // Manual process polyfill via define
-  // MIGRATION NOTE: Transitioning from REACT_APP_* to VITE_* (VITE_* takes precedence)
-  /* define: {
-    global: 'globalThis',
-    'process': JSON.stringify({
-      env: {
-        NODE_ENV: process.env.NODE_ENV || 'development',
-        // Backward compatibility: Keep REACT_APP_* for existing code
-        REACT_APP_API_BASE_URL: process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1',
-        REACT_APP_API_TIMEOUT: process.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000',
-        REACT_APP_API_URL: process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
-        REACT_APP_DOCKER: process.env.VITE_DOCKER || process.env.REACT_APP_DOCKER || 'false',
-      },
-      platform: 'browser',
-      version: '18.0.0',
-      versions: { node: '18.0.0' },
-      nextTick: (callback, ...args) => setTimeout(() => callback(...args), 0),
-      cwd: () => '/',
-      argv: [],
-      stdout: { write: () => {} },
-      stderr: { write: () => {} },
-    }),
-    'process.env': JSON.stringify({
-      NODE_ENV: process.env.NODE_ENV || 'development',
-      // Backward compatibility: Keep REACT_APP_* for existing code
-      REACT_APP_API_BASE_URL: process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1',
-      REACT_APP_API_TIMEOUT: process.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000',
-      REACT_APP_API_URL: process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
-      REACT_APP_DOCKER: process.env.VITE_DOCKER || process.env.REACT_APP_DOCKER || 'false',
-    }),
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-    'process.env.REACT_APP_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/v1'),
-    'process.env.REACT_APP_API_TIMEOUT': JSON.stringify(process.env.VITE_API_TIMEOUT || process.env.REACT_APP_API_TIMEOUT || '10000'),
-    'process.env.REACT_APP_API_URL': JSON.stringify(process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000'),
-    'process.env.REACT_APP_DOCKER': JSON.stringify(process.env.VITE_DOCKER || process.env.REACT_APP_DOCKER || 'false'),
-  }, */
-
-  // Performance optimizations
+  // Build configuration
   build: {
-    // Code splitting and chunk optimization
     rollupOptions: {
       output: {
         manualChunks: {
           // Vendor chunks for better caching
           vendor: ['react', 'react-dom'],
-          mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
-          // Heavy libraries split for mobile optimization
-
-          animation: ['framer-motion'],
-          utils: ['axios', 'socket.io-client', 'lodash-es'],
-          query: ['react-query', '@reduxjs/toolkit', 'react-redux'],
+          router: ['@tanstack/react-router'],
+          query: ['@tanstack/react-query'],
+          xyflow: ['@xyflow/react'],
         },
       },
     },
     outDir: 'dist',
     emptyOutDir: true,
-    // terserOptions: {
-    //   compress: {
-    //     drop_console: true, // Remove console.log in production
-    //     drop_debugger: true,
-    //     dead_code: true,
-    //     unused: true,
-    //   },
-    //   mangle: {
-    //     safari10: true, // Fix Safari 10+ issues
-    //   },
-    // },
   },
 
   // Development server optimizations
@@ -102,7 +48,7 @@ export default defineConfig({
       // Proxy /api/* to backend without versioning
       // Use 127.0.0.1 explicitly for WSL2 compatibility (avoid IPv6 resolution issues)
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
 
         // SSE-specific configuration for event streaming
@@ -119,12 +65,12 @@ export default defineConfig({
       },
       // Proxy /meta/* to backend
       '/meta': {
-        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
       // Proxy /health to backend
       '/health': {
-        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },
@@ -135,10 +81,8 @@ export default defineConfig({
     include: [
       'react',
       'react-dom',
-      '@mui/material',
-      '@mui/icons-material',
-      'axios',
-      'framer-motion'
+      '@tanstack/react-query',
+      '@tanstack/react-router',
     ],
   },
 
@@ -146,23 +90,16 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
-      '@components': resolve(__dirname, 'src/components'),
-      '@hooks': resolve(__dirname, 'src/hooks'),
-      '@services': resolve(__dirname, 'src/services'),
-      '@types': resolve(__dirname, 'src/types'),
+      '@/app': resolve(__dirname, 'src/app'),
+      '@/features': resolve(__dirname, 'src/features'),
+      '@/shared': resolve(__dirname, 'src/shared'),
       '@/styles': resolve(__dirname, 'src/styles'),
-      '@mui/icons-material$': resolve(__dirname, 'src/mui-icons.ts'),
     },
   },
 
-  // CSS optimization
+  // CSS configuration
   css: {
     devSourcemap: true,
-    preprocessorOptions: {
-      scss: {
-        additionalData: `@import "@/styles/variables.scss";`,
-      },
-    },
   },
 
   // Preview configuration with SPA fallback
@@ -173,15 +110,15 @@ export default defineConfig({
       // Proxy /api/* to backend in preview mode
       // Use 127.0.0.1 explicitly for WSL2 compatibility
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
       '/meta': {
-        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
       '/health': {
-        target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },
@@ -190,40 +127,46 @@ export default defineConfig({
   appType: 'spa',
 
   // Vitest Configuration
-      test: {
-        globals: true,
-        environment: 'jsdom',
-        setupFiles: './src/test/setup.ts',
-        isolate: true,
-        css: false, // Disable CSS processing for faster tests
-        coverage: {
-          provider: 'v8',
-          reporter: ['text', 'json', 'html'],
-          thresholds: {
-            lines: 80,
-            functions: 80,
-            branches: 80,
-            statements: 80,
-          },
-          exclude: [
-            'node_modules/',
-            'src/test/setup.ts',
-            '**/*.test.tsx',
-            '**/*.test.ts',
-            '**/*.spec.ts',
-            'dist/',
-          ],
-        },
-        fileParallelism: false, // Disable parallelism to prevent hangs on limited resources
-
-        pool: 'forks', // Use forks instead of threads for better isolation
-        // Vitest 4: poolOptions moved to top-level
-        singleFork: true, // Run tests sequentially in a single fork
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    isolate: true,
+    css: false, // Disable CSS processing for faster tests
+    include: [
+      'src/__tests__/**/*.test.{ts,tsx}',
+      'src/pages/__tests__/**/*.test.{ts,tsx}',
+      'src/shared/**/__tests__/**/*.test.{ts,tsx}',
+    ],
+    exclude: [
+      'node_modules',
+      'dist',
+      'src/test/**',
+      'tests/**',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+    ],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+      },
+      exclude: [
+        'node_modules/',
+        'src/test/setup.ts',
+        'dist/',
+      ],
+    },
+    fileParallelism: false, // Disable parallelism to prevent hangs on limited resources
+    pool: 'forks', // Use forks instead of threads for better isolation
+    singleFork: true, // Run tests sequentially in a single fork
     testTimeout: 10000,
     hookTimeout: 10000,
     reporters: ['verbose'],
-    // Exclude e2e tests and integration tests from unit test runs
-    exclude: ['node_modules', 'dist', '**/*.spec.ts', '**/*.spec.tsx', '**/tests/integration/**', 'tests/integration'],
   },
 
 });

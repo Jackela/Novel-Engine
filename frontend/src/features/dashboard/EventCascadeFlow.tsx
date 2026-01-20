@@ -9,7 +9,7 @@ import {
   useMediaQuery,
   Fade,
 } from '@mui/material';
-import { styled, alpha } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material';
 import { motion } from 'framer-motion';
 import {
   TrendingFlat as ConnectionIcon,

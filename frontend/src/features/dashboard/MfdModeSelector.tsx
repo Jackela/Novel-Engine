@@ -1,9 +1,9 @@
 import React from 'react';
 import { ToggleButton, ToggleButtonGroup, styled } from '@mui/material';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import HubIcon from '@mui/icons-material/Hub';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import StreamIcon from '@mui/icons-material/Stream';
+import { Analytics as AnalyticsIcon } from '@mui/icons-material';
+import { Hub as HubIcon } from '@mui/icons-material';
+import { Timeline as TimelineIcon } from '@mui/icons-material';
+import { Stream as StreamIcon } from '@mui/icons-material';
 
 export type MfdMode = 'analytics' | 'network' | 'timeline' | 'signals';
 

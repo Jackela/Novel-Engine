@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Stack, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { Close as CloseIcon } from '@mui/icons-material';
 import TurnPipelineStatus from '../TurnPipelineStatus';
 import RealTimeActivity from '../RealTimeActivity';
 import SuspenseWrapper from '@/components/common/SuspenseWrapper';

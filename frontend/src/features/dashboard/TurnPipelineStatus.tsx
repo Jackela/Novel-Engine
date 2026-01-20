@@ -16,7 +16,7 @@ import {
   useMediaQuery,
   Fade,
 } from '@mui/material';
-import { styled, alpha } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Psychology as ProcessingIcon,

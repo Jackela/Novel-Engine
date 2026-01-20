@@ -1,81 +1,110 @@
-import React from 'react';
-import {
-  Box,
-  Typography,
-  Grid,
-  Button,
-  Stack,
-  useTheme
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DescriptionIcon from '@mui/icons-material/Description';
-
-import { useCampaigns } from '../hooks/useCampaigns';
+/**
+ * CampaignList - List display of campaigns
+ */
+import { Plus, Filter } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@/shared/components/ui';
+import { LoadingSpinner, EmptyState } from '@/shared/components/feedback';
 import { CampaignCard } from './CampaignCard';
-import AsyncStates from '@/components/common/AsyncStates';
-import EmptyState from '@/components/common/EmptyState';
+import type { Campaign, CampaignStatus } from '@/shared/types/campaign';
 
-const CampaignList: React.FC = () => {
-  const { data: campaigns, isLoading, error } = useCampaigns();
-  const theme = useTheme();
+interface CampaignListProps {
+  campaigns: Campaign[];
+  isLoading?: boolean;
+  onCreateNew?: () => void;
+  onStart?: (id: string) => void;
+  onPause?: (id: string) => void;
+  onEdit?: (campaign: Campaign) => void;
+  onDelete?: (id: string) => void;
+  onSelect?: (campaign: Campaign) => void;
+}
 
-  // Handlers (placeholders for now - strictly UI state/events)
-  const handleResume = (id: string) => console.log('Resume', id);
-  const handleMenu = (id: string) => console.log('Menu', id);
-  const handleNew = () => console.log('New Campaign');
+const statusFilters: { value: CampaignStatus | 'all'; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'paused', label: 'Paused' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'completed', label: 'Completed' },
+];
 
-  // Success content logic
-  const renderContent = () => {
-    if (campaigns.length === 0) {
-      return (
-        <EmptyState
-          title="No Active Campaigns"
-          description="Start a new adventure by creating your first campaign. Choose a setting, define your protagonist, and begin."
-          actionLabel="Create Campaign"
-          onAction={handleNew}
-          icon={<DescriptionIcon />}
-        />
-      );
-    }
+export function CampaignList({
+  campaigns,
+  isLoading = false,
+  onCreateNew,
+  onStart,
+  onPause,
+  onEdit,
+  onDelete,
+  onSelect,
+}: CampaignListProps) {
+  const [statusFilter, setStatusFilter] = useState<CampaignStatus | 'all'>('all');
 
-    return (
-      <Grid container spacing={3}>
-        {campaigns.map((campaign) => (
-          <Grid item xs={12} md={6} lg={4} key={campaign.id}>
-            <CampaignCard
-              campaign={campaign}
-              onResume={handleResume}
-              onMenu={handleMenu}
-            />
-          </Grid>
-        ))}
-      </Grid>
-    );
-  };
+  const filteredCampaigns =
+    statusFilter === 'all'
+      ? campaigns
+      : campaigns.filter((c) => c.status === statusFilter);
+
+  if (isLoading) {
+    return <LoadingSpinner fullScreen text="Loading campaigns..." />;
+  }
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 600, color: 'text.primary' }}>
-          Active Campaigns
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleNew}
-          sx={{
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-          }}
-        >
-          New Campaign
-        </Button>
-      </Stack>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <div className="flex gap-1">
+            {statusFilters.map((filter) => (
+              <Button
+                key={filter.value}
+                variant={statusFilter === filter.value ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setStatusFilter(filter.value)}
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        {onCreateNew && (
+          <Button onClick={onCreateNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Campaign
+          </Button>
+        )}
+      </div>
 
-      <AsyncStates isLoading={isLoading} error={error}>
-        {renderContent()}
-      </AsyncStates>
-    </Box>
+      {/* List or Empty State */}
+      {filteredCampaigns.length === 0 ? (
+        <EmptyState
+          title={statusFilter === 'all' ? 'No campaigns yet' : `No ${statusFilter} campaigns`}
+          description={
+            statusFilter === 'all'
+              ? 'Create your first campaign to start your narrative adventure'
+              : 'Try changing the filter to see other campaigns'
+          }
+          action={
+            statusFilter === 'all' && onCreateNew
+              ? { label: 'Create Campaign', onClick: onCreateNew }
+              : undefined
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCampaigns.map((campaign) => (
+            <CampaignCard
+              key={campaign.id}
+              campaign={campaign}
+              onStart={onStart}
+              onPause={onPause}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
-};
-
-export default CampaignList;
+}

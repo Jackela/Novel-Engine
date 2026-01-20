@@ -74,7 +74,8 @@ if (enableFullMatrix) {
 }
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: '.',
+  testMatch: ['tests/e2e/**/*.spec.ts', 'e2e/**/*.spec.ts'],
 
   // Global test settings
   timeout: 30 * 60 * 1000, // 30 minutes for long-running dashboard operations
@@ -141,7 +142,10 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test',
       VITE_DEV_PORT: String(playwrightPort),
-      VITE_API_BASE_URL: process.env.TEST_API_URL || 'http://127.0.0.1:8000',   
+      VITE_API_BASE_URL: process.env.TEST_API_URL || '/api',
+      VITE_ENABLE_MSW: 'false',
+      VITE_E2E_BYPASS_AUTH: process.env.PLAYWRIGHT_BYPASS_AUTH ?? 'true',
+      VITE_E2E_EXPOSE_WEAVER: 'true',
       VITE_WS_URL: process.env.TEST_WS_URL || 'ws://localhost:8001/ws',
       VITE_DISABLE_QUERY_RETRY: 'true',
       VITE_SHOW_PERFORMANCE_METRICS: 'true',

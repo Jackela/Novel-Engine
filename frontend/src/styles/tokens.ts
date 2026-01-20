@@ -1,177 +1,117 @@
-export const tokens = {
-  colors: {
-    primary: {
-      50: '#eef3ff',
-      100: '#dbe6ff',
-      200: '#b5c8ff',
-      300: '#8aa7ff',
-      400: '#5f86f5',
-      500: '#1a4fdc',
-      600: '#1240b8',
-      700: '#0c3292',
-      800: '#0a276f',
-      900: '#081c4d',
-      gradient: 'linear-gradient(135deg, #1a4fdc 0%, #0c3292 100%)',
-    },
-    secondary: {
-      50: '#f7f6f2',
-      100: '#efede7',
-      200: '#e0ddd4',
-      300: '#c8c4b7',
-      400: '#a9a395',
-      500: '#111111',
-      600: '#0f0f0f',
-      700: '#0c0c0c',
-      800: '#0a0a0a',
-      900: '#050505',
-    },
-    background: {
-      default: '#f7f6f2',
-      paper: '#ffffff',
-      tertiary: '#f0eee8',
-      elevated: '#ffffff',
-      interactive: '#f5f4f0',
-    },
-    border: {
-      primary: '#e2dfd6',
-      secondary: '#cbc6ba',
-      tertiary: '#b3ad9f',
-      focus: '#1a4fdc',
-      hover: '#b9b3a7',
-    },
-    text: {
-      primary: '#111111',
-      secondary: '#4b4b4b',
-      tertiary: '#7a7a7a',
-      disabled: '#a6a6a6',
-      inverse: '#ffffff',
-    },
-    status: {
-      success: {
-        main: '#2f7d55',
-        bg: 'rgba(47, 125, 85, 0.12)',
-        border: 'rgba(47, 125, 85, 0.24)',
-        text: '#1d5b3b',
-        glow: '0 0 0 1px rgba(47, 125, 85, 0.2)',
-      },
-      warning: {
-        main: '#b7791f',
-        bg: 'rgba(183, 121, 31, 0.12)',
-        border: 'rgba(183, 121, 31, 0.24)',
-        text: '#7a4b09',
-        glow: '0 0 0 1px rgba(183, 121, 31, 0.2)',
-      },
-      error: {
-        main: '#b42318',
-        bg: 'rgba(180, 35, 24, 0.12)',
-        border: 'rgba(180, 35, 24, 0.24)',
-        text: '#7d1a12',
-        glow: '0 0 0 1px rgba(180, 35, 24, 0.2)',
-      },
-      info: {
-        main: '#2563eb',
-        bg: 'rgba(37, 99, 235, 0.12)',
-        border: 'rgba(37, 99, 235, 0.24)',
-        text: '#1d4ed8',
-        glow: '0 0 0 1px rgba(37, 99, 235, 0.2)',
-      },
-    },
-    inverse: '#111111',
-  },
-  gradients: {
-    primary: 'linear-gradient(135deg, #1a4fdc 0%, #0c3292 100%)',
-    secondary: 'linear-gradient(135deg, #111111 0%, #2a2a2a 100%)',
-    subtle: 'radial-gradient(120% 120% at 0% 0%, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0) 55%)',
-    surface: 'linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.78) 100%)',
-  },
-  glass: {
-    main: {
-      background: 'rgba(255, 255, 255, 0.7)',
-      backdropFilter: 'blur(14px) saturate(120%)',
-      border: '1px solid rgba(17, 17, 17, 0.08)',
-      boxShadow: '0 6px 24px rgba(17, 17, 17, 0.08)',
-    },
-    panel: {
-      background: 'rgba(255, 255, 255, 0.9)',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(17, 17, 17, 0.08)',
-    },
-    low: 'rgba(255, 255, 255, 0.8)',
-    medium: 'rgba(255, 255, 255, 0.92)',
-    high: '#ffffff',
-    border: 'rgba(17, 17, 17, 0.08)',
-    highlight: 'rgba(17, 17, 17, 0.06)',
-  },
-  typography: {
-    fontFamily: '"Manrope", "Space Grotesk", "Helvetica Neue", sans-serif',
-    headingFamily: '"Space Grotesk", "Manrope", "Helvetica Neue", sans-serif',
-    mono: '"IBM Plex Mono", "JetBrains Mono", monospace',
-    size: {
-      displayLg: '4.25rem',
-      displayMd: '3.25rem',
-      displaySm: '2.5rem',
-      h1: '2.25rem',
-      h2: '1.875rem',
-      h3: '1.5rem',
-      h4: '1.25rem',
-      h5: '1.125rem',
-      h6: '1rem',
-      body: '1rem',
-      bodySm: '0.875rem',
-      caption: '0.75rem',
-    },
-    weight: {
-      light: 300,
-      normal: 400,
-      medium: 500,
-      semibold: 600,
-      bold: 700,
-    },
-    lineHeight: {
-      tight: 1.1,
-      snug: 1.2,
-      normal: 1.5,
-      relaxed: 1.6,
-    },
-  },
-  spacing: {
-    0: '0',
-    1: '0.25rem',
-    2: '0.5rem',
-    3: '0.75rem',
-    4: '1rem',
-    5: '1.25rem',
-    6: '1.5rem',
-    8: '2rem',
-    10: '2.5rem',
-    12: '3rem',
-    16: '4rem',
-    20: '5rem',
-  },
-  elevation: {
-    xs: '0 1px 2px rgba(17, 17, 17, 0.06)',
-    sm: '0 2px 6px rgba(17, 17, 17, 0.08)',
-    md: '0 8px 24px rgba(17, 17, 17, 0.1)',
-    lg: '0 16px 40px rgba(17, 17, 17, 0.12)',
-    xl: '0 24px 64px rgba(17, 17, 17, 0.14)',
-    xxl: '0 32px 80px rgba(17, 17, 17, 0.18)',
-    glow: '0 0 0 1px rgba(17, 17, 17, 0.08)',
-    focus: '0 0 0 2px #1a4fdc',
-  },
-  motion: {
-    duration: {
-      fast: '140ms',
-      standard: '220ms',
-      slow: '320ms',
-      extraSlow: '480ms',
-    },
-    easing: {
-      standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
-      decelerate: 'cubic-bezier(0, 0, 0.2, 1)',
-      accelerate: 'cubic-bezier(0.4, 0, 1, 1)',
-      spring: 'cubic-bezier(0.16, 1, 0.3, 1)',
-    },
-  },
+/**
+ * Design Tokens
+ * CSS variables and theme tokens for the application
+ */
+
+// Color tokens
+export const colors = {
+  // Primary colors
+  primary: 'hsl(var(--primary))',
+  primaryForeground: 'hsl(var(--primary-foreground))',
+
+  // Secondary colors
+  secondary: 'hsl(var(--secondary))',
+  secondaryForeground: 'hsl(var(--secondary-foreground))',
+
+  // Background colors
+  background: 'hsl(var(--background))',
+  foreground: 'hsl(var(--foreground))',
+
+  // Card colors
+  card: 'hsl(var(--card))',
+  cardForeground: 'hsl(var(--card-foreground))',
+
+  // Muted colors
+  muted: 'hsl(var(--muted))',
+  mutedForeground: 'hsl(var(--muted-foreground))',
+
+  // Accent colors
+  accent: 'hsl(var(--accent))',
+  accentForeground: 'hsl(var(--accent-foreground))',
+
+  // Destructive colors
+  destructive: 'hsl(var(--destructive))',
+  destructiveForeground: 'hsl(var(--destructive-foreground))',
+
+  // Border and input
+  border: 'hsl(var(--border))',
+  input: 'hsl(var(--input))',
+  ring: 'hsl(var(--ring))',
 } as const;
 
-export type Tokens = typeof tokens;
+// Spacing tokens (based on 4px grid)
+export const spacing = {
+  0: '0',
+  1: '0.25rem',
+  2: '0.5rem',
+  3: '0.75rem',
+  4: '1rem',
+  5: '1.25rem',
+  6: '1.5rem',
+  8: '2rem',
+  10: '2.5rem',
+  12: '3rem',
+  16: '4rem',
+  20: '5rem',
+  24: '6rem',
+} as const;
+
+// Border radius tokens
+export const radius = {
+  sm: 'calc(var(--radius) - 4px)',
+  md: 'calc(var(--radius) - 2px)',
+  lg: 'var(--radius)',
+  xl: 'calc(var(--radius) + 4px)',
+  full: '9999px',
+} as const;
+
+// Font size tokens
+export const fontSize = {
+  xs: '0.75rem',
+  sm: '0.875rem',
+  base: '1rem',
+  lg: '1.125rem',
+  xl: '1.25rem',
+  '2xl': '1.5rem',
+  '3xl': '1.875rem',
+  '4xl': '2.25rem',
+} as const;
+
+// Font weight tokens
+export const fontWeight = {
+  normal: '400',
+  medium: '500',
+  semibold: '600',
+  bold: '700',
+} as const;
+
+// Animation tokens
+export const animation = {
+  fast: '150ms',
+  normal: '300ms',
+  slow: '500ms',
+} as const;
+
+// Z-index tokens
+export const zIndex = {
+  dropdown: 50,
+  sticky: 100,
+  fixed: 150,
+  overlay: 200,
+  modal: 300,
+  popover: 400,
+  tooltip: 500,
+} as const;
+
+// Export all tokens
+const tokens = {
+  colors,
+  spacing,
+  radius,
+  fontSize,
+  fontWeight,
+  animation,
+  zIndex,
+};
+
+export default tokens;

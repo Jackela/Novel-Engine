@@ -25,12 +25,16 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
+      "@/app/*": ["src/app/*"],
+      "@/features/*": ["src/features/*"],
+      "@/shared/*": ["src/shared/*"],
       "@/components/*": ["src/components/*"],
       "@/hooks/*": ["src/hooks/*"],
       "@/services/*": ["src/services/*"],
       "@/types/*": ["src/types/*"],
       "@/utils/*": ["src/utils/*"],
       "@/styles/*": ["src/styles/*"],
+      "@/lib/*": ["src/lib/*"],
       "@mui/icons-material": ["src/mui-icons.ts"]
     }
   },

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Stack, Typography, Chip, useTheme, useMediaQuery } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled } from '@mui/material';
 import { Timeline as TimelineIcon, Bolt as BoltIcon, AutoGraph as AutoGraphIcon } from '@mui/icons-material';
 
 type PipelineState = 'idle' | 'running' | 'paused' | 'stopped';
