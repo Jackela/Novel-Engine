@@ -46,7 +46,14 @@ $pytestCaches = Get-ChildItem -Path "." -Recurse -Force -Directory -Filter ".pyt
 foreach ($dir in $pytestCaches) {
     Remove-Item $dir.FullName -Recurse -Force -ErrorAction SilentlyContinue
 }
-$pathsToRemove = @("reports", "coverage", "frontend/dist")
+$pathsToRemove = @(
+    "reports",
+    "coverage",
+    "dist",
+    "node_modules",
+    "frontend/node_modules",
+    "frontend/dist"
+)
 foreach ($path in $pathsToRemove) {
     if (Test-Path $path) {
         Remove-Item $path -Recurse -Force -ErrorAction SilentlyContinue
@@ -106,8 +113,14 @@ $frontendDir = "frontend"
 if (Test-Path $frontendDir) {
     Push-Location $frontendDir
     if (Test-Path "package.json") {
+        npm install
+        Assert-LastExitCode "Install frontend dependencies"
+
         npm test --if-present --silent
-        Assert-LastExitCode "Frontend tests"
+        Assert-LastExitCode "Frontend unit tests"
+
+        npm run test:integration --if-present
+        Assert-LastExitCode "Frontend integration tests"
 
         npm run build --if-present
         Assert-LastExitCode "Frontend build"

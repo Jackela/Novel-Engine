@@ -2,7 +2,7 @@
  * Character API hooks using TanStack Query
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/shared/lib/api';
+import { api } from '@/lib/api';
 import type { CharacterDetail, CreateCharacterInput, UpdateCharacterInput } from '@/shared/types/character';
 import { CharactersListResponseSchema, CharacterDetailSchema } from '@/types/schemas';
 

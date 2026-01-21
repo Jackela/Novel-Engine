@@ -2,7 +2,7 @@
  * Story API hooks using TanStack Query
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/shared/lib/api';
+import { api } from '@/lib/api';
 import type { Story, GenerateStoryInput, StoryGenerationProgress } from '@/shared/types/story';
 
 const STORIES_KEY = ['stories'];

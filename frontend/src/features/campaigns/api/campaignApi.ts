@@ -2,7 +2,7 @@
  * Campaign API hooks using TanStack Query
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/shared/lib/api';
+import { api } from '@/lib/api';
 import type { Campaign, CreateCampaignInput, UpdateCampaignInput } from '@/shared/types/campaign';
 
 const CAMPAIGNS_KEY = ['campaigns'];
