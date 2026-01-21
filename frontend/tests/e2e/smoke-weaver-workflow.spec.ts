@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
 
 test.describe('Weaver Workflow', () => {
-  test('can add, drag, and connect nodes', async ({ page }) => {
+  test('@weaver-smoke can add, drag, and connect nodes', async ({ page }) => {
     await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
 
     await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible();

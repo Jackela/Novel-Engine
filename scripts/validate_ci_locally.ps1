@@ -113,7 +113,7 @@ $frontendDir = "frontend"
 if (Test-Path $frontendDir) {
     Push-Location $frontendDir
     if (Test-Path "package.json") {
-        npm install
+        npm ci
         Assert-LastExitCode "Install frontend dependencies"
 
         npm test --if-present --silent
@@ -136,8 +136,9 @@ if (Test-Path $frontendDir) {
         }
         $env:PLAYWRIGHT_PORT = $playwrightPort
         $env:VITE_DEV_PORT = $playwrightPort
+        $env:CI = "true"
         npm run test:e2e:smoke
-        Assert-LastExitCode "Playwright smoke tests"
+        Assert-LastExitCode "Playwright E2E smoke tests"
     } else {
         Write-Host "⚠ No frontend package.json found, skipping" -ForegroundColor Yellow
     }
