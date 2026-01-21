@@ -1,49 +1,64 @@
 import { http, HttpResponse, delay } from 'msw';
-import type { Character, CharacterStats } from '@/shared/types/character';
-import { CharactersResponseSchema, OrchestrationStartRequestSchema } from '@/types/schemas';
+import type { CharacterDetail, CharacterSummary } from '@/shared/types/character';
+import { CharactersListResponseSchema, OrchestrationStartRequestSchema } from '@/types/schemas';
 
 const API_PREFIX = '/api';
 
-const baseStats: CharacterStats = {
-  strength: 10,
-  intelligence: 10,
-  charisma: 10,
-  agility: 10,
-  wisdom: 10,
-  luck: 10,
-};
-
-const createId = (prefix: string) => {
-  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
-    return `${prefix}_${globalThis.crypto.randomUUID()}`;
-  }
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-};
-
 const nowIso = () => new Date().toISOString();
 
-const characters: Character[] = [
+const characterSummaries: CharacterSummary[] = [
   {
-    id: 'char-001',
+    id: 'aria-shadowbane',
+    agent_id: 'aria-shadowbane',
     name: 'Aria Shadowbane',
-    description: 'A tactician navigating a fractured realm.',
-    role: 'protagonist',
-    traits: ['strategic', 'resilient'],
-    stats: { ...baseStats, wisdom: 14, charisma: 12 },
-    relationships: [],
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
+    status: 'active',
+    type: 'protagonist',
+    updated_at: nowIso(),
+    workspace_id: 'guest-workspace',
   },
   {
-    id: 'char-002',
+    id: 'merchant-aldric',
+    agent_id: 'merchant-aldric',
     name: 'Merchant Aldric',
-    description: 'A seasoned trader with a hidden agenda.',
-    role: 'npc',
-    traits: ['connected', 'observant'],
-    stats: { ...baseStats, intelligence: 13 },
-    relationships: [],
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
+    status: 'active',
+    type: 'npc',
+    updated_at: nowIso(),
+    workspace_id: 'guest-workspace',
+  },
+];
+
+const characterDetails: CharacterDetail[] = [
+  {
+    agent_id: 'aria-shadowbane',
+    character_id: 'aria-shadowbane',
+    character_name: 'Aria Shadowbane',
+    name: 'Aria Shadowbane',
+    background_summary: 'A tactician navigating a fractured realm.',
+    personality_traits: 'Strategic, resilient, decisive.',
+    current_status: 'active',
+    narrative_context: '',
+    skills: { tactics: 0.8, leadership: 0.7 },
+    relationships: {},
+    current_location: 'Meridian Station',
+    inventory: [],
+    metadata: {},
+    structured_data: {},
+  },
+  {
+    agent_id: 'merchant-aldric',
+    character_id: 'merchant-aldric',
+    character_name: 'Merchant Aldric',
+    name: 'Merchant Aldric',
+    background_summary: 'A seasoned trader with a hidden agenda.',
+    personality_traits: 'Connected, observant, cautious.',
+    current_status: 'active',
+    narrative_context: '',
+    skills: { negotiation: 0.7 },
+    relationships: {},
+    current_location: 'Trade Hub',
+    inventory: [],
+    metadata: {},
+    structured_data: {},
   },
 ];
 
@@ -174,12 +189,14 @@ export const handlers = [
 
   http.get(`${API_PREFIX}/characters`, async () => {
     await withLatency();
-    return HttpResponse.json(CharactersResponseSchema.parse(characters));
+    return HttpResponse.json(
+      CharactersListResponseSchema.parse({ characters: characterSummaries })
+    );
   }),
 
   http.get(`${API_PREFIX}/characters/:id`, async ({ params }) => {
     await withLatency();
-    const character = characters.find((item) => item.id === params.id);
+    const character = characterDetails.find((item) => item.character_id === params.id);
     if (!character) {
       return HttpResponse.json({ detail: 'Character not found' }, { status: 404 });
     }
@@ -188,48 +205,90 @@ export const handlers = [
 
   http.post(`${API_PREFIX}/characters`, async ({ request }) => {
     await withLatency();
-    const body = await request.json();
-    const createdAt = nowIso();
-    const newCharacter: Character = {
-      id: createId('char'),
-      name: String(body.name ?? 'New Character'),
-      description: String(body.description ?? ''),
-      role: (body.role ?? 'supporting') as Character['role'],
-      traits: Array.isArray(body.traits) ? body.traits : [],
-      stats: { ...baseStats, ...(body.stats ?? {}) },
-      relationships: [],
-      createdAt,
-      updatedAt: createdAt,
+    const body = await request.json().catch(() => ({}));
+    const agentId = typeof body === 'object' && body !== null && 'agent_id' in body
+      ? String((body as { agent_id?: string }).agent_id ?? '')
+      : '';
+    const name = typeof body === 'object' && body !== null && 'name' in body
+      ? String((body as { name?: string }).name ?? '')
+      : agentId;
+    const character_id = agentId || name.toLowerCase().replace(/\s+/g, '-');
+    const newCharacter: CharacterDetail = {
+      agent_id: character_id,
+      character_id,
+      character_name: name,
+      name,
+      background_summary: String((body as { background_summary?: string }).background_summary ?? ''),
+      personality_traits: String((body as { personality_traits?: string }).personality_traits ?? ''),
+      current_status: 'active',
+      narrative_context: '',
+      skills: (body as { skills?: Record<string, number> }).skills ?? {},
+      relationships: (body as { relationships?: Record<string, number> }).relationships ?? {},
+      current_location: String((body as { current_location?: string }).current_location ?? ''),
+      inventory: Array.isArray((body as { inventory?: unknown }).inventory)
+        ? (body as { inventory?: string[] }).inventory ?? []
+        : [],
+      metadata: (body as { metadata?: Record<string, unknown> }).metadata ?? {},
+      structured_data: (body as { structured_data?: Record<string, unknown> }).structured_data ?? {},
     };
-    characters.unshift(newCharacter);
+    characterDetails.unshift(newCharacter);
+    characterSummaries.unshift({
+      id: character_id,
+      agent_id: character_id,
+      name,
+      status: 'active',
+      type: 'npc',
+      updated_at: nowIso(),
+      workspace_id: 'guest-workspace',
+    });
     return HttpResponse.json(newCharacter, { status: 201 });
   }),
 
   http.put(`${API_PREFIX}/characters/:id`, async ({ params, request }) => {
     await withLatency();
-    const index = characters.findIndex((item) => item.id === params.id);
+    const index = characterDetails.findIndex((item) => item.character_id === params.id);
     if (index === -1) {
       return HttpResponse.json({ detail: 'Character not found' }, { status: 404 });
     }
-    const body = await request.json();
-    const updated: Character = {
-      ...characters[index],
-      ...body,
-      traits: Array.isArray(body.traits) ? body.traits : characters[index].traits,
-      stats: { ...characters[index].stats, ...(body.stats ?? {}) },
-      updatedAt: nowIso(),
+    const body = await request.json().catch(() => ({}));
+    const current = characterDetails[index];
+    const updated: CharacterDetail = {
+      ...current,
+      name: String((body as { name?: string }).name ?? current.name),
+      background_summary: String((body as { background_summary?: string }).background_summary ?? current.background_summary),
+      personality_traits: String((body as { personality_traits?: string }).personality_traits ?? current.personality_traits),
+      skills: (body as { skills?: Record<string, number> }).skills ?? current.skills,
+      relationships: (body as { relationships?: Record<string, number> }).relationships ?? current.relationships,
+      current_location: String((body as { current_location?: string }).current_location ?? current.current_location),
+      inventory: Array.isArray((body as { inventory?: unknown }).inventory)
+        ? (body as { inventory?: string[] }).inventory ?? current.inventory
+        : current.inventory,
+      metadata: (body as { metadata?: Record<string, unknown> }).metadata ?? current.metadata,
+      structured_data: (body as { structured_data?: Record<string, unknown> }).structured_data ?? current.structured_data,
     };
-    characters[index] = updated;
+    characterDetails[index] = updated;
+    const summaryIndex = characterSummaries.findIndex((item) => item.id === params.id);
+    if (summaryIndex !== -1) {
+      characterSummaries[summaryIndex] = {
+        ...characterSummaries[summaryIndex],
+        name: updated.name,
+        updated_at: nowIso(),
+      };
+    }
     return HttpResponse.json(updated);
   }),
 
   http.delete(`${API_PREFIX}/characters/:id`, async ({ params }) => {
     await withLatency();
-    const index = characters.findIndex((item) => item.id === params.id);
+    const index = characterDetails.findIndex((item) => item.character_id === params.id);
     if (index === -1) {
       return HttpResponse.json({ detail: 'Character not found' }, { status: 404 });
     }
-    characters.splice(index, 1);
+    characterDetails.splice(index, 1);
+    const summaryIndex = characterSummaries.findIndex((item) => item.id === params.id);
+    if (summaryIndex !== -1) {
+      characterSummaries.splice(summaryIndex, 1);
+    }
     return HttpResponse.json({ success: true });
   }),
 ];

@@ -1,17 +1,12 @@
 import { z } from 'zod';
 import {
-  CharacterSchema,
-  CharacterRoleSchema,
-  CharacterStatsSchema,
-  CharacterRelationshipSchema,
-  CreateCharacterInputSchema,
-  UpdateCharacterInputSchema,
+  CharacterSummarySchema,
+  CharacterDetailSchema,
+  WorkspaceCharacterCreateSchema,
+  WorkspaceCharacterUpdateSchema,
 } from '@/types/schemas';
 
-export type Character = z.infer<typeof CharacterSchema>;
-export type CharacterRole = z.infer<typeof CharacterRoleSchema>;
-export type CharacterStats = z.infer<typeof CharacterStatsSchema>;
-export type CharacterRelationship = z.infer<typeof CharacterRelationshipSchema>;
-export type RelationshipType = CharacterRelationship['type'];
-export type CreateCharacterInput = z.infer<typeof CreateCharacterInputSchema>;
-export type UpdateCharacterInput = z.infer<typeof UpdateCharacterInputSchema>;
+export type CharacterSummary = z.infer<typeof CharacterSummarySchema>;
+export type CharacterDetail = z.infer<typeof CharacterDetailSchema>;
+export type CreateCharacterInput = z.infer<typeof WorkspaceCharacterCreateSchema>;
+export type UpdateCharacterInput = z.infer<typeof WorkspaceCharacterUpdateSchema>;

@@ -1,43 +1,6 @@
 // Novel Engine Frontend Types
 // Comprehensive type definitions for the creative platform
 
-export interface Character {
-  id: string;
-  name: string;
-  faction: string;
-  role: string;
-  description: string;
-  stats: CharacterStats;
-  equipment: Equipment[];
-  relationships: Relationship[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface CharacterStats {
-  strength: number;
-  dexterity: number;
-  intelligence: number;
-  willpower: number;
-  perception: number;
-  charisma: number;
-}
-
-export interface Equipment {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  condition: number;
-}
-
-export interface Relationship {
-  targetCharacterId: string;
-  type: 'ally' | 'enemy' | 'neutral' | 'mentor' | 'rival';
-  strength: number;
-  description: string;
-}
-
 export interface StoryProject {
   id: string;
   title: string;
@@ -200,15 +163,7 @@ export interface AgentStatusUpdate extends WSEvent {
 }
 
 // Form Types for React Hook Form
-export interface CharacterFormData {
-  name: string;
-  faction: string;
-  role: string;
-  description: string;
-  stats: CharacterStats;
-  equipment: Omit<Equipment, 'id'>[];
-  relationships: Omit<Relationship, 'targetCharacterId'>[];
-}
+// Character-related types are derived from Zod schemas in src/types/schemas.ts.
 
 export interface StoryFormData {
   title: string;

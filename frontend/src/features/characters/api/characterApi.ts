@@ -3,7 +3,8 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/lib/api';
-import type { Character, CreateCharacterInput, UpdateCharacterInput } from '@/shared/types/character';
+import type { CharacterDetail, CreateCharacterInput, UpdateCharacterInput } from '@/shared/types/character';
+import { CharactersListResponseSchema, CharacterDetailSchema } from '@/types/schemas';
 
 const CHARACTERS_KEY = ['characters'];
 
@@ -11,7 +12,10 @@ const CHARACTERS_KEY = ['characters'];
 export function useCharacters() {
   return useQuery({
     queryKey: CHARACTERS_KEY,
-    queryFn: () => api.get<Character[]>('/characters'),
+    queryFn: async () => {
+      const data = await api.get<unknown>('/characters');
+      return CharactersListResponseSchema.parse(data).characters;
+    },
   });
 }
 
@@ -19,7 +23,10 @@ export function useCharacters() {
 export function useCharacter(id: string) {
   return useQuery({
     queryKey: [...CHARACTERS_KEY, id],
-    queryFn: () => api.get<Character>(`/characters/${id}`),
+    queryFn: async () => {
+      const data = await api.get<unknown>(`/characters/${id}`);
+      return CharacterDetailSchema.parse(data);
+    },
     enabled: !!id,
   });
 }
@@ -30,7 +37,7 @@ export function useCreateCharacter() {
 
   return useMutation({
     mutationFn: (input: CreateCharacterInput) =>
-      api.post<Character>('/characters', input),
+      api.post<CharacterDetail>('/characters', input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CHARACTERS_KEY });
     },
@@ -43,7 +50,7 @@ export function useUpdateCharacter() {
 
   return useMutation({
     mutationFn: ({ id, ...input }: UpdateCharacterInput) =>
-      api.put<Character>(`/characters/${id}`, input),
+      api.put<CharacterDetail>(`/characters/${id}`, input),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: CHARACTERS_KEY });
       queryClient.setQueryData([...CHARACTERS_KEY, data.id], data);

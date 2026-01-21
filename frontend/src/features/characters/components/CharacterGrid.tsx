@@ -6,15 +6,15 @@ import { useState } from 'react';
 import { Button, Input } from '@/shared/components/ui';
 import { LoadingSpinner, EmptyState } from '@/shared/components/feedback';
 import { CharacterCard } from './CharacterCard';
-import type { Character } from '@/shared/types/character';
+import type { CharacterSummary } from '@/shared/types/character';
 
 interface CharacterGridProps {
-  characters: Character[];
+  characters: CharacterSummary[];
   isLoading?: boolean;
   onCreateNew?: () => void;
-  onEdit?: (character: Character) => void;
+  onEdit?: (character: CharacterSummary) => void;
   onDelete?: (id: string) => void;
-  onSelect?: (character: Character) => void;
+  onSelect?: (character: CharacterSummary) => void;
   selectedId?: string;
 }
 
@@ -32,8 +32,8 @@ export function CharacterGrid({
   const filteredCharacters = characters.filter(
     (char) =>
       char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      char.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      char.traits.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+      char.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      char.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (isLoading) {

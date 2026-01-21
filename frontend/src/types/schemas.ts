@@ -1,55 +1,59 @@
 import { z } from 'zod';
 
-export const CharacterRoleSchema = z.enum([
-  'protagonist',
-  'antagonist',
-  'supporting',
-  'minor',
-  'npc',
-]);
-
-export const CharacterStatsSchema = z.object({
-  strength: z.number(),
-  intelligence: z.number(),
-  charisma: z.number(),
-  agility: z.number(),
-  wisdom: z.number(),
-  luck: z.number(),
-});
-
-export const CharacterRelationshipSchema = z.object({
-  targetId: z.string(),
-  targetName: z.string(),
-  type: z.enum(['ally', 'enemy', 'neutral', 'family', 'romantic', 'rival']),
-  strength: z.number(),
-  description: z.string().optional(),
-});
-
-export const CharacterSchema = z.object({
+export const CharacterSummarySchema = z.object({
   id: z.string(),
+  agent_id: z.string(),
   name: z.string(),
-  description: z.string(),
-  role: CharacterRoleSchema,
-  traits: z.array(z.string()),
-  stats: CharacterStatsSchema,
-  relationships: z.array(CharacterRelationshipSchema),
-  imageUrl: z.string().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  status: z.string(),
+  type: z.string(),
+  updated_at: z.string(),
+  workspace_id: z.string().nullable().optional(),
 });
 
-export const CharactersResponseSchema = z.array(CharacterSchema);
-
-export const CreateCharacterInputSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  role: CharacterRoleSchema,
-  traits: z.array(z.string()).optional(),
-  stats: CharacterStatsSchema.partial().optional(),
+export const CharactersListResponseSchema = z.object({
+  characters: z.array(CharacterSummarySchema),
 });
 
-export const UpdateCharacterInputSchema = CreateCharacterInputSchema.partial().extend({
-  id: z.string(),
+export const CharacterDetailSchema = z.object({
+  agent_id: z.string(),
+  character_id: z.string(),
+  character_name: z.string(),
+  name: z.string(),
+  background_summary: z.string(),
+  personality_traits: z.string(),
+  current_status: z.string(),
+  narrative_context: z.string(),
+  skills: z.record(z.number()),
+  relationships: z.record(z.number()),
+  current_location: z.string(),
+  inventory: z.array(z.string()),
+  metadata: z.record(z.unknown()),
+  structured_data: z.record(z.unknown()),
+});
+
+export const WorkspaceCharacterCreateSchema = z.object({
+  agent_id: z.string().min(1, 'Agent ID is required'),
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  background_summary: z.string().max(1000).optional().default(''),
+  personality_traits: z.string().max(500).optional().default(''),
+  skills: z.record(z.number()).optional().default({}),
+  relationships: z.record(z.number()).optional().default({}),
+  current_location: z.string().max(200).optional().default(''),
+  inventory: z.array(z.string()).optional().default([]),
+  metadata: z.record(z.unknown()).optional().default({}),
+  structured_data: z.record(z.unknown()).optional().default({}),
+});
+
+export const WorkspaceCharacterUpdateSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+  background_summary: z.string().max(1000).optional(),
+  personality_traits: z.string().max(500).optional(),
+  skills: z.record(z.number()).optional(),
+  relationships: z.record(z.number()).optional(),
+  current_location: z.string().max(200).optional(),
+  inventory: z.array(z.string()).optional(),
+  metadata: z.record(z.unknown()).optional(),
+  structured_data: z.record(z.unknown()).optional(),
 });
 
 export const OrchestrationStartRequestSchema = z.object({
@@ -89,11 +93,9 @@ export const OrchestrationStartResponseSchema = z.object({
   message: z.string().optional(),
 });
 
-export type Character = z.infer<typeof CharacterSchema>;
-export type CharacterRole = z.infer<typeof CharacterRoleSchema>;
-export type CharacterStats = z.infer<typeof CharacterStatsSchema>;
-export type CharacterRelationship = z.infer<typeof CharacterRelationshipSchema>;
-export type CreateCharacterInput = z.infer<typeof CreateCharacterInputSchema>;
-export type UpdateCharacterInput = z.infer<typeof UpdateCharacterInputSchema>;
+export type CharacterSummary = z.infer<typeof CharacterSummarySchema>;
+export type CharacterDetail = z.infer<typeof CharacterDetailSchema>;
+export type CreateCharacterInput = z.infer<typeof WorkspaceCharacterCreateSchema>;
+export type UpdateCharacterInput = z.infer<typeof WorkspaceCharacterUpdateSchema>;
 export type OrchestrationStartRequest = z.infer<typeof OrchestrationStartRequestSchema>;
 export type OrchestrationStatus = z.infer<typeof OrchestrationStatusSchema>;

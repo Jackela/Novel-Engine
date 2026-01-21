@@ -4,16 +4,18 @@
 import { useState } from 'react';
 import { CharacterGrid } from './components/CharacterGrid';
 import { CharacterForm } from './components/CharacterForm';
-import { useCharacters, useCreateCharacter, useUpdateCharacter, useDeleteCharacter } from './api/characterApi';
+import { useCharacters, useCharacter, useCreateCharacter, useUpdateCharacter, useDeleteCharacter } from './api/characterApi';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui';
 import { ErrorState } from '@/shared/components/feedback';
-import type { Character, CreateCharacterInput } from '@/shared/types/character';
+import type { CreateCharacterInput, CharacterSummary } from '@/shared/types/character';
 
 export default function CharactersPage() {
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<CharacterSummary | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const { data: characters = [], isLoading, error } = useCharacters();
+  const selectedCharacterId = selectedCharacter?.id ?? '';
+  const { data: selectedDetail } = useCharacter(selectedCharacterId);
   const createMutation = useCreateCharacter();
   const updateMutation = useUpdateCharacter();
   const deleteMutation = useDeleteCharacter();
@@ -23,7 +25,7 @@ export default function CharactersPage() {
     setIsFormOpen(true);
   };
 
-  const handleEdit = (character: Character) => {
+  const handleEdit = (character: CharacterSummary) => {
     setSelectedCharacter(character);
     setIsFormOpen(true);
   };
@@ -36,7 +38,8 @@ export default function CharactersPage() {
 
   const handleSubmit = async (data: CreateCharacterInput) => {
     if (selectedCharacter) {
-      await updateMutation.mutateAsync({ ...data, id: selectedCharacter.id });
+      const { agent_id: _agentId, ...payload } = data;
+      await updateMutation.mutateAsync({ ...payload, id: selectedCharacter.id });
     } else {
       await createMutation.mutateAsync(data);
     }
@@ -74,7 +77,7 @@ export default function CharactersPage() {
           </CardHeader>
           <CardContent>
             <CharacterForm
-              character={selectedCharacter ?? undefined}
+              character={selectedDetail ?? undefined}
               onSubmit={handleSubmit}
               onCancel={() => {
                 setIsFormOpen(false);
