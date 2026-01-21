@@ -31,6 +31,20 @@ module.exports = {
     'color-hex-length': null,
     'property-no-unknown': null,
     'rule-empty-line-before': null,
+    // Allow Tailwind CSS at-rules
+    'at-rule-no-unknown': [
+      true,
+      {
+        ignoreAtRules: [
+          'tailwind',
+          'apply',
+          'variants',
+          'responsive',
+          'screen',
+          'layer',
+        ],
+      },
+    ],
   },
   ignoreFiles: [
     '**/*.js',
@@ -39,6 +53,7 @@ module.exports = {
     '**/*.tsx',
     'src/styles/design-system.generated.css',
     'src/styles/design-system.css',
+    'src/styles/tailwind.css',
     'src/components/**/*.css',
     'src/components/**/**/*.css',
     'src/components/**/**/**/*.css',

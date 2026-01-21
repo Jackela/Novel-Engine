@@ -14,7 +14,7 @@ This PR hardens TypeScript, enforces a styling Single Source of Truth (SSOT), ti
   - Replaced remaining app hexes with design tokens (e.g., AgentInterface)
 
 - Styling SSOT
-  - Tokens → generated CSS + MUI theme already in place
+  - Tokens → generated CSS variables + Tailwind theme tokens
   - High-contrast overrides mapped to tokens
 
 - Stylelint tightening
@@ -49,4 +49,3 @@ This PR hardens TypeScript, enforces a styling Single Source of Truth (SSOT), ti
 1) Optionally re-enable additional Stylelint rules (e.g., rule-empty-line-before, value-keyword-case) in small patches.
 2) Expand integration tests for wizard paths as env hooks are stabilized.
 3) Decide whether to keep CI branch-specific test scoping for this feature or revert to full suite after merge.
-

@@ -2,7 +2,7 @@
 
 ## Quick Links
 
-- Design System (SSOT): `frontend/DESIGN_SYSTEM.md`
+- Design System (SSOT): `docs/specifications/UI_DESIGN_SPEC.md`
 - Feature Spec: `specs/002-ts-ssot-frontend/spec.md`
 - Quickstart (tokens + checks): `specs/002-ts-ssot-frontend/quickstart.md`
 

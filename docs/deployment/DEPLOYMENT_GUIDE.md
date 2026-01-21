@@ -800,7 +800,7 @@ git push origin main --tags
 - [Operations Runbook](../operations/OPERATIONS_RUNBOOK.md)
 - [API Reference](../api/API_REFERENCE.md)
 - [System Architecture](../architecture/SYSTEM_ARCHITECTURE.md)
-- [Security Guide](./security-guide.md) (Coming Soon)
+- [Security Guide](../security/INDEX.md)
 
 ---
 

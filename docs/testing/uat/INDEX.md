@@ -54,8 +54,6 @@ User Acceptance Testing documentation for Novel Engine, including daily test pla
 - Production readiness assessment
 
 ---
-
----
 ## UAT Process
 
 ### Pre-UAT Checklist
@@ -85,7 +83,6 @@ User Acceptance Testing documentation for Novel Engine, including daily test pla
 
 ### Testing
 - [Testing Overview](../TESTING.md)
-- [Testing Structure](../TESTING_STRUCTURE.md)
 - [Testing Quick Reference](../TESTING_QUICK_REFERENCE.md)
 
 ### Deployment

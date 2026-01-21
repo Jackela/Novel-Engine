@@ -5,7 +5,7 @@
 - [X] T001 Verify feature branch noted in spec header `specs/002-ts-ssot-frontend/spec.md`
  - [X] T002 Verify Node toolchain and install deps in frontend `frontend/package.json`
 - [X] T003 Add CI gates to block on type-check, lint, and tokens checks `/.github/workflows/frontend-ci.yml`
-- [X] T004 Add contributor docs link from DESIGN_SYSTEM to spec directory `frontend/DESIGN_SYSTEM.md`
+- [X] T004 Add contributor docs link from UI design spec to spec directory `docs/specifications/UI_DESIGN_SPEC.md`
 
 ## Phase 2: Foundational
 
@@ -24,7 +24,7 @@
 - [X] T014 [US1] Refactor GridTile to use theme tokens (remove hex) `frontend/src/components/layout/GridTile.tsx`
  - [X] T015 [P] [US1] Sweep layout components for hex → tokens (batch 1) `frontend/src/components/layout/*`
  - [X] T016 [P] [US1] Sweep navbar and shared UI for hex → tokens (batch 2) `frontend/src/components/Navbar.tsx`
-- [X] T017 [US1] Document token update workflow in DESIGN_SYSTEM `frontend/DESIGN_SYSTEM.md`
+- [X] T017 [US1] Document token update workflow in UI design spec `docs/specifications/UI_DESIGN_SPEC.md`
 
 ## Phase 4: User Story 2 – Contributor-Friendly Styling (P2)
 
@@ -63,4 +63,3 @@
 
 - T030 documents the SSOT styling and server-state split as an ADR, aligning with Constitution Principle VI (Documentation & Knowledge Stewardship).
 - T031 updates the Constitution Gate Workbook, aligning with Constitution Principle VI and validating that gates from Principles II (API Discipline) and IV (Quality Engineering & Testing) are reflected in this feature’s plan/spec/tasks.
-

@@ -27,12 +27,6 @@ Comprehensive testing documentation including strategies, UAT procedures, and te
 - Common patterns
 - Troubleshooting
 
-### [Testing Structure](./TESTING_STRUCTURE.md)
-**Test organization and structure**
-- Test directory layout
-- Naming conventions
-- Test categories
-
 ---
 
 ## 🧪 User Acceptance Testing (UAT)

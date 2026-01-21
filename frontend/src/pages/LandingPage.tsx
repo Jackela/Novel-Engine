@@ -1,287 +1,176 @@
-import React from 'react';
-import { Alert, Box, Container, Stack, Typography, Button, Grid, Paper, Divider } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
-import LiveTvIcon from '@mui/icons-material/LiveTv';
-import InsightsIcon from '@mui/icons-material/Insights';
-import SecurityIcon from '@mui/icons-material/Security';
-import AutoStoriesIcon from '@mui/icons-material/AutoStories';
-import { motion } from 'framer-motion';
-import { tokens } from '../styles/tokens';
-import { useAuthContext } from '@/contexts/useAuthContext';
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.45, ease: 'easeOut' },
-  },
-};
+/**
+ * LandingPage - Welcome page for the application
+ */
+import { useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { Rocket, Monitor, BarChart3, Shield, BookOpen, AlertCircle } from 'lucide-react';
+import { Button, Card, CardContent } from '@/shared/components/ui';
+import { useAuth } from '@/features/auth';
 
 const FEATURES = [
   {
-    icon: <LiveTvIcon />,
+    icon: Monitor,
     title: 'Live Orchestration',
     desc: 'Real-time control over narrative turns and character decisions.',
   },
   {
-    icon: <InsightsIcon />,
+    icon: BarChart3,
     title: 'Adaptive Analytics',
     desc: 'Deep insight into plot progression and character relationships.',
   },
   {
-    icon: <SecurityIcon />,
+    icon: Shield,
     title: 'Secure Environment',
     desc: 'Air-gapped simulation sandbox for safe narrative testing.',
   },
 ];
 
-const FeatureCard: React.FC<{ icon: React.ReactElement; title: string; desc: string }> = ({
-  icon,
-  title,
-  desc,
-}) => (
-  <Grid item xs={12} data-testid="feature-card">
-    <Stack direction="row" spacing={2} alignItems="flex-start">
-      <Box
-        sx={{
-          width: 36,
-          height: 36,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: tokens.colors.background.interactive,
-          color: tokens.colors.primary[500],
-        }}
-      >
-        {React.cloneElement(icon, { sx: { fontSize: 18 } })}
-      </Box>
-      <Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {desc}
-        </Typography>
-      </Box>
-    </Stack>
-  </Grid>
-);
+function FeatureCard({ icon: Icon, title, desc }: { icon: typeof Monitor; title: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3" data-testid="feature-card">
+      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Icon className="h-4 w-4 text-primary" />
+      </div>
+      <div>
+        <h3 className="font-semibold">{title}</h3>
+        <p className="text-sm text-muted-foreground">{desc}</p>
+      </div>
+    </div>
+  );
+}
 
-const FeaturePanel: React.FC = () => (
-  <motion.div variants={itemVariants}>
-    <Paper
-      elevation={0}
-      sx={{
-        p: { xs: 3, md: 4 },
-        borderRadius: 4,
-        border: `1px solid ${tokens.colors.border.primary}`,
-        backgroundColor: tokens.colors.background.paper,
-      }}
-    >
-      <Stack spacing={3}>
-        <Stack spacing={1}>
-          <Typography variant="overline" sx={{ letterSpacing: '0.2em', color: 'text.secondary' }}>
-            Capabilities
-          </Typography>
-          <Typography variant="h6" sx={{ fontFamily: tokens.typography.headingFamily, fontWeight: 600 }}>
-            Built for operators, not dashboards.
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+function FeaturePanel() {
+  return (
+    <Card>
+      <CardContent className="p-6 space-y-6">
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Capabilities</p>
+          <h2 className="text-lg font-semibold">Built for operators, not dashboards.</h2>
+          <p className="text-sm text-muted-foreground">
             Minimal surfaces, precise hierarchy, and legible telemetry across every scale.
-          </Typography>
-        </Stack>
+          </p>
+        </div>
 
-        <Divider />
+        <div className="h-px bg-border" />
 
-        <Grid container spacing={2}>
+        <div className="space-y-4">
           {FEATURES.map((feature) => (
             <FeatureCard key={feature.title} {...feature} />
           ))}
-        </Grid>
-      </Stack>
-    </Paper>
-  </motion.div>
-);
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-const HeroBadge: React.FC = () => (
-  <motion.div variants={itemVariants}>
-    <Box
+function HeroBadge() {
+  return (
+    <div
       data-testid="version-chip"
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 1,
-        px: 2,
-        py: 0.75,
-        borderRadius: 99,
-        border: `1px solid ${tokens.colors.border.primary}`,
-        backgroundColor: tokens.colors.background.paper,
-        color: 'text.secondary',
-        fontWeight: 600,
-        fontSize: '0.8rem',
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-      }}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-background text-sm font-medium tracking-wider uppercase"
     >
-      <AutoStoriesIcon sx={{ fontSize: 16, color: tokens.colors.primary[500] }} />
+      <BookOpen className="h-4 w-4 text-primary" />
       Novel Engine
-    </Box>
-  </motion.div>
-);
+    </div>
+  );
+}
 
-const HeroTitle: React.FC = () => (
-  <motion.div variants={itemVariants}>
-    <Typography
-      variant="h1"
-      component="h1"
-      sx={{
-        fontFamily: tokens.typography.headingFamily,
-        fontWeight: 600,
-        fontSize: { xs: '2.8rem', sm: '3.4rem', md: '4.5rem' },
-        lineHeight: 1.05,
-        letterSpacing: '-0.02em',
-      }}
-    >
+function HeroTitle() {
+  return (
+    <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-tight">
       Narrative Engine
-      <Box component="span" sx={{ display: 'block', color: tokens.colors.primary[500] }}>
-        calm control for complex stories.
-      </Box>
-    </Typography>
-  </motion.div>
-);
+      <span className="block text-primary">calm control for complex stories.</span>
+    </h1>
+  );
+}
 
-const HeroDescription: React.FC = () => (
-  <motion.div variants={itemVariants}>
-    <Typography
-      variant="h5"
-      sx={{
-        color: 'text.secondary',
-        maxWidth: 560,
-        lineHeight: 1.6,
-        fontSize: { xs: '1rem', md: '1.15rem' },
-        fontWeight: 400,
-      }}
-    >
+function HeroDescription() {
+  return (
+    <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
       Direct complex storylines across Meridian Station. Monitor character networks, guide event
       cascades, and watch your narrative evolve in real time.
-    </Typography>
-  </motion.div>
-);
+    </p>
+  );
+}
 
-const HeroActions: React.FC<{
+interface HeroActionsProps {
   isLoading: boolean;
   error: Error | null;
-  enterGuestMode: () => Promise<void>;
-}> = ({ isLoading, error, enterGuestMode }) => {
+  onLaunch: () => void;
+}
+
+function HeroActions({ isLoading, error, onLaunch }: HeroActionsProps) {
   const navigate = useNavigate();
 
   return (
-    <motion.div variants={itemVariants}>
+    <div className="space-y-4">
       {error && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2, textAlign: 'left', maxWidth: 640 }}
-          action={
-            <Button color="inherit" size="small" onClick={() => void enterGuestMode()} disabled={isLoading}>
-              Retry
-            </Button>
-          }
-        >
-          {error.message || 'Failed to connect to backend.'}
-        </Alert>
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive max-w-lg">
+          <AlertCircle className="h-4 w-4" />
+          <span className="text-sm">{error.message || 'Failed to connect to backend.'}</span>
+          <Button variant="ghost" size="sm" onClick={onLaunch} disabled={isLoading}>
+            Retry
+          </Button>
+        </div>
       )}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
+      <div className="flex flex-col sm:flex-row gap-3">
         <Button
-          variant="contained"
-          size="large"
-          onClick={() => void enterGuestMode()}
-          startIcon={<RocketLaunchIcon />}
-          data-testid="cta-launch"
+          size="lg"
+          onClick={onLaunch}
           disabled={isLoading}
-          sx={{
-            px: 4,
-            py: 1.6,
-            fontSize: '1rem',
-            fontWeight: 600,
-            borderRadius: 999,
-            boxShadow: tokens.elevation.sm,
-          }}
+          data-testid="cta-launch"
+          className="rounded-full px-8"
         >
+          <Rocket className="h-4 w-4 mr-2" />
           {isLoading ? 'Launching...' : 'Launch Engine'}
         </Button>
-        <Button variant="text" onClick={() => navigate('/login')} sx={{ color: 'text.secondary' }}>
+        <Button
+          variant="ghost"
+          onClick={() => navigate({ to: '/login' })}
+          className="text-muted-foreground"
+        >
           Already have an account? Login
         </Button>
-      </Stack>
-    </motion.div>
+      </div>
+    </div>
   );
-};
+}
 
-const HeroPanel: React.FC<{
-  isLoading: boolean;
-  error: Error | null;
-  enterGuestMode: () => Promise<void>;
-}> = ({ isLoading, error, enterGuestMode }) => (
-  <Stack spacing={4}>
-    <HeroBadge />
-    <HeroTitle />
-    <HeroDescription />
-    <HeroActions isLoading={isLoading} error={error} enterGuestMode={enterGuestMode} />
-  </Stack>
-);
-
-const LandingPage: React.FC = () => {
+export default function LandingPage() {
   const navigate = useNavigate();
-  const { enterGuestMode, isAuthenticated, isLoading, error } = useAuthContext();
+  const { isAuthenticated, isLoading, error, loginAsGuest } = useAuth();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate({ to: '/dashboard' });
     }
   }, [isAuthenticated, navigate]);
 
-  React.useEffect(() => {
-    void import('../features/dashboard/Dashboard');
-  }, []);
+  const handleLaunch = async () => {
+    await loginAsGuest();
+  };
 
   return (
-    <Box
-      component="main"
+    <main
       id="main-content"
-      sx={{
-        minHeight: '100vh',
-        color: 'text.primary',
-        display: 'flex',
-        alignItems: 'center',
-        py: { xs: 8, md: 10 },
-      }}
+      className="min-h-screen flex items-center py-16 md:py-20"
     >
-      <Container maxWidth="lg">
-        <motion.div variants={containerVariants} initial="hidden" animate="visible">
-          <Grid container spacing={{ xs: 6, md: 10 }} alignItems="center">
-            <Grid item xs={12} md={7}>
-              <HeroPanel isLoading={isLoading} error={error} enterGuestMode={enterGuestMode} />
-            </Grid>
+      <div className="container mx-auto px-4 max-w-6xl">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-16 items-center">
+          {/* Hero Section */}
+          <div className="md:col-span-7 space-y-8">
+            <HeroBadge />
+            <HeroTitle />
+            <HeroDescription />
+            <HeroActions isLoading={isLoading} error={error} onLaunch={handleLaunch} />
+          </div>
 
-            <Grid item xs={12} md={5}>
-              <FeaturePanel />
-            </Grid>
-          </Grid>
-        </motion.div>
-      </Container>
-    </Box>
+          {/* Feature Panel */}
+          <div className="md:col-span-5">
+            <FeaturePanel />
+          </div>
+        </div>
+      </div>
+    </main>
   );
-};
-
-export default LandingPage;
+}

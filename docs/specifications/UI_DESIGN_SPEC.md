@@ -1262,7 +1262,7 @@ UserSession: {
 
 **Frontend Framework**: React 18+ with TypeScript
 **Styling**: CSS-in-JS (Styled Components or Emotion) + CSS Custom Properties
-**State Management**: Redux Toolkit + RTK Query for API state
+**State Management**: Zustand + TanStack Query for API state
 **Real-time**: WebSocket connection with socket.io-client
 **Data Visualization**: Recharts for charts (Note: D3.js/Three.js were considered but not implemented in current release)
 **Testing**: Jest + React Testing Library + Playwright for E2E

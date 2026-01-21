@@ -1,120 +1,134 @@
-import React from 'react';
-import {
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  IconButton,
-  Button,
-  Stack,
-  Box,
-  styled
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import type { Campaign } from '@/types/campaign';
+/**
+ * CampaignCard - Display card for a campaign
+ */
+import { Play, Pause, Edit, Trash2, Users, Clock } from 'lucide-react';
+import { Card, CardContent, Badge, Button } from '@/shared/components/ui';
+import { cn, formatRelativeTime } from '@/lib/utils';
+import type { Campaign, CampaignStatus } from '@/shared/types/campaign';
 
 interface CampaignCardProps {
   campaign: Campaign;
-  onResume?: (id: string) => void;
-  onMenu?: (id: string) => void;
+  onStart?: (id: string) => void;
+  onPause?: (id: string) => void;
+  onEdit?: (campaign: Campaign) => void;
+  onDelete?: (id: string) => void;
+  onSelect?: (campaign: Campaign) => void;
 }
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  backgroundColor: theme.palette.background.paper,
-  border: `1px solid ${theme.palette.divider}`,
-  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: theme.shadows[3],
-    borderColor: theme.palette.primary.main,
-  }
-}));
-
-const StatusChip = styled(Chip)<{ status: string }>(({ theme, status }) => {
-  const getColors = () => {
-    switch (status) {
-      case 'active':
-        return {
-          bg: alpha(theme.palette.success.main, 0.12),
-          color: theme.palette.success.main,
-          border: theme.palette.success.main
-        };
-      case 'completed':
-        return {
-          bg: alpha(theme.palette.info.main, 0.12),
-          color: theme.palette.info.main,
-          border: theme.palette.info.main
-        };
-      default:
-        return {
-          bg: alpha(theme.palette.text.secondary, 0.12),
-          color: theme.palette.text.secondary,
-          border: theme.palette.text.secondary
-        };
-    }
-  };
-
-  const colors = getColors();
-
-  return {
-    backgroundColor: colors.bg,
-    color: colors.color,
-    border: `1px solid ${colors.border}`,
-    fontWeight: 600
-  };
-});
-
-export const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onResume, onMenu }) => {
-  return (
-    <StyledCard>
-      <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
-          <Box>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              {campaign.name}
-            </Typography>
-            <StatusChip
-              label={campaign.status.toUpperCase()}
-              size="small"
-              status={campaign.status}
-            />
-          </Box>
-          <IconButton 
-            size="small" 
-            sx={{ color: 'text.secondary' }}
-            onClick={() => onMenu?.(campaign.id)}
-            aria-label="Campaign options"
-          >
-            <MoreVertIcon />
-          </IconButton>
-        </Stack>
-
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          paragraph 
-          sx={{ minHeight: '3em' }}
-        >
-          {campaign.description}
-        </Typography>
-
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mt={2}>
-          <Typography variant="caption" color="text.secondary">
-            Turn {campaign.current_turn} • Updated {new Date(campaign.updated_at).toLocaleDateString()}
-          </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<PlayArrowIcon />}
-            sx={{ borderColor: (theme) => theme.palette.divider, color: 'text.primary' }}
-            onClick={() => onResume?.(campaign.id)}
-          >
-            Resume
-          </Button>
-        </Stack>
-      </CardContent>
-    </StyledCard>
-  );
+const statusColors: Record<CampaignStatus, string> = {
+  draft: 'bg-muted text-muted-foreground',
+  active: 'bg-success text-success-foreground',
+  paused: 'bg-warning text-warning-foreground',
+  completed: 'bg-primary text-primary-foreground',
+  archived: 'bg-secondary text-secondary-foreground',
 };
+
+const statusLabels: Record<CampaignStatus, string> = {
+  draft: 'Draft',
+  active: 'Active',
+  paused: 'Paused',
+  completed: 'Completed',
+  archived: 'Archived',
+};
+
+export function CampaignCard({
+  campaign,
+  onStart,
+  onPause,
+  onEdit,
+  onDelete,
+  onSelect,
+}: CampaignCardProps) {
+  return (
+    <Card
+      className="cursor-pointer transition-all hover:shadow-md"
+      onClick={() => onSelect?.(campaign)}
+    >
+      <CardContent className="p-4">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h3 className="font-semibold">{campaign.name}</h3>
+            <Badge className={cn('text-xs mt-1', statusColors[campaign.status])}>
+              {statusLabels[campaign.status]}
+            </Badge>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-1">
+            {campaign.status === 'active' && onPause && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPause(campaign.id);
+                }}
+              >
+                <Pause className="h-4 w-4" />
+              </Button>
+            )}
+            {(campaign.status === 'draft' || campaign.status === 'paused') && onStart && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-success"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStart(campaign.id);
+                }}
+              >
+                <Play className="h-4 w-4" />
+              </Button>
+            )}
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(campaign);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(campaign.id);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Description */}
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          {campaign.description}
+        </p>
+
+        {/* Meta */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            <span>{campaign.characterIds.length} characters</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>Turn {campaign.currentTurn}</span>
+          </div>
+          <span className="ml-auto">{formatRelativeTime(campaign.updatedAt)}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

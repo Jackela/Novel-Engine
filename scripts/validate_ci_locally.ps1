@@ -8,6 +8,14 @@ Write-Host "🔍 CI/CD Local Validation for Novel-Engine" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host ""
 
+function Assert-LastExitCode {
+    param([string]$Step)
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ $Step failed (exit code $LASTEXITCODE)" -ForegroundColor Red
+        exit 1
+    }
+}
+
 # Check Python version (must be 3.11+)
 Write-Host "📋 Checking Python version..." -ForegroundColor Yellow
 try {
@@ -28,11 +36,40 @@ catch {
     exit 1
 }
 
+# Clean environment artifacts
+Write-Host "🧹 Cleaning environment..." -ForegroundColor Yellow
+$cacheDirs = Get-ChildItem -Path "." -Recurse -Force -Directory -Filter "__pycache__"
+foreach ($dir in $cacheDirs) {
+    Remove-Item $dir.FullName -Recurse -Force -ErrorAction SilentlyContinue
+}
+$pytestCaches = Get-ChildItem -Path "." -Recurse -Force -Directory -Filter ".pytest_cache"
+foreach ($dir in $pytestCaches) {
+    Remove-Item $dir.FullName -Recurse -Force -ErrorAction SilentlyContinue
+}
+$pathsToRemove = @(
+    "reports",
+    "coverage",
+    "dist",
+    "node_modules",
+    "frontend/node_modules",
+    "frontend/dist"
+)
+foreach ($path in $pathsToRemove) {
+    if (Test-Path $path) {
+        Remove-Item $path -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+Write-Host "✓ Environment cleaned" -ForegroundColor Green
+Write-Host ""
+
 # Install dependencies
 Write-Host "📦 Installing dependencies..." -ForegroundColor Yellow
 python -m pip install --upgrade pip --quiet
+Assert-LastExitCode "Upgrade pip"
 pip install -r requirements.txt --quiet
+Assert-LastExitCode "Install Python requirements"
 pip install pytest pytest-asyncio pytest-timeout httpx --quiet
+Assert-LastExitCode "Install test dependencies"
 Write-Host "✓ Dependencies installed" -ForegroundColor Green
 Write-Host ""
 
@@ -40,8 +77,7 @@ Write-Host ""
 Write-Host "🧪 Running backend CI gates..." -ForegroundColor Yellow
 Write-Host ""
 
-$testExitCode = 0
-$env:PYTHONPATH = "$PWD;$PWD\src"
+$env:PYTHONPATH = "$PWD\src"
 $minPyramidScore = if ($env:MIN_PYRAMID_SCORE) { [double]$env:MIN_PYRAMID_SCORE } else { 5.5 }
 
 if (-not (Test-Path "reports")) {
@@ -49,30 +85,27 @@ if (-not (Test-Path "reports")) {
 }
 
 python scripts/testing/validate-test-markers.py --all --verbose
-if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
+Assert-LastExitCode "Validate test markers"
 
 python scripts/testing/test-pyramid-monitor-fast.py --format json --save-history > pyramid-report.json
-if ($LASTEXITCODE -ne 0) {
-    $testExitCode = 1
-} else {
-    $report = Get-Content "pyramid-report.json" | ConvertFrom-Json
-    if ($report.score -lt $minPyramidScore) {
-        Write-Host "❌ Test pyramid score ($($report.score)) below threshold ($minPyramidScore)" -ForegroundColor Red
-        $testExitCode = 1
-    }
+Assert-LastExitCode "Generate test pyramid report"
+$report = Get-Content "pyramid-report.json" | ConvertFrom-Json
+if ($report.score -lt $minPyramidScore) {
+    Write-Host "❌ Test pyramid score ($($report.score)) below threshold ($minPyramidScore)" -ForegroundColor Red
+    exit 1
 }
 
 python -m pytest -m "unit" --tb=short --durations=10 --junitxml=reports/unit-tests.xml
-if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
+Assert-LastExitCode "Unit tests"
 
 python -m pytest -m "integration" --tb=short --durations=10 --junitxml=reports/integration-tests.xml
-if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
+Assert-LastExitCode "Integration tests"
 
 python -m pytest -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
-if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
+Assert-LastExitCode "E2E tests"
 
 python -m pytest -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py --junitxml=reports/smoke-tests.xml
-if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
+Assert-LastExitCode "Smoke tests"
 
 Write-Host ""
 Write-Host "🌐 Running frontend CI checks..." -ForegroundColor Yellow
@@ -80,13 +113,19 @@ $frontendDir = "frontend"
 if (Test-Path $frontendDir) {
     Push-Location $frontendDir
     if (Test-Path "package.json") {
+        npm ci
+        Assert-LastExitCode "Install frontend dependencies"
+
         npm test --if-present --silent
-        if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
+        Assert-LastExitCode "Frontend unit tests"
+
+        npm run test:integration --if-present
+        Assert-LastExitCode "Frontend integration tests"
 
         npm run build --if-present
-        if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
+        Assert-LastExitCode "Frontend build"
 
-        $env:PYTHONPATH = "..;..\src"
+        $env:PYTHONPATH = "..\src"
         $playwrightPort = 3000
         try {
             $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, 3000)
@@ -97,8 +136,9 @@ if (Test-Path $frontendDir) {
         }
         $env:PLAYWRIGHT_PORT = $playwrightPort
         $env:VITE_DEV_PORT = $playwrightPort
+        $env:CI = "true"
         npm run test:e2e:smoke
-        if ($LASTEXITCODE -ne 0) { $testExitCode = 1 }
+        Assert-LastExitCode "Playwright E2E smoke tests"
     } else {
         Write-Host "⚠ No frontend package.json found, skipping" -ForegroundColor Yellow
     }
@@ -109,20 +149,9 @@ if (Test-Path $frontendDir) {
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
-if ($testExitCode -eq 0) {
-    Write-Host "✅ Validation PASSED" -ForegroundColor Green
-    Write-Host "   All tests passed and coverage meets 20% threshold" -ForegroundColor Green
-    Write-Host "   Safe to push to GitHub" -ForegroundColor Green
-}
-else {
-    Write-Host "❌ Validation FAILED" -ForegroundColor Red
-    Write-Host "   Fix issues before pushing to GitHub" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Common issues:" -ForegroundColor Yellow
-    Write-Host "  - Test failures: Check test output above for failing tests" -ForegroundColor Yellow
-    Write-Host "  - Coverage below 20%: Add tests or check .coveragerc configuration" -ForegroundColor Yellow
-    Write-Host "  - Import errors: Verify PYTHONPATH includes src/" -ForegroundColor Yellow
-}
+Write-Host "✅ Validation PASSED" -ForegroundColor Green
+Write-Host "   All tests passed and coverage meets 20% threshold" -ForegroundColor Green
+Write-Host "   Safe to push to GitHub" -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Cyan
 
-exit $testExitCode
+exit 0

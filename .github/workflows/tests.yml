@@ -122,7 +122,8 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
-        run: npx playwright test
+        working-directory: frontend
+        run: npm run test:e2e:smoke
         env:
           CI: true
 

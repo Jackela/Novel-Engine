@@ -31,7 +31,7 @@ Novel Engine is a production-ready AI-powered multi-agent narrative simulation s
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   Backend       │    │   AI Services   │
 │   React/TS      │◄──►│   FastAPI       │◄──►│   Gemini API    │
-│   Material-UI   │    │   Python 3.11   │    │   GPT Models    │
+│   Shadcn UI     │    │   Python 3.11   │    │   GPT Models    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       
          │                       ▼                       
@@ -46,7 +46,7 @@ Novel Engine is a production-ready AI-powered multi-agent narrative simulation s
 
 **Frontend Tier**:
 - **Framework**: React 18 with TypeScript
-- **UI Library**: Material-UI v5 (dark theme)
+- **UI Library**: Shadcn UI + Tailwind CSS
 - **State Management**: React Query + local state
 - **Routing**: React Router v6
 - **Build Tool**: Vite
@@ -543,7 +543,7 @@ Structured Logging:
 ```yaml
 Frontend:
   - React 18 + TypeScript
-  - Material-UI v5
+  - Shadcn UI + Tailwind CSS
   - Vite
   - React Query
 
@@ -586,4 +586,3 @@ Development:
 **Last Updated**: 2024-11-04  
 **Maintained by**: Novel Engine Architecture Team  
 **License**: MIT
-

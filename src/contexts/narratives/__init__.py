@@ -43,7 +43,7 @@ from .domain.value_objects.causal_node import (
     CausalRelationType,
     CausalStrength,
 )
-from .domain.value_objects.narrative_v2_models import (
+from .domain.value_objects.narrative_models import (
     NarrativeGuidance,
     PacingAdjustment,
     StoryArcPhase,

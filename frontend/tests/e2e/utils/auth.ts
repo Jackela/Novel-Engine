@@ -13,7 +13,7 @@ export const resetAuthState = async (page: Page) => {
 };
 
 export const mockGuestSessionApi = async (page: Page) => {
-  await page.route(/\/api\/guest\/session/, async route => {
+  await page.route(/\/api\/guest\/sessions/, async route => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -25,8 +25,31 @@ export const mockGuestSessionApi = async (page: Page) => {
 export const activateGuestSession = async (page: Page) => {
   await page.addInitScript(() => {
     try {
-      localStorage.setItem('guest_session_active', '1');
-      sessionStorage.setItem('guest_session_active', '1');
+      const guestToken = {
+        accessToken: 'guest',
+        refreshToken: '',
+        tokenType: 'Guest',
+        expiresAt: Date.now() + 60 * 60 * 1000,
+        refreshExpiresAt: 0,
+        user: {
+          id: 'guest',
+          username: 'guest',
+          email: '',
+          roles: ['guest'],
+        },
+      };
+      const payload = {
+        state: {
+          token: guestToken,
+          isGuest: true,
+          workspaceId: 'ws-mock',
+        },
+        version: 0,
+      };
+      localStorage.setItem('novel-engine-auth', JSON.stringify(payload));
+      localStorage.setItem('novelengine_guest_session', '1');
+      sessionStorage.setItem('novelengine_guest_session', '1');
+      localStorage.setItem('e2e_bypass_auth', '1');
     } catch {
       // ignore storage errors on opaque origins
     }

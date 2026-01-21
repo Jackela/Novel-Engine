@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Stack, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { Close as CloseIcon } from '@mui/icons-material';
 import QuickActions, { type QuickAction } from '../QuickActions';
 import AnalyticsDashboard from '../AnalyticsDashboard';
 import CharacterNetworks from '../CharacterNetworks';

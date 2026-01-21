@@ -7,7 +7,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { styled, alpha } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material';
 import { motion } from 'framer-motion';
 // Removed unused imports: PerformanceIcon, MemoryIcon, StorageIcon, NetworkIcon, StatusIcon
 import { usePerformance, type PerformanceMetric } from '@/hooks/usePerformance';

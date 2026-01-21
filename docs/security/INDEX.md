@@ -9,13 +9,7 @@
 
 ## Overview
 
-Security guidelines, migration documentation, and security best practices.
-
-## Contents
-
-- [SEC-001 HTTPOnly Cookie Migration](./SEC-001-HTTPONLY-COOKIE-MIGRATION.md) - Cookie security migration guide
-
----
+Security guidelines and best practices for Novel Engine deployments.
 
 ## Related
 

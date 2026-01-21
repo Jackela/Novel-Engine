@@ -84,7 +84,7 @@ Implementation guides, patterns, and workflows for Novel Engine development.
 
 ### Testing
 - [Testing Guide](../testing/TESTING.md)
-- [Testing Structure](../testing/TESTING_STRUCTURE.md)
+- [Testing Overview](../testing/INDEX.md)
 
 ---
 

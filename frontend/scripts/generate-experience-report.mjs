@@ -131,10 +131,18 @@ function buildSummaryTable(rows) {
     `- Duration: ${(offlineSummary.duration / 1000).toFixed(2)}s`
   ]);
 
+  const weaverSpec = findSpecByTag(testResults, '@weaver-smoke');
+  const weaverSummary = summarizeResult(weaverSpec);
+  const weaverSection = formatSection('Weaver Workflow', [
+    `- Status: ${weaverSummary.status}`,
+    `- Duration: ${(weaverSummary.duration / 1000).toFixed(2)}s`
+  ]);
+
   const markdown = [
     formatSection('Experience Report Summary', reportMeta),
     demoSection,
     offlineSection,
+    weaverSection,
   ].join('\n');
 
   const htmlSections = [
@@ -149,6 +157,12 @@ function buildSummaryTable(rows) {
       status: offlineSummary.status,
       duration: offlineSummary.duration,
       description: 'Simulates offline mode to ensure indicator + telemetry behave as expected.'
+    }),
+    htmlSection({
+      heading: 'Weaver Workflow',
+      status: weaverSummary.status,
+      duration: weaverSummary.duration,
+      description: 'Validates Weaver node add, drag, and connect interactions.'
     })
   ];
   const htmlReport = htmlLayout({ title: 'Experience Report', sections: htmlSections });
@@ -161,13 +175,21 @@ function buildSummaryTable(rows) {
   await Promise.all([
     writeFileSafe(mdPath, markdown),
     writeFileSafe(htmlPath, htmlReport),
-    writeFileSafe(jsonPath, JSON.stringify({ demoSummary, offlineSummary, generatedAt: new Date().toISOString() }, null, 2))
+    writeFileSafe(
+      jsonPath,
+      JSON.stringify(
+        { demoSummary, offlineSummary, weaverSummary, generatedAt: new Date().toISOString() },
+        null,
+        2
+      )
+    )
   ]);
   await pruneOldReports(REPORT_RETENTION_COUNT);
 
   const summaryTable = buildSummaryTable([
     { label: 'Demo CTA', summary: demoSummary },
     { label: 'Offline Recovery', summary: offlineSummary },
+    { label: 'Weaver Workflow', summary: weaverSummary },
   ]);
 
   console.log('📝 Experience Summary\n');

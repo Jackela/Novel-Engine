@@ -1,16 +1,15 @@
-export interface AuthToken {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  expiresAt: number;
-  refreshExpiresAt: number;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    roles: string[];
-  };
-}
+import { z } from 'zod';
+import {
+  AuthTokenSchema,
+  AuthResponseSchema,
+  AuthUserSchema,
+  LoginRequestSchema,
+} from '@/types/schemas';
+
+export type AuthUser = z.infer<typeof AuthUserSchema>;
+export type AuthToken = z.infer<typeof AuthTokenSchema>;
+export type LoginRequest = z.infer<typeof LoginRequestSchema>;
+export type LoginResponse = z.infer<typeof AuthResponseSchema>;
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -19,23 +18,4 @@ export interface AuthState {
   lastError: Error | null;
   lastLoginAt: string | null;
   isInitialized: boolean;
-}
-
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expires_in: number;
-  refresh_expires_in?: number;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    roles: string[];
-  };
 }

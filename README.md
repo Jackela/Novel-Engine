@@ -21,6 +21,21 @@
   - 前端：TypeScript 严格模式 + ESLint (SOLID 原则) + Vitest (80% 覆盖率要求)。
   - 后端：Mypy 类型检查 + Pytest 单元/集成测试。
 
+---
+
+## 🧵 The Weaver
+
+A node-based narrative orchestration interface built with React Flow. Weaver provides a visual, draggable canvas for composing characters, events, and locations, then linking them into a narrative execution graph.
+
+---
+
+## 🧩 技术栈
+
+- **UI**: Shadcn UI + Tailwind CSS
+- **State**: Zustand
+- **Data**: TanStack Query
+- **Backend**: FastAPI + Pydantic V2
+
 
 
 ---
@@ -166,7 +181,7 @@ Novel-Engine/
 │   ├── src/features/     # 业务功能模块
 │   └── tests/            # Vitest & Playwright 测试
 ├── docs/                 # 架构文档与规范
-├── openspec/             # 架构演进提案 (OpenSpec)
+├── docs/specs/openspec/             # 架构演进提案 (OpenSpec)
 └── characters/           # 用户角色数据存储 (YAML/MD)
 ```
 
@@ -207,7 +222,7 @@ Novel-Engine/
 ## 🤖 AI 协作
 
 - `AGENTS.md` 是 AI 工作流与 SSoT 位置的唯一真相来源。
-- 任何包含提案/规格/架构变更的请求，先阅读 `openspec/AGENTS.md`。
+- 任何包含提案/规格/架构变更的请求，先阅读 `docs/specs/openspec/AGENTS.md`。
 - 项目构建与测试命令请参考 `CLAUDE.md`。
 
 ---

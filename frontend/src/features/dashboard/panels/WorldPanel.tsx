@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button, styled } from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import { alpha } from '@mui/material';
+import { OpenInFull as OpenInFullIcon } from '@mui/icons-material';
 import WorldStateMap from '../WorldStateMap';
 import { ErrorBoundary } from '@/components/error-boundaries/ErrorBoundary';
 import PanelErrorFallback from '../PanelErrorFallback';

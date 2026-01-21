@@ -11,6 +11,8 @@
 
 Novel Engine provides a comprehensive API layer offering unified access to all system capabilities with consistent authentication, validation, and response patterns.
 
+The authoritative contract snapshot lives at `docs/api/openapi.json` and is regenerated from the FastAPI app.
+
 ---
 
 ## API Architecture
@@ -69,17 +71,17 @@ Engine  Service   Manager
 
 ```javascript
 // Fetch character
-const response = await fetch('http://localhost:8000/characters/krieg');
+const response = await fetch('http://localhost:8000/api/characters/krieg');
 const character = await response.json();
 
 // Run simulation
-const simulation = await fetch('http://localhost:8000/simulations', {
+const simulation = await fetch('http://localhost:8000/api/simulations', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     character_names: ['krieg', 'ork_warboss'],
     turns: 5,
-    narrative_style': 'action'
+    narrative_style: 'action'
   })
 });
 ```

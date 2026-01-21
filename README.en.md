@@ -21,6 +21,21 @@ A production-ready AI-driven narrative generation and multi-agent simulation pla
   - Frontend: TypeScript Strict + ESLint (SOLID) + Vitest (80% coverage enforcement).
   - Backend: Mypy type checking + Pytest unit/integration suites.
 
+---
+
+## 🧵 The Weaver
+
+A node-based narrative orchestration interface built with React Flow. Weaver provides a visual, draggable canvas for composing characters, events, and locations, then linking them into a narrative execution graph.
+
+---
+
+## 🧩 Stack
+
+- **UI**: Shadcn UI + Tailwind CSS
+- **State**: Zustand
+- **Data**: TanStack Query
+- **Backend**: FastAPI + Pydantic V2
+
 ![Dashboard Preview](docs/assets/dashboard/dashboard-flow-2025-11-14-condensed.png)
 
 ---
@@ -85,7 +100,7 @@ Novel-Engine/
 │   ├── src/features/     # Business Feature Modules
 │   └── tests/            # Vitest & Playwright Suites
 ├── docs/                 # Architecture & Guides
-├── openspec/             # Architecture Evolution Proposals
+├── docs/specs/openspec/             # Architecture Evolution Proposals
 └── characters/           # User Data (YAML/MD)
 ```
 
@@ -126,7 +141,7 @@ We enforce a strict TDD (Test-Driven Development) workflow.
 ## 🤖 AI Collaboration
 
 - `AGENTS.md` is the SSOT for AI workflow and repo guardrails.
-- Any proposal/spec/architecture change should start with `openspec/AGENTS.md`.
+- Any proposal/spec/architecture change should start with `docs/specs/openspec/AGENTS.md`.
 - Build and test commands live in `CLAUDE.md`.
 
 ---

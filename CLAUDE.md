@@ -36,6 +36,12 @@ npm run test:e2e
 ## Ralph Loop（迭代操作手册）
 目标：最小化试错，确保每轮变更都可追踪、可验证、可复现。
 
+## Contract-First Protocol
+
+- When modifying APIs, always update Pydantic models first, regenerate `docs/api/openapi.json`, then update frontend Zod schemas.
+- Frontend: Use `npm run type-check` for validation.
+- Backend: Use `pytest`.
+
 ### R - Read（阅读与上下文）
 - 读取 `CLAUDE.md`、`AGENTS.md`（若存在）与关键 ADR
 - 扫描变更区域：`rg -n "关键词" src/ tests/ docs/`

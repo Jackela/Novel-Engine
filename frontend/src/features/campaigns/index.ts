@@ -1,3 +1,7 @@
-export { default as CampaignList } from './components/CampaignList';
+/**
+ * Campaigns feature module
+ */
 export { CampaignCard } from './components/CampaignCard';
-export { useCampaigns } from './hooks/useCampaigns';
+export { CampaignList } from './components/CampaignList';
+export * from './api/campaignApi';
+export { default as CampaignsPage } from './CampaignsPage';

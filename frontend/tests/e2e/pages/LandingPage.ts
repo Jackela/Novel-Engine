@@ -52,7 +52,7 @@ export class LandingPage {
   async navigateToLanding(options: { timeoutMs?: number } = {}) {
     const timeoutMs = options.timeoutMs ?? 30000;
     // Set up mocks needed for dashboard navigation (must be before goto)
-    await this.page.route(/\/api\/guest\/session/, async route => {
+    await this.page.route(/\/api\/guest\/sessions/, async route => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -62,7 +62,30 @@ export class LandingPage {
 
     await this.page.addInitScript(() => {
       try {
-        window.sessionStorage.setItem('guest_session_active', '1');
+        const guestToken = {
+          accessToken: 'guest',
+          refreshToken: '',
+          tokenType: 'Guest',
+          expiresAt: Date.now() + 60 * 60 * 1000,
+          refreshExpiresAt: 0,
+          user: {
+            id: 'guest',
+            username: 'guest',
+            email: '',
+            roles: ['guest'],
+          },
+        };
+        const payload = {
+          state: {
+            token: guestToken,
+            isGuest: true,
+            workspaceId: 'ws-mock',
+          },
+          version: 0,
+        };
+        window.localStorage.setItem('novel-engine-auth', JSON.stringify(payload));
+        window.sessionStorage.setItem('novelengine_guest_session', '1');
+        window.localStorage.setItem('e2e_bypass_auth', '1');
       } catch {
         // ignore storage failures
       }

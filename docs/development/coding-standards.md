@@ -11,7 +11,7 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
 ## 2. Frontend (TypeScript + React)
 
 ### Layout & Semantics
-- Use the flow-based layout defined in `openspec/specs/dashboard-layout/spec.md`. Critical zones must expose deterministic hooks: `data-role="control-cluster"`, `data-role="stream-feed"`, `data-role="pipeline"`, etc.
+- Use the flow-based layout defined in `docs/specs/openspec/specs/dashboard-layout/spec.md`. Critical zones must expose deterministic hooks: `data-role="control-cluster"`, `data-role="stream-feed"`, `data-role="pipeline"`, etc.
 - Components exposing interactions **must** provide stable `data-testid` attributes (e.g., `quick-action-play`, `connection-status`). Tests and MCP automation rely on these selectors.
 - Prefer CSS grid/flex tokens (see `frontend/src/components/layout/BentoGrid.tsx`) over inline styles. Clamp tall visuals with CSS functions (`clamp`, `minmax`) to keep first-fold density predictable.
 
@@ -80,7 +80,7 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
 - Any change touching layout, evidence, or CI must update:
   - README & README.en (sections: dev workflow, coding standards, screenshot references).
   - `docs/assets/dashboard/README.md` (table of MCP captures).
-- Keep OpenSpec changes (`openspec/changes/<id>/`) validated via `openspec validate <id> --strict`. Every task list must be checked off before a change is considered complete.
+- Keep OpenSpec changes (`docs/specs/openspec/changes/<id>/`) validated via `openspec validate <id> --strict`. Every task list must be checked off before a change is considered complete.
 
 Following this checklist ensures the next contributor (human or AI) can reproduce the stack, gather evidence, and pass CI without guesswork.
 
