@@ -45,6 +45,7 @@ export function useRealtimeEvents({
   const retryCountRef = useRef(0);
   const retryTimeoutRef = useRef<number | null>(null);
   const heartbeatTimeoutRef = useRef<number | null>(null);
+  const connectRef = useRef<() => void>(() => {});
 
   const clearTimeouts = useCallback(() => {
     if (retryTimeoutRef.current) {
@@ -67,6 +68,23 @@ export function useRealtimeEvents({
     onDisconnect?.();
   }, [clearTimeouts, onDisconnect]);
 
+  const scheduleReconnect = useCallback(() => {
+    if (!enabled) {
+      return;
+    }
+
+    if (retryCountRef.current < maxRetries) {
+      const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000);
+      retryCountRef.current += 1;
+      retryTimeoutRef.current = window.setTimeout(() => {
+        connectRef.current();
+      }, delay);
+    } else {
+      onError?.(new Error('Max reconnection attempts reached'));
+      onDisconnect?.();
+    }
+  }, [enabled, maxRetries, onError, onDisconnect]);
+
   const resetHeartbeat = useCallback(() => {
     if (heartbeatTimeoutRef.current) {
       clearTimeout(heartbeatTimeoutRef.current);
@@ -76,10 +94,10 @@ export function useRealtimeEvents({
       disconnect();
       retryCountRef.current = 0;
       if (enabled) {
-        connect();
+        connectRef.current();
       }
     }, heartbeatInterval * 2);
-  }, [heartbeatInterval, disconnect, enabled, connect]);
+  }, [heartbeatInterval, disconnect, enabled]);
 
   const connect = useCallback(() => {
     if (!enabled || eventSourceRef.current) return;
@@ -125,23 +143,24 @@ export function useRealtimeEvents({
         eventSource.close();
         eventSourceRef.current = null;
         setIsConnected(false);
-
-        if (retryCountRef.current < maxRetries) {
-          const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000);
-          retryCountRef.current++;
-
-          retryTimeoutRef.current = window.setTimeout(() => {
-            connect();
-          }, delay);
-        } else {
-          onError?.(new Error('Max reconnection attempts reached'));
-          onDisconnect?.();
-        }
+        scheduleReconnect();
       };
     } catch (error) {
       onError?.(error as Error);
     }
-  }, [url, enabled, maxRetries, onEvent, onConnect, onDisconnect, onError, resetHeartbeat]);
+  }, [
+    url,
+    enabled,
+    onEvent,
+    onConnect,
+    onError,
+    resetHeartbeat,
+    scheduleReconnect,
+  ]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   const reconnect = useCallback(() => {
     disconnect();

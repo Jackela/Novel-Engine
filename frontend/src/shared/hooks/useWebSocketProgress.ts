@@ -57,6 +57,7 @@ export function useWebSocketProgress({
   const retryCountRef = useRef(0);
   const retryTimeoutRef = useRef<number | null>(null);
   const manualCloseRef = useRef(false);
+  const connectRef = useRef<() => void>(() => {});
 
   const disconnect = useCallback(() => {
     manualCloseRef.current = true;
@@ -75,6 +76,20 @@ export function useWebSocketProgress({
     setIsConnected(false);
     setConnectionQuality({ latency: 0, status: 'disconnected' });
   }, []);
+
+  const scheduleReconnect = useCallback(() => {
+    if (!enabled || manualCloseRef.current) {
+      return;
+    }
+
+    if (retryCountRef.current < maxRetries) {
+      const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000);
+      retryCountRef.current += 1;
+      retryTimeoutRef.current = window.setTimeout(() => {
+        connectRef.current();
+      }, delay);
+    }
+  }, [enabled, maxRetries]);
 
   const measureLatency = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -139,6 +154,9 @@ export function useWebSocketProgress({
 
       ws.onerror = (event) => {
         onError?.(new Error('WebSocket error: ' + (event as ErrorEvent).message));
+        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+          ws.close();
+        }
       };
 
       ws.onclose = () => {
@@ -151,17 +169,7 @@ export function useWebSocketProgress({
           pingIntervalRef.current = null;
         }
 
-        if (!enabled || manualCloseRef.current) {
-          return;
-        }
-
-        if (retryCountRef.current < maxRetries) {
-          const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000);
-          retryCountRef.current += 1;
-          retryTimeoutRef.current = window.setTimeout(() => {
-            connect();
-          }, delay);
-        }
+        scheduleReconnect();
       };
     } catch (error) {
       onError?.(error as Error);
@@ -175,7 +183,12 @@ export function useWebSocketProgress({
     onComplete,
     onError,
     measureLatency,
+    scheduleReconnect,
   ]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   const reconnect = useCallback(() => {
     disconnect();

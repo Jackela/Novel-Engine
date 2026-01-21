@@ -180,7 +180,7 @@ export const handlers = [
       success: true,
       data: {
         story: 'Mock narrative output generated for Weaver sessions.',
-        participants: characters.map((character) => character.name),
+        participants: characterSummaries.map((character) => character.name),
         turns_completed: orchestrationState.current_turn,
         last_generated: nowIso(),
         has_content: true,
