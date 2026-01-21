@@ -3,7 +3,7 @@
  */
 import { User, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, Badge, Button } from '@/shared/components/ui';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import type { CharacterSummary } from '@/shared/types/character';
 
 interface CharacterCardProps {

@@ -2,7 +2,7 @@
  * SkipLink - Accessibility skip navigation link
  * Allows keyboard users to skip to main content
  */
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface SkipLinkProps {
   targetId: string;

@@ -3,7 +3,6 @@
  * Contains mobile menu button, breadcrumbs, and user menu
  */
 import { Menu, Bell, User, LogOut } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/components/ui/Button';
 
 interface TopBarProps {

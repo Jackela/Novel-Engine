@@ -3,7 +3,7 @@
  * Manages panel arrangement and responsive layout
  */
 import { Suspense } from 'react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/shared/components/feedback';
 
 // Lazy load panels for code splitting

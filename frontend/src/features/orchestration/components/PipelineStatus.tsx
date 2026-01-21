@@ -3,7 +3,7 @@
  */
 import { Activity, Brain, Zap, FileText, CheckCircle, Loader2 } from 'lucide-react';
 import { Card, CardContent, Badge } from '@/shared/components/ui';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import type { PipelinePhase, AgentStatus, OrchestrationStatus } from '@/shared/types/orchestration';
 
 interface PipelineStatusProps {

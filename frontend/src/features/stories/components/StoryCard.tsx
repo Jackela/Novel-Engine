@@ -1,9 +1,9 @@
 /**
  * StoryCard - Display card for a story
  */
-import { FileText, Users, Clock, Tag, Trash2, Download } from 'lucide-react';
+import { FileText, Users, Tag, Trash2, Download } from 'lucide-react';
 import { Card, CardContent, Badge, Button } from '@/shared/components/ui';
-import { cn, formatRelativeTime } from '@/shared/lib/utils';
+import { cn, formatRelativeTime } from '@/lib/utils';
 import type { Story, StoryMood } from '@/shared/types/story';
 
 interface StoryCardProps {

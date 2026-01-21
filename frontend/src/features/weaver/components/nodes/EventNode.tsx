@@ -5,7 +5,7 @@ import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { Calendar, Zap } from 'lucide-react';
 import { Card, CardContent, Badge } from '@/shared/components/ui';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 
 export interface EventNodeData {
   title: string;

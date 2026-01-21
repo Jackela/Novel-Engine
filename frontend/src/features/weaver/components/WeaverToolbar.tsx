@@ -1,7 +1,7 @@
 /**
  * WeaverToolbar - Toolbar for weaver actions
  */
-import { Users, Sparkles, Link2, MapPin, Zap, Save, Undo, Redo } from 'lucide-react';
+import { Users, Sparkles, MapPin, Zap, Save, Undo, Redo } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import {
   Tooltip,

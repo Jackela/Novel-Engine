@@ -2,7 +2,7 @@
  * Separator - Visual divider component
  */
 import { forwardRef } from 'react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface SeparatorProps extends React.HTMLAttributes<HTMLDivElement> {
   orientation?: 'horizontal' | 'vertical';

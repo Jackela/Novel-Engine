@@ -3,7 +3,7 @@
  */
 import { Play, Pause, Edit, Trash2, Users, Clock } from 'lucide-react';
 import { Card, CardContent, Badge, Button } from '@/shared/components/ui';
-import { cn, formatRelativeTime } from '@/shared/lib/utils';
+import { cn, formatRelativeTime } from '@/lib/utils';
 import type { Campaign, CampaignStatus } from '@/shared/types/campaign';
 
 interface CampaignCardProps {

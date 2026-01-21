@@ -3,7 +3,7 @@
  * Contains sidebar navigation and main content area
  */
 import { useState } from 'react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 

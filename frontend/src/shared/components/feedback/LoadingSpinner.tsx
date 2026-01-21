@@ -2,7 +2,7 @@
  * LoadingSpinner - Loading indicator component
  * Used for suspense boundaries and async operations
  */
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
 interface LoadingSpinnerProps {

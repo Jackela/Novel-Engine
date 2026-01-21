@@ -2,7 +2,7 @@
  * Card - Container component with header, content, footer
  */
 import { forwardRef } from 'react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 
 const Card = forwardRef<
   HTMLDivElement,

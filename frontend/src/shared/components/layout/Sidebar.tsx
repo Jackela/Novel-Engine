@@ -13,7 +13,7 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   open: boolean;

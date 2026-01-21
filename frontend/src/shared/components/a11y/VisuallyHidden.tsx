@@ -2,7 +2,7 @@
  * VisuallyHidden - Hides content visually but keeps it accessible
  */
 import type { ReactNode, ElementType } from 'react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface VisuallyHiddenProps {
   children: ReactNode;

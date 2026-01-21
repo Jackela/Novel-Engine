@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from '@/shared/components/ui/dialog';
 import { Button, Badge, Card, CardContent } from '@/shared/components/ui';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import type { DecisionPoint, DecisionOption } from '@/shared/types/orchestration';
 
 interface DecisionDialogProps {

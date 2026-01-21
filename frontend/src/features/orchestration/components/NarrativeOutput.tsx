@@ -4,7 +4,7 @@
 import { ScrollText, Users, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import { Card, CardContent, Badge, Button } from '@/shared/components/ui';
-import { cn, formatRelativeTime } from '@/shared/lib/utils';
+import { cn, formatRelativeTime } from '@/lib/utils';
 import type { NarrativeOutput as NarrativeOutputType } from '@/shared/types/orchestration';
 
 interface NarrativeOutputProps {

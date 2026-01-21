@@ -3,7 +3,7 @@
  */
 import { ArrowLeft, Download, Clock, Users, Tag } from 'lucide-react';
 import { Button, Badge, Card, CardContent } from '@/shared/components/ui';
-import { cn, formatRelativeTime } from '@/shared/lib/utils';
+import { cn, formatRelativeTime } from '@/lib/utils';
 import type { Story, StoryMood, StoryEvent } from '@/shared/types/story';
 
 interface StoryViewerProps {

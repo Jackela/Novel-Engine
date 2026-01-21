@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Rocket, Monitor, BarChart3, Shield, BookOpen, AlertCircle } from 'lucide-react';
-import { Button, Card, CardContent, Badge } from '@/shared/components/ui';
+import { Button, Card, CardContent } from '@/shared/components/ui';
 import { useAuth } from '@/features/auth';
 
 const FEATURES = [

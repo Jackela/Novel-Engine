@@ -2,8 +2,8 @@
  * CommandDeck - Main control panel for orchestration
  */
 import { Play, Pause, SkipForward, Settings, Zap, Activity } from 'lucide-react';
-import { Button, Card, CardContent, Badge } from '@/shared/components/ui';
-import { cn } from '@/shared/lib/utils';
+import { Button, Card, CardContent } from '@/shared/components/ui';
+import { cn } from '@/lib/utils';
 import type { OrchestrationStatus, OrchestrationMetrics } from '@/shared/types/orchestration';
 
 interface CommandDeckProps {

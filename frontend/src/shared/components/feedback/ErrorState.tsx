@@ -3,7 +3,7 @@
  * Used for showing error messages in a consistent way
  */
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { cn } from '@/shared/lib/utils';
+import { cn } from '@/lib/utils';
 import { Button } from '@/shared/components/ui/Button';
 
 interface ErrorStateProps {
