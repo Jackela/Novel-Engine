@@ -21,6 +21,21 @@
   - 前端：TypeScript 严格模式 + ESLint (SOLID 原则) + Vitest (80% 覆盖率要求)。
   - 后端：Mypy 类型检查 + Pytest 单元/集成测试。
 
+---
+
+## 🧵 The Weaver
+
+A node-based narrative orchestration interface built with React Flow. Weaver provides a visual, draggable canvas for composing characters, events, and locations, then linking them into a narrative execution graph.
+
+---
+
+## 🧩 技术栈
+
+- **UI**: Shadcn UI + Tailwind CSS
+- **State**: Zustand
+- **Data**: TanStack Query
+- **Backend**: FastAPI + Pydantic V2
+
 
 
 ---
