@@ -725,6 +725,6 @@ All design tokens should be implemented as CSS custom properties in the `:root` 
 **Design System Version**: 1.0  
 **Last Updated**: January 29, 2025  
 **Design Lead**: Claude (Designer Persona)  
-**Technical Requirements**: React + TypeScript + Material-UI + CSS Custom Properties
+**Technical Requirements**: React + TypeScript + Shadcn UI + Tailwind CSS + CSS Custom Properties
 
 *This specification provides the complete visual foundation for transforming the Emergent Narrative Dashboard from its current gaming theme into a sophisticated, professional interface suitable for creative professionals and system administrators.*

@@ -2,7 +2,7 @@
 *Document Version: 1.2*
 *Last Updated: 2025-08-11*
 
-This document is the single source of truth for all major data structures used within the Novel Engine. These schemas are enforced by Pydantic models in `src/core/types/shared_types.py`.
+This document is the single source of truth for high-level data structures used within Novel Engine. Contracts are enforced by Pydantic models in `src/api/schemas.py` and materialized in `docs/api/openapi.json`.
 
 ## 1. Schema Overview Diagram
 

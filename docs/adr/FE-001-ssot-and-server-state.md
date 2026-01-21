@@ -7,14 +7,14 @@
 
 ## Context
 
-The frontend exhibited drift between CSS variables and MUI theme values and inconsistently handled server reads via bespoke cache/dedupe logic. This led to visual inconsistency, harder refactors, and unpredictable loading/error states.
+The frontend exhibited drift between CSS variables and UI theme tokens and inconsistently handled server reads via bespoke cache/dedupe logic. This led to visual inconsistency, harder refactors, and unpredictable loading/error states.
 
 ## Decision
 
 - Establish a Single Source of Truth for styling via tokens defined in `src/styles/tokens.ts`.
-- Generate both the MUI theme (`src/styles/theme.ts`) and CSS variables (`src/styles/design-system.generated.css`) from tokens.
+- Generate CSS variables (`src/styles/design-system.generated.css`) from tokens and align Tailwind theme tokens to the same source.
 - Standardize server-state handling for primary reads via query hooks in `src/services/queries.ts`.
-- Remove bespoke API cache usage for covered reads; rely on consumer-level caching (React Query).
+- Remove bespoke API cache usage for covered reads; rely on consumer-level caching (TanStack Query).
 - Enforce via CI gates: type-check, ESLint (TS), Stylelint (CSS), TSX hex scan, token drift/contrast check, unit tests.
 
 ## Rationale

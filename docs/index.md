@@ -10,7 +10,7 @@
 
 ## Overview
 
-Welcome to the comprehensive documentation for Novel Engine. This hub now reflects the flow-based dashboard layout, the unified non-blocking dev script (`scripts/dev_env_daemon.sh`), and the alignment requirements defined in `openspec/specs/docs-alignment/spec.md`.
+Welcome to the comprehensive documentation for Novel Engine. This hub now reflects the Weaver node-based editor, the unified non-blocking dev script (`scripts/dev_env_daemon.sh`), and the contract-first workflow anchored in `docs/api/openapi.json`.
 
 ---
 

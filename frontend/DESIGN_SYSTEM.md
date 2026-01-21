@@ -1,6 +1,8 @@
 # Novel Engine - Design System (SSOT)
 
-This design system is driven by a Single Source of Truth for tokens. Author tokens in `src/styles/tokens.ts`, generate CSS variables (`src/styles/design-system.generated.css`) via `scripts/build-tokens.mjs`, then import the generated CSS before `src/styles/design-system.css`. Components consume tokens through the MUI theme defined in `src/styles/theme.ts`.
+This design system is driven by a Single Source of Truth for tokens. Author tokens in `src/styles/tokens.ts`, generate CSS variables (`src/styles/design-system.generated.css`) via `scripts/build-tokens.mjs`, then import the generated CSS before `src/styles/design-system.css`.
+
+Note: The UI stack now uses Shadcn UI + Tailwind CSS. MUI theme references below are legacy and should be treated as historical context only.
 
 ## Token Update Workflow (SSOT)
 
@@ -26,8 +28,9 @@ This design system is driven by a Single Source of Truth for tokens. Author toke
 
 ## Technology Stack
 
-- **UI Framework**: Material-UI v5
-- **Animation**: Framer Motion
+- **UI Framework**: Shadcn UI + Tailwind CSS
+- **State**: Zustand
+- **Data**: TanStack Query
 - **Language**: TypeScript
 - **Build Tool**: Vite
 - **React**: v18
@@ -126,7 +129,7 @@ const fontWeights = {
 
 ## Spacing System
 
-Based on Material-UI's 8px base unit.
+Based on an 8px base unit.
 
 ```typescript
 const spacing = {
@@ -230,7 +233,7 @@ whileHover={{
 
 ## Responsive Breakpoints
 
-Material-UI breakpoints:
+Legacy breakpoints (previous MUI values):
 
 ```typescript
 const breakpoints = {
@@ -423,7 +426,7 @@ const StyledListItem = styled(ListItem)<{ status: string }>(({ theme, status }) 
 
 ## Theme Configuration
 
-### Material-UI Theme Setup
+### Legacy Theme Setup (MUI Reference)
 
 ```typescript
 import { createTheme } from '@mui/material/styles';
@@ -522,7 +525,7 @@ const customScrollbar = {
 
 ### 1. Component Composition
 
-- Use Material-UI components as base
+- Use Shadcn UI components as base
 - Extend with `styled()` API for custom styling
 - Use Framer Motion for animations
 - Keep styles close to components
@@ -563,7 +566,7 @@ components/
 
 When refactoring a component to this design system:
 
-- [ ] Replace Tailwind/custom CSS with Material-UI components
+- [ ] Replace custom CSS with Shadcn UI components and Tailwind utilities
 - [ ] Use `styled()` API for custom styling
 - [ ] Apply color palette from this SSOT
 - [ ] Use spacing system (theme.spacing)
@@ -581,7 +584,7 @@ When refactoring a component to this design system:
 To ensure AI generation quality, strict adherence to this inventory is required.
 
 ### Directory Mapping
-- **Atoms** (`src/components/ui/`): Fundamental building blocks. wrappers around MUI components.
+- **Atoms** (`src/components/ui/`): Fundamental building blocks. wrappers around Shadcn UI components.
 - **Molecules** (`src/components/common/`): Combinations of atoms. Search bars, basic cards.
 - **Organisms** (`src/features/*/components/`): Business-logic aware complex components.
 - **Templates/Layouts** (`src/components/layout/`): Page structures.
@@ -590,7 +593,7 @@ To ensure AI generation quality, strict adherence to this inventory is required.
 1.  **Direct API Calls:** `fetch` or `axios` inside components is **BANNED**. Use hooks.
 2.  **Inline Magic Numbers:** `margin: "15px"` is **BANNED**. Use `theme.spacing(2)`.
 3.  **Hardcoded Hex Colors:** `#333` is **BANNED**. Use `theme.palette.text.primary`.
-4.  **Prop Drilling:** Passing props down > 3 levels. Use Context or Redux.
+4.  **Prop Drilling:** Passing props down > 3 levels. Use Context or Zustand store.
 5.  **Console Logs:** No `console.log` in production code.
 
 ---

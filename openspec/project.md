@@ -5,7 +5,7 @@ Novel-Engine (StoryForge) is a production-oriented AI-driven narrative generatio
 
 ## Tech Stack
 - **Backend:** Python 3.11+, FastAPI, Uvicorn.
-- **Frontend:** React 18, Vite, TypeScript, MUI (Material UI), Redux Toolkit, React Query, Three.js.
+- **Frontend:** React 18, Vite, TypeScript, Shadcn UI, Zustand, TanStack Query, React Flow.
 - **AI/ML:** Multi-agent architecture (DirectorAgent, PersonaAgent, ChroniclerAgent) with LLM integration.
 - **Testing:**
   - Backend: pytest (with coverage).

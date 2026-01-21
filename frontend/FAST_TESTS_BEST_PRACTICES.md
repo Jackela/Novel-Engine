@@ -403,13 +403,13 @@ await waitFor(() => {
 it('tests button click', () => {
   render(
     <QueryClientProvider client={queryClient}>
-      <ReduxProvider store={store}>
+      <StoreProvider store={store}>
         <ThemeProvider theme={theme}>
           <MemoryRouter>
             <SimpleButton onClick={handler}>Click me</SimpleButton>
           </MemoryRouter>
         </ThemeProvider>
-      </ReduxProvider>
+      </StoreProvider>
     </QueryClientProvider>
   );
 
@@ -423,7 +423,7 @@ it('tests button click', () => {
 ### ✅ FAST (minimal providers)
 ```typescript
 it('tests button click', () => {
-  // Button doesn't need routing, Redux, or queries!
+  // Button doesn't need routing, store, or queries!
   render(
     <ThemeProvider theme={theme}>
       <SimpleButton onClick={handler}>Click me</SimpleButton>
@@ -448,9 +448,9 @@ it('tests button click', () => {
 
 ### Provider checklist:
 - ❓ Does component use routing? → Need `MemoryRouter`
-- ❓ Does component use Redux? → Need `Provider`
+- ❓ Does component use a shared store? → Add provider if required by your store setup
 - ❓ Does component use queries? → Need `QueryClientProvider`
-- ❓ Does component use MUI theme? → Need `ThemeProvider`
+- ❓ Does component rely on a theme provider? → Add the provider if required
 
 If NO to all → Don't add any providers!
 

@@ -250,7 +250,7 @@ export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
 
 - ✅ Cookies set by backend
 - ✅ Tokens still returned in response body
-- ✅ Redux state maintains token fields
+- ✅ Client auth store maintains token fields
 - ✅ Both cookie and header auth supported
 
 ### Phase 2: Deprecation Warning (Future)
@@ -265,7 +265,7 @@ if (localStorage.getItem('accessToken')) {
 ### Phase 3: Full Migration (Future)
 
 - Remove token fields from response body
-- Remove Redux accessToken/refreshToken fields
+- Remove auth store accessToken/refreshToken fields
 - Rely solely on httpOnly cookies
 
 ---

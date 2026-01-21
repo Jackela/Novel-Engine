@@ -6,16 +6,16 @@
 - Rationale: Ensures one source controls all styling layers, eliminating drift and enabling fast, safe design updates.
 - Alternatives Considered:
   - Maintain parallel token sets in CSS and TS: Rejected due to duplication and drift risk.
-  - Rely solely on MUI theme without CSS variables: Rejected because global styles and non-React contexts still need variables.
+  - Rely solely on Tailwind theme without CSS variables: Rejected because global styles and non-React contexts still need variables.
   - Adopt a full design-system framework: Overkill for current scope; adds complexity without proportional benefit.
 
 ## Decision 2: Standardize Server-State Patterns
 
-- Decision: Use a consistent query-based pattern (React Query v3) for primary reads to unify loading, error, and caching behavior.
+- Decision: Use a consistent query-based pattern (TanStack Query) for primary reads to unify loading, error, and caching behavior.
 - Rationale: Eliminates custom caching/dedup logic, improves consistency, and clarifies component responsibilities.
 - Alternatives Considered:
   - Keep bespoke APICache/request dedupe: Rejected due to maintenance burden and limited observability.
-  - Move reads into Redux slices: Rejected; conflates app state with server state and duplicates caching logic.
+  - Move reads into a global store (e.g., Zustand slices): Rejected; conflates app state with server state and duplicates caching logic.
 
 ## Decision 3: CI Gates for Quality Enforcement
 
@@ -37,4 +37,3 @@
 - Backward compatibility: Out of scope; project is pre-release per directive.
 - Theming mode count (light/dark/system): Default to current project behavior; token system supports future theme additions.
 - Scope of initial migration: Focus on shared components and primary flows; deeper legacy sections can follow.
-

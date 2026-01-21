@@ -29,8 +29,8 @@ Backend:
 Frontend:
   Language: TypeScript 4.9+
   Framework: React 18+ with hooks
-  UI Library: Material-UI v5+ (dark theme)
-  State Management: React Query + local state
+  UI Library: Shadcn UI + Tailwind CSS
+  State Management: TanStack Query + local state
   Build Tool: Vite (modern tooling)
 
 Integration:
