@@ -825,8 +825,7 @@ orchestrator, result = await setup_agent()
 
 - [Core Systems Integration Guide](../guides/CORE_SYSTEMS_INTEGRATION_GUIDE.md)
 - [Data Schemas](./schemas.md)
-- [Authentication Guide](./authentication.md) (Coming Soon)
-- [SDK Documentation](./sdks/) (Coming Soon)
+- [OpenAPI Snapshot](./openapi.json)
 
 ---
 

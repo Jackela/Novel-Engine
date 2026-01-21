@@ -339,7 +339,7 @@ Campaign (Aggregate Root)
 - **API Base Path**: Single stable prefix under `/api/*`.
 - **No Path Versioning**: Explicitly avoid `/api/v1` or `/api/v2` in the URL path for first-party clients.
 - **Backward Compatibility**: Handle breaking changes via headers or evolutionary schema changes (e.g., optional fields).
-- **Canonical Decision**: See `openspec/changes/archive/2025-12-22-standardize-api-surface` for details.
+- **Canonical Decision**: See `docs/specs/openspec/changes/archive/2025-12-22-standardize-api-surface` for details.
 
 ### API Gateway Architecture
 

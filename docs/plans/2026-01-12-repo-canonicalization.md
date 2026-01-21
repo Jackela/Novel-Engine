@@ -4,7 +4,7 @@
 
 **Goal:** Remove legacy artifacts, unify agent guidance, and align documentation/scripts with the current SSOT.
 
-**Architecture:** Keep documentation canonical in `docs/` and OpenSpec guidance in `openspec/`. Clean out legacy artifacts without changing runtime behavior.
+**Architecture:** Keep documentation canonical in `docs/` and OpenSpec guidance in `docs/specs/openspec/`. Clean out legacy artifacts without changing runtime behavior.
 
 **Tech Stack:** Python 3.11+, FastAPI, pytest, Node.js, npm.
 
@@ -41,19 +41,19 @@ Expected: No matches.
 - Create: `AGENTS.md`
 - Modify: `docs/index.md`
 - Modify: `docs/DEVELOPER_GUIDE.md`
-- Modify: `openspec/AGENTS.md`
+- Modify: `docs/specs/openspec/AGENTS.md`
 - Modify: `README.md`
 - Modify: `README.en.md`
 
 **Step 1: Add root agent guide**
-Create `AGENTS.md` with SSOT workflow and pointers to `CLAUDE.md` and `openspec/AGENTS.md`.
+Create `AGENTS.md` with SSOT workflow and pointers to `CLAUDE.md` and `docs/specs/openspec/AGENTS.md`.
 
 **Step 2: Update documentation hub**
 Add links to `AGENTS.md` and `CLAUDE.md` in `docs/index.md`.
 
 **Step 3: Align developer guide and OpenSpec**
 Update `docs/DEVELOPER_GUIDE.md` to reference `AGENTS.md`.
-Add a short note in `openspec/AGENTS.md` pointing back to `AGENTS.md`.
+Add a short note in `docs/specs/openspec/AGENTS.md` pointing back to `AGENTS.md`.
 
 **Step 4: Sync README files**
 Add an AI collaboration section in `README.md` and `README.en.md`.

@@ -32,7 +32,7 @@ Novel-Engine (StoryForge) is a production-oriented AI-driven narrative generatio
 
 ### Git Workflow
 - Atomic commits with clear descriptions.
-- Update `PROJECT_DOCS.md` and `openspec/` in the same commit as code changes.
+- Update `PROJECT_DOCS.md` and `docs/specs/openspec/` in the same commit as code changes.
 - Use `openspec` for tracking major changes and features.
 
 ## Domain Context
@@ -52,7 +52,7 @@ Novel-Engine (StoryForge) is a production-oriented AI-driven narrative generatio
 ## API Conventions
 - **Canonical Prefix:** All product APIs MUST use the `/api` prefix.
 - **No Path Versioning:** Avoid `/api/v1` or `/api/v2` in the URL path. Versioning should be handled via headers or evolutionary schema changes if needed.
-- **Link to Decision:** See `openspec/changes/archive/2025-12-22-standardize-api-surface` for the standardization rationale.
+- **Link to Decision:** See `docs/specs/openspec/changes/archive/2025-12-22-standardize-api-surface` for the standardization rationale.
 
 ## Persistence Conventions
 - **Location:**

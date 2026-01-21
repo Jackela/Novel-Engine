@@ -100,7 +100,7 @@ Novel-Engine/
 │   ├── src/features/     # Business Feature Modules
 │   └── tests/            # Vitest & Playwright Suites
 ├── docs/                 # Architecture & Guides
-├── openspec/             # Architecture Evolution Proposals
+├── docs/specs/openspec/             # Architecture Evolution Proposals
 └── characters/           # User Data (YAML/MD)
 ```
 
@@ -141,7 +141,7 @@ We enforce a strict TDD (Test-Driven Development) workflow.
 ## 🤖 AI Collaboration
 
 - `AGENTS.md` is the SSOT for AI workflow and repo guardrails.
-- Any proposal/spec/architecture change should start with `openspec/AGENTS.md`.
+- Any proposal/spec/architecture change should start with `docs/specs/openspec/AGENTS.md`.
 - Build and test commands live in `CLAUDE.md`.
 
 ---

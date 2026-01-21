@@ -139,7 +139,7 @@ curl -N -H "Accept: text/event-stream" "http://localhost:8000/api/events/stream?
 Use the provided `useRealtimeEvents` hook:
 
 ```typescript
-import { useRealtimeEvents } from '@/hooks/useRealtimeEvents';
+import { useRealtimeEvents } from '@/shared/hooks/useRealtimeEvents';
 
 function MyComponent() {
   const { events, loading, error, connectionState } = useRealtimeEvents({
@@ -353,7 +353,7 @@ async def event_generator(client_id: str):
 ## Related Documentation
 
 - [Frontend Integration Guide](../migration/demo-to-live-api.md)
-- [useRealtimeEvents Hook Documentation](../../frontend/src/hooks/useRealtimeEvents.ts)
+- [useRealtimeEvents Hook Documentation](../../frontend/src/shared/hooks/useRealtimeEvents.ts)
 
 ## Support
 

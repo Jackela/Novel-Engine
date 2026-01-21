@@ -13,7 +13,6 @@ Dated implementation plans and technical specifications for specific features or
 
 ## Contents
 
-- [2026-01-12 Golden Standard Template](./2026-01-12-golden-standard-template.md)
 - [2026-01-12 Repo Canonicalization](./2026-01-12-repo-canonicalization.md)
 
 ---

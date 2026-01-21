@@ -50,7 +50,7 @@ useEffect(() => {
 **Added**:
 ```typescript
 // NEW: SSE integration via hook
-import { useRealtimeEvents } from '../../hooks/useRealtimeEvents';
+import { useRealtimeEvents } from '@/shared/hooks/useRealtimeEvents';
 
 const { events, loading, error, connectionState } = useRealtimeEvents({
   enabled: true
@@ -414,7 +414,7 @@ After migration, verify:
 ## Related Documentation
 
 - [SSE Endpoint API Documentation](../api/sse-events-endpoint.md)
-- [useRealtimeEvents Hook](../../frontend/src/hooks/useRealtimeEvents.ts)
+- [useRealtimeEvents Hook](../../frontend/src/shared/hooks/useRealtimeEvents.ts)
 - [Vite Environment Variables](https://vitejs.dev/guide/env-and-mode.html)
 
 ## Support

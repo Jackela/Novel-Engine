@@ -37,6 +37,6 @@ The frontend exhibited drift between CSS variables and UI theme tokens and incon
 
 ## Links
 
-- Design System: frontend/DESIGN_SYSTEM.md
+- Design System: docs/specifications/UI_DESIGN_SPEC.md
 - Plan/Spec: specs/002-ts-ssot-frontend/
 - CI: .github/workflows/frontend-ci.yml
