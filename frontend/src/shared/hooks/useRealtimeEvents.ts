@@ -75,8 +75,11 @@ export function useRealtimeEvents({
       // No heartbeat received, reconnect
       disconnect();
       retryCountRef.current = 0;
+      if (enabled) {
+        connect();
+      }
     }, heartbeatInterval * 2);
-  }, [heartbeatInterval, disconnect]);
+  }, [heartbeatInterval, disconnect, enabled, connect]);
 
   const connect = useCallback(() => {
     if (!enabled || eventSourceRef.current) return;

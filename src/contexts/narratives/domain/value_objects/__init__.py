@@ -17,7 +17,7 @@ from .causal_node import CausalNode, CausalRelationType, CausalStrength
 from .narrative_context import NarrativeContext
 from .narrative_id import NarrativeId
 from .narrative_theme import NarrativeTheme, ThemeIntensity, ThemeType
-from .narrative_v2_models import (
+from .narrative_models import (
     NarrativeGuidance,
     PacingAdjustment,
     StoryArcPhase,

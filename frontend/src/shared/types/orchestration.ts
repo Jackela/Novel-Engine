@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { OrchestrationStartRequestSchema } from '@/types/schemas';
 /**
  * Orchestration Types
  */
@@ -10,12 +12,7 @@ export interface OrchestrationState {
   metrics: OrchestrationMetrics;
 }
 
-export interface OrchestrationStartRequest {
-  character_names: string[];
-  total_turns?: number;
-  setting?: string;
-  scenario?: string;
-}
+export type OrchestrationStartRequest = z.infer<typeof OrchestrationStartRequestSchema>;
 
 export type OrchestrationStatus = 'idle' | 'running' | 'paused' | 'waiting_decision' | 'error';
 

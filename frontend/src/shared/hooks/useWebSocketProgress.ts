@@ -19,6 +19,7 @@ interface UseWebSocketProgressOptions {
   onComplete?: (taskId: string) => void;
   onError?: (error: Error) => void;
   enabled?: boolean;
+  maxRetries?: number;
 }
 
 interface ConnectionQuality {
@@ -41,6 +42,7 @@ export function useWebSocketProgress({
   onComplete,
   onError,
   enabled = true,
+  maxRetries = 5,
 }: UseWebSocketProgressOptions): UseWebSocketProgressReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [currentProgress, setCurrentProgress] = useState<ProgressUpdate | null>(null);
@@ -52,11 +54,19 @@ export function useWebSocketProgress({
   const wsRef = useRef<WebSocket | null>(null);
   const pingIntervalRef = useRef<number | null>(null);
   const lastPingRef = useRef<number>(0);
+  const retryCountRef = useRef(0);
+  const retryTimeoutRef = useRef<number | null>(null);
+  const manualCloseRef = useRef(false);
 
   const disconnect = useCallback(() => {
+    manualCloseRef.current = true;
     if (pingIntervalRef.current) {
       clearInterval(pingIntervalRef.current);
       pingIntervalRef.current = null;
+    }
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
     }
     if (wsRef.current) {
       wsRef.current.close();
@@ -77,12 +87,14 @@ export function useWebSocketProgress({
     if (!enabled || wsRef.current) return;
 
     try {
+      manualCloseRef.current = false;
       const wsUrl = taskId ? `${url}?taskId=${taskId}` : url;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
         setIsConnected(true);
+        retryCountRef.current = 0;
         setConnectionQuality({ latency: 0, status: 'excellent' });
 
         // Start ping interval for latency monitoring
@@ -138,14 +150,36 @@ export function useWebSocketProgress({
           clearInterval(pingIntervalRef.current);
           pingIntervalRef.current = null;
         }
+
+        if (!enabled || manualCloseRef.current) {
+          return;
+        }
+
+        if (retryCountRef.current < maxRetries) {
+          const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000);
+          retryCountRef.current += 1;
+          retryTimeoutRef.current = window.setTimeout(() => {
+            connect();
+          }, delay);
+        }
       };
     } catch (error) {
       onError?.(error as Error);
     }
-  }, [url, taskId, enabled, onProgress, onComplete, onError, measureLatency]);
+  }, [
+    url,
+    taskId,
+    enabled,
+    maxRetries,
+    onProgress,
+    onComplete,
+    onError,
+    measureLatency,
+  ]);
 
   const reconnect = useCallback(() => {
     disconnect();
+    retryCountRef.current = 0;
     connect();
   }, [disconnect, connect]);
 

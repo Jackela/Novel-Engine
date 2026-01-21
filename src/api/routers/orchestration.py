@@ -1,110 +1,72 @@
+"""Orchestration Router - Thin HTTP layer with Pydantic models."""
+
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from typing import Any, Dict, Optional, Set
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from src.api.schemas import SimulationRequest
-from src.api.services.paths import get_characters_directory_path
+from src.api.schemas import (
+    NarrativeResponse,
+    OrchestrationStartRequest,
+    OrchestrationStartResponse,
+    OrchestrationStatusResponse,
+    OrchestrationStopResponse,
+)
+from src.api.services.orchestration_service import OrchestrationService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Orchestration"])
 
 
-@router.get("/api/orchestration/status")
-async def get_orchestration_status(request: Request) -> Dict[str, Any]:
+def get_orchestration_service(request: Request) -> OrchestrationService:
+    """Dependency injection for orchestration service."""
     api_service = getattr(request.app.state, "api_service", None)
-    if not api_service:
-        return {
-            "success": False,
-            "message": "Orchestration service not available",
-            "data": {"status": "error"},
-        }
-
-    status = await api_service.get_status()
-    return {"success": True, "data": status}
+    return OrchestrationService(api_service)
 
 
-@router.post("/api/orchestration/start")
+@router.get("/api/orchestration/status", response_model=OrchestrationStatusResponse)
+async def get_orchestration_status(
+    service: OrchestrationService = Depends(get_orchestration_service),
+) -> OrchestrationStatusResponse:
+    """Get current orchestration status."""
+    return await service.get_status()
+
+
+@router.post("/api/orchestration/start", response_model=OrchestrationStartResponse)
 async def start_orchestration(
-    request: Request, payload: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
-    api_service = getattr(request.app.state, "api_service", None)
-    if not api_service:
-        raise HTTPException(
-            status_code=503, detail="Orchestration service not initialized"
-        )
-
-    params = payload or {}
-    total_turns = params.get("total_turns", 3)
-    character_names = params.get("character_names")
-
-    if not character_names:
-        try:
-            characters_path = get_characters_directory_path()
-            available_chars: Set[str] = set()
-            p = Path(characters_path)
-            if p.exists():
-                for item in p.iterdir():
-                    if item.is_dir() and not item.name.startswith("."):
-                        available_chars.add(item.name)
-            character_names = sorted(list(available_chars))[:3]
-            if not character_names:
-                character_names = ["pilot", "scientist", "engineer"]
-        except Exception as exc:
-            logger.warning("Failed to fetch characters, using defaults: %s", exc)
-            character_names = ["pilot", "scientist", "engineer"]
-
-    sim_request = SimulationRequest(character_names=character_names, turns=total_turns)
-
+    payload: Optional[OrchestrationStartRequest] = None,
+    service: OrchestrationService = Depends(get_orchestration_service),
+) -> OrchestrationStartResponse:
+    """Start orchestration with optional parameters."""
     try:
-        result = await api_service.start_simulation(sim_request)
-        return result
-    except ValueError:
-        return {
-            "success": False,
-            "message": "Invalid orchestration request.",
-            "data": await api_service.get_status(),
-        }
+        return await service.start(payload)
     except Exception:
         logger.exception("Failed to start orchestration.")
         raise HTTPException(status_code=500, detail="Failed to start orchestration.")
 
 
-@router.post("/api/orchestration/stop")
-async def stop_orchestration(request: Request) -> Dict[str, Any]:
-    api_service = getattr(request.app.state, "api_service", None)
-    if not api_service:
-        return {"success": False, "message": "Service unavailable"}
-    return await api_service.stop_simulation()
+@router.post("/api/orchestration/stop", response_model=OrchestrationStopResponse)
+async def stop_orchestration(
+    service: OrchestrationService = Depends(get_orchestration_service),
+) -> OrchestrationStopResponse:
+    """Stop the current orchestration."""
+    return await service.stop()
 
 
-@router.post("/api/orchestration/pause")
-async def pause_orchestration(request: Request) -> Dict[str, Any]:
-    """Pause the current orchestration"""
-    api_service = getattr(request.app.state, "api_service", None)
-    if not api_service:
-        return {"success": False, "message": "Service unavailable"}
-    return await api_service.pause_simulation()
+@router.post("/api/orchestration/pause", response_model=OrchestrationStopResponse)
+async def pause_orchestration(
+    service: OrchestrationService = Depends(get_orchestration_service),
+) -> OrchestrationStopResponse:
+    """Pause the current orchestration."""
+    return await service.pause()
 
 
-@router.get("/api/orchestration/narrative")
-async def get_narrative(request: Request) -> Dict[str, Any]:
-    api_service = getattr(request.app.state, "api_service", None)
-    if not api_service:
-        return {"success": False, "data": {}}
-
-    narrative = await api_service.get_narrative()
-    return {
-        "success": True,
-        "data": {
-            "story": narrative.get("story", ""),
-            "participants": narrative.get("participants", []),
-            "turns_completed": narrative.get("turns_completed", 0),
-            "last_generated": narrative.get("last_generated"),
-            "has_content": bool(narrative.get("story", "")),
-        },
-    }
+@router.get("/api/orchestration/narrative", response_model=NarrativeResponse)
+async def get_narrative(
+    service: OrchestrationService = Depends(get_orchestration_service),
+) -> NarrativeResponse:
+    """Get current narrative content."""
+    return await service.get_narrative()

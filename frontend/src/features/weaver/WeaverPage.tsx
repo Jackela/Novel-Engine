@@ -2,7 +2,8 @@
  * WeaverPage - Main story weaver page
  */
 import { useCallback } from 'react';
-import { WeaverCanvas } from './components/WeaverCanvas';
+import { WeaverLayout } from '@/layouts/WeaverLayout';
+import { WeaverCanvas } from './WeaverCanvas';
 import { WeaverToolbar } from './components/WeaverToolbar';
 import type { Node } from '@xyflow/react';
 import { useWeaverAddNode, useWeaverStore } from './store/weaverStore';
@@ -59,16 +60,18 @@ export default function WeaverPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <WeaverToolbar
-        onAddCharacter={handleAddCharacter}
-        onAddEvent={handleAddEvent}
-        onAddLocation={handleAddLocation}
-        onSave={handleSave}
-      />
-      <div className="flex-1">
-        <WeaverCanvas />
+    <WeaverLayout>
+      <div className="flex min-h-screen flex-col">
+        <WeaverToolbar
+          onAddCharacter={handleAddCharacter}
+          onAddEvent={handleAddEvent}
+          onAddLocation={handleAddLocation}
+          onSave={handleSave}
+        />
+        <div className="flex-1">
+          <WeaverCanvas />
+        </div>
       </div>
-    </div>
+    </WeaverLayout>
   );
 }

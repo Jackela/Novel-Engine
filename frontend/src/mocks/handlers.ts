@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw';
 import type { Character, CharacterStats } from '@/shared/types/character';
+import { CharactersResponseSchema, OrchestrationStartRequestSchema } from '@/types/schemas';
 
 const API_PREFIX = '/api';
 
@@ -125,9 +126,8 @@ export const handlers = [
   http.post(`${API_PREFIX}/orchestration/start`, async ({ request }) => {
     await withLatency();
     const body = await request.json().catch(() => ({}));
-    const turns = typeof body === 'object' && body !== null && 'total_turns' in body
-      ? Number((body as { total_turns?: number }).total_turns ?? 3)
-      : 3;
+    const parsed = OrchestrationStartRequestSchema.safeParse(body);
+    const turns = parsed.success ? parsed.data.total_turns ?? 3 : 3;
 
     orchestrationState = {
       status: 'running',
@@ -174,7 +174,7 @@ export const handlers = [
 
   http.get(`${API_PREFIX}/characters`, async () => {
     await withLatency();
-    return HttpResponse.json(characters);
+    return HttpResponse.json(CharactersResponseSchema.parse(characters));
   }),
 
   http.get(`${API_PREFIX}/characters/:id`, async ({ params }) => {

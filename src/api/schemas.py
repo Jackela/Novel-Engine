@@ -3,10 +3,161 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
+# === Orchestration Schemas (aligned with frontend/src/types/schemas.ts) ===
+
+
+class OrchestrationStep(BaseModel):
+    """Step within orchestration progress."""
+
+    id: str
+    name: str
+    status: str
+    progress: float = Field(ge=0, le=100)
+
+
+class OrchestrationStatusData(BaseModel):
+    """Orchestration status data structure."""
+
+    status: str
+    current_turn: int = 0
+    total_turns: int = 0
+    queue_length: int = 0
+    average_processing_time: float = 0.0
+    steps: List[OrchestrationStep] = Field(default_factory=list)
+    last_updated: Optional[str] = None
+
+
+class OrchestrationStatusResponse(BaseModel):
+    """Response for orchestration status endpoint."""
+
+    success: bool
+    data: OrchestrationStatusData
+    message: Optional[str] = None
+
+
+class OrchestrationStartRequest(BaseModel):
+    """Request to start orchestration."""
+
+    character_names: Optional[List[str]] = Field(None, min_length=2, max_length=6)
+    total_turns: Optional[int] = Field(3, ge=1, le=10)
+    setting: Optional[str] = None
+    scenario: Optional[str] = None
+
+
+class OrchestrationStartResponse(BaseModel):
+    """Response after starting orchestration."""
+
+    success: bool
+    status: str
+    task_id: Optional[str] = None
+    message: Optional[str] = None
+
+
+class OrchestrationStopResponse(BaseModel):
+    """Response after stopping orchestration."""
+
+    success: bool
+    message: Optional[str] = None
+
+
+class NarrativeData(BaseModel):
+    """Narrative content data."""
+
+    story: str
+    participants: List[str]
+    turns_completed: int
+    last_generated: Optional[str] = None
+    has_content: bool
+
+
+class NarrativeResponse(BaseModel):
+    """Response for narrative endpoint."""
+
+    success: bool
+    data: NarrativeData
+
+
+# === Health/Meta Schemas ===
+
+
 class HealthResponse(BaseModel):
     message: str
     status: Optional[str] = None
     timestamp: Optional[str] = None
+
+
+class HealthCheckResponse(BaseModel):
+    """Detailed health check response."""
+
+    status: str
+    api: str
+    timestamp: str
+    version: str
+    config: str
+    uptime: float
+
+
+class SystemStatusResponse(BaseModel):
+    """System status response."""
+
+    status: str
+    uptime: float
+    version: str
+    components: Dict[str, str]
+
+
+class PolicyInfoResponse(BaseModel):
+    """Policy information response."""
+
+    brand_status: str
+    compliance: Dict[str, str]
+    last_reviewed: str
+
+
+# === Events/Analytics Schemas ===
+
+
+class SSEEventData(BaseModel):
+    """SSE event data structure."""
+
+    id: str
+    type: str
+    title: str
+    description: str
+    timestamp: int
+    severity: str
+    characterName: Optional[str] = None
+
+
+class SSEStatsResponse(BaseModel):
+    """SSE connection statistics."""
+
+    connected_clients: int
+    total_events_sent: int
+    active_queues: int
+
+
+class AnalyticsMetricsData(BaseModel):
+    """Analytics metrics data."""
+
+    story_quality: float
+    engagement: float
+    coherence: float
+    complexity: float
+    data_points: int
+    metrics_tracked: int
+    status: str
+    last_updated: str
+
+
+class AnalyticsMetricsResponse(BaseModel):
+    """Analytics metrics response."""
+
+    success: bool
+    data: AnalyticsMetricsData
+
+
+# === Character Schemas ===
 
 
 class CharacterSummary(BaseModel):
@@ -206,7 +357,26 @@ class WorkspaceCharacterUpdateRequest(BaseModel):
 
 
 __all__ = [
+    # Orchestration Schemas
+    "OrchestrationStep",
+    "OrchestrationStatusData",
+    "OrchestrationStatusResponse",
+    "OrchestrationStartRequest",
+    "OrchestrationStartResponse",
+    "OrchestrationStopResponse",
+    "NarrativeData",
+    "NarrativeResponse",
+    # Health/Meta Schemas
     "HealthResponse",
+    "HealthCheckResponse",
+    "SystemStatusResponse",
+    "PolicyInfoResponse",
+    # Events/Analytics Schemas
+    "SSEEventData",
+    "SSEStatsResponse",
+    "AnalyticsMetricsData",
+    "AnalyticsMetricsResponse",
+    # Character Schemas
     "CharacterSummary",
     "CharactersListResponse",
     "SimulationRequest",
@@ -216,6 +386,7 @@ __all__ = [
     "CampaignsListResponse",
     "CampaignCreationRequest",
     "CampaignCreationResponse",
+    # Auth Schemas
     "LoginRequest",
     "AuthResponse",
     "LogoutRequest",

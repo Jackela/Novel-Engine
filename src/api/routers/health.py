@@ -1,13 +1,14 @@
+"""Health Router - Application health and status endpoints."""
+
 from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
-from typing import Any, Dict
 
-from src.core.config.config_loader import get_config
 from fastapi import APIRouter, HTTPException, Request
 
-from src.api.schemas import HealthResponse
+from src.api.schemas import HealthCheckResponse, HealthResponse
+from src.core.config.config_loader import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -22,25 +23,20 @@ def _uptime_seconds(request: Request) -> float:
 
 
 @router.get("/", response_model=HealthResponse)
-async def root() -> Dict[str, Any]:
+async def root() -> HealthResponse:
+    """Root endpoint for basic health check."""
     logger.info("Root endpoint accessed for health check")
-    response_data = {
-        "message": "StoryForge AI Interactive Story Engine is running!",
-        "status": "ok",
-        "timestamp": datetime.now(UTC).isoformat(),
-    }
-    logger.debug("Root endpoint response: %s", response_data)
-    return response_data
+    return HealthResponse(
+        message="StoryForge AI Interactive Story Engine is running!",
+        status="ok",
+        timestamp=datetime.now(UTC).isoformat(),
+    )
 
 
-@router.get("/health")
-async def health_check(request: Request) -> Dict[str, Any]:
-    import datetime as datetime_mod
-
+@router.get("/health", response_model=HealthCheckResponse)
+async def health_check(request: Request) -> HealthCheckResponse:
+    """Detailed health check endpoint."""
     try:
-        import logging as logging_mod
-
-        logging_mod.Formatter("%(name)s - %(levelname)s - %(message)s")
         get_config()
         config_status = "loaded"
         status = "healthy"
@@ -52,14 +48,11 @@ async def health_check(request: Request) -> Dict[str, Any]:
         config_status = "error"
         status = "degraded"
 
-    health_data = {
-        "status": status,
-        "api": "running",
-        "timestamp": datetime_mod.datetime.now().isoformat(),
-        "version": "1.0.0",
-        "config": config_status,
-        "uptime": _uptime_seconds(request),
-    }
-
-    logger.debug("Health check response: %s", health_data)
-    return health_data
+    return HealthCheckResponse(
+        status=status,
+        api="running",
+        timestamp=datetime.now(UTC).isoformat(),
+        version="1.0.0",
+        config=config_status,
+        uptime=_uptime_seconds(request),
+    )
