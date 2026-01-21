@@ -1,6 +1,8 @@
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
+
+JSONValue = Union[str, int, float, bool, None, Dict[str, "JSONValue"], List["JSONValue"]]
 
 
 # === Orchestration Schemas (aligned with frontend/src/types/schemas.ts) ===
@@ -203,8 +205,8 @@ class CharacterDetailResponse(BaseModel):
     relationships: Dict[str, float] = Field(default_factory=dict)
     current_location: str = ""
     inventory: List[str] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    structured_data: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, JSONValue] = Field(default_factory=dict)
+    structured_data: Dict[str, JSONValue] = Field(default_factory=dict)
 
 
 class FileCount(BaseModel):
@@ -259,7 +261,7 @@ class AuthResponse(BaseModel):
     )
     token_type: str = Field(default="Bearer", description="Token type")
     expires_in: int = Field(..., description="Token expiry time in seconds")
-    user: Dict[str, Any] = Field(..., description="User information")
+    user: Dict[str, JSONValue] = Field(..., description="User information")
 
 
 class LogoutRequest(BaseModel):
@@ -320,8 +322,8 @@ class WorkspaceCharacterCreateRequest(BaseModel):
     relationships: Dict[str, float] = Field(default_factory=dict)
     current_location: Optional[str] = Field(default=None, max_length=200)
     inventory: List[str] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    structured_data: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, JSONValue] = Field(default_factory=dict)
+    structured_data: Dict[str, JSONValue] = Field(default_factory=dict)
 
     @field_validator("agent_id")
     @classmethod
@@ -352,8 +354,8 @@ class WorkspaceCharacterUpdateRequest(BaseModel):
     relationships: Optional[Dict[str, float]] = None
     current_location: Optional[str] = Field(default=None, max_length=200)       
     inventory: Optional[List[str]] = None
-    metadata: Optional[Dict[str, Any]] = None
-    structured_data: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, JSONValue]] = None
+    structured_data: Optional[Dict[str, JSONValue]] = None
 
 
 __all__ = [

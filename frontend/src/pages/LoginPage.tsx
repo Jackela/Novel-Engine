@@ -279,7 +279,7 @@ export default function LoginPage() {
     }
 
     try {
-      await login({ username: email, password });
+      await login({ email, password, remember_me: rememberMe });
       navigate({ to: '/dashboard' });
     } catch {
       // Error handled by auth store

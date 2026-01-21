@@ -4,7 +4,8 @@
  */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { AuthToken, LoginRequest } from '@/types/auth';
+import type { AuthToken, LoginRequest, LoginResponse } from '@/types/auth';
+import { AuthResponseSchema } from '@/types/schemas';
 
 const AUTH_STORAGE_KEY = 'novel-engine-auth';
 const GUEST_SESSION_KEY = 'novelengine_guest_session';
@@ -42,7 +43,7 @@ const authAPI = {
       throw new Error(error.detail || 'Login failed');
     }
 
-    const data = await response.json();
+    const data = AuthResponseSchema.parse(await response.json());
     return transformLoginResponse(data);
   },
 
@@ -61,7 +62,7 @@ const authAPI = {
       throw new Error('Token refresh failed');
     }
 
-    const data = await response.json();
+    const data = AuthResponseSchema.parse(await response.json());
     return transformLoginResponse(data);
   },
 
@@ -75,17 +76,17 @@ const authAPI = {
 };
 
 // Transform API response to AuthToken
-function transformLoginResponse(data: Record<string, unknown>): AuthToken {
-  const expiresIn = (data.expires_in as number) || 3600;
-  const refreshExpiresIn = (data.refresh_expires_in as number) || 86400;
+function transformLoginResponse(data: LoginResponse): AuthToken {
+  const expiresIn = data.expires_in || 3600;
+  const refreshExpiresIn = data.refresh_expires_in || 86400;
 
   return {
-    accessToken: data.access_token as string,
-    refreshToken: data.refresh_token as string,
-    tokenType: (data.token_type as string) || 'Bearer',
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    tokenType: data.token_type || 'Bearer',
     expiresAt: Date.now() + expiresIn * 1000,
     refreshExpiresAt: Date.now() + refreshExpiresIn * 1000,
-    user: data.user as AuthToken['user'],
+    user: data.user,
   };
 }
 

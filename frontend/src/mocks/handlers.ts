@@ -87,9 +87,10 @@ export const handlers = [
   http.post(`${API_PREFIX}/auth/login`, async ({ request }) => {
     await withLatency();
     const body = await request.json().catch(() => ({}));
-    const username = typeof body === 'object' && body !== null && 'username' in body
-      ? String((body as { username?: string }).username)
-      : 'operator';
+    const email = typeof body === 'object' && body !== null && 'email' in body
+      ? String((body as { email?: string }).email)
+      : 'operator@novel.engine';
+    const username = email.split('@')[0] || 'operator';
 
     return HttpResponse.json({
       access_token: 'mock-access-token',
@@ -100,7 +101,7 @@ export const handlers = [
       user: {
         id: 'user-001',
         username,
-        email: `${username}@novel.engine`,
+        email,
         roles: ['operator'],
       },
     });

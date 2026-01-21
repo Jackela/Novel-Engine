@@ -56,6 +56,52 @@ export const WorkspaceCharacterUpdateSchema = z.object({
   structured_data: z.record(z.unknown()).optional(),
 });
 
+export const AuthUserSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  email: z.string(),
+  roles: z.array(z.string()),
+});
+
+export const LoginRequestSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+  remember_me: z.boolean().optional(),
+});
+
+export const AuthResponseSchema = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  token_type: z.string(),
+  expires_in: z.number(),
+  refresh_expires_in: z.number().optional(),
+  user: AuthUserSchema,
+});
+
+export const AuthTokenSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string(),
+  tokenType: z.string(),
+  expiresAt: z.number(),
+  refreshExpiresAt: z.number(),
+  user: AuthUserSchema,
+});
+
+export const GuestSessionResponseSchema = z.object({
+  workspace_id: z.string(),
+  created: z.boolean().optional(),
+});
+
+export const CampaignSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  status: z.enum(['active', 'completed', 'archived']),
+  created_at: z.string(),
+  updated_at: z.string(),
+  current_turn: z.number(),
+});
+
 export const OrchestrationStartRequestSchema = z.object({
   character_names: z.array(z.string().min(1)).min(2).max(6),
   total_turns: z.number().int().min(1).max(10).optional(),
@@ -99,3 +145,9 @@ export type CreateCharacterInput = z.infer<typeof WorkspaceCharacterCreateSchema
 export type UpdateCharacterInput = z.infer<typeof WorkspaceCharacterUpdateSchema>;
 export type OrchestrationStartRequest = z.infer<typeof OrchestrationStartRequestSchema>;
 export type OrchestrationStatus = z.infer<typeof OrchestrationStatusSchema>;
+export type AuthUser = z.infer<typeof AuthUserSchema>;
+export type LoginRequest = z.infer<typeof LoginRequestSchema>;
+export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+export type AuthToken = z.infer<typeof AuthTokenSchema>;
+export type GuestSessionResponse = z.infer<typeof GuestSessionResponseSchema>;
+export type Campaign = z.infer<typeof CampaignSchema>;
