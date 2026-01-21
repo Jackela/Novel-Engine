@@ -48,8 +48,7 @@ export default function OrchestrationPage() {
   }, []);
 
   const handleNarrativeOutput = useCallback((narrative: NarrativeOutputType) => {
-    // Could show toast notification here
-    console.log('New narrative:', narrative.id);
+    void narrative;
   }, []);
 
   useOrchestrationEvents({

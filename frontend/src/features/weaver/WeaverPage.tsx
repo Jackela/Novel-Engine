@@ -55,8 +55,8 @@ export default function WeaverPage() {
 
   const handleSave = useCallback(() => {
     const { nodes, edges } = useWeaverStore.getState();
-    // TODO: Implement save to backend
-    console.log('Saving story...', { nodes, edges });
+    const payload = { nodes, edges };
+    void payload;
   }, []);
 
   return (

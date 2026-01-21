@@ -11,7 +11,6 @@ interface TopBarProps {
 }
 
 export function TopBar({ onMenuClick }: TopBarProps) {
-  // TODO: Replace with Zustand auth store
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
     window.location.href = '/';

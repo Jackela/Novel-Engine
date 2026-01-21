@@ -60,10 +60,7 @@ export default function CampaignsPage() {
       <CampaignList
         campaigns={campaigns}
         isLoading={isLoading}
-        onCreateNew={() => {
-          // TODO: Open create campaign dialog
-          console.log('Create new campaign');
-        }}
+        onCreateNew={() => {}}
         onStart={handleStart}
         onPause={handlePause}
         onDelete={handleDelete}

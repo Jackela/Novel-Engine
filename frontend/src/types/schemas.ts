@@ -103,7 +103,7 @@ export const CampaignSchema = z.object({
 });
 
 export const OrchestrationStartRequestSchema = z.object({
-  character_names: z.array(z.string().min(1)).min(2).max(6),
+  character_names: z.array(z.string().min(1)).min(2).max(6).optional(),
   total_turns: z.number().int().min(1).max(10).optional(),
   setting: z.string().min(1).optional(),
   scenario: z.string().min(1).optional(),
