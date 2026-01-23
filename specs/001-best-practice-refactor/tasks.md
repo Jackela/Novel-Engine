@@ -57,7 +57,7 @@ description: "Task list for Project Best-Practice Refactor"
 - [X] T011 [US1] [Simulation Orchestration] Finalize aggregate invariants in specs/001-best-practice-refactor/data-model.md
 - [X] T012 [P] [US1] [Architecture] Map module ownership by context in docs/architecture/context-mapping.md
 - [X] T013 [US1] [Architecture] Capture port/adapter matrix in docs/architecture/ports-adapters.md
-- [X] T014 [US1] [Persona Intelligence] Document Gemini anti-corruption layer (cache TTLs, retries, tenant isolation, fallback path) in docs/architecture/acls/gemini.md
+- [X] T014 [US1] [Persona Intelligence] Document Gemini anti-corruption layer details in AGENTS.md
 - [X] T015 [US1] [Documentation] Refresh architecture overview links in README.md
 
 **Checkpoint**: All contexts, aggregates, and adapters cataloged with owners and invariants.

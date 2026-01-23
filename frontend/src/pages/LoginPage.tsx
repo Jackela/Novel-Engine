@@ -42,65 +42,128 @@ function LoginFormFields({
   return (
     <>
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
+        <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-destructive">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span className="text-sm">{error.message || 'Authentication failed'}</span>
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+      <LoginEmailField
+        email={email}
+        emailError={emailError}
+        onChange={onEmailChange}
+        onBlur={onEmailBlur}
+      />
+      <LoginPasswordField
+        password={password}
+        showPassword={showPassword}
+        passwordError={passwordError}
+        onChange={onPasswordChange}
+        onBlur={onPasswordBlur}
+        onTogglePassword={onTogglePassword}
+      />
+      <LoginRememberField rememberMe={rememberMe} onChange={onRememberMeChange} />
+    </>
+  );
+}
+
+interface LoginEmailFieldProps {
+  email: string;
+  emailError: boolean;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+}
+
+function LoginEmailField({
+  email,
+  emailError,
+  onChange,
+  onBlur,
+}: LoginEmailFieldProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="email">Email</Label>
+      <Input
+        id="email"
+        type="email"
+        placeholder="Enter your email"
+        value={email}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        className={emailError ? 'border-destructive' : ''}
+        required
+      />
+      {emailError && <p className="text-xs text-destructive">Email is required.</p>}
+    </div>
+  );
+}
+
+interface LoginPasswordFieldProps {
+  password: string;
+  showPassword: boolean;
+  passwordError: boolean;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+  onTogglePassword: () => void;
+}
+
+function LoginPasswordField({
+  password,
+  showPassword,
+  passwordError,
+  onChange,
+  onBlur,
+  onTogglePassword,
+}: LoginPasswordFieldProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor="password">Password</Label>
+      <div className="relative">
         <Input
-          id="email"
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
-          onBlur={onEmailBlur}
-          className={emailError ? 'border-destructive' : ''}
+          id="password"
+          type={showPassword ? 'text' : 'password'}
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
+          className={`pr-10 ${passwordError ? 'border-destructive' : ''}`}
           required
         />
-        {emailError && <p className="text-xs text-destructive">Email is required.</p>}
+        <button
+          type="button"
+          onClick={onTogglePassword}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
+        >
+          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
       </div>
+      {passwordError && (
+        <p className="text-xs text-destructive">Password is required.</p>
+      )}
+    </div>
+  );
+}
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? 'text' : 'password'}
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => onPasswordChange(e.target.value)}
-            onBlur={onPasswordBlur}
-            className={`pr-10 ${passwordError ? 'border-destructive' : ''}`}
-            required
-          />
-          <button
-            type="button"
-            onClick={onTogglePassword}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-          >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
-        </div>
-        {passwordError && <p className="text-xs text-destructive">Password is required.</p>}
-      </div>
+interface LoginRememberFieldProps {
+  rememberMe: boolean;
+  onChange: (value: boolean) => void;
+}
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="rememberMe"
-          checked={rememberMe}
-          onChange={(e) => onRememberMeChange(e.target.checked)}
-          className="h-4 w-4 rounded border-input accent-primary"
-        />
-        <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">
-          Remember this device
-        </Label>
-      </div>
-    </>
+function LoginRememberField({ rememberMe, onChange }: LoginRememberFieldProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        id="rememberMe"
+        checked={rememberMe}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 rounded border-input accent-primary"
+      />
+      <Label htmlFor="rememberMe" className="cursor-pointer text-sm font-normal">
+        Remember this device
+      </Label>
+    </div>
   );
 }
 
@@ -118,7 +181,13 @@ function LoginFormActions({ isLoading, demoMode, onGuest }: LoginFormActionsProp
       </Button>
 
       {demoMode && (
-        <Button type="button" variant="outline" size="lg" className="w-full" onClick={onGuest}>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full"
+          onClick={onGuest}
+        >
           Continue as guest
         </Button>
       )}
@@ -135,10 +204,11 @@ function LoginSupportPanel({ demoMode }: LoginSupportPanelProps) {
     <div className="space-y-2">
       <p className="text-xs uppercase tracking-widest text-muted-foreground">Support</p>
       {demoMode ? (
-        <div className="flex items-start gap-2 p-3 rounded-lg border bg-muted/50">
-          <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+        <div className="flex items-start gap-2 rounded-lg border bg-muted/50 p-3">
+          <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
           <span className="text-sm text-muted-foreground">
-            Demo mode is enabled. Guest sessions are available and do not require credentials.
+            Demo mode is enabled. Guest sessions are available and do not require
+            credentials.
           </span>
         </div>
       ) : (
@@ -157,13 +227,15 @@ function LoginSupportPanel({ demoMode }: LoginSupportPanelProps) {
 function LoginIntroPanel() {
   return (
     <Card className="h-full">
-      <CardContent className="p-6 md:p-8 h-full flex flex-col justify-between">
+      <CardContent className="flex h-full flex-col justify-between p-6 md:p-8">
         <div className="space-y-6">
-          <div className="w-13 h-13 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="w-13 h-13 flex items-center justify-center rounded-full bg-primary/10">
             <Lock className="h-7 w-7 text-primary" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Access console</h1>
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              Access console
+            </h1>
             <p className="text-muted-foreground">
               Sign in to resume your operational workspace and manage live narratives.
             </p>
@@ -217,9 +289,11 @@ function LoginFormPanel({
 }: LoginFormPanelProps) {
   return (
     <Card className="h-full">
-      <CardContent className="p-6 md:p-8 space-y-6">
+      <CardContent className="space-y-6 p-6 md:p-8">
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Operator login</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            Operator login
+          </p>
           <h2 className="text-xl font-semibold">Welcome back</h2>
         </div>
 
@@ -239,15 +313,23 @@ function LoginFormPanel({
             onTogglePassword={onTogglePassword}
             onRememberMeChange={onRememberMeChange}
           />
-          <LoginFormActions isLoading={isLoading} demoMode={demoMode} onGuest={onGuest} />
+          <LoginFormActions
+            isLoading={isLoading}
+            demoMode={demoMode}
+            onGuest={onGuest}
+          />
         </form>
 
         <LoginSupportPanel demoMode={demoMode} />
 
         <div className="h-px bg-border" />
 
-        <Button variant="ghost" onClick={onReturn} className="w-full text-muted-foreground">
-          <ArrowLeft className="h-4 w-4 mr-2" />
+        <Button
+          variant="ghost"
+          onClick={onReturn}
+          className="w-full text-muted-foreground"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Return to overview
         </Button>
       </CardContent>
@@ -292,9 +374,9 @@ export default function LoginPage() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center py-12 md:py-20">
-      <div className="container mx-auto px-4 max-w-5xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-stretch">
+    <main id="main-content" className="flex min-h-screen items-center py-12 md:py-20">
+      <div className="container mx-auto max-w-5xl px-4">
+        <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 md:gap-8">
           <LoginIntroPanel />
           <LoginFormPanel
             email={email}

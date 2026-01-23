@@ -4,13 +4,25 @@
 import { useState } from 'react';
 import { CharacterGrid } from './components/CharacterGrid';
 import { CharacterForm } from './components/CharacterForm';
-import { useCharacters, useCharacter, useCreateCharacter, useUpdateCharacter, useDeleteCharacter } from './api/characterApi';
+import {
+  useCharacters,
+  useCharacter,
+  useCreateCharacter,
+  useUpdateCharacter,
+  useDeleteCharacter,
+} from './api/characterApi';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui';
 import { ErrorState } from '@/shared/components/feedback';
-import type { CreateCharacterInput, CharacterSummary } from '@/shared/types/character';
+import type {
+  CreateCharacterInput,
+  CharacterSummary,
+  CharacterDetail,
+} from '@/shared/types/character';
 
 export default function CharactersPage() {
-  const [selectedCharacter, setSelectedCharacter] = useState<CharacterSummary | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<CharacterSummary | null>(
+    null
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const { data: characters = [], isLoading, error } = useCharacters();
@@ -59,34 +71,18 @@ export default function CharactersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Characters</h1>
-        <p className="text-muted-foreground">
-          Manage your story characters and their relationships
-        </p>
-      </div>
-
-      {/* Form or Grid */}
+      <CharactersHeader />
       {isFormOpen ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {selectedCharacter ? 'Edit Character' : 'Create Character'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CharacterForm
-              character={selectedDetail ?? undefined}
-              onSubmit={handleSubmit}
-              onCancel={() => {
-                setIsFormOpen(false);
-                setSelectedCharacter(null);
-              }}
-              isLoading={createMutation.isPending || updateMutation.isPending}
-            />
-          </CardContent>
-        </Card>
+        <CharacterFormPanel
+          selectedCharacter={selectedCharacter}
+          selectedDetail={selectedDetail}
+          isLoading={createMutation.isPending || updateMutation.isPending}
+          onSubmit={handleSubmit}
+          onCancel={() => {
+            setIsFormOpen(false);
+            setSelectedCharacter(null);
+          }}
+        />
       ) : (
         <CharacterGrid
           characters={characters}
@@ -97,5 +93,50 @@ export default function CharactersPage() {
         />
       )}
     </div>
+  );
+}
+
+function CharactersHeader() {
+  return (
+    <div>
+      <h1 className="text-2xl font-bold tracking-tight">Characters</h1>
+      <p className="text-muted-foreground">
+        Manage your story characters and their relationships
+      </p>
+    </div>
+  );
+}
+
+type CharacterFormPanelProps = {
+  selectedCharacter: CharacterSummary | null;
+  selectedDetail?: CharacterDetail;
+  isLoading: boolean;
+  onSubmit: (data: CreateCharacterInput) => void;
+  onCancel: () => void;
+};
+
+function CharacterFormPanel({
+  selectedCharacter,
+  selectedDetail,
+  isLoading,
+  onSubmit,
+  onCancel,
+}: CharacterFormPanelProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {selectedCharacter ? 'Edit Character' : 'Create Character'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <CharacterForm
+          {...(selectedDetail ? { character: selectedDetail } : {})}
+          onSubmit={onSubmit}
+          onCancel={onCancel}
+          isLoading={isLoading}
+        />
+      </CardContent>
+    </Card>
   );
 }

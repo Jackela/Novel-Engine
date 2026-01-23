@@ -1,14 +1,14 @@
 import React from 'react';
 import { render, cleanup } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import {
-  createMemoryRouter,
-  RouterProvider,
-  Outlet,
-} from 'react-router-dom';
+import { createMemoryRouter, RouterProvider, Outlet } from 'react-router-dom';
 
 // Minimal test component that uses router features
-const TestLayout: React.FC = () => <div data-testid="test-layout"><Outlet /></div>;
+const TestLayout: React.FC = () => (
+  <div data-testid="test-layout">
+    <Outlet />
+  </div>
+);
 const TestPage: React.FC = () => <div data-testid="test-page">Test Page</div>;
 
 // Match media mock for MUI components
@@ -87,8 +87,10 @@ describe('App router configuration', () => {
     renderRouter(router);
 
     // Check for React Router Future Flag warnings
-    const hasFutureFlagWarning = warnSpy.mock.calls.some(([message]: [unknown]) =>
-      typeof message === 'string' && message.includes('React Router Future Flag Warning')
+    const hasFutureFlagWarning = warnSpy.mock.calls.some(
+      ([message]: [unknown]) =>
+        typeof message === 'string' &&
+        message.includes('React Router Future Flag Warning')
     );
 
     expect(hasFutureFlagWarning).toBe(false);
@@ -103,7 +105,9 @@ describe('App router configuration', () => {
       if (typeof message !== 'string') {
         return false;
       }
-      return message.includes('ReactDOMTestUtils.act') || message.includes('wrapped in act');
+      return (
+        message.includes('ReactDOMTestUtils.act') || message.includes('wrapped in act')
+      );
     });
 
     expect(hasActWarning).toBe(false);

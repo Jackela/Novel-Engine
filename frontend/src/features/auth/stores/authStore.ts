@@ -29,6 +29,196 @@ interface AuthState {
   initialize: () => Promise<void>;
 }
 
+const getGuestSessionFlag = () =>
+  typeof window !== 'undefined' && localStorage.getItem(GUEST_SESSION_KEY) === '1';
+
+const setGuestSessionFlag = (value: boolean) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  if (value) {
+    localStorage.setItem(GUEST_SESSION_KEY, '1');
+  } else {
+    localStorage.removeItem(GUEST_SESSION_KEY);
+  }
+};
+
+const setSignedOutState = (set: (state: Partial<AuthState>) => void) => {
+  set({
+    isAuthenticated: false,
+    isGuest: false,
+    token: null,
+    workspaceId: null,
+    isInitialized: true,
+    isLoading: false,
+  });
+};
+
+const setAuthLoading = (
+  set: (state: Partial<AuthState>) => void,
+  isLoading: boolean
+) => {
+  set({ isLoading });
+};
+
+const setAuthError = (set: (state: Partial<AuthState>) => void, error: Error) => {
+  set({
+    isAuthenticated: false,
+    token: null,
+    error,
+    isLoading: false,
+  });
+};
+
+const applyTokenState = (
+  set: (state: Partial<AuthState>) => void,
+  token: AuthToken,
+  extra?: Partial<AuthState>
+) => {
+  set({
+    token,
+    isAuthenticated: true,
+    isGuest: false,
+    isLoading: false,
+    ...extra,
+  });
+};
+
+const tryRestoreToken = async (
+  state: AuthState,
+  set: (state: Partial<AuthState>) => void
+) => {
+  if (!state.token) {
+    return false;
+  }
+  if (state.token.expiresAt > Date.now()) {
+    applyTokenState(set, state.token, { isInitialized: true });
+    return true;
+  }
+  if (state.token.refreshToken && state.token.refreshExpiresAt > Date.now()) {
+    const newToken = await authAPI.refreshToken(state.token.refreshToken);
+    applyTokenState(set, newToken, { isInitialized: true });
+    return true;
+  }
+  return false;
+};
+
+const tryRestoreGuestSession = async (set: (state: Partial<AuthState>) => void) => {
+  if (!getGuestSessionFlag()) {
+    return false;
+  }
+  const session = await authAPI.createGuestSession();
+  set({
+    isAuthenticated: true,
+    isGuest: true,
+    token: createGuestToken(),
+    workspaceId: session.workspace_id,
+    isInitialized: true,
+    isLoading: false,
+  });
+  return true;
+};
+
+const createInitialize =
+  (set: (state: Partial<AuthState>) => void, get: () => AuthState) => async () => {
+    const state = get();
+    if (state.isInitialized) return;
+
+    setAuthLoading(set, true);
+
+    try {
+      if (await tryRestoreToken(state, set)) {
+        return;
+      }
+      if (await tryRestoreGuestSession(set)) {
+        return;
+      }
+      setSignedOutState(set);
+    } catch (error) {
+      set({
+        isAuthenticated: false,
+        token: null,
+        error: error as Error,
+        isInitialized: true,
+        isLoading: false,
+      });
+    }
+  };
+
+const createLogin =
+  (set: (state: Partial<AuthState>) => void) => async (credentials: LoginRequest) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const token = await authAPI.login(credentials);
+      applyTokenState(set, token, { workspaceId: null });
+    } catch (error) {
+      setAuthError(set, error as Error);
+      throw error;
+    }
+  };
+
+const createLogout =
+  (set: (state: Partial<AuthState>) => void, get: () => AuthState) => async () => {
+    const state = get();
+    setAuthLoading(set, true);
+
+    try {
+      if (state.isGuest) {
+        setGuestSessionFlag(false);
+      } else {
+        await authAPI.logout();
+      }
+
+      setSignedOutState(set);
+    } catch (error) {
+      set({ error: error as Error, isLoading: false });
+      throw error;
+    }
+  };
+
+const createGuestMode = (set: (state: Partial<AuthState>) => void) => async () => {
+  set({ isLoading: true, error: null });
+
+  try {
+    const session = await authAPI.createGuestSession();
+    setGuestSessionFlag(true);
+
+    set({
+      isAuthenticated: true,
+      isGuest: true,
+      token: createGuestToken(),
+      workspaceId: session.workspace_id,
+      isLoading: false,
+    });
+  } catch (error) {
+    set({
+      isAuthenticated: false,
+      error: error as Error,
+      isLoading: false,
+    });
+    throw error;
+  }
+};
+
+const createRefreshToken =
+  (set: (state: Partial<AuthState>) => void, get: () => AuthState) => async () => {
+    const state = get();
+    if (!state.token?.refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    setAuthLoading(set, true);
+
+    try {
+      const newToken = await authAPI.refreshToken(state.token.refreshToken);
+      set({ token: newToken, isLoading: false });
+    } catch (error) {
+      setAuthError(set, error as Error);
+      throw error;
+    }
+  };
+
 // API helper functions
 const authAPI = {
   login: async (credentials: LoginRequest): Promise<AuthToken> => {
@@ -120,181 +310,19 @@ export const useAuthStore = create<AuthState>()(
       error: null,
 
       // Initialize auth state
-      initialize: async () => {
-        const state = get();
-        if (state.isInitialized) return;
-
-        set({ isLoading: true });
-
-        try {
-          // Check for existing token
-          if (state.token) {
-            // Validate token hasn't expired
-            if (state.token.expiresAt > Date.now()) {
-              set({ isAuthenticated: true, isInitialized: true, isLoading: false });
-              return;
-            }
-
-            // Try to refresh if we have a refresh token
-            if (state.token.refreshToken && state.token.refreshExpiresAt > Date.now()) {
-              try {
-                const newToken = await authAPI.refreshToken(state.token.refreshToken);
-                set({
-                  token: newToken,
-                  isAuthenticated: true,
-                  isInitialized: true,
-                  isLoading: false,
-                });
-                return;
-              } catch {
-                // Refresh failed, continue to signed out state
-              }
-            }
-          }
-
-          // Check for guest session
-          if (typeof window !== 'undefined') {
-            const hasGuestSession = localStorage.getItem(GUEST_SESSION_KEY) === '1';
-            if (hasGuestSession) {
-              try {
-                const session = await authAPI.createGuestSession();
-                set({
-                  isAuthenticated: true,
-                  isGuest: true,
-                  token: createGuestToken(),
-                  workspaceId: session.workspace_id,
-                  isInitialized: true,
-                  isLoading: false,
-                });
-                return;
-              } catch {
-                // Guest session failed, continue to signed out state
-              }
-            }
-          }
-
-          // No valid auth found
-          set({
-            isAuthenticated: false,
-            isGuest: false,
-            token: null,
-            isInitialized: true,
-            isLoading: false,
-          });
-        } catch (error) {
-          set({
-            isAuthenticated: false,
-            token: null,
-            error: error as Error,
-            isInitialized: true,
-            isLoading: false,
-          });
-        }
-      },
+      initialize: createInitialize(set, get),
 
       // Login
-      login: async (credentials) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const token = await authAPI.login(credentials);
-          set({
-            token,
-            isAuthenticated: true,
-            isGuest: false,
-            workspaceId: null,
-            isLoading: false,
-          });
-        } catch (error) {
-          set({
-            isAuthenticated: false,
-            token: null,
-            error: error as Error,
-            isLoading: false,
-          });
-          throw error;
-        }
-      },
+      login: createLogin(set),
 
       // Logout
-      logout: async () => {
-        const state = get();
-        set({ isLoading: true });
-
-        try {
-          if (state.isGuest) {
-            // Clear guest session
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem(GUEST_SESSION_KEY);
-            }
-          } else {
-            // Call logout API
-            await authAPI.logout();
-          }
-
-          set({
-            isAuthenticated: false,
-            isGuest: false,
-            token: null,
-            workspaceId: null,
-            isLoading: false,
-          });
-        } catch (error) {
-          set({ error: error as Error, isLoading: false });
-          throw error;
-        }
-      },
+      logout: createLogout(set, get),
 
       // Enter guest mode
-      enterGuestMode: async () => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const session = await authAPI.createGuestSession();
-
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(GUEST_SESSION_KEY, '1');
-          }
-
-          set({
-            isAuthenticated: true,
-            isGuest: true,
-            token: createGuestToken(),
-            workspaceId: session.workspace_id,
-            isLoading: false,
-          });
-        } catch (error) {
-          set({
-            isAuthenticated: false,
-            error: error as Error,
-            isLoading: false,
-          });
-          throw error;
-        }
-      },
+      enterGuestMode: createGuestMode(set),
 
       // Refresh token
-      refreshToken: async () => {
-        const state = get();
-        if (!state.token?.refreshToken) {
-          throw new Error('No refresh token available');
-        }
-
-        set({ isLoading: true });
-
-        try {
-          const newToken = await authAPI.refreshToken(state.token.refreshToken);
-          set({ token: newToken, isLoading: false });
-        } catch (error) {
-          set({
-            isAuthenticated: false,
-            token: null,
-            error: error as Error,
-            isLoading: false,
-          });
-          throw error;
-        }
-      },
+      refreshToken: createRefreshToken(set, get),
 
       // Clear error
       clearError: () => set({ error: null }),

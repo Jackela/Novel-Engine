@@ -8,8 +8,8 @@ import type { Story, StoryMood, StoryEvent } from '@/shared/types/story';
 
 interface StoryViewerProps {
   story: Story;
-  onBack?: () => void;
-  onExport?: (format: 'markdown' | 'pdf' | 'json') => void;
+  onBack?: (() => void) | undefined;
+  onExport?: ((format: 'markdown' | 'pdf' | 'json') => void) | undefined;
 }
 
 const moodColors: Record<StoryMood, string> = {
@@ -33,102 +33,129 @@ const eventTypeIcons: Record<StoryEvent['type'], string> = {
 export function StoryViewer({ story, onBack, onExport }: StoryViewerProps) {
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
-          <div>
-            <h1 className="text-2xl font-bold">{story.title}</h1>
-            <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
-              <Badge className={cn('text-xs', moodColors[story.mood])}>
-                {story.mood}
-              </Badge>
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Turn {story.turnNumber}
-              </span>
-              <span className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {story.characters.length} characters
-              </span>
-              <span>{formatRelativeTime(story.createdAt)}</span>
-            </div>
+      <StoryViewerHeader story={story} onBack={onBack} onExport={onExport} />
+      <StoryTags tags={story.tags} />
+      <StoryContent content={story.content} />
+      <StoryEvents events={story.events} />
+    </div>
+  );
+}
+
+type StoryViewerHeaderProps = {
+  story: Story;
+  onBack?: (() => void) | undefined;
+  onExport?: ((format: 'markdown' | 'pdf' | 'json') => void) | undefined;
+};
+
+function StoryViewerHeader({ story, onBack, onExport }: StoryViewerHeaderProps) {
+  return (
+    <div className="flex items-start justify-between">
+      <div className="flex items-center gap-4">
+        {onBack && (
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        )}
+        <div>
+          <h1 className="text-2xl font-bold">{story.title}</h1>
+          <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
+            <Badge className={cn('text-xs', moodColors[story.mood])}>
+              {story.mood}
+            </Badge>
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Turn {story.turnNumber}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {story.characters.length} characters
+            </span>
+            <span>{formatRelativeTime(story.createdAt)}</span>
           </div>
         </div>
-
-        {onExport && (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => onExport('markdown')}>
-              <Download className="h-4 w-4 mr-2" />
-              Markdown
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onExport('pdf')}>
-              <Download className="h-4 w-4 mr-2" />
-              PDF
-            </Button>
-          </div>
-        )}
       </div>
 
-      {/* Tags */}
-      {story.tags.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <Tag className="h-4 w-4 text-muted-foreground" />
-          {story.tags.map((tag) => (
-            <Badge key={tag} variant="outline">
-              {tag}
-            </Badge>
+      {onExport && (
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => onExport('markdown')}>
+            <Download className="mr-2 h-4 w-4" />
+            Markdown
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onExport('pdf')}>
+            <Download className="mr-2 h-4 w-4" />
+            PDF
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StoryTags({ tags }: { tags: Story['tags'] }) {
+  if (tags.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Tag className="h-4 w-4 text-muted-foreground" />
+      {tags.map((tag) => (
+        <Badge key={tag} variant="outline">
+          {tag}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function StoryContent({ content }: { content: string }) {
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="prose prose-sm dark:prose-invert max-w-none">
+          {content.split('\n\n').map((paragraph, index) => (
+            <p key={index}>{paragraph}</p>
           ))}
         </div>
-      )}
+      </CardContent>
+    </Card>
+  );
+}
 
-      {/* Main Content */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            {story.content.split('\n\n').map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+function StoryEvents({ events }: { events: Story['events'] }) {
+  if (events.length === 0) {
+    return null;
+  }
 
-      {/* Events Timeline */}
-      {story.events.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Story Events</h2>
-          <div className="space-y-3">
-            {story.events.map((event) => (
-              <Card key={event.id}>
-                <CardContent className="p-4 flex items-start gap-3">
-                  <span className="text-xl">{eventTypeIcons[event.type]}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {event.type}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {formatRelativeTime(event.timestamp)}
-                      </span>
-                    </div>
-                    <p className="text-sm">{event.description}</p>
-                    {event.involvedCharacters.length > 0 && (
-                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                        <Users className="h-3 w-3" />
-                        {event.involvedCharacters.join(', ')}
-                      </div>
-                    )}
+  return (
+    <div>
+      <h2 className="mb-4 text-lg font-semibold">Story Events</h2>
+      <div className="space-y-3">
+        {events.map((event) => (
+          <Card key={event.id}>
+            <CardContent className="flex items-start gap-3 p-4">
+              <span className="text-xl">{eventTypeIcons[event.type]}</span>
+              <div className="flex-1">
+                <div className="mb-1 flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs capitalize">
+                    {event.type}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {formatRelativeTime(event.timestamp)}
+                  </span>
+                </div>
+                <p className="text-sm">{event.description}</p>
+                {event.involvedCharacters.length > 0 && (
+                  <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                    <Users className="h-3 w-3" />
+                    {event.involvedCharacters.join(', ')}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

@@ -2,18 +2,17 @@
  * WeaverCanvas - Main React Flow canvas for story weaving
  */
 import { useMemo } from 'react';
-import {
-  ReactFlow,
-  Background,
-  Controls,
-  MiniMap,
-  type Node,
-} from '@xyflow/react';
+import { ReactFlow, Background, Controls, MiniMap, type Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { nodeTypes, type CharacterNodeData } from './nodes';
-import { useShallow } from 'zustand/shallow';
-import { useWeaverStore } from '../store/weaverStore';
+import {
+  useWeaverEdges,
+  useWeaverNodes,
+  useWeaverOnConnect,
+  useWeaverOnEdgesChange,
+  useWeaverOnNodesChange,
+} from '../store/weaverStore';
 
 // Tailwind color palette values for React Flow API
 export const FLOW_COLORS = {
@@ -46,21 +45,11 @@ function getNodeColor(node: Node): string {
   }
 }
 export function WeaverCanvas() {
-  const {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-  } = useWeaverStore(
-    useShallow((state) => ({
-      nodes: state.nodes,
-      edges: state.edges,
-      onNodesChange: state.onNodesChange,
-      onEdgesChange: state.onEdgesChange,
-      onConnect: state.onConnect,
-    }))
-  );
+  const nodes = useWeaverNodes();
+  const edges = useWeaverEdges();
+  const onNodesChange = useWeaverOnNodesChange();
+  const onEdgesChange = useWeaverOnEdgesChange();
+  const onConnect = useWeaverOnConnect();
 
   const proOptions = useMemo(() => ({ hideAttribution: true }), []);
 
@@ -75,13 +64,13 @@ export function WeaverCanvas() {
       proOptions={proOptions}
       fitView
       data-testid="weaver-canvas"
-      className="bg-muted/30"
+      className="bg-weaver-canvas"
     >
       <Background color={FLOW_COLORS.background} gap={16} />
-      <Controls className="!bg-background !border-border !shadow-md" />
+      <Controls className="!border-weaver-border !bg-weaver-surface !shadow-md" />
       <MiniMap
         nodeColor={getNodeColor}
-        className="!bg-background !border-border !shadow-md"
+        className="!border-weaver-border !bg-weaver-surface !shadow-md"
         maskColor={FLOW_COLORS.minimapMask}
       />
     </ReactFlow>

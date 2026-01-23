@@ -11,12 +11,12 @@ import {
 } from '@/shared/components/ui/tooltip';
 
 interface WeaverToolbarProps {
-  onAddCharacter?: () => void;
-  onAddEvent?: () => void;
-  onAddLocation?: () => void;
-  onSave?: () => void;
-  onUndo?: () => void;
-  onRedo?: () => void;
+  onAddCharacter?: (() => void) | undefined;
+  onAddEvent?: (() => void) | undefined;
+  onAddLocation?: (() => void) | undefined;
+  onSave?: (() => void) | undefined;
+  onUndo?: (() => void) | undefined;
+  onRedo?: (() => void) | undefined;
   canUndo?: boolean;
   canRedo?: boolean;
 }
@@ -39,86 +39,121 @@ export function WeaverToolbar({
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Node Creation */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={onAddCharacter}>
-                <Users className="mr-2 h-4 w-4" />
-                Character
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Add a character node</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={onAddEvent}>
-                <Zap className="mr-2 h-4 w-4" />
-                Event
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Add an event node</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={onAddLocation}>
-                <MapPin className="mr-2 h-4 w-4" />
-                Location
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Add a location node</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <div className="w-px h-6 bg-border mx-2" />
-
-        {/* History */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onUndo}
-                disabled={!canUndo}
-              >
-                <Undo className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Undo</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onRedo}
-                disabled={!canRedo}
-              >
-                <Redo className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Redo</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <div className="w-px h-6 bg-border mx-2" />
-
-        {/* Save */}
+        <WeaverNodeControls
+          onAddCharacter={onAddCharacter}
+          onAddEvent={onAddEvent}
+          onAddLocation={onAddLocation}
+        />
+        <Divider />
+        <WeaverHistoryControls
+          onUndo={onUndo}
+          onRedo={onRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+        />
+        <Divider />
         <Button size="sm" onClick={onSave}>
           <Save className="mr-2 h-4 w-4" />
           Save
         </Button>
       </div>
     </header>
+  );
+}
+
+type TooltipButtonProps = {
+  label: string;
+  tooltip: string;
+  onClick?: (() => void) | undefined;
+  icon: JSX.Element;
+  variant?: 'outline' | 'ghost';
+  size?: 'sm' | 'icon';
+  disabled?: boolean;
+};
+
+function TooltipButton({
+  label,
+  tooltip,
+  onClick,
+  icon,
+  variant = 'outline',
+  size = 'sm',
+  disabled,
+}: TooltipButtonProps) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant={variant} size={size} onClick={onClick} disabled={disabled}>
+            {icon}
+            {label && size !== 'icon' ? label : null}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{tooltip}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function Divider() {
+  return <div className="mx-2 h-6 w-px bg-border" />;
+}
+
+function WeaverNodeControls({
+  onAddCharacter,
+  onAddEvent,
+  onAddLocation,
+}: Pick<WeaverToolbarProps, 'onAddCharacter' | 'onAddEvent' | 'onAddLocation'>) {
+  return (
+    <>
+      <TooltipButton
+        label="Character"
+        tooltip="Add a character node"
+        onClick={onAddCharacter}
+        icon={<Users className="mr-2 h-4 w-4" />}
+      />
+      <TooltipButton
+        label="Event"
+        tooltip="Add an event node"
+        onClick={onAddEvent}
+        icon={<Zap className="mr-2 h-4 w-4" />}
+      />
+      <TooltipButton
+        label="Location"
+        tooltip="Add a location node"
+        onClick={onAddLocation}
+        icon={<MapPin className="mr-2 h-4 w-4" />}
+      />
+    </>
+  );
+}
+
+function WeaverHistoryControls({
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+}: Pick<WeaverToolbarProps, 'onUndo' | 'onRedo' | 'canUndo' | 'canRedo'>) {
+  return (
+    <>
+      <TooltipButton
+        label=""
+        tooltip="Undo"
+        onClick={onUndo}
+        icon={<Undo className="h-4 w-4" />}
+        variant="ghost"
+        size="icon"
+        disabled={!canUndo}
+      />
+      <TooltipButton
+        label=""
+        tooltip="Redo"
+        onClick={onRedo}
+        icon={<Redo className="h-4 w-4" />}
+        variant="ghost"
+        size="icon"
+        disabled={!canRedo}
+      />
+    </>
   );
 }

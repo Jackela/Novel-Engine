@@ -56,11 +56,11 @@ export default function SignalsPanel() {
             return (
               <div
                 key={signal.id}
-                className="flex items-start gap-2 p-2 rounded-lg bg-muted/30"
+                className="flex items-start gap-2 rounded-lg bg-muted/30 p-2"
               >
-                <Icon className={`h-4 w-4 mt-0.5 ${colorClass}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{signal.message}</p>
+                <Icon className={`mt-0.5 h-4 w-4 ${colorClass}`} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm">{signal.message}</p>
                   <p className="text-xs text-muted-foreground">{signal.time}</p>
                 </div>
               </div>

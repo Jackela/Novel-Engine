@@ -4,7 +4,7 @@ import {
   extractEquipmentFromData,
   transformCharacterResponse,
   transformEnhancedCharacterResponse,
-  transformSimulationResponse
+  transformSimulationResponse,
 } from '../services/dtoTransforms';
 
 describe('DTO transforms', () => {
@@ -28,14 +28,21 @@ describe('DTO transforms', () => {
         special_gear: ['Grappling Hook'],
       },
     });
-    expect(items.map((item) => item.name)).toEqual(['Rifle', 'Kevlar', 'Grappling Hook']);
+    expect(items.map((item) => item.name)).toEqual([
+      'Rifle',
+      'Kevlar',
+      'Grappling Hook',
+    ]);
   });
 
   it('transforms character response with fallback fields', () => {
-    const res = transformCharacterResponse({
-      name: 'Aria',
-      structured_data: { combat_stats: { strength: 7 } },
-    }, 'Aria');
+    const res = transformCharacterResponse(
+      {
+        name: 'Aria',
+        structured_data: { combat_stats: { strength: 7 } },
+      },
+      'Aria'
+    );
     expect(res.name).toBe('Aria');
     expect(res.stats.strength).toBe(7);
   });
@@ -45,9 +52,7 @@ describe('DTO transforms', () => {
       character_id: 'c1',
       name: 'Kael',
       faction: 'Vanguard',
-      equipment: [
-        { name: 'Blade', equipment_type: 'weapon', condition: 1.0 },
-      ],
+      equipment: [{ name: 'Blade', equipment_type: 'weapon', condition: 1.0 }],
     });
     expect(res.id).toBe('c1');
     expect(res.name).toBe('Kael');
@@ -57,8 +62,25 @@ describe('DTO transforms', () => {
 
   it('transforms simulation response to StoryProject structure', () => {
     const story = transformSimulationResponse(
-      { story: 'Once upon a time', turns_executed: 3, duration_seconds: 2, participants: ['Aria'] },
-      { title: 'Test', description: 'Desc', characters: ['Aria'], settings: { turns: 3, narrativeStyle: 'concise', genre: 'test', tone: 'dramatic', environment: 'test', objectives: [] } }
+      {
+        story: 'Once upon a time',
+        turns_executed: 3,
+        duration_seconds: 2,
+        participants: ['Aria'],
+      },
+      {
+        title: 'Test',
+        description: 'Desc',
+        characters: ['Aria'],
+        settings: {
+          turns: 3,
+          narrativeStyle: 'concise',
+          genre: 'test',
+          tone: 'dramatic',
+          environment: 'test',
+          objectives: [],
+        },
+      }
     );
     expect(story.title).toBe('Test');
     expect(story.metadata.totalTurns).toBe(3);

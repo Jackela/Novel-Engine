@@ -18,11 +18,11 @@ export default function NetworkPanel() {
         <div className="space-y-4">
           {/* Network stats */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <div className="rounded-lg bg-muted/50 p-3 text-center">
               <p className="text-2xl font-bold">12</p>
               <p className="text-xs text-muted-foreground">Characters</p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <div className="rounded-lg bg-muted/50 p-3 text-center">
               <p className="text-2xl font-bold">28</p>
               <p className="text-xs text-muted-foreground">Relationships</p>
             </div>
@@ -38,7 +38,7 @@ export default function NetworkPanel() {
               ].map((interaction, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 p-2 rounded-md bg-muted/30"
+                  className="flex items-center gap-2 rounded-md bg-muted/30 p-2"
                 >
                   <span className="text-sm">{interaction.a}</span>
                   <Link2 className="h-3 w-3 text-muted-foreground" />
@@ -52,7 +52,7 @@ export default function NetworkPanel() {
           </div>
 
           {/* Network visualization placeholder */}
-          <div className="aspect-square rounded-lg bg-muted/30 flex items-center justify-center border border-dashed border-muted-foreground/30">
+          <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30">
             <p className="text-sm text-muted-foreground">Network Graph</p>
           </div>
         </div>

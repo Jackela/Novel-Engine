@@ -3,7 +3,11 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Story, GenerateStoryInput, StoryGenerationProgress } from '@/shared/types/story';
+import type {
+  Story,
+  GenerateStoryInput,
+  StoryGenerationProgress,
+} from '@/shared/types/story';
 
 const STORIES_KEY = ['stories'];
 
@@ -64,7 +68,9 @@ export function useExportStory() {
     mutationFn: ({ id, format }: { id: string; format: 'markdown' | 'pdf' | 'json' }) =>
       api.get<Blob>(`/stories/${id}/export`, {
         params: { format },
-        headers: { Accept: format === 'pdf' ? 'application/pdf' : 'application/octet-stream' },
+        headers: {
+          Accept: format === 'pdf' ? 'application/pdf' : 'application/octet-stream',
+        },
       }),
   });
 }

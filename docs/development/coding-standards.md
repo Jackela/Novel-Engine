@@ -36,7 +36,7 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
   (All commands assume the daemon wrapper is already running.)
 
 ### Snapshot & Evidence
-- Store MCP screenshots/JSON in `docs/assets/dashboard/` with date suffixes (`dashboard-flow-YYYY-MM-DD[-suffix].png`). Update both README files and `docs/assets/dashboard/README.md` whenever evidence changes.
+- Store MCP screenshots/JSON in `docs/assets/dashboard/` with date suffixes (`dashboard-flow-YYYY-MM-DD[-suffix].png`). Track capture steps in `AGENTS.md`.
 - Keep regression logs and raw test artifacts out of the repo. Attach logs/screenshots to PRs (or upload as CI artifacts) instead of committing them.
 
 ## 3. Backend (Python)
@@ -79,7 +79,7 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
 
 - Any change touching layout, evidence, or CI must update:
   - README & README.en (sections: dev workflow, coding standards, screenshot references).
-  - `docs/assets/dashboard/README.md` (table of MCP captures).
+  - `AGENTS.md` (capture procedure and AI workflow guidance).
 - Keep OpenSpec changes (`docs/specs/openspec/changes/<id>/`) validated via `openspec validate <id> --strict`. Every task list must be checked off before a change is considered complete.
 
 Following this checklist ensures the next contributor (human or AI) can reproduce the stack, gather evidence, and pass CI without guesswork.

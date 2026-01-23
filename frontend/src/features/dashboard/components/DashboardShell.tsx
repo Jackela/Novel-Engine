@@ -19,7 +19,7 @@ const SignalsPanel = lazy(() => import('./panels/SignalsPanel'));
 // Panel loading fallback
 function PanelFallback() {
   return (
-    <div className="flex items-center justify-center h-full min-h-[200px]">
+    <div className="flex h-full min-h-[200px] items-center justify-center">
       <LoadingSpinner size="sm" />
     </div>
   );

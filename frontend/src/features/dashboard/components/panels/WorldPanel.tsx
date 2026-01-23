@@ -17,7 +17,7 @@ export default function WorldPanel() {
       <CardContent>
         <div className="space-y-4">
           {/* Time indicator */}
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+          <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
             <Clock className="h-4 w-4 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium">Current Time</p>
@@ -29,22 +29,20 @@ export default function WorldPanel() {
           <div className="space-y-2">
             <h4 className="text-sm font-medium">Active Locations</h4>
             <div className="space-y-1">
-              {['Dragon\'s Keep', 'Merchant Quarter', 'Forest Path'].map(
-                (location) => (
-                  <div
-                    key={location}
-                    className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
-                  >
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{location}</span>
-                  </div>
-                )
-              )}
+              {["Dragon's Keep", 'Merchant Quarter', 'Forest Path'].map((location) => (
+                <div
+                  key={location}
+                  className="flex cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-muted/50"
+                >
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{location}</span>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* World map placeholder */}
-          <div className="aspect-video rounded-lg bg-muted/30 flex items-center justify-center border border-dashed border-muted-foreground/30">
+          <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30">
             <p className="text-sm text-muted-foreground">World Map</p>
           </div>
         </div>

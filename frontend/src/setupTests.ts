@@ -21,10 +21,11 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     }) as unknown as MediaQueryList;
 }
 
-type WindowWithTesting = Window & typeof globalThis & {
-  scrollTo?: (options?: ScrollToOptions | number, y?: number) => void;
-  ResizeObserver?: typeof ResizeObserver;
-};
+type WindowWithTesting = Window &
+  typeof globalThis & {
+    scrollTo?: (options?: ScrollToOptions | number, y?: number) => void;
+    ResizeObserver?: typeof ResizeObserver;
+  };
 
 if (typeof window !== 'undefined') {
   const testWindow = window as WindowWithTesting;

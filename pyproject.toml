@@ -115,7 +115,7 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 show_error_codes = true
-follow_imports = "skip"
+follow_imports = "normal"
 
 # files = [...]  # Removed to enable global type checking
 

@@ -8,7 +8,6 @@ import {
   createRootRoute,
   redirect,
   lazyRouteComponent,
-  Outlet,
 } from '@tanstack/react-router';
 import { RootLayout } from './layout';
 import { ProtectedLayout } from './ProtectedLayout';

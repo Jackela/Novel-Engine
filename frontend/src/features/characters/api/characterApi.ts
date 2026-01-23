@@ -3,7 +3,11 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { CharacterDetail, CreateCharacterInput, UpdateCharacterInput } from '@/shared/types/character';
+import type {
+  CharacterDetail,
+  CreateCharacterInput,
+  UpdateCharacterInput,
+} from '@/shared/types/character';
 import { CharactersListResponseSchema, CharacterDetailSchema } from '@/types/schemas';
 
 const CHARACTERS_KEY = ['characters'];
@@ -49,11 +53,11 @@ export function useUpdateCharacter() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, ...input }: UpdateCharacterInput) =>
+    mutationFn: ({ id, ...input }: UpdateCharacterInput & { id: string }) =>
       api.put<CharacterDetail>(`/characters/${id}`, input),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: CHARACTERS_KEY });
-      queryClient.setQueryData([...CHARACTERS_KEY, data.id], data);
+      queryClient.setQueryData([...CHARACTERS_KEY, data.character_id], data);
     },
   });
 }

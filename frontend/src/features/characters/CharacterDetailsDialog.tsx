@@ -1,4 +1,9 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import type { CharacterDetail } from '@/shared/types/character';
 
@@ -57,7 +62,9 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
               <div className="text-muted-foreground">Relationships</div>
               <div className="flex flex-wrap gap-2">
                 {Object.keys(character.relationships || {}).length === 0 ? (
-                  <span className="text-muted-foreground">No relationships recorded.</span>
+                  <span className="text-muted-foreground">
+                    No relationships recorded.
+                  </span>
                 ) : (
                   Object.entries(character.relationships).map(([relation, value]) => (
                     <Badge key={relation} variant="secondary">

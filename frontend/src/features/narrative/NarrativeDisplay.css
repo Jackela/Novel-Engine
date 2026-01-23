@@ -365,7 +365,8 @@
 
 /* Animations */
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -374,16 +375,19 @@
 }
 
 @keyframes blink {
-  0%, 50% {
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+  51%,
+  100% {
     opacity: 0;
   }
 }
 
 @keyframes streaming-glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 rgba(0, 123, 255, 0.3);
   }
   50% {
@@ -410,26 +414,26 @@
     gap: 12px;
     padding: 12px 16px;
   }
-  
+
   .narrative-controls {
     flex-wrap: wrap;
   }
-  
+
   .narrative-display__content {
     flex-direction: column;
   }
-  
+
   .agent-actions {
     width: 100%;
     max-height: 200px;
     border-left: none;
     border-top: 1px solid var(--border-color, #e0e0e0);
   }
-  
+
   .narrative-event {
     padding: 8px 12px;
   }
-  
+
   .narrative-event__header {
     flex-wrap: wrap;
     gap: 8px;
@@ -440,17 +444,17 @@
   .narrative-display {
     border-radius: 0;
   }
-  
+
   .narrative-event {
     margin: 4px 0;
     padding: 8px;
     border-radius: 4px;
   }
-  
+
   .narrative-event__content {
     font-size: 13px;
   }
-  
+
   .agent-actions {
     max-height: 150px;
   }
@@ -474,7 +478,7 @@
     --info-color: #06b6d4;
     --secondary-color: #6b7280;
   }
-  
+
   .narrative-filter,
   .control-btn,
   .event-action-btn {
@@ -482,7 +486,7 @@
     color: var(--text-color);
     border-color: var(--border-color);
   }
-  
+
   .agent-action {
     background: var(--bg-secondary);
     border-color: var(--border-color);
@@ -494,23 +498,23 @@
   .narrative-event {
     border: 2px solid;
   }
-  
+
   .narrative-event--action {
     border-color: #28a745;
   }
-  
+
   .narrative-event--dialogue {
     border-color: #007bff;
   }
-  
+
   .narrative-event--description {
     border-color: #6c757d;
   }
-  
+
   .narrative-event--system {
     border-color: #ffc107;
   }
-  
+
   .narrative-event--agent-thought {
     border-color: #8a2be2;
   }
@@ -524,7 +528,7 @@
   .narrative-filter {
     transition: none;
   }
-  
+
   .generating-indicator,
   .narrative-event__cursor,
   .narrative-event--streaming,

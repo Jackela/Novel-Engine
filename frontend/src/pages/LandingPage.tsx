@@ -3,7 +3,14 @@
  */
 import { useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Rocket, Monitor, BarChart3, Shield, BookOpen, AlertCircle } from 'lucide-react';
+import {
+  Rocket,
+  Monitor,
+  BarChart3,
+  Shield,
+  BookOpen,
+  AlertCircle,
+} from 'lucide-react';
 import { Button, Card, CardContent } from '@/shared/components/ui';
 import { useAuth } from '@/features/auth';
 
@@ -25,10 +32,18 @@ const FEATURES = [
   },
 ];
 
-function FeatureCard({ icon: Icon, title, desc }: { icon: typeof Monitor; title: string; desc: string }) {
+function FeatureCard({
+  icon: Icon,
+  title,
+  desc,
+}: {
+  icon: typeof Monitor;
+  title: string;
+  desc: string;
+}) {
   return (
     <div className="flex items-start gap-3" data-testid="feature-card">
-      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
         <Icon className="h-4 w-4 text-primary" />
       </div>
       <div>
@@ -42,12 +57,17 @@ function FeatureCard({ icon: Icon, title, desc }: { icon: typeof Monitor; title:
 function FeaturePanel() {
   return (
     <Card>
-      <CardContent className="p-6 space-y-6">
+      <CardContent className="space-y-6 p-6">
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Capabilities</p>
-          <h2 className="text-lg font-semibold">Built for operators, not dashboards.</h2>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            Capabilities
+          </p>
+          <h2 className="text-lg font-semibold">
+            Built for operators, not dashboards.
+          </h2>
           <p className="text-sm text-muted-foreground">
-            Minimal surfaces, precise hierarchy, and legible telemetry across every scale.
+            Minimal surfaces, precise hierarchy, and legible telemetry across every
+            scale.
           </p>
         </div>
 
@@ -67,7 +87,7 @@ function HeroBadge() {
   return (
     <div
       data-testid="version-chip"
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-background text-sm font-medium tracking-wider uppercase"
+      className="inline-flex items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm font-medium uppercase tracking-wider"
     >
       <BookOpen className="h-4 w-4 text-primary" />
       Novel Engine
@@ -77,7 +97,7 @@ function HeroBadge() {
 
 function HeroTitle() {
   return (
-    <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-tight">
+    <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl md:text-6xl">
       Narrative Engine
       <span className="block text-primary">calm control for complex stories.</span>
     </h1>
@@ -86,9 +106,9 @@ function HeroTitle() {
 
 function HeroDescription() {
   return (
-    <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
-      Direct complex storylines across Meridian Station. Monitor character networks, guide event
-      cascades, and watch your narrative evolve in real time.
+    <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
+      Direct complex storylines across Meridian Station. Monitor character networks,
+      guide event cascades, and watch your narrative evolve in real time.
     </p>
   );
 }
@@ -105,15 +125,17 @@ function HeroActions({ isLoading, error, onLaunch }: HeroActionsProps) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive max-w-lg">
+        <div className="flex max-w-lg items-center gap-2 rounded-lg bg-destructive/10 p-3 text-destructive">
           <AlertCircle className="h-4 w-4" />
-          <span className="text-sm">{error.message || 'Failed to connect to backend.'}</span>
+          <span className="text-sm">
+            {error.message || 'Failed to connect to backend.'}
+          </span>
           <Button variant="ghost" size="sm" onClick={onLaunch} disabled={isLoading}>
             Retry
           </Button>
         </div>
       )}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Button
           size="lg"
           onClick={onLaunch}
@@ -121,7 +143,7 @@ function HeroActions({ isLoading, error, onLaunch }: HeroActionsProps) {
           data-testid="cta-launch"
           className="rounded-full px-8"
         >
-          <Rocket className="h-4 w-4 mr-2" />
+          <Rocket className="mr-2 h-4 w-4" />
           {isLoading ? 'Launching...' : 'Launch Engine'}
         </Button>
         <Button
@@ -151,14 +173,11 @@ export default function LandingPage() {
   };
 
   return (
-    <main
-      id="main-content"
-      className="min-h-screen flex items-center py-16 md:py-20"
-    >
-      <div className="container mx-auto px-4 max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-16 items-center">
+    <main id="main-content" className="flex min-h-screen items-center py-16 md:py-20">
+      <div className="container mx-auto max-w-6xl px-4">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-12 md:gap-16">
           {/* Hero Section */}
-          <div className="md:col-span-7 space-y-8">
+          <div className="space-y-8 md:col-span-7">
             <HeroBadge />
             <HeroTitle />
             <HeroDescription />

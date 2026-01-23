@@ -5,14 +5,13 @@ import { useCallback } from 'react';
 import { WeaverLayout } from '@/layouts/WeaverLayout';
 import { WeaverCanvas } from './WeaverCanvas';
 import { WeaverToolbar } from './components/WeaverToolbar';
-import type { Node } from '@xyflow/react';
-import { useWeaverAddNode, useWeaverStore } from './store/weaverStore';
+import { useWeaverAddNode, useWeaverStore, type WeaverNode } from './store/weaverStore';
 
 export default function WeaverPage() {
   const addNode = useWeaverAddNode();
 
   const handleAddCharacter = useCallback(() => {
-    const newNode: Node = {
+    const newNode: WeaverNode = {
       id: `char-${Date.now()}`,
       type: 'character',
       position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
@@ -20,13 +19,14 @@ export default function WeaverPage() {
         name: 'New Character',
         role: 'Supporting',
         traits: [],
+        status: 'idle',
       },
     };
     addNode(newNode);
   }, [addNode]);
 
   const handleAddEvent = useCallback(() => {
-    const newNode: Node = {
+    const newNode: WeaverNode = {
       id: `event-${Date.now()}`,
       type: 'event',
       position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
@@ -34,13 +34,14 @@ export default function WeaverPage() {
         title: 'New Event',
         type: 'action',
         description: 'Describe what happens...',
+        status: 'idle',
       },
     };
     addNode(newNode);
   }, [addNode]);
 
   const handleAddLocation = useCallback(() => {
-    const newNode: Node = {
+    const newNode: WeaverNode = {
       id: `loc-${Date.now()}`,
       type: 'location',
       position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
@@ -48,6 +49,7 @@ export default function WeaverPage() {
         name: 'New Location',
         type: 'other',
         description: 'Describe the place...',
+        status: 'idle',
       },
     };
     addNode(newNode);

@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import type { AxiosStatic } from 'axios';
 import { vi, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
 import { server } from '../mocks/server';
 import { runCleanups as runUtilCleanups } from './utils/cleanup';
@@ -6,7 +7,7 @@ import { runCleanups as runUtilCleanups } from './utils/cleanup';
 // Ensure globals expected by browser-only libraries (e.g., web-vitals) exist
 if (typeof globalThis.self === 'undefined') {
   const globalWithSelf = globalThis as typeof globalThis & { self?: typeof globalThis };
-  globalWithSelf.self = globalThis;
+  globalWithSelf.self = globalThis as unknown as Window & typeof globalThis;
 }
 
 // Polyfills
@@ -16,8 +17,10 @@ if (typeof window !== 'undefined') {
   // Mock scrollTop for MUI Fade component compatibility with jsdom
   Object.defineProperty(HTMLElement.prototype, 'scrollTop', {
     configurable: true,
-    get() { return 0; },
-    set() {}
+    get() {
+      return 0;
+    },
+    set() {},
   });
 }
 
@@ -127,44 +130,57 @@ beforeAll(() => {
 
 // Mock axios for any direct usage - using importOriginal to preserve AxiosError
 vi.mock('axios', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('axios')>();
+  const actual = (await importOriginal()) as { default: AxiosStatic } & Record<
+    string,
+    unknown
+  >;
   return {
     ...actual,
     default: {
       ...actual.default,
       create: vi.fn(() => ({
-        get: vi.fn(() => Promise.resolve({
-          data: {
-            api: 'healthy',
-            config: 'loaded',
-            version: '1.0.0',
-          },
-        })),
-        post: vi.fn(() => Promise.resolve({
-          data: { success: true },
-        })),
+        get: vi.fn(() =>
+          Promise.resolve({
+            data: {
+              api: 'healthy',
+              config: 'loaded',
+              version: '1.0.0',
+            },
+          })
+        ),
+        post: vi.fn(() =>
+          Promise.resolve({
+            data: { success: true },
+          })
+        ),
         interceptors: {
           request: { use: vi.fn() },
           response: { use: vi.fn() },
         },
-        getSystemStatus: vi.fn(() => Promise.resolve({
+        getSystemStatus: vi.fn(() =>
+          Promise.resolve({
+            data: {
+              api: 'healthy',
+              config: 'loaded',
+              version: '1.0.0',
+            },
+          })
+        ),
+      })),
+      get: vi.fn(() =>
+        Promise.resolve({
           data: {
             api: 'healthy',
             config: 'loaded',
             version: '1.0.0',
           },
-        })),
-      })),
-      get: vi.fn(() => Promise.resolve({
-        data: {
-          api: 'healthy',
-          config: 'loaded',
-          version: '1.0.0',
-        },
-      })),
-      post: vi.fn(() => Promise.resolve({
-        data: { success: true },
-      })),
+        })
+      ),
+      post: vi.fn(() =>
+        Promise.resolve({
+          data: { success: true },
+        })
+      ),
     },
   };
 });

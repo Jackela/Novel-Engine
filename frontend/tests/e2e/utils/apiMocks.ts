@@ -60,7 +60,9 @@ export const mockDecisionApi = async (page: Page) => {
 };
 
 export const mockDashboardApi = async (page: Page, options: { characters?: MockCharacter[] } = {}) => {
-  const characters = options.characters ?? DEFAULT_CHARACTERS;
+  const baseCharacters = options.characters ?? DEFAULT_CHARACTERS;
+  const nowIso = new Date().toISOString();
+  const characters = [...baseCharacters];
 
   let orchestrationState = {
     status: 'idle',
@@ -223,15 +225,56 @@ export const mockDashboardApi = async (page: Page, options: { characters?: MockC
     });
   });
 
+  const toCharacterSummary = (character: MockCharacter) => ({
+    id: character.id,
+    agent_id: character.id,
+    name: character.name,
+    status: character.status ?? 'active',
+    type: character.role ?? 'npc',
+    updated_at: nowIso,
+    workspace_id: null,
+  });
+
+  const buildCharacterDetail = (character: MockCharacter) => ({
+    agent_id: character.id,
+    character_id: character.id,
+    character_name: character.name,
+    name: character.name,
+    background_summary: 'Mock character profile.',
+    personality_traits: 'Focused and resilient.',
+    current_status: character.status ?? 'active',
+    narrative_context: 'Operative assigned to test scenarios.',
+    skills: {},
+    relationships: {},
+    current_location: '',
+    inventory: [],
+    metadata: {},
+    structured_data: {},
+  });
+
   await page.route(/\/api\/characters(\/|\?|$)/, async route => {
+    if (route.request().method() === 'POST') {
+      const payload = (await route.request().postDataJSON()) as {
+        agent_id?: string;
+        name?: string;
+      };
+      const characterId = payload.agent_id ?? `character-${Date.now()}`;
+      const characterName = payload.name ?? characterId;
+      const created = { id: characterId, name: characterName, status: 'active' };
+      characters.unshift(created);
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(buildCharacterDetail(created)),
+      });
+      return;
+    }
+
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        characters: characters.map((character) => ({
-          id: character.id,
-          name: character.name,
-        })),
+        characters: characters.map((character) => toCharacterSummary(character)),
       }),
     });
   });
@@ -240,25 +283,11 @@ export const mockDashboardApi = async (page: Page, options: { characters?: MockC
     const url = new URL(route.request().url());
     const characterId = decodeURIComponent(url.pathname.split('/').pop() || 'unknown');
     const fallback = characters.find((character) => character.id === characterId);
+    const fallbackCharacter = fallback ?? { id: characterId, name: characterId, status: 'active' };
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        id: characterId,
-        name: fallback?.name ?? characterId,
-        background_summary: 'Mock character profile.',
-        narrative_context: 'Operative assigned to test scenarios.',
-        current_status: fallback?.status ?? 'active',
-        structured_data: {
-          psychological_profile: {
-            openness: 0.6,
-            conscientiousness: 0.6,
-            extraversion: 0.5,
-            agreeableness: 0.7,
-            neuroticism: 0.4,
-          },
-        },
-      }),
+      body: JSON.stringify(buildCharacterDetail(fallbackCharacter)),
     });
   });
 };

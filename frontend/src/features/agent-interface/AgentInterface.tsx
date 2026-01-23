@@ -1,7 +1,7 @@
 /**
  * Agent Interface Component
  * =========================
- * 
+ *
  * Interactive interface for managing and communicating with AI agents:
  * - Agent status monitoring
  * - Direct agent communication
@@ -98,6 +98,13 @@ const getDefaultStatistics = (): AgentStatistics => ({
   narrativeContributions: 0,
 });
 
+const applyAgentPatch = (agent: Agent, patch: Partial<Agent>) => {
+  const filteredPatch = Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined)
+  ) as Partial<Agent>;
+  return { ...agent, ...filteredPatch };
+};
+
 const updateAgentsFromStatus = (
   prevAgents: Agent[],
   message: { data: Partial<Agent> & { agentId: string } },
@@ -107,11 +114,14 @@ const updateAgentsFromStatus = (
   const agentIndex = newAgents.findIndex((agent) => agent.id === message.data.agentId);
 
   if (agentIndex >= 0) {
-    newAgents[agentIndex] = {
-      ...newAgents[agentIndex],
-      ...message.data,
-      lastActivity: Date.now(),
-    };
+    const existingAgent = newAgents[agentIndex];
+    if (!existingAgent) {
+      return newAgents;
+    }
+    const { agentId: _agentId, ...patch } = message.data;
+    const updatedAgent = applyAgentPatch(existingAgent, patch);
+    updatedAgent.lastActivity = Date.now();
+    newAgents[agentIndex] = updatedAgent;
     return newAgents;
   }
 
@@ -167,7 +177,10 @@ const useSortedAgents = (agents: Agent[]) =>
   useMemo(() => sortAgentsByStatus(agents), [agents]);
 
 const useSelectedAgent = (agents: Agent[], selectedAgentId: string | null) =>
-  useMemo(() => agents.find((agent) => agent.id === selectedAgentId) || null, [agents, selectedAgentId]);
+  useMemo(
+    () => agents.find((agent) => agent.id === selectedAgentId) || null,
+    [agents, selectedAgentId]
+  );
 
 const useAutoSelectAgent = (
   selectedAgentId: string | null,
@@ -175,8 +188,11 @@ const useAutoSelectAgent = (
   setSelectedAgentId: React.Dispatch<React.SetStateAction<string | null>>
 ) => {
   useEffect(() => {
-    if (!selectedAgentId && agents.length > 0) {
-      setSelectedAgentId(agents[0].id);
+    if (!selectedAgentId) {
+      const [firstAgent] = agents;
+      if (firstAgent) {
+        setSelectedAgentId(firstAgent.id);
+      }
     }
   }, [selectedAgentId, agents, setSelectedAgentId]);
 };
@@ -186,7 +202,11 @@ const useAgentWebSocket = (params: {
   maxAgents: number;
   sessionId: string;
   wsState: { isConnected: boolean };
-  sendMessage: (payload: { type: string; data: Record<string, unknown>; priority: 'normal' }) => void;
+  sendMessage: (payload: {
+    type: string;
+    data: Record<string, unknown>;
+    priority: 'normal';
+  }) => void;
   setAgents: React.Dispatch<React.SetStateAction<Agent[]>>;
   setMessages: React.Dispatch<React.SetStateAction<AgentMessage[]>>;
   selectedAgentId: string | null;
@@ -223,18 +243,30 @@ const useAgentWebSocket = (params: {
           break;
 
         case 'agent_removed':
-          setAgents((prev) => prev.filter((agent) => agent.id !== message.data.agentId));
+          setAgents((prev) =>
+            prev.filter((agent) => agent.id !== message.data.agentId)
+          );
           if (selectedAgentId === message.data.agentId) {
             setSelectedAgentId(null);
           }
           break;
       }
     },
-    [deferUpdate, maxAgents, selectedAgentId, setAgents, setMessages, setSelectedAgentId]
+    [
+      deferUpdate,
+      maxAgents,
+      selectedAgentId,
+      setAgents,
+      setMessages,
+      setSelectedAgentId,
+    ]
   );
 
   useEffect(() => {
-    window.addEventListener('websocket-message', handleWebSocketMessage as EventListener);
+    window.addEventListener(
+      'websocket-message',
+      handleWebSocketMessage as EventListener
+    );
 
     if (wsState.isConnected) {
       sendMessage({
@@ -245,7 +277,10 @@ const useAgentWebSocket = (params: {
     }
 
     return () => {
-      window.removeEventListener('websocket-message', handleWebSocketMessage as EventListener);
+      window.removeEventListener(
+        'websocket-message',
+        handleWebSocketMessage as EventListener
+      );
     };
   }, [handleWebSocketMessage, wsState.isConnected, sendMessage, sessionId]);
 };
@@ -275,7 +310,9 @@ const AgentParameterSliders: React.FC<{
             onChange={(event) => onChange(param, parseFloat(event.target.value))}
             className="parameter-slider"
           />
-          <span className="parameter-value">{((parameters[param] as number) * 100).toFixed(0)}%</span>
+          <span className="parameter-value">
+            {((parameters[param] as number) * 100).toFixed(0)}%
+          </span>
         </div>
       );
     })}
@@ -325,7 +362,10 @@ const AgentParametersPanel: React.FC<{
   selectedAgent: Agent;
   onUpdateParameters: (agentId: string, parameters: Partial<AgentParameters>) => void;
 }> = ({ selectedAgent, onUpdateParameters }) => {
-  const handleParameterChange = (param: keyof AgentParameters, value: number | string) => {
+  const handleParameterChange = (
+    param: keyof AgentParameters,
+    value: number | string
+  ) => {
     const newParameters = { ...selectedAgent.parameters, [param]: value };
     onUpdateParameters(selectedAgent.id, newParameters);
   };
@@ -357,7 +397,10 @@ const AgentParametersPanel: React.FC<{
   );
 };
 
-const AgentRelationships: React.FC<{ selectedAgent: Agent; agents: Agent[] }> = ({ selectedAgent, agents }) => (
+const AgentRelationships: React.FC<{ selectedAgent: Agent; agents: Agent[] }> = ({
+  selectedAgent,
+  agents,
+}) => (
   <div className="agent-relationships">
     <h5>Agent Relationships</h5>
     {Object.entries(selectedAgent.relationships).map(([agentId, weight]) => {
@@ -366,7 +409,10 @@ const AgentRelationships: React.FC<{ selectedAgent: Agent; agents: Agent[] }> = 
         <div key={agentId} className="relationship-item">
           <span>{relatedAgent.name}</span>
           <div className="relationship-strength">
-            <div className="relationship-bar" style={{ width: `${Math.abs(weight) * 100}%` }} />
+            <div
+              className="relationship-bar"
+              style={{ width: `${Math.abs(weight) * 100}%` }}
+            />
             <span>{weight > 0 ? 'Positive' : 'Negative'}</span>
           </div>
         </div>
@@ -397,7 +443,9 @@ const AgentMessageComposer: React.FC<{
     <div className="message-controls">
       <select
         value={messageType}
-        onChange={(event) => onMessageTypeChange(event.target.value as AgentMessage['type'])}
+        onChange={(event) =>
+          onMessageTypeChange(event.target.value as AgentMessage['type'])
+        }
         className="message-type-select"
       >
         <option value="instruction">Instruction</option>
@@ -433,56 +481,28 @@ const AgentList: React.FC<{
   onPause: (agentId: string) => void;
   onResume: (agentId: string) => void;
   onRestart: (agentId: string) => void;
-}> = ({ agents, selectedAgentId, allowDirectControl, onSelect, onPause, onResume, onRestart }) => (
+}> = ({
+  agents,
+  selectedAgentId,
+  allowDirectControl,
+  onSelect,
+  onPause,
+  onResume,
+  onRestart,
+}) => (
   <div className="agent-list">
     <h4>Active Agents ({agents.length})</h4>
     {agents.map((agent) => (
-      <div
+      <AgentListItem
         key={agent.id}
-        className={`agent-item ${selectedAgentId === agent.id ? 'selected' : ''}`}
-        onClick={() => onSelect(agent.id)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onSelect(agent.id);
-          }
-        }}
-        role="button"
-        tabIndex={0}
-      >
-        <div className="agent-item__header">
-          <span className="agent-name">{agent.name}</span>
-          <span className="agent-type">{agent.type}</span>
-        </div>
-
-        <div className="agent-item__status">
-          <AgentStatusIndicator status={agent.status} />
-          {agent.currentAction && <span className="agent-action">{agent.currentAction}</span>}
-        </div>
-
-        <div className="agent-item__stats">
-          <span>Actions: {agent.statistics.actionsPerformed}</span>
-          <span>Success: {(agent.statistics.successRate * 100).toFixed(0)}%</span>
-          <span>Avg RT: {agent.statistics.averageResponseTime.toFixed(0)}ms</span>
-        </div>
-
-        {allowDirectControl && (
-          <div className="agent-item__controls">
-            {agent.status === 'idle' ? (
-              <button onClick={(event) => { event.stopPropagation(); onResume(agent.id); }} className="control-btn">
-                Resume
-              </button>
-            ) : (
-              <button onClick={(event) => { event.stopPropagation(); onPause(agent.id); }} className="control-btn">
-                Pause
-              </button>
-            )}
-            <button onClick={(event) => { event.stopPropagation(); onRestart(agent.id); }} className="control-btn">
-              Restart
-            </button>
-          </div>
-        )}
-      </div>
+        agent={agent}
+        selected={selectedAgentId === agent.id}
+        allowDirectControl={allowDirectControl}
+        onSelect={onSelect}
+        onPause={onPause}
+        onResume={onResume}
+        onRestart={onRestart}
+      />
     ))}
 
     {agents.length === 0 && (
@@ -490,6 +510,110 @@ const AgentList: React.FC<{
         <p>No agents active. Start a narrative session to see agents here.</p>
       </div>
     )}
+  </div>
+);
+
+type AgentListItemProps = {
+  agent: Agent;
+  selected: boolean;
+  allowDirectControl: boolean;
+  onSelect: (agentId: string) => void;
+  onPause: (agentId: string) => void;
+  onResume: (agentId: string) => void;
+  onRestart: (agentId: string) => void;
+};
+
+const AgentListItem: React.FC<AgentListItemProps> = ({
+  agent,
+  selected,
+  allowDirectControl,
+  onSelect,
+  onPause,
+  onResume,
+  onRestart,
+}) => (
+  <div
+    className={`agent-item ${selected ? 'selected' : ''}`}
+    onClick={() => onSelect(agent.id)}
+    onKeyDown={(event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        onSelect(agent.id);
+      }
+    }}
+    role="button"
+    tabIndex={0}
+  >
+    <div className="agent-item__header">
+      <span className="agent-name">{agent.name}</span>
+      <span className="agent-type">{agent.type}</span>
+    </div>
+
+    <div className="agent-item__status">
+      <AgentStatusIndicator status={agent.status} />
+      {agent.currentAction && (
+        <span className="agent-action">{agent.currentAction}</span>
+      )}
+    </div>
+
+    <AgentStats agent={agent} />
+
+    {allowDirectControl && (
+      <AgentControls
+        agent={agent}
+        onPause={onPause}
+        onResume={onResume}
+        onRestart={onRestart}
+      />
+    )}
+  </div>
+);
+
+const AgentStats: React.FC<{ agent: Agent }> = ({ agent }) => (
+  <div className="agent-item__stats">
+    <span>Actions: {agent.statistics.actionsPerformed}</span>
+    <span>Success: {(agent.statistics.successRate * 100).toFixed(0)}%</span>
+    <span>Avg RT: {agent.statistics.averageResponseTime.toFixed(0)}ms</span>
+  </div>
+);
+
+const AgentControls: React.FC<{
+  agent: Agent;
+  onPause: (agentId: string) => void;
+  onResume: (agentId: string) => void;
+  onRestart: (agentId: string) => void;
+}> = ({ agent, onPause, onResume, onRestart }) => (
+  <div className="agent-item__controls">
+    {agent.status === 'idle' ? (
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+          onResume(agent.id);
+        }}
+        className="control-btn"
+      >
+        Resume
+      </button>
+    ) : (
+      <button
+        onClick={(event) => {
+          event.stopPropagation();
+          onPause(agent.id);
+        }}
+        className="control-btn"
+      >
+        Pause
+      </button>
+    )}
+    <button
+      onClick={(event) => {
+        event.stopPropagation();
+        onRestart(agent.id);
+      }}
+      className="control-btn"
+    >
+      Restart
+    </button>
   </div>
 );
 
@@ -568,7 +692,10 @@ const AgentInterfaceBody: React.FC<{
       showAdvancedControls={showAdvancedControls}
       onUpdateParameters={onUpdateParameters}
     />
-    <AgentInterfaceFooter isConnected={isConnected} coordinationMode={coordinationMode} />
+    <AgentInterfaceFooter
+      isConnected={isConnected}
+      coordinationMode={coordinationMode}
+    />
   </div>
 );
 
@@ -578,13 +705,21 @@ const AgentInterfaceHeader: React.FC<{
   isConfigPanelOpen: boolean;
   setCoordinationMode: (value: 'autonomous' | 'guided' | 'manual') => void;
   setIsConfigPanelOpen: (value: boolean) => void;
-}> = ({ coordinationMode, showAdvancedControls, isConfigPanelOpen, setCoordinationMode, setIsConfigPanelOpen }) => (
+}> = ({
+  coordinationMode,
+  showAdvancedControls,
+  isConfigPanelOpen,
+  setCoordinationMode,
+  setIsConfigPanelOpen,
+}) => (
   <div className="agent-interface__header">
     <h3>Agent Management</h3>
     <div className="agent-controls">
       <select
         value={coordinationMode}
-        onChange={(event) => setCoordinationMode(event.target.value as 'autonomous' | 'guided' | 'manual')}
+        onChange={(event) =>
+          setCoordinationMode(event.target.value as 'autonomous' | 'guided' | 'manual')
+        }
         className="coordination-select"
       >
         <option value="autonomous">Autonomous</option>
@@ -687,7 +822,10 @@ const AgentInterfaceContent: React.FC<{
         )}
 
         {isConfigPanelOpen && showAdvancedControls && (
-          <AgentParametersPanel selectedAgent={selectedAgent} onUpdateParameters={onUpdateParameters} />
+          <AgentParametersPanel
+            selectedAgent={selectedAgent}
+            onUpdateParameters={onUpdateParameters}
+          />
         )}
       </div>
     )}
@@ -699,15 +837,14 @@ const AgentInterfaceFooter: React.FC<{
   coordinationMode: 'autonomous' | 'guided' | 'manual';
 }> = ({ isConnected, coordinationMode }) => (
   <div className="agent-interface__footer">
-    <div className="connection-status">{isConnected ? '🟢 Connected' : '🔴 Disconnected'}</div>
+    <div className="connection-status">
+      {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+    </div>
     <div className="coordination-status">Mode: {coordinationMode}</div>
   </div>
 );
 
-const useAgentInterfaceState = (params: {
-  sessionId: string;
-  maxAgents: number;
-}) => {
+const useAgentInterfaceState = (params: { sessionId: string; maxAgents: number }) => {
   const { state: wsState, sendMessage } = useWebSocketContext();
   const { deferUpdate, measureInteractionDelay } = usePerformanceOptimizer();
 
@@ -736,7 +873,11 @@ const useAgentInterfaceState = (params: {
     setSelectedAgentId: state.setSelectedAgentId,
   });
 
-  useAutoSelectAgent(state.selectedAgentId, derived.sortedAgents, state.setSelectedAgentId);
+  useAutoSelectAgent(
+    state.selectedAgentId,
+    derived.sortedAgents,
+    state.setSelectedAgentId
+  );
 
   return {
     wsState,
@@ -768,7 +909,9 @@ const useAgentInterfaceStateValues = () => {
   const [messageInput, setMessageInput] = useState('');
   const [messageType, setMessageType] = useState<AgentMessage['type']>('instruction');
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
-  const [coordinationMode, setCoordinationMode] = useState<'autonomous' | 'guided' | 'manual'>('autonomous');
+  const [coordinationMode, setCoordinationMode] = useState<
+    'autonomous' | 'guided' | 'manual'
+  >('autonomous');
 
   return {
     agents,
@@ -795,7 +938,11 @@ const useAgentInterfaceDerived = (agents: Agent[], selectedAgentId: string | nul
 const useAgentMessageActions = (params: {
   sessionId: string;
   wsState: { isConnected: boolean };
-  sendMessage: (payload: { type: string; data: Record<string, unknown>; priority: 'normal' }) => void;
+  sendMessage: (payload: {
+    type: string;
+    data: Record<string, unknown>;
+    priority: 'normal';
+  }) => void;
   measureInteractionDelay: (callback: () => void) => void;
   messageInput: string;
   setMessageInput: React.Dispatch<React.SetStateAction<string>>;
@@ -817,14 +964,16 @@ const useAgentMessageActions = (params: {
     if (!messageInput.trim() || !wsState.isConnected) return;
 
     measureInteractionDelay(() => {
-      const message: Omit<AgentMessage, 'id' | 'timestamp'> = {
+      const messageBase: Omit<AgentMessage, 'id' | 'timestamp' | 'toAgentId'> = {
         fromAgentId: 'user',
-        toAgentId: selectedAgentId ?? undefined,
         content: messageInput.trim(),
         type: messageType,
         priority: 'normal',
         requiresResponse: messageType === 'question',
       };
+      const message: Omit<AgentMessage, 'id' | 'timestamp'> = selectedAgentId
+        ? { ...messageBase, toAgentId: selectedAgentId }
+        : messageBase;
 
       sendMessage({
         type: 'agent_message',
@@ -869,7 +1018,11 @@ const useAgentMessageActions = (params: {
 
 const useAgentControlActions = (params: {
   sessionId: string;
-  sendMessage: (payload: { type: string; data: Record<string, unknown>; priority: 'high' }) => void;
+  sendMessage: (payload: {
+    type: string;
+    data: Record<string, unknown>;
+    priority: 'high';
+  }) => void;
 }) => {
   const { sessionId, sendMessage } = params;
 
@@ -912,7 +1065,11 @@ const useAgentControlActions = (params: {
 const useAgentInterfaceActions = (params: {
   sessionId: string;
   wsState: { isConnected: boolean };
-  sendMessage: (payload: { type: string; data: Record<string, unknown>; priority: 'normal' | 'high' }) => void;
+  sendMessage: (payload: {
+    type: string;
+    data: Record<string, unknown>;
+    priority: 'normal' | 'high';
+  }) => void;
   measureInteractionDelay: (callback: () => void) => void;
   messageInput: string;
   setMessageInput: React.Dispatch<React.SetStateAction<string>>;
@@ -945,7 +1102,7 @@ const AgentInterface: React.FC<AgentInterfaceProps> = ({
   allowDirectControl = true,
   showAdvancedControls = false,
   maxAgents = 10,
-  className = ''
+  className = '',
 }) => {
   const {
     wsState,

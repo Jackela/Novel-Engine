@@ -20,7 +20,10 @@ export default function StoriesPage() {
     }
   };
 
-  const handleExport = async (id: string, format: 'markdown' | 'pdf' | 'json' = 'markdown') => {
+  const handleExport = async (
+    id: string,
+    format: 'markdown' | 'pdf' | 'json' = 'markdown'
+  ) => {
     const blob = await exportMutation.mutateAsync({ id, format });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -68,8 +71,7 @@ export default function StoriesPage() {
         onDelete={handleDelete}
         onExport={(id) => handleExport(id)}
         onGenerate={() => {
-          // Navigate to orchestration page for generation
-          window.location.href = '/orchestration';
+          window.location.href = '/weaver';
         }}
       />
     </div>

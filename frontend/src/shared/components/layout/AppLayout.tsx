@@ -37,17 +37,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Main content area */}
       <div
         className={cn(
-          'flex flex-col min-h-screen transition-all duration-300',
+          'flex min-h-screen flex-col transition-all duration-300',
           sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
         )}
       >
         <TopBar onMenuClick={() => setSidebarOpen(true)} />
 
-        <main
-          id="main-content"
-          className="flex-1 p-4 lg:p-6"
-          tabIndex={-1}
-        >
+        <main id="main-content" className="flex-1 p-4 lg:p-6" tabIndex={-1}>
           {children}
         </main>
       </div>

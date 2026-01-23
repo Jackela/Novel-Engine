@@ -24,7 +24,7 @@ export default function TimelinePanel() {
       <CardContent>
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+          <div className="absolute bottom-0 left-4 top-0 w-px bg-border" />
 
           {/* Events */}
           <div className="space-y-4">
@@ -32,23 +32,21 @@ export default function TimelinePanel() {
               <div key={event.id} className="relative flex items-start gap-4 pl-8">
                 {/* Dot */}
                 <div
-                  className={`absolute left-3 w-2 h-2 rounded-full -translate-x-1/2 mt-2 ${
+                  className={`absolute left-3 mt-2 h-2 w-2 -translate-x-1/2 rounded-full ${
                     event.status === 'completed'
                       ? 'bg-primary'
                       : event.status === 'active'
-                        ? 'bg-warning animate-pulse'
+                        ? 'animate-pulse bg-warning'
                         : 'bg-muted-foreground/30'
                   }`}
                 />
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {event.time}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{event.time}</span>
                     {event.status === 'active' && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-warning/20 text-warning">
+                      <span className="rounded-full bg-warning/20 px-2 py-0.5 text-xs text-warning">
                         Active
                       </span>
                     )}

@@ -3,36 +3,36 @@
  */
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
-import { Card, CardContent, Badge } from '@/shared/components/ui';
-import { cn } from '@/lib/utils';
+import { CardContent, Badge } from '@/shared/components/ui';
+import type { WeaverNodeStatus } from '../../types';
+import { WeaverNode } from './WeaverNode';
 
-export interface CharacterNodeData {
+export interface CharacterNodeData extends Record<string, unknown> {
   name: string;
   role: string;
   traits: string[];
+  status?: WeaverNodeStatus;
 }
 
 export type CharacterNodeType = Node<CharacterNodeData>;
 
 export function CharacterNode({ data, id, selected }: NodeProps<CharacterNodeType>) {
   return (
-    <Card
-      className={cn(
-        'w-64 cursor-grab active:cursor-grabbing shadow-md',
-        selected && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
-      )}
-      data-testid="weaver-node"
-      data-node-type="character"
-      data-node-id={id}
+    <WeaverNode
+      nodeId={id}
+      nodeType="character"
+      status={data.status}
+      selected={selected}
+      className="w-64 cursor-grab active:cursor-grabbing"
     >
       <Handle
         type="target"
         position={Position.Top}
-        className="!bg-muted-foreground"
+        className="!bg-weaver-border"
         data-testid="weaver-handle-target"
       />
       <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="mb-2 flex items-center justify-between">
           <h4 className="font-semibold">{data.name}</h4>
           <Badge variant="secondary" className="text-xs">
             {data.role}
@@ -49,9 +49,9 @@ export function CharacterNode({ data, id, selected }: NodeProps<CharacterNodeTyp
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!bg-muted-foreground"
+        className="!bg-weaver-border"
         data-testid="weaver-handle-source"
       />
-    </Card>
+    </WeaverNode>
   );
 }

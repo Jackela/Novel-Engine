@@ -46,31 +46,31 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-          <Card className="max-w-md w-full">
+        <div className="flex min-h-screen items-center justify-center bg-background p-4">
+          <Card className="w-full max-w-md">
             <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
                 <AlertTriangle className="h-6 w-6 text-destructive" />
               </div>
-              <h2 className="text-lg font-semibold mb-2">Something went wrong</h2>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h2 className="mb-2 text-lg font-semibold">Something went wrong</h2>
+              <p className="mb-4 text-sm text-muted-foreground">
                 {this.state.error?.message || 'An unexpected error occurred'}
               </p>
-              <div className="flex gap-2 justify-center">
+              <div className="flex justify-center gap-2">
                 <Button variant="outline" onClick={this.handleReset}>
                   Try Again
                 </Button>
                 <Button onClick={this.handleReload}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <RefreshCw className="mr-2 h-4 w-4" />
                   Reload Page
                 </Button>
               </div>
               {import.meta.env.DEV && this.state.error && (
                 <details className="mt-4 text-left">
-                  <summary className="text-sm text-muted-foreground cursor-pointer">
+                  <summary className="cursor-pointer text-sm text-muted-foreground">
                     Error details
                   </summary>
-                  <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto">
+                  <pre className="mt-2 overflow-auto rounded bg-muted p-2 text-xs">
                     {this.state.error.stack}
                   </pre>
                 </details>

@@ -1,6 +1,9 @@
 import { http, HttpResponse, delay } from 'msw';
 import type { CharacterDetail, CharacterSummary } from '@/shared/types/character';
-import { CharactersListResponseSchema, OrchestrationStartRequestSchema } from '@/types/schemas';
+import {
+  CharactersListResponseSchema,
+  OrchestrationStartRequestSchema,
+} from '@/types/schemas';
 
 const API_PREFIX = '/api';
 
@@ -83,28 +86,70 @@ const withLatency = async () => {
   await delay(120);
 };
 
+const asObject = (body: unknown): Record<string, unknown> =>
+  typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
+
+const stringField = (body: Record<string, unknown>, key: string, fallback = '') =>
+  key in body ? String(body[key] ?? fallback) : fallback;
+
+const recordField = <T extends Record<string, number> | Record<string, unknown>>(
+  body: Record<string, unknown>,
+  key: string,
+  fallback: T
+) =>
+  key in body && typeof body[key] === 'object' && body[key] !== null
+    ? (body[key] as T)
+    : fallback;
+
+const arrayField = (body: Record<string, unknown>, key: string, fallback: string[]) =>
+  Array.isArray(body[key]) ? (body[key] as string[]) : fallback;
+
+const buildLoginResponse = (email: string) => ({
+  access_token: 'mock-access-token',
+  refresh_token: 'mock-refresh-token',
+  token_type: 'Bearer',
+  expires_in: 3600,
+  refresh_expires_in: 86400,
+  user: {
+    id: 'user-001',
+    username: email.split('@')[0] || 'operator',
+    email,
+    roles: ['operator'],
+  },
+});
+
+const buildCharacterDetail = (body: Record<string, unknown>) => {
+  const agentId = stringField(body, 'agent_id');
+  const name = stringField(body, 'name', agentId);
+  const character_id = agentId || name.toLowerCase().replace(/\s+/g, '-');
+
+  return {
+    character_id,
+    detail: {
+      agent_id: character_id,
+      character_id,
+      character_name: name,
+      name,
+      background_summary: stringField(body, 'background_summary'),
+      personality_traits: stringField(body, 'personality_traits'),
+      current_status: 'active',
+      narrative_context: '',
+      skills: recordField(body, 'skills', {}),
+      relationships: recordField(body, 'relationships', {}),
+      current_location: stringField(body, 'current_location'),
+      inventory: arrayField(body, 'inventory', []),
+      metadata: recordField(body, 'metadata', {}),
+      structured_data: recordField(body, 'structured_data', {}),
+    } as CharacterDetail,
+  };
+};
+
 export const handlers = [
   http.post(`${API_PREFIX}/auth/login`, async ({ request }) => {
     await withLatency();
-    const body = await request.json().catch(() => ({}));
-    const email = typeof body === 'object' && body !== null && 'email' in body
-      ? String((body as { email?: string }).email)
-      : 'operator@novel.engine';
-    const username = email.split('@')[0] || 'operator';
-
-    return HttpResponse.json({
-      access_token: 'mock-access-token',
-      refresh_token: 'mock-refresh-token',
-      token_type: 'Bearer',
-      expires_in: 3600,
-      refresh_expires_in: 86400,
-      user: {
-        id: 'user-001',
-        username,
-        email,
-        roles: ['operator'],
-      },
-    });
+    const body = asObject(await request.json().catch(() => ({})));
+    const email = stringField(body, 'email', 'operator@novel.engine');
+    return HttpResponse.json(buildLoginResponse(email));
   }),
 
   http.post(`${API_PREFIX}/auth/logout`, async () => {
@@ -114,19 +159,7 @@ export const handlers = [
 
   http.post(`${API_PREFIX}/auth/refresh`, async () => {
     await withLatency();
-    return HttpResponse.json({
-      access_token: 'mock-access-token',
-      refresh_token: 'mock-refresh-token',
-      token_type: 'Bearer',
-      expires_in: 3600,
-      refresh_expires_in: 86400,
-      user: {
-        id: 'user-001',
-        username: 'operator',
-        email: 'operator@novel.engine',
-        roles: ['operator'],
-      },
-    });
+    return HttpResponse.json(buildLoginResponse('operator@novel.engine'));
   }),
 
   http.post(`${API_PREFIX}/guest/sessions`, async () => {
@@ -143,7 +176,7 @@ export const handlers = [
     await withLatency();
     const body = await request.json().catch(() => ({}));
     const parsed = OrchestrationStartRequestSchema.safeParse(body);
-    const turns = parsed.success ? parsed.data.total_turns ?? 3 : 3;
+    const turns = parsed.success ? (parsed.data.total_turns ?? 3) : 3;
 
     orchestrationState = {
       status: 'running',
@@ -206,43 +239,19 @@ export const handlers = [
 
   http.post(`${API_PREFIX}/characters`, async ({ request }) => {
     await withLatency();
-    const body = await request.json().catch(() => ({}));
-    const agentId = typeof body === 'object' && body !== null && 'agent_id' in body
-      ? String((body as { agent_id?: string }).agent_id ?? '')
-      : '';
-    const name = typeof body === 'object' && body !== null && 'name' in body
-      ? String((body as { name?: string }).name ?? '')
-      : agentId;
-    const character_id = agentId || name.toLowerCase().replace(/\s+/g, '-');
-    const newCharacter: CharacterDetail = {
-      agent_id: character_id,
-      character_id,
-      character_name: name,
-      name,
-      background_summary: String((body as { background_summary?: string }).background_summary ?? ''),
-      personality_traits: String((body as { personality_traits?: string }).personality_traits ?? ''),
-      current_status: 'active',
-      narrative_context: '',
-      skills: (body as { skills?: Record<string, number> }).skills ?? {},
-      relationships: (body as { relationships?: Record<string, number> }).relationships ?? {},
-      current_location: String((body as { current_location?: string }).current_location ?? ''),
-      inventory: Array.isArray((body as { inventory?: unknown }).inventory)
-        ? (body as { inventory?: string[] }).inventory ?? []
-        : [],
-      metadata: (body as { metadata?: Record<string, unknown> }).metadata ?? {},
-      structured_data: (body as { structured_data?: Record<string, unknown> }).structured_data ?? {},
-    };
-    characterDetails.unshift(newCharacter);
+    const body = asObject(await request.json().catch(() => ({})));
+    const { character_id, detail } = buildCharacterDetail(body);
+    characterDetails.unshift(detail);
     characterSummaries.unshift({
       id: character_id,
       agent_id: character_id,
-      name,
+      name: detail.name,
       status: 'active',
       type: 'npc',
       updated_at: nowIso(),
       workspace_id: 'guest-workspace',
     });
-    return HttpResponse.json(newCharacter, { status: 201 });
+    return HttpResponse.json(detail, { status: 201 });
   }),
 
   http.put(`${API_PREFIX}/characters/:id`, async ({ params, request }) => {
@@ -251,30 +260,42 @@ export const handlers = [
     if (index === -1) {
       return HttpResponse.json({ detail: 'Character not found' }, { status: 404 });
     }
-    const body = await request.json().catch(() => ({}));
+    const body = asObject(await request.json().catch(() => ({})));
     const current = characterDetails[index];
+    if (!current) {
+      return HttpResponse.json({ detail: 'Character not found' }, { status: 404 });
+    }
     const updated: CharacterDetail = {
       ...current,
-      name: String((body as { name?: string }).name ?? current.name),
-      background_summary: String((body as { background_summary?: string }).background_summary ?? current.background_summary),
-      personality_traits: String((body as { personality_traits?: string }).personality_traits ?? current.personality_traits),
-      skills: (body as { skills?: Record<string, number> }).skills ?? current.skills,
-      relationships: (body as { relationships?: Record<string, number> }).relationships ?? current.relationships,
-      current_location: String((body as { current_location?: string }).current_location ?? current.current_location),
-      inventory: Array.isArray((body as { inventory?: unknown }).inventory)
-        ? (body as { inventory?: string[] }).inventory ?? current.inventory
-        : current.inventory,
-      metadata: (body as { metadata?: Record<string, unknown> }).metadata ?? current.metadata,
-      structured_data: (body as { structured_data?: Record<string, unknown> }).structured_data ?? current.structured_data,
+      name: stringField(body, 'name', current.name),
+      background_summary: stringField(
+        body,
+        'background_summary',
+        current.background_summary
+      ),
+      personality_traits: stringField(
+        body,
+        'personality_traits',
+        current.personality_traits
+      ),
+      skills: recordField(body, 'skills', current.skills),
+      relationships: recordField(body, 'relationships', current.relationships),
+      current_location: stringField(body, 'current_location', current.current_location),
+      inventory: arrayField(body, 'inventory', current.inventory),
+      metadata: recordField(body, 'metadata', current.metadata),
+      structured_data: recordField(body, 'structured_data', current.structured_data),
     };
     characterDetails[index] = updated;
     const summaryIndex = characterSummaries.findIndex((item) => item.id === params.id);
     if (summaryIndex !== -1) {
-      characterSummaries[summaryIndex] = {
-        ...characterSummaries[summaryIndex],
-        name: updated.name,
-        updated_at: nowIso(),
-      };
+      const summary = characterSummaries[summaryIndex];
+      if (summary) {
+        characterSummaries[summaryIndex] = {
+          ...summary,
+          name: updated.name,
+          updated_at: nowIso(),
+        };
+      }
     }
     return HttpResponse.json(updated);
   }),

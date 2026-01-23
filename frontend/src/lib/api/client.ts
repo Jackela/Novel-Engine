@@ -21,7 +21,10 @@ function createApiError(message: string, status: number, data?: unknown): ApiErr
   return error;
 }
 
-function buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
+function buildUrl(
+  path: string,
+  params?: Record<string, string | number | boolean | undefined>
+): string {
   const url = new URL(path, window.location.origin);
 
   if (!path.startsWith('http')) {
@@ -48,9 +51,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
       errorData = await response.text();
     }
 
-    const message = typeof errorData === 'object' && errorData !== null && 'detail' in errorData
-      ? String((errorData as { detail: unknown }).detail)
-      : `HTTP ${response.status}`;
+    const message =
+      typeof errorData === 'object' && errorData !== null && 'detail' in errorData
+        ? String((errorData as { detail: unknown }).detail)
+        : `HTTP ${response.status}`;
 
     throw createApiError(message, response.status, errorData);
   }
@@ -103,7 +107,7 @@ export const api = {
         ...getAuthHeader(),
         ...config?.headers,
       },
-      body: data ? JSON.stringify(data) : undefined,
+      ...(data !== undefined ? { body: JSON.stringify(data) } : {}),
     });
     return handleResponse<T>(response);
   },
@@ -118,7 +122,7 @@ export const api = {
         ...getAuthHeader(),
         ...config?.headers,
       },
-      body: data ? JSON.stringify(data) : undefined,
+      ...(data !== undefined ? { body: JSON.stringify(data) } : {}),
     });
     return handleResponse<T>(response);
   },
@@ -133,7 +137,7 @@ export const api = {
         ...getAuthHeader(),
         ...config?.headers,
       },
-      body: data ? JSON.stringify(data) : undefined,
+      ...(data !== undefined ? { body: JSON.stringify(data) } : {}),
     });
     return handleResponse<T>(response);
   },

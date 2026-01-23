@@ -141,8 +141,8 @@ We enforce a strict TDD (Test-Driven Development) workflow.
 ## 🤖 AI Collaboration
 
 - `AGENTS.md` is the SSOT for AI workflow and repo guardrails.
-- Any proposal/spec/architecture change should start with `docs/specs/openspec/AGENTS.md`.
-- Build and test commands live in `CLAUDE.md`.
+- Any proposal/spec/architecture change should start with `AGENTS.md`.
+- Build and test commands live in `AGENTS.md`.
 
 ---
 

@@ -17,7 +17,13 @@ export interface Story {
   updatedAt: string;
 }
 
-export type StoryMood = 'tense' | 'calm' | 'dramatic' | 'mysterious' | 'action' | 'emotional';
+export type StoryMood =
+  | 'tense'
+  | 'calm'
+  | 'dramatic'
+  | 'mysterious'
+  | 'action'
+  | 'emotional';
 
 export interface StoryEvent {
   id: string;

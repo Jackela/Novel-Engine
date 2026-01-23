@@ -41,19 +41,19 @@ Expected: No matches.
 - Create: `AGENTS.md`
 - Modify: `docs/index.md`
 - Modify: `docs/DEVELOPER_GUIDE.md`
-- Modify: `docs/specs/openspec/AGENTS.md`
+- Modify: `AGENTS.md`
 - Modify: `README.md`
 - Modify: `README.en.md`
 
 **Step 1: Add root agent guide**
-Create `AGENTS.md` with SSOT workflow and pointers to `CLAUDE.md` and `docs/specs/openspec/AGENTS.md`.
+Create `AGENTS.md` with SSOT workflow and contract guidance.
 
 **Step 2: Update documentation hub**
-Add links to `AGENTS.md` and `CLAUDE.md` in `docs/index.md`.
+Add links to `AGENTS.md` in `docs/index.md`.
 
 **Step 3: Align developer guide and OpenSpec**
 Update `docs/DEVELOPER_GUIDE.md` to reference `AGENTS.md`.
-Add a short note in `docs/specs/openspec/AGENTS.md` pointing back to `AGENTS.md`.
+Add a short note in `AGENTS.md` pointing back to itself as SSOT.
 
 **Step 4: Sync README files**
 Add an AI collaboration section in `README.md` and `README.en.md`.

@@ -41,15 +41,7 @@ export default defineConfig([
     'playwright-report',
     'nm_backup_ci',
     'node_modules',
-    'src/tests/**',
-    'src/test/**',
-    'src/components/EmergentDashboard.tsx',
-    'src/components/EmergentDashboardSimple.tsx',
-    'src/components/NarrativeDisplay.tsx',
-    'src/components/PerformanceOptimizer.tsx',
-    'src/components/AgentInterface.tsx',
-    'src/components/steps/**',
-    'src/components/ui/**',
+    'public/mockServiceWorker.js',
   ]),
   // JavaScript files configuration
   {
@@ -111,7 +103,7 @@ export default defineConfig([
       ...js.configs.recommended.rules,
       // Disable no-undef for TypeScript - TS handles this
       'no-undef': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
       'no-unused-vars': 'off',
       'react-hooks/exhaustive-deps': 'warn',

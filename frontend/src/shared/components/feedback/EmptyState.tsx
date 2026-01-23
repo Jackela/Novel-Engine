@@ -36,11 +36,9 @@ export function EmptyState({
       </div>
       <div className="space-y-2">
         <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-muted-foreground max-w-md">{description}</p>
+        <p className="max-w-md text-sm text-muted-foreground">{description}</p>
       </div>
-      {action && (
-        <Button onClick={action.onClick}>{action.label}</Button>
-      )}
+      {action && <Button onClick={action.onClick}>{action.label}</Button>}
     </div>
   );
 }

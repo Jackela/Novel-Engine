@@ -8,9 +8,9 @@ import type { Story, StoryMood } from '@/shared/types/story';
 
 interface StoryCardProps {
   story: Story;
-  onSelect?: (story: Story) => void;
-  onDelete?: (id: string) => void;
-  onExport?: (id: string) => void;
+  onSelect?: ((story: Story) => void) | undefined;
+  onDelete?: ((id: string) => void) | undefined;
+  onExport?: ((id: string) => void) | undefined;
 }
 
 const moodColors: Record<StoryMood, string> = {
@@ -38,82 +38,122 @@ export function StoryCard({ story, onSelect, onDelete, onExport }: StoryCardProp
       onClick={() => onSelect?.(story)}
     >
       <CardContent className="p-4">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold truncate">{story.title}</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge className={cn('text-xs', moodColors[story.mood])}>
-                {moodLabels[story.mood]}
-              </Badge>
-              <span className="text-xs text-muted-foreground">Turn {story.turnNumber}</span>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-1 ml-2">
-            {onExport && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onExport(story.id);
-                }}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(story.id);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
+        <StoryCardHeader story={story} onExport={onExport} onDelete={onDelete} />
 
         {/* Summary */}
-        <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+        <p className="mb-3 line-clamp-3 text-sm text-muted-foreground">
           {story.summary || story.content.slice(0, 150) + '...'}
         </p>
 
         {/* Tags */}
-        {story.tags.length > 0 && (
-          <div className="flex items-center gap-1 mb-3 flex-wrap">
-            <Tag className="h-3 w-3 text-muted-foreground" />
-            {story.tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {story.tags.length > 3 && (
-              <span className="text-xs text-muted-foreground">+{story.tags.length - 3}</span>
-            )}
-          </div>
-        )}
+        <StoryTags tags={story.tags} />
 
         {/* Meta */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            <span>{story.characters.length} characters</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <FileText className="h-3 w-3" />
-            <span>{story.events.length} events</span>
-          </div>
-          <span className="ml-auto">{formatRelativeTime(story.createdAt)}</span>
-        </div>
+        <StoryMeta story={story} />
       </CardContent>
     </Card>
+  );
+}
+
+type StoryCardHeaderProps = {
+  story: Story;
+  onDelete?: ((id: string) => void) | undefined;
+  onExport?: ((id: string) => void) | undefined;
+};
+
+function StoryCardHeader({ story, onDelete, onExport }: StoryCardHeaderProps) {
+  return (
+    <div className="mb-3 flex items-start justify-between">
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate font-semibold">{story.title}</h3>
+        <div className="mt-1 flex items-center gap-2">
+          <Badge className={cn('text-xs', moodColors[story.mood])}>
+            {moodLabels[story.mood]}
+          </Badge>
+          <span className="text-xs text-muted-foreground">Turn {story.turnNumber}</span>
+        </div>
+      </div>
+
+      <StoryCardActions storyId={story.id} onDelete={onDelete} onExport={onExport} />
+    </div>
+  );
+}
+
+type StoryCardActionsProps = {
+  storyId: string;
+  onDelete?: ((id: string) => void) | undefined;
+  onExport?: ((id: string) => void) | undefined;
+};
+
+function StoryCardActions({ storyId, onDelete, onExport }: StoryCardActionsProps) {
+  if (!onDelete && !onExport) {
+    return null;
+  }
+
+  return (
+    <div className="ml-2 flex gap-1">
+      {onExport && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={(event) => {
+            event.stopPropagation();
+            onExport(storyId);
+          }}
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+      )}
+      {onDelete && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete(storyId);
+          }}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function StoryTags({ tags }: { tags: Story['tags'] }) {
+  if (tags.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-1">
+      <Tag className="h-3 w-3 text-muted-foreground" />
+      {tags.slice(0, 3).map((tag) => (
+        <Badge key={tag} variant="outline" className="text-xs">
+          {tag}
+        </Badge>
+      ))}
+      {tags.length > 3 && (
+        <span className="text-xs text-muted-foreground">+{tags.length - 3}</span>
+      )}
+    </div>
+  );
+}
+
+function StoryMeta({ story }: { story: Story }) {
+  return (
+    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+      <div className="flex items-center gap-1">
+        <Users className="h-3 w-3" />
+        <span>{story.characters.length} characters</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <FileText className="h-3 w-3" />
+        <span>{story.events.length} events</span>
+      </div>
+      <span className="ml-auto">{formatRelativeTime(story.createdAt)}</span>
+    </div>
   );
 }

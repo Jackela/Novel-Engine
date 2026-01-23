@@ -10,7 +10,7 @@ architecture, and UX references now live in the following documents:
 - `docs/implementation/implementation_workflow.md` – end-to-end implementation process
 - `docs/deployment/DEPLOYMENT_GUIDE.md` – deployment and validation playbooks
 - `docs/design/DESIGN_FRONTEND_UX.md` – current UI architecture & evidence
-- `CLAUDE.md` – build/test commands, stack overview, and coding conventions
+- `AGENTS.md` – AI workflow, contracts, and agent development SSOT
 
 The previous `DEVELOPER_GUIDE.md` placeholder is intentionally slim so that
 historical tests checking for its existence keep passing. Please refer to the

@@ -4,24 +4,28 @@
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { Calendar, Zap } from 'lucide-react';
-import { Card, CardContent, Badge } from '@/shared/components/ui';
+import { CardContent, Badge } from '@/shared/components/ui';
 import { cn } from '@/lib/utils';
+import type { WeaverNodeStatus } from '../../types';
+import { resolveNodeStatus } from './nodeStyles';
+import { WeaverNode } from './WeaverNode';
 
-export interface EventNodeData {
+export interface EventNodeData extends Record<string, unknown> {
   title: string;
   type: 'action' | 'dialogue' | 'discovery' | 'conflict' | 'resolution';
   description: string;
   timestamp?: string;
+  status?: WeaverNodeStatus;
 }
 
 export type EventNodeType = Node<EventNodeData>;
 
 const eventTypeStyles: Record<EventNodeData['type'], string> = {
-  action: 'border-l-orange-500',
-  dialogue: 'border-l-blue-500',
-  discovery: 'border-l-green-500',
-  conflict: 'border-l-red-500',
-  resolution: 'border-l-purple-500',
+  action: 'border-l-weaver-glow',
+  dialogue: 'border-l-weaver-neon',
+  discovery: 'border-l-emerald-400',
+  conflict: 'border-l-weaver-error',
+  resolution: 'border-l-cyan-300',
 };
 
 const eventTypeLabels: Record<EventNodeData['type'], string> = {
@@ -33,34 +37,32 @@ const eventTypeLabels: Record<EventNodeData['type'], string> = {
 };
 
 export function EventNode({ data, id, selected }: NodeProps<EventNodeType>) {
+  const status = resolveNodeStatus(data.status, selected);
+  const eventAccent = status === 'error' ? '' : eventTypeStyles[data.type];
   return (
-    <Card
-      className={cn(
-        'w-56 cursor-grab active:cursor-grabbing shadow-md border-l-4',
-        eventTypeStyles[data.type],
-        selected && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
-      )}
-      data-testid="weaver-node"
-      data-node-type="event"
-      data-node-id={id}
+    <WeaverNode
+      nodeId={id}
+      nodeType="event"
+      status={status}
+      className={cn('w-56 cursor-grab border-l-4 active:cursor-grabbing', eventAccent)}
     >
       <Handle
         type="target"
         position={Position.Top}
-        className="!bg-muted-foreground"
+        className="!bg-weaver-border"
         data-testid="weaver-handle-target"
       />
       <CardContent className="p-3">
-        <div className="flex items-start justify-between mb-2">
+        <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-1.5">
             <Zap className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium text-sm">{data.title}</span>
+            <span className="text-sm font-medium">{data.title}</span>
           </div>
           <Badge variant="outline" className="text-xs">
             {eventTypeLabels[data.type]}
           </Badge>
         </div>
-        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+        <p className="mb-2 line-clamp-2 text-xs text-muted-foreground">
           {data.description}
         </p>
         {data.timestamp && (
@@ -73,9 +75,9 @@ export function EventNode({ data, id, selected }: NodeProps<EventNodeType>) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!bg-muted-foreground"
+        className="!bg-weaver-border"
         data-testid="weaver-handle-source"
       />
-    </Card>
+    </WeaverNode>
   );
 }
