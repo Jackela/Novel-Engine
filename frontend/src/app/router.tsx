@@ -65,6 +65,14 @@ const weaverRoute = createRoute({
   component: lazyRouteComponent(() => import('@/pages/WeaverPage')),
 });
 
+const weaverPreviewRoute = import.meta.env.DEV
+  ? createRoute({
+      getParentRoute: () => rootRoute,
+      path: '/dev/weaver-preview',
+      component: lazyRouteComponent(() => import('@/pages/WeaverPreviewPage')),
+    })
+  : null;
+
 // Protected layout route
 const protectedLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -128,6 +136,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   weaverRoute,
+  ...(weaverPreviewRoute ? [weaverPreviewRoute] : []),
   protectedLayoutRoute.addChildren([
     dashboardRoute,
     charactersRoute,

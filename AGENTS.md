@@ -86,6 +86,16 @@ npm run ci
 ## Weaver Interface
 Weaver is the node-based orchestration UI built with React Flow. Nodes (characters, events, locations) are composed into a graph and mapped to orchestration payloads. The frontend sends those payloads to `/api/orchestration/start` and listens for runtime updates via SSE streams.
 
+## Weaver Visual Protocol
+- `WeaverNode` maps status -> CSS class via `nodeStatusClasses` and `resolveNodeStatus`.
+- Status matrix (required):
+  - `idle` -> `.node-idle`
+  - `active` -> `.node-active`
+  - `loading` -> `.node-loading`
+  - `error` -> `.node-error` + `.weaver-node-alert` icon
+- All visual treatments live in `frontend/src/styles/tailwind.css` under the Weaver node section.
+- Dev-only preview route: `/dev/weaver-preview` (enabled only when `import.meta.env.DEV` is true).
+
 ## Testing Quick Reference
 - Local CI parity: `scripts/local-ci.sh` (flags: `--fast`, `--pyramid`, `--markers`).
 - Test markers (required): `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.e2e`.
