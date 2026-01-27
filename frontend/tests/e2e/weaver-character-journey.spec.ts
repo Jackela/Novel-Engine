@@ -15,8 +15,10 @@ test.describe('Weaver Journey - Login to Weaver', () => {
     await page.goto('/characters', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Characters' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'New Character' }).click();
-    await expect(page.getByRole('heading', { name: /Create Character/i })).toBeVisible();
+    const newCharacterButton = page.getByRole('button', { name: 'New Character' });
+    await expect(newCharacterButton).toBeVisible();
+    await newCharacterButton.click();
+    await expect(page.getByLabel('Agent ID')).toBeVisible();
 
     const agentId = `e2e-agent-${Date.now()}`;
     const characterName = 'E2E Voyager';

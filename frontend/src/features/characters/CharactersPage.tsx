@@ -109,7 +109,7 @@ function CharactersHeader() {
 
 type CharacterFormPanelProps = {
   selectedCharacter: CharacterSummary | null;
-  selectedDetail?: CharacterDetail;
+  selectedDetail?: CharacterDetail | undefined;
   isLoading: boolean;
   onSubmit: (data: CreateCharacterInput) => void;
   onCancel: () => void;

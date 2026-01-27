@@ -11,7 +11,7 @@ import { nodeStatusClasses, resolveNodeStatus } from './nodeStyles';
 interface WeaverNodeProps {
   nodeId: string;
   nodeType: string;
-  status?: WeaverNodeStatus;
+  status?: WeaverNodeStatus | undefined;
   selected?: boolean;
   className?: string;
   children: ReactNode;

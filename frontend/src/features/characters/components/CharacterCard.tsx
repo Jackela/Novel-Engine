@@ -38,8 +38,8 @@ export function CharacterCard({
       <CardContent className="p-4">
         <CharacterCardHeader
           character={character}
-          onEdit={onEdit}
-          onDelete={onDelete}
+          {...(onEdit ? { onEdit } : {})}
+          {...(onDelete ? { onDelete } : {})}
         />
         <CharacterCardMeta character={character} />
       </CardContent>

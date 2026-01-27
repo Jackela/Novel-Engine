@@ -84,7 +84,13 @@ function TooltipButton({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant={variant} size={size} onClick={onClick} disabled={disabled}>
+          <Button
+            variant={variant}
+            size={size}
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label || tooltip}
+          >
             {icon}
             {label && size !== 'icon' ? label : null}
           </Button>

@@ -28,7 +28,7 @@ describe('DTO transforms', () => {
         special_gear: ['Grappling Hook'],
       },
     });
-    expect(items.map((item) => item.name)).toEqual([
+    expect(items.map((item: { name: string }) => item.name)).toEqual([
       'Rifle',
       'Kevlar',
       'Grappling Hook',
@@ -57,7 +57,7 @@ describe('DTO transforms', () => {
     expect(res.id).toBe('c1');
     expect(res.name).toBe('Kael');
     expect(res.role).toBe('Character');
-    expect(res.equipment[0].name).toBe('Blade');
+    expect(res.equipment[0]?.name).toBe('Blade');
   });
 
   it('transforms simulation response to StoryProject structure', () => {

@@ -14,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import type { CharacterDetail, CreateCharacterInput } from '@/shared/types/character';
 import { WorkspaceCharacterCreateSchema } from '@/types/schemas';
 
@@ -203,7 +204,7 @@ function InventoryFieldList({ form, items, onAddItem }: InventoryFieldListProps)
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <FormLabel>Inventory</FormLabel>
+        <Label>Inventory</Label>
         <Button type="button" variant="outline" size="sm" onClick={onAddItem}>
           Add Item
         </Button>
