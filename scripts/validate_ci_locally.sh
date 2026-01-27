@@ -146,6 +146,13 @@ FRONTEND_DIR="frontend"
 if [ -d "$FRONTEND_DIR" ]; then
     cd "$FRONTEND_DIR"
     if [ -f "package.json" ] && grep -q '"test"' package.json; then
+        frontend_lint_exit=0
+        frontend_typecheck_exit=0
+        frontend_format_exit=0
+        frontend_tokens_exit=0
+        frontend_test_exit=0
+        frontend_build_exit=0
+        frontend_smoke_exit=0
         win_cmd=""
         if [ -x /mnt/c/Windows/System32/cmd.exe ]; then
             win_cmd="/mnt/c/Windows/System32/cmd.exe"
@@ -154,6 +161,17 @@ if [ -d "$FRONTEND_DIR" ]; then
         fi
         if grep -qi microsoft /proc/version 2>/dev/null && [ -n "$win_cmd" ]; then
             win_frontend_dir=$(wslpath -w "$PWD")
+            "$win_cmd" /c "cd /d $win_frontend_dir && npm ci"
+            "$win_cmd" /c "cd /d $win_frontend_dir && npm run lint:all --if-present"
+            frontend_lint_exit=$?
+            "$win_cmd" /c "cd /d $win_frontend_dir && npm run type-check --if-present"
+            frontend_typecheck_exit=$?
+            "$win_cmd" /c "cd /d $win_frontend_dir && npm run format:check --if-present"
+            frontend_format_exit=$?
+            "$win_cmd" /c "cd /d $win_frontend_dir && npm run build:tokens --if-present"
+            frontend_tokens_exit=$?
+            "$win_cmd" /c "cd /d $win_frontend_dir && npm run tokens:check --if-present"
+            frontend_tokens_exit=$?
             "$win_cmd" /c "cd /d $win_frontend_dir && npm test --if-present --silent"
             frontend_test_exit=$?
             "$win_cmd" /c "cd /d $win_frontend_dir && npm run build --if-present"
@@ -162,6 +180,17 @@ if [ -d "$FRONTEND_DIR" ]; then
             "$win_cmd" /c "cd /d $win_frontend_dir && set PYTHONPATH=..;..\\src && npm run test:e2e:smoke"
             frontend_smoke_exit=$?
         else
+            npm ci
+            npm run lint:all --if-present
+            frontend_lint_exit=$?
+            npm run type-check --if-present
+            frontend_typecheck_exit=$?
+            npm run format:check --if-present
+            frontend_format_exit=$?
+            npm run build:tokens --if-present
+            frontend_tokens_exit=$?
+            npm run tokens:check --if-present
+            frontend_tokens_exit=$?
             npm test --if-present --silent
             frontend_test_exit=$?
             npm run build --if-present
@@ -170,7 +199,7 @@ if [ -d "$FRONTEND_DIR" ]; then
             frontend_smoke_exit=$?
         fi
         cd ..
-        if [ $frontend_test_exit -ne 0 ] || [ $frontend_build_exit -ne 0 ] || [ $frontend_smoke_exit -ne 0 ]; then
+        if [ $frontend_lint_exit -ne 0 ] || [ $frontend_typecheck_exit -ne 0 ] || [ $frontend_format_exit -ne 0 ] || [ $frontend_tokens_exit -ne 0 ] || [ $frontend_test_exit -ne 0 ] || [ $frontend_build_exit -ne 0 ] || [ $frontend_smoke_exit -ne 0 ]; then
             echo -e "${RED}❌ Frontend tests failed${NC}"
             test_exit_code=1
         else

@@ -45,4 +45,4 @@ blocks adoption of contract-first workflows and operability standards.
 
 - [X] Bounded contexts documented in `docs/architecture/bounded-contexts.md`.
 - [X] Ports and adapters catalog drafted in `docs/architecture/ports-adapters.md`.
-- [X] Gemini ACL responsibilities aligned with `docs/architecture/acls/gemini.md`.
+- [X] Gemini ACL responsibilities aligned with `AGENTS.md`.

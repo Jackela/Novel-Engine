@@ -31,7 +31,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -56,7 +56,6 @@ from src.api.logging_system import (
     StructuredLogger,
     setup_logging,
 )
-from src.api.monitoring import setup_monitoring
 
 # Import new integration systems
 from src.api.response_models import (
@@ -90,12 +89,6 @@ try:
         RateLimitMiddleware,
         RateLimitStrategy,
     )
-    from src.security.security_headers import (
-        SecurityHeaders,
-        SecurityHeadersMiddleware,
-        get_production_security_config,
-    )
-
     SECURITY_AVAILABLE = True
 except ImportError:
     SECURITY_AVAILABLE = False
@@ -1570,9 +1563,6 @@ def main():
 
     # Set basic logging level
     logging.getLogger().setLevel(config.log_level.upper())
-
-    # Create enhanced application
-    app = create_app()
 
     logger.info("=" * 60)
     logger.info("🚀 Starting Enhanced Novel Engine API Server")

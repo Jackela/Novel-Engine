@@ -16,7 +16,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 bg-background/95 backdrop-blur border-b border-border">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur">
       {/* Left side */}
       <div className="flex items-center gap-4">
         {/* Mobile menu button */}
@@ -46,25 +46,16 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />
         </Button>
 
         {/* User menu */}
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="User menu"
-        >
+        <Button variant="ghost" size="icon" aria-label="User menu">
           <User className="h-5 w-5" />
         </Button>
 
         {/* Logout */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleLogout}
-          aria-label="Log out"
-        >
+        <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
           <LogOut className="h-5 w-5" />
         </Button>
       </div>

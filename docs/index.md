@@ -31,10 +31,7 @@ Data models and schema documentation
 ### 🤖 [Agent Guide](../AGENTS.md)
 Workflow rules and SSOT locations for AI contributors
 
-### 🧭 [Codex Guide](../CLAUDE.md)
-Build/test commands, stack overview, and coding conventions
-
----
+--- 
 
 ## 🏗️ System Documentation
 

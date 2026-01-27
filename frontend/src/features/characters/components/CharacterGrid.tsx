@@ -44,8 +44,8 @@ export function CharacterGrid({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search characters..."
             value={searchQuery}
@@ -55,7 +55,7 @@ export function CharacterGrid({
         </div>
         {onCreateNew && (
           <Button onClick={onCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             New Character
           </Button>
         )}
@@ -70,21 +70,19 @@ export function CharacterGrid({
               ? 'Try adjusting your search terms'
               : 'Create your first character to get started'
           }
-          action={
-            !searchQuery && onCreateNew
-              ? { label: 'Create Character', onClick: onCreateNew }
-              : undefined
-          }
+          {...(!searchQuery && onCreateNew
+            ? { action: { label: 'Create Character', onClick: onCreateNew } }
+            : {})}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredCharacters.map((character) => (
             <CharacterCard
               key={character.id}
               character={character}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onSelect={onSelect}
+              {...(onEdit ? { onEdit } : {})}
+              {...(onDelete ? { onDelete } : {})}
+              {...(onSelect ? { onSelect } : {})}
               selected={character.id === selectedId}
             />
           ))}

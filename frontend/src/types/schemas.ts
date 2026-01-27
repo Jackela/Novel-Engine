@@ -23,12 +23,12 @@ export const CharacterDetailSchema = z.object({
   personality_traits: z.string(),
   current_status: z.string(),
   narrative_context: z.string(),
-  skills: z.record(z.number()),
-  relationships: z.record(z.number()),
+  skills: z.record(z.string(), z.number()),
+  relationships: z.record(z.string(), z.number()),
   current_location: z.string(),
   inventory: z.array(z.string()),
-  metadata: z.record(z.unknown()),
-  structured_data: z.record(z.unknown()),
+  metadata: z.record(z.string(), z.unknown()),
+  structured_data: z.record(z.string(), z.unknown()),
 });
 
 export const WorkspaceCharacterCreateSchema = z.object({
@@ -36,24 +36,24 @@ export const WorkspaceCharacterCreateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
   background_summary: z.string().max(1000).optional().default(''),
   personality_traits: z.string().max(500).optional().default(''),
-  skills: z.record(z.number()).optional().default({}),
-  relationships: z.record(z.number()).optional().default({}),
+  skills: z.record(z.string(), z.number()).optional().default({}),
+  relationships: z.record(z.string(), z.number()).optional().default({}),
   current_location: z.string().max(200).optional().default(''),
   inventory: z.array(z.string()).optional().default([]),
-  metadata: z.record(z.unknown()).optional().default({}),
-  structured_data: z.record(z.unknown()).optional().default({}),
+  metadata: z.record(z.string(), z.unknown()).optional().default({}),
+  structured_data: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
 export const WorkspaceCharacterUpdateSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   background_summary: z.string().max(1000).optional(),
   personality_traits: z.string().max(500).optional(),
-  skills: z.record(z.number()).optional(),
-  relationships: z.record(z.number()).optional(),
+  skills: z.record(z.string(), z.number()).optional(),
+  relationships: z.record(z.string(), z.number()).optional(),
   current_location: z.string().max(200).optional(),
   inventory: z.array(z.string()).optional(),
-  metadata: z.record(z.unknown()).optional(),
-  structured_data: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  structured_data: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const AuthUserSchema = z.object({
@@ -101,6 +101,8 @@ export const CampaignSchema = z.object({
   updated_at: z.string(),
   current_turn: z.number(),
 });
+
+export const CampaignDetailResponseSchema = CampaignSchema;
 
 export const OrchestrationStartRequestSchema = z.object({
   character_names: z.array(z.string().min(1)).min(2).max(6).optional(),

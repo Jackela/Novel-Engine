@@ -116,6 +116,21 @@ if (Test-Path $frontendDir) {
         npm ci
         Assert-LastExitCode "Install frontend dependencies"
 
+        npm run lint:all --if-present
+        Assert-LastExitCode "Frontend lint"
+
+        npm run type-check --if-present
+        Assert-LastExitCode "Frontend typecheck"
+
+        npm run format:check --if-present
+        Assert-LastExitCode "Frontend format check"
+
+        npm run build:tokens --if-present
+        Assert-LastExitCode "Frontend token generation"
+
+        npm run tokens:check --if-present
+        Assert-LastExitCode "Frontend token checks"
+
         npm test --if-present --silent
         Assert-LastExitCode "Frontend unit tests"
 

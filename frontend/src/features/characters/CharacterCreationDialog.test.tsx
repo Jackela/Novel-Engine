@@ -1,6 +1,5 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import CharacterCreationDialog from './CharacterCreationDialog';
 
 const mockCreate = {
@@ -46,15 +45,21 @@ describe('CharacterCreationDialog', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Agent ID is required')).toBeInTheDocument();
-      expect(screen.getByText('Name must be at least 2 characters')).toBeInTheDocument();
+      expect(
+        screen.getByText('Name must be at least 2 characters')
+      ).toBeInTheDocument();
     });
   });
 
   it('submits valid form data', async () => {
     render(<CharacterCreationDialog {...mockProps} />);
 
-    fireEvent.change(screen.getByLabelText('Agent ID'), { target: { value: 'agent-001' } });
-    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Test Agent' } });
+    fireEvent.change(screen.getByLabelText('Agent ID'), {
+      target: { value: 'agent-001' },
+    });
+    fireEvent.change(screen.getByLabelText('Name'), {
+      target: { value: 'Test Agent' },
+    });
 
     const submitButton = screen.getByRole('button', { name: /create character/i });
     fireEvent.click(submitButton);

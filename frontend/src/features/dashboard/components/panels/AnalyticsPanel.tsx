@@ -29,20 +29,16 @@ export default function AnalyticsPanel() {
             return (
               <div
                 key={metric.label}
-                className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
+                className="flex items-center justify-between rounded-lg bg-muted/30 p-2"
               >
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    {metric.label}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{metric.label}</span>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium">{metric.value}</p>
                   <p
-                    className={`text-xs ${
-                      isPositive ? 'text-green-500' : 'text-red-500'
-                    }`}
+                    className={`text-xs ${isPositive ? 'text-green-500' : 'text-red-500'}`}
                   >
                     {metric.trend}
                   </p>

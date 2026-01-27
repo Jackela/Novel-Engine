@@ -6,6 +6,13 @@
   "author": "Jackela",
   "license": "MIT",
   "scripts": {
+    "build": "npm --prefix frontend run build",
+    "format": "npm --prefix frontend run format",
+    "format:check": "npm --prefix frontend run format:check",
+    "lint": "npm --prefix frontend run lint:all",
+    "type-check": "npm --prefix frontend run type-check",
+    "test": "pytest && npm --prefix frontend run test && npm --prefix frontend run test:integration && npm --prefix frontend run test:e2e:smoke",
+    "ci": "npm run format:check && powershell -ExecutionPolicy Bypass -File scripts/validate_ci_locally.ps1",
     "dev:daemon": "bash scripts/dev_env_daemon.sh",
     "dev:stop": "bash scripts/stop_dev_env.sh"
   },

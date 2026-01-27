@@ -17,8 +17,8 @@ import type { CharacterNodeData } from '../components/nodes/CharacterNode';
 import type { EventNodeData } from '../components/nodes/EventNode';
 import type { LocationNodeData } from '../components/nodes/LocationNode';
 
-type WeaverNodeData = CharacterNodeData | EventNodeData | LocationNodeData;
-type WeaverNode = Node<WeaverNodeData>;
+export type WeaverNodeData = CharacterNodeData | EventNodeData | LocationNodeData;
+export type WeaverNode = Node<WeaverNodeData>;
 
 type WeaverState = {
   nodes: WeaverNode[];
@@ -43,6 +43,7 @@ const defaultNodes: WeaverNode[] = [
       name: 'Alice',
       role: 'Protagonist',
       traits: ['Brave', 'Curious', 'Kind'],
+      status: 'idle',
     },
   },
   {
@@ -53,6 +54,7 @@ const defaultNodes: WeaverNode[] = [
       name: 'Bob',
       role: 'Mentor',
       traits: ['Wise', 'Patient'],
+      status: 'idle',
     },
   },
   {
@@ -63,6 +65,7 @@ const defaultNodes: WeaverNode[] = [
       name: 'Carol',
       role: 'Antagonist',
       traits: ['Cunning', 'Ambitious'],
+      status: 'idle',
     },
   },
 ];
@@ -100,8 +103,10 @@ const buildOrchestrationStartRequest = (
   return {
     character_names,
     total_turns: overrides.total_turns,
-    setting: overrides.setting ?? (settingNode?.data as LocationNodeData | undefined)?.name,
-    scenario: overrides.scenario ?? (scenarioNode?.data as EventNodeData | undefined)?.title,
+    setting:
+      overrides.setting ?? (settingNode?.data as LocationNodeData | undefined)?.name,
+    scenario:
+      overrides.scenario ?? (scenarioNode?.data as EventNodeData | undefined)?.title,
   };
 };
 
@@ -118,7 +123,7 @@ export const useWeaverStore = create<WeaverState>((set, get) => ({
   setStartParams: (params) =>
     set((state) => ({ startParams: { ...state.startParams, ...params } })),
   onNodesChange: (changes) =>
-    set((state) => ({ nodes: applyNodeChanges(changes, state.nodes) })),
+    set((state) => ({ nodes: applyNodeChanges(changes, state.nodes) as WeaverNode[] })),
   onEdgesChange: (changes) =>
     set((state) => ({ edges: applyEdgeChanges(changes, state.edges) })),
   onConnect: (connection) =>
@@ -135,8 +140,10 @@ export const useWeaverStore = create<WeaverState>((set, get) => ({
 
 export const useWeaverNodes = () => useWeaverStore((state) => state.nodes);
 export const useWeaverEdges = () => useWeaverStore((state) => state.edges);
-export const useWeaverOnNodesChange = () => useWeaverStore((state) => state.onNodesChange);
-export const useWeaverOnEdgesChange = () => useWeaverStore((state) => state.onEdgesChange);
+export const useWeaverOnNodesChange = () =>
+  useWeaverStore((state) => state.onNodesChange);
+export const useWeaverOnEdgesChange = () =>
+  useWeaverStore((state) => state.onEdgesChange);
 export const useWeaverOnConnect = () => useWeaverStore((state) => state.onConnect);
 export const useWeaverAddNode = () => useWeaverStore((state) => state.addNode);
 export const useWeaverStartParams = () => useWeaverStore((state) => state.startParams);
@@ -145,6 +152,9 @@ export const useWeaverOrchestrationRequest = () =>
 export const useWeaverNodeCount = () => useWeaverStore((state) => state.nodes.length);
 export const useWeaverEdgeCount = () => useWeaverStore((state) => state.edges.length);
 
-if ((import.meta.env.DEV || import.meta.env.VITE_E2E_EXPOSE_WEAVER === 'true') && typeof window !== 'undefined') {
+if (
+  (import.meta.env.DEV || import.meta.env.VITE_E2E_EXPOSE_WEAVER === 'true') &&
+  typeof window !== 'undefined'
+) {
   (window as { __weaverStore?: typeof useWeaverStore }).__weaverStore = useWeaverStore;
 }

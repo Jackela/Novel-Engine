@@ -1,6 +1,6 @@
 /**
  * Environment Configuration Module
- * 
+ *
  * Centralizes access to environment variables to ensure type safety and validation.
  * Replaces direct usage of `import.meta.env` or `process.env` throughout the app.
  */
@@ -68,7 +68,10 @@ export const config: EnvConfig = {
   enableGuestMode: getBoolEnvVar('VITE_ENABLE_GUEST_MODE', true), // Default to true as per existing logic
   apiBaseUrl: getEnvVar('VITE_API_BASE_URL', ''),
   apiTimeout: getNumberEnvVar('VITE_API_TIMEOUT', 10000),
-  enableMobileOptimizations: getBoolEnvVar('VITE_ENABLE_MOBILE_OPTIMIZATIONS', getDefaultProdFlag()),
+  enableMobileOptimizations: getBoolEnvVar(
+    'VITE_ENABLE_MOBILE_OPTIMIZATIONS',
+    getDefaultProdFlag()
+  ),
 };
 
 export default config;

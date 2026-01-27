@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures';
 import { DashboardPage } from './pages/DashboardPage';
+import { checkA11y } from './utils/a11y';
 
 test.describe('Dashboard Interactions', () => {
   let dashboardPage: DashboardPage;
@@ -22,6 +23,7 @@ test.describe('Dashboard Interactions', () => {
   test('@experience-offline @smoke Dashboard panels remain visible when offline toggles', async () => {
     await expect(dashboardPage.dashboardLayout).toBeVisible();
     await expect(dashboardPage.worldStateMap).toBeVisible();
+    await checkA11y(dashboardPage.page);
 
     await dashboardPage.page.context().setOffline(true);
     await dashboardPage.page.waitForTimeout(500);
@@ -46,5 +48,6 @@ test.describe('Dashboard Interactions', () => {
 
     await expect(dashboardPage.worldStateMap).toBeVisible();
     await expect(dashboardPage.analyticsPanel).toBeVisible();
+    await checkA11y(page);
   });
 });

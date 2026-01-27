@@ -35,7 +35,7 @@ interface NarrativeState {
   activeAgents: string[];
   currentTurn: number;
   isGenerating: boolean;
-  streamingEventId?: string;
+  streamingEventId: string | undefined;
 }
 
 interface NarrativeDisplayProps {
@@ -52,11 +52,14 @@ const DEFAULT_STATE: NarrativeState = {
   activeAgents: [],
   currentTurn: 0,
   isGenerating: false,
+  streamingEventId: undefined,
 };
+
+type NarrativeFilterType = 'all' | NarrativeEvent['type'];
 
 const shouldIncludeEvent = (
   event: NarrativeEvent,
-  filterType: string,
+  filterType: NarrativeFilterType,
   showThoughts: boolean
 ) => {
   if (filterType !== 'all' && event.type !== filterType) return false;
@@ -92,7 +95,9 @@ const updateEventsForMessage = (
 
 const updateAgentActions = (prev: AgentAction[], payload: AgentAction) => {
   const newActions = [...prev];
-  const existingIndex = newActions.findIndex((action) => action.agentId === payload.agentId);
+  const existingIndex = newActions.findIndex(
+    (action) => action.agentId === payload.agentId
+  );
 
   if (existingIndex >= 0) {
     newActions[existingIndex] = payload;
@@ -110,7 +115,7 @@ const useNarrativeDisplayState = (initialShowThoughts: boolean) => {
   const [narrativeState, setNarrativeState] = useState<NarrativeState>(DEFAULT_STATE);
   const [agentActions, setAgentActions] = useState<AgentAction[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [filterType, setFilterType] = useState<string>('all');
+  const [filterType, setFilterType] = useState<NarrativeFilterType>('all');
   const [autoScroll, setAutoScroll] = useState(true);
   const [showThoughts, setShowThoughts] = useState(initialShowThoughts);
 
@@ -131,8 +136,8 @@ const useNarrativeDisplayState = (initialShowThoughts: boolean) => {
 };
 
 const NarrativeControls: React.FC<{
-  filterType: string;
-  onFilterChange: (value: string) => void;
+  filterType: NarrativeFilterType;
+  onFilterChange: (value: NarrativeFilterType) => void;
   autoScroll: boolean;
   onToggleScroll: () => void;
   showThoughts: boolean;
@@ -148,7 +153,7 @@ const NarrativeControls: React.FC<{
   <div className="narrative-controls">
     <select
       value={filterType}
-      onChange={(event) => onFilterChange(event.target.value)}
+      onChange={(event) => onFilterChange(event.target.value as NarrativeFilterType)}
       className="narrative-filter"
     >
       <option value="all">All Events</option>
@@ -159,11 +164,17 @@ const NarrativeControls: React.FC<{
       {showThoughts && <option value="agent_thought">Agent Thoughts</option>}
     </select>
 
-    <button onClick={onToggleScroll} className={`control-btn ${autoScroll ? 'active' : ''}`}>
+    <button
+      onClick={onToggleScroll}
+      className={`control-btn ${autoScroll ? 'active' : ''}`}
+    >
       Auto Scroll
     </button>
 
-    <button onClick={onToggleThoughts} className={`control-btn ${showThoughts ? 'active' : ''}`}>
+    <button
+      onClick={onToggleThoughts}
+      className={`control-btn ${showThoughts ? 'active' : ''}`}
+    >
       Show Thoughts
     </button>
   </div>
@@ -179,13 +190,15 @@ const NarrativeStatus: React.FC<{
     <span className="turn-counter">Turn {currentTurn}</span>
     <span className="active-agents">Active: {activeAgentCount}</span>
     {isGenerating && <span className="generating-indicator">Generating...</span>}
-    <span className="connection-status">{isConnected ? '🟢 Connected' : '🔴 Disconnected'}</span>
+    <span className="connection-status">
+      {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+    </span>
   </div>
 );
 
 const NarrativeHeader: React.FC<{
-  filterType: string;
-  onFilterChange: (value: string) => void;
+  filterType: NarrativeFilterType;
+  onFilterChange: (value: NarrativeFilterType) => void;
   autoScroll: boolean;
   onToggleScroll: () => void;
   showThoughts: boolean;
@@ -226,13 +239,17 @@ const NarrativeHeader: React.FC<{
 
 const NarrativeEventHeader: React.FC<{ event: NarrativeEvent }> = ({ event }) => (
   <div className="narrative-event__header">
-    {event.agentName && <span className="narrative-event__agent">{event.agentName}</span>}
+    {event.agentName && (
+      <span className="narrative-event__agent">{event.agentName}</span>
+    )}
     <span className="narrative-event__type">{event.type}</span>
     <span className="narrative-event__timestamp">
       {new Date(event.timestamp).toLocaleTimeString()}
     </span>
     {event.confidence && (
-      <span className="narrative-event__confidence">{Math.round(event.confidence * 100)}%</span>
+      <span className="narrative-event__confidence">
+        {Math.round(event.confidence * 100)}%
+      </span>
     )}
   </div>
 );
@@ -369,7 +386,14 @@ const NarrativeEventsList: React.FC<{
         />
       );
     },
-    [events, selectedEventId, enableInteractivity, onEventClick, onEventKeyDown, onEventAction]
+    [
+      events,
+      selectedEventId,
+      enableInteractivity,
+      onEventClick,
+      onEventKeyDown,
+      onEventAction,
+    ]
   );
 
   if (enableVirtualization && events.length > 50) {
@@ -390,9 +414,7 @@ const NarrativeEventsList: React.FC<{
   return (
     <div className="narrative-events-list">
       {events.map((event, index) => (
-        <div key={event.id}>
-          {renderVirtualRow({ index, style: {} })}
-        </div>
+        <div key={event.id}>{renderVirtualRow({ index, style: {} })}</div>
       ))}
     </div>
   );
@@ -402,7 +424,10 @@ const AgentActionsPanel: React.FC<{ actions: AgentAction[] }> = ({ actions }) =>
   <div className="agent-actions">
     <h3>Active Agents</h3>
     {actions.map((action) => (
-      <div key={action.agentId} className={`agent-action agent-action--${action.status}`}>
+      <div
+        key={action.agentId}
+        className={`agent-action agent-action--${action.status}`}
+      >
         <div className="agent-action__header">
           <strong>{action.agentName}</strong>
           <span className="agent-action__status">{action.status}</span>
@@ -425,7 +450,8 @@ const useNarrativeAutoScroll = (
 ) => {
   useEffect(() => {
     if (autoScroll && listRef.current && filteredEvents.length > 0) {
-      const lastEvent = filteredEvents[filteredEvents.length - 1];
+      const lastEvent = filteredEvents.at(-1);
+      if (!lastEvent) return;
       if (lastEvent.id !== lastEventRef.current) {
         listRef.current.scrollToItem(filteredEvents.length - 1, 'end');
         lastEventRef.current = lastEvent.id;
@@ -438,12 +464,15 @@ const useNarrativeWebSocket = (params: {
   sessionId: string;
   wsState: ReturnType<typeof useWebSocketContext>['state'];
   sendMessage: ReturnType<typeof useWebSocketContext>['sendMessage'];
-  handleWebSocketMessage: (event: CustomEvent) => void;
+  handleWebSocketMessage: (event: Event) => void;
 }) => {
   const { sessionId, wsState, sendMessage, handleWebSocketMessage } = params;
 
   useEffect(() => {
-    window.addEventListener('websocket-message', handleWebSocketMessage);
+    window.addEventListener(
+      'websocket-message',
+      handleWebSocketMessage as EventListener
+    );
 
     if (wsState.isConnected) {
       sendMessage({
@@ -454,14 +483,19 @@ const useNarrativeWebSocket = (params: {
     }
 
     return () => {
-      window.removeEventListener('websocket-message', handleWebSocketMessage);
+      window.removeEventListener(
+        'websocket-message',
+        handleWebSocketMessage as EventListener
+      );
     };
   }, [handleWebSocketMessage, wsState.isConnected, sendMessage, sessionId]);
 };
 
 const createNarrativeEventHandlers = (params: {
   enableInteractivity: boolean;
-  measureInteractionDelay: ReturnType<typeof usePerformanceOptimizer>['measureInteractionDelay'];
+  measureInteractionDelay: ReturnType<
+    typeof usePerformanceOptimizer
+  >['measureInteractionDelay'];
   setSelectedEventId: React.Dispatch<React.SetStateAction<string | null>>;
   wsState: ReturnType<typeof useWebSocketContext>['state'];
   sendMessage: ReturnType<typeof useWebSocketContext>['sendMessage'];
@@ -489,7 +523,10 @@ const createNarrativeEventHandlers = (params: {
     });
   };
 
-  const handleEventKeyDown = (eventId: string, keyboardEvent: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleEventKeyDown = (
+    eventId: string,
+    keyboardEvent: React.KeyboardEvent<HTMLDivElement>
+  ) => {
     if (!params.enableInteractivity) return;
     if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
       keyboardEvent.preventDefault();
@@ -503,7 +540,9 @@ const createNarrativeEventHandlers = (params: {
 const useNarrativeVirtualConfig = (
   scrollContainerRef: React.RefObject<HTMLDivElement>,
   eventsCount: number,
-  createVirtualScrollConfig: ReturnType<typeof usePerformanceOptimizer>['createVirtualScrollConfig']
+  createVirtualScrollConfig: ReturnType<
+    typeof usePerformanceOptimizer
+  >['createVirtualScrollConfig']
 ) => {
   return useMemo(() => {
     const containerHeight = scrollContainerRef.current?.clientHeight || 600;
@@ -534,7 +573,9 @@ const useNarrativeRealtimeSync = (params: {
   filteredEvents: NarrativeEvent[];
   autoScroll: boolean;
   lastEventRef: React.MutableRefObject<string>;
-  optimizeForRealTime: ReturnType<typeof usePerformanceOptimizer>['optimizeForRealTime'];
+  optimizeForRealTime: ReturnType<
+    typeof usePerformanceOptimizer
+  >['optimizeForRealTime'];
 }) => {
   const {
     sessionId,
@@ -552,13 +593,15 @@ const useNarrativeRealtimeSync = (params: {
   } = params;
 
   const handleWebSocketMessage = useCallback(
-    (event: CustomEvent) => {
-      const message = event.detail;
+    (event: Event) => {
+      const message = (event as CustomEvent).detail;
 
       switch (message.type) {
         case 'narrative_event':
           deferUpdate(() => {
-            setNarrativeState((prev) => updateEventsForMessage(prev, message.data, maxEvents));
+            setNarrativeState((prev) =>
+              updateEventsForMessage(prev, message.data, maxEvents)
+            );
           });
           break;
         case 'agent_action':
@@ -595,12 +638,14 @@ const useNarrativeDisplayController = (params: {
 }) => {
   const { sessionId, maxEvents, showAgentThoughts, enableInteractivity } = params;
   const { state: wsState, sendMessage } = useWebSocketContext();
-  const { optimizeForRealTime, createVirtualScrollConfig, deferUpdate, measureInteractionDelay } =
-    usePerformanceOptimizer();
+  const {
+    optimizeForRealTime,
+    createVirtualScrollConfig,
+    deferUpdate,
+    measureInteractionDelay,
+  } = usePerformanceOptimizer();
 
-  const listRef = useRef<List>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const lastEventRef = useRef<string>('');
+  const { listRef, scrollContainerRef, lastEventRef } = useNarrativeRefs();
 
   const {
     narrativeState,
@@ -617,13 +662,13 @@ const useNarrativeDisplayController = (params: {
     setShowThoughts,
   } = useNarrativeDisplayState(showAgentThoughts);
 
-  const virtualConfig = useNarrativeVirtualConfig(
+  const { virtualConfig, filteredEvents } = useNarrativeDerivedState({
     scrollContainerRef,
-    narrativeState.events.length,
-    createVirtualScrollConfig
-  );
-
-  const filteredEvents = useNarrativeFilteredEvents(narrativeState.events, filterType, showThoughts);
+    createVirtualScrollConfig,
+    events: narrativeState.events,
+    filterType,
+    showThoughts,
+  });
 
   useNarrativeRealtimeSync({
     sessionId,
@@ -640,14 +685,15 @@ const useNarrativeDisplayController = (params: {
     optimizeForRealTime,
   });
 
-  const { handleEventClick, handleEventAction, handleEventKeyDown } = createNarrativeEventHandlers({
-    enableInteractivity,
-    measureInteractionDelay,
-    setSelectedEventId,
-    wsState,
-    sendMessage,
-    sessionId,
-  });
+  const { handleEventClick, handleEventAction, handleEventKeyDown } =
+    createNarrativeEventHandlers({
+      enableInteractivity,
+      measureInteractionDelay,
+      setSelectedEventId,
+      wsState,
+      sendMessage,
+      sessionId,
+    });
 
   return {
     wsState,
@@ -668,6 +714,38 @@ const useNarrativeDisplayController = (params: {
     handleEventAction,
     handleEventKeyDown,
   };
+};
+
+const useNarrativeRefs = () => {
+  const listRef = useRef<List>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const lastEventRef = useRef<string>('');
+  return { listRef, scrollContainerRef, lastEventRef };
+};
+
+const useNarrativeDerivedState = (params: {
+  scrollContainerRef: React.RefObject<HTMLDivElement>;
+  createVirtualScrollConfig: ReturnType<
+    typeof usePerformanceOptimizer
+  >['createVirtualScrollConfig'];
+  events: NarrativeEvent[];
+  filterType: NarrativeFilterType;
+  showThoughts: boolean;
+}) => {
+  const {
+    scrollContainerRef,
+    createVirtualScrollConfig,
+    events,
+    filterType,
+    showThoughts,
+  } = params;
+  const virtualConfig = useNarrativeVirtualConfig(
+    scrollContainerRef,
+    events.length,
+    createVirtualScrollConfig
+  );
+  const filteredEvents = useNarrativeFilteredEvents(events, filterType, showThoughts);
+  return { virtualConfig, filteredEvents };
 };
 
 const NarrativeDisplay: React.FC<NarrativeDisplayProps> = ({

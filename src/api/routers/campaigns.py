@@ -12,12 +12,36 @@ from fastapi import APIRouter, HTTPException
 from src.api.schemas import (
     CampaignCreationRequest,
     CampaignCreationResponse,
+    CampaignDetailResponse,
     CampaignsListResponse,
 )
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Campaigns"])
+
+
+def _find_campaign_file(campaign_id: str) -> str | None:
+    campaigns_paths = ["campaigns", "logs", "private/campaigns"]
+    for campaigns_path in campaigns_paths:
+        for extension in (".json", ".md"):
+            candidate = os.path.join(campaigns_path, f"{campaign_id}{extension}")
+            if os.path.isfile(candidate):
+                return candidate
+    return None
+
+
+def _build_campaign_detail(campaign_id: str, payload: dict[str, Any], updated_at: str) -> CampaignDetailResponse:
+    created_at = str(payload.get("created_at") or updated_at)
+    return CampaignDetailResponse(
+        id=campaign_id,
+        name=str(payload.get("name") or campaign_id),
+        description=str(payload.get("description") or ""),
+        status=str(payload.get("status") or "active"),
+        created_at=created_at,
+        updated_at=str(payload.get("updated_at") or updated_at),
+        current_turn=int(payload.get("current_turn") or 0),
+    )
 
 
 @router.get("/campaigns", response_model=CampaignsListResponse)
@@ -42,6 +66,31 @@ async def get_campaigns() -> CampaignsListResponse:
     except Exception as exc:
         logger.error("Error retrieving campaigns: %s", exc, exc_info=True)
         return CampaignsListResponse(campaigns=[])
+
+
+@router.get("/campaigns/{campaign_id}", response_model=CampaignDetailResponse)
+async def get_campaign(campaign_id: str) -> CampaignDetailResponse:
+    """Retrieves a campaign by id."""
+    campaign_file = _find_campaign_file(campaign_id)
+    if not campaign_file:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
+    try:
+        updated_at = datetime.fromtimestamp(os.path.getmtime(campaign_file)).isoformat()
+        if campaign_file.endswith(".json"):
+            with open(campaign_file, "r") as handle:
+                payload = json.load(handle)
+            if not isinstance(payload, dict):
+                raise ValueError("Campaign payload must be an object")
+        else:
+            with open(campaign_file, "r") as handle:
+                payload = {"name": campaign_id, "description": handle.read().strip()}
+        return _build_campaign_detail(campaign_id, payload, updated_at)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error retrieving campaign: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to retrieve campaign") from exc
 
 
 @router.post("/campaigns", response_model=CampaignCreationResponse)

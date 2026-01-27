@@ -28,21 +28,16 @@ export function LoadingSpinner({
     <div
       className={cn(
         'flex flex-col items-center justify-center gap-3',
-        fullScreen && 'fixed inset-0 bg-background z-50',
+        fullScreen && 'fixed inset-0 z-50 bg-background',
         className
       )}
       role="status"
       aria-label={text || 'Loading'}
     >
       <Loader2
-        className={cn(
-          sizeClasses[size],
-          'animate-spin text-muted-foreground'
-        )}
+        className={cn(sizeClasses[size], 'animate-spin text-muted-foreground')}
       />
-      {text && (
-        <p className="text-sm text-muted-foreground">{text}</p>
-      )}
+      {text && <p className="text-sm text-muted-foreground">{text}</p>}
       <span className="sr-only">{text || 'Loading...'}</span>
     </div>
   );

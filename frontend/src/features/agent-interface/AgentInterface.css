@@ -457,7 +457,8 @@
 
 /* Animations */
 @keyframes thinking {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -466,7 +467,8 @@
 }
 
 @keyframes acting {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -475,7 +477,8 @@
 }
 
 @keyframes waiting {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.6;
   }
   50% {
@@ -484,7 +487,8 @@
 }
 
 @keyframes error {
-  0%, 100% {
+  0%,
+  100% {
     color: var(--danger-color, #dc3545);
   }
   50% {
@@ -497,35 +501,35 @@
   .agent-interface__content {
     flex-direction: column;
   }
-  
+
   .agent-list {
     width: 100%;
     max-height: 300px;
     border-right: none;
     border-bottom: 1px solid var(--border-color, #e0e0e0);
   }
-  
+
   .agent-item__stats {
     font-size: 9px;
     flex-direction: column;
     gap: 2px;
   }
-  
+
   .agent-item__controls {
     flex-direction: column;
     gap: 4px;
   }
-  
+
   .parameter-control {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .parameter-control label {
     min-width: auto;
   }
-  
+
   .parameter-slider {
     width: 100%;
   }
@@ -537,24 +541,24 @@
     gap: 12px;
     padding: 12px 16px;
   }
-  
+
   .agent-controls {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .agent-item {
     padding: 12px;
   }
-  
+
   .agent-details {
     padding: 16px;
   }
-  
+
   .message-controls {
     gap: 8px;
   }
-  
+
   .agent-parameters {
     padding: 16px;
   }
@@ -578,7 +582,7 @@
     --danger-color: #ef4444;
     --info-color: #06b6d4;
   }
-  
+
   .coordination-select,
   .message-type-select,
   .parameter-select,
@@ -588,12 +592,12 @@
     color: var(--text-color);
     border-color: var(--border-color);
   }
-  
+
   .agent-item {
     background: var(--bg-secondary);
     border-color: var(--border-color);
   }
-  
+
   .capability-tag {
     background: var(--bg-tertiary);
     border-color: var(--border-color);
@@ -606,12 +610,12 @@
   .agent-item {
     border: 2px solid;
   }
-  
+
   .agent-item.selected {
     border-color: var(--primary-color);
     background: rgba(59, 130, 246, 0.2);
   }
-  
+
   .control-btn,
   .send-message-btn {
     border-width: 2px;
@@ -629,7 +633,7 @@
   .message-input {
     transition: none;
   }
-  
+
   .agent-status--thinking,
   .agent-status--acting,
   .agent-status--waiting,

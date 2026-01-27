@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
+import { checkA11y } from './utils/a11y';
 
 /**
  * Landing Page E2E Test Suite
@@ -30,7 +31,7 @@ test.describe('Landing Page E2E Tests', () => {
      * And: The "Launch Engine" button is present
      * And: Three feature cards are displayed
      */
-    test('@landing-smoke should display page title, CTA button, and feature cards', async () => {
+    test('@landing-smoke should display page title, CTA button, and feature cards', async ({ page }) => {
       await test.step('Given: Application is running and user navigates to /', async () => {
         // Already navigated in beforeEach
         await expect(landingPage.mainTitle).toBeVisible();
@@ -51,6 +52,10 @@ test.describe('Landing Page E2E Tests', () => {
       await test.step('And: Three feature cards are displayed', async () => {
         const cardCount = await landingPage.getFeatureCardCount();
         expect(cardCount).toBe(3);
+      });
+
+      await test.step('And: Landing page has no critical accessibility violations', async () => {
+        await checkA11y(page);
       });
     });
 

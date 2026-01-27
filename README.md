@@ -221,9 +221,7 @@ Novel-Engine/
 
 ## 🤖 AI 协作
 
-- `AGENTS.md` 是 AI 工作流与 SSoT 位置的唯一真相来源。
-- 任何包含提案/规格/架构变更的请求，先阅读 `docs/specs/openspec/AGENTS.md`。
-- 项目构建与测试命令请参考 `CLAUDE.md`。
+- AI 工作流、Agent 开发与契约规范以 `AGENTS.md` 为唯一真相来源。
 
 ---
 

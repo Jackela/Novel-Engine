@@ -56,6 +56,15 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        weaver: {
+          canvas: 'rgb(10 11 15 / <alpha-value>)',
+          surface: 'rgb(16 19 26 / <alpha-value>)',
+          border: 'rgb(32 38 56 / <alpha-value>)',
+          glow: 'rgb(0 245 255 / <alpha-value>)',
+          neon: 'rgb(176 38 255 / <alpha-value>)',
+          loading: 'rgb(0 229 255 / <alpha-value>)',
+          error: 'rgb(255 92 77 / <alpha-value>)',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

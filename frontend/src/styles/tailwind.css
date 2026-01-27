@@ -65,3 +65,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .weaver-node {
+    @apply relative overflow-hidden border border-weaver-border bg-weaver-surface text-foreground shadow-[0_12px_30px_rgba(0,0,0,0.35)] transition;
+  }
+
+  .node-idle {
+    @apply border-weaver-border bg-weaver-surface/90;
+  }
+
+  .node-active {
+    @apply border-weaver-glow shadow-[0_0_24px_rgba(0,245,255,0.45)];
+  }
+
+  .node-loading {
+    @apply animate-pulse border-weaver-glow/60 bg-weaver-loading/35;
+  }
+
+  .node-error {
+    @apply border-2 border-dashed border-weaver-error shadow-[0_0_16px_rgba(255,92,77,0.45)];
+  }
+
+  .weaver-node-alert {
+    @apply absolute right-2 top-2 text-weaver-error drop-shadow;
+  }
+}

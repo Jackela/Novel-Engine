@@ -29,7 +29,7 @@ const MOCK_CAMPAIGNS: Campaign[] = [
     created_at: '2025-10-15T08:00:00Z',
     updated_at: '2025-10-20T11:20:00Z',
     current_turn: 8,
-  }
+  },
 ];
 
 export const useCampaigns = () => {

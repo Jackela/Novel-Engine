@@ -421,7 +421,7 @@ pytest -m unit -v
 
 - Check this documentation
 - Review example tests in `tests/` directory
-- See `scripts/testing/README.md` for tool documentation
+- Tooling reference lives in `AGENTS.md`
 - Run tools with `--help` flag for usage
 - Ask team members for guidance on test classification
 

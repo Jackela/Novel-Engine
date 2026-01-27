@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { OrchestrationStartRequestSchema } from '@/types/schemas';
+import type { z } from 'zod';
+import type { OrchestrationStartRequestSchema } from '@/types/schemas';
 /**
  * Orchestration Types
  */
@@ -14,7 +14,12 @@ export interface OrchestrationState {
 
 export type OrchestrationStartRequest = z.infer<typeof OrchestrationStartRequestSchema>;
 
-export type OrchestrationStatus = 'idle' | 'running' | 'paused' | 'waiting_decision' | 'error';
+export type OrchestrationStatus =
+  | 'idle'
+  | 'running'
+  | 'paused'
+  | 'waiting_decision'
+  | 'error';
 
 export type PipelinePhase =
   | 'idle'

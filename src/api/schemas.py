@@ -237,6 +237,18 @@ class CampaignCreationResponse(BaseModel):
     created_at: str
 
 
+class CampaignDetailResponse(BaseModel):
+    """Response model for campaign detail."""
+
+    id: str
+    name: str
+    description: str
+    status: str
+    created_at: str
+    updated_at: str
+    current_turn: int = 0
+
+
 # Authentication Models
 class LoginRequest(BaseModel):
     """Request model for user login."""
@@ -386,6 +398,7 @@ __all__ = [
     "CampaignsListResponse",
     "CampaignCreationRequest",
     "CampaignCreationResponse",
+    "CampaignDetailResponse",
     # Auth Schemas
     "LoginRequest",
     "AuthResponse",

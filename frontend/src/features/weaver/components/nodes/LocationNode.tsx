@@ -4,13 +4,15 @@
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { MapPin } from 'lucide-react';
-import { Card, CardContent, Badge } from '@/shared/components/ui';
-import { cn } from '@/lib/utils';
+import { CardContent, Badge } from '@/shared/components/ui';
+import type { WeaverNodeStatus } from '../../types';
+import { WeaverNode } from './WeaverNode';
 
-export interface LocationNodeData {
+export interface LocationNodeData extends Record<string, unknown> {
   name: string;
   type: 'city' | 'building' | 'wilderness' | 'dungeon' | 'other';
   description: string;
+  status?: WeaverNodeStatus;
 }
 
 export type LocationNodeType = Node<LocationNodeData>;
@@ -25,39 +27,37 @@ const locationTypeLabels: Record<LocationNodeData['type'], string> = {
 
 export function LocationNode({ data, id, selected }: NodeProps<LocationNodeType>) {
   return (
-    <Card
-      className={cn(
-        'w-52 cursor-grab active:cursor-grabbing shadow-md bg-emerald-50 dark:bg-emerald-950/30',
-        selected && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
-      )}
-      data-testid="weaver-node"
-      data-node-type="location"
-      data-node-id={id}
+    <WeaverNode
+      nodeId={id}
+      nodeType="location"
+      status={data.status}
+      selected={selected}
+      className="w-52 cursor-grab active:cursor-grabbing"
     >
       <Handle
         type="target"
         position={Position.Top}
-        className="!bg-emerald-500"
+        className="!bg-weaver-glow"
         data-testid="weaver-handle-target"
       />
       <CardContent className="p-3">
-        <div className="flex items-start gap-2 mb-2">
-          <MapPin className="h-4 w-4 text-emerald-600 mt-0.5" />
+        <div className="mb-2 flex items-start gap-2">
+          <MapPin className="mt-0.5 h-4 w-4 text-weaver-glow" />
           <div className="flex-1">
-            <h4 className="font-medium text-sm">{data.name}</h4>
-            <Badge variant="outline" className="text-xs mt-1 border-emerald-300">
+            <h4 className="text-sm font-medium">{data.name}</h4>
+            <Badge variant="outline" className="mt-1 border-weaver-border text-xs">
               {locationTypeLabels[data.type]}
             </Badge>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground line-clamp-2">{data.description}</p>
+        <p className="line-clamp-2 text-xs text-muted-foreground">{data.description}</p>
       </CardContent>
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!bg-emerald-500"
+        className="!bg-weaver-glow"
         data-testid="weaver-handle-source"
       />
-    </Card>
+    </WeaverNode>
   );
 }

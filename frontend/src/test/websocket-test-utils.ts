@@ -50,8 +50,8 @@ export function simulateWebSocketError(ws: MockWebSocket): void {
  * Simulate WebSocket connection close
  */
 export function simulateWebSocketClose(
-  ws: MockWebSocket, 
-  code: number = 1000, 
+  ws: MockWebSocket,
+  code: number = 1000,
   reason: string = ''
 ): void {
   ws.close(code, reason);
@@ -86,7 +86,9 @@ interface ProgressUpdate {
 /**
  * Mock WebSocket progress update data for testing
  */
-export function createMockProgressUpdate(overrides: Partial<ProgressUpdate> = {}): ProgressUpdate {
+export function createMockProgressUpdate(
+  overrides: Partial<ProgressUpdate> = {}
+): ProgressUpdate {
   return {
     generation_id: 'test-123',
     progress: 50,

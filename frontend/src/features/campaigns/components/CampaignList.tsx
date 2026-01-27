@@ -69,7 +69,7 @@ export function CampaignList({
         </div>
         {onCreateNew && (
           <Button onClick={onCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             New Campaign
           </Button>
         )}
@@ -78,29 +78,29 @@ export function CampaignList({
       {/* List or Empty State */}
       {filteredCampaigns.length === 0 ? (
         <EmptyState
-          title={statusFilter === 'all' ? 'No campaigns yet' : `No ${statusFilter} campaigns`}
+          title={
+            statusFilter === 'all' ? 'No campaigns yet' : `No ${statusFilter} campaigns`
+          }
           description={
             statusFilter === 'all'
               ? 'Create your first campaign to start your narrative adventure'
               : 'Try changing the filter to see other campaigns'
           }
-          action={
-            statusFilter === 'all' && onCreateNew
-              ? { label: 'Create Campaign', onClick: onCreateNew }
-              : undefined
-          }
+          {...(statusFilter === 'all' && onCreateNew
+            ? { action: { label: 'Create Campaign', onClick: onCreateNew } }
+            : {})}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredCampaigns.map((campaign) => (
             <CampaignCard
               key={campaign.id}
               campaign={campaign}
-              onStart={onStart}
-              onPause={onPause}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onSelect={onSelect}
+              {...(onStart ? { onStart } : {})}
+              {...(onPause ? { onPause } : {})}
+              {...(onEdit ? { onEdit } : {})}
+              {...(onDelete ? { onDelete } : {})}
+              {...(onSelect ? { onSelect } : {})}
             />
           ))}
         </div>
