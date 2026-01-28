@@ -137,6 +137,7 @@ export default defineConfig({
       'src/__tests__/**/*.test.{ts,tsx}',
       'src/pages/__tests__/**/*.test.{ts,tsx}',
       'src/shared/**/__tests__/**/*.test.{ts,tsx}',
+      'src/features/**/__tests__/**/*.test.{ts,tsx}',
     ],
     exclude: [
       'node_modules',

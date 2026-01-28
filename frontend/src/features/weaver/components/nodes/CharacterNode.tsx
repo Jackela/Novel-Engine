@@ -12,6 +12,10 @@ export interface CharacterNodeData extends Record<string, unknown> {
   role: string;
   traits: string[];
   status?: WeaverNodeStatus;
+  tagline?: string;
+  bio?: string;
+  visualPrompt?: string;
+  errorMessage?: string;
 }
 
 export type CharacterNodeType = Node<CharacterNodeData>;
@@ -38,6 +42,15 @@ export function CharacterNode({ data, id, selected }: NodeProps<CharacterNodeTyp
             {data.role}
           </Badge>
         </div>
+        {data.tagline ? (
+          <p className="text-xs text-muted-foreground">{data.tagline}</p>
+        ) : null}
+        {data.bio ? (
+          <p className="mt-2 text-xs text-muted-foreground">{data.bio}</p>
+        ) : null}
+        {data.errorMessage ? (
+          <p className="mt-2 text-xs text-weaver-error">{data.errorMessage}</p>
+        ) : null}
         <div className="flex flex-wrap gap-1">
           {data.traits.map((trait) => (
             <Badge key={trait} variant="outline" className="text-xs">

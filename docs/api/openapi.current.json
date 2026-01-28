@@ -2043,6 +2043,48 @@
         }
       }
     },
+    "/generation/character": {
+      "post": {
+        "tags": [
+          "generation"
+        ],
+        "summary": "Generate Character",
+        "description": "Stub endpoint for character generation (Contract-First).",
+        "operationId": "generate_character_generation_character_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CharacterGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/guest/session": {
       "post": {
         "tags": [
@@ -2985,6 +3027,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnalyticsMetricsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/generation/character": {
+      "post": {
+        "tags": [
+          "generation"
+        ],
+        "summary": "Generate Character",
+        "description": "Stub endpoint for character generation (Contract-First).",
+        "operationId": "generate_character_api_generation_character_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CharacterGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -4457,6 +4541,73 @@
         ],
         "title": "CharacterDetailResponse",
         "description": "Response model for detailed character information."
+      },
+      "CharacterGenerationRequest": {
+        "properties": {
+          "concept": {
+            "type": "string",
+            "title": "Concept"
+          },
+          "archetype": {
+            "type": "string",
+            "title": "Archetype"
+          },
+          "tone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "concept",
+          "archetype"
+        ],
+        "title": "CharacterGenerationRequest",
+        "description": "Request model for character generation."
+      },
+      "CharacterGenerationResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "bio": {
+            "type": "string",
+            "title": "Bio"
+          },
+          "visual_prompt": {
+            "type": "string",
+            "title": "Visual Prompt"
+          },
+          "traits": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Traits"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "tagline",
+          "bio",
+          "visual_prompt",
+          "traits"
+        ],
+        "title": "CharacterGenerationResponse",
+        "description": "Response model for character generation."
       },
       "CharacterListResponse": {
         "properties": {

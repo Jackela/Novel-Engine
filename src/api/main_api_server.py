@@ -41,7 +41,6 @@ from src.api.character_api import create_character_api
 
 # Import Context7 integration and enhanced documentation
 from src.api.context7_integration_api import create_context7_integration_api
-from src.api.documentation import setup_enhanced_docs
 from src.api.emergent_narrative_api import create_emergent_narrative_api
 from src.api.enhanced_documentation_system import EnhancedDocumentationSystem
 from src.api.error_handlers import (
@@ -58,13 +57,12 @@ from src.api.logging_system import (
 )
 
 # Import new integration systems
-from src.api.response_models import (
+from src.api.response_envelopes import (
     APIMetadata,
     HealthCheckData,
     HealthCheckResponse,
     SuccessResponse,
 )
-from src.api.story_generation_api import create_story_generation_api
 from src.api.subjective_reality_api import create_subjective_reality_api
 from src.api.versioning import setup_versioning
 from src.core.system_orchestrator import (
@@ -271,9 +269,6 @@ async def lifespan(app: FastAPI):
         # Set orchestrator on all API instances
         if hasattr(app.state, "character_api"):
             app.state.character_api.set_orchestrator(global_orchestrator)
-        if hasattr(app.state, "story_api"):
-            app.state.story_api.set_orchestrator(global_orchestrator)
-            await app.state.story_api.start_background_tasks()
         if hasattr(app.state, "interaction_api"):
             app.state.interaction_api.set_orchestrator(global_orchestrator)
         if hasattr(app.state, "subjective_reality_api"):
@@ -326,17 +321,7 @@ async def lifespan(app: FastAPI):
             "Shutting down Enhanced API Server", category=LogCategory.SYSTEM
         )
 
-        # Stop background tasks
-        if hasattr(app.state, "story_api"):
-            try:
-                await app.state.story_api.stop_background_tasks()
-                global_structured_logger.info(
-                    "Story API background tasks stopped", category=LogCategory.SYSTEM
-                )
-            except Exception as e:
-                global_structured_logger.error(
-                    f"Error stopping story API tasks: {e}", category=LogCategory.ERROR
-                )
+        # Stop background tasks (none for character generation yet)
 
         # Shutdown orchestrator
         if global_orchestrator:
@@ -382,8 +367,7 @@ def create_app() -> FastAPI:
     app.state.metrics_collector = None
     app.state.alert_manager = None
 
-    # 4. Enhanced documentation
-    setup_enhanced_docs(app)
+    # 4. Enhanced documentation (handled by EnhancedDocumentationSystem)
 
     # Add middleware (order matters - last added = first executed)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -735,7 +719,6 @@ def _register_api_routes(app: FastAPI):
     """Register all API routes immediately."""
     # Create API instances; orchestrator will be injected during lifespan       
     character_api = create_character_api(None)
-    story_generation_api = create_story_generation_api(None)
     interaction_api = create_interaction_api(None)
     subjective_reality_api = create_subjective_reality_api(None)
     emergent_narrative_api = create_emergent_narrative_api(None)
@@ -743,7 +726,6 @@ def _register_api_routes(app: FastAPI):
 
     # Store API instances in app state for lifespan initialization
     app.state.character_api = character_api
-    app.state.story_api = story_generation_api
     app.state.interaction_api = interaction_api
     app.state.subjective_reality_api = subjective_reality_api
     app.state.emergent_narrative_api = emergent_narrative_api
@@ -755,7 +737,6 @@ def _register_api_routes(app: FastAPI):
         character_api.setup_routes(app)
     else:
         logger.info("Skipping CharacterAPI routes in testing mode")
-    story_generation_api.setup_routes(app)
     interaction_api.setup_routes(app)
     subjective_reality_api.setup_routes(app)
     emergent_narrative_api.setup_routes(app)
@@ -779,6 +760,7 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.campaigns import router as campaigns_router
     from src.api.routers.characters import router as characters_router
     from src.api.routers.events import router as events_router
+    from src.api.routers.generation import router as generation_router
     from src.api.routers.guest import router as guest_router
     from src.api.routers.health import router as health_router
     from src.api.routers.meta import router as meta_router
@@ -792,6 +774,7 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(campaigns_router)
     app.include_router(characters_router)
     app.include_router(events_router)
+    app.include_router(generation_router)
     app.include_router(guest_router)
     app.include_router(health_router)
     app.include_router(meta_router)
@@ -804,6 +787,7 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(campaigns_router, prefix="/api")
     app.include_router(characters_router, prefix="/api")
     app.include_router(events_router, prefix="/api")
+    app.include_router(generation_router, prefix="/api")
     app.include_router(guest_router, prefix="/api")
     app.include_router(health_router, prefix="/api")
     app.include_router(meta_router, prefix="/api")
@@ -1466,81 +1450,19 @@ def _register_legacy_routes(app: FastAPI):
                     if not result.success:
                         logger.warning("Could not create agent context")
 
-            # Use the story generation API to create a story
-            story_api = getattr(app.state, "story_api", None)
-            if story_api:
-                # Create a story generation request
-                import time
-                import uuid
-
-                start_time = time.time()
-                generation_id = f"legacy_{uuid.uuid4().hex[:8]}"
-
-                # Trigger story generation directly
-                story_api.active_generations[generation_id] = {
-                    "status": "initiated",
-                    "request": {
-                        "characters": character_names,
-                        "title": "Legacy Simulation Story",
-                    },
-                    "progress": 0,
-                    "stage": "initializing",
-                    "start_time": datetime.now(),
-                }
-
-                # Run simplified story generation
-                try:
-                    await story_api._generate_story_async(generation_id)
-
-                    # Get the result
-                    generation_state = story_api.active_generations.get(
-                        generation_id, {}
-                    )
-                    story_content = generation_state.get(
-                        "story_content", "Story generation completed"
-                    )
-
-                    duration = time.time() - start_time
-
-                    response = {
-                        "story": story_content,
-                        "participants": character_names,
-                        "turns_executed": turns,
-                        "duration_seconds": duration,
-                    }
-
-                    logger.info("Legacy simulation completed in %.2fs", duration)
-                    return response
-
-                except Exception as e:
-                    logger.error(f"Story generation failed in legacy simulation: {e}")
-                    # Fallback response
-                    characters = ", ".join(character_names)
-                    fallback_story = (
-                        "A story featuring "
-                        f"{characters} was generated through the legacy simulation "
-                        "system."
-                    )
-                    return {
-                        "story": fallback_story,
-                        "participants": character_names,
-                        "turns_executed": turns,
-                        "duration_seconds": time.time() - start_time,
-                    }
-            else:
-                # Fallback if story API is not available
-                characters = ", ".join(character_names)
-                fallback_story = (
-                    "Legacy simulation story featuring "
-                    f"{characters}. The characters interacted for {turns} turns "
-                    "in an engaging narrative."
-                )
-                return {
-                    "story": fallback_story,
-                    "participants": character_names,
-                    "turns_executed": turns,
-                    "duration_seconds": 2.0,
-                }
+            # Legacy simulation fallback response (story API removed in M2 purge)
+            characters = ", ".join(character_names)
+            fallback_story = (
+                "Legacy simulation story featuring "
+                f"{characters}. The characters interacted for {turns} turns "
+                "in an engaging narrative."
+            )
+            return {
+                "story": fallback_story,
+                "participants": character_names,
+                "turns_executed": turns,
+                "duration_seconds": 2.0,
+            }
 
         except HTTPException:
             raise
