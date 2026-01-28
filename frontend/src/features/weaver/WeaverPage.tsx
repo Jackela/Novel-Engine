@@ -65,7 +65,7 @@ export default function WeaverPage() {
 
   return (
     <WeaverLayout>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex h-screen flex-col">
         <WeaverToolbar
           onAddCharacter={handleAddCharacter}
           onAddEvent={handleAddEvent}
@@ -73,8 +73,10 @@ export default function WeaverPage() {
           onGenerateCharacter={() => setGenerationOpen(true)}
           onSave={handleSave}
         />
-        <div className="flex-1">
-          <WeaverCanvas />
+        <div className="flex-1 relative">
+          <div className="absolute inset-0">
+            <WeaverCanvas />
+          </div>
         </div>
       </div>
       <CharacterGenerationDialog
