@@ -1,14 +1,16 @@
 /**
  * WeaverPage - Main story weaver page
  */
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { WeaverLayout } from '@/layouts/WeaverLayout';
 import { WeaverCanvas } from './WeaverCanvas';
+import { CharacterGenerationDialog } from './components/CharacterGenerationDialog';
 import { WeaverToolbar } from './components/WeaverToolbar';
 import { useWeaverAddNode, useWeaverStore, type WeaverNode } from './store/weaverStore';
 
 export default function WeaverPage() {
   const addNode = useWeaverAddNode();
+  const [generationOpen, setGenerationOpen] = useState(false);
 
   const handleAddCharacter = useCallback(() => {
     const newNode: WeaverNode = {
@@ -68,12 +70,17 @@ export default function WeaverPage() {
           onAddCharacter={handleAddCharacter}
           onAddEvent={handleAddEvent}
           onAddLocation={handleAddLocation}
+          onGenerateCharacter={() => setGenerationOpen(true)}
           onSave={handleSave}
         />
         <div className="flex-1">
           <WeaverCanvas />
         </div>
       </div>
+      <CharacterGenerationDialog
+        open={generationOpen}
+        onOpenChange={setGenerationOpen}
+      />
     </WeaverLayout>
   );
 }

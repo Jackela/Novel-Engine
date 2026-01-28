@@ -27,6 +27,12 @@ import pytest
 class TestStoryCreationFlow:
     """E2E tests for complete story creation workflow."""
 
+    @pytest.fixture(autouse=True)
+    def _require_story_generation_api(self, client):
+        response = client.get("/api/stories/generate")
+        if response.status_code == 404:
+            pytest.skip("Story generation API removed in M2 purge.")
+
     def test_complete_story_creation_flow(
         self, client, data_factory, api_helper, performance_tracker
     ):

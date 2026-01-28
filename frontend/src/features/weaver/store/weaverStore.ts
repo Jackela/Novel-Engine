@@ -31,6 +31,7 @@ type WeaverState = {
   onEdgesChange: OnEdgesChange;
   onConnect: (connection: Connection) => void;
   addNode: (node: WeaverNode) => void;
+  updateNode: (nodeId: string, updater: (node: WeaverNode) => WeaverNode) => void;
   getOrchestrationStartRequest: () => OrchestrationStartRequest;
 };
 
@@ -134,6 +135,10 @@ export const useWeaverStore = create<WeaverState>((set, get) => ({
       ),
     })),
   addNode: (node) => set((state) => ({ nodes: [...state.nodes, node] })),
+  updateNode: (nodeId, updater) =>
+    set((state) => ({
+      nodes: state.nodes.map((node) => (node.id === nodeId ? updater(node) : node)),
+    })),
   getOrchestrationStartRequest: () =>
     buildOrchestrationStartRequest(get().nodes, get().startParams),
 }));
@@ -146,6 +151,7 @@ export const useWeaverOnEdgesChange = () =>
   useWeaverStore((state) => state.onEdgesChange);
 export const useWeaverOnConnect = () => useWeaverStore((state) => state.onConnect);
 export const useWeaverAddNode = () => useWeaverStore((state) => state.addNode);
+export const useWeaverUpdateNode = () => useWeaverStore((state) => state.updateNode);
 export const useWeaverStartParams = () => useWeaverStore((state) => state.startParams);
 export const useWeaverOrchestrationRequest = () =>
   useWeaverStore((state) => state.getOrchestrationStartRequest());

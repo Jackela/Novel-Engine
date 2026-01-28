@@ -141,12 +141,32 @@ export const OrchestrationStartResponseSchema = z.object({
   message: z.string().optional(),
 });
 
+export const CharacterGenerationRequestSchema = z.object({
+  concept: z.string(),
+  archetype: z.string(),
+  tone: z.string().optional(),
+});
+
+export const CharacterGenerationResponseSchema = z.object({
+  name: z.string(),
+  tagline: z.string(),
+  bio: z.string(),
+  visual_prompt: z.string(),
+  traits: z.array(z.string()),
+});
+
 export type CharacterSummary = z.infer<typeof CharacterSummarySchema>;
 export type CharacterDetail = z.infer<typeof CharacterDetailSchema>;
 export type CreateCharacterInput = z.infer<typeof WorkspaceCharacterCreateSchema>;
 export type UpdateCharacterInput = z.infer<typeof WorkspaceCharacterUpdateSchema>;
 export type OrchestrationStartRequest = z.infer<typeof OrchestrationStartRequestSchema>;
 export type OrchestrationStatus = z.infer<typeof OrchestrationStatusSchema>;
+export type CharacterGenerationRequest = z.infer<
+  typeof CharacterGenerationRequestSchema
+>;
+export type CharacterGenerationResponse = z.infer<
+  typeof CharacterGenerationResponseSchema
+>;
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;

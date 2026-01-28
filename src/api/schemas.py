@@ -207,6 +207,24 @@ class CharacterDetailResponse(BaseModel):
     structured_data: Dict[str, JsonValue] = Field(default_factory=dict)
 
 
+class CharacterGenerationRequest(BaseModel):
+    """Request model for character generation."""
+
+    concept: str
+    archetype: str
+    tone: Optional[str] = None
+
+
+class CharacterGenerationResponse(BaseModel):
+    """Response model for character generation."""
+
+    name: str
+    tagline: str
+    bio: str
+    visual_prompt: str
+    traits: List[str]
+
+
 class FileCount(BaseModel):
     """Response model for file count information."""
 
@@ -394,6 +412,8 @@ __all__ = [
     "SimulationRequest",
     "SimulationResponse",
     "CharacterDetailResponse",
+    "CharacterGenerationRequest",
+    "CharacterGenerationResponse",
     "FileCount",
     "CampaignsListResponse",
     "CampaignCreationRequest",
@@ -467,21 +487,6 @@ try:
         UserPromptsListResponse,
         UserPromptUpdate,
     )
-    from .secure_main_api import (
-        ApiKeyResponse,
-        CharacterCreateRequest,
-        CharacterRecord,
-        SecureSimulationRequest,
-        SecureSimulationResponse,
-        SystemHealthResponse,
-        UserLoginRequest,
-        UserRegistrationRequest,
-    )
-    from .story_generation_api import (
-        ProgressUpdate,
-        StoryGenerationRequest,
-        StoryGenerationResponse,
-    )
     from .subjective_reality_api import (
         BeliefModelData,
         BeliefModelRequest,
@@ -499,9 +504,6 @@ try:
         "CharacterUpdateRequest",
         "CharacterResponse",
         "CharacterListResponse",
-        "StoryGenerationRequest",
-        "StoryGenerationResponse",
-        "ProgressUpdate",
         "InteractionRequest",
         "InteractionResponse",
         "EmergentNarrativeRequest",
@@ -550,14 +552,6 @@ try:
         "UserPromptUpdate",
         "UserPromptResponse",
         "UserPromptsListResponse",
-        "UserLoginRequest",
-        "UserRegistrationRequest",
-        "ApiKeyResponse",
-        "SystemHealthResponse",
-        "SecureSimulationRequest",
-        "SecureSimulationResponse",
-        "CharacterCreateRequest",
-        "CharacterRecord",
     ]
 except ImportError:
     pass

@@ -18,7 +18,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 import psutil
 
-from .response_models import HealthCheckData
+from .response_envelopes import HealthCheckData
 
 logger = logging.getLogger(__name__)
 

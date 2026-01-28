@@ -14,6 +14,7 @@ interface WeaverToolbarProps {
   onAddCharacter?: (() => void) | undefined;
   onAddEvent?: (() => void) | undefined;
   onAddLocation?: (() => void) | undefined;
+  onGenerateCharacter?: (() => void) | undefined;
   onSave?: (() => void) | undefined;
   onUndo?: (() => void) | undefined;
   onRedo?: (() => void) | undefined;
@@ -25,6 +26,7 @@ export function WeaverToolbar({
   onAddCharacter,
   onAddEvent,
   onAddLocation,
+  onGenerateCharacter,
   onSave,
   onUndo,
   onRedo,
@@ -43,6 +45,12 @@ export function WeaverToolbar({
           onAddCharacter={onAddCharacter}
           onAddEvent={onAddEvent}
           onAddLocation={onAddLocation}
+        />
+        <TooltipButton
+          label="Generate"
+          tooltip="Generate a character node"
+          onClick={onGenerateCharacter}
+          icon={<Sparkles className="mr-2 h-4 w-4" />}
         />
         <Divider />
         <WeaverHistoryControls

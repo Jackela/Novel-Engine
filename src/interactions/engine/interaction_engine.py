@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
 Interaction Engine - Core orchestration.
+
+Deprecated:
+This legacy interaction engine remains for backward compatibility. The M2
+pipeline will migrate interaction logic into contract-first services.
 """
 
 import asyncio

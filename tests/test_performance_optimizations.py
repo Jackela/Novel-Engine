@@ -8,103 +8,11 @@ and overall system performance improvements.
 
 import asyncio
 import time
-from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 # Import our optimized components
-from src.api.story_generation_api import ConnectionPool, StoryGenerationAPI
 from src.core.performance_cache import CacheLevel, PerformanceCache
-from src.core.system_orchestrator import SystemOrchestrator
-
-
-class TestWebSocketOptimizations:
-    """Test WebSocket connection pooling and performance improvements."""
-
-    @pytest.mark.unit
-    def test_connection_pool_creation(self):
-        """Test connection pool initialization."""
-        pool = ConnectionPool()
-        assert len(pool.connections) == 0
-        assert len(pool.last_activity) == 0
-        assert pool.cleanup_interval == 300
-
-    @pytest.mark.unit
-    def test_connection_pool_add_remove(self):
-        """Test adding and removing connections."""
-        pool = ConnectionPool()
-        mock_ws = Mock()
-
-        # Add connection
-        pool.add_connection("test_gen_1", mock_ws)
-        assert "test_gen_1" in pool.connections
-        assert mock_ws in pool.connections["test_gen_1"]
-        assert "test_gen_1" in pool.last_activity
-
-        # Remove connection
-        pool.remove_connection("test_gen_1", mock_ws)
-        assert "test_gen_1" not in pool.connections
-        assert "test_gen_1" not in pool.last_activity
-
-    @pytest.mark.asyncio
-    async def test_connection_pool_cleanup(self):
-        """Test automatic cleanup of stale connections."""
-        pool = ConnectionPool()
-        pool.cleanup_interval = 0.1  # 100ms for testing
-
-        mock_ws = Mock()
-        pool.add_connection("test_gen_1", mock_ws)
-
-        # Wait for cleanup interval
-        await asyncio.sleep(0.2)
-        await pool.cleanup_stale_connections()
-
-        # Connection should be cleaned up
-        assert "test_gen_1" not in pool.connections
-
-    @pytest.mark.asyncio
-    async def test_story_generation_api_semaphore(self):
-        """Test concurrent generation limiting."""
-        mock_orchestrator = Mock(spec=SystemOrchestrator)
-        api = StoryGenerationAPI(mock_orchestrator)
-
-        # Test semaphore limits concurrent generations
-        assert api.generation_semaphore._value == 5
-
-        # Acquire all permits
-        for _ in range(5):
-            assert api.generation_semaphore.acquire(blocking=False)
-
-        # Should fail to acquire 6th permit
-        assert not api.generation_semaphore.acquire(blocking=False)
-
-    @pytest.mark.asyncio
-    async def test_optimized_progress_broadcast(self):
-        """Test batch progress broadcasting performance."""
-        mock_orchestrator = Mock(spec=SystemOrchestrator)
-        api = StoryGenerationAPI(mock_orchestrator)
-
-        # Set up test generation
-        generation_id = "test_gen_broadcast"
-        api.active_generations[generation_id] = {
-            "status": "generating",
-            "progress": 50,
-            "stage": "testing",
-            "stage_detail": "Testing broadcast",
-        }
-
-        # Add multiple mock WebSocket connections
-        mock_connections = [Mock() for _ in range(10)]
-        for ws in mock_connections:
-            ws.send_text = AsyncMock()
-            api.connection_pool.add_connection(generation_id, ws)
-
-        # Update progress (should broadcast to all)
-        await api._update_progress(generation_id, 75, "testing", "Broadcast test")
-
-        # Verify all connections received update
-        for ws in mock_connections:
-            ws.send_text.assert_called_once()
 
 
 class TestPerformanceCache:
@@ -217,48 +125,6 @@ class TestIntegratedPerformance:
     """Test overall system performance with optimizations."""
 
     @pytest.mark.asyncio
-    async def test_concurrent_story_generations(self):
-        """Test system handles multiple concurrent generations efficiently."""
-        mock_orchestrator = Mock(spec=SystemOrchestrator)
-        mock_orchestrator.create_agent_context = AsyncMock(
-            return_value=Mock(success=True)
-        )
-
-        api = StoryGenerationAPI(mock_orchestrator)
-        await api.start_background_tasks()
-
-        try:
-            # Start multiple generations concurrently
-            generation_tasks = []
-            for i in range(3):  # Within semaphore limit
-                generation_id = f"concurrent_test_{i}"
-                api.active_generations[generation_id] = {
-                    "status": "initiated",
-                    "request": Mock(characters=["char1", "char2"]),
-                    "progress": 0,
-                    "stage": "initializing",
-                }
-                task = asyncio.create_task(api._generate_story_async(generation_id))
-                generation_tasks.append(task)
-
-            # Wait for all to complete
-            start_time = time.time()
-            await asyncio.gather(*generation_tasks)
-            duration = time.time() - start_time
-
-            # Should complete reasonably quickly with optimizations
-            # Note: LLM API calls have variable latency, allow up to 45s for CI environments
-            assert duration < 45  # Should be much faster than original 15+ seconds
-
-            # All generations should be completed
-            for i in range(3):
-                generation_id = f"concurrent_test_{i}"
-                assert api.active_generations[generation_id]["status"] == "completed"
-
-        finally:
-            await api.stop_background_tasks()
-
-    @pytest.mark.asyncio
     async def test_memory_usage_efficiency(self):
         """Test memory usage remains reasonable under load."""
         cache = PerformanceCache(memory_limit_mb=10)  # 10MB limit
@@ -277,47 +143,6 @@ class TestIntegratedPerformance:
         recent_char = await cache.get_character("char_999")
         assert recent_char is not None
 
-    @pytest.mark.asyncio
-    async def test_websocket_connection_resilience(self):
-        """Test WebSocket connection handling under stress."""
-        mock_orchestrator = Mock(spec=SystemOrchestrator)
-        api = StoryGenerationAPI(mock_orchestrator)
-
-        generation_id = "resilience_test"
-        api.active_generations[generation_id] = {
-            "status": "generating",
-            "progress": 50,
-            "stage": "testing",
-        }
-
-        # Simulate many connections
-        connections = []
-        for i in range(50):
-            mock_ws = Mock()
-            mock_ws.send_text = AsyncMock()
-            api.connection_pool.add_connection(generation_id, mock_ws)
-            connections.append(mock_ws)
-
-        # Simulate some connection failures
-        for i in range(0, 50, 5):  # Every 5th connection fails
-            connections[i].send_text.side_effect = Exception("Connection failed")
-
-        # Update progress should handle failures gracefully
-        await api._update_progress(generation_id, 75, "testing", "Resilience test")
-
-        # Failed connections should be removed from pool
-        remaining_connections = api.connection_pool.connections.get(
-            generation_id, set()
-        )
-        # Note: Mock connections won't actually be removed in test, so we just verify the logic executed
-        assert (
-            len(remaining_connections) >= 40
-        )  # At least 40 connections should remain or process
-
-        # Working connections should have received update
-        working_connections = [ws for i, ws in enumerate(connections) if i % 5 != 0]
-        for ws in working_connections:
-            ws.send_text.assert_called_once()
 
 
 class TestFrontendOptimizations:
@@ -356,19 +181,6 @@ if __name__ == "__main__":
         print(f"   - 1000 operations completed in {cache_duration:.2f}s")
         print(f"   - Memory usage: {stats['memory_cache']['memory_usage_mb']:.1f}MB")
         print(f"   - Hit rate: {stats['memory_cache']['hit_rate']:.1%}")
-
-        # Test WebSocket connection pool
-        pool = ConnectionPool()
-        start_time = time.time()
-
-        for i in range(100):
-            mock_ws = Mock()
-            pool.add_connection(f"gen_{i}", mock_ws)
-            pool.remove_connection(f"gen_{i}", mock_ws)
-
-        pool_duration = time.time() - start_time
-        print("✅ Connection Pool Performance:")
-        print(f"   - 100 add/remove cycles in {pool_duration:.3f}s")
 
         print("🎉 Performance benchmark complete!")
 

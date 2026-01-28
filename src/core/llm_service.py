@@ -20,6 +20,10 @@ Features:
 - Fallback mechanisms and error handling
 - Performance monitoring and metrics
 - Multiple response format support
+
+Deprecated:
+This module powers legacy LLM flows and will be replaced by M2 contract-first
+character generation services. Keep until migration completes.
 """
 
 import asyncio
