@@ -73,9 +73,9 @@ describe('useCharacterGeneration', () => {
       // THEN: Store should have a loading node
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      expect(nodes[0].data.status).toBe('loading');
-      expect(nodes[0].data.name).toBe('Generating...');
-      expect(nodes[0].type).toBe('character');
+      expect(nodes[0]!.data.status).toBe('loading');
+      expect(nodes[0]!.data.name).toBe('Generating...');
+      expect(nodes[0]!.type).toBe('character');
     });
 
     it('uses default role when archetype is not provided', async () => {
@@ -99,7 +99,7 @@ describe('useCharacterGeneration', () => {
       // THEN: Store should have a node with default role
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      expect(nodes[0].data.role).toBe('New Character');
+      expect(nodes[0]!.data.role).toBe('New Character');
     });
 
     it('creates node with correct position based on existing nodes', async () => {
@@ -135,7 +135,7 @@ describe('useCharacterGeneration', () => {
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(2);
       // New node should have index-based positioning
-      const newNode = nodes[1];
+      const newNode = nodes[1]!;
       expect(newNode.position.x).toBeGreaterThan(0);
       expect(newNode.position.y).toBeGreaterThan(0);
     });
@@ -174,7 +174,7 @@ describe('useCharacterGeneration', () => {
       // THEN: Node should be updated to idle with character data
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      const node = nodes[0];
+      const node = nodes[0]!;
       expect(node.data.status).toBe('idle');
       expect(node.data.name).toBe('Zenith Arc');
       expect(node.data.tagline).toBe('A spark that bends the grid.');
@@ -210,7 +210,7 @@ describe('useCharacterGeneration', () => {
 
       // THEN: Role should match the archetype from the request
       const nodes = useWeaverStore.getState().nodes;
-      expect(nodes[0].data.role).toBe('Guardian');
+      expect(nodes[0]!.data.role).toBe('Guardian');
     });
   });
 
@@ -242,7 +242,7 @@ describe('useCharacterGeneration', () => {
       // THEN: Node should have error status and error message
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      const node = nodes[0];
+      const node = nodes[0]!;
       expect(node.data.status).toBe('error');
       expect(node.data.errorMessage).toBe('LLM service unavailable');
 
@@ -274,7 +274,7 @@ describe('useCharacterGeneration', () => {
 
       // THEN: Fallback message should be used
       const nodes = useWeaverStore.getState().nodes;
-      expect(nodes[0].data.errorMessage).toBe('Generation failed');
+      expect(nodes[0]!.data.errorMessage).toBe('Generation failed');
 
       consoleSpy.mockRestore();
     });
@@ -340,7 +340,7 @@ describe('useCharacterGeneration', () => {
       // THEN: Node should have a unique ID starting with 'char'
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      expect(nodes[0].id).toMatch(/^char[_-]/);
+      expect(nodes[0]!.id).toMatch(/^char[_-]/);
     });
   });
 
