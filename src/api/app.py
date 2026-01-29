@@ -80,6 +80,7 @@ def create_app(
     from src.api.routers.events import router as events_router
     from src.api.routers.generation import router as generation_router
     from src.api.routers.guest import router as guest_router
+    from src.api.routers.scene import router as scene_router
     from src.api.routers.health import router as health_router
     from src.api.routers.meta import router as meta_router
     from src.api.routers.orchestration import router as orchestration_router
@@ -95,6 +96,7 @@ def create_app(
     app.include_router(guest_router)
     app.include_router(events_router)
     app.include_router(generation_router)
+    app.include_router(scene_router)
     app.include_router(auth_router)
 
     app.include_router(health_router, prefix="/api")
@@ -107,6 +109,7 @@ def create_app(
     app.include_router(guest_router, prefix="/api")
     app.include_router(events_router, prefix="/api")
     app.include_router(generation_router, prefix="/api")
+    app.include_router(scene_router, prefix="/api")
     app.include_router(auth_router, prefix="/api")
 
     try:

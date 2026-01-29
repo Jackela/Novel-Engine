@@ -16,8 +16,9 @@ import type { OrchestrationStartRequest } from '@/shared/types/orchestration';
 import type { CharacterNodeData } from '../components/nodes/CharacterNode';
 import type { EventNodeData } from '../components/nodes/EventNode';
 import type { LocationNodeData } from '../components/nodes/LocationNode';
+import type { SceneNodeData } from '../types';
 
-export type WeaverNodeData = CharacterNodeData | EventNodeData | LocationNodeData;
+export type WeaverNodeData = CharacterNodeData | EventNodeData | LocationNodeData | SceneNodeData;
 export type WeaverNode = Node<WeaverNodeData>;
 
 type WeaverState = {
@@ -157,6 +158,14 @@ export const useWeaverOrchestrationRequest = () =>
   useWeaverStore((state) => state.getOrchestrationStartRequest());
 export const useWeaverNodeCount = () => useWeaverStore((state) => state.nodes.length);
 export const useWeaverEdgeCount = () => useWeaverStore((state) => state.edges.length);
+
+/**
+ * Returns the first selected character node, or null if none selected
+ */
+export const useSelectedCharacterNode = () =>
+  useWeaverStore((state) =>
+    state.nodes.find((node) => node.selected && node.type === 'character') ?? null
+  );
 
 if (
   (import.meta.env.DEV || import.meta.env.VITE_E2E_EXPOSE_WEAVER === 'true') &&

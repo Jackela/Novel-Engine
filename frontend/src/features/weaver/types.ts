@@ -9,3 +9,16 @@ export type WeaverNodeData = {
 
 export type WeaverNode = Node<WeaverNodeData>;
 export type WeaverEdge = Edge;
+
+/**
+ * Scene node data interface
+ */
+export interface SceneNodeData extends Record<string, unknown> {
+  title: string;
+  sceneType: string;
+  content: string;
+  summary: string;
+  visualPrompt: string;
+  status?: WeaverNodeStatus;
+  errorMessage?: string;
+}

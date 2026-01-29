@@ -225,6 +225,23 @@ class CharacterGenerationResponse(BaseModel):
     traits: List[str]
 
 
+class SceneGenerationRequest(BaseModel):
+    """Request model for scene generation."""
+
+    character_context: CharacterGenerationResponse
+    scene_type: str  # 'opening', 'action', 'dialogue', 'climax', 'resolution'
+    tone: Optional[str] = None
+
+
+class SceneGenerationResponse(BaseModel):
+    """Response model for scene generation."""
+
+    title: str
+    content: str  # Markdown story text
+    summary: str  # Short text for node display
+    visual_prompt: str
+
+
 class FileCount(BaseModel):
     """Response model for file count information."""
 
@@ -414,6 +431,8 @@ __all__ = [
     "CharacterDetailResponse",
     "CharacterGenerationRequest",
     "CharacterGenerationResponse",
+    "SceneGenerationRequest",
+    "SceneGenerationResponse",
     "FileCount",
     "CampaignsListResponse",
     "CampaignCreationRequest",
