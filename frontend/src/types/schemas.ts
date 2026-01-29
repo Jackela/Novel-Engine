@@ -155,6 +155,19 @@ export const CharacterGenerationResponseSchema = z.object({
   traits: z.array(z.string()),
 });
 
+export const SceneGenerationRequestSchema = z.object({
+  character_context: CharacterGenerationResponseSchema,
+  scene_type: z.string(),
+  tone: z.string().optional(),
+});
+
+export const SceneGenerationResponseSchema = z.object({
+  title: z.string(),
+  content: z.string(),
+  summary: z.string(),
+  visual_prompt: z.string(),
+});
+
 export type CharacterSummary = z.infer<typeof CharacterSummarySchema>;
 export type CharacterDetail = z.infer<typeof CharacterDetailSchema>;
 export type CreateCharacterInput = z.infer<typeof WorkspaceCharacterCreateSchema>;
@@ -173,3 +186,5 @@ export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 export type AuthToken = z.infer<typeof AuthTokenSchema>;
 export type GuestSessionResponse = z.infer<typeof GuestSessionResponseSchema>;
 export type Campaign = z.infer<typeof CampaignSchema>;
+export type SceneGenerationRequest = z.infer<typeof SceneGenerationRequestSchema>;
+export type SceneGenerationResponse = z.infer<typeof SceneGenerationResponseSchema>;

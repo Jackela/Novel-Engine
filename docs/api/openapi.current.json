@@ -2,17 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Novel Engine API",
-    "description": "\n# Novel Engine API\n\nThe Novel Engine API provides comprehensive endpoints for character management,\nstory generation, and interactive narrative experiences. This RESTful API enables\ndevelopers to integrate advanced AI-driven storytelling capabilities into their applications.\n\n## Key Features\n\n- **Character Management**: Create, customize, and manage AI characters with detailed personalities\n- **Story Generation**: Generate dynamic stories through character interactions\n- **Real-time Interactions**: WebSocket-based real-time character interactions\n- **Health Monitoring**: Comprehensive system health and performance monitoring\n- **Versioning**: Full API versioning with backward compatibility\n- **Error Handling**: Standardized error responses with detailed information\n\n## Authentication\n\nCurrently, the API operates in open mode for development. Production deployments\nwill require API key authentication.\n\n## Rate Limiting\n\nThe API implements rate limiting to ensure fair usage:\n- **Development**: 1000 requests per hour per IP\n- **Production**: Custom limits based on subscription tier\n\n## Response Format\n\nAll API responses follow a standardized format:\n\n```json\n{\n  \"status\": \"success|error|partial|pending\",\n  \"data\": { /* response payload */ },\n  \"error\": { /* error information if status is error */ },\n  \"metadata\": {\n    \"timestamp\": \"2024-01-01T12:00:00Z\",\n    \"request_id\": \"uuid\",\n    \"api_version\": \"1.1\",\n    \"server_time\": 0.123\n  }\n}\n```\n\n## Error Handling\n\nErrors are returned with appropriate HTTP status codes and detailed information:\n\n- **400 Bad Request**: Invalid request parameters\n- **401 Unauthorized**: Authentication required\n- **403 Forbidden**: Insufficient permissions\n- **404 Not Found**: Resource not found\n- **422 Unprocessable Entity**: Validation errors\n- **429 Too Many Requests**: Rate limit exceeded\n- **500 Internal Server Error**: Server-side errors\n- **503 Service Unavailable**: System temporarily unavailable\n\n## WebSocket Connections\n\nReal-time features use WebSocket connections:\n\n- **Story Generation Progress**: `/api/stories/progress/{generation_id}`\n- **Character Interactions**: `/api/interactions/ws/{interaction_id}`\n\n## SDK and Libraries\n\nOfficial SDKs are available for:\n- Python: `pip install novel-engine-python`\n- JavaScript/TypeScript: `npm install novel-engine-js`\n- Java: Maven/Gradle support available\n\n## Support\n\n- **Documentation**: https://docs.novel-engine.app\n- **Support**: support@novel-engine.app\n- **GitHub**: https://github.com/novel-engine/api\n        ",
-    "version": "1.1.0",
-    "contact": {
-      "name": "Novel Engine API Support",
-      "url": "https://novel-engine.app/support",
-      "email": "support@novel-engine.app"
-    },
-    "license": {
-      "name": "MIT",
-      "url": "https://opensource.org/licenses/MIT"
-    }
+    "description": "Enhanced Dynamic Context Engineering Framework with comprehensive integration systems",
+    "version": "1.1.0"
   },
   "paths": {
     "/api/versions": {
@@ -252,83 +243,6 @@
         "responses": {
           "204": {
             "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stories/generate": {
-      "post": {
-        "summary": "Generate Story",
-        "description": "Generates a story from character interactions.",
-        "operationId": "generate_story_api_stories_generate_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StoryGenerationRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StoryGenerationResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stories/status/{generation_id}": {
-      "get": {
-        "summary": "Get Generation Status",
-        "description": "Get current status of a story generation (REST fallback).",
-        "operationId": "get_generation_status_api_stories_status__generation_id__get",
-        "parameters": [
-          {
-            "name": "generation_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Generation Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
           },
           "422": {
             "description": "Validation Error",
@@ -2049,7 +1963,7 @@
           "generation"
         ],
         "summary": "Generate Character",
-        "description": "Stub endpoint for character generation (Contract-First).",
+        "description": "Generate a character card using deterministic fallback logic.",
         "operationId": "generate_character_generation_character_post",
         "requestBody": {
           "content": {
@@ -2149,6 +2063,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generation/scene": {
+      "post": {
+        "tags": [
+          "generation"
+        ],
+        "summary": "Generate Scene",
+        "description": "Generate a scene based on character context.\n\nArgs:\n    request: Scene generation parameters including character context,\n             scene type, and optional tone.\n\nReturns:\n    Generated scene with title, content, summary, and visual prompt.\n\nRaises:\n    HTTPException: 501 Not Implemented (stub endpoint).\n\nNOTE: Stub implementation - returns 501 until LLM integration is complete.",
+        "operationId": "generate_scene_generation_scene_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneGenerationResponse"
                 }
               }
             }
@@ -3040,7 +2996,7 @@
           "generation"
         ],
         "summary": "Generate Character",
-        "description": "Stub endpoint for character generation (Contract-First).",
+        "description": "Generate a character card using deterministic fallback logic.",
         "operationId": "generate_character_api_generation_character_post",
         "requestBody": {
           "content": {
@@ -3140,6 +3096,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/generation/scene": {
+      "post": {
+        "tags": [
+          "generation"
+        ],
+        "summary": "Generate Scene",
+        "description": "Generate a scene based on character context.\n\nArgs:\n    request: Scene generation parameters including character context,\n             scene type, and optional tone.\n\nReturns:\n    Generated scene with title, content, summary, and visual prompt.\n\nRaises:\n    HTTPException: 501 Not Implemented (stub endpoint).\n\nNOTE: Stub implementation - returns 501 until LLM integration is complete.",
+        "operationId": "generate_scene_api_generation_scene_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneGenerationResponse"
                 }
               }
             }
@@ -6423,6 +6421,64 @@
         "title": "SSEStatsResponse",
         "description": "SSE connection statistics."
       },
+      "SceneGenerationRequest": {
+        "properties": {
+          "character_context": {
+            "$ref": "#/components/schemas/CharacterGenerationResponse"
+          },
+          "scene_type": {
+            "type": "string",
+            "title": "Scene Type"
+          },
+          "tone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "character_context",
+          "scene_type"
+        ],
+        "title": "SceneGenerationRequest",
+        "description": "Request model for scene generation."
+      },
+      "SceneGenerationResponse": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "visual_prompt": {
+            "type": "string",
+            "title": "Visual Prompt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "content",
+          "summary",
+          "visual_prompt"
+        ],
+        "title": "SceneGenerationResponse",
+        "description": "Response model for scene generation."
+      },
       "SimulationRequest": {
         "properties": {
           "character_names": {
@@ -6939,54 +6995,6 @@
         ],
         "title": "StandardResponse"
       },
-      "StoryGenerationRequest": {
-        "properties": {
-          "characters": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Characters"
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 200,
-            "title": "Title",
-            "default": "A Generated Story"
-          }
-        },
-        "type": "object",
-        "required": [
-          "characters"
-        ],
-        "title": "StoryGenerationRequest",
-        "description": "Request model for story generation."
-      },
-      "StoryGenerationResponse": {
-        "properties": {
-          "generation_id": {
-            "type": "string",
-            "title": "Generation Id"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message"
-          }
-        },
-        "type": "object",
-        "required": [
-          "generation_id",
-          "status",
-          "message"
-        ],
-        "title": "StoryGenerationResponse",
-        "description": "Response model for story generation requests."
-      },
       "SystemStatusResponse": {
         "properties": {
           "status": {
@@ -7471,130 +7479,10 @@
       }
     },
     "securitySchemes": {
-      "APIKeyHeader": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-API-Key",
-        "description": "API key for authenticated requests"
-      },
-      "BearerAuth": {
+      "HTTPBearer": {
         "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "JWT token for authenticated requests"
-      }
-    },
-    "examples": {
-      "CharacterSuccessResponse": {
-        "summary": "Successful character creation",
-        "value": {
-          "status": "success",
-          "data": {
-            "agent_id": "aragorn_ranger",
-            "name": "Aragorn",
-            "status": "active",
-            "created_at": "2024-01-01T12:00:00Z",
-            "background_summary": "A skilled ranger and heir to the throne of Gondor",
-            "skills": {
-              "combat": 0.9,
-              "leadership": 0.8,
-              "tracking": 0.95
-            }
-          },
-          "metadata": {
-            "timestamp": "2024-01-01T12:00:00Z",
-            "request_id": "req_123456",
-            "api_version": "1.1",
-            "server_time": 0.045
-          }
-        }
-      },
-      "ValidationErrorResponse": {
-        "summary": "Validation error example",
-        "value": {
-          "status": "error",
-          "data": null,
-          "error": {
-            "type": "validation_error",
-            "message": "Character name is required",
-            "detail": "The 'name' field cannot be empty",
-            "field": "name"
-          },
-          "metadata": {
-            "timestamp": "2024-01-01T12:00:00Z",
-            "request_id": "req_123457",
-            "api_version": "1.1",
-            "server_time": 0.012
-          }
-        }
-      },
-      "CharacterCreationRequest": {
-        "summary": "Create a new character",
-        "value": {
-          "agent_id": "aragorn_ranger",
-          "name": "Aragorn",
-          "background_summary": "A skilled ranger and heir to the throne of Gondor",
-          "personality_traits": "Brave, noble, skilled in combat and leadership",
-          "skills": {
-            "combat": 0.9,
-            "leadership": 0.8,
-            "tracking": 0.95,
-            "diplomacy": 0.7
-          },
-          "current_location": "Rivendell",
-          "metadata": {
-            "source": "tolkien",
-            "category": "hero"
-          }
-        }
-      },
-      "StoryGenerationRequest": {
-        "summary": "Generate a story with multiple characters",
-        "value": {
-          "characters": [
-            "aragorn_ranger",
-            "legolas_elf",
-            "gimli_dwarf"
-          ],
-          "title": "The Fellowship's Journey"
-        }
+        "scheme": "bearer"
       }
     }
-  },
-  "tags": [
-    {
-      "name": "System",
-      "description": "System health, version info, and API metadata endpoints"
-    },
-    {
-      "name": "Characters",
-      "description": "Character creation, management, and customization endpoints"
-    },
-    {
-      "name": "Stories",
-      "description": "Story generation, export, and narrative management endpoints"
-    },
-    {
-      "name": "Interactions",
-      "description": "Real-time character interactions and conversation management"
-    },
-    {
-      "name": "Monitoring",
-      "description": "Performance metrics, monitoring, and observability endpoints"
-    }
-  ],
-  "servers": [
-    {
-      "url": "http://localhost:8000",
-      "description": "Development server"
-    },
-    {
-      "url": "https://api.novel-engine.app",
-      "description": "Production server"
-    }
-  ],
-  "externalDocs": {
-    "description": "Full API Documentation",
-    "url": "https://docs.novel-engine.app"
   }
 }
