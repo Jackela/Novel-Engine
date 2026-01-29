@@ -5,12 +5,25 @@ import { useCallback, useState } from 'react';
 import { WeaverLayout } from '@/layouts/WeaverLayout';
 import { WeaverCanvas } from './WeaverCanvas';
 import { CharacterGenerationDialog } from './components/CharacterGenerationDialog';
+import { SceneGenerationDialog } from './components/SceneGenerationDialog';
 import { WeaverToolbar } from './components/WeaverToolbar';
-import { useWeaverAddNode, useWeaverStore, type WeaverNode } from './store/weaverStore';
+import {
+  useWeaverAddNode,
+  useWeaverStore,
+  useSelectedCharacterNode,
+  type WeaverNode,
+} from './store/weaverStore';
+import type { CharacterNodeData } from './components/nodes/CharacterNode';
 
 export default function WeaverPage() {
   const addNode = useWeaverAddNode();
   const [generationOpen, setGenerationOpen] = useState(false);
+  const [sceneGenerationOpen, setSceneGenerationOpen] = useState(false);
+  const selectedCharacterNode = useSelectedCharacterNode();
+
+  const selectedCharacterName = selectedCharacterNode
+    ? (selectedCharacterNode.data as CharacterNodeData).name
+    : undefined;
 
   const handleAddCharacter = useCallback(() => {
     const newNode: WeaverNode = {
@@ -71,7 +84,9 @@ export default function WeaverPage() {
           onAddEvent={handleAddEvent}
           onAddLocation={handleAddLocation}
           onGenerateCharacter={() => setGenerationOpen(true)}
+          onGenerateScene={() => setSceneGenerationOpen(true)}
           onSave={handleSave}
+          hasSelectedCharacter={selectedCharacterNode !== null}
         />
         <div className="flex-1 relative">
           <div className="absolute inset-0">
@@ -82,6 +97,12 @@ export default function WeaverPage() {
       <CharacterGenerationDialog
         open={generationOpen}
         onOpenChange={setGenerationOpen}
+      />
+      <SceneGenerationDialog
+        open={sceneGenerationOpen}
+        onOpenChange={setSceneGenerationOpen}
+        selectedCharacterNodeId={selectedCharacterNode?.id ?? null}
+        selectedCharacterName={selectedCharacterName}
       />
     </WeaverLayout>
   );

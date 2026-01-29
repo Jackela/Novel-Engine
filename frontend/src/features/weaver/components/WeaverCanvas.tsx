@@ -31,6 +31,7 @@ function getNodeColor(node: Node): string {
 
   if (node.type === 'location') return FLOW_COLORS.green;
   if (node.type === 'event') return FLOW_COLORS.orange;
+  if (node.type === 'scene') return FLOW_COLORS.purple;
 
   // Character node colors based on role
   switch (nodeData?.role) {
