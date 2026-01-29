@@ -5,11 +5,14 @@ Provides endpoints for generating narrative scenes based on character context.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from src.api.schemas import (
     SceneGenerationRequest,
     SceneGenerationResponse,
+)
+from src.contexts.story.application.services.scene_service import (
+    generate_scene as generate_scene_service,
 )
 
 router = APIRouter(tags=["generation"])
@@ -27,13 +30,15 @@ async def generate_scene(
 
     Returns:
         Generated scene with title, content, summary, and visual prompt.
-
-    Raises:
-        HTTPException: 501 Not Implemented (stub endpoint).
-
-    NOTE: Stub implementation - returns 501 until LLM integration is complete.
     """
-    raise HTTPException(
-        status_code=501,
-        detail="Scene generation not yet implemented",
+    result = generate_scene_service(
+        character_context=request.character_context,
+        scene_type=request.scene_type,
+        tone=request.tone,
+    )
+    return SceneGenerationResponse(
+        title=result.title,
+        content=result.content,
+        summary=result.summary,
+        visual_prompt=result.visual_prompt,
     )
