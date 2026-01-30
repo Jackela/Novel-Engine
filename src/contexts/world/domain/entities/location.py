@@ -152,8 +152,7 @@ class LocationStatus(Enum):
 
 @dataclass
 class Location(Entity):
-    """
-    Location Entity
+    """Location Entity.
 
     Represents a place within the world with its physical characteristics,
     inhabitants, and narrative significance. Contains domain logic for

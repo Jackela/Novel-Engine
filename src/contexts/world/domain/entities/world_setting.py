@@ -126,8 +126,7 @@ class ToneType(Enum):
 
 @dataclass
 class WorldSetting(Entity):
-    """
-    WorldSetting Entity
+    """WorldSetting Entity.
 
     Defines the foundational characteristics of a world, including its genre,
     themes, era, and core narrative elements. This entity contains domain logic

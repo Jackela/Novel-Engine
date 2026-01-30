@@ -161,8 +161,7 @@ class FactionRelation:
 
 @dataclass
 class Faction(Entity):
-    """
-    Faction Entity
+    """Faction Entity.
 
     Represents an organization, group, or power within the world. Contains
     domain logic for managing faction relationships, influence, and internal

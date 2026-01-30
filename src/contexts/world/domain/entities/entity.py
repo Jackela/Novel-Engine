@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Domain Entity Base Class
+"""Domain Entity Base Class.
 
 This module provides the base Entity class for the World context following
 Domain-Driven Design principles. All domain entities should inherit from this base class.
@@ -200,8 +199,7 @@ class Entity(ABC):
         return hash((self.__class__.__name__, self.id))
 
     def __str__(self) -> str:
-        """
-        String representation of the entity.
+        """Return string representation of the entity.
 
         Returns:
             String representation showing entity type and ID

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-World Domain Entities
+"""World Domain Entities.
 
 This module exports all domain entities for the World context.
 """

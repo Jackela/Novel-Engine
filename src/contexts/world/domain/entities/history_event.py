@@ -132,8 +132,7 @@ class EventOutcome(Enum):
 
 @dataclass
 class HistoryEvent(Entity):
-    """
-    HistoryEvent Entity
+    """HistoryEvent Entity.
 
     Represents a significant historical event in the world's timeline.
     Contains domain logic for managing event relationships, causality,
