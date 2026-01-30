@@ -260,3 +260,62 @@ export type WorldSetting = z.infer<typeof WorldSettingSchema>;
 export type Faction = z.infer<typeof FactionSchema>;
 export type WorldLocation = z.infer<typeof WorldLocationSchema>;
 export type HistoryEvent = z.infer<typeof HistoryEventSchema>;
+
+/**
+ * Error information matching backend's ErrorInfo dataclass
+ */
+export const ErrorInfoSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  details: z.record(z.string(), z.unknown()).nullable().optional(),
+  recoverable: z.boolean().default(true),
+  standard_guidance: z.string().nullable().optional(),
+});
+
+export type ErrorInfo = z.infer<typeof ErrorInfoSchema>;
+
+/**
+ * Standard API response envelope matching backend's StandardResponse
+ *
+ * This generic type wraps all API responses with consistent metadata
+ * for error handling and debugging.
+ *
+ * @example
+ * ```typescript
+ * // Success response
+ * const response: ApiResponse<Character> = {
+ *   success: true,
+ *   data: character,
+ *   metadata: { request_id: '123' },
+ *   timestamp: '2024-01-01T00:00:00Z'
+ * };
+ *
+ * // Error response
+ * const errorResponse: ApiResponse<never> = {
+ *   success: false,
+ *   error: { code: 'NOT_FOUND', message: 'Character not found' },
+ *   metadata: {},
+ *   timestamp: '2024-01-01T00:00:00Z'
+ * };
+ * ```
+ */
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: ErrorInfo;
+  metadata: Record<string, unknown>;
+  timestamp: string;
+}
+
+/**
+ * Create a Zod schema for ApiResponse with a given data schema
+ */
+export function createApiResponseSchema<T extends z.ZodTypeAny>(dataSchema: T) {
+  return z.object({
+    success: z.boolean(),
+    data: dataSchema.optional(),
+    error: ErrorInfoSchema.optional(),
+    metadata: z.record(z.string(), z.unknown()).default({}),
+    timestamp: z.string(),
+  });
+}

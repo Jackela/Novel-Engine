@@ -43,7 +43,7 @@
         "Standardization: Create a generic `ApiResponse<T>` interface that matches the backend's `StandardResponse` envelope."
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "No more lying to the compiler. If the type is unknown, use `unknown` and narrow it."
     },
     {
