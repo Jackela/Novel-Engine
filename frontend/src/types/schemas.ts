@@ -168,6 +168,72 @@ export const SceneGenerationResponseSchema = z.object({
   visual_prompt: z.string(),
 });
 
+// World Generation Schemas
+export const WorldGenerationRequestSchema = z.object({
+  genre: z.string().default('fantasy'),
+  era: z.string().default('medieval'),
+  tone: z.string().default('heroic'),
+  themes: z.array(z.string()).default(['adventure', 'heroism']),
+  magic_level: z.number().min(0).max(10).default(5),
+  technology_level: z.number().min(0).max(10).default(3),
+  num_factions: z.number().min(1).max(10).default(3),
+  num_locations: z.number().min(1).max(10).default(5),
+  num_events: z.number().min(1).max(10).default(3),
+});
+
+export const WorldSettingSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  genre: z.string(),
+  era: z.string(),
+  tone: z.string(),
+  themes: z.array(z.string()),
+  magic_level: z.number(),
+  technology_level: z.number(),
+});
+
+export const FactionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  faction_type: z.string(),
+  alignment: z.string(),
+  values: z.array(z.string()),
+  goals: z.array(z.string()),
+  influence: z.number(),
+  ally_count: z.number(),
+  enemy_count: z.number(),
+});
+
+export const WorldLocationSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  location_type: z.string(),
+  population: z.number(),
+  controlling_faction_id: z.string().nullable(),
+  notable_features: z.array(z.string()),
+  danger_level: z.string(),
+});
+
+export const HistoryEventSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  event_type: z.string(),
+  significance: z.number(),
+  participants: z.array(z.string()),
+});
+
+export const WorldGenerationResponseSchema = z.object({
+  world_setting: WorldSettingSchema,
+  factions: z.array(FactionSchema),
+  locations: z.array(WorldLocationSchema),
+  events: z.array(HistoryEventSchema),
+  generation_summary: z.string(),
+});
+
 export type CharacterSummary = z.infer<typeof CharacterSummarySchema>;
 export type CharacterDetail = z.infer<typeof CharacterDetailSchema>;
 export type CreateCharacterInput = z.infer<typeof WorkspaceCharacterCreateSchema>;
@@ -188,3 +254,9 @@ export type GuestSessionResponse = z.infer<typeof GuestSessionResponseSchema>;
 export type Campaign = z.infer<typeof CampaignSchema>;
 export type SceneGenerationRequest = z.infer<typeof SceneGenerationRequestSchema>;
 export type SceneGenerationResponse = z.infer<typeof SceneGenerationResponseSchema>;
+export type WorldGenerationRequest = z.infer<typeof WorldGenerationRequestSchema>;
+export type WorldGenerationResponse = z.infer<typeof WorldGenerationResponseSchema>;
+export type WorldSetting = z.infer<typeof WorldSettingSchema>;
+export type Faction = z.infer<typeof FactionSchema>;
+export type WorldLocation = z.infer<typeof WorldLocationSchema>;
+export type HistoryEvent = z.infer<typeof HistoryEventSchema>;

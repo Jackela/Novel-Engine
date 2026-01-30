@@ -29,6 +29,8 @@ export const FLOW_COLORS = {
 function getNodeColor(node: Node): string {
   const nodeData = node.data as CharacterNodeData | undefined;
 
+  if (node.type === 'world') return FLOW_COLORS.purple;
+  if (node.type === 'faction') return FLOW_COLORS.orange;
   if (node.type === 'location') return FLOW_COLORS.green;
   if (node.type === 'event') return FLOW_COLORS.orange;
   if (node.type === 'scene') return FLOW_COLORS.purple;

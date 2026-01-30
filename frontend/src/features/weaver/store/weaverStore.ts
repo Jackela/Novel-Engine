@@ -15,10 +15,18 @@ import {
 import type { OrchestrationStartRequest } from '@/shared/types/orchestration';
 import type { CharacterNodeData } from '../components/nodes/CharacterNode';
 import type { EventNodeData } from '../components/nodes/EventNode';
+import type { FactionNodeData } from '../components/nodes/FactionNode';
 import type { LocationNodeData } from '../components/nodes/LocationNode';
+import type { WorldNodeData } from '../components/nodes/WorldNode';
 import type { SceneNodeData } from '../types';
 
-export type WeaverNodeData = CharacterNodeData | EventNodeData | LocationNodeData | SceneNodeData;
+export type WeaverNodeData =
+  | CharacterNodeData
+  | EventNodeData
+  | FactionNodeData
+  | LocationNodeData
+  | WorldNodeData
+  | SceneNodeData;
 export type WeaverNode = Node<WeaverNodeData>;
 
 type WeaverState = {

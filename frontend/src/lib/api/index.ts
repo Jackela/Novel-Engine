@@ -4,3 +4,4 @@
 export { api, type ApiError } from './client';
 export { generateCharacter } from './generationApi';
 export { generateScene } from './sceneApi';
+export { generateWorld } from './worldApi';
