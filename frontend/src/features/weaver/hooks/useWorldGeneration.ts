@@ -4,6 +4,42 @@
  * This hook generates complete world settings including factions, locations, and history
  * events, then visualizes them as an interconnected graph with automatic hierarchical layout.
  *
+ * ## Generation State Machine
+ *
+ * The hook manages node status through a finite state machine with the following states
+ * and transitions:
+ *
+ * ```
+ *                    ┌─────────────────────────────────────────┐
+ *                    │                                         │
+ *   User clicks  ────┴───► [loading] ───────┬──────────────────┤
+ *   "Generate"                              │                  │
+ *                                           │                  │
+ *                            API Success    │    API Error     │
+ *                                           │                  │
+ *                                           ▼                  ▼
+ *                                        [idle]            [error]
+ *                                  (new world nodes)   (loading node updated)
+ * ```
+ *
+ * ### State Descriptions
+ *
+ * | State     | Visual Indicator        | Description                                    |
+ * |-----------|-------------------------|------------------------------------------------|
+ * | `loading` | Pulsing animation       | API call in progress, placeholder node visible |
+ * | `idle`    | Default node appearance | Generation complete, nodes interactive         |
+ * | `error`   | Red border + icon       | Generation failed, error message displayed     |
+ *
+ * ### Transition Events
+ *
+ * | Event         | From State | To State | Side Effects                              |
+ * |---------------|------------|----------|-------------------------------------------|
+ * | `mutate()`    | —          | loading  | Creates placeholder node on canvas        |
+ * | API success   | loading    | idle     | Removes placeholder, creates world graph  |
+ * | API error     | loading    | error    | Updates placeholder with error details    |
+ *
+ * ## Optimistic UI Pattern
+ *
  * Implements the Optimistic UI pattern with multi-node graph creation:
  * 1. onMutate: Creates a single loading placeholder at the top of the layout
  * 2. mutationFn: Calls the world generation API (can take several seconds for LLM)
@@ -223,15 +259,30 @@ function createWorldGraphNodes(
  * Creates a complete world with factions, locations, and events, automatically
  * laying them out in a hierarchical tree structure on the canvas.
  *
- * Implements the optimistic update pattern:
- * 1. Shows a loading placeholder immediately
- * 2. Generates world via LLM API call
- * 3. Replaces placeholder with full world graph on success
- * 4. Shows error state if generation fails
+ * ## Mutation Lifecycle
+ *
+ * Implements the optimistic update pattern with state transitions:
+ *
+ * 1. **onMutate** (→ `loading`): Shows a loading placeholder immediately
+ * 2. **mutationFn**: Generates world via LLM API call
+ * 3. **onSuccess** (→ `idle`): Replaces placeholder with full world graph
+ * 4. **onError** (→ `error`): Shows error state on the placeholder node
+ *
+ * See the module-level documentation for the complete state machine diagram.
+ *
+ * ## Return Value Properties
+ *
+ * The returned mutation object includes:
+ * - `mutate(input)` - Trigger world generation with the given parameters
+ * - `isPending` - True while the API call is in progress (node in `loading` state)
+ * - `isError` - True if the last generation failed (node in `error` state)
+ * - `isSuccess` - True if the last generation succeeded (nodes in `idle` state)
+ * - `error` - The error object if generation failed
+ * - `reset()` - Reset the mutation state to idle
  *
  * @example
  * ```tsx
- * const { mutate, isPending } = useWorldGeneration();
+ * const { mutate, isPending, isError, error } = useWorldGeneration();
  *
  * const handleGenerateWorld = () => {
  *   mutate({
@@ -243,9 +294,14 @@ function createWorldGraphNodes(
  *     num_locations: 6,
  *   });
  * };
+ *
+ * // isPending: loading placeholder visible on canvas
+ * // isError: placeholder shows error state with message
+ * // isSuccess: world graph with all nodes visible
  * ```
  *
  * @returns A TanStack Query mutation object with generate function and status
+ * @see {@link WorldMutationContext} for the context passed through lifecycle
  */
 export function useWorldGeneration() {
   const addNode = useWeaverAddNode();
