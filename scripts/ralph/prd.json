@@ -85,7 +85,7 @@
         "Scenario 3 (Bad JSON): Mock LLM returning malformed JSON. Assert `LLMWorldGenerator` triggers its self-correction retry loop."
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "The system must fail gracefully, not crash with a traceback."
     },
     {
