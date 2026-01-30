@@ -9,3 +9,20 @@
 - What I implemented: Verified that LLMWorldGenerator already has complete Google-style docstrings. The _build_user_prompt method (lines 155-189) documents input variables (WorldGenerationInput fields: genre, era, tone, themes, magic_level, technology_level, num_factions, num_locations, num_events, custom_constraints) and expected JSON output format (references system prompt for exact structure).
 - Pattern discovered: Infrastructure generators use a consistent pattern: module docstring with usage example, class docstring with Attributes section listing all private fields, method docstrings explaining "Why" (purpose) not just "What" (signature).
 - Gotcha for future: The AC mentioned "_build_prompt" but actual method is "_build_user_prompt" (user prompt) plus "_load_system_prompt" (system prompt). Both together define the complete prompt engineering logic.
+
+## DOC-003 - 2026-01-30T11:05:00Z
+- What I implemented: Added comprehensive JSDoc documentation to `useWorldGeneration.ts` including:
+  - ASCII state machine diagram showing loading → idle/error transitions
+  - State descriptions table documenting visual indicators for each state
+  - Transition events table with from/to states and side effects
+  - Enhanced function-level JSDoc with mutation lifecycle documentation
+  - Documented TanStack Query return value properties (mutate, isPending, isError, etc.)
+- Pattern discovered: Frontend hooks that manage async state machines benefit from documenting states both visually (diagram) and structurally (tables). The `status` field on node data objects (`WorldNodeData.status`) acts as the actual state variable, not a separate `generationState` - the hook's mutation status (`isPending`, `isError`, `isSuccess`) maps to node status.
+- Gotcha for future: The PRD mentioned `generationState` but the actual implementation uses TanStack Query's mutation status combined with node `status` field. TypeScript script is `type-check` not `typecheck`.
+
+## TEST-001 - 2026-01-30T11:30:00Z
+- What I implemented: Added two E2E smoke tests to `frontend/tests/e2e/navigation.spec.ts`:
+  1. `should load landing page with correct title` - Visits '/', checks page title contains 'Novel Engine', verifies h1 heading is visible
+  2. `should navigate to Weaver page when clicking Weaver link` - Activates guest session, navigates to dashboard, clicks Weaver link in sidebar, verifies URL is '/weaver' and Story Weaver heading is visible
+- Pattern discovered: Frontend tests in `frontend/tests/e2e/` use shared fixtures (`./fixtures`), page objects (`./pages/`), and utility functions (`./utils/auth`, `./utils/waitForReady`). The `activateGuestSession` function sets up localStorage tokens to bypass authentication. The test file structure organizes tests by describe blocks with JSDoc comments referencing PRD acceptance criteria.
+- Gotcha for future: PRD specified path `tests/e2e/navigation.spec.ts` but actual tests run from `frontend/` directory since `@playwright/test` is only installed there. The page title ('Novel Engine') differs from the main heading ('Narrative Engine') - both need to be verified separately.

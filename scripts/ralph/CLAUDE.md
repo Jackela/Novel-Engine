@@ -1,60 +1,66 @@
-# Novel Engine - Vibe Coding Protocols
+# Ralph Agent Instructions
 
-## I. Core Philosophy
-- **Text-Driven**: Rely on structured constraints, not visual feedback.
-- **Contract-First**: Types (Pydantic/Zod) and Tests are the absolute truth.
-- **Strict Layering**: Enforce Hexagonal Architecture boundaries strictly.
+You are an autonomous coding agent for the **Novel-Engine** project. You work in a LOOP managed by a bash script.
+Each time you are invoked is ONE iteration. You must complete EXACTLY ONE story per iteration.
 
-## II. Frontend Rules (The "Eyes")
-- **Design System**: Use ONLY `shadcn/ui` components. Do NOT create custom CSS classes unless absolutely necessary.
-- **Styling**: Use Tailwind CSS utility classes exclusively.
-  - Spacing: strict scale (space-y-4, gap-6, p-8). No arbitrary pixels (e.g., `margin: 13px`).
-  - Layout: Flexbox and Grid only. Max nesting depth: 3.
-- **Layout Verification**: All UI components must pass `npm run test:e2e` (Playwright) which checks for overlaps and overflow.
-- **State**: Use Zustand for global state. No complex `useEffect` chains.
+## Project Context (Novel-Engine)
 
-## III. Backend Rules (The "Brain")
-- **Architecture**:
-  - `routers/`: Input validation -> Service call -> Response formatting. NO business logic.
-  - `services/`: Pure business logic.
-  - `repositories/`: Database interaction only.
-  - `domain/`: Pure Python entities (Pydantic).
-- **Coding Style**:
-  - Explicit is better than implicit.
-  - Return `Result<T, E>` patterns instead of throwing raw exceptions for logic errors.
-  - Every public function MUST have a Docstring explaining "Why", not just "What".
-- **Logs**: Use `structlog`. All logs must be structured JSON.
+### Frontend Rules
+- **Design System**: Use ONLY `shadcn/ui` components.
+- **Styling**: Tailwind CSS utility classes exclusively.
+- **State**: Zustand for global state management.
+- **Layout Verification**: Use Playwright via `npm run test:e2e` to verify spatial health.
 
-## IV. The Feedback Loop
-Before marking a task as complete, you MUST run:
-1. `npm run typecheck` (Frontend)
-2. `npm run lint` (Frontend & Backend)
-3. `pytest` (Backend Logic)
-4. `npm run test:e2e` (Frontend Layout & Integration)
+### Backend Rules
+- **Architecture**: Hexagonal (routers → services → repositories → domain).
+- **Coding Style**: Use `Result<T, E>` patterns for logic errors. Every public function MUST have a Google-style Docstring explaining "Why".
+- **Logs**: Use `structlog` for structured JSON logging.
 
-## V. Workflow Instructions (The Algorithm)
+### Quality Checks (Mandatory before commit)
+- `npm run typecheck` (Frontend)
+- `npm run lint` (Frontend & Backend)
+- `pytest` (Backend Logic)
+- `npm run test:e2e` (Frontend Layout & Integration)
 
-1. **Read State**: Check `prd.json` and `git status`.
-2. **Cleanup Check**: 
-   - IF all stories in `prd.json` are `passes: true` AND `git status` shows changes:
-   - **ACTION**: `git add . && git commit -m "chore: finalize all tasks"`
-   - **THEN**: Output `<promise>COMPLETE</promise>` immediately.
-3. **Work Check**:
-   - IF there is a story with `passes: false`:
-   - Pick the highest priority one.
-   - Implement it.
-   - Run tests (IV. The Feedback Loop).
-   - `git add . && git commit -m "feat: [ID] ..."`
-   - Update `prd.json` to `passes: true`.
-   - Output `<promise>COMPLETE</promise>` ONLY if this was the last story.
+## Iteration Workflow
 
-## ⚡️ CRITICAL INSTRUCTION - EXECUTE IMMEDIATELY ⚡️
+1. Read `scripts/ralph/prd.json` - find the highest priority story where `passes: false`.
+2. Read `scripts/ralph/progress.txt` - check Codebase Patterns section for prior learnings.
+3. Verify you're on the branch specified in PRD's `branchName`.
+4. Implement **ONLY** that single story.
+5. Run quality checks (All mandatory checks above must pass).
+6. If checks pass:
+   - `git add -A && git commit -m "feat: [STORY-ID] - [title]"`
+   - Update `prd.json`: set this story's `passes` to `true`.
+   - Append to `progress.txt` what you implemented and learned.
+7. **STOP. END YOUR RESPONSE. DO NOT CONTINUE.**
 
-**DO NOT** ask for permission.
-**DO NOT** ask "What should I do?".
-**ACT** like a senior engineer who knows what needs to be done.
+## CRITICAL: One Story Per Iteration
 
-If tasks are done but code is uncommitted -> **COMMIT IT**.
-If everything is clean and done -> **OUTPUT <promise>COMPLETE</promise>**.
+You are NOT allowed to:
+- Start working on the next story.
+- Say "I will now proceed to...".
+- Do multiple stories in one response.
+- Combine commits for multiple stories.
 
---> **GO!** <--
+After committing ONE story: STOP TYPING. The bash script will restart you for the next story.
+
+## Exit Signal
+
+ONLY output `<promise>COMPLETE</promise>` when:
+- You checked `prd.json`.
+- AND every single story has `passes: true`.
+- AND there is nothing left to do.
+
+If ANY story has `passes: false`, DO NOT output COMPLETE. Just end your response.
+
+## Progress File Format
+
+Append to `scripts/ralph/progress.txt`:
+
+```
+## [STORY-ID] - [timestamp]
+- What I implemented: ...
+- Pattern discovered: ...
+- Gotcha for future: ...
+```

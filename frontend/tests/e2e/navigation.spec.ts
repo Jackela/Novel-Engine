@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
 import { waitForDashboardReady, waitForLandingReady } from './utils/waitForReady';
+import { activateGuestSession } from './utils/auth';
 
 /**
  * Navigation & Wildcard Route E2E Test Suite
@@ -9,10 +10,62 @@ import { waitForDashboardReady, waitForLandingReady } from './utils/waitForReady
  * Spec: e2e-route-coverage/spec.md - Wildcard Route E2E Coverage
  *
  * Tests verify:
- * 1. Unknown routes redirect to landing
- * 2. Deep unknown paths redirect
- * 3. Route handling edge cases
+ * 1. Basic navigation smoke tests (TEST-001)
+ * 2. Unknown routes redirect to landing
+ * 3. Deep unknown paths redirect
+ * 4. Route handling edge cases
  */
+
+test.describe('Basic Navigation Smoke Tests', () => {
+  /**
+   * TEST-001: Verify landing page loads with correct title
+   *
+   * Acceptance Criteria:
+   * - Visit '/' -> Check title is present
+   */
+  test('should load landing page with correct title', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await waitForLandingReady(page);
+
+    // Check page title contains app name (document.title = 'Novel Engine')
+    const title = await page.title();
+    expect(title).toContain('Novel Engine');
+
+    // Verify main heading is visible (h1 contains 'Narrative Engine')
+    const mainHeading = page.locator('h1');
+    await expect(mainHeading).toBeVisible();
+    await expect(mainHeading).toContainText('Narrative Engine');
+  });
+
+  /**
+   * TEST-001: Verify Weaver navigation via sidebar link
+   *
+   * Acceptance Criteria:
+   * - Click 'Weaver' -> Check URL is '/weaver'
+   */
+  test('should navigate to Weaver page when clicking Weaver link', async ({ page }) => {
+    // Activate guest session to access dashboard with sidebar
+    await activateGuestSession(page);
+
+    // Navigate to dashboard first (sidebar is visible there)
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    await waitForDashboardReady(page);
+
+    // Find and click the Weaver link in the sidebar
+    const sidebar = page.locator('[data-testid="sidebar-navigation"]');
+    await expect(sidebar).toBeAttached({ timeout: 5000 });
+
+    const weaverLink = sidebar.locator('a[href="/weaver"]');
+    await expect(weaverLink).toBeVisible({ timeout: 5000 });
+    await weaverLink.click();
+
+    // Verify URL changed to /weaver
+    await expect(page).toHaveURL(/.*\/weaver$/);
+
+    // Verify Weaver page content is visible
+    await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible({ timeout: 10000 });
+  });
+});
 
 test.describe('Wildcard Route E2E Tests', () => {
   test.describe('Scenario: Unknown routes redirect to landing', () => {

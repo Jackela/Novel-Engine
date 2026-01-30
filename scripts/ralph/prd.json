@@ -53,7 +53,7 @@
         "Run `npm run typecheck` -> Pass"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {
@@ -67,7 +67,7 @@
         "Run `npx playwright test tests/e2e/navigation.spec.ts` -> Pass"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "note": "Navigation tests already exist in frontend/tests/e2e/navigation.spec.ts with comprehensive coverage"
     },
