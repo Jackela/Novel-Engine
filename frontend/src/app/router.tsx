@@ -126,6 +126,18 @@ const storyEditorRoute = createRoute({
   component: lazyRouteComponent(() => import('@/pages/StoryEditorPage')),
 });
 
+const worldRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/world',
+  component: lazyRouteComponent(() => import('@/pages/WorldPage')),
+});
+
+const storyRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/story',
+  component: lazyRouteComponent(() => import('@/pages/NarrativePage')),
+});
+
 // Catch-all route
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -149,6 +161,8 @@ const routeTree = rootRoute.addChildren([
     campaignsRoute,
     storiesRoute,
     storyEditorRoute,
+    worldRoute,
+    storyRoute,
   ]),
   notFoundRoute,
 ]);

@@ -1,47 +1,120 @@
 {
-  "project": "Novel-Engine-Deep-Clean",
+  "project": "Novel-Engine-Grand-Refactor",
   "branchName": "feat/domain-and-fortification",
-  "description": "CRITICAL FIX PHASE. The application compiles but is functionally broken (404s). Wiring and Routing repair required.",
+  "description": "EPIC ITERATION: Deep Clean -> Quality -> Tests -> Feature. Do NOT stop until all are green. Execution must be 'Senior Engineer' quality.",
   "userStories": [
     {
-      "id": "FIX-001",
-      "title": "Router & Navigation Wiring",
-      "description": "The app has 404 errors. The Frontend Router is likely misconfigured or pointing to wrong file paths.",
+      "id": "CLEAN-001",
+      "title": "Fix Routing & 404s (The Wiring)",
+      "description": "The app works in unit tests but fails in the browser (404s). Wiring is broken. React Router must be configured correctly.",
       "acceptanceCriteria": [
-        "Audit `frontend/src/App.tsx` (or router config): Ensure routes `/weaver`, `/world`, `/story` point to existing components.",
-        "Fix Imports: Ensure `WeaverPage` is correctly exported and imported.",
-        "Add a 'Home' dashboard at `/` that links to these pages (so we don't have to guess URLs).",
-        "Verification: Create a simple `smoke-test.spec.ts` that just navigates to each route and asserts 200 OK (no 404 text)."
+        "Audit `frontend/src/App.tsx`: Verify `BrowserRouter` setup. Ensure routes `/weaver`, `/world`, `/story` map to `WeaverPage`, `WorldPage`, `NarrativePage`.",
+        "Fix Imports: Ensure page components are correctly exported (default vs named) and imported. Resolve any circular dependencies.",
+        "Dashboard Implementation: Create a functional `DashboardPage` at `/` root. It must contain shadcn Cards linking to the 3 main sub-apps.",
+        "Manual Verify: Create `scripts/verify_routes.py` using `httpx` or `curl` to check `http://localhost:3000/`, `/weaver`, etc. return 200 OK (HTML), not 404.",
+        "Constraint: Use React Router v6+ data APIs (loaders) is optional, but basic routing MUST work."
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Router verified: /weaver, /stories, /dashboard all correctly wired. Sidebar provides navigation. smoke-test.spec.ts created with 9 tests."
+      "notes": "If the user cannot navigate, the feature does not exist."
     },
     {
-      "id": "FIX-002",
-      "title": "Component Zombie Cleanup",
-      "description": "We migrated to shadcn/ui, but old components might still be lingering or breaking styles.",
+      "id": "CLEAN-002",
+      "title": "Dead Code Extermination",
+      "description": "Remove legacy UI components, unused CSS, and zombie files that confuse the AI agent.",
       "acceptanceCriteria": [
-        "Audit `src/components`: Delete any duplicate UI components that conflict with `@/components/ui` (shadcn).",
-        "Global Search: Find any usages of old CSS classes or inline styles and replace with Tailwind utility classes.",
-        "Strict Check: Ensure `WeaverToolbar` and `WorldNode` are actually rendering via the new Router."
+        "Component Audit: Delete `src/shared/components/ui` if it duplicates shadcn's `@/components/ui`. There must be ONE Source of Truth for UI components.",
+        "CSS Cleanup: Scan `src/**/*.css`. Remove any custom classes that can be replaced by standard Tailwind utilities. `Weaver.css` should likely be deleted.",
+        "Grep Clean: Search for 'TODO', 'FIXME', 'legacy', 'deprecated'. Fix trivial ones (typos, unused vars). Log GitHub Issues for complex ones.",
+        "Import Pruning: Run `ruff check --select F401 --fix` (or equivalent) on `src/contexts/world` to remove unused imports."
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Deleted dead code: AgentInterface and NarrativeDisplay (unused, had custom CSS). WeaverToolbar and WorldNode verified rendering correctly. Some UI duplication exists between @/components/ui and @/shared/components/ui but both are functional."
+      "passes": false,
+      "notes": "Less code = Fewer bugs. Be ruthless but compile-safe."
     },
     {
-      "id": "FIX-003",
-      "title": "Strict Type Hygiene",
-      "description": "The codebase likely has 'any' types hiding bugs. Enable strict mode compliance.",
+      "id": "QUAL-001",
+      "title": "Strict Type Hygiene (Frontend)",
+      "description": "Eliminate implicit 'any' and enforce Zod schemas to prevent runtime crashes.",
       "acceptanceCriteria": [
-        "Run `tsc --noEmit` and capture all errors.",
-        "Fix all implicit `any` errors in the `frontend/src/features` directory.",
-        "Ensure all API responses are typed with the generated Zod schemas, not manual interfaces."
+        "Strict Mode: Ensure `tsconfig.json` has `\"strict\": true` and `\"noImplicitAny\": true`.",
+        "Audit Hooks: Refactor `useWeaver`, `useWorldGeneration` to remove all `any` types. Use types from `@/lib/api/generated/api-types`.",
+        "API Safety: Wrap all API calls in `frontend/src/lib/api` with `zod.parse()` or ensure they match the generated OpenAPI types exactly.",
+        "Standardization: Create a generic `ApiResponse<T>` interface that matches the backend's `StandardResponse` envelope."
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "TypeScript strict mode passes with zero errors. No implicit 'any' in features directory. API responses use Zod schemas (13 files using .parse/.safeParse)."
+      "passes": false,
+      "notes": "No more lying to the compiler. If the type is unknown, use `unknown` and narrow it."
+    },
+    {
+      "id": "QUAL-002",
+      "title": "Backend Docstrings & Architecture",
+      "description": "Ensure the codebase is readable and self-documenting for future AI agents and human auditors.",
+      "acceptanceCriteria": [
+        "Docstrings: Add Google-style Docstrings (Args, Returns, Raises) to all public methods in `src/contexts/story/application/services` and `src/contexts/world/domain`.",
+        "Architecture Map: Create `src/contexts/narrative/ARCHITECTURE.md` describing the Hexagonal layers (Ports, Adapters, Domain).",
+        "Pydantic Polish: Ensure all Pydantic models in `src/api/schemas.py` have `Field(..., description=\"...\")` for proper OpenAPI documentation generation.",
+        "Linter Pass: Run `pydocstyle` and ensure no D101/D102 errors in target directories."
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "Code is read more often than it is written."
+    },
+    {
+      "id": "TEST-001",
+      "title": "Frontend E2E Smoke Tests",
+      "description": "Ensure critical paths are covered by Playwright to prevent regression during refactors.",
+      "acceptanceCriteria": [
+        "Navigation Test: Create `tests/e2e/navigation.spec.ts`. Scenarios: Visit Home -> Click Weaver -> Assert URL changes -> Click Back -> Assert Home.",
+        "Generation Flow: Create `tests/e2e/world-generation.spec.ts`. Scenarios: Open World Gen Modal -> Fill Form -> Click Generate -> Wait for 'Success' toast -> Verify nodes render on canvas.",
+        "CI Integration: Ensure `npm run test:e2e` runs in the local CI script.",
+        "Selectors: Use `data-testid` attributes in the UI if stable selectors are missing."
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "These tests serve as the 'Definition of Done' for the UI."
+    },
+    {
+      "id": "TEST-002",
+      "title": "Backend Chaos Testing",
+      "description": "Verify system resilience against dependencies failures (LLM, DB).",
+      "acceptanceCriteria": [
+        "Test Suite: Create `tests/integration/test_error_handling.py`.",
+        "Scenario 1 (LLM Failure): Mock `UnifiedLLMService` to raise `APITimeoutError`. Assert Backend returns HTTP 503 (not 500) with a user-friendly error message.",
+        "Scenario 2 (DB Lock): Mock `ContextDatabase` to raise `OperationalError` (locked). Assert Backend retries 3 times before failing.",
+        "Scenario 3 (Bad JSON): Mock LLM returning malformed JSON. Assert `LLMWorldGenerator` triggers its self-correction retry loop."
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "The system must fail gracefully, not crash with a traceback."
+    },
+    {
+      "id": "DEV-001",
+      "title": "Narrative Engine: Context Builder",
+      "description": "Implement the logic to compress the massive World State into a tight Story Prompt for the LLM.",
+      "acceptanceCriteria": [
+        "Service: Implement `ContextAssembler` in `src/contexts/story/application/services`.",
+        "Logic: Input `WorldGraph` (NetworkX) + `ActiveCharacters`. Logic: Filter nodes within N hops of characters. Output: Summarized Text context.",
+        "Constraint: Use `tiktoken` (or similar) to ensure output context is < 4000 tokens. Truncate distant nodes if necessary.",
+        "Unit Test: Create a mock large graph and verify the assembler prunes it correctly."
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "The 'Memory' of the AI writer."
+    },
+    {
+      "id": "DEV-002",
+      "title": "Narrative Engine: Streaming API",
+      "description": "Implement Server-Sent Events (SSE) for real-time story generation feedback.",
+      "acceptanceCriteria": [
+        "Endpoint: Create `POST /api/narrative/stream` using `ssev3` or `starlette.responses.StreamingResponse`.",
+        "Format: Stream events must follow `{ event: 'token' | 'error' | 'done', data: JSON }`.",
+        "Frontend: Update `useStoryStream` hook to parse this SSE format and update the Editor state character-by-character.",
+        "UX: The Editor should auto-scroll to the bottom as text arrives."
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "Low latency (<200ms TTFT) is critical for user experience."
     }
   ]
 }

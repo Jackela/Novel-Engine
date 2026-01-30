@@ -2,12 +2,14 @@
  * DashboardShell - Dashboard layout orchestrator
  * Manages panel arrangement and responsive layout
  */
-import { Suspense } from 'react';
+import { Suspense, lazy } from 'react';
+import { Link } from '@tanstack/react-router';
+import { GitBranch, Globe, BookOpen, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/shared/components/feedback';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/Card';
 
 // Lazy load panels for code splitting
-import { lazy } from 'react';
 
 const WorldPanel = lazy(() => import('./panels/WorldPanel'));
 const NetworkPanel = lazy(() => import('./panels/NetworkPanel'));
@@ -25,6 +27,57 @@ function PanelFallback() {
   );
 }
 
+// Quick navigation cards to main sub-apps
+const SUB_APPS = [
+  {
+    title: 'Story Weaver',
+    description: 'Visual node-based story orchestration',
+    icon: GitBranch,
+    href: '/weaver',
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10',
+  },
+  {
+    title: 'World Builder',
+    description: 'Manage locations, characters, and world state',
+    icon: Globe,
+    href: '/world',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+  },
+  {
+    title: 'Narrative Studio',
+    description: 'Write and generate story content',
+    icon: BookOpen,
+    href: '/story',
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+  },
+] as const;
+
+function QuickNavCards() {
+  return (
+    <div className="grid gap-4 md:grid-cols-3" data-testid="quick-nav-cards">
+      {SUB_APPS.map((app) => (
+        <Link key={app.href} to={app.href}>
+          <Card className="group cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
+            <CardHeader>
+              <div className={cn('mb-2 inline-flex rounded-lg p-2', app.bgColor)}>
+                <app.icon className={cn('h-6 w-6', app.color)} />
+              </div>
+              <CardTitle className="flex items-center justify-between">
+                {app.title}
+                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+              </CardTitle>
+              <CardDescription>{app.description}</CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 export function DashboardShell() {
   return (
     <div className="space-y-6" data-testid="dashboard-layout">
@@ -37,6 +90,9 @@ export function DashboardShell() {
           </p>
         </div>
       </div>
+
+      {/* Quick navigation to sub-apps */}
+      <QuickNavCards />
 
       {/* Bento grid layout */}
       <div
