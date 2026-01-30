@@ -34,7 +34,7 @@ Before marking a task as complete, you MUST run:
 
 ---
 
-# Original AGENTS.md Content
+# Original CLAUDE.md Content
 
 ## Agent Guide (SSOT)
 

@@ -1,21 +1,23 @@
 import { useMemo, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
-  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
-  Label,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/shared/components/ui';
+} from '@/components/ui/select';
 import { useCharacterGeneration } from '../hooks/useCharacterGeneration';
 
 type CharacterGenerationDialogProps = {

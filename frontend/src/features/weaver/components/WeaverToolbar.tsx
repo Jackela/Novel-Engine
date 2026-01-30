@@ -2,13 +2,13 @@
  * WeaverToolbar - Toolbar for weaver actions
  */
 import { Users, Sparkles, MapPin, Zap, Save, Undo, Redo, Film } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/shared/components/ui/tooltip';
+} from '@/components/ui/tooltip';
 
 interface WeaverToolbarProps {
   onAddCharacter?: (() => void) | undefined;

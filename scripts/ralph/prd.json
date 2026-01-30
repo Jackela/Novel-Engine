@@ -1,46 +1,49 @@
 {
-  "project": "Novel-Engine-Refactor",
-  "branchName": "feat/domain-and-fortification", 
-  "description": "DEEP REFACTORING PHASE. No new features. Focus on code quality, UI/UX cleanup, and End-to-End wiring on the CURRENT branch.",
+  "project": "Novel-Engine-Standardization",
+  "branchName": "feat/domain-and-fortification",
+  "description": "Standardize the codebase using 'Text-Driven Vibe Coding' protocols. Establish the 'Blind Swordsman' verification system.",
   "userStories": [
     {
-      "id": "REF-001",
-      "title": "Frontend Architecture & UX Overhaul",
-      "description": "Refactor the Weaver frontend to match Vibe Coding best practices. The code is currently messy.",
+      "id": "STD-001",
+      "title": "Establish The 'Non-Visual Eye' (Playwright Infrastructure)",
+      "description": "Before refactoring UI, we must have eyes. Install Playwright and create 'Spatial Assertion' helpers.",
       "acceptanceCriteria": [
-        "Refactor `WeaverPage.tsx`: Split into smaller, semantic components (Toolbar, Canvas, Sidebar).",
-        "UI Polish: Ensure the node creation/connection animation is smooth (No flickering).",
-        "Type Safety: Replace any `any` types in frontend hooks with generated types from `src/lib/api/generated/api-types.ts`.",
-        "Comments: Add JSDoc comments to all Hooks explaining complex logic (Optimistic UI)."
+        "Install Playwright: `npm init playwright@latest` (Use existing Playwright if detected, but ensure infrastructure is fresh)",
+        "Create `frontend/tests/utils/spatial-assertions.ts`: Implement `expectRightOf(a, b)`, `expectBelow(a, b)`, `expectNoOverlap(nodes)` using bounding box math",
+        "Create `frontend/tests/e2e/weaver-smoke.spec.ts`: A test that fails if nodes overlap or go off-screen in the Weaver canvas",
+        "Verify: Run `npm run test:e2e` and confirm it correctly catches current or simulated layout issues"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "DO NOT CREATE NEW BRANCH. Modify existing files in place. Make the UI look professional."
+      "notes": "COMPLETED: Created spatial-assertions.ts with expectRightOf, expectBelow, expectNoOverlap, expectWithinViewport, expectContainedIn. Created weaver-smoke.spec.ts which successfully detects node overlaps (found 2 overlapping pairs with 10533px² and 56185px² overlap areas). The 'Non-Visual Eye' is now operational."
     },
     {
-      "id": "REF-002",
-      "title": "Backend Code Quality & Docs",
-      "description": "The backend works but lacks readability. Harded the codebase.",
+      "id": "STD-002",
+      "title": "Frontend Standardization (shadcn/ui Migration)",
+      "description": "Refactor Weaver to use shadcn/ui components strictly. Remove custom CSS.",
       "acceptanceCriteria": [
-        "Add Python Docstrings (Google Style) to all Domain Entities and Services in `src/contexts/world`.",
-        "Refactor `LLMWorldGenerator`: Extract the retry logic into a reusable Decorator or Mixin if it's too coupled.",
-        "Cleanup: Remove any unused imports or commented-out code detected by linter."
+        "Run `npx shadcn-ui@latest init` (overwrite existing utils if needed to match standard)",
+        "Install components: `button`, `card`, `dialog`, `input`, `select`, `slider`, `switch` using the CLI",
+        "Refactor `WeaverToolbar`: Replace raw `radix-ui` primitives with `shadcn/ui` components",
+        "Refactor `WorldNode`: Use shadcn `Card` component instead of custom divs/styled-components",
+        "Validation: `npm run test:e2e` MUST pass after refactor, ensuring no layout regressions"
       ],
       "priority": 2,
       "passes": true,
-      "notes": "Treat this as if you are preparing for a strict code review."
+      "notes": "COMPLETED: Installed shadcn/ui tooltip, slider, switch components. Migrated all Weaver components from @/shared/components/ui to @/components/ui (WeaverToolbar, WeaverNode, WorldNode, CharacterNode, EventNode, LocationNode, SceneNode, FactionNode, CharacterGenerationDialog, SceneGenerationDialog). TypeScript checks pass. Core workflow e2e tests pass (drag node, connect, add nodes). Code now follows v0.dev patterns with standardized shadcn/ui components."
     },
     {
-      "id": "INT-001",
-      "title": "End-to-End wiring Check",
-      "description": "Verify the system actually runs from UI to DB.",
+      "id": "STD-003",
+      "title": "Strict Backend Documentation",
+      "description": "Ensure the codebase is self-documenting for future AI agents.",
       "acceptanceCriteria": [
-        "Manual Verification Script: Create `scripts/verify_e2e.py` that calls the API and checks the output, printing the generated World graph.",
-        "Ensure frontend API client correctly handles the specific error format from backend (Validation Errors)."
+        "Create `src/contexts/world/ARCHITECTURE.md`: Document the layers, relationship mapping, and rules",
+        "Add Docstrings to `LLMWorldGenerator` explaining the self-correction retry mechanism in detail",
+        "Run `pydocstyle` or `ruff` check to ensure docstring compliance"
       ],
       "priority": 3,
       "passes": true,
-      "notes": "Ensure the novel generation actually outputs content."
+      "notes": "COMPLETED: Created comprehensive ARCHITECTURE.md documenting Hexagonal Architecture layers (Domain/Application/Infrastructure), relationship mapping between entities (WorldSetting, Faction, Location, HistoryEvent), LLM generation flow with temporary ID resolution, and the multi-stage JSON extraction retry mechanism (_extract_json with direct parse, markdown code block, embedded JSON detection). LLMWorldGenerator already had complete docstrings. Ruff check passes: 'All checks passed!' on src/contexts/world/."
     }
   ]
 }

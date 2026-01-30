@@ -21,10 +21,10 @@ from ...domain.services.llm_provider import (
     LLMResponseStatus,
 )
 from ...domain.value_objects.common import ModelId, ProviderId, TokenBudget
-from ...infrastructure.policies.caching import ICacheService
-from ...infrastructure.policies.cost_tracking import CostEntry, ICostTracker
-from ...infrastructure.policies.rate_limiting import IRateLimiter
-from ...infrastructure.policies.retry_fallback import IRetryPolicy
+from ..ports.cache_port import ICacheService
+from ..ports.cost_tracking_port import CostEntry, ICostTracker
+from ..ports.rate_limiting_port import IRateLimiter
+from ..ports.retry_policy_port import IRetryPolicy
 
 
 @dataclass

@@ -1,20 +1,22 @@
 import { useMemo, useState } from 'react';
 import { Loader2, Film } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
-  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Label,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/shared/components/ui';
+} from '@/components/ui/select';
 import { useSceneGeneration } from '../hooks/useSceneGeneration';
 
 type SceneGenerationDialogProps = {

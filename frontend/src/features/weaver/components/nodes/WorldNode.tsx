@@ -7,7 +7,8 @@ import { memo } from 'react';
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { Globe, Sparkles, Cog } from 'lucide-react';
-import { CardContent, Badge } from '@/shared/components/ui';
+import { CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import type { WeaverNodeStatus } from '../../types';
 import { WeaverNode } from './WeaverNode';
 
