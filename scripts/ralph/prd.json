@@ -39,7 +39,7 @@
         "Run `pydocstyle src/contexts/world/infrastructure/generators/` -> Exit code 0"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": ["DOC-001"]
     },
