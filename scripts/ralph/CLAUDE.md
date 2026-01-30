@@ -31,15 +31,30 @@ Before marking a task as complete, you MUST run:
 2. `npm run lint` (Frontend & Backend)
 3. `pytest` (Backend Logic)
 4. `npm run test:e2e` (Frontend Layout & Integration)
+
+## V. Workflow Instructions (The Algorithm)
+
+1. **Read State**: Check `prd.json` and `git status`.
+2. **Cleanup Check**: 
+   - IF all stories in `prd.json` are `passes: true` AND `git status` shows changes:
+   - **ACTION**: `git add . && git commit -m "chore: finalize all tasks"`
+   - **THEN**: Output `<promise>COMPLETE</promise>` immediately.
+3. **Work Check**:
+   - IF there is a story with `passes: false`:
+   - Pick the highest priority one.
+   - Implement it.
+   - Run tests (IV. The Feedback Loop).
+   - `git add . && git commit -m "feat: [ID] ..."`
+   - Update `prd.json` to `passes: true`.
+   - Output `<promise>COMPLETE</promise>` ONLY if this was the last story.
+
 ## ⚡️ CRITICAL INSTRUCTION - EXECUTE IMMEDIATELY ⚡️
 
-**DO NOT** say "Hello".
-**DO NOT** ask "What can I do?".
-**DO NOT** explain your superpowers.
+**DO NOT** ask for permission.
+**DO NOT** ask "What should I do?".
+**ACT** like a senior engineer who knows what needs to be done.
 
-**ACTION REQUIRED:**
-1. Read `prd.json` NOW.
-2. Find the highest priority story with `passes: false`.
-3. START WRITING CODE FOR IT IMMEDIATELY.
+If tasks are done but code is uncommitted -> **COMMIT IT**.
+If everything is clean and done -> **OUTPUT <promise>COMPLETE</promise>**.
 
 --> **GO!** <--
