@@ -1,0 +1,49 @@
+{
+  "project": "Novel-Engine-Reforged",
+  "branchName": "feat/domain-and-fortification",
+  "description": "Consolidated Phase: Fortify Architecture & Build World Domain. Rerunning arch checks to ensure stability.",
+  "userStories": [
+    {
+      "id": "ARCH-RECOVER-001",
+      "title": "Verify & Enforce Architecture",
+      "description": "Re-implement architecture guardrails. If code exists, this acts as verification. If not, it builds it.",
+      "acceptanceCriteria": [
+        "Ensure `import-linter` is installed and `.importlinter` config exists with Hexagonal rules",
+        "Ensure `scripts/generate_openapi.py` exists and correctly exports FastAPI spec",
+        "Ensure `structlog` is configured in `src/core/logging_system.py`",
+        "Run `lint` and `typecheck` to confirm baseline is green"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Quick sanity check to ensure the foundations from Phase 1 are solid."
+    },
+    {
+      "id": "WORLD-001",
+      "title": "World Domain Modeling (DDD)",
+      "description": "Define the core Domain Entities for the World context following DDD principles.",
+      "acceptanceCriteria": [
+        "Create `src/contexts/world/domain/entities/world_setting.py` containing `WorldSetting` entity",
+        "Define `Faction`, `Location`, `HistoryEvent` entities inheriting from base `Entity`",
+        "Ensure entities contain domain logic/invariants, not just anemic data",
+        "Add unit tests in `tests/unit/contexts/world/domain/` for these entities"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "The foundation of the Knowledge Graph-based World Engine."
+    },
+    {
+      "id": "WORLD-002",
+      "title": "World Generator Adapter",
+      "description": "Implement the LLM Adapter to generate structured World data via the centralized LLM service.",
+      "acceptanceCriteria": [
+        "Define `WorldGeneratorPort` interface in `src/contexts/world/application/ports/`",
+        "Implement `LLMWorldGenerator` in `src/contexts/world/infrastructure/generators/`",
+        "Create structured prompt template that outputs JSON mapping to domain entities",
+        "Integration test: Generate a world lore fragment and successfully parse it into Domain Entities"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Must leverage `UnifiedLLMService` for consistency and cost tracking."
+    }
+  ]
+}

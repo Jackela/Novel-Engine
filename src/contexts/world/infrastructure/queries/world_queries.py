@@ -24,7 +24,7 @@ from core_platform.persistence.database import get_db_session
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
 
-from ...infrastructure.projections.world_read_model import WorldSliceReadModel
+from ..projections.world_read_model import WorldSliceReadModel
 
 logger = logging.getLogger(__name__)
 

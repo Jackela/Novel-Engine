@@ -12,9 +12,7 @@ from uuid import UUID
 
 from ...domain.services.causal_graph_service import CausalGraphService
 from ...domain.services.narrative_flow_service import NarrativeFlowService
-from ...infrastructure.repositories.narrative_arc_repository import (
-    NarrativeArcRepository,
-)
+from ..ports.narrative_arc_repository_port import INarrativeArcRepository
 from ..command_handlers.narrative_arc_command_handlers import NarrativeArcCommandHandler
 from ..commands.narrative_arc_commands import (
     ActivateContextCommand,
@@ -62,7 +60,7 @@ class NarrativeArcApplicationService:
 
     def __init__(
         self,
-        repository: NarrativeArcRepository,
+        repository: INarrativeArcRepository,
         flow_service: Optional[NarrativeFlowService] = None,
         causal_service: Optional[CausalGraphService] = None,
     ):

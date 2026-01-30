@@ -34,9 +34,7 @@ from ...domain.value_objects.story_pacing import (
     PacingType,
     StoryPacing,
 )
-from ...infrastructure.repositories.narrative_arc_repository import (
-    NarrativeArcRepository,
-)
+from ..ports.narrative_arc_repository_port import INarrativeArcRepository
 from ..commands.narrative_arc_commands import (
     ActivateContextCommand,
     AddCharacterToArcCommand,
@@ -71,7 +69,7 @@ class NarrativeArcCommandHandler:
 
     def __init__(
         self,
-        repository: NarrativeArcRepository,
+        repository: INarrativeArcRepository,
         flow_service: Optional[NarrativeFlowService] = None,
         causal_service: Optional[CausalGraphService] = None,
     ):

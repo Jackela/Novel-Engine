@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING
 
 from src.api.schemas import CharacterGenerationResponse
@@ -108,16 +107,13 @@ class SceneGenerationService:
 
 
 def _select_default_generator() -> SceneGeneratorPort:
-    """Select the appropriate generator based on configuration."""
-    if os.getenv("ENABLE_LLM_GENERATION", "").lower() == "true":
-        try:
-            from src.contexts.story.infrastructure.generators.llm_scene_generator import (
-                LLMSceneGenerator,
-            )
+    """Select the appropriate generator based on configuration.
 
-            return LLMSceneGenerator()
-        except Exception:
-            return DeterministicSceneGenerator()
+    Note: This function returns DeterministicSceneGenerator by default.
+    For LLM-based generation, the caller (API layer) should inject
+    the LLMSceneGenerator instance directly to maintain hexagonal
+    architecture boundaries.
+    """
     return DeterministicSceneGenerator()
 
 

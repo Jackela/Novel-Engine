@@ -1,0 +1,144 @@
+# Ralph Progress Log
+Started: Thu Jan 29 19:31:37 2026
+---
+
+## Codebase Patterns
+- Use `application/ports/` directory for interface definitions (hexagonal ports)
+- Infrastructure implementations import from ports, not vice versa
+- API layer (composition root) is allowed to import from infrastructure for DI
+- `lint-imports` command runs import-linter checks
+- Query Objects (dataclasses) stay in application layer; Query Handlers move to infrastructure if they depend on ORM models
+- Frontend API types are auto-generated from backend OpenAPI spec (SSOT)
+- Run `npm run api:sync` in frontend after backend API changes
+- Import types from `@/lib/api` (e.g., `import { type CharacterGenerationRequest } from '@/lib/api'`)
+- OpenAPI generated types use `string | null` for optional fields, not `undefined`
+- Logging: Use `src/core/logging_system` for structured logging with structlog
+- Correlation IDs propagate automatically through async tasks via contextvars
+- StructlogRequestMiddleware binds X-Request-ID header to log context
+- WorldKnowledgeGraph is distinct from WorldState: WorldKnowledgeGraph manages lore/geography (static), WorldState manages runtime state (dynamic)
+- Frozen dataclass subclasses should use `field(default=...)` to set parent fields, not `__post_init__` with `object.__setattr__`
+- Relationship value objects use frozen dataclasses for immutability and type-specific subclasses for Control, Alliance, Conflict, Origin, Causal relationships
+
+---
+
+## Thu Jan 30 2026 - WORLD-001
+- What was implemented:
+  - Created 4 domain entities in `src/contexts/world/domain/entities/`: WorldSetting, Faction, Location, HistoryEvent
+  - Created relationship value objects in `src/contexts/world/domain/value_objects/relationships.py`: ControlRelationship, OriginRelationship, ConflictRelationship, AllianceRelationship, CausalRelationship
+  - Created WorldKnowledgeGraph aggregate root in `src/contexts/world/domain/aggregates/world_knowledge_graph.py`
+  - Created comprehensive unit tests (108 tests) in `tests/unit/contexts/world/domain/`
+- Files changed:
+  - New: `src/contexts/world/domain/entities/__init__.py`
+  - New: `src/contexts/world/domain/entities/world_setting.py`
+  - New: `src/contexts/world/domain/entities/faction.py`
+  - New: `src/contexts/world/domain/entities/location.py`
+  - New: `src/contexts/world/domain/entities/history_event.py`
+  - New: `src/contexts/world/domain/value_objects/__init__.py`
+  - New: `src/contexts/world/domain/value_objects/relationships.py`
+  - New: `src/contexts/world/domain/aggregates/__init__.py`
+  - New: `src/contexts/world/domain/aggregates/world_knowledge_graph.py`
+  - New: `tests/unit/contexts/world/domain/test_world_entities.py`
+  - New: `tests/unit/contexts/world/domain/test_relationships_value_objects.py`
+  - New: `tests/unit/contexts/world/domain/test_world_knowledge_graph.py`
+- **Learnings for future iterations:**
+  - Existing base Entity class is in `src/contexts/world/domain/entities/entity.py` - inherit from it for all world domain entities
+  - frozen dataclass inheritance requires using `field(default=...)` to set parent class fields instead of modifying in `__post_init__`
+  - Use FactionType, LocationType, EventType enums for type categorization
+  - Bidirectional relationships (alliances, conflicts) should be maintained in both entity references and explicit Relationship objects
+  - WorldKnowledgeGraph validates graph consistency including circular causality and faction relationship conflicts
+---
+
+## Thu Jan 30 2026 - WORLD-002
+- What was implemented:
+  - Defined WorldGeneratorPort protocol in `src/contexts/world/application/ports/world_generator_port.py`
+  - Implemented LLMWorldGenerator adapter in `src/contexts/world/infrastructure/generators/llm_world_generator.py`
+  - Created structured prompt template in `src/contexts/world/infrastructure/prompts/world_gen.yaml`
+  - Generator produces complete graph structure (entities + relationships) in a single pass
+  - Added unit tests for generator parsing and building logic
+  - Added integration tests verifying LLM-generated lore parses into valid WorldKnowledgeGraph
+- Files changed:
+  - New: `src/contexts/world/application/ports/__init__.py`
+  - New: `src/contexts/world/application/ports/world_generator_port.py`
+  - New: `src/contexts/world/infrastructure/generators/__init__.py`
+  - New: `src/contexts/world/infrastructure/generators/llm_world_generator.py`
+  - New: `src/contexts/world/infrastructure/prompts/world_gen.yaml`
+  - New: `tests/integration/contexts/world/__init__.py`
+  - New: `tests/integration/contexts/world/test_world_generation_integration.py`
+  - New: `tests/unit/contexts/world/infrastructure/__init__.py`
+  - New: `tests/unit/contexts/world/infrastructure/test_llm_world_generator.py`
+- **Learnings for future iterations:**
+  - LLMWorldGenerator uses direct Gemini API calls (not src/core/llm_service.py) for structured JSON output
+  - Use structlog.get_logger(__name__) for consistent logging across generators
+  - temp_id system in prompts allows LLM to cross-reference entities before actual UUIDs are assigned
+  - JSON extraction handles both raw JSON and markdown code blocks
+  - Integration tests should mock requests.post, not the entire generator
+  - Generator _build_knowledge_graph method handles entity resolution in multiple passes (locations -> factions -> events -> relationships)
+---
+
+## Thu Jan 30 2026 - WORLD-003
+- What was implemented:
+  - Created world generation API router in `src/api/routers/world.py` with POST /api/world/generation endpoint
+  - Added WorldGenerationRequest/Response and related schemas to `src/api/schemas.py`
+  - Registered world router in both `src/api/app.py` and `src/api/main_api_server.py`
+  - Created WorldNode component for displaying world settings with genre, themes, and era
+  - Created FactionNode component for displaying factions with type, values, and relationship counts
+  - Updated WeaverCanvas to support world and faction node types with distinct colors
+  - Updated weaverStore to include new node data types
+  - Created useWorldGeneration hook with hierarchical auto-layout logic
+  - Added Zod schemas for world generation to frontend types
+  - Created worldApi.ts for frontend API calls
+  - Updated OpenAPI spec with new endpoints
+- Files changed:
+  - New: `src/api/routers/world.py`
+  - Modified: `src/api/schemas.py`
+  - Modified: `src/api/app.py`
+  - Modified: `src/api/main_api_server.py`
+  - New: `frontend/src/features/weaver/components/nodes/WorldNode.tsx`
+  - New: `frontend/src/features/weaver/components/nodes/FactionNode.tsx`
+  - Modified: `frontend/src/features/weaver/components/nodes/index.ts`
+  - Modified: `frontend/src/features/weaver/components/WeaverCanvas.tsx`
+  - Modified: `frontend/src/features/weaver/store/weaverStore.ts`
+  - New: `frontend/src/features/weaver/hooks/useWorldGeneration.ts`
+  - New: `frontend/src/lib/api/worldApi.ts`
+  - Modified: `frontend/src/lib/api/index.ts`
+  - Modified: `frontend/src/types/schemas.ts`
+  - Modified: `docs/api/openapi.current.json`
+- **Learnings for future iterations:**
+  - Dual router registration required: once without prefix, once with `/api` prefix
+  - API router (composition root) is allowed to import from infrastructure for DI
+  - useWorldGeneration uses optimistic loading node that gets replaced on success
+  - Hierarchical auto-layout calculates row positions centered around a reference X
+  - Node type mapping from backend (e.g., "capital") to frontend enum (e.g., "city") needed
+  - TypeScript `exactOptionalPropertyTypes` requires `?? null` for nullable fields
+  - Array index access may be undefined, use fallback: `arr[i] ?? defaultValue`
+---
+
+## Thu Jan 30 2026 - ARCH-RECOVER-001
+- What was implemented:
+  - Verified `import-linter` installed and `.importlinter` config has Hexagonal rules
+  - Verified `scripts/generate_openapi.py` exists and correctly exports FastAPI spec
+  - Verified `structlog` configured in `src/core/logging_system.py`
+  - Fixed 5 architecture violations found by lint-imports:
+    - narratives.application was importing from narratives.infrastructure (3 violations)
+    - story.application was importing from story.infrastructure (1 violation)
+    - world.application was importing from world.infrastructure (1 violation)
+  - All 8 architecture contracts now pass
+- Files changed:
+  - New: `src/contexts/narratives/application/ports/__init__.py`
+  - New: `src/contexts/narratives/application/ports/narrative_arc_repository_port.py`
+  - Modified: `src/contexts/narratives/application/command_handlers/narrative_arc_command_handlers.py`
+  - Modified: `src/contexts/narratives/application/query_handlers/narrative_arc_query_handlers.py`
+  - Modified: `src/contexts/narratives/application/services/narrative_arc_application_service.py`
+  - Modified: `src/contexts/narratives/infrastructure/repositories/narrative_arc_repository.py`
+  - Modified: `src/contexts/story/application/services/scene_service.py`
+  - Modified: `src/api/routers/scene.py`
+  - Moved: `src/contexts/world/application/queries/world_queries.py` → `src/contexts/world/infrastructure/queries/world_queries.py`
+  - New: `src/contexts/world/infrastructure/queries/__init__.py`
+  - Modified: `src/contexts/world/application/queries/__init__.py` (now empty placeholder)
+- **Learnings for future iterations:**
+  - Repository ports (interfaces) belong in application/ports/, implementations in infrastructure
+  - Application services should depend on port interfaces, not concrete implementations
+  - Factory/selector functions that import infrastructure belong in API layer (composition root)
+  - Query handlers that depend on ORM models belong in infrastructure, not application layer
+  - `lint-imports` command validates all hexagonal architecture contracts
+---
