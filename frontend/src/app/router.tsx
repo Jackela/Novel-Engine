@@ -138,10 +138,10 @@ const storyRoute = createRoute({
   component: lazyRouteComponent(() => import('@/pages/NarrativePage')),
 });
 
-// Catch-all route
+// Catch-all route (splat route using $ syntax)
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '*',
+  path: '$',
   beforeLoad: () => {
     throw redirect({
       to: '/',
