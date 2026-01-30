@@ -202,3 +202,95 @@ Started: Thu Jan 29 19:31:37 2026
   - _extract_json handles multiple formats: direct JSON, markdown blocks, embedded JSON
   - Integration tests mock requests.post for deterministic testing
 ---
+
+## Thu Jan 30 2026 - WORLD-003 (Implementation)
+- What was implemented:
+  - Backend API: POST /api/world/generation endpoint in `src/api/routers/world.py`
+    - WorldGenerationRequest/Response Pydantic models
+    - Integration with LLMWorldGenerator adapter
+    - Safe enum parsing with fallbacks
+  - Frontend WorldNode component: displays world settings with genre, era, themes, magic/tech levels
+  - Frontend FactionNode component: displays factions with type, alignment, influence, ally/enemy counts
+  - Frontend useWorldGeneration hook with hierarchical auto-layout
+  - worldApi.ts API client with Zod validation
+  - Zod schemas for world generation types
+  - Updated nodeTypes registry and WeaverCanvas minimap colors
+- Files changed:
+  - New: `src/api/routers/world.py`
+  - Modified: `src/api/app.py` - registered world_gen_router
+  - Modified: `src/api/main_api_server.py` - registered world_gen_router
+  - New: `frontend/src/features/weaver/components/nodes/WorldNode.tsx`
+  - New: `frontend/src/features/weaver/components/nodes/FactionNode.tsx`
+  - Modified: `frontend/src/features/weaver/components/nodes/index.ts`
+  - Modified: `frontend/src/features/weaver/components/WeaverCanvas.tsx`
+  - New: `frontend/src/features/weaver/hooks/useWorldGeneration.ts`
+  - Modified: `frontend/src/features/weaver/store/weaverStore.ts`
+  - New: `frontend/src/lib/api/worldApi.ts`
+  - Modified: `frontend/src/lib/api/index.ts`
+  - Modified: `frontend/src/types/schemas.ts`
+- **Learnings for future iterations:**
+  - Dual router registration required: once without prefix, once with `/api` prefix
+  - API router (composition root) is allowed to import from infrastructure for DI
+  - Hierarchical auto-layout calculates row positions centered around a reference X
+  - Backend location_type values (e.g., "capital", "fortress") need mapping to frontend enum (e.g., "city", "building")
+  - FactionNodeData extends Record<string, unknown> for React Flow compatibility
+  - WeaverCanvas minimap getNodeColor function needs updating when adding new node types
+---
+
+## Thu Jan 30 2026 - DOCS-001
+- What was implemented:
+  - Created `docs/architecture/world_engine.mermaid` with complete layered architecture diagram
+    - API Layer (Composition Root): WorldRouter, Request/Response models
+    - Application Layer: WorldGeneratorPort protocol, Input/Result dataclasses
+    - Domain Layer: WorldSetting, Faction, Location, HistoryEvent entities with all enums
+    - Infrastructure Layer: LLMWorldGenerator adapter, prompt templates
+    - Frontend Layer: useWorldGeneration hook, WorldNode, FactionNode components
+    - Entity relationship mapping (control, alliance, conflict, causality)
+  - Regenerated OpenAPI spec (`docs/api/openapi.current.json`)
+    - Verified /api/world/generation endpoint included with 'world' tag
+    - 120 total endpoints documented
+  - Updated README.md with World Generation usage guide (Chinese)
+    - API usage example with curl
+    - Generated content types table (WorldSetting, Factions, Locations, HistoryEvents)
+    - Link to architecture documentation
+  - Updated README.en.md with World Generation usage guide (English)
+- Files changed:
+  - New: `docs/architecture/world_engine.mermaid`
+  - Modified: `docs/api/openapi.current.json`
+  - Modified: `README.md`
+  - Modified: `README.en.md`
+- **Learnings for future iterations:**
+  - Mermaid files should not be linted by ruff (exclude in pyproject.toml if needed)
+  - OpenAPI regeneration command: `python scripts/generate_openapi.py`
+  - Architecture contracts validated via `lint-imports` (C:/Users/.../Scripts/lint-imports.exe)
+  - World context has 210 unit tests passing in tests/unit/contexts/world/
+---
+
+## Thu Jan 30 2026 - REF-001
+- What was implemented:
+  - Added comprehensive JSDoc documentation to all Weaver generation hooks:
+    - `useCharacterGeneration.ts`: Module docs, type docs, function docs with @example
+    - `useSceneGeneration.ts`: Module docs, type docs, function docs with @example
+    - `useWorldGeneration.ts`: Enhanced existing docs with patterns and examples
+  - Memoized all React Flow node components with React.memo() for render optimization:
+    - CharacterNode, EventNode, FactionNode, LocationNode, SceneNode, WorldNode
+    - Prevents unnecessary re-renders during canvas interactions (pan, zoom, selection)
+  - WeaverPage.tsx structure review: Already properly split into Toolbar, Canvas components
+  - Type safety audit: No `any` types found in production hooks (only in test assertions)
+- Files changed:
+  - Modified: `frontend/src/features/weaver/hooks/useCharacterGeneration.ts`
+  - Modified: `frontend/src/features/weaver/hooks/useSceneGeneration.ts`
+  - Modified: `frontend/src/features/weaver/hooks/useWorldGeneration.ts`
+  - Modified: `frontend/src/features/weaver/components/nodes/CharacterNode.tsx`
+  - Modified: `frontend/src/features/weaver/components/nodes/EventNode.tsx`
+  - Modified: `frontend/src/features/weaver/components/nodes/FactionNode.tsx`
+  - Modified: `frontend/src/features/weaver/components/nodes/LocationNode.tsx`
+  - Modified: `frontend/src/features/weaver/components/nodes/SceneNode.tsx`
+  - Modified: `frontend/src/features/weaver/components/nodes/WorldNode.tsx`
+- **Learnings for future iterations:**
+  - WeaverPage.tsx is already well-structured with WeaverToolbar, WeaverCanvas as separate components
+  - The project uses Zod schemas in `types/schemas.ts` for type inference, not a separate `api-types.ts`
+  - React Flow recommends memoizing custom node components to prevent flickering during canvas interactions
+  - The pattern `export const ComponentName = memo(ComponentNameComponent)` maintains named exports
+  - All 33 weaver hook tests pass after the changes
+---

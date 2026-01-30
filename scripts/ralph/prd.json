@@ -1,49 +1,46 @@
 {
-  "project": "Novel-Engine-Reforged",
-  "branchName": "feat/domain-and-fortification",
-  "description": "Consolidated Phase: Fortify Architecture & Build World Domain. Rerunning arch checks to ensure stability.",
+  "project": "Novel-Engine-Refactor",
+  "branchName": "feat/domain-and-fortification", 
+  "description": "DEEP REFACTORING PHASE. No new features. Focus on code quality, UI/UX cleanup, and End-to-End wiring on the CURRENT branch.",
   "userStories": [
     {
-      "id": "ARCH-RECOVER-001",
-      "title": "Verify & Enforce Architecture",
-      "description": "Re-implement architecture guardrails. If code exists, this acts as verification. If not, it builds it.",
+      "id": "REF-001",
+      "title": "Frontend Architecture & UX Overhaul",
+      "description": "Refactor the Weaver frontend to match Vibe Coding best practices. The code is currently messy.",
       "acceptanceCriteria": [
-        "Ensure `import-linter` is installed and `.importlinter` config exists with Hexagonal rules",
-        "Ensure `scripts/generate_openapi.py` exists and correctly exports FastAPI spec",
-        "Ensure `structlog` is configured in `src/core/logging_system.py`",
-        "Run `lint` and `typecheck` to confirm baseline is green"
+        "Refactor `WeaverPage.tsx`: Split into smaller, semantic components (Toolbar, Canvas, Sidebar).",
+        "UI Polish: Ensure the node creation/connection animation is smooth (No flickering).",
+        "Type Safety: Replace any `any` types in frontend hooks with generated types from `src/lib/api/generated/api-types.ts`.",
+        "Comments: Add JSDoc comments to all Hooks explaining complex logic (Optimistic UI)."
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Quick sanity check to ensure the foundations from Phase 1 are solid."
+      "notes": "DO NOT CREATE NEW BRANCH. Modify existing files in place. Make the UI look professional."
     },
     {
-      "id": "WORLD-001",
-      "title": "World Domain Modeling (DDD)",
-      "description": "Define the core Domain Entities for the World context following DDD principles.",
+      "id": "REF-002",
+      "title": "Backend Code Quality & Docs",
+      "description": "The backend works but lacks readability. Harded the codebase.",
       "acceptanceCriteria": [
-        "Create `src/contexts/world/domain/entities/world_setting.py` containing `WorldSetting` entity",
-        "Define `Faction`, `Location`, `HistoryEvent` entities inheriting from base `Entity`",
-        "Ensure entities contain domain logic/invariants, not just anemic data",
-        "Add unit tests in `tests/unit/contexts/world/domain/` for these entities"
+        "Add Python Docstrings (Google Style) to all Domain Entities and Services in `src/contexts/world`.",
+        "Refactor `LLMWorldGenerator`: Extract the retry logic into a reusable Decorator or Mixin if it's too coupled.",
+        "Cleanup: Remove any unused imports or commented-out code detected by linter."
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Verified: All 4 entities exist with rich domain logic. 185 unit tests passing."
+      "passes": false,
+      "notes": "Treat this as if you are preparing for a strict code review."
     },
     {
-      "id": "WORLD-002",
-      "title": "World Generator Adapter",
-      "description": "Implement the LLM Adapter to generate structured World data via the centralized LLM service.",
+      "id": "INT-001",
+      "title": "End-to-End wiring Check",
+      "description": "Verify the system actually runs from UI to DB.",
       "acceptanceCriteria": [
-        "Define `WorldGeneratorPort` interface in `src/contexts/world/application/ports/`",
-        "Implement `LLMWorldGenerator` in `src/contexts/world/infrastructure/generators/`",
-        "Create structured prompt template that outputs JSON mapping to domain entities",
-        "Integration test: Generate a world lore fragment and successfully parse it into Domain Entities"
+        "Manual Verification Script: Create `scripts/verify_e2e.py` that calls the API and checks the output, printing the generated World graph.",
+        "Ensure frontend API client correctly handles the specific error format from backend (Validation Errors)."
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Verified: All 4 acceptance criteria met. 25 unit tests + 4 integration tests passing."
+      "passes": false,
+      "notes": "Ensure the novel generation actually outputs content."
     }
   ]
 }
