@@ -71,7 +71,7 @@
         "Selectors: Use `data-testid` attributes in the UI if stable selectors are missing."
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "These tests serve as the 'Definition of Done' for the UI."
     },
     {
