@@ -29,7 +29,7 @@
         "Import Pruning: Run `ruff check --select F401 --fix` (or equivalent) on `src/contexts/world` to remove unused imports."
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Less code = Fewer bugs. Be ruthless but compile-safe."
     },
     {
