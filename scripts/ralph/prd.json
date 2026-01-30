@@ -113,7 +113,7 @@
         "UX: The Editor should auto-scroll to the bottom as text arrives."
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Low latency (<200ms TTFT) is critical for user experience."
     }
   ]
