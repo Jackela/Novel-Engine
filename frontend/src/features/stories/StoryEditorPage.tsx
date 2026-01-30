@@ -52,8 +52,8 @@ export default function StoryEditorPage() {
   }, []);
 
   const handleComplete = useCallback(() => {
-    // Could trigger auto-save or analytics here
-    console.log('Generation complete, content length:', lastContent.length);
+    // Future: trigger auto-save or analytics here
+    void lastContent.length;
   }, [lastContent.length]);
 
   return (
