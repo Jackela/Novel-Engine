@@ -1,6 +1,9 @@
 /**
  * FactionNode - React Flow node for factions
+ *
+ * Memoized component to prevent unnecessary re-renders during canvas interactions.
  */
+import { memo } from 'react';
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { Shield, Users, Swords } from 'lucide-react';
@@ -61,7 +64,7 @@ function formatAlignment(alignment: string): string {
     .join(' ');
 }
 
-export function FactionNode({ data, id, selected }: NodeProps<FactionNodeType>) {
+function FactionNodeComponent({ data, id, selected }: NodeProps<FactionNodeType>) {
   const alignmentClass = alignmentColors[data.alignment] ?? 'border-gray-400/50 text-gray-200';
 
   return (
@@ -131,3 +134,5 @@ export function FactionNode({ data, id, selected }: NodeProps<FactionNodeType>) 
     </WeaverNode>
   );
 }
+
+export const FactionNode = memo(FactionNodeComponent);

@@ -1,6 +1,10 @@
 /**
  * CharacterNode - React Flow node for characters
+ *
+ * Memoized component to prevent unnecessary re-renders during canvas interactions.
+ * Only re-renders when node data, id, or selected state changes.
  */
+import { memo } from 'react';
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { CardContent, Badge } from '@/shared/components/ui';
@@ -20,7 +24,7 @@ export interface CharacterNodeData extends Record<string, unknown> {
 
 export type CharacterNodeType = Node<CharacterNodeData>;
 
-export function CharacterNode({ data, id, selected }: NodeProps<CharacterNodeType>) {
+function CharacterNodeComponent({ data, id, selected }: NodeProps<CharacterNodeType>) {
   return (
     <WeaverNode
       nodeId={id}
@@ -68,3 +72,5 @@ export function CharacterNode({ data, id, selected }: NodeProps<CharacterNodeTyp
     </WeaverNode>
   );
 }
+
+export const CharacterNode = memo(CharacterNodeComponent);

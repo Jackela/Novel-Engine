@@ -1,5 +1,22 @@
 /**
- * useWorldGeneration - Hook for generating world settings and visualizing as graph nodes
+ * useWorldGeneration - Hook for AI-powered world generation with hierarchical graph layout
+ *
+ * This hook generates complete world settings including factions, locations, and history
+ * events, then visualizes them as an interconnected graph with automatic hierarchical layout.
+ *
+ * Implements the Optimistic UI pattern with multi-node graph creation:
+ * 1. onMutate: Creates a single loading placeholder at the top of the layout
+ * 2. mutationFn: Calls the world generation API (can take several seconds for LLM)
+ * 3. onSuccess: Removes loading node and creates the full world graph:
+ *    - World setting node at top center
+ *    - Faction nodes in a centered middle row
+ *    - Location nodes in a centered bottom row
+ * 4. onError: Updates loading node to show error state
+ *
+ * The hierarchical auto-layout algorithm ensures new world graphs don't overlap
+ * with existing nodes on the canvas.
+ *
+ * @module useWorldGeneration
  */
 import { useMutation } from '@tanstack/react-query';
 import { generateWorld } from '@/lib/api';
@@ -18,8 +35,11 @@ import {
   type WeaverNode,
 } from '../store/weaverStore';
 
+/** Context passed through the mutation lifecycle to track optimistic nodes */
 export type WorldMutationContext = {
+  /** Reserved for the main world node ID (set on success) */
   worldNodeId: string;
+  /** ID of the loading placeholder node to remove on completion */
   loadingNodeId: string;
 };
 
@@ -197,6 +217,36 @@ function createWorldGraphNodes(
   return nodes;
 }
 
+/**
+ * Hook for generating AI worlds with hierarchical graph visualization.
+ *
+ * Creates a complete world with factions, locations, and events, automatically
+ * laying them out in a hierarchical tree structure on the canvas.
+ *
+ * Implements the optimistic update pattern:
+ * 1. Shows a loading placeholder immediately
+ * 2. Generates world via LLM API call
+ * 3. Replaces placeholder with full world graph on success
+ * 4. Shows error state if generation fails
+ *
+ * @example
+ * ```tsx
+ * const { mutate, isPending } = useWorldGeneration();
+ *
+ * const handleGenerateWorld = () => {
+ *   mutate({
+ *     genre: 'fantasy',
+ *     era: 'medieval',
+ *     tone: 'dark',
+ *     themes: ['war', 'redemption'],
+ *     num_factions: 4,
+ *     num_locations: 6,
+ *   });
+ * };
+ * ```
+ *
+ * @returns A TanStack Query mutation object with generate function and status
+ */
 export function useWorldGeneration() {
   const addNode = useWeaverAddNode();
   const updateNode = useWeaverUpdateNode();

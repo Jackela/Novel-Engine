@@ -1,6 +1,9 @@
 /**
  * WorldNode - React Flow node for world settings
+ *
+ * Memoized component to prevent unnecessary re-renders during canvas interactions.
  */
+import { memo } from 'react';
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { Globe, Sparkles, Cog } from 'lucide-react';
@@ -23,7 +26,7 @@ export interface WorldNodeData extends Record<string, unknown> {
 
 export type WorldNodeType = Node<WorldNodeData>;
 
-export function WorldNode({ data, id, selected }: NodeProps<WorldNodeType>) {
+function WorldNodeComponent({ data, id, selected }: NodeProps<WorldNodeType>) {
   return (
     <WeaverNode
       nodeId={id}
@@ -89,3 +92,5 @@ export function WorldNode({ data, id, selected }: NodeProps<WorldNodeType>) {
     </WeaverNode>
   );
 }
+
+export const WorldNode = memo(WorldNodeComponent);

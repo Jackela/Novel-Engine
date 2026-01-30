@@ -1,6 +1,9 @@
 /**
  * LocationNode - React Flow node for locations
+ *
+ * Memoized component to prevent unnecessary re-renders during canvas interactions.
  */
+import { memo } from 'react';
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { MapPin } from 'lucide-react';
@@ -25,7 +28,7 @@ const locationTypeLabels: Record<LocationNodeData['type'], string> = {
   other: 'Location',
 };
 
-export function LocationNode({ data, id, selected }: NodeProps<LocationNodeType>) {
+function LocationNodeComponent({ data, id, selected }: NodeProps<LocationNodeType>) {
   return (
     <WeaverNode
       nodeId={id}
@@ -61,3 +64,5 @@ export function LocationNode({ data, id, selected }: NodeProps<LocationNodeType>
     </WeaverNode>
   );
 }
+
+export const LocationNode = memo(LocationNodeComponent);

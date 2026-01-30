@@ -1,6 +1,9 @@
 /**
  * SceneNode - React Flow node for scenes
+ *
+ * Memoized component to prevent unnecessary re-renders during canvas interactions.
  */
+import { memo } from 'react';
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { CardContent, Badge } from '@/shared/components/ui';
@@ -17,7 +20,7 @@ const sceneTypeBadgeVariant: Record<string, 'default' | 'secondary' | 'destructi
   resolution: 'default',
 };
 
-export function SceneNode({ data, id, selected }: NodeProps<SceneNodeType>) {
+function SceneNodeComponent({ data, id, selected }: NodeProps<SceneNodeType>) {
   const badgeVariant = sceneTypeBadgeVariant[data.sceneType] ?? 'secondary';
 
   return (
@@ -62,3 +65,5 @@ export function SceneNode({ data, id, selected }: NodeProps<SceneNodeType>) {
     </WeaverNode>
   );
 }
+
+export const SceneNode = memo(SceneNodeComponent);
