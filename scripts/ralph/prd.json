@@ -99,7 +99,7 @@
         "Unit Test: Create a mock large graph and verify the assembler prunes it correctly."
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "The 'Memory' of the AI writer."
     },
     {
