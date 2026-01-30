@@ -28,8 +28,8 @@
         "Add unit tests in `tests/unit/contexts/world/domain/` for these entities"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "The foundation of the Knowledge Graph-based World Engine."
+      "passes": true,
+      "notes": "Verified: All 4 entities exist with rich domain logic. 185 unit tests passing."
     },
     {
       "id": "WORLD-002",

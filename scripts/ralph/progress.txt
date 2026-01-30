@@ -142,3 +142,31 @@ Started: Thu Jan 29 19:31:37 2026
   - Query handlers that depend on ORM models belong in infrastructure, not application layer
   - `lint-imports` command validates all hexagonal architecture contracts
 ---
+
+## Thu Jan 30 2026 - WORLD-001 (Verification Pass)
+- What was verified:
+  - Confirmed all 4 domain entities exist in `src/contexts/world/domain/entities/`:
+    - WorldSetting (genre, era, themes, magic/tech levels with validation)
+    - Faction (alignment, relations, influence, territories, power ratings)
+    - Location (hierarchy, climate, connections, danger levels)
+    - HistoryEvent (causality chains, significance levels, outcome tracking)
+  - Entities contain rich domain logic including:
+    - `_validate_business_rules()` for invariant enforcement
+    - Genre/era compatibility validation
+    - Theme consistency validation
+    - Power rating calculations
+    - Factory methods (create_fantasy_world, create_kingdom, etc.)
+  - All 185 unit tests in `tests/unit/contexts/world/domain/` pass
+  - All 8 architecture contracts pass via lint-imports
+  - Ruff lint check passes with no errors
+- Files verified:
+  - `src/contexts/world/domain/entities/world_setting.py` - WorldSetting entity with Genre, Era, ToneType enums
+  - `src/contexts/world/domain/entities/faction.py` - Faction entity with FactionType, FactionAlignment, FactionStatus enums
+  - `src/contexts/world/domain/entities/location.py` - Location entity
+  - `src/contexts/world/domain/entities/history_event.py` - HistoryEvent entity
+  - `tests/unit/contexts/world/domain/test_world_entities.py` - Unit tests for entities
+- **Learnings for future iterations:**
+  - On Windows, use `C:/Users/.../Scripts/lint-imports.exe` directly to run import-linter
+  - mypy errors in unrelated modules (events/) don't block world domain development
+  - Existing implementation already exceeds acceptance criteria with additional features like WorldKnowledgeGraph aggregate and relationship value objects
+---
