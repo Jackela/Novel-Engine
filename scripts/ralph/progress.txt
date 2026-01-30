@@ -18,6 +18,8 @@ Started: Thu Jan 29 19:31:37 2026
 - WorldKnowledgeGraph is distinct from WorldState: WorldKnowledgeGraph manages lore/geography (static), WorldState manages runtime state (dynamic)
 - Frozen dataclass subclasses should use `field(default=...)` to set parent fields, not `__post_init__` with `object.__setattr__`
 - Relationship value objects use frozen dataclasses for immutability and type-specific subclasses for Control, Alliance, Conflict, Origin, Causal relationships
+- Frontend API errors: Use `ApiError.validationErrors` for field-level errors, `ApiError.errorType` for error classification
+- Backend error format: `{status, error: {type, message}, errors: [{field, message}]}` - frontend client handles this automatically
 
 ---
 
@@ -293,4 +295,63 @@ Started: Thu Jan 29 19:31:37 2026
   - React Flow recommends memoizing custom node components to prevent flickering during canvas interactions
   - The pattern `export const ComponentName = memo(ComponentNameComponent)` maintains named exports
   - All 33 weaver hook tests pass after the changes
+---
+## Thu Jan 30 2026 - REF-002
+- What was implemented:
+  - Added comprehensive Google-style docstrings to all domain entities in `src/contexts/world/domain/entities/`:
+    - WorldSetting: Module docstring, Genre/Era/ToneType enums with attribute descriptions, factory methods
+    - Faction: Module docstring, FactionType/FactionAlignment/FactionStatus enums, FactionRelation dataclass, factory methods
+    - Location: Module docstring, LocationType/ClimateType/LocationStatus enums, factory methods
+    - HistoryEvent: Module docstring, EventType/EventSignificance/EventOutcome enums, factory methods
+  - Added detailed docstrings to LLMWorldGenerator in infrastructure layer:
+    - Class-level docstring with attributes and examples
+    - All public and private methods documented with Args, Returns, Raises sections
+  - Cleaned up commented-out code in `example_usage.py`:
+    - Moved example imports from commented code to module docstring
+  - Reviewed LLMWorldGenerator for retry logic:
+    - Confirmed no retry logic exists (only basic try/except error handling)
+    - No extraction needed per PRD criteria "if it's too coupled"
+- Files changed:
+  - Modified: `src/contexts/world/domain/entities/world_setting.py`
+  - Modified: `src/contexts/world/domain/entities/faction.py`
+  - Modified: `src/contexts/world/domain/entities/location.py`
+  - Modified: `src/contexts/world/domain/entities/history_event.py`
+  - Modified: `src/contexts/world/infrastructure/generators/llm_world_generator.py`
+  - Modified: `src/contexts/world/infrastructure/projections/example_usage.py`
+- **Learnings for future iterations:**
+  - Google-style docstrings include: module docstring, class docstring with Attributes, method docstrings with Args/Returns/Raises
+  - Enum docstrings should include Attributes section listing each value and its meaning
+  - Factory methods benefit from Example sections showing typical usage
+  - Commented-out code flagged by ruff ERA001 can be moved to docstrings if it serves as documentation
+  - LLMWorldGenerator uses simple error handling (returns error result), not retry patterns
+  - All 210 world context unit tests verified passing after docstring additions
+---
+
+## Thu Jan 30 2026 - INT-001
+- What was implemented:
+  - Created `scripts/verify_e2e.py` - comprehensive E2E verification script:
+    - Health check endpoint testing (`/api/meta/health`)
+    - Validation error format verification (422 responses)
+    - World generation API call with structured output
+    - Pretty-prints generated World graph (settings, factions, locations, events)
+    - Command-line support for custom base URL (`--base-url`)
+  - Enhanced frontend API client error handling in `frontend/src/lib/api/client.ts`:
+    - Added `ValidationError` and `BackendError` TypeScript interfaces
+    - New `isBackendError()` type guard for structured error detection
+    - `extractErrorMessage()` extracts user-friendly messages from Novel Engine error format
+    - `ApiError` now includes `validationErrors` array and `errorType` field
+    - Proper handling of validation errors (field-level) vs generic errors
+  - Updated `frontend/src/lib/api/index.ts` to export new types
+- Files changed:
+  - New: `scripts/verify_e2e.py`
+  - Modified: `frontend/src/lib/api/client.ts`
+  - Modified: `frontend/src/lib/api/index.ts`
+- **Learnings for future iterations:**
+  - Backend error response structure: `{status: "error", error: {type, message, detail}, errors: [{field, message, value}], metadata: {...}}`
+  - Validation errors (422) include `errors` array with field-level details
+  - Generic errors use `error.message` for main message
+  - FastAPI HTTPException uses simple `detail` field (fallback case)
+  - Frontend type exports: Use `export type { ... }` for interface re-exports
+  - E2E script can be run with: `python scripts/verify_e2e.py --base-url http://localhost:8000`
+  - Health endpoint is at `/api/meta/health`
 ---

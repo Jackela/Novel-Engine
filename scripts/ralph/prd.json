@@ -27,7 +27,7 @@
         "Cleanup: Remove any unused imports or commented-out code detected by linter."
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Treat this as if you are preparing for a strict code review."
     },
     {
@@ -39,7 +39,7 @@
         "Ensure frontend API client correctly handles the specific error format from backend (Validation Errors)."
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Ensure the novel generation actually outputs content."
     }
   ]
