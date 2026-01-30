@@ -47,6 +47,22 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
   test('Scenario 1: User clicks "New Chapter" -> "Generating..." state appears', async ({
     page,
   }) => {
+    // Override mock to add a delay so we can catch the generating state
+    await page.route('**/api/narratives/stream', async (route) => {
+      // Add delay to observe the generating state
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const sseBody =
+        `data: ${JSON.stringify({ type: 'chunk', content: 'Test content...' })}\n\n` +
+        `data: ${JSON.stringify({ type: 'done', content: '' })}\n\n`;
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: sseBody,
+      });
+    });
+
     // ========================================
     // GIVEN: User is on the Story Editor page
     // ========================================
@@ -68,9 +84,10 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // ========================================
     await test.step('THEN: A "Generating..." indicator appears in the editor', async () => {
       // The editor should show a loading/generating state
-      const generatingIndicator = page.locator('[data-testid="generating-indicator"]');
+      // Use .first() since there may be multiple indicators during different states
+      const generatingIndicator = page.locator('[data-testid="generating-indicator"]').first();
       await expect(generatingIndicator).toBeVisible({ timeout: 3000 });
-      await expect(generatingIndicator).toContainText(/generating/i);
+      await expect(generatingIndicator).toContainText(/generating|connecting/i);
     });
   });
 

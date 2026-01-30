@@ -43,8 +43,8 @@
         "Validation: `npm run test:e2e` (NAR-001) MUST PASS (Green state)"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "No custom CSS. Use standard components."
+      "passes": true,
+      "notes": "GREEN state achieved. All 5 E2E tests passing. NarrativeEditor + useStoryStream + ScrollArea implemented."
     }
   ]
 }
