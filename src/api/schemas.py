@@ -242,6 +242,56 @@ class SceneGenerationResponse(BaseModel):
     visual_prompt: str
 
 
+# === Narrative Streaming Schemas ===
+
+
+class WorldContextEntity(BaseModel):
+    """Entity within the world context."""
+
+    id: str
+    name: str
+    type: str  # 'character', 'location', 'item', 'event'
+    description: str = ""
+    attributes: Dict[str, str] = Field(default_factory=dict)
+
+
+class WorldContext(BaseModel):
+    """World context for narrative generation."""
+
+    characters: List[WorldContextEntity] = Field(default_factory=list)
+    locations: List[WorldContextEntity] = Field(default_factory=list)
+    entities: List[WorldContextEntity] = Field(default_factory=list)
+    current_scene: Optional[str] = None
+    narrative_style: Optional[str] = None
+
+
+class NarrativeStreamRequest(BaseModel):
+    """Request model for streaming narrative generation."""
+
+    prompt: str = Field(..., min_length=1, max_length=5000)
+    world_context: WorldContext
+    chapter_title: Optional[str] = None
+    tone: Optional[str] = None
+    max_tokens: int = Field(default=2000, ge=100, le=8000)
+
+
+class NarrativeStreamChunk(BaseModel):
+    """A single chunk from the narrative stream."""
+
+    type: str  # 'chunk', 'done', 'error'
+    content: str
+    sequence: int = 0
+
+
+class NarrativeStreamMetadata(BaseModel):
+    """Metadata about a completed narrative stream."""
+
+    total_chunks: int
+    total_characters: int
+    generation_time_ms: int
+    model_used: str = "deterministic-fallback"
+
+
 class FileCount(BaseModel):
     """Response model for file count information."""
 
@@ -433,6 +483,12 @@ __all__ = [
     "CharacterGenerationResponse",
     "SceneGenerationRequest",
     "SceneGenerationResponse",
+    # Narrative Streaming Schemas
+    "WorldContextEntity",
+    "WorldContext",
+    "NarrativeStreamRequest",
+    "NarrativeStreamChunk",
+    "NarrativeStreamMetadata",
     "FileCount",
     "CampaignsListResponse",
     "CampaignCreationRequest",

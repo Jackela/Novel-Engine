@@ -29,8 +29,8 @@
         "Passes: `NAR-001` test scenario for backend connection"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Performance matters. Latency to first token must be < 2s."
+      "passes": true,
+      "notes": "POST /api/narratives/stream implemented with SSE. DeterministicNarrativeGenerator provides fallback."
     },
     {
       "id": "NAR-003",
