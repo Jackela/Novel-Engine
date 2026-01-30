@@ -1,104 +1,53 @@
 {
-  "project": "Novel-Engine-Quality-Assurance",
+  "project": "Novel-Engine-UI-Rescue",
   "branchName": "feat/domain-and-fortification",
-  "description": "Quality Assurance Phase: Applying strict documentation and testing standards.",
+  "description": "Fixing the broken UI (404s), optimizing test execution (hanging browsers), and preparing the Mock infrastructure.",
   "techContext": {
-    "stack": "FastAPI + React (Vite) + Tailwind + shadcn/ui",
-    "testCommand": "pytest",
-    "e2eCommand": "npm run test:e2e",
-    "typecheckCommand": "npm run typecheck",
-    "lintCommand": "npm run lint",
-    "docstyleCommand": "pydocstyle src/contexts/world",
-    "conventions": [
-      "Docstrings follow Google Style",
-      "Frontend uses JSDoc for complex hooks",
-      "No console.log allowed in production code"
-    ]
+    "stack": "React + Vite + shadcn/ui + Playwright",
+    "testCommand": "npm run test:e2e",
+    "e2eConfig": "playwright.config.ts"
   },
   "userStories": [
     {
-      "id": "DOC-001",
-      "title": "Document Domain Entities",
-      "description": "Add docstrings to core domain entities.",
+      "id": "UI-FIX-001",
+      "title": "Router & Page Audit",
+      "description": "The app has blank pages. Audit the Router and delete dead code.",
       "acceptanceCriteria": [
-        "Add class docstrings to `WorldSetting`, `Faction`, `Location` in `src/contexts/world/domain/entities/`",
-        "Docstring must include: Args, Attributes, and a brief description",
-        "Run `pydocstyle src/contexts/world/domain/entities/` -> Exit code 0"
+        "Audit `App.tsx`: Identify all routes.",
+        "Manual Check Logic: If a route points to a component that renders nothing or errors, FIX it or DELETE the route.",
+        "Ensure the Root Route `/` redirects to a valid Dashboard or Home (not blank).",
+        "Verification: `npm run test:e2e` (navigation tests) must pass and NOT be empty."
       ],
       "priority": 1,
       "passes": true,
-      "effort": "low"
+      "effort": "medium"
     },
     {
-      "id": "DOC-002",
-      "title": "Document Generator Infrastructure",
-      "description": "Explain the LLM prompt engineering logic.",
+      "id": "TEST-FIX-001",
+      "title": "Fix Hanging Playwright Browsers",
+      "description": "Tests leave Chrome instances open, blocking the dev loop.",
       "acceptanceCriteria": [
-        "Add docstrings to `LLMWorldGenerator` methods",
-        "Explain the `_build_prompt` logic: input variables and expected JSON output format",
-        "Run `pydocstyle src/contexts/world/infrastructure/generators/` -> Exit code 0"
+        "Modify `playwright.config.ts`: Ensure `headless: true` is default for CI/Ralph runs.",
+        "Add `Global Teardown`: Ensure contexts are closed after tests.",
+        "Verification: Run `npm run test:e2e` twice in a row. It should not fail due to 'port in use' or locked files."
       ],
       "priority": 2,
       "passes": true,
-      "effort": "low",
-      "dependencies": ["DOC-001"]
-    },
-    {
-      "id": "DOC-003",
-      "title": "Frontend Hook Documentation",
-      "description": "Document the World Generation state machine.",
-      "acceptanceCriteria": [
-        "Add JSDoc to `useWorldGeneration.ts`",
-        "Document the `generationState` state transitions",
-        "Run `npm run typecheck` -> Pass"
-      ],
-      "priority": 3,
-      "passes": true,
       "effort": "low"
     },
     {
-      "id": "TEST-001",
-      "title": "E2E Smoke Test - Navigation",
-      "description": "Verify basic navigation works.",
+      "id": "MOCK-001",
+      "title": "LLM Mock Infrastructure",
+      "description": "Prepare for Narrative dev by mocking the expensive LLM calls in E2E.",
       "acceptanceCriteria": [
-        "Create `tests/e2e/navigation.spec.ts`",
-        "Test: Visit '/' -> Check title",
-        "Test: Click 'Weaver' -> Check URL is '/weaver'",
-        "Run `npx playwright test tests/e2e/navigation.spec.ts` -> Pass"
+        "Create `tests/mocks/llm_handlers.ts`: A mock server (or Playwright `page.route`) that intercepts `POST /api/generate`.",
+        "Return dummy JSON instantly instead of calling OpenAI/Claude.",
+        "Enable this mock ONLY when `MOCK_LLM=true` env var is set.",
+        "Verification: Run a generation test with MOCK_LLM=true and assert it finishes in <2 seconds."
       ],
-      "priority": 4,
-      "passes": true,
-      "effort": "medium",
-      "note": "Navigation tests already exist in frontend/tests/e2e/navigation.spec.ts with comprehensive coverage"
-    },
-    {
-      "id": "TEST-002",
-      "title": "E2E Smoke Test - Generation",
-      "description": "Verify the core loop works visually.",
-      "acceptanceCriteria": [
-        "Create `tests/e2e/generation.spec.ts`",
-        "Test: Fill form -> Click Generate -> Wait for Node '.world-node' to appear",
-        "Assert: Node count > 0",
-        "Run `npx playwright test tests/e2e/generation.spec.ts` -> Pass"
-      ],
-      "priority": 5,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["TEST-001"],
-      "note": "Generation tests in frontend/tests/e2e/world-generation.spec.ts - updated to match actual CharacterGeneration UI (not World Generation)"
-    },
-    {
-      "id": "CLEAN-001",
-      "title": "Remove Console Logs",
-      "description": "Clean up debugging artifacts.",
-      "acceptanceCriteria": [
-        "Run `grep -r 'console.log' src/` -> Output should be empty (or only allowed specific files)",
-        "Run `npm run lint` -> Pass"
-      ],
-      "priority": 6,
-      "passes": true,
-      "effort": "low",
-      "note": "Verified clean: frontend/src has zero console.log statements. Backend src/ has 3 instances, all in API documentation example strings (JavaScript code snippets showing users how to call the API). These are legitimate documentation, not debugging artifacts."
+      "priority": 3,
+      "passes": false,
+      "effort": "medium"
     }
   ]
 }

@@ -111,8 +111,8 @@ export default defineConfig({
     // Base URL for testing
     baseURL: baseUrl,
 
-    // Browser settings
-    headless: process.env.CI ? true : false,
+    // Browser settings - default to headless for CI/Ralph runs
+    headless: process.env.HEADED !== 'true',
     viewport: { width: 1440, height: 900 }, // Desktop default
     ignoreHTTPSErrors: true,
 

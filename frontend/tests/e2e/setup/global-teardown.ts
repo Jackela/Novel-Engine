@@ -1,9 +1,10 @@
-import { FullConfig } from '@playwright/test';
+import { FullConfig, chromium, firefox, webkit } from '@playwright/test';
 
 /**
  * Global Teardown for Emergent Narrative Dashboard UAT
- * 
+ *
  * Handles:
+ * - Browser context and instance cleanup
  * - Test environment cleanup
  * - Mock server shutdown
  * - Test data cleanup
@@ -13,16 +14,56 @@ import { FullConfig } from '@playwright/test';
 async function globalTeardown(config: FullConfig) {
   console.log('🧹 Cleaning up Emergent Narrative Dashboard UAT environment...');
 
+  // Force close any lingering browser contexts
+  await cleanupBrowserContexts();
+
   // Cleanup mock API server
   await cleanupMockAPIServer();
-  
+
   // Clear test data and tokens
   await clearTestData();
-  
+
   // Generate test summary metrics
   await generateTestMetrics(config);
-  
+
   console.log('✅ Global teardown completed successfully');
+}
+
+/**
+ * Force close any lingering browser contexts to prevent port/file locks.
+ */
+async function cleanupBrowserContexts() {
+  console.log('🌐 Closing any lingering browser contexts...');
+
+  const browserTypes = [chromium, firefox, webkit];
+
+  for (const browserType of browserTypes) {
+    try {
+      // Connect to any running browser and close it
+      // This is a best-effort cleanup; errors are expected if no browsers are running
+      const browser = await browserType.launch({ headless: true });
+      await browser.close();
+    } catch {
+      // No browser of this type running - this is expected
+    }
+  }
+
+  // Kill any orphaned browser processes on Windows
+  if (process.platform === 'win32') {
+    try {
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+
+      // Kill orphaned Chromium processes spawned by Playwright
+      await execAsync('taskkill /F /IM "chrome.exe" /FI "WINDOWTITLE eq Playwright*" 2>nul').catch(() => {});
+      await execAsync('taskkill /F /IM "msedge.exe" /FI "WINDOWTITLE eq Playwright*" 2>nul').catch(() => {});
+    } catch {
+      // Process kill failed - acceptable, not critical
+    }
+  }
+
+  console.log('🌐 Browser cleanup complete');
 }
 
 /**

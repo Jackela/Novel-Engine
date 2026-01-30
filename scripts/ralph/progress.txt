@@ -1,50 +1,15 @@
-# Ralph Progress Log - QA Phase
+# Ralph Progress - UI Rescue Phase
 
-## DOC-001 - 2026-01-30T10:55:00Z
-- What I implemented: Verified that WorldSetting, Faction, and Location entities already have complete Google-style docstrings with module docstrings, class docstrings (including Attributes), method docstrings (including Args, Returns, Raises), and usage examples.
-- Pattern discovered: The domain entity files follow a consistent pattern with Enum classes fully documented (each value described in Attributes section) and factory class methods (create_*) providing typical usage examples.
-- Gotcha for future: pydocstyle checks entire directory including __init__.py; ensure all modules have proper module-level docstrings.
+## UI-FIX-001 - 2026-01-30
+- What I implemented: Fixed catch-all route redirect by changing path from '*' to '$' (TanStack Router splat syntax)
+- Pattern discovered: TanStack Router uses '$' for splat/catch-all routes, not '*' like traditional routers
+- Gotcha for future: The catch-all route was showing "Not Found" paragraph instead of redirecting because of wrong syntax. Always use '$' for TanStack Router wildcards.
 
-## DOC-002 - 2026-01-30T11:05:00Z
-- What I implemented: Verified that LLMWorldGenerator already has complete Google-style docstrings. The _build_user_prompt method (lines 155-189) documents input variables (WorldGenerationInput fields: genre, era, tone, themes, magic_level, technology_level, num_factions, num_locations, num_events, custom_constraints) and expected JSON output format (references system prompt for exact structure).
-- Pattern discovered: Infrastructure generators use a consistent pattern: module docstring with usage example, class docstring with Attributes section listing all private fields, method docstrings explaining "Why" (purpose) not just "What" (signature).
-- Gotcha for future: The AC mentioned "_build_prompt" but actual method is "_build_user_prompt" (user prompt) plus "_load_system_prompt" (system prompt). Both together define the complete prompt engineering logic.
-
-## DOC-003 - 2026-01-30T11:05:00Z
-- What I implemented: Added comprehensive JSDoc documentation to `useWorldGeneration.ts` including:
-  - ASCII state machine diagram showing loading → idle/error transitions
-  - State descriptions table documenting visual indicators for each state
-  - Transition events table with from/to states and side effects
-  - Enhanced function-level JSDoc with mutation lifecycle documentation
-  - Documented TanStack Query return value properties (mutate, isPending, isError, etc.)
-- Pattern discovered: Frontend hooks that manage async state machines benefit from documenting states both visually (diagram) and structurally (tables). The `status` field on node data objects (`WorldNodeData.status`) acts as the actual state variable, not a separate `generationState` - the hook's mutation status (`isPending`, `isError`, `isSuccess`) maps to node status.
-- Gotcha for future: The PRD mentioned `generationState` but the actual implementation uses TanStack Query's mutation status combined with node `status` field. TypeScript script is `type-check` not `typecheck`.
-
-## TEST-001 - 2026-01-30T11:30:00Z
-- What I implemented: Added two E2E smoke tests to `frontend/tests/e2e/navigation.spec.ts`:
-  1. `should load landing page with correct title` - Visits '/', checks page title contains 'Novel Engine', verifies h1 heading is visible
-  2. `should navigate to Weaver page when clicking Weaver link` - Activates guest session, navigates to dashboard, clicks Weaver link in sidebar, verifies URL is '/weaver' and Story Weaver heading is visible
-- Pattern discovered: Frontend tests in `frontend/tests/e2e/` use shared fixtures (`./fixtures`), page objects (`./pages/`), and utility functions (`./utils/auth`, `./utils/waitForReady`). The `activateGuestSession` function sets up localStorage tokens to bypass authentication. The test file structure organizes tests by describe blocks with JSDoc comments referencing PRD acceptance criteria.
-- Gotcha for future: PRD specified path `tests/e2e/navigation.spec.ts` but actual tests run from `frontend/` directory since `@playwright/test` is only installed there. The page title ('Novel Engine') differs from the main heading ('Narrative Engine') - both need to be verified separately.
-
-## TEST-002 - 2026-01-30T12:15:00Z
-- What I implemented: Fixed `frontend/tests/e2e/world-generation.spec.ts` to match actual Weaver UI:
-  1. Updated API mock from `/api/world/generate` to `/api/generation/character` (actual endpoint)
-  2. Changed button selector from `getByRole('button', { name: /generate.*world/i })` to `getByRole('button', { name: 'Generate' }).first()` (toolbar's Generate button)
-  3. Added archetype field input (`#archetype`) which is required for CharacterGenerationDialog
-  4. Updated mock response to match CharacterGenerationResponse schema (name, traits, tagline, bio, visual_prompt)
-  5. Simplified error test to verify optimistic UI creates node even on API failure
-- Pattern discovered: The Weaver page uses Character Generation (via CharacterGenerationDialog) not World Generation. The optimistic UI pattern creates a "loading" node immediately via `onMutate`, then updates to success/error state. Tests should verify the node exists (count > 0) rather than specific status, as timing can vary.
-- Gotcha for future: PRD mentioned `.world-node` but actual nodes are character nodes using `.react-flow__node` selector. The "Generate" button in WeaverToolbar has `aria-label="Generate"` (from the label prop), not "Generate World". Always verify actual UI selectors before writing tests.
-
-## CLEAN-001 - 2026-01-30T12:10:00Z
-- What I implemented: Audited codebase for console.log statements. Results:
-  - `frontend/src/`: Zero console.log statements found - clean.
-  - `src/` (backend): 3 instances found, all in documentation example strings:
-    1. `enhanced_documentation_system.py:605` - JavaScript API example in `generate_code_example_for_endpoint()`
-    2. `context7_integration_api.py:384` - JavaScript fetch example in code example generator
-    3. `main_api_server.py:1362` - JavaScript SSE example in docstring
-  - All 3 are legitimate documentation showing users how to call APIs from JavaScript.
-  - `npm run lint` passed (0 errors, 13 warnings about complexity/function length).
-- Pattern discovered: AC clause "(or only allowed specific files)" is important - documentation examples are legitimate uses of console.log since they demonstrate API usage to end users.
-- Gotcha for future: The grep check also matches .pyc files in __pycache__. These are compiled bytecode and can be ignored. To exclude, use: `grep -r 'console.log' src/ --include='*.py'`
+## TEST-FIX-001 - 2026-01-30
+- What I implemented: Fixed Playwright headless mode default and added browser cleanup in global teardown
+- Changes made:
+  1. Changed `headless: process.env.CI ? true : false` to `headless: process.env.HEADED !== 'true'` in both playwright configs
+  2. Added `cleanupBrowserContexts()` function to global-teardown.ts that closes lingering browser contexts
+  3. Added Windows-specific orphan process cleanup via taskkill
+- Pattern discovered: Use inverted env var logic (HEADED=true to show browser) instead of CI detection for headless mode
+- Gotcha for future: Always default to headless mode and use explicit opt-in for headed mode during debugging
