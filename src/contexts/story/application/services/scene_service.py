@@ -16,10 +16,28 @@ if TYPE_CHECKING:
 
 
 class DeterministicSceneGenerator:
-    """Fallback scene generator with deterministic output."""
+    """Fallback scene generator with deterministic output.
+
+    This generator uses predefined templates to create scenes without
+    requiring an LLM. It's useful for testing, development, and as a
+    fallback when LLM services are unavailable.
+    """
 
     def generate(self, request: SceneGenerationInput) -> SceneGenerationResult:
-        """Generate a scene using template-based logic."""
+        """Generate a scene using template-based logic.
+
+        Produces deterministic output by selecting templates based on
+        scene type and interpolating character data.
+
+        Args:
+            request: Scene generation input containing character context,
+                scene type ('opening', 'action', 'dialogue', 'climax',
+                'resolution'), and optional tone.
+
+        Returns:
+            SceneGenerationResult with title, content, summary, and
+            visual_prompt fields populated from templates.
+        """
         char = request.character_context
         scene_type = request.scene_type
         tone = request.tone or "neutral"
@@ -85,10 +103,21 @@ class DeterministicSceneGenerator:
 
 
 class SceneGenerationService:
-    """Service for generating narrative scenes."""
+    """Service for generating narrative scenes.
+
+    Orchestrates scene generation by delegating to a generator implementation.
+    Follows the hexagonal architecture pattern where the service contains
+    application logic and the generator (port) handles infrastructure concerns.
+    """
 
     def __init__(self, generator: SceneGeneratorPort | None = None) -> None:
-        """Initialize with a scene generator."""
+        """Initialize the service with a scene generator.
+
+        Args:
+            generator: Optional scene generator implementation. If not provided,
+                defaults to DeterministicSceneGenerator. For LLM-based generation,
+                inject LLMSceneGenerator from the infrastructure layer.
+        """
         self._generator = generator or _select_default_generator()
 
     def generate(
@@ -97,7 +126,19 @@ class SceneGenerationService:
         scene_type: str,
         tone: str | None = None,
     ) -> SceneGenerationResult:
-        """Generate a scene based on character context and parameters."""
+        """Generate a scene based on character context and parameters.
+
+        Args:
+            character_context: Character data including name, bio, traits, and
+                visual prompt from a previous character generation call.
+            scene_type: Type of scene to generate. Valid values are 'opening',
+                'action', 'dialogue', 'climax', or 'resolution'.
+            tone: Optional tone modifier for the scene (e.g., 'dark', 'hopeful').
+
+        Returns:
+            SceneGenerationResult containing the generated scene's title,
+            content, summary, and visual_prompt.
+        """
         request = SceneGenerationInput(
             character_context=character_context,
             scene_type=scene_type,
@@ -123,7 +164,20 @@ def generate_scene(
     tone: str | None = None,
     generator: SceneGeneratorPort | None = None,
 ) -> SceneGenerationResult:
-    """Convenience function to generate a scene."""
+    """Convenience function to generate a scene.
+
+    Creates a SceneGenerationService instance and generates a scene in one call.
+    Useful for simple use cases that don't need to manage service lifecycle.
+
+    Args:
+        character_context: Character data from character generation.
+        scene_type: Scene type ('opening', 'action', 'dialogue', 'climax', 'resolution').
+        tone: Optional tone modifier.
+        generator: Optional custom generator. Defaults to DeterministicSceneGenerator.
+
+    Returns:
+        SceneGenerationResult with generated scene content.
+    """
     service = SceneGenerationService(generator=generator)
     return service.generate(
         character_context=character_context,

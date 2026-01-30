@@ -9,22 +9,22 @@ from pydantic import BaseModel, Field, JsonValue, field_validator
 class OrchestrationStep(BaseModel):
     """Step within orchestration progress."""
 
-    id: str
-    name: str
-    status: str
-    progress: float = Field(ge=0, le=100)
+    id: str = Field(..., description="Unique identifier for this step")
+    name: str = Field(..., description="Human-readable name of the step")
+    status: str = Field(..., description="Current status: pending, running, completed, failed")
+    progress: float = Field(ge=0, le=100, description="Completion percentage (0-100)")
 
 
 class OrchestrationStatusData(BaseModel):
     """Orchestration status data structure."""
 
-    status: str
-    current_turn: int = 0
-    total_turns: int = 0
-    queue_length: int = 0
-    average_processing_time: float = 0.0
-    steps: List[OrchestrationStep] = Field(default_factory=list)
-    last_updated: Optional[str] = None
+    status: str = Field(..., description="Overall orchestration status: idle, running, paused, completed")
+    current_turn: int = Field(0, description="Current turn number being processed")
+    total_turns: int = Field(0, description="Total number of turns to process")
+    queue_length: int = Field(0, description="Number of pending operations in the queue")
+    average_processing_time: float = Field(0.0, description="Average time per turn in seconds")
+    steps: List[OrchestrationStep] = Field(default_factory=list, description="Detailed step breakdown")
+    last_updated: Optional[str] = Field(None, description="ISO 8601 timestamp of last status update")
 
 
 class OrchestrationStatusResponse(BaseModel):
@@ -38,10 +38,20 @@ class OrchestrationStatusResponse(BaseModel):
 class OrchestrationStartRequest(BaseModel):
     """Request to start orchestration."""
 
-    character_names: Optional[List[str]] = Field(None, min_length=2, max_length=6)
-    total_turns: Optional[int] = Field(3, ge=1, le=10)
-    setting: Optional[str] = None
-    scenario: Optional[str] = None
+    character_names: Optional[List[str]] = Field(
+        None,
+        min_length=2,
+        max_length=6,
+        description="List of character names to include (2-6 characters)"
+    )
+    total_turns: Optional[int] = Field(
+        3,
+        ge=1,
+        le=10,
+        description="Number of narrative turns to generate (1-10)"
+    )
+    setting: Optional[str] = Field(None, description="World setting name or ID")
+    scenario: Optional[str] = Field(None, description="Initial scenario description")
 
 
 class OrchestrationStartResponse(BaseModel):

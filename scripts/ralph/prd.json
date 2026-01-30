@@ -57,7 +57,7 @@
         "Linter Pass: Run `pydocstyle` and ensure no D101/D102 errors in target directories."
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Code is read more often than it is written."
     },
     {
