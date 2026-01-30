@@ -49,7 +49,7 @@ class TestLLMFailureHandling:
 
             # Make request to character generation (this endpoint uses LLM)
             response = test_client.post(
-                "/api/characters/generate",
+                "/api/generation/character",
                 json={
                     "concept": "test hero",
                     "archetype": "hero",
@@ -297,7 +297,7 @@ class TestGracefulDegradation:
         """
         # Test various invalid requests
         invalid_requests = [
-            ("POST", "/api/characters/generate", {"invalid": "data"}),
+            ("POST", "/api/generation/character", {"invalid": "data"}),
             ("GET", "/api/nonexistent/endpoint", None),
             ("POST", "/api/world/generate", {"genre": 12345}),  # Wrong type
         ]
