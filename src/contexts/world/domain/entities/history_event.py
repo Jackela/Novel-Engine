@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
-"""
-HistoryEvent Domain Entity
+"""HistoryEvent Domain Entity.
 
-Represents a historical event in the world's timeline, including wars,
-discoveries, political changes, and other significant occurrences.
+This module defines the HistoryEvent entity which represents significant
+historical events in the world's timeline, including wars, discoveries,
+political changes, and other occurrences that shape the world's lore.
+
+Typical usage example:
+    >>> from src.contexts.world.domain.entities import (
+    ...     HistoryEvent, EventType, EventSignificance
+    ... )
+    >>> war = HistoryEvent.create_war(
+    ...     name="The Sundering",
+    ...     description="A cataclysmic war that split the continent.",
+    ...     date_description="Year 1042 of the Third Age",
+    ...     faction_ids=["uuid1", "uuid2"]
+    ... )
 """
 
 from dataclasses import dataclass, field
@@ -14,7 +25,39 @@ from .entity import Entity
 
 
 class EventType(Enum):
-    """Classification of historical event types."""
+    """Classification of historical event types.
+
+    Categorizes events to enable consistent narrative treatment and
+    establish relationships between events and other entities.
+
+    Attributes:
+        WAR: Extended military conflict between factions.
+        BATTLE: Single military engagement.
+        TREATY: Formal agreement between factions.
+        FOUNDING: Creation of a new faction or settlement.
+        DESTRUCTION: Annihilation of a location or faction.
+        DISCOVERY: Finding of new knowledge, lands, or artifacts.
+        INVENTION: Creation of new technology or magic.
+        CORONATION: Ascension of a new ruler.
+        DEATH: Passing of a significant figure.
+        BIRTH: Arrival of a significant figure.
+        MARRIAGE: Union between important individuals.
+        REVOLUTION: Uprising against established order.
+        MIGRATION: Large-scale population movement.
+        DISASTER: Natural or magical catastrophe.
+        MIRACLE: Divine intervention or unexplained wonder.
+        PROPHECY: Revelation of future events.
+        CONQUEST: Takeover of territory.
+        LIBERATION: Freedom from occupation or oppression.
+        ALLIANCE: Formation of faction partnership.
+        BETRAYAL: Breaking of trust or agreement.
+        RELIGIOUS: Faith-related occurrence.
+        CULTURAL: Artistic or social development.
+        ECONOMIC: Trade or financial change.
+        SCIENTIFIC: Knowledge or research advancement.
+        MAGICAL: Arcane phenomenon.
+        POLITICAL: Governance or diplomacy event.
+    """
 
     WAR = "war"
     BATTLE = "battle"
@@ -45,7 +88,19 @@ class EventType(Enum):
 
 
 class EventSignificance(Enum):
-    """Level of historical significance."""
+    """Level of historical significance.
+
+    Determines how much impact an event has on world history and
+    affects narrative importance calculations.
+
+    Attributes:
+        TRIVIAL: Forgotten by most, local impact only.
+        MINOR: Remembered locally, limited lasting effects.
+        MODERATE: Regional impact, taught in schools.
+        MAJOR: National impact, changes political landscape.
+        WORLD_CHANGING: Global impact, reshapes civilization.
+        LEGENDARY: Mythic status, defines eras.
+    """
 
     TRIVIAL = "trivial"
     MINOR = "minor"
@@ -56,7 +111,17 @@ class EventSignificance(Enum):
 
 
 class EventOutcome(Enum):
-    """General outcome of the event."""
+    """General outcome of the event.
+
+    Categorizes the net effect of the event on the world and affected parties.
+
+    Attributes:
+        POSITIVE: Beneficial results for most involved.
+        NEGATIVE: Harmful results for most involved.
+        NEUTRAL: No clear positive or negative impact.
+        MIXED: Both positive and negative consequences.
+        UNKNOWN: Outcome not yet determined or understood.
+    """
 
     POSITIVE = "positive"
     NEGATIVE = "negative"
@@ -438,7 +503,30 @@ class HistoryEvent(Entity):
         faction_ids: List[str],
         outcome: EventOutcome = EventOutcome.MIXED,
     ) -> "HistoryEvent":
-        """Factory method to create a war event."""
+        """Create a war event with typical military conflict attributes.
+
+        Factory method that creates a pre-configured HistoryEvent representing
+        an extended military conflict with major significance and high
+        narrative importance.
+
+        Args:
+            name: The war's name.
+            description: Detailed description of the conflict.
+            date_description: When the war occurred (narrative format).
+            faction_ids: UUIDs of factions involved in the conflict.
+            outcome: Result of the war. Defaults to MIXED.
+
+        Returns:
+            A new HistoryEvent configured as a war.
+
+        Example:
+            >>> war = HistoryEvent.create_war(
+            ...     name="The Sundering",
+            ...     description="A devastating conflict over ancient artifacts.",
+            ...     date_description="Year 1042 of the Third Age",
+            ...     faction_ids=["kingdom-uuid", "empire-uuid"]
+            ... )
+        """
         return cls(
             name=name,
             description=description,
@@ -459,7 +547,30 @@ class HistoryEvent(Entity):
         location_ids: List[str] | None = None,
         faction_ids: List[str] | None = None,
     ) -> "HistoryEvent":
-        """Factory method to create a founding event."""
+        """Create a founding event for settlements or organizations.
+
+        Factory method that creates a pre-configured HistoryEvent representing
+        the establishment of a new faction or location with positive outcome
+        and moderate significance.
+
+        Args:
+            name: The event's name.
+            description: Detailed description of the founding.
+            date_description: When the founding occurred (narrative format).
+            location_ids: UUIDs of locations where the founding occurred.
+            faction_ids: UUIDs of factions involved in the founding.
+
+        Returns:
+            A new HistoryEvent configured as a founding event.
+
+        Example:
+            >>> founding = HistoryEvent.create_founding(
+            ...     name="Founding of Thornhaven",
+            ...     description="Refugees established a new city.",
+            ...     date_description="After the Great Migration",
+            ...     location_ids=["city-uuid"]
+            ... )
+        """
         return cls(
             name=name,
             description=description,
@@ -481,7 +592,31 @@ class HistoryEvent(Entity):
         location_ids: List[str],
         significance: EventSignificance = EventSignificance.MAJOR,
     ) -> "HistoryEvent":
-        """Factory method to create a disaster event."""
+        """Create a disaster event representing a catastrophe.
+
+        Factory method that creates a pre-configured HistoryEvent representing
+        a natural or magical disaster with negative outcome and configurable
+        significance.
+
+        Args:
+            name: The disaster's name.
+            description: Detailed description of the catastrophe.
+            date_description: When the disaster occurred (narrative format).
+            location_ids: UUIDs of locations affected by the disaster.
+            significance: Level of historical impact. Defaults to MAJOR.
+
+        Returns:
+            A new HistoryEvent configured as a disaster.
+
+        Example:
+            >>> disaster = HistoryEvent.create_disaster(
+            ...     name="The Great Flood",
+            ...     description="Rising seas swallowed the coastal cities.",
+            ...     date_description="The Year of Drowned Bells",
+            ...     location_ids=["coast-uuid", "port-uuid"],
+            ...     significance=EventSignificance.WORLD_CHANGING
+            ... )
+        """
         return cls(
             name=name,
             description=description,

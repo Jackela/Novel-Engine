@@ -1,9 +1,21 @@
 #!/usr/bin/env python3
-"""
-Location Domain Entity
+"""Location Domain Entity.
 
-Represents a place or area within the world, including physical locations,
-regions, and points of interest.
+This module defines the Location entity which represents places and areas
+within the world, including settlements, natural features, dungeons, and
+other points of interest.
+
+Typical usage example:
+    >>> from src.contexts.world.domain.entities import Location, LocationType
+    >>> city = Location.create_city(
+    ...     name="Thornhaven",
+    ...     population=75000,
+    ...     climate=ClimateType.TEMPERATE
+    ... )
+    >>> dungeon = Location.create_dungeon(
+    ...     name="Crypt of Shadows",
+    ...     dangers=["undead", "traps", "cursed artifacts"]
+    ... )
 """
 
 from dataclasses import dataclass, field
@@ -14,7 +26,40 @@ from .entity import Entity
 
 
 class LocationType(Enum):
-    """Classification of location types."""
+    """Classification of location types.
+
+    Determines the nature and expected characteristics of a location,
+    affecting population limits, danger levels, and resource availability.
+
+    Attributes:
+        CONTINENT: Massive landmass containing multiple regions.
+        REGION: Large geographic area with shared characteristics.
+        COUNTRY: Political entity with defined borders.
+        PROVINCE: Administrative division of a country.
+        CITY: Large urban settlement (population up to 5 million).
+        TOWN: Medium settlement (population up to 50,000).
+        VILLAGE: Small settlement (population up to 5,000).
+        FORTRESS: Military stronghold or castle.
+        CASTLE: Noble residence, often fortified.
+        DUNGEON: Underground complex, often dangerous.
+        TEMPLE: Religious structure or complex.
+        FOREST: Wooded natural area.
+        MOUNTAIN: Elevated terrain feature.
+        OCEAN: Large body of saltwater.
+        RIVER: Flowing freshwater body.
+        DESERT: Arid wasteland.
+        SWAMP: Wetland with standing water.
+        PLAINS: Flat grassland terrain.
+        ISLAND: Land surrounded by water.
+        CAVE: Natural underground formation.
+        RUINS: Remnants of former structures.
+        LANDMARK: Notable geographic or artificial feature.
+        CAPITAL: Seat of government, largest city.
+        PORT: Coastal trading settlement.
+        SPACE_STATION: Orbital or space-based structure.
+        PLANET: Celestial body (for sci-fi settings).
+        DIMENSION: Alternate plane of existence.
+    """
 
     CONTINENT = "continent"
     REGION = "region"
@@ -46,7 +91,23 @@ class LocationType(Enum):
 
 
 class ClimateType(Enum):
-    """Climate classification for locations."""
+    """Climate classification for locations.
+
+    Affects environmental descriptions, available resources, and
+    inhabitant lifestyles.
+
+    Attributes:
+        TROPICAL: Hot and humid, rainforests.
+        TEMPERATE: Moderate temperatures, four seasons.
+        ARCTIC: Extremely cold, ice and snow.
+        DESERT: Hot and dry, minimal precipitation.
+        MEDITERRANEAN: Warm, dry summers; mild, wet winters.
+        CONTINENTAL: Hot summers, cold winters, inland areas.
+        OCEANIC: Mild temperatures, frequent rain, coastal.
+        SUBARCTIC: Very cold winters, short cool summers.
+        MAGICAL: Climate maintained or created by magic.
+        ARTIFICIAL: Climate-controlled environments.
+    """
 
     TROPICAL = "tropical"
     TEMPERATE = "temperate"
@@ -61,7 +122,22 @@ class ClimateType(Enum):
 
 
 class LocationStatus(Enum):
-    """Current status of the location."""
+    """Current status of the location.
+
+    Represents the current state of habitability and prosperity
+    of a location.
+
+    Attributes:
+        THRIVING: Prosperous and growing.
+        STABLE: Maintaining steady conditions.
+        DECLINING: Losing population or resources.
+        ABANDONED: No longer inhabited.
+        DESTROYED: Ruined beyond habitation.
+        CONTESTED: Subject to ongoing conflict.
+        HIDDEN: Concealed from general knowledge.
+        SEALED: Magically or physically blocked.
+        UNDER_CONSTRUCTION: Being built or rebuilt.
+    """
 
     THRIVING = "thriving"
     STABLE = "stable"
@@ -443,7 +519,27 @@ class Location(Entity):
         population: int = 50000,
         climate: ClimateType = ClimateType.TEMPERATE,
     ) -> "Location":
-        """Factory method to create a city location."""
+        """Create a city location with typical urban attributes.
+
+        Factory method that creates a pre-configured Location representing
+        a thriving urban center with high accessibility and moderate wealth.
+
+        Args:
+            name: The city's name.
+            description: Optional detailed description.
+            population: Number of inhabitants. Defaults to 50,000.
+            climate: Climate type. Defaults to TEMPERATE.
+
+        Returns:
+            A new Location configured as a city.
+
+        Example:
+            >>> city = Location.create_city(
+            ...     name="Thornhaven",
+            ...     population=100000,
+            ...     climate=ClimateType.MEDITERRANEAN
+            ... )
+        """
         return cls(
             name=name,
             description=description,
@@ -462,7 +558,26 @@ class Location(Entity):
         description: str = "",
         dangers: List[str] | None = None,
     ) -> "Location":
-        """Factory method to create a dungeon location."""
+        """Create a dungeon location with typical underground attributes.
+
+        Factory method that creates a pre-configured Location representing
+        a dangerous underground complex with low accessibility, moderate
+        treasure potential, and magical presence.
+
+        Args:
+            name: The dungeon's name.
+            description: Optional detailed description.
+            dangers: List of hazards. Defaults to ["traps", "monsters"].
+
+        Returns:
+            A new Location configured as a dungeon.
+
+        Example:
+            >>> dungeon = Location.create_dungeon(
+            ...     name="Crypt of Shadows",
+            ...     dangers=["undead", "poison gas", "collapsing floors"]
+            ... )
+        """
         return cls(
             name=name,
             description=description,
@@ -483,7 +598,27 @@ class Location(Entity):
         description: str = "",
         climate: ClimateType = ClimateType.TEMPERATE,
     ) -> "Location":
-        """Factory method to create a natural area."""
+        """Create a natural area with typical wilderness attributes.
+
+        Factory method that creates a pre-configured Location representing
+        a natural terrain feature with no population and moderate accessibility.
+
+        Args:
+            name: The area's name.
+            location_type: The type of natural feature (FOREST, MOUNTAIN, etc.).
+            description: Optional detailed description.
+            climate: Climate type. Defaults to TEMPERATE.
+
+        Returns:
+            A new Location configured as a natural area.
+
+        Example:
+            >>> forest = Location.create_natural_area(
+            ...     name="Whispering Woods",
+            ...     location_type=LocationType.FOREST,
+            ...     climate=ClimateType.TEMPERATE
+            ... )
+        """
         return cls(
             name=name,
             description=description,

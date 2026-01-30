@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
-"""
-Faction Domain Entity
+"""Faction Domain Entity.
 
-Represents a faction, organization, or group within the world that has
-its own goals, values, and relationships with other factions.
+This module defines the Faction entity which represents organizations, groups,
+or power structures within the world. Factions have goals, values, territories,
+and complex relationships with other factions.
+
+Typical usage example:
+    >>> from src.contexts.world.domain.entities import Faction, FactionType
+    >>> kingdom = Faction.create_kingdom(
+    ...     name="Kingdom of Valdris",
+    ...     description="A prosperous realm known for its academies."
+    ... )
+    >>> guild = Faction.create_guild(name="Merchants' Alliance", guild_focus="trade")
 """
 
 from dataclasses import dataclass, field
@@ -14,7 +22,28 @@ from .entity import Entity
 
 
 class FactionType(Enum):
-    """Classification of faction types."""
+    """Classification of faction types.
+
+    Determines the organizational structure, typical behaviors, and
+    default characteristics of a faction.
+
+    Attributes:
+        KINGDOM: A sovereign nation with monarchy.
+        EMPIRE: A large multi-nation territory under imperial rule.
+        GUILD: Professional organization of craftsmen or merchants.
+        CULT: Religious or ideological extremist group.
+        CORPORATION: Business entity with economic focus.
+        MILITARY: Armed forces or mercenary organization.
+        RELIGIOUS: Mainstream religious institution.
+        CRIMINAL: Organized crime syndicate.
+        ACADEMIC: Educational or research institution.
+        MERCHANT: Trading company or merchant collective.
+        TRIBAL: Indigenous or nomadic clan structure.
+        REVOLUTIONARY: Movement seeking political change.
+        SECRET_SOCIETY: Clandestine organization with hidden agenda.
+        ADVENTURER_GROUP: Band of heroes or mercenaries.
+        NOBLE_HOUSE: Aristocratic family lineage.
+    """
 
     KINGDOM = "kingdom"
     EMPIRE = "empire"
@@ -34,7 +63,22 @@ class FactionType(Enum):
 
 
 class FactionAlignment(Enum):
-    """Moral alignment of the faction."""
+    """Moral alignment of the faction.
+
+    Based on the classic D&D alignment system, representing both
+    ethical (lawful/chaotic) and moral (good/evil) dimensions.
+
+    Attributes:
+        LAWFUL_GOOD: Follows rules, does right. Paladins, just kings.
+        NEUTRAL_GOOD: Does right regardless of rules. Healers, helpers.
+        CHAOTIC_GOOD: Values freedom, fights oppression. Rebels, vigilantes.
+        LAWFUL_NEUTRAL: Values order above all. Judges, bureaucrats.
+        TRUE_NEUTRAL: Balanced, pragmatic. Druids, merchants.
+        CHAOTIC_NEUTRAL: Values personal freedom. Rogues, wanderers.
+        LAWFUL_EVIL: Uses rules for selfish ends. Tyrants, corrupt officials.
+        NEUTRAL_EVIL: Self-serving without loyalty. Mercenaries, assassins.
+        CHAOTIC_EVIL: Destruction and cruelty. Raiders, demons.
+    """
 
     LAWFUL_GOOD = "lawful_good"
     NEUTRAL_GOOD = "neutral_good"
@@ -48,7 +92,20 @@ class FactionAlignment(Enum):
 
 
 class FactionStatus(Enum):
-    """Current status of the faction."""
+    """Current status of the faction.
+
+    Represents the operational state of the faction, affecting its
+    ability to act and interact with other entities.
+
+    Attributes:
+        ACTIVE: Fully operational and influential.
+        DORMANT: Inactive but not disbanded, may reactivate.
+        DISBANDED: No longer exists as an organization.
+        EMERGING: Newly formed, building influence.
+        DECLINING: Losing power and members.
+        CONQUERED: Subjugated by another faction.
+        HIDDEN: Operating in secret, existence unknown to most.
+    """
 
     ACTIVE = "active"
     DORMANT = "dormant"
@@ -61,23 +118,44 @@ class FactionStatus(Enum):
 
 @dataclass
 class FactionRelation:
-    """Represents the relationship between two factions."""
+    """Represents the relationship between two factions.
+
+    Encapsulates the diplomatic or social connection between factions,
+    including the nature and strength of their relationship.
+
+    Attributes:
+        target_faction_id: UUID of the related faction.
+        relation_type: Type of relationship (alliance, enemy, neutral,
+            vassal, overlord, rival, trading).
+        strength: Relationship strength from -100 (hostile) to 100 (allied).
+        description: Optional narrative description of the relationship.
+
+    Example:
+        >>> relation = FactionRelation(
+        ...     target_faction_id="uuid-here",
+        ...     relation_type="alliance",
+        ...     strength=75,
+        ...     description="Forged during the Great War"
+        ... )
+        >>> relation.is_friendly()
+        True
+    """
 
     target_faction_id: str
-    relation_type: str  # alliance, enemy, neutral, vassal, overlord, rival, trading
-    strength: int  # -100 (hostile) to 100 (allied)
+    relation_type: str
+    strength: int
     description: Optional[str] = None
 
     def is_hostile(self) -> bool:
-        """Check if relationship is hostile."""
+        """Check if relationship is hostile (strength < -30)."""
         return self.strength < -30
 
     def is_friendly(self) -> bool:
-        """Check if relationship is friendly."""
+        """Check if relationship is friendly (strength > 30)."""
         return self.strength > 30
 
     def is_neutral(self) -> bool:
-        """Check if relationship is neutral."""
+        """Check if relationship is neutral (-30 <= strength <= 30)."""
         return -30 <= self.strength <= 30
 
 
@@ -413,7 +491,25 @@ class Faction(Entity):
         description: str = "",
         alignment: FactionAlignment = FactionAlignment.LAWFUL_NEUTRAL,
     ) -> "Faction":
-        """Factory method to create a kingdom faction."""
+        """Create a kingdom faction with typical royal attributes.
+
+        Factory method that creates a pre-configured Faction representing
+        a sovereign nation with high influence and large population.
+
+        Args:
+            name: The kingdom's name.
+            description: Optional detailed description.
+            alignment: Moral alignment. Defaults to LAWFUL_NEUTRAL.
+
+        Returns:
+            A new Faction configured as a kingdom.
+
+        Example:
+            >>> kingdom = Faction.create_kingdom(
+            ...     name="Valdris",
+            ...     description="A realm of scholars and warriors."
+            ... )
+        """
         return cls(
             name=name,
             description=description,
@@ -432,7 +528,26 @@ class Faction(Entity):
         description: str = "",
         guild_focus: str = "trade",
     ) -> "Faction":
-        """Factory method to create a guild faction."""
+        """Create a guild faction with typical professional organization attributes.
+
+        Factory method that creates a pre-configured Faction representing
+        a professional guild with high economic power and lawful alignment.
+
+        Args:
+            name: The guild's name.
+            description: Optional detailed description.
+            guild_focus: Primary focus area (e.g., "trade", "crafting", "magic").
+                Defaults to "trade".
+
+        Returns:
+            A new Faction configured as a guild.
+
+        Example:
+            >>> guild = Faction.create_guild(
+            ...     name="Blacksmiths' Union",
+            ...     guild_focus="crafting"
+            ... )
+        """
         return cls(
             name=name,
             description=description,
@@ -452,7 +567,25 @@ class Faction(Entity):
         description: str = "",
         alignment: FactionAlignment = FactionAlignment.CHAOTIC_EVIL,
     ) -> "Faction":
-        """Factory method to create a cult faction."""
+        """Create a cult faction with typical secretive organization attributes.
+
+        Factory method that creates a pre-configured Faction representing
+        a cult with hidden status, moderate military strength, and small membership.
+
+        Args:
+            name: The cult's name.
+            description: Optional detailed description.
+            alignment: Moral alignment. Defaults to CHAOTIC_EVIL.
+
+        Returns:
+            A new Faction configured as a cult.
+
+        Example:
+            >>> cult = Faction.create_cult(
+            ...     name="Followers of the Void",
+            ...     alignment=FactionAlignment.NEUTRAL_EVIL
+            ... )
+        """
         return cls(
             name=name,
             description=description,

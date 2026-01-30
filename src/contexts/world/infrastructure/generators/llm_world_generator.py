@@ -1,4 +1,25 @@
-"""LLM-based world generator using Gemini API."""
+"""LLM-based world generator using Gemini API.
+
+This module implements the WorldGeneratorPort protocol using Google's Gemini API
+to generate complete world lore including settings, factions, locations, and
+historical events in a single pass.
+
+The generator uses structured prompts to produce JSON output that is then
+parsed into domain entities. It handles temporary ID cross-references to
+maintain entity relationships during generation.
+
+Typical usage example:
+    >>> from src.contexts.world.infrastructure.generators import LLMWorldGenerator
+    >>> from src.contexts.world.application.ports import WorldGenerationInput, Genre
+    >>> generator = LLMWorldGenerator(temperature=0.8)
+    >>> request = WorldGenerationInput(
+    ...     genre=Genre.FANTASY,
+    ...     num_factions=3,
+    ...     num_locations=5
+    ... )
+    >>> result = generator.generate(request)
+    >>> print(result.generation_summary)
+"""
 
 from __future__ import annotations
 
@@ -36,7 +57,25 @@ logger = structlog.get_logger(__name__)
 
 
 class LLMWorldGenerator(WorldGeneratorPort):
-    """World generator using Gemini API."""
+    """World generator using Gemini API.
+
+    Implements the WorldGeneratorPort protocol to generate complete world lore
+    using Google's Gemini large language model. The generator produces a
+    WorldSetting, multiple Factions, Locations, and HistoryEvents in a single
+    API call, maintaining cross-references between entities.
+
+    Attributes:
+        _model: Gemini model name (e.g., "gemini-2.0-flash").
+        _temperature: Generation temperature controlling creativity (0-2).
+        _prompt_path: Path to the YAML file containing system prompts.
+        _api_key: Gemini API authentication key.
+        _base_url: Gemini API endpoint URL.
+
+    Example:
+        >>> generator = LLMWorldGenerator(model="gemini-2.0-flash", temperature=0.7)
+        >>> result = generator.generate(WorldGenerationInput(genre=Genre.FANTASY))
+        >>> print(f"Generated {result.total_entities} entities")
+    """
 
     def __init__(
         self,
@@ -94,7 +133,18 @@ class LLMWorldGenerator(WorldGeneratorPort):
             return self._error_result(request, str(exc))
 
     def _load_system_prompt(self) -> str:
-        """Load the system prompt from YAML file."""
+        """Load the system prompt from YAML file.
+
+        Reads the world_gen.yaml prompt template that instructs the LLM
+        on the expected JSON output format and world-building guidelines.
+
+        Returns:
+            The system prompt string.
+
+        Raises:
+            ValueError: If system_prompt key is missing in the YAML file.
+            FileNotFoundError: If the prompt file doesn't exist.
+        """
         with self._prompt_path.open("r", encoding="utf-8") as handle:
             payload = yaml.safe_load(handle) or {}
         prompt = str(payload.get("system_prompt", "")).strip()
@@ -103,7 +153,17 @@ class LLMWorldGenerator(WorldGeneratorPort):
         return prompt
 
     def _build_user_prompt(self, request: WorldGenerationInput) -> str:
-        """Build the user prompt from the request."""
+        """Build the user prompt from the request parameters.
+
+        Constructs a structured prompt containing all world generation
+        parameters including genre, era, tone, and generation targets.
+
+        Args:
+            request: Input parameters for world generation.
+
+        Returns:
+            Formatted user prompt string for the LLM.
+        """
         themes_str = ", ".join(request.themes) if request.themes else "unspecified"
         constraints = request.custom_constraints or "None"
 
@@ -129,7 +189,22 @@ Return valid JSON only with the exact structure specified in the system prompt.
 Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references."""
 
     def _call_gemini(self, system_prompt: str, user_prompt: str) -> str:
-        """Call Gemini API to generate world."""
+        """Call Gemini API to generate world content.
+
+        Sends the combined system and user prompts to the Gemini API
+        and returns the raw text response.
+
+        Args:
+            system_prompt: Instructions for the LLM on output format.
+            user_prompt: World generation parameters and constraints.
+
+        Returns:
+            Raw text response from the Gemini API.
+
+        Raises:
+            RuntimeError: If API key is missing, authentication fails,
+                rate limit is exceeded, or other API errors occur.
+        """
         if not self._api_key:
             raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 
@@ -174,12 +249,40 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
     def _parse_and_build(
         self, content: str, request: WorldGenerationInput
     ) -> WorldGenerationResult:
-        """Parse the LLM response and build domain entities."""
+        """Parse the LLM response and build domain entities.
+
+        Extracts JSON from the response and constructs domain entities
+        including WorldSetting, Factions, Locations, and HistoryEvents.
+
+        Args:
+            content: Raw text response from the LLM.
+            request: Original generation request for fallback values.
+
+        Returns:
+            WorldGenerationResult containing all parsed entities.
+
+        Raises:
+            json.JSONDecodeError: If no valid JSON can be extracted.
+        """
         payload = self._extract_json(content)
         return self._build_result(payload, request)
 
     def _extract_json(self, content: str) -> Dict[str, Any]:
-        """Extract JSON from the response content."""
+        """Extract JSON from the response content.
+
+        Attempts multiple strategies to extract valid JSON from the LLM
+        response: direct parsing, markdown code block extraction, and
+        embedded JSON object detection.
+
+        Args:
+            content: Raw text that may contain JSON.
+
+        Returns:
+            Parsed JSON as a dictionary.
+
+        Raises:
+            json.JSONDecodeError: If no valid JSON can be found.
+        """
         # Try direct parse first
         try:
             return json.loads(content)
@@ -204,7 +307,20 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
     def _build_result(
         self, payload: Dict[str, Any], request: WorldGenerationInput
     ) -> WorldGenerationResult:
-        """Build WorldGenerationResult from parsed JSON payload."""
+        """Build WorldGenerationResult from parsed JSON payload.
+
+        Constructs domain entities in the correct order to resolve
+        cross-references: locations first (needed by factions), then
+        factions (needed by events), then events with full resolution.
+
+        Args:
+            payload: Parsed JSON containing world_setting, factions,
+                locations, and events arrays.
+            request: Original generation request for default values.
+
+        Returns:
+            Complete WorldGenerationResult with all entities.
+        """
         # Build WorldSetting
         world_data = payload.get("world_setting", {})
         world_setting = self._build_world_setting(world_data, request)
@@ -238,7 +354,15 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
     def _build_world_setting(
         self, data: Dict[str, Any], request: WorldGenerationInput
     ) -> WorldSetting:
-        """Build WorldSetting entity from data."""
+        """Build WorldSetting entity from parsed data.
+
+        Args:
+            data: Dictionary containing world_setting fields from LLM.
+            request: Original request providing genre, era, tone defaults.
+
+        Returns:
+            Constructed WorldSetting entity.
+        """
         return WorldSetting(
             name=str(data.get("name", "Generated World")),
             description=str(data.get("description", "")),
@@ -255,7 +379,18 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
     def _build_locations(
         self, data: List[Dict[str, Any]]
     ) -> tuple[List[Location], Dict[str, str]]:
-        """Build Location entities and return ID mapping."""
+        """Build Location entities and return ID mapping.
+
+        Creates Location entities from parsed data and builds a mapping
+        from temporary IDs (used by LLM for cross-references) to actual
+        UUIDs. Also resolves parent/child and connection relationships.
+
+        Args:
+            data: List of location dictionaries from LLM output.
+
+        Returns:
+            Tuple of (list of Location entities, temp_id to UUID mapping).
+        """
         locations: List[Location] = []
         id_map: Dict[str, str] = {}
 
@@ -303,7 +438,18 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
     def _build_factions(
         self, data: List[Dict[str, Any]], location_id_map: Dict[str, str]
     ) -> tuple[List[Faction], Dict[str, str]]:
-        """Build Faction entities and return ID mapping."""
+        """Build Faction entities and return ID mapping.
+
+        Creates Faction entities from parsed data, resolving location
+        references (headquarters, territories) using the location ID map.
+
+        Args:
+            data: List of faction dictionaries from LLM output.
+            location_id_map: Mapping from temp_id to Location UUID.
+
+        Returns:
+            Tuple of (list of Faction entities, temp_id to UUID mapping).
+        """
         factions: List[Faction] = []
         id_map: Dict[str, str] = {}
 
@@ -355,7 +501,20 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         location_id_map: Dict[str, str],
         faction_id_map: Dict[str, str],
     ) -> List[HistoryEvent]:
-        """Build HistoryEvent entities."""
+        """Build HistoryEvent entities with full reference resolution.
+
+        Creates HistoryEvent entities from parsed data in two passes:
+        first creating all events to get their UUIDs, then resolving
+        event-to-event relationships (preceding, following, related).
+
+        Args:
+            data: List of event dictionaries from LLM output.
+            location_id_map: Mapping from temp_id to Location UUID.
+            faction_id_map: Mapping from temp_id to Faction UUID.
+
+        Returns:
+            List of HistoryEvent entities with resolved relationships.
+        """
         events: List[HistoryEvent] = []
         event_id_map: Dict[str, str] = {}
 
@@ -417,7 +576,19 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         return events
 
     def _parse_enum(self, enum_class: type, value: Any, default: Any) -> Any:
-        """Parse a string value into an enum, returning default if invalid."""
+        """Parse a string value into an enum, returning default if invalid.
+
+        Safely converts string values from LLM output to enum instances,
+        handling None values and invalid strings gracefully.
+
+        Args:
+            enum_class: The enum type to convert to.
+            value: String value to parse (or None).
+            default: Default enum value if parsing fails.
+
+        Returns:
+            The parsed enum value or the default.
+        """
         if value is None:
             return default
         if isinstance(value, enum_class):
@@ -430,7 +601,19 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
     def _error_result(
         self, request: WorldGenerationInput, reason: str
     ) -> WorldGenerationResult:
-        """Return an error result when generation fails."""
+        """Return an error result when generation fails.
+
+        Creates a minimal WorldGenerationResult with an error-state
+        WorldSetting and empty entity lists, preserving the original
+        request parameters.
+
+        Args:
+            request: Original generation request.
+            reason: Error message describing the failure.
+
+        Returns:
+            WorldGenerationResult with error information.
+        """
         error_world = WorldSetting(
             name="Generation Failed",
             description=f"World generation failed: {reason}",

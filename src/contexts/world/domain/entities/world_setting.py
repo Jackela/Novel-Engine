@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
-"""
-WorldSetting Domain Entity
+"""WorldSetting Domain Entity.
 
-Represents the foundational setting/configuration for a world including
-genre, themes, era, and core narrative elements.
+This module defines the WorldSetting entity which represents the foundational
+setting and configuration for a world, including genre, themes, era, and core
+narrative elements.
+
+Typical usage example:
+    >>> from src.contexts.world.domain.entities import WorldSetting, Genre, Era
+    >>> world = WorldSetting.create_fantasy_world(
+    ...     name="Middle Earth",
+    ...     magic_level=8,
+    ...     themes=["heroism", "corruption", "friendship"]
+    ... )
+    >>> print(world.get_setting_profile())
 """
 
 from dataclasses import dataclass, field
@@ -14,7 +23,29 @@ from .entity import Entity
 
 
 class Genre(Enum):
-    """Genre classifications for world settings."""
+    """Genre classifications for world settings.
+
+    Each genre represents a primary storytelling category that influences
+    world-building decisions including era compatibility, magic/technology
+    levels, and thematic elements.
+
+    Attributes:
+        FANTASY: Traditional fantasy with magic and mythical creatures.
+        SCIENCE_FICTION: Technology-focused futuristic settings.
+        HORROR: Dark, fear-inducing supernatural or psychological settings.
+        MYSTERY: Investigation and puzzle-focused narratives.
+        ROMANCE: Relationship-centered storytelling.
+        HISTORICAL: Based on real historical periods.
+        CONTEMPORARY: Modern-day realistic settings.
+        POST_APOCALYPTIC: Settings after civilization collapse.
+        STEAMPUNK: Victorian-era aesthetic with steam-powered technology.
+        CYBERPUNK: High-tech, low-life dystopian futures.
+        URBAN_FANTASY: Magic in modern urban environments.
+        EPIC_FANTASY: Grand-scale fantasy with world-spanning conflicts.
+        SPACE_OPERA: Epic space-faring adventures.
+        MILITARY: War and combat-focused settings.
+        SUPERNATURAL: Paranormal elements in various eras.
+    """
 
     FANTASY = "fantasy"
     SCIENCE_FICTION = "science_fiction"
@@ -34,7 +65,22 @@ class Genre(Enum):
 
 
 class Era(Enum):
-    """Historical/temporal era for the world setting."""
+    """Historical/temporal era for the world setting.
+
+    Defines the temporal period in which the world exists. Era affects
+    technology availability, social structures, and genre compatibility.
+
+    Attributes:
+        PREHISTORIC: Before recorded history, primitive societies.
+        ANCIENT: Early civilizations (Egypt, Rome, Greece).
+        MEDIEVAL: Feudal societies, castles, knights.
+        RENAISSANCE: Cultural rebirth, early science.
+        INDUSTRIAL: Steam power, factories, urbanization.
+        MODERN: Contemporary technology and society.
+        NEAR_FUTURE: Within the next century.
+        FAR_FUTURE: Distant future with advanced technology.
+        TIMELESS: Era-agnostic or mythical time.
+    """
 
     PREHISTORIC = "prehistoric"
     ANCIENT = "ancient"
@@ -48,7 +94,23 @@ class Era(Enum):
 
 
 class ToneType(Enum):
-    """Narrative tone for the world."""
+    """Narrative tone for the world.
+
+    Determines the overall emotional atmosphere and storytelling approach
+    for the world. Tone affects theme compatibility and narrative expectations.
+
+    Attributes:
+        DARK: Grim, pessimistic, morally ambiguous.
+        LIGHT: Optimistic, family-friendly, clear good/evil.
+        GRITTY: Realistic, harsh, unflinching.
+        HOPEFUL: Emphasizes possibility and redemption.
+        SATIRICAL: Mocking or ironic commentary.
+        HEROIC: Classic hero's journey, triumph over adversity.
+        TRAGIC: Emphasizes loss, sacrifice, and inevitable doom.
+        COMEDIC: Humor-focused, lighthearted adventures.
+        EPIC: Grand scale, sweeping narratives.
+        INTIMATE: Character-focused, personal stories.
+    """
 
     DARK = "dark"
     LIGHT = "light"
@@ -335,7 +397,27 @@ class WorldSetting(Entity):
         magic_level: int = 7,
         themes: List[str] | None = None,
     ) -> "WorldSetting":
-        """Factory method to create a standard fantasy world setting."""
+        """Create a standard fantasy world setting.
+
+        Factory method that creates a pre-configured WorldSetting for
+        traditional fantasy worlds with medieval era and heroic tone.
+
+        Args:
+            name: The name of the world.
+            description: Optional detailed description.
+            magic_level: Level of magic presence (0-10). Defaults to 7.
+            themes: Core thematic elements. Defaults to adventure/magic/heroism.
+
+        Returns:
+            A new WorldSetting configured for fantasy storytelling.
+
+        Example:
+            >>> world = WorldSetting.create_fantasy_world(
+            ...     name="Eldoria",
+            ...     magic_level=9,
+            ...     themes=["prophecy", "ancient evil"]
+            ... )
+        """
         return cls(
             name=name,
             description=description,
@@ -355,7 +437,28 @@ class WorldSetting(Entity):
         technology_level: int = 8,
         themes: List[str] | None = None,
     ) -> "WorldSetting":
-        """Factory method to create a science fiction world setting."""
+        """Create a science fiction world setting.
+
+        Factory method that creates a pre-configured WorldSetting for
+        science fiction worlds with far future era and epic tone.
+
+        Args:
+            name: The name of the world/setting.
+            description: Optional detailed description.
+            technology_level: Level of technological advancement (0-10).
+                Defaults to 8.
+            themes: Core thematic elements. Defaults to exploration/technology/humanity.
+
+        Returns:
+            A new WorldSetting configured for science fiction storytelling.
+
+        Example:
+            >>> world = WorldSetting.create_scifi_world(
+            ...     name="Galactic Federation",
+            ...     technology_level=10,
+            ...     themes=["AI consciousness", "first contact"]
+            ... )
+        """
         return cls(
             name=name,
             description=description,
