@@ -27,8 +27,8 @@
         "Strict Check: Ensure `WeaverToolbar` and `WorldNode` are actually rendering via the new Router."
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Delete the dead code. Less code = fewer bugs."
+      "passes": true,
+      "notes": "Deleted dead code: AgentInterface and NarrativeDisplay (unused, had custom CSS). WeaverToolbar and WorldNode verified rendering correctly. Some UI duplication exists between @/components/ui and @/shared/components/ui but both are functional."
     },
     {
       "id": "FIX-003",
