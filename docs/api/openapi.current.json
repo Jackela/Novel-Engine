@@ -2086,7 +2086,7 @@
           "generation"
         ],
         "summary": "Generate Scene",
-        "description": "Generate a scene based on character context.\n\nArgs:\n    request: Scene generation parameters including character context,\n             scene type, and optional tone.\n\nReturns:\n    Generated scene with title, content, summary, and visual prompt.\n\nRaises:\n    HTTPException: 501 Not Implemented (stub endpoint).\n\nNOTE: Stub implementation - returns 501 until LLM integration is complete.",
+        "description": "Generate a scene based on character context.\n\nArgs:\n    request: Scene generation parameters including character context,\n             scene type, and optional tone.\n\nReturns:\n    Generated scene with title, content, summary, and visual prompt.",
         "operationId": "generate_scene_generation_scene_post",
         "requestBody": {
           "content": {
@@ -2329,6 +2329,48 @@
                   "additionalProperties": true,
                   "type": "object",
                   "title": "Response Legacy Run Simulation Simulations Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/world/generation": {
+      "post": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Generate World",
+        "description": "Generate a complete world with factions, locations, and history events.",
+        "operationId": "generate_world_world_generation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorldGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldGenerationResponse"
                 }
               }
             }
@@ -3119,7 +3161,7 @@
           "generation"
         ],
         "summary": "Generate Scene",
-        "description": "Generate a scene based on character context.\n\nArgs:\n    request: Scene generation parameters including character context,\n             scene type, and optional tone.\n\nReturns:\n    Generated scene with title, content, summary, and visual prompt.\n\nRaises:\n    HTTPException: 501 Not Implemented (stub endpoint).\n\nNOTE: Stub implementation - returns 501 until LLM integration is complete.",
+        "description": "Generate a scene based on character context.\n\nArgs:\n    request: Scene generation parameters including character context,\n             scene type, and optional tone.\n\nReturns:\n    Generated scene with title, content, summary, and visual prompt.",
         "operationId": "generate_scene_api_generation_scene_post",
         "requestBody": {
           "content": {
@@ -3405,6 +3447,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SimulationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/generation": {
+      "post": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Generate World",
+        "description": "Generate a complete world with factions, locations, and history events.",
+        "operationId": "generate_world_api_world_generation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorldGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldGenerationResponse"
                 }
               }
             }
@@ -5423,6 +5507,71 @@
         "title": "ExampleFormat",
         "description": "Code example formats."
       },
+      "FactionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "faction_type": {
+            "type": "string",
+            "title": "Faction Type"
+          },
+          "alignment": {
+            "type": "string",
+            "title": "Alignment"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Values"
+          },
+          "goals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Goals"
+          },
+          "influence": {
+            "type": "integer",
+            "title": "Influence"
+          },
+          "ally_count": {
+            "type": "integer",
+            "title": "Ally Count",
+            "default": 0
+          },
+          "enemy_count": {
+            "type": "integer",
+            "title": "Enemy Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "faction_type",
+          "alignment",
+          "values",
+          "goals",
+          "influence"
+        ],
+        "title": "FactionResponse",
+        "description": "Response model for faction."
+      },
       "FrameworkType": {
         "type": "string",
         "enum": [
@@ -5541,6 +5690,48 @@
           "message"
         ],
         "title": "HealthResponse"
+      },
+      "HistoryEventResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "significance": {
+            "type": "integer",
+            "title": "Significance"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Participants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "event_type",
+          "significance",
+          "participants"
+        ],
+        "title": "HistoryEventResponse",
+        "description": "Response model for history event."
       },
       "InformationFragmentResponse": {
         "properties": {
@@ -5711,6 +5902,64 @@
         "title": "InvalidationRequest"
       },
       "JsonValue": {},
+      "LocationResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "location_type": {
+            "type": "string",
+            "title": "Location Type"
+          },
+          "population": {
+            "type": "integer",
+            "title": "Population"
+          },
+          "controlling_faction_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Controlling Faction Id"
+          },
+          "notable_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notable Features"
+          },
+          "danger_level": {
+            "type": "string",
+            "title": "Danger Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "location_type",
+          "population",
+          "notable_features",
+          "danger_level"
+        ],
+        "title": "LocationResponse",
+        "description": "Response model for location."
+      },
       "LoginRequest": {
         "properties": {
           "email": {
@@ -7476,6 +7725,178 @@
         },
         "type": "object",
         "title": "WorkspaceCharacterUpdateRequest"
+      },
+      "WorldGenerationRequest": {
+        "properties": {
+          "genre": {
+            "type": "string",
+            "title": "Genre",
+            "description": "Primary genre (fantasy, sci-fi, etc.)",
+            "default": "fantasy"
+          },
+          "era": {
+            "type": "string",
+            "title": "Era",
+            "description": "Temporal era (medieval, modern, etc.)",
+            "default": "medieval"
+          },
+          "tone": {
+            "type": "string",
+            "title": "Tone",
+            "description": "Narrative tone (dark, heroic, etc.)",
+            "default": "heroic"
+          },
+          "themes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Themes",
+            "description": "Thematic elements"
+          },
+          "magic_level": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Magic Level",
+            "description": "Magic level (0-10)",
+            "default": 5
+          },
+          "technology_level": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Technology Level",
+            "description": "Technology level (0-10)",
+            "default": 3
+          },
+          "num_factions": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Num Factions",
+            "description": "Number of factions",
+            "default": 3
+          },
+          "num_locations": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Num Locations",
+            "description": "Number of locations",
+            "default": 5
+          },
+          "num_events": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Num Events",
+            "description": "Number of history events",
+            "default": 3
+          }
+        },
+        "type": "object",
+        "title": "WorldGenerationRequest",
+        "description": "Request model for world generation."
+      },
+      "WorldGenerationResponse": {
+        "properties": {
+          "world_setting": {
+            "$ref": "#/components/schemas/WorldSettingResponse"
+          },
+          "factions": {
+            "items": {
+              "$ref": "#/components/schemas/FactionResponse"
+            },
+            "type": "array",
+            "title": "Factions"
+          },
+          "locations": {
+            "items": {
+              "$ref": "#/components/schemas/LocationResponse"
+            },
+            "type": "array",
+            "title": "Locations"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryEventResponse"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "generation_summary": {
+            "type": "string",
+            "title": "Generation Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "world_setting",
+          "factions",
+          "locations",
+          "events",
+          "generation_summary"
+        ],
+        "title": "WorldGenerationResponse",
+        "description": "Response model for world generation."
+      },
+      "WorldSettingResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "genre": {
+            "type": "string",
+            "title": "Genre"
+          },
+          "era": {
+            "type": "string",
+            "title": "Era"
+          },
+          "tone": {
+            "type": "string",
+            "title": "Tone"
+          },
+          "themes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Themes"
+          },
+          "magic_level": {
+            "type": "integer",
+            "title": "Magic Level"
+          },
+          "technology_level": {
+            "type": "integer",
+            "title": "Technology Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "genre",
+          "era",
+          "tone",
+          "themes",
+          "magic_level",
+          "technology_level"
+        ],
+        "title": "WorldSettingResponse",
+        "description": "Response model for world setting."
       }
     },
     "securitySchemes": {
