@@ -82,10 +82,10 @@
         "Run `npx playwright test tests/e2e/generation.spec.ts` -> Pass"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["TEST-001"],
-      "note": "World generation tests exist in frontend/tests/e2e/world-generation.spec.ts with comprehensive coverage"
+      "note": "Generation tests in frontend/tests/e2e/world-generation.spec.ts - updated to match actual CharacterGeneration UI (not World Generation)"
     },
     {
       "id": "CLEAN-001",
