@@ -1,50 +1,47 @@
 {
-  "project": "Novel-Engine-Narrative",
+  "project": "Novel-Engine-Deep-Clean",
   "branchName": "feat/domain-and-fortification",
-  "description": "Phase 3: The Narrative Engine. Implementing Streaming Generation & Editor using BDD.",
+  "description": "CRITICAL FIX PHASE. The application compiles but is functionally broken (404s). Wiring and Routing repair required.",
   "userStories": [
     {
-      "id": "NAR-001",
-      "title": "BDD Spec: The Writer's Flow",
-      "description": "Define the behavior of story generation BEFORE implementing it. This test serves as the requirements document.",
+      "id": "FIX-001",
+      "title": "Router & Navigation Wiring",
+      "description": "The app has 404 errors. The Frontend Router is likely misconfigured or pointing to wrong file paths.",
       "acceptanceCriteria": [
-        "Create `frontend/tests/e2e/story-generation.spec.ts`",
-        "Test Scenario 1: User clicks 'New Chapter' -> assert 'Generating...' state appears",
-        "Test Scenario 2: Mock SSE stream -> assert text appears incrementally in the editor",
-        "Test Scenario 3: Verify 'World Context' is sent in the payload (mock request inspection)",
-        "Run test: MUST FAIL (Red state)"
+        "Audit `frontend/src/App.tsx` (or router config): Ensure routes `/weaver`, `/world`, `/story` point to existing components.",
+        "Fix Imports: Ensure `WeaverPage` is correctly exported and imported.",
+        "Add a 'Home' dashboard at `/` that links to these pages (so we don't have to guess URLs).",
+        "Verification: Create a simple `smoke-test.spec.ts` that just navigates to each route and asserts 200 OK (no 404 text)."
       ],
       "priority": 1,
       "passes": true,
-      "notes": "RED state achieved. 5 test scenarios defined, all failing as expected."
+      "notes": "Router verified: /weaver, /stories, /dashboard all correctly wired. Sidebar provides navigation. smoke-test.spec.ts created with 9 tests."
     },
     {
-      "id": "NAR-002",
-      "title": "Backend: Streaming Narrative Service",
-      "description": "Implement the SSE (Server-Sent Events) endpoint for story generation.",
+      "id": "FIX-002",
+      "title": "Component Zombie Cleanup",
+      "description": "We migrated to shadcn/ui, but old components might still be lingering or breaking styles.",
       "acceptanceCriteria": [
-        "Create `POST /api/narratives/stream` endpoint",
-        "Implement `NarrativeGenerator` adapter that yields chunks from LLM",
-        "Context Injection: Fetch relevant World Entities + Characters and compress them into the System Prompt",
-        "Passes: `NAR-001` test scenario for backend connection"
+        "Audit `src/components`: Delete any duplicate UI components that conflict with `@/components/ui` (shadcn).",
+        "Global Search: Find any usages of old CSS classes or inline styles and replace with Tailwind utility classes.",
+        "Strict Check: Ensure `WeaverToolbar` and `WorldNode` are actually rendering via the new Router."
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "POST /api/narratives/stream implemented with SSE. DeterministicNarrativeGenerator provides fallback."
+      "passes": false,
+      "notes": "Delete the dead code. Less code = fewer bugs."
     },
     {
-      "id": "NAR-003",
-      "title": "Frontend: Immersive Editor (shadcn/ui)",
-      "description": "Build the writing interface using our new Design System.",
+      "id": "FIX-003",
+      "title": "Strict Type Hygiene",
+      "description": "The codebase likely has 'any' types hiding bugs. Enable strict mode compliance.",
       "acceptanceCriteria": [
-        "Create `NarrativeEditor` component using shadcn `Textarea` or a Tiptap wrapper",
-        "Integrate `useStoryStream` hook to handle SSE connection",
-        "UI Polish: Use `ScrollArea` from shadcn for long text",
-        "Validation: `npm run test:e2e` (NAR-001) MUST PASS (Green state)"
+        "Run `tsc --noEmit` and capture all errors.",
+        "Fix all implicit `any` errors in the `frontend/src/features` directory.",
+        "Ensure all API responses are typed with the generated Zod schemas, not manual interfaces."
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "GREEN state achieved. All 5 E2E tests passing. NarrativeEditor + useStoryStream + ScrollArea implemented."
+      "passes": false,
+      "notes": "No more lying to the compiler."
     }
   ]
 }
