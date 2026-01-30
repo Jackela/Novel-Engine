@@ -1,49 +1,50 @@
 {
-  "project": "Novel-Engine-Standardization",
+  "project": "Novel-Engine-Narrative",
   "branchName": "feat/domain-and-fortification",
-  "description": "Standardize the codebase using 'Text-Driven Vibe Coding' protocols. Establish the 'Blind Swordsman' verification system.",
+  "description": "Phase 3: The Narrative Engine. Implementing Streaming Generation & Editor using BDD.",
   "userStories": [
     {
-      "id": "STD-001",
-      "title": "Establish The 'Non-Visual Eye' (Playwright Infrastructure)",
-      "description": "Before refactoring UI, we must have eyes. Install Playwright and create 'Spatial Assertion' helpers.",
+      "id": "NAR-001",
+      "title": "BDD Spec: The Writer's Flow",
+      "description": "Define the behavior of story generation BEFORE implementing it. This test serves as the requirements document.",
       "acceptanceCriteria": [
-        "Install Playwright: `npm init playwright@latest` (Use existing Playwright if detected, but ensure infrastructure is fresh)",
-        "Create `frontend/tests/utils/spatial-assertions.ts`: Implement `expectRightOf(a, b)`, `expectBelow(a, b)`, `expectNoOverlap(nodes)` using bounding box math",
-        "Create `frontend/tests/e2e/weaver-smoke.spec.ts`: A test that fails if nodes overlap or go off-screen in the Weaver canvas",
-        "Verify: Run `npm run test:e2e` and confirm it correctly catches current or simulated layout issues"
+        "Create `frontend/tests/e2e/story-generation.spec.ts`",
+        "Test Scenario 1: User clicks 'New Chapter' -> assert 'Generating...' state appears",
+        "Test Scenario 2: Mock SSE stream -> assert text appears incrementally in the editor",
+        "Test Scenario 3: Verify 'World Context' is sent in the payload (mock request inspection)",
+        "Run test: MUST FAIL (Red state)"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "COMPLETED: Created spatial-assertions.ts with expectRightOf, expectBelow, expectNoOverlap, expectWithinViewport, expectContainedIn. Created weaver-smoke.spec.ts which successfully detects node overlaps (found 2 overlapping pairs with 10533px² and 56185px² overlap areas). The 'Non-Visual Eye' is now operational."
+      "notes": "RED state achieved. 5 test scenarios defined, all failing as expected."
     },
     {
-      "id": "STD-002",
-      "title": "Frontend Standardization (shadcn/ui Migration)",
-      "description": "Refactor Weaver to use shadcn/ui components strictly. Remove custom CSS.",
+      "id": "NAR-002",
+      "title": "Backend: Streaming Narrative Service",
+      "description": "Implement the SSE (Server-Sent Events) endpoint for story generation.",
       "acceptanceCriteria": [
-        "Run `npx shadcn-ui@latest init` (overwrite existing utils if needed to match standard)",
-        "Install components: `button`, `card`, `dialog`, `input`, `select`, `slider`, `switch` using the CLI",
-        "Refactor `WeaverToolbar`: Replace raw `radix-ui` primitives with `shadcn/ui` components",
-        "Refactor `WorldNode`: Use shadcn `Card` component instead of custom divs/styled-components",
-        "Validation: `npm run test:e2e` MUST pass after refactor, ensuring no layout regressions"
+        "Create `POST /api/narratives/stream` endpoint",
+        "Implement `NarrativeGenerator` adapter that yields chunks from LLM",
+        "Context Injection: Fetch relevant World Entities + Characters and compress them into the System Prompt",
+        "Passes: `NAR-001` test scenario for backend connection"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "COMPLETED: Installed shadcn/ui tooltip, slider, switch components. Migrated all Weaver components from @/shared/components/ui to @/components/ui (WeaverToolbar, WeaverNode, WorldNode, CharacterNode, EventNode, LocationNode, SceneNode, FactionNode, CharacterGenerationDialog, SceneGenerationDialog). TypeScript checks pass. Core workflow e2e tests pass (drag node, connect, add nodes). Code now follows v0.dev patterns with standardized shadcn/ui components."
+      "passes": false,
+      "notes": "Performance matters. Latency to first token must be < 2s."
     },
     {
-      "id": "STD-003",
-      "title": "Strict Backend Documentation",
-      "description": "Ensure the codebase is self-documenting for future AI agents.",
+      "id": "NAR-003",
+      "title": "Frontend: Immersive Editor (shadcn/ui)",
+      "description": "Build the writing interface using our new Design System.",
       "acceptanceCriteria": [
-        "Create `src/contexts/world/ARCHITECTURE.md`: Document the layers, relationship mapping, and rules",
-        "Add Docstrings to `LLMWorldGenerator` explaining the self-correction retry mechanism in detail",
-        "Run `pydocstyle` or `ruff` check to ensure docstring compliance"
+        "Create `NarrativeEditor` component using shadcn `Textarea` or a Tiptap wrapper",
+        "Integrate `useStoryStream` hook to handle SSE connection",
+        "UI Polish: Use `ScrollArea` from shadcn for long text",
+        "Validation: `npm run test:e2e` (NAR-001) MUST PASS (Green state)"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "COMPLETED: Created comprehensive ARCHITECTURE.md documenting Hexagonal Architecture layers (Domain/Application/Infrastructure), relationship mapping between entities (WorldSetting, Faction, Location, HistoryEvent), LLM generation flow with temporary ID resolution, and the multi-stage JSON extraction retry mechanism (_extract_json with direct parse, markdown code block, embedded JSON detection). LLMWorldGenerator already had complete docstrings. Ruff check passes: 'All checks passed!' on src/contexts/world/."
+      "passes": false,
+      "notes": "No custom CSS. Use standard components."
     }
   ]
 }
