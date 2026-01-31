@@ -44,11 +44,11 @@ interface NarrativeSidebarProps {
   /** List of chapters with their nested scenes */
   chapters: OutlinerChapter[];
   /** Currently selected scene ID */
-  activeSceneId?: string;
+  activeSceneId?: string | undefined;
   /** Called when a scene is selected */
-  onSceneSelect?: (sceneId: string, chapterId: string) => void;
+  onSceneSelect?: ((sceneId: string, chapterId: string) => void) | undefined;
   /** Additional CSS classes */
-  className?: string;
+  className?: string | undefined;
 }
 
 /**

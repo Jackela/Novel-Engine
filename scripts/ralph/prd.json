@@ -94,7 +94,7 @@
         "Run `npm run build` to verify dependencies."
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {
@@ -107,7 +107,7 @@
         "UI: Active scene should be highlighted."
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["NAR-006"]
     },
@@ -121,7 +121,7 @@
         "Layout: Sidebar on left (20%), Editor on right (80%)."
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["NAR-006"]
     },
