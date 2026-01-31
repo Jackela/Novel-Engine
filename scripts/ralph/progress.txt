@@ -18,3 +18,16 @@ Started: Sat Jan 31 23:42:17     2026
 - Unit tests: 71 tests passed (36 for Scene, 35 for Beat)
 - Pattern discovered: SceneStatus has additional states (GENERATING, REVIEW) for LLM workflow tracking
 - Gotcha for future: Beat allows empty content (for placeholder beats), unlike Scene which requires a title
+
+## NAR-003 - 2026-02-01T00:30:00
+- What I implemented: Verified existing INarrativeRepository port and InMemoryNarrativeRepository adapter
+- Implementation already complete:
+  - `INarrativeRepository` protocol in `src/contexts/narrative/application/ports/narrative_repository_port.py`
+    - Methods: save(), get_by_id() (load), list_all(), delete(), exists()
+    - Custom `RepositoryException` for infrastructure errors
+  - `InMemoryNarrativeRepository` in `src/contexts/narrative/infrastructure/repositories/`
+    - Uses deep copy for isolation between stored/returned aggregates
+    - Additional testing helpers: clear(), count property
+- Unit tests: 25 tests passed in `test_in_memory_narrative_repository.py`
+- Pattern discovered: Repository uses deep copy to prevent external mutations from affecting stored data
+- Gotcha for future: The port uses Optional return instead of exceptions for "not found" - follows "Tell, Don't Ask" principle

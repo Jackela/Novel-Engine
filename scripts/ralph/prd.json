@@ -52,7 +52,7 @@
         "Run `pytest` verifying the mock repository works."
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": ["NAR-002"]
     },
