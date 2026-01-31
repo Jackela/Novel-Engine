@@ -8,3 +8,13 @@ Started: Sat Jan 31 23:42:17     2026
 - Unit tests: 120 tests passed covering Story and Chapter entities (test_story_entity.py, test_chapter_entity.py)
 - Pattern discovered: Domain entities use dataclasses with `__post_init__` for validation and `_touch()` for timestamp updates
 - Gotcha for future: Story and Chapter already implement full CRUD operations - no need to add more methods unless requirements change
+
+## NAR-002 - 2026-02-01T00:15:00
+- What I implemented: Verified existing Scene & Beat entities in `src/contexts/narrative/domain/entities/`
+- Implementation already complete:
+  - Scene entity: title, chapter_id, summary, order_index, status (DRAFT/GENERATING/REVIEW/PUBLISHED), location, beats management
+  - Beat entity: scene_id, content, order_index, beat_type (ACTION/DIALOGUE/REACTION/REVELATION/TRANSITION/DESCRIPTION), notes
+  - `reorder_beats()` method fully implemented with validation for missing/extra beat IDs
+- Unit tests: 71 tests passed (36 for Scene, 35 for Beat)
+- Pattern discovered: SceneStatus has additional states (GENERATING, REVIEW) for LLM workflow tracking
+- Gotcha for future: Beat allows empty content (for placeholder beats), unlike Scene which requires a title
