@@ -38,7 +38,7 @@
         "Run `pytest`."
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": ["NAR-001"]
     },

@@ -46,3 +46,22 @@
 - Pattern discovered: Used dataclass with field(default_factory=...) for mutable defaults and timestamps
 - Gotcha for future: Story.chapters returns a sorted copy (by order_index) to prevent external modification of internal list
 - Verification: All 49 tests pass in 0.26s
+
+## NAR-002 - 2026-01-31
+- What I implemented: Scene & Beat domain entities for atomic narrative units
+- Files created:
+  1. `src/contexts/narrative/domain/entities/scene.py` - Scene entity with SceneStatus enum (DRAFT/GENERATING/REVIEW/PUBLISHED)
+  2. `src/contexts/narrative/domain/entities/beat.py` - Beat entity with BeatType enum (ACTION/DIALOGUE/REACTION/REVELATION/TRANSITION/DESCRIPTION)
+  3. `tests/unit/contexts/narrative/domain/entities/test_scene_entity.py` - 43 unit tests for Scene
+  4. `tests/unit/contexts/narrative/domain/entities/test_beat_entity.py` - 41 unit tests for Beat
+- Attributes implemented:
+  - Scene: id, chapter_id, title, summary, order_index, status, location, created_at, updated_at, _beats
+  - Beat: id, scene_id, content, order_index, beat_type, notes, created_at, updated_at
+- Key methods:
+  - Scene.reorder_beats(beat_ids): Atomic reordering for drag-and-drop UI
+  - Scene.add_beat/remove_beat/get_beat: Beat management with scene_id validation
+  - Beat.append_content: Streaming support for LLM generation
+  - Beat.word_count/is_empty: Utility methods for writing progress tracking
+- Pattern discovered: SceneStatus has GENERATING state for LLM generation workflow, while Beat allows empty content (placeholder beats)
+- Gotcha for future: Scene.beats returns sorted copy by order_index; reorder_beats() validates beat_ids match exactly (no missing or extra)
+- Verification: All 120 Narrative domain tests pass in 0.42s

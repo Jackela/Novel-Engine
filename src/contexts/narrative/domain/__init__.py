@@ -12,10 +12,16 @@ Why this structure:
 
 from .entities.story import Story, StoryStatus
 from .entities.chapter import Chapter, ChapterStatus
+from .entities.scene import Scene, SceneStatus
+from .entities.beat import Beat, BeatType
 
 __all__ = [
     "Story",
     "StoryStatus",
     "Chapter",
     "ChapterStatus",
+    "Scene",
+    "SceneStatus",
+    "Beat",
+    "BeatType",
 ]
