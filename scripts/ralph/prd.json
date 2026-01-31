@@ -94,7 +94,7 @@
         "Run `npm run build` to verify dependencies."
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {

@@ -54,3 +54,20 @@ Started: Sat Jan 31 23:42:17     2026
 - OpenAPI: Endpoint documented in `docs/api/openapi.current.json`
 - Pattern discovered: SSE streaming uses `StreamingResponse` with `media_type="text/event-stream"` and async generator
 - Gotcha for future: When `MOCK_LLM` is not set or false, endpoint still falls back to mock (real LLM not implemented yet)
+
+## NAR-006 - 2026-02-01T16:10:00
+- What I implemented: Verified existing Tiptap & dnd-kit dependencies and EditorComponent
+- Implementation already complete:
+  - Dependencies in `frontend/package.json`:
+    - `@tiptap/react: ^3.18.0`, `@tiptap/starter-kit: ^3.18.0`, `@tiptap/pm: ^3.18.0`
+    - `@dnd-kit/core: ^6.3.1`, `@dnd-kit/sortable: ^10.0.0`, `@dnd-kit/utilities: ^3.2.2`
+  - `EditorComponent.tsx` at `frontend/src/components/narrative/EditorComponent.tsx`
+    - Default content: `<p>Hello World</p>` (line 158)
+    - Full Tiptap integration with StarterKit
+    - Toolbar (Bold, Italic, H1, H2) using shadcn Toggle components
+    - Streaming integration via `useStoryStream` hook
+- Build verification: `npm run build` completed in 22.67s with no errors
+- Type-check: Passed with no errors
+- Lint: Passed (only warnings, no errors)
+- Pattern discovered: EditorComponent is more advanced than required - already includes streaming integration, making NAR-010 and NAR-011 partially complete
+- Gotcha for future: EditorComponent uses `editorRef` pattern to allow streaming callbacks to access editor after mount
