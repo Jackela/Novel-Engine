@@ -65,3 +65,59 @@
 - Pattern discovered: SceneStatus has GENERATING state for LLM generation workflow, while Beat allows empty content (placeholder beats)
 - Gotcha for future: Scene.beats returns sorted copy by order_index; reorder_beats() validates beat_ids match exactly (no missing or extra)
 - Verification: All 120 Narrative domain tests pass in 0.42s
+
+## NAR-003 - 2026-01-31
+- What I implemented: Narrative Repository Port (INarrativeRepository) and InMemory implementation
+- Files created:
+  1. `src/contexts/narrative/application/__init__.py` - Application layer package
+  2. `src/contexts/narrative/application/ports/__init__.py` - Ports package
+  3. `src/contexts/narrative/application/ports/narrative_repository_port.py` - INarrativeRepository protocol (ABC)
+  4. `src/contexts/narrative/infrastructure/__init__.py` - Infrastructure layer package
+  5. `src/contexts/narrative/infrastructure/repositories/__init__.py` - Repositories package
+  6. `src/contexts/narrative/infrastructure/repositories/in_memory_narrative_repository.py` - InMemory implementation
+  7. `tests/unit/contexts/narrative/infrastructure/repositories/test_in_memory_narrative_repository.py` - 25 unit tests
+- Port methods defined:
+  - save(story): Persist a Story aggregate
+  - get_by_id(story_id): Load a Story by UUID
+  - list_all(): Get all stories sorted by created_at
+  - delete(story_id): Remove a story, return success bool
+  - exists(story_id): Check existence without loading aggregate
+- Pattern discovered: InMemory implementation uses deepcopy on both save AND get to prevent external mutation of stored entities
+- Gotcha for future: list_all() returns sorted by created_at (oldest first) for consistent ordering in tests and UI
+- Verification: All 145 Narrative context tests pass in 0.44s
+
+## NAR-004 - 2026-01-31
+- What I implemented: Structure API (CRUD) for managing story outline via REST endpoints
+- Files created:
+  1. `src/api/routers/structure.py` - 15+ REST endpoints for Story/Chapter/Scene CRUD
+  2. Added Pydantic schemas in `src/api/schemas.py`: StoryCreateRequest, StoryUpdateRequest, StoryResponse, StoryListResponse, ChapterCreateRequest, ChapterUpdateRequest, ChapterResponse, ChapterListResponse, SceneCreateRequest, SceneUpdateRequest, SceneResponse, SceneListResponse, MoveChapterRequest, MoveSceneRequest, StructureErrorResponse
+  3. Updated `docs/api/openapi.current.json` via generate_openapi.py
+- Endpoints implemented:
+  - Stories: POST/GET/PATCH/DELETE /structure/stories
+  - Chapters: POST/GET/PATCH/DELETE /structure/stories/{id}/chapters
+  - Scenes: POST/GET/PATCH/DELETE /structure/stories/{id}/chapters/{id}/scenes
+  - Move operations: POST .../move for reordering
+- Pattern discovered: Used dependency injection with `Depends(get_repository)` for testability; scenes stored in module-level dict for MVP (not in Story aggregate) to avoid repository interface changes
+- Gotcha for future: Scene storage is separate from Story aggregate - scenes are stored in `_scenes` dict, not persisted through INarrativeRepository. This is MVP-only; production should extend repository to handle Scene persistence
+- Verification: All 145 Narrative tests pass, frontend type-check passes, ruff lint passes
+
+## NAR-005 - 2026-01-31
+- What I implemented: SSE streaming endpoint for narrative generation with MOCK_LLM flag
+- Files created:
+  1. `src/api/routers/narrative_generation.py` - SSE streaming router with POST /narrative/generate/stream
+  2. `tests/unit/api/routers/test_narrative_generation_router.py` - 23 unit tests covering models, mock mode, and endpoint
+  3. `scripts/verify_stream_endpoint.py` - Manual verification script using httpx
+- Key features:
+  - `is_mock_mode()`: Checks MOCK_LLM env var (true/1/yes = enabled)
+  - `GenerateStreamRequest`: Pydantic model with scene_id, prompt, context, max_tokens (50-4000)
+  - `StreamChunk`: Pydantic model for SSE events (type: chunk/done/error)
+  - `MOCK_STORY_LINES`: 18-line hardcoded gothic story for mock streaming
+  - `generate_mock_stream()`: Async generator simulating LLM delay (50-150ms per line)
+  - `_sse_generator()`: SSE-formatted output with metadata on completion
+- Endpoint: POST /api/narrative/generate/stream
+  - Returns text/event-stream with Cache-Control: no-cache
+  - Chunks have sequence numbers for ordering
+  - Done event includes metadata: total_chunks, total_characters, generation_time_ms, mock_mode
+- Pattern discovered: FastAPI StreamingResponse with async generator works well for SSE; use media_type="text/event-stream"
+- Gotcha for future: Real LLM mode falls back to mock for now; production needs actual LLM service integration
+- Verification: All 23 new tests pass in 17.7s, endpoint returns proper SSE format
