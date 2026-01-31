@@ -149,6 +149,7 @@ export function NarrativeEditorLayout({
           initialContent={getSceneContent(activeSceneId)}
           onChange={handleEditorChange}
           className="h-full"
+          sceneId={activeSceneId}
         />
       </main>
     </div>

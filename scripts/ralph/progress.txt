@@ -171,3 +171,51 @@
 - Pattern discovered: shadcn Toggle component uses `data-[state=on]:bg-accent` for pressed state styling
 - Gotcha for future: Need @radix-ui/react-toggle dependency (auto-installed by shadcn add toggle)
 - Verification: type-check passes, lint passes (warnings only), build succeeds, 145 pytest tests pass
+
+## NAR-009 - 2026-01-31
+- What I implemented: Connected NarrativeSidebar to Structure API for real data loading
+- Files created/modified:
+  1. `frontend/src/types/schemas.ts` - Added Narrative Structure Zod schemas (StoryResponseSchema, ChapterResponseSchema, SceneResponseSchema, etc.)
+  2. `frontend/src/lib/api/narrativeApi.ts` - Full CRUD API client for stories/chapters/scenes with Zod validation
+  3. `frontend/src/hooks/useStoryStructure.ts` - Hook for loading and managing story structure with loading/error states
+  4. `frontend/src/lib/api/index.ts` - Exported new narrative API functions
+  5. `frontend/src/components/narrative/NarrativeEditorLayout.tsx` - Integrated useStoryStructure hook with fallback to mock data
+- API functions implemented:
+  - Stories: listStories, getStory, createStory, updateStory, deleteStory
+  - Chapters: listChapters, getChapter, createChapter, updateChapter, deleteChapter, moveChapter
+  - Scenes: listScenes, getScene, createScene, updateScene, deleteScene, moveScene
+- Hook features:
+  - loadStories(): Load all stories and auto-select first one
+  - selectStory(id): Switch to a different story
+  - refresh(): Reload current story structure
+  - addStory/addChapter/addScene: Create new items with auto-refresh
+  - Parallel loading of scenes for all chapters
+- Layout integration:
+  - Added storyId and useMockData props for flexible data sourcing
+  - Loading spinner during initial fetch
+  - Error state with retry button
+  - Graceful fallback to mock data when backend unavailable
+- Pattern discovered: When array operations might return undefined (e.g., `array[0]`), use explicit variable assignment and null check for TypeScript strictness
+- Gotcha for future: useStoryStructure loads scenes for each chapter in parallel - with many chapters this could create many concurrent requests. Consider adding rate limiting or lazy loading for large stories
+- Verification: type-check passes, lint passes (warnings only for function length), build succeeds, 145 pytest tests pass
+
+## NAR-010 - 2026-01-31
+- What I implemented: SSE streaming hook for narrative generation
+- Files created:
+  1. `frontend/src/hooks/useStoryStream.ts` - Full SSE streaming hook with fetch-based ReadableStream
+- Hook features:
+  - `startStream(request)`: Start SSE connection via fetch POST (not EventSource since POST required)
+  - `stopStream()`: Abort controller cancellation for user-initiated stop
+  - `reset()`: Clear buffer and reset all state
+  - `buffer`: Accumulated text from all chunks
+  - `isStreaming`: Current streaming status
+  - `error`: Error message on failure
+  - `metadata`: Generation metadata on completion (total_chunks, total_characters, generation_time_ms, mock_mode)
+  - `isComplete`: Success completion flag
+- Callbacks:
+  - `onChunk(content, sequence)`: Called for each incoming chunk
+  - `onComplete(metadata)`: Called on successful stream completion
+  - `onError(error)`: Called on streaming errors
+- Pattern discovered: EventSource only supports GET requests; our endpoint uses POST. Used fetch with ReadableStream and manual SSE parsing instead
+- Gotcha for future: SSE lines need manual parsing (split by "data: " prefix). AbortController needed for fetch cancellation
+- Verification: type-check passes, lint passes (warnings only for function length/complexity), build succeeds, 2731 pytest tests pass

@@ -41,13 +41,13 @@ interface StreamMetadata {
  */
 export interface StreamRequest {
   /** Optional UUID of the scene to generate content for */
-  scene_id?: string;
+  scene_id?: string | undefined;
   /** Optional custom prompt for generation */
-  prompt?: string;
+  prompt?: string | undefined;
   /** Optional context string to inform generation */
-  context?: string;
+  context?: string | undefined;
   /** Maximum tokens to generate (50-4000, default 500) */
-  max_tokens?: number;
+  max_tokens?: number | undefined;
 }
 
 /**
