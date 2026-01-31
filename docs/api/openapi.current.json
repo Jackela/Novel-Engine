@@ -3294,6 +3294,46 @@
         }
       }
     },
+    "/narrative/generate/stream": {
+      "post": {
+        "tags": [
+          "narrative-generation"
+        ],
+        "summary": "Stream Narrative Generation",
+        "description": "Stream narrative generation via Server-Sent Events.\n\nThis endpoint generates narrative content and streams it in real-time.\nWhen MOCK_LLM=true, it streams a hardcoded story line by line.\nOtherwise, it calls the actual LLM service (when implemented).\n\nWhy streaming:\n    Provides immediate feedback to users, reducing perceived latency.\n    Users see content appearing as it's generated rather than\n    waiting for the entire response.\n\nRequest body:\n    - scene_id: Optional UUID of the scene to generate for\n    - prompt: Optional custom generation prompt\n    - context: Optional context string\n    - max_tokens: Maximum tokens (50-4000, default 500)\n\nResponse: SSE stream with events:\n    - type: \"chunk\" - Content chunk with sequence number\n    - type: \"done\" - Generation complete with metadata\n    - type: \"error\" - Error occurred during generation\n\nEnvironment:\n    - MOCK_LLM=true: Use mock generation (for testing)\n    - MOCK_LLM=false or unset: Use real LLM (when implemented)\n\nExample with curl:\n    ```bash\n    curl -N -X POST http://localhost:8000/api/narrative/generate/stream \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\"max_tokens\": 500}'\n    ```",
+        "operationId": "stream_narrative_generation_narrative_generate_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/api/auth/login": {
       "post": {
         "tags": [
@@ -5302,6 +5342,46 @@
                 "schema": {
                   "$ref": "#/components/schemas/SceneResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/narrative/generate/stream": {
+      "post": {
+        "tags": [
+          "narrative-generation"
+        ],
+        "summary": "Stream Narrative Generation",
+        "description": "Stream narrative generation via Server-Sent Events.\n\nThis endpoint generates narrative content and streams it in real-time.\nWhen MOCK_LLM=true, it streams a hardcoded story line by line.\nOtherwise, it calls the actual LLM service (when implemented).\n\nWhy streaming:\n    Provides immediate feedback to users, reducing perceived latency.\n    Users see content appearing as it's generated rather than\n    waiting for the entire response.\n\nRequest body:\n    - scene_id: Optional UUID of the scene to generate for\n    - prompt: Optional custom generation prompt\n    - context: Optional context string\n    - max_tokens: Maximum tokens (50-4000, default 500)\n\nResponse: SSE stream with events:\n    - type: \"chunk\" - Content chunk with sequence number\n    - type: \"done\" - Generation complete with metadata\n    - type: \"error\" - Error occurred during generation\n\nEnvironment:\n    - MOCK_LLM=true: Use mock generation (for testing)\n    - MOCK_LLM=false or unset: Use real LLM (when implemented)\n\nExample with curl:\n    ```bash\n    curl -N -X POST http://localhost:8000/api/narrative/generate/stream \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\"max_tokens\": 500}'\n    ```",
+        "operationId": "stream_narrative_generation_api_narrative_generate_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -7563,6 +7643,57 @@
         ],
         "title": "FrameworkType",
         "description": "Supported framework types for Context7 integration."
+      },
+      "GenerateStreamRequest": {
+        "properties": {
+          "scene_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scene Id",
+            "description": "UUID of the scene to generate content for"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt",
+            "description": "Custom prompt for generation"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context",
+            "description": "Context string to inform generation"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "maximum": 4000.0,
+            "minimum": 50.0,
+            "title": "Max Tokens",
+            "description": "Maximum tokens to generate",
+            "default": 500
+          }
+        },
+        "type": "object",
+        "title": "GenerateStreamRequest",
+        "description": "Request body for narrative streaming generation.\n\nAttributes:\n    scene_id: Optional UUID of the scene to generate content for.\n    prompt: Optional custom prompt for generation.\n    context: Optional context string to inform generation.\n    max_tokens: Maximum tokens to generate (controls length)."
       },
       "GuestSessionResponse": {
         "properties": {

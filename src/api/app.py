@@ -87,6 +87,8 @@ def create_app(
     from src.api.routers.orchestration import router as orchestration_router
     from src.api.routers.simulations import router as simulations_router
     from src.api.routers.world import router as world_gen_router
+    from src.api.routers.structure import router as structure_router
+    from src.api.routers.narrative_generation import router as narrative_generation_router
 
     app.include_router(health_router)
     app.include_router(meta_router)
@@ -102,6 +104,8 @@ def create_app(
     app.include_router(scene_router)
     app.include_router(auth_router)
     app.include_router(world_gen_router)
+    app.include_router(structure_router)
+    app.include_router(narrative_generation_router)
 
     app.include_router(health_router, prefix="/api")
     app.include_router(meta_router, prefix="/api")
@@ -117,6 +121,8 @@ def create_app(
     app.include_router(scene_router, prefix="/api")
     app.include_router(auth_router, prefix="/api")
     app.include_router(world_gen_router, prefix="/api")
+    app.include_router(structure_router, prefix="/api")
+    app.include_router(narrative_generation_router, prefix="/api")
 
     try:
         from src.api.prompts_router import router as prompts_router
