@@ -38,7 +38,7 @@
         "Run `pytest`."
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "effort": "low",
       "dependencies": ["NAR-001"]
     },
@@ -52,7 +52,7 @@
         "Run `pytest` verifying the mock repository works."
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "effort": "low",
       "dependencies": ["NAR-002"]
     },
@@ -66,7 +66,7 @@
         "Run `scripts/generate_openapi.py` to update frontend types."
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["NAR-003"]
     },
@@ -80,7 +80,7 @@
         "Verify with `curl -N localhost:8000/...` (or python script)."
       ],
       "priority": 5,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["NAR-004"]
     },
@@ -94,7 +94,7 @@
         "Run `npm run build` to verify dependencies."
       ],
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "effort": "low"
     },
     {
@@ -107,7 +107,7 @@
         "UI: Active scene should be highlighted."
       ],
       "priority": 7,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["NAR-006"]
     },
@@ -121,7 +121,7 @@
         "Layout: Sidebar on left (20%), Editor on right (80%)."
       ],
       "priority": 8,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["NAR-006"]
     },
@@ -135,7 +135,7 @@
         "Verify: Sidebar loads data from the InMemory backend."
       ],
       "priority": 9,
-      "passes": true,
+      "passes": false,
       "effort": "high",
       "dependencies": ["NAR-004", "NAR-007"]
     },
@@ -149,7 +149,7 @@
         "Handle `onComplete` and `onError` events."
       ],
       "priority": 10,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["NAR-005"]
     },
@@ -163,7 +163,7 @@
         "UX: Insert text into Tiptap editor at cursor position."
       ],
       "priority": 11,
-      "passes": true,
+      "passes": false,
       "effort": "high",
       "dependencies": ["NAR-010", "NAR-008"]
     },
@@ -179,7 +179,7 @@
         "Run `npm run test:e2e`."
       ],
       "priority": 12,
-      "passes": true,
+      "passes": false,
       "effort": "high",
       "dependencies": ["NAR-011"]
     },
