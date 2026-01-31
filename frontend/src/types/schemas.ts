@@ -274,6 +274,113 @@ export const ErrorInfoSchema = z.object({
 
 export type ErrorInfo = z.infer<typeof ErrorInfoSchema>;
 
+// === Narrative Structure Schemas (aligned with backend schemas.py) ===
+
+/**
+ * Story response schema matching backend StoryResponse.
+ */
+export const StoryResponseSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  summary: z.string().default(''),
+  status: z.enum(['draft', 'published']),
+  chapter_count: z.number().default(0),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Story list response schema matching backend StoryListResponse.
+ */
+export const StoryListResponseSchema = z.object({
+  stories: z.array(StoryResponseSchema).default([]),
+});
+
+/**
+ * Chapter response schema matching backend ChapterResponse.
+ */
+export const ChapterResponseSchema = z.object({
+  id: z.string(),
+  story_id: z.string(),
+  title: z.string(),
+  summary: z.string().default(''),
+  order_index: z.number(),
+  status: z.enum(['draft', 'published']),
+  scene_count: z.number().default(0),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Chapter list response schema matching backend ChapterListResponse.
+ */
+export const ChapterListResponseSchema = z.object({
+  story_id: z.string(),
+  chapters: z.array(ChapterResponseSchema).default([]),
+});
+
+/**
+ * Scene response schema matching backend SceneResponse.
+ */
+export const SceneResponseSchema = z.object({
+  id: z.string(),
+  chapter_id: z.string(),
+  title: z.string(),
+  summary: z.string().default(''),
+  location: z.string().default(''),
+  order_index: z.number(),
+  status: z.enum(['draft', 'generating', 'review', 'published']),
+  beat_count: z.number().default(0),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Scene list response schema matching backend SceneListResponse.
+ */
+export const SceneListResponseSchema = z.object({
+  chapter_id: z.string(),
+  scenes: z.array(SceneResponseSchema).default([]),
+});
+
+/**
+ * Story create request schema.
+ */
+export const StoryCreateRequestSchema = z.object({
+  title: z.string().min(1).max(200),
+  summary: z.string().max(2000).default(''),
+});
+
+/**
+ * Chapter create request schema.
+ */
+export const ChapterCreateRequestSchema = z.object({
+  title: z.string().min(1).max(200),
+  summary: z.string().max(2000).default(''),
+  order_index: z.number().int().min(0).optional(),
+});
+
+/**
+ * Scene create request schema.
+ */
+export const SceneCreateRequestSchema = z.object({
+  title: z.string().min(1).max(200),
+  summary: z.string().max(2000).default(''),
+  location: z.string().max(500).default(''),
+  order_index: z.number().int().min(0).optional(),
+});
+
+// Narrative Structure Types
+export type StoryResponse = z.infer<typeof StoryResponseSchema>;
+export type StoryListResponse = z.infer<typeof StoryListResponseSchema>;
+export type ChapterResponse = z.infer<typeof ChapterResponseSchema>;
+export type ChapterListResponse = z.infer<typeof ChapterListResponseSchema>;
+export type SceneResponse = z.infer<typeof SceneResponseSchema>;
+export type SceneListResponse = z.infer<typeof SceneListResponseSchema>;
+export type StoryCreateRequest = z.infer<typeof StoryCreateRequestSchema>;
+export type ChapterCreateRequest = z.infer<typeof ChapterCreateRequestSchema>;
+export type SceneCreateRequest = z.infer<typeof SceneCreateRequestSchema>;
+
 /**
  * Standard API response envelope matching backend's StandardResponse
  *

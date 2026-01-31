@@ -5,3 +5,24 @@ export { api, type ApiError, type ValidationError, type BackendError } from './c
 export { generateCharacter } from './generationApi';
 export { generateScene } from './sceneApi';
 export { generateWorld } from './worldApi';
+
+// Narrative Structure API
+export {
+  listStories,
+  getStory,
+  createStory,
+  updateStory,
+  deleteStory,
+  listChapters,
+  getChapter,
+  createChapter,
+  updateChapter,
+  deleteChapter,
+  moveChapter,
+  listScenes,
+  getScene,
+  createScene,
+  updateScene,
+  deleteScene,
+  moveScene,
+} from './narrativeApi';

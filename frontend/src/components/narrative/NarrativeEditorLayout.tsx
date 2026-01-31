@@ -4,18 +4,23 @@
  * Why: Combines the NarrativeSidebar (20% width) and EditorComponent (80% width)
  * into a cohesive writing environment, following the PRD layout specifications.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { cn } from '@/lib/utils';
 import { NarrativeSidebar, MOCK_CHAPTERS } from './NarrativeSidebar';
 import { EditorComponent } from './EditorComponent';
+import { useStoryStructure } from '@/hooks/useStoryStructure';
 import type { OutlinerChapter } from './NarrativeSidebar';
 
 interface NarrativeEditorLayoutProps {
-  /** Story chapters data (optional, defaults to mock data for development) */
+  /** Story ID to load (optional, loads from backend when provided) */
+  storyId?: string;
+  /** Story chapters data (optional, defaults to backend data or mock) */
   chapters?: OutlinerChapter[];
   /** Additional CSS classes for the container */
   className?: string;
+  /** Use mock data instead of backend (defaults to false) */
+  useMockData?: boolean;
 }
 
 /**
@@ -26,13 +31,42 @@ interface NarrativeEditorLayoutProps {
  * navigation and the editor on the right for content creation.
  */
 export function NarrativeEditorLayout({
-  chapters = MOCK_CHAPTERS,
+  storyId,
+  chapters: propChapters,
   className,
+  useMockData = false,
 }: NarrativeEditorLayoutProps) {
+  // Load story structure from backend
+  const {
+    chapters: backendChapters,
+    isLoading,
+    error,
+    loadStories,
+  } = useStoryStructure(storyId);
+
+  // Load stories on mount if not using mock data
+  useEffect(() => {
+    if (!useMockData && !storyId) {
+      loadStories();
+    }
+  }, [useMockData, storyId, loadStories]);
+
+  // Determine which chapters to use: props > backend > mock
+  const chapters = propChapters ?? (useMockData ? MOCK_CHAPTERS : backendChapters.length > 0 ? backendChapters : MOCK_CHAPTERS);
+
   // Track active scene for sidebar highlighting and content loading
   const [activeSceneId, setActiveSceneId] = useState<string | undefined>(
     chapters[0]?.scenes[0]?.id
   );
+
+  // Update active scene when chapters change
+  useEffect(() => {
+    const firstChapter = chapters[0];
+    const firstScene = firstChapter?.scenes[0];
+    if (chapters.length > 0 && firstScene && !activeSceneId) {
+      setActiveSceneId(firstScene.id);
+    }
+  }, [chapters, activeSceneId]);
 
   // Find the active scene's content (placeholder for now)
   const getSceneContent = (sceneId: string | undefined): string => {
@@ -57,6 +91,42 @@ export function NarrativeEditorLayout({
     // Future: Save content to backend via API
     console.log('Editor content changed:', html.substring(0, 100) + '...');
   };
+
+  // Show loading state
+  if (isLoading && !useMockData) {
+    return (
+      <div
+        className={cn('flex h-full w-full items-center justify-center', className)}
+        data-testid="narrative-editor-layout"
+      >
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p>Loading story structure...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state (but still allow fallback to mock)
+  if (error && !useMockData && chapters.length === 0) {
+    return (
+      <div
+        className={cn('flex h-full w-full items-center justify-center', className)}
+        data-testid="narrative-editor-layout"
+      >
+        <div className="flex flex-col items-center gap-2 text-destructive">
+          <p>Failed to load story: {error}</p>
+          <button
+            type="button"
+            onClick={() => loadStories()}
+            className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
