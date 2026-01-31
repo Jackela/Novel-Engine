@@ -13,3 +13,36 @@
   3. Added Windows-specific orphan process cleanup via taskkill
 - Pattern discovered: Use inverted env var logic (HEADED=true to show browser) instead of CI detection for headless mode
 - Gotcha for future: Always default to headless mode and use explicit opt-in for headed mode during debugging
+
+## MOCK-001 - 2026-01-30
+- What I implemented: LLM Mock Infrastructure for E2E Testing
+- Files created:
+  1. `tests/mocks/llm_handlers.ts` - Main mock implementation with Page route interceptors
+  2. `frontend/tests/e2e/utils/llmMocks.ts` - ESM-compatible copy for Playwright tests
+  3. `frontend/tests/e2e/llm-mock-verification.spec.ts` - Verification tests
+- Endpoints mocked:
+  - POST /api/generate
+  - POST /api/generation/character
+  - POST /api/generation/scene
+  - POST /api/narratives/stream (SSE)
+  - GET/POST /api/orchestration/narrative
+- Pattern discovered: TypeScript files in `tests/` are CommonJS by default, Playwright tests in `frontend/tests/e2e/` require ESM. Need to maintain parallel implementations or use re-exports
+- Gotcha for future: When using `page.route()` with `page.evaluate()`, cannot use `about:blank` as the page - need to navigate to actual app URL first for relative fetch URLs to work
+- Verification: All 5 tests pass with MOCK_LLM=true in 8.1s, properly skipped when env var not set
+
+## NAR-001 - 2026-01-31
+- What I implemented: Story & Chapter domain entities for the Narrative bounded context
+- Files created:
+  1. `src/contexts/narrative/domain/__init__.py` - Domain layer exports
+  2. `src/contexts/narrative/domain/entities/__init__.py` - Entities package
+  3. `src/contexts/narrative/domain/entities/story.py` - Story aggregate root with StoryStatus enum
+  4. `src/contexts/narrative/domain/entities/chapter.py` - Chapter entity with ChapterStatus enum
+  5. `src/contexts/narrative/domain/value_objects/__init__.py` - Value objects package (placeholder)
+  6. `tests/unit/contexts/narrative/domain/entities/test_story_entity.py` - 28 unit tests for Story
+  7. `tests/unit/contexts/narrative/domain/entities/test_chapter_entity.py` - 21 unit tests for Chapter
+- Attributes implemented:
+  - Story: id, title, summary, status (DRAFT/PUBLISHED), created_at, updated_at, _chapters
+  - Chapter: id, story_id, title, summary, order_index, status (DRAFT/PUBLISHED), created_at, updated_at
+- Pattern discovered: Used dataclass with field(default_factory=...) for mutable defaults and timestamps
+- Gotcha for future: Story.chapters returns a sorted copy (by order_index) to prevent external modification of internal list
+- Verification: All 49 tests pass in 0.26s

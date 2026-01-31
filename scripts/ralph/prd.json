@@ -1,53 +1,214 @@
 {
-  "project": "Novel-Engine-UI-Rescue",
+  "project": "Novel-Engine-Midnight-Run",
   "branchName": "feat/domain-and-fortification",
-  "description": "Fixing the broken UI (404s), optimizing test execution (hanging browsers), and preparing the Mock infrastructure.",
+  "description": "OVERNIGHT BUILD: From Domain Entities to a functional Streaming Editor. 14 atomic steps.",
   "techContext": {
-    "stack": "React + Vite + shadcn/ui + Playwright",
-    "testCommand": "npm run test:e2e",
-    "e2eConfig": "playwright.config.ts"
+    "stack": "FastAPI + React + Tiptap (Editor) + dnd-kit (Outliner) + SSE",
+    "testCommand": "pytest",
+    "e2eCommand": "npm run test:e2e",
+    "typecheckCommand": "npm run typecheck",
+    "conventions": [
+      "Domain logic must be pure Python",
+      "Frontend uses shadcn/ui",
+      "Streaming uses standard EventSource"
+    ]
   },
   "userStories": [
     {
-      "id": "UI-FIX-001",
-      "title": "Router & Page Audit",
-      "description": "The app has blank pages. Audit the Router and delete dead code.",
+      "id": "NAR-001",
+      "title": "Domain: Story & Chapter Entities",
+      "description": "Define the root aggregates for a novel.",
       "acceptanceCriteria": [
-        "Audit `App.tsx`: Identify all routes.",
-        "Manual Check Logic: If a route points to a component that renders nothing or errors, FIX it or DELETE the route.",
-        "Ensure the Root Route `/` redirects to a valid Dashboard or Home (not blank).",
-        "Verification: `npm run test:e2e` (navigation tests) must pass and NOT be empty."
+        "Create `Story` and `Chapter` entities in `src/contexts/narrative/domain/`.",
+        "Attributes: title, summary, order_index, status (DRAFT/PUBLISHED).",
+        "Run `pytest` (create basic unit tests for instantiation)."
       ],
       "priority": 1,
-      "passes": true,
-      "effort": "medium"
-    },
-    {
-      "id": "TEST-FIX-001",
-      "title": "Fix Hanging Playwright Browsers",
-      "description": "Tests leave Chrome instances open, blocking the dev loop.",
-      "acceptanceCriteria": [
-        "Modify `playwright.config.ts`: Ensure `headless: true` is default for CI/Ralph runs.",
-        "Add `Global Teardown`: Ensure contexts are closed after tests.",
-        "Verification: Run `npm run test:e2e` twice in a row. It should not fail due to 'port in use' or locked files."
-      ],
-      "priority": 2,
       "passes": true,
       "effort": "low"
     },
     {
-      "id": "MOCK-001",
-      "title": "LLM Mock Infrastructure",
-      "description": "Prepare for Narrative dev by mocking the expensive LLM calls in E2E.",
+      "id": "NAR-002",
+      "title": "Domain: Scene & Beat Entities",
+      "description": "Define the atomic units of storytelling.",
       "acceptanceCriteria": [
-        "Create `tests/mocks/llm_handlers.ts`: A mock server (or Playwright `page.route`) that intercepts `POST /api/generate`.",
-        "Return dummy JSON instantly instead of calling OpenAI/Claude.",
-        "Enable this mock ONLY when `MOCK_LLM=true` env var is set.",
-        "Verification: Run a generation test with MOCK_LLM=true and assert it finishes in <2 seconds."
+        "Create `Scene` and `Beat` entities.",
+        "Logic: A Scene belongs to a Chapter. A Beat belongs to a Scene.",
+        "Implement `reorder_beats()` method in Scene entity.",
+        "Run `pytest`."
+      ],
+      "priority": 2,
+      "passes": false,
+      "effort": "low",
+      "dependencies": ["NAR-001"]
+    },
+    {
+      "id": "NAR-003",
+      "title": "Backend: Narrative Repository Port",
+      "description": "Define how we save stories.",
+      "acceptanceCriteria": [
+        "Define `INarrativeRepository` protocol (save, load, list).",
+        "Implement `InMemoryNarrativeRepository` for testing.",
+        "Run `pytest` verifying the mock repository works."
       ],
       "priority": 3,
       "passes": false,
-      "effort": "medium"
+      "effort": "low",
+      "dependencies": ["NAR-002"]
+    },
+    {
+      "id": "NAR-004",
+      "title": "Backend: Structure API (CRUD)",
+      "description": "API to manage the outline.",
+      "acceptanceCriteria": [
+        "Create `routers/structure.py`: Endpoints to create/move Chapters and Scenes.",
+        "Use Pydantic models for Input/Output.",
+        "Run `scripts/generate_openapi.py` to update frontend types."
+      ],
+      "priority": 4,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["NAR-003"]
+    },
+    {
+      "id": "NAR-005",
+      "title": "Backend: Streaming Endpoint Stub",
+      "description": "The SSE endpoint that will eventually stream text.",
+      "acceptanceCriteria": [
+        "Create `POST /api/narrative/generate/stream`.",
+        "Implementation: Use `MOCK_LLM` flag. If true, stream a hardcoded generic story line by line.",
+        "Verify with `curl -N localhost:8000/...` (or python script)."
+      ],
+      "priority": 5,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["NAR-004"]
+    },
+    {
+      "id": "NAR-006",
+      "title": "Frontend: Install Tiptap & Dependencies",
+      "description": "Setup the rich text editor engine.",
+      "acceptanceCriteria": [
+        "Run `npm install @tiptap/react @tiptap/starter-kit @dnd-kit/core @dnd-kit/sortable`.",
+        "Create a minimal `EditorComponent.tsx` that renders 'Hello World'.",
+        "Run `npm run build` to verify dependencies."
+      ],
+      "priority": 6,
+      "passes": false,
+      "effort": "low"
+    },
+    {
+      "id": "NAR-007",
+      "title": "Frontend: Outliner UI (Sidebar)",
+      "description": "The sidebar where users see chapters.",
+      "acceptanceCriteria": [
+        "Create `NarrativeSidebar` component using shadcn `ScrollArea`.",
+        "Mock data: Render a list of Chapters > Scenes.",
+        "UI: Active scene should be highlighted."
+      ],
+      "priority": 7,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["NAR-006"]
+    },
+    {
+      "id": "NAR-008",
+      "title": "Frontend: Editor UI (Main Canvas)",
+      "description": "The main writing interface.",
+      "acceptanceCriteria": [
+        "Refactor `EditorComponent` to use shadcn styling (clean typography).",
+        "Add a Toolbar (Bold, Italic, H1, H2).",
+        "Layout: Sidebar on left (20%), Editor on right (80%)."
+      ],
+      "priority": 8,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["NAR-006"]
+    },
+    {
+      "id": "NAR-009",
+      "title": "Frontend: Connect Structure API",
+      "description": "Make the Outliner real.",
+      "acceptanceCriteria": [
+        "Create `narrativeApi.ts` using generated types.",
+        "Hook `useStoryStructure`: Fetch chapters from backend.",
+        "Verify: Sidebar loads data from the InMemory backend."
+      ],
+      "priority": 9,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["NAR-004", "NAR-007"]
+    },
+    {
+      "id": "NAR-010",
+      "title": "Frontend: SSE Streaming Hook",
+      "description": "The logic to handle incoming text streams.",
+      "acceptanceCriteria": [
+        "Create `useStoryStream.ts`.",
+        "Logic: Connect to EventSource, append incoming tokens to a buffer state.",
+        "Handle `onComplete` and `onError` events."
+      ],
+      "priority": 10,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["NAR-005"]
+    },
+    {
+      "id": "NAR-011",
+      "title": "Frontend: Editor Streaming Integration",
+      "description": "Watch the ghost write.",
+      "acceptanceCriteria": [
+        "Integrate `useStoryStream` into `EditorComponent`.",
+        "UX: When streaming, show a 'Generating...' indicator.",
+        "UX: Insert text into Tiptap editor at cursor position."
+      ],
+      "priority": 11,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["NAR-010", "NAR-008"]
+    },
+    {
+      "id": "NAR-012",
+      "title": "E2E: The Ghostwriter Test",
+      "description": "Verify the whole loop.",
+      "acceptanceCriteria": [
+        "Create `tests/e2e/narrative-gen.spec.ts`.",
+        "Step 1: Create Chapter via UI.",
+        "Step 2: Click 'Generate' button.",
+        "Step 3: Assert Tiptap editor content becomes non-empty.",
+        "Run `npm run test:e2e`."
+      ],
+      "priority": 12,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["NAR-011"]
+    },
+    {
+      "id": "NAR-013",
+      "title": "Weaver: Drag & Drop Reordering",
+      "description": "Allow reordering chapters.",
+      "acceptanceCriteria": [
+        "Implement `dnd-kit` in `NarrativeSidebar`.",
+        "Allow dragging a Scene from Chapter A to Chapter B.",
+        "Call backend API to update order."
+      ],
+      "priority": 13,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["NAR-009"]
+    },
+    {
+      "id": "DOC-004",
+      "title": "Narrative Architecture Docs",
+      "description": "Document what we just built.",
+      "acceptanceCriteria": [
+        "Create `docs/architecture/narrative_engine.mermaid`.",
+        "Explain the SSE flow and Domain Model.",
+        "Run `npm run typecheck` one last time."
+      ],
+      "priority": 14,
+      "passes": false,
+      "effort": "low"
     }
   ]
 }
