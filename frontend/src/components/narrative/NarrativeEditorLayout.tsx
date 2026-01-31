@@ -4,13 +4,14 @@
  * Why: Combines the NarrativeSidebar (20% width) and EditorComponent (80% width)
  * into a cohesive writing environment, following the PRD layout specifications.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { cn } from '@/lib/utils';
 import { NarrativeSidebar, MOCK_CHAPTERS } from './NarrativeSidebar';
 import { EditorComponent } from './EditorComponent';
 import { useStoryStructure } from '@/hooks/useStoryStructure';
-import type { OutlinerChapter } from './NarrativeSidebar';
+import { moveScene } from '@/lib/api';
+import type { OutlinerChapter, SceneMoveResult } from './NarrativeSidebar';
 
 interface NarrativeEditorLayoutProps {
   /** Story ID to load (optional, loads from backend when provided) */
@@ -92,6 +93,49 @@ export function NarrativeEditorLayout({
     console.log('Editor content changed:', html.substring(0, 100) + '...');
   };
 
+  /**
+   * Handle scene move from drag-and-drop.
+   *
+   * Why: Persists scene reordering to the backend, enabling cross-chapter
+   * scene movement as required by NAR-013.
+   */
+  const handleSceneMove = useCallback(
+    async (result: SceneMoveResult) => {
+      const { sceneId, sourceChapterId, targetChapterId, newOrderIndex } = result;
+
+      // Get the current story ID
+      const storyId = chapters[0]?.story_id;
+      if (!storyId) {
+        console.error('No story ID available for scene move');
+        return;
+      }
+
+      try {
+        // Call the backend API to move the scene
+        await moveScene(
+          storyId,
+          sourceChapterId,
+          sceneId,
+          newOrderIndex,
+          sourceChapterId !== targetChapterId ? targetChapterId : undefined
+        );
+
+        // Refresh the structure to reflect the changes
+        if (!useMockData) {
+          loadStories();
+        }
+
+        console.log(
+          `Moved scene ${sceneId} from ${sourceChapterId} to ${targetChapterId} at index ${newOrderIndex}`
+        );
+      } catch (error) {
+        console.error('Failed to move scene:', error);
+        // TODO: Show error toast to user
+      }
+    },
+    [chapters, useMockData, loadStories]
+  );
+
   // Show loading state
   if (isLoading && !useMockData) {
     return (
@@ -139,6 +183,7 @@ export function NarrativeEditorLayout({
           chapters={chapters}
           activeSceneId={activeSceneId}
           onSceneSelect={handleSceneSelect}
+          onSceneMove={handleSceneMove}
           className="h-full"
         />
       </div>
