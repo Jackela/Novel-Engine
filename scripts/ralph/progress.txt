@@ -219,3 +219,42 @@
 - Pattern discovered: EventSource only supports GET requests; our endpoint uses POST. Used fetch with ReadableStream and manual SSE parsing instead
 - Gotcha for future: SSE lines need manual parsing (split by "data: " prefix). AbortController needed for fetch cancellation
 - Verification: type-check passes, lint passes (warnings only for function length/complexity), build succeeds, 2731 pytest tests pass
+
+## NAR-011 - 2026-01-31
+- What I implemented: Integrated useStoryStream hook into EditorComponent for live streaming text insertion
+- Files modified:
+  1. `frontend/src/components/narrative/EditorComponent.tsx` - Added streaming integration with Generate/Stop buttons
+  2. `frontend/src/components/narrative/NarrativeEditorLayout.tsx` - Pass sceneId to EditorComponent
+  3. `frontend/src/hooks/useStoryStream.ts` - Fixed exactOptionalPropertyTypes for StreamRequest interface
+- Key features:
+  - EditorToolbar now has Generate button (Sparkles icon) and Stop button (Square icon) during streaming
+  - "Generating..." indicator banner with spinner animation shows during streaming
+  - Text is inserted at cursor position using Tiptap's `insertContentAt()` method
+  - Cursor position tracked via `insertPositionRef` - saved when generation starts, updated as chunks arrive
+  - Formatting toolbar toggles (Bold, Italic, H1, H2) are disabled during streaming
+  - Editor becomes read-only during streaming (`editable: editable && !isStreaming`)
+  - Error state displays below toolbar when streaming fails
+  - Props added: sceneId, prompt, context for generation parameters
+- Pattern discovered: Tiptap's `insertContentAt(position, content)` is ideal for streaming - it inserts at exact position without moving cursor. Need to track and update position as content grows
+- Gotcha for future: Editor becomes read-only during streaming to prevent conflicts. Format toggles are disabled. User can only Stop the generation
+- Verification: type-check passes, lint passes (warnings only), build succeeds, 145 narrative tests pass, 89 e2e tests pass
+
+## NAR-012 - 2026-01-31
+- What I implemented: E2E test for the full narrative generation flow (The Ghostwriter Test)
+- Files created:
+  1. `frontend/tests/e2e/narrative-gen.spec.ts` - 3 BDD-style E2E tests covering:
+     - Full generation flow: Navigate to editor → Click New Chapter → Assert content appears
+     - Cancel flow: Verify generating indicator and Cancel button during streaming
+     - Error handling: Verify graceful error display when API fails
+- Key test techniques:
+  - `prepareGuestSession(page)` to bypass protected route auth
+  - Mock SSE endpoint (`/api/narratives/stream`) with `createMockNarrativeSSE()` helper
+  - Use `.first()` for locators that may match multiple elements (generating indicator)
+  - Wait for content assertion instead of checking indicator visibility for completion
+- Test covers NAR-012 acceptance criteria:
+  1. Create Chapter via UI - uses "New Chapter" button
+  2. Click Generate button - via New Chapter button which triggers startStream
+  3. Assert Tiptap editor content becomes non-empty - verify story text appears
+- Pattern discovered: Use `page.route()` with `{ times: 1 }` option to override mock for specific test scenarios without affecting beforeEach setup
+- Gotcha for future: Multiple `[data-testid="generating-indicator"]` elements exist during streaming states; always use `.first()` or more specific selectors
+- Verification: All 3 narrative-gen tests pass in 8.5s, type-check passes, lint passes (warnings only)
