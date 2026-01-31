@@ -452,15 +452,162 @@ class WorkspaceCharacterCreateRequest(BaseModel):
 
 
 class WorkspaceCharacterUpdateRequest(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=2, max_length=100)     
-    background_summary: Optional[str] = Field(default=None, max_length=1000)    
-    personality_traits: Optional[str] = Field(default=None, max_length=500)     
+    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    background_summary: Optional[str] = Field(default=None, max_length=1000)
+    personality_traits: Optional[str] = Field(default=None, max_length=500)
     skills: Optional[Dict[str, float]] = None
     relationships: Optional[Dict[str, float]] = None
-    current_location: Optional[str] = Field(default=None, max_length=200)       
+    current_location: Optional[str] = Field(default=None, max_length=200)
     inventory: Optional[List[str]] = None
     metadata: Optional[Dict[str, JsonValue]] = None
     structured_data: Optional[Dict[str, JsonValue]] = None
+
+
+# === Narrative Structure Schemas (Story Outline CRUD) ===
+
+
+class StoryCreateRequest(BaseModel):
+    """Request model for creating a new story."""
+
+    title: str = Field(..., min_length=1, max_length=200, description="Story title")
+    summary: str = Field(default="", max_length=2000, description="Story synopsis")
+
+
+class StoryUpdateRequest(BaseModel):
+    """Request model for updating a story."""
+
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    summary: Optional[str] = Field(default=None, max_length=2000)
+    status: Optional[str] = Field(
+        default=None, description="Story status: 'draft' or 'published'"
+    )
+
+
+class StoryResponse(BaseModel):
+    """Response model for a single story."""
+
+    id: str = Field(..., description="Story UUID")
+    title: str = Field(..., description="Story title")
+    summary: str = Field(default="", description="Story synopsis")
+    status: str = Field(..., description="Publication status")
+    chapter_count: int = Field(default=0, description="Number of chapters")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class StoryListResponse(BaseModel):
+    """Response model for listing stories."""
+
+    stories: List["StoryResponse"] = Field(default_factory=list)
+
+
+class ChapterCreateRequest(BaseModel):
+    """Request model for creating a new chapter."""
+
+    title: str = Field(..., min_length=1, max_length=200, description="Chapter title")
+    summary: str = Field(default="", max_length=2000, description="Chapter synopsis")
+    order_index: Optional[int] = Field(
+        default=None, ge=0, description="Position in story (0-based)"
+    )
+
+
+class ChapterUpdateRequest(BaseModel):
+    """Request model for updating a chapter."""
+
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    summary: Optional[str] = Field(default=None, max_length=2000)
+    status: Optional[str] = Field(
+        default=None, description="Chapter status: 'draft' or 'published'"
+    )
+
+
+class ChapterResponse(BaseModel):
+    """Response model for a single chapter."""
+
+    id: str = Field(..., description="Chapter UUID")
+    story_id: str = Field(..., description="Parent story UUID")
+    title: str = Field(..., description="Chapter title")
+    summary: str = Field(default="", description="Chapter synopsis")
+    order_index: int = Field(..., description="Position in story")
+    status: str = Field(..., description="Publication status")
+    scene_count: int = Field(default=0, description="Number of scenes")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class ChapterListResponse(BaseModel):
+    """Response model for listing chapters."""
+
+    story_id: str = Field(..., description="Parent story UUID")
+    chapters: List["ChapterResponse"] = Field(default_factory=list)
+
+
+class SceneCreateRequest(BaseModel):
+    """Request model for creating a new scene."""
+
+    title: str = Field(..., min_length=1, max_length=200, description="Scene title")
+    summary: str = Field(default="", max_length=2000, description="Scene synopsis")
+    location: str = Field(default="", max_length=500, description="Scene setting")
+    order_index: Optional[int] = Field(
+        default=None, ge=0, description="Position in chapter (0-based)"
+    )
+
+
+class SceneUpdateRequest(BaseModel):
+    """Request model for updating a scene."""
+
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    summary: Optional[str] = Field(default=None, max_length=2000)
+    location: Optional[str] = Field(default=None, max_length=500)
+    status: Optional[str] = Field(
+        default=None,
+        description="Scene status: 'draft', 'generating', 'review', 'published'",
+    )
+
+
+class SceneResponse(BaseModel):
+    """Response model for a single scene."""
+
+    id: str = Field(..., description="Scene UUID")
+    chapter_id: str = Field(..., description="Parent chapter UUID")
+    title: str = Field(..., description="Scene title")
+    summary: str = Field(default="", description="Scene synopsis")
+    location: str = Field(default="", description="Scene setting")
+    order_index: int = Field(..., description="Position in chapter")
+    status: str = Field(..., description="Workflow status")
+    beat_count: int = Field(default=0, description="Number of beats")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class SceneListResponse(BaseModel):
+    """Response model for listing scenes."""
+
+    chapter_id: str = Field(..., description="Parent chapter UUID")
+    scenes: List["SceneResponse"] = Field(default_factory=list)
+
+
+class MoveChapterRequest(BaseModel):
+    """Request model for moving a chapter to a new position."""
+
+    new_order_index: int = Field(..., ge=0, description="New position in story")
+
+
+class MoveSceneRequest(BaseModel):
+    """Request model for moving a scene."""
+
+    target_chapter_id: Optional[str] = Field(
+        default=None, description="Target chapter UUID (for cross-chapter moves)"
+    )
+    new_order_index: int = Field(..., ge=0, description="New position in chapter")
+
+
+class StructureErrorResponse(BaseModel):
+    """Standard error response for structure operations."""
+
+    error: str = Field(..., description="Error type")
+    message: str = Field(..., description="Human-readable error message")
+    detail: Optional[str] = Field(default=None, description="Additional details")
 
 
 __all__ = [
@@ -517,6 +664,22 @@ __all__ = [
     "GuestSessionResponse",
     "WorkspaceCharacterCreateRequest",
     "WorkspaceCharacterUpdateRequest",
+    # Structure (Outline) Schemas
+    "StoryCreateRequest",
+    "StoryUpdateRequest",
+    "StoryResponse",
+    "StoryListResponse",
+    "ChapterCreateRequest",
+    "ChapterUpdateRequest",
+    "ChapterResponse",
+    "ChapterListResponse",
+    "SceneCreateRequest",
+    "SceneUpdateRequest",
+    "SceneResponse",
+    "SceneListResponse",
+    "MoveChapterRequest",
+    "MoveSceneRequest",
+    "StructureErrorResponse",
 ]
 
 try:
