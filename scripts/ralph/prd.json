@@ -127,7 +127,7 @@
         "Browser Verification: Chat works."
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["CHAR-027"]
     },

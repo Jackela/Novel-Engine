@@ -762,3 +762,36 @@ export type WorldRuleResponse = z.infer<typeof WorldRuleResponseSchema>;
 export type WorldRuleListResponse = z.infer<typeof WorldRuleListResponseSchema>;
 export type WorldRuleCreateRequest = z.infer<typeof WorldRuleCreateRequestSchema>;
 export type WorldRuleUpdateRequest = z.infer<typeof WorldRuleUpdateRequestSchema>;
+
+// === Dialogue Generation Schemas (CHAR-027/CHAR-028) ===
+
+/**
+ * Request for generating character dialogue.
+ * Uses character psychology, traits, and speaking style to generate
+ * authentic dialogue that sounds like the character would naturally speak.
+ */
+export const DialogueGenerationRequestSchema = z.object({
+  character_id: z.string(),
+  context: z.string().min(1).max(1000),
+  mood: z.string().max(50).optional(),
+  psychology_override: CharacterPsychologySchema.optional(),
+  traits_override: z.array(z.string()).optional(),
+  speaking_style_override: z.string().max(200).optional(),
+});
+
+/**
+ * Response from dialogue generation.
+ * Contains the character's spoken words along with metadata about
+ * their internal state and physical expression.
+ */
+export const DialogueGenerationResponseSchema = z.object({
+  dialogue: z.string(),
+  tone: z.string(),
+  internal_thought: z.string().nullable().optional(),
+  body_language: z.string().nullable().optional(),
+  character_id: z.string(),
+  error: z.string().nullable().optional(),
+});
+
+export type DialogueGenerationRequest = z.infer<typeof DialogueGenerationRequestSchema>;
+export type DialogueGenerationResponse = z.infer<typeof DialogueGenerationResponseSchema>;

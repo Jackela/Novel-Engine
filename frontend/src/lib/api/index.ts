@@ -3,6 +3,7 @@
  */
 export { api, type ApiError, type ValidationError, type BackendError } from './client';
 export { generateCharacter } from './generationApi';
+export { generateDialogue } from './dialogueApi';
 export { generateScene } from './sceneApi';
 export { generateWorld } from './worldApi';
 

@@ -144,6 +144,13 @@ const storyRoute = createRoute({
   component: lazyRouteComponent(() => import('@/pages/NarrativePage')),
 });
 
+// Character Voice Tester route (CHAR-028)
+const characterVoiceRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/world/characters/$characterId/voice',
+  component: lazyRouteComponent(() => import('@/pages/CharacterVoicePage')),
+});
+
 // Catch-all route (splat route using $ syntax)
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -170,6 +177,7 @@ const routeTree = rootRoute.addChildren([
     worldRoute,
     wikiRoute,
     storyRoute,
+    characterVoiceRoute,
   ]),
   notFoundRoute,
 ]);

@@ -1250,4 +1250,79 @@ export const handlers = [
     mockWorldRules.splice(ruleIndex, 1);
     return new HttpResponse(null, { status: 204 });
   }),
+
+  // === Dialogue Generation (CHAR-028) ===
+  http.post(`${API_PREFIX}/dialogue/generate`, async ({ request }) => {
+    await withLatency();
+    const body = asObject(await request.json().catch(() => ({})));
+
+    const characterId = stringField(body, 'character_id');
+    const context = stringField(body, 'context');
+    const mood = stringField(body, 'mood');
+
+    if (!characterId || !context) {
+      return HttpResponse.json(
+        { detail: 'character_id and context are required' },
+        { status: 400 }
+      );
+    }
+
+    // Generate mock dialogue based on mood and context
+    const dialogueResponses: Record<string, { dialogue: string; tone: string; thought: string; body: string }> = {
+      angry: {
+        dialogue: "Don't test my patience. I've dealt with far worse than this.",
+        tone: 'threatening',
+        thought: 'This is beneath me, but I must maintain composure.',
+        body: 'clenches fist, jaw tightens',
+      },
+      happy: {
+        dialogue: "What a wonderful surprise! This day just keeps getting better.",
+        tone: 'enthusiastic',
+        thought: "I should savor this moment - they're rare enough.",
+        body: 'eyes brighten, slight smile appears',
+      },
+      sad: {
+        dialogue: "I... I suppose that makes sense. Things rarely go the way we hope.",
+        tone: 'melancholic',
+        thought: 'Another disappointment. But I expected as much.',
+        body: 'shoulders slump slightly, gaze drops',
+      },
+      fearful: {
+        dialogue: "We should... we should proceed carefully. Something feels wrong.",
+        tone: 'nervous',
+        thought: 'Every instinct tells me to run.',
+        body: 'eyes dart around, steps back slightly',
+      },
+      cautious: {
+        dialogue: "I've seen deals like this before. What's the catch?",
+        tone: 'suspicious',
+        thought: "Nothing is ever this simple. There's always a price.",
+        body: 'narrows eyes, crosses arms',
+      },
+      excited: {
+        dialogue: "Finally! I've been waiting for something like this!",
+        tone: 'eager',
+        thought: 'This could change everything.',
+        body: 'leans forward, eyes wide with anticipation',
+      },
+      default: {
+        dialogue: "Interesting. Tell me more about what you have in mind.",
+        tone: 'neutral',
+        thought: "Let's see where this leads before committing.",
+        body: 'maintains neutral expression, tilts head slightly',
+      },
+    };
+
+    const responseKey = mood || 'default';
+    const response = dialogueResponses[responseKey] ?? dialogueResponses['default'];
+
+    return HttpResponse.json({
+      dialogue: response?.dialogue ?? '...',
+      tone: response?.tone ?? 'neutral',
+      internal_thought: response?.thought ?? null,
+      body_language: response?.body ?? null,
+      character_id: characterId,
+      error: null,
+    });
+  }),
 ];
