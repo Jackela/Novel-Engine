@@ -1656,4 +1656,96 @@ export const handlers = [
       centrality_score: (charRelationships.length / maxRelCount) * 100,
     });
   }),
+
+  // === Factions API (CHAR-036) ===
+
+  http.get(`${API_PREFIX}/factions/:factionId`, async ({ params }) => {
+    await withLatency();
+
+    const factionId = params.factionId as string;
+
+    // Mock faction data with members
+    const mockFactionDetails: Record<string, {
+      id: string;
+      name: string;
+      description: string;
+      faction_type: string;
+      alignment: string;
+      status: string;
+      leader_id: string | null;
+      leader_name: string | null;
+      influence: number;
+      members: Array<{
+        character_id: string;
+        name: string;
+        is_leader: boolean;
+      }>;
+    }> = {
+      'faction-merchants-alliance': {
+        id: 'faction-merchants-alliance',
+        name: "Merchants' Alliance",
+        description: 'A powerful coalition of traders and merchants controlling major trade routes.',
+        faction_type: 'merchant',
+        alignment: 'lawful_neutral',
+        status: 'active',
+        leader_id: 'merchant-aldric',
+        leader_name: 'Merchant Aldric',
+        influence: 75,
+        members: [
+          { character_id: 'merchant-aldric', name: 'Merchant Aldric', is_leader: true },
+          { character_id: 'finn-bard', name: 'Finn the Bard', is_leader: false },
+        ],
+      },
+      'faction-shadowbane-order': {
+        id: 'faction-shadowbane-order',
+        name: 'Order of the Shadowbane',
+        description: 'An elite order dedicated to combating darkness and corruption.',
+        faction_type: 'military',
+        alignment: 'lawful_good',
+        status: 'active',
+        leader_id: 'aria-shadowbane',
+        leader_name: 'Aria Shadowbane',
+        influence: 60,
+        members: [
+          { character_id: 'aria-shadowbane', name: 'Aria Shadowbane', is_leader: true },
+        ],
+      },
+      'faction-vexars-dominion': {
+        id: 'faction-vexars-dominion',
+        name: "Vexar's Dominion",
+        description: 'A dark empire ruled by fear and ambition.',
+        faction_type: 'empire',
+        alignment: 'lawful_evil',
+        status: 'active',
+        leader_id: 'lord-vexar',
+        leader_name: 'Lord Vexar',
+        influence: 85,
+        members: [
+          { character_id: 'lord-vexar', name: 'Lord Vexar', is_leader: true },
+        ],
+      },
+    };
+
+    const faction = mockFactionDetails[factionId];
+    if (!faction) {
+      return HttpResponse.json(
+        { detail: `Faction '${factionId}' not found` },
+        { status: 404 }
+      );
+    }
+
+    return HttpResponse.json({
+      id: faction.id,
+      name: faction.name,
+      description: faction.description,
+      faction_type: faction.faction_type,
+      alignment: faction.alignment,
+      status: faction.status,
+      leader_id: faction.leader_id,
+      leader_name: faction.leader_name,
+      influence: faction.influence,
+      member_count: faction.members.length,
+      members: faction.members,
+    });
+  }),
 ];

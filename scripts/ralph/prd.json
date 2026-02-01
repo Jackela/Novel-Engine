@@ -228,7 +228,7 @@
         "Test: `pytest`."
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["WORLD-001"]
     },
@@ -242,7 +242,7 @@
         "Browser Verification: Join faction updates list."
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["CHAR-035"]
     },

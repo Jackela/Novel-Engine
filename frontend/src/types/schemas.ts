@@ -930,3 +930,88 @@ export const RelationshipHistoryGenerationResponseSchema = z.object({
 export type RelationshipHistoryGenerationResponse = z.infer<
   typeof RelationshipHistoryGenerationResponseSchema
 >;
+
+// === Faction Schemas (CHAR-035/CHAR-036) ===
+
+/**
+ * Schema for a faction member.
+ * Represents a character who belongs to a faction.
+ */
+export const FactionMemberSchema = z.object({
+  character_id: z.string(),
+  name: z.string().default(''),
+  is_leader: z.boolean().default(false),
+});
+
+/**
+ * Faction type enum matching backend FactionType.
+ */
+export const FactionTypeEnum = z.enum([
+  'kingdom',
+  'empire',
+  'guild',
+  'cult',
+  'corporation',
+  'military',
+  'religious',
+  'criminal',
+  'academic',
+  'merchant',
+  'tribal',
+  'revolutionary',
+  'secret_society',
+  'adventurer_group',
+  'noble_house',
+]);
+
+/**
+ * Faction alignment enum matching backend FactionAlignment.
+ */
+export const FactionAlignmentEnum = z.enum([
+  'lawful_good',
+  'neutral_good',
+  'chaotic_good',
+  'lawful_neutral',
+  'true_neutral',
+  'chaotic_neutral',
+  'lawful_evil',
+  'neutral_evil',
+  'chaotic_evil',
+]);
+
+/**
+ * Faction status enum matching backend FactionStatus.
+ */
+export const FactionStatusEnum = z.enum([
+  'active',
+  'dormant',
+  'disbanded',
+  'emerging',
+  'declining',
+  'conquered',
+  'hidden',
+]);
+
+/**
+ * Faction detail response schema matching backend FactionDetailResponse.
+ * Includes faction metadata and list of members.
+ */
+export const FactionDetailResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().default(''),
+  faction_type: z.string(),
+  alignment: z.string(),
+  status: z.string(),
+  leader_id: z.string().nullable().optional(),
+  leader_name: z.string().nullable().optional(),
+  influence: z.number().min(0).max(100).default(50),
+  member_count: z.number().int().min(0).default(0),
+  members: z.array(FactionMemberSchema).default([]),
+});
+
+export type FactionMember = z.infer<typeof FactionMemberSchema>;
+export type FactionType = z.infer<typeof FactionTypeEnum>;
+export type FactionAlignment = z.infer<typeof FactionAlignmentEnum>;
+export type FactionStatus = z.infer<typeof FactionStatusEnum>;
+export type FactionDetailResponse = z.infer<typeof FactionDetailResponseSchema>;

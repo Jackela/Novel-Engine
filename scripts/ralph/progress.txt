@@ -3,6 +3,9 @@ Started: Sun Feb  1 17:25:24     2026
 
 ## Codebase Patterns
 - Character aggregate uses Optional fields for mutable state (not on frozen CharacterProfile)
+- FactionMembers component in `frontend/src/features/factions/` - pattern: separate features per entity type
+- API client files in `frontend/src/lib/api/` follow naming pattern: `{feature}Api.ts` (e.g., factionApi.ts)
+- Zod schemas in `frontend/src/types/schemas.ts` should include enums for backend enum types (FactionType, FactionAlignment, etc.)
 - recharts is already installed in frontend - use Radar/RadarChart for personality visualization
 - Frontend types in `frontend/src/types/schemas.ts` must match backend `src/api/schemas.py`
 - CharacterDetailsDialog uses Tabs component with TabsList/TabsTrigger/TabsContent pattern
@@ -38,7 +41,47 @@ Started: Sun Feb  1 17:25:24     2026
 - Frontend API client files named with pattern: `{feature}Api.ts` (e.g., relationshipApi.ts, dialogueApi.ts)
 - RelationshipGraph detail panel displays when selectedEdge is set, cleared by handleCloseDetail
 - Generate buttons use Sparkles icon for AI generation actions, Loader2 with animate-spin for loading state
+- Faction membership stored in character's structured_data.faction_id via workspace_character_store
+- Faction leader stored in faction's leader_id and leader_name fields
+- Factions router follows same pattern as goals/memories routers - CRUD via workspace stores
 
+---
+
+## [CHAR-036] - 2026-02-01
+- What was implemented: Frontend Faction Roster component. Created `FactionMembers.tsx` displaying scrollable list of faction members with leader highlighted (crown icon, amber styling). Added FactionMember and FactionDetail Zod schemas to frontend types. Created factionApi.ts with getFactionDetail function. Added mock handler for `/factions/:id` endpoint returning faction details with member list.
+- Files changed:
+  - `frontend/src/types/schemas.ts` (modified - FactionMemberSchema, FactionDetailResponseSchema, FactionType/Alignment/Status enums)
+  - `frontend/src/lib/api/factionApi.ts` (new - getFactionDetail API function)
+  - `frontend/src/lib/api/index.ts` (modified - export getFactionDetail)
+  - `frontend/src/features/factions/components/FactionMembers.tsx` (new - faction roster component)
+  - `frontend/src/features/factions/index.ts` (new - feature exports)
+  - `frontend/src/mocks/handlers.ts` (modified - faction detail mock handler)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - Feature components organized under `frontend/src/features/{featureName}/` with components subdirectory
+  - Member lists sort leader first, then alphabetically by display name
+  - Character ID to display name: split on `-` and capitalize each word
+  - ScrollArea from `@/components/ui` provides consistent scrollable containers
+  - Badge with `variant="outline"` and custom border/text colors for role indicators
+---
+
+## [CHAR-035] - 2026-02-01
+- What was implemented: Domain-level faction membership and leadership. Added faction_id field to Character aggregate with join_faction(), leave_faction(), is_in_faction() methods. Added leader_id field to Faction entity with set_leader(), remove_leader(), has_leader() methods. Created factions API router with endpoints for joining/leaving factions and setting leaders. Added FactionJoin/Leave/SetLeader schemas.
+- Files changed:
+  - `src/contexts/character/domain/aggregates/character.py` (modified - faction_id field and methods)
+  - `src/contexts/world/domain/entities/faction.py` (modified - leader_id field and methods)
+  - `src/api/schemas.py` (modified - FactionJoin/Leave/SetLeader schemas)
+  - `src/api/routers/factions.py` (new - faction membership API endpoints)
+  - `src/api/main_api_server.py` (modified - register factions router)
+  - `tests/unit/contexts/character/domain/test_character_faction.py` (new - 22 tests)
+  - `tests/unit/contexts/world/domain/test_faction_leadership.py` (new - 23 tests)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - Character aggregate uses Optional fields for mutable state that can change during narrative
+  - Faction entity is in world context, similar to how Relationship is in world context (not character)
+  - Faction membership is stored in structured_data.faction_id in workspace_character_store
+  - Event types use snake_case format: "character.updated" not "CharacterUpdated"
+  - Domain events include updated_fields list for audit trail
 ---
 
 ## [CHAR-034] - 2026-02-01

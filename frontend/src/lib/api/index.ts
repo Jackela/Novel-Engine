@@ -33,3 +33,6 @@ export { getSocialAnalysis, getCharacterCentrality } from './socialApi';
 
 // Relationship API
 export { generateRelationshipHistory } from './relationshipApi';
+
+// Faction API
+export { getFactionDetail } from './factionApi';
