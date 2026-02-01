@@ -93,6 +93,7 @@ def create_app(
     from src.api.routers.items import router as items_router
     from src.api.routers.items import character_inventory_router
     from src.api.routers.lore import router as lore_router
+    from src.api.routers.world_rules import router as world_rules_router
 
     app.include_router(health_router)
     app.include_router(meta_router)
@@ -114,6 +115,7 @@ def create_app(
     app.include_router(items_router)
     app.include_router(character_inventory_router)
     app.include_router(lore_router)
+    app.include_router(world_rules_router)
 
     app.include_router(health_router, prefix="/api")
     app.include_router(meta_router, prefix="/api")
@@ -135,6 +137,7 @@ def create_app(
     app.include_router(items_router, prefix="/api")
     app.include_router(character_inventory_router, prefix="/api")
     app.include_router(lore_router, prefix="/api")
+    app.include_router(world_rules_router, prefix="/api")
 
     try:
         from src.api.prompts_router import router as prompts_router

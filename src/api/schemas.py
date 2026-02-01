@@ -831,6 +831,55 @@ class LoreSearchRequest(BaseModel):
     category: Optional[str] = Field(default=None, description="Filter by category")
 
 
+# ============ World Rule Schemas ============
+
+
+class WorldRuleCreateRequest(BaseModel):
+    """Request model for creating a world rule."""
+
+    name: str = Field(..., min_length=1, max_length=200, description="Rule name")
+    description: str = Field(default="", max_length=5000, description="Rule description")
+    consequence: str = Field(default="", max_length=2000, description="What happens when rule is invoked/violated")
+    exceptions: List[str] = Field(
+        default_factory=list, max_length=20, description="Cases where rule doesn't apply"
+    )
+    category: str = Field(default="", max_length=50, description="Rule category (magic, physics, social, etc.)")
+    severity: int = Field(default=50, ge=0, le=100, description="How strictly enforced (0-100)")
+
+
+class WorldRuleUpdateRequest(BaseModel):
+    """Request model for updating a world rule."""
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=5000)
+    consequence: Optional[str] = Field(default=None, max_length=2000)
+    exceptions: Optional[List[str]] = Field(default=None, max_length=20)
+    category: Optional[str] = Field(default=None, max_length=50)
+    severity: Optional[int] = Field(default=None, ge=0, le=100)
+
+
+class WorldRuleResponse(BaseModel):
+    """Response model for a single world rule."""
+
+    id: str = Field(..., description="Rule UUID")
+    name: str
+    description: str
+    consequence: str
+    exceptions: List[str] = Field(default_factory=list)
+    category: str
+    severity: int
+    related_rule_ids: List[str] = Field(default_factory=list)
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class WorldRuleListResponse(BaseModel):
+    """Response model for listing world rules."""
+
+    rules: List[WorldRuleResponse] = Field(default_factory=list)
+    total: int = Field(default=0, description="Total count of matching rules")
+
+
 __all__ = [
     # Orchestration Schemas
     "OrchestrationStep",
@@ -919,6 +968,11 @@ __all__ = [
     "LoreEntryResponse",
     "LoreEntryListResponse",
     "LoreSearchRequest",
+    # World Rule Schemas
+    "WorldRuleCreateRequest",
+    "WorldRuleUpdateRequest",
+    "WorldRuleResponse",
+    "WorldRuleListResponse",
 ]
 
 try:

@@ -44,6 +44,7 @@ from .lore_entry import (
     LoreCategory,
     LoreEntry,
 )
+from .world_rule import WorldRule
 
 __all__ = [
     # Base Entity
@@ -80,4 +81,6 @@ __all__ = [
     # LoreEntry
     "LoreEntry",
     "LoreCategory",
+    # WorldRule
+    "WorldRule",
 ]
