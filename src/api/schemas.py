@@ -247,6 +247,9 @@ class CharacterDetailResponse(BaseModel):
     inventory: List[str] = Field(default_factory=list)
     metadata: Dict[str, JsonValue] = Field(default_factory=dict)
     structured_data: Dict[str, JsonValue] = Field(default_factory=dict)
+    psychology: Optional[CharacterPsychologySchema] = Field(
+        None, description="Big Five personality traits (OCEAN model)"
+    )
 
 
 class CharacterGenerationRequest(BaseModel):

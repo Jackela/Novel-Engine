@@ -1,352 +1,305 @@
 {
-  "project": "Novel-Engine-Warzone-1",
-  "branchName": "feat/world-deep-dive",
-  "description": "WARZONE 1: Transforming static settings into a dynamic World Knowledge Graph.",
+  "project": "Novel-Engine-Warzone-2",
+  "branchName": "feat/character-evolution",
+  "description": "WARZONE 2: Making characters dynamic with Memories, Relationships Evolution, and Voice.",
   "techContext": {
-    "stack": "FastAPI + React + React Flow + Zod",
+    "stack": "FastAPI + React + Recharts (Charts) + OpenAI (Mocked)",
     "testCommand": "pytest",
     "e2eCommand": "npm run test:e2e",
-    "typecheckCommand": "npm run type-check",
+    "typecheckCommand": "npm run typecheck",
     "conventions": [
-      "Use `reactflow` for graph visualizations",
-      "Domain entities must support `metadata: Dict` for flexible schema",
-      "Character entity exists in src/contexts/character/ - extend CharacterProfile",
-      "Location entity exists with parent_id hierarchy - verify before implementing"
+      "Use `Recharts` for visualizing psychological traits",
+      "Character events must be immutable logs"
     ]
   },
   "userStories": [
     {
-      "id": "WORLD-001",
-      "title": "Domain: Character Entity Upgrade",
-      "description": "Expand Character entity to support detailed profiles.",
+      "id": "CHAR-021",
+      "title": "Domain: Character Psychology Model (Big 5)",
+      "description": "Quantify personality.",
       "acceptanceCriteria": [
-        "Update `CharacterProfile` in `src/contexts/character/domain/value_objects/character_profile.py`",
-        "Add fields: `aliases: List[str]`, `archetype: Optional[str]`, `traits: List[str]`, `appearance: Optional[str]`",
-        "Fields must be optional with empty defaults for backward compatibility",
-        "Update `CharacterSummarySchema` in `src/api/schemas.py` to include new fields",
-        "Run `pytest tests/unit/contexts/character/` - all tests pass",
-        "Run `scripts/generate_openapi.py` to update frontend types"
+        "Update `Character` entity.",
+        "Add `psychology`: { openness, conscientiousness, extraversion, agreeableness, neuroticism } (0-100 scale).",
+        "Migration: Update DB/Mock.",
+        "Test: `pytest` validation range."
       ],
       "priority": 1,
       "passes": true,
       "effort": "low"
     },
     {
-      "id": "WORLD-002",
-      "title": "Frontend: Character Profile Form",
-      "description": "A complex form to edit character details.",
+      "id": "CHAR-022",
+      "title": "Frontend: Psychology Radar Chart",
+      "description": "Visualize personality.",
       "acceptanceCriteria": [
-        "Run `npm install react-hook-form @hookform/resolvers` if not installed",
-        "Create `frontend/src/features/characters/CharacterProfileForm.tsx`",
-        "Use `react-hook-form` with `zod` resolver for validation",
-        "UI: Use shadcn `Input`, `Textarea`, and `Badge` (for traits tag input)",
-        "Validation: Name is required, display inline errors",
-        "Run `npm run type-check` - no errors",
-        "Browser verification: Form renders, validation works, submit updates state"
+        "Install `recharts`.",
+        "Create `PsychologyChart.tsx` using Radar Chart.",
+        "Embed in Character Profile.",
+        "Browser Verification: Chart renders correctly."
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
-      "dependencies": ["WORLD-001"]
+      "dependencies": ["CHAR-021"]
     },
     {
-      "id": "WORLD-003",
-      "title": "Domain: Relationship System",
-      "description": "Define how entities relate to each other.",
+      "id": "CHAR-023",
+      "title": "Domain: Character Memory System",
+      "description": "Characters need to remember things.",
       "acceptanceCriteria": [
-        "Create `src/contexts/world/domain/entities/relationship.py`",
-        "Fields: `source_id`, `source_type` (CHARACTER/FACTION/LOCATION), `target_id`, `target_type`, `relationship_type` (FAMILY/ENEMY/ALLY/MENTOR/ROMANTIC), `description`, `strength` (0-100)",
-        "Create `RelationshipType` enum with bidirectional awareness",
-        "Add `IRelationshipRepository` protocol and `InMemoryRelationshipRepository`",
-        "Create API: `POST /api/relationships`, `GET /api/relationships/by-entity/{id}`, `DELETE /api/relationships/{id}`",
-        "Run `pytest tests/unit/contexts/world/domain/test_relationship.py` - all pass"
+        "Create `CharacterMemory` entity: `content`, `importance` (1-10), `tags`, `timestamp`.",
+        "Add `add_memory()` method to Character aggregate.",
+        "API: CRUD for memories.",
+        "Test: `pytest` adding memories."
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "effort": "medium"
     },
     {
-      "id": "WORLD-004",
-      "title": "Frontend: Install React Flow",
-      "description": "Setup the graph visualization library.",
+      "id": "CHAR-024",
+      "title": "Frontend: Memory Timeline",
+      "description": "A scrollable history of the character.",
       "acceptanceCriteria": [
-        "Run `npm install reactflow`",
-        "Create `frontend/src/components/graph/RelationshipGraph.tsx` with basic ReactFlow setup",
-        "Configure default node/edge styles to match shadcn theme",
-        "Render dummy nodes: 3 test characters with 2 edges",
-        "Run `npm run build` - no errors",
-        "Browser verification: Navigate to /world, see graph with nodes"
+        "Create `MemoryTimeline.tsx`.",
+        "UI: Vertical list sorted by date.",
+        "Highlight 'Core Memories' (importance > 8).",
+        "Browser Verification: Add memory, see it appear."
       ],
       "priority": 4,
-      "passes": true,
-      "effort": "low"
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["CHAR-023"]
     },
     {
-      "id": "WORLD-005",
-      "title": "Frontend: Character Graph Visualizer",
-      "description": "Visualize character relationships.",
+      "id": "CHAR-025",
+      "title": "Domain: Dynamic Relationship Evolution",
+      "description": "Relationships change over time.",
       "acceptanceCriteria": [
-        "Connect `RelationshipGraph` to Character and Relationship API data",
-        "Nodes = Characters (Avatar placeholder + Name + Archetype badge)",
-        "Edges = Relationships (Labelled with type, color-coded: green=ALLY, red=ENEMY, blue=FAMILY)",
-        "Layout: Use dagre for automatic positioning",
-        "Interactive: Click node to select, zoom/pan controls",
-        "Browser verification: See real characters connected by relationships"
+        "Update `Relationship` entity.",
+        "Add `trust` (0-100) and `romance` (0-100) metrics.",
+        "Add `log_interaction(summary, trust_change, romance_change)`.",
+        "Test: `pytest` verifying changes log."
       ],
       "priority": 5,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["WORLD-003", "WORLD-004"]
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["WORLD-003"]
     },
     {
-      "id": "WORLD-006",
-      "title": "Domain: Location Hierarchy",
-      "description": "Locations need to be nestable.",
+      "id": "CHAR-026",
+      "title": "Frontend: Relationship Status Bars",
+      "description": "The Sims style relationship bars.",
       "acceptanceCriteria": [
-        "VERIFY: `Location` entity already has `parent_location_id` and `child_location_ids`",
-        "VERIFY: `LocationType` enum already includes CONTINENT, CITY, BUILDING, ROOM, etc.",
-        "If already implemented: Mark as PASS and document in progress.txt",
-        "If not: Add `get_sub_locations()` method returning direct children",
-        "Run `pytest tests/unit/contexts/world/domain/test_location.py` - verify hierarchy tests"
+        "Update `RelationshipGraph` node details.",
+        "Show Trust/Romance progress bars (shadcn `Progress`).",
+        "Color code: Red (Hate) -> Green (Love).",
+        "Browser Verification: Bars update."
       ],
       "priority": 6,
-      "passes": true,
-      "effort": "low"
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["CHAR-025"]
     },
     {
-      "id": "WORLD-007",
-      "title": "Frontend: Location Tree View",
-      "description": "A file-explorer style view for locations.",
+      "id": "CHAR-027",
+      "title": "AI: Voice/Dialogue Generator",
+      "description": "Generate dialogue in character.",
       "acceptanceCriteria": [
-        "Create `frontend/src/components/world/LocationTree.tsx`",
-        "Recursive component using Location.parent_location_id",
-        "Use shadcn `Collapsible` for expand/collapse",
-        "Icons per LocationType from lucide-react (Building, Trees, Castle, etc.)",
-        "Click location -> emit onSelect event",
-        "Run `npm run type-check` - no errors",
-        "Browser verification: 3-level hierarchy expands/collapses correctly"
+        "Update `LLMWorldGenerator`.",
+        "Method: `generate_dialogue(character, context, mood)`.",
+        "Prompt: Inject `psychology`, `traits`, and `speaking_style`.",
+        "Test: Mock output."
       ],
       "priority": 7,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["WORLD-006"]
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["CHAR-021"]
     },
     {
-      "id": "WORLD-008",
-      "title": "Domain: Inventory & Items",
-      "description": "The stuff characters carry.",
+      "id": "CHAR-028",
+      "title": "Frontend: Dialogue Tester",
+      "description": "Playground to test character voice.",
       "acceptanceCriteria": [
-        "Create `src/contexts/world/domain/entities/item.py`",
-        "Fields: `name`, `type` (WEAPON/ARMOR/CONSUMABLE/KEY_ITEM/MISC), `description`, `rarity` (COMMON/UNCOMMON/RARE/LEGENDARY)",
-        "Add `inventory: List[str]` (item IDs) to Character entity",
-        "Create API: `POST /api/items`, `GET /api/items/{id}`, `POST /api/characters/{id}/give-item`, `DELETE /api/characters/{id}/remove-item`",
-        "Run `pytest tests/unit/contexts/world/domain/test_item.py` - all pass"
+        "Create `/world/characters/{id}/voice` route.",
+        "UI: Chat interface (User inputs context -> AI responds as character).",
+        "Use `generate_dialogue` API.",
+        "Browser Verification: Chat works."
       ],
       "priority": 8,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["WORLD-001"]
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["CHAR-027"]
     },
     {
-      "id": "WORLD-009",
-      "title": "Frontend: Inventory UI",
-      "description": "Manage character items.",
+      "id": "CHAR-029",
+      "title": "Domain: Character Arc/Goals",
+      "description": "What do they want?",
       "acceptanceCriteria": [
-        "Update Character detail view to add 'Inventory' tab using shadcn Tabs",
-        "List items with icon (by type), name, rarity badge, 'Remove' button",
-        "Add 'Give Item' dialog using shadcn Dialog + Select",
-        "Filter items by type in dropdown",
-        "Run `npm run type-check` - no errors",
-        "Browser verification: Add item to character, see it appear, remove it"
+        "Create `CharacterGoal` entity: `description`, `status` (ACTIVE/COMPLETED/FAILED), `urgency`.",
+        "Add `goals` list to Character.",
+        "API: CRUD Goals.",
+        "Test: `pytest`."
       ],
       "priority": 9,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["WORLD-008"]
-    },
-    {
-      "id": "WORLD-010",
-      "title": "Backend: Knowledge Base (Wiki) API",
-      "description": "Generic lore entries.",
-      "acceptanceCriteria": [
-        "Create `src/contexts/world/domain/entities/lore_entry.py`",
-        "Fields: `title`, `content`, `tags: List[str]`, `category` (HISTORY/CULTURE/MAGIC/TECHNOLOGY)",
-        "CRUD API: `POST /api/lore`, `GET /api/lore`, `GET /api/lore/{id}`, `PUT /api/lore/{id}`, `DELETE /api/lore/{id}`",
-        "Search API: `GET /api/lore/search?q=&tags=` - simple text search by title/tag",
-        "Run `pytest tests/api/test_lore_api.py` - all pass"
-      ],
-      "priority": 10,
-      "passes": true,
+      "passes": false,
       "effort": "low"
     },
     {
-      "id": "WORLD-011",
-      "title": "Frontend: Wiki Dashboard",
-      "description": "The central database view.",
+      "id": "CHAR-030",
+      "title": "Frontend: Goals Tracker",
+      "description": "Kanban for character goals.",
       "acceptanceCriteria": [
-        "Create `/world/wiki` route and `WikiDashboard.tsx`",
-        "UI: shadcn DataTable listing Lore, Characters, Locations, Items",
-        "Columns: Name, Type, Tags, Last Updated",
-        "Filter: Search bar (debounced) and Type dropdown",
-        "Click row -> navigate to detail view",
-        "Run `npm run type-check` - no errors",
-        "Browser verification: Search filters the list correctly"
+        "Create `GoalsList.tsx`.",
+        "UI: Checkbox list with strikethrough for completed.",
+        "Browser Verification: Add/Complete goals."
       ],
-      "priority": 11,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["WORLD-010"]
+      "priority": 10,
+      "passes": false,
+      "effort": "low",
+      "dependencies": ["CHAR-029"]
     },
     {
-      "id": "WORLD-012",
-      "title": "AI: Character Generator (Structure)",
-      "description": "Generate a full character profile from a prompt.",
+      "id": "CHAR-031",
+      "title": "Domain: Social Network Analysis",
+      "description": "Who is the main character?",
       "acceptanceCriteria": [
-        "Update `LLMWorldGenerator` or create new `CharacterGenerator` service",
-        "Add `generate_character_profile(name: str, archetype: str, context: str)` method",
-        "Prompt engineering: Output JSON matching new `CharacterProfile` schema",
-        "Support MOCK_LLM flag for testing without API calls",
-        "Run `pytest tests/unit/contexts/world/infrastructure/test_character_generator.py` - mock test passes"
+        "Implement `SocialGraphService`.",
+        "Calculate `centrality` score for each character based on relationship count.",
+        "API: `GET /api/social/analysis`.",
+        "Test: `pytest` on a subgraph."
+      ],
+      "priority": 11,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["WORLD-003"]
+    },
+    {
+      "id": "CHAR-032",
+      "title": "Frontend: Social Dashboard Widget",
+      "description": "Show network stats.",
+      "acceptanceCriteria": [
+        "Create `SocialStatsWidget.tsx`.",
+        "Display: 'Most Connected', 'Most Hated', 'Most Loved'.",
+        "Browser Verification: Stats match graph."
       ],
       "priority": 12,
-      "passes": true,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["CHAR-031"]
+    },
+    {
+      "id": "CHAR-033",
+      "title": "AI: Relationship Event Generator",
+      "description": "Generate history between characters.",
+      "acceptanceCriteria": [
+        "Update `LLMWorldGenerator`.",
+        "Method: `generate_relationship_history(charA, charB)`.",
+        "Prompt: Create a backstory explaining their current trust level.",
+        "Test: Mock output."
+      ],
+      "priority": 13,
+      "passes": false,
       "effort": "high",
+      "dependencies": ["CHAR-025"]
+    },
+    {
+      "id": "CHAR-034",
+      "title": "Frontend: 'Generate Backstory' Button",
+      "description": "Fill in the blanks.",
+      "acceptanceCriteria": [
+        "In Relationship Editor, add 'Generate History' button.",
+        "Fills the `description` field.",
+        "Browser Verification: Click fills text."
+      ],
+      "priority": 14,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["CHAR-033"]
+    },
+    {
+      "id": "CHAR-035",
+      "title": "Domain: Character Group/Faction Dynamics",
+      "description": "Characters belong to groups.",
+      "acceptanceCriteria": [
+        "Update `Character` to have `faction_id`.",
+        "Update `Faction` to have `leader_id`.",
+        "API: `POST /api/factions/{id}/join`.",
+        "Test: `pytest`."
+      ],
+      "priority": 15,
+      "passes": false,
+      "effort": "medium",
       "dependencies": ["WORLD-001"]
     },
     {
-      "id": "WORLD-013",
-      "title": "Frontend: 'Generate Profile' Button",
-      "description": "Connect UI to the new generator.",
+      "id": "CHAR-036",
+      "title": "Frontend: Faction Roster",
+      "description": "Who is in this group?",
       "acceptanceCriteria": [
-        "In `CharacterProfileForm`, add 'Auto-Generate' button with Sparkles icon",
-        "On click: Show loading spinner, call generate API",
-        "On success: Fill form fields with generated result",
-        "On error: Show toast with error message",
-        "Run `npm run type-check` - no errors",
-        "Browser verification: Click fills the form with generated content"
-      ],
-      "priority": 13,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["WORLD-012", "WORLD-002"]
-    },
-    {
-      "id": "WORLD-014",
-      "title": "Domain: Magic/Rule System",
-      "description": "Defining the laws of physics.",
-      "acceptanceCriteria": [
-        "VERIFY: `WorldSetting` already has `world_rules: List[str]` field",
-        "If basic: Upgrade to `WorldRule` entity with `name`, `description`, `consequence`, `exceptions: List[str]`",
-        "CRUD API: `POST /api/world-rules`, `GET /api/world-rules`, etc.",
-        "Example rule: 'Magic requires stamina' with consequence 'exhaustion'",
-        "Run `pytest tests/unit/contexts/world/domain/test_world_rule.py` - all pass"
-      ],
-      "priority": 14,
-      "passes": true,
-      "effort": "low"
-    },
-    {
-      "id": "WORLD-015",
-      "title": "Frontend: World Rules Editor",
-      "description": "Interface for magic systems.",
-      "acceptanceCriteria": [
-        "Create `frontend/src/features/world/WorldRulesEditor.tsx`",
-        "UI: Card layout for each rule using shadcn Card",
-        "Editable fields: Name, Description, Consequence, Exceptions (tag list)",
-        "Add/Delete rule buttons",
-        "Run `npm run type-check` - no errors",
-        "Browser verification: Create a rule, edit it, delete it"
-      ],
-      "priority": 15,
-      "passes": true,
-      "effort": "low",
-      "dependencies": ["WORLD-014"]
-    },
-    {
-      "id": "WORLD-016",
-      "title": "Integration: Sidebar 'World' Tab",
-      "description": "Bring the world into the writer's room.",
-      "acceptanceCriteria": [
-        "Update `NarrativeSidebar` to add 'World' tab using shadcn Tabs",
-        "Reuse mini `LocationTree` (collapsed by default) and `CharacterList` (top 5)",
-        "Lazy load world data when tab first selected",
-        "Show counts: 'X characters, Y locations'",
-        "Run `npm run type-check` - no errors",
-        "Browser verification: Switch to World tab in editor, see data"
+        "Create `FactionMembers.tsx`.",
+        "List characters with their roles.",
+        "Browser Verification: Join faction updates list."
       ],
       "priority": 16,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
-      "dependencies": ["WORLD-007", "WORLD-002"]
+      "dependencies": ["CHAR-035"]
     },
     {
-      "id": "WORLD-017",
-      "title": "Integration: Drag-to-Insert",
-      "description": "Drag a character into the text.",
+      "id": "CHAR-037",
+      "title": "Integration: Sidebar 'Characters' Sort",
+      "description": "Organize the cast.",
       "acceptanceCriteria": [
-        "Make Sidebar character items draggable using dnd-kit (already installed)",
-        "Make Tiptap editor a droppable zone",
-        "On Drop: Insert Mention node `@CharacterName` with character_id attribute",
-        "Mention styled with highlight background (bg-primary/10)",
-        "Run `npm run type-check` - no errors",
-        "Browser verification: Drag character from sidebar, drop in editor, see @mention"
+        "Update Sidebar Character List.",
+        "Add Sort/Filter: By Faction, By Name, By Role.",
+        "Browser Verification: Sorting works."
       ],
       "priority": 17,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["WORLD-016"]
+      "passes": false,
+      "effort": "low",
+      "dependencies": ["CHAR-035"]
     },
     {
-      "id": "WORLD-018",
-      "title": "Integration: Hover Card",
-      "description": "See details without leaving the editor.",
+      "id": "CHAR-038",
+      "title": "UX: Quick Create from Editor",
+      "description": "Don't break flow.",
       "acceptanceCriteria": [
-        "Create Tiptap extension for mention hover: `MentionHoverExtension`",
-        "On hover over `@Name`: Show shadcn `HoverCard` with character summary",
-        "Card shows: Avatar, Name, Archetype, Brief description (first 100 chars)",
-        "Position: Above mention, shift if near edge",
-        "Delay: 300ms before showing, immediate hide on mouse leave",
-        "Browser verification: Hover mention, see popup with character info"
+        "In Editor, typing `@NewName` triggers creation prompt.",
+        "Opens mini-dialog to create basic character.",
+        "Browser Verification: Create without leaving page."
       ],
       "priority": 18,
-      "passes": true,
+      "passes": false,
       "effort": "high",
       "dependencies": ["WORLD-017"]
     },
     {
-      "id": "WORLD-019",
-      "title": "UX: Global Search (Cmd+K)",
-      "description": "Quick access to everything.",
+      "id": "CHAR-039",
+      "title": "Data: Export Character Sheet",
+      "description": "Download PDF/JSON.",
       "acceptanceCriteria": [
-        "Run `npm install cmdk`",
-        "Create `frontend/src/components/GlobalSearch.tsx` using shadcn Command",
-        "Register keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)",
-        "Index: Characters, Locations, Lore, Chapters",
-        "Display recent searches (localStorage)",
-        "Action: Select item -> navigate to detail page",
-        "Browser verification: Cmd+K opens, typing filters, Enter navigates"
+        "Frontend: Add 'Export' button to Profile.",
+        "Generate JSON download of full character graph.",
+        "Browser Verification: Download starts."
       ],
       "priority": 19,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["WORLD-011"]
+      "passes": false,
+      "effort": "low"
     },
     {
-      "id": "WORLD-020",
-      "title": "E2E: World Building Smoke Test",
-      "description": "Verify the war zone is secure.",
+      "id": "CHAR-040",
+      "title": "E2E: Character Lifecycle Test",
+      "description": "Birth to Death.",
       "acceptanceCriteria": [
-        "Create `frontend/tests/e2e/world-building.spec.ts`",
-        "Test Flow 1: Create Character -> Add Trait -> Assign Item -> View in Graph",
-        "Test Flow 2: Create Location hierarchy -> Verify tree view",
-        "Test Flow 3: Cmd+K search finds created entities",
-        "Verify: All data persists across page refreshes",
-        "Run `npm run test:e2e` - all world-building tests pass"
+        "Create `tests/e2e/character-lifecycle.spec.ts`.",
+        "Create -> Add Goals -> Evolve Relationship -> Generate Voice -> Export.",
+        "Run `npm run test:e2e`."
       ],
       "priority": 20,
-      "passes": true,
+      "passes": false,
       "effort": "high",
-      "dependencies": ["WORLD-005", "WORLD-009", "WORLD-019"]
+      "dependencies": ["CHAR-021", "CHAR-025", "CHAR-029"]
     }
   ]
 }

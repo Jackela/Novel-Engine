@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+// Character Psychology Schema (Big Five / OCEAN model)
+// All traits scored 0-100: 0-30 = Low, 31-70 = Average, 71-100 = High
+export const CharacterPsychologySchema = z.object({
+  openness: z.number().min(0).max(100),
+  conscientiousness: z.number().min(0).max(100),
+  extraversion: z.number().min(0).max(100),
+  agreeableness: z.number().min(0).max(100),
+  neuroticism: z.number().min(0).max(100),
+});
+
 export const CharacterSummarySchema = z.object({
   id: z.string(),
   agent_id: z.string(),
@@ -34,6 +44,7 @@ export const CharacterDetailSchema = z.object({
   inventory: z.array(z.string()),
   metadata: z.record(z.string(), z.unknown()),
   structured_data: z.record(z.string(), z.unknown()),
+  psychology: CharacterPsychologySchema.nullable().optional(),
 });
 
 export const WorkspaceCharacterCreateSchema = z.object({
