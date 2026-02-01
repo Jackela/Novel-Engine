@@ -195,6 +195,7 @@ class Faction(Entity):
     status: FactionStatus = FactionStatus.ACTIVE
     headquarters_id: Optional[str] = None
     leader_name: Optional[str] = None
+    leader_id: Optional[str] = None  # Character ID of the faction leader
     founding_date: Optional[str] = None
     values: List[str] = field(default_factory=list)
     goals: List[str] = field(default_factory=list)
@@ -453,6 +454,50 @@ class Faction(Entity):
         """Check if faction is a minor faction (power rating < 30)."""
         return self.get_power_rating() < 30
 
+    def set_leader(self, character_id: str, leader_name: Optional[str] = None) -> None:
+        """Set the faction leader.
+
+        Why track both ID and name: ID enables system lookups and cross-references,
+        while name provides human-readable display without requiring a lookup.
+
+        Args:
+            character_id: The unique identifier of the character becoming leader
+            leader_name: Optional display name for the leader
+        """
+        if not character_id or not character_id.strip():
+            raise ValueError("Leader character ID cannot be empty")
+
+        self.leader_id = character_id
+        if leader_name:
+            self.leader_name = leader_name
+        self.touch()
+
+    def remove_leader(self) -> bool:
+        """Remove the current faction leader.
+
+        Returns:
+            True if a leader was removed, False if there was no leader
+        """
+        if self.leader_id is None:
+            return False
+
+        self.leader_id = None
+        self.leader_name = None
+        self.touch()
+        return True
+
+    def get_leader_id(self) -> Optional[str]:
+        """Get the leader's character ID.
+
+        Returns:
+            The leader's character ID or None if no leader is set
+        """
+        return self.leader_id
+
+    def has_leader(self) -> bool:
+        """Check if the faction has a leader."""
+        return self.leader_id is not None
+
     def _to_dict_specific(self) -> Dict[str, Any]:
         """Convert Faction-specific data to dictionary."""
         return {
@@ -463,6 +508,7 @@ class Faction(Entity):
             "status": self.status.value,
             "headquarters_id": self.headquarters_id,
             "leader_name": self.leader_name,
+            "leader_id": self.leader_id,
             "founding_date": self.founding_date,
             "values": self.values,
             "goals": self.goals,

@@ -68,6 +68,10 @@ class Character:
     # Character goals - what the character wants to achieve
     goals: List[CharacterGoal] = field(default_factory=list)
 
+    # Faction membership - which faction/group the character belongs to
+    # Why optional: Characters may be unaffiliated (lone wolves, neutrals)
+    faction_id: Optional[str] = None
+
     # Entity state
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
@@ -905,6 +909,88 @@ class Character:
         """Get the number of items in inventory."""
         return len(self.inventory)
 
+    # ==================== Faction Operations ====================
+
+    def join_faction(self, faction_id: str) -> None:
+        """Join a faction/group.
+
+        Why separate from profile: Faction membership is dynamic and can change
+        during the narrative. Characters may leave, be expelled, or switch
+        allegiances based on story events.
+
+        Args:
+            faction_id: The unique identifier of the faction to join
+
+        Raises:
+            ValueError: If faction_id is empty or already a member
+        """
+        if not faction_id or not faction_id.strip():
+            raise ValueError("Faction ID cannot be empty")
+
+        if self.faction_id == faction_id:
+            raise ValueError(f"Already a member of faction {faction_id}")
+
+        self.faction_id = faction_id
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["faction_join"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def leave_faction(self) -> bool:
+        """Leave the current faction.
+
+        Returns:
+            True if successfully left a faction, False if not in any faction
+        """
+        if self.faction_id is None:
+            return False
+
+        self.faction_id = None
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["faction_leave"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return True
+
+    def get_faction_id(self) -> Optional[str]:
+        """Get the current faction ID.
+
+        Returns:
+            The faction ID or None if not in a faction
+        """
+        return self.faction_id
+
+    def is_in_faction(self, faction_id: Optional[str] = None) -> bool:
+        """Check if character is in a faction.
+
+        Args:
+            faction_id: If provided, check if in this specific faction.
+                        If None, check if in any faction.
+
+        Returns:
+            True if in the specified faction (or any faction if faction_id is None)
+        """
+        if faction_id is None:
+            return self.faction_id is not None
+        return self.faction_id == faction_id
+
     # ==================== Query Methods ====================
 
     def is_alive(self) -> bool:
@@ -952,6 +1038,10 @@ class Character:
             summary["goal_count"] = len(self.goals)
             summary["active_goal_count"] = len(self.get_active_goals())
             summary["urgent_goal_count"] = len(self.get_urgent_goals())
+
+        # Include faction membership
+        if self.faction_id is not None:
+            summary["faction_id"] = self.faction_id
 
         return summary
 

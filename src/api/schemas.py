@@ -1236,6 +1236,83 @@ class WorldRuleListResponse(BaseModel):
     total: int = Field(default=0, description="Total count of matching rules")
 
 
+# === Faction Schemas (CHAR-035) ===
+
+
+class FactionJoinRequest(BaseModel):
+    """Request model for joining a faction.
+
+    Why character_id is required: A character must be explicitly specified
+    to join a faction. This enables scenarios like GMs assigning characters
+    to factions or characters choosing to join.
+    """
+
+    character_id: str = Field(..., description="Character ID to join the faction")
+
+
+class FactionJoinResponse(BaseModel):
+    """Response model for successful faction join operation."""
+
+    faction_id: str = Field(..., description="Faction UUID that was joined")
+    character_id: str = Field(..., description="Character UUID that joined")
+    faction_name: str = Field(..., description="Display name of the faction")
+    message: str = Field(default="Successfully joined faction")
+
+
+class FactionLeaveRequest(BaseModel):
+    """Request model for leaving a faction."""
+
+    character_id: str = Field(..., description="Character ID to leave the faction")
+
+
+class FactionLeaveResponse(BaseModel):
+    """Response model for successful faction leave operation."""
+
+    faction_id: str = Field(..., description="Faction UUID that was left")
+    character_id: str = Field(..., description="Character UUID that left")
+    message: str = Field(default="Successfully left faction")
+
+
+class FactionSetLeaderRequest(BaseModel):
+    """Request model for setting a faction leader."""
+
+    character_id: str = Field(..., description="Character ID to become the leader")
+    leader_name: Optional[str] = Field(None, description="Display name for the leader")
+
+
+class FactionSetLeaderResponse(BaseModel):
+    """Response model for successful leader assignment."""
+
+    faction_id: str = Field(..., description="Faction UUID")
+    leader_id: str = Field(..., description="Character UUID of new leader")
+    leader_name: Optional[str] = Field(None, description="Display name of new leader")
+    message: str = Field(default="Successfully set faction leader")
+
+
+class FactionMemberSchema(BaseModel):
+    """Schema for a faction member."""
+
+    character_id: str = Field(..., description="Character UUID")
+    name: str = Field(default="", description="Character display name")
+    is_leader: bool = Field(default=False, description="Whether this member is the faction leader")
+
+
+class FactionDetailResponse(BaseModel):
+    """Response model for faction details including members."""
+
+    id: str = Field(..., description="Faction UUID")
+    name: str = Field(..., description="Faction name")
+    description: str = Field(default="", description="Faction description")
+    faction_type: str = Field(..., description="Type of faction (KINGDOM, GUILD, etc.)")
+    alignment: str = Field(..., description="Moral alignment")
+    status: str = Field(..., description="Operational status")
+    leader_id: Optional[str] = Field(None, description="Character ID of the leader")
+    leader_name: Optional[str] = Field(None, description="Display name of the leader")
+    influence: int = Field(default=50, ge=0, le=100, description="Faction influence")
+    member_count: int = Field(default=0, ge=0, description="Number of members")
+    members: List[FactionMemberSchema] = Field(default_factory=list, description="List of faction members")
+
+
 __all__ = [
     # Orchestration Schemas
     "OrchestrationStep",
@@ -1342,6 +1419,15 @@ __all__ = [
     "WorldRuleUpdateRequest",
     "WorldRuleResponse",
     "WorldRuleListResponse",
+    # Faction Schemas
+    "FactionJoinRequest",
+    "FactionJoinResponse",
+    "FactionLeaveRequest",
+    "FactionLeaveResponse",
+    "FactionSetLeaderRequest",
+    "FactionSetLeaderResponse",
+    "FactionMemberSchema",
+    "FactionDetailResponse",
 ]
 
 try:
