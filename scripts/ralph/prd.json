@@ -163,7 +163,7 @@
         "UX: Insert text into Tiptap editor at cursor position."
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["NAR-010", "NAR-008"]
     },

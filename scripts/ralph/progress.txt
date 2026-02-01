@@ -136,3 +136,18 @@ Started: Sat Jan 31 23:42:17     2026
 - Quality checks: type-check ✓, lint ✓ (warnings only), build ✓, frontend tests (46 passed)
 - Pattern discovered: Using fetch + ReadableStream instead of EventSource allows POST requests with request bodies
 - Gotcha for future: Two useStoryStream implementations exist - hooks/ version for simple use, features/stories/ version for world-aware generation
+
+## NAR-011 - 2026-02-01T10:40:00
+- What I implemented: Verified existing Editor Streaming Integration in EditorComponent
+- Implementation already complete at `frontend/src/components/narrative/EditorComponent.tsx`:
+  - `useStoryStream` hook integrated (line 18 import, lines 214-223 usage)
+  - Three callbacks wired: `handleChunk`, `handleComplete`, `handleError`
+  - "Generating..." indicator: Shows Loader2 spinner with text during streaming (lines 296-304)
+  - Cursor-position insertion: `insertPositionRef` tracks where to insert text (line 167)
+  - `handleChunk` inserts each chunk at saved position using Tiptap's `insertContentAt` (lines 175-195)
+  - Toolbar disabled during streaming to prevent conflicting edits
+  - Error display: Shows stream errors in destructive styling (lines 307-314)
+  - Stop button: Allows user to cancel generation mid-stream (lines 123-133)
+- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓, pytest (2063 passed), frontend tests (46 passed)
+- Pattern discovered: EditorComponent uses `editorRef` pattern to access Tiptap editor from streaming callbacks without stale closure issues
+- Gotcha for future: The editor becomes read-only during streaming (`editable: editable && !isStreaming`) to prevent user edits that could conflict with streaming insertion
