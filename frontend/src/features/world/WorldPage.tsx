@@ -3,7 +3,7 @@
  * Full-page view for world state management
  */
 import { Suspense } from 'react';
-import { Globe, MapPin, Clock, Users, Layers, Settings } from 'lucide-react';
+import { Globe, MapPin, Clock, Users, Layers, Settings, Network } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -13,26 +13,20 @@ import {
 } from '@/shared/components/ui/Card';
 import { Button } from '@/shared/components/ui';
 import { LoadingSpinner } from '@/shared/components/feedback';
+import { RelationshipGraph } from '@/components/graph';
 
-function WorldMap() {
+function RelationshipGraphCard() {
   return (
-    <Card className="h-full" data-testid="world-map-card">
+    <Card className="h-full" data-testid="relationship-graph-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Globe className="h-5 w-5 text-primary" />
-          World Map
+          <Network className="h-5 w-5 text-primary" />
+          Relationship Graph
         </CardTitle>
-        <CardDescription>Interactive visualization of your narrative world</CardDescription>
+        <CardDescription>Interactive visualization of character relationships</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex aspect-[16/9] items-center justify-center rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30">
-          <div className="text-center">
-            <Globe className="mx-auto h-12 w-12 text-muted-foreground/50" />
-            <p className="mt-2 text-sm text-muted-foreground">
-              World map visualization coming soon
-            </p>
-          </div>
-        </div>
+        <RelationshipGraph className="h-[400px] w-full" />
       </CardContent>
     </Card>
   );
@@ -158,9 +152,9 @@ export default function WorldPage() {
 
         {/* Main content grid */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Map takes 2 columns */}
+          {/* Relationship graph takes 2 columns */}
           <div className="lg:col-span-2">
-            <WorldMap />
+            <RelationshipGraphCard />
           </div>
 
           {/* Sidebar */}
