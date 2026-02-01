@@ -36,3 +36,11 @@ export { generateRelationshipHistory } from './relationshipApi';
 
 // Faction API
 export { getFactionDetail } from './factionApi';
+
+// Export API
+export {
+  getCharacterRelationships,
+  buildCharacterExportData,
+  downloadAsJson,
+  type CharacterExportData,
+} from './exportApi';

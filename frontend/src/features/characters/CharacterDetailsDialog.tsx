@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -5,12 +6,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Download, Loader2 } from 'lucide-react';
 import type { CharacterDetail } from '@/shared/types/character';
 import InventoryTab from './components/InventoryTab';
 import MemoryTimeline from './components/MemoryTimeline';
 import PsychologyChart from './components/PsychologyChart';
 import GoalsList from './components/GoalsList';
+import {
+  getCharacterRelationships,
+  buildCharacterExportData,
+  downloadAsJson,
+} from '@/lib/api';
 
 type Props = {
   open: boolean;
@@ -19,11 +27,53 @@ type Props = {
 };
 
 export default function CharacterDetailsDialog({ open, onClose, character }: Props) {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    if (!character) return;
+
+    setIsExporting(true);
+    try {
+      // Fetch relationships for this character
+      const relationshipData = await getCharacterRelationships(character.agent_id);
+
+      // Build export data with character and relationships
+      const exportData = buildCharacterExportData(character, relationshipData.relationships);
+
+      // Generate filename from character name (sanitized)
+      const sanitizedName = character.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const filename = `character-${sanitizedName}-${new Date().toISOString().split('T')[0]}`;
+
+      // Trigger download
+      downloadAsJson(exportData, filename);
+    } catch (error) {
+      console.error('Failed to export character:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between gap-4">
           <DialogTitle>{character?.name || 'Character Details'}</DialogTitle>
+          {character && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="shrink-0"
+            >
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Export
+            </Button>
+          )}
         </DialogHeader>
 
         {character ? (
