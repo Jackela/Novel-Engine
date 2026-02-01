@@ -659,3 +659,58 @@ export type LoreCategory = z.infer<typeof LoreCategoryEnum>;
 export type LoreEntryResponse = z.infer<typeof LoreEntryResponseSchema>;
 export type LoreEntryListResponse = z.infer<typeof LoreEntryListResponseSchema>;
 export type LoreEntryRequest = z.infer<typeof LoreEntryRequestSchema>;
+
+// === World Rule Schemas (WORLD-014/WORLD-015) ===
+
+/**
+ * World rule response schema matching backend WorldRuleResponse.
+ */
+export const WorldRuleResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  consequence: z.string(),
+  exceptions: z.array(z.string()).default([]),
+  category: z.string(),
+  severity: z.number().min(0).max(100),
+  related_rule_ids: z.array(z.string()).default([]),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * World rule list response schema matching backend WorldRuleListResponse.
+ */
+export const WorldRuleListResponseSchema = z.object({
+  rules: z.array(WorldRuleResponseSchema).default([]),
+  total: z.number().default(0),
+});
+
+/**
+ * World rule create request schema.
+ */
+export const WorldRuleCreateRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(5000).default(''),
+  consequence: z.string().max(2000).default(''),
+  exceptions: z.array(z.string()).max(20).default([]),
+  category: z.string().max(50).default(''),
+  severity: z.number().min(0).max(100).default(50),
+});
+
+/**
+ * World rule update request schema.
+ */
+export const WorldRuleUpdateRequestSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(5000).optional(),
+  consequence: z.string().max(2000).optional(),
+  exceptions: z.array(z.string()).max(20).optional(),
+  category: z.string().max(50).optional(),
+  severity: z.number().min(0).max(100).optional(),
+});
+
+export type WorldRuleResponse = z.infer<typeof WorldRuleResponseSchema>;
+export type WorldRuleListResponse = z.infer<typeof WorldRuleListResponseSchema>;
+export type WorldRuleCreateRequest = z.infer<typeof WorldRuleCreateRequestSchema>;
+export type WorldRuleUpdateRequest = z.infer<typeof WorldRuleUpdateRequestSchema>;

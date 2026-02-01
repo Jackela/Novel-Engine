@@ -7,6 +7,7 @@ import {
   type WorldLocation,
   type ItemResponse,
   type LoreEntryResponse,
+  type WorldRuleResponse,
 } from '@/types/schemas';
 
 const API_PREFIX = '/api';
@@ -474,6 +475,46 @@ const mockLoreEntries: LoreEntryResponse[] = [
       'A treaty between mortal kingdoms and the fey courts, establishing boundaries and rules of engagement. Breaking this compact invites dire consequences.',
     category: 'history',
     tags: ['fey', 'treaty', 'law'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+];
+
+// Mock world rules for the World Rules Editor
+const mockWorldRules: WorldRuleResponse[] = [
+  {
+    id: 'rule-001',
+    name: 'Magic requires stamina',
+    description: 'All magical abilities draw from the caster\'s physical reserves. More powerful spells demand greater stamina expenditure.',
+    consequence: 'Exhaustion and potential unconsciousness if stamina is depleted',
+    exceptions: ['Divine magic from gods', 'Artifacts with stored energy'],
+    category: 'magic',
+    severity: 85,
+    related_rule_ids: ['rule-002'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rule-002',
+    name: 'No teleportation within wards',
+    description: 'Magical wards placed around settlements prevent all forms of instantaneous travel, including teleportation, dimension doors, and phase shifting.',
+    consequence: 'Spell failure and magical backlash',
+    exceptions: ['Ward keepers with authorization tokens', 'Emergency royal override'],
+    category: 'magic',
+    severity: 95,
+    related_rule_ids: ['rule-001'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rule-003',
+    name: 'Iron repels the fey',
+    description: 'Cold iron causes discomfort and weakening to fey creatures. Direct contact with pure iron causes burning damage.',
+    consequence: 'Fey creatures suffer weakness and pain near iron',
+    exceptions: ['Half-fey with mortal blood', 'Fey who have sworn iron-pacts'],
+    category: 'physics',
+    severity: 100,
+    related_rule_ids: [],
     created_at: nowIso(),
     updated_at: nowIso(),
   },
@@ -1034,5 +1075,143 @@ export const handlers = [
       motivations: template.motivations,
       quirks: template.quirks,
     });
+  }),
+
+  // === World Rules API ===
+
+  http.get(`${API_PREFIX}/world-rules`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const category = url.searchParams.get('category');
+    const minSeverity = url.searchParams.get('min_severity');
+    const maxSeverity = url.searchParams.get('max_severity');
+
+    let filtered = mockWorldRules;
+
+    if (category) {
+      filtered = filtered.filter((rule) => rule.category === category);
+    }
+
+    if (minSeverity) {
+      const min = parseInt(minSeverity, 10);
+      filtered = filtered.filter((rule) => rule.severity >= min);
+    }
+
+    if (maxSeverity) {
+      const max = parseInt(maxSeverity, 10);
+      filtered = filtered.filter((rule) => rule.severity <= max);
+    }
+
+    return HttpResponse.json({
+      rules: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/world-rules/search`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q')?.toLowerCase() || '';
+    const category = url.searchParams.get('category');
+
+    let filtered = mockWorldRules;
+
+    if (query) {
+      filtered = filtered.filter((rule) =>
+        rule.name.toLowerCase().includes(query)
+      );
+    }
+
+    if (category) {
+      filtered = filtered.filter((rule) => rule.category === category);
+    }
+
+    return HttpResponse.json({
+      rules: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/world-rules/absolute`, async () => {
+    await withLatency();
+    const absoluteRules = mockWorldRules.filter((rule) => rule.severity >= 90);
+    return HttpResponse.json({
+      rules: absoluteRules,
+      total: absoluteRules.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/world-rules/:id`, async ({ params }) => {
+    await withLatency();
+    const rule = mockWorldRules.find((r) => r.id === params.id);
+    if (!rule) {
+      return HttpResponse.json({ detail: 'World rule not found' }, { status: 404 });
+    }
+    return HttpResponse.json(rule);
+  }),
+
+  http.post(`${API_PREFIX}/world-rules`, async ({ request }) => {
+    await withLatency();
+    const body = asObject(await request.json().catch(() => ({})));
+
+    const name = stringField(body, 'name');
+    if (!name) {
+      return HttpResponse.json({ detail: 'Name is required' }, { status: 400 });
+    }
+
+    const newRule: WorldRuleResponse = {
+      id: `rule-${Date.now()}`,
+      name,
+      description: stringField(body, 'description'),
+      consequence: stringField(body, 'consequence'),
+      exceptions: arrayField(body, 'exceptions', []),
+      category: stringField(body, 'category'),
+      severity: typeof body.severity === 'number' ? body.severity : 50,
+      related_rule_ids: [],
+      created_at: nowIso(),
+      updated_at: nowIso(),
+    };
+
+    mockWorldRules.push(newRule);
+    return HttpResponse.json(newRule, { status: 201 });
+  }),
+
+  http.put(`${API_PREFIX}/world-rules/:id`, async ({ params, request }) => {
+    await withLatency();
+    const ruleIndex = mockWorldRules.findIndex((r) => r.id === params.id);
+    if (ruleIndex === -1) {
+      return HttpResponse.json({ detail: 'World rule not found' }, { status: 404 });
+    }
+
+    const body = asObject(await request.json().catch(() => ({})));
+    const existingRule = mockWorldRules[ruleIndex];
+    if (!existingRule) {
+      return HttpResponse.json({ detail: 'World rule not found' }, { status: 404 });
+    }
+
+    const updatedRule: WorldRuleResponse = {
+      ...existingRule,
+      name: 'name' in body ? stringField(body, 'name') : existingRule.name,
+      description: 'description' in body ? stringField(body, 'description') : existingRule.description,
+      consequence: 'consequence' in body ? stringField(body, 'consequence') : existingRule.consequence,
+      exceptions: 'exceptions' in body ? arrayField(body, 'exceptions', []) : existingRule.exceptions,
+      category: 'category' in body ? stringField(body, 'category') : existingRule.category,
+      severity: 'severity' in body && typeof body.severity === 'number' ? body.severity : existingRule.severity,
+      updated_at: nowIso(),
+    };
+
+    mockWorldRules[ruleIndex] = updatedRule;
+    return HttpResponse.json(updatedRule);
+  }),
+
+  http.delete(`${API_PREFIX}/world-rules/:id`, async ({ params }) => {
+    await withLatency();
+    const ruleIndex = mockWorldRules.findIndex((r) => r.id === params.id);
+    if (ruleIndex === -1) {
+      return HttpResponse.json({ detail: 'World rule not found' }, { status: 404 });
+    }
+
+    mockWorldRules.splice(ruleIndex, 1);
+    return new HttpResponse(null, { status: 204 });
   }),
 ];
