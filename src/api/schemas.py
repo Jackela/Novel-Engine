@@ -670,6 +670,78 @@ class RelationshipListResponse(BaseModel):
     total: int = Field(default=0, description="Total count of matching relationships")
 
 
+# === Item Schemas (WORLD-008) ===
+
+
+class ItemCreateRequest(BaseModel):
+    """Request model for creating an item."""
+
+    name: str = Field(..., min_length=1, max_length=200, description="Item name")
+    item_type: str = Field(
+        ..., description="Type: WEAPON, ARMOR, CONSUMABLE, KEY_ITEM, MISC"
+    )
+    description: str = Field(default="", max_length=2000)
+    rarity: str = Field(
+        default="common", description="Rarity: COMMON, UNCOMMON, RARE, LEGENDARY"
+    )
+    weight: Optional[float] = Field(default=None, ge=0, description="Weight in kg")
+    value: Optional[int] = Field(default=None, ge=0, description="Monetary value")
+    is_equippable: bool = Field(default=False)
+    is_consumable: bool = Field(default=False)
+    effects: List[str] = Field(default_factory=list, description="List of effect descriptions")
+    lore: str = Field(default="", max_length=5000, description="Extended backstory")
+
+
+class ItemUpdateRequest(BaseModel):
+    """Request model for updating an item."""
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=2000)
+    rarity: Optional[str] = Field(default=None)
+    weight: Optional[float] = Field(default=None, ge=0)
+    value: Optional[int] = Field(default=None, ge=0)
+    effects: Optional[List[str]] = Field(default=None)
+    lore: Optional[str] = Field(default=None, max_length=5000)
+
+
+class ItemResponse(BaseModel):
+    """Response model for a single item."""
+
+    id: str = Field(..., description="Item UUID")
+    name: str
+    item_type: str
+    description: str
+    rarity: str
+    weight: Optional[float] = None
+    value: Optional[int] = None
+    is_equippable: bool
+    is_consumable: bool
+    effects: List[str] = Field(default_factory=list)
+    lore: str
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class ItemListResponse(BaseModel):
+    """Response model for listing items."""
+
+    items: List[ItemResponse] = Field(default_factory=list)
+    total: int = Field(default=0, description="Total count of matching items")
+
+
+class GiveItemRequest(BaseModel):
+    """Request model for giving an item to a character."""
+
+    item_id: str = Field(..., description="ID of the item to give")
+
+
+class RemoveItemResponse(BaseModel):
+    """Response model for removing an item from a character."""
+
+    success: bool = Field(..., description="Whether removal was successful")
+    message: str = Field(default="", description="Status message")
+
+
 __all__ = [
     # Orchestration Schemas
     "OrchestrationStep",
@@ -745,6 +817,13 @@ __all__ = [
     "RelationshipUpdateRequest",
     "RelationshipResponse",
     "RelationshipListResponse",
+    # Item Schemas
+    "ItemCreateRequest",
+    "ItemUpdateRequest",
+    "ItemResponse",
+    "ItemListResponse",
+    "GiveItemRequest",
+    "RemoveItemResponse",
 ]
 
 try:

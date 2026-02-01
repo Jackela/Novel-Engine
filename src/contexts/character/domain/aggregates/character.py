@@ -60,6 +60,9 @@ class Character:
     updated_at: datetime = field(default_factory=datetime.now)
     version: int = field(default=1)
 
+    # Inventory: List of item IDs owned by this character
+    inventory: List[str] = field(default_factory=list)
+
     # Domain events (not persisted)
     _events: List[CharacterEvent] = field(default_factory=list, init=False)
 
@@ -458,6 +461,81 @@ class Character:
             )
         )
 
+    # ==================== Inventory Operations ====================
+
+    def give_item(self, item_id: str) -> None:
+        """Add an item to the character's inventory.
+
+        Why track by ID: Items may exist as separate entities with their own
+        lifecycle. Storing IDs enables loose coupling and avoids duplication.
+
+        Args:
+            item_id: The unique identifier of the item to add.
+
+        Raises:
+            ValueError: If item_id is empty or already in inventory.
+        """
+        if not item_id or not item_id.strip():
+            raise ValueError("Item ID cannot be empty")
+
+        if item_id in self.inventory:
+            raise ValueError(f"Item {item_id} is already in inventory")
+
+        self.inventory.append(item_id)
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["inventory_add"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def remove_item(self, item_id: str) -> bool:
+        """Remove an item from the character's inventory.
+
+        Args:
+            item_id: The unique identifier of the item to remove.
+
+        Returns:
+            True if item was found and removed, False otherwise.
+        """
+        if item_id in self.inventory:
+            self.inventory.remove(item_id)
+            self.updated_at = datetime.now()
+            self.version += 1
+
+            self._add_event(
+                CharacterUpdated.create(
+                    character_id=self.character_id,
+                    updated_fields=["inventory_remove"],
+                    old_version=self.version - 1,
+                    new_version=self.version,
+                    updated_at=self.updated_at,
+                )
+            )
+            return True
+        return False
+
+    def has_item(self, item_id: str) -> bool:
+        """Check if the character has a specific item.
+
+        Args:
+            item_id: The unique identifier of the item to check.
+
+        Returns:
+            True if item is in inventory.
+        """
+        return item_id in self.inventory
+
+    def get_inventory_count(self) -> int:
+        """Get the number of items in inventory."""
+        return len(self.inventory)
+
     # ==================== Query Methods ====================
 
     def is_alive(self) -> bool:
@@ -480,6 +558,8 @@ class Character:
             "profile_summary": self.profile.get_character_summary(),
             "stats_summary": self.stats.get_stats_summary(),
             "skills_summary": self.skills.get_skill_summary(),
+            "inventory": self.inventory.copy(),
+            "inventory_count": len(self.inventory),
             "is_alive": self.is_alive(),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),

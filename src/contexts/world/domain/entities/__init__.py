@@ -35,6 +35,11 @@ from .relationship import (
     Relationship,
     RelationshipType,
 )
+from .item import (
+    Item,
+    ItemRarity,
+    ItemType,
+)
 
 __all__ = [
     # Base Entity
@@ -64,4 +69,8 @@ __all__ = [
     "Relationship",
     "RelationshipType",
     "EntityType",
+    # Item
+    "Item",
+    "ItemType",
+    "ItemRarity",
 ]

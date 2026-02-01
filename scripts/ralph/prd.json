@@ -127,7 +127,7 @@
         "Browser verification: 3-level hierarchy expands/collapses correctly"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["WORLD-006"]
     },
@@ -143,7 +143,7 @@
         "Run `pytest tests/unit/contexts/world/domain/test_item.py` - all pass"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["WORLD-001"]
     },
