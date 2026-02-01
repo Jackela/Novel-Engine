@@ -30,7 +30,7 @@ export default function NarrativePage() {
 
         {/* Main content: NarrativeEditorLayout (sidebar 20% + editor 80%) */}
         <div className="flex-1 overflow-hidden">
-          <NarrativeEditorLayout useMockData />
+          <NarrativeEditorLayout />
         </div>
       </div>
     </Suspense>
