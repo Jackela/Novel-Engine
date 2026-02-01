@@ -344,7 +344,7 @@
         "Run `npm run test:e2e` - all world-building tests pass"
       ],
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["WORLD-005", "WORLD-009", "WORLD-019"]
     }
