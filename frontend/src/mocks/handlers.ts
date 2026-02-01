@@ -5,6 +5,7 @@ import {
   OrchestrationStartRequestSchema,
   type RelationshipResponse,
   type WorldLocation,
+  type ItemResponse,
 } from '@/types/schemas';
 
 const API_PREFIX = '/api';
@@ -292,6 +293,136 @@ const mockLocations: WorldLocation[] = [
     child_location_ids: [],
   },
 ];
+
+// Mock items for inventory testing
+const mockItems: ItemResponse[] = [
+  {
+    id: 'item-001',
+    name: 'Starfall Blade',
+    item_type: 'weapon',
+    description: 'A legendary sword forged from a fallen star.',
+    rarity: 'legendary',
+    weight: 3.5,
+    value: 10000,
+    is_equippable: true,
+    is_consumable: false,
+    effects: ['+20 Attack', 'Glow in darkness'],
+    lore: 'Said to have been wielded by the first king of Eldara.',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-002',
+    name: 'Leather Armor',
+    item_type: 'armor',
+    description: 'Standard leather armor providing basic protection.',
+    rarity: 'common',
+    weight: 8,
+    value: 50,
+    is_equippable: true,
+    is_consumable: false,
+    effects: ['+5 Defense'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-003',
+    name: 'Health Potion',
+    item_type: 'consumable',
+    description: 'Restores 50 health points when consumed.',
+    rarity: 'common',
+    weight: 0.5,
+    value: 25,
+    is_equippable: false,
+    is_consumable: true,
+    effects: ['Restore 50 HP'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-004',
+    name: 'Moonstone Amulet',
+    item_type: 'key_item',
+    description: 'An amulet required to enter the Temple of Moonlight.',
+    rarity: 'rare',
+    weight: 0.2,
+    value: null,
+    is_equippable: false,
+    is_consumable: false,
+    effects: [],
+    lore: 'Given only to those deemed worthy by the elven priests.',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-005',
+    name: 'Iron Shield',
+    item_type: 'armor',
+    description: 'A sturdy iron shield.',
+    rarity: 'uncommon',
+    weight: 12,
+    value: 150,
+    is_equippable: true,
+    is_consumable: false,
+    effects: ['+10 Defense', 'Block chance +5%'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-006',
+    name: 'Rusty Dagger',
+    item_type: 'weapon',
+    description: 'An old rusty dagger. Not very effective.',
+    rarity: 'common',
+    weight: 0.3,
+    value: 5,
+    is_equippable: true,
+    is_consumable: false,
+    effects: ['+2 Attack'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-007',
+    name: 'Mana Crystal',
+    item_type: 'consumable',
+    description: 'Restores 30 mana points when consumed.',
+    rarity: 'uncommon',
+    weight: 0.3,
+    value: 40,
+    is_equippable: false,
+    is_consumable: true,
+    effects: ['Restore 30 MP'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-008',
+    name: 'Traveler\'s Pack',
+    item_type: 'misc',
+    description: 'A simple backpack for carrying supplies.',
+    rarity: 'common',
+    weight: 1,
+    value: 10,
+    is_equippable: false,
+    is_consumable: false,
+    effects: [],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+];
+
+// Track which items are in which character's inventory
+const characterInventories: Record<string, string[]> = {
+  'aria-shadowbane': ['item-001', 'item-004'],
+  'merchant-aldric': ['item-002', 'item-003', 'item-008'],
+};
 
 let orchestrationState = {
   status: 'idle',
@@ -603,6 +734,105 @@ export const handlers = [
     return HttpResponse.json({
       locations: children,
       total: children.length,
+    });
+  }),
+
+  // === Items API ===
+
+  http.get(`${API_PREFIX}/items`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const itemType = url.searchParams.get('item_type');
+
+    let filtered = mockItems;
+    if (itemType) {
+      filtered = mockItems.filter((item) => item.item_type === itemType);
+    }
+
+    return HttpResponse.json({
+      items: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/items/:id`, async ({ params }) => {
+    await withLatency();
+    const item = mockItems.find((i) => i.id === params.id);
+    if (!item) {
+      return HttpResponse.json({ detail: 'Item not found' }, { status: 404 });
+    }
+    return HttpResponse.json(item);
+  }),
+
+  // === Character Inventory API ===
+
+  http.get(`${API_PREFIX}/characters/:id/inventory`, async ({ params }) => {
+    await withLatency();
+    const characterId = params.id as string;
+    const inventoryIds = characterInventories[characterId] || [];
+    const items = mockItems.filter((item) => inventoryIds.includes(item.id));
+
+    return HttpResponse.json({
+      items,
+      total: items.length,
+    });
+  }),
+
+  http.post(`${API_PREFIX}/characters/:id/give-item`, async ({ params, request }) => {
+    await withLatency();
+    const characterId = params.id as string;
+    const body = asObject(await request.json().catch(() => ({})));
+    const itemId = stringField(body, 'item_id');
+
+    const item = mockItems.find((i) => i.id === itemId);
+    if (!item) {
+      return HttpResponse.json({ detail: 'Item not found' }, { status: 404 });
+    }
+
+    if (!characterInventories[characterId]) {
+      characterInventories[characterId] = [];
+    }
+
+    if (characterInventories[characterId].includes(itemId)) {
+      return HttpResponse.json(
+        { detail: `Item ${itemId} is already in character's inventory` },
+        { status: 409 }
+      );
+    }
+
+    characterInventories[characterId].push(itemId);
+
+    return HttpResponse.json({
+      success: true,
+      message: `Item '${item.name}' added to character ${characterId}'s inventory`,
+    });
+  }),
+
+  http.delete(`${API_PREFIX}/characters/:id/remove-item/:itemId`, async ({ params }) => {
+    await withLatency();
+    const characterId = params.id as string;
+    const itemId = params.itemId as string;
+
+    if (!characterInventories[characterId]) {
+      return HttpResponse.json({
+        success: false,
+        message: `Character ${characterId} has no inventory`,
+      });
+    }
+
+    const idx = characterInventories[characterId].indexOf(itemId);
+    if (idx === -1) {
+      return HttpResponse.json({
+        success: false,
+        message: `Item ${itemId} not in character's inventory`,
+      });
+    }
+
+    characterInventories[characterId].splice(idx, 1);
+
+    return HttpResponse.json({
+      success: true,
+      message: `Item ${itemId} removed from character ${characterId}'s inventory`,
     });
   }),
 ];

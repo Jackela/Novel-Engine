@@ -379,6 +379,67 @@ export const ErrorInfoSchema = z.object({
 
 export type ErrorInfo = z.infer<typeof ErrorInfoSchema>;
 
+// === Item Schemas (WORLD-008) ===
+
+/**
+ * Item type enum matching backend ItemType.
+ */
+export const ItemTypeEnum = z.enum(['weapon', 'armor', 'consumable', 'key_item', 'misc']);
+
+/**
+ * Item rarity enum matching backend ItemRarity.
+ */
+export const ItemRarityEnum = z.enum(['common', 'uncommon', 'rare', 'legendary']);
+
+/**
+ * Item response schema matching backend ItemResponse.
+ */
+export const ItemResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  item_type: ItemTypeEnum,
+  description: z.string(),
+  rarity: ItemRarityEnum,
+  weight: z.number().nullable().optional(),
+  value: z.number().nullable().optional(),
+  is_equippable: z.boolean(),
+  is_consumable: z.boolean(),
+  effects: z.array(z.string()).default([]),
+  lore: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Item list response schema matching backend ItemListResponse.
+ */
+export const ItemListResponseSchema = z.object({
+  items: z.array(ItemResponseSchema).default([]),
+  total: z.number().default(0),
+});
+
+/**
+ * Give item request schema.
+ */
+export const GiveItemRequestSchema = z.object({
+  item_id: z.string(),
+});
+
+/**
+ * Remove item response schema.
+ */
+export const RemoveItemResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+});
+
+export type ItemType = z.infer<typeof ItemTypeEnum>;
+export type ItemRarity = z.infer<typeof ItemRarityEnum>;
+export type ItemResponse = z.infer<typeof ItemResponseSchema>;
+export type ItemListResponse = z.infer<typeof ItemListResponseSchema>;
+export type GiveItemRequest = z.infer<typeof GiveItemRequestSchema>;
+export type RemoveItemResponse = z.infer<typeof RemoveItemResponseSchema>;
+
 // === Narrative Structure Schemas (aligned with backend schemas.py) ===
 
 /**
