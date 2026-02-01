@@ -20,7 +20,7 @@ import {
   type OnSelectionChangeFunc,
 } from '@xyflow/react';
 import Dagre from '@dagrejs/dagre';
-import { X, Users } from 'lucide-react';
+import { X, Users, Sparkles, Loader2 } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
 import { CharacterNode, type CharacterNodeType, type CharacterNodeData } from './nodes/CharacterNode';
@@ -28,6 +28,7 @@ import { RelationshipStatusBars } from './RelationshipStatusBars';
 import { Button, Badge } from '@/shared/components/ui';
 import type { CharacterSummary, RelationshipResponse, RelationshipType } from '@/types/schemas';
 import { cn } from '@/lib/utils';
+import { generateRelationshipHistory } from '@/lib/api';
 
 /**
  * Map relationship types to edge colors.
@@ -232,6 +233,8 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
   const [selectedEdge, setSelectedEdge] = useState<Edge<RelationshipEdgeData> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingHistory, setIsGeneratingHistory] = useState(false);
+  const [generatedBackstory, setGeneratedBackstory] = useState<string | null>(null);
 
   // Fetch data on mount
   useEffect(() => {
@@ -292,7 +295,58 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
   /** Close the relationship detail panel */
   const handleCloseDetail = useCallback(() => {
     setSelectedEdge(null);
+    setGeneratedBackstory(null);
   }, []);
+
+  /** Generate backstory for the selected relationship */
+  const handleGenerateHistory = useCallback(async () => {
+    if (!selectedEdge) return;
+
+    setIsGeneratingHistory(true);
+    setGeneratedBackstory(null);
+
+    try {
+      const result = await generateRelationshipHistory(selectedEdge.id);
+      if (result.error) {
+        console.error('History generation error:', result.error);
+      }
+      setGeneratedBackstory(result.backstory);
+
+      // Update the edge data with the generated backstory
+      setEdges((eds) =>
+        eds.map((edge) => {
+          if (edge.id === selectedEdge.id && edge.data) {
+            return {
+              ...edge,
+              data: {
+                ...edge.data,
+                description: result.backstory,
+              },
+            };
+          }
+          return edge;
+        })
+      );
+
+      // Also update the selectedEdge to reflect the change
+      setSelectedEdge((prev) => {
+        if (prev && prev.data) {
+          return {
+            ...prev,
+            data: {
+              ...prev.data,
+              description: result.backstory,
+            },
+          };
+        }
+        return prev;
+      });
+    } catch (err) {
+      console.error('Failed to generate relationship history:', err);
+    } finally {
+      setIsGeneratingHistory(false);
+    }
+  }, [selectedEdge, setEdges]);
 
   /** Theme-aware colors for MiniMap */
   const minimapStyle = useMemo(
@@ -407,6 +461,33 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
               {selectedEdge.data.description && (
                 <p className="text-sm text-muted-foreground">{selectedEdge.data.description}</p>
               )}
+
+              {/* Generate History button - shown when no description or to regenerate */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateHistory}
+                  disabled={isGeneratingHistory}
+                  className="gap-2"
+                  data-testid="generate-history-button"
+                >
+                  {isGeneratingHistory ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      {selectedEdge.data.description ? 'Regenerate History' : 'Generate History'}
+                    </>
+                  )}
+                </Button>
+                {generatedBackstory && !isGeneratingHistory && (
+                  <span className="text-xs text-muted-foreground">History generated</span>
+                )}
+              </div>
 
               {/* Trust and Romance bars */}
               <RelationshipStatusBars

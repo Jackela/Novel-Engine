@@ -916,6 +916,79 @@ export const handlers = [
     return HttpResponse.json(relationship);
   }),
 
+  // === Relationship History Generation (CHAR-034) ===
+  http.post(`${API_PREFIX}/relationships/:id/generate-history`, async ({ params }) => {
+    // Simulate AI processing delay
+    await delay(1500);
+
+    const relationship = mockRelationships.find((r) => r.id === params.id);
+    if (!relationship) {
+      return HttpResponse.json({ detail: 'Relationship not found' }, { status: 404 });
+    }
+
+    // Generate mock backstory based on trust and romance levels
+    const formatName = (id: string) =>
+      id
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+
+    const sourceName = formatName(relationship.source_id);
+    const targetName = formatName(relationship.target_id);
+    const trust = relationship.trust;
+    const romance = relationship.romance;
+
+    let backstoryTemplate: {
+      backstory: string;
+      first_meeting: string;
+      defining_moment: string;
+      current_status: string;
+    };
+
+    // Select backstory template based on trust/romance levels
+    if (trust >= 70 && romance >= 50) {
+      // High trust, romantic
+      backstoryTemplate = {
+        backstory: `${sourceName} and ${targetName} first crossed paths during a tumultuous period in both their lives. What began as a chance encounter quickly evolved into something deeper. Their shared experiences forged a bond of trust that few could understand. Through trials and tribulations, they found in each other a kindred spirit—someone who truly understood the weight of their struggles and the fire of their ambitions.`,
+        first_meeting: `They met at the Trade Hub during the Festival of First Light, when ${sourceName} helped ${targetName} navigate a dangerous confrontation with local bandits.`,
+        defining_moment: `When ${sourceName} risked everything to save ${targetName} from Lord Vexar's machinations, their bond transformed from friendship into something unbreakable.`,
+        current_status: `Now inseparable allies, they face the challenges of the fractured realm together, their trust and affection evident to all who know them.`,
+      };
+    } else if (trust <= 30) {
+      // Low trust - adversarial
+      backstoryTemplate = {
+        backstory: `The history between ${sourceName} and ${targetName} is marked by betrayal and broken promises. Once, there may have been potential for alliance, but a series of unfortunate events shattered any goodwill between them. Now they regard each other with suspicion at best, open hostility at worst. Their paths continue to cross, each encounter adding another layer to their complicated history.`,
+        first_meeting: `They first encountered each other as competitors for the same prize—control of a vital trade route through the Frostpeak Mountains.`,
+        defining_moment: `The betrayal at the Meridian Council, where one's actions cost the other dearly, created an irreparable rift between them.`,
+        current_status: `They maintain a cold, calculated distance, each watching the other for signs of treachery while secretly hoping for an opportunity to settle old scores.`,
+      };
+    } else if (trust >= 50 && romance === 0) {
+      // Neutral trust, no romance - professional
+      backstoryTemplate = {
+        backstory: `${sourceName} and ${targetName} have built their relationship on a foundation of mutual respect and professional necessity. Neither seeks more than what the other can provide—reliable partnership in an unreliable world. They understand each other's capabilities and limitations, making them effective collaborators when circumstances require.`,
+        first_meeting: `Their first interaction was a business transaction at the Crossroads Town market, each recognizing in the other a competent operator in the realm's complex political landscape.`,
+        defining_moment: `A successful joint venture during the chaos of the Sundering War's anniversary demonstrated that they could rely on each other when it mattered most.`,
+        current_status: `They maintain cordial relations, calling upon each other when mutual interests align, always professional but never quite friends.`,
+      };
+    } else {
+      // Default moderate relationship
+      backstoryTemplate = {
+        backstory: `The connection between ${sourceName} and ${targetName} defies simple categorization. They have shared moments of genuine camaraderie and periods of frustrating misunderstanding. Their relationship reflects the complexities of life in the fractured realm—alliances of convenience, moments of genuine connection, and the ever-present uncertainty of tomorrow.`,
+        first_meeting: `They first became aware of each other through mutual acquaintances in the Heartlands, their reputations preceding actual introduction.`,
+        defining_moment: `A shared adventure in the Whisperwood Forest, where they had to rely on each other against unexpected dangers, revealed new dimensions to their relationship.`,
+        current_status: `They navigate their connection day by day, neither fully trusting nor entirely dismissing the other, their future together as uncertain as the realm itself.`,
+      };
+    }
+
+    return HttpResponse.json({
+      backstory: backstoryTemplate.backstory,
+      first_meeting: backstoryTemplate.first_meeting,
+      defining_moment: backstoryTemplate.defining_moment,
+      current_status: backstoryTemplate.current_status,
+      error: null,
+    });
+  }),
+
   // === Locations API ===
 
   http.get(`${API_PREFIX}/locations`, async () => {

@@ -30,3 +30,6 @@ export {
 
 // Social Network Analysis API
 export { getSocialAnalysis, getCharacterCentrality } from './socialApi';
+
+// Relationship API
+export { generateRelationshipHistory } from './relationshipApi';

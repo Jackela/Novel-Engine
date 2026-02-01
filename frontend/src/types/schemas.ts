@@ -912,3 +912,21 @@ export const SocialAnalysisResponseSchema = z.object({
 
 export type CharacterCentrality = z.infer<typeof CharacterCentralitySchema>;
 export type SocialAnalysisResponse = z.infer<typeof SocialAnalysisResponseSchema>;
+
+// === Relationship History Generation Schemas (CHAR-034) ===
+
+/**
+ * Response from relationship history generation.
+ * Contains a backstory explaining the relationship dynamics.
+ */
+export const RelationshipHistoryGenerationResponseSchema = z.object({
+  backstory: z.string(),
+  first_meeting: z.string().nullable().optional(),
+  defining_moment: z.string().nullable().optional(),
+  current_status: z.string().nullable().optional(),
+  error: z.string().nullable().optional(),
+});
+
+export type RelationshipHistoryGenerationResponse = z.infer<
+  typeof RelationshipHistoryGenerationResponseSchema
+>;

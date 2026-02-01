@@ -20,6 +20,7 @@ from src.api.schemas import (
     InteractionLogSchema,
     LogInteractionRequest,
     RelationshipCreateRequest,
+    RelationshipHistoryGenerationResponse,
     RelationshipListResponse,
     RelationshipResponse,
     RelationshipUpdateRequest,
@@ -28,6 +29,10 @@ from src.contexts.world.domain.entities.relationship import (
     EntityType,
     Relationship,
     RelationshipType,
+)
+from src.contexts.world.infrastructure.generators import (
+    CharacterData,
+    LLMWorldGenerator,
 )
 from src.contexts.world.infrastructure.persistence.in_memory_relationship_repository import (
     InMemoryRelationshipRepository,
@@ -414,3 +419,87 @@ async def get_relationships_between(
         relationships=[_relationship_to_response(r) for r in relationships],
         total=len(relationships),
     )
+
+
+@router.post(
+    "/{relationship_id}/generate-history",
+    response_model=RelationshipHistoryGenerationResponse,
+)
+async def generate_relationship_history(
+    relationship_id: str,
+) -> RelationshipHistoryGenerationResponse:
+    """Generate a backstory for the relationship using AI.
+
+    Creates a compelling narrative explaining how the two characters came
+    to have their current trust and romance levels. The generated history
+    includes their first meeting, defining moments, and current status.
+
+    Args:
+        relationship_id: Unique identifier for the relationship.
+
+    Returns:
+        Generated backstory and structured history elements.
+
+    Raises:
+        HTTPException: If relationship not found or generation fails.
+    """
+    repo = get_repository()
+    relationship = await repo.get_by_id(relationship_id)
+
+    if not relationship:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Relationship not found: {relationship_id}",
+        )
+
+    # Create character data from IDs (basic info for generation)
+    # In production, this would fetch full character profiles
+    char_a = CharacterData(
+        name=_format_character_name(relationship.source_id),
+        psychology=None,
+        traits=None,
+        speaking_style=None,
+    )
+    char_b = CharacterData(
+        name=_format_character_name(relationship.target_id),
+        psychology=None,
+        traits=None,
+        speaking_style=None,
+    )
+
+    try:
+        generator = LLMWorldGenerator()
+        result = generator.generate_relationship_history(
+            character_a=char_a,
+            character_b=char_b,
+            trust=relationship.trust,
+            romance=relationship.romance,
+        )
+
+        return RelationshipHistoryGenerationResponse(
+            backstory=result.backstory,
+            first_meeting=result.first_meeting,
+            defining_moment=result.defining_moment,
+            current_status=result.current_status,
+            error=result.error,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate relationship history: {str(e)}",
+        )
+
+
+def _format_character_name(character_id: str) -> str:
+    """Convert character ID to display name.
+
+    Transforms IDs like 'aria-shadowbane' to 'Aria Shadowbane'.
+
+    Args:
+        character_id: Character identifier with hyphens.
+
+    Returns:
+        Formatted display name.
+    """
+    return " ".join(word.capitalize() for word in character_id.split("-"))

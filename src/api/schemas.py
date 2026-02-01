@@ -973,6 +973,20 @@ class LogInteractionRequest(BaseModel):
     romance_change: int = Field(default=0, ge=-100, le=100, description="Romance change")
 
 
+class RelationshipHistoryGenerationResponse(BaseModel):
+    """Response model for generated relationship history.
+
+    Contains a backstory explaining how two characters developed their current
+    relationship dynamics based on trust/romance levels.
+    """
+
+    backstory: str = Field(..., description="2-4 paragraph narrative explaining relationship history")
+    first_meeting: Optional[str] = Field(None, description="How the characters first met")
+    defining_moment: Optional[str] = Field(None, description="Pivotal event shaping current dynamic")
+    current_status: Optional[str] = Field(None, description="Summary of where they currently stand")
+    error: Optional[str] = Field(None, description="Error message if generation failed")
+
+
 class RelationshipResponse(BaseModel):
     """Response model for a single relationship."""
 
@@ -1306,6 +1320,7 @@ __all__ = [
     "RelationshipListResponse",
     "InteractionLogSchema",
     "LogInteractionRequest",
+    "RelationshipHistoryGenerationResponse",
     # Social Network Analysis Schemas
     "CharacterCentralitySchema",
     "SocialAnalysisResponse",
