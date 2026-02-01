@@ -142,7 +142,7 @@
         "Test: `pytest`."
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {

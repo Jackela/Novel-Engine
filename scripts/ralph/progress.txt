@@ -8,7 +8,116 @@ Started: Sun Feb  1 17:25:24     2026
 - CharacterDetailsDialog uses Tabs component with TabsList/TabsTrigger/TabsContent pattern
 - Character memories stored in structured_data.memories via workspace_character_store
 - API routers go in `src/api/routers/` and register in `main_api_server.py`
+- Relationship entity is in `src/contexts/world/domain/entities/relationship.py` (not character context)
+- Use frozen dataclass for immutable value objects like InteractionLog
+- Use Tuple (not List) for immutable collections in frozen dataclasses
+- shadcn components install to src/components/ui but project uses src/shared/components/ui - move after install
+- Progress component supports indicatorClassName prop for custom indicator colors
 
+- LLMWorldGenerator is in `src/contexts/world/infrastructure/generators/` and is the main AI generation service
+- Dialogue generation uses CharacterData DTO - can be created from Character aggregate or plain dicts
+- Prompt YAML files go in `src/contexts/world/infrastructure/prompts/` directory
+- TanStack Router uses `$paramName` for dynamic route segments (e.g., `/world/characters/$characterId/voice`)
+- Protected routes must use path prefix `/protected/...` when referencing with useParams `from:` option
+- Mock handlers use dialogueResponses lookup table pattern for mood-based response generation
+- CharacterGoal uses GoalStatus enum (ACTIVE/COMPLETED/FAILED) and GoalUrgency enum (LOW/MEDIUM/HIGH/CRITICAL)
+- Goals stored in character's structured_data.goals via workspace_character_store (same pattern as memories)
+- Goal state transitions create new instances (immutable): goal.complete() returns new CharacterGoal with status=COMPLETED
+
+---
+
+## [CHAR-029] - 2026-02-01
+- What was implemented: Character Arc/Goals domain model. Created CharacterGoal frozen dataclass with description, status (ACTIVE/COMPLETED/FAILED), urgency (LOW/MEDIUM/HIGH/CRITICAL). Added goals list to Character aggregate with lifecycle methods (add_goal, complete_goal, fail_goal, update_urgency, remove_goal). Created CharacterGoalSchema and CRUD API endpoints. Added 45 unit tests.
+- Files changed:
+  - `src/contexts/character/domain/value_objects/character_goal.py` (new - CharacterGoal value object with GoalStatus, GoalUrgency enums)
+  - `src/contexts/character/domain/value_objects/__init__.py` (modified - export CharacterGoal, GoalStatus, GoalUrgency)
+  - `src/contexts/character/domain/aggregates/character.py` (modified - goals list and goal operations)
+  - `src/api/schemas.py` (modified - CharacterGoalSchema, CharacterGoalCreateRequest, CharacterGoalUpdateRequest, CharacterGoalsResponse)
+  - `src/api/routers/goals.py` (new - CRUD endpoints for goals)
+  - `src/api/main_api_server.py` (modified - register goals router)
+  - `tests/unit/contexts/character/domain/test_character_goal.py` (new - 45 tests)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - Goals follow the same pattern as memories: stored in structured_data.goals via workspace_character_store
+  - CharacterGoal is immutable (frozen dataclass) - state transitions return new instances
+  - Urgency levels: LOW = background ambition, MEDIUM = important, HIGH = pressing, CRITICAL = immediate
+  - Goal completion sets completed_at timestamp automatically
+  - Active goals cannot have completed_at timestamp (validation enforced)
+---
+
+## [CHAR-028] - 2026-02-01
+- What was implemented: Frontend Dialogue Tester - a chat-like voice testing interface for characters. Created `/world/characters/:characterId/voice` route with DialogueTester component featuring context input, mood selector, and conversation history. Backend dialogue API router (POST /dialogue/generate) connects frontend to LLMWorldGenerator. Added Zod schemas for type-safe API calls.
+- Files changed:
+  - `src/api/routers/dialogue.py` (new - dialogue generation API endpoint)
+  - `src/api/main_api_server.py` (modified - register dialogue router)
+  - `frontend/src/features/characters/components/DialogueTester.tsx` (new - chat interface)
+  - `frontend/src/pages/CharacterVoicePage.tsx` (new - route page)
+  - `frontend/src/app/router.tsx` (modified - add characterVoiceRoute)
+  - `frontend/src/lib/api/dialogueApi.ts` (new - API client)
+  - `frontend/src/lib/api/index.ts` (modified - export generateDialogue)
+  - `frontend/src/types/schemas.ts` (modified - DialogueGenerationRequest/Response)
+  - `frontend/src/mocks/handlers.ts` (modified - dialogue mock handler)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - TanStack Router dynamic params use `$` prefix, not `:` (e.g., `$characterId` not `:characterId`)
+  - Protected route refs need `/protected/` prefix in useParams `from:` option
+  - Button doesn't have `asChild` prop in this codebase - wrap Link around Button instead
+  - Mock handlers can use lookup tables with nullish coalescing for fallback responses
+  - exactOptionalPropertyTypes requires explicit `?? null` for undefined -> null conversions
+---
+
+## [CHAR-027] - 2026-02-01
+- What was implemented: AI Voice/Dialogue Generator that creates character-authentic speech. Added generate_dialogue(character, context, mood) method to LLMWorldGenerator. Created dialogue_gen.yaml prompt template with Big Five psychology guidance for speech patterns. Added CharacterData DTO for input and DialogueResult dataclass for structured output. Added DialogueGenerationRequest/Response schemas to API for future router integration.
+- Files changed:
+  - `src/contexts/world/infrastructure/generators/llm_world_generator.py` (modified - added dialogue generation methods and classes)
+  - `src/contexts/world/infrastructure/generators/__init__.py` (modified - export CharacterData, DialogueResult)
+  - `src/contexts/world/infrastructure/prompts/dialogue_gen.yaml` (new)
+  - `src/api/schemas.py` (modified - added DialogueGenerationRequest/Response)
+  - `tests/unit/contexts/world/infrastructure/test_dialogue_generation.py` (new - 23 tests)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - LLMWorldGenerator handles all AI generation (world, profiles, dialogue) - extend it for new generation needs
+  - CharacterData.from_character_aggregate() extracts needed fields from Character aggregate
+  - Psychology traits influence dialogue: high extraversion = enthusiastic, high neuroticism = hedging language
+  - Prompt YAML files use system_prompt key, loaded via _load_*_prompt() methods
+  - DialogueResult.to_dict() omits null optional fields for cleaner API responses
+---
+
+## [CHAR-026] - 2026-02-01
+- What was implemented: Sims-style relationship status bars for the RelationshipGraph. Created RelationshipStatusBars component with Trust and Romance progress bars using shadcn Progress component. Added color coding from Red (0-30) to Yellow (31-50) to Lime (51-70) to Green (71-100). Updated RelationshipGraph to support edge selection with detail panel overlay showing relationship metrics. Added InteractionLogSchema to frontend types and updated RelationshipResponseSchema with trust, romance, interaction_history fields.
+- Files changed:
+  - `frontend/src/components/graph/RelationshipStatusBars.tsx` (new)
+  - `frontend/src/components/graph/RelationshipGraph.tsx`
+  - `frontend/src/components/graph/index.ts`
+  - `frontend/src/shared/components/ui/Progress.tsx` (new)
+  - `frontend/src/shared/components/ui/index.ts`
+  - `frontend/src/types/schemas.ts`
+  - `frontend/src/mocks/handlers.ts`
+  - `frontend/package.json`
+  - `scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Install shadcn components via `npx shadcn@latest add <component>` - they install to src/components/ui by default
+  - Project uses src/shared/components/ui for UI primitives - move installed components there
+  - Progress component extended with indicatorClassName prop for custom fill colors
+  - Edge selection in React Flow uses onSelectionChange with selectedEdges array
+  - Color scale for relationship status: 0-30 red (bad), 31-50 yellow (neutral), 51-70 lime (good), 71-100 green (excellent)
+---
+
+## [CHAR-025] - 2026-02-01
+- What was implemented: Dynamic relationship evolution with trust (0-100) and romance (0-100) metrics. Created InteractionLog frozen dataclass to record relationship-changing interactions. Added log_interaction() method that updates trust/romance with automatic clamping and records history. Added update_trust/update_romance direct setters, get_interaction_history/get_recent_interactions helpers. Updated schemas.py with InteractionLogSchema and LogInteractionRequest. Added POST /relationships/{id}/interactions endpoint. Added 31 new unit tests.
+- Files changed:
+  - `src/contexts/world/domain/entities/relationship.py`
+  - `src/contexts/world/domain/entities/__init__.py`
+  - `src/api/schemas.py`
+  - `src/api/routers/relationships.py`
+  - `tests/unit/contexts/world/domain/test_relationship.py`
+  - `scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Relationship entity is in world context, not character context
+  - Trust/romance changes via log_interaction are clamped (not rejected) to stay in 0-100 range
+  - InteractionLog stores trust_change/romance_change as deltas (-100 to +100), not absolute values
+  - History stored as immutable Tuple, converted via `history + (new_log,)` pattern
+  - Default trust is 50 (neutral), default romance is 0 (none)
 ---
 
 ## [CHAR-024] - 2026-02-01
