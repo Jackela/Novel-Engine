@@ -312,6 +312,124 @@ class CharacterMemoriesResponse(BaseModel):
     core_memory_count: int
 
 
+# === Character Goal Schemas (CHAR-029) ===
+
+
+class CharacterGoalSchema(BaseModel):
+    """Schema for character goal.
+
+    Goals represent what a character wants to achieve, driving motivation
+    and narrative arcs.
+
+    Status values:
+    - ACTIVE: Currently being pursued
+    - COMPLETED: Successfully achieved
+    - FAILED: Abandoned or became impossible
+
+    Urgency levels:
+    - LOW: Background ambition, no time pressure
+    - MEDIUM: Important but not immediate
+    - HIGH: Pressing concern that demands attention
+    - CRITICAL: Must be addressed immediately
+    """
+
+    goal_id: str = Field(..., description="Unique identifier for this goal")
+    description: str = Field(
+        ..., min_length=1, description="What the character wants to achieve"
+    )
+    status: str = Field(
+        ..., description="Goal status: ACTIVE, COMPLETED, or FAILED"
+    )
+    urgency: str = Field(
+        ..., description="Urgency level: LOW, MEDIUM, HIGH, or CRITICAL"
+    )
+    created_at: str = Field(..., description="ISO 8601 timestamp when goal was created")
+    completed_at: Optional[str] = Field(
+        None, description="ISO 8601 timestamp when goal was completed/failed"
+    )
+    is_active: bool = Field(True, description="Whether the goal is still being pursued")
+    is_urgent: bool = Field(
+        False, description="Whether the goal requires immediate attention"
+    )
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        valid_statuses = {"ACTIVE", "COMPLETED", "FAILED"}
+        if v.upper() not in valid_statuses:
+            raise ValueError(f"Status must be one of: {valid_statuses}")
+        return v.upper()
+
+    @field_validator("urgency")
+    @classmethod
+    def validate_urgency(cls, v: str) -> str:
+        valid_urgencies = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
+        if v.upper() not in valid_urgencies:
+            raise ValueError(f"Urgency must be one of: {valid_urgencies}")
+        return v.upper()
+
+
+class CharacterGoalCreateRequest(BaseModel):
+    """Request to create a new character goal."""
+
+    description: str = Field(
+        ..., min_length=1, description="What the character wants to achieve"
+    )
+    urgency: str = Field(
+        "MEDIUM", description="Urgency level: LOW, MEDIUM, HIGH, or CRITICAL"
+    )
+
+    @field_validator("urgency")
+    @classmethod
+    def validate_urgency(cls, v: str) -> str:
+        valid_urgencies = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
+        if v.upper() not in valid_urgencies:
+            raise ValueError(f"Urgency must be one of: {valid_urgencies}")
+        return v.upper()
+
+
+class CharacterGoalUpdateRequest(BaseModel):
+    """Request to update a character goal."""
+
+    status: Optional[str] = Field(
+        None, description="New status: ACTIVE, COMPLETED, or FAILED"
+    )
+    urgency: Optional[str] = Field(
+        None, description="New urgency level: LOW, MEDIUM, HIGH, or CRITICAL"
+    )
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        valid_statuses = {"ACTIVE", "COMPLETED", "FAILED"}
+        if v.upper() not in valid_statuses:
+            raise ValueError(f"Status must be one of: {valid_statuses}")
+        return v.upper()
+
+    @field_validator("urgency")
+    @classmethod
+    def validate_urgency(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        valid_urgencies = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
+        if v.upper() not in valid_urgencies:
+            raise ValueError(f"Urgency must be one of: {valid_urgencies}")
+        return v.upper()
+
+
+class CharacterGoalsResponse(BaseModel):
+    """Response containing a list of character goals."""
+
+    character_id: str
+    goals: List[CharacterGoalSchema]
+    total_count: int
+    active_count: int
+    completed_count: int
+    failed_count: int
+
+
 class CharacterSummary(BaseModel):
     id: str
     agent_id: str
@@ -367,6 +485,9 @@ class CharacterDetailResponse(BaseModel):
     )
     memories: List[CharacterMemorySchema] = Field(
         default_factory=list, description="Character memories"
+    )
+    goals: List[CharacterGoalSchema] = Field(
+        default_factory=list, description="Character goals"
     )
 
 
@@ -1079,6 +1200,10 @@ __all__ = [
     "AnalyticsMetricsResponse",
     # Character Schemas
     "CharacterPsychologySchema",
+    "CharacterGoalSchema",
+    "CharacterGoalCreateRequest",
+    "CharacterGoalUpdateRequest",
+    "CharacterGoalsResponse",
     "DialogueGenerationRequest",
     "DialogueGenerationResponse",
     "CharacterSummary",

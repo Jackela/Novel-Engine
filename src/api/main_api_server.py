@@ -776,6 +776,7 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.items import character_inventory_router
     from src.api.routers.lore import router as lore_router
     from src.api.routers.memories import router as memories_router
+    from src.api.routers.goals import router as goals_router
     from src.api.routers.world_rules import router as world_rules_router
     from src.api.routers.dialogue import router as dialogue_router
 
@@ -802,6 +803,7 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(character_inventory_router)
     app.include_router(lore_router)
     app.include_router(memories_router)
+    app.include_router(goals_router)
     app.include_router(world_rules_router)
     app.include_router(dialogue_router)
 
@@ -827,6 +829,7 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(character_inventory_router, prefix="/api")
     app.include_router(lore_router, prefix="/api")
     app.include_router(memories_router, prefix="/api")
+    app.include_router(goals_router, prefix="/api")
     app.include_router(world_rules_router, prefix="/api")
     app.include_router(dialogue_router, prefix="/api")
 

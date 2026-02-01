@@ -31,6 +31,7 @@ from ..value_objects.character_stats import (
     CoreAbilities,
     VitalStats,
 )
+from ..value_objects.character_goal import CharacterGoal, GoalStatus, GoalUrgency
 from ..value_objects.character_memory import CharacterMemory
 from ..value_objects.character_psychology import CharacterPsychology
 from ..value_objects.skills import SkillCategory, Skills
@@ -63,6 +64,9 @@ class Character:
 
     # Character memories - immutable records of experiences that shape behavior
     memories: List[CharacterMemory] = field(default_factory=list)
+
+    # Character goals - what the character wants to achieve
+    goals: List[CharacterGoal] = field(default_factory=list)
 
     # Entity state
     created_at: datetime = field(default_factory=datetime.now)
@@ -414,6 +418,250 @@ class Character:
         )
         return sorted_memories[:count]
 
+    # ==================== Goal Operations ====================
+
+    def add_goal(self, goal: CharacterGoal) -> None:
+        """Add a goal to the character's goal list.
+
+        Why goals are separate from profile: CharacterProfile is frozen and
+        represents the character's base identity. Goals represent dynamic
+        desires that drive character motivation and narrative arcs.
+
+        Args:
+            goal: The CharacterGoal to add
+
+        Raises:
+            TypeError: If goal is not a CharacterGoal instance
+            ValueError: If a goal with the same ID already exists
+        """
+        if not isinstance(goal, CharacterGoal):
+            raise TypeError(
+                f"Expected CharacterGoal, got {type(goal).__name__}"
+            )
+
+        # Check for duplicate goal_id
+        if any(g.goal_id == goal.goal_id for g in self.goals):
+            raise ValueError(f"Goal with ID {goal.goal_id} already exists")
+
+        self.goals.append(goal)
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def get_goals(self) -> List[CharacterGoal]:
+        """Get all goals for this character.
+
+        Returns:
+            A copy of the goals list
+        """
+        return self.goals.copy()
+
+    def get_active_goals(self) -> List[CharacterGoal]:
+        """Get only active goals.
+
+        Returns:
+            List of goals with status ACTIVE
+        """
+        return [g for g in self.goals if g.is_active()]
+
+    def get_completed_goals(self) -> List[CharacterGoal]:
+        """Get only completed goals.
+
+        Returns:
+            List of goals with status COMPLETED
+        """
+        return [g for g in self.goals if g.is_completed()]
+
+    def get_failed_goals(self) -> List[CharacterGoal]:
+        """Get only failed goals.
+
+        Returns:
+            List of goals with status FAILED
+        """
+        return [g for g in self.goals if g.is_failed()]
+
+    def get_urgent_goals(self) -> List[CharacterGoal]:
+        """Get goals that require immediate attention (HIGH or CRITICAL urgency).
+
+        Returns:
+            List of active goals with HIGH or CRITICAL urgency
+        """
+        return [g for g in self.goals if g.is_active() and g.is_urgent()]
+
+    def get_goal_by_id(self, goal_id: str) -> Optional[CharacterGoal]:
+        """Find a goal by its ID.
+
+        Args:
+            goal_id: The unique identifier of the goal
+
+        Returns:
+            The CharacterGoal if found, None otherwise
+        """
+        return next((g for g in self.goals if g.goal_id == goal_id), None)
+
+    def complete_goal(self, goal_id: str) -> CharacterGoal:
+        """Mark a goal as completed.
+
+        Args:
+            goal_id: The ID of the goal to complete
+
+        Returns:
+            The updated CharacterGoal
+
+        Raises:
+            ValueError: If goal not found or cannot be completed
+        """
+        goal = self.get_goal_by_id(goal_id)
+        if not goal:
+            raise ValueError(f"Goal with ID {goal_id} not found")
+
+        completed_goal = goal.complete()
+
+        # Replace the goal in the list
+        self.goals = [
+            completed_goal if g.goal_id == goal_id else g
+            for g in self.goals
+        ]
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return completed_goal
+
+    def fail_goal(self, goal_id: str) -> CharacterGoal:
+        """Mark a goal as failed.
+
+        Args:
+            goal_id: The ID of the goal to fail
+
+        Returns:
+            The updated CharacterGoal
+
+        Raises:
+            ValueError: If goal not found or cannot be failed
+        """
+        goal = self.get_goal_by_id(goal_id)
+        if not goal:
+            raise ValueError(f"Goal with ID {goal_id} not found")
+
+        failed_goal = goal.fail()
+
+        # Replace the goal in the list
+        self.goals = [
+            failed_goal if g.goal_id == goal_id else g
+            for g in self.goals
+        ]
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return failed_goal
+
+    def update_goal_urgency(
+        self, goal_id: str, new_urgency: GoalUrgency
+    ) -> CharacterGoal:
+        """Update the urgency level of a goal.
+
+        Args:
+            goal_id: The ID of the goal to update
+            new_urgency: The new urgency level
+
+        Returns:
+            The updated CharacterGoal
+
+        Raises:
+            ValueError: If goal not found or cannot be updated
+        """
+        goal = self.get_goal_by_id(goal_id)
+        if not goal:
+            raise ValueError(f"Goal with ID {goal_id} not found")
+
+        updated_goal = goal.update_urgency(new_urgency)
+
+        # Replace the goal in the list
+        self.goals = [
+            updated_goal if g.goal_id == goal_id else g
+            for g in self.goals
+        ]
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return updated_goal
+
+    def remove_goal(self, goal_id: str) -> bool:
+        """Remove a goal from the character.
+
+        Note: In most cases, goals should be marked as completed or failed
+        rather than removed. This method exists for data correction.
+
+        Args:
+            goal_id: The ID of the goal to remove
+
+        Returns:
+            True if goal was found and removed, False otherwise
+        """
+        original_count = len(self.goals)
+        self.goals = [g for g in self.goals if g.goal_id != goal_id]
+
+        if len(self.goals) == original_count:
+            return False
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return True
+
     def level_up(self) -> None:
         """Level up the character, increasing stats appropriately."""
         if self.profile.level >= 100:
@@ -697,6 +945,13 @@ class Character:
             summary["memories"] = [m.to_dict() for m in self.memories]
             summary["memory_count"] = len(self.memories)
             summary["core_memory_count"] = len(self.get_core_memories())
+
+        # Include goals
+        if self.goals:
+            summary["goals"] = [g.to_dict() for g in self.goals]
+            summary["goal_count"] = len(self.goals)
+            summary["active_goal_count"] = len(self.get_active_goals())
+            summary["urgent_goal_count"] = len(self.get_urgent_goals())
 
         return summary
 
