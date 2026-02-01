@@ -5,9 +5,12 @@
  * allowing writers to reference characters and locations without leaving
  * their current editing context. Supports dragging characters into the
  * editor to insert @mentions.
+ *
+ * CHAR-037: Added sort/filter functionality for character list.
+ * - Sort by: Name (A-Z), Faction, Role (archetype)
  */
-import { useState, useCallback } from 'react';
-import { Users, MapPin, Globe, ChevronRight } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { Users, MapPin, Globe, ChevronRight, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -15,10 +18,61 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/Select';
 import { LocationTree } from '@/components/world/LocationTree';
 import { DraggableCharacterItem } from '@/components/editor/DraggableCharacterItem';
 import type { CharacterSummary } from '@/shared/types/character';
 import type { WorldLocation } from '@/types/schemas';
+
+/** Available sort options for the character list */
+type CharacterSortOption = 'name' | 'faction' | 'role';
+
+/** Compare two characters by faction (with faction first, then alphabetically) */
+function compareByFaction(a: CharacterSummary, b: CharacterSummary): number {
+  if (a.faction_id && !b.faction_id) return -1;
+  if (!a.faction_id && b.faction_id) return 1;
+  if (a.faction_id && b.faction_id) {
+    const factionCompare = a.faction_id.localeCompare(b.faction_id);
+    if (factionCompare !== 0) return factionCompare;
+  }
+  return a.name.localeCompare(b.name);
+}
+
+/** Compare two characters by role/archetype (with role first, then alphabetically) */
+function compareByRole(a: CharacterSummary, b: CharacterSummary): number {
+  const aRole = a.archetype ?? '';
+  const bRole = b.archetype ?? '';
+  if (aRole && !bRole) return -1;
+  if (!aRole && bRole) return 1;
+  const roleCompare = aRole.localeCompare(bRole);
+  if (roleCompare !== 0) return roleCompare;
+  return a.name.localeCompare(b.name);
+}
+
+/** Sort characters based on selected option */
+function sortCharacters(
+  characters: CharacterSummary[],
+  sortBy: CharacterSortOption
+): CharacterSummary[] {
+  return [...characters].sort((a, b) => {
+    switch (sortBy) {
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'faction':
+        return compareByFaction(a, b);
+      case 'role':
+        return compareByRole(a, b);
+      default:
+        return 0;
+    }
+  });
+}
 
 
 /**
@@ -82,7 +136,7 @@ function EmptyState({ className }: { className?: string | undefined }) {
   );
 }
 
-/** Characters section content */
+/** Characters section content with sort/filter controls */
 interface CharactersSectionProps {
   characters: CharacterSummary[];
   selectedCharacterId: string | null | undefined;
@@ -94,32 +148,71 @@ function CharactersSection({
   selectedCharacterId,
   onCharacterSelect,
 }: CharactersSectionProps) {
-  const displayedCharacters = characters.slice(0, 5);
-  const hasMoreCharacters = characters.length > 5;
+  const [sortBy, setSortBy] = useState<CharacterSortOption>('name');
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  // Sort characters based on selected option
+  const sortedCharacters = useMemo(
+    () => sortCharacters(characters, sortBy),
+    [characters, sortBy]
+  );
+
+  // Show all characters when sorted, otherwise limit to 5
+  const displayedCharacters = sortedCharacters;
+  const characterCount = characters.length;
 
   return (
-    <SidebarSection
-      title="Characters"
-      icon={<Users className="h-4 w-4 shrink-0 text-muted-foreground" />}
-      count={characters.length}
-      defaultExpanded={true}
-    >
-      <div className="mt-1 space-y-0.5">
-        {displayedCharacters.map((character) => (
-          <DraggableCharacterItem
-            key={character.id}
-            character={character}
-            isSelected={character.id === selectedCharacterId}
-            onSelect={onCharacterSelect}
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <div className="flex items-center gap-2 px-2 py-1.5">
+        <CollapsibleTrigger className="flex flex-1 items-center gap-2 text-sm font-medium hover:text-accent-foreground rounded-md">
+          <ChevronRight
+            className={cn(
+              'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+              isExpanded && 'rotate-90'
+            )}
           />
-        ))}
-        {hasMoreCharacters && (
-          <p className="px-2 py-1 text-xs text-muted-foreground">
-            +{characters.length - 5} more...
-          </p>
+          <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span>Characters</span>
+          <span className="text-xs text-muted-foreground">({characterCount})</span>
+        </CollapsibleTrigger>
+        {/* Sort dropdown - only show when expanded and has characters */}
+        {isExpanded && characterCount > 1 && (
+          <Select value={sortBy} onValueChange={(val) => setSortBy(val as CharacterSortOption)}>
+            <SelectTrigger
+              className="h-6 w-auto min-w-[70px] gap-1 px-2 text-xs"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ArrowUpDown className="h-3 w-3" />
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="faction">Faction</SelectItem>
+              <SelectItem value="role">Role</SelectItem>
+            </SelectContent>
+          </Select>
         )}
       </div>
-    </SidebarSection>
+      <CollapsibleContent className="pl-4">
+        <ScrollArea className="max-h-[300px]">
+          <div className="mt-1 space-y-0.5 pr-2">
+            {displayedCharacters.map((character) => (
+              <DraggableCharacterItem
+                key={character.id}
+                character={character}
+                isSelected={character.id === selectedCharacterId}
+                onSelect={onCharacterSelect}
+              />
+            ))}
+            {characterCount === 0 && (
+              <p className="px-2 py-1 text-xs text-muted-foreground italic">
+                No characters found
+              </p>
+            )}
+          </div>
+        </ScrollArea>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 

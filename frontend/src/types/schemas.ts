@@ -39,6 +39,8 @@ export const CharacterSummarySchema = z.object({
   archetype: z.string().nullable().optional(),
   traits: z.array(z.string()).optional().default([]),
   appearance: z.string().nullable().optional(),
+  // CHAR-037: Faction membership for sidebar sorting
+  faction_id: z.string().nullable().optional(),
 });
 
 export const CharactersListResponseSchema = z.object({

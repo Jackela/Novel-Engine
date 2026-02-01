@@ -27,6 +27,7 @@ const characterSummaries: CharacterSummary[] = [
     archetype: 'Tactician',
     traits: ['Strategic', 'Resilient', 'Decisive'],
     appearance: 'Tall with dark hair and piercing eyes',
+    faction_id: 'faction-shadowbane-order',
   },
   {
     id: 'merchant-aldric',
@@ -40,6 +41,7 @@ const characterSummaries: CharacterSummary[] = [
     archetype: 'Merchant',
     traits: ['Shrewd', 'Friendly'],
     appearance: null,
+    faction_id: 'faction-merchants-alliance',
   },
 ];
 
@@ -271,6 +273,7 @@ const additionalCharacterSummaries: CharacterSummary[] = [
     archetype: 'Antagonist',
     traits: ['Cunning', 'Ambitious', 'Ruthless'],
     appearance: 'Pale complexion with silver hair and cold grey eyes',
+    faction_id: 'faction-vexars-dominion',
   },
   {
     id: 'finn-bard',
@@ -284,6 +287,7 @@ const additionalCharacterSummaries: CharacterSummary[] = [
     archetype: 'Mentor',
     traits: ['Wise', 'Musical', 'Mysterious'],
     appearance: 'An elderly man with a warm smile and a worn lute',
+    faction_id: 'faction-merchants-alliance',
   },
 ];
 
@@ -821,6 +825,7 @@ export const handlers = [
       archetype: null,
       traits: [],
       appearance: null,
+      faction_id: null,
     });
     return HttpResponse.json(detail, { status: 201 });
   }),
