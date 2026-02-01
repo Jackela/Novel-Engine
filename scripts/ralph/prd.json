@@ -67,7 +67,7 @@
         "Browser Verification: Add memory, see it appear."
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["CHAR-023"]
     },

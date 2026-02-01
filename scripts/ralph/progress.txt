@@ -11,6 +11,22 @@ Started: Sun Feb  1 17:25:24     2026
 
 ---
 
+## [CHAR-024] - 2026-02-01
+- What was implemented: MemoryTimeline.tsx component displaying character memories as a vertical scrollable list. Memories are sorted by timestamp (newest first). Core memories (importance > 8) are highlighted with amber border and star icon. Added CharacterMemorySchema to frontend types with importance_level enum. Integrated as new "Memories" tab in CharacterDetailsDialog (now 4 tabs). Updated mock handlers with sample memory data for testing.
+- Files changed:
+  - `frontend/src/features/characters/components/MemoryTimeline.tsx` (new)
+  - `frontend/src/features/characters/CharacterDetailsDialog.tsx`
+  - `frontend/src/types/schemas.ts`
+  - `frontend/src/mocks/handlers.ts`
+  - `scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - CharacterDetail type inferred from Zod schema automatically gets new fields when schema updated
+  - Use ScrollArea component from shadcn/ui for scrollable containers with consistent styling
+  - Core memory threshold is importance > 8 (not >= 8), matching backend is_core_memory check
+  - Badge variants with custom colors: use className with bg-/text- utilities over variant prop
+  - When adding new tabs, update grid-cols-N in TabsList to match tab count
+---
+
 ## [CHAR-023] - 2026-02-01
 - What was implemented: CharacterMemory value object (frozen dataclass) with content, importance (1-10), tags, timestamp, memory_id. Character aggregate now has memories list, add_memory() method, and helper methods (get_memories, get_core_memories, get_memories_by_tag, get_recent_memories). Created memories.py router with CRUD endpoints. Added CharacterMemorySchema to schemas.py. Created 31 unit tests covering validation, business logic, and aggregate integration.
 - Files changed:
