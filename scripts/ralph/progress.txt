@@ -44,7 +44,25 @@ Started: Sun Feb  1 17:25:24     2026
 - Faction membership stored in character's structured_data.faction_id via workspace_character_store
 - Faction leader stored in faction's leader_id and leader_name fields
 - Factions router follows same pattern as goals/memories routers - CRUD via workspace stores
+- WorldSidebarTab CharactersSection uses Select dropdown for sort options (Name/Faction/Role)
+- Sort comparator functions extracted for cleaner switch statement (avoid no-case-declarations lint error)
+- CharacterSummary.faction_id field enables sorting by faction membership
 
+---
+
+## [CHAR-037] - 2026-02-01
+- What was implemented: Sidebar character list sort/filter functionality. Added dropdown to sort characters by Name (A-Z), Faction, or Role (archetype). Updated CharacterSummarySchema to include faction_id field. Updated mock handlers with faction_id data for existing characters. Sorting groups characters with values first, then alphabetically.
+- Files changed:
+  - `frontend/src/types/schemas.ts` (modified - added faction_id to CharacterSummarySchema)
+  - `frontend/src/components/narrative/WorldSidebarTab.tsx` (modified - added sort controls and sorting logic)
+  - `frontend/src/mocks/handlers.ts` (modified - added faction_id to all character summaries)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - WorldSidebarTab uses internal state for sort option, sorts characters via useMemo
+  - Select component from `@/shared/components/ui/Select` for dropdown menus
+  - Extract case-specific logic to separate functions to avoid `no-case-declarations` ESLint error
+  - Sorting by faction/role: group items with values first, then alphabetically by value, then by name
+  - ArrowUpDown icon from lucide-react is good for sort controls
 ---
 
 ## [CHAR-036] - 2026-02-01

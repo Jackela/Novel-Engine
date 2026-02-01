@@ -256,7 +256,7 @@
         "Browser Verification: Sorting works."
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": ["CHAR-035"]
     },
