@@ -71,3 +71,68 @@ Started: Sat Jan 31 23:42:17     2026
 - Lint: Passed (only warnings, no errors)
 - Pattern discovered: EditorComponent is more advanced than required - already includes streaming integration, making NAR-010 and NAR-011 partially complete
 - Gotcha for future: EditorComponent uses `editorRef` pattern to allow streaming callbacks to access editor after mount
+
+## NAR-007 - 2026-02-01T16:15:00
+- What I implemented: Verified and committed enhanced NarrativeSidebar with drag-and-drop support
+- Implementation complete:
+  - `NarrativeSidebar` component at `frontend/src/components/narrative/NarrativeSidebar.tsx`
+  - Uses shadcn `ScrollArea` for scrollable content area
+  - Mock data: `MOCK_CHAPTERS` with 3 chapters, 6 scenes for testing
+  - Active scene highlighting: `bg-primary text-primary-foreground` styling
+  - Collapsible chapter tree-view with expand/collapse buttons
+  - Status badges: draft (muted), generating (blue), review (yellow), published (green)
+  - **Bonus**: Full drag-and-drop scene reordering using dnd-kit (NAR-013 prep)
+    - `SortableSceneItem` with drag handle (visible on hover)
+    - `DragOverlay` for visual feedback during drag
+    - `onSceneMove` callback for API integration
+- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓
+- Pattern discovered: dnd-kit uses `SortableContext` per-container for multi-list drag-drop
+- Gotcha for future: Integration tests in `test_error_handling.py` have pre-existing failures (datetime serialization, missing attributes)
+
+## NAR-008 - 2026-02-01T18:15:00
+- What I implemented: Updated NarrativePage to use NarrativeEditorLayout for proper 20/80 split layout
+- Implementation details:
+  - Refactored `frontend/src/features/narrative/NarrativePage.tsx` to use `NarrativeEditorLayout`
+  - Removed temporary mock UI components (NarrativeEditor, ChaptersList, GenerationStats)
+  - Layout now properly integrates:
+    - NarrativeSidebar (20% width) on the left with collapsible chapters
+    - EditorComponent (80% width) on the right with Tiptap editor and toolbar
+  - EditorComponent already had all required features (shadcn styling, Bold/Italic/H1/H2 toolbar)
+- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓
+- Pattern discovered: NarrativeEditorLayout already existed and was well-designed, just needed to be wired into NarrativePage
+- Gotcha for future: NarrativeEditorLayout has `useMockData` prop to toggle between mock and backend data sources
+
+## NAR-009 - 2026-02-01T18:45:00
+- What I implemented: Connected Structure API to the Outliner UI
+- Implementation details:
+  - `narrativeApi.ts` already exists at `frontend/src/lib/api/narrativeApi.ts` with full CRUD operations
+    - Uses generated types from `frontend/src/types/schemas.ts` (StoryResponse, ChapterResponse, SceneResponse)
+    - Exports listStories, listChapters, listScenes, createStory, createChapter, createScene, moveScene
+  - `useStoryStructure` hook at `frontend/src/hooks/useStoryStructure.ts` already implemented:
+    - Fetches chapters from backend via `listChapters()` and `listScenes()`
+    - Transforms backend responses to `OutlinerChapter[]` format for NarrativeSidebar
+    - Provides `loadStories`, `selectStory`, `refresh`, `addStory`, `addChapter`, `addScene` actions
+  - Updated `NarrativePage.tsx`: Removed `useMockData` prop from `NarrativeEditorLayout`
+    - Sidebar now defaults to loading from InMemory backend
+    - Falls back to mock data if backend returns empty or errors
+- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓, pytest (168 passed)
+- Pattern discovered: The layered data flow is well-designed: NarrativePage → NarrativeEditorLayout → useStoryStructure → narrativeApi → backend
+- Gotcha for future: Backend starts with empty InMemory repository - UI shows "No chapters" until user creates data or backend seeds data
+
+## NAR-010 - 2026-02-01T10:35:00
+- What I implemented: Verified existing SSE streaming hook implementation
+- Implementation already complete at `frontend/src/hooks/useStoryStream.ts`:
+  - Uses fetch + ReadableStream (not EventSource) because endpoint is POST
+  - Full SSE parsing: splits lines, extracts "data: " prefix, parses JSON
+  - StreamChunk types: 'chunk', 'done', 'error' with sequence numbers
+  - Buffer state: Accumulates text in `buffer` state variable
+  - `onComplete` callback: Called with `StreamMetadata` when stream finishes
+  - `onError` callback: Called with error message on failure
+  - Abort controller: Supports `stopStream()` and cleanup on unmount
+- Also found alternative implementation at `frontend/src/features/stories/hooks/useStoryStream.ts`:
+  - Uses different API endpoint (`/api/narratives/stream`)
+  - More detailed status enum: 'idle', 'connecting', 'streaming', 'complete', 'error', 'cancelled'
+  - Includes `WorldContext` for richer generation context
+- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓, frontend tests (46 passed)
+- Pattern discovered: Using fetch + ReadableStream instead of EventSource allows POST requests with request bodies
+- Gotcha for future: Two useStoryStream implementations exist - hooks/ version for simple use, features/stories/ version for world-aware generation

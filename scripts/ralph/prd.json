@@ -107,7 +107,7 @@
         "UI: Active scene should be highlighted."
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["NAR-006"]
     },
@@ -121,7 +121,7 @@
         "Layout: Sidebar on left (20%), Editor on right (80%)."
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["NAR-006"]
     },
@@ -135,7 +135,7 @@
         "Verify: Sidebar loads data from the InMemory backend."
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["NAR-004", "NAR-007"]
     },
@@ -149,7 +149,7 @@
         "Handle `onComplete` and `onError` events."
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["NAR-005"]
     },
