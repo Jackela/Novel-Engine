@@ -213,7 +213,7 @@
         "Browser Verification: Click fills text."
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["CHAR-033"]
     },

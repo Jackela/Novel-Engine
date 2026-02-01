@@ -34,7 +34,44 @@ Started: Sun Feb  1 17:25:24     2026
 - Social API client functions live in `frontend/src/lib/api/socialApi.ts` and export through index.ts
 - Mock handlers for social analysis compute metrics dynamically from mockRelationships array
 - Character ID display names are formatted by splitting on `-` and capitalizing each word
+- Relationship history generation follows dialogue generation pattern: prompt YAML + _load_*_prompt + _build_*_user_prompt + _parse_*_response
+- Frontend API client files named with pattern: `{feature}Api.ts` (e.g., relationshipApi.ts, dialogueApi.ts)
+- RelationshipGraph detail panel displays when selectedEdge is set, cleared by handleCloseDetail
+- Generate buttons use Sparkles icon for AI generation actions, Loader2 with animate-spin for loading state
 
+---
+
+## [CHAR-034] - 2026-02-01
+- What was implemented: Frontend 'Generate Backstory' button in RelationshipGraph detail panel. Added backend API endpoint POST /relationships/{id}/generate-history that calls LLMWorldGenerator.generate_relationship_history(). Created RelationshipHistoryGenerationResponse schema in backend and frontend. Created relationshipApi.ts with generateRelationshipHistory function. Button shows loading state during generation and updates the relationship description field with the generated backstory.
+- Files changed:
+  - `src/api/schemas.py` (modified - added RelationshipHistoryGenerationResponse)
+  - `src/api/routers/relationships.py` (modified - added generate_relationship_history endpoint, _format_character_name helper)
+  - `frontend/src/types/schemas.ts` (modified - added RelationshipHistoryGenerationResponseSchema)
+  - `frontend/src/lib/api/relationshipApi.ts` (new - generateRelationshipHistory function)
+  - `frontend/src/lib/api/index.ts` (modified - export generateRelationshipHistory)
+  - `frontend/src/components/graph/RelationshipGraph.tsx` (modified - added Generate History button with loading state)
+  - `frontend/src/mocks/handlers.ts` (modified - mock handler for /relationships/:id/generate-history)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - RelationshipGraph's selectedEdge state holds both edge ID and data object (RelationshipEdgeData)
+  - Edge selection triggers setSelectedEdge which renders the detail panel overlay
+  - Button text changes based on whether description exists: "Generate History" vs "Regenerate History"
+  - State updates after generation should update both edges array (setEdges) and selectedEdge state
+---
+
+## [CHAR-033] - 2026-02-01
+- What was implemented: AI Relationship Event Generator. Added generate_relationship_history(charA, charB) method to LLMWorldGenerator that creates backstories explaining relationship dynamics based on trust/romance levels. Created RelationshipHistoryResult dataclass with backstory, first_meeting, defining_moment, and current_status fields. Created relationship_history_gen.yaml prompt template with trust/romance level interpretation guidance (0-100 scale meanings). Prompt construction injects both characters' psychology and traits.
+- Files changed:
+  - `src/contexts/world/infrastructure/generators/llm_world_generator.py` (modified - added generate_relationship_history method, _load_relationship_history_prompt, _build_relationship_history_user_prompt, _parse_relationship_history_response, RelationshipHistoryResult dataclass)
+  - `src/contexts/world/infrastructure/generators/__init__.py` (modified - export RelationshipHistoryResult)
+  - `src/contexts/world/infrastructure/prompts/relationship_history_gen.yaml` (new - prompt template)
+  - `tests/unit/contexts/world/infrastructure/test_relationship_history_generation.py` (new - 24 tests)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - LLMWorldGenerator uses a consistent pattern for all generation types: prompt YAML file + loader + user prompt builder + response parser
+  - Relationship history takes trust (0-100) and romance (0-100) as parameters with default values (50 neutral, 0 none)
+  - RelationshipHistoryResult follows DialogueResult pattern with to_dict() that omits null fields
+  - Prompt YAML includes guidance on interpreting numeric levels (e.g., 0-20 trust = deep distrust/betrayal history)
 ---
 
 ## [CHAR-032] - 2026-02-01
