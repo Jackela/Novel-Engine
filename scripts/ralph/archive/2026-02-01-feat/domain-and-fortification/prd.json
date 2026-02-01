@@ -28,7 +28,7 @@
         "Run `scripts/generate_openapi.py` to update frontend types"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "effort": "low"
     },
     {
@@ -45,7 +45,7 @@
         "Browser verification: Form renders, validation works, submit updates state"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["WORLD-001"]
     },
@@ -62,7 +62,7 @@
         "Run `pytest tests/unit/contexts/world/domain/test_relationship.py` - all pass"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "effort": "medium"
     },
     {
@@ -78,7 +78,7 @@
         "Browser verification: Navigate to /world, see graph with nodes"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "effort": "low"
     },
     {
@@ -94,7 +94,7 @@
         "Browser verification: See real characters connected by relationships"
       ],
       "priority": 5,
-      "passes": true,
+      "passes": false,
       "effort": "high",
       "dependencies": ["WORLD-003", "WORLD-004"]
     },
@@ -110,7 +110,7 @@
         "Run `pytest tests/unit/contexts/world/domain/test_location.py` - verify hierarchy tests"
       ],
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "effort": "low"
     },
     {

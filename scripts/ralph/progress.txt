@@ -1,176 +1,33 @@
 # Ralph Progress Log
-Started: Sat Jan 31 23:42:17     2026
+Started: Sun Feb  1 12:27:10     2026
 ---
 
-## NAR-001 - 2026-01-31T23:50:00
-- What I implemented: Verified existing Story & Chapter entities in `src/contexts/narrative/domain/entities/`
-- Implementation already complete: Story (title, summary, status DRAFT/PUBLISHED, chapter management) and Chapter (title, summary, order_index, status DRAFT/PUBLISHED)
-- Unit tests: 120 tests passed covering Story and Chapter entities (test_story_entity.py, test_chapter_entity.py)
-- Pattern discovered: Domain entities use dataclasses with `__post_init__` for validation and `_touch()` for timestamp updates
-- Gotcha for future: Story and Chapter already implement full CRUD operations - no need to add more methods unless requirements change
+## WORLD-001 - 2026-02-01
+- What I implemented: Added aliases, archetype, traits, appearance fields to CharacterProfile dataclass and CharacterSummary Pydantic schema. Updated frontend TypeScript schemas and mock handlers to match.
+- Pattern discovered: CharacterProfile is a frozen dataclass (immutable), so new fields must have Optional types with None defaults for backward compatibility.
+- Gotcha for future: When updating CharacterSummary schema, also update frontend/src/mocks/handlers.ts to include the new required fields, otherwise TypeScript type-check will fail.
 
-## NAR-002 - 2026-02-01T00:15:00
-- What I implemented: Verified existing Scene & Beat entities in `src/contexts/narrative/domain/entities/`
-- Implementation already complete:
-  - Scene entity: title, chapter_id, summary, order_index, status (DRAFT/GENERATING/REVIEW/PUBLISHED), location, beats management
-  - Beat entity: scene_id, content, order_index, beat_type (ACTION/DIALOGUE/REACTION/REVELATION/TRANSITION/DESCRIPTION), notes
-  - `reorder_beats()` method fully implemented with validation for missing/extra beat IDs
-- Unit tests: 71 tests passed (36 for Scene, 35 for Beat)
-- Pattern discovered: SceneStatus has additional states (GENERATING, REVIEW) for LLM workflow tracking
-- Gotcha for future: Beat allows empty content (for placeholder beats), unlike Scene which requires a title
+## WORLD-002 - 2026-02-01
+- What I implemented: Created CharacterProfileForm.tsx with react-hook-form and zod validation. Includes tag-based inputs for aliases and traits using Badge components. Uses shadcn/ui Input, Textarea, and Badge components. Name field is required with inline validation errors.
+- Pattern discovered: When using zodResolver with strict TypeScript, the form values type must be explicitly defined and cast with `as Resolver<FormType>` to avoid type mismatch between zod's inferred optional fields and the form's runtime values.
+- Gotcha for future: Use `useMemo` to stabilize array values from `form.watch()` when they're used in `useCallback` dependencies, otherwise ESLint warns about unstable deps causing re-renders.
 
-## NAR-003 - 2026-02-01T00:30:00
-- What I implemented: Verified existing INarrativeRepository port and InMemoryNarrativeRepository adapter
-- Implementation already complete:
-  - `INarrativeRepository` protocol in `src/contexts/narrative/application/ports/narrative_repository_port.py`
-    - Methods: save(), get_by_id() (load), list_all(), delete(), exists()
-    - Custom `RepositoryException` for infrastructure errors
-  - `InMemoryNarrativeRepository` in `src/contexts/narrative/infrastructure/repositories/`
-    - Uses deep copy for isolation between stored/returned aggregates
-    - Additional testing helpers: clear(), count property
-- Unit tests: 25 tests passed in `test_in_memory_narrative_repository.py`
-- Pattern discovered: Repository uses deep copy to prevent external mutations from affecting stored data
-- Gotcha for future: The port uses Optional return instead of exceptions for "not found" - follows "Tell, Don't Ask" principle
+## WORLD-003 - 2026-02-01
+- What I implemented: Created Relationship entity with EntityType (5 types) and RelationshipType (12 types) enums. Implemented type compatibility validation (e.g., ROMANTIC requires CHARACTER entities). Created IRelationshipRepository protocol and InMemoryRelationshipRepository with entity-indexed lookups. Added CRUD API endpoints at /api/relationships with by-entity and between-entities queries. Wrote 33 unit tests covering all validation and query methods.
+- Pattern discovered: World domain entities inherit from a base Entity class in src/contexts/world/domain/entities/entity.py that provides id, created_at, updated_at, version fields and domain event support. New entities should extend this base class.
+- Gotcha for future: When creating new routers, remember to register them in TWO places in main_api_server.py's _register_legacy_routes: once without prefix and once with /api prefix for backward compatibility.
 
-## NAR-004 - 2026-02-01T01:00:00
-- What I implemented: Registered Structure API routes and added comprehensive unit tests
-- Implementation details:
-  - `routers/structure.py` already existed with full CRUD for Story, Chapter, Scene
-  - Registered `structure_router` and `narrative_generation_router` in `src/api/app.py`
-  - Created `tests/api/test_structure_api.py` with 23 tests covering all endpoints
-  - Ran `scripts/generate_openapi.py` to update `docs/api/openapi.current.json`
-- Pattern discovered: `api_server.py` uses `src/api/app.py:create_app()` - must register routers there, not just in `main_api_server.py`
-- Gotcha for future: Scene storage uses module-level dict (`_scenes`) separate from Story repository - not persisted through repository
+## WORLD-004 - 2026-02-01
+- What I implemented: Created RelationshipGraph component using @xyflow/react v12. Added CharacterNode custom node with avatar placeholder, name, and archetype badge. Configured shadcn theme-matching styles for nodes, edges, handles, MiniMap, and Controls. Integrated graph into WorldPage replacing placeholder WorldMap.
+- Pattern discovered: @xyflow/react v12 requires custom node data types to `extends Record<string, unknown>`, then create a `NodeType = Node<NodeData>` and use `NodeProps<NodeType>` for component props. This is different from older reactflow package patterns.
+- Gotcha for future: The package name is `@xyflow/react` (already installed), not `reactflow`. The library was renamed. Use `satisfies NodeTypes` instead of direct type annotation for nodeTypes registry to avoid strict type errors with custom nodes.
 
-## NAR-005 - 2026-02-01T16:05:00
-- What I implemented: Verified existing SSE streaming endpoint for narrative generation
-- Implementation already complete:
-  - `POST /api/narrative/generate/stream` endpoint in `src/api/routers/narrative_generation.py`
-  - `MOCK_LLM` environment flag toggles mock/real generation
-  - SSE format: `data: {"type": "chunk|done|error", "content": "...", "sequence": N}\n\n`
-  - Mock content: 17 atmospheric story lines simulating LLM streaming (50-150ms delays)
-  - Proper headers: Cache-Control: no-cache, X-Accel-Buffering: no (nginx SSE support)
-- Unit tests: 23 tests passed in `tests/unit/api/routers/test_narrative_generation_router.py`
-- OpenAPI: Endpoint documented in `docs/api/openapi.current.json`
-- Pattern discovered: SSE streaming uses `StreamingResponse` with `media_type="text/event-stream"` and async generator
-- Gotcha for future: When `MOCK_LLM` is not set or false, endpoint still falls back to mock (real LLM not implemented yet)
+## WORLD-005 - 2026-02-01
+- What I implemented: Connected RelationshipGraph to API data (Characters + Relationships). Installed @dagrejs/dagre for automatic graph layout. Added Relationship schemas (EntityType, RelationshipType) to frontend. Created mock handlers for /api/relationships. Implemented color-coded edges (green=ally, red=enemy, blue=family). Added edge animation for enemy/romantic relationships. Implemented node selection with MiniMap highlighting.
+- Pattern discovered: When using useEdgesState with custom Edge types, you must specify the type parameter: `useEdgesState<Edge>([])`. Without it, TypeScript infers `never[]` which causes assignment errors.
+- Gotcha for future: Avoid `satisfies` with optional properties in object literals when the type has optional fields. Instead, build the object conditionally: `const data: CharacterNodeData = { name }; if (archetype) data.archetype = archetype;`. This avoids type narrowing issues with undefined vs optional.
 
-## NAR-006 - 2026-02-01T16:10:00
-- What I implemented: Verified existing Tiptap & dnd-kit dependencies and EditorComponent
-- Implementation already complete:
-  - Dependencies in `frontend/package.json`:
-    - `@tiptap/react: ^3.18.0`, `@tiptap/starter-kit: ^3.18.0`, `@tiptap/pm: ^3.18.0`
-    - `@dnd-kit/core: ^6.3.1`, `@dnd-kit/sortable: ^10.0.0`, `@dnd-kit/utilities: ^3.2.2`
-  - `EditorComponent.tsx` at `frontend/src/components/narrative/EditorComponent.tsx`
-    - Default content: `<p>Hello World</p>` (line 158)
-    - Full Tiptap integration with StarterKit
-    - Toolbar (Bold, Italic, H1, H2) using shadcn Toggle components
-    - Streaming integration via `useStoryStream` hook
-- Build verification: `npm run build` completed in 22.67s with no errors
-- Type-check: Passed with no errors
-- Lint: Passed (only warnings, no errors)
-- Pattern discovered: EditorComponent is more advanced than required - already includes streaming integration, making NAR-010 and NAR-011 partially complete
-- Gotcha for future: EditorComponent uses `editorRef` pattern to allow streaming callbacks to access editor after mount
-
-## NAR-007 - 2026-02-01T16:15:00
-- What I implemented: Verified and committed enhanced NarrativeSidebar with drag-and-drop support
-- Implementation complete:
-  - `NarrativeSidebar` component at `frontend/src/components/narrative/NarrativeSidebar.tsx`
-  - Uses shadcn `ScrollArea` for scrollable content area
-  - Mock data: `MOCK_CHAPTERS` with 3 chapters, 6 scenes for testing
-  - Active scene highlighting: `bg-primary text-primary-foreground` styling
-  - Collapsible chapter tree-view with expand/collapse buttons
-  - Status badges: draft (muted), generating (blue), review (yellow), published (green)
-  - **Bonus**: Full drag-and-drop scene reordering using dnd-kit (NAR-013 prep)
-    - `SortableSceneItem` with drag handle (visible on hover)
-    - `DragOverlay` for visual feedback during drag
-    - `onSceneMove` callback for API integration
-- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓
-- Pattern discovered: dnd-kit uses `SortableContext` per-container for multi-list drag-drop
-- Gotcha for future: Integration tests in `test_error_handling.py` have pre-existing failures (datetime serialization, missing attributes)
-
-## NAR-008 - 2026-02-01T18:15:00
-- What I implemented: Updated NarrativePage to use NarrativeEditorLayout for proper 20/80 split layout
-- Implementation details:
-  - Refactored `frontend/src/features/narrative/NarrativePage.tsx` to use `NarrativeEditorLayout`
-  - Removed temporary mock UI components (NarrativeEditor, ChaptersList, GenerationStats)
-  - Layout now properly integrates:
-    - NarrativeSidebar (20% width) on the left with collapsible chapters
-    - EditorComponent (80% width) on the right with Tiptap editor and toolbar
-  - EditorComponent already had all required features (shadcn styling, Bold/Italic/H1/H2 toolbar)
-- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓
-- Pattern discovered: NarrativeEditorLayout already existed and was well-designed, just needed to be wired into NarrativePage
-- Gotcha for future: NarrativeEditorLayout has `useMockData` prop to toggle between mock and backend data sources
-
-## NAR-009 - 2026-02-01T18:45:00
-- What I implemented: Connected Structure API to the Outliner UI
-- Implementation details:
-  - `narrativeApi.ts` already exists at `frontend/src/lib/api/narrativeApi.ts` with full CRUD operations
-    - Uses generated types from `frontend/src/types/schemas.ts` (StoryResponse, ChapterResponse, SceneResponse)
-    - Exports listStories, listChapters, listScenes, createStory, createChapter, createScene, moveScene
-  - `useStoryStructure` hook at `frontend/src/hooks/useStoryStructure.ts` already implemented:
-    - Fetches chapters from backend via `listChapters()` and `listScenes()`
-    - Transforms backend responses to `OutlinerChapter[]` format for NarrativeSidebar
-    - Provides `loadStories`, `selectStory`, `refresh`, `addStory`, `addChapter`, `addScene` actions
-  - Updated `NarrativePage.tsx`: Removed `useMockData` prop from `NarrativeEditorLayout`
-    - Sidebar now defaults to loading from InMemory backend
-    - Falls back to mock data if backend returns empty or errors
-- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓, pytest (168 passed)
-- Pattern discovered: The layered data flow is well-designed: NarrativePage → NarrativeEditorLayout → useStoryStructure → narrativeApi → backend
-- Gotcha for future: Backend starts with empty InMemory repository - UI shows "No chapters" until user creates data or backend seeds data
-
-## NAR-010 - 2026-02-01T10:35:00
-- What I implemented: Verified existing SSE streaming hook implementation
-- Implementation already complete at `frontend/src/hooks/useStoryStream.ts`:
-  - Uses fetch + ReadableStream (not EventSource) because endpoint is POST
-  - Full SSE parsing: splits lines, extracts "data: " prefix, parses JSON
-  - StreamChunk types: 'chunk', 'done', 'error' with sequence numbers
-  - Buffer state: Accumulates text in `buffer` state variable
-  - `onComplete` callback: Called with `StreamMetadata` when stream finishes
-  - `onError` callback: Called with error message on failure
-  - Abort controller: Supports `stopStream()` and cleanup on unmount
-- Also found alternative implementation at `frontend/src/features/stories/hooks/useStoryStream.ts`:
-  - Uses different API endpoint (`/api/narratives/stream`)
-  - More detailed status enum: 'idle', 'connecting', 'streaming', 'complete', 'error', 'cancelled'
-  - Includes `WorldContext` for richer generation context
-- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓, frontend tests (46 passed)
-- Pattern discovered: Using fetch + ReadableStream instead of EventSource allows POST requests with request bodies
-- Gotcha for future: Two useStoryStream implementations exist - hooks/ version for simple use, features/stories/ version for world-aware generation
-
-## NAR-011 - 2026-02-01T10:40:00
-- What I implemented: Verified existing Editor Streaming Integration in EditorComponent
-- Implementation already complete at `frontend/src/components/narrative/EditorComponent.tsx`:
-  - `useStoryStream` hook integrated (line 18 import, lines 214-223 usage)
-  - Three callbacks wired: `handleChunk`, `handleComplete`, `handleError`
-  - "Generating..." indicator: Shows Loader2 spinner with text during streaming (lines 296-304)
-  - Cursor-position insertion: `insertPositionRef` tracks where to insert text (line 167)
-  - `handleChunk` inserts each chunk at saved position using Tiptap's `insertContentAt` (lines 175-195)
-  - Toolbar disabled during streaming to prevent conflicting edits
-  - Error display: Shows stream errors in destructive styling (lines 307-314)
-  - Stop button: Allows user to cancel generation mid-stream (lines 123-133)
-- Quality checks: type-check ✓, lint ✓ (warnings only), build ✓, pytest (2063 passed), frontend tests (46 passed)
-- Pattern discovered: EditorComponent uses `editorRef` pattern to access Tiptap editor from streaming callbacks without stale closure issues
-- Gotcha for future: The editor becomes read-only during streaming (`editable: editable && !isStreaming`) to prevent user edits that could conflict with streaming insertion
-
-## NAR-012 - 2026-02-01T10:45:00
-- What I implemented: Verified existing E2E Ghostwriter test suite
-- Implementation already complete at `frontend/tests/e2e/narrative-gen.spec.ts`:
-  - 3 comprehensive tests in "Narrative Generation - Ghostwriter Flow" describe block
-  - Test 1: `@narrative generates story content via New Chapter button` - Full flow verification
-    - Navigate to `/stories/editor`, click "New Chapter", verify "Generating..." indicator
-    - Assert editor content includes generated text after streaming completes
-    - Verify metadata shows generation stats (chars, time)
-  - Test 2: `@narrative shows generating indicator and Cancel button during stream`
-    - Slower mock response to observe Cancel button visibility
-    - Verifies generating indicator appears during streaming
-  - Test 3: `@narrative handles streaming error gracefully`
-    - Mocks 500 error response, verifies error card appears with Retry button
-- Also verified `frontend/tests/e2e/story-generation.spec.ts` with 5 additional scenarios:
-  - Scenario 1: "Generating..." state appears on New Chapter click
-  - Scenario 2: SSE stream delivers text incrementally
-  - Scenario 3: World Context sent in payload
-  - Scenario 4: API error shows error state
-  - Scenario 5: User can cancel ongoing generation
-- Quality checks: type-check ✓, lint ✓ (warnings only), pytest (756 narrative tests passed), E2E (8 tests passed)
-- Pattern discovered: Tests use Playwright route mocking for SSE - creates mock SSE body with data: prefix and JSON payloads
-- Gotcha for future: Test fixtures (`tests/e2e/fixtures.ts`) auto-mock guest session and dashboard APIs for all tests
+## WORLD-006 - 2026-02-01
+- What I implemented: VERIFICATION PASS - Location hierarchy already fully implemented. Verified `parent_location_id` (line 187), `child_location_ids` (line 188), plus `add_child_location()`, `remove_child_location()`, `set_parent_location()`, and `_validate_hierarchy()` methods. LocationType enum has 26 types including CONTINENT, REGION, CITY, TOWN, VILLAGE, CASTLE, DUNGEON, TEMPLE, etc. All 17 Location tests pass in test_world_entities.py.
+- Pattern discovered: Location.child_location_ids directly provides child IDs without needing a get_sub_locations() method. Returning full child Location objects would require repository lookup, which violates domain entity purity (entities should not depend on infrastructure). The current design correctly keeps hierarchy data as IDs.
+- Gotcha for future: The test file is test_world_entities.py (not test_location.py as PRD suggested). Multiple world entities (WorldSetting, Faction, Location, HistoryEvent) are tested in a single comprehensive file.
