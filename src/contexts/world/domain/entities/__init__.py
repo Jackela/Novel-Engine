@@ -30,6 +30,11 @@ from .world_setting import (
     ToneType,
     WorldSetting,
 )
+from .relationship import (
+    EntityType,
+    Relationship,
+    RelationshipType,
+)
 
 __all__ = [
     # Base Entity
@@ -55,4 +60,8 @@ __all__ = [
     "EventType",
     "EventSignificance",
     "EventOutcome",
+    # Relationship
+    "Relationship",
+    "RelationshipType",
+    "EntityType",
 ]

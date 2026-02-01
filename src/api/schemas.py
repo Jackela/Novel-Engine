@@ -615,6 +615,61 @@ class StructureErrorResponse(BaseModel):
     detail: Optional[str] = Field(default=None, description="Additional details")
 
 
+# === Relationship Schemas (WORLD-003) ===
+
+
+class RelationshipCreateRequest(BaseModel):
+    """Request model for creating a relationship."""
+
+    source_id: str = Field(..., description="ID of the source entity")
+    source_type: str = Field(
+        ..., description="Type of source: CHARACTER, FACTION, LOCATION, ITEM, EVENT"
+    )
+    target_id: str = Field(..., description="ID of the target entity")
+    target_type: str = Field(
+        ..., description="Type of target: CHARACTER, FACTION, LOCATION, ITEM, EVENT"
+    )
+    relationship_type: str = Field(
+        ...,
+        description="Relationship type: FAMILY, ENEMY, ALLY, MENTOR, ROMANTIC, RIVAL, "
+        "MEMBER_OF, LOCATED_IN, OWNS, CREATED, HISTORICAL, NEUTRAL",
+    )
+    description: str = Field(default="", max_length=1000)
+    strength: int = Field(default=50, ge=0, le=100, description="Relationship strength")
+
+
+class RelationshipUpdateRequest(BaseModel):
+    """Request model for updating a relationship."""
+
+    relationship_type: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    strength: Optional[int] = Field(default=None, ge=0, le=100)
+    is_active: Optional[bool] = Field(default=None)
+
+
+class RelationshipResponse(BaseModel):
+    """Response model for a single relationship."""
+
+    id: str = Field(..., description="Relationship UUID")
+    source_id: str
+    source_type: str
+    target_id: str
+    target_type: str
+    relationship_type: str
+    description: str
+    strength: int
+    is_active: bool
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class RelationshipListResponse(BaseModel):
+    """Response model for listing relationships."""
+
+    relationships: List[RelationshipResponse] = Field(default_factory=list)
+    total: int = Field(default=0, description="Total count of matching relationships")
+
+
 __all__ = [
     # Orchestration Schemas
     "OrchestrationStep",
@@ -685,6 +740,11 @@ __all__ = [
     "MoveChapterRequest",
     "MoveSceneRequest",
     "StructureErrorResponse",
+    # Relationship Schemas
+    "RelationshipCreateRequest",
+    "RelationshipUpdateRequest",
+    "RelationshipResponse",
+    "RelationshipListResponse",
 ]
 
 try:
