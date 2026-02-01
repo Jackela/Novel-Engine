@@ -240,6 +240,39 @@ class CharacterGenerationResponse(BaseModel):
     traits: List[str]
 
 
+class CharacterProfileGenerationRequest(BaseModel):
+    """Request model for character profile generation.
+
+    This generates a detailed character profile with aliases, archetype, traits,
+    appearance, backstory, etc. using LLM or mock generator.
+    """
+
+    name: str = Field(..., min_length=1, max_length=100, description="Character's primary name")
+    archetype: str = Field(
+        ..., min_length=1, max_length=50, description="Character archetype (e.g., Hero, Villain, Mentor)"
+    )
+    context: Optional[str] = Field(
+        None, max_length=500, description="Additional context about the character's world or background"
+    )
+
+
+class CharacterProfileGenerationResponse(BaseModel):
+    """Response model for character profile generation.
+
+    Contains the generated profile fields matching the CharacterProfile
+    value object's fields from WORLD-001.
+    """
+
+    name: str
+    aliases: List[str]
+    archetype: str
+    traits: List[str]
+    appearance: str
+    backstory: str
+    motivations: List[str]
+    quirks: List[str]
+
+
 class SceneGenerationRequest(BaseModel):
     """Request model for scene generation."""
 

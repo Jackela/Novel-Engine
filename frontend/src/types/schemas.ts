@@ -160,6 +160,24 @@ export const CharacterGenerationResponseSchema = z.object({
   traits: z.array(z.string()),
 });
 
+// Character Profile Generation Schemas (WORLD-013)
+export const CharacterProfileGenerationRequestSchema = z.object({
+  name: z.string().min(1).max(100),
+  archetype: z.string().min(1).max(50),
+  context: z.string().max(500).optional(),
+});
+
+export const CharacterProfileGenerationResponseSchema = z.object({
+  name: z.string(),
+  aliases: z.array(z.string()),
+  archetype: z.string(),
+  traits: z.array(z.string()),
+  appearance: z.string(),
+  backstory: z.string(),
+  motivations: z.array(z.string()),
+  quirks: z.array(z.string()),
+});
+
 export const SceneGenerationRequestSchema = z.object({
   character_context: CharacterGenerationResponseSchema,
   scene_type: z.string(),
@@ -289,6 +307,12 @@ export type CharacterGenerationRequest = z.infer<
 >;
 export type CharacterGenerationResponse = z.infer<
   typeof CharacterGenerationResponseSchema
+>;
+export type CharacterProfileGenerationRequest = z.infer<
+  typeof CharacterProfileGenerationRequestSchema
+>;
+export type CharacterProfileGenerationResponse = z.infer<
+  typeof CharacterProfileGenerationResponseSchema
 >;
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;

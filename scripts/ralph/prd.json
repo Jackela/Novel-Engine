@@ -193,7 +193,7 @@
         "Browser verification: Search filters the list correctly"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["WORLD-010"]
     },
@@ -209,7 +209,7 @@
         "Run `pytest tests/unit/contexts/world/infrastructure/test_character_generator.py` - mock test passes"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["WORLD-001"]
     },
@@ -226,7 +226,7 @@
         "Browser verification: Click fills the form with generated content"
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["WORLD-012", "WORLD-002"]
     },

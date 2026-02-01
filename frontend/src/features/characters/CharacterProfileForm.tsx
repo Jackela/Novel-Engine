@@ -3,12 +3,14 @@
  *
  * Uses react-hook-form with zod validation to manage enhanced character
  * profile fields including aliases, archetype, traits, and appearance.
+ * Includes an Auto-Generate button to fill the form using AI generation.
  */
 import { useState, useCallback, useMemo, type KeyboardEvent } from 'react';
 import { useForm, type UseFormReturn, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X } from 'lucide-react';
+import { X, Sparkles, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { generateCharacterProfile } from '@/lib/api/generationApi';
 
 /**
  * Schema for character profile form validation.
@@ -83,6 +86,8 @@ export function CharacterProfileForm({
   isLoading = false,
   submitLabel = 'Save Profile',
 }: CharacterProfileFormProps) {
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const form = useForm<CharacterProfileFormValues>({
     resolver: zodResolver(CharacterProfileFormSchema) as Resolver<CharacterProfileFormValues>,
     defaultValues: { ...emptyDefaults, ...defaultValues },
@@ -92,6 +97,50 @@ export function CharacterProfileForm({
   const handleSubmit = async (values: CharacterProfileFormValues) => {
     await onSubmit(values);
   };
+
+  /**
+   * Handle auto-generation of character profile using the AI generator.
+   * Requires name and archetype to be filled in before generation.
+   */
+  const handleAutoGenerate = useCallback(async () => {
+    const name = form.getValues('name');
+    const archetype = form.getValues('archetype');
+
+    if (!name.trim()) {
+      toast.error('Please enter a character name first');
+      return;
+    }
+
+    if (!archetype?.trim()) {
+      toast.error('Please enter an archetype first (e.g., Hero, Villain, Mentor)');
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const result = await generateCharacterProfile({
+        name: name.trim(),
+        archetype: archetype.trim(),
+        context: form.getValues('background_summary') || undefined,
+      });
+
+      // Fill the form with generated values
+      form.setValue('name', result.name, { shouldDirty: true });
+      form.setValue('aliases', result.aliases, { shouldDirty: true });
+      form.setValue('archetype', result.archetype, { shouldDirty: true });
+      form.setValue('traits', result.traits, { shouldDirty: true });
+      form.setValue('appearance', result.appearance, { shouldDirty: true });
+      form.setValue('background_summary', result.backstory, { shouldDirty: true });
+
+      toast.success('Character profile generated successfully');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to generate profile';
+      toast.error(message);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [form]);
 
   return (
     <Form {...form}>
@@ -143,6 +192,35 @@ export function CharacterProfileForm({
             </FormItem>
           )}
         />
+
+        {/* Auto-Generate Button */}
+        <div className="flex items-center gap-2 rounded-lg border border-dashed border-muted-foreground/25 bg-muted/30 p-4">
+          <div className="flex-1">
+            <p className="text-sm font-medium">Auto-Generate Profile</p>
+            <p className="text-xs text-muted-foreground">
+              Fill in name and archetype above, then generate the rest automatically
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={handleAutoGenerate}
+            disabled={isGenerating || isLoading}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Auto-Generate
+              </>
+            )}
+          </Button>
+        </div>
 
         {/* Traits Field - Tag Input */}
         <TagInputField

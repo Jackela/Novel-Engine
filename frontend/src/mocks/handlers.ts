@@ -948,4 +948,91 @@ export const handlers = [
     }
     return HttpResponse.json(entry);
   }),
+
+  // === Generation API ===
+
+  http.post(`${API_PREFIX}/generation/character-profile`, async ({ request }) => {
+    // Simulate LLM processing delay
+    await delay(1500);
+
+    const body = asObject(await request.json().catch(() => ({})));
+    const name = stringField(body, 'name', 'Unknown Character');
+    const archetype = stringField(body, 'archetype', 'Hero');
+    const context = stringField(body, 'context', '');
+
+    // Mock profile generation based on archetype
+    const archetypeKey = archetype.toLowerCase();
+    const templates: Record<
+      string,
+      {
+        aliases: string[];
+        traits: string[];
+        appearance: string;
+        backstory: string;
+        motivations: string[];
+        quirks: string[];
+      }
+    > = {
+      hero: {
+        aliases: ['The Lightbringer', 'Champion of the Dawn'],
+        traits: ['courageous', 'selfless', 'determined', 'honorable'],
+        appearance:
+          'Tall and well-built with confident posture. Eyes gleam with inner resolve. Wears practical armor with subtle heroic embellishments.',
+        backstory:
+          'Rose from humble origins after witnessing injustice firsthand. Trained under a renowned mentor before embarking on their quest.',
+        motivations: ['protect the innocent', 'right past wrongs', 'find redemption'],
+        quirks: ['always helps those in need', 'never breaks a promise'],
+      },
+      villain: {
+        aliases: ['The Dark Tyrant', 'Lord of Shadows'],
+        traits: ['ruthless', 'calculating', 'charismatic', 'ambitious'],
+        appearance:
+          'Imposing figure cloaked in darkness. Sharp features with piercing eyes that seem to see through deception.',
+        backstory:
+          'Once a respected figure, twisted by betrayal and loss. Now seeks to reshape the world according to their vision.',
+        motivations: ['absolute power', 'revenge on betrayers', 'create order through fear'],
+        quirks: ['speaks in measured tones', 'collects trophies from fallen foes'],
+      },
+      mentor: {
+        aliases: ['The Sage', 'Keeper of Ancient Ways'],
+        traits: ['wise', 'patient', 'cryptic', 'protective'],
+        appearance:
+          'Weathered features that speak of long experience. Gentle eyes that hold depths of knowledge.',
+        backstory:
+          'Has walked many paths and learned from countless trials. Now seeks to pass on wisdom to the next generation.',
+        motivations: ['guide the worthy', 'preserve ancient knowledge', 'prevent past mistakes'],
+        quirks: ['speaks in riddles', 'appears when least expected'],
+      },
+      rogue: {
+        aliases: ['Shadow Dancer', 'The Ghost'],
+        traits: ['cunning', 'charming', 'resourceful', 'independent'],
+        appearance:
+          'Lithe and agile with quick, graceful movements. Unremarkable features that blend into any crowd.',
+        backstory:
+          'Learned to survive on the streets from a young age. Trust is hard-earned, but loyalty once given is absolute.',
+        motivations: ['freedom', 'wealth', 'protect street family'],
+        quirks: ['fidgets with coins', 'always knows the exits'],
+      },
+    };
+
+    const template = templates[archetypeKey] || {
+      aliases: [`${name} the Unknown`, 'The Mysterious One'],
+      traits: ['enigmatic', 'adaptable', 'observant'],
+      appearance: 'Average build with nondescript features. Something about them defies easy categorization.',
+      backstory: `Origins shrouded in mystery. ${context || 'Their past remains unknown.'}`,
+      motivations: ['unknown goals', 'hidden agenda'],
+      quirks: ['rarely speaks of the past'],
+    };
+
+    return HttpResponse.json({
+      name,
+      aliases: template.aliases,
+      archetype,
+      traits: template.traits,
+      appearance: template.appearance,
+      backstory: template.backstory,
+      motivations: template.motivations,
+      quirks: template.quirks,
+    });
+  }),
 ];
