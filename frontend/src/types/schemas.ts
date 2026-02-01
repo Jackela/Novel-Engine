@@ -8,6 +8,11 @@ export const CharacterSummarySchema = z.object({
   type: z.string(),
   updated_at: z.string(),
   workspace_id: z.string().nullable().optional(),
+  // New fields for WORLD-001: Enhanced character profiles
+  aliases: z.array(z.string()).optional().default([]),
+  archetype: z.string().nullable().optional(),
+  traits: z.array(z.string()).optional().default([]),
+  appearance: z.string().nullable().optional(),
 });
 
 export const CharactersListResponseSchema = z.object({

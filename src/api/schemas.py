@@ -178,6 +178,11 @@ class CharacterSummary(BaseModel):
     type: str
     updated_at: str
     workspace_id: Optional[str] = None
+    # New fields for WORLD-001: Enhanced character profiles
+    aliases: List[str] = Field(default_factory=list)
+    archetype: Optional[str] = None
+    traits: List[str] = Field(default_factory=list)
+    appearance: Optional[str] = None
 
 
 class CharactersListResponse(BaseModel):

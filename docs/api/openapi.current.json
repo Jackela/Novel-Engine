@@ -6838,6 +6838,42 @@
               }
             ],
             "title": "Workspace Id"
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Aliases"
+          },
+          "archetype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archetype"
+          },
+          "traits": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Traits"
+          },
+          "appearance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appearance"
           }
         },
         "type": "object",

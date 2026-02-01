@@ -18,6 +18,10 @@ const characterSummaries: CharacterSummary[] = [
     type: 'protagonist',
     updated_at: nowIso(),
     workspace_id: 'guest-workspace',
+    aliases: ['The Shadow'],
+    archetype: 'Tactician',
+    traits: ['Strategic', 'Resilient', 'Decisive'],
+    appearance: 'Tall with dark hair and piercing eyes',
   },
   {
     id: 'merchant-aldric',
@@ -27,6 +31,10 @@ const characterSummaries: CharacterSummary[] = [
     type: 'npc',
     updated_at: nowIso(),
     workspace_id: 'guest-workspace',
+    aliases: [],
+    archetype: 'Merchant',
+    traits: ['Shrewd', 'Friendly'],
+    appearance: null,
   },
 ];
 
@@ -250,6 +258,10 @@ export const handlers = [
       type: 'npc',
       updated_at: nowIso(),
       workspace_id: 'guest-workspace',
+      aliases: [],
+      archetype: null,
+      traits: [],
+      appearance: null,
     });
     return HttpResponse.json(detail, { status: 201 });
   }),
