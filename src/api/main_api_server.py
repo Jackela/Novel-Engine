@@ -774,6 +774,7 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.relationships import router as relationships_router
     from src.api.routers.items import router as items_router
     from src.api.routers.items import character_inventory_router
+    from src.api.routers.lore import router as lore_router
 
     # Register all routers with and without /api prefix for backward compatibility
     # Order matters: register without prefix first, then with prefix
@@ -796,6 +797,7 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(relationships_router)
     app.include_router(items_router)
     app.include_router(character_inventory_router)
+    app.include_router(lore_router)
 
     # Register with /api prefix
     app.include_router(auth_router, prefix="/api")
@@ -817,6 +819,7 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(relationships_router, prefix="/api")
     app.include_router(items_router, prefix="/api")
     app.include_router(character_inventory_router, prefix="/api")
+    app.include_router(lore_router, prefix="/api")
 
     @app.get("/", response_model=dict)
     async def root_index():

@@ -40,6 +40,10 @@ from .item import (
     ItemRarity,
     ItemType,
 )
+from .lore_entry import (
+    LoreCategory,
+    LoreEntry,
+)
 
 __all__ = [
     # Base Entity
@@ -73,4 +77,7 @@ __all__ = [
     "Item",
     "ItemType",
     "ItemRarity",
+    # LoreEntry
+    "LoreEntry",
+    "LoreCategory",
 ]

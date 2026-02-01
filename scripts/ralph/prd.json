@@ -160,7 +160,7 @@
         "Browser verification: Add item to character, see it appear, remove it"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["WORLD-008"]
     },
@@ -176,7 +176,7 @@
         "Run `pytest tests/api/test_lore_api.py` - all pass"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {

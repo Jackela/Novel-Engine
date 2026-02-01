@@ -742,6 +742,62 @@ class RemoveItemResponse(BaseModel):
     message: str = Field(default="", description="Status message")
 
 
+# === Lore Entry Schemas (WORLD-010) ===
+
+
+class LoreEntryCreateRequest(BaseModel):
+    """Request model for creating a lore entry."""
+
+    title: str = Field(..., min_length=1, max_length=300, description="Entry title")
+    content: str = Field(default="", description="Full content (markdown supported)")
+    tags: List[str] = Field(
+        default_factory=list, max_length=20, description="Searchable tags"
+    )
+    category: str = Field(
+        default="history", description="Category: HISTORY, CULTURE, MAGIC, TECHNOLOGY"
+    )
+    summary: str = Field(default="", max_length=500, description="Short summary")
+
+
+class LoreEntryUpdateRequest(BaseModel):
+    """Request model for updating a lore entry."""
+
+    title: Optional[str] = Field(default=None, min_length=1, max_length=300)
+    content: Optional[str] = Field(default=None)
+    tags: Optional[List[str]] = Field(default=None, max_length=20)
+    category: Optional[str] = Field(default=None)
+    summary: Optional[str] = Field(default=None, max_length=500)
+
+
+class LoreEntryResponse(BaseModel):
+    """Response model for a single lore entry."""
+
+    id: str = Field(..., description="Entry UUID")
+    title: str
+    content: str
+    tags: List[str] = Field(default_factory=list)
+    category: str
+    summary: str
+    related_entry_ids: List[str] = Field(default_factory=list)
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class LoreEntryListResponse(BaseModel):
+    """Response model for listing lore entries."""
+
+    entries: List[LoreEntryResponse] = Field(default_factory=list)
+    total: int = Field(default=0, description="Total count of matching entries")
+
+
+class LoreSearchRequest(BaseModel):
+    """Request model for searching lore entries."""
+
+    query: str = Field(default="", description="Search query (matches title)")
+    tags: Optional[List[str]] = Field(default=None, description="Filter by tags")
+    category: Optional[str] = Field(default=None, description="Filter by category")
+
+
 __all__ = [
     # Orchestration Schemas
     "OrchestrationStep",
@@ -824,6 +880,12 @@ __all__ = [
     "ItemListResponse",
     "GiveItemRequest",
     "RemoveItemResponse",
+    # Lore Entry Schemas
+    "LoreEntryCreateRequest",
+    "LoreEntryUpdateRequest",
+    "LoreEntryResponse",
+    "LoreEntryListResponse",
+    "LoreSearchRequest",
 ]
 
 try:
