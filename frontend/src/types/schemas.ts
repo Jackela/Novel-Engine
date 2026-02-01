@@ -45,6 +45,21 @@ export const CharactersListResponseSchema = z.object({
   characters: z.array(CharacterSummarySchema),
 });
 
+/**
+ * Inline goal schema for CharacterDetail (defined before CharacterGoalSchema export).
+ * This matches the structure expected by the goals list component.
+ */
+const InlineCharacterGoalSchema = z.object({
+  goal_id: z.string(),
+  description: z.string().min(1),
+  status: z.enum(['ACTIVE', 'COMPLETED', 'FAILED']),
+  urgency: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  created_at: z.string(),
+  completed_at: z.string().nullable().optional(),
+  is_active: z.boolean(),
+  is_urgent: z.boolean(),
+});
+
 export const CharacterDetailSchema = z.object({
   agent_id: z.string(),
   character_id: z.string(),
@@ -62,6 +77,7 @@ export const CharacterDetailSchema = z.object({
   structured_data: z.record(z.string(), z.unknown()),
   psychology: CharacterPsychologySchema.nullable().optional(),
   memories: z.array(CharacterMemorySchema).optional().default([]),
+  goals: z.array(InlineCharacterGoalSchema).optional().default([]),
 });
 
 export const WorkspaceCharacterCreateSchema = z.object({
@@ -795,3 +811,71 @@ export const DialogueGenerationResponseSchema = z.object({
 
 export type DialogueGenerationRequest = z.infer<typeof DialogueGenerationRequestSchema>;
 export type DialogueGenerationResponse = z.infer<typeof DialogueGenerationResponseSchema>;
+
+// === Character Goal Schemas (CHAR-029/CHAR-030) ===
+
+/**
+ * Goal status enum matching backend GoalStatus.
+ * - ACTIVE: Currently being pursued
+ * - COMPLETED: Successfully achieved
+ * - FAILED: Abandoned or became impossible
+ */
+export const GoalStatusEnum = z.enum(['ACTIVE', 'COMPLETED', 'FAILED']);
+
+/**
+ * Goal urgency enum matching backend GoalUrgency.
+ * - LOW: Background ambition, no time pressure
+ * - MEDIUM: Important but not immediate
+ * - HIGH: Pressing concern that demands attention
+ * - CRITICAL: Must be addressed immediately
+ */
+export const GoalUrgencyEnum = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+
+/**
+ * Character goal schema matching backend CharacterGoalSchema.
+ */
+export const CharacterGoalSchema = z.object({
+  goal_id: z.string(),
+  description: z.string().min(1),
+  status: GoalStatusEnum,
+  urgency: GoalUrgencyEnum,
+  created_at: z.string(),
+  completed_at: z.string().nullable().optional(),
+  is_active: z.boolean(),
+  is_urgent: z.boolean(),
+});
+
+/**
+ * Character goals response schema matching backend CharacterGoalsResponse.
+ */
+export const CharacterGoalsResponseSchema = z.object({
+  character_id: z.string(),
+  goals: z.array(CharacterGoalSchema),
+  total_count: z.number(),
+  active_count: z.number(),
+  completed_count: z.number(),
+  failed_count: z.number(),
+});
+
+/**
+ * Request to create a new goal.
+ */
+export const CharacterGoalCreateRequestSchema = z.object({
+  description: z.string().min(1),
+  urgency: GoalUrgencyEnum.optional().default('MEDIUM'),
+});
+
+/**
+ * Request to update a goal's status or urgency.
+ */
+export const CharacterGoalUpdateRequestSchema = z.object({
+  status: GoalStatusEnum.optional(),
+  urgency: GoalUrgencyEnum.optional(),
+});
+
+export type GoalStatus = z.infer<typeof GoalStatusEnum>;
+export type GoalUrgency = z.infer<typeof GoalUrgencyEnum>;
+export type CharacterGoal = z.infer<typeof CharacterGoalSchema>;
+export type CharacterGoalsResponse = z.infer<typeof CharacterGoalsResponseSchema>;
+export type CharacterGoalCreateRequest = z.infer<typeof CharacterGoalCreateRequestSchema>;
+export type CharacterGoalUpdateRequest = z.infer<typeof CharacterGoalUpdateRequestSchema>;

@@ -10,6 +10,7 @@ import type { CharacterDetail } from '@/shared/types/character';
 import InventoryTab from './components/InventoryTab';
 import MemoryTimeline from './components/MemoryTimeline';
 import PsychologyChart from './components/PsychologyChart';
+import GoalsList from './components/GoalsList';
 
 type Props = {
   open: boolean;
@@ -27,10 +28,11 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
 
         {character ? (
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="psychology">Psychology</TabsTrigger>
               <TabsTrigger value="memories">Memories</TabsTrigger>
+              <TabsTrigger value="goals">Goals</TabsTrigger>
               <TabsTrigger value="inventory">Inventory</TabsTrigger>
             </TabsList>
 
@@ -96,6 +98,10 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
 
             <TabsContent value="memories" className="mt-4">
               <MemoryTimeline memories={character.memories} />
+            </TabsContent>
+
+            <TabsContent value="goals" className="mt-4">
+              <GoalsList goals={character.goals} />
             </TabsContent>
 
             <TabsContent value="inventory" className="mt-4">
