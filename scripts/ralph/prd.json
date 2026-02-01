@@ -179,7 +179,7 @@
         "Run `npm run test:e2e`."
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["NAR-011"]
     },

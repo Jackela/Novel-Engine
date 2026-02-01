@@ -151,3 +151,26 @@ Started: Sat Jan 31 23:42:17     2026
 - Quality checks: type-check ✓, lint ✓ (warnings only), build ✓, pytest (2063 passed), frontend tests (46 passed)
 - Pattern discovered: EditorComponent uses `editorRef` pattern to access Tiptap editor from streaming callbacks without stale closure issues
 - Gotcha for future: The editor becomes read-only during streaming (`editable: editable && !isStreaming`) to prevent user edits that could conflict with streaming insertion
+
+## NAR-012 - 2026-02-01T10:45:00
+- What I implemented: Verified existing E2E Ghostwriter test suite
+- Implementation already complete at `frontend/tests/e2e/narrative-gen.spec.ts`:
+  - 3 comprehensive tests in "Narrative Generation - Ghostwriter Flow" describe block
+  - Test 1: `@narrative generates story content via New Chapter button` - Full flow verification
+    - Navigate to `/stories/editor`, click "New Chapter", verify "Generating..." indicator
+    - Assert editor content includes generated text after streaming completes
+    - Verify metadata shows generation stats (chars, time)
+  - Test 2: `@narrative shows generating indicator and Cancel button during stream`
+    - Slower mock response to observe Cancel button visibility
+    - Verifies generating indicator appears during streaming
+  - Test 3: `@narrative handles streaming error gracefully`
+    - Mocks 500 error response, verifies error card appears with Retry button
+- Also verified `frontend/tests/e2e/story-generation.spec.ts` with 5 additional scenarios:
+  - Scenario 1: "Generating..." state appears on New Chapter click
+  - Scenario 2: SSE stream delivers text incrementally
+  - Scenario 3: World Context sent in payload
+  - Scenario 4: API error shows error state
+  - Scenario 5: User can cancel ongoing generation
+- Quality checks: type-check ✓, lint ✓ (warnings only), pytest (756 narrative tests passed), E2E (8 tests passed)
+- Pattern discovered: Tests use Playwright route mocking for SSE - creates mock SSE body with data: prefix and JSON payloads
+- Gotcha for future: Test fixtures (`tests/e2e/fixtures.ts`) auto-mock guest session and dashboard APIs for all tests
