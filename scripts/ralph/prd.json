@@ -309,7 +309,7 @@
         "Browser verification: Hover mention, see popup with character info"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["WORLD-017"]
     },
@@ -327,7 +327,7 @@
         "Browser verification: Cmd+K opens, typing filters, Enter navigates"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["WORLD-011"]
     },
