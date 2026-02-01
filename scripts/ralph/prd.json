@@ -242,7 +242,7 @@
         "Run `pytest tests/unit/contexts/world/domain/test_world_rule.py` - all pass"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {
@@ -258,7 +258,7 @@
         "Browser verification: Create a rule, edit it, delete it"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": ["WORLD-014"]
     },
@@ -275,7 +275,7 @@
         "Browser verification: Switch to World tab in editor, see data"
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["WORLD-007", "WORLD-002"]
     },
@@ -292,7 +292,7 @@
         "Browser verification: Drag character from sidebar, drop in editor, see @mention"
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["WORLD-016"]
     },

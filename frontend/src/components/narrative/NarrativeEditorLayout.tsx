@@ -3,12 +3,25 @@
  *
  * Why: Combines the NarrativeSidebar (20% width) and EditorComponent (80% width)
  * into a cohesive writing environment, following the PRD layout specifications.
+ * Supports drag-and-drop character mentions from the World sidebar tab.
  */
 import { useState, useEffect, useCallback } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
 
 import { cn } from '@/lib/utils';
-import { NarrativeSidebar, MOCK_CHAPTERS } from './NarrativeSidebar';
-import { EditorComponent } from './EditorComponent';
+import { NarrativeSidebarWithTabs } from './NarrativeSidebarWithTabs';
+import { MOCK_CHAPTERS } from './NarrativeSidebar';
+import { EditorComponent, type CharacterMentionInsert } from './EditorComponent';
+import { CharacterDragOverlay } from '@/components/editor/DraggableCharacterItem';
+import type { CharacterDragData } from '@/components/editor/DraggableCharacterItem';
 import { useStoryStructure } from '@/hooks/useStoryStructure';
 import { moveScene } from '@/lib/api';
 import type { OutlinerChapter, SceneMoveResult } from './NarrativeSidebar';
@@ -60,6 +73,20 @@ export function NarrativeEditorLayout({
     chapters[0]?.scenes[0]?.id
   );
 
+  // Drag-and-drop state for character mentions
+  const [activeDragData, setActiveDragData] = useState<CharacterDragData | null>(null);
+  const [pendingMention, setPendingMention] = useState<CharacterMentionInsert | null>(null);
+  const [isOverEditor, setIsOverEditor] = useState(false);
+
+  // DnD sensors with higher distance threshold to avoid accidental drags
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    })
+  );
+
   // Update active scene when chapters change
   useEffect(() => {
     const firstChapter = chapters[0];
@@ -92,6 +119,56 @@ export function NarrativeEditorLayout({
     // Future: Save content to backend via API
     console.log('Editor content changed:', html.substring(0, 100) + '...');
   };
+
+  /**
+   * Handle character drag start.
+   *
+   * Why: Track which character is being dragged to show the drag overlay
+   * and enable the editor drop zone visual feedback.
+   */
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const data = event.active.data.current as CharacterDragData | undefined;
+    if (data?.type === 'character') {
+      setActiveDragData(data);
+    }
+  }, []);
+
+  /**
+   * Handle drag end - insert character mention if dropped on editor.
+   *
+   * Why: When a character is dropped on the editor zone, we set the
+   * pendingMention state which triggers the EditorComponent to insert
+   * the @mention at the cursor position.
+   */
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { over } = event;
+
+    if (over?.id === 'editor-drop-zone' && activeDragData) {
+      // Set pending mention to trigger insertion in EditorComponent
+      setPendingMention({
+        characterId: activeDragData.characterId,
+        characterName: activeDragData.characterName,
+      });
+    }
+
+    // Reset drag state
+    setActiveDragData(null);
+    setIsOverEditor(false);
+  }, [activeDragData]);
+
+  /**
+   * Handle drag over to show drop indicator on editor.
+   */
+  const handleDragOver = useCallback((event: { over: { id: string | number } | null }) => {
+    setIsOverEditor(event.over?.id === 'editor-drop-zone');
+  }, []);
+
+  /**
+   * Clear pending mention after it has been inserted.
+   */
+  const handleMentionInserted = useCallback(() => {
+    setPendingMention(null);
+  }, []);
 
   /**
    * Handle scene move from drag-and-drop.
@@ -173,31 +250,48 @@ export function NarrativeEditorLayout({
   }
 
   return (
-    <div
-      className={cn('flex h-full w-full overflow-hidden', className)}
-      data-testid="narrative-editor-layout"
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
     >
-      {/* Sidebar - 20% width */}
-      <div className="w-1/5 min-w-[200px] max-w-[300px] shrink-0">
-        <NarrativeSidebar
-          chapters={chapters}
-          activeSceneId={activeSceneId}
-          onSceneSelect={handleSceneSelect}
-          onSceneMove={handleSceneMove}
-          className="h-full"
-        />
-      </div>
+      <div
+        className={cn('flex h-full w-full overflow-hidden', className)}
+        data-testid="narrative-editor-layout"
+      >
+        {/* Sidebar - 20% width */}
+        <div className="w-1/5 min-w-[200px] max-w-[300px] shrink-0">
+          <NarrativeSidebarWithTabs
+            chapters={chapters}
+            activeSceneId={activeSceneId}
+            onSceneSelect={handleSceneSelect}
+            onSceneMove={handleSceneMove}
+            className="h-full"
+          />
+        </div>
 
-      {/* Editor - 80% width (remaining space) */}
-      <main className="flex flex-1 flex-col overflow-hidden bg-background p-4">
-        <EditorComponent
-          initialContent={getSceneContent(activeSceneId)}
-          onChange={handleEditorChange}
-          className="h-full"
-          sceneId={activeSceneId}
-        />
-      </main>
-    </div>
+        {/* Editor - 80% width (remaining space) */}
+        <main className="flex flex-1 flex-col overflow-hidden bg-background p-4">
+          <EditorComponent
+            initialContent={getSceneContent(activeSceneId)}
+            onChange={handleEditorChange}
+            className="h-full"
+            sceneId={activeSceneId}
+            isDropTarget={isOverEditor}
+            pendingMention={pendingMention}
+            onMentionInserted={handleMentionInserted}
+          />
+        </main>
+
+        {/* Drag overlay for character being dragged */}
+        <DragOverlay>
+          {activeDragData ? (
+            <CharacterDragOverlay name={activeDragData.characterName} />
+          ) : null}
+        </DragOverlay>
+      </div>
+    </DndContext>
   );
 }
 

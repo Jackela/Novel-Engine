@@ -3,10 +3,11 @@
  *
  * Why: Provides quick access to world entities within the narrative editor,
  * allowing writers to reference characters and locations without leaving
- * their current editing context.
+ * their current editing context. Supports dragging characters into the
+ * editor to insert @mentions.
  */
 import { useState, useCallback } from 'react';
-import { Users, MapPin, Globe, ChevronRight, User } from 'lucide-react';
+import { Users, MapPin, Globe, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -15,64 +16,10 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { LocationTree } from '@/components/world/LocationTree';
+import { DraggableCharacterItem } from '@/components/editor/DraggableCharacterItem';
 import type { CharacterSummary } from '@/shared/types/character';
 import type { WorldLocation } from '@/types/schemas';
 
-/**
- * Props for mini character item used in the sidebar.
- */
-interface MiniCharacterItemProps {
-  character: CharacterSummary;
-  isSelected: boolean;
-  onSelect: (id: string) => void;
-}
-
-/**
- * Compact character list item for sidebar display.
- */
-function MiniCharacterItem({
-  character,
-  isSelected,
-  onSelect,
-}: MiniCharacterItemProps) {
-  const handleClick = useCallback(() => {
-    onSelect(character.id);
-  }, [onSelect, character.id]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onSelect(character.id);
-      }
-    },
-    [onSelect, character.id]
-  );
-
-  return (
-    <div
-      className={cn(
-        'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm',
-        'transition-colors hover:bg-accent hover:text-accent-foreground',
-        isSelected && 'bg-accent text-accent-foreground font-medium'
-      )}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={0}
-    >
-      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted">
-        <User className="h-3.5 w-3.5 text-muted-foreground" />
-      </div>
-      <span className="truncate">{character.name}</span>
-      {character.archetype && (
-        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-          {character.archetype}
-        </span>
-      )}
-    </div>
-  );
-}
 
 /**
  * Collapsible section wrapper for sidebar sections.
@@ -159,7 +106,7 @@ function CharactersSection({
     >
       <div className="mt-1 space-y-0.5">
         {displayedCharacters.map((character) => (
-          <MiniCharacterItem
+          <DraggableCharacterItem
             key={character.id}
             character={character}
             isSelected={character.id === selectedCharacterId}

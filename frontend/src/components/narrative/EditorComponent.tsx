@@ -4,10 +4,12 @@
  * Why: Provides a WYSIWYG editing experience for story content, with a
  * toolbar for common formatting operations and shadcn/ui styling for
  * consistent design system integration. Supports streaming text insertion
- * from LLM generation via SSE.
+ * from LLM generation via SSE. Also supports drag-and-drop character
+ * mentions from the sidebar.
  */
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { useDroppable } from '@dnd-kit/core';
 import { Bold, Italic, Heading1, Heading2, Sparkles, Loader2, Square } from 'lucide-react';
 import { useCallback, useEffect, useRef } from 'react';
 
@@ -16,6 +18,15 @@ import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useStoryStream, type StreamRequest } from '@/hooks/useStoryStream';
+import { CharacterMention } from '@/components/editor/CharacterMention';
+
+/**
+ * Character mention insertion data.
+ */
+export interface CharacterMentionInsert {
+  characterId: string;
+  characterName: string;
+}
 
 interface EditorComponentProps {
   /** Initial content for the editor (HTML string) */
@@ -32,6 +43,12 @@ interface EditorComponentProps {
   prompt?: string | undefined;
   /** Context for generation (optional) */
   context?: string | undefined;
+  /** Whether a character is currently being dragged over */
+  isDropTarget?: boolean | undefined;
+  /** Pending character mention to insert (from drag-and-drop) */
+  pendingMention?: CharacterMentionInsert | null | undefined;
+  /** Called after mention is inserted */
+  onMentionInserted?: (() => void) | undefined;
 }
 
 /**
@@ -162,9 +179,17 @@ export function EditorComponent({
   sceneId,
   prompt,
   context,
+  isDropTarget = false,
+  pendingMention,
+  onMentionInserted,
 }: EditorComponentProps) {
   // Track the cursor position where we'll insert streamed text
   const insertPositionRef = useRef<number | null>(null);
+
+  // Setup droppable zone for character drag-and-drop
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: 'editor-drop-zone',
+  });
 
   /**
    * Insert streamed content at the cursor position.
@@ -223,7 +248,7 @@ export function EditorComponent({
   });
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, CharacterMention],
     content: initialContent,
     editable: editable && !isStreaming, // Disable editing during streaming
     onUpdate: ({ editor }) => {
@@ -242,6 +267,31 @@ export function EditorComponent({
   useEffect(() => {
     editorRef.current = editor;
   }, [editor]);
+
+  /**
+   * Insert character mention when pendingMention changes.
+   *
+   * Why: When a character is dropped on the editor, the parent component
+   * sets pendingMention with the character data. This effect picks up
+   * that data and inserts it as a mention node at the cursor position.
+   */
+  useEffect(() => {
+    if (!pendingMention || !editor) return;
+
+    // Insert the character mention at the current cursor position
+    editor
+      .chain()
+      .focus()
+      .insertCharacterMention({
+        characterId: pendingMention.characterId,
+        characterName: pendingMention.characterName,
+      })
+      .insertContent(' ') // Add space after mention
+      .run();
+
+    // Notify parent that mention was inserted
+    onMentionInserted?.();
+  }, [pendingMention, editor, onMentionInserted]);
 
   /**
    * Start generation at current cursor position.
@@ -275,11 +325,16 @@ export function EditorComponent({
     insertPositionRef.current = null;
   }, [stopStream]);
 
+  // Combine drop target state from props and local isOver
+  const showDropIndicator = isDropTarget || isOver;
+
   return (
     <div
+      ref={setDroppableRef}
       className={cn(
         'flex flex-col overflow-hidden rounded-md border border-input bg-background',
         'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+        showDropIndicator && 'ring-2 ring-primary ring-offset-2',
         className
       )}
       data-testid="narrative-editor"
@@ -291,6 +346,16 @@ export function EditorComponent({
         onGenerate={handleGenerate}
         onStopGenerate={handleStopGenerate}
       />
+
+      {/* Drop indicator */}
+      {showDropIndicator && (
+        <div
+          className="flex items-center gap-2 border-b border-primary bg-primary/10 px-3 py-2 text-sm text-primary"
+          data-testid="drop-indicator"
+        >
+          <span>Drop to insert @mention</span>
+        </div>
+      )}
 
       {/* Generating indicator */}
       {isStreaming && (

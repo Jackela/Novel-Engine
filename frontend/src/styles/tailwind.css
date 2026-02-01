@@ -90,4 +90,20 @@
   .weaver-node-alert {
     @apply absolute right-2 top-2 text-weaver-error drop-shadow;
   }
+
+  /* Character mention styles for Tiptap editor */
+  .character-mention {
+    @apply inline-flex items-center rounded-sm bg-primary/10 px-1 py-0.5 text-primary font-medium;
+    /* Subtle box shadow for depth */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .character-mention:hover {
+    @apply bg-primary/20;
+  }
+
+  /* Ensure prose styles don't override mention */
+  .prose .character-mention {
+    @apply text-primary no-underline;
+  }
 }
