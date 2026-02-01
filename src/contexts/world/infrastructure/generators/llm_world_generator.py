@@ -810,6 +810,181 @@ Return valid JSON only with the exact structure specified in the system prompt."
             body_language=payload.get("body_language"),
         )
 
+    # ==================== Relationship History Generation ====================
+
+    def generate_relationship_history(
+        self,
+        character_a: "CharacterData",
+        character_b: "CharacterData",
+        trust: int = 50,
+        romance: int = 0,
+    ) -> "RelationshipHistoryResult":
+        """Generate backstory explaining the relationship between two characters.
+
+        Creates a compelling narrative that explains how the two characters came
+        to have their current trust and romance levels. The generated history
+        includes their first meeting, defining moments, and current status.
+
+        Why this matters: Every significant relationship in a narrative needs
+        depth and history. Rather than requiring writers to manually create
+        backstories for every character pair, this method infers plausible
+        histories from the current relationship metrics.
+
+        Args:
+            character_a: First character in the relationship.
+            character_b: Second character in the relationship.
+            trust: Current trust level between them (0-100). Default 50 is neutral.
+            romance: Current romance level between them (0-100). Default 0 is none.
+
+        Returns:
+            RelationshipHistoryResult containing the generated backstory,
+            first meeting, defining moment, and current status.
+
+        Example:
+            >>> result = generator.generate_relationship_history(
+            ...     character_a=hero_data,
+            ...     character_b=mentor_data,
+            ...     trust=85,
+            ...     romance=0
+            ... )
+            >>> print(result.backstory)
+            "They first met when Marcus saved Elena from bandits..."
+        """
+        log = logger.bind(
+            character_a=character_a.name,
+            character_b=character_b.name,
+            trust=trust,
+            romance=romance,
+        )
+        log.info("Starting relationship history generation")
+
+        try:
+            system_prompt = self._load_relationship_history_prompt()
+            user_prompt = self._build_relationship_history_user_prompt(
+                character_a, character_b, trust, romance
+            )
+
+            response_text = self._call_gemini(system_prompt, user_prompt)
+            result = self._parse_relationship_history_response(response_text)
+
+            log.info("Relationship history generation completed")
+            return result
+
+        except Exception as exc:
+            log.error("Relationship history generation failed", error=str(exc))
+            return RelationshipHistoryResult(
+                backstory="Unable to generate relationship history.",
+                error=str(exc),
+            )
+
+    def _load_relationship_history_prompt(self) -> str:
+        """Load the relationship history generation system prompt from YAML file.
+
+        Returns:
+            The system prompt string for relationship history generation.
+
+        Raises:
+            ValueError: If system_prompt key is missing in the YAML file.
+            FileNotFoundError: If the prompt file doesn't exist.
+        """
+        prompt_path = (
+            Path(__file__).resolve().parents[1]
+            / "prompts"
+            / "relationship_history_gen.yaml"
+        )
+        with prompt_path.open("r", encoding="utf-8") as handle:
+            payload = yaml.safe_load(handle) or {}
+        prompt = str(payload.get("system_prompt", "")).strip()
+        if not prompt:
+            raise ValueError("Missing system_prompt in relationship_history_gen.yaml")
+        return prompt
+
+    def _build_relationship_history_user_prompt(
+        self,
+        character_a: "CharacterData",
+        character_b: "CharacterData",
+        trust: int,
+        romance: int,
+    ) -> str:
+        """Build the user prompt for relationship history generation.
+
+        Injects both characters' information and current relationship metrics
+        into a structured prompt that guides the LLM to produce a coherent
+        backstory explaining their relationship dynamics.
+
+        Args:
+            character_a: First character data.
+            character_b: Second character data.
+            trust: Current trust level (0-100).
+            romance: Current romance level (0-100).
+
+        Returns:
+            Formatted user prompt string.
+        """
+
+        def format_character_section(char: "CharacterData", label: str) -> str:
+            """Format a single character's information for the prompt."""
+            # Build psychology section
+            psychology_section = "Not specified"
+            if char.psychology:
+                psych = char.psychology
+                psychology_section = (
+                    f"Openness: {psych.get('openness', 50)}, "
+                    f"Conscientiousness: {psych.get('conscientiousness', 50)}, "
+                    f"Extraversion: {psych.get('extraversion', 50)}, "
+                    f"Agreeableness: {psych.get('agreeableness', 50)}, "
+                    f"Neuroticism: {psych.get('neuroticism', 50)}"
+                )
+
+            # Build traits section
+            traits_section = "None specified"
+            if char.traits:
+                traits_section = ", ".join(char.traits)
+
+            return f"""{label}:
+  Name: {char.name}
+  Psychology (Big Five): {psychology_section}
+  Traits: {traits_section}"""
+
+        char_a_section = format_character_section(character_a, "CHARACTER A")
+        char_b_section = format_character_section(character_b, "CHARACTER B")
+
+        return f"""Generate a relationship history for these two characters:
+
+{char_a_section}
+
+{char_b_section}
+
+CURRENT RELATIONSHIP METRICS:
+  Trust Level: {trust}/100
+  Romance Level: {romance}/100
+
+Based on these personalities and their current trust/romance levels, create a
+backstory that explains how they got to this point. Consider their psychology
+and traits when determining what conflicts or connections would naturally arise.
+
+Return valid JSON only with the exact structure specified in the system prompt."""
+
+    def _parse_relationship_history_response(
+        self, content: str
+    ) -> "RelationshipHistoryResult":
+        """Parse the LLM response into a RelationshipHistoryResult.
+
+        Args:
+            content: Raw text response from the LLM.
+
+        Returns:
+            RelationshipHistoryResult with parsed backstory data.
+        """
+        payload = self._extract_json(content)
+
+        return RelationshipHistoryResult(
+            backstory=str(payload.get("backstory", "Unable to generate backstory.")),
+            first_meeting=payload.get("first_meeting"),
+            defining_moment=payload.get("defining_moment"),
+            current_status=payload.get("current_status"),
+        )
+
 
 @dataclass
 class CharacterData:
@@ -896,6 +1071,52 @@ class DialogueResult:
             result["internal_thought"] = self.internal_thought
         if self.body_language:
             result["body_language"] = self.body_language
+        if self.error:
+            result["error"] = self.error
+        return result
+
+
+@dataclass
+class RelationshipHistoryResult:
+    """Result of relationship history generation.
+
+    Contains the generated backstory along with structured elements that
+    explain how two characters developed their current relationship dynamics.
+
+    Why generate backstory: Relationships in narratives need depth. Rather than
+    having writers manually create history for every character pair, the AI can
+    infer plausible backstories from the current trust/romance metrics. This
+    creates consistent, believable relationship histories on demand.
+
+    Attributes:
+        backstory: A 2-4 paragraph narrative explaining the relationship history.
+        first_meeting: How the characters first encountered each other.
+        defining_moment: The pivotal event that shaped their current dynamic.
+        current_status: A summary of where they currently stand.
+        error: Error message if generation failed.
+    """
+
+    backstory: str
+    first_meeting: Optional[str] = None
+    defining_moment: Optional[str] = None
+    current_status: Optional[str] = None
+    error: Optional[str] = None
+
+    def is_error(self) -> bool:
+        """Check if this result represents an error."""
+        return self.error is not None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format for API responses."""
+        result: Dict[str, Any] = {
+            "backstory": self.backstory,
+        }
+        if self.first_meeting:
+            result["first_meeting"] = self.first_meeting
+        if self.defining_moment:
+            result["defining_moment"] = self.defining_moment
+        if self.current_status:
+            result["current_status"] = self.current_status
         if self.error:
             result["error"] = self.error
         return result

@@ -199,7 +199,7 @@
         "Test: Mock output."
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["CHAR-025"]
     },

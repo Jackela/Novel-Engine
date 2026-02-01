@@ -1,0 +1,34 @@
+# Ralph Progress - War Zone 2: Character Evolution
+Started: 2026-02-01
+---
+
+## Codebase Patterns (from War Zone 1)
+
+### Domain Layer
+- CharacterProfile is frozen dataclass (immutable) - add mutable state to Character aggregate instead
+- Relationship entity at src/contexts/world/domain/entities/relationship.py - has strength (0-100), metadata, is_active, description
+- World domain entities inherit from base Entity class with id, created_at, updated_at, version fields
+- Return `Result<T, E>` patterns instead of throwing raw exceptions for logic errors
+- Inventory management belongs on Character aggregate (mutable state), not CharacterProfile (frozen)
+
+### API Layer
+- Register new routers in BOTH app.py AND main_api_server.py (each with and without /api prefix)
+- FastAPI route order matters - static routes (like /search) must be defined BEFORE parameterized routes (like /{id})
+- Use Pydantic schemas in src/api/schemas.py for request/response types
+
+### Frontend Layer
+- Frontend typecheck: `npm run type-check` (with hyphen)
+- Use shadcn/ui sonner for toasts (adapted for React+Vite, not Next.js)
+- When components exceed 80 lines, extract sub-components and custom hooks
+- @xyflow/react v12 (not reactflow) for graph visualization
+- With `exactOptionalPropertyTypes: true`, optional props must use `prop?: T | undefined`
+- shadcn/ui components need separate installation: `npx shadcn@latest add <component> -y`
+- Use TanStack Query with staleTime for caching API responses
+
+### Testing
+- MOCK_LLM flag supports "true", "1", "yes" (case-insensitive)
+- Use `page.route()` for E2E API mocking (not MSW)
+- Test file naming: test_<entity>.py or test_<feature>.py
+
+---
+
