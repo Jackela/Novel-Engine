@@ -27,3 +27,6 @@ export {
   deleteScene,
   moveScene,
 } from './narrativeApi';
+
+// Social Network Analysis API
+export { getSocialAnalysis, getCharacterCentrality } from './socialApi';

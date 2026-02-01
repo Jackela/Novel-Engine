@@ -879,3 +879,36 @@ export type CharacterGoal = z.infer<typeof CharacterGoalSchema>;
 export type CharacterGoalsResponse = z.infer<typeof CharacterGoalsResponseSchema>;
 export type CharacterGoalCreateRequest = z.infer<typeof CharacterGoalCreateRequestSchema>;
 export type CharacterGoalUpdateRequest = z.infer<typeof CharacterGoalUpdateRequestSchema>;
+
+// === Social Network Analysis Schemas (CHAR-031/CHAR-032) ===
+
+/**
+ * Centrality metrics for a single character in the social network.
+ * Used to identify key characters based on their relationship patterns.
+ */
+export const CharacterCentralitySchema = z.object({
+  character_id: z.string(),
+  relationship_count: z.number().int().min(0),
+  positive_count: z.number().int().min(0),
+  negative_count: z.number().int().min(0),
+  average_trust: z.number().min(0).max(100),
+  average_romance: z.number().min(0).max(100),
+  centrality_score: z.number().min(0).max(100),
+});
+
+/**
+ * Complete social network analysis result.
+ * Provides graph analytics for the character relationship network.
+ */
+export const SocialAnalysisResponseSchema = z.object({
+  character_centralities: z.record(z.string(), CharacterCentralitySchema),
+  most_connected: z.string().nullable().optional(),
+  most_hated: z.string().nullable().optional(),
+  most_loved: z.string().nullable().optional(),
+  total_relationships: z.number().int().min(0),
+  total_characters: z.number().int().min(0),
+  network_density: z.number().min(0).max(1),
+});
+
+export type CharacterCentrality = z.infer<typeof CharacterCentralitySchema>;
+export type SocialAnalysisResponse = z.infer<typeof SocialAnalysisResponseSchema>;

@@ -1401,4 +1401,186 @@ export const handlers = [
       error: null,
     });
   }),
+
+  // === Social Network Analysis (CHAR-031/CHAR-032) ===
+  http.get(`${API_PREFIX}/social/analysis`, async () => {
+    await withLatency();
+
+    // Compute social analysis from mock relationships (character-to-character only)
+    const charRelationships = mockRelationships.filter(
+      (r) => r.source_type === 'character' && r.target_type === 'character'
+    );
+
+    // Unique characters in relationships
+    const characterIds = new Set<string>();
+    charRelationships.forEach((r) => {
+      characterIds.add(r.source_id);
+      characterIds.add(r.target_id);
+    });
+
+    // Calculate centrality for each character
+    interface CentralityMetrics {
+      character_id: string;
+      relationship_count: number;
+      positive_count: number;
+      negative_count: number;
+      average_trust: number;
+      average_romance: number;
+      centrality_score: number;
+    }
+
+    const centralities: Record<string, CentralityMetrics> = {};
+    const positiveTypes = ['ally', 'family', 'mentor', 'romantic'];
+    const negativeTypes = ['enemy', 'rival'];
+
+    characterIds.forEach((charId) => {
+      const related = charRelationships.filter(
+        (r) => r.source_id === charId || r.target_id === charId
+      );
+
+      const positiveCount = related.filter((r) =>
+        positiveTypes.includes(r.relationship_type)
+      ).length;
+      const negativeCount = related.filter((r) =>
+        negativeTypes.includes(r.relationship_type)
+      ).length;
+
+      const avgTrust =
+        related.length > 0
+          ? related.reduce((sum, r) => sum + r.trust, 0) / related.length
+          : 0;
+      const avgRomance =
+        related.length > 0
+          ? related.reduce((sum, r) => sum + r.romance, 0) / related.length
+          : 0;
+
+      centralities[charId] = {
+        character_id: charId,
+        relationship_count: related.length,
+        positive_count: positiveCount,
+        negative_count: negativeCount,
+        average_trust: avgTrust,
+        average_romance: avgRomance,
+        centrality_score: 0, // computed after
+      };
+    });
+
+    // Normalize centrality scores (highest relationship count = 100)
+    const maxRelCount = Math.max(
+      ...Object.values(centralities).map((c) => c.relationship_count),
+      1
+    );
+    Object.values(centralities).forEach((c) => {
+      c.centrality_score = (c.relationship_count / maxRelCount) * 100;
+    });
+
+    // Find most connected (highest relationship_count)
+    const mostConnected = Object.values(centralities).reduce(
+      (max, c) => (c.relationship_count > (max?.relationship_count ?? 0) ? c : max),
+      null as CentralityMetrics | null
+    );
+
+    // Find most hated (most negative relationships)
+    const mostHated = Object.values(centralities).reduce(
+      (max, c) => (c.negative_count > (max?.negative_count ?? 0) ? c : max),
+      null as CentralityMetrics | null
+    );
+
+    // Find most loved (highest weighted score: trust * 0.6 + romance * 0.4)
+    const mostLoved = Object.values(centralities).reduce((max, c) => {
+      const score = c.average_trust * 0.6 + c.average_romance * 0.4;
+      const maxScore = max
+        ? max.average_trust * 0.6 + max.average_romance * 0.4
+        : 0;
+      return score > maxScore ? c : max;
+    }, null as CentralityMetrics | null);
+
+    // Network density
+    const totalChars = characterIds.size;
+    const maxPossibleEdges = totalChars * (totalChars - 1);
+    const density =
+      maxPossibleEdges > 0
+        ? Math.min(charRelationships.length / maxPossibleEdges, 1)
+        : 0;
+
+    return HttpResponse.json({
+      character_centralities: centralities,
+      most_connected: mostConnected?.character_id ?? null,
+      most_hated: mostHated?.character_id ?? null,
+      most_loved: mostLoved?.character_id ?? null,
+      total_relationships: charRelationships.length,
+      total_characters: totalChars,
+      network_density: density,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/social/analysis/:characterId`, async ({ params }) => {
+    await withLatency();
+
+    const { characterId } = params;
+    if (typeof characterId !== 'string') {
+      return HttpResponse.json({ detail: 'Invalid character ID' }, { status: 400 });
+    }
+
+    // Get relationships for this character
+    const charRelationships = mockRelationships.filter(
+      (r) =>
+        r.source_type === 'character' &&
+        r.target_type === 'character' &&
+        (r.source_id === characterId || r.target_id === characterId)
+    );
+
+    if (charRelationships.length === 0) {
+      return HttpResponse.json(
+        { detail: `No relationships found for character: ${characterId}` },
+        { status: 404 }
+      );
+    }
+
+    const positiveTypes = ['ally', 'family', 'mentor', 'romantic'];
+    const negativeTypes = ['enemy', 'rival'];
+
+    const positiveCount = charRelationships.filter((r) =>
+      positiveTypes.includes(r.relationship_type)
+    ).length;
+    const negativeCount = charRelationships.filter((r) =>
+      negativeTypes.includes(r.relationship_type)
+    ).length;
+
+    const avgTrust =
+      charRelationships.reduce((sum, r) => sum + r.trust, 0) /
+      charRelationships.length;
+    const avgRomance =
+      charRelationships.reduce((sum, r) => sum + r.romance, 0) /
+      charRelationships.length;
+
+    // Get max relationship count for normalization
+    const allCharRelationships = mockRelationships.filter(
+      (r) => r.source_type === 'character' && r.target_type === 'character'
+    );
+    const charIds = new Set<string>();
+    allCharRelationships.forEach((r) => {
+      charIds.add(r.source_id);
+      charIds.add(r.target_id);
+    });
+    const maxRelCount = Math.max(
+      ...Array.from(charIds).map(
+        (id) =>
+          allCharRelationships.filter(
+            (r) => r.source_id === id || r.target_id === id
+          ).length
+      ),
+      1
+    );
+
+    return HttpResponse.json({
+      character_id: characterId,
+      relationship_count: charRelationships.length,
+      positive_count: positiveCount,
+      negative_count: negativeCount,
+      average_trust: avgTrust,
+      average_romance: avgRomance,
+      centrality_score: (charRelationships.length / maxRelCount) * 100,
+    });
+  }),
 ];

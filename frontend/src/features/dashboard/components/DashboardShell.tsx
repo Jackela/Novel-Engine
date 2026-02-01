@@ -17,6 +17,7 @@ const TimelinePanel = lazy(() => import('./panels/TimelinePanel'));
 const NarrativePanel = lazy(() => import('./panels/NarrativePanel'));
 const AnalyticsPanel = lazy(() => import('./panels/AnalyticsPanel'));
 const SignalsPanel = lazy(() => import('./panels/SignalsPanel'));
+const SocialStatsWidget = lazy(() => import('./panels/SocialStatsWidget'));
 
 // Panel loading fallback
 function PanelFallback() {
@@ -146,6 +147,13 @@ export function DashboardShell() {
         <div>
           <Suspense fallback={<PanelFallback />}>
             <SignalsPanel />
+          </Suspense>
+        </div>
+
+        {/* Social Stats Widget - Small, spans 2 cols */}
+        <div className="lg:col-span-2">
+          <Suspense fallback={<PanelFallback />}>
+            <SocialStatsWidget />
           </Suspense>
         </div>
       </div>

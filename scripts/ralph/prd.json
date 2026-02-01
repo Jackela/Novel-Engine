@@ -155,7 +155,7 @@
         "Browser Verification: Add/Complete goals."
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": ["CHAR-029"]
     },
@@ -170,7 +170,7 @@
         "Test: `pytest` on a subgraph."
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["WORLD-003"]
     },
@@ -184,7 +184,7 @@
         "Browser Verification: Stats match graph."
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["CHAR-031"]
     },

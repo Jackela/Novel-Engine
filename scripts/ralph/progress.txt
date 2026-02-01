@@ -24,6 +24,70 @@ Started: Sun Feb  1 17:25:24     2026
 - Goals stored in character's structured_data.goals via workspace_character_store (same pattern as memories)
 - Goal state transitions create new instances (immutable): goal.complete() returns new CharacterGoal with status=COMPLETED
 
+- ScrollArea component is in `src/components/ui` (not `src/shared/components/ui`)
+- CharacterDetailSchema goals field uses inline schema definition to avoid circular dependency
+- Application services live in `src/contexts/{context}/application/services/` directory
+- SocialGraphService analyzes character-to-character relationships only (filters out faction/location memberships)
+- Social network analysis uses degree centrality (relationship count) normalized to 0-100 scale
+- "Most loved" score uses weighted formula: trust * 0.6 + romance * 0.4
+- Dashboard panels are lazy-loaded via React.lazy() and wrapped in Suspense with PanelFallback
+- Social API client functions live in `frontend/src/lib/api/socialApi.ts` and export through index.ts
+- Mock handlers for social analysis compute metrics dynamically from mockRelationships array
+- Character ID display names are formatted by splitting on `-` and capitalizing each word
+
+---
+
+## [CHAR-032] - 2026-02-01
+- What was implemented: SocialStatsWidget dashboard panel displaying social network statistics. Shows "Most Connected", "Most Hated", and "Most Loved" characters with icons and color-coded backgrounds. Includes network summary showing total characters and relationships count. Component fetches data from /api/social/analysis endpoint.
+- Files changed:
+  - `frontend/src/types/schemas.ts` (modified - CharacterCentralitySchema, SocialAnalysisResponseSchema)
+  - `frontend/src/lib/api/socialApi.ts` (new - getSocialAnalysis, getCharacterCentrality)
+  - `frontend/src/lib/api/index.ts` (modified - export social API functions)
+  - `frontend/src/features/dashboard/components/panels/SocialStatsWidget.tsx` (new - dashboard widget)
+  - `frontend/src/features/dashboard/components/DashboardShell.tsx` (modified - add SocialStatsWidget to grid)
+  - `frontend/src/mocks/handlers.ts` (modified - social analysis mock endpoints)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - Dashboard panels use lazy loading pattern: `const Panel = lazy(() => import('./panels/Panel'))`
+  - Card components from `@/shared/components/ui/Card` provide consistent dashboard styling
+  - Mock handlers can compute derived metrics (centrality, averages) from base mockRelationships data
+  - Character IDs like `aria-shadowbane` are formatted to display names by splitting on `-` and capitalizing
+  - Social stats use icon + label + value layout with colored backgrounds (bg-{color}-500/10)
+---
+
+## [CHAR-031] - 2026-02-01
+- What was implemented: Social Network Analysis service that calculates centrality metrics for character relationship networks. Created SocialGraphService with analyze_social_network() and get_character_centrality() methods. Computes per-character metrics (relationship_count, positive/negative counts, average_trust, average_romance, centrality_score). Identifies "most connected", "most hated", and "most loved" characters. Calculates network density. Added REST API endpoints GET /api/social/analysis and GET /api/social/analysis/{character_id}.
+- Files changed:
+  - `src/contexts/world/application/services/__init__.py` (new - exports service and dataclasses)
+  - `src/contexts/world/application/services/social_graph_service.py` (new - SocialGraphService with CharacterCentrality and SocialAnalysisResult dataclasses)
+  - `src/api/schemas.py` (modified - CharacterCentralitySchema, SocialAnalysisResponse)
+  - `src/api/routers/social.py` (new - /social/analysis endpoints)
+  - `src/api/main_api_server.py` (modified - register social router)
+  - `tests/unit/contexts/world/application/__init__.py` (new)
+  - `tests/unit/contexts/world/application/test_social_graph_service.py` (new - 22 tests)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - Application services go in `src/contexts/{context}/application/services/` following DDD layering
+  - Social analysis filters to CHARACTER-to-CHARACTER relationships only via find_by_entity_types()
+  - Centrality is normalized: highest relationship_count = 100, others proportional
+  - Network density = actual_edges / max_possible_edges (capped at 1.0 for directed overcounting)
+  - "Most loved" uses weighted score: 60% trust + 40% romance to balance universal trust vs specific romance
+---
+
+## [CHAR-030] - 2026-02-01
+- What was implemented: Frontend Goals Tracker displaying character goals as a checkbox-style list. Created GoalsList.tsx component with status indicators (circle, check, X icons), strikethrough for completed/failed goals, urgency badges, and sorting (active goals first by urgency, then resolved by completion date). Added Goals tab to CharacterDetailsDialog (now 5 tabs). Added CharacterGoalSchema and related types to frontend/src/types/schemas.ts. Updated mock handlers with sample goal data for both characters.
+- Files changed:
+  - `frontend/src/features/characters/components/GoalsList.tsx` (new - scrollable goal list component)
+  - `frontend/src/features/characters/CharacterDetailsDialog.tsx` (modified - added Goals tab)
+  - `frontend/src/types/schemas.ts` (modified - CharacterGoal, GoalStatus, GoalUrgency schemas)
+  - `frontend/src/mocks/handlers.ts` (modified - sample goals for testing)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - When adding new tabs to CharacterDetailsDialog, update grid-cols-N in TabsList to match tab count
+  - Goals are sorted: CRITICAL > HIGH > MEDIUM > LOW for active, then by completed_at for resolved
+  - Frontend goal schema uses inline definition in CharacterDetailSchema to avoid ordering issues
+  - Badge variants can use className with custom bg-/text- utilities for status colors
+  - ScrollArea component is in `@/components/ui` not `@/shared/components/ui`
 ---
 
 ## [CHAR-029] - 2026-02-01
