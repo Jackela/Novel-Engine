@@ -394,6 +394,17 @@ export const RelationshipTypeSchema = z.enum([
 ]);
 
 /**
+ * Interaction log schema for relationship history.
+ */
+export const InteractionLogSchema = z.object({
+  interaction_id: z.string(),
+  summary: z.string(),
+  trust_change: z.number().min(-100).max(100),
+  romance_change: z.number().min(-100).max(100),
+  timestamp: z.string(),
+});
+
+/**
  * Relationship response schema matching backend RelationshipResponse.
  */
 export const RelationshipResponseSchema = z.object({
@@ -406,6 +417,9 @@ export const RelationshipResponseSchema = z.object({
   description: z.string(),
   strength: z.number().min(0).max(100),
   is_active: z.boolean(),
+  trust: z.number().min(0).max(100).default(50),
+  romance: z.number().min(0).max(100).default(0),
+  interaction_history: z.array(InteractionLogSchema).default([]),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -420,6 +434,7 @@ export const RelationshipListResponseSchema = z.object({
 
 export type EntityType = z.infer<typeof EntityTypeSchema>;
 export type RelationshipType = z.infer<typeof RelationshipTypeSchema>;
+export type InteractionLog = z.infer<typeof InteractionLogSchema>;
 export type RelationshipResponse = z.infer<typeof RelationshipResponseSchema>;
 export type RelationshipListResponse = z.infer<typeof RelationshipListResponseSchema>;
 

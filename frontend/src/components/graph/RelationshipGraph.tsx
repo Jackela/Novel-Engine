@@ -20,10 +20,14 @@ import {
   type OnSelectionChangeFunc,
 } from '@xyflow/react';
 import Dagre from '@dagrejs/dagre';
+import { X, Users } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
 import { CharacterNode, type CharacterNodeType, type CharacterNodeData } from './nodes/CharacterNode';
+import { RelationshipStatusBars } from './RelationshipStatusBars';
+import { Button, Badge } from '@/shared/components/ui';
 import type { CharacterSummary, RelationshipResponse, RelationshipType } from '@/types/schemas';
+import { cn } from '@/lib/utils';
 
 /**
  * Map relationship types to edge colors.
@@ -135,13 +139,27 @@ function applyDagreLayout(
   });
 }
 
+/** Extended edge data including relationship metrics */
+interface RelationshipEdgeData extends Record<string, unknown> {
+  relationshipType: RelationshipType;
+  strength: number;
+  trust: number;
+  romance: number;
+  description: string;
+  sourceName: string;
+  targetName: string;
+}
+
 /**
  * Convert API data to React Flow nodes and edges.
  */
 function transformDataToGraph(
   characters: CharacterSummary[],
   relationships: RelationshipResponse[]
-): { nodes: CharacterNodeType[]; edges: Edge[] } {
+): { nodes: CharacterNodeType[]; edges: Edge<RelationshipEdgeData>[] } {
+  // Create a map for quick character lookup
+  const characterMap = new Map(characters.map((c) => [c.id, c]));
+
   // Create a set of character IDs that are involved in relationships
   const involvedCharacterIds = new Set<string>();
   relationships.forEach((rel) => {
@@ -167,8 +185,8 @@ function transformDataToGraph(
       };
     });
 
-  // Create edges from relationships
-  const edges: Edge[] = relationships.map((rel) => ({
+  // Create edges from relationships with extended data
+  const edges: Edge<RelationshipEdgeData>[] = relationships.map((rel) => ({
     id: rel.id,
     source: rel.source_id,
     target: rel.target_id,
@@ -178,7 +196,15 @@ function transformDataToGraph(
     style: getEdgeStyle(rel.relationship_type, rel.strength),
     labelStyle: { fill: 'hsl(var(--foreground))', fontWeight: 500, fontSize: 11 },
     labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 },
-    data: { relationshipType: rel.relationship_type, strength: rel.strength },
+    data: {
+      relationshipType: rel.relationship_type,
+      strength: rel.strength,
+      trust: rel.trust,
+      romance: rel.romance,
+      description: rel.description,
+      sourceName: characterMap.get(rel.source_id)?.name ?? 'Unknown',
+      targetName: characterMap.get(rel.target_id)?.name ?? 'Unknown',
+    },
   }));
 
   // Apply dagre layout
@@ -196,12 +222,14 @@ export interface RelationshipGraphProps {
 
 /**
  * RelationshipGraph renders an interactive node graph for entity relationships.
- * Fetches character and relationship data from the API.
+ * Fetches character and relationship data from the API. Clicking an edge shows
+ * detailed relationship metrics with Trust and Romance status bars.
  */
 export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<CharacterNodeType>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<RelationshipEdgeData>>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge<RelationshipEdgeData> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -243,13 +271,28 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
 
   /** Handle node selection changes */
   const onSelectionChange: OnSelectionChangeFunc = useCallback(
-    ({ nodes: selectedNodes }) => {
+    ({ nodes: selectedNodes, edges: selectedEdges }) => {
+      // Handle node selection
       const selected = selectedNodes.length > 0 ? selectedNodes[0]?.id ?? null : null;
       setSelectedNodeId(selected);
       onNodeSelect?.(selected);
+
+      // Handle edge selection
+      if (selectedEdges.length > 0) {
+        const edge = selectedEdges[0] as Edge<RelationshipEdgeData>;
+        setSelectedEdge(edge);
+      } else if (selectedNodes.length === 0) {
+        // Only clear edge when nothing is selected
+        setSelectedEdge(null);
+      }
     },
     [onNodeSelect]
   );
+
+  /** Close the relationship detail panel */
+  const handleCloseDetail = useCallback(() => {
+    setSelectedEdge(null);
+  }, []);
 
   /** Theme-aware colors for MiniMap */
   const minimapStyle = useMemo(
@@ -293,7 +336,7 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
   }
 
   return (
-    <div className={className} data-testid="relationship-graph">
+    <div className={cn('relative', className)} data-testid="relationship-graph">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -308,6 +351,7 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
         nodesDraggable
         nodesConnectable={false}
         elementsSelectable
+        edgesFocusable
       >
         <Background
           variant={BackgroundVariant.Dots}
@@ -331,6 +375,59 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
           className="!rounded-md !border-border"
         />
       </ReactFlow>
+
+      {/* Relationship Detail Panel */}
+      {selectedEdge && selectedEdge.data && (
+        <div
+          className="absolute bottom-4 left-4 right-4 rounded-lg border border-border bg-card p-4 shadow-lg"
+          data-testid="relationship-detail-panel"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 space-y-4">
+              {/* Header with character names */}
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">
+                  {selectedEdge.data.sourceName ?? 'Unknown'}{' '}
+                  <span className="text-muted-foreground">&</span>{' '}
+                  {selectedEdge.data.targetName ?? 'Unknown'}
+                </span>
+                <Badge
+                  variant="secondary"
+                  style={{
+                    backgroundColor: RELATIONSHIP_COLORS[selectedEdge.data.relationshipType] + '20',
+                    color: RELATIONSHIP_COLORS[selectedEdge.data.relationshipType],
+                  }}
+                >
+                  {getRelationshipLabel(selectedEdge.data.relationshipType)}
+                </Badge>
+              </div>
+
+              {/* Description if available */}
+              {selectedEdge.data.description && (
+                <p className="text-sm text-muted-foreground">{selectedEdge.data.description}</p>
+              )}
+
+              {/* Trust and Romance bars */}
+              <RelationshipStatusBars
+                trust={selectedEdge.data.trust}
+                romance={selectedEdge.data.romance}
+              />
+            </div>
+
+            {/* Close button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={handleCloseDetail}
+              aria-label="Close detail panel"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
