@@ -211,6 +211,42 @@ export const FactionSchema = z.object({
   enemy_count: z.number(),
 });
 
+/**
+ * LocationType enum values matching backend LocationType enum.
+ * Used for rendering appropriate icons in LocationTree component.
+ */
+export const LocationTypeEnum = z.enum([
+  'continent',
+  'region',
+  'country',
+  'province',
+  'city',
+  'town',
+  'village',
+  'fortress',
+  'castle',
+  'dungeon',
+  'temple',
+  'forest',
+  'mountain',
+  'ocean',
+  'river',
+  'desert',
+  'swamp',
+  'plains',
+  'island',
+  'cave',
+  'ruins',
+  'landmark',
+  'capital',
+  'port',
+  'space_station',
+  'planet',
+  'dimension',
+]);
+
+export type LocationType = z.infer<typeof LocationTypeEnum>;
+
 export const WorldLocationSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -220,6 +256,9 @@ export const WorldLocationSchema = z.object({
   controlling_faction_id: z.string().nullable(),
   notable_features: z.array(z.string()),
   danger_level: z.string(),
+  // Hierarchy fields for tree structure
+  parent_location_id: z.string().nullable().optional(),
+  child_location_ids: z.array(z.string()).optional().default([]),
 });
 
 export const HistoryEventSchema = z.object({

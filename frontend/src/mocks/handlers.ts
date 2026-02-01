@@ -4,6 +4,7 @@ import {
   CharactersListResponseSchema,
   OrchestrationStartRequestSchema,
   type RelationshipResponse,
+  type WorldLocation,
 } from '@/types/schemas';
 
 const API_PREFIX = '/api';
@@ -175,6 +176,122 @@ const additionalCharacterSummaries: CharacterSummary[] = [
 
 // Merge additional characters into the main array
 characterSummaries.push(...additionalCharacterSummaries);
+
+// Mock locations with 3-level hierarchy for LocationTree testing
+const mockLocations: WorldLocation[] = [
+  // Root: Continent
+  {
+    id: 'loc-continent-eldara',
+    name: 'Eldara Continent',
+    description: 'A vast landmass spanning temperate to arctic regions.',
+    location_type: 'continent',
+    population: 15000000,
+    controlling_faction_id: null,
+    notable_features: ['Great Mountain Range', 'Endless Forests'],
+    danger_level: 'low',
+    parent_location_id: null,
+    child_location_ids: ['loc-region-heartlands', 'loc-region-frostpeaks'],
+  },
+  // Level 2: Regions
+  {
+    id: 'loc-region-heartlands',
+    name: 'The Heartlands',
+    description: 'Fertile plains with numerous settlements.',
+    location_type: 'region',
+    population: 5000000,
+    controlling_faction_id: null,
+    notable_features: ['River Valley', 'Golden Fields'],
+    danger_level: 'low',
+    parent_location_id: 'loc-continent-eldara',
+    child_location_ids: ['loc-city-meridian', 'loc-town-crossroads'],
+  },
+  {
+    id: 'loc-region-frostpeaks',
+    name: 'Frostpeak Mountains',
+    description: 'Treacherous mountain range with ancient ruins.',
+    location_type: 'mountain',
+    population: 50000,
+    controlling_faction_id: null,
+    notable_features: ['Frozen Waterfalls', 'Ancient Dwarf Mines'],
+    danger_level: 'high',
+    parent_location_id: 'loc-continent-eldara',
+    child_location_ids: ['loc-fortress-ironhold', 'loc-dungeon-depths'],
+  },
+  // Level 3: Cities/Towns/Fortresses
+  {
+    id: 'loc-city-meridian',
+    name: 'Meridian City',
+    description: 'The capital and largest trading hub.',
+    location_type: 'capital',
+    population: 500000,
+    controlling_faction_id: null,
+    notable_features: ['Grand Market', 'Royal Palace', 'Mage Academy'],
+    danger_level: 'low',
+    parent_location_id: 'loc-region-heartlands',
+    child_location_ids: [],
+  },
+  {
+    id: 'loc-town-crossroads',
+    name: 'Crossroads Town',
+    description: 'A bustling town at the junction of major trade routes.',
+    location_type: 'town',
+    population: 15000,
+    controlling_faction_id: null,
+    notable_features: ['Four Winds Inn', 'Weekly Market'],
+    danger_level: 'low',
+    parent_location_id: 'loc-region-heartlands',
+    child_location_ids: [],
+  },
+  {
+    id: 'loc-fortress-ironhold',
+    name: 'Ironhold Fortress',
+    description: 'An ancient dwarven stronghold carved into the mountain.',
+    location_type: 'fortress',
+    population: 5000,
+    controlling_faction_id: null,
+    notable_features: ['Great Forge', 'Deep Mines'],
+    danger_level: 'medium',
+    parent_location_id: 'loc-region-frostpeaks',
+    child_location_ids: [],
+  },
+  {
+    id: 'loc-dungeon-depths',
+    name: 'The Frozen Depths',
+    description: 'A vast underground complex filled with ancient horrors.',
+    location_type: 'dungeon',
+    population: 0,
+    controlling_faction_id: null,
+    notable_features: ['Ice Caverns', 'Lost Treasures'],
+    danger_level: 'extreme',
+    parent_location_id: 'loc-region-frostpeaks',
+    child_location_ids: [],
+  },
+  // Additional standalone location (forest)
+  {
+    id: 'loc-forest-whisper',
+    name: 'Whisperwood Forest',
+    description: 'An ancient forest filled with fey creatures.',
+    location_type: 'forest',
+    population: 1000,
+    controlling_faction_id: null,
+    notable_features: ['Fairy Circles', 'Talking Trees'],
+    danger_level: 'medium',
+    parent_location_id: null,
+    child_location_ids: ['loc-temple-moonlight'],
+  },
+  {
+    id: 'loc-temple-moonlight',
+    name: 'Temple of Moonlight',
+    description: 'A sacred elven temple hidden deep in the forest.',
+    location_type: 'temple',
+    population: 50,
+    controlling_faction_id: null,
+    notable_features: ['Lunar Altar', 'Ancient Library'],
+    danger_level: 'low',
+    parent_location_id: 'loc-forest-whisper',
+    child_location_ids: [],
+  },
+];
 
 let orchestrationState = {
   status: 'idle',
@@ -458,5 +575,34 @@ export const handlers = [
       return HttpResponse.json({ detail: 'Relationship not found' }, { status: 404 });
     }
     return HttpResponse.json(relationship);
+  }),
+
+  // === Locations API ===
+
+  http.get(`${API_PREFIX}/locations`, async () => {
+    await withLatency();
+    return HttpResponse.json({
+      locations: mockLocations,
+      total: mockLocations.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/locations/:id`, async ({ params }) => {
+    await withLatency();
+    const location = mockLocations.find((l) => l.id === params.id);
+    if (!location) {
+      return HttpResponse.json({ detail: 'Location not found' }, { status: 404 });
+    }
+    return HttpResponse.json(location);
+  }),
+
+  http.get(`${API_PREFIX}/locations/:id/children`, async ({ params }) => {
+    await withLatency();
+    const parentId = params.id as string;
+    const children = mockLocations.filter((l) => l.parent_location_id === parentId);
+    return HttpResponse.json({
+      locations: children,
+      total: children.length,
+    });
   }),
 ];
