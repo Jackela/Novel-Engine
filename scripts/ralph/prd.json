@@ -284,7 +284,7 @@
         "Browser Verification: Download starts."
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {
@@ -297,7 +297,7 @@
         "Run `npm run test:e2e`."
       ],
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["CHAR-021", "CHAR-025", "CHAR-029"]
     }

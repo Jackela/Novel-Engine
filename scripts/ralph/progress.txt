@@ -3,6 +3,7 @@ Started: Sun Feb  1 17:25:24     2026
 
 ## Codebase Patterns
 - Character aggregate uses Optional fields for mutable state (not on frozen CharacterProfile)
+- E2E tests go in `frontend/tests/e2e/` directory (Playwright config uses testMatch: ['tests/e2e/**/*.spec.ts'])
 - FactionMembers component in `frontend/src/features/factions/` - pattern: separate features per entity type
 - API client files in `frontend/src/lib/api/` follow naming pattern: `{feature}Api.ts` (e.g., factionApi.ts)
 - Zod schemas in `frontend/src/types/schemas.ts` should include enums for backend enum types (FactionType, FactionAlignment, etc.)
@@ -54,7 +55,41 @@ Started: Sun Feb  1 17:25:24     2026
 - buildSuggestionItems shows existing characters first, then "Create New" option if query >= 2 chars
 - Characters list passed from NarrativeEditorLayout to EditorComponent for @mention suggestions
 - Query client invalidation after character creation refreshes sidebar list automatically
+- Export functionality uses exportApi.ts with getCharacterRelationships, buildCharacterExportData, and downloadAsJson functions
+- JSON export includes export_version, exported_at timestamp, full character data, and relationships array
+- Download files named as `character-{sanitized-name}-{date}.json` for easy identification
 
+---
+
+## [CHAR-040] - 2026-02-02
+- What was implemented: Complete E2E Character Lifecycle Test covering the full character journey: Create -> Add Goals -> Evolve Relationship -> Generate Voice -> Export. Created comprehensive Playwright test suite with 6 test cases covering individual lifecycle steps and a complete integration journey. Includes mock API setup for guest session, characters, goals, relationships, dialogue, and export functionality.
+- Files changed:
+  - `frontend/tests/e2e/character-lifecycle.spec.ts` (new - E2E lifecycle test suite)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+  - `scripts/ralph/progress.txt` (modified - added progress entry)
+- **Learnings for future iterations:**
+  - E2E tests must go in `frontend/tests/e2e/` to be picked up by Playwright (config uses testMatch: ['tests/e2e/**/*.spec.ts'])
+  - test.describe.configure({ mode: 'serial' }) ensures tests run in order when they have shared state
+  - Playwright route interception allows dynamic mock data that persists across test steps
+  - Use page.addInitScript() for guest session setup (localStorage, sessionStorage, EventSource mock)
+  - Mock API handlers can share state via closures (e.g., characters object updated by POST and read by GET)
+  - Use test.step() for better test reporting of complex multi-step tests
+  - Flexible element selection with fallbacks handles different UI states gracefully
+---
+
+## [CHAR-039] - 2026-02-02
+- What was implemented: Character sheet JSON export functionality. Added Export button to CharacterDetailsDialog header that fetches character relationships and downloads a complete JSON file with character data and relationship graph. Created exportApi.ts with getCharacterRelationships, buildCharacterExportData, and downloadAsJson utility functions.
+- Files changed:
+  - `frontend/src/lib/api/exportApi.ts` (new - export API functions and utilities)
+  - `frontend/src/lib/api/index.ts` (modified - export exportApi functions)
+  - `frontend/src/features/characters/CharacterDetailsDialog.tsx` (modified - added Export button with loading state)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - Use DialogHeader with flex-row layout for buttons alongside title
+  - Blob + URL.createObjectURL pattern for triggering file downloads in browser
+  - Sanitize filenames by replacing non-alphanumeric chars with hyphens
+  - Mock handler `/relationships/by-entity/:entityId` already supports fetching character relationships
+  - Export data includes version and timestamp for future compatibility
 ---
 
 ## [CHAR-038] - 2026-02-02
