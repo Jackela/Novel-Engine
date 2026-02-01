@@ -59,6 +59,26 @@ const characterDetails: CharacterDetail[] = [
     inventory: [],
     metadata: {},
     structured_data: {},
+    memories: [
+      {
+        memory_id: 'mem-001',
+        content: 'The day I first saw the fractured realm from Meridian Station.',
+        importance: 9,
+        tags: ['origin', 'awakening'],
+        timestamp: '2024-01-15T10:30:00Z',
+        is_core_memory: true,
+        importance_level: 'core',
+      },
+      {
+        memory_id: 'mem-002',
+        content: 'Meeting Aldric for the first time at the Trade Hub.',
+        importance: 6,
+        tags: ['relationship', 'ally'],
+        timestamp: '2024-02-20T14:00:00Z',
+        is_core_memory: false,
+        importance_level: 'moderate',
+      },
+    ],
   },
   {
     agent_id: 'merchant-aldric',
@@ -75,6 +95,7 @@ const characterDetails: CharacterDetail[] = [
     inventory: [],
     metadata: {},
     structured_data: {},
+    memories: [],
   },
 ];
 

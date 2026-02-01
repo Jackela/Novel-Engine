@@ -10,6 +10,22 @@ export const CharacterPsychologySchema = z.object({
   neuroticism: z.number().min(0).max(100),
 });
 
+// Character Memory Schema
+// Importance scale (1-10):
+// - 1-3: Minor memories (daily routines, passing encounters)
+// - 4-6: Moderate memories (friendships, minor conflicts)
+// - 7-8: Significant memories (major life events, turning points)
+// - 9-10: Core memories (defining moments, traumas, transformations)
+export const CharacterMemorySchema = z.object({
+  memory_id: z.string(),
+  content: z.string().min(1),
+  importance: z.number().min(1).max(10),
+  tags: z.array(z.string()),
+  timestamp: z.string(),
+  is_core_memory: z.boolean(),
+  importance_level: z.enum(['minor', 'moderate', 'significant', 'core']),
+});
+
 export const CharacterSummarySchema = z.object({
   id: z.string(),
   agent_id: z.string(),
@@ -45,6 +61,7 @@ export const CharacterDetailSchema = z.object({
   metadata: z.record(z.string(), z.unknown()),
   structured_data: z.record(z.string(), z.unknown()),
   psychology: CharacterPsychologySchema.nullable().optional(),
+  memories: z.array(CharacterMemorySchema).optional().default([]),
 });
 
 export const WorkspaceCharacterCreateSchema = z.object({
@@ -313,6 +330,7 @@ export const WorldGenerationResponseSchema = z.object({
 
 export type CharacterSummary = z.infer<typeof CharacterSummarySchema>;
 export type CharacterDetail = z.infer<typeof CharacterDetailSchema>;
+export type CharacterMemory = z.infer<typeof CharacterMemorySchema>;
 export type CreateCharacterInput = z.infer<typeof WorkspaceCharacterCreateSchema>;
 export type UpdateCharacterInput = z.infer<typeof WorkspaceCharacterUpdateSchema>;
 export type OrchestrationStartRequest = z.infer<typeof OrchestrationStartRequestSchema>;

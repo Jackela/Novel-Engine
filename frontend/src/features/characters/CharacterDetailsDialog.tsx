@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { CharacterDetail } from '@/shared/types/character';
 import InventoryTab from './components/InventoryTab';
+import MemoryTimeline from './components/MemoryTimeline';
 import PsychologyChart from './components/PsychologyChart';
 
 type Props = {
@@ -26,9 +27,10 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
 
         {character ? (
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="psychology">Psychology</TabsTrigger>
+              <TabsTrigger value="memories">Memories</TabsTrigger>
               <TabsTrigger value="inventory">Inventory</TabsTrigger>
             </TabsList>
 
@@ -90,6 +92,10 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
 
             <TabsContent value="psychology" className="mt-4">
               <PsychologyChart psychology={character.psychology} />
+            </TabsContent>
+
+            <TabsContent value="memories" className="mt-4">
+              <MemoryTimeline memories={character.memories} />
             </TabsContent>
 
             <TabsContent value="inventory" className="mt-4">
