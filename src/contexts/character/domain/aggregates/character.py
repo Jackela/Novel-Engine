@@ -9,7 +9,7 @@ invariants across all character data.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ..events.character_events import (
     CharacterCreated,
@@ -31,6 +31,7 @@ from ..value_objects.character_stats import (
     CoreAbilities,
     VitalStats,
 )
+from ..value_objects.character_psychology import CharacterPsychology
 from ..value_objects.skills import SkillCategory, Skills
 
 
@@ -54,6 +55,10 @@ class Character:
     profile: CharacterProfile
     stats: CharacterStats
     skills: Skills
+
+    # Optional mutable state (not part of frozen CharacterProfile)
+    # Psychology uses the Big Five model for personality quantification
+    psychology: Optional[CharacterPsychology] = None
 
     # Entity state
     created_at: datetime = field(default_factory=datetime.now)
@@ -287,6 +292,39 @@ class Character:
             CharacterUpdated.create(
                 character_id=self.character_id,
                 updated_fields=["skills"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def update_psychology(self, new_psychology: CharacterPsychology) -> None:
+        """Update character psychology (Big Five personality traits).
+
+        Why separate from profile: CharacterProfile is frozen and represents
+        the character's base identity. Psychology can evolve based on
+        narrative events and character development.
+
+        Args:
+            new_psychology: The new CharacterPsychology value object
+
+        Raises:
+            TypeError: If new_psychology is not a CharacterPsychology instance
+        """
+        if not isinstance(new_psychology, CharacterPsychology):
+            raise TypeError(
+                f"Expected CharacterPsychology, got {type(new_psychology).__name__}"
+            )
+
+        self.psychology = new_psychology
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["psychology"],
                 old_version=self.version - 1,
                 new_version=self.version,
                 updated_at=self.updated_at,
@@ -548,7 +586,7 @@ class Character:
 
     def get_character_summary(self) -> Dict[str, Any]:
         """Get a comprehensive summary of the character."""
-        return {
+        summary = {
             "id": str(self.character_id),
             "name": self.profile.name,
             "level": self.profile.level,
@@ -565,6 +603,13 @@ class Character:
             "updated_at": self.updated_at.isoformat(),
             "version": self.version,
         }
+
+        # Include psychology if set
+        if self.psychology is not None:
+            summary["psychology"] = self.psychology.to_dict()
+            summary["psychology_summary"] = self.psychology.get_personality_summary()
+
+        return summary
 
     @classmethod
     def create_new_character(

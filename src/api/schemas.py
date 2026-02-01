@@ -170,6 +170,33 @@ class AnalyticsMetricsResponse(BaseModel):
 # === Character Schemas ===
 
 
+class CharacterPsychologySchema(BaseModel):
+    """Schema for Big Five personality model.
+
+    The Big Five (OCEAN) traits quantify personality:
+    - Openness: Appreciation for art, emotion, adventure, unusual ideas
+    - Conscientiousness: Self-discipline, act dutifully, aim for achievement
+    - Extraversion: Energy, positive emotions, assertiveness, sociability
+    - Agreeableness: Tendency to be compassionate and cooperative
+    - Neuroticism: Tendency to experience unpleasant emotions easily
+
+    All traits are scored 0-100 where:
+    - 0-30: Low
+    - 31-70: Average
+    - 71-100: High
+    """
+
+    openness: int = Field(
+        ..., ge=0, le=100, description="Openness to experience (0-100)"
+    )
+    conscientiousness: int = Field(
+        ..., ge=0, le=100, description="Conscientiousness (0-100)"
+    )
+    extraversion: int = Field(..., ge=0, le=100, description="Extraversion (0-100)")
+    agreeableness: int = Field(..., ge=0, le=100, description="Agreeableness (0-100)")
+    neuroticism: int = Field(..., ge=0, le=100, description="Neuroticism (0-100)")
+
+
 class CharacterSummary(BaseModel):
     id: str
     agent_id: str
@@ -901,6 +928,7 @@ __all__ = [
     "AnalyticsMetricsData",
     "AnalyticsMetricsResponse",
     # Character Schemas
+    "CharacterPsychologySchema",
     "CharacterSummary",
     "CharactersListResponse",
     "SimulationRequest",
