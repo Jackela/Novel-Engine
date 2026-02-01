@@ -3,10 +3,13 @@
  *
  * Why: Enables inline character references in the narrative editor,
  * allowing writers to reference world entities that can later be used
- * for context injection or character tracking. Styled with subtle
- * background highlighting for visual distinction.
+ * for context injection or character tracking. Uses ReactNodeViewRenderer
+ * to support interactive hover cards showing character details.
  */
 import { Node, mergeAttributes } from '@tiptap/core';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+
+import { CharacterMentionView } from './CharacterMentionView';
 
 /**
  * Character mention attributes stored in the document.
@@ -32,10 +35,10 @@ declare module '@tiptap/core' {
 /**
  * CharacterMention extension for Tiptap.
  *
- * Why: Custom extension instead of generic mention because we need
- * specific character_id attribute for later hover cards and context
- * lookup. The `@` prefix is purely visual - the node stores both
- * the ID and display name.
+ * Why: Custom extension using ReactNodeViewRenderer to enable interactive
+ * hover cards on character mentions. The hover card shows character details
+ * (avatar, name, archetype, description) with 300ms delay, providing context
+ * without leaving the editor.
  */
 export const CharacterMention = Node.create({
   name: 'characterMention',
@@ -76,6 +79,7 @@ export const CharacterMention = Node.create({
   },
 
   renderHTML({ node, HTMLAttributes }) {
+    // Fallback HTML for SSR/copy-paste - the React component handles interactive rendering
     return [
       'span',
       mergeAttributes(HTMLAttributes, {
@@ -84,6 +88,10 @@ export const CharacterMention = Node.create({
       }),
       `@${node.attrs['characterName']}`,
     ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(CharacterMentionView);
   },
 
   addCommands() {
