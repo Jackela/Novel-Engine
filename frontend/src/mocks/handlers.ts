@@ -3,6 +3,7 @@ import type { CharacterDetail, CharacterSummary } from '@/shared/types/character
 import {
   CharactersListResponseSchema,
   OrchestrationStartRequestSchema,
+  type RelationshipResponse,
 } from '@/types/schemas';
 
 const API_PREFIX = '/api';
@@ -72,6 +73,108 @@ const characterDetails: CharacterDetail[] = [
     structured_data: {},
   },
 ];
+
+// Mock relationships for the graph visualization
+const mockRelationships: RelationshipResponse[] = [
+  {
+    id: 'rel-001',
+    source_id: 'aria-shadowbane',
+    source_type: 'character',
+    target_id: 'merchant-aldric',
+    target_type: 'character',
+    relationship_type: 'ally',
+    description: 'Trusted business partner and information source',
+    strength: 75,
+    is_active: true,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rel-002',
+    source_id: 'aria-shadowbane',
+    source_type: 'character',
+    target_id: 'lord-vexar',
+    target_type: 'character',
+    relationship_type: 'enemy',
+    description: 'Long-standing rivalry over territorial control',
+    strength: 90,
+    is_active: true,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rel-003',
+    source_id: 'merchant-aldric',
+    source_type: 'character',
+    target_id: 'lord-vexar',
+    target_type: 'character',
+    relationship_type: 'rival',
+    description: 'Competing for trade route dominance',
+    strength: 60,
+    is_active: true,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rel-004',
+    source_id: 'finn-bard',
+    source_type: 'character',
+    target_id: 'aria-shadowbane',
+    target_type: 'character',
+    relationship_type: 'mentor',
+    description: 'Trained Aria in diplomacy and negotiation',
+    strength: 85,
+    is_active: true,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rel-005',
+    source_id: 'finn-bard',
+    source_type: 'character',
+    target_id: 'merchant-aldric',
+    target_type: 'character',
+    relationship_type: 'family',
+    description: 'Distant cousins through maternal lineage',
+    strength: 50,
+    is_active: true,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+];
+
+// Add additional mock characters for the graph
+const additionalCharacterSummaries: CharacterSummary[] = [
+  {
+    id: 'lord-vexar',
+    agent_id: 'lord-vexar',
+    name: 'Lord Vexar',
+    status: 'active',
+    type: 'antagonist',
+    updated_at: nowIso(),
+    workspace_id: 'guest-workspace',
+    aliases: ['The Dark Prince'],
+    archetype: 'Antagonist',
+    traits: ['Cunning', 'Ambitious', 'Ruthless'],
+    appearance: 'Pale complexion with silver hair and cold grey eyes',
+  },
+  {
+    id: 'finn-bard',
+    agent_id: 'finn-bard',
+    name: 'Finn the Bard',
+    status: 'active',
+    type: 'npc',
+    updated_at: nowIso(),
+    workspace_id: 'guest-workspace',
+    aliases: ['The Wandering Minstrel'],
+    archetype: 'Mentor',
+    traits: ['Wise', 'Musical', 'Mysterious'],
+    appearance: 'An elderly man with a warm smile and a worn lute',
+  },
+];
+
+// Merge additional characters into the main array
+characterSummaries.push(...additionalCharacterSummaries);
 
 let orchestrationState = {
   status: 'idle',
@@ -324,5 +427,36 @@ export const handlers = [
       characterSummaries.splice(summaryIndex, 1);
     }
     return HttpResponse.json({ success: true });
+  }),
+
+  // === Relationships API ===
+
+  http.get(`${API_PREFIX}/relationships`, async () => {
+    await withLatency();
+    return HttpResponse.json({
+      relationships: mockRelationships,
+      total: mockRelationships.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/relationships/by-entity/:entityId`, async ({ params }) => {
+    await withLatency();
+    const entityId = params.entityId as string;
+    const filtered = mockRelationships.filter(
+      (r) => r.source_id === entityId || r.target_id === entityId
+    );
+    return HttpResponse.json({
+      relationships: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/relationships/:id`, async ({ params }) => {
+    await withLatency();
+    const relationship = mockRelationships.find((r) => r.id === params.id);
+    if (!relationship) {
+      return HttpResponse.json({ detail: 'Relationship not found' }, { status: 404 });
+    }
+    return HttpResponse.json(relationship);
   }),
 ];

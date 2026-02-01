@@ -266,6 +266,67 @@ export type Faction = z.infer<typeof FactionSchema>;
 export type WorldLocation = z.infer<typeof WorldLocationSchema>;
 export type HistoryEvent = z.infer<typeof HistoryEventSchema>;
 
+// === Relationship Schemas (aligned with backend schemas.py) ===
+
+/**
+ * Entity types that can participate in relationships.
+ */
+export const EntityTypeSchema = z.enum([
+  'character',
+  'faction',
+  'location',
+  'item',
+  'event',
+]);
+
+/**
+ * Relationship types between entities.
+ */
+export const RelationshipTypeSchema = z.enum([
+  'family',
+  'enemy',
+  'ally',
+  'mentor',
+  'romantic',
+  'rival',
+  'member_of',
+  'located_in',
+  'owns',
+  'created',
+  'historical',
+  'neutral',
+]);
+
+/**
+ * Relationship response schema matching backend RelationshipResponse.
+ */
+export const RelationshipResponseSchema = z.object({
+  id: z.string(),
+  source_id: z.string(),
+  source_type: EntityTypeSchema,
+  target_id: z.string(),
+  target_type: EntityTypeSchema,
+  relationship_type: RelationshipTypeSchema,
+  description: z.string(),
+  strength: z.number().min(0).max(100),
+  is_active: z.boolean(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Relationship list response schema.
+ */
+export const RelationshipListResponseSchema = z.object({
+  relationships: z.array(RelationshipResponseSchema).default([]),
+  total: z.number().default(0),
+});
+
+export type EntityType = z.infer<typeof EntityTypeSchema>;
+export type RelationshipType = z.infer<typeof RelationshipTypeSchema>;
+export type RelationshipResponse = z.infer<typeof RelationshipResponseSchema>;
+export type RelationshipListResponse = z.infer<typeof RelationshipListResponseSchema>;
+
 /**
  * Error information matching backend's ErrorInfo dataclass
  */
