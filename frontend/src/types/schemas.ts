@@ -279,6 +279,10 @@ export const WorldLocationSchema = z.object({
   child_location_ids: z.array(z.string()).optional().default([]),
 });
 
+export const LocationListResponseSchema = z.object({
+  locations: z.array(WorldLocationSchema),
+});
+
 export const HistoryEventSchema = z.object({
   id: z.string(),
   name: z.string(),
