@@ -592,3 +592,46 @@ export function createApiResponseSchema<T extends z.ZodTypeAny>(dataSchema: T) {
     timestamp: z.string(),
   });
 }
+
+// === Lore Entry Schemas (WORLD-010/WORLD-011) ===
+
+/**
+ * Lore category enum matching backend LoreCategory.
+ */
+export const LoreCategoryEnum = z.enum(['history', 'culture', 'magic', 'technology']);
+
+/**
+ * Lore entry response schema matching backend LoreEntryResponse.
+ */
+export const LoreEntryResponseSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  category: LoreCategoryEnum,
+  tags: z.array(z.string()).default([]),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Lore entry list response schema matching backend LoreEntryListResponse.
+ */
+export const LoreEntryListResponseSchema = z.object({
+  entries: z.array(LoreEntryResponseSchema).default([]),
+  total: z.number().default(0),
+});
+
+/**
+ * Lore entry create/update request schema.
+ */
+export const LoreEntryRequestSchema = z.object({
+  title: z.string().min(1).max(200),
+  content: z.string().max(10000),
+  category: LoreCategoryEnum,
+  tags: z.array(z.string()).default([]),
+});
+
+export type LoreCategory = z.infer<typeof LoreCategoryEnum>;
+export type LoreEntryResponse = z.infer<typeof LoreEntryResponseSchema>;
+export type LoreEntryListResponse = z.infer<typeof LoreEntryListResponseSchema>;
+export type LoreEntryRequest = z.infer<typeof LoreEntryRequestSchema>;

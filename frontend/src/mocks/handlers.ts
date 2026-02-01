@@ -6,6 +6,7 @@ import {
   type RelationshipResponse,
   type WorldLocation,
   type ItemResponse,
+  type LoreEntryResponse,
 } from '@/types/schemas';
 
 const API_PREFIX = '/api';
@@ -424,6 +425,60 @@ const characterInventories: Record<string, string[]> = {
   'merchant-aldric': ['item-002', 'item-003', 'item-008'],
 };
 
+// Mock lore entries for Wiki Dashboard
+const mockLoreEntries: LoreEntryResponse[] = [
+  {
+    id: 'lore-001',
+    title: 'The Sundering War',
+    content:
+      'A devastating conflict that split the continent of Eldara into warring kingdoms. The war lasted for three centuries and forever changed the political landscape.',
+    category: 'history',
+    tags: ['war', 'eldara', 'ancient'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'lore-002',
+    title: 'Elven Moonweaving',
+    content:
+      'The ancient art of channeling lunar energy into protective wards and healing magic. Only practiced by elven priests at the Temple of Moonlight.',
+    category: 'magic',
+    tags: ['elven', 'magic', 'healing'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'lore-003',
+    title: 'Dwarven Forgecraft',
+    content:
+      'The secret techniques passed down through generations of dwarven smiths. Ironhold Fortress is home to the greatest masters of this craft.',
+    category: 'technology',
+    tags: ['dwarven', 'smithing', 'ironhold'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'lore-004',
+    title: 'Festival of First Light',
+    content:
+      'An annual celebration marking the end of winter. Communities gather for feasts, dances, and the lighting of the Great Bonfire.',
+    category: 'culture',
+    tags: ['festival', 'tradition', 'celebration'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'lore-005',
+    title: 'The Arcane Compact',
+    content:
+      'A treaty between mortal kingdoms and the fey courts, establishing boundaries and rules of engagement. Breaking this compact invites dire consequences.',
+    category: 'history',
+    tags: ['fey', 'treaty', 'law'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+];
+
 let orchestrationState = {
   status: 'idle',
   current_turn: 0,
@@ -834,5 +889,63 @@ export const handlers = [
       success: true,
       message: `Item ${itemId} removed from character ${characterId}'s inventory`,
     });
+  }),
+
+  // === Lore API ===
+
+  http.get(`${API_PREFIX}/lore`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const category = url.searchParams.get('category');
+
+    let filtered = mockLoreEntries;
+    if (category) {
+      filtered = mockLoreEntries.filter((entry) => entry.category === category);
+    }
+
+    return HttpResponse.json({
+      entries: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/lore/search`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q')?.toLowerCase() || '';
+    const tags = url.searchParams.get('tags')?.split(',').filter(Boolean) || [];
+    const category = url.searchParams.get('category');
+
+    let filtered = mockLoreEntries;
+
+    if (query) {
+      filtered = filtered.filter(
+        (entry) =>
+          entry.title.toLowerCase().includes(query) ||
+          entry.content.toLowerCase().includes(query)
+      );
+    }
+
+    if (tags.length > 0) {
+      filtered = filtered.filter((entry) => tags.some((tag) => entry.tags.includes(tag)));
+    }
+
+    if (category) {
+      filtered = filtered.filter((entry) => entry.category === category);
+    }
+
+    return HttpResponse.json({
+      entries: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/lore/:id`, async ({ params }) => {
+    await withLatency();
+    const entry = mockLoreEntries.find((e) => e.id === params.id);
+    if (!entry) {
+      return HttpResponse.json({ detail: 'Lore entry not found' }, { status: 404 });
+    }
+    return HttpResponse.json(entry);
   }),
 ];
