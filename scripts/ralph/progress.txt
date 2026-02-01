@@ -47,7 +47,34 @@ Started: Sun Feb  1 17:25:24     2026
 - WorldSidebarTab CharactersSection uses Select dropdown for sort options (Name/Faction/Role)
 - Sort comparator functions extracted for cleaner switch statement (avoid no-case-declarations lint error)
 - CharacterSummary.faction_id field enables sorting by faction membership
+- EditorComponent uses @tiptap/extension-mention for @mention autocomplete with custom suggestion rendering
+- QuickCreateCharacterDialog provides minimal character creation flow (name + background only)
+- MentionSuggestion uses PopupManager class for positioning instead of tippy.js dependency
+- Mention suggestion items can be 'character' or 'create-new' type for different actions
+- buildSuggestionItems shows existing characters first, then "Create New" option if query >= 2 chars
+- Characters list passed from NarrativeEditorLayout to EditorComponent for @mention suggestions
+- Query client invalidation after character creation refreshes sidebar list automatically
 
+---
+
+## [CHAR-038] - 2026-02-02
+- What was implemented: Quick character creation from editor via @mention. When typing @NewName in the narrative editor, a dropdown shows matching characters and a "Create New" option. Selecting "Create New" opens QuickCreateCharacterDialog with the typed name pre-filled. After creation, the new character's @mention is automatically inserted at cursor position.
+- Files changed:
+  - `frontend/src/components/editor/MentionSuggestion.tsx` (new - mention suggestion UI and configuration)
+  - `frontend/src/features/characters/components/QuickCreateCharacterDialog.tsx` (new - minimal creation dialog)
+  - `frontend/src/features/characters/index.ts` (modified - export QuickCreateCharacterDialog)
+  - `frontend/src/components/narrative/EditorComponent.tsx` (modified - integrated Mention extension and quick-create dialog)
+  - `frontend/src/components/narrative/NarrativeEditorLayout.tsx` (modified - pass characters to EditorComponent)
+  - `scripts/ralph/prd.json` (modified - set passes: true)
+- **Learnings for future iterations:**
+  - @tiptap/extension-mention already installed in project, use configure() for custom suggestion behavior
+  - Mention extension's command callback receives custom item type from items() function
+  - Use PopupManager class with fixed positioning instead of tippy.js to avoid adding dependency
+  - exactOptionalPropertyTypes requires explicit `?? null` conversion for undefined archetype values
+  - Characters fetched via useCharacters() hook from @/features/characters/api/characterApi
+  - Query client invalidation triggers sidebar refresh when new character is created
+  - Quick-create dialog uses minimal schema (name + background) with defaults for other fields
+  - Agent ID generated from name via nameToAgentId helper (lowercase, hyphenated)
 ---
 
 ## [CHAR-037] - 2026-02-01

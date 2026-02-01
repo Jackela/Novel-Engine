@@ -5,13 +5,15 @@
  * toolbar for common formatting operations and shadcn/ui styling for
  * consistent design system integration. Supports streaming text insertion
  * from LLM generation via SSE. Also supports drag-and-drop character
- * mentions from the sidebar.
+ * mentions from the sidebar. CHAR-038: Supports @mention autocomplete
+ * with quick character creation via typing @NewName.
  */
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Mention from '@tiptap/extension-mention';
 import { useDroppable } from '@dnd-kit/core';
 import { Bold, Italic, Heading1, Heading2, Sparkles, Loader2, Square } from 'lucide-react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 import { Toggle } from '@/components/ui/toggle';
@@ -19,6 +21,9 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useStoryStream, type StreamRequest } from '@/hooks/useStoryStream';
 import { CharacterMention } from '@/components/editor/CharacterMention';
+import { createMentionSuggestion, type SuggestionItem } from '@/components/editor/MentionSuggestion';
+import { QuickCreateCharacterDialog } from '@/features/characters/components/QuickCreateCharacterDialog';
+import type { CharacterSummary } from '@/types/schemas';
 
 /**
  * Character mention insertion data.
@@ -49,6 +54,10 @@ interface EditorComponentProps {
   pendingMention?: CharacterMentionInsert | null | undefined;
   /** Called after mention is inserted */
   onMentionInserted?: (() => void) | undefined;
+  /** List of characters for @mention suggestions (CHAR-038) */
+  characters?: CharacterSummary[] | undefined;
+  /** Called when a new character is created via quick-create (CHAR-038) */
+  onCharacterCreated?: ((characterId: string, characterName: string) => void) | undefined;
 }
 
 /**
@@ -182,9 +191,15 @@ export function EditorComponent({
   isDropTarget = false,
   pendingMention,
   onMentionInserted,
+  characters = [],
+  onCharacterCreated,
 }: EditorComponentProps) {
   // Track the cursor position where we'll insert streamed text
   const insertPositionRef = useRef<number | null>(null);
+
+  // CHAR-038: Quick-create dialog state
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [quickCreateName, setQuickCreateName] = useState('');
 
   // Setup droppable zone for character drag-and-drop
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
@@ -247,8 +262,95 @@ export function EditorComponent({
     onError: handleError,
   });
 
+  /**
+   * CHAR-038: Handle request to create a new character from @mention.
+   *
+   * Why: When user types @NewName and no match is found, selecting
+   * "Create New" opens the quick-create dialog with the name pre-filled.
+   */
+  const handleCreateNew = useCallback((name: string) => {
+    setQuickCreateName(name);
+    setQuickCreateOpen(true);
+  }, []);
+
+  /**
+   * CHAR-038: Handle successful character creation from quick-create dialog.
+   *
+   * Why: After creating a character, we insert a mention of the new character
+   * at the current cursor position, completing the flow without interruption.
+   */
+  const handleQuickCreateSuccess = useCallback(
+    (characterId: string, characterName: string) => {
+      // Insert the mention of the newly created character
+      if (editorRef.current) {
+        editorRef.current
+          .chain()
+          .focus()
+          .insertCharacterMention({
+            characterId,
+            characterName,
+          })
+          .insertContent(' ')
+          .run();
+      }
+
+      // Notify parent if callback provided
+      onCharacterCreated?.(characterId, characterName);
+    },
+    [onCharacterCreated]
+  );
+
+  /**
+   * CHAR-038: Create Mention extension with suggestion configuration.
+   *
+   * Why: The Mention extension provides @-trigger autocomplete with a
+   * dropdown showing matching characters and a "Create New" option.
+   */
+  const mentionSuggestion = useMemo(
+    () => createMentionSuggestion(characters, handleCreateNew),
+    [characters, handleCreateNew]
+  );
+
+  /**
+   * CHAR-038: Configure Mention extension to render character mentions.
+   *
+   * Why: When a character is selected from the dropdown, we need to insert
+   * our custom CharacterMention node (which has hover cards) rather than
+   * a generic mention node. We cast the command to bypass strict typing
+   * since our items() returns SuggestionItems that get passed to command().
+   */
+  const MentionExtension = useMemo(
+    () =>
+      Mention.configure({
+        HTMLAttributes: {
+          class: 'character-mention',
+        },
+        suggestion: {
+          ...mentionSuggestion,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          command: ({ editor, range, props }: { editor: Editor; range: { from: number; to: number }; props: any }) => {
+            const item = props as SuggestionItem;
+            // Delete the @query text
+            editor.chain().focus().deleteRange(range).run();
+
+            // Insert our custom CharacterMention node
+            editor
+              .chain()
+              .focus()
+              .insertCharacterMention({
+                characterId: item.id,
+                characterName: item.name,
+              })
+              .insertContent(' ')
+              .run();
+          },
+        },
+      }),
+    [mentionSuggestion]
+  );
+
   const editor = useEditor({
-    extensions: [StarterKit, CharacterMention],
+    extensions: [StarterKit, CharacterMention, MentionExtension],
     content: initialContent,
     editable: editable && !isStreaming, // Disable editing during streaming
     onUpdate: ({ editor }) => {
@@ -382,6 +484,14 @@ export function EditorComponent({
       <div className="flex-1 overflow-auto p-4">
         <EditorContent editor={editor} />
       </div>
+
+      {/* CHAR-038: Quick Create Character Dialog */}
+      <QuickCreateCharacterDialog
+        open={quickCreateOpen}
+        onClose={() => setQuickCreateOpen(false)}
+        initialName={quickCreateName}
+        onCharacterCreated={handleQuickCreateSuccess}
+      />
     </div>
   );
 }

@@ -270,7 +270,7 @@
         "Browser Verification: Create without leaving page."
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["WORLD-017"]
     },

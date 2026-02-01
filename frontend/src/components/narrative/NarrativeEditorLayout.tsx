@@ -4,6 +4,7 @@
  * Why: Combines the NarrativeSidebar (20% width) and EditorComponent (80% width)
  * into a cohesive writing environment, following the PRD layout specifications.
  * Supports drag-and-drop character mentions from the World sidebar tab.
+ * CHAR-038: Integrates quick character creation from @mention in editor.
  */
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -15,6 +16,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { cn } from '@/lib/utils';
 import { NarrativeSidebarWithTabs } from './NarrativeSidebarWithTabs';
@@ -25,6 +27,7 @@ import type { CharacterDragData } from '@/components/editor/DraggableCharacterIt
 import { useStoryStructure } from '@/hooks/useStoryStructure';
 import { moveScene } from '@/lib/api';
 import type { OutlinerChapter, SceneMoveResult } from './NarrativeSidebar';
+import { useCharacters } from '@/features/characters/api/characterApi';
 
 interface NarrativeEditorLayoutProps {
   /** Story ID to load (optional, loads from backend when provided) */
@@ -50,6 +53,10 @@ export function NarrativeEditorLayout({
   className,
   useMockData = false,
 }: NarrativeEditorLayoutProps) {
+  // CHAR-038: Get characters list for @mention suggestions
+  const { data: characters = [] } = useCharacters();
+  const queryClient = useQueryClient();
+
   // Load story structure from backend
   const {
     chapters: backendChapters,
@@ -171,6 +178,21 @@ export function NarrativeEditorLayout({
   }, []);
 
   /**
+   * CHAR-038: Handle character created from quick-create dialog.
+   *
+   * Why: When a new character is created via @mention, we need to refresh
+   * the characters list so the sidebar and future suggestions show the new
+   * character. The mention is inserted by EditorComponent after creation.
+   */
+  const handleCharacterCreated = useCallback(
+    (_characterId: string, _characterName: string) => {
+      // Invalidate characters query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['characters'] });
+    },
+    [queryClient]
+  );
+
+  /**
    * Handle scene move from drag-and-drop.
    *
    * Why: Persists scene reordering to the backend, enabling cross-chapter
@@ -281,6 +303,8 @@ export function NarrativeEditorLayout({
             isDropTarget={isOverEditor}
             pendingMention={pendingMention}
             onMentionInserted={handleMentionInserted}
+            characters={characters}
+            onCharacterCreated={handleCharacterCreated}
           />
         </main>
 
