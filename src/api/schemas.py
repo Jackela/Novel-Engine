@@ -1001,6 +1001,50 @@ class RelationshipListResponse(BaseModel):
     total: int = Field(default=0, description="Total count of matching relationships")
 
 
+# === Social Network Analysis Schemas (CHAR-031) ===
+
+
+class CharacterCentralitySchema(BaseModel):
+    """Centrality metrics for a single character in the social network.
+
+    Why centrality: In narrative design, understanding which characters are
+    most connected helps identify protagonists, social hubs, and potential
+    dramatic focal points.
+    """
+
+    character_id: str = Field(..., description="Character UUID")
+    relationship_count: int = Field(default=0, ge=0, description="Total relationships (degree centrality)")
+    positive_count: int = Field(default=0, ge=0, description="Positive relationships (ally, family, romantic)")
+    negative_count: int = Field(default=0, ge=0, description="Negative relationships (enemy, rival)")
+    average_trust: float = Field(default=0.0, ge=0, le=100, description="Average trust across relationships")
+    average_romance: float = Field(default=0.0, ge=0, le=100, description="Average romance across relationships")
+    centrality_score: float = Field(default=0.0, ge=0, le=100, description="Normalized centrality (0-100)")
+
+
+class SocialAnalysisResponse(BaseModel):
+    """Complete social network analysis result.
+
+    Provides graph analytics for the character relationship network including
+    centrality metrics, extreme characters, and network properties.
+    """
+
+    character_centralities: Dict[str, CharacterCentralitySchema] = Field(
+        default_factory=dict,
+        description="Mapping of character_id to their centrality metrics",
+    )
+    most_connected: Optional[str] = Field(None, description="Character ID with most relationships")
+    most_hated: Optional[str] = Field(None, description="Character ID with most negative relationships")
+    most_loved: Optional[str] = Field(None, description="Character ID with highest trust/romance average")
+    total_relationships: int = Field(default=0, ge=0, description="Total character-to-character relationships")
+    total_characters: int = Field(default=0, ge=0, description="Unique characters in the social graph")
+    network_density: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Ratio of actual to possible relationships (0.0-1.0)",
+    )
+
+
 # === Item Schemas (WORLD-008) ===
 
 
@@ -1262,6 +1306,9 @@ __all__ = [
     "RelationshipListResponse",
     "InteractionLogSchema",
     "LogInteractionRequest",
+    # Social Network Analysis Schemas
+    "CharacterCentralitySchema",
+    "SocialAnalysisResponse",
     # Item Schemas
     "ItemCreateRequest",
     "ItemUpdateRequest",
