@@ -17,6 +17,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, status
 
 from src.api.schemas import (
+    InteractionLogSchema,
+    LogInteractionRequest,
     RelationshipCreateRequest,
     RelationshipListResponse,
     RelationshipResponse,
@@ -106,6 +108,18 @@ def _relationship_to_response(relationship: Relationship) -> RelationshipRespons
         description=relationship.description,
         strength=relationship.strength,
         is_active=relationship.is_active,
+        trust=relationship.trust,
+        romance=relationship.romance,
+        interaction_history=[
+            InteractionLogSchema(
+                interaction_id=log.interaction_id,
+                summary=log.summary,
+                trust_change=log.trust_change,
+                romance_change=log.romance_change,
+                timestamp=log.timestamp.isoformat(),
+            )
+            for log in relationship.get_interaction_history()
+        ],
         created_at=relationship.created_at.isoformat(),
         updated_at=relationship.updated_at.isoformat(),
     )
@@ -142,6 +156,8 @@ async def create_relationship(request: RelationshipCreateRequest) -> Relationshi
             relationship_type=relationship_type,
             description=request.description,
             strength=request.strength,
+            trust=request.trust,
+            romance=request.romance,
         )
     except ValueError as e:
         raise HTTPException(
@@ -260,6 +276,57 @@ async def update_relationship(
             else:
                 relationship.deactivate()
 
+        if request.trust is not None:
+            relationship.update_trust(request.trust)
+
+        if request.romance is not None:
+            relationship.update_romance(request.romance)
+
+        saved = await repo.save(relationship)
+        return _relationship_to_response(saved)
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post("/{relationship_id}/interactions", response_model=RelationshipResponse)
+async def log_interaction(
+    relationship_id: str,
+    request: LogInteractionRequest,
+) -> RelationshipResponse:
+    """Log an interaction that affects the relationship.
+
+    Records the interaction in the relationship's history and updates
+    trust/romance levels accordingly. Changes are clamped to 0-100 range.
+
+    Args:
+        relationship_id: Unique identifier for the relationship.
+        request: Interaction details including summary and metric changes.
+
+    Returns:
+        The updated relationship with new trust/romance levels.
+
+    Raises:
+        HTTPException: If relationship not found or validation fails.
+    """
+    repo = get_repository()
+    relationship = await repo.get_by_id(relationship_id)
+
+    if not relationship:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Relationship not found: {relationship_id}",
+        )
+
+    try:
+        relationship.log_interaction(
+            summary=request.summary,
+            trust_change=request.trust_change,
+            romance_change=request.romance_change,
+        )
         saved = await repo.save(relationship)
         return _relationship_to_response(saved)
 

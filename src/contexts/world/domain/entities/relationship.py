@@ -20,10 +20,43 @@ Typical usage example:
 """
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from .entity import Entity
+
+
+@dataclass(frozen=True)
+class InteractionLog:
+    """Record of a single interaction that affected the relationship.
+
+    Why frozen: Interactions are historical records that should never
+    be modified once created. This ensures data integrity for the
+    relationship evolution timeline.
+
+    Attributes:
+        summary: Brief description of what happened in the interaction.
+        trust_change: How much trust changed (-100 to +100).
+        romance_change: How much romance changed (-100 to +100).
+        timestamp: When the interaction occurred.
+        interaction_id: Unique identifier for this interaction.
+    """
+
+    summary: str
+    trust_change: int
+    romance_change: int
+    timestamp: datetime = field(default_factory=datetime.now)
+    interaction_id: str = field(default_factory=lambda: str(__import__("uuid").uuid4()))
+
+    def __post_init__(self) -> None:
+        """Validate interaction log constraints."""
+        if not self.summary or not self.summary.strip():
+            raise ValueError("Interaction summary cannot be empty")
+        if not -100 <= self.trust_change <= 100:
+            raise ValueError("Trust change must be between -100 and +100")
+        if not -100 <= self.romance_change <= 100:
+            raise ValueError("Romance change must be between -100 and +100")
 
 
 class EntityType(Enum):
@@ -152,6 +185,11 @@ class Relationship(Entity):
     is_active: bool = True
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    # Dynamic relationship evolution metrics (CHAR-025)
+    trust: int = 50
+    romance: int = 0
+    _interaction_history: Tuple[InteractionLog, ...] = field(default_factory=tuple)
+
     def _validate_business_rules(self) -> List[str]:
         """Validate Relationship-specific business rules."""
         errors = []
@@ -167,6 +205,12 @@ class Relationship(Entity):
 
         if not 0 <= self.strength <= 100:
             errors.append("Strength must be between 0 and 100")
+
+        if not 0 <= self.trust <= 100:
+            errors.append("Trust must be between 0 and 100")
+
+        if not 0 <= self.romance <= 100:
+            errors.append("Romance must be between 0 and 100")
 
         # Validate relationship type compatibility with entity types
         errors.extend(self._validate_type_compatibility())
@@ -259,6 +303,98 @@ class Relationship(Entity):
         # Re-validate after type change
         self.validate()
 
+    def log_interaction(
+        self,
+        summary: str,
+        trust_change: int = 0,
+        romance_change: int = 0,
+    ) -> InteractionLog:
+        """Record an interaction that affects the relationship.
+
+        Why log interactions: Relationships evolve through specific events.
+        Logging each interaction provides a history that explains how the
+        relationship reached its current state, enabling rich narrative
+        backstories and character development arcs.
+
+        Args:
+            summary: Description of what happened in the interaction.
+            trust_change: How much trust changed (-100 to +100).
+            romance_change: How much romance changed (-100 to +100).
+
+        Returns:
+            The created InteractionLog record.
+
+        Raises:
+            ValueError: If changes are out of valid range or summary is empty.
+        """
+        interaction = InteractionLog(
+            summary=summary,
+            trust_change=trust_change,
+            romance_change=romance_change,
+        )
+
+        # Apply changes with clamping to valid range
+        new_trust = max(0, min(100, self.trust + trust_change))
+        new_romance = max(0, min(100, self.romance + romance_change))
+
+        self.trust = new_trust
+        self.romance = new_romance
+
+        # Append to immutable history (create new tuple)
+        self._interaction_history = self._interaction_history + (interaction,)
+        self.touch()
+
+        return interaction
+
+    def update_trust(self, new_trust: int) -> None:
+        """Directly update trust level.
+
+        Args:
+            new_trust: New trust value (0-100).
+
+        Raises:
+            ValueError: If trust is out of valid range.
+        """
+        if not 0 <= new_trust <= 100:
+            raise ValueError("Trust must be between 0 and 100")
+
+        self.trust = new_trust
+        self.touch()
+
+    def update_romance(self, new_romance: int) -> None:
+        """Directly update romance level.
+
+        Args:
+            new_romance: New romance value (0-100).
+
+        Raises:
+            ValueError: If romance is out of valid range.
+        """
+        if not 0 <= new_romance <= 100:
+            raise ValueError("Romance must be between 0 and 100")
+
+        self.romance = new_romance
+        self.touch()
+
+    def get_interaction_history(self) -> Tuple[InteractionLog, ...]:
+        """Get the full interaction history.
+
+        Returns:
+            Tuple of all logged interactions, ordered chronologically.
+        """
+        return self._interaction_history
+
+    def get_recent_interactions(self, limit: int = 10) -> Tuple[InteractionLog, ...]:
+        """Get the most recent interactions.
+
+        Args:
+            limit: Maximum number of interactions to return.
+
+        Returns:
+            Tuple of recent interactions, most recent first.
+        """
+        return tuple(reversed(self._interaction_history[-limit:]))
+
     def is_positive(self) -> bool:
         """Check if this is a positive/friendly relationship."""
         positive_types = {
@@ -325,6 +461,18 @@ class Relationship(Entity):
             "strength": self.strength,
             "is_active": self.is_active,
             "metadata": self.metadata,
+            "trust": self.trust,
+            "romance": self.romance,
+            "interaction_history": [
+                {
+                    "interaction_id": log.interaction_id,
+                    "summary": log.summary,
+                    "trust_change": log.trust_change,
+                    "romance_change": log.romance_change,
+                    "timestamp": log.timestamp.isoformat(),
+                }
+                for log in self._interaction_history
+            ],
         }
 
     @classmethod

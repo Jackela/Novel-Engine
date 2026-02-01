@@ -32,6 +32,7 @@ from .world_setting import (
 )
 from .relationship import (
     EntityType,
+    InteractionLog,
     Relationship,
     RelationshipType,
 )
@@ -74,6 +75,7 @@ __all__ = [
     "Relationship",
     "RelationshipType",
     "EntityType",
+    "InteractionLog",
     # Item
     "Item",
     "ItemType",

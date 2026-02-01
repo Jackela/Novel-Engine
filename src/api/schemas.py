@@ -767,6 +767,8 @@ class RelationshipCreateRequest(BaseModel):
     )
     description: str = Field(default="", max_length=1000)
     strength: int = Field(default=50, ge=0, le=100, description="Relationship strength")
+    trust: int = Field(default=50, ge=0, le=100, description="Trust level (0-100)")
+    romance: int = Field(default=0, ge=0, le=100, description="Romance level (0-100)")
 
 
 class RelationshipUpdateRequest(BaseModel):
@@ -776,6 +778,28 @@ class RelationshipUpdateRequest(BaseModel):
     description: Optional[str] = Field(default=None, max_length=1000)
     strength: Optional[int] = Field(default=None, ge=0, le=100)
     is_active: Optional[bool] = Field(default=None)
+    trust: Optional[int] = Field(default=None, ge=0, le=100, description="Trust level")
+    romance: Optional[int] = Field(default=None, ge=0, le=100, description="Romance level")
+
+
+class InteractionLogSchema(BaseModel):
+    """Schema for a single interaction log entry."""
+
+    interaction_id: str = Field(..., description="Unique ID for this interaction")
+    summary: str = Field(..., description="Description of the interaction")
+    trust_change: int = Field(..., ge=-100, le=100, description="Trust change (-100 to +100)")
+    romance_change: int = Field(
+        ..., ge=-100, le=100, description="Romance change (-100 to +100)"
+    )
+    timestamp: str = Field(..., description="ISO 8601 timestamp of the interaction")
+
+
+class LogInteractionRequest(BaseModel):
+    """Request model for logging an interaction."""
+
+    summary: str = Field(..., min_length=1, max_length=500, description="Interaction description")
+    trust_change: int = Field(default=0, ge=-100, le=100, description="Trust change")
+    romance_change: int = Field(default=0, ge=-100, le=100, description="Romance change")
 
 
 class RelationshipResponse(BaseModel):
@@ -790,6 +814,11 @@ class RelationshipResponse(BaseModel):
     description: str
     strength: int
     is_active: bool
+    trust: int = Field(default=50, description="Trust level (0-100)")
+    romance: int = Field(default=0, description="Romance level (0-100)")
+    interaction_history: List[InteractionLogSchema] = Field(
+        default_factory=list, description="History of interactions"
+    )
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 last update timestamp")
 
@@ -1054,6 +1083,8 @@ __all__ = [
     "RelationshipUpdateRequest",
     "RelationshipResponse",
     "RelationshipListResponse",
+    "InteractionLogSchema",
+    "LogInteractionRequest",
     # Item Schemas
     "ItemCreateRequest",
     "ItemUpdateRequest",

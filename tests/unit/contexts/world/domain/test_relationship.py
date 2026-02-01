@@ -13,6 +13,7 @@ import pytest
 
 from src.contexts.world.domain.entities.relationship import (
     EntityType,
+    InteractionLog,
     Relationship,
     RelationshipType,
 )
@@ -502,3 +503,485 @@ class TestRelationshipFactoryMethods:
         assert rel.target_type == EntityType.LOCATION
         assert rel.relationship_type == RelationshipType.LOCATED_IN
         assert rel.strength == 100  # Binary relationship
+
+
+class TestInteractionLog:
+    """Tests for InteractionLog value object (CHAR-025)."""
+
+    def test_create_basic_interaction(self):
+        """Test creating a basic interaction log."""
+        log = InteractionLog(
+            summary="Had a deep conversation about the future",
+            trust_change=10,
+            romance_change=5,
+        )
+
+        assert log.summary == "Had a deep conversation about the future"
+        assert log.trust_change == 10
+        assert log.romance_change == 5
+        assert log.interaction_id is not None
+        assert log.timestamp is not None
+
+    def test_interaction_empty_summary_fails(self):
+        """Empty summary should fail validation."""
+        with pytest.raises(ValueError, match="summary cannot be empty"):
+            InteractionLog(
+                summary="",
+                trust_change=0,
+                romance_change=0,
+            )
+
+    def test_interaction_whitespace_summary_fails(self):
+        """Whitespace-only summary should fail validation."""
+        with pytest.raises(ValueError, match="summary cannot be empty"):
+            InteractionLog(
+                summary="   ",
+                trust_change=0,
+                romance_change=0,
+            )
+
+    def test_interaction_trust_change_too_low(self):
+        """Trust change below -100 should fail validation."""
+        with pytest.raises(ValueError, match="Trust change must be between"):
+            InteractionLog(
+                summary="Terrible betrayal",
+                trust_change=-101,
+                romance_change=0,
+            )
+
+    def test_interaction_trust_change_too_high(self):
+        """Trust change above 100 should fail validation."""
+        with pytest.raises(ValueError, match="Trust change must be between"):
+            InteractionLog(
+                summary="Saved their life",
+                trust_change=101,
+                romance_change=0,
+            )
+
+    def test_interaction_romance_change_too_low(self):
+        """Romance change below -100 should fail validation."""
+        with pytest.raises(ValueError, match="Romance change must be between"):
+            InteractionLog(
+                summary="Heartbreak",
+                trust_change=0,
+                romance_change=-101,
+            )
+
+    def test_interaction_romance_change_too_high(self):
+        """Romance change above 100 should fail validation."""
+        with pytest.raises(ValueError, match="Romance change must be between"):
+            InteractionLog(
+                summary="Love at first sight",
+                trust_change=0,
+                romance_change=101,
+            )
+
+    def test_interaction_is_frozen(self):
+        """InteractionLog should be immutable."""
+        log = InteractionLog(
+            summary="Test interaction",
+            trust_change=5,
+            romance_change=0,
+        )
+
+        with pytest.raises(Exception):  # FrozenInstanceError
+            log.summary = "Changed summary"
+
+
+class TestRelationshipDynamicEvolution:
+    """Tests for dynamic relationship evolution (CHAR-025)."""
+
+    def test_relationship_default_trust_and_romance(self):
+        """Test that trust and romance have correct defaults."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+        )
+
+        assert rel.trust == 50  # Default trust
+        assert rel.romance == 0  # Default romance (neutral)
+        assert len(rel.get_interaction_history()) == 0
+
+    def test_relationship_custom_trust_and_romance(self):
+        """Test creating relationship with custom trust/romance values."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            trust=80,
+            romance=60,
+        )
+
+        assert rel.trust == 80
+        assert rel.romance == 60
+
+    def test_trust_validation_below_zero(self):
+        """Trust below 0 should fail validation."""
+        with pytest.raises(ValueError, match="Trust must be between 0 and 100"):
+            Relationship(
+                source_id="char-001",
+                source_type=EntityType.CHARACTER,
+                target_id="char-002",
+                target_type=EntityType.CHARACTER,
+                trust=-1,
+            )
+
+    def test_trust_validation_above_100(self):
+        """Trust above 100 should fail validation."""
+        with pytest.raises(ValueError, match="Trust must be between 0 and 100"):
+            Relationship(
+                source_id="char-001",
+                source_type=EntityType.CHARACTER,
+                target_id="char-002",
+                target_type=EntityType.CHARACTER,
+                trust=101,
+            )
+
+    def test_romance_validation_below_zero(self):
+        """Romance below 0 should fail validation."""
+        with pytest.raises(ValueError, match="Romance must be between 0 and 100"):
+            Relationship(
+                source_id="char-001",
+                source_type=EntityType.CHARACTER,
+                target_id="char-002",
+                target_type=EntityType.CHARACTER,
+                romance=-1,
+            )
+
+    def test_romance_validation_above_100(self):
+        """Romance above 100 should fail validation."""
+        with pytest.raises(ValueError, match="Romance must be between 0 and 100"):
+            Relationship(
+                source_id="char-001",
+                source_type=EntityType.CHARACTER,
+                target_id="char-002",
+                target_type=EntityType.CHARACTER,
+                romance=101,
+            )
+
+    def test_update_trust(self):
+        """Test directly updating trust level."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            trust=50,
+        )
+        initial_version = rel.version
+
+        rel.update_trust(75)
+
+        assert rel.trust == 75
+        assert rel.version > initial_version
+
+    def test_update_trust_invalid_range(self):
+        """Test that invalid trust values are rejected."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+        )
+
+        with pytest.raises(ValueError, match="Trust must be between 0 and 100"):
+            rel.update_trust(101)
+
+        with pytest.raises(ValueError, match="Trust must be between 0 and 100"):
+            rel.update_trust(-1)
+
+    def test_update_romance(self):
+        """Test directly updating romance level."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            romance=30,
+        )
+        initial_version = rel.version
+
+        rel.update_romance(60)
+
+        assert rel.romance == 60
+        assert rel.version > initial_version
+
+    def test_update_romance_invalid_range(self):
+        """Test that invalid romance values are rejected."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+        )
+
+        with pytest.raises(ValueError, match="Romance must be between 0 and 100"):
+            rel.update_romance(101)
+
+        with pytest.raises(ValueError, match="Romance must be between 0 and 100"):
+            rel.update_romance(-1)
+
+
+class TestLogInteraction:
+    """Tests for the log_interaction method (CHAR-025)."""
+
+    def test_log_interaction_updates_trust(self):
+        """Test that logging an interaction updates trust."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            trust=50,
+        )
+
+        rel.log_interaction(
+            summary="Helped each other in battle",
+            trust_change=20,
+            romance_change=0,
+        )
+
+        assert rel.trust == 70
+
+    def test_log_interaction_updates_romance(self):
+        """Test that logging an interaction updates romance."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            romance=20,
+        )
+
+        rel.log_interaction(
+            summary="Romantic evening together",
+            trust_change=0,
+            romance_change=30,
+        )
+
+        assert rel.romance == 50
+
+    def test_log_interaction_updates_both_metrics(self):
+        """Test that logging an interaction can update both metrics."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            trust=50,
+            romance=30,
+        )
+
+        rel.log_interaction(
+            summary="Deep emotional conversation",
+            trust_change=15,
+            romance_change=10,
+        )
+
+        assert rel.trust == 65
+        assert rel.romance == 40
+
+    def test_log_interaction_records_history(self):
+        """Test that interactions are recorded in history."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+        )
+
+        rel.log_interaction(
+            summary="First meeting",
+            trust_change=5,
+            romance_change=0,
+        )
+        rel.log_interaction(
+            summary="Shared a meal",
+            trust_change=10,
+            romance_change=5,
+        )
+
+        history = rel.get_interaction_history()
+        assert len(history) == 2
+        assert history[0].summary == "First meeting"
+        assert history[1].summary == "Shared a meal"
+
+    def test_log_interaction_clamps_trust_high(self):
+        """Test that trust is clamped at 100."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            trust=90,
+        )
+
+        rel.log_interaction(
+            summary="Saved their life multiple times",
+            trust_change=50,
+            romance_change=0,
+        )
+
+        assert rel.trust == 100  # Clamped at 100
+
+    def test_log_interaction_clamps_trust_low(self):
+        """Test that trust is clamped at 0."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            trust=20,
+        )
+
+        rel.log_interaction(
+            summary="Horrible betrayal",
+            trust_change=-50,
+            romance_change=0,
+        )
+
+        assert rel.trust == 0  # Clamped at 0
+
+    def test_log_interaction_clamps_romance_high(self):
+        """Test that romance is clamped at 100."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            romance=80,
+        )
+
+        rel.log_interaction(
+            summary="Wedding day",
+            trust_change=0,
+            romance_change=50,
+        )
+
+        assert rel.romance == 100  # Clamped at 100
+
+    def test_log_interaction_clamps_romance_low(self):
+        """Test that romance is clamped at 0."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            romance=15,
+        )
+
+        rel.log_interaction(
+            summary="Heartbreaking rejection",
+            trust_change=0,
+            romance_change=-30,
+        )
+
+        assert rel.romance == 0  # Clamped at 0
+
+    def test_log_interaction_returns_log(self):
+        """Test that log_interaction returns the created log."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+        )
+
+        log = rel.log_interaction(
+            summary="Important event",
+            trust_change=10,
+            romance_change=5,
+        )
+
+        assert isinstance(log, InteractionLog)
+        assert log.summary == "Important event"
+        assert log.trust_change == 10
+        assert log.romance_change == 5
+
+    def test_log_interaction_touches_entity(self):
+        """Test that log_interaction updates the entity version."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+        )
+        initial_version = rel.version
+
+        rel.log_interaction(
+            summary="An event occurred",
+            trust_change=5,
+            romance_change=0,
+        )
+
+        assert rel.version > initial_version
+
+    def test_get_recent_interactions(self):
+        """Test getting recent interactions."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+        )
+
+        for i in range(15):
+            rel.log_interaction(
+                summary=f"Event {i}",
+                trust_change=1,
+                romance_change=0,
+            )
+
+        recent = rel.get_recent_interactions(limit=5)
+        assert len(recent) == 5
+        # Most recent first
+        assert recent[0].summary == "Event 14"
+        assert recent[4].summary == "Event 10"
+
+
+class TestRelationshipSerializationWithEvolution:
+    """Tests for serialization including evolution fields (CHAR-025)."""
+
+    def test_to_dict_includes_trust_and_romance(self):
+        """Test that to_dict includes trust and romance."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+            trust=75,
+            romance=40,
+        )
+
+        data = rel.to_dict()
+
+        assert data["trust"] == 75
+        assert data["romance"] == 40
+
+    def test_to_dict_includes_interaction_history(self):
+        """Test that to_dict includes interaction history."""
+        rel = Relationship(
+            source_id="char-001",
+            source_type=EntityType.CHARACTER,
+            target_id="char-002",
+            target_type=EntityType.CHARACTER,
+        )
+
+        rel.log_interaction(
+            summary="First meeting",
+            trust_change=10,
+            romance_change=0,
+        )
+
+        data = rel.to_dict()
+
+        assert "interaction_history" in data
+        assert len(data["interaction_history"]) == 1
+        assert data["interaction_history"][0]["summary"] == "First meeting"
+        assert data["interaction_history"][0]["trust_change"] == 10
+        assert data["interaction_history"][0]["romance_change"] == 0
+        assert "interaction_id" in data["interaction_history"][0]
+        assert "timestamp" in data["interaction_history"][0]
