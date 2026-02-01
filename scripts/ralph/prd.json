@@ -97,7 +97,7 @@
         "Browser Verification: Bars update."
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["CHAR-025"]
     },
@@ -112,7 +112,7 @@
         "Test: Mock output."
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["CHAR-021"]
     },

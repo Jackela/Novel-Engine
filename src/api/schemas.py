@@ -197,6 +197,56 @@ class CharacterPsychologySchema(BaseModel):
     neuroticism: int = Field(..., ge=0, le=100, description="Neuroticism (0-100)")
 
 
+class DialogueGenerationRequest(BaseModel):
+    """Request model for generating character dialogue.
+
+    Uses character psychology, traits, and speaking style to generate
+    authentic dialogue that sounds like the character would naturally speak.
+    """
+
+    character_id: str = Field(..., description="ID of the character to generate dialogue for")
+    context: str = Field(
+        ...,
+        min_length=1,
+        max_length=1000,
+        description="The situation or prompt the character is responding to",
+    )
+    mood: Optional[str] = Field(
+        None,
+        max_length=50,
+        description="Current emotional state (e.g., 'angry', 'excited', 'fearful')",
+    )
+    # Optional override fields for when character data isn't in the system
+    psychology_override: Optional[CharacterPsychologySchema] = Field(
+        None, description="Optional psychology override if not using stored character data"
+    )
+    traits_override: Optional[List[str]] = Field(
+        None, description="Optional traits override"
+    )
+    speaking_style_override: Optional[str] = Field(
+        None, max_length=200, description="Optional speaking style override"
+    )
+
+
+class DialogueGenerationResponse(BaseModel):
+    """Response model for generated dialogue.
+
+    Contains the character's spoken words along with metadata about
+    their internal state and physical expression.
+    """
+
+    dialogue: str = Field(..., description="The character's spoken response")
+    tone: str = Field(..., description="Emotional tone (e.g., 'defensive', 'excited')")
+    internal_thought: Optional[str] = Field(
+        None, description="What the character thinks but doesn't say"
+    )
+    body_language: Optional[str] = Field(
+        None, description="Physical description (e.g., 'crosses arms')"
+    )
+    character_id: str = Field(..., description="ID of the character who spoke")
+    error: Optional[str] = Field(None, description="Error message if generation failed")
+
+
 class CharacterMemorySchema(BaseModel):
     """Schema for character memory.
 
@@ -1029,6 +1079,8 @@ __all__ = [
     "AnalyticsMetricsResponse",
     # Character Schemas
     "CharacterPsychologySchema",
+    "DialogueGenerationRequest",
+    "DialogueGenerationResponse",
     "CharacterSummary",
     "CharactersListResponse",
     "SimulationRequest",

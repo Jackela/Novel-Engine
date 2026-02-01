@@ -8,6 +8,9 @@ The generator uses structured prompts to produce JSON output that is then
 parsed into domain entities. It handles temporary ID cross-references to
 maintain entity relationships during generation.
 
+Additionally, this module provides dialogue generation capabilities that create
+character-authentic speech based on psychology, traits, and speaking style.
+
 Typical usage example:
     >>> from src.contexts.world.infrastructure.generators import LLMWorldGenerator
     >>> from src.contexts.world.application.ports import WorldGenerationInput, Genre
@@ -19,6 +22,14 @@ Typical usage example:
     ... )
     >>> result = generator.generate(request)
     >>> print(result.generation_summary)
+
+    # Dialogue generation example:
+    >>> dialogue_result = generator.generate_dialogue(
+    ...     character=my_character,
+    ...     context="A stranger approaches in the tavern",
+    ...     mood="suspicious"
+    ... )
+    >>> print(dialogue_result.dialogue)
 """
 
 from __future__ import annotations
@@ -26,7 +37,8 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 import requests
 import structlog
@@ -631,3 +643,259 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             events=[],
             generation_summary=f"Error: {reason}",
         )
+
+    # ==================== Dialogue Generation ====================
+
+    def generate_dialogue(
+        self,
+        character: "CharacterData",
+        context: str,
+        mood: Optional[str] = None,
+    ) -> "DialogueResult":
+        """Generate dialogue in character voice using psychology, traits, and speaking style.
+
+        Creates character-authentic speech by injecting personality data into the
+        prompt. The dialogue generator considers the Big Five psychology traits,
+        character-specific traits, and speaking style to produce responses that
+        sound like the character would naturally speak.
+
+        Why this matters: Characters need consistent voices. A high-neuroticism
+        character should hedge and worry, while a high-extraversion character
+        should be enthusiastic and talkative. This method ensures AI-generated
+        dialogue matches established character patterns.
+
+        Args:
+            character: CharacterData containing psychology, traits, and speaking_style.
+                      This can be a Character aggregate or a simpler data structure.
+            context: The situation or prompt the character is responding to.
+                    Examples: "A stranger asks for directions", "Their rival insults them".
+            mood: Optional current emotional state that modifies normal patterns.
+                 Examples: "angry", "melancholic", "excited", "fearful".
+
+        Returns:
+            DialogueResult containing the generated dialogue, internal thought,
+            tone, and optional body language.
+
+        Example:
+            >>> result = generator.generate_dialogue(
+            ...     character=my_character,
+            ...     context="A merchant offers a suspiciously good deal",
+            ...     mood="cautious"
+            ... )
+            >>> print(result.dialogue)
+            "I've seen deals like this before. What's the catch?"
+        """
+        log = logger.bind(
+            character_name=character.name,
+            has_psychology=character.psychology is not None,
+            mood=mood,
+        )
+        log.info("Starting dialogue generation")
+
+        try:
+            system_prompt = self._load_dialogue_prompt()
+            user_prompt = self._build_dialogue_user_prompt(character, context, mood)
+
+            response_text = self._call_gemini(system_prompt, user_prompt)
+            result = self._parse_dialogue_response(response_text)
+
+            log.info("Dialogue generation completed", tone=result.tone)
+            return result
+
+        except Exception as exc:
+            log.error("Dialogue generation failed", error=str(exc))
+            return DialogueResult(
+                dialogue="...",
+                tone="uncertain",
+                error=str(exc),
+            )
+
+    def _load_dialogue_prompt(self) -> str:
+        """Load the dialogue generation system prompt from YAML file.
+
+        Returns:
+            The system prompt string for dialogue generation.
+
+        Raises:
+            ValueError: If system_prompt key is missing in the YAML file.
+            FileNotFoundError: If the prompt file doesn't exist.
+        """
+        dialogue_prompt_path = (
+            Path(__file__).resolve().parents[1] / "prompts" / "dialogue_gen.yaml"
+        )
+        with dialogue_prompt_path.open("r", encoding="utf-8") as handle:
+            payload = yaml.safe_load(handle) or {}
+        prompt = str(payload.get("system_prompt", "")).strip()
+        if not prompt:
+            raise ValueError("Missing system_prompt in dialogue_gen.yaml")
+        return prompt
+
+    def _build_dialogue_user_prompt(
+        self,
+        character: "CharacterData",
+        context: str,
+        mood: Optional[str],
+    ) -> str:
+        """Build the user prompt for dialogue generation.
+
+        Injects the character's psychology, traits, and speaking style into
+        a structured prompt that guides the LLM to produce authentic dialogue.
+
+        Args:
+            character: CharacterData with personality information.
+            context: The situation the character is responding to.
+            mood: Optional current emotional state.
+
+        Returns:
+            Formatted user prompt string.
+        """
+        # Build psychology section
+        psychology_section = "Not specified"
+        if character.psychology:
+            psych = character.psychology
+            psychology_section = f"""Openness: {psych.get('openness', 50)}/100
+Conscientiousness: {psych.get('conscientiousness', 50)}/100
+Extraversion: {psych.get('extraversion', 50)}/100
+Agreeableness: {psych.get('agreeableness', 50)}/100
+Neuroticism: {psych.get('neuroticism', 50)}/100"""
+
+        # Build traits section
+        traits_section = "None specified"
+        if character.traits:
+            traits_section = ", ".join(character.traits)
+
+        # Build speaking style section
+        speaking_style = character.speaking_style or "Natural, conversational"
+
+        # Build mood section
+        mood_section = mood or "Neutral"
+
+        return f"""Generate dialogue for this character:
+
+CHARACTER NAME: {character.name}
+
+PSYCHOLOGY (Big Five):
+{psychology_section}
+
+CHARACTER TRAITS:
+{traits_section}
+
+SPEAKING STYLE:
+{speaking_style}
+
+CURRENT MOOD:
+{mood_section}
+
+CONTEXT/SITUATION:
+{context}
+
+Generate a response that this character would naturally give in this situation.
+Return valid JSON only with the exact structure specified in the system prompt."""
+
+    def _parse_dialogue_response(self, content: str) -> "DialogueResult":
+        """Parse the LLM response into a DialogueResult.
+
+        Args:
+            content: Raw text response from the LLM.
+
+        Returns:
+            DialogueResult with parsed dialogue data.
+        """
+        payload = self._extract_json(content)
+
+        return DialogueResult(
+            dialogue=str(payload.get("dialogue", "...")),
+            internal_thought=payload.get("internal_thought"),
+            tone=str(payload.get("tone", "neutral")),
+            body_language=payload.get("body_language"),
+        )
+
+
+@dataclass
+class CharacterData:
+    """Data structure for character information needed by dialogue generation.
+
+    This is a simple data transfer object that can be constructed from
+    a Character aggregate or from API request data. It contains only the
+    fields needed for dialogue generation.
+
+    Why a separate class: The Character aggregate in the character context
+    has complex validation and domain logic. For dialogue generation, we
+    only need a subset of that data in a simple format.
+    """
+
+    name: str
+    psychology: Optional[Dict[str, int]] = None
+    traits: Optional[List[str]] = None
+    speaking_style: Optional[str] = None
+
+    @classmethod
+    def from_character_aggregate(cls, character: Any) -> "CharacterData":
+        """Create CharacterData from a Character aggregate.
+
+        Args:
+            character: A Character aggregate from the character context.
+
+        Returns:
+            CharacterData with extracted fields.
+        """
+        psychology_dict = None
+        if hasattr(character, 'psychology') and character.psychology:
+            psychology_dict = character.psychology.to_dict()
+
+        traits_list = None
+        if hasattr(character, 'profile') and character.profile:
+            if hasattr(character.profile, 'traits') and character.profile.traits:
+                traits_list = list(character.profile.traits)
+            elif hasattr(character.profile, 'personality_traits'):
+                # Fallback to personality_traits if traits not set
+                pt = character.profile.personality_traits
+                if hasattr(pt, 'quirks') and pt.quirks:
+                    traits_list = list(pt.quirks)
+
+        return cls(
+            name=character.profile.name if hasattr(character, 'profile') else str(character),
+            psychology=psychology_dict,
+            traits=traits_list,
+            speaking_style=None,  # Can be extended in future
+        )
+
+
+@dataclass
+class DialogueResult:
+    """Result of dialogue generation.
+
+    Contains the generated dialogue along with optional metadata about
+    the character's internal state and physical expression.
+
+    Attributes:
+        dialogue: The character's spoken words (1-3 sentences).
+        internal_thought: What the character thinks but doesn't say.
+        tone: Emotional tone of the response (e.g., 'defensive', 'excited').
+        body_language: Physical description (e.g., 'crosses arms').
+        error: Error message if generation failed.
+    """
+
+    dialogue: str
+    tone: str = "neutral"
+    internal_thought: Optional[str] = None
+    body_language: Optional[str] = None
+    error: Optional[str] = None
+
+    def is_error(self) -> bool:
+        """Check if this result represents an error."""
+        return self.error is not None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format for API responses."""
+        result: Dict[str, Any] = {
+            "dialogue": self.dialogue,
+            "tone": self.tone,
+        }
+        if self.internal_thought:
+            result["internal_thought"] = self.internal_thought
+        if self.body_language:
+            result["body_language"] = self.body_language
+        if self.error:
+            result["error"] = self.error
+        return result

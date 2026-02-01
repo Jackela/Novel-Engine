@@ -9,10 +9,12 @@ from .character_profile_generator import (
     MockCharacterProfileGenerator,
     generate_character_profile,
 )
-from .llm_world_generator import LLMWorldGenerator
+from .llm_world_generator import CharacterData, DialogueResult, LLMWorldGenerator
 
 __all__ = [
     "LLMWorldGenerator",
+    "CharacterData",
+    "DialogueResult",
     "CharacterProfileGenerator",
     "CharacterProfileGeneratorPort",
     "CharacterProfileInput",
