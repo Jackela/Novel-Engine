@@ -38,7 +38,7 @@
         "Browser Verification: Chart renders correctly."
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["CHAR-021"]
     },
@@ -53,7 +53,7 @@
         "Test: `pytest` adding memories."
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {

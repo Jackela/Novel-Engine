@@ -1,103 +1,51 @@
 # Ralph Progress Log
-Started: Sun Feb  1 12:27:10     2026
+Started: Sun Feb  1 17:25:24     2026
+
+## Codebase Patterns
+- Character aggregate uses Optional fields for mutable state (not on frozen CharacterProfile)
+- recharts is already installed in frontend - use Radar/RadarChart for personality visualization
+- Frontend types in `frontend/src/types/schemas.ts` must match backend `src/api/schemas.py`
+- CharacterDetailsDialog uses Tabs component with TabsList/TabsTrigger/TabsContent pattern
+- Character memories stored in structured_data.memories via workspace_character_store
+- API routers go in `src/api/routers/` and register in `main_api_server.py`
+
 ---
 
-## WORLD-001 - 2026-02-01
-- What I implemented: Added aliases, archetype, traits, appearance fields to CharacterProfile dataclass and CharacterSummary Pydantic schema. Updated frontend TypeScript schemas and mock handlers to match.
-- Pattern discovered: CharacterProfile is a frozen dataclass (immutable), so new fields must have Optional types with None defaults for backward compatibility.
-- Gotcha for future: When updating CharacterSummary schema, also update frontend/src/mocks/handlers.ts to include the new required fields, otherwise TypeScript type-check will fail.
+## [CHAR-023] - 2026-02-01
+- What was implemented: CharacterMemory value object (frozen dataclass) with content, importance (1-10), tags, timestamp, memory_id. Character aggregate now has memories list, add_memory() method, and helper methods (get_memories, get_core_memories, get_memories_by_tag, get_recent_memories). Created memories.py router with CRUD endpoints. Added CharacterMemorySchema to schemas.py. Created 31 unit tests covering validation, business logic, and aggregate integration.
+- Files changed:
+  - `src/contexts/character/domain/value_objects/character_memory.py` (new)
+  - `src/contexts/character/domain/value_objects/__init__.py`
+  - `src/contexts/character/domain/aggregates/character.py`
+  - `src/api/routers/memories.py` (new)
+  - `src/api/schemas.py`
+  - `src/api/main_api_server.py`
+  - `tests/unit/contexts/character/domain/test_character_memory.py` (new)
+  - `scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Use frozen dataclass with tuple (not list) for immutable value objects
+  - Convert lists to tuples in __post_init__ for frozen dataclasses
+  - is_core_memory() threshold is importance > 8 (not >= 9)
+  - Memory importance levels: 1-3=minor, 4-6=moderate, 7-8=significant, 9-10=core
+  - Memories are stored in character's structured_data.memories for workspace characters
+---
 
-## WORLD-002 - 2026-02-01
-- What I implemented: Created CharacterProfileForm.tsx with react-hook-form and zod validation. Includes tag-based inputs for aliases and traits using Badge components. Uses shadcn/ui Input, Textarea, and Badge components. Name field is required with inline validation errors.
-- Pattern discovered: When using zodResolver with strict TypeScript, the form values type must be explicitly defined and cast with `as Resolver<FormType>` to avoid type mismatch between zod's inferred optional fields and the form's runtime values.
-- Gotcha for future: Use `useMemo` to stabilize array values from `form.watch()` when they're used in `useCallback` dependencies, otherwise ESLint warns about unstable deps causing re-renders.
+## [CHAR-022] - 2026-02-01
+- What was implemented: PsychologyChart.tsx component using Recharts RadarChart to visualize Big Five personality traits. Added CharacterPsychologySchema to frontend types. Integrated chart into CharacterDetailsDialog as a new "Psychology" tab. Updated backend CharacterDetailResponse to include optional psychology field.
+- Files changed:
+  - `frontend/src/features/characters/components/PsychologyChart.tsx` (new)
+  - `frontend/src/features/characters/CharacterDetailsDialog.tsx`
+  - `frontend/src/types/schemas.ts`
+  - `src/api/schemas.py`
+  - `scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - recharts already installed, use ResponsiveContainer for proper sizing
+  - Custom tooltip requires null check for payload[0] to satisfy TypeScript strict mode
+  - Use hsl(var(--css-variable)) pattern for theming recharts components
+  - TabsList grid-cols must match number of TabsTrigger children
+---
 
-## WORLD-003 - 2026-02-01
-- What I implemented: Created Relationship entity with EntityType (5 types) and RelationshipType (12 types) enums. Implemented type compatibility validation (e.g., ROMANTIC requires CHARACTER entities). Created IRelationshipRepository protocol and InMemoryRelationshipRepository with entity-indexed lookups. Added CRUD API endpoints at /api/relationships with by-entity and between-entities queries. Wrote 33 unit tests covering all validation and query methods.
-- Pattern discovered: World domain entities inherit from a base Entity class in src/contexts/world/domain/entities/entity.py that provides id, created_at, updated_at, version fields and domain event support. New entities should extend this base class.
-- Gotcha for future: When creating new routers, remember to register them in TWO places in main_api_server.py's _register_legacy_routes: once without prefix and once with /api prefix for backward compatibility.
-
-## WORLD-004 - 2026-02-01
-- What I implemented: Created RelationshipGraph component using @xyflow/react v12. Added CharacterNode custom node with avatar placeholder, name, and archetype badge. Configured shadcn theme-matching styles for nodes, edges, handles, MiniMap, and Controls. Integrated graph into WorldPage replacing placeholder WorldMap.
-- Pattern discovered: @xyflow/react v12 requires custom node data types to `extends Record<string, unknown>`, then create a `NodeType = Node<NodeData>` and use `NodeProps<NodeType>` for component props. This is different from older reactflow package patterns.
-- Gotcha for future: The package name is `@xyflow/react` (already installed), not `reactflow`. The library was renamed. Use `satisfies NodeTypes` instead of direct type annotation for nodeTypes registry to avoid strict type errors with custom nodes.
-
-## WORLD-005 - 2026-02-01
-- What I implemented: Connected RelationshipGraph to API data (Characters + Relationships). Installed @dagrejs/dagre for automatic graph layout. Added Relationship schemas (EntityType, RelationshipType) to frontend. Created mock handlers for /api/relationships. Implemented color-coded edges (green=ally, red=enemy, blue=family). Added edge animation for enemy/romantic relationships. Implemented node selection with MiniMap highlighting.
-- Pattern discovered: When using useEdgesState with custom Edge types, you must specify the type parameter: `useEdgesState<Edge>([])`. Without it, TypeScript infers `never[]` which causes assignment errors.
-- Gotcha for future: Avoid `satisfies` with optional properties in object literals when the type has optional fields. Instead, build the object conditionally: `const data: CharacterNodeData = { name }; if (archetype) data.archetype = archetype;`. This avoids type narrowing issues with undefined vs optional.
-
-## WORLD-006 - 2026-02-01
-- What I implemented: VERIFICATION PASS - Location hierarchy already fully implemented. Verified `parent_location_id` (line 187), `child_location_ids` (line 188), plus `add_child_location()`, `remove_child_location()`, `set_parent_location()`, and `_validate_hierarchy()` methods. LocationType enum has 26 types including CONTINENT, REGION, CITY, TOWN, VILLAGE, CASTLE, DUNGEON, TEMPLE, etc. All 17 Location tests pass in test_world_entities.py.
-- Pattern discovered: Location.child_location_ids directly provides child IDs without needing a get_sub_locations() method. Returning full child Location objects would require repository lookup, which violates domain entity purity (entities should not depend on infrastructure). The current design correctly keeps hierarchy data as IDs.
-- Gotcha for future: The test file is test_world_entities.py (not test_location.py as PRD suggested). Multiple world entities (WorldSetting, Faction, Location, HistoryEvent) are tested in a single comprehensive file.
-
-## WORLD-007 - 2026-02-01
-- What I implemented: Created LocationTree.tsx recursive component using shadcn Collapsible. Added LocationType enum (27 types) with matching lucide-react icons. Implemented tree building from flat array with parent_location_id. Added keyboard accessibility (Enter/Space to select, Arrow keys to expand/collapse). Updated WorldLocationSchema with parent_location_id and child_location_ids fields. Created mock locations API with 3-level hierarchy (Continent > Region > City/Fortress).
-- Pattern discovered: With `exactOptionalPropertyTypes: true` in tsconfig, optional props must use `prop: T | undefined` (explicit undefined) not `prop?: T` when passing potentially undefined values to child components. Also, avoid `new Map<K,V>()` constructor - use `Record<K,V>` object or `new Map(entries)` to avoid type inference issues with lucide-react's global type augmentation.
-- Gotcha for future: The shadcn Collapsible component must be installed separately via `npx shadcn@latest add collapsible`. It's not included by default. The component is thin (just re-exports from @radix-ui/react-collapsible) but provides consistent styling hooks.
-
-## WORLD-008 - 2026-02-01
-- What I implemented: Created Item entity with ItemType (5 types: WEAPON/ARMOR/CONSUMABLE/KEY_ITEM/MISC) and ItemRarity (4 levels: COMMON/UNCOMMON/RARE/LEGENDARY) enums. Added inventory: List[str] to Character aggregate with give_item/remove_item/has_item methods. Created IItemRepository protocol and InMemoryItemRepository with type/rarity indexes. Added full CRUD API at /api/items plus /api/characters/{id}/give-item and /api/characters/{id}/remove-item/{item_id} endpoints. Wrote 35 unit tests covering entity validation, operations, factory methods, and serialization.
-- Pattern discovered: Inventory management belongs on the Character aggregate (mutable state) rather than CharacterProfile (frozen dataclass). The aggregate pattern allows coordinating inventory changes with version updates and domain events.
-- Gotcha for future: When creating router endpoints that cross domain boundaries (e.g., /characters/{id}/give-item relates to both items and characters), consider using a separate APIRouter (character_inventory_router) to keep concerns modular while still allowing registration under different prefixes.
-
-## WORLD-009 - 2026-02-01
-- What I implemented: Created InventoryTab component with full CRUD capabilities. Updated CharacterDetailsDialog to use shadcn Tabs with Profile/Inventory tabs. Added Item schemas (ItemType, ItemRarity, ItemResponse, ItemListResponse) to frontend types. Created mock handlers for /api/items and /api/characters/:id/inventory endpoints. Installed shadcn/ui tabs component. Implemented item list with type-based icons (lucide-react), rarity badges with color coding, remove button, Give Item dialog with item select, and type filter dropdown.
-- Pattern discovered: When building complex form components that exceed ESLint's max-lines-per-function (80 lines), break them into smaller sub-components (ItemRow, GiveItemDialog, ItemIcon, RarityBadge) that handle specific concerns. This keeps each function focused and testable.
-- Gotcha for future: The shadcn/ui tabs component must be installed separately via `npx shadcn@latest add tabs -y`. It's built on @radix-ui/react-tabs. When using react-query mutations, the `error` property is typed as `Error | null`, so check with `error instanceof Error` before accessing `.message`.
-
-## WORLD-010 - 2026-02-01
-- What I implemented: Created LoreEntry entity with LoreCategory enum (HISTORY/CULTURE/MAGIC/TECHNOLOGY). Implemented ILoreEntryRepository protocol and InMemoryLoreEntryRepository with category and tag indexes. Added full CRUD API at /api/lore plus search endpoint at /api/lore/search with title, tag, and category filtering. Added Pydantic schemas for requests and responses. Wrote 42 unit tests for entity and 22 API integration tests.
-- Pattern discovered: FastAPI route order matters - static routes (like /search) must be defined BEFORE parameterized routes (like /{entry_id}), otherwise "search" gets matched as an entry_id. Also, the persistence/__init__.py was importing SQLAlchemy models that had a "metadata" attribute name conflict; fixed with lazy imports using __getattr__.
-- Gotcha for future: When adding new routers, must register in BOTH src/api/app.py (used by api_server.py for tests) AND src/api/main_api_server.py (used for production). The app.py registration was missing for relationships, items, and lore routers - tests fail with 404 if only main_api_server.py is updated.
-
-## WORLD-011 - 2026-02-01
-- What I implemented: Created WikiDashboard.tsx at /world/wiki route as a central knowledge base view. Used shadcn Table component (installed via `npx shadcn@latest add table -y`) to display a unified list of Lore, Characters, Locations, and Items. Implemented debounced search (300ms) filtering by name, tags, and subtype. Added type dropdown filter. Each row shows type-specific icon (lucide-react), color-coded type badge, tags (max 3 + overflow indicator), and formatted date. Row clicks navigate to relevant detail pages. Added Lore schemas (LoreCategory, LoreEntryResponse, LoreEntryListResponse) to frontend types. Created mock lore entries and API handlers.
-- Pattern discovered: When splitting components to avoid max-lines-per-function warnings, extract pure transform functions (transformLoreEntries, transformCharacters) separately from React components (WikiFilters, WikiTableRow). This keeps data transformation logic testable and components focused on rendering.
-- Gotcha for future: With `exactOptionalPropertyTypes: true` in tsconfig, optional interface properties must explicitly include `| undefined` (e.g., `subtype?: string | undefined`) when the source data may be undefined. Using just `subtype?: string` causes TS2379 assignment errors.
-
-## WORLD-012 - 2026-02-01
-- What I implemented: Created CharacterProfileGenerator service in src/contexts/world/infrastructure/generators/character_profile_generator.py. Implemented LLMCharacterProfileGenerator using Gemini API with structured JSON output matching CharacterProfile schema (name, aliases, archetype, traits, appearance, backstory, motivations, quirks). Added MockCharacterProfileGenerator for deterministic testing. Created CharacterProfileGenerator factory class that selects generator based on MOCK_LLM environment variable. Wrote 36 comprehensive unit tests covering parsing, prompts, integration, and edge cases.
-- Pattern discovered: Existing LLMCharacterGenerator in character context returns simple CharacterGenerationResult (name, tagline, bio, visual_prompt, traits). The new CharacterProfileGenerator returns richer data matching the CharacterProfile value object's new WORLD-001 fields. Keep them separate - different use cases.
-- Gotcha for future: The MOCK_LLM flag supports multiple formats: "true", "1", "yes" (case-insensitive). When creating similar generators, follow the factory pattern with Protocol-based dependency injection to allow easy testing and swapping implementations.
-
-## WORLD-013 - 2026-02-01
-- What I implemented: Added 'Auto-Generate' button with Sparkles icon to CharacterProfileForm.tsx. Created backend API endpoint POST /api/generation/character-profile in generation.py router. Added CharacterProfileGenerationRequest/Response Pydantic schemas. Added corresponding Zod schemas and TypeScript types in frontend. Added generateCharacterProfile function in generationApi.ts. Installed shadcn/ui sonner component for toast notifications. Added Toaster to AppProviders. Created mock handler for /api/generation/character-profile in handlers.ts with archetype-based response templates.
-- Pattern discovered: The shadcn/ui sonner component by default uses `next-themes` which is for Next.js projects. For React+Vite projects, remove the useTheme hook and accept theme as a prop with a default value of 'system'. Also, sonner exports ToasterProps directly which is cleaner than using ComponentProps.
-- Gotcha for future: When adding new shadcn/ui components via `npx shadcn@latest add`, always check if they have Next.js-specific dependencies (like next-themes) and adapt them for the project's tech stack. The sonner component needed modification to work with the standard React + Vite setup.
-
-## WORLD-014 - 2026-02-01
-- What I implemented: Created WorldRule entity for defining world laws, magic systems, and physics constraints. Fields: name, description, consequence, exceptions (List[str]), category (string), severity (0-100). Created IWorldRuleRepository protocol with category and severity-based queries. Implemented InMemoryWorldRuleRepository with category indexing. Added full CRUD API at /api/world-rules with /search (name + category filter), /absolute (severity >= 90) endpoints. Added Pydantic schemas (WorldRuleCreateRequest, WorldRuleUpdateRequest, WorldRuleResponse, WorldRuleListResponse) to schemas.py. Wrote 58 unit tests covering entity creation, validation, exception management, severity helpers, factory methods, and serialization.
-- Pattern discovered: The existing WorldSetting has `world_rules: List[str]` as simple strings. The new WorldRule entity provides much richer structure (name, description, consequence, exceptions with severity levels). These coexist - WorldSetting.world_rules is for quick string-based rules, WorldRule entity is for detailed rule management. No migration needed.
-- Gotcha for future: When creating new routers, must register in BOTH app.py AND main_api_server.py, each with and without /api prefix. This is a pattern established by previous routers (lore, items, relationships). Follow the same registration pattern for consistency.
-
-## WORLD-015 - 2026-02-01
-- What I implemented: Created WorldRulesEditor.tsx component with full CRUD UI using shadcn Card layout. Added WorldRule schemas (WorldRuleResponseSchema, WorldRuleCreateRequestSchema, WorldRuleUpdateRequestSchema) to frontend types. Added comprehensive mock API handlers for /api/world-rules endpoints. UI includes: severity slider (0-100 with color-coded labels: Flexible/Moderate/Strict/Absolute), exception tag input, category badges, inline editing cards, create dialog, loading/error/empty states.
-- Pattern discovered: When components exceed ESLint's max-lines-per-function (80 lines), extract pure helper functions (API calls, severity info) and sub-components (RuleFormFields, ExceptionsEditor, RulesGrid) separately. Also extract mutation hooks into a custom hook (useWorldRulesMutations) to reduce main component size.
-- Gotcha for future: The shadcn/ui Card component is at `@/components/ui/card`, not `@/shared/components/ui/Card`. Some components have inconsistent casing in their paths - always check the actual file path before importing.
-
-## WORLD-016 - 2026-02-01
-- What I implemented: Created NarrativeSidebarWithTabs.tsx component that adds a 'World' tab to the narrative sidebar using shadcn Tabs. Created WorldSidebarTab.tsx with mini CharacterList (showing top 5 characters with archetype) and LocationTree (collapsed by default). Added worldDataApi.ts with useLocations and useWorldSidebarData hooks for lazy loading. Added LocationListResponseSchema to frontend types. Entity counts displayed in header.
-- Pattern discovered: Creating a new component (NarrativeSidebarWithTabs) that wraps/composes the original (NarrativeSidebar) is cleaner than modifying the original component. This allows gradual adoption and keeps the original component stable.
-- Gotcha for future: With `exactOptionalPropertyTypes: true`, when extracting sub-components, their optional props must use `prop?: T | undefined` not just `prop?: T`. This is required when passing potentially undefined values from parent to child. Also, for inline types like `{ className?: string }`, add `| undefined` to avoid TS2375 errors.
-
-## WORLD-017 - 2026-02-01
-- What I implemented: Created CharacterMention Tiptap extension for @CharacterName inline mentions. Built DraggableCharacterItem component using dnd-kit for sidebar drag. Made EditorComponent a droppable zone with useDroppable hook. Updated NarrativeEditorLayout to wrap everything in DndContext with drag handlers. Added CharacterDragOverlay for visual feedback during drag. Replaced NarrativeSidebar with NarrativeSidebarWithTabs in the layout. Added CSS styles for character mentions with bg-primary/10 highlight.
-- Pattern discovered: For cross-component drag-and-drop, the DndContext must wrap both the draggable source and droppable target. Using a "pending mention" pattern (parent sets state, child effect reads it) cleanly separates concerns: parent handles DnD coordination, child handles editor insertion.
-- Gotcha for future: When creating custom Tiptap nodes, use `Node.create()` with proper attribute handlers. The `renderHTML` and `parseHTML` must match for serialization. The `@tiptap/extension-mention` package provides a base, but for custom behavior (like character_id attributes), a custom node extension is cleaner.
-
-## WORLD-018 - 2026-02-01
-- What I implemented: Added interactive hover cards to @CharacterName mentions in the narrative editor. Installed shadcn/ui hover-card component. Created CharacterMentionView.tsx as a React NodeView component using @tiptap/react's ReactNodeViewRenderer. Updated CharacterMention extension to use addNodeView() for React rendering. Implemented CharacterHoverContent that fetches character details via TanStack Query with 5-minute stale time caching. Card displays avatar placeholder (initials), name, status badge, and truncated description (100 chars).
-- Pattern discovered: For interactive Tiptap nodes (like hover cards), use ReactNodeViewRenderer to render a React component instead of static HTML. This allows full React ecosystem (hooks, context, state) inside the editor node. The renderHTML() method still provides fallback for SSR/copy-paste scenarios.
-- Gotcha for future: shadcn/ui HoverCardContent doesn't expose Radix's onOpenAutoFocus prop directly - remove it to avoid TypeScript errors. The Radix HoverCard component handles openDelay and closeDelay natively (pass to HoverCard root, not Content). Use TanStack Query with staleTime to cache character details across multiple hovers.
-
-## WORLD-019 - 2026-02-01
-- What I implemented: Created GlobalSearch.tsx command palette using cmdk and shadcn Command components. Installed cmdk package. Implemented Cmd+K / Ctrl+K keyboard shortcut to open search dialog. Indexes Characters, Locations, Lore entries, and Chapters. Added recent searches stored in localStorage (max 5). Groups search results by type with icons and descriptions. Navigates to relevant detail pages on selection. Integrated into ProtectedLayout for global accessibility.
-- Pattern discovered: When components exceed ESLint's max-lines-per-function or complexity limits, extract logic into custom hooks (useGlobalSearchState), helper functions (fetchSearchData, transform functions), and sub-components (SearchContent, SearchResults, LoadingState, EmptyState). This keeps the main component clean and each function focused.
-- Gotcha for future: The cmdk package works seamlessly with shadcn's Command component. Use Promise.allSettled for parallel API calls when some may fail (graceful degradation). When fetching nested data (chapters from stories), handle each story's chapters separately to avoid all-or-nothing failures.
-
-## WORLD-020 - 2026-02-01
-- What I implemented: Created comprehensive E2E smoke test suite at `frontend/tests/e2e/world-building.spec.ts`. Covers 13 test cases across 4 test groups: Character Management (display, creation form, search filtering), Global Search (Cmd+K keyboard shortcut, search characters/locations/lore), Data Persistence (refresh, navigation), Integration (sidebar navigation, keyboard navigation). Created stateful mock APIs for characters, relationships, locations, items, lore entries, and stories.
-- Pattern discovered: The /world page has a dagre library bundling issue in Vite test environment ("Dynamic require of @dagrejs/graphlib is not supported"). Tests needing RelationshipGraph were refactored to avoid /world route. Focus tests on stable pages (/characters, /dashboard) and ensure API mocks are comprehensive enough to cover all data flows.
-- Gotcha for future: When creating E2E tests with Playwright, use `page.route()` to mock APIs rather than relying on MSW for E2E (MSW is for unit/integration tests). Use `[cmdk-item]` selector to find Command palette results. Always use `.first()` for locators that might match multiple elements to avoid strict mode violations. The `activateGuestSession()` helper from `./utils/auth` is essential for protected route testing.
+## [CHAR-021] - 2026-02-01
+- What I implemented: CharacterPsychology value object using Big Five (OCEAN) model with all required traits (openness, conscientiousness, extraversion, agreeableness, neuroticism). Added optional `psychology` field to Character aggregate with `update_psychology()` method. Created `CharacterPsychologySchema` Pydantic model in schemas.py. Added 18 comprehensive unit tests.
+- Pattern discovered: The Character aggregate uses Optional fields for mutable state that isn't part of the frozen CharacterProfile. This follows the convention noted in techContext to "Extend Character aggregate (not frozen CharacterProfile) for mutable state".
+- Gotcha for future: CharacterProfile is frozen (immutable dataclass), so new mutable character properties should go on the Character aggregate directly, not on the profile.

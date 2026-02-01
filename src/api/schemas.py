@@ -197,6 +197,71 @@ class CharacterPsychologySchema(BaseModel):
     neuroticism: int = Field(..., ge=0, le=100, description="Neuroticism (0-100)")
 
 
+class CharacterMemorySchema(BaseModel):
+    """Schema for character memory.
+
+    Memories are immutable records of experiences that shape character behavior.
+
+    Importance scale (1-10):
+    - 1-3: Minor memories (daily routines, passing encounters)
+    - 4-6: Moderate memories (friendships, minor conflicts)
+    - 7-8: Significant memories (major life events, turning points)
+    - 9-10: Core memories (defining moments, traumas, transformations)
+    """
+
+    memory_id: str = Field(..., description="Unique identifier for this memory")
+    content: str = Field(
+        ..., min_length=1, description="The memory content (what happened)"
+    )
+    importance: int = Field(
+        ..., ge=1, le=10, description="Importance score (1-10)"
+    )
+    tags: List[str] = Field(
+        default_factory=list, description="Categorization tags for retrieval"
+    )
+    timestamp: str = Field(..., description="ISO 8601 timestamp of when memory formed")
+    is_core_memory: bool = Field(
+        False, description="Whether this is a core memory (importance > 8)"
+    )
+    importance_level: str = Field(
+        "moderate", description="Qualitative level: minor, moderate, significant, core"
+    )
+
+
+class CharacterMemoryCreateRequest(BaseModel):
+    """Request to create a new character memory."""
+
+    content: str = Field(
+        ..., min_length=1, description="The memory content (what happened)"
+    )
+    importance: int = Field(
+        ..., ge=1, le=10, description="Importance score (1-10)"
+    )
+    tags: List[str] = Field(
+        default_factory=list, description="Categorization tags for retrieval"
+    )
+
+
+class CharacterMemoryUpdateRequest(BaseModel):
+    """Request to update a character memory (limited updates allowed)."""
+
+    importance: Optional[int] = Field(
+        None, ge=1, le=10, description="Updated importance score"
+    )
+    tags: Optional[List[str]] = Field(
+        None, description="Updated tags"
+    )
+
+
+class CharacterMemoriesResponse(BaseModel):
+    """Response containing a list of character memories."""
+
+    character_id: str
+    memories: List[CharacterMemorySchema]
+    total_count: int
+    core_memory_count: int
+
+
 class CharacterSummary(BaseModel):
     id: str
     agent_id: str
@@ -249,6 +314,9 @@ class CharacterDetailResponse(BaseModel):
     structured_data: Dict[str, JsonValue] = Field(default_factory=dict)
     psychology: Optional[CharacterPsychologySchema] = Field(
         None, description="Big Five personality traits (OCEAN model)"
+    )
+    memories: List[CharacterMemorySchema] = Field(
+        default_factory=list, description="Character memories"
     )
 
 

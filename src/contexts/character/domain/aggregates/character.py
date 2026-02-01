@@ -31,6 +31,7 @@ from ..value_objects.character_stats import (
     CoreAbilities,
     VitalStats,
 )
+from ..value_objects.character_memory import CharacterMemory
 from ..value_objects.character_psychology import CharacterPsychology
 from ..value_objects.skills import SkillCategory, Skills
 
@@ -59,6 +60,9 @@ class Character:
     # Optional mutable state (not part of frozen CharacterProfile)
     # Psychology uses the Big Five model for personality quantification
     psychology: Optional[CharacterPsychology] = None
+
+    # Character memories - immutable records of experiences that shape behavior
+    memories: List[CharacterMemory] = field(default_factory=list)
 
     # Entity state
     created_at: datetime = field(default_factory=datetime.now)
@@ -330,6 +334,85 @@ class Character:
                 updated_at=self.updated_at,
             )
         )
+
+    def add_memory(self, memory: CharacterMemory) -> None:
+        """Add a memory to the character's memory list.
+
+        Why memories are separate from profile: CharacterProfile is frozen and
+        represents the character's base identity. Memories accumulate over time
+        and represent the character's experiences, affecting their behavior and
+        dialogue. They are immutable event logs, not mutable state.
+
+        Args:
+            memory: The CharacterMemory to add
+
+        Raises:
+            TypeError: If memory is not a CharacterMemory instance
+        """
+        if not isinstance(memory, CharacterMemory):
+            raise TypeError(
+                f"Expected CharacterMemory, got {type(memory).__name__}"
+            )
+
+        self.memories.append(memory)
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["memories"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def get_memories(self) -> List[CharacterMemory]:
+        """Get all memories for this character.
+
+        Returns:
+            A copy of the memories list
+        """
+        return self.memories.copy()
+
+    def get_core_memories(self) -> List[CharacterMemory]:
+        """Get only core memories (importance > 8).
+
+        Why this matters: Core memories are the defining experiences that
+        shape a character's identity. They should be prioritized in AI
+        context building and highlighted in the UI.
+
+        Returns:
+            List of memories with importance > 8
+        """
+        return [m for m in self.memories if m.is_core_memory()]
+
+    def get_memories_by_tag(self, tag: str) -> List[CharacterMemory]:
+        """Get memories filtered by a specific tag.
+
+        Args:
+            tag: The tag to filter by (case-insensitive)
+
+        Returns:
+            List of memories containing the specified tag
+        """
+        return [m for m in self.memories if m.has_tag(tag)]
+
+    def get_recent_memories(self, count: int = 5) -> List[CharacterMemory]:
+        """Get the most recent memories.
+
+        Args:
+            count: Number of memories to return (default 5)
+
+        Returns:
+            List of most recent memories, sorted by timestamp descending
+        """
+        sorted_memories = sorted(
+            self.memories, key=lambda m: m.timestamp, reverse=True
+        )
+        return sorted_memories[:count]
 
     def level_up(self) -> None:
         """Level up the character, increasing stats appropriately."""
@@ -608,6 +691,12 @@ class Character:
         if self.psychology is not None:
             summary["psychology"] = self.psychology.to_dict()
             summary["psychology_summary"] = self.psychology.get_personality_summary()
+
+        # Include memories
+        if self.memories:
+            summary["memories"] = [m.to_dict() for m in self.memories]
+            summary["memory_count"] = len(self.memories)
+            summary["core_memory_count"] = len(self.get_core_memories())
 
         return summary
 

@@ -30,10 +30,12 @@ from .character_stats import (
     CoreAbilities,
     VitalStats,
 )
+from .character_memory import CharacterMemory
 from .character_psychology import CharacterPsychology
 from .skills import ProficiencyLevel, Skill, SkillCategory, SkillGroup, Skills
 
 __all__ = [
+    "CharacterMemory",
     "CharacterPsychology",
     "CharacterID",
     "CharacterProfile",
