@@ -8,18 +8,9 @@ test.describe('Weaver Scene Generation', () => {
     // GIVEN: 用户在 Weaver 画布，且 API 已 mock
     // ========================================
     await test.step('GIVEN: API mock 配置为返回成功的场景数据', async () => {
-      await page.route('**/api/generation/scene', async (route) => {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            title: 'The Shadows Whisper',
-            content: 'In the dim corridors of the ancient library, Nyx discovered a tome that pulsed with forbidden knowledge...',
-            summary: 'Nyx discovers a mysterious tome in an ancient library.',
-            visual_prompt: 'dark library, ancient tomes, ethereal glow, shadowy figure',
-          }),
-        });
+      await page.addInitScript(() => {
+        (window as any).__e2eSceneMode = 'success';
+        (window as any).__e2eSceneDelayMs = 300;
       });
     });
 
@@ -50,7 +41,10 @@ test.describe('Weaver Scene Generation', () => {
     });
 
     await test.step('WHEN: 用户点击对话框内的 Generate 按钮提交', async () => {
-      await page.getByRole('button', { name: 'Generate' }).click();
+      await page
+        .locator('[role="dialog"]')
+        .getByRole('button', { name: /^Generate$/i })
+        .click();
     });
 
     // ========================================
@@ -106,13 +100,9 @@ test.describe('Weaver Scene Generation', () => {
     // GIVEN: 用户在 Weaver 画布，且 API 会返回错误
     // ========================================
     await test.step('GIVEN: API mock 配置为返回 500 错误', async () => {
-      await page.route('**/api/generation/scene', async (route) => {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        await route.fulfill({
-          status: 500,
-          contentType: 'application/json',
-          body: JSON.stringify({ detail: 'Scene generation service unavailable' }),
-        });
+      await page.addInitScript(() => {
+        (window as any).__e2eSceneMode = 'error';
+        (window as any).__e2eSceneDelayMs = 100;
       });
     });
 
@@ -137,7 +127,10 @@ test.describe('Weaver Scene Generation', () => {
     await test.step('WHEN: 用户填写表单并提交', async () => {
       await page.getByLabel('Scene Type').click();
       await page.getByRole('option', { name: 'Opening' }).click();
-      await page.getByRole('button', { name: 'Generate' }).click();
+      await page
+        .locator('[role="dialog"]')
+        .getByRole('button', { name: /^Generate$/i })
+        .click();
     });
 
     // ========================================

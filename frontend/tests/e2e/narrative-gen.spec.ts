@@ -9,58 +9,13 @@
 import { test, expect } from './fixtures';
 import { prepareGuestSession } from './utils/auth';
 
-/**
- * Creates a mock SSE response body with narrative content.
- * Simulates the server streaming text chunks.
- */
-function createMockNarrativeSSE(): string {
-  const chunks = [
-    '## The Beginning\n\n',
-    'The ancient library stretched endlessly before Elena, ',
-    'its towering shelves heavy with forgotten knowledge. ',
-    'She ran her fingers along the dusty spines, ',
-    'searching for the tome that would change everything.\n\n',
-    '*The shadows whispered secrets...*\n',
-  ];
-
-  let sseBody = '';
-  for (const chunk of chunks) {
-    sseBody += `data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`;
-  }
-  // Add completion event with metadata
-  sseBody += `data: ${JSON.stringify({
-    type: 'done',
-    content: '',
-    metadata: {
-      total_chunks: chunks.length,
-      total_characters: chunks.join('').length,
-      generation_time_ms: 1200,
-      model_used: 'mock-llm-v1',
-    },
-  })}\n\n`;
-
-  return sseBody;
-}
-
 test.describe('Narrative Generation - Ghostwriter Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Prepare guest session for authentication bypass
     await prepareGuestSession(page);
-
-    // Mock the narrative streaming endpoint
-    await page.route('**/api/narratives/stream', async (route) => {
-      // Small delay to simulate network latency
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/event-stream',
-        headers: {
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-        },
-        body: createMockNarrativeSSE(),
-      });
+    await page.addInitScript(() => {
+      (window as any).__e2eNarrativeMode = 'success';
+      (window as any).__e2eNarrativeDelayMs = 100;
     });
   });
 
@@ -135,21 +90,10 @@ test.describe('Narrative Generation - Ghostwriter Flow', () => {
   test('@narrative shows generating indicator and Cancel button during stream', async ({
     page,
   }) => {
-    // Override mock with a slower response to test Cancel button
-    await page.route(
-      '**/api/narratives/stream',
-      async (route) => {
-        // Longer delay to ensure we can observe Cancel button
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        await route.fulfill({
-          status: 200,
-          contentType: 'text/event-stream',
-          body: createMockNarrativeSSE(),
-        });
-      },
-      { times: 1 }
-    );
+    await page.addInitScript(() => {
+      (window as any).__e2eNarrativeMode = 'success';
+      (window as any).__e2eNarrativeDelayMs = 2000;
+    });
 
     // ========================================
     // GIVEN: User is on the story editor page
@@ -184,21 +128,9 @@ test.describe('Narrative Generation - Ghostwriter Flow', () => {
   });
 
   test('@narrative handles streaming error gracefully', async ({ page }) => {
-    // ========================================
-    // GIVEN: API will return an error
-    // ========================================
-    await test.step('GIVEN: API mock configured to return error', async () => {
-      await page.route(
-        '**/api/narratives/stream',
-        async (route) => {
-          await route.fulfill({
-            status: 500,
-            contentType: 'application/json',
-            body: JSON.stringify({ detail: 'Generation service unavailable' }),
-          });
-        },
-        { times: 1 }
-      );
+    await page.addInitScript(() => {
+      (window as any).__e2eNarrativeMode = 'error';
+      (window as any).__e2eNarrativeDelayMs = 0;
     });
 
     await test.step('GIVEN: User navigates to the story editor', async () => {

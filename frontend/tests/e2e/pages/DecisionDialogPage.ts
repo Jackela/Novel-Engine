@@ -69,39 +69,39 @@ export class DecisionDialogPage {
     this.page = page;
 
     // Dialog container
-    this.dialog = page.getByRole('dialog');
+    this.dialog = page.locator('[data-testid="decision-dialog"]');
     this.dialogTitle = page.locator('[id="decision-dialog-title"]');
     this.dialogDescription = page.locator('[id="decision-dialog-description"]');
 
     // Header elements
-    this.turnChip = page.getByText(/Turn \d+/);
-    this.decisionTypeChip = page.locator('.MuiChip-root').filter({ hasText: /choice|turning|crisis|climax/i });
-    this.countdownTimer = page.locator('[class*="MuiBox"]').filter({ has: page.locator('[data-testid="TimerIcon"], svg') }).first();
-    this.headerSkipButton = page.getByRole('button', { name: /skip decision/i });
+    this.turnChip = page.locator('[data-testid="decision-turn-chip"]');
+    this.decisionTypeChip = page.locator('[data-testid="decision-type-chip"]');
+    this.countdownTimer = page.locator('[data-testid="decision-countdown"]');
+    this.headerSkipButton = page.locator('[data-testid="decision-skip-header"]');
 
     // Content elements
-    this.narrativeContext = page.locator('[class*="borderLeft"]').first();
-    this.errorAlert = page.getByRole('alert').filter({ hasText: /error|failed/i });
+    this.narrativeContext = page.locator('[data-testid="decision-narrative-context"]');
+    this.errorAlert = page.locator('[data-testid="decision-error"]');
 
     // Input mode buttons
-    this.chooseOptionButton = page.getByRole('button', { name: /choose option/i });
-    this.customActionButton = page.getByRole('button', { name: /custom action/i });
+    this.chooseOptionButton = page.locator('[data-testid="decision-mode-options"]');
+    this.customActionButton = page.locator('[data-testid="decision-mode-free-text"]');
 
     // Options grid
-    this.optionCards = page.locator('.MuiCard-root button');
+    this.optionCards = page.locator('[data-testid="decision-option-card"]');
 
     // Free text input
-    this.freeTextInput = page.getByPlaceholder(/describe what you want/i);
-    this.characterCount = page.getByText(/\/500/);
+    this.freeTextInput = page.locator('[data-testid="decision-free-text"]');
+    this.characterCount = page.locator('[data-testid="decision-character-count"]');
 
     // Negotiation elements
-    this.negotiationAlert = page.getByRole('alert').filter({ hasText: /adjustment|accepted|alternatives/i });
-    this.acceptSuggestionButton = page.getByRole('button', { name: /accept suggestion/i });
-    this.keepOriginalButton = page.getByRole('button', { name: /keep original/i });
+    this.negotiationAlert = page.locator('[data-testid="decision-negotiation"]');
+    this.acceptSuggestionButton = page.locator('[data-testid="decision-accept-suggestion"]');
+    this.keepOriginalButton = page.locator('[data-testid="decision-keep-original"]');
 
     // Footer buttons
-    this.footerSkipButton = page.getByRole('button', { name: /skip.*default/i });
-    this.confirmButton = page.getByRole('button', { name: /confirm/i });
+    this.footerSkipButton = page.locator('[data-testid="decision-skip-footer"]');
+    this.confirmButton = page.locator('[data-testid="decision-confirm"]');
   }
 
   /**
@@ -152,10 +152,7 @@ export class DecisionDialogPage {
    * Get the countdown timer text
    */
   async getCountdownText(): Promise<string> {
-    const timerContainer = this.page.locator('[class*="MuiBox"]').filter({
-      hasText: /\d+:\d+/
-    }).first();
-    const text = await timerContainer.textContent();
+    const text = await this.countdownTimer.textContent();
     return text?.match(/\d+:\d+/)?.[0] || '';
   }
 
@@ -168,7 +165,7 @@ export class DecisionDialogPage {
     const labels: string[] = [];
 
     for (let i = 0; i < count; i++) {
-      const text = await cards.nth(i).locator('.MuiTypography-subtitle1').textContent();
+      const text = await cards.nth(i).locator('[data-testid="decision-option-label"]').textContent();
       if (text) labels.push(text);
     }
 
@@ -194,10 +191,9 @@ export class DecisionDialogPage {
    * Check if an option is selected by its label
    */
   async isOptionSelected(label: string): Promise<boolean> {
-    const card = this.optionCards.filter({ hasText: label }).locator('..');
-    const classes = await card.getAttribute('class');
-    // Selected cards have elevation variant or different border
-    return classes?.includes('elevation') || false;
+    const card = this.optionCards.filter({ hasText: label }).first();
+    const pressed = await card.getAttribute('aria-pressed');
+    return pressed === 'true';
   }
 
   /**

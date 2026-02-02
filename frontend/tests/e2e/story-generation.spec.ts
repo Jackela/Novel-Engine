@@ -10,57 +10,18 @@ import { test, expect } from './fixtures';
  */
 test.describe('Story Generation - The Writer\'s Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Mock the narrative streaming endpoint
-    await page.route('**/api/narratives/stream', async (route) => {
-      const request = route.request();
-      const postData = request.postDataJSON() as Record<string, unknown> | null;
-
-      // Store request for validation
-      await page.evaluate((data) => {
-        (window as unknown as { __lastNarrativeRequest?: unknown }).__lastNarrativeRequest = data;
-      }, postData);
-
-      // Simulate SSE streaming response
-      const chunks = [
-        'In the depths of the ancient forest, ',
-        'where shadows danced with moonlight, ',
-        'a figure emerged from the mist. ',
-        'Her name was whispered among the trees—',
-        'Elara, the last keeper of forgotten memories.',
-      ];
-
-      // Build SSE response body
-      let sseBody = '';
-      for (const chunk of chunks) {
-        sseBody += `data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`;
-      }
-      sseBody += `data: ${JSON.stringify({ type: 'done', content: '' })}\n\n`;
-
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/event-stream',
-        body: sseBody,
-      });
+    await page.addInitScript(() => {
+      (window as any).__e2eNarrativeMode = 'success';
+      (window as any).__e2eNarrativeDelayMs = 0;
     });
   });
 
   test('Scenario 1: User clicks "New Chapter" -> "Generating..." state appears', async ({
     page,
   }) => {
-    // Override mock to add a delay so we can catch the generating state
-    await page.route('**/api/narratives/stream', async (route) => {
-      // Add delay to observe the generating state
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const sseBody =
-        `data: ${JSON.stringify({ type: 'chunk', content: 'Test content...' })}\n\n` +
-        `data: ${JSON.stringify({ type: 'done', content: '' })}\n\n`;
-
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/event-stream',
-        body: sseBody,
-      });
+    await page.addInitScript(() => {
+      (window as any).__e2eNarrativeMode = 'success';
+      (window as any).__e2eNarrativeDelayMs = 500;
     });
 
     // ========================================
@@ -136,18 +97,10 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
       await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
     });
 
-    // Set up request interception to capture the payload
-    let capturedPayload: Record<string, unknown> | null = null;
-    await page.route('**/api/narratives/stream', async (route) => {
-      const request = route.request();
-      capturedPayload = request.postDataJSON() as Record<string, unknown>;
-
-      // Fulfill with minimal SSE response
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/event-stream',
-        body: `data: ${JSON.stringify({ type: 'chunk', content: 'Test content.' })}\n\ndata: ${JSON.stringify({ type: 'done', content: '' })}\n\n`,
-      });
+    await page.addInitScript(() => {
+      (window as any).__e2eNarrativeMode = 'success';
+      (window as any).__e2eNarrativeDelayMs = 0;
+      (window as any).__lastNarrativeRequest = null;
     });
 
     // ========================================
@@ -166,6 +119,9 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // THEN: The request payload includes World Context
     // ========================================
     await test.step('THEN: The API request includes world_context in the payload', async () => {
+      const capturedPayload = await page.evaluate(
+        () => (window as unknown as { __lastNarrativeRequest?: Record<string, unknown> }).__lastNarrativeRequest ?? null
+      );
       expect(capturedPayload).not.toBeNull();
       expect(capturedPayload).toHaveProperty('world_context');
 
@@ -185,13 +141,9 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
   });
 
   test('Scenario 4: Error handling - API failure shows error state', async ({ page }) => {
-    // Override mock to return error
-    await page.route('**/api/narratives/stream', async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ detail: 'Narrative generation service unavailable' }),
-      });
+    await page.addInitScript(() => {
+      (window as any).__e2eNarrativeMode = 'error';
+      (window as any).__e2eNarrativeDelayMs = 0;
     });
 
     // ========================================
@@ -226,15 +178,9 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
   });
 
   test('Scenario 5: User can cancel ongoing generation', async ({ page }) => {
-    // Set up a slow streaming response
-    await page.route('**/api/narratives/stream', async (route) => {
-      // This will be aborted before completion
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/event-stream',
-        body: `data: ${JSON.stringify({ type: 'chunk', content: 'Content' })}\n\n`,
-      });
+    await page.addInitScript(() => {
+      (window as any).__e2eNarrativeMode = 'success';
+      (window as any).__e2eNarrativeDelayMs = 5000;
     });
 
     // ========================================

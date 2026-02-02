@@ -16,6 +16,16 @@ import { DashboardPage } from './pages/DashboardPage';
 
 const ACCESSIBILITY_IGNORED_RULES = ['color-contrast', 'list', 'scrollable-region-focusable'];
 
+const focusViaTab = async (page: import('@playwright/test').Page, locator: import('@playwright/test').Locator, maxPresses = 40) => {
+  await locator.waitFor({ state: 'visible' });
+  for (let i = 0; i < maxPresses; i++) {
+    const isFocused = await locator.evaluate((el) => el === document.activeElement).catch(() => false);
+    if (isFocused) return;
+    await page.keyboard.press('Tab');
+  }
+  throw new Error('Unable to reach locator via keyboard navigation');
+};
+
 test.describe('Weaver Full Journey', () => {
   test.describe('Navigation Flow', () => {
     /**
@@ -216,28 +226,15 @@ test.describe('Weaver Full Journey', () => {
     test('@e2e Weaver canvas should support keyboard navigation', async ({ page }) => {
       await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
 
-      // Tab through toolbar buttons
-      await page.keyboard.press('Tab');
-
-      // Find and activate Character button via keyboard
-      let foundButton = false;
-      for (let i = 0; i < 15; i++) {
-        const focusedText = await page.evaluate(() => document.activeElement?.textContent);
-        if (focusedText?.toLowerCase().includes('character')) {
-          foundButton = true;
-          break;
-        }
-        await page.keyboard.press('Tab');
-      }
-
-      if (foundButton) {
-        await page.keyboard.press('Enter');
-        const characterNode = page
-          .locator('.react-flow__node')
-          .filter({ hasText: 'New Character' })
-          .first();
-        await expect(characterNode).toBeVisible();
-      }
+      const characterButton = page.getByRole('button', { name: 'Character' });
+      await focusViaTab(page, characterButton);
+      await expect(characterButton).toBeFocused();
+      await page.keyboard.press('Enter');
+      const characterNode = page
+        .locator('.react-flow__node')
+        .filter({ hasText: 'New Character' })
+        .first();
+      await expect(characterNode).toBeVisible();
     });
   });
 });

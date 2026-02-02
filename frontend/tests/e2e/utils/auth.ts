@@ -6,6 +6,7 @@ export const resetAuthState = async (page: Page) => {
     try {
       localStorage.clear();
       sessionStorage.clear();
+      localStorage.setItem('e2e_bypass_auth', '0');
     } catch {
       // ignore storage errors on opaque origins
     }

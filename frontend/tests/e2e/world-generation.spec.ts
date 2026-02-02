@@ -14,23 +14,10 @@ import { test, expect } from './fixtures';
  */
 test.describe('Generation Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Set up API mock for character generation endpoint
-    await page.route('**/api/generation/character', async (route) => {
-      const request = route.request();
-      const body = request.postDataJSON() as Record<string, unknown> | null;
-
-      // Return mocked character generation response
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          name: body?.archetype === 'Wandering Mage' ? 'Seraphina the Wanderer' : 'Generated Character',
-          traits: ['wise', 'mysterious', 'compassionate'],
-          tagline: 'A seeker of forbidden knowledge',
-          bio: 'Once a scholar of the highest order, now walks the paths between worlds seeking answers to questions long forgotten.',
-          visual_prompt: 'A hooded figure with glowing arcane sigils on their robes, staff topped with crystallized starlight',
-        }),
-      });
+    await page.addInitScript(() => {
+      (window as any).__e2eGenerationMode = 'success';
+      (window as any).__e2eGenerationDelayMs = 300;
+      (window as any).__lastGenerationRequest = null;
     });
 
     // Navigate to Weaver page
@@ -60,9 +47,9 @@ test.describe('Generation Flow', () => {
     // ========================================
     // WHEN: User clicks "Generate" button in toolbar
     // ========================================
-    await test.step('WHEN: User opens the Character Generation dialog', async () => {
-      // The toolbar "Generate" button has aria-label="Generate"
-      const generateBtn = page.getByRole('button', { name: 'Generate' }).first();
+      await test.step('WHEN: User opens the Character Generation dialog', async () => {
+        // The toolbar "Generate" button has aria-label="Generate"
+      const generateBtn = page.getByRole('button', { name: /^Generate$/i }).first();
       await expect(generateBtn).toBeVisible({ timeout: 5000 });
       await generateBtn.click();
 
@@ -86,7 +73,9 @@ test.describe('Generation Flow', () => {
     // WHEN: User clicks Generate
     // ========================================
     await test.step('WHEN: User clicks the Generate button in dialog', async () => {
-      const generateBtn = page.getByRole('button', { name: /^generate$/i });
+      const generateBtn = page
+        .locator('[role="dialog"]')
+        .getByRole('button', { name: /^generate$/i });
       await expect(generateBtn).toBeVisible({ timeout: 3000 });
       await generateBtn.click();
     });
@@ -122,22 +111,16 @@ test.describe('Generation Flow', () => {
    * The optimistic UI pattern creates a node immediately, then updates it to error state.
    */
   test('Scenario: Generation failure shows error state on node', async ({ page }) => {
-    // Override mock to return error
-    await page.route('**/api/generation/character', async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          detail: 'Character generation service unavailable',
-        }),
-      });
+    await page.addInitScript(() => {
+      (window as any).__e2eGenerationMode = 'error';
+      (window as any).__e2eGenerationDelayMs = 100;
     });
 
     // ========================================
     // WHEN: User triggers generation and API fails
     // ========================================
     await test.step('WHEN: User opens Character Generation and triggers generation', async () => {
-      const generateBtn = page.getByRole('button', { name: 'Generate' }).first();
+      const generateBtn = page.getByRole('button', { name: /^Generate$/i }).first();
       await expect(generateBtn).toBeVisible({ timeout: 5000 });
       await generateBtn.click();
 
@@ -148,7 +131,9 @@ test.describe('Generation Flow', () => {
       const archetypeInput = page.locator('#archetype');
       await archetypeInput.fill('Test Character');
 
-      const submitBtn = page.getByRole('button', { name: /^generate$/i });
+      const submitBtn = page
+        .locator('[role="dialog"]')
+        .getByRole('button', { name: /^generate$/i });
       await submitBtn.click();
     });
 
@@ -176,25 +161,14 @@ test.describe('Generation Flow', () => {
    * Tests that generation request contains expected fields.
    */
   test('Scenario: Generated character request has expected structure', async ({ page }) => {
-    let capturedRequest: Record<string, unknown> | null = null;
-
-    await page.route('**/api/generation/character', async (route) => {
-      capturedRequest = route.request().postDataJSON() as Record<string, unknown>;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          name: 'Test Character',
-          traits: ['brave'],
-          tagline: 'A test character',
-          bio: 'Generated for testing',
-          visual_prompt: 'A test visual',
-        }),
-      });
+    await page.addInitScript(() => {
+      (window as any).__e2eGenerationMode = 'success';
+      (window as any).__e2eGenerationDelayMs = 100;
+      (window as any).__lastGenerationRequest = null;
     });
 
     await test.step('WHEN: User triggers character generation', async () => {
-      const generateBtn = page.getByRole('button', { name: 'Generate' }).first();
+      const generateBtn = page.getByRole('button', { name: /^Generate$/i }).first();
       await expect(generateBtn).toBeVisible({ timeout: 5000 });
       await generateBtn.click();
 
@@ -205,7 +179,9 @@ test.describe('Generation Flow', () => {
       const archetypeInput = page.locator('#archetype');
       await archetypeInput.fill('Hero');
 
-      const submitBtn = page.getByRole('button', { name: /^generate$/i });
+      const submitBtn = page
+        .locator('[role="dialog"]')
+        .getByRole('button', { name: /^generate$/i });
       await submitBtn.click();
 
       // Wait for request to be made
@@ -213,7 +189,9 @@ test.describe('Generation Flow', () => {
     });
 
     await test.step('THEN: Request payload has expected structure', async () => {
-      // Verify the request was made with expected fields
+      const capturedRequest = await page.evaluate(
+        () => (window as unknown as { __lastGenerationRequest?: Record<string, unknown> }).__lastGenerationRequest ?? null
+      );
       expect(capturedRequest).not.toBeNull();
       if (capturedRequest) {
         // Character generation should include concept and archetype
