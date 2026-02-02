@@ -258,8 +258,14 @@ def create_realistic_llm_response() -> Dict[str, Any]:
 
 @pytest.fixture
 def generator() -> LLMWorldGenerator:
-    """Create a generator instance for testing."""
-    return LLMWorldGenerator()
+    """Create a generator instance for testing.
+
+    Note: We set _api_key directly to avoid dependency on environment variables,
+    which may not be set in CI environments. The actual API call is mocked anyway.
+    """
+    gen = LLMWorldGenerator()
+    gen._api_key = "test-api-key"  # Set directly since env var might not exist in CI
+    return gen
 
 
 @pytest.fixture
