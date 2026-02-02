@@ -80,3 +80,62 @@
   - The Weaver CharacterNode is more feature-rich (has role, traits, status, bio, etc.)
   - Named exports are preferred (`export function AppShell`) but default export is also provided for compatibility
 ---
+
+## 2026-02-02 - VIS-003
+- **What was implemented**: Editor Typography System for Editor Canvas domain
+- **Files changed**:
+  - Created `frontend/src/styles/editor.css` - Complete Editor Canvas styling with prose-editor class
+  - Updated `frontend/src/main.tsx` - Imported editor.css
+  - Updated `frontend/src/components/narrative/EditorComponent.tsx`:
+    - Added @tiptap/extension-placeholder for empty editor state
+    - Applied .prose-editor class to editor container
+    - Removed inline editorProps.attributes.class (now handled by editor.css)
+  - Updated `frontend/.stylelintrc.cjs` - Added editor.css to ignoreFiles (ProseMirror classes don't follow BEM)
+  - Updated `frontend/package.json` - Added @tiptap/extension-placeholder dependency
+- **Learnings for future iterations:**
+  - ProseMirror uses `.ProseMirror` class for the editable area, must be targeted via `.prose-editor .ProseMirror`
+  - Tiptap placeholder extension uses `is-editor-empty` class and `data-placeholder` attribute
+  - editor.css is excluded from stylelint because ProseMirror class names are third-party (not BEM compliant)
+  - Literary mode uses `[data-typography="literary"] .prose-editor` selector to scope to Editor Canvas only
+  - The `--font-sans`, `--font-serif`, `--font-display`, `--font-mono` CSS variables are used for font families
+  - Ornamental horizontal rules in literary mode use `::before` pseudo-element with "• • •" content
+---
+
+## 2026-02-02 - VIS-004
+- **What was implemented**: Enhanced Weaver Node Styling for Graph Canvas domain
+- **Files changed**:
+  - `frontend/src/styles/tailwind.css`:
+    - Added CSS variables for Weaver glow colors (--weaver-glow-rgb, --weaver-neon-rgb, etc.)
+    - Refactored node status classes to use CSS variables for theming (box-shadow uses rgb(var(--weaver-glow-rgb)))
+    - Added type-specific left border accents using `[data-node-type="character"]` selectors
+    - Added dark mode contrast improvements via `.dark .weaver-node` overrides
+  - `frontend/tailwind.config.js`:
+    - Added `transitionDuration` tokens (fast: 150ms, normal: 300ms, slow: 500ms) per DESIGN_SYSTEM.md
+- **Learnings for future iterations:**
+  - All Weaver nodes already use `data-node-type` attribute via WeaverNode wrapper component
+  - CSS custom properties for RGB values use format `--weaver-glow-rgb: 0 245 255` (no commas), consumed as `rgb(var(--weaver-glow-rgb) / 0.45)`
+  - Dark mode variants of glow colors are slightly brighter to maintain contrast on dark surfaces
+  - Type-specific styling should use `[data-node-type="xxx"]` selectors in CSS, not inline className props
+  - The `.dark .weaver-node .text-muted-foreground` selector improves text readability in dark mode
+---
+
+## 2026-02-02 - VIS-005
+- **What was implemented**: Typography Mode Switcher for TopBar
+- **Files changed**:
+  - Created `frontend/src/shared/components/layout/TypographyToggle.tsx`:
+    - Toggles between default and literary typography modes
+    - Uses Type icon for default mode, BookOpen icon for literary mode
+    - Sets `data-typography="literary"` attribute on html element
+    - Persists preference to localStorage with key `typography-mode`
+    - Full accessibility: aria-label and aria-pressed attributes
+  - Updated `frontend/src/shared/components/layout/index.ts` - Added TypographyToggle export
+  - Updated `frontend/src/shared/components/layout/TopBar.tsx`:
+    - Imported TypographyToggle component
+    - Added toggle to right-side actions (before notifications)
+- **Learnings for future iterations:**
+  - Typography mode is separate from color mode (class="dark") - they are orthogonal
+  - localStorage key for typography mode is `typography-mode`
+  - The toggle uses `data-typography` attribute (not class) on html element
+  - Literary mode is "opt-in" - default is sans-serif UI typography
+  - Button icons from lucide-react: `Type` for default, `BookOpen` for literary
+---
