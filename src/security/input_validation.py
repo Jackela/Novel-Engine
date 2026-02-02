@@ -16,7 +16,7 @@ System保佑此验证系统 (May the System bless this validation system)
 
 import html
 import json
-import logging
+import structlog
 import re
 from dataclasses import dataclass
 from enum import Enum
@@ -25,9 +25,7 @@ from typing import Any, Callable, Dict, List, Optional, Pattern
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-# Comprehensive logging configuration
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ValidationSeverity(str, Enum):
@@ -300,12 +298,12 @@ class InputValidator:
     def add_validation_rule(self, rule: ValidationRule):
         """STANDARD CUSTOM VALIDATION RULE ADDITION"""
         self.validation_rules.append(rule)
-        logger.info(f"VALIDATION RULE ADDED: {rule.name}")
+        logger.info("validation.rule_added", rule=rule.name)
 
     def add_sanitization_rule(self, rule: SanitizationRule):
         """STANDARD CUSTOM SANITIZATION RULE ADDITION"""
         self.sanitization_rules.append(rule)
-        logger.info(f"SANITIZATION RULE ADDED: {rule.name}")
+        logger.info("validation.sanitization_rule_added", rule=rule.name)
 
     def validate_input(self, value: str, input_type: InputType) -> str:
         """STANDARD INPUT VALIDATION ENHANCED BY SECURITY"""
@@ -331,10 +329,13 @@ class InputValidator:
 
                     # Log security event
                     logger.warning(
-                        f"VALIDATION VIOLATION: {rule.name} | "
-                        f"Type: {input_type.value} | "
-                        f"Severity: {rule.severity.value} | "
-                        f"Value: {value[:100]}{'...' if len(value) > 100 else ''}"
+                        "validation.violation",
+                        rule=rule.name,
+                        input_type=input_type.value,
+                        severity=rule.severity.value,
+                        value_preview=(
+                            f"{value[:100]}{'...' if len(value) > 100 else ''}"
+                        ),
                     )
 
                     # Raise exception for medium+ severity
@@ -351,14 +352,19 @@ class InputValidator:
                 try:
                     value = rule.sanitizer(value)
                 except Exception as e:
-                    logger.error(f"SANITIZATION ERROR: {rule.name} | Error: {e}")
+                    logger.error(
+                        "validation.sanitization_error",
+                        rule=rule.name,
+                        error=str(e),
+                    )
 
         # Log sanitization if value changed
         if value != original_value:
             logger.info(
-                f"INPUT SANITIZED: Type: {input_type.value} | "
-                f"Original length: {len(original_value)} | "
-                f"Sanitized length: {len(value)}"
+                "validation.input_sanitized",
+                input_type=input_type.value,
+                original_length=len(original_value),
+                sanitized_length=len(value),
             )
 
         return value
@@ -492,17 +498,14 @@ class ValidationMiddleware(BaseHTTPMiddleware):
                     self.validator.validate_input(
                         request.headers[header], InputType.TEXT
                     )
-
-            response = await call_next(request)
-            return response
-
         except ValidationError as e:
             logger.warning(
-                f"VALIDATION FAILED: {e.rule_name} | "
-                f"Severity: {e.severity.value} | "
-                f"Path: {request.url.path} | "
-                f"Method: {request.method} | "
-                f"IP: {request.client.host if request.client else 'unknown'}"
+                "validation.failed",
+                rule=e.rule_name,
+                severity=e.severity.value,
+                path=request.url.path,
+                method=request.method,
+                ip=request.client.host if request.client else "unknown",
             )
 
             if e.severity == ValidationSeverity.CRITICAL:
@@ -514,8 +517,11 @@ class ValidationMiddleware(BaseHTTPMiddleware):
                 status_code=status_code, detail=f"Input validation failed: {e.message}"
             )
         except Exception as e:
-            logger.error(f"VALIDATION MIDDLEWARE ERROR: {e}")
+            logger.error("validation.middleware_error", error=str(e))
             raise HTTPException(status_code=500, detail="Internal validation error")
+
+        response = await call_next(request)
+        return response
 
 
 # STANDARD GLOBAL VALIDATOR INSTANCE

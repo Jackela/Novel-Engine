@@ -11,6 +11,7 @@ from src.contexts.world.application.ports.world_generator_port import (
     WorldGenerationInput,
 )
 from src.contexts.world.domain.entities import Era, Genre, ToneType
+from src.api.error_handlers import ServiceUnavailableException
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
     LLMWorldGenerator,
 )
@@ -150,6 +151,13 @@ async def generate_world(request: WorldGenerationRequest) -> WorldGenerationResp
     )
 
     result = generator.generate(input_data)
+    if result.world_setting.name == "Generation Failed" or result.generation_summary.startswith(
+        "Error:"
+    ):
+        raise ServiceUnavailableException(
+            service_name="World generation",
+            detail=result.generation_summary,
+        )
 
     # Convert domain entities to response models
     world_setting = WorldSettingResponse(
