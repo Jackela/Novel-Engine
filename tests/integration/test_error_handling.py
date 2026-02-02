@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import status
@@ -40,20 +40,20 @@ class TestLLMFailureHandling:
         Then: Response is 503 with user-friendly error message
         """
         with patch(
-            "src.contexts.character.infrastructure.generators.llm_character_generator.LLMCharacterGenerator"
-        ) as mock_generator:
-            # Mock the generator to raise a timeout-like error
-            mock_instance = MagicMock()
-            mock_instance.generate.side_effect = TimeoutError("LLM request timed out")
-            mock_generator.return_value = mock_instance
+            "src.contexts.world.infrastructure.generators.llm_world_generator.LLMWorldGenerator._call_gemini"
+        ) as mock_call:
+            mock_call.side_effect = TimeoutError("LLM request timed out")
 
-            # Make request to character generation (this endpoint uses LLM)
+            # Make request to world generation (this endpoint uses LLM)
             response = test_client.post(
-                "/api/generation/character",
+                "/api/world/generation",
                 json={
-                    "concept": "test hero",
-                    "archetype": "hero",
-                    "tone": "hopeful",
+                    "genre": "fantasy",
+                    "era": "medieval",
+                    "tone": "heroic",
+                    "themes": ["adventure"],
+                    "num_factions": 2,
+                    "num_locations": 2,
                 },
             )
 
@@ -78,16 +78,12 @@ class TestLLMFailureHandling:
         Then: Response is 503 with descriptive error
         """
         with patch(
-            "src.contexts.world.infrastructure.generators.llm_world_generator.LLMWorldGenerator"
-        ) as mock_generator:
-            mock_instance = MagicMock()
-            mock_instance.generate.side_effect = ConnectionError(
-                "Failed to connect to LLM service"
-            )
-            mock_generator.return_value = mock_instance
+            "src.contexts.world.infrastructure.generators.llm_world_generator.LLMWorldGenerator._call_gemini"
+        ) as mock_call:
+            mock_call.side_effect = ConnectionError("Failed to connect to LLM service")
 
             response = test_client.post(
-                "/api/world/generate",
+                "/api/world/generation",
                 json={
                     "genre": "fantasy",
                     "era": "medieval",
@@ -129,12 +125,13 @@ class TestDatabaseFailureHandling:
             return []  # Success on 4th call
 
         with patch(
-            "src.contexts.character.infrastructure.persistence.character_repository.CharacterRepository.list_all"
+            "src.api.routers.characters._get_public_character_entries",
+            new_callable=AsyncMock,
         ) as mock_list:
             mock_list.side_effect = mock_db_operation
 
             # Make request - it should either succeed after retries or fail gracefully
-            response = test_client.get("/api/v1/characters")
+            response = test_client.get("/api/characters")
 
             # The system should have attempted multiple times
             # Note: actual retry logic depends on implementation
@@ -158,11 +155,12 @@ class TestDatabaseFailureHandling:
         Then: Response is structured error, not raw traceback
         """
         with patch(
-            "src.contexts.character.infrastructure.persistence.character_repository.CharacterRepository.list_all"
+            "src.api.routers.characters._get_public_character_entries",
+            new_callable=AsyncMock,
         ) as mock_list:
             mock_list.side_effect = ConnectionError("Database connection refused")
 
-            response = test_client.get("/api/v1/characters")
+            response = test_client.get("/api/characters")
 
             # Should return error status
             assert response.status_code >= 400
@@ -216,12 +214,12 @@ class TestMalformedLLMResponse:
             )
 
         with patch(
-            "src.contexts.world.infrastructure.generators.llm_world_generator.LLMWorldGenerator._call_llm"
+            "src.contexts.world.infrastructure.generators.llm_world_generator.LLMWorldGenerator._call_gemini"
         ) as mock_call:
             mock_call.side_effect = mock_llm_call
 
             response = test_client.post(
-                "/api/world/generate",
+                "/api/world/generation",
                 json={
                     "genre": "fantasy",
                     "era": "medieval",
@@ -246,12 +244,12 @@ class TestMalformedLLMResponse:
         Then: Response is structured error after max retries
         """
         with patch(
-            "src.contexts.world.infrastructure.generators.llm_world_generator.LLMWorldGenerator._call_llm"
+            "src.contexts.world.infrastructure.generators.llm_world_generator.LLMWorldGenerator._call_gemini"
         ) as mock_call:
             mock_call.return_value = "not valid json {{{"
 
             response = test_client.post(
-                "/api/world/generate",
+                "/api/world/generation",
                 json={
                     "genre": "fantasy",
                     "era": "medieval",
@@ -299,7 +297,7 @@ class TestGracefulDegradation:
         invalid_requests = [
             ("POST", "/api/generation/character", {"invalid": "data"}),
             ("GET", "/api/nonexistent/endpoint", None),
-            ("POST", "/api/world/generate", {"genre": 12345}),  # Wrong type
+            ("POST", "/api/world/generation", {"genre": 12345}),  # Wrong type
         ]
 
         for method, path, body in invalid_requests:
