@@ -11,6 +11,7 @@
 import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
+import Placeholder from '@tiptap/extension-placeholder';
 import { useDroppable } from '@dnd-kit/core';
 import { Bold, Italic, Heading1, Heading2, Sparkles, Loader2, Square } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -350,17 +351,19 @@ export function EditorComponent({
   );
 
   const editor = useEditor({
-    extensions: [StarterKit, CharacterMention, MentionExtension],
+    extensions: [
+      StarterKit,
+      CharacterMention,
+      MentionExtension,
+      Placeholder.configure({
+        placeholder: 'Start writing your story...',
+        emptyEditorClass: 'is-editor-empty',
+      }),
+    ],
     content: initialContent,
     editable: editable && !isStreaming, // Disable editing during streaming
     onUpdate: ({ editor }) => {
       onChange?.(editor.getHTML());
-    },
-    editorProps: {
-      attributes: {
-        class:
-          'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px]',
-      },
     },
   });
 
@@ -480,8 +483,8 @@ export function EditorComponent({
         </div>
       )}
 
-      {/* Editor content */}
-      <div className="flex-1 overflow-auto p-4">
+      {/* Editor content - prose-editor class triggers Editor Canvas styling */}
+      <div className="prose-editor flex-1 overflow-auto">
         <EditorContent editor={editor} />
       </div>
 

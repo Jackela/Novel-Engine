@@ -54,6 +54,8 @@ module.exports = {
     'src/styles/design-system.generated.css',
     'src/styles/design-system.css',
     'src/styles/tailwind.css',
+    // editor.css targets third-party ProseMirror classes which don't follow BEM
+    'src/styles/editor.css',
     'src/components/**/*.css',
     'src/components/**/**/*.css',
     'src/components/**/**/**/*.css',

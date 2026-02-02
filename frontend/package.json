@@ -84,6 +84,7 @@
     "@tanstack/react-query-devtools": "^5.91.2",
     "@tanstack/react-router": "^1.151.6",
     "@tiptap/extension-mention": "^3.18.0",
+    "@tiptap/extension-placeholder": "^3.18.0",
     "@tiptap/pm": "^3.18.0",
     "@tiptap/react": "^3.18.0",
     "@tiptap/starter-kit": "^3.18.0",
