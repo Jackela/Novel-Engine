@@ -49,6 +49,19 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/structure", tags=["structure"])
 
+
+def _safe_log_id(value: str) -> str:
+    """
+    Sanitize ID for safe logging.
+
+    Ensures that user-provided IDs cannot inject malicious content into logs.
+    Only allows alphanumeric characters, hyphens, and underscores.
+    """
+    # Allow only safe characters for UUID-like strings
+    safe_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
+    sanitized = "".join(c if c in safe_chars else "_" for c in str(value)[:64])
+    return sanitized
+
 # Module-level repository instance for development/testing
 # In production, this would be injected via dependency injection
 _repository: Optional[INarrativeRepository] = None
@@ -265,7 +278,7 @@ async def delete_story(
     uuid = _parse_uuid(story_id, "story_id")
     if not repo.delete(uuid):
         raise HTTPException(status_code=404, detail=f"Story not found: {story_id}")
-    logger.info("Deleted story: %s", story_id)
+    logger.info("Deleted story: %s", _safe_log_id(story_id))
 
 
 # ============ Chapter Endpoints ============
@@ -311,7 +324,7 @@ async def create_chapter(
         )
         story.add_chapter(chapter)
         repo.save(story)
-        logger.info("Created chapter: %s in story: %s", chapter.id, story_id)
+        logger.info("Created chapter: %s in story: %s", chapter.id, _safe_log_id(story_id))
         return _chapter_to_response(chapter)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -431,7 +444,7 @@ async def update_chapter(
                 )
 
         repo.save(story)
-        logger.info("Updated chapter: %s", chapter_id)
+        logger.info("Updated chapter: %s", _safe_log_id(chapter_id))
         return _chapter_to_response(chapter)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -465,7 +478,7 @@ async def delete_chapter(
         raise HTTPException(status_code=404, detail=f"Chapter not found: {chapter_id}")
 
     repo.save(story)
-    logger.info("Deleted chapter: %s", chapter_id)
+    logger.info("Deleted chapter: %s", _safe_log_id(chapter_id))
 
 
 @router.post(
@@ -505,7 +518,7 @@ async def move_chapter(
     try:
         chapter.move_to_position(request.new_order_index)
         repo.save(story)
-        logger.info("Moved chapter: %s to position: %s", chapter_id, request.new_order_index)
+        logger.info("Moved chapter: %s to position: %s", _safe_log_id(chapter_id), request.new_order_index)
         return _chapter_to_response(chapter)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -567,7 +580,7 @@ async def create_scene(
         _store_scene(scene)
 
         repo.save(story)
-        logger.info("Created scene: %s in chapter: %s", scene.id, chapter_id)
+        logger.info("Created scene: %s in chapter: %s", scene.id, _safe_log_id(chapter_id))
         return _scene_to_response(scene)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -724,7 +737,7 @@ async def update_scene(
                 scene.complete_generation()
 
         _store_scene(scene)
-        logger.info("Updated scene: %s", scene_id)
+        logger.info("Updated scene: %s", _safe_log_id(scene_id))
         return _scene_to_response(scene)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -765,7 +778,7 @@ async def delete_scene(
     if not _delete_scene(scene_uuid):
         raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
 
-    logger.info("Deleted scene: %s", scene_id)
+    logger.info("Deleted scene: %s", _safe_log_id(scene_id))
 
 
 @router.post(
@@ -826,7 +839,7 @@ async def move_scene(
 
         scene.move_to_position(request.new_order_index)
         _store_scene(scene)
-        logger.info("Moved scene: %s to position: %s", scene_id, request.new_order_index)
+        logger.info("Moved scene: %s to position: %s", _safe_log_id(scene_id), request.new_order_index)
         return _scene_to_response(scene)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
