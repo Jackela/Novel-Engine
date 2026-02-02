@@ -20,6 +20,8 @@ from src.api.routers.narrative_generation import (
     router,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def client():

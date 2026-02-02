@@ -13,6 +13,8 @@ import pytest
 
 from src.contexts.world.domain.entities.world_rule import WorldRule
 
+pytestmark = pytest.mark.unit
+
 
 class TestWorldRuleCreation:
     """Tests for WorldRule entity creation."""

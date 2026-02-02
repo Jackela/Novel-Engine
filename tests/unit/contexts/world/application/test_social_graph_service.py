@@ -31,6 +31,8 @@ from src.contexts.world.infrastructure.persistence.in_memory_relationship_reposi
     InMemoryRelationshipRepository,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def repository() -> InMemoryRelationshipRepository:

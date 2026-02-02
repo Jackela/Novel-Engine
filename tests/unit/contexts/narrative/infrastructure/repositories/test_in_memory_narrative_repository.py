@@ -11,11 +11,15 @@ Why test the in-memory implementation:
 
 from uuid import uuid4
 
+import pytest
+
 from src.contexts.narrative.application.ports import INarrativeRepository
 from src.contexts.narrative.domain import Chapter, Story
 from src.contexts.narrative.infrastructure.repositories import (
     InMemoryNarrativeRepository,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestInMemoryNarrativeRepositoryInstantiation:

@@ -28,6 +28,8 @@ from src.contexts.story.application.services.context_assembler import (
     create_context_assembler,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def simple_counter() -> SimpleTokenCounter:

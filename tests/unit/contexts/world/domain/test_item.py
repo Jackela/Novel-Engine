@@ -17,6 +17,8 @@ from src.contexts.world.domain.entities.item import (
     ItemType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestItemType:
     """Tests for ItemType enum behavior."""

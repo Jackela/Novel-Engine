@@ -16,6 +16,8 @@ from src.contexts.world.domain.entities.lore_entry import (
     LoreEntry,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestLoreCategory:
     """Tests for LoreCategory enum behavior."""

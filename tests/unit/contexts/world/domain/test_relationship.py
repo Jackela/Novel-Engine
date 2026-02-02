@@ -18,6 +18,8 @@ from src.contexts.world.domain.entities.relationship import (
     RelationshipType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestRelationshipType:
     """Tests for RelationshipType enum behavior."""
