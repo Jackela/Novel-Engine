@@ -151,7 +151,7 @@ class RelationshipType(Enum):
         return inverses.get(self, self)
 
 
-@dataclass
+@dataclass(eq=False)
 class Relationship(Entity):
     """Relationship Entity.
 

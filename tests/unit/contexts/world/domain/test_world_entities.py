@@ -157,6 +157,7 @@ class TestWorldSetting:
             try:
                 world_setting.add_theme(f"theme_{i}")
             except ValueError:
+                # Theme limit reached - expected for later iterations
                 pass
 
         with pytest.raises(ValueError, match="Cannot have more than 10 themes"):

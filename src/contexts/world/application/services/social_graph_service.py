@@ -20,7 +20,7 @@ Typical usage example:
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from src.contexts.world.domain.entities.relationship import (
     EntityType,

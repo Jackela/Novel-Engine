@@ -159,7 +159,7 @@ class FactionRelation:
         return -30 <= self.strength <= 30
 
 
-@dataclass
+@dataclass(eq=False)
 class Faction(Entity):
     """Faction Entity.
 

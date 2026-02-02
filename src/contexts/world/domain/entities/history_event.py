@@ -130,7 +130,7 @@ class EventOutcome(Enum):
     UNKNOWN = "unknown"
 
 
-@dataclass
+@dataclass(eq=False)
 class HistoryEvent(Entity):
     """HistoryEvent Entity.
 

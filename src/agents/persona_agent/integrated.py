@@ -633,9 +633,11 @@ class PersonaAgent:
         """Core decision-making logic (delegated to decision engine)."""
         return self.decision_engine.make_decision(world_state_update)
 
-    def _assess_current_situation(self) -> Dict[str, Any]:
+    def _assess_current_situation(
+        self, world_state_update: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Assess the current situation (delegated to decision engine)."""
-        return self.decision_engine._assess_current_situation()
+        return self.decision_engine._assess_current_situation(world_state_update or {})
 
     def _generate_personal_interpretation(self, experience: Dict[str, Any]) -> str:
         """Generate personal interpretation of an experience."""

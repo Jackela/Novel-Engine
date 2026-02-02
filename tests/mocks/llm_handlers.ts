@@ -45,7 +45,8 @@ const MOCK_SCENE_RESPONSE = {
 /**
  * Mock response data for narrative generation.
  */
-const MOCK_NARRATIVE_RESPONSE = {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _MOCK_NARRATIVE_RESPONSE = {
   narrative: 'Mock narrative content for testing purposes.',
   summary: 'Test narrative summary.',
   characters_involved: ['Mock Character A', 'Mock Character B'],

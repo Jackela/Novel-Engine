@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 
 from src.api.deps import get_optional_workspace_id
 from src.api.schemas import (
@@ -86,6 +86,7 @@ def _fetch_character_data(
                     speaking_style=speaking_style,
                 )
         except ValueError:
+            # Character lookup failed - will use fallback below
             pass
 
     # Fallback: return minimal character data

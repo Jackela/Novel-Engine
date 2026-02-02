@@ -183,10 +183,12 @@ async def create_character_memory(
         raise HTTPException(status_code=400, detail=str(err)) from err
 
     logger.info(
-        "Created memory for character %s: %s (importance=%d)",
-        character_id,
-        memory_id,
-        payload.importance,
+        "Created memory for character",
+        extra={
+            "character_id": character_id[:64] if character_id else "unknown",
+            "memory_id": memory_id,
+            "importance": payload.importance,
+        },
     )
 
     return _memory_to_schema(memory_data)
@@ -295,7 +297,9 @@ async def delete_character_memory(
         raise HTTPException(status_code=400, detail=str(err)) from err
 
     logger.info(
-        "Deleted memory %s from character %s",
-        memory_id,
-        character_id,
+        "Deleted memory from character",
+        extra={
+            "memory_id": memory_id[:64] if memory_id else "unknown",
+            "character_id": character_id[:64] if character_id else "unknown",
+        },
     )

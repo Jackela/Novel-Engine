@@ -174,10 +174,12 @@ async def create_character_goal(
         raise HTTPException(status_code=400, detail=str(err)) from err
 
     logger.info(
-        "Created goal for character %s: %s (urgency=%s)",
-        character_id,
-        goal_id,
-        payload.urgency,
+        "Created goal for character",
+        extra={
+            "character_id": character_id[:64] if character_id else "unknown",
+            "goal_id": goal_id,
+            "urgency": payload.urgency,
+        },
     )
 
     return _goal_to_schema(goal_data)
@@ -314,11 +316,13 @@ async def update_character_goal(
         raise HTTPException(status_code=400, detail=str(err)) from err
 
     logger.info(
-        "Updated goal %s for character %s: status=%s, urgency=%s",
-        goal_id,
-        character_id,
-        goal.get("status"),
-        goal.get("urgency"),
+        "Updated goal for character",
+        extra={
+            "goal_id": goal_id[:64] if goal_id else "unknown",
+            "character_id": character_id[:64] if character_id else "unknown",
+            "status": goal.get("status"),
+            "urgency": goal.get("urgency"),
+        },
     )
 
     return _goal_to_schema(goal)
@@ -379,7 +383,9 @@ async def delete_character_goal(
         raise HTTPException(status_code=400, detail=str(err)) from err
 
     logger.info(
-        "Deleted goal %s from character %s",
-        goal_id,
-        character_id,
+        "Deleted goal from character",
+        extra={
+            "goal_id": goal_id[:64] if goal_id else "unknown",
+            "character_id": character_id[:64] if character_id else "unknown",
+        },
     )

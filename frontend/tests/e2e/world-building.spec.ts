@@ -19,7 +19,8 @@ import { test, expect } from './fixtures';
 import { activateGuestSession } from './utils/auth';
 
 // Test data for world-building scenarios
-const TEST_CHARACTER = {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _TEST_CHARACTER = {
   name: 'Elena Stormwind',
   type: 'protagonist',
   archetype: 'Mage',

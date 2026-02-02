@@ -355,6 +355,7 @@ class ContextAssembler:
                     try:
                         recency = -float(updated_at)
                     except (ValueError, TypeError):
+                        # Invalid timestamp format - use default recency of 0
                         pass
 
             return (not is_active, type_order, recency)

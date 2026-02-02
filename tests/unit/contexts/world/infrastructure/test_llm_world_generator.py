@@ -1,7 +1,6 @@
 """Unit tests for LLMWorldGenerator."""
 
 import json
-from pathlib import Path
 from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 

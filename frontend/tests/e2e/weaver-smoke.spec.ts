@@ -145,7 +145,9 @@ test.describe('Weaver Canvas Spatial Verification', () => {
       }
 
       const node = nodes[0];
-      const initialBox = await getBoundingBox(node);
+      // Store initial position for potential future comparison
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _initialBox = await getBoundingBox(node);
 
       // Simulate drag by updating node position via store
       await page.evaluate(() => {

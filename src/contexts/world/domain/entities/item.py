@@ -66,7 +66,7 @@ class ItemRarity(Enum):
     LEGENDARY = "legendary"
 
 
-@dataclass
+@dataclass(eq=False)
 class Item(Entity):
     """Item Entity.
 

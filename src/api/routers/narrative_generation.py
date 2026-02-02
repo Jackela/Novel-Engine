@@ -220,11 +220,12 @@ async def _sse_generator(request: GenerateStreamRequest) -> AsyncIterator[str]:
             },
         )
 
-    except Exception as exc:
+    except Exception:
+        # Log full exception internally, send generic message to client
         logger.exception("Error during narrative streaming")
         error_data = {
             "type": "error",
-            "content": str(exc),
+            "content": "An error occurred during narrative generation. Please try again.",
             "sequence": -1,
         }
         yield f"data: {json.dumps(error_data)}\n\n"
@@ -267,10 +268,15 @@ async def stream_narrative_generation(
             -d '{"max_tokens": 500}'
         ```
     """
+    # Sanitize scene_id for logging (truncate and remove unsafe characters)
+    safe_scene_id = (
+        request.scene_id[:64].replace("\n", " ").replace("\r", " ")
+        if request.scene_id else None
+    )
     logger.info(
         "Starting narrative generation stream",
         extra={
-            "scene_id": request.scene_id,
+            "scene_id": safe_scene_id,
             "has_prompt": request.prompt is not None,
             "has_context": request.context is not None,
             "max_tokens": request.max_tokens,

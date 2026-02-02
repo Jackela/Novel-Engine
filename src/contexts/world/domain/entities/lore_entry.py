@@ -46,7 +46,7 @@ class LoreCategory(Enum):
     TECHNOLOGY = "technology"
 
 
-@dataclass
+@dataclass(eq=False)
 class LoreEntry(Entity):
     """Lore Entry Entity.
 

@@ -45,6 +45,26 @@ def _sanitize_campaign_id(campaign_id: str) -> str:
     return str(campaign_id)
 
 
+def _validate_path_safety(file_path: str, allowed_bases: list[str]) -> bool:
+    """
+    Validate that a file path is within one of the allowed base directories.
+
+    This is a critical security check to prevent path traversal attacks.
+    Returns True if the path is safe, False otherwise.
+    """
+    abs_path = os.path.realpath(file_path)
+    for base in allowed_bases:
+        abs_base = os.path.realpath(base)
+        # Ensure path is within base directory (handle both with and without trailing separator)
+        if abs_path.startswith(abs_base + os.sep) or abs_path == abs_base:
+            return True
+    return False
+
+
+# Allowed base directories for campaign files
+_CAMPAIGN_ALLOWED_BASES = ["campaigns", "logs", "private/campaigns"]
+
+
 def _find_campaign_file(safe_campaign_id: str) -> str | None:
     """
     Find campaign file by ID.
@@ -55,15 +75,12 @@ def _find_campaign_file(safe_campaign_id: str) -> str | None:
     """
     # SECURITY: safe_campaign_id is pre-validated to contain only safe characters
     # No path traversal is possible with the validated pattern [a-zA-Z0-9_-]+
-    campaigns_paths = ["campaigns", "logs", "private/campaigns"]
-    for campaigns_path in campaigns_paths:
+    for campaigns_path in _CAMPAIGN_ALLOWED_BASES:
         for extension in (".json", ".md"):
             # Using os.path.join with validated ID is safe
             candidate = os.path.join(campaigns_path, f"{safe_campaign_id}{extension}")
             # Additional safety: verify the resolved path is within expected directories
-            abs_candidate = os.path.abspath(candidate)
-            abs_base = os.path.abspath(campaigns_path)
-            if not abs_candidate.startswith(abs_base):
+            if not _validate_path_safety(candidate, [campaigns_path]):
                 continue  # Path traversal attempt blocked
             if os.path.isfile(candidate):
                 return candidate
@@ -115,15 +132,23 @@ async def get_campaign(campaign_id: str) -> CampaignDetailResponse:
     if not campaign_file:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
+    # SECURITY: Re-validate path safety before any file operations
+    # This provides defense-in-depth against path traversal attacks
+    if not _validate_path_safety(campaign_file, _CAMPAIGN_ALLOWED_BASES):
+        logger.warning("Path validation failed for campaign file", extra={"safe_id": safe_id})
+        raise HTTPException(status_code=404, detail="Campaign not found")
+
     try:
-        updated_at = datetime.fromtimestamp(os.path.getmtime(campaign_file)).isoformat()
-        if campaign_file.endswith(".json"):
-            with open(campaign_file, "r") as handle:
+        # Path is now validated - safe to perform file operations
+        validated_path = os.path.realpath(campaign_file)
+        updated_at = datetime.fromtimestamp(os.path.getmtime(validated_path)).isoformat()
+        if validated_path.endswith(".json"):
+            with open(validated_path, "r") as handle:
                 payload = json.load(handle)
             if not isinstance(payload, dict):
                 raise ValueError("Campaign payload must be an object")
         else:
-            with open(campaign_file, "r") as handle:
+            with open(validated_path, "r") as handle:
                 payload = {"name": campaign_id, "description": handle.read().strip()}
         return _build_campaign_detail(campaign_id, payload, updated_at)
     except HTTPException:

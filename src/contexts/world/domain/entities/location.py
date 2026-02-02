@@ -150,7 +150,7 @@ class LocationStatus(Enum):
     UNDER_CONSTRUCTION = "under_construction"
 
 
-@dataclass
+@dataclass(eq=False)
 class Location(Entity):
     """Location Entity.
 

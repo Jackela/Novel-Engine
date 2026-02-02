@@ -124,7 +124,7 @@ class ToneType(Enum):
     INTIMATE = "intimate"
 
 
-@dataclass
+@dataclass(eq=False)
 class WorldSetting(Entity):
     """WorldSetting Entity.
 

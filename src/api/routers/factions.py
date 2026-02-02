@@ -79,6 +79,7 @@ def _get_character_name(
         if record:
             return record.get("name") or record.get("character_name") or character_id
     except (ValueError, FileNotFoundError):
+        # Character not found - return the ID as the name
         pass
 
     return character_id
@@ -106,6 +107,7 @@ def _get_characters_in_faction(
                         "name": record.get("name") or record.get("character_name") or char_id,
                     })
     except (ValueError, FileNotFoundError):
+        # Workspace or character lookup failed - return empty or partial list
         pass
 
     return members
@@ -227,10 +229,12 @@ async def join_faction(
     faction_name = faction.get("name", faction_id)
 
     logger.info(
-        "Character %s joined faction %s (%s)",
-        payload.character_id,
-        faction_id,
-        faction_name,
+        "Character joined faction",
+        extra={
+            "character_id": payload.character_id[:64] if payload.character_id else "unknown",
+            "faction_id": faction_id[:64] if faction_id else "unknown",
+            "faction_name": faction_name[:64] if faction_name else "unknown",
+        },
     )
 
     return FactionJoinResponse(
@@ -299,12 +303,20 @@ async def leave_faction(
         faction["leader_id"] = None
         faction["leader_name"] = None
         _update_faction_in_store(request, faction_id, faction)
-        logger.info("Removed leader %s from faction %s", payload.character_id, faction_id)
+        logger.info(
+            "Removed leader from faction",
+            extra={
+                "character_id": payload.character_id[:64] if payload.character_id else "unknown",
+                "faction_id": faction_id[:64] if faction_id else "unknown",
+            },
+        )
 
     logger.info(
-        "Character %s left faction %s",
-        payload.character_id,
-        faction_id,
+        "Character left faction",
+        extra={
+            "character_id": payload.character_id[:64] if payload.character_id else "unknown",
+            "faction_id": faction_id[:64] if faction_id else "unknown",
+        },
     )
 
     return FactionLeaveResponse(
@@ -380,10 +392,12 @@ async def set_faction_leader(
         )
 
     logger.info(
-        "Set leader of faction %s to character %s (%s)",
-        faction_id,
-        payload.character_id,
-        leader_name,
+        "Set leader of faction",
+        extra={
+            "faction_id": faction_id[:64] if faction_id else "unknown",
+            "character_id": payload.character_id[:64] if payload.character_id else "unknown",
+            "leader_name": (leader_name[:64] if leader_name else None),
+        },
     )
 
     return FactionSetLeaderResponse(

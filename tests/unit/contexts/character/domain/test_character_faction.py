@@ -7,7 +7,6 @@ leave_faction, and related methods.
 """
 
 import sys
-from datetime import datetime
 from unittest.mock import MagicMock, Mock
 
 import pytest

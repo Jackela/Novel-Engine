@@ -27,7 +27,7 @@ from typing import Any, Dict, List
 from .entity import Entity
 
 
-@dataclass
+@dataclass(eq=False)
 class WorldRule(Entity):
     """World Rule Entity.
 

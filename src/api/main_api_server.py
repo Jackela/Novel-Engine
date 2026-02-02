@@ -372,8 +372,9 @@ def create_app() -> FastAPI:
     # Add middleware (order matters - last added = first executed)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # Define and add a raw ASGI middleware to ensure headers even on early errors
-    class RawHeaderASGIMiddleware:
+    # Define a raw ASGI middleware to ensure headers even on early errors
+    # Note: Currently disabled but kept for potential future use
+    class RawHeaderASGIMiddleware:  # noqa: F841 - intentionally kept for future use
         def __init__(self, app, headers: Dict[str, str]):
             self.app = app
             self._headers = headers
