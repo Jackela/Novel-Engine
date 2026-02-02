@@ -158,7 +158,7 @@ async def create_story(
     try:
         story = Story(title=request.title, summary=request.summary)
         repo.save(story)
-        logger.info(f"Created story: {story.id}")
+        logger.info("Created story: %s", story.id)
         return _story_to_response(story)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -242,7 +242,7 @@ async def update_story(
                 )
 
         repo.save(story)
-        logger.info(f"Updated story: {story.id}")
+        logger.info("Updated story: %s", story.id)
         return _story_to_response(story)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -265,7 +265,7 @@ async def delete_story(
     uuid = _parse_uuid(story_id, "story_id")
     if not repo.delete(uuid):
         raise HTTPException(status_code=404, detail=f"Story not found: {story_id}")
-    logger.info(f"Deleted story: {story_id}")
+    logger.info("Deleted story: %s", story_id)
 
 
 # ============ Chapter Endpoints ============
@@ -311,7 +311,7 @@ async def create_chapter(
         )
         story.add_chapter(chapter)
         repo.save(story)
-        logger.info(f"Created chapter: {chapter.id} in story: {story_id}")
+        logger.info("Created chapter: %s in story: %s", chapter.id, story_id)
         return _chapter_to_response(chapter)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -431,7 +431,7 @@ async def update_chapter(
                 )
 
         repo.save(story)
-        logger.info(f"Updated chapter: {chapter_id}")
+        logger.info("Updated chapter: %s", chapter_id)
         return _chapter_to_response(chapter)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -465,7 +465,7 @@ async def delete_chapter(
         raise HTTPException(status_code=404, detail=f"Chapter not found: {chapter_id}")
 
     repo.save(story)
-    logger.info(f"Deleted chapter: {chapter_id}")
+    logger.info("Deleted chapter: %s", chapter_id)
 
 
 @router.post(
@@ -505,7 +505,7 @@ async def move_chapter(
     try:
         chapter.move_to_position(request.new_order_index)
         repo.save(story)
-        logger.info(f"Moved chapter: {chapter_id} to position: {request.new_order_index}")
+        logger.info("Moved chapter: %s to position: %s", chapter_id, request.new_order_index)
         return _chapter_to_response(chapter)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -567,7 +567,7 @@ async def create_scene(
         _store_scene(scene)
 
         repo.save(story)
-        logger.info(f"Created scene: {scene.id} in chapter: {chapter_id}")
+        logger.info("Created scene: %s in chapter: %s", scene.id, chapter_id)
         return _scene_to_response(scene)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -724,7 +724,7 @@ async def update_scene(
                 scene.complete_generation()
 
         _store_scene(scene)
-        logger.info(f"Updated scene: {scene_id}")
+        logger.info("Updated scene: %s", scene_id)
         return _scene_to_response(scene)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -765,7 +765,7 @@ async def delete_scene(
     if not _delete_scene(scene_uuid):
         raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
 
-    logger.info(f"Deleted scene: {scene_id}")
+    logger.info("Deleted scene: %s", scene_id)
 
 
 @router.post(
@@ -826,7 +826,7 @@ async def move_scene(
 
         scene.move_to_position(request.new_order_index)
         _store_scene(scene)
-        logger.info(f"Moved scene: {scene_id} to position: {request.new_order_index}")
+        logger.info("Moved scene: %s to position: %s", scene_id, request.new_order_index)
         return _scene_to_response(scene)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
