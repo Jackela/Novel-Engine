@@ -54,9 +54,7 @@ function AvatarPlaceholder({ name }: { name: string }) {
   return (
     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
       {initials ? (
-        <span className="text-lg font-semibold text-muted-foreground">
-          {initials}
-        </span>
+        <span className="text-lg font-semibold text-muted-foreground">{initials}</span>
       ) : (
         <User className="h-6 w-6 text-muted-foreground" />
       )}
@@ -71,7 +69,11 @@ function AvatarPlaceholder({ name }: { name: string }) {
  * focused on the mention rendering logic.
  */
 function CharacterHoverContent({ characterId }: { characterId: string }) {
-  const { data: character, isLoading, error } = useQuery({
+  const {
+    data: character,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['characters', characterId, 'hover'],
     queryFn: () => fetchCharacterForHover(characterId),
     // Stale time of 5 minutes to reduce API calls
@@ -101,7 +103,8 @@ function CharacterHoverContent({ characterId }: { characterId: string }) {
   }
 
   // Extract description from background_summary or fallback to personality_traits
-  const description = character.background_summary || character.personality_traits || '';
+  const description =
+    character.background_summary || character.personality_traits || '';
   const truncatedDescription = truncateText(description, 100);
 
   return (
@@ -117,7 +120,7 @@ function CharacterHoverContent({ characterId }: { characterId: string }) {
           )}
         </div>
         {truncatedDescription && (
-          <p className="text-sm text-muted-foreground leading-snug">
+          <p className="text-sm leading-snug text-muted-foreground">
             {truncatedDescription}
           </p>
         )}
@@ -151,12 +154,7 @@ export function CharacterMentionView({ node }: NodeViewProps) {
             @{characterName}
           </span>
         </HoverCardTrigger>
-        <HoverCardContent
-          side="top"
-          align="start"
-          sideOffset={8}
-          className="w-80"
-        >
+        <HoverCardContent side="top" align="start" sideOffset={8} className="w-80">
           <CharacterHoverContent characterId={characterId} />
         </HoverCardContent>
       </HoverCard>

@@ -7,7 +7,13 @@
  * reordering of scenes within and between chapters.
  */
 import { useState, useCallback } from 'react';
-import { ChevronRight, ChevronDown, FileText, FolderOpen, GripVertical } from 'lucide-react';
+import {
+  ChevronRight,
+  ChevronDown,
+  FileText,
+  FolderOpen,
+  GripVertical,
+} from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
@@ -84,6 +90,8 @@ interface NarrativeSidebarProps {
   onSceneMove?: ((result: SceneMoveResult) => void) | undefined;
   /** Additional CSS classes */
   className?: string | undefined;
+  /** Whether to show the header summary */
+  showHeader?: boolean | undefined;
 }
 
 /**
@@ -205,14 +213,8 @@ function SortableSceneItem({
   isActive: boolean;
   onSelect: () => void;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: scene.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: scene.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -223,10 +225,7 @@ function SortableSceneItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        'group flex items-center rounded-md',
-        isDragging && 'opacity-50'
-      )}
+      className={cn('group flex items-center rounded-md', isDragging && 'opacity-50')}
       data-testid={`scene-item-${scene.id}`}
     >
       {/* Drag handle */}
@@ -366,6 +365,7 @@ export function NarrativeSidebar({
   onSceneSelect,
   onSceneMove,
   className,
+  showHeader = true,
 }: NarrativeSidebarProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overChapterId, setOverChapterId] = useState<string | null>(null);
@@ -469,10 +469,7 @@ export function NarrativeSidebar({
     }
 
     // No-op if dropping on same position
-    if (
-      sourceChapter.id === targetChapter.id &&
-      active.id === over.id
-    ) {
+    if (sourceChapter.id === targetChapter.id && active.id === over.id) {
       return;
     }
 
@@ -495,15 +492,16 @@ export function NarrativeSidebar({
       )}
       data-testid="narrative-sidebar"
     >
-      {/* Header */}
-      <div className="border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold text-foreground">Outline</h2>
-        <p className="text-xs text-muted-foreground">
-          {chapters.length} chapter{chapters.length !== 1 ? 's' : ''} ·{' '}
-          {chapters.reduce((acc, ch) => acc + ch.scenes.length, 0)} scene
-          {chapters.reduce((acc, ch) => acc + ch.scenes.length, 0) !== 1 ? 's' : ''}
-        </p>
-      </div>
+      {showHeader && (
+        <div className="border-b border-border px-4 py-3">
+          <h2 className="text-sm font-semibold text-foreground">Outline</h2>
+          <p className="text-xs text-muted-foreground">
+            {chapters.length} chapter{chapters.length !== 1 ? 's' : ''} ·{' '}
+            {chapters.reduce((acc, ch) => acc + ch.scenes.length, 0)} scene
+            {chapters.reduce((acc, ch) => acc + ch.scenes.length, 0) !== 1 ? 's' : ''}
+          </p>
+        </div>
+      )}
 
       {/* Scrollable content with DnD context */}
       <ScrollArea className="flex-1">

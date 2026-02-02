@@ -9,7 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { useStoryStream, type WorldContext, type StreamRequest } from '../hooks/useStoryStream';
+import {
+  useStoryStream,
+  type WorldContext,
+  type StreamRequest,
+} from '../hooks/useStoryStream';
 
 interface NarrativeEditorProps {
   /** Initial world context for generation */
@@ -27,11 +31,14 @@ interface NarrativeEditorProps {
 const DEFAULT_WORLD_CONTEXT: WorldContext = {
   characters: [
     { id: 'char-1', name: 'Elena', type: 'character', description: 'A young scholar' },
-    { id: 'char-2', name: 'Marcus', type: 'character', description: 'A wandering knight' },
+    {
+      id: 'char-2',
+      name: 'Marcus',
+      type: 'character',
+      description: 'A wandering knight',
+    },
   ],
-  locations: [
-    { id: 'loc-1', name: 'The Ancient Library', type: 'location' },
-  ],
+  locations: [{ id: 'loc-1', name: 'The Ancient Library', type: 'location' }],
   entities: [],
   current_scene: 'The journey begins',
   narrative_style: 'epic fantasy',
@@ -42,15 +49,8 @@ export function NarrativeEditor({
   onContentChange,
   onComplete,
 }: NarrativeEditorProps) {
-  const {
-    content,
-    status,
-    error,
-    metadata,
-    startStream,
-    cancelStream,
-    reset,
-  } = useStoryStream();
+  const { content, status, error, metadata, startStream, cancelStream, reset } =
+    useStoryStream();
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isGenerating = status === 'connecting' || status === 'streaming';
@@ -58,7 +58,9 @@ export function NarrativeEditor({
   // Auto-scroll to bottom when content updates
   useEffect(() => {
     if (scrollAreaRef.current && status === 'streaming') {
-      const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      const viewport = scrollAreaRef.current.querySelector(
+        '[data-radix-scroll-area-viewport]'
+      );
       if (viewport) {
         viewport.scrollTop = viewport.scrollHeight;
       }
@@ -79,7 +81,8 @@ export function NarrativeEditor({
 
   const handleNewChapter = useCallback(() => {
     const request: StreamRequest = {
-      prompt: 'Continue the story with a new chapter. Build upon the existing narrative.',
+      prompt:
+        'Continue the story with a new chapter. Build upon the existing narrative.',
       world_context: worldContext,
       chapter_title: `Chapter ${Math.floor(Date.now() / 1000) % 100}`,
       tone: 'mysterious',
@@ -125,11 +128,7 @@ export function NarrativeEditor({
             </Button>
           )}
           {content && status !== 'streaming' && (
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              disabled={isGenerating}
-            >
+            <Button variant="outline" onClick={handleReset} disabled={isGenerating}>
               Clear
             </Button>
           )}
@@ -170,8 +169,14 @@ export function NarrativeEditor({
                   className="whitespace-pre-wrap leading-relaxed"
                   dangerouslySetInnerHTML={{
                     __html: content
-                      .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold mt-6 mb-2">$1</h2>')
-                      .replace(/^\*(.+)\*$/gm, '<p class="italic text-muted-foreground">$1</p>')
+                      .replace(
+                        /^## (.+)$/gm,
+                        '<h2 class="text-lg font-semibold mt-6 mb-2">$1</h2>'
+                      )
+                      .replace(
+                        /^\*(.+)\*$/gm,
+                        '<p class="italic text-muted-foreground">$1</p>'
+                      )
                       .replace(/\n\n/g, '</p><p class="my-2">')
                       .replace(/^/, '<p class="my-2">')
                       .replace(/$/, '</p>'),
@@ -196,9 +201,7 @@ export function NarrativeEditor({
       {status === 'error' && error && (
         <Card className="border-destructive" data-testid="generation-error">
           <CardContent className="py-4">
-            <p className="text-sm text-destructive">
-              Error: {error}
-            </p>
+            <p className="text-sm text-destructive">Error: {error}</p>
             <Button
               variant="outline"
               size="sm"

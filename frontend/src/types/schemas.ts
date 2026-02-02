@@ -474,7 +474,13 @@ export type ErrorInfo = z.infer<typeof ErrorInfoSchema>;
 /**
  * Item type enum matching backend ItemType.
  */
-export const ItemTypeEnum = z.enum(['weapon', 'armor', 'consumable', 'key_item', 'misc']);
+export const ItemTypeEnum = z.enum([
+  'weapon',
+  'armor',
+  'consumable',
+  'key_item',
+  'misc',
+]);
 
 /**
  * Item rarity enum matching backend ItemRarity.
@@ -812,7 +818,9 @@ export const DialogueGenerationResponseSchema = z.object({
 });
 
 export type DialogueGenerationRequest = z.infer<typeof DialogueGenerationRequestSchema>;
-export type DialogueGenerationResponse = z.infer<typeof DialogueGenerationResponseSchema>;
+export type DialogueGenerationResponse = z.infer<
+  typeof DialogueGenerationResponseSchema
+>;
 
 // === Character Goal Schemas (CHAR-029/CHAR-030) ===
 
@@ -879,8 +887,12 @@ export type GoalStatus = z.infer<typeof GoalStatusEnum>;
 export type GoalUrgency = z.infer<typeof GoalUrgencyEnum>;
 export type CharacterGoal = z.infer<typeof CharacterGoalSchema>;
 export type CharacterGoalsResponse = z.infer<typeof CharacterGoalsResponseSchema>;
-export type CharacterGoalCreateRequest = z.infer<typeof CharacterGoalCreateRequestSchema>;
-export type CharacterGoalUpdateRequest = z.infer<typeof CharacterGoalUpdateRequestSchema>;
+export type CharacterGoalCreateRequest = z.infer<
+  typeof CharacterGoalCreateRequestSchema
+>;
+export type CharacterGoalUpdateRequest = z.infer<
+  typeof CharacterGoalUpdateRequestSchema
+>;
 
 // === Social Network Analysis Schemas (CHAR-031/CHAR-032) ===
 

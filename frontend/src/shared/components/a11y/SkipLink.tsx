@@ -18,6 +18,8 @@ export function SkipLink({
   return (
     <a
       href={`#${targetId}`}
+      tabIndex={0}
+      data-testid="skip-link"
       className={cn(
         'sr-only focus:not-sr-only',
         'focus:fixed focus:left-4 focus:top-4 focus:z-[9999]',

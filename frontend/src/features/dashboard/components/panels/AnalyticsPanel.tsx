@@ -20,7 +20,7 @@ export default function AnalyticsPanel() {
           Analytics
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent data-testid="performance-metrics">
         <div className="space-y-3">
           {metrics.map((metric) => {
             const Icon = metric.icon;

@@ -48,7 +48,9 @@ async function fetchWorldRules(): Promise<WorldRuleResponse[]> {
   return data.rules ?? [];
 }
 
-async function createWorldRule(rule: WorldRuleCreateRequest): Promise<WorldRuleResponse> {
+async function createWorldRule(
+  rule: WorldRuleCreateRequest
+): Promise<WorldRuleResponse> {
   const response = await fetch(`${API_PREFIX}/world-rules`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -58,7 +60,10 @@ async function createWorldRule(rule: WorldRuleCreateRequest): Promise<WorldRuleR
   return response.json();
 }
 
-async function updateWorldRule(id: string, updates: WorldRuleUpdateRequest): Promise<WorldRuleResponse> {
+async function updateWorldRule(
+  id: string,
+  updates: WorldRuleUpdateRequest
+): Promise<WorldRuleResponse> {
   const response = await fetch(`${API_PREFIX}/world-rules/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -70,7 +75,8 @@ async function updateWorldRule(id: string, updates: WorldRuleUpdateRequest): Pro
 
 async function deleteWorldRule(id: string): Promise<void> {
   const response = await fetch(`${API_PREFIX}/world-rules/${id}`, { method: 'DELETE' });
-  if (!response.ok && response.status !== 204) throw new Error('Failed to delete world rule');
+  if (!response.ok && response.status !== 204)
+    throw new Error('Failed to delete world rule');
 }
 
 // === Helper Functions ===
@@ -164,8 +170,19 @@ interface RuleFormFieldsProps {
 }
 
 function RuleFormFields({
-  name, setName, category, setCategory, description, setDescription,
-  consequence, setConsequence, severity, setSeverity, exceptions, setExceptions, idPrefix,
+  name,
+  setName,
+  category,
+  setCategory,
+  description,
+  setDescription,
+  consequence,
+  setConsequence,
+  severity,
+  setSeverity,
+  exceptions,
+  setExceptions,
+  idPrefix,
 }: RuleFormFieldsProps) {
   return (
     <>
@@ -243,7 +260,11 @@ function RuleDisplayCard({ rule, onEdit, onDelete, isDeleting }: RuleDisplayCard
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <CardTitle className="text-base">{rule.name}</CardTitle>
-            {rule.category && <Badge variant="outline" className="text-xs">{rule.category}</Badge>}
+            {rule.category && (
+              <Badge variant="outline" className="text-xs">
+                {rule.category}
+              </Badge>
+            )}
           </div>
           <div className={`text-xs font-medium ${severityInfo.color}`}>
             {severityInfo.label} ({rule.severity})
@@ -251,29 +272,41 @@ function RuleDisplayCard({ rule, onEdit, onDelete, isDeleting }: RuleDisplayCard
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {rule.description && <p className="text-sm text-muted-foreground line-clamp-2">{rule.description}</p>}
+        {rule.description && (
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {rule.description}
+          </p>
+        )}
         {rule.consequence && (
           <div>
             <p className="text-xs font-medium text-muted-foreground">Consequence:</p>
-            <p className="text-sm line-clamp-2">{rule.consequence}</p>
+            <p className="line-clamp-2 text-sm">{rule.consequence}</p>
           </div>
         )}
         {rule.exceptions.length > 0 && (
           <div>
-            <p className="mb-1 text-xs font-medium text-muted-foreground">Exceptions:</p>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">
+              Exceptions:
+            </p>
             <div className="flex flex-wrap gap-1">
               {rule.exceptions.slice(0, 3).map((exc, idx) => (
-                <Badge key={idx} variant="secondary" className="text-xs">{exc}</Badge>
+                <Badge key={idx} variant="secondary" className="text-xs">
+                  {exc}
+                </Badge>
               ))}
               {rule.exceptions.length > 3 && (
-                <Badge variant="secondary" className="text-xs">+{rule.exceptions.length - 3} more</Badge>
+                <Badge variant="secondary" className="text-xs">
+                  +{rule.exceptions.length - 3} more
+                </Badge>
               )}
             </div>
           </div>
         )}
       </CardContent>
       <CardFooter className="gap-2 pt-0">
-        <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>Edit</Button>
+        <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
+          Edit
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -281,7 +314,11 @@ function RuleDisplayCard({ rule, onEdit, onDelete, isDeleting }: RuleDisplayCard
           disabled={isDeleting}
           className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
         >
-          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          {isDeleting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
         </Button>
       </CardFooter>
     </Card>
@@ -304,29 +341,46 @@ function RuleEditCard({ rule, onSave, onCancel, isSaving }: RuleEditCardProps) {
   const [severity, setSeverity] = useState(rule.severity);
 
   const handleSave = () => {
-    if (!name.trim()) { toast.error('Name is required'); return; }
+    if (!name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
     onSave({ name, description, consequence, exceptions, category, severity });
   };
 
   return (
     <Card className="border-primary" data-testid={`rule-edit-card-${rule.id}`}>
-      <CardHeader className="pb-3"><CardDescription>Editing Rule</CardDescription></CardHeader>
+      <CardHeader className="pb-3">
+        <CardDescription>Editing Rule</CardDescription>
+      </CardHeader>
       <CardContent className="space-y-4">
         <RuleFormFields
-          name={name} setName={setName} category={category} setCategory={setCategory}
-          description={description} setDescription={setDescription}
-          consequence={consequence} setConsequence={setConsequence}
-          severity={severity} setSeverity={setSeverity}
-          exceptions={exceptions} setExceptions={setExceptions}
+          name={name}
+          setName={setName}
+          category={category}
+          setCategory={setCategory}
+          description={description}
+          setDescription={setDescription}
+          consequence={consequence}
+          setConsequence={setConsequence}
+          severity={severity}
+          setSeverity={setSeverity}
+          exceptions={exceptions}
+          setExceptions={setExceptions}
           idPrefix="edit"
         />
       </CardContent>
       <CardFooter className="gap-2 pt-0">
         <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
-          <X className="mr-1 h-4 w-4" />Cancel
+          <X className="mr-1 h-4 w-4" />
+          Cancel
         </Button>
         <Button size="sm" onClick={handleSave} disabled={isSaving}>
-          {isSaving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
+          {isSaving ? (
+            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="mr-1 h-4 w-4" />
+          )}
           Save
         </Button>
       </CardFooter>
@@ -341,7 +395,12 @@ interface CreateRuleDialogProps {
   isSubmitting: boolean;
 }
 
-function CreateRuleDialog({ open, onOpenChange, onSubmit, isSubmitting }: CreateRuleDialogProps) {
+function CreateRuleDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  isSubmitting,
+}: CreateRuleDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [consequence, setConsequence] = useState('');
@@ -351,13 +410,20 @@ function CreateRuleDialog({ open, onOpenChange, onSubmit, isSubmitting }: Create
 
   useEffect(() => {
     if (!open) {
-      setName(''); setDescription(''); setConsequence('');
-      setExceptions([]); setCategory(''); setSeverity(50);
+      setName('');
+      setDescription('');
+      setConsequence('');
+      setExceptions([]);
+      setCategory('');
+      setSeverity(50);
     }
   }, [open]);
 
   const handleSubmit = () => {
-    if (!name.trim()) { toast.error('Name is required'); return; }
+    if (!name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
     onSubmit({ name, description, consequence, exceptions, category, severity });
   };
 
@@ -366,22 +432,47 @@ function CreateRuleDialog({ open, onOpenChange, onSubmit, isSubmitting }: Create
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create World Rule</DialogTitle>
-          <DialogDescription>Define a new law or magic system rule for your world.</DialogDescription>
+          <DialogDescription>
+            Define a new law or magic system rule for your world.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <RuleFormFields
-            name={name} setName={setName} category={category} setCategory={setCategory}
-            description={description} setDescription={setDescription}
-            consequence={consequence} setConsequence={setConsequence}
-            severity={severity} setSeverity={setSeverity}
-            exceptions={exceptions} setExceptions={setExceptions}
+            name={name}
+            setName={setName}
+            category={category}
+            setCategory={setCategory}
+            description={description}
+            setDescription={setDescription}
+            consequence={consequence}
+            setConsequence={setConsequence}
+            severity={severity}
+            setSeverity={setSeverity}
+            exceptions={exceptions}
+            setExceptions={setExceptions}
             idPrefix="create"
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</> : <><Plus className="mr-2 h-4 w-4" />Create Rule</>}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Rule
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -391,16 +482,21 @@ function CreateRuleDialog({ open, onOpenChange, onSubmit, isSubmitting }: Create
 
 // === Empty State Component ===
 
-interface EmptyRulesStateProps { onCreate: () => void; }
+interface EmptyRulesStateProps {
+  onCreate: () => void;
+}
 
 function EmptyRulesState({ onCreate }: EmptyRulesStateProps) {
   return (
     <div className="rounded-lg border border-dashed p-8 text-center">
       <Shield className="mx-auto h-12 w-12 text-muted-foreground/50" />
       <h3 className="mt-4 text-lg font-medium">No world rules yet</h3>
-      <p className="mt-2 text-sm text-muted-foreground">Create your first rule to define how your world works</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Create your first rule to define how your world works
+      </p>
       <Button variant="outline" className="mt-4" onClick={onCreate}>
-        <Plus className="mr-2 h-4 w-4" />Create First Rule
+        <Plus className="mr-2 h-4 w-4" />
+        Create First Rule
       </Button>
     </div>
   );
@@ -418,7 +514,15 @@ interface RulesGridProps {
   isDeleting: boolean;
 }
 
-function RulesGrid({ rules, editingRuleId, setEditingRuleId, onUpdate, onDelete, isUpdating, isDeleting }: RulesGridProps) {
+function RulesGrid({
+  rules,
+  editingRuleId,
+  setEditingRuleId,
+  onUpdate,
+  onDelete,
+  isUpdating,
+  isDeleting,
+}: RulesGridProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {rules.map((rule) =>
@@ -446,7 +550,10 @@ function RulesGrid({ rules, editingRuleId, setEditingRuleId, onUpdate, onDelete,
 
 // === Hooks ===
 
-function useWorldRulesMutations(setIsCreateDialogOpen: (v: boolean) => void, setEditingRuleId: (v: string | null) => void) {
+function useWorldRulesMutations(
+  setIsCreateDialogOpen: (v: boolean) => void,
+  setEditingRuleId: (v: string | null) => void
+) {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
@@ -456,17 +563,20 @@ function useWorldRulesMutations(setIsCreateDialogOpen: (v: boolean) => void, set
       setIsCreateDialogOpen(false);
       toast.success('World rule created');
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to create rule'),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Failed to create rule'),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: WorldRuleUpdateRequest }) => updateWorldRule(id, updates),
+    mutationFn: ({ id, updates }: { id: string; updates: WorldRuleUpdateRequest }) =>
+      updateWorldRule(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['world-rules'] });
       setEditingRuleId(null);
       toast.success('World rule updated');
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to update rule'),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Failed to update rule'),
   });
 
   const deleteMutation = useMutation({
@@ -475,7 +585,8 @@ function useWorldRulesMutations(setIsCreateDialogOpen: (v: boolean) => void, set
       queryClient.invalidateQueries({ queryKey: ['world-rules'] });
       toast.success('World rule deleted');
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to delete rule'),
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Failed to delete rule'),
   });
 
   return { createMutation, updateMutation, deleteMutation };
@@ -506,7 +617,11 @@ export function WorldRulesEditor() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
 
-  const { data: rules = [], isLoading, error } = useQuery({
+  const {
+    data: rules = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['world-rules'],
     queryFn: fetchWorldRules,
   });
@@ -524,10 +639,13 @@ export function WorldRulesEditor() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">World Rules</h2>
-          <p className="text-sm text-muted-foreground">Define the laws and constraints of your world</p>
+          <p className="text-sm text-muted-foreground">
+            Define the laws and constraints of your world
+          </p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />Add Rule
+          <Plus className="mr-2 h-4 w-4" />
+          Add Rule
         </Button>
       </div>
 

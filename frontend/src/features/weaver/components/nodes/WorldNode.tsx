@@ -34,7 +34,7 @@ function WorldNodeComponent({ data, id, selected }: NodeProps<WorldNodeType>) {
       nodeType="world"
       status={data.status}
       selected={selected}
-      className="w-72 cursor-grab active:cursor-grabbing border-purple-500/50 bg-gradient-to-br from-purple-950/80 to-indigo-950/80"
+      className="w-72 cursor-grab border-purple-500/50 bg-gradient-to-br from-purple-950/80 to-indigo-950/80 active:cursor-grabbing"
     >
       <Handle
         type="target"
@@ -51,13 +51,22 @@ function WorldNodeComponent({ data, id, selected }: NodeProps<WorldNodeType>) {
           {data.description}
         </p>
         <div className="mb-2 flex flex-wrap gap-1">
-          <Badge variant="outline" className="border-purple-400/50 text-xs text-purple-200">
+          <Badge
+            variant="outline"
+            className="border-purple-400/50 text-xs text-purple-200"
+          >
             {data.genre}
           </Badge>
-          <Badge variant="outline" className="border-indigo-400/50 text-xs text-indigo-200">
+          <Badge
+            variant="outline"
+            className="border-indigo-400/50 text-xs text-indigo-200"
+          >
             {data.era}
           </Badge>
-          <Badge variant="outline" className="border-violet-400/50 text-xs text-violet-200">
+          <Badge
+            variant="outline"
+            className="border-violet-400/50 text-xs text-violet-200"
+          >
             {data.tone}
           </Badge>
         </div>
@@ -74,7 +83,11 @@ function WorldNodeComponent({ data, id, selected }: NodeProps<WorldNodeType>) {
         {data.themes.length > 0 ? (
           <div className="mt-2 flex flex-wrap gap-1">
             {data.themes.slice(0, 3).map((theme) => (
-              <Badge key={theme} variant="secondary" className="text-xs bg-purple-800/50">
+              <Badge
+                key={theme}
+                variant="secondary"
+                className="bg-purple-800/50 text-xs"
+              >
                 {theme}
               </Badge>
             ))}

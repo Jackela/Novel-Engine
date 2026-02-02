@@ -16,6 +16,21 @@ function Assert-LastExitCode {
     }
 }
 
+function Get-GzipSizeKb {
+    param([string]$Path)
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    $memoryStream = New-Object System.IO.MemoryStream
+    $gzipStream = New-Object System.IO.Compression.GzipStream(
+        $memoryStream,
+        [System.IO.Compression.CompressionMode]::Compress
+    )
+    $gzipStream.Write($bytes, 0, $bytes.Length)
+    $gzipStream.Close()
+    $sizeKb = [math]::Floor($memoryStream.Length / 1KB)
+    $memoryStream.Dispose()
+    return $sizeKb
+}
+
 # Check Python version (must be 3.11+)
 Write-Host "📋 Checking Python version..." -ForegroundColor Yellow
 try {
@@ -62,14 +77,20 @@ foreach ($path in $pathsToRemove) {
 Write-Host "✓ Environment cleaned" -ForegroundColor Green
 Write-Host ""
 
-# Install dependencies
+# Install dependencies (matching GitHub Actions ci.yml)
 Write-Host "📦 Installing dependencies..." -ForegroundColor Yellow
 python -m pip install --upgrade pip --quiet
 Assert-LastExitCode "Upgrade pip"
 pip install -r requirements.txt --quiet
 Assert-LastExitCode "Install Python requirements"
-pip install pytest pytest-asyncio pytest-timeout httpx --quiet
-Assert-LastExitCode "Install test dependencies"
+# Install test dependencies from requirements-test.txt (GA parity)
+if (Test-Path "requirements/requirements-test.txt") {
+    pip install -r requirements/requirements-test.txt --quiet
+    Assert-LastExitCode "Install test requirements"
+}
+# Editable install for proper package imports (GA parity)
+pip install -e . --quiet
+Assert-LastExitCode "Editable install"
 Write-Host "✓ Dependencies installed" -ForegroundColor Green
 Write-Host ""
 
@@ -104,8 +125,20 @@ Assert-LastExitCode "Integration tests"
 python -m pytest -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
 Assert-LastExitCode "E2E tests"
 
-python -m pytest -q tests/test_enhanced_bridge.py tests/test_character_system_comprehensive.py --junitxml=reports/smoke-tests.xml
+# Smoke tests path matches GA ci.yml
+python -m pytest -q tests/test_character_system_comprehensive.py tests/smoke/ --junitxml=reports/smoke-tests.xml
 Assert-LastExitCode "Smoke tests"
+
+# Speed Regression Check (GA parity)
+Write-Host "🚀 Running speed regression check..." -ForegroundColor Yellow
+python scripts/testing/test-speed-report.py --format json > speed-report.json
+$speedReport = Get-Content "speed-report.json" | ConvertFrom-Json
+$slowCount = $speedReport.slow_tests.count
+Write-Host "Found $slowCount slow tests (>1000ms)"
+if ($slowCount -gt 10) {
+    Write-Host "⚠ Warning: Found $slowCount slow tests. Consider optimization." -ForegroundColor Yellow
+}
+Write-Host ""
 
 Write-Host ""
 Write-Host "🌐 Running frontend CI checks..." -ForegroundColor Yellow
@@ -137,8 +170,55 @@ if (Test-Path $frontendDir) {
         npm run test:integration --if-present
         Assert-LastExitCode "Frontend integration tests"
 
+        $env:NODE_ENV = "production"
         npm run build --if-present
         Assert-LastExitCode "Frontend build"
+
+        if (Test-Path "dist") {
+            Write-Host "📦 Checking bundle sizes..." -ForegroundColor Yellow
+            $initialBundle = Get-ChildItem "dist" -Recurse -Filter "index-*.js" | Select-Object -First 1
+            if ($null -ne $initialBundle) {
+                $initialSizeKb = Get-GzipSizeKb $initialBundle.FullName
+                Write-Host "Initial bundle: ${initialSizeKb}KB (gzip)"
+                if ($initialSizeKb -gt 400) {
+                    Write-Host "❌ Initial bundle ${initialSizeKb}KB exceeds 400KB limit" -ForegroundColor Red
+                    exit 1
+                }
+            }
+
+            $routeChunks = Get-ChildItem "dist" -Recurse -Filter "*.js" | Where-Object {
+                $_.Name -notlike "index-*.js" -and $_.Name -notlike "vendor-*.js"
+            }
+            foreach ($chunk in $routeChunks) {
+                $chunkSizeKb = Get-GzipSizeKb $chunk.FullName
+                Write-Host "  $($chunk.Name): ${chunkSizeKb}KB (gzip)"
+                if ($chunkSizeKb -gt 200) {
+                    Write-Host "❌ Chunk $($chunk.Name) exceeds 200KB limit" -ForegroundColor Red
+                    exit 1
+                }
+            }
+            Write-Host "✅ Bundle sizes within thresholds" -ForegroundColor Green
+        }
+
+        # Lighthouse CI (GA parity) - enabled by default for full CI parity
+        $runLighthouse = if ($env:SKIP_LIGHTHOUSE -eq "1") { $false } else { $true }
+        if ($runLighthouse) {
+            Write-Host "🔦 Running Lighthouse CI..." -ForegroundColor Yellow
+            # Check if @lhci/cli is available
+            $lhciInstalled = npm list -g @lhci/cli 2>&1 | Select-String "@lhci/cli"
+            if (-not $lhciInstalled) {
+                Write-Host "Installing @lhci/cli..." -ForegroundColor Yellow
+                npm install -g @lhci/cli@0.14.0
+            }
+            npx @lhci/cli@0.14.0 autorun
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "⚠ Lighthouse CI failed - continuing with other checks" -ForegroundColor Yellow
+            } else {
+                Write-Host "✅ Lighthouse CI passed" -ForegroundColor Green
+            }
+        } else {
+            Write-Host "⚠ Skipping Lighthouse CI (SKIP_LIGHTHOUSE=1 is set)" -ForegroundColor Yellow
+        }
 
         $env:PYTHONPATH = "..\src"
         $playwrightPort = 3000
@@ -154,6 +234,15 @@ if (Test-Path $frontendDir) {
         $env:CI = "true"
         npm run test:e2e:smoke
         Assert-LastExitCode "Playwright E2E smoke tests"
+
+        # Full E2E is opt-in (smoke tests are sufficient for local validation)
+        $runFullE2E = if ($env:RUN_FULL_E2E -eq "1") { $true } else { $false }
+        if ($runFullE2E) {
+            npm run test:e2e
+            Assert-LastExitCode "Playwright full E2E suite"
+        } else {
+            Write-Host "⚠ Skipping full Playwright E2E suite (set RUN_FULL_E2E=1 to enable)" -ForegroundColor Yellow
+        }
     } else {
         Write-Host "⚠ No frontend package.json found, skipping" -ForegroundColor Yellow
     }

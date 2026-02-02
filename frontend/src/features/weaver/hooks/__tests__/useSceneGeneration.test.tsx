@@ -38,7 +38,11 @@ function createWrapper() {
 }
 
 // Helper to create a mock character node
-function createMockCharacterNode(id: string, x: number, y: number): {
+function createMockCharacterNode(
+  id: string,
+  x: number,
+  y: number
+): {
   id: string;
   type: 'character';
   position: { x: number; y: number };
@@ -62,6 +66,8 @@ function createMockCharacterNode(id: string, x: number, y: number): {
 
 describe('useSceneGeneration', () => {
   beforeEach(() => {
+    // Use fake timers with shouldAdvanceTime to allow waitFor to work
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     // Reset the Weaver store with a character node for testing
     useWeaverStore.setState({
       nodes: [createMockCharacterNode('char-1', 200, 100)],
@@ -72,7 +78,7 @@ describe('useSceneGeneration', () => {
   });
 
   afterEach(() => {
-    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   describe('Smart Placement (onMutate)', () => {
@@ -240,6 +246,11 @@ describe('useSceneGeneration', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
+      // Advance timers to trigger the delayed updateNode call
+      await act(async () => {
+        vi.runAllTimers();
+      });
+
       // THEN: Node should be updated with scene data
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(2);
@@ -276,6 +287,11 @@ describe('useSceneGeneration', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
+      // Advance timers to trigger the delayed updateNode call
+      await act(async () => {
+        vi.runAllTimers();
+      });
+
       // THEN: Scene type should be preserved
       const nodes = useWeaverStore.getState().nodes;
       const sceneNode = nodes[1]!;
@@ -289,7 +305,9 @@ describe('useSceneGeneration', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       // GIVEN: API will fail
-      mockedGenerateScene.mockRejectedValue(new Error('Scene generation service unavailable'));
+      mockedGenerateScene.mockRejectedValue(
+        new Error('Scene generation service unavailable')
+      );
 
       // WHEN: Hook is called and mutation fails
       const { result } = renderHook(() => useSceneGeneration(), {
@@ -306,6 +324,11 @@ describe('useSceneGeneration', () => {
       // Wait for mutation to fail
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
+      });
+
+      // Advance timers to trigger the delayed updateNode call
+      await act(async () => {
+        vi.runAllTimers();
       });
 
       // THEN: Node should have error status and message
@@ -371,6 +394,11 @@ describe('useSceneGeneration', () => {
 
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
+      });
+
+      // Advance timers to trigger the delayed updateNode call
+      await act(async () => {
+        vi.runAllTimers();
       });
 
       // THEN: Fallback message should be used
@@ -458,7 +486,10 @@ describe('useSceneGeneration', () => {
       const mockVariables = { sourceNodeId: 'test', sceneType: 'opening' };
 
       // WHEN: handleSceneMutationSuccess is called with empty nodeId
-      handleSceneMutationSuccess(updateNode, mockData, mockVariables, { nodeId: '' });
+      handleSceneMutationSuccess(updateNode, mockData, mockVariables, {
+        nodeId: '',
+        startedAt: Date.now(),
+      });
 
       // THEN: updateNode should NOT be called (early return due to falsy nodeId)
       expect(updateNode).not.toHaveBeenCalled();
@@ -482,7 +513,10 @@ describe('useSceneGeneration', () => {
       const mockError = new Error('Test error');
 
       // WHEN: handleSceneMutationError is called with empty nodeId
-      handleSceneMutationError(updateNode, mockError, { nodeId: '' });
+      handleSceneMutationError(updateNode, mockError, {
+        nodeId: '',
+        startedAt: Date.now(),
+      });
 
       // THEN: updateNode should NOT be called (early return due to falsy nodeId)
       expect(updateNode).not.toHaveBeenCalled();
@@ -490,6 +524,7 @@ describe('useSceneGeneration', () => {
 
     it('handleSceneMutationSuccess calls updateNode when context is valid', () => {
       // GIVEN: updateNode mock and valid context
+      // Use a startedAt in the past (>300ms ago) to avoid setTimeout delay
       const updateNode = vi.fn();
       const mockData = {
         title: 'Test Scene',
@@ -500,7 +535,10 @@ describe('useSceneGeneration', () => {
       const mockVariables = { sourceNodeId: 'char-1', sceneType: 'action' };
 
       // WHEN: handleSceneMutationSuccess is called with valid context
-      handleSceneMutationSuccess(updateNode, mockData, mockVariables, { nodeId: 'scene-123' });
+      handleSceneMutationSuccess(updateNode, mockData, mockVariables, {
+        nodeId: 'scene-123',
+        startedAt: Date.now() - 500, // 500ms ago, so delayMs = 0
+      });
 
       // THEN: updateNode should be called with the correct nodeId
       expect(updateNode).toHaveBeenCalledTimes(1);
@@ -509,11 +547,15 @@ describe('useSceneGeneration', () => {
 
     it('handleSceneMutationError calls updateNode when context is valid', () => {
       // GIVEN: updateNode mock and valid context
+      // Use a startedAt in the past (>300ms ago) to avoid setTimeout delay
       const updateNode = vi.fn();
       const mockError = new Error('Generation failed');
 
       // WHEN: handleSceneMutationError is called with valid context
-      handleSceneMutationError(updateNode, mockError, { nodeId: 'scene-456' });
+      handleSceneMutationError(updateNode, mockError, {
+        nodeId: 'scene-456',
+        startedAt: Date.now() - 500, // 500ms ago, so delayMs = 0
+      });
 
       // THEN: updateNode should be called with the correct nodeId
       expect(updateNode).toHaveBeenCalledTimes(1);

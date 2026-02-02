@@ -73,7 +73,13 @@ export function NarrativeEditorLayout({
   }, [useMockData, storyId, loadStories]);
 
   // Determine which chapters to use: props > backend > mock
-  const chapters = propChapters ?? (useMockData ? MOCK_CHAPTERS : backendChapters.length > 0 ? backendChapters : MOCK_CHAPTERS);
+  const chapters =
+    propChapters ??
+    (useMockData
+      ? MOCK_CHAPTERS
+      : backendChapters.length > 0
+        ? backendChapters
+        : MOCK_CHAPTERS);
 
   // Track active scene for sidebar highlighting and content loading
   const [activeSceneId, setActiveSceneId] = useState<string | undefined>(
@@ -82,7 +88,9 @@ export function NarrativeEditorLayout({
 
   // Drag-and-drop state for character mentions
   const [activeDragData, setActiveDragData] = useState<CharacterDragData | null>(null);
-  const [pendingMention, setPendingMention] = useState<CharacterMentionInsert | null>(null);
+  const [pendingMention, setPendingMention] = useState<CharacterMentionInsert | null>(
+    null
+  );
   const [isOverEditor, setIsOverEditor] = useState(false);
 
   // DnD sensors with higher distance threshold to avoid accidental drags
@@ -147,28 +155,34 @@ export function NarrativeEditorLayout({
    * pendingMention state which triggers the EditorComponent to insert
    * the @mention at the cursor position.
    */
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { over } = event;
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { over } = event;
 
-    if (over?.id === 'editor-drop-zone' && activeDragData) {
-      // Set pending mention to trigger insertion in EditorComponent
-      setPendingMention({
-        characterId: activeDragData.characterId,
-        characterName: activeDragData.characterName,
-      });
-    }
+      if (over?.id === 'editor-drop-zone' && activeDragData) {
+        // Set pending mention to trigger insertion in EditorComponent
+        setPendingMention({
+          characterId: activeDragData.characterId,
+          characterName: activeDragData.characterName,
+        });
+      }
 
-    // Reset drag state
-    setActiveDragData(null);
-    setIsOverEditor(false);
-  }, [activeDragData]);
+      // Reset drag state
+      setActiveDragData(null);
+      setIsOverEditor(false);
+    },
+    [activeDragData]
+  );
 
   /**
    * Handle drag over to show drop indicator on editor.
    */
-  const handleDragOver = useCallback((event: { over: { id: string | number } | null }) => {
-    setIsOverEditor(event.over?.id === 'editor-drop-zone');
-  }, []);
+  const handleDragOver = useCallback(
+    (event: { over: { id: string | number } | null }) => {
+      setIsOverEditor(event.over?.id === 'editor-drop-zone');
+    },
+    []
+  );
 
   /**
    * Clear pending mention after it has been inserted.

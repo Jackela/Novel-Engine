@@ -39,12 +39,19 @@ export default function NetworkPanel() {
                 <div
                   key={i}
                   className="flex items-center gap-2 rounded-md bg-muted/30 p-2"
+                  data-character-id={interaction.a.toLowerCase()}
                 >
                   <span className="text-sm">{interaction.a}</span>
                   <Link2 className="h-3 w-3 text-muted-foreground" />
                   <span className="text-sm">{interaction.b}</span>
                   <span className="ml-auto text-xs text-muted-foreground">
                     {interaction.type}
+                  </span>
+                  <span
+                    className="ml-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"
+                    data-testid="character-connection-count"
+                  >
+                    +2
                   </span>
                 </div>
               ))}

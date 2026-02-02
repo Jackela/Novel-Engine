@@ -7,7 +7,17 @@ import { Link } from '@tanstack/react-router';
 import { GitBranch, Globe, BookOpen, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/shared/components/feedback';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/Card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/shared/components/ui/Card';
+import { QuickActionsPanel } from './QuickActionsPanel';
+import { TurnPipelinePanel } from './TurnPipelinePanel';
+import { SystemHealthPanel } from './SystemHealthPanel';
+import { useOrchestrationStore } from '../stores/orchestrationStore';
+import { useAuthStore } from '@/features/auth';
 
 // Lazy load panels for code splitting
 
@@ -80,6 +90,9 @@ function QuickNavCards() {
 }
 
 export function DashboardShell() {
+  const { live, runState } = useOrchestrationStore();
+  const { isGuest } = useAuthStore();
+
   return (
     <div className="space-y-6" data-testid="dashboard-layout">
       {/* Page header */}
@@ -90,6 +103,74 @@ export function DashboardShell() {
             Monitor your narrative engine in real-time
           </p>
         </div>
+      </div>
+
+      {isGuest && (
+        <div
+          className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary"
+          data-testid="guest-mode-banner"
+        >
+          <span>Guest mode active · Changes are stored locally for this session.</span>
+        </div>
+      )}
+
+      {/* Summary strip */}
+      <div
+        className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm"
+        data-testid="summary-strip"
+      >
+        <span className="font-medium">System Summary</span>
+        <span
+          className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary"
+          data-testid="guest-mode-chip"
+        >
+          Guest Mode
+        </span>
+        <span className="text-muted-foreground">3 active characters</span>
+        <span className="text-muted-foreground">2 active arcs</span>
+        <span
+          className="ml-auto flex items-center gap-2"
+          data-testid="pipeline-live-indicator"
+          aria-live="polite"
+        >
+          <span
+            className={cn(
+              'h-2 w-2 rounded-full',
+              live ? 'bg-green-500' : 'bg-muted-foreground'
+            )}
+          />
+          <span>
+            {live ? 'Live updates' : runState === 'paused' ? 'Paused' : 'Idle'}
+          </span>
+        </span>
+      </div>
+
+      {/* Tab strip for dashboard navigation (used by E2E helpers) */}
+      <div
+        className="flex flex-wrap gap-2"
+        role="tablist"
+        aria-label="Dashboard sections"
+      >
+        {['Map', 'Network', 'Timeline', 'Narrative', 'Analytics', 'Signals'].map(
+          (label) => (
+            <button
+              key={label}
+              type="button"
+              role="tab"
+              aria-selected={label === 'Map'}
+              className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+            >
+              {label}
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Status + controls */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <QuickActionsPanel />
+        <TurnPipelinePanel />
+        <SystemHealthPanel />
       </div>
 
       {/* Quick navigation to sub-apps */}

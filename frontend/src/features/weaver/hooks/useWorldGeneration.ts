@@ -57,10 +57,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { generateWorld } from '@/lib/api';
 import { generateId } from '@/lib/utils';
-import type {
-  WorldGenerationRequest,
-  WorldGenerationResponse,
-} from '@/types/schemas';
+import type { WorldGenerationRequest, WorldGenerationResponse } from '@/types/schemas';
 import type { WorldNodeData } from '../components/nodes/WorldNode';
 import type { FactionNodeData } from '../components/nodes/FactionNode';
 import type { LocationNodeData } from '../components/nodes/LocationNode';
@@ -334,7 +331,8 @@ export function useWorldGeneration() {
     },
     onError: (error, _variables, context) => {
       if (!context?.loadingNodeId) return;
-      const message = error instanceof Error ? error.message : 'World generation failed';
+      const message =
+        error instanceof Error ? error.message : 'World generation failed';
       updateNode(context.loadingNodeId, (node) => {
         const updatedData = {
           ...(node.data as WorldNodeData),

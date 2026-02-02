@@ -38,7 +38,10 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
       const relationshipData = await getCharacterRelationships(character.agent_id);
 
       // Build export data with character and relationships
-      const exportData = buildCharacterExportData(character, relationshipData.relationships);
+      const exportData = buildCharacterExportData(
+        character,
+        relationshipData.relationships
+      );
 
       // Generate filename from character name (sanitized)
       const sanitizedName = character.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -55,7 +58,7 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between gap-4">
           <DialogTitle>{character?.name || 'Character Details'}</DialogTitle>
           {character && (
@@ -67,9 +70,9 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
               className="shrink-0"
             >
               {isExporting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="mr-2 h-4 w-4" />
               )}
               Export
             </Button>
@@ -131,11 +134,13 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
                         No relationships recorded.
                       </span>
                     ) : (
-                      Object.entries(character.relationships).map(([relation, value]) => (
-                        <Badge key={relation} variant="secondary">
-                          {relation}: {value}
-                        </Badge>
-                      ))
+                      Object.entries(character.relationships).map(
+                        ([relation, value]) => (
+                          <Badge key={relation} variant="secondary">
+                            {relation}: {value}
+                          </Badge>
+                        )
+                      )
                     )}
                   </div>
                 </section>

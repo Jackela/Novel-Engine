@@ -23,7 +23,10 @@ import type {
   ChapterCreateRequest,
   SceneCreateRequest,
 } from '@/types/schemas';
-import type { OutlinerChapter, OutlinerScene } from '@/components/narrative/NarrativeSidebar';
+import type {
+  OutlinerChapter,
+  OutlinerScene,
+} from '@/components/narrative/NarrativeSidebar';
 
 /**
  * State for story structure data.
@@ -151,7 +154,8 @@ export function useStoryStructure(
           error: null,
         }));
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to load story structure';
+        const message =
+          error instanceof Error ? error.message : 'Failed to load story structure';
         setState((prev) => ({
           ...prev,
           isLoading: false,

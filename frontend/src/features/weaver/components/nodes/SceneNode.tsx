@@ -13,7 +13,10 @@ import { WeaverNode } from './WeaverNode';
 
 export type SceneNodeType = Node<SceneNodeData>;
 
-const sceneTypeBadgeVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+const sceneTypeBadgeVariant: Record<
+  string,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
   opening: 'default',
   action: 'secondary',
   dialogue: 'outline',
@@ -40,16 +43,16 @@ function SceneNodeComponent({ data, id, selected }: NodeProps<SceneNodeType>) {
       />
       <CardContent className="p-4">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h4 className="font-semibold text-sm truncate flex-1">{data.title}</h4>
-          <Badge variant={badgeVariant} className="text-xs capitalize shrink-0">
+          <h4 className="flex-1 truncate text-sm font-semibold">{data.title}</h4>
+          <Badge variant={badgeVariant} className="shrink-0 text-xs capitalize">
             {data.sceneType}
           </Badge>
         </div>
         {data.summary ? (
-          <p className="text-xs text-muted-foreground line-clamp-2">{data.summary}</p>
+          <p className="line-clamp-2 text-xs text-muted-foreground">{data.summary}</p>
         ) : null}
         {data.visualPrompt && data.status === 'idle' ? (
-          <p className="mt-2 text-xs text-muted-foreground/70 italic truncate">
+          <p className="mt-2 truncate text-xs italic text-muted-foreground/70">
             Visual: {data.visualPrompt}
           </p>
         ) : null}

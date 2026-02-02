@@ -48,7 +48,7 @@ export default function SignalsPanel() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="system-log">
           {signals.map((signal) => {
             const Icon = iconMap[signal.type as keyof typeof iconMap];
             const colorClass = colorMap[signal.type as keyof typeof colorMap];
@@ -57,6 +57,7 @@ export default function SignalsPanel() {
               <div
                 key={signal.id}
                 className="flex items-start gap-2 rounded-lg bg-muted/30 p-2"
+                data-testid="activity-event"
               >
                 <Icon className={`mt-0.5 h-4 w-4 ${colorClass}`} />
                 <div className="min-w-0 flex-1">
@@ -66,6 +67,13 @@ export default function SignalsPanel() {
               </div>
             );
           })}
+        </div>
+
+        <div
+          className="mt-4 flex items-center justify-center rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 py-6 text-xs text-muted-foreground"
+          data-testid="event-cascade-flow"
+        >
+          Event Cascade Flow
         </div>
       </CardContent>
     </Card>

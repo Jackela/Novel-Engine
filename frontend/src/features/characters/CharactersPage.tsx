@@ -11,13 +11,14 @@ import {
   useUpdateCharacter,
   useDeleteCharacter,
 } from './api/characterApi';
-import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ErrorState } from '@/shared/components/feedback';
-import type {
-  CreateCharacterInput,
-  CharacterSummary,
-  CharacterDetail,
-} from '@/shared/types/character';
+import type { CreateCharacterInput, CharacterSummary } from '@/shared/types/character';
 
 export default function CharactersPage() {
   const [selectedCharacter, setSelectedCharacter] = useState<CharacterSummary | null>(
@@ -72,26 +73,40 @@ export default function CharactersPage() {
   return (
     <div className="space-y-6">
       <CharactersHeader />
-      {isFormOpen ? (
-        <CharacterFormPanel
-          selectedCharacter={selectedCharacter}
-          selectedDetail={selectedDetail}
-          isLoading={createMutation.isPending || updateMutation.isPending}
-          onSubmit={handleSubmit}
-          onCancel={() => {
+      <CharacterGrid
+        characters={characters}
+        isLoading={isLoading}
+        onCreateNew={handleCreate}
+        onEdit={handleEdit}
+        onSelect={handleEdit}
+        onDelete={handleDelete}
+      />
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) {
             setIsFormOpen(false);
             setSelectedCharacter(null);
-          }}
-        />
-      ) : (
-        <CharacterGrid
-          characters={characters}
-          isLoading={isLoading}
-          onCreateNew={handleCreate}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      )}
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedCharacter ? 'Edit Character' : 'Create Character'}
+            </DialogTitle>
+          </DialogHeader>
+          <CharacterForm
+            {...(selectedDetail ? { character: selectedDetail } : {})}
+            onSubmit={handleSubmit}
+            onCancel={() => {
+              setIsFormOpen(false);
+              setSelectedCharacter(null);
+            }}
+            isLoading={createMutation.isPending || updateMutation.isPending}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -104,39 +119,5 @@ function CharactersHeader() {
         Manage your story characters and their relationships
       </p>
     </div>
-  );
-}
-
-type CharacterFormPanelProps = {
-  selectedCharacter: CharacterSummary | null;
-  selectedDetail?: CharacterDetail | undefined;
-  isLoading: boolean;
-  onSubmit: (data: CreateCharacterInput) => void;
-  onCancel: () => void;
-};
-
-function CharacterFormPanel({
-  selectedCharacter,
-  selectedDetail,
-  isLoading,
-  onSubmit,
-  onCancel,
-}: CharacterFormPanelProps) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {selectedCharacter ? 'Edit Character' : 'Create Character'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <CharacterForm
-          {...(selectedDetail ? { character: selectedDetail } : {})}
-          onSubmit={onSubmit}
-          onCancel={onCancel}
-          isLoading={isLoading}
-        />
-      </CardContent>
-    </Card>
   );
 }

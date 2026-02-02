@@ -35,6 +35,7 @@ import {
 /** Context passed through the mutation lifecycle to track the optimistic scene node */
 export type SceneMutationContext = {
   nodeId: string;
+  startedAt: number;
 };
 
 /** Function signature for updating a node in the Weaver store */
@@ -60,10 +61,17 @@ export type SceneGenerationInput = {
 export const createOptimisticSceneNode = (
   sourceNodeId: string,
   sceneType: string
-): { node: WeaverNode; edge: { id: string; source: string; target: string; animated: boolean; style: { stroke: string } } } | null => {
-  const sourceNode = useWeaverStore.getState().nodes.find(
-    (n) => n.id === sourceNodeId
-  );
+): {
+  node: WeaverNode;
+  edge: {
+    id: string;
+    source: string;
+    target: string;
+    animated: boolean;
+    style: { stroke: string };
+  };
+} | null => {
+  const sourceNode = useWeaverStore.getState().nodes.find((n) => n.id === sourceNodeId);
 
   if (!sourceNode) {
     return null;
@@ -133,18 +141,27 @@ export const handleSceneMutationSuccess = (
   context: SceneMutationContext | undefined
 ): void => {
   if (!context?.nodeId) return;
-  updateNode(context.nodeId, (node) => {
-    const updatedData: SceneNodeData = {
-      ...(node.data as SceneNodeData),
-      title: data.title,
-      content: data.content,
-      summary: data.summary,
-      visualPrompt: data.visual_prompt,
-      sceneType: variables.sceneType,
-      status: 'idle',
-    };
-    return { ...node, data: updatedData };
-  });
+  const MIN_LOADING_MS = 300;
+  const delayMs = Math.max(0, MIN_LOADING_MS - (Date.now() - context.startedAt));
+  const applyUpdate = () => {
+    updateNode(context.nodeId, (node) => {
+      const updatedData: SceneNodeData = {
+        ...(node.data as SceneNodeData),
+        title: data.title,
+        content: data.content,
+        summary: data.summary,
+        visualPrompt: data.visual_prompt,
+        sceneType: variables.sceneType,
+        status: 'idle',
+      };
+      return { ...node, data: updatedData };
+    });
+  };
+  if (delayMs > 0) {
+    window.setTimeout(applyUpdate, delayMs);
+  } else {
+    applyUpdate();
+  }
 };
 
 /**
@@ -164,14 +181,23 @@ export const handleSceneMutationError = (
 ): void => {
   if (!context?.nodeId) return;
   const message = error instanceof Error ? error.message : 'Scene generation failed';
-  updateNode(context.nodeId, (node) => {
-    const updatedData: SceneNodeData = {
-      ...(node.data as SceneNodeData),
-      status: 'error',
-      errorMessage: message,
-    };
-    return { ...node, data: updatedData };
-  });
+  const MIN_LOADING_MS = 300;
+  const delayMs = Math.max(0, MIN_LOADING_MS - (Date.now() - context.startedAt));
+  const applyUpdate = () => {
+    updateNode(context.nodeId, (node) => {
+      const updatedData: SceneNodeData = {
+        ...(node.data as SceneNodeData),
+        status: 'error',
+        errorMessage: message,
+      };
+      return { ...node, data: updatedData };
+    });
+  };
+  if (delayMs > 0) {
+    window.setTimeout(applyUpdate, delayMs);
+  } else {
+    applyUpdate();
+  }
 };
 
 /**
@@ -207,11 +233,13 @@ export function useSceneGeneration() {
   const updateNode = useWeaverUpdateNode();
 
   return useMutation({
-    mutationFn: async (input: SceneGenerationInput): Promise<SceneGenerationResponse> => {
+    mutationFn: async (
+      input: SceneGenerationInput
+    ): Promise<SceneGenerationResponse> => {
       // Get source node to extract character context
-      const sourceNode = useWeaverStore.getState().nodes.find(
-        (n) => n.id === input.sourceNodeId
-      );
+      const sourceNode = useWeaverStore
+        .getState()
+        .nodes.find((n) => n.id === input.sourceNodeId);
 
       if (!sourceNode) {
         throw new Error('Source character node not found');
@@ -234,7 +262,7 @@ export function useSceneGeneration() {
 
       if (!result) {
         // Source node not found - mutation will fail in mutationFn
-        return { nodeId: '' } satisfies SceneMutationContext;
+        return { nodeId: '', startedAt: Date.now() } satisfies SceneMutationContext;
       }
 
       const { node, edge } = result;
@@ -245,7 +273,7 @@ export function useSceneGeneration() {
         edges: [...state.edges, edge],
       }));
 
-      return { nodeId: node.id } satisfies SceneMutationContext;
+      return { nodeId: node.id, startedAt: Date.now() } satisfies SceneMutationContext;
     },
     onSuccess: (data, variables, context) => {
       handleSceneMutationSuccess(updateNode, data, variables, context);

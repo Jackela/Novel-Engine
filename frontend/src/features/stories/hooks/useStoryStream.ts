@@ -37,7 +37,13 @@ export interface StreamMetadata {
   model_used: string;
 }
 
-export type StreamStatus = 'idle' | 'connecting' | 'streaming' | 'complete' | 'error' | 'cancelled';
+export type StreamStatus =
+  | 'idle'
+  | 'connecting'
+  | 'streaming'
+  | 'complete'
+  | 'error'
+  | 'cancelled';
 
 export interface UseStoryStreamReturn {
   /** Current accumulated text content */
@@ -57,6 +63,28 @@ export interface UseStoryStreamReturn {
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const buildStreamUrl = () => {
+  if (!API_BASE) {
+    return '/api/narratives/stream';
+  }
+  return `${API_BASE.replace(/\/$/, '')}/narratives/stream`;
+};
+
+const getTestHeaders = (): Record<string, string> => {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+  const mode = (window as { __e2eNarrativeMode?: string }).__e2eNarrativeMode;
+  const delay = (window as { __e2eNarrativeDelayMs?: number }).__e2eNarrativeDelayMs;
+  const headers: Record<string, string> = {};
+  if (mode) {
+    headers['x-e2e-narrative-mode'] = String(mode);
+  }
+  if (typeof delay === 'number') {
+    headers['x-e2e-narrative-delay'] = String(delay);
+  }
+  return headers;
+};
 
 /**
  * Custom hook for streaming narrative generation.
@@ -90,105 +118,116 @@ export function useStoryStream(): UseStoryStreamReturn {
     setStatus('cancelled');
   }, []);
 
-  const startStream = useCallback(async (request: StreamRequest) => {
-    // Cancel any existing stream
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Reset state
-    setContent('');
-    setError(null);
-    setMetadata(null);
-    setStatus('connecting');
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    try {
-      const response = await fetch(`${API_BASE}/api/narratives/stream`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'text/event-stream',
-        },
-        body: JSON.stringify(request),
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-        throw new Error(errorData.detail || `HTTP ${response.status}`);
+  const startStream = useCallback(
+    async (request: StreamRequest) => {
+      // Cancel any existing stream
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
 
-      if (!response.body) {
-        throw new Error('No response body');
-      }
+      // Reset state
+      setContent('');
+      setError(null);
+      setMetadata(null);
+      setStatus('connecting');
 
-      setStatus('streaming');
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+      try {
+        if (typeof window !== 'undefined') {
+          (
+            window as { __lastNarrativeRequest?: StreamRequest }
+          ).__lastNarrativeRequest = request;
+        }
+        const response = await fetch(buildStreamUrl(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream',
+            ...getTestHeaders(),
+          },
+          body: JSON.stringify(request),
+          signal: controller.signal,
+        });
 
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          break;
+        if (!response.ok) {
+          const errorData = await response
+            .json()
+            .catch(() => ({ detail: 'Unknown error' }));
+          throw new Error(errorData.detail || `HTTP ${response.status}`);
         }
 
-        buffer += decoder.decode(value, { stream: true });
+        if (!response.body) {
+          throw new Error('No response body');
+        }
 
-        // Parse SSE events from buffer
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+        setStatus('streaming');
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const jsonStr = line.slice(6);
-            try {
-              const event = JSON.parse(jsonStr) as {
-                type: string;
-                content: string;
-                metadata?: StreamMetadata;
-              };
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-              if (event.type === 'chunk') {
-                setContent((prev) => prev + event.content);
-              } else if (event.type === 'done') {
-                if (event.metadata) {
-                  setMetadata(event.metadata);
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Parse SSE events from buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6);
+              try {
+                const event = JSON.parse(jsonStr) as {
+                  type: string;
+                  content: string;
+                  metadata?: StreamMetadata;
+                };
+
+                if (event.type === 'chunk') {
+                  setContent((prev) => prev + event.content);
+                } else if (event.type === 'done') {
+                  if (event.metadata) {
+                    setMetadata(event.metadata);
+                  }
+                  setStatus('complete');
+                } else if (event.type === 'error') {
+                  throw new Error(event.content || 'Stream error');
                 }
-                setStatus('complete');
-              } else if (event.type === 'error') {
-                throw new Error(event.content || 'Stream error');
-              }
-            } catch (parseError) {
-              // Ignore malformed JSON in SSE - might be comment or keep-alive
-              if (jsonStr.trim() && !jsonStr.startsWith(':')) {
-                console.warn('Failed to parse SSE event:', jsonStr);
+              } catch (parseError) {
+                // Ignore malformed JSON in SSE - might be comment or keep-alive
+                if (jsonStr.trim() && !jsonStr.startsWith(':')) {
+                  console.warn('Failed to parse SSE event:', jsonStr);
+                }
               }
             }
           }
         }
-      }
 
-      // Final status check
-      if (status !== 'complete' && status !== 'error' && status !== 'cancelled') {
-        setStatus('complete');
-      }
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        // Cancelled - status already set
-        return;
-      }
+        // Final status check
+        if (status !== 'complete' && status !== 'error' && status !== 'cancelled') {
+          setStatus('complete');
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          // Cancelled - status already set
+          return;
+        }
 
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
-      setStatus('error');
-    }
-  }, [status]);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMessage);
+        setStatus('error');
+      }
+    },
+    [status]
+  );
 
   return {
     content,

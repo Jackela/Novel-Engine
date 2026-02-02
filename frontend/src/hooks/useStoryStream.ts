@@ -117,7 +117,9 @@ function parseSSEData(data: string): StreamChunk | null {
  * @param callbacks - Optional callbacks for stream events
  * @returns State and actions for managing the stream
  */
-export function useStoryStream(callbacks?: StreamCallbacks): StreamState & StreamActions {
+export function useStoryStream(
+  callbacks?: StreamCallbacks
+): StreamState & StreamActions {
   const [state, setState] = useState<StreamState>({
     buffer: '',
     isStreaming: false,
@@ -251,7 +253,9 @@ export function useStoryStream(callbacks?: StreamCallbacks): StreamState & Strea
                   }));
 
                   // Call error callback
-                  callbacksRef.current?.onError?.(chunk.content || 'Unknown streaming error');
+                  callbacksRef.current?.onError?.(
+                    chunk.content || 'Unknown streaming error'
+                  );
                   break;
               }
             }
@@ -264,7 +268,8 @@ export function useStoryStream(callbacks?: StreamCallbacks): StreamState & Strea
           return;
         }
 
-        const errorMessage = error instanceof Error ? error.message : 'Stream connection failed';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Stream connection failed';
 
         setState((prev) => ({
           ...prev,

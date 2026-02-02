@@ -16,7 +16,9 @@ import {
  * @param factionId - The UUID of the faction to retrieve
  * @returns Faction details with member list
  */
-export async function getFactionDetail(factionId: string): Promise<FactionDetailResponse> {
+export async function getFactionDetail(
+  factionId: string
+): Promise<FactionDetailResponse> {
   const data = await api.get<unknown>(`/factions/${factionId}`);
   return FactionDetailResponseSchema.parse(data);
 }

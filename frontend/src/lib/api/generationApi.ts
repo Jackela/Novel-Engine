@@ -17,7 +17,26 @@ export async function generateCharacter(
   input: CharacterGenerationRequest
 ): Promise<CharacterGenerationResponse> {
   const payload = CharacterGenerationRequestSchema.parse(input);
-  const data = await api.post<unknown>('/generation/character', payload);
+  if (typeof window !== 'undefined') {
+    (
+      window as { __lastGenerationRequest?: CharacterGenerationRequest }
+    ).__lastGenerationRequest = payload;
+  }
+  const headers: Record<string, string> = {};
+  if (typeof window !== 'undefined') {
+    const mode = (window as { __e2eGenerationMode?: string }).__e2eGenerationMode;
+    const delay = (window as { __e2eGenerationDelayMs?: number })
+      .__e2eGenerationDelayMs;
+    if (mode) {
+      headers['x-e2e-generation-mode'] = String(mode);
+    }
+    if (typeof delay === 'number') {
+      headers['x-e2e-generation-delay'] = String(delay);
+    }
+  }
+  const data = await api.post<unknown>('/generation/character', payload, {
+    headers,
+  });
   return CharacterGenerationResponseSchema.parse(data);
 }
 

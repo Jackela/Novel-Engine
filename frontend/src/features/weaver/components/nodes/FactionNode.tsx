@@ -66,7 +66,8 @@ function formatAlignment(alignment: string): string {
 }
 
 function FactionNodeComponent({ data, id, selected }: NodeProps<FactionNodeType>) {
-  const alignmentClass = alignmentColors[data.alignment] ?? 'border-gray-400/50 text-gray-200';
+  const alignmentClass =
+    alignmentColors[data.alignment] ?? 'border-gray-400/50 text-gray-200';
 
   return (
     <WeaverNode
@@ -74,7 +75,7 @@ function FactionNodeComponent({ data, id, selected }: NodeProps<FactionNodeType>
       nodeType="faction"
       status={data.status}
       selected={selected}
-      className="w-60 cursor-grab active:cursor-grabbing border-amber-500/50 bg-gradient-to-br from-amber-950/80 to-orange-950/80"
+      className="w-60 cursor-grab border-amber-500/50 bg-gradient-to-br from-amber-950/80 to-orange-950/80 active:cursor-grabbing"
     >
       <Handle
         type="target"
@@ -87,12 +88,17 @@ function FactionNodeComponent({ data, id, selected }: NodeProps<FactionNodeType>
           <Shield className="mt-0.5 h-4 w-4 text-amber-400" />
           <div className="flex-1">
             <h4 className="text-sm font-medium text-amber-100">{data.name}</h4>
-            <Badge variant="outline" className="mt-1 border-amber-400/50 text-xs text-amber-200">
+            <Badge
+              variant="outline"
+              className="mt-1 border-amber-400/50 text-xs text-amber-200"
+            >
               {factionTypeLabels[data.faction_type] ?? data.faction_type}
             </Badge>
           </div>
         </div>
-        <p className="mb-2 line-clamp-2 text-xs text-amber-200/70">{data.description}</p>
+        <p className="mb-2 line-clamp-2 text-xs text-amber-200/70">
+          {data.description}
+        </p>
         <div className="mb-2 flex items-center gap-2">
           <Badge variant="outline" className={`text-xs ${alignmentClass}`}>
             {formatAlignment(data.alignment)}
@@ -116,7 +122,11 @@ function FactionNodeComponent({ data, id, selected }: NodeProps<FactionNodeType>
         {data.values.length > 0 ? (
           <div className="mt-2 flex flex-wrap gap-1">
             {data.values.slice(0, 2).map((value) => (
-              <Badge key={value} variant="secondary" className="text-xs bg-amber-800/50">
+              <Badge
+                key={value}
+                variant="secondary"
+                className="bg-amber-800/50 text-xs"
+              >
                 {value}
               </Badge>
             ))}

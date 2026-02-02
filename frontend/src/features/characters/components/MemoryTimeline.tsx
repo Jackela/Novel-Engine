@@ -35,15 +35,13 @@ function MemoryCard({ memory }: MemoryCardProps) {
 
   return (
     <div
-      className={`relative p-4 rounded-lg border transition-colors ${
-        isCoreMemory
-          ? 'border-amber-500/50 bg-amber-500/5'
-          : 'border-border bg-card'
+      className={`relative rounded-lg border p-4 transition-colors ${
+        isCoreMemory ? 'border-amber-500/50 bg-amber-500/5' : 'border-border bg-card'
       }`}
     >
       {isCoreMemory && (
-        <div className="absolute -top-2 -right-2">
-          <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+        <div className="absolute -right-2 -top-2">
+          <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
         </div>
       )}
 
@@ -53,7 +51,10 @@ function MemoryCard({ memory }: MemoryCardProps) {
             <Calendar className="h-3 w-3" />
             <span>{formatDate(memory.timestamp)}</span>
           </div>
-          <Badge variant="outline" className={IMPORTANCE_COLORS[memory.importance_level]}>
+          <Badge
+            variant="outline"
+            className={IMPORTANCE_COLORS[memory.importance_level]}
+          >
             {memory.importance_level}
           </Badge>
         </div>
@@ -61,7 +62,7 @@ function MemoryCard({ memory }: MemoryCardProps) {
         <p className="text-sm leading-relaxed">{memory.content}</p>
 
         {memory.tags.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <Tag className="h-3 w-3 text-muted-foreground" />
             {memory.tags.map((tag) => (
               <Badge key={tag} variant="secondary" className="text-xs">
@@ -96,9 +97,9 @@ export default function MemoryTimeline({ memories }: Props) {
   if (!memories || memories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-        <Brain className="h-8 w-8 mb-2 opacity-50" />
+        <Brain className="mb-2 h-8 w-8 opacity-50" />
         <p className="text-sm">No memories recorded yet.</p>
-        <p className="text-xs mt-1">Memories shape who a character becomes.</p>
+        <p className="mt-1 text-xs">Memories shape who a character becomes.</p>
       </div>
     );
   }

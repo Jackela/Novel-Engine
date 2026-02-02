@@ -41,11 +41,10 @@ export function DraggableCharacterItem({
     characterName: character.name,
   };
 
-  const { attributes, listeners, setNodeRef, isDragging, transform } =
-    useDraggable({
-      id: `character-drag-${character.id}`,
-      data: dragData,
-    });
+  const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
+    id: `character-drag-${character.id}`,
+    data: dragData,
+  });
 
   const handleClick = useCallback(() => {
     onSelect(character.id);
@@ -74,8 +73,8 @@ export function DraggableCharacterItem({
       className={cn(
         'group flex cursor-pointer items-center gap-1 rounded-md px-2 py-1.5 text-sm',
         'transition-colors hover:bg-accent hover:text-accent-foreground',
-        isSelected && 'bg-accent text-accent-foreground font-medium',
-        isDragging && 'opacity-50 shadow-lg z-50'
+        isSelected && 'bg-accent font-medium text-accent-foreground',
+        isDragging && 'z-50 opacity-50 shadow-lg'
       )}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

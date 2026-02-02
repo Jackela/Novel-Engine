@@ -9,6 +9,7 @@ import { AuthResponseSchema } from '@/types/schemas';
 
 const AUTH_STORAGE_KEY = 'novel-engine-auth';
 const GUEST_SESSION_KEY = 'novelengine_guest_session';
+const E2E_BYPASS_KEY = 'e2e_bypass_auth';
 
 interface AuthState {
   // State
@@ -31,6 +32,23 @@ interface AuthState {
 
 const getGuestSessionFlag = () =>
   typeof window !== 'undefined' && localStorage.getItem(GUEST_SESSION_KEY) === '1';
+
+const isE2EBypassEnabled = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const override = localStorage.getItem(E2E_BYPASS_KEY);
+      if (override === '0') {
+        return false;
+      }
+      if (override === '1') {
+        return true;
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+  return import.meta.env.VITE_E2E_BYPASS_AUTH === 'true';
+};
 
 const setGuestSessionFlag = (value: boolean) => {
   if (typeof window === 'undefined') {
@@ -107,6 +125,17 @@ const tryRestoreGuestSession = async (set: (state: Partial<AuthState>) => void) 
   if (!getGuestSessionFlag()) {
     return false;
   }
+  if (isE2EBypassEnabled()) {
+    set({
+      isAuthenticated: true,
+      isGuest: true,
+      token: createGuestToken(),
+      workspaceId: 'ws-e2e',
+      isInitialized: true,
+      isLoading: false,
+    });
+    return true;
+  }
   const session = await authAPI.createGuestSession();
   set({
     isAuthenticated: true,
@@ -181,16 +210,27 @@ const createGuestMode = (set: (state: Partial<AuthState>) => void) => async () =
   set({ isLoading: true, error: null });
 
   try {
-    const session = await authAPI.createGuestSession();
-    setGuestSessionFlag(true);
+    if (isE2EBypassEnabled()) {
+      setGuestSessionFlag(true);
+      set({
+        isAuthenticated: true,
+        isGuest: true,
+        token: createGuestToken(),
+        workspaceId: 'ws-e2e',
+        isLoading: false,
+      });
+    } else {
+      const session = await authAPI.createGuestSession();
+      setGuestSessionFlag(true);
 
-    set({
-      isAuthenticated: true,
-      isGuest: true,
-      token: createGuestToken(),
-      workspaceId: session.workspace_id,
-      isLoading: false,
-    });
+      set({
+        isAuthenticated: true,
+        isGuest: true,
+        token: createGuestToken(),
+        workspaceId: session.workspace_id,
+        isLoading: false,
+      });
+    }
   } catch (error) {
     set({
       isAuthenticated: false,

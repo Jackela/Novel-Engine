@@ -140,7 +140,8 @@ export function QuickCreateCharacterDialog({
             Quick Create Character
           </DialogTitle>
           <DialogDescription>
-            Create a new character without leaving the editor. You can add more details later.
+            Create a new character without leaving the editor. You can add more details
+            later.
           </DialogDescription>
         </DialogHeader>
 
@@ -153,10 +154,7 @@ export function QuickCreateCharacterDialog({
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Character name"
-                      {...field}
-                    />
+                    <Input placeholder="Character name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -169,8 +167,7 @@ export function QuickCreateCharacterDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Background{' '}
-                    <span className="text-muted-foreground">(optional)</span>
+                    Background <span className="text-muted-foreground">(optional)</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea

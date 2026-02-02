@@ -181,7 +181,7 @@ function LocationTreeItem({
           'flex items-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors',
           'hover:bg-accent hover:text-accent-foreground',
           'cursor-pointer select-none',
-          isSelected && 'bg-accent text-accent-foreground font-medium'
+          isSelected && 'bg-accent font-medium text-accent-foreground'
         )}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
         onClick={handleSelect}

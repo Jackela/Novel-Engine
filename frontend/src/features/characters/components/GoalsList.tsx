@@ -60,11 +60,11 @@ function GoalItem({ goal }: { goal: CharacterGoal }) {
     >
       <StatusIcon status={goal.status} />
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <p
           className={cn(
             'text-sm leading-relaxed',
-            isResolved && 'line-through text-muted-foreground'
+            isResolved && 'text-muted-foreground line-through'
           )}
         >
           {goal.description}

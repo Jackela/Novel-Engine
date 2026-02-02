@@ -29,7 +29,11 @@ import '@xyflow/react/dist/style.css';
 
 import { RelationshipStatusBars } from './RelationshipStatusBars';
 import { Button, Badge } from '@/shared/components/ui';
-import type { CharacterSummary, RelationshipResponse, RelationshipType } from '@/types/schemas';
+import type {
+  CharacterSummary,
+  RelationshipResponse,
+  RelationshipType,
+} from '@/types/schemas';
 import { cn } from '@/lib/utils';
 import { generateRelationshipHistory } from '@/lib/api';
 
@@ -87,9 +91,7 @@ function SimpleCharacterNodeComponent({
 
           <div className="min-w-0 flex-1">
             {/* Character name */}
-            <p className="truncate text-sm font-medium text-foreground">
-              {data.name}
-            </p>
+            <p className="truncate text-sm font-medium text-foreground">{data.name}</p>
 
             {/* Archetype badge */}
             {data.archetype && (
@@ -310,9 +312,13 @@ export interface RelationshipGraphProps {
  */
 export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<SimpleCharacterNodeType>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<RelationshipEdgeData>>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<RelationshipEdgeData>>(
+    []
+  );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [selectedEdge, setSelectedEdge] = useState<Edge<RelationshipEdgeData> | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge<RelationshipEdgeData> | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingHistory, setIsGeneratingHistory] = useState(false);
@@ -358,7 +364,7 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
   const onSelectionChange: OnSelectionChangeFunc = useCallback(
     ({ nodes: selectedNodes, edges: selectedEdges }) => {
       // Handle node selection
-      const selected = selectedNodes.length > 0 ? selectedNodes[0]?.id ?? null : null;
+      const selected = selectedNodes.length > 0 ? (selectedNodes[0]?.id ?? null) : null;
       setSelectedNodeId(selected);
       onNodeSelect?.(selected);
 
@@ -464,7 +470,9 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
         <div className="flex h-full items-center justify-center rounded-lg border border-border bg-card">
           <div className="text-center text-muted-foreground">
             <p className="font-medium">No relationships to display</p>
-            <p className="text-sm">Create characters and add relationships to see them here</p>
+            <p className="text-sm">
+              Create characters and add relationships to see them here
+            </p>
           </div>
         </div>
       </div>
@@ -531,7 +539,8 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
                 <Badge
                   variant="secondary"
                   style={{
-                    backgroundColor: RELATIONSHIP_COLORS[selectedEdge.data.relationshipType] + '20',
+                    backgroundColor:
+                      RELATIONSHIP_COLORS[selectedEdge.data.relationshipType] + '20',
                     color: RELATIONSHIP_COLORS[selectedEdge.data.relationshipType],
                   }}
                 >
@@ -541,7 +550,9 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
 
               {/* Description if available */}
               {selectedEdge.data.description && (
-                <p className="text-sm text-muted-foreground">{selectedEdge.data.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedEdge.data.description}
+                </p>
               )}
 
               {/* Generate History button - shown when no description or to regenerate */}
@@ -562,12 +573,16 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4" />
-                      {selectedEdge.data.description ? 'Regenerate History' : 'Generate History'}
+                      {selectedEdge.data.description
+                        ? 'Regenerate History'
+                        : 'Generate History'}
                     </>
                   )}
                 </Button>
                 {generatedBackstory && !isGeneratingHistory && (
-                  <span className="text-xs text-muted-foreground">History generated</span>
+                  <span className="text-xs text-muted-foreground">
+                    History generated
+                  </span>
                 )}
               </div>
 

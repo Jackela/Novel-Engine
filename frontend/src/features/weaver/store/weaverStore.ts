@@ -48,7 +48,7 @@ const defaultNodes: WeaverNode[] = [
   {
     id: '1',
     type: 'character',
-    position: { x: 250, y: 50 },
+    position: { x: 160, y: 120 },
     data: {
       name: 'Alice',
       role: 'Protagonist',
@@ -59,7 +59,7 @@ const defaultNodes: WeaverNode[] = [
   {
     id: '2',
     type: 'character',
-    position: { x: 100, y: 250 },
+    position: { x: 480, y: 120 },
     data: {
       name: 'Bob',
       role: 'Mentor',
@@ -70,7 +70,7 @@ const defaultNodes: WeaverNode[] = [
   {
     id: '3',
     type: 'character',
-    position: { x: 400, y: 250 },
+    position: { x: 800, y: 120 },
     data: {
       name: 'Carol',
       role: 'Antagonist',
@@ -171,8 +171,9 @@ export const useWeaverEdgeCount = () => useWeaverStore((state) => state.edges.le
  * Returns the first selected character node, or null if none selected
  */
 export const useSelectedCharacterNode = () =>
-  useWeaverStore((state) =>
-    state.nodes.find((node) => node.selected && node.type === 'character') ?? null
+  useWeaverStore(
+    (state) =>
+      state.nodes.find((node) => node.selected && node.type === 'character') ?? null
   );
 
 if (

@@ -7,7 +7,13 @@
  * enabling CHAR-038's quick character creation workflow.
  */
 import { ReactRenderer } from '@tiptap/react';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from 'react';
 import { UserPlus, User } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -163,9 +169,7 @@ export function buildSuggestionItems(
   // Add "Create New" option if query has at least 2 characters
   // and doesn't exactly match an existing character
   if (query.length >= 2) {
-    const exactMatch = characters.some(
-      (c) => c.name.toLowerCase() === queryLower
-    );
+    const exactMatch = characters.some((c) => c.name.toLowerCase() === queryLower);
     if (!exactMatch) {
       items.push({
         type: 'create-new',

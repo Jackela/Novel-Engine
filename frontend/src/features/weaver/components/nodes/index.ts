@@ -7,22 +7,14 @@ export {
   type CharacterNodeType,
 } from './CharacterNode';
 export { EventNode, type EventNodeData, type EventNodeType } from './EventNode';
-export {
-  FactionNode,
-  type FactionNodeData,
-  type FactionNodeType,
-} from './FactionNode';
+export { FactionNode, type FactionNodeData, type FactionNodeType } from './FactionNode';
 export {
   LocationNode,
   type LocationNodeData,
   type LocationNodeType,
 } from './LocationNode';
 export { SceneNode, type SceneNodeType } from './SceneNode';
-export {
-  WorldNode,
-  type WorldNodeData,
-  type WorldNodeType,
-} from './WorldNode';
+export { WorldNode, type WorldNodeData, type WorldNodeType } from './WorldNode';
 
 import { CharacterNode } from './CharacterNode';
 import { EventNode } from './EventNode';

@@ -27,13 +27,14 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           className="lg:hidden"
           onClick={onMenuClick}
           aria-label="Open menu"
+          data-testid="mobile-menu-toggle"
         >
           <Menu className="h-5 w-5" />
         </Button>
 
         {/* Page title or breadcrumbs */}
         <nav aria-label="Breadcrumb">
-          <h1 className="text-lg font-semibold">Dashboard</h1>
+          <span className="text-lg font-semibold">Dashboard</span>
         </nav>
       </div>
 

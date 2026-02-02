@@ -55,7 +55,11 @@ const EXAMPLE_CONTEXTS = [
   'Someone asks about their past',
 ];
 
-export default function DialogueTester({ characterId, characterName, characterData }: Props) {
+export default function DialogueTester({
+  characterId,
+  characterName,
+  characterData,
+}: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [contextInput, setContextInput] = useState('');
   const [mood, setMood] = useState('');
@@ -129,12 +133,14 @@ export default function DialogueTester({ characterId, characterName, characterDa
   };
 
   return (
-    <div className="flex flex-col h-full max-h-[600px]">
+    <div className="flex h-full max-h-[600px] flex-col">
       {/* Header with character info */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between border-b p-4">
         <div>
-          <h3 className="font-semibold text-lg">{characterName}</h3>
-          <p className="text-sm text-muted-foreground">Voice Tester - Chat as this character</p>
+          <h3 className="text-lg font-semibold">{characterName}</h3>
+          <p className="text-sm text-muted-foreground">
+            Voice Tester - Chat as this character
+          </p>
         </div>
         {messages.length > 0 && (
           <Button variant="outline" size="sm" onClick={handleClear}>
@@ -144,7 +150,7 @@ export default function DialogueTester({ characterId, characterName, characterDa
       </div>
 
       {/* Mood selector */}
-      <div className="px-4 py-2 border-b bg-muted/30">
+      <div className="border-b bg-muted/30 px-4 py-2">
         <div className="flex items-center gap-4">
           <Label htmlFor="mood-select" className="text-sm font-medium">
             Current Mood:
@@ -165,9 +171,9 @@ export default function DialogueTester({ characterId, characterName, characterDa
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="py-8 text-center text-muted-foreground">
             <p className="mb-4">No messages yet. Start a conversation!</p>
             <div className="space-y-2">
               <p className="text-sm font-medium">Try one of these prompts:</p>
@@ -204,17 +210,21 @@ export default function DialogueTester({ characterId, characterName, characterDa
                 <CardContent className="p-3">
                   {message.type === 'user' ? (
                     <>
-                      <p className="text-xs opacity-70 mb-1">Context:</p>
+                      <p className="mb-1 text-xs opacity-70">Context:</p>
                       <p>{message.content}</p>
                     </>
                   ) : (
                     <>
                       {message.error ? (
-                        <p className="text-destructive text-sm">Error: {message.error}</p>
+                        <p className="text-sm text-destructive">
+                          Error: {message.error}
+                        </p>
                       ) : (
                         <>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-sm">{characterName}:</span>
+                          <div className="mb-2 flex items-center gap-2">
+                            <span className="text-sm font-medium">
+                              {characterName}:
+                            </span>
                             {message.tone && (
                               <Badge variant="secondary" className="text-xs">
                                 {message.tone}
@@ -225,17 +235,19 @@ export default function DialogueTester({ characterId, characterName, characterDa
 
                           {/* Body language */}
                           {message.bodyLanguage && (
-                            <p className="text-xs text-muted-foreground mt-2">
+                            <p className="mt-2 text-xs text-muted-foreground">
                               *{message.bodyLanguage}*
                             </p>
                           )}
 
                           {/* Internal thought */}
                           {message.internalThought && (
-                            <div className="mt-2 pt-2 border-t border-border/50">
+                            <div className="mt-2 border-t border-border/50 pt-2">
                               <p className="text-xs text-muted-foreground">
                                 <span className="font-medium">Thinks:</span>{' '}
-                                <span className="italic">{message.internalThought}</span>
+                                <span className="italic">
+                                  {message.internalThought}
+                                </span>
                               </p>
                             </div>
                           )}
@@ -256,17 +268,19 @@ export default function DialogueTester({ characterId, characterName, characterDa
               <CardContent className="p-3">
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground" />
                     <span
-                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                      className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground"
                       style={{ animationDelay: '0.1s' }}
                     />
                     <span
-                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                      className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground"
                       style={{ animationDelay: '0.2s' }}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground">{characterName} is thinking...</span>
+                  <span className="text-sm text-muted-foreground">
+                    {characterName} is thinking...
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -277,7 +291,7 @@ export default function DialogueTester({ characterId, characterName, characterDa
       </div>
 
       {/* Input area */}
-      <form onSubmit={handleSubmit} className="p-4 border-t bg-background">
+      <form onSubmit={handleSubmit} className="border-t bg-background p-4">
         <div className="flex gap-2">
           <Input
             value={contextInput}
@@ -290,7 +304,7 @@ export default function DialogueTester({ characterId, characterName, characterDa
             {isLoading ? 'Generating...' : 'Send'}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
+        <p className="mt-2 text-xs text-muted-foreground">
           Enter a context or situation to see how {characterName} would respond.
         </p>
       </form>

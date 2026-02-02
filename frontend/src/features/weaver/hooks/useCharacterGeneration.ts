@@ -30,6 +30,7 @@ import {
 /** Context passed through the mutation lifecycle to track the optimistic node */
 export type MutationContext = {
   nodeId: string;
+  startedAt: number;
 };
 
 /** Function signature for updating a node in the Weaver store */
@@ -48,13 +49,9 @@ export type UpdateNodeFn = (
  * @param input - The character generation request parameters
  * @returns A WeaverNode with loading state to display immediately
  */
-export const createOptimisticNode = (
-  input: CharacterGenerationRequest
-): WeaverNode => {
+export const createOptimisticNode = (input: CharacterGenerationRequest): WeaverNode => {
   const existingNodes = useWeaverStore.getState().nodes;
   const index = existingNodes.length;
-  const baseX = 160 + (index % 3) * 240;
-  const baseY = 120 + Math.floor(index / 3) * 180;
   const data: CharacterNodeData = {
     name: 'Generating...',
     role: input.archetype || 'New Character',
@@ -67,8 +64,8 @@ export const createOptimisticNode = (
     id: generateId('char'),
     type: 'character',
     position: {
-      x: baseX + Math.random() * 40,
-      y: baseY + Math.random() * 40,
+      x: 160 + (index % 3) * 320,
+      y: 120 + Math.floor(index / 3) * 240,
     },
     data,
   };
@@ -92,19 +89,28 @@ export const handleMutationSuccess = (
   context: MutationContext | undefined
 ): void => {
   if (!context?.nodeId) return;
-  updateNode(context.nodeId, (node) => {
-    const updatedData: CharacterNodeData = {
-      ...(node.data as CharacterNodeData),
-      name: data.name,
-      role: variables.archetype,
-      traits: data.traits,
-      status: 'idle',
-      tagline: data.tagline,
-      bio: data.bio,
-      visualPrompt: data.visual_prompt,
-    };
-    return { ...node, data: updatedData };
-  });
+  const MIN_LOADING_MS = 300;
+  const delayMs = Math.max(0, MIN_LOADING_MS - (Date.now() - context.startedAt));
+  const applyUpdate = () => {
+    updateNode(context.nodeId, (node) => {
+      const updatedData: CharacterNodeData = {
+        ...(node.data as CharacterNodeData),
+        name: data.name,
+        role: variables.archetype,
+        traits: data.traits,
+        status: 'idle',
+        tagline: data.tagline,
+        bio: data.bio,
+        visualPrompt: data.visual_prompt,
+      };
+      return { ...node, data: updatedData };
+    });
+  };
+  if (delayMs > 0) {
+    window.setTimeout(applyUpdate, delayMs);
+  } else {
+    applyUpdate();
+  }
 };
 
 /**
@@ -125,14 +131,23 @@ export const handleMutationError = (
 ): void => {
   if (!context?.nodeId) return;
   const message = error instanceof Error ? error.message : 'Generation failed';
-  updateNode(context.nodeId, (node) => {
-    const updatedData: CharacterNodeData = {
-      ...(node.data as CharacterNodeData),
-      status: 'error',
-      errorMessage: message,
-    };
-    return { ...node, data: updatedData };
-  });
+  const MIN_LOADING_MS = 300;
+  const delayMs = Math.max(0, MIN_LOADING_MS - (Date.now() - context.startedAt));
+  const applyUpdate = () => {
+    updateNode(context.nodeId, (node) => {
+      const updatedData: CharacterNodeData = {
+        ...(node.data as CharacterNodeData),
+        status: 'error',
+        errorMessage: message,
+      };
+      return { ...node, data: updatedData };
+    });
+  };
+  if (delayMs > 0) {
+    window.setTimeout(applyUpdate, delayMs);
+  } else {
+    applyUpdate();
+  }
 };
 
 /**
@@ -167,7 +182,7 @@ export function useCharacterGeneration() {
     onMutate: async (input) => {
       const node = createOptimisticNode(input);
       addNode(node);
-      return { nodeId: node.id } satisfies MutationContext;
+      return { nodeId: node.id, startedAt: Date.now() } satisfies MutationContext;
     },
     onSuccess: (data, variables, context) => {
       handleMutationSuccess(updateNode, data, variables, context);

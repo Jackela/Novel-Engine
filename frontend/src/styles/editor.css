@@ -24,7 +24,9 @@
   position: relative;
   width: 100%;
   height: 100%;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 /**
@@ -64,7 +66,10 @@
 }
 
 /* Literary mode placeholder - warmer tone */
-[data-typography="literary"] .prose-editor .ProseMirror p.is-editor-empty:first-child::before {
+[data-typography='literary']
+  .prose-editor
+  .ProseMirror
+  p.is-editor-empty:first-child::before {
   color: hsl(var(--ink) / 0.4);
 }
 
@@ -186,12 +191,12 @@
  * the feel of reading a printed book. Lora serif font with generous
  * line height reduces eye strain during long writing sessions.
  */
-[data-typography="literary"] .prose-editor {
+[data-typography='literary'] .prose-editor {
   background-color: hsl(var(--paper));
   color: hsl(var(--ink));
 }
 
-[data-typography="literary"] .prose-editor .ProseMirror {
+[data-typography='literary'] .prose-editor .ProseMirror {
   font-family: Lora, Georgia, serif;
   font-size: 1.125rem; /* 18px */
   line-height: 1.75;
@@ -201,20 +206,20 @@
 }
 
 /* Literary mode paragraph spacing */
-[data-typography="literary"] .prose-editor .ProseMirror p {
+[data-typography='literary'] .prose-editor .ProseMirror p {
   margin-bottom: 1.25rem;
   text-indent: 0;
 }
 
 /* First paragraph after heading - no indent */
-[data-typography="literary"] .prose-editor .ProseMirror h1 + p,
-[data-typography="literary"] .prose-editor .ProseMirror h2 + p,
-[data-typography="literary"] .prose-editor .ProseMirror h3 + p {
+[data-typography='literary'] .prose-editor .ProseMirror h1 + p,
+[data-typography='literary'] .prose-editor .ProseMirror h2 + p,
+[data-typography='literary'] .prose-editor .ProseMirror h3 + p {
   text-indent: 0;
 }
 
 /* Literary headings - more elegant */
-[data-typography="literary"] .prose-editor .ProseMirror h1 {
+[data-typography='literary'] .prose-editor .ProseMirror h1 {
   font-family: Lora, Georgia, serif;
   font-weight: 600;
   font-size: 1.875rem;
@@ -223,7 +228,7 @@
   margin-bottom: 1.25rem;
 }
 
-[data-typography="literary"] .prose-editor .ProseMirror h2 {
+[data-typography='literary'] .prose-editor .ProseMirror h2 {
   font-family: Lora, Georgia, serif;
   font-weight: 500;
   font-size: 1.5rem;
@@ -232,7 +237,7 @@
   margin-bottom: 1rem;
 }
 
-[data-typography="literary"] .prose-editor .ProseMirror h3 {
+[data-typography='literary'] .prose-editor .ProseMirror h3 {
   font-family: Lora, Georgia, serif;
   font-weight: 500;
   font-size: 1.25rem;
@@ -242,7 +247,7 @@
 }
 
 /* Literary blockquotes - more elegant */
-[data-typography="literary"] .prose-editor .ProseMirror blockquote {
+[data-typography='literary'] .prose-editor .ProseMirror blockquote {
   border-left: 2px solid hsl(var(--accent-literary));
   padding-left: 1.25rem;
   color: hsl(var(--ink) / 0.8);
@@ -250,20 +255,20 @@
 }
 
 /* Literary emphasis - slightly more prominent */
-[data-typography="literary"] .prose-editor .ProseMirror em {
+[data-typography='literary'] .prose-editor .ProseMirror em {
   font-style: italic;
   color: hsl(var(--ink));
 }
 
 /* Literary horizontal rule - ornamental */
-[data-typography="literary"] .prose-editor .ProseMirror hr {
+[data-typography='literary'] .prose-editor .ProseMirror hr {
   border: none;
   text-align: center;
   margin: 2.5rem 0;
 }
 
-[data-typography="literary"] .prose-editor .ProseMirror hr::before {
-  content: "• • •";
+[data-typography='literary'] .prose-editor .ProseMirror hr::before {
+  content: '• • •';
   color: hsl(var(--ink) / 0.4);
   letter-spacing: 0.5em;
 }
@@ -301,14 +306,14 @@
  * Why: In literary mode, mentions use the warm accent color to blend
  * with the book-like aesthetic while remaining distinguishable.
  */
-[data-typography="literary"] .prose-editor .character-mention {
+[data-typography='literary'] .prose-editor .character-mention {
   color: hsl(var(--accent-literary));
   background-color: hsl(var(--accent-literary) / 0.1);
   font-weight: 500;
   font-style: normal;
 }
 
-[data-typography="literary"] .prose-editor .character-mention:hover {
+[data-typography='literary'] .prose-editor .character-mention:hover {
   background-color: hsl(var(--accent-literary) / 0.2);
 }
 
@@ -326,7 +331,7 @@
   background-color: hsl(var(--primary) / 0.2);
 }
 
-[data-typography="literary"] .prose-editor .ProseMirror ::selection {
+[data-typography='literary'] .prose-editor .ProseMirror ::selection {
   background-color: hsl(var(--accent-literary) / 0.25);
 }
 

@@ -23,7 +23,9 @@ function RelationshipGraphCard() {
           <Network className="h-5 w-5 text-primary" />
           Relationship Graph
         </CardTitle>
-        <CardDescription>Interactive visualization of character relationships</CardDescription>
+        <CardDescription>
+          Interactive visualization of character relationships
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <RelationshipGraph className="h-[400px] w-full" />

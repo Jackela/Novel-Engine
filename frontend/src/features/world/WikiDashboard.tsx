@@ -26,7 +26,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/Card';
 import { LoadingSpinner } from '@/shared/components/feedback';
 import type {
   CharacterSummary,
@@ -136,7 +142,11 @@ async function fetchWikiData(): Promise<WikiEntry[]> {
 function formatDate(dateStr: string): string {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   } catch {
     return 'Unknown';
   }
@@ -158,7 +168,12 @@ interface WikiFiltersProps {
   onTypeChange: (value: WikiEntryType) => void;
 }
 
-function WikiFilters({ searchQuery, onSearchChange, typeFilter, onTypeChange }: WikiFiltersProps) {
+function WikiFilters({
+  searchQuery,
+  onSearchChange,
+  typeFilter,
+  onTypeChange,
+}: WikiFiltersProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -177,8 +192,14 @@ function WikiFilters({ searchQuery, onSearchChange, typeFilter, onTypeChange }: 
               data-testid="wiki-search-input"
             />
           </div>
-          <Select value={typeFilter} onValueChange={(v) => onTypeChange(v as WikiEntryType)}>
-            <SelectTrigger className="w-full sm:w-[180px]" data-testid="wiki-type-filter">
+          <Select
+            value={typeFilter}
+            onValueChange={(v) => onTypeChange(v as WikiEntryType)}
+          >
+            <SelectTrigger
+              className="w-full sm:w-[180px]"
+              data-testid="wiki-type-filter"
+            >
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>
@@ -202,7 +223,8 @@ interface WikiTableRowProps {
 
 function WikiTableRow({ entry, onClick }: WikiTableRowProps) {
   const Icon = TYPE_ICONS[entry.type as Exclude<WikiEntryType, 'all'>];
-  const typeBadgeClass = TYPE_BADGE_VARIANTS[entry.type as Exclude<WikiEntryType, 'all'>];
+  const typeBadgeClass =
+    TYPE_BADGE_VARIANTS[entry.type as Exclude<WikiEntryType, 'all'>];
 
   return (
     <TableRow
@@ -225,14 +247,20 @@ function WikiTableRow({ entry, onClick }: WikiTableRowProps) {
       <TableCell>
         <div className="flex flex-wrap gap-1">
           {entry.tags.slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+            <Badge key={tag} variant="outline" className="text-xs">
+              {tag}
+            </Badge>
           ))}
           {entry.tags.length > 3 && (
-            <Badge variant="outline" className="text-xs">+{entry.tags.length - 3}</Badge>
+            <Badge variant="outline" className="text-xs">
+              +{entry.tags.length - 3}
+            </Badge>
           )}
         </div>
       </TableCell>
-      <TableCell className="text-muted-foreground">{formatDate(entry.updatedAt)}</TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatDate(entry.updatedAt)}
+      </TableCell>
     </TableRow>
   );
 }
@@ -243,7 +271,11 @@ export default function WikiDashboard() {
   const [typeFilter, setTypeFilter] = useState<WikiEntryType>('all');
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: entries = [], isLoading, error } = useQuery({
+  const {
+    data: entries = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['wiki-entries'],
     queryFn: fetchWikiData,
     staleTime: 30000,
@@ -257,24 +289,32 @@ export default function WikiDashboard() {
     if (debouncedSearch) {
       const query = debouncedSearch.toLowerCase();
       filtered = filtered.filter(
-        (e) => e.name.toLowerCase().includes(query) ||
+        (e) =>
+          e.name.toLowerCase().includes(query) ||
           e.tags.some((t) => t.toLowerCase().includes(query)) ||
           (e.subtype?.toLowerCase().includes(query) ?? false)
       );
     }
-    return [...filtered].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    return [...filtered].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
   }, [entries, typeFilter, debouncedSearch]);
 
-  const handleRowClick = useCallback((entry: WikiEntry) => {
-    navigate({ to: entry.type === 'character' ? '/characters' : '/world' });
-  }, [navigate]);
+  const handleRowClick = useCallback(
+    (entry: WikiEntry) => {
+      navigate({ to: entry.type === 'character' ? '/characters' : '/world' });
+    },
+    [navigate]
+  );
 
   if (isLoading) return <LoadingSpinner text="Loading wiki..." />;
   if (error) {
     return (
-      <Card><CardContent className="py-8 text-center">
-        <p className="text-muted-foreground">Failed to load wiki data.</p>
-      </CardContent></Card>
+      <Card>
+        <CardContent className="py-8 text-center">
+          <p className="text-muted-foreground">Failed to load wiki data.</p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -282,11 +322,20 @@ export default function WikiDashboard() {
     <div className="space-y-6" data-testid="wiki-dashboard">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">World Wiki</h1>
-        <p className="text-muted-foreground">Central knowledge base for your narrative world</p>
+        <p className="text-muted-foreground">
+          Central knowledge base for your narrative world
+        </p>
       </div>
-      <WikiFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} typeFilter={typeFilter} onTypeChange={setTypeFilter} />
+      <WikiFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        typeFilter={typeFilter}
+        onTypeChange={setTypeFilter}
+      />
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>Showing {filteredEntries.length} of {entries.length} entries</span>
+        <span>
+          Showing {filteredEntries.length} of {entries.length} entries
+        </span>
       </div>
       <Card>
         <Table>
@@ -296,16 +345,27 @@ export default function WikiDashboard() {
               <TableHead>Type</TableHead>
               <TableHead>Tags</TableHead>
               <TableHead className="w-[140px]">
-                <div className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />Last Updated</div>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  Last Updated
+                </div>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredEntries.length === 0 ? (
-              <TableRow><TableCell colSpan={4} className="h-24 text-center">No entries found.</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">
+                  No entries found.
+                </TableCell>
+              </TableRow>
             ) : (
               filteredEntries.map((entry) => (
-                <WikiTableRow key={`${entry.type}-${entry.id}`} entry={entry} onClick={() => handleRowClick(entry)} />
+                <WikiTableRow
+                  key={`${entry.type}-${entry.id}`}
+                  entry={entry}
+                  onClick={() => handleRowClick(entry)}
+                />
               ))
             )}
           </TableBody>

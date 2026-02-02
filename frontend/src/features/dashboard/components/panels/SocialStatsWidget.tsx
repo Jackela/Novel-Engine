@@ -88,11 +88,11 @@ export default function SocialStatsWidget() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse rounded-lg bg-muted/30 p-3 h-14" />
+              <div key={i} className="h-14 animate-pulse rounded-lg bg-muted/30 p-3" />
             ))}
           </div>
         ) : error ? (
-          <div className="text-sm text-muted-foreground text-center py-4">{error}</div>
+          <div className="py-4 text-center text-sm text-muted-foreground">{error}</div>
         ) : (
           <div className="space-y-3">
             {stats.map((stat) => (
@@ -106,7 +106,7 @@ export default function SocialStatsWidget() {
                   </div>
                   <span className="text-sm text-muted-foreground">{stat.label}</span>
                 </div>
-                <span className="text-sm font-medium truncate max-w-[120px]">
+                <span className="max-w-[120px] truncate text-sm font-medium">
                   {formatCharacterName(stat.value)}
                 </span>
               </div>

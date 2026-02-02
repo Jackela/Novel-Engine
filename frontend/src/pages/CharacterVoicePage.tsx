@@ -26,7 +26,9 @@ async function fetchCharacter(characterId: string): Promise<CharacterDetail> {
 }
 
 export default function CharacterVoicePage() {
-  const { characterId } = useParams({ from: '/protected/world/characters/$characterId/voice' });
+  const { characterId } = useParams({
+    from: '/protected/world/characters/$characterId/voice',
+  });
 
   const {
     data: character,
@@ -40,7 +42,7 @@ export default function CharacterVoicePage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6 max-w-4xl">
+      <div className="container mx-auto max-w-4xl p-6">
         <div className="mb-4">
           <Skeleton className="h-8 w-48" />
         </div>
@@ -58,13 +60,13 @@ export default function CharacterVoicePage() {
 
   if (error || !character) {
     return (
-      <div className="container mx-auto p-6 max-w-4xl">
+      <div className="container mx-auto max-w-4xl p-6">
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="text-destructive">Character Not Found</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-4">
+            <p className="mb-4 text-muted-foreground">
               Could not load character with ID: {characterId}
             </p>
             <Link to="/characters">
@@ -77,12 +79,12 @@ export default function CharacterVoicePage() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto max-w-4xl p-6">
       {/* Breadcrumb navigation */}
       <nav className="mb-4 text-sm text-muted-foreground">
         <ol className="flex items-center gap-2">
           <li>
-            <Link to="/characters" className="hover:text-foreground transition-colors">
+            <Link to="/characters" className="transition-colors hover:text-foreground">
               Characters
             </Link>
           </li>
@@ -112,28 +114,39 @@ export default function CharacterVoicePage() {
             <div className="grid grid-cols-5 gap-2 text-xs">
               <div className="text-center">
                 <div className="font-medium">Openness</div>
-                <div className="text-muted-foreground">{character.psychology.openness}</div>
+                <div className="text-muted-foreground">
+                  {character.psychology.openness}
+                </div>
               </div>
               <div className="text-center">
                 <div className="font-medium">Conscientiousness</div>
-                <div className="text-muted-foreground">{character.psychology.conscientiousness}</div>
+                <div className="text-muted-foreground">
+                  {character.psychology.conscientiousness}
+                </div>
               </div>
               <div className="text-center">
                 <div className="font-medium">Extraversion</div>
-                <div className="text-muted-foreground">{character.psychology.extraversion}</div>
+                <div className="text-muted-foreground">
+                  {character.psychology.extraversion}
+                </div>
               </div>
               <div className="text-center">
                 <div className="font-medium">Agreeableness</div>
-                <div className="text-muted-foreground">{character.psychology.agreeableness}</div>
+                <div className="text-muted-foreground">
+                  {character.psychology.agreeableness}
+                </div>
               </div>
               <div className="text-center">
                 <div className="font-medium">Neuroticism</div>
-                <div className="text-muted-foreground">{character.psychology.neuroticism}</div>
+                <div className="text-muted-foreground">
+                  {character.psychology.neuroticism}
+                </div>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              The character&apos;s Big Five personality traits influence how they speak. High extraversion leads
-              to more enthusiastic speech, while high neuroticism may add hedging language.
+            <p className="mt-3 text-xs text-muted-foreground">
+              The character&apos;s Big Five personality traits influence how they speak.
+              High extraversion leads to more enthusiastic speech, while high
+              neuroticism may add hedging language.
             </p>
           </CardContent>
         </Card>

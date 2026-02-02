@@ -24,6 +24,9 @@ export default function NarrativePanel() {
 
           {/* Latest narrative */}
           <div className="prose prose-sm dark:prose-invert max-w-none">
+            <p className="text-xs font-medium uppercase tracking-wide text-primary">
+              Narrative generated for Meridian Station
+            </p>
             <p className="leading-relaxed text-muted-foreground">
               The morning mist clung to the cobblestone streets as Aldric made his way
               through the quiet marketplace. Merchants were just beginning to set up

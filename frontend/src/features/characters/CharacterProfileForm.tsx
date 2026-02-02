@@ -32,12 +32,21 @@ import { generateCharacterProfile } from '@/lib/api/generationApi';
  * Name is required; other fields are optional for flexibility.
  */
 export const CharacterProfileFormSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(100, 'Name must be 100 characters or less'),
   aliases: z.array(z.string()).optional().default([]),
   archetype: z.string().max(50, 'Archetype must be 50 characters or less').optional(),
   traits: z.array(z.string()).optional().default([]),
-  appearance: z.string().max(1000, 'Appearance must be 1000 characters or less').optional(),
-  background_summary: z.string().max(2000, 'Background must be 2000 characters or less').optional(),
+  appearance: z
+    .string()
+    .max(1000, 'Appearance must be 1000 characters or less')
+    .optional(),
+  background_summary: z
+    .string()
+    .max(2000, 'Background must be 2000 characters or less')
+    .optional(),
 });
 
 /**
@@ -89,7 +98,9 @@ export function CharacterProfileForm({
   const [isGenerating, setIsGenerating] = useState(false);
 
   const form = useForm<CharacterProfileFormValues>({
-    resolver: zodResolver(CharacterProfileFormSchema) as Resolver<CharacterProfileFormValues>,
+    resolver: zodResolver(
+      CharacterProfileFormSchema
+    ) as Resolver<CharacterProfileFormValues>,
     defaultValues: { ...emptyDefaults, ...defaultValues },
     mode: 'onBlur',
   });
@@ -135,7 +146,8 @@ export function CharacterProfileForm({
 
       toast.success('Character profile generated successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to generate profile';
+      const message =
+        error instanceof Error ? error.message : 'Failed to generate profile';
       toast.error(message);
     } finally {
       setIsGenerating(false);
@@ -274,7 +286,12 @@ export function CharacterProfileForm({
         {/* Form Actions */}
         <div className="flex justify-end gap-3 pt-4">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
           )}
@@ -299,7 +316,13 @@ interface TagInputFieldProps {
   placeholder?: string;
 }
 
-function TagInputField({ form, name, label, description, placeholder }: TagInputFieldProps) {
+function TagInputField({
+  form,
+  name,
+  label,
+  description,
+  placeholder,
+}: TagInputFieldProps) {
   const [inputValue, setInputValue] = useState('');
   const watchedTags = form.watch(name);
   const currentTags = useMemo(() => watchedTags ?? [], [watchedTags]);
@@ -308,7 +331,10 @@ function TagInputField({ form, name, label, description, placeholder }: TagInput
     (tag: string) => {
       const trimmed = tag.trim();
       if (trimmed && !currentTags.includes(trimmed)) {
-        form.setValue(name, [...currentTags, trimmed], { shouldDirty: true, shouldValidate: true });
+        form.setValue(name, [...currentTags, trimmed], {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
       }
       setInputValue('');
     },
@@ -348,7 +374,11 @@ function TagInputField({ form, name, label, description, placeholder }: TagInput
               {currentTags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {currentTags.map((tag, index) => (
-                    <Badge key={`${tag}-${index}`} variant="secondary" className="gap-1 pr-1">
+                    <Badge
+                      key={`${tag}-${index}`}
+                      variant="secondary"
+                      className="gap-1 pr-1"
+                    >
                       {tag}
                       <button
                         type="button"

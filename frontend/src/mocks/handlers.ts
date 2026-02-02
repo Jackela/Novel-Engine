@@ -14,6 +14,24 @@ const API_PREFIX = '/api';
 
 const nowIso = () => new Date().toISOString();
 
+const buildNarrativeSse = (chunks: string[], metadata?: Record<string, unknown>) => {
+  let body = '';
+  for (const chunk of chunks) {
+    body += `data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`;
+  }
+  body += `data: ${JSON.stringify({
+    type: 'done',
+    content: '',
+    metadata: metadata ?? {
+      total_chunks: chunks.length,
+      total_characters: chunks.join('').length,
+      generation_time_ms: 1200,
+      model_used: 'mock-llm-v1',
+    },
+  })}\n\n`;
+  return body;
+};
+
 const characterSummaries: CharacterSummary[] = [
   {
     id: 'aria-shadowbane',
@@ -519,7 +537,7 @@ const mockItems: ItemResponse[] = [
   },
   {
     id: 'item-008',
-    name: 'Traveler\'s Pack',
+    name: "Traveler's Pack",
     item_type: 'misc',
     description: 'A simple backpack for carrying supplies.',
     rarity: 'common',
@@ -599,7 +617,8 @@ const mockWorldRules: WorldRuleResponse[] = [
   {
     id: 'rule-001',
     name: 'Magic requires stamina',
-    description: 'All magical abilities draw from the caster\'s physical reserves. More powerful spells demand greater stamina expenditure.',
+    description:
+      "All magical abilities draw from the caster's physical reserves. More powerful spells demand greater stamina expenditure.",
     consequence: 'Exhaustion and potential unconsciousness if stamina is depleted',
     exceptions: ['Divine magic from gods', 'Artifacts with stored energy'],
     category: 'magic',
@@ -611,7 +630,8 @@ const mockWorldRules: WorldRuleResponse[] = [
   {
     id: 'rule-002',
     name: 'No teleportation within wards',
-    description: 'Magical wards placed around settlements prevent all forms of instantaneous travel, including teleportation, dimension doors, and phase shifting.',
+    description:
+      'Magical wards placed around settlements prevent all forms of instantaneous travel, including teleportation, dimension doors, and phase shifting.',
     consequence: 'Spell failure and magical backlash',
     exceptions: ['Ward keepers with authorization tokens', 'Emergency royal override'],
     category: 'magic',
@@ -623,7 +643,8 @@ const mockWorldRules: WorldRuleResponse[] = [
   {
     id: 'rule-003',
     name: 'Iron repels the fey',
-    description: 'Cold iron causes discomfort and weakening to fey creatures. Direct contact with pure iron causes burning damage.',
+    description:
+      'Cold iron causes discomfort and weakening to fey creatures. Direct contact with pure iron causes burning damage.',
     consequence: 'Fey creatures suffer weakness and pain near iron',
     exceptions: ['Half-fey with mortal blood', 'Fey who have sworn iron-pacts'],
     category: 'physics',
@@ -788,6 +809,41 @@ export const handlers = [
         turns_completed: orchestrationState.current_turn,
         last_generated: nowIso(),
         has_content: true,
+      },
+    });
+  }),
+
+  http.post(`${API_PREFIX}/narratives/stream`, async ({ request }) => {
+    const mode = request.headers.get('x-e2e-narrative-mode');
+    const delayMs = Number(request.headers.get('x-e2e-narrative-delay') ?? 0);
+    if (Number.isFinite(delayMs) && delayMs > 0) {
+      await delay(delayMs);
+    }
+
+    if (mode === 'error') {
+      return HttpResponse.json(
+        { detail: 'Narrative generation service unavailable' },
+        { status: 500 }
+      );
+    }
+
+    const chunks = [
+      '## The Beginning\n\n',
+      'The ancient library stretched endlessly before Elena, ',
+      'its towering shelves heavy with forgotten knowledge. ',
+      'In the depths of the ancient forest, ',
+      'where shadows danced with moonlight, ',
+      'a figure emerged from the mist. ',
+      'Her name was whispered among the trees—',
+      'Elara, the last keeper of forgotten memories.',
+    ];
+
+    return new HttpResponse(buildNarrativeSse(chunks), {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
       },
     });
   }),
@@ -1094,33 +1150,36 @@ export const handlers = [
     });
   }),
 
-  http.delete(`${API_PREFIX}/characters/:id/remove-item/:itemId`, async ({ params }) => {
-    await withLatency();
-    const characterId = params.id as string;
-    const itemId = params.itemId as string;
+  http.delete(
+    `${API_PREFIX}/characters/:id/remove-item/:itemId`,
+    async ({ params }) => {
+      await withLatency();
+      const characterId = params.id as string;
+      const itemId = params.itemId as string;
 
-    if (!characterInventories[characterId]) {
+      if (!characterInventories[characterId]) {
+        return HttpResponse.json({
+          success: false,
+          message: `Character ${characterId} has no inventory`,
+        });
+      }
+
+      const idx = characterInventories[characterId].indexOf(itemId);
+      if (idx === -1) {
+        return HttpResponse.json({
+          success: false,
+          message: `Item ${itemId} not in character's inventory`,
+        });
+      }
+
+      characterInventories[characterId].splice(idx, 1);
+
       return HttpResponse.json({
-        success: false,
-        message: `Character ${characterId} has no inventory`,
+        success: true,
+        message: `Item ${itemId} removed from character ${characterId}'s inventory`,
       });
     }
-
-    const idx = characterInventories[characterId].indexOf(itemId);
-    if (idx === -1) {
-      return HttpResponse.json({
-        success: false,
-        message: `Item ${itemId} not in character's inventory`,
-      });
-    }
-
-    characterInventories[characterId].splice(idx, 1);
-
-    return HttpResponse.json({
-      success: true,
-      message: `Item ${itemId} removed from character ${characterId}'s inventory`,
-    });
-  }),
+  ),
 
   // === Lore API ===
 
@@ -1158,7 +1217,9 @@ export const handlers = [
     }
 
     if (tags.length > 0) {
-      filtered = filtered.filter((entry) => tags.some((tag) => entry.tags.includes(tag)));
+      filtered = filtered.filter((entry) =>
+        tags.some((tag) => entry.tags.includes(tag))
+      );
     }
 
     if (category) {
@@ -1221,7 +1282,11 @@ export const handlers = [
           'Imposing figure cloaked in darkness. Sharp features with piercing eyes that seem to see through deception.',
         backstory:
           'Once a respected figure, twisted by betrayal and loss. Now seeks to reshape the world according to their vision.',
-        motivations: ['absolute power', 'revenge on betrayers', 'create order through fear'],
+        motivations: [
+          'absolute power',
+          'revenge on betrayers',
+          'create order through fear',
+        ],
         quirks: ['speaks in measured tones', 'collects trophies from fallen foes'],
       },
       mentor: {
@@ -1231,7 +1296,11 @@ export const handlers = [
           'Weathered features that speak of long experience. Gentle eyes that hold depths of knowledge.',
         backstory:
           'Has walked many paths and learned from countless trials. Now seeks to pass on wisdom to the next generation.',
-        motivations: ['guide the worthy', 'preserve ancient knowledge', 'prevent past mistakes'],
+        motivations: [
+          'guide the worthy',
+          'preserve ancient knowledge',
+          'prevent past mistakes',
+        ],
         quirks: ['speaks in riddles', 'appears when least expected'],
       },
       rogue: {
@@ -1249,7 +1318,8 @@ export const handlers = [
     const template = templates[archetypeKey] || {
       aliases: [`${name} the Unknown`, 'The Mysterious One'],
       traits: ['enigmatic', 'adaptable', 'observant'],
-      appearance: 'Average build with nondescript features. Something about them defies easy categorization.',
+      appearance:
+        'Average build with nondescript features. Something about them defies easy categorization.',
       backstory: `Origins shrouded in mystery. ${context || 'Their past remains unknown.'}`,
       motivations: ['unknown goals', 'hidden agenda'],
       quirks: ['rarely speaks of the past'],
@@ -1307,9 +1377,7 @@ export const handlers = [
     let filtered = mockWorldRules;
 
     if (query) {
-      filtered = filtered.filter((rule) =>
-        rule.name.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter((rule) => rule.name.toLowerCase().includes(query));
     }
 
     if (category) {
@@ -1382,11 +1450,24 @@ export const handlers = [
     const updatedRule: WorldRuleResponse = {
       ...existingRule,
       name: 'name' in body ? stringField(body, 'name') : existingRule.name,
-      description: 'description' in body ? stringField(body, 'description') : existingRule.description,
-      consequence: 'consequence' in body ? stringField(body, 'consequence') : existingRule.consequence,
-      exceptions: 'exceptions' in body ? arrayField(body, 'exceptions', []) : existingRule.exceptions,
-      category: 'category' in body ? stringField(body, 'category') : existingRule.category,
-      severity: 'severity' in body && typeof body.severity === 'number' ? body.severity : existingRule.severity,
+      description:
+        'description' in body
+          ? stringField(body, 'description')
+          : existingRule.description,
+      consequence:
+        'consequence' in body
+          ? stringField(body, 'consequence')
+          : existingRule.consequence,
+      exceptions:
+        'exceptions' in body
+          ? arrayField(body, 'exceptions', [])
+          : existingRule.exceptions,
+      category:
+        'category' in body ? stringField(body, 'category') : existingRule.category,
+      severity:
+        'severity' in body && typeof body.severity === 'number'
+          ? body.severity
+          : existingRule.severity,
       updated_at: nowIso(),
     };
 
@@ -1422,7 +1503,10 @@ export const handlers = [
     }
 
     // Generate mock dialogue based on mood and context
-    const dialogueResponses: Record<string, { dialogue: string; tone: string; thought: string; body: string }> = {
+    const dialogueResponses: Record<
+      string,
+      { dialogue: string; tone: string; thought: string; body: string }
+    > = {
       angry: {
         dialogue: "Don't test my patience. I've dealt with far worse than this.",
         tone: 'threatening',
@@ -1430,19 +1514,19 @@ export const handlers = [
         body: 'clenches fist, jaw tightens',
       },
       happy: {
-        dialogue: "What a wonderful surprise! This day just keeps getting better.",
+        dialogue: 'What a wonderful surprise! This day just keeps getting better.',
         tone: 'enthusiastic',
         thought: "I should savor this moment - they're rare enough.",
         body: 'eyes brighten, slight smile appears',
       },
       sad: {
-        dialogue: "I... I suppose that makes sense. Things rarely go the way we hope.",
+        dialogue: 'I... I suppose that makes sense. Things rarely go the way we hope.',
         tone: 'melancholic',
         thought: 'Another disappointment. But I expected as much.',
         body: 'shoulders slump slightly, gaze drops',
       },
       fearful: {
-        dialogue: "We should... we should proceed carefully. Something feels wrong.",
+        dialogue: 'We should... we should proceed carefully. Something feels wrong.',
         tone: 'nervous',
         thought: 'Every instinct tells me to run.',
         body: 'eyes dart around, steps back slightly',
@@ -1460,7 +1544,7 @@ export const handlers = [
         body: 'leans forward, eyes wide with anticipation',
       },
       default: {
-        dialogue: "Interesting. Tell me more about what you have in mind.",
+        dialogue: 'Interesting. Tell me more about what you have in mind.',
         tone: 'neutral',
         thought: "Let's see where this leads before committing.",
         body: 'maintains neutral expression, tilts head slightly',
@@ -1565,13 +1649,14 @@ export const handlers = [
     );
 
     // Find most loved (highest weighted score: trust * 0.6 + romance * 0.4)
-    const mostLoved = Object.values(centralities).reduce((max, c) => {
-      const score = c.average_trust * 0.6 + c.average_romance * 0.4;
-      const maxScore = max
-        ? max.average_trust * 0.6 + max.average_romance * 0.4
-        : 0;
-      return score > maxScore ? c : max;
-    }, null as CentralityMetrics | null);
+    const mostLoved = Object.values(centralities).reduce(
+      (max, c) => {
+        const score = c.average_trust * 0.6 + c.average_romance * 0.4;
+        const maxScore = max ? max.average_trust * 0.6 + max.average_romance * 0.4 : 0;
+        return score > maxScore ? c : max;
+      },
+      null as CentralityMetrics | null
+    );
 
     // Network density
     const totalChars = characterIds.size;
@@ -1626,8 +1711,7 @@ export const handlers = [
     ).length;
 
     const avgTrust =
-      charRelationships.reduce((sum, r) => sum + r.trust, 0) /
-      charRelationships.length;
+      charRelationships.reduce((sum, r) => sum + r.trust, 0) / charRelationships.length;
     const avgRomance =
       charRelationships.reduce((sum, r) => sum + r.romance, 0) /
       charRelationships.length;
@@ -1644,9 +1728,8 @@ export const handlers = [
     const maxRelCount = Math.max(
       ...Array.from(charIds).map(
         (id) =>
-          allCharRelationships.filter(
-            (r) => r.source_id === id || r.target_id === id
-          ).length
+          allCharRelationships.filter((r) => r.source_id === id || r.target_id === id)
+            .length
       ),
       1
     );
@@ -1670,26 +1753,30 @@ export const handlers = [
     const factionId = params.factionId as string;
 
     // Mock faction data with members
-    const mockFactionDetails: Record<string, {
-      id: string;
-      name: string;
-      description: string;
-      faction_type: string;
-      alignment: string;
-      status: string;
-      leader_id: string | null;
-      leader_name: string | null;
-      influence: number;
-      members: Array<{
-        character_id: string;
+    const mockFactionDetails: Record<
+      string,
+      {
+        id: string;
         name: string;
-        is_leader: boolean;
-      }>;
-    }> = {
+        description: string;
+        faction_type: string;
+        alignment: string;
+        status: string;
+        leader_id: string | null;
+        leader_name: string | null;
+        influence: number;
+        members: Array<{
+          character_id: string;
+          name: string;
+          is_leader: boolean;
+        }>;
+      }
+    > = {
       'faction-merchants-alliance': {
         id: 'faction-merchants-alliance',
         name: "Merchants' Alliance",
-        description: 'A powerful coalition of traders and merchants controlling major trade routes.',
+        description:
+          'A powerful coalition of traders and merchants controlling major trade routes.',
         faction_type: 'merchant',
         alignment: 'lawful_neutral',
         status: 'active',
@@ -1725,9 +1812,7 @@ export const handlers = [
         leader_id: 'lord-vexar',
         leader_name: 'Lord Vexar',
         influence: 85,
-        members: [
-          { character_id: 'lord-vexar', name: 'Lord Vexar', is_leader: true },
-        ],
+        members: [{ character_id: 'lord-vexar', name: 'Lord Vexar', is_leader: true }],
       },
     };
 
@@ -1751,6 +1836,291 @@ export const handlers = [
       influence: faction.influence,
       member_count: faction.members.length,
       members: faction.members,
+    });
+  }),
+
+  // === Stories API ===
+  // Provide full Story shape for UI components.
+  http.get(`${API_PREFIX}/stories`, async () => {
+    await withLatency();
+    const baseStory = {
+      id: 'story-001',
+      title: 'Echoes of Meridian',
+      content:
+        'The fractured realm trembles as alliances shift and the mist rolls across Meridian Station.',
+      summary: 'A fractured realm unites under a reluctant tactician.',
+      campaignId: 'campaign-001',
+      turnNumber: 42,
+      characters: ['Aria Shadowbane', 'Merchant Aldric'],
+      events: [
+        {
+          id: 'evt-001',
+          type: 'discovery',
+          description: 'A hidden alliance is uncovered in the marketplace.',
+          involvedCharacters: ['Aria Shadowbane'],
+          timestamp: nowIso(),
+        },
+      ],
+      mood: 'dramatic',
+      tags: ['meridian', 'tactician', 'politics'],
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    return HttpResponse.json([baseStory]);
+  }),
+
+  http.get(`${API_PREFIX}/stories/:storyId`, async ({ params }) => {
+    await withLatency();
+    const storyId = params.storyId as string;
+    return HttpResponse.json({
+      id: storyId,
+      title: 'Echoes of Meridian',
+      content:
+        'The fractured realm trembles as alliances shift and the mist rolls across Meridian Station.',
+      summary: 'A fractured realm unites under a reluctant tactician.',
+      campaignId: 'campaign-001',
+      turnNumber: 42,
+      characters: ['Aria Shadowbane', 'Merchant Aldric'],
+      events: [
+        {
+          id: 'evt-001',
+          type: 'discovery',
+          description: 'A hidden alliance is uncovered in the marketplace.',
+          involvedCharacters: ['Aria Shadowbane'],
+          timestamp: nowIso(),
+        },
+      ],
+      mood: 'dramatic',
+      tags: ['meridian', 'tactician', 'politics'],
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    });
+  }),
+
+  http.get(`${API_PREFIX}/structure/stories`, async () => {
+    await withLatency();
+    return HttpResponse.json({
+      stories: [
+        {
+          id: 'story-1',
+          title: 'Chronicles of Meridian',
+          summary: 'A fractured realm unites under a reluctant tactician.',
+          status: 'draft',
+          chapter_count: 3,
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+      ],
+    });
+  }),
+
+  http.get(`${API_PREFIX}/structure/stories/:storyId`, async ({ params }) => {
+    await withLatency();
+    const storyId = params.storyId as string;
+    return HttpResponse.json({
+      id: storyId,
+      title: 'Chronicles of Meridian',
+      summary: 'A fractured realm unites under a reluctant tactician.',
+      status: 'draft',
+      chapter_count: 3,
+      created_at: nowIso(),
+      updated_at: nowIso(),
+    });
+  }),
+
+  http.get(`${API_PREFIX}/structure/stories/:storyId/chapters`, async ({ params }) => {
+    await withLatency();
+    const storyId = params.storyId as string;
+    return HttpResponse.json({
+      story_id: storyId,
+      chapters: [
+        {
+          id: 'chapter-1',
+          story_id: storyId,
+          title: 'Chapter 1: The Beginning',
+          summary: 'The opening movement.',
+          order_index: 0,
+          status: 'published',
+          scene_count: 3,
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+        {
+          id: 'chapter-2',
+          story_id: storyId,
+          title: 'Chapter 2: Rising Action',
+          summary: 'The plot accelerates.',
+          order_index: 1,
+          status: 'draft',
+          scene_count: 2,
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+        {
+          id: 'chapter-3',
+          story_id: storyId,
+          title: 'Chapter 3: The Conflict',
+          summary: 'Tensions reach a breaking point.',
+          order_index: 2,
+          status: 'draft',
+          scene_count: 1,
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+      ],
+    });
+  }),
+
+  http.get(
+    `${API_PREFIX}/structure/stories/:storyId/chapters/:chapterId/scenes`,
+    async ({ params }) => {
+      await withLatency();
+      const chapterId = params.chapterId as string;
+      const scenesByChapter: Record<
+        string,
+        Array<{
+          id: string;
+          chapter_id: string;
+          title: string;
+          summary: string;
+          location: string;
+          order_index: number;
+          status: string;
+          beat_count: number;
+          created_at: string;
+          updated_at: string;
+        }>
+      > = {
+        'chapter-1': [
+          {
+            id: 'scene-1-1',
+            chapter_id: 'chapter-1',
+            title: 'Opening Scene',
+            summary: 'The first encounter.',
+            location: 'Meridian Station',
+            order_index: 0,
+            status: 'published',
+            beat_count: 3,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+          {
+            id: 'scene-1-2',
+            chapter_id: 'chapter-1',
+            title: 'First Encounter',
+            summary: 'A pivotal meeting.',
+            location: 'Meridian Station',
+            order_index: 1,
+            status: 'review',
+            beat_count: 2,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+          {
+            id: 'scene-1-3',
+            chapter_id: 'chapter-1',
+            title: 'The Decision',
+            summary: 'A turning point.',
+            location: 'Meridian Station',
+            order_index: 2,
+            status: 'draft',
+            beat_count: 1,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+        ],
+        'chapter-2': [
+          {
+            id: 'scene-2-1',
+            chapter_id: 'chapter-2',
+            title: 'Journey Begins',
+            summary: 'The road unfolds.',
+            location: 'Wilderness',
+            order_index: 0,
+            status: 'generating',
+            beat_count: 1,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+          {
+            id: 'scene-2-2',
+            chapter_id: 'chapter-2',
+            title: 'Unexpected Ally',
+            summary: 'An unlikely friendship.',
+            location: 'Wilderness',
+            order_index: 1,
+            status: 'draft',
+            beat_count: 2,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+        ],
+        'chapter-3': [
+          {
+            id: 'scene-3-1',
+            chapter_id: 'chapter-3',
+            title: 'Confrontation',
+            summary: 'Conflict ignites.',
+            location: 'Meridian Station',
+            order_index: 0,
+            status: 'draft',
+            beat_count: 2,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+        ],
+      };
+      return HttpResponse.json({
+        chapter_id: chapterId,
+        scenes: scenesByChapter[chapterId] ?? [],
+      });
+    }
+  ),
+
+  http.post(`${API_PREFIX}/generation/character`, async ({ request }) => {
+    const mode = request.headers.get('x-e2e-generation-mode');
+    const delayMs = Number(request.headers.get('x-e2e-generation-delay') ?? 0);
+    if (Number.isFinite(delayMs) && delayMs > 0) {
+      await delay(delayMs);
+    } else {
+      await withLatency();
+    }
+
+    if (mode === 'error') {
+      return HttpResponse.json({ detail: 'LLM service unavailable' }, { status: 500 });
+    }
+
+    return HttpResponse.json({
+      name: 'Zenith Arc',
+      tagline: 'A spark that bends the grid.',
+      bio: 'Zenith navigates lost circuits with quiet precision.',
+      visual_prompt: 'neon silhouette, cyan glow, circuit motifs',
+      traits: ['curious', 'steady'],
+    });
+  }),
+
+  http.post(`${API_PREFIX}/generation/scene`, async ({ request }) => {
+    const mode = request.headers.get('x-e2e-scene-mode');
+    const delayMs = Number(request.headers.get('x-e2e-scene-delay') ?? 0);
+    if (Number.isFinite(delayMs) && delayMs > 0) {
+      await delay(delayMs);
+    } else {
+      await withLatency();
+    }
+
+    if (mode === 'error') {
+      return HttpResponse.json(
+        { detail: 'Scene generation service unavailable' },
+        { status: 500 }
+      );
+    }
+
+    return HttpResponse.json({
+      title: 'The Shadows Whisper',
+      content:
+        'In the dim corridors of the ancient library, Nyx discovered a tome that pulsed with forbidden knowledge...',
+      summary: 'Nyx discovers a mysterious tome in an ancient library.',
+      visual_prompt: 'dark library, ancient tomes, ethereal glow, shadowy figure',
     });
   }),
 ];

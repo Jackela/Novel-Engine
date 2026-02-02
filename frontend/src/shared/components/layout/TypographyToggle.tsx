@@ -55,14 +55,12 @@ export function TypographyToggle({ className }: { className?: string }) {
       size="icon"
       onClick={toggleMode}
       className={cn(className)}
-      aria-label={isLiterary ? 'Switch to default typography' : 'Switch to literary typography'}
+      aria-label={
+        isLiterary ? 'Switch to default typography' : 'Switch to literary typography'
+      }
       aria-pressed={isLiterary}
     >
-      {isLiterary ? (
-        <BookOpen className="h-5 w-5" />
-      ) : (
-        <Type className="h-5 w-5" />
-      )}
+      {isLiterary ? <BookOpen className="h-5 w-5" /> : <Type className="h-5 w-5" />}
     </Button>
   );
 }

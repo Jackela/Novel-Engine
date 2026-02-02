@@ -74,7 +74,6 @@ function sortCharacters(
   });
 }
 
-
 /**
  * Collapsible section wrapper for sidebar sections.
  */
@@ -97,7 +96,7 @@ function SidebarSection({
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <CollapsibleTrigger className="flex w-full items-center gap-2 px-2 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground rounded-md">
+      <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
         <ChevronRight
           className={cn(
             'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
@@ -126,7 +125,12 @@ function LoadingState({ className }: { className?: string | undefined }) {
 /** Empty state display */
 function EmptyState({ className }: { className?: string | undefined }) {
   return (
-    <div className={cn('flex flex-col items-center justify-center p-6 text-center', className)}>
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center p-6 text-center',
+        className
+      )}
+    >
       <Globe className="h-8 w-8 text-muted-foreground opacity-50" />
       <p className="mt-2 text-sm font-medium text-muted-foreground">No world data</p>
       <p className="text-xs text-muted-foreground">
@@ -164,7 +168,7 @@ function CharactersSection({
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
       <div className="flex items-center gap-2 px-2 py-1.5">
-        <CollapsibleTrigger className="flex flex-1 items-center gap-2 text-sm font-medium hover:text-accent-foreground rounded-md">
+        <CollapsibleTrigger className="flex flex-1 items-center gap-2 rounded-md text-sm font-medium hover:text-accent-foreground">
           <ChevronRight
             className={cn(
               'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
@@ -177,7 +181,10 @@ function CharactersSection({
         </CollapsibleTrigger>
         {/* Sort dropdown - only show when expanded and has characters */}
         {isExpanded && characterCount > 1 && (
-          <Select value={sortBy} onValueChange={(val) => setSortBy(val as CharacterSortOption)}>
+          <Select
+            value={sortBy}
+            onValueChange={(val) => setSortBy(val as CharacterSortOption)}
+          >
             <SelectTrigger
               className="h-6 w-auto min-w-[70px] gap-1 px-2 text-xs"
               onClick={(e) => e.stopPropagation()}
@@ -205,7 +212,7 @@ function CharactersSection({
               />
             ))}
             {characterCount === 0 && (
-              <p className="px-2 py-1 text-xs text-muted-foreground italic">
+              <p className="px-2 py-1 text-xs italic text-muted-foreground">
                 No characters found
               </p>
             )}

@@ -17,13 +17,14 @@ type Props = {
 };
 
 // OCEAN trait labels with abbreviated display names
-const TRAIT_LABELS: Record<keyof CharacterPsychology, { short: string; full: string }> = {
-  openness: { short: 'O', full: 'Openness' },
-  conscientiousness: { short: 'C', full: 'Conscientiousness' },
-  extraversion: { short: 'E', full: 'Extraversion' },
-  agreeableness: { short: 'A', full: 'Agreeableness' },
-  neuroticism: { short: 'N', full: 'Neuroticism' },
-};
+const TRAIT_LABELS: Record<keyof CharacterPsychology, { short: string; full: string }> =
+  {
+    openness: { short: 'O', full: 'Openness' },
+    conscientiousness: { short: 'C', full: 'Conscientiousness' },
+    extraversion: { short: 'E', full: 'Extraversion' },
+    agreeableness: { short: 'A', full: 'Agreeableness' },
+    neuroticism: { short: 'N', full: 'Neuroticism' },
+  };
 
 function getTraitLevel(value: number): string {
   if (value <= 30) return 'Low';
@@ -32,12 +33,14 @@ function getTraitLevel(value: number): string {
 }
 
 function formatChartData(psychology: CharacterPsychology) {
-  return (Object.keys(TRAIT_LABELS) as Array<keyof CharacterPsychology>).map((trait) => ({
-    trait: TRAIT_LABELS[trait].short,
-    fullName: TRAIT_LABELS[trait].full,
-    value: psychology[trait],
-    level: getTraitLevel(psychology[trait]),
-  }));
+  return (Object.keys(TRAIT_LABELS) as Array<keyof CharacterPsychology>).map(
+    (trait) => ({
+      trait: TRAIT_LABELS[trait].short,
+      fullName: TRAIT_LABELS[trait].full,
+      value: psychology[trait],
+      level: getTraitLevel(psychology[trait]),
+    })
+  );
 }
 
 type CustomTooltipProps = {
@@ -59,7 +62,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 
   const data = firstPayload.payload;
   return (
-    <div className="bg-popover border rounded-md px-3 py-2 shadow-md">
+    <div className="rounded-md border bg-popover px-3 py-2 shadow-md">
       <p className="font-medium">{data.fullName}</p>
       <p className="text-sm text-muted-foreground">
         Score: {data.value} ({data.level})
@@ -71,7 +74,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
 export default function PsychologyChart({ psychology }: Props) {
   if (!psychology) {
     return (
-      <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
+      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
         No psychology data available.
       </div>
     );
@@ -108,15 +111,17 @@ export default function PsychologyChart({ psychology }: Props) {
         </ResponsiveContainer>
       </div>
 
-      <div className="text-xs text-muted-foreground space-y-1">
-        <p className="font-medium mb-2">OCEAN Traits Legend:</p>
+      <div className="space-y-1 text-xs text-muted-foreground">
+        <p className="mb-2 font-medium">OCEAN Traits Legend:</p>
         <div className="grid grid-cols-2 gap-1">
-          {(Object.keys(TRAIT_LABELS) as Array<keyof CharacterPsychology>).map((trait) => (
-            <div key={trait} className="flex items-center gap-2">
-              <span className="font-medium w-4">{TRAIT_LABELS[trait].short}</span>
-              <span>= {TRAIT_LABELS[trait].full}</span>
-            </div>
-          ))}
+          {(Object.keys(TRAIT_LABELS) as Array<keyof CharacterPsychology>).map(
+            (trait) => (
+              <div key={trait} className="flex items-center gap-2">
+                <span className="w-4 font-medium">{TRAIT_LABELS[trait].short}</span>
+                <span>= {TRAIT_LABELS[trait].full}</span>
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>

@@ -9,7 +9,11 @@ import { useState, useCallback } from 'react';
 import { FileText, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { NarrativeSidebar, type OutlinerChapter, type SceneMoveResult } from './NarrativeSidebar';
+import {
+  NarrativeSidebar,
+  type OutlinerChapter,
+  type SceneMoveResult,
+} from './NarrativeSidebar';
 import { WorldSidebarTab } from './WorldSidebarTab';
 import { useWorldSidebarData } from '@/lib/api/worldDataApi';
 
@@ -68,8 +72,8 @@ function OutlineTabContent({
     <div className="flex h-full flex-col">
       <div className="border-b border-border px-4 py-2">
         <p className="text-xs text-muted-foreground">
-          {chapters.length} chapter{chapters.length !== 1 ? 's' : ''} ·{' '}
-          {sceneCount} scene{sceneCount !== 1 ? 's' : ''}
+          {chapters.length} chapter{chapters.length !== 1 ? 's' : ''} · {sceneCount}{' '}
+          scene{sceneCount !== 1 ? 's' : ''}
         </p>
       </div>
       <div className="flex-1 overflow-hidden">
@@ -79,6 +83,7 @@ function OutlineTabContent({
           onSceneSelect={onSceneSelect}
           onSceneMove={onSceneMove}
           className="h-full border-r-0"
+          showHeader={false}
         />
       </div>
     </div>
@@ -103,9 +108,10 @@ function WorldTabContent({
   onCharacterSelect,
   onLocationSelect,
 }: WorldTabContentProps) {
-  const worldCounts = hasLoadedWorld && !worldData.isLoading
-    ? `${worldData.characters.length} characters, ${worldData.locations.length} locations`
-    : 'Loading...';
+  const worldCounts =
+    hasLoadedWorld && !worldData.isLoading
+      ? `${worldData.characters.length} characters, ${worldData.locations.length} locations`
+      : 'Loading...';
 
   return (
     <div className="flex h-full flex-col">
@@ -146,22 +152,31 @@ export function NarrativeSidebarWithTabs({
 
   const worldData = useWorldSidebarData({ enabled: hasLoadedWorld });
 
-  const handleTabChange = useCallback((value: string) => {
-    setActiveTab(value);
-    if (value === 'world' && !hasLoadedWorld) {
-      setHasLoadedWorld(true);
-    }
-  }, [hasLoadedWorld]);
+  const handleTabChange = useCallback(
+    (value: string) => {
+      setActiveTab(value);
+      if (value === 'world' && !hasLoadedWorld) {
+        setHasLoadedWorld(true);
+      }
+    },
+    [hasLoadedWorld]
+  );
 
-  const handleCharacterSelect = useCallback((id: string) => {
-    setSelectedCharacterId(id);
-    onCharacterSelect?.(id);
-  }, [onCharacterSelect]);
+  const handleCharacterSelect = useCallback(
+    (id: string) => {
+      setSelectedCharacterId(id);
+      onCharacterSelect?.(id);
+    },
+    [onCharacterSelect]
+  );
 
-  const handleLocationSelect = useCallback((id: string) => {
-    setSelectedLocationId(id);
-    onLocationSelect?.(id);
-  }, [onLocationSelect]);
+  const handleLocationSelect = useCallback(
+    (id: string) => {
+      setSelectedLocationId(id);
+      onLocationSelect?.(id);
+    },
+    [onLocationSelect]
+  );
 
   return (
     <aside

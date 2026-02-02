@@ -88,24 +88,24 @@
   }
 
   /* Literary Typography Mode - Editor Canvas Only */
-  [data-typography="literary"] .prose-editor {
+  [data-typography='literary'] .prose-editor {
     font-family: Lora, Georgia, serif;
     background-color: hsl(var(--paper));
     color: hsl(var(--ink));
   }
 
-  [data-typography="literary"] .prose-editor .ProseMirror {
+  [data-typography='literary'] .prose-editor .ProseMirror {
     font-size: 1.125rem;
     line-height: 1.75;
     max-width: 65ch;
   }
 
-  [data-typography="literary"] .prose-editor .character-mention {
+  [data-typography='literary'] .prose-editor .character-mention {
     color: hsl(var(--accent-literary));
     background-color: hsl(var(--accent-literary) / 0.1);
   }
 
-  [data-typography="literary"] .prose-editor .character-mention:hover {
+  [data-typography='literary'] .prose-editor .character-mention:hover {
     background-color: hsl(var(--accent-literary) / 0.2);
   }
 }
@@ -143,27 +143,27 @@
   }
 
   /* Type-specific node accents */
-  .weaver-node[data-node-type="character"] {
+  .weaver-node[data-node-type='character'] {
     @apply border-l-4 border-l-weaver-glow/70;
   }
 
-  .weaver-node[data-node-type="location"] {
+  .weaver-node[data-node-type='location'] {
     @apply border-l-4 border-l-emerald-400/70;
   }
 
-  .weaver-node[data-node-type="event"] {
+  .weaver-node[data-node-type='event'] {
     /* Event nodes have dynamic left border based on event type, handled in component */
   }
 
-  .weaver-node[data-node-type="scene"] {
+  .weaver-node[data-node-type='scene'] {
     @apply border-l-4 border-l-weaver-neon/70;
   }
 
-  .weaver-node[data-node-type="world"] {
+  .weaver-node[data-node-type='world'] {
     @apply border-l-4 border-l-purple-400/70;
   }
 
-  .weaver-node[data-node-type="faction"] {
+  .weaver-node[data-node-type='faction'] {
     @apply border-l-4 border-l-amber-400/70;
   }
 
@@ -178,7 +178,7 @@
 
   /* Character mention styles for Tiptap editor */
   .character-mention {
-    @apply inline-flex items-center rounded-sm bg-primary/10 px-1 py-0.5 text-primary font-medium;
+    @apply inline-flex items-center rounded-sm bg-primary/10 px-1 py-0.5 font-medium text-primary;
     /* Subtle box shadow for depth */
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }

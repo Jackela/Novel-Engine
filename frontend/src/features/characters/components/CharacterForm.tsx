@@ -7,6 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Form,
   FormControl,
   FormField,
@@ -154,9 +161,9 @@ function CharacterDetailsFields({ form }: CharacterDetailsFieldsProps) {
         name="background_summary"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Background Summary</FormLabel>
+            <FormLabel>Character Description</FormLabel>
             <FormControl>
-              <Textarea rows={4} placeholder="Short background summary" {...field} />
+              <Textarea rows={4} placeholder="Character description" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -186,6 +193,53 @@ function CharacterDetailsFields({ form }: CharacterDetailsFieldsProps) {
             <FormControl>
               <Input placeholder="Current location" {...field} />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name={'metadata.role' as const}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Role</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Role"
+                value={typeof field.value === 'string' ? field.value : ''}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name={'metadata.faction_id' as const}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Faction</FormLabel>
+            <Select
+              value={typeof field.value === 'string' ? field.value : ''}
+              onValueChange={field.onChange}
+            >
+              <FormControl>
+                <SelectTrigger data-testid="faction-select">
+                  <SelectValue placeholder="Select faction" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="alliance-network">Alliance Network</SelectItem>
+                <SelectItem value="shadowbane-order">Shadowbane Order</SelectItem>
+                <SelectItem value="merchants-alliance">Merchants Alliance</SelectItem>
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}

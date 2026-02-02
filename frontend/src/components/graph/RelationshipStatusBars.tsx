@@ -95,7 +95,9 @@ export function RelationshipStatusBars({
             className="h-1.5 flex-1"
             indicatorClassName={romanceColor}
           />
-          <span className="w-8 text-right text-xs text-muted-foreground">{romance}</span>
+          <span className="w-8 text-right text-xs text-muted-foreground">
+            {romance}
+          </span>
         </div>
       </div>
     );
@@ -114,11 +116,7 @@ export function RelationshipStatusBars({
             {trust}% - {getTrustLabel(trust)}
           </span>
         </div>
-        <Progress
-          value={trust}
-          className="h-2"
-          indicatorClassName={trustColor}
-        />
+        <Progress value={trust} className="h-2" indicatorClassName={trustColor} />
       </div>
 
       {/* Romance Bar */}
@@ -132,11 +130,7 @@ export function RelationshipStatusBars({
             {romance}% - {getRomanceLabel(romance)}
           </span>
         </div>
-        <Progress
-          value={romance}
-          className="h-2"
-          indicatorClassName={romanceColor}
-        />
+        <Progress value={romance} className="h-2" indicatorClassName={romanceColor} />
       </div>
     </div>
   );

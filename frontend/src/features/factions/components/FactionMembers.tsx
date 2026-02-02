@@ -56,12 +56,12 @@ function MemberItem({ member }: { member: FactionMember }) {
         )}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{displayName}</p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{displayName}</p>
         {member.is_leader && (
           <Badge
             variant="outline"
-            className="mt-1 border-amber-500/50 text-amber-500 text-xs"
+            className="mt-1 border-amber-500/50 text-xs text-amber-500"
           >
             Leader
           </Badge>

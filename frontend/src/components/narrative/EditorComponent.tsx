@@ -13,7 +13,15 @@ import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useDroppable } from '@dnd-kit/core';
-import { Bold, Italic, Heading1, Heading2, Sparkles, Loader2, Square } from 'lucide-react';
+import {
+  Bold,
+  Italic,
+  Heading1,
+  Heading2,
+  Sparkles,
+  Loader2,
+  Square,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -22,7 +30,10 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useStoryStream, type StreamRequest } from '@/hooks/useStoryStream';
 import { CharacterMention } from '@/components/editor/CharacterMention';
-import { createMentionSuggestion, type SuggestionItem } from '@/components/editor/MentionSuggestion';
+import {
+  createMentionSuggestion,
+  type SuggestionItem,
+} from '@/components/editor/MentionSuggestion';
 import { QuickCreateCharacterDialog } from '@/features/characters/components/QuickCreateCharacterDialog';
 import type { CharacterSummary } from '@/types/schemas';
 
@@ -58,7 +69,9 @@ interface EditorComponentProps {
   /** List of characters for @mention suggestions (CHAR-038) */
   characters?: CharacterSummary[] | undefined;
   /** Called when a new character is created via quick-create (CHAR-038) */
-  onCharacterCreated?: ((characterId: string, characterName: string) => void) | undefined;
+  onCharacterCreated?:
+    | ((characterId: string, characterName: string) => void)
+    | undefined;
 }
 
 /**
@@ -120,9 +133,7 @@ function EditorToolbar({
       <Toggle
         size="sm"
         pressed={editor.isActive('heading', { level: 1 })}
-        onPressedChange={() =>
-          editor.chain().focus().toggleHeading({ level: 1 }).run()
-        }
+        onPressedChange={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         aria-label="Heading 1"
         data-testid="toolbar-h1"
         disabled={isStreaming}
@@ -134,9 +145,7 @@ function EditorToolbar({
       <Toggle
         size="sm"
         pressed={editor.isActive('heading', { level: 2 })}
-        onPressedChange={() =>
-          editor.chain().focus().toggleHeading({ level: 2 }).run()
-        }
+        onPressedChange={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         aria-label="Heading 2"
         data-testid="toolbar-h2"
         disabled={isStreaming}
@@ -221,15 +230,12 @@ export function EditorComponent({
     const insertAt = insertPositionRef.current ?? editor.state.doc.content.size;
 
     // Insert the new content (add newline before if not first chunk)
-    const textToInsert = insertPositionRef.current !== null && insertPositionRef.current !== insertAt
-      ? `\n${content}`
-      : content;
+    const textToInsert =
+      insertPositionRef.current !== null && insertPositionRef.current !== insertAt
+        ? `\n${content}`
+        : content;
 
-    editor
-      .chain()
-      .focus()
-      .insertContentAt(insertAt, textToInsert)
-      .run();
+    editor.chain().focus().insertContentAt(insertAt, textToInsert).run();
 
     // Update position for next chunk
     insertPositionRef.current = insertAt + textToInsert.length;
@@ -329,7 +335,15 @@ export function EditorComponent({
         suggestion: {
           ...mentionSuggestion,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          command: ({ editor, range, props }: { editor: Editor; range: { from: number; to: number }; props: any }) => {
+          command: ({
+            editor,
+            range,
+            props,
+          }: {
+            editor: Editor;
+            range: { from: number; to: number };
+            props: any;
+          }) => {
             const item = props as SuggestionItem;
             // Delete the @query text
             editor.chain().focus().deleteRange(range).run();

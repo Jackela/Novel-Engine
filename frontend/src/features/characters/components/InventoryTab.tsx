@@ -109,7 +109,7 @@ type ItemRowProps = {
 
 function ItemRow({ item, onRemove, isRemoving }: ItemRowProps) {
   return (
-    <li className="flex items-center justify-between p-3 rounded-lg border bg-card">
+    <li className="flex items-center justify-between rounded-lg border bg-card p-3">
       <div className="flex items-center gap-3">
         <ItemIcon type={item.item_type} />
         <div>
@@ -118,7 +118,7 @@ function ItemRow({ item, onRemove, isRemoving }: ItemRowProps) {
             <RarityBadge rarity={item.rarity} />
           </div>
           {item.description && (
-            <p className="text-sm text-muted-foreground line-clamp-1">
+            <p className="line-clamp-1 text-sm text-muted-foreground">
               {item.description}
             </p>
           )}
@@ -129,7 +129,7 @@ function ItemRow({ item, onRemove, isRemoving }: ItemRowProps) {
         size="icon"
         onClick={() => onRemove(item.id)}
         disabled={isRemoving}
-        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
       >
         {isRemoving ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -168,7 +168,7 @@ function GiveItemDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Give Item
         </Button>
       </DialogTrigger>
@@ -177,7 +177,11 @@ function GiveItemDialog({
           <DialogTitle>Give Item to Character</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-4">
-          <Select value={selectedItemId} onValueChange={onSelectItem} disabled={isLoading}>
+          <Select
+            value={selectedItemId}
+            onValueChange={onSelectItem}
+            disabled={isLoading}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select an item..." />
             </SelectTrigger>
@@ -192,7 +196,7 @@ function GiveItemDialog({
                 </SelectItem>
               ))}
               {availableItems.length === 0 && (
-                <div className="text-sm text-muted-foreground p-2">
+                <div className="p-2 text-sm text-muted-foreground">
                   No items available to give.
                 </div>
               )}
@@ -204,7 +208,7 @@ function GiveItemDialog({
               Cancel
             </Button>
             <Button onClick={onConfirm} disabled={!selectedItemId || isPending}>
-              {isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Give Item
             </Button>
           </div>
@@ -226,7 +230,11 @@ export default function InventoryTab({ characterId }: Props) {
   const [giveDialogOpen, setGiveDialogOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string>('');
 
-  const { data: inventory = [], isLoading, error } = useQuery({
+  const {
+    data: inventory = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['character-inventory', characterId],
     queryFn: () => fetchInventory(characterId),
     enabled: Boolean(characterId),
@@ -282,7 +290,7 @@ export default function InventoryTab({ characterId }: Props) {
 
   if (error) {
     return (
-      <div className="text-sm text-destructive py-4">
+      <div className="py-4 text-sm text-destructive">
         Failed to load inventory. Please try again.
       </div>
     );
@@ -322,7 +330,7 @@ export default function InventoryTab({ characterId }: Props) {
       </div>
 
       {filteredInventory.length === 0 ? (
-        <div className="text-sm text-muted-foreground py-4 text-center">
+        <div className="py-4 text-center text-sm text-muted-foreground">
           {typeFilter === 'all'
             ? 'No items in inventory.'
             : `No ${ITEM_TYPE_LABELS[typeFilter].toLowerCase()} items.`}

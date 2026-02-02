@@ -8,15 +8,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Users,
-  MapPin,
-  Book,
-  FileText,
-  Clock,
-  Search,
-  Loader2,
-} from 'lucide-react';
+import { Users, MapPin, Book, FileText, Clock, Search, Loader2 } from 'lucide-react';
 import {
   CommandDialog,
   CommandInput,
@@ -148,7 +140,9 @@ function transformChapters(data: ChapterResponse[]): SearchItem[] {
 
 // ============ API Fetch ============
 
-async function fetchChaptersForStories(stories: { id: string }[]): Promise<SearchItem[]> {
+async function fetchChaptersForStories(
+  stories: { id: string }[]
+): Promise<SearchItem[]> {
   const items: SearchItem[] = [];
   const promises = stories.map(async (story) => {
     try {
@@ -208,17 +202,25 @@ function SearchItemRow({ item, onSelect }: { item: SearchItem; onSelect: () => v
       className="flex items-center gap-3 py-3"
     >
       <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="font-medium truncate">{item.name}</span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate font-medium">{item.name}</span>
         {item.description && (
-          <span className="text-xs text-muted-foreground truncate">{item.description}</span>
+          <span className="truncate text-xs text-muted-foreground">
+            {item.description}
+          </span>
         )}
       </div>
     </CommandItem>
   );
 }
 
-function RecentSearchItem({ item, onSelect }: { item: RecentSearch; onSelect: () => void }) {
+function RecentSearchItem({
+  item,
+  onSelect,
+}: {
+  item: RecentSearch;
+  onSelect: () => void;
+}) {
   const Icon = TYPE_ICONS[item.type];
   return (
     <CommandItem
@@ -235,7 +237,7 @@ function RecentSearchItem({ item, onSelect }: { item: RecentSearch; onSelect: ()
 
 function LoadingState() {
   return (
-    <div className="flex items-center justify-center py-6 gap-2 text-muted-foreground">
+    <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" />
       <span>Loading...</span>
     </div>
@@ -244,7 +246,7 @@ function LoadingState() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground">
+    <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
       <Search className="h-8 w-8" />
       <p className="text-sm">Start typing to search...</p>
       <p className="text-xs">Characters, locations, lore entries, and chapters</p>
@@ -268,7 +270,11 @@ function SearchResults({ groups, onSelect }: SearchResultsProps) {
           {idx > 0 && <CommandSeparator />}
           <CommandGroup heading={TYPE_LABELS[type]}>
             {groups[type].slice(0, MAX_RESULTS_PER_GROUP).map((item) => (
-              <SearchItemRow key={`${type}-${item.id}`} item={item} onSelect={() => onSelect(item)} />
+              <SearchItemRow
+                key={`${type}-${item.id}`}
+                item={item}
+                onSelect={() => onSelect(item)}
+              />
             ))}
           </CommandGroup>
         </div>
@@ -383,7 +389,8 @@ export function GlobalSearch() {
     if (!search.trim()) return [];
     const q = search.toLowerCase();
     return searchItems.filter(
-      (i) => i.name.toLowerCase().includes(q) || i.description?.toLowerCase().includes(q)
+      (i) =>
+        i.name.toLowerCase().includes(q) || i.description?.toLowerCase().includes(q)
     );
   }, [searchItems, search]);
 
