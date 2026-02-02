@@ -139,3 +139,20 @@
   - Literary mode is "opt-in" - default is sans-serif UI typography
   - Button icons from lucide-react: `Type` for default, `BookOpen` for literary
 ---
+
+## 2026-02-02 - VIS-006
+- **What was implemented**: Visual regression tests for all 4 theme combinations
+- **Files changed**:
+  - Created `frontend/tests/e2e/visual-regression.spec.ts`:
+    - Dashboard theme baselines: light+default, light+literary, dark+default, dark+literary
+    - Landing page theme baselines: 4 combinations
+    - Theme switching validation tests
+    - Helper functions: setTheme(), navigateToDashboard(), captureBaseline()
+  - Baseline screenshots saved to `frontend/test-results/visual-baselines/`
+- **Learnings for future iterations:**
+  - To set dark mode in Playwright tests, use `page.evaluate(() => document.documentElement.classList.add('dark'))`
+  - To set literary mode, use `page.evaluate(() => document.documentElement.setAttribute('data-typography', 'literary'))`
+  - Visual baselines are captured with `page.screenshot({ path: '...', fullPage: false })` for consistent viewport sizing
+  - Allow 300ms after theme changes for CSS transitions to settle before capturing screenshots
+  - Test fixtures from `./fixtures` automatically mock API endpoints and EventSource
+---

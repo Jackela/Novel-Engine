@@ -97,7 +97,7 @@
         "All tests pass with npm run test:e2e"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     }
   ]
