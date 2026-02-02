@@ -582,12 +582,15 @@ class TestCoordinatesValueObject:
     @pytest.mark.unit
     @pytest.mark.fast
     def test_multiplication_invalid_type(self):
-        """Test multiplication fails with invalid type."""
+        """Test multiplication fails with invalid type.
+
+        When __mul__ receives an incompatible type, it returns NotImplemented,
+        which causes Python to raise a TypeError with its default message.
+        """
         coords = Coordinates(x=10.0, y=20.0, z=5.0)
 
-        with pytest.raises(TypeError) as exc_info:
-            coords * "invalid"
-        assert "Can only multiply Coordinates by numeric values" in str(exc_info.value)
+        with pytest.raises(TypeError):
+            coords * "invalid"  # Returns NotImplemented, Python raises TypeError
 
     @pytest.mark.unit
     @pytest.mark.fast
