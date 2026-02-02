@@ -1,17 +1,19 @@
 /**
- * AppLayout - Main application layout for protected routes
- * Contains sidebar navigation and main content area
+ * AppShell - Main application layout wrapper for protected routes
+ *
+ * Why: Provides the consistent app shell with sidebar navigation
+ * and top bar. Children are rendered in the main content area.
  */
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Sidebar } from './Sidebar';
-import { TopBar } from './TopBar';
+import { Sidebar } from '@/shared/components/layout/Sidebar';
+import { TopBar } from '@/shared/components/layout/TopBar';
 
-interface AppLayoutProps {
+interface AppShellProps {
   children: React.ReactNode;
 }
 
-export default function AppLayout({ children }: AppLayoutProps) {
+export function AppShell({ children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -50,3 +52,5 @@ export default function AppLayout({ children }: AppLayoutProps) {
     </div>
   );
 }
+
+export default AppShell;

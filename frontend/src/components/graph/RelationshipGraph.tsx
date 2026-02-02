@@ -6,29 +6,111 @@
  * performance and rich interaction patterns. Dagre layout provides automatic
  * node positioning for readable graph structures.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ReactFlow,
   Background,
   Controls,
   MiniMap,
+  Handle,
+  Position,
   useNodesState,
   useEdgesState,
   type Edge,
+  type Node,
+  type NodeProps,
   type NodeTypes,
   BackgroundVariant,
   type OnSelectionChangeFunc,
 } from '@xyflow/react';
 import Dagre from '@dagrejs/dagre';
-import { X, Users, Sparkles, Loader2 } from 'lucide-react';
+import { X, Users, Sparkles, Loader2, User } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
-import { CharacterNode, type CharacterNodeType, type CharacterNodeData } from './nodes/CharacterNode';
 import { RelationshipStatusBars } from './RelationshipStatusBars';
 import { Button, Badge } from '@/shared/components/ui';
 import type { CharacterSummary, RelationshipResponse, RelationshipType } from '@/types/schemas';
 import { cn } from '@/lib/utils';
 import { generateRelationshipHistory } from '@/lib/api';
+
+/**
+ * Simple character node data for relationship graph display
+ */
+interface SimpleCharacterNodeData extends Record<string, unknown> {
+  name: string;
+  archetype?: string;
+  avatarUrl?: string;
+}
+
+type SimpleCharacterNodeType = Node<SimpleCharacterNodeData>;
+
+/**
+ * SimpleCharacterNode - Minimal character node for relationship graph
+ *
+ * Why: Displays a compact character node with name and archetype badge,
+ * optimized for the relationship graph layout.
+ */
+function SimpleCharacterNodeComponent({
+  data,
+  selected,
+}: NodeProps<SimpleCharacterNodeType>) {
+  return (
+    <>
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!h-2 !w-2 !rounded-full !border-2 !border-primary !bg-background"
+      />
+
+      <div
+        className={cn(
+          'min-w-[140px] rounded-lg border bg-card p-3 shadow-md transition-all',
+          'hover:shadow-lg',
+          selected
+            ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-background'
+            : 'border-border'
+        )}
+      >
+        <div className="flex items-center gap-3">
+          {/* Avatar placeholder */}
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+            {data.avatarUrl ? (
+              <img
+                src={data.avatarUrl}
+                alt={data.name}
+                className="h-full w-full rounded-full object-cover"
+              />
+            ) : (
+              <User className="h-5 w-5 text-muted-foreground" />
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            {/* Character name */}
+            <p className="truncate text-sm font-medium text-foreground">
+              {data.name}
+            </p>
+
+            {/* Archetype badge */}
+            {data.archetype && (
+              <Badge variant="secondary" className="mt-1 text-[10px]">
+                {data.archetype}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!h-2 !w-2 !rounded-full !border-2 !border-primary !bg-background"
+      />
+    </>
+  );
+}
+
+const SimpleCharacterNode = memo(SimpleCharacterNodeComponent);
 
 /**
  * Map relationship types to edge colors.
@@ -93,9 +175,9 @@ function getRelationshipLabel(type: RelationshipType): string {
   return labels[type];
 }
 
-/** Custom node types registry - typed to match CharacterNodeType */
+/** Custom node types registry - typed to match SimpleCharacterNodeType */
 const nodeTypes = {
-  character: CharacterNode,
+  character: SimpleCharacterNode,
 } satisfies NodeTypes;
 
 /**
@@ -104,10 +186,10 @@ const nodeTypes = {
  * Uses 'TB' (top-bottom) direction for intuitive hierarchy visualization.
  */
 function applyDagreLayout(
-  nodes: CharacterNodeType[],
+  nodes: SimpleCharacterNodeType[],
   edges: Edge[],
   direction: 'TB' | 'LR' = 'TB'
-): CharacterNodeType[] {
+): SimpleCharacterNodeType[] {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
   g.setGraph({
@@ -157,7 +239,7 @@ interface RelationshipEdgeData extends Record<string, unknown> {
 function transformDataToGraph(
   characters: CharacterSummary[],
   relationships: RelationshipResponse[]
-): { nodes: CharacterNodeType[]; edges: Edge<RelationshipEdgeData>[] } {
+): { nodes: SimpleCharacterNodeType[]; edges: Edge<RelationshipEdgeData>[] } {
   // Create a map for quick character lookup
   const characterMap = new Map(characters.map((c) => [c.id, c]));
 
@@ -169,10 +251,10 @@ function transformDataToGraph(
   });
 
   // Create nodes only for characters involved in relationships
-  const nodes: CharacterNodeType[] = characters
+  const nodes: SimpleCharacterNodeType[] = characters
     .filter((char) => involvedCharacterIds.has(char.id))
     .map((char) => {
-      const data: CharacterNodeData = {
+      const data: SimpleCharacterNodeData = {
         name: char.name,
       };
       if (char.archetype) {
@@ -227,7 +309,7 @@ export interface RelationshipGraphProps {
  * detailed relationship metrics with Trust and Romance status bars.
  */
 export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraphProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<CharacterNodeType>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<SimpleCharacterNodeType>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<RelationshipEdgeData>>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<Edge<RelationshipEdgeData> | null>(null);
