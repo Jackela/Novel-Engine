@@ -1,400 +1,82 @@
-# Ralph Progress Log
-Started: Sun Feb  1 17:25:24     2026
+# Ralph Progress - Visual Rescue (Full Refactor)
 
 ## Codebase Patterns
-- Character aggregate uses Optional fields for mutable state (not on frozen CharacterProfile)
-- E2E tests go in `frontend/tests/e2e/` directory (Playwright config uses testMatch: ['tests/e2e/**/*.spec.ts'])
-- FactionMembers component in `frontend/src/features/factions/` - pattern: separate features per entity type
-- API client files in `frontend/src/lib/api/` follow naming pattern: `{feature}Api.ts` (e.g., factionApi.ts)
-- Zod schemas in `frontend/src/types/schemas.ts` should include enums for backend enum types (FactionType, FactionAlignment, etc.)
-- recharts is already installed in frontend - use Radar/RadarChart for personality visualization
-- Frontend types in `frontend/src/types/schemas.ts` must match backend `src/api/schemas.py`
-- CharacterDetailsDialog uses Tabs component with TabsList/TabsTrigger/TabsContent pattern
-- Character memories stored in structured_data.memories via workspace_character_store
-- API routers go in `src/api/routers/` and register in `main_api_server.py`
-- Relationship entity is in `src/contexts/world/domain/entities/relationship.py` (not character context)
-- Use frozen dataclass for immutable value objects like InteractionLog
-- Use Tuple (not List) for immutable collections in frozen dataclasses
-- shadcn components install to src/components/ui but project uses src/shared/components/ui - move after install
-- Progress component supports indicatorClassName prop for custom indicator colors
+(Inherited from Character Evolution + new patterns)
 
-- LLMWorldGenerator is in `src/contexts/world/infrastructure/generators/` and is the main AI generation service
-- Dialogue generation uses CharacterData DTO - can be created from Character aggregate or plain dicts
-- Prompt YAML files go in `src/contexts/world/infrastructure/prompts/` directory
-- TanStack Router uses `$paramName` for dynamic route segments (e.g., `/world/characters/$characterId/voice`)
-- Protected routes must use path prefix `/protected/...` when referencing with useParams `from:` option
-- Mock handlers use dialogueResponses lookup table pattern for mood-based response generation
-- CharacterGoal uses GoalStatus enum (ACTIVE/COMPLETED/FAILED) and GoalUrgency enum (LOW/MEDIUM/HIGH/CRITICAL)
-- Goals stored in character's structured_data.goals via workspace_character_store (same pattern as memories)
-- Goal state transitions create new instances (immutable): goal.complete() returns new CharacterGoal with status=COMPLETED
+### Component Organization
+- Feature components: `frontend/src/features/{featureName}/components/`
+- API clients: `frontend/src/lib/api/{feature}Api.ts`
+- Composed components: `frontend/src/components/composed/` (AppShell, EditorLayout)
+- shadcn/ui components: `frontend/src/components/ui/` (DO NOT MODIFY)
 
-- ScrollArea component is in `src/components/ui` (not `src/shared/components/ui`)
-- CharacterDetailSchema goals field uses inline schema definition to avoid circular dependency
-- Application services live in `src/contexts/{context}/application/services/` directory
-- SocialGraphService analyzes character-to-character relationships only (filters out faction/location memberships)
-- Social network analysis uses degree centrality (relationship count) normalized to 0-100 scale
-- "Most loved" score uses weighted formula: trust * 0.6 + romance * 0.4
-- Dashboard panels are lazy-loaded via React.lazy() and wrapped in Suspense with PanelFallback
-- Social API client functions live in `frontend/src/lib/api/socialApi.ts` and export through index.ts
-- Mock handlers for social analysis compute metrics dynamically from mockRelationships array
-- Character ID display names are formatted by splitting on `-` and capitalizing each word
-- Relationship history generation follows dialogue generation pattern: prompt YAML + _load_*_prompt + _build_*_user_prompt + _parse_*_response
-- Frontend API client files named with pattern: `{feature}Api.ts` (e.g., relationshipApi.ts, dialogueApi.ts)
-- RelationshipGraph detail panel displays when selectedEdge is set, cleared by handleCloseDetail
-- Generate buttons use Sparkles icon for AI generation actions, Loader2 with animate-spin for loading state
-- Faction membership stored in character's structured_data.faction_id via workspace_character_store
-- Faction leader stored in faction's leader_id and leader_name fields
-- Factions router follows same pattern as goals/memories routers - CRUD via workspace stores
-- WorldSidebarTab CharactersSection uses Select dropdown for sort options (Name/Faction/Role)
-- Sort comparator functions extracted for cleaner switch statement (avoid no-case-declarations lint error)
-- CharacterSummary.faction_id field enables sorting by faction membership
-- EditorComponent uses @tiptap/extension-mention for @mention autocomplete with custom suggestion rendering
-- QuickCreateCharacterDialog provides minimal character creation flow (name + background only)
-- MentionSuggestion uses PopupManager class for positioning instead of tippy.js dependency
-- Mention suggestion items can be 'character' or 'create-new' type for different actions
-- buildSuggestionItems shows existing characters first, then "Create New" option if query >= 2 chars
-- Characters list passed from NarrativeEditorLayout to EditorComponent for @mention suggestions
-- Query client invalidation after character creation refreshes sidebar list automatically
-- Export functionality uses exportApi.ts with getCharacterRelationships, buildCharacterExportData, and downloadAsJson functions
-- JSON export includes export_version, exported_at timestamp, full character data, and relationships array
-- Download files named as `character-{sanitized-name}-{date}.json` for easy identification
+### Three Rendering Domains
+- **App Shell**: Tailwind + shadcn/ui, font-sans, bg-background
+- **Editor Canvas**: Custom CSS (.prose-editor), font-serif in literary mode, bg-paper
+- **Graph Canvas**: Weaver colors, .weaver-node + status classes
+
+### Orthogonal Theming
+- Color mode: `class="dark"` on `<html>` (light/dark)
+- Typography mode: `data-typography="literary"` on `<html>` (default/literary)
+- 4 combinations must all work correctly
+
+### State Management
+- Server state → TanStack Query (useQuery, useMutation)
+- Global UI state → Zustand stores
+- Form state → React Hook Form + Zod validation
+- Avoid duplicate truth in local + global stores
+
+### Testing
+- E2E tests: `frontend/tests/e2e/`
+- Visual regression: Must capture all 4 theme combinations
+- Run `npm run type-check && npm run lint:all` before commit
+
+### API Patterns
+- Zod schemas in `frontend/src/types/schemas.ts` must match backend
+- Use frozen dataclasses for immutable value objects
+- Character aggregate uses Optional fields for mutable state
+
+### Previous Sprint Patterns (Character Evolution)
+- recharts is installed - use Radar/RadarChart for personality visualization
+- CharacterDetailsDialog uses Tabs with TabsList/TabsTrigger/TabsContent
+- Character memories/goals stored in structured_data via workspace_character_store
+- LLMWorldGenerator is the main AI generation service in `src/contexts/world/infrastructure/generators/`
+- TanStack Router uses `$paramName` for dynamic route segments
+- EditorComponent uses @tiptap/extension-mention for @mention autocomplete
+- QuickCreateCharacterDialog provides minimal character creation flow
+- Export functionality uses exportApi.ts with downloadAsJson utility
 
 ---
 
-## [CHAR-040] - 2026-02-02
-- What was implemented: Complete E2E Character Lifecycle Test covering the full character journey: Create -> Add Goals -> Evolve Relationship -> Generate Voice -> Export. Created comprehensive Playwright test suite with 6 test cases covering individual lifecycle steps and a complete integration journey. Includes mock API setup for guest session, characters, goals, relationships, dialogue, and export functionality.
-- Files changed:
-  - `frontend/tests/e2e/character-lifecycle.spec.ts` (new - E2E lifecycle test suite)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-  - `scripts/ralph/progress.txt` (modified - added progress entry)
+## 2026-02-02 - VIS-001
+- **What was implemented**: Design tokens and font system setup
+- **Files changed**:
+  - `frontend/index.html` - Added Lora font to Google Fonts import (400/500/600 + italic)
+  - `frontend/tailwind.config.js` - Added fontFamily.serif (Lora), fontFamily.display (Space Grotesk), fontFamily.mono (IBM Plex Mono), and paper/ink/accent-literary color utilities
+  - `frontend/src/styles/tailwind.css` - Added --paper, --ink, --accent-literary CSS variables for light/dark modes, and [data-typography="literary"] selector rules
+  - `CONVENTIONS.md` - Added project coding conventions document
+  - `DESIGN_SYSTEM.md` - Added design system documentation
 - **Learnings for future iterations:**
-  - E2E tests must go in `frontend/tests/e2e/` to be picked up by Playwright (config uses testMatch: ['tests/e2e/**/*.spec.ts'])
-  - test.describe.configure({ mode: 'serial' }) ensures tests run in order when they have shared state
-  - Playwright route interception allows dynamic mock data that persists across test steps
-  - Use page.addInitScript() for guest session setup (localStorage, sessionStorage, EventSource mock)
-  - Mock API handlers can share state via closures (e.g., characters object updated by POST and read by GET)
-  - Use test.step() for better test reporting of complex multi-step tests
-  - Flexible element selection with fallbacks handles different UI states gracefully
+  - Font families in tailwind.config.js should use Manrope (not Inter) as primary sans font per DESIGN_SYSTEM.md
+  - Literary theme CSS variables use HSL format without hsl() wrapper: e.g., `--paper: 40 30% 96%`
+  - The [data-typography="literary"] selector must target .prose-editor class specifically (Editor Canvas domain only)
+  - Dark mode literary theme uses warmer tones: `--paper: 30 15% 12%` (brownish dark) vs default dark `--background: 240 10% 3.9%` (bluish dark)
 ---
 
-## [CHAR-039] - 2026-02-02
-- What was implemented: Character sheet JSON export functionality. Added Export button to CharacterDetailsDialog header that fetches character relationships and downloads a complete JSON file with character data and relationship graph. Created exportApi.ts with getCharacterRelationships, buildCharacterExportData, and downloadAsJson utility functions.
-- Files changed:
-  - `frontend/src/lib/api/exportApi.ts` (new - export API functions and utilities)
-  - `frontend/src/lib/api/index.ts` (modified - export exportApi functions)
-  - `frontend/src/features/characters/CharacterDetailsDialog.tsx` (modified - added Export button with loading state)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
+## 2026-02-02 - VIS-002
+- **What was implemented**: Refactored component directory structure
+- **Files changed**:
+  - Created `frontend/src/components/composed/` directory with `AppShell.tsx` and `index.ts`
+  - Deleted `frontend/src/shared/components/layout/AppLayout.tsx`
+  - Updated `frontend/src/shared/components/layout/index.ts` - removed AppLayout export
+  - Updated `frontend/src/app/ProtectedLayout.tsx` - import from `@/components/composed` instead of `@/shared/components/layout`
+  - Deleted `frontend/src/components/graph/nodes/CharacterNode.tsx` (duplicate)
+  - Deleted `frontend/src/components/graph/nodes/index.ts`
+  - Updated `frontend/src/components/graph/RelationshipGraph.tsx` - inlined SimpleCharacterNode component
+  - Updated `frontend/src/components/graph/index.ts` - removed CharacterNode export
 - **Learnings for future iterations:**
-  - Use DialogHeader with flex-row layout for buttons alongside title
-  - Blob + URL.createObjectURL pattern for triggering file downloads in browser
-  - Sanitize filenames by replacing non-alphanumeric chars with hyphens
-  - Mock handler `/relationships/by-entity/:entityId` already supports fetching character relationships
-  - Export data includes version and timestamp for future compatibility
+  - Composed components go in `@/components/composed/` directory (AppShell, EditorLayout, etc.)
+  - When CharacterNode is needed for Weaver/Graph Canvas, import from `@/features/weaver/components/nodes`
+  - RelationshipGraph has its own SimpleCharacterNode inlined (simpler data model: name, archetype, avatarUrl)
+  - The Weaver CharacterNode is more feature-rich (has role, traits, status, bio, etc.)
+  - Named exports are preferred (`export function AppShell`) but default export is also provided for compatibility
 ---
-
-## [CHAR-038] - 2026-02-02
-- What was implemented: Quick character creation from editor via @mention. When typing @NewName in the narrative editor, a dropdown shows matching characters and a "Create New" option. Selecting "Create New" opens QuickCreateCharacterDialog with the typed name pre-filled. After creation, the new character's @mention is automatically inserted at cursor position.
-- Files changed:
-  - `frontend/src/components/editor/MentionSuggestion.tsx` (new - mention suggestion UI and configuration)
-  - `frontend/src/features/characters/components/QuickCreateCharacterDialog.tsx` (new - minimal creation dialog)
-  - `frontend/src/features/characters/index.ts` (modified - export QuickCreateCharacterDialog)
-  - `frontend/src/components/narrative/EditorComponent.tsx` (modified - integrated Mention extension and quick-create dialog)
-  - `frontend/src/components/narrative/NarrativeEditorLayout.tsx` (modified - pass characters to EditorComponent)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - @tiptap/extension-mention already installed in project, use configure() for custom suggestion behavior
-  - Mention extension's command callback receives custom item type from items() function
-  - Use PopupManager class with fixed positioning instead of tippy.js to avoid adding dependency
-  - exactOptionalPropertyTypes requires explicit `?? null` conversion for undefined archetype values
-  - Characters fetched via useCharacters() hook from @/features/characters/api/characterApi
-  - Query client invalidation triggers sidebar refresh when new character is created
-  - Quick-create dialog uses minimal schema (name + background) with defaults for other fields
-  - Agent ID generated from name via nameToAgentId helper (lowercase, hyphenated)
----
-
-## [CHAR-037] - 2026-02-01
-- What was implemented: Sidebar character list sort/filter functionality. Added dropdown to sort characters by Name (A-Z), Faction, or Role (archetype). Updated CharacterSummarySchema to include faction_id field. Updated mock handlers with faction_id data for existing characters. Sorting groups characters with values first, then alphabetically.
-- Files changed:
-  - `frontend/src/types/schemas.ts` (modified - added faction_id to CharacterSummarySchema)
-  - `frontend/src/components/narrative/WorldSidebarTab.tsx` (modified - added sort controls and sorting logic)
-  - `frontend/src/mocks/handlers.ts` (modified - added faction_id to all character summaries)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - WorldSidebarTab uses internal state for sort option, sorts characters via useMemo
-  - Select component from `@/shared/components/ui/Select` for dropdown menus
-  - Extract case-specific logic to separate functions to avoid `no-case-declarations` ESLint error
-  - Sorting by faction/role: group items with values first, then alphabetically by value, then by name
-  - ArrowUpDown icon from lucide-react is good for sort controls
----
-
-## [CHAR-036] - 2026-02-01
-- What was implemented: Frontend Faction Roster component. Created `FactionMembers.tsx` displaying scrollable list of faction members with leader highlighted (crown icon, amber styling). Added FactionMember and FactionDetail Zod schemas to frontend types. Created factionApi.ts with getFactionDetail function. Added mock handler for `/factions/:id` endpoint returning faction details with member list.
-- Files changed:
-  - `frontend/src/types/schemas.ts` (modified - FactionMemberSchema, FactionDetailResponseSchema, FactionType/Alignment/Status enums)
-  - `frontend/src/lib/api/factionApi.ts` (new - getFactionDetail API function)
-  - `frontend/src/lib/api/index.ts` (modified - export getFactionDetail)
-  - `frontend/src/features/factions/components/FactionMembers.tsx` (new - faction roster component)
-  - `frontend/src/features/factions/index.ts` (new - feature exports)
-  - `frontend/src/mocks/handlers.ts` (modified - faction detail mock handler)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - Feature components organized under `frontend/src/features/{featureName}/` with components subdirectory
-  - Member lists sort leader first, then alphabetically by display name
-  - Character ID to display name: split on `-` and capitalize each word
-  - ScrollArea from `@/components/ui` provides consistent scrollable containers
-  - Badge with `variant="outline"` and custom border/text colors for role indicators
----
-
-## [CHAR-035] - 2026-02-01
-- What was implemented: Domain-level faction membership and leadership. Added faction_id field to Character aggregate with join_faction(), leave_faction(), is_in_faction() methods. Added leader_id field to Faction entity with set_leader(), remove_leader(), has_leader() methods. Created factions API router with endpoints for joining/leaving factions and setting leaders. Added FactionJoin/Leave/SetLeader schemas.
-- Files changed:
-  - `src/contexts/character/domain/aggregates/character.py` (modified - faction_id field and methods)
-  - `src/contexts/world/domain/entities/faction.py` (modified - leader_id field and methods)
-  - `src/api/schemas.py` (modified - FactionJoin/Leave/SetLeader schemas)
-  - `src/api/routers/factions.py` (new - faction membership API endpoints)
-  - `src/api/main_api_server.py` (modified - register factions router)
-  - `tests/unit/contexts/character/domain/test_character_faction.py` (new - 22 tests)
-  - `tests/unit/contexts/world/domain/test_faction_leadership.py` (new - 23 tests)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - Character aggregate uses Optional fields for mutable state that can change during narrative
-  - Faction entity is in world context, similar to how Relationship is in world context (not character)
-  - Faction membership is stored in structured_data.faction_id in workspace_character_store
-  - Event types use snake_case format: "character.updated" not "CharacterUpdated"
-  - Domain events include updated_fields list for audit trail
----
-
-## [CHAR-034] - 2026-02-01
-- What was implemented: Frontend 'Generate Backstory' button in RelationshipGraph detail panel. Added backend API endpoint POST /relationships/{id}/generate-history that calls LLMWorldGenerator.generate_relationship_history(). Created RelationshipHistoryGenerationResponse schema in backend and frontend. Created relationshipApi.ts with generateRelationshipHistory function. Button shows loading state during generation and updates the relationship description field with the generated backstory.
-- Files changed:
-  - `src/api/schemas.py` (modified - added RelationshipHistoryGenerationResponse)
-  - `src/api/routers/relationships.py` (modified - added generate_relationship_history endpoint, _format_character_name helper)
-  - `frontend/src/types/schemas.ts` (modified - added RelationshipHistoryGenerationResponseSchema)
-  - `frontend/src/lib/api/relationshipApi.ts` (new - generateRelationshipHistory function)
-  - `frontend/src/lib/api/index.ts` (modified - export generateRelationshipHistory)
-  - `frontend/src/components/graph/RelationshipGraph.tsx` (modified - added Generate History button with loading state)
-  - `frontend/src/mocks/handlers.ts` (modified - mock handler for /relationships/:id/generate-history)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - RelationshipGraph's selectedEdge state holds both edge ID and data object (RelationshipEdgeData)
-  - Edge selection triggers setSelectedEdge which renders the detail panel overlay
-  - Button text changes based on whether description exists: "Generate History" vs "Regenerate History"
-  - State updates after generation should update both edges array (setEdges) and selectedEdge state
----
-
-## [CHAR-033] - 2026-02-01
-- What was implemented: AI Relationship Event Generator. Added generate_relationship_history(charA, charB) method to LLMWorldGenerator that creates backstories explaining relationship dynamics based on trust/romance levels. Created RelationshipHistoryResult dataclass with backstory, first_meeting, defining_moment, and current_status fields. Created relationship_history_gen.yaml prompt template with trust/romance level interpretation guidance (0-100 scale meanings). Prompt construction injects both characters' psychology and traits.
-- Files changed:
-  - `src/contexts/world/infrastructure/generators/llm_world_generator.py` (modified - added generate_relationship_history method, _load_relationship_history_prompt, _build_relationship_history_user_prompt, _parse_relationship_history_response, RelationshipHistoryResult dataclass)
-  - `src/contexts/world/infrastructure/generators/__init__.py` (modified - export RelationshipHistoryResult)
-  - `src/contexts/world/infrastructure/prompts/relationship_history_gen.yaml` (new - prompt template)
-  - `tests/unit/contexts/world/infrastructure/test_relationship_history_generation.py` (new - 24 tests)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - LLMWorldGenerator uses a consistent pattern for all generation types: prompt YAML file + loader + user prompt builder + response parser
-  - Relationship history takes trust (0-100) and romance (0-100) as parameters with default values (50 neutral, 0 none)
-  - RelationshipHistoryResult follows DialogueResult pattern with to_dict() that omits null fields
-  - Prompt YAML includes guidance on interpreting numeric levels (e.g., 0-20 trust = deep distrust/betrayal history)
----
-
-## [CHAR-032] - 2026-02-01
-- What was implemented: SocialStatsWidget dashboard panel displaying social network statistics. Shows "Most Connected", "Most Hated", and "Most Loved" characters with icons and color-coded backgrounds. Includes network summary showing total characters and relationships count. Component fetches data from /api/social/analysis endpoint.
-- Files changed:
-  - `frontend/src/types/schemas.ts` (modified - CharacterCentralitySchema, SocialAnalysisResponseSchema)
-  - `frontend/src/lib/api/socialApi.ts` (new - getSocialAnalysis, getCharacterCentrality)
-  - `frontend/src/lib/api/index.ts` (modified - export social API functions)
-  - `frontend/src/features/dashboard/components/panels/SocialStatsWidget.tsx` (new - dashboard widget)
-  - `frontend/src/features/dashboard/components/DashboardShell.tsx` (modified - add SocialStatsWidget to grid)
-  - `frontend/src/mocks/handlers.ts` (modified - social analysis mock endpoints)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - Dashboard panels use lazy loading pattern: `const Panel = lazy(() => import('./panels/Panel'))`
-  - Card components from `@/shared/components/ui/Card` provide consistent dashboard styling
-  - Mock handlers can compute derived metrics (centrality, averages) from base mockRelationships data
-  - Character IDs like `aria-shadowbane` are formatted to display names by splitting on `-` and capitalizing
-  - Social stats use icon + label + value layout with colored backgrounds (bg-{color}-500/10)
----
-
-## [CHAR-031] - 2026-02-01
-- What was implemented: Social Network Analysis service that calculates centrality metrics for character relationship networks. Created SocialGraphService with analyze_social_network() and get_character_centrality() methods. Computes per-character metrics (relationship_count, positive/negative counts, average_trust, average_romance, centrality_score). Identifies "most connected", "most hated", and "most loved" characters. Calculates network density. Added REST API endpoints GET /api/social/analysis and GET /api/social/analysis/{character_id}.
-- Files changed:
-  - `src/contexts/world/application/services/__init__.py` (new - exports service and dataclasses)
-  - `src/contexts/world/application/services/social_graph_service.py` (new - SocialGraphService with CharacterCentrality and SocialAnalysisResult dataclasses)
-  - `src/api/schemas.py` (modified - CharacterCentralitySchema, SocialAnalysisResponse)
-  - `src/api/routers/social.py` (new - /social/analysis endpoints)
-  - `src/api/main_api_server.py` (modified - register social router)
-  - `tests/unit/contexts/world/application/__init__.py` (new)
-  - `tests/unit/contexts/world/application/test_social_graph_service.py` (new - 22 tests)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - Application services go in `src/contexts/{context}/application/services/` following DDD layering
-  - Social analysis filters to CHARACTER-to-CHARACTER relationships only via find_by_entity_types()
-  - Centrality is normalized: highest relationship_count = 100, others proportional
-  - Network density = actual_edges / max_possible_edges (capped at 1.0 for directed overcounting)
-  - "Most loved" uses weighted score: 60% trust + 40% romance to balance universal trust vs specific romance
----
-
-## [CHAR-030] - 2026-02-01
-- What was implemented: Frontend Goals Tracker displaying character goals as a checkbox-style list. Created GoalsList.tsx component with status indicators (circle, check, X icons), strikethrough for completed/failed goals, urgency badges, and sorting (active goals first by urgency, then resolved by completion date). Added Goals tab to CharacterDetailsDialog (now 5 tabs). Added CharacterGoalSchema and related types to frontend/src/types/schemas.ts. Updated mock handlers with sample goal data for both characters.
-- Files changed:
-  - `frontend/src/features/characters/components/GoalsList.tsx` (new - scrollable goal list component)
-  - `frontend/src/features/characters/CharacterDetailsDialog.tsx` (modified - added Goals tab)
-  - `frontend/src/types/schemas.ts` (modified - CharacterGoal, GoalStatus, GoalUrgency schemas)
-  - `frontend/src/mocks/handlers.ts` (modified - sample goals for testing)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - When adding new tabs to CharacterDetailsDialog, update grid-cols-N in TabsList to match tab count
-  - Goals are sorted: CRITICAL > HIGH > MEDIUM > LOW for active, then by completed_at for resolved
-  - Frontend goal schema uses inline definition in CharacterDetailSchema to avoid ordering issues
-  - Badge variants can use className with custom bg-/text- utilities for status colors
-  - ScrollArea component is in `@/components/ui` not `@/shared/components/ui`
----
-
-## [CHAR-029] - 2026-02-01
-- What was implemented: Character Arc/Goals domain model. Created CharacterGoal frozen dataclass with description, status (ACTIVE/COMPLETED/FAILED), urgency (LOW/MEDIUM/HIGH/CRITICAL). Added goals list to Character aggregate with lifecycle methods (add_goal, complete_goal, fail_goal, update_urgency, remove_goal). Created CharacterGoalSchema and CRUD API endpoints. Added 45 unit tests.
-- Files changed:
-  - `src/contexts/character/domain/value_objects/character_goal.py` (new - CharacterGoal value object with GoalStatus, GoalUrgency enums)
-  - `src/contexts/character/domain/value_objects/__init__.py` (modified - export CharacterGoal, GoalStatus, GoalUrgency)
-  - `src/contexts/character/domain/aggregates/character.py` (modified - goals list and goal operations)
-  - `src/api/schemas.py` (modified - CharacterGoalSchema, CharacterGoalCreateRequest, CharacterGoalUpdateRequest, CharacterGoalsResponse)
-  - `src/api/routers/goals.py` (new - CRUD endpoints for goals)
-  - `src/api/main_api_server.py` (modified - register goals router)
-  - `tests/unit/contexts/character/domain/test_character_goal.py` (new - 45 tests)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - Goals follow the same pattern as memories: stored in structured_data.goals via workspace_character_store
-  - CharacterGoal is immutable (frozen dataclass) - state transitions return new instances
-  - Urgency levels: LOW = background ambition, MEDIUM = important, HIGH = pressing, CRITICAL = immediate
-  - Goal completion sets completed_at timestamp automatically
-  - Active goals cannot have completed_at timestamp (validation enforced)
----
-
-## [CHAR-028] - 2026-02-01
-- What was implemented: Frontend Dialogue Tester - a chat-like voice testing interface for characters. Created `/world/characters/:characterId/voice` route with DialogueTester component featuring context input, mood selector, and conversation history. Backend dialogue API router (POST /dialogue/generate) connects frontend to LLMWorldGenerator. Added Zod schemas for type-safe API calls.
-- Files changed:
-  - `src/api/routers/dialogue.py` (new - dialogue generation API endpoint)
-  - `src/api/main_api_server.py` (modified - register dialogue router)
-  - `frontend/src/features/characters/components/DialogueTester.tsx` (new - chat interface)
-  - `frontend/src/pages/CharacterVoicePage.tsx` (new - route page)
-  - `frontend/src/app/router.tsx` (modified - add characterVoiceRoute)
-  - `frontend/src/lib/api/dialogueApi.ts` (new - API client)
-  - `frontend/src/lib/api/index.ts` (modified - export generateDialogue)
-  - `frontend/src/types/schemas.ts` (modified - DialogueGenerationRequest/Response)
-  - `frontend/src/mocks/handlers.ts` (modified - dialogue mock handler)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - TanStack Router dynamic params use `$` prefix, not `:` (e.g., `$characterId` not `:characterId`)
-  - Protected route refs need `/protected/` prefix in useParams `from:` option
-  - Button doesn't have `asChild` prop in this codebase - wrap Link around Button instead
-  - Mock handlers can use lookup tables with nullish coalescing for fallback responses
-  - exactOptionalPropertyTypes requires explicit `?? null` for undefined -> null conversions
----
-
-## [CHAR-027] - 2026-02-01
-- What was implemented: AI Voice/Dialogue Generator that creates character-authentic speech. Added generate_dialogue(character, context, mood) method to LLMWorldGenerator. Created dialogue_gen.yaml prompt template with Big Five psychology guidance for speech patterns. Added CharacterData DTO for input and DialogueResult dataclass for structured output. Added DialogueGenerationRequest/Response schemas to API for future router integration.
-- Files changed:
-  - `src/contexts/world/infrastructure/generators/llm_world_generator.py` (modified - added dialogue generation methods and classes)
-  - `src/contexts/world/infrastructure/generators/__init__.py` (modified - export CharacterData, DialogueResult)
-  - `src/contexts/world/infrastructure/prompts/dialogue_gen.yaml` (new)
-  - `src/api/schemas.py` (modified - added DialogueGenerationRequest/Response)
-  - `tests/unit/contexts/world/infrastructure/test_dialogue_generation.py` (new - 23 tests)
-  - `scripts/ralph/prd.json` (modified - set passes: true)
-- **Learnings for future iterations:**
-  - LLMWorldGenerator handles all AI generation (world, profiles, dialogue) - extend it for new generation needs
-  - CharacterData.from_character_aggregate() extracts needed fields from Character aggregate
-  - Psychology traits influence dialogue: high extraversion = enthusiastic, high neuroticism = hedging language
-  - Prompt YAML files use system_prompt key, loaded via _load_*_prompt() methods
-  - DialogueResult.to_dict() omits null optional fields for cleaner API responses
----
-
-## [CHAR-026] - 2026-02-01
-- What was implemented: Sims-style relationship status bars for the RelationshipGraph. Created RelationshipStatusBars component with Trust and Romance progress bars using shadcn Progress component. Added color coding from Red (0-30) to Yellow (31-50) to Lime (51-70) to Green (71-100). Updated RelationshipGraph to support edge selection with detail panel overlay showing relationship metrics. Added InteractionLogSchema to frontend types and updated RelationshipResponseSchema with trust, romance, interaction_history fields.
-- Files changed:
-  - `frontend/src/components/graph/RelationshipStatusBars.tsx` (new)
-  - `frontend/src/components/graph/RelationshipGraph.tsx`
-  - `frontend/src/components/graph/index.ts`
-  - `frontend/src/shared/components/ui/Progress.tsx` (new)
-  - `frontend/src/shared/components/ui/index.ts`
-  - `frontend/src/types/schemas.ts`
-  - `frontend/src/mocks/handlers.ts`
-  - `frontend/package.json`
-  - `scripts/ralph/prd.json`
-- **Learnings for future iterations:**
-  - Install shadcn components via `npx shadcn@latest add <component>` - they install to src/components/ui by default
-  - Project uses src/shared/components/ui for UI primitives - move installed components there
-  - Progress component extended with indicatorClassName prop for custom fill colors
-  - Edge selection in React Flow uses onSelectionChange with selectedEdges array
-  - Color scale for relationship status: 0-30 red (bad), 31-50 yellow (neutral), 51-70 lime (good), 71-100 green (excellent)
----
-
-## [CHAR-025] - 2026-02-01
-- What was implemented: Dynamic relationship evolution with trust (0-100) and romance (0-100) metrics. Created InteractionLog frozen dataclass to record relationship-changing interactions. Added log_interaction() method that updates trust/romance with automatic clamping and records history. Added update_trust/update_romance direct setters, get_interaction_history/get_recent_interactions helpers. Updated schemas.py with InteractionLogSchema and LogInteractionRequest. Added POST /relationships/{id}/interactions endpoint. Added 31 new unit tests.
-- Files changed:
-  - `src/contexts/world/domain/entities/relationship.py`
-  - `src/contexts/world/domain/entities/__init__.py`
-  - `src/api/schemas.py`
-  - `src/api/routers/relationships.py`
-  - `tests/unit/contexts/world/domain/test_relationship.py`
-  - `scripts/ralph/prd.json`
-- **Learnings for future iterations:**
-  - Relationship entity is in world context, not character context
-  - Trust/romance changes via log_interaction are clamped (not rejected) to stay in 0-100 range
-  - InteractionLog stores trust_change/romance_change as deltas (-100 to +100), not absolute values
-  - History stored as immutable Tuple, converted via `history + (new_log,)` pattern
-  - Default trust is 50 (neutral), default romance is 0 (none)
----
-
-## [CHAR-024] - 2026-02-01
-- What was implemented: MemoryTimeline.tsx component displaying character memories as a vertical scrollable list. Memories are sorted by timestamp (newest first). Core memories (importance > 8) are highlighted with amber border and star icon. Added CharacterMemorySchema to frontend types with importance_level enum. Integrated as new "Memories" tab in CharacterDetailsDialog (now 4 tabs). Updated mock handlers with sample memory data for testing.
-- Files changed:
-  - `frontend/src/features/characters/components/MemoryTimeline.tsx` (new)
-  - `frontend/src/features/characters/CharacterDetailsDialog.tsx`
-  - `frontend/src/types/schemas.ts`
-  - `frontend/src/mocks/handlers.ts`
-  - `scripts/ralph/prd.json`
-- **Learnings for future iterations:**
-  - CharacterDetail type inferred from Zod schema automatically gets new fields when schema updated
-  - Use ScrollArea component from shadcn/ui for scrollable containers with consistent styling
-  - Core memory threshold is importance > 8 (not >= 8), matching backend is_core_memory check
-  - Badge variants with custom colors: use className with bg-/text- utilities over variant prop
-  - When adding new tabs, update grid-cols-N in TabsList to match tab count
----
-
-## [CHAR-023] - 2026-02-01
-- What was implemented: CharacterMemory value object (frozen dataclass) with content, importance (1-10), tags, timestamp, memory_id. Character aggregate now has memories list, add_memory() method, and helper methods (get_memories, get_core_memories, get_memories_by_tag, get_recent_memories). Created memories.py router with CRUD endpoints. Added CharacterMemorySchema to schemas.py. Created 31 unit tests covering validation, business logic, and aggregate integration.
-- Files changed:
-  - `src/contexts/character/domain/value_objects/character_memory.py` (new)
-  - `src/contexts/character/domain/value_objects/__init__.py`
-  - `src/contexts/character/domain/aggregates/character.py`
-  - `src/api/routers/memories.py` (new)
-  - `src/api/schemas.py`
-  - `src/api/main_api_server.py`
-  - `tests/unit/contexts/character/domain/test_character_memory.py` (new)
-  - `scripts/ralph/prd.json`
-- **Learnings for future iterations:**
-  - Use frozen dataclass with tuple (not list) for immutable value objects
-  - Convert lists to tuples in __post_init__ for frozen dataclasses
-  - is_core_memory() threshold is importance > 8 (not >= 9)
-  - Memory importance levels: 1-3=minor, 4-6=moderate, 7-8=significant, 9-10=core
-  - Memories are stored in character's structured_data.memories for workspace characters
----
-
-## [CHAR-022] - 2026-02-01
-- What was implemented: PsychologyChart.tsx component using Recharts RadarChart to visualize Big Five personality traits. Added CharacterPsychologySchema to frontend types. Integrated chart into CharacterDetailsDialog as a new "Psychology" tab. Updated backend CharacterDetailResponse to include optional psychology field.
-- Files changed:
-  - `frontend/src/features/characters/components/PsychologyChart.tsx` (new)
-  - `frontend/src/features/characters/CharacterDetailsDialog.tsx`
-  - `frontend/src/types/schemas.ts`
-  - `src/api/schemas.py`
-  - `scripts/ralph/prd.json`
-- **Learnings for future iterations:**
-  - recharts already installed, use ResponsiveContainer for proper sizing
-  - Custom tooltip requires null check for payload[0] to satisfy TypeScript strict mode
-  - Use hsl(var(--css-variable)) pattern for theming recharts components
-  - TabsList grid-cols must match number of TabsTrigger children
----
-
-## [CHAR-021] - 2026-02-01
-- What I implemented: CharacterPsychology value object using Big Five (OCEAN) model with all required traits (openness, conscientiousness, extraversion, agreeableness, neuroticism). Added optional `psychology` field to Character aggregate with `update_psychology()` method. Created `CharacterPsychologySchema` Pydantic model in schemas.py. Added 18 comprehensive unit tests.
-- Pattern discovered: The Character aggregate uses Optional fields for mutable state that isn't part of the frozen CharacterProfile. This follows the convention noted in techContext to "Extend Character aggregate (not frozen CharacterProfile) for mutable state".
-- Gotcha for future: CharacterProfile is frozen (immutable dataclass), so new mutable character properties should go on the Character aggregate directly, not on the profile.

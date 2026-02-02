@@ -36,7 +36,7 @@
         "npm run type-check passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {
