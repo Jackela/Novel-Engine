@@ -32,6 +32,12 @@ const prepareApp = async () => {
     }
   }
 
+  if (import.meta.env.DEV && import.meta.env.VITE_E2E_EXPOSE_WEAVER === 'true') {
+    const { exposeDecisionStoreForE2E } =
+      await import('./features/decision/exposeDecisionStore');
+    exposeDecisionStoreForE2E();
+  }
+
   renderApp();
 };
 

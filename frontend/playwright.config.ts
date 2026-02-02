@@ -16,6 +16,9 @@ const enableFullMatrix =
   (process.env.PLAYWRIGHT_ENABLE_FULL_MATRIX || '').toLowerCase() === 'true';
 const playwrightPort = Number(process.env.PLAYWRIGHT_PORT || process.env.VITE_DEV_PORT || 3000);
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${playwrightPort}`;
+const reuseServer =
+  (process.env.PLAYWRIGHT_REUSE_SERVER || '').toLowerCase() === 'true' &&
+  !process.env.CI;
 
 const browserProjects = [
   {
@@ -120,6 +123,9 @@ export default defineConfig({
     actionTimeout: 10 * 1000,
     navigationTimeout: 30 * 1000,
 
+    // Ensure MSW service workers can register in test runs
+    serviceWorkers: 'allow',
+
     // Screenshots and videos
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -137,13 +143,13 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: baseUrl,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: reuseServer,
     timeout: 120 * 1000, // 2 minutes to start dev server
     env: {
       NODE_ENV: 'test',
       VITE_DEV_PORT: String(playwrightPort),
       VITE_API_BASE_URL: process.env.TEST_API_URL || '/api',
-      VITE_ENABLE_MSW: 'false',
+      VITE_ENABLE_MSW: 'true',
       VITE_E2E_BYPASS_AUTH: process.env.PLAYWRIGHT_BYPASS_AUTH ?? 'true',
       VITE_E2E_EXPOSE_WEAVER: 'true',
       VITE_WS_URL: process.env.TEST_WS_URL || 'ws://localhost:8001/ws',
