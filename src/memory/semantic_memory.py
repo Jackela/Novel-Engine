@@ -46,7 +46,8 @@ class KnowledgeFact:
         self.confidence = max(0.0, min(1.0, self.confidence))
         if not self.fact_id:
             fact_hash = hashlib.sha1(
-                f"{self.subject}{self.predicate}{self.object_value}".encode()
+                f"{self.subject}{self.predicate}{self.object_value}".encode(),
+                usedforsecurity=False,  # nosec B324 - used for ID generation, not security
             ).hexdigest()[:8]
             self.fact_id = f"fact_{fact_hash}"
 

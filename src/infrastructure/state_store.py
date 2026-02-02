@@ -166,7 +166,7 @@ class RedisStateStore(StateStore):
                 return json.loads(raw_value)
             except json.JSONDecodeError:
                 try:
-                    return pickle.loads(raw_value)
+                    return pickle.loads(raw_value)  # nosec B301 - trusted internal state data
                 except Exception:
                     # Return as string if deserialization fails
                     return (
@@ -1055,7 +1055,7 @@ class ConfigurationManager:
                 "level": "INFO",
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             },
-            "api": {"host": "0.0.0.0", "port": 8000, "workers": 4},
+            "api": {"host": "0.0.0.0", "port": 8000, "workers": 4},  # nosec B104 - default config
             "security": {
                 "encryption_key": None,
                 "jwt_secret": None,

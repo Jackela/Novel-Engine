@@ -221,7 +221,7 @@ class IntelligentCacheManager:
         try:
             if compressed:
                 data = gzip.decompress(data)
-            return pickle.loads(data)
+            return pickle.loads(data)  # nosec B301 - trusted internal cache data
         except Exception as e:
             logger.error(f"Value decompression failed: {e}")
             raise
@@ -626,7 +626,7 @@ class IntelligentCacheManager:
             if os.path.exists(file_path):
                 with open(file_path, "rb") as f:
                     data = f.read()
-                    return pickle.loads(data)
+                    return pickle.loads(data)  # nosec B301 - trusted disk cache data
 
             return None
 

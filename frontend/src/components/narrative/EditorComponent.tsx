@@ -334,17 +334,14 @@ export function EditorComponent({
         },
         suggestion: {
           ...mentionSuggestion,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          command: ({
-            editor,
-            range,
-            props,
-          }: {
-            editor: Editor;
-            range: { from: number; to: number };
-            props: any;
-          }) => {
-            const item = props as SuggestionItem;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Tiptap Mention extension type mismatch
+          command: (commandProps: any) => {
+            const { editor, range, props } = commandProps as {
+              editor: Editor;
+              range: { from: number; to: number };
+              props: SuggestionItem;
+            };
+            const item = props;
             // Delete the @query text
             editor.chain().focus().deleteRange(range).run();
 

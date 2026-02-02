@@ -57,7 +57,7 @@ def main():
     logger.info("Starting Novel Engine Turn Orchestration Service")
 
     # Configuration from environment variables
-    host = os.environ.get("HOST", "0.0.0.0")
+    host = os.environ.get("HOST", "0.0.0.0")  # nosec B104 - configurable via env var
     port = int(os.environ.get("PORT", 8000))
     log_level = os.environ.get("LOG_LEVEL", "info").lower()
     reload = os.environ.get("RELOAD", "false").lower() == "true"

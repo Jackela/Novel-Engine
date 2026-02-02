@@ -298,10 +298,10 @@ class AsyncLLMClient:
             "faction": character_context.get("faction", ""),
         }
         context_str = json.dumps(context_data, sort_keys=True)
-        context_hash = hashlib.md5(context_str.encode()).hexdigest()[:8]
+        context_hash = hashlib.md5(context_str.encode(), usedforsecurity=False).hexdigest()[:8]  # nosec B324
 
         # Create prompt hash
-        prompt_hash = hashlib.md5(prompt.encode()).hexdigest()[:12]
+        prompt_hash = hashlib.md5(prompt.encode(), usedforsecurity=False).hexdigest()[:12]  # nosec B324
 
         return f"{agent_id}:{prompt_hash}:{context_hash}"
 
@@ -339,7 +339,7 @@ class AsyncLLMClient:
             del self.cache[lru_key]
 
         # Create cache entry
-        prompt_hash = hashlib.md5(prompt.encode()).hexdigest()[:12]
+        prompt_hash = hashlib.md5(prompt.encode(), usedforsecurity=False).hexdigest()[:12]  # nosec B324
         context_hash = self._generate_cache_key(agent_id, "", character_context).split(
             ":"
         )[-1]

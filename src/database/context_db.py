@@ -911,7 +911,7 @@ class ContextDatabase:
                     "interactions",
                 ]:
                     async with connection.execute(
-                        f"SELECT COUNT(*) as count FROM {table}"
+                        f"SELECT COUNT(*) as count FROM {table}"  # nosec B608
                     ) as cursor:
                         row = await cursor.fetchone()
                         statistics[f"{table}_count"] = row["count"]

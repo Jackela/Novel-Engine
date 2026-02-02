@@ -73,7 +73,7 @@ class QualityIssue:
     def issue_id(self) -> str:
         """Generate unique issue ID"""
         content = f"{self.file_path}:{self.line_number}:{self.rule_id}"
-        return hashlib.md5(content.encode()).hexdigest()[:12]
+        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]  # nosec B324
 
 
 @dataclass
