@@ -6,7 +6,6 @@ import asyncio
 import time
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Dict, List, Optional
-from uuid import uuid4
 
 from ...domain.services.llm_provider import (
     ILLMProvider,
