@@ -65,6 +65,9 @@ export default {
           loading: 'rgb(0 229 255 / <alpha-value>)',
           error: 'rgb(255 92 77 / <alpha-value>)',
         },
+        paper: 'hsl(var(--paper))',
+        ink: 'hsl(var(--ink))',
+        'accent-literary': 'hsl(var(--accent-literary))',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -73,7 +76,7 @@ export default {
       },
       fontFamily: {
         sans: [
-          'Inter',
+          'Manrope',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',
@@ -88,6 +91,31 @@ export default {
           'Segoe UI Emoji',
           'Segoe UI Symbol',
           'Noto Color Emoji',
+        ],
+        serif: [
+          'Lora',
+          'Georgia',
+          'Cambria',
+          'Times New Roman',
+          'Times',
+          'serif',
+        ],
+        display: [
+          'Space Grotesk',
+          'ui-sans-serif',
+          'system-ui',
+          'sans-serif',
+        ],
+        mono: [
+          'IBM Plex Mono',
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'Monaco',
+          'Consolas',
+          'Liberation Mono',
+          'Courier New',
+          'monospace',
         ],
       },
       keyframes: {

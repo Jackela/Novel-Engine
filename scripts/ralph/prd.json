@@ -1,305 +1,104 @@
 {
-  "project": "Novel-Engine-Warzone-2",
+  "project": "Novel-Engine-Visual-Rescue",
   "branchName": "feat/character-evolution",
-  "description": "WARZONE 2: Making characters dynamic with Memories, Relationships Evolution, and Voice.",
+  "description": "Full UI refactor implementing DESIGN_SYSTEM.md constraints and orthogonal theme architecture",
   "techContext": {
-    "stack": "FastAPI + React + Recharts (Charts) + OpenAI (Mocked)",
-    "testCommand": "pytest",
-    "e2eCommand": "npm run test:e2e",
-    "typecheckCommand": "npm run typecheck",
-    "conventions": [
-      "Use `Recharts` for visualizing psychological traits",
-      "Character events must be immutable logs"
-    ]
+    "stack": "React + Tailwind + shadcn/ui + Tiptap + React Flow",
+    "testCommand": "npm run test:e2e",
+    "conventions": "MUST read DESIGN_SYSTEM.md and CONVENTIONS.md before coding"
   },
   "userStories": [
     {
-      "id": "CHAR-021",
-      "title": "Domain: Character Psychology Model (Big 5)",
-      "description": "Quantify personality.",
+      "id": "VIS-001",
+      "title": "Setup Design Tokens and Font System",
+      "description": "Extend Tailwind configuration with Lora font and literary theme tokens",
       "acceptanceCriteria": [
-        "Update `Character` entity.",
-        "Add `psychology`: { openness, conscientiousness, extraversion, agreeableness, neuroticism } (0-100 scale).",
-        "Migration: Update DB/Mock.",
-        "Test: `pytest` validation range."
+        "index.html loads Lora font (400/500/600 + italic)",
+        "tailwind.config.js defines fontFamily.serif with Lora",
+        "tailwind.css defines --paper, --ink, --accent-literary CSS variables",
+        "[data-typography='literary'] selector correctly overrides editor styles",
+        "dark mode + literary has distinct warm dark tones"
       ],
       "priority": 1,
-      "passes": true,
-      "effort": "low"
-    },
-    {
-      "id": "CHAR-022",
-      "title": "Frontend: Psychology Radar Chart",
-      "description": "Visualize personality.",
-      "acceptanceCriteria": [
-        "Install `recharts`.",
-        "Create `PsychologyChart.tsx` using Radar Chart.",
-        "Embed in Character Profile.",
-        "Browser Verification: Chart renders correctly."
-      ],
-      "priority": 2,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["CHAR-021"]
-    },
-    {
-      "id": "CHAR-023",
-      "title": "Domain: Character Memory System",
-      "description": "Characters need to remember things.",
-      "acceptanceCriteria": [
-        "Create `CharacterMemory` entity: `content`, `importance` (1-10), `tags`, `timestamp`.",
-        "Add `add_memory()` method to Character aggregate.",
-        "API: CRUD for memories.",
-        "Test: `pytest` adding memories."
-      ],
-      "priority": 3,
       "passes": true,
       "effort": "medium"
     },
     {
-      "id": "CHAR-024",
-      "title": "Frontend: Memory Timeline",
-      "description": "A scrollable history of the character.",
+      "id": "VIS-002",
+      "title": "Refactor Component Directory Structure",
+      "description": "Create composed/ directory, rename AppLayout→AppShell, delete duplicate components",
       "acceptanceCriteria": [
-        "Create `MemoryTimeline.tsx`.",
-        "UI: Vertical list sorted by date.",
-        "Highlight 'Core Memories' (importance > 8).",
-        "Browser Verification: Add memory, see it appear."
+        "Create frontend/src/components/composed/ directory",
+        "Move and rename AppLayout.tsx to composed/AppShell.tsx",
+        "Update ProtectedLayout.tsx import path",
+        "Delete components/graph/nodes/CharacterNode.tsx (duplicate)",
+        "All CharacterNode imports point to features/weaver version",
+        "npm run type-check passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "VIS-003",
+      "title": "Create Editor Typography System",
+      "description": "Implement Editor Canvas domain literary typography",
+      "acceptanceCriteria": [
+        "Create frontend/src/styles/editor.css",
+        "Import editor.css in main.tsx",
+        "EditorComponent uses .prose-editor class",
+        "max-width: 65ch, line-height: 1.75 in literary mode",
+        "ProseMirror placeholder styles work correctly",
+        "character-mention has distinct literary mode styling"
+      ],
+      "priority": 3,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "VIS-004",
+      "title": "Enhance Weaver Node Styling",
+      "description": "Unify Graph Canvas visual style",
+      "acceptanceCriteria": [
+        "CharacterNode uses data-node-type attribute for type identification",
+        "Node status classes (idle/active/loading/error) produce consistent visuals",
+        "Glow effects use CSS variables for theming",
+        "Nodes have correct contrast in dark mode"
       ],
       "priority": 4,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["CHAR-023"]
+      "passes": false,
+      "effort": "low"
     },
     {
-      "id": "CHAR-025",
-      "title": "Domain: Dynamic Relationship Evolution",
-      "description": "Relationships change over time.",
+      "id": "VIS-005",
+      "title": "Implement Typography Mode Switcher",
+      "description": "Add default/literary toggle to TopBar",
       "acceptanceCriteria": [
-        "Update `Relationship` entity.",
-        "Add `trust` (0-100) and `romance` (0-100) metrics.",
-        "Add `log_interaction(summary, trust_change, romance_change)`.",
-        "Test: `pytest` verifying changes log."
+        "Create TypographyToggle.tsx component",
+        "Integrate into TopBar.tsx right-side actions",
+        "Toggle sets data-typography attribute on html element",
+        "Preference persists to localStorage",
+        "Icons correctly reflect current mode (Type/BookOpen)"
       ],
       "priority": 5,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["WORLD-003"]
+      "passes": false,
+      "effort": "low"
     },
     {
-      "id": "CHAR-026",
-      "title": "Frontend: Relationship Status Bars",
-      "description": "The Sims style relationship bars.",
+      "id": "VIS-006",
+      "title": "Visual Regression Testing Baseline",
+      "description": "Create visual regression tests for all 4 theme combinations",
       "acceptanceCriteria": [
-        "Update `RelationshipGraph` node details.",
-        "Show Trust/Romance progress bars (shadcn `Progress`).",
-        "Color code: Red (Hate) -> Green (Love).",
-        "Browser Verification: Bars update."
+        "Create frontend/tests/e2e/visual-regression.spec.ts",
+        "Test captures baseline for light+default theme",
+        "Test captures baseline for light+literary theme",
+        "Test captures baseline for dark+default theme",
+        "Test captures baseline for dark+literary theme",
+        "All tests pass with npm run test:e2e"
       ],
       "priority": 6,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["CHAR-025"]
-    },
-    {
-      "id": "CHAR-027",
-      "title": "AI: Voice/Dialogue Generator",
-      "description": "Generate dialogue in character.",
-      "acceptanceCriteria": [
-        "Update `LLMWorldGenerator`.",
-        "Method: `generate_dialogue(character, context, mood)`.",
-        "Prompt: Inject `psychology`, `traits`, and `speaking_style`.",
-        "Test: Mock output."
-      ],
-      "priority": 7,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["CHAR-021"]
-    },
-    {
-      "id": "CHAR-028",
-      "title": "Frontend: Dialogue Tester",
-      "description": "Playground to test character voice.",
-      "acceptanceCriteria": [
-        "Create `/world/characters/{id}/voice` route.",
-        "UI: Chat interface (User inputs context -> AI responds as character).",
-        "Use `generate_dialogue` API.",
-        "Browser Verification: Chat works."
-      ],
-      "priority": 8,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["CHAR-027"]
-    },
-    {
-      "id": "CHAR-029",
-      "title": "Domain: Character Arc/Goals",
-      "description": "What do they want?",
-      "acceptanceCriteria": [
-        "Create `CharacterGoal` entity: `description`, `status` (ACTIVE/COMPLETED/FAILED), `urgency`.",
-        "Add `goals` list to Character.",
-        "API: CRUD Goals.",
-        "Test: `pytest`."
-      ],
-      "priority": 9,
-      "passes": true,
-      "effort": "low"
-    },
-    {
-      "id": "CHAR-030",
-      "title": "Frontend: Goals Tracker",
-      "description": "Kanban for character goals.",
-      "acceptanceCriteria": [
-        "Create `GoalsList.tsx`.",
-        "UI: Checkbox list with strikethrough for completed.",
-        "Browser Verification: Add/Complete goals."
-      ],
-      "priority": 10,
-      "passes": true,
-      "effort": "low",
-      "dependencies": ["CHAR-029"]
-    },
-    {
-      "id": "CHAR-031",
-      "title": "Domain: Social Network Analysis",
-      "description": "Who is the main character?",
-      "acceptanceCriteria": [
-        "Implement `SocialGraphService`.",
-        "Calculate `centrality` score for each character based on relationship count.",
-        "API: `GET /api/social/analysis`.",
-        "Test: `pytest` on a subgraph."
-      ],
-      "priority": 11,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["WORLD-003"]
-    },
-    {
-      "id": "CHAR-032",
-      "title": "Frontend: Social Dashboard Widget",
-      "description": "Show network stats.",
-      "acceptanceCriteria": [
-        "Create `SocialStatsWidget.tsx`.",
-        "Display: 'Most Connected', 'Most Hated', 'Most Loved'.",
-        "Browser Verification: Stats match graph."
-      ],
-      "priority": 12,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["CHAR-031"]
-    },
-    {
-      "id": "CHAR-033",
-      "title": "AI: Relationship Event Generator",
-      "description": "Generate history between characters.",
-      "acceptanceCriteria": [
-        "Update `LLMWorldGenerator`.",
-        "Method: `generate_relationship_history(charA, charB)`.",
-        "Prompt: Create a backstory explaining their current trust level.",
-        "Test: Mock output."
-      ],
-      "priority": 13,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["CHAR-025"]
-    },
-    {
-      "id": "CHAR-034",
-      "title": "Frontend: 'Generate Backstory' Button",
-      "description": "Fill in the blanks.",
-      "acceptanceCriteria": [
-        "In Relationship Editor, add 'Generate History' button.",
-        "Fills the `description` field.",
-        "Browser Verification: Click fills text."
-      ],
-      "priority": 14,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["CHAR-033"]
-    },
-    {
-      "id": "CHAR-035",
-      "title": "Domain: Character Group/Faction Dynamics",
-      "description": "Characters belong to groups.",
-      "acceptanceCriteria": [
-        "Update `Character` to have `faction_id`.",
-        "Update `Faction` to have `leader_id`.",
-        "API: `POST /api/factions/{id}/join`.",
-        "Test: `pytest`."
-      ],
-      "priority": 15,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["WORLD-001"]
-    },
-    {
-      "id": "CHAR-036",
-      "title": "Frontend: Faction Roster",
-      "description": "Who is in this group?",
-      "acceptanceCriteria": [
-        "Create `FactionMembers.tsx`.",
-        "List characters with their roles.",
-        "Browser Verification: Join faction updates list."
-      ],
-      "priority": 16,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["CHAR-035"]
-    },
-    {
-      "id": "CHAR-037",
-      "title": "Integration: Sidebar 'Characters' Sort",
-      "description": "Organize the cast.",
-      "acceptanceCriteria": [
-        "Update Sidebar Character List.",
-        "Add Sort/Filter: By Faction, By Name, By Role.",
-        "Browser Verification: Sorting works."
-      ],
-      "priority": 17,
-      "passes": true,
-      "effort": "low",
-      "dependencies": ["CHAR-035"]
-    },
-    {
-      "id": "CHAR-038",
-      "title": "UX: Quick Create from Editor",
-      "description": "Don't break flow.",
-      "acceptanceCriteria": [
-        "In Editor, typing `@NewName` triggers creation prompt.",
-        "Opens mini-dialog to create basic character.",
-        "Browser Verification: Create without leaving page."
-      ],
-      "priority": 18,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["WORLD-017"]
-    },
-    {
-      "id": "CHAR-039",
-      "title": "Data: Export Character Sheet",
-      "description": "Download PDF/JSON.",
-      "acceptanceCriteria": [
-        "Frontend: Add 'Export' button to Profile.",
-        "Generate JSON download of full character graph.",
-        "Browser Verification: Download starts."
-      ],
-      "priority": 19,
-      "passes": true,
-      "effort": "low"
-    },
-    {
-      "id": "CHAR-040",
-      "title": "E2E: Character Lifecycle Test",
-      "description": "Birth to Death.",
-      "acceptanceCriteria": [
-        "Create `tests/e2e/character-lifecycle.spec.ts`.",
-        "Create -> Add Goals -> Evolve Relationship -> Generate Voice -> Export.",
-        "Run `npm run test:e2e`."
-      ],
-      "priority": 20,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["CHAR-021", "CHAR-025", "CHAR-029"]
+      "passes": false,
+      "effort": "medium"
     }
   ]
 }

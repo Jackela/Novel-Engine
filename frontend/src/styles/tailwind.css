@@ -28,6 +28,11 @@
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
+
+    /* Literary Theme Tokens (Light Mode) */
+    --paper: 40 30% 96%;
+    --ink: 30 15% 20%;
+    --accent-literary: 35 80% 45%;
   }
 
   .dark {
@@ -54,6 +59,11 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+
+    /* Literary Theme Tokens (Dark Mode - Warm Dark Tones) */
+    --paper: 30 15% 12%;
+    --ink: 40 20% 85%;
+    --accent-literary: 35 70% 55%;
   }
 }
 
@@ -63,6 +73,28 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Literary Typography Mode - Editor Canvas Only */
+  [data-typography="literary"] .prose-editor {
+    font-family: Lora, Georgia, serif;
+    background-color: hsl(var(--paper));
+    color: hsl(var(--ink));
+  }
+
+  [data-typography="literary"] .prose-editor .ProseMirror {
+    font-size: 1.125rem;
+    line-height: 1.75;
+    max-width: 65ch;
+  }
+
+  [data-typography="literary"] .prose-editor .character-mention {
+    color: hsl(var(--accent-literary));
+    background-color: hsl(var(--accent-literary) / 0.1);
+  }
+
+  [data-typography="literary"] .prose-editor .character-mention:hover {
+    background-color: hsl(var(--accent-literary) / 0.2);
   }
 }
 
