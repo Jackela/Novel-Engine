@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import uuid
 from datetime import datetime
 from typing import Any
@@ -20,8 +21,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Campaigns"])
 
+# Safe campaign ID pattern: alphanumeric, hyphens, underscores only
+SAFE_CAMPAIGN_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
+def _validate_campaign_id(campaign_id: str) -> None:
+    """Validate campaign_id to prevent path traversal attacks."""
+    if not campaign_id or not SAFE_CAMPAIGN_ID_PATTERN.match(campaign_id):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid campaign ID. Only alphanumeric characters, hyphens, and underscores are allowed.",
+        )
+    if len(campaign_id) > 128:
+        raise HTTPException(status_code=400, detail="Campaign ID too long (max 128 characters)")
+
 
 def _find_campaign_file(campaign_id: str) -> str | None:
+    """Find campaign file by ID. Caller must validate campaign_id first."""
     campaigns_paths = ["campaigns", "logs", "private/campaigns"]
     for campaigns_path in campaigns_paths:
         for extension in (".json", ".md"):
@@ -71,6 +87,7 @@ async def get_campaigns() -> CampaignsListResponse:
 @router.get("/campaigns/{campaign_id}", response_model=CampaignDetailResponse)
 async def get_campaign(campaign_id: str) -> CampaignDetailResponse:
     """Retrieves a campaign by id."""
+    _validate_campaign_id(campaign_id)
     campaign_file = _find_campaign_file(campaign_id)
     if not campaign_file:
         raise HTTPException(status_code=404, detail="Campaign not found")
