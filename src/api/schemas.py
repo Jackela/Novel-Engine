@@ -1550,4 +1550,5 @@ try:
         "UserPromptsListResponse",
     ]
 except ImportError:
+    # Optional imports for extended API schemas - these modules may not exist in all environments
     pass

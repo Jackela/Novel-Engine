@@ -98,8 +98,9 @@ describe('Character API Integration Tests', () => {
       // Verify skills are normalized
       // Note: Backend should store normalized values, verify by reading back
       const getResponse = await apiClient.get(`/api/characters/${response.data.id}`);
+      expect(getResponse.status).toBe(200); // Verify character can be retrieved
 
-      // If backend returns normalized values:
+      // If backend returns normalized values in future:
       // expect(getResponse.data.stats.strength).toBeCloseTo(0.0, 2);
       // expect(getResponse.data.stats.agility).toBeCloseTo(1.0, 2);
       // expect(getResponse.data.stats.intelligence).toBeCloseTo(0.444, 2);

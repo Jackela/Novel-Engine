@@ -142,8 +142,8 @@ class EventsService:
                         "cache_semantic_hits": 0,
                         "cache_exact_hits": 0,
                     }
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001 - silently return empty dict on any error
+            return {}
         return {}
 
     def _calculate_metrics(

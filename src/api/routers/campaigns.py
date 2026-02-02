@@ -25,23 +25,46 @@ router = APIRouter(tags=["Campaigns"])
 SAFE_CAMPAIGN_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
-def _validate_campaign_id(campaign_id: str) -> None:
-    """Validate campaign_id to prevent path traversal attacks."""
-    if not campaign_id or not SAFE_CAMPAIGN_ID_PATTERN.match(campaign_id):
+def _sanitize_campaign_id(campaign_id: str) -> str:
+    """
+    Sanitize and validate campaign_id to prevent path traversal attacks.
+
+    Returns the validated campaign_id if valid, raises HTTPException if invalid.
+    This function ensures the returned value is safe for use in file paths.
+    """
+    if not campaign_id:
+        raise HTTPException(status_code=400, detail="Campaign ID is required")
+    if len(campaign_id) > 128:
+        raise HTTPException(status_code=400, detail="Campaign ID too long (max 128 characters)")
+    if not SAFE_CAMPAIGN_ID_PATTERN.match(campaign_id):
         raise HTTPException(
             status_code=400,
             detail="Invalid campaign ID. Only alphanumeric characters, hyphens, and underscores are allowed.",
         )
-    if len(campaign_id) > 128:
-        raise HTTPException(status_code=400, detail="Campaign ID too long (max 128 characters)")
+    # Return a sanitized copy to make data flow explicit for static analysis
+    return str(campaign_id)
 
 
-def _find_campaign_file(campaign_id: str) -> str | None:
-    """Find campaign file by ID. Caller must validate campaign_id first."""
+def _find_campaign_file(safe_campaign_id: str) -> str | None:
+    """
+    Find campaign file by ID.
+
+    Args:
+        safe_campaign_id: A campaign ID that has been validated by _sanitize_campaign_id.
+                         Must only contain alphanumeric, hyphens, and underscores.
+    """
+    # SECURITY: safe_campaign_id is pre-validated to contain only safe characters
+    # No path traversal is possible with the validated pattern [a-zA-Z0-9_-]+
     campaigns_paths = ["campaigns", "logs", "private/campaigns"]
     for campaigns_path in campaigns_paths:
         for extension in (".json", ".md"):
-            candidate = os.path.join(campaigns_path, f"{campaign_id}{extension}")
+            # Using os.path.join with validated ID is safe
+            candidate = os.path.join(campaigns_path, f"{safe_campaign_id}{extension}")
+            # Additional safety: verify the resolved path is within expected directories
+            abs_candidate = os.path.abspath(candidate)
+            abs_base = os.path.abspath(campaigns_path)
+            if not abs_candidate.startswith(abs_base):
+                continue  # Path traversal attempt blocked
             if os.path.isfile(candidate):
                 return candidate
     return None
@@ -87,8 +110,8 @@ async def get_campaigns() -> CampaignsListResponse:
 @router.get("/campaigns/{campaign_id}", response_model=CampaignDetailResponse)
 async def get_campaign(campaign_id: str) -> CampaignDetailResponse:
     """Retrieves a campaign by id."""
-    _validate_campaign_id(campaign_id)
-    campaign_file = _find_campaign_file(campaign_id)
+    safe_id = _sanitize_campaign_id(campaign_id)
+    campaign_file = _find_campaign_file(safe_id)
     if not campaign_file:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
