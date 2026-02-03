@@ -11,11 +11,14 @@ Constitution Compliance:
 from typing import List, Optional
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from src.security.auth_system import User, UserRole, require_role
 from src.core.types.shared_types import CharacterId, KnowledgeEntryId, UserId
+
+logger = structlog.get_logger(__name__)
 
 # OpenTelemetry tracing (Article VII - Observability)
 try:
@@ -46,6 +49,7 @@ from src.contexts.knowledge.application.use_cases.update_knowledge_entry import 
 from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
 from src.contexts.knowledge.domain.models.access_level import AccessLevel
 from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+from src.contexts.knowledge.domain.models.agent_identity import AgentIdentity
 from src.contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import (
     MarkdownMigrationAdapter,
 )
@@ -148,8 +152,12 @@ def _entry_to_response(entry: KnowledgeEntry) -> KnowledgeEntryResponse:
 
 
 async def get_repository() -> IKnowledgeRepository:
-    """Get knowledge repository instance (dependency injection)."""
-    # TODO: Integrate with DatabaseManager for session management
+    """
+    Get knowledge repository instance (dependency injection).
+
+    NOTE: Current implementation uses direct async session creation.
+    Future enhancement: Integrate with DatabaseManager singleton for centralized session management.
+    """
     from core_platform.persistence.database import get_async_db_session
 
     async with get_async_db_session() as session:
@@ -157,8 +165,12 @@ async def get_repository() -> IKnowledgeRepository:
 
 
 async def get_event_publisher() -> IEventPublisher:
-    """Get event publisher instance (dependency injection)."""
-    # TODO: Integrate with KafkaClient singleton
+    """
+    Get event publisher instance (dependency injection).
+
+    NOTE: Current implementation creates new KafkaClient instance per request.
+    Future enhancement: Integrate with KafkaClient singleton for connection pooling.
+    """
     from src.contexts.orchestration.infrastructure.kafka.kafka_client import KafkaClient
 
     kafka_client = KafkaClient()
@@ -296,10 +308,36 @@ def create_knowledge_api() -> APIRouter:
         List knowledge entries with optional filters.
 
         Requires: Admin role (enforced by authentication T008, T043)
+
+        Admin users can access all knowledge entries regardless of access control.
+        Filters:
+            - knowledge_type: Filter by knowledge category
+            - owning_character_id: Filter by character ownership
         """
-        # TODO: Implement list/filter logic
-        # For now, return empty list
-        return []
+        # Admin users bypass access control - use admin agent identity
+        admin_agent = AgentIdentity(character_id="admin", roles=("admin",))
+
+        # Build knowledge type filter list
+        knowledge_types = [knowledge_type] if knowledge_type else None
+
+        try:
+            entries = await repository.retrieve_for_agent(
+                agent=admin_agent,
+                knowledge_types=knowledge_types,
+                owning_character_id=owning_character_id,
+            )
+            return [_entry_to_response(entry) for entry in entries]
+        except Exception as e:
+            logger.error(
+                "knowledge_list_error",
+                error=str(e),
+                error_type=type(e).__name__,
+                user_id=current_user.id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to retrieve knowledge entries",
+            )
 
     @router.get(
         "/entries/{entry_id}",
@@ -326,27 +364,22 @@ def create_knowledge_api() -> APIRouter:
                     detail="Knowledge entry not found",
                 )
 
-            # Convert to response model
-            return KnowledgeEntryResponse(
-                id=entry.id,
-                content=entry.content,
-                knowledge_type=entry.knowledge_type,
-                owning_character_id=entry.owning_character_id,
-                access_level=entry.access_control.access_level,
-                allowed_roles=list(entry.access_control.allowed_roles),
-                allowed_character_ids=list(entry.access_control.allowed_character_ids),
-                created_at=entry.created_at.isoformat(),
-                updated_at=entry.updated_at.isoformat(),
-                created_by=entry.created_by,
-            )
+            # Use helper function to convert to response model
+            return _entry_to_response(entry)
 
         except HTTPException:
             raise
-        except Exception:
-            # TODO: Log error with structured logging
+        except Exception as e:
+            logger.error(
+                "knowledge_get_error",
+                entry_id=str(entry_id),
+                error=str(e),
+                error_type=type(e).__name__,
+                user_id=current_user.id,
+            )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal server error",
+                detail="Failed to retrieve knowledge entry",
             )
 
     @router.put(

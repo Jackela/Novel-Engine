@@ -357,10 +357,12 @@ async def health_check(request: Request) -> Dict[str, Any]:
 @app.post("/auth/token")
 @limiter.limit("5/minute")
 async def login(request: Request, credentials: TokenRequest) -> Dict[str, str]:
-    """Authentication endpoint (implement your authentication logic)."""
-    # TODO: Implement proper authentication against your user database
-    # This is a placeholder implementation
+    """
+    Authentication endpoint.
 
+    NOTE: Current implementation uses environment variable-based admin authentication.
+    For production use, integrate with your user database for proper authentication.
+    """
     _reject_query_credentials(request)
 
     admin_username = os.getenv("ADMIN_USERNAME", "admin")

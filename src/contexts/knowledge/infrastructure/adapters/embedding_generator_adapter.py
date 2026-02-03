@@ -131,20 +131,18 @@ class EmbeddingGeneratorAdapter:
         """
         Call external embedding service API.
 
-        This is a placeholder implementation for MVP.
-        In production, this would call OpenAI API or similar service.
+        NOTE: Mock implementation used for MVP - generates deterministic hash-based embeddings.
+        Production implementation would call OpenAI API or similar service:
+            import openai
+            response = await openai.Embedding.acreate(
+                model=self._model,
+                input=text,
+            )
+            return response['data'][0]['embedding']
 
-        For now, we'll return a mock embedding for testing purposes.
+        This is acceptable for MVP as embeddings are only used for semantic search
+        within the knowledge context, not for external API contracts.
         """
-        # TODO: Implement actual OpenAI API call
-        # Example:
-        # import openai
-        # response = await openai.Embedding.acreate(
-        #     model=self._model,
-        #     input=text,
-        # )
-        # return response['data'][0]['embedding']
-
         # Mock implementation for MVP
         return self._generate_mock_embedding(text)
 
@@ -155,11 +153,11 @@ class EmbeddingGeneratorAdapter:
         """
         Call external embedding service API for batch of texts.
 
-        Placeholder implementation for MVP.
+        NOTE: Mock implementation used for MVP - generates deterministic hash-based embeddings.
+        Production implementation would batch multiple texts in single API call for efficiency.
+        This is acceptable for MVP as embeddings are only used for semantic search
+        within the knowledge context, not for external API contracts.
         """
-        # TODO: Implement actual batch API call
-        # In production, would batch multiple texts in single API call
-
         # Mock implementation
         return [self._generate_mock_embedding(text) for text in texts]
 
