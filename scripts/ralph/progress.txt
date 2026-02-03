@@ -210,3 +210,30 @@ Started: Tue Feb  3 16:06:24     2026
   - Dialog includes loading state, error state, and regenerate button
   - All 17 beat suggestion tests pass, frontend typecheck and lint pass
 ---
+
+## 2026-02-03 - DIR-049
+- **What was implemented:**
+  - Created Plotline entity in `src/contexts/narrative/domain/entities/plotline.py`
+  - Added PlotlineStatus enum (ACTIVE/RESOLVED/ABANDONED) for tracking storyline progression
+  - Implemented CRUD methods: update_name, update_description, update_color, resolve, abandon, reactivate
+  - Added is_active and is_resolved properties for UI convenience
+  - Added plotline_ids field to Scene entity with add/remove/set methods
+  - Backend: Added Plotline schemas to `src/api/schemas.py` (Create, Update, Response, List, scene linking)
+  - Backend: Added Plotline API endpoints at `/structure/plotlines` (CRUD)
+  - Backend: Added scene-plotline linking endpoints at `/structure/scenes/{scene_id}/plotlines`
+  - Backend: Implemented in-memory plotline storage following Conflict pattern
+- **Files changed:**
+  - `src/contexts/narrative/domain/entities/plotline.py` - New file (218 lines)
+  - `src/contexts/narrative/domain/entities/__init__.py` - Added Plotline exports
+  - `src/contexts/narrative/domain/entities/scene.py` - Added plotline_ids field and management methods
+  - `src/api/schemas.py` - Added Plotline schemas and scene linking schemas
+  - `src/api/routers/structure.py` - Added Plotline CRUD and scene linking endpoints
+  - `tests/unit/contexts/narrative/domain/test_plotline.py` - New file (27 tests)
+  - `tests/unit/contexts/narrative/domain/entities/test_scene_entity.py` - Added 9 plotline tests
+- **Learnings for future iterations:**
+  - Plotline API follows same pattern as Conflict API with in-memory storage
+  - Color validation is strict - must be hex color code with # prefix (3, 6, or 8 characters)
+  - Scene-plotline relationship is many-to-many via plotline_ids list in Scene entity
+  - Plotline CRUD endpoints are at `/structure/plotlines` (not nested under stories)
+  - Scene linking uses POST (link), DELETE (unlink), PUT (set all) pattern
+  - All 206 narrative domain tests pass (145 original + 25 conflict + 27 plotline + 9 scene plotline methods)
