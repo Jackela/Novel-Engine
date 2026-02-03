@@ -894,6 +894,66 @@ class SceneListResponse(BaseModel):
     scenes: List["SceneResponse"] = Field(default_factory=list)
 
 
+# === Beat Schemas (DIR-042) ===
+
+
+class BeatCreateRequest(BaseModel):
+    """Request model for creating a new beat.
+
+    Beats are atomic narrative units within a scene. Each beat
+    represents a single action, dialogue, or reaction moment.
+    """
+
+    content: str = Field(default="", max_length=10000, description="Beat narrative text")
+    beat_type: str = Field(
+        default="action",
+        description="Beat type: 'action', 'dialogue', 'reaction', 'revelation', 'transition', 'description'",
+    )
+    mood_shift: int = Field(
+        default=0, ge=-5, le=5, description="Emotional impact (-5 to +5)"
+    )
+    order_index: Optional[int] = Field(
+        default=None, ge=0, description="Position in scene (0-based)"
+    )
+
+
+class BeatUpdateRequest(BaseModel):
+    """Request model for updating a beat."""
+
+    content: Optional[str] = Field(default=None, max_length=10000)
+    beat_type: Optional[str] = Field(
+        default=None,
+        description="Beat type: 'action', 'dialogue', 'reaction', 'revelation', 'transition', 'description'",
+    )
+    mood_shift: Optional[int] = Field(default=None, ge=-5, le=5)
+
+
+class BeatResponse(BaseModel):
+    """Response model for a single beat."""
+
+    id: str = Field(..., description="Beat UUID")
+    scene_id: str = Field(..., description="Parent scene UUID")
+    content: str = Field(default="", description="Beat narrative text")
+    beat_type: str = Field(..., description="Beat classification")
+    mood_shift: int = Field(default=0, description="Emotional impact (-5 to +5)")
+    order_index: int = Field(..., description="Position in scene")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class BeatListResponse(BaseModel):
+    """Response model for listing beats."""
+
+    scene_id: str = Field(..., description="Parent scene UUID")
+    beats: List["BeatResponse"] = Field(default_factory=list)
+
+
+class ReorderBeatsRequest(BaseModel):
+    """Request model for reordering beats within a scene."""
+
+    beat_ids: List[str] = Field(..., description="Beat UUIDs in desired order")
+
+
 class MoveChapterRequest(BaseModel):
     """Request model for moving a chapter to a new position."""
 

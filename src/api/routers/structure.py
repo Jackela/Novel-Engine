@@ -18,12 +18,17 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.api.schemas import (
+    BeatCreateRequest,
+    BeatListResponse,
+    BeatResponse,
+    BeatUpdateRequest,
     ChapterCreateRequest,
     ChapterListResponse,
     ChapterResponse,
     ChapterUpdateRequest,
     MoveChapterRequest,
     MoveSceneRequest,
+    ReorderBeatsRequest,
     SceneCreateRequest,
     SceneListResponse,
     SceneResponse,
@@ -41,6 +46,7 @@ from src.contexts.narrative.domain import (
     Scene,
     Story,
 )
+from src.contexts.narrative.domain.entities.beat import Beat, BeatType
 from src.contexts.narrative.infrastructure.repositories.in_memory_narrative_repository import (
     InMemoryNarrativeRepository,
 )
@@ -132,6 +138,20 @@ def _scene_to_response(scene: Scene) -> SceneResponse:
         beat_count=len(scene.beats),
         created_at=scene.created_at.isoformat(),
         updated_at=scene.updated_at.isoformat(),
+    )
+
+
+def _beat_to_response(beat: Beat) -> BeatResponse:
+    """Convert a Beat entity to a response model."""
+    return BeatResponse(
+        id=str(beat.id),
+        scene_id=str(beat.scene_id),
+        content=beat.content,
+        beat_type=beat.beat_type.value,
+        mood_shift=beat.mood_shift,
+        order_index=beat.order_index,
+        created_at=beat.created_at.isoformat(),
+        updated_at=beat.updated_at.isoformat(),
     )
 
 
@@ -838,6 +858,251 @@ async def move_scene(
             extra={"scene_id": str(scene_uuid), "position": safe_position},
         )
         return _scene_to_response(scene)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ============ Beat Endpoints (DIR-042) ============
+
+
+def _get_scene_for_beat_ops(scene_id: UUID) -> Scene:
+    """Get a scene from storage, raising HTTPException if not found.
+
+    Why this helper:
+        Beat operations need to work directly with scenes. This helper
+        simplifies the repeated pattern of fetching and validating scenes.
+    """
+    scene = _get_scene(scene_id)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+    return scene
+
+
+@router.post(
+    "/scenes/{scene_id}/beats",
+    response_model=BeatResponse,
+    status_code=201,
+)
+async def create_beat(
+    scene_id: str,
+    request: BeatCreateRequest,
+) -> BeatResponse:
+    """Create a new beat in a scene.
+
+    Args:
+        scene_id: UUID of the parent scene.
+        request: Beat creation data.
+
+    Returns:
+        The created beat.
+
+    Raises:
+        HTTPException: If scene not found or beat creation fails.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    scene = _get_scene_for_beat_ops(scene_uuid)
+
+    try:
+        # Validate beat_type
+        valid_types = [t.value for t in BeatType]
+        if request.beat_type not in valid_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid beat_type: {request.beat_type}. Must be one of {valid_types}",
+            )
+
+        # Determine order_index
+        order_index = request.order_index
+        if order_index is None:
+            order_index = len(scene.beats)
+
+        beat = Beat(
+            scene_id=scene_uuid,
+            content=request.content,
+            beat_type=BeatType(request.beat_type),
+            mood_shift=request.mood_shift,
+            order_index=order_index,
+        )
+        scene.add_beat(beat)
+        _store_scene(scene)
+
+        logger.info("Created beat: %s in scene: %s", beat.id, scene_uuid)
+        return _beat_to_response(beat)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get(
+    "/scenes/{scene_id}/beats",
+    response_model=BeatListResponse,
+)
+async def list_beats(
+    scene_id: str,
+) -> BeatListResponse:
+    """List all beats in a scene.
+
+    Args:
+        scene_id: UUID of the scene.
+
+    Returns:
+        List of beats sorted by order_index.
+
+    Raises:
+        HTTPException: If scene not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    scene = _get_scene_for_beat_ops(scene_uuid)
+
+    return BeatListResponse(
+        scene_id=scene_id,
+        beats=[_beat_to_response(b) for b in scene.beats],
+    )
+
+
+@router.get(
+    "/scenes/{scene_id}/beats/{beat_id}",
+    response_model=BeatResponse,
+)
+async def get_beat(
+    scene_id: str,
+    beat_id: str,
+) -> BeatResponse:
+    """Get a beat by ID.
+
+    Args:
+        scene_id: UUID of the parent scene.
+        beat_id: UUID of the beat.
+
+    Returns:
+        The requested beat.
+
+    Raises:
+        HTTPException: If scene or beat not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    beat_uuid = _parse_uuid(beat_id, "beat_id")
+
+    scene = _get_scene_for_beat_ops(scene_uuid)
+    beat = scene.get_beat(beat_uuid)
+    if beat is None:
+        raise HTTPException(status_code=404, detail=f"Beat not found: {beat_id}")
+
+    return _beat_to_response(beat)
+
+
+@router.patch(
+    "/scenes/{scene_id}/beats/{beat_id}",
+    response_model=BeatResponse,
+)
+async def update_beat(
+    scene_id: str,
+    beat_id: str,
+    request: BeatUpdateRequest,
+) -> BeatResponse:
+    """Update a beat's properties.
+
+    Args:
+        scene_id: UUID of the parent scene.
+        beat_id: UUID of the beat.
+        request: Fields to update.
+
+    Returns:
+        The updated beat.
+
+    Raises:
+        HTTPException: If not found or update fails.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    beat_uuid = _parse_uuid(beat_id, "beat_id")
+
+    scene = _get_scene_for_beat_ops(scene_uuid)
+    beat = scene.get_beat(beat_uuid)
+    if beat is None:
+        raise HTTPException(status_code=404, detail=f"Beat not found: {beat_id}")
+
+    try:
+        if request.content is not None:
+            beat.update_content(request.content)
+        if request.beat_type is not None:
+            valid_types = [t.value for t in BeatType]
+            if request.beat_type not in valid_types:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid beat_type: {request.beat_type}. Must be one of {valid_types}",
+                )
+            beat.change_type(BeatType(request.beat_type))
+        if request.mood_shift is not None:
+            beat.update_mood_shift(request.mood_shift)
+
+        _store_scene(scene)
+        logger.info("Updated beat: %s", beat_uuid)
+        return _beat_to_response(beat)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete(
+    "/scenes/{scene_id}/beats/{beat_id}",
+    status_code=204,
+)
+async def delete_beat(
+    scene_id: str,
+    beat_id: str,
+) -> None:
+    """Delete a beat from a scene.
+
+    Args:
+        scene_id: UUID of the parent scene.
+        beat_id: UUID of the beat.
+
+    Raises:
+        HTTPException: If not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    beat_uuid = _parse_uuid(beat_id, "beat_id")
+
+    scene = _get_scene_for_beat_ops(scene_uuid)
+    if not scene.remove_beat(beat_uuid):
+        raise HTTPException(status_code=404, detail=f"Beat not found: {beat_id}")
+
+    _store_scene(scene)
+    logger.info("Deleted beat: %s", beat_uuid)
+
+
+@router.post(
+    "/scenes/{scene_id}/beats/reorder",
+    response_model=BeatListResponse,
+)
+async def reorder_beats(
+    scene_id: str,
+    request: ReorderBeatsRequest,
+) -> BeatListResponse:
+    """Reorder beats within a scene.
+
+    Args:
+        scene_id: UUID of the scene.
+        request: List of beat IDs in desired order.
+
+    Returns:
+        Updated list of beats in new order.
+
+    Raises:
+        HTTPException: If scene not found or beat IDs don't match.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    scene = _get_scene_for_beat_ops(scene_uuid)
+
+    try:
+        # Parse and validate all beat UUIDs
+        beat_uuids = [_parse_uuid(bid, "beat_id") for bid in request.beat_ids]
+        scene.reorder_beats(beat_uuids)
+        _store_scene(scene)
+
+        logger.info("Reordered beats in scene: %s", scene_uuid)
+        return BeatListResponse(
+            scene_id=scene_id,
+            beats=[_beat_to_response(b) for b in scene.beats],
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

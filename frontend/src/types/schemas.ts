@@ -643,6 +643,78 @@ export type StoryCreateRequest = z.infer<typeof StoryCreateRequestSchema>;
 export type ChapterCreateRequest = z.infer<typeof ChapterCreateRequestSchema>;
 export type SceneCreateRequest = z.infer<typeof SceneCreateRequestSchema>;
 
+// === Beat Schemas (DIR-042) ===
+
+/**
+ * Beat type enum matching backend BeatType.
+ * Classifications for narrative beat functions.
+ */
+export const BeatTypeEnum = z.enum([
+  'action',
+  'dialogue',
+  'reaction',
+  'revelation',
+  'transition',
+  'description',
+]);
+
+/**
+ * Beat response schema matching backend BeatResponse.
+ * Beats are atomic narrative units within a scene.
+ */
+export const BeatResponseSchema = z.object({
+  id: z.string(),
+  scene_id: z.string(),
+  content: z.string().default(''),
+  beat_type: BeatTypeEnum,
+  mood_shift: z.number().min(-5).max(5).default(0),
+  order_index: z.number(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Beat list response schema matching backend BeatListResponse.
+ */
+export const BeatListResponseSchema = z.object({
+  scene_id: z.string(),
+  beats: z.array(BeatResponseSchema).default([]),
+});
+
+/**
+ * Beat create request schema.
+ */
+export const BeatCreateRequestSchema = z.object({
+  content: z.string().max(10000).default(''),
+  beat_type: BeatTypeEnum.default('action'),
+  mood_shift: z.number().min(-5).max(5).default(0),
+  order_index: z.number().int().min(0).optional(),
+});
+
+/**
+ * Beat update request schema.
+ */
+export const BeatUpdateRequestSchema = z.object({
+  content: z.string().max(10000).optional(),
+  beat_type: BeatTypeEnum.optional(),
+  mood_shift: z.number().min(-5).max(5).optional(),
+});
+
+/**
+ * Reorder beats request schema.
+ */
+export const ReorderBeatsRequestSchema = z.object({
+  beat_ids: z.array(z.string()),
+});
+
+// Beat Types
+export type BeatType = z.infer<typeof BeatTypeEnum>;
+export type BeatResponse = z.infer<typeof BeatResponseSchema>;
+export type BeatListResponse = z.infer<typeof BeatListResponseSchema>;
+export type BeatCreateRequest = z.infer<typeof BeatCreateRequestSchema>;
+export type BeatUpdateRequest = z.infer<typeof BeatUpdateRequestSchema>;
+export type ReorderBeatsRequest = z.infer<typeof ReorderBeatsRequestSchema>;
+
 /**
  * Standard API response envelope matching backend's StandardResponse
  *
