@@ -858,6 +858,10 @@ class SceneCreateRequest(BaseModel):
     order_index: Optional[int] = Field(
         default=None, ge=0, description="Position in chapter (0-based)"
     )
+    story_phase: Optional[str] = Field(
+        default="setup",
+        description="Story phase: 'setup', 'inciting_incident', 'rising_action', 'climax', 'resolution'",
+    )
 
 
 class SceneUpdateRequest(BaseModel):
@@ -869,6 +873,10 @@ class SceneUpdateRequest(BaseModel):
     status: Optional[str] = Field(
         default=None,
         description="Scene status: 'draft', 'generating', 'review', 'published'",
+    )
+    story_phase: Optional[str] = Field(
+        default=None,
+        description="Story phase: 'setup', 'inciting_incident', 'rising_action', 'climax', 'resolution'",
     )
 
 
@@ -882,6 +890,7 @@ class SceneResponse(BaseModel):
     location: str = Field(default="", description="Scene setting")
     order_index: int = Field(..., description="Position in chapter")
     status: str = Field(..., description="Workflow status")
+    story_phase: str = Field(default="setup", description="Story structure phase")
     beat_count: int = Field(default=0, description="Number of beats")
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 last update timestamp")

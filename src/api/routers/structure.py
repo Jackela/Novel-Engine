@@ -68,6 +68,7 @@ from src.contexts.narrative.domain import (
     Scene,
     Story,
 )
+from src.contexts.narrative.domain.entities.scene import StoryPhase
 from src.contexts.narrative.domain.entities.beat import Beat, BeatType
 from src.contexts.narrative.domain.entities.conflict import (
     Conflict,
@@ -172,6 +173,7 @@ def _scene_to_response(scene: Scene) -> SceneResponse:
         location=scene.location,
         order_index=scene.order_index,
         status=scene.status.value,
+        story_phase=scene.story_phase.value,
         beat_count=len(scene.beats),
         created_at=scene.created_at.isoformat(),
         updated_at=scene.updated_at.isoformat(),
@@ -617,12 +619,25 @@ async def create_scene(
         # For MVP, we'll track scenes in a module-level dict
         order_index = request.order_index if request.order_index is not None else 0
 
+        # Parse story_phase
+        story_phase = StoryPhase.SETUP
+        if request.story_phase:
+            try:
+                story_phase = StoryPhase(request.story_phase)
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid story_phase: {request.story_phase}. "
+                    f"Must be one of: {[p.value for p in StoryPhase]}",
+                )
+
         scene = Scene(
             title=request.title,
             chapter_id=chapter_uuid,
             summary=request.summary,
             location=request.location,
             order_index=order_index,
+            story_phase=story_phase,
         )
 
         # Store scene (for MVP, using module-level storage)
@@ -769,6 +784,14 @@ async def update_scene(
             scene.update_summary(request.summary)
         if request.location is not None:
             scene.update_location(request.location)
+        if request.story_phase is not None:
+            valid_phases = [p.value for p in StoryPhase]
+            if request.story_phase not in valid_phases:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid story_phase: {request.story_phase}. Must be one of {valid_phases}",
+                )
+            scene.update_story_phase(StoryPhase(request.story_phase))
         if request.status is not None:
             valid_statuses = ["draft", "generating", "review", "published"]
             if request.status not in valid_statuses:

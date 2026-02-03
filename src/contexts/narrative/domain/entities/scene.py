@@ -37,6 +37,23 @@ class SceneStatus(str, Enum):
     PUBLISHED = "published"
 
 
+class StoryPhase(str, Enum):
+    """Story structure phase of a scene within a chapter.
+
+    Why this enum:
+        Enables Chapter Board View (Kanban-style) organization by story beats.
+        Scenes can be categorized by their narrative function: Setup,
+        Inciting Incident, Rising Action, Climax, or Resolution. This helps
+        authors visualize story structure and balance pacing across phases.
+    """
+
+    SETUP = "setup"
+    INCITING_INCIDENT = "inciting_incident"
+    RISING_ACTION = "rising_action"
+    CLIMAX = "climax"
+    RESOLUTION = "resolution"
+
+
 @dataclass
 class Scene:
     """Scene Entity - A dramatic unit within a chapter.
@@ -52,6 +69,7 @@ class Scene:
         summary: A brief synopsis or logline of the scene.
         order_index: Position of the scene within the chapter (0-based).
         status: Workflow status (DRAFT, GENERATING, REVIEW, PUBLISHED).
+        story_phase: Story structure phase (SETUP, INCITING_INCIDENT, RISING_ACTION, CLIMAX, RESOLUTION).
         location: Optional location/setting description.
         tension_level: Dramatic tension level 1-10 (default 5).
         energy_level: Narrative energy level 1-10 (default 5).
@@ -75,6 +93,7 @@ class Scene:
     summary: str = ""
     order_index: int = 0
     status: SceneStatus = SceneStatus.DRAFT
+    story_phase: StoryPhase = StoryPhase.SETUP
     location: str = ""
     tension_level: int = 5
     energy_level: int = 5
@@ -340,6 +359,19 @@ class Scene:
             Useful for bulk updates from the UI.
         """
         self.plotline_ids = list(plotline_ids)
+        self._touch()
+
+    def update_story_phase(self, phase: StoryPhase) -> None:
+        """Update the scene's story structure phase.
+
+        Args:
+            phase: The new story phase.
+
+        Why this method:
+            Enables Chapter Board View (Kanban) organization by narrative function.
+            Scenes can be moved between phases to visualize story structure.
+        """
+        self.story_phase = phase
         self._touch()
 
     def _touch(self) -> None:

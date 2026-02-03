@@ -582,6 +582,18 @@ export const ChapterListResponseSchema = z.object({
 });
 
 /**
+ * Story phase enum matching backend StoryPhase.
+ * Classifications for narrative structure phases.
+ */
+export const StoryPhaseEnum = z.enum([
+  'setup',              // Introduction, status quo
+  'inciting_incident',  // Event that launches the plot
+  'rising_action',      // Building tension and complications
+  'climax',             // Peak of dramatic tension
+  'resolution',         // Aftermath and new status quo
+]);
+
+/**
  * Scene response schema matching backend SceneResponse.
  */
 export const SceneResponseSchema = z.object({
@@ -592,6 +604,7 @@ export const SceneResponseSchema = z.object({
   location: z.string().default(''),
   order_index: z.number(),
   status: z.enum(['draft', 'generating', 'review', 'published']),
+  story_phase: StoryPhaseEnum,
   beat_count: z.number().default(0),
   created_at: z.string(),
   updated_at: z.string(),
@@ -642,6 +655,7 @@ export type SceneListResponse = z.infer<typeof SceneListResponseSchema>;
 export type StoryCreateRequest = z.infer<typeof StoryCreateRequestSchema>;
 export type ChapterCreateRequest = z.infer<typeof ChapterCreateRequestSchema>;
 export type SceneCreateRequest = z.infer<typeof SceneCreateRequestSchema>;
+export type StoryPhase = z.infer<typeof StoryPhaseEnum>;
 
 // === Beat Schemas (DIR-042) ===
 

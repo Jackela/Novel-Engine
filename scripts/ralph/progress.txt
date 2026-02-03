@@ -28,6 +28,10 @@ Started: Tue Feb  3 16:06:24     2026
 - EdgeProps from @xyflow/react doesn't support generic typing - use `EdgeProps` and cast data
 - EdgeLabelRenderer requires absolute positioning with transform for proper label placement
 - Dashed lines in React Flow use strokeDasharray="5,5" on the path element
+- For dnd-kit DragStartEvent, use event.active.id (not event.activeId) to get the dragged item ID
+- Clickable divs need keyboard support for accessibility: add role="button", tabIndex={0}, onKeyDown handler
+- Kanban boards use dnd-kit with SortableContext in each column and DragOverlay for drag feedback
+- Story phases follow enum pattern: SETUP, INCITING_INCIDENT, RISING_ACTION, CLIMAX, RESOLUTION
 
 ---
 
@@ -347,3 +351,35 @@ Started: Tue Feb  3 16:06:24     2026
   - Tooltip visibility uses group-hover pattern with hidden/block classes
   - All typecheck and lint pass (4 warnings about useMemo dependencies are acceptable)
   - All 33 foreshadowing tests pass
+
+## 2026-02-03 - DIR-054
+- **What was implemented:**
+  - Added StoryPhase enum (SETUP, INCITING_INCIDENT, RISING_ACTION, CLIMAX, RESOLUTION) to Scene entity
+  - Added story_phase field to Scene entity with update_story_phase() method
+  - Backend: Added story_phase to Scene API schemas (Create, Update, Response)
+  - Backend: Updated create_scene and update_scene endpoints to handle story_phase
+  - Frontend: Added StoryPhaseEnum Zod schema to schemas.ts
+  - Frontend: Created sceneApi.ts with TanStack Query hooks (useScenes, useScene, useUpdateScenePhase)
+  - Frontend: Created ChapterBoard.tsx with Kanban columns and dnd-kit drag-and-drop
+  - Frontend: Added toggle between Board and List view
+- **Files changed:**
+  - `src/contexts/narrative/domain/entities/scene.py` - Added StoryPhase enum, story_phase field, update_story_phase() method
+  - `src/contexts/narrative/domain/entities/__init__.py` - Added StoryPhase export
+  - `src/api/schemas.py` - Added story_phase to SceneCreateRequest, SceneUpdateRequest, SceneResponse
+  - `src/api/routers/structure.py` - Updated create_scene, update_scene, _scene_to_response to handle story_phase
+  - `frontend/src/types/schemas.ts` - Added StoryPhaseEnum, updated SceneResponseSchema
+  - `frontend/src/lib/api/narrativeApi.ts` - Updated updateScene type to include story_phase
+  - `frontend/src/features/director/api/sceneApi.ts` - New file (TanStack Query hooks)
+  - `frontend/src/features/director/components/ChapterBoard.tsx` - New file (Kanban board with dnd-kit)
+  - `frontend/src/features/director/index.ts` - Added ChapterBoard and scene API exports
+  - `scripts/ralph/prd.json` - Set DIR-054 passes: true
+- **Learnings for future iterations:**
+  - StoryPhase enum follows same pattern as SceneStatus, BeatType, etc. - simple string enum with values matching backend
+  - Default story_phase is SETUP for new scenes - provides reasonable default
+  - ChapterBoard uses dnd-kit with SortableContext for vertical columns and drag-between-columns functionality
+  - DragEnd event data.active.id contains the dragged item ID, not event.activeId (TypeScript error caught this)
+  - Kanban columns are configured with color-coded backgrounds (blue=setup, amber=inciting, purple=rising, red=climax, green=resolution)
+  - View mode toggle (Board/List) uses Select component for accessibility
+  - Keyboard support (Enter/Space) required for clickable divs to pass a11y lint - add role="button", tabIndex={0}, onKeyDown
+  - All 55 scene entity tests pass, typecheck and lint pass
+---

@@ -11,6 +11,7 @@ export { BeatList } from './components/BeatList';
 export { BeatSuggestionPopover } from './components/BeatSuggestionPopover';
 export { PacingGraph } from './components/PacingGraph';
 export { ChapterDashboard } from './components/ChapterDashboard';
+export { ChapterBoard } from './components/ChapterBoard';
 export { ConflictPanel } from './components/ConflictPanel';
 export { PlotlineManager } from './components/PlotlineManager';
 export { ForeshadowingPanel } from './components/ForeshadowingPanel';
@@ -19,6 +20,7 @@ export { ForeshadowingPanel } from './components/ForeshadowingPanel';
 export { useBeats, useCreateBeat, useUpdateBeat, useDeleteBeat, useReorderBeats } from './api/beatApi';
 export { useSuggestBeats, beatSuggestionKeys } from './api/beatSuggestionApi';
 export { useChapterPacing, pacingKeys } from './api/pacingApi';
+export { useScenes, useScene, useUpdateScenePhase, sceneKeys } from './api/sceneApi';
 export {
   useConflicts,
   useCreateConflict,

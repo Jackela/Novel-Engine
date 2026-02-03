@@ -12,7 +12,7 @@ This package contains the core domain entities for story structure:
 
 from .story import Story, StoryStatus
 from .chapter import Chapter, ChapterStatus
-from .scene import Scene, SceneStatus
+from .scene import Scene, SceneStatus, StoryPhase
 from .beat import Beat, BeatType
 from .conflict import Conflict, ConflictType, ConflictStakes, ResolutionStatus
 from .plotline import Plotline, PlotlineStatus
@@ -25,6 +25,7 @@ __all__ = [
     "ChapterStatus",
     "Scene",
     "SceneStatus",
+    "StoryPhase",
     "Beat",
     "BeatType",
     "Conflict",
