@@ -1,3 +1,73 @@
 # Ralph Progress Log
 Started: Tue Feb  3 20:12:59     2026
 ---
+
+## Codebase Patterns
+
+### Schema Synchronization Process
+- Backend schemas are the SSOT (Single Source of Truth) in `src/api/schemas.py`
+- Frontend schemas live in `frontend/src/types/schemas.ts` (Zod)
+- Regenerate OpenAPI with `python scripts/generate_openapi.py` after schema changes
+- Copy `openapi.current.json` to `openapi.json` to update the baseline
+- The OpenAPI schema drives frontend type generation
+
+### Schema Naming Convention
+- Backend: `{Entity}Response`, `{Entity}Request`, `{Entity}CreateRequest`, `{Entity}UpdateRequest`
+- Frontend: `{Entity}Schema` (without Response/Request suffix)
+- Example: `CharacterDetailResponse` (backend) ↔ `CharacterDetailSchema` (frontend)
+
+### Common Schema Gotchas
+- Missing `Enum` import in schemas.py causes OpenAPI generation to fail
+- Zod's `z.number()` is used for both Python `int` and `float` - this is correct, not a mismatch
+- Optional fields in Pydantic (`Optional[T]`) should match `.optional()` or `.nullable()` in Zod
+- Enums in Pydantic should match `z.enum()` in Zod
+
+### Project Structure for Scripts
+- `scripts/generate_openapi.py` - Regenerate OpenAPI from FastAPI
+- `scripts/manual_schema_audit.py` - Compare backend/frontend schemas
+- `scripts/audit_schema_sync.py` - Automated schema diff tool (less accurate)
+
+---
+
+## 2026-02-03 - CIT-001: Backend Schema Synchronization Audit
+
+### What was implemented
+- Fixed missing `Enum` import in `src/api/schemas.py` that was breaking OpenAPI generation
+- Created `scripts/manual_schema_audit.py` script to compare Pydantic and Zod schemas
+- Generated comprehensive schema drift report at `docs/api/schema-drift-report.md`
+- Regenerated OpenAPI specification (`docs/api/openapi.json`)
+- Documented all schema discrepancies with severity levels
+
+### Files changed
+- `src/api/schemas.py` - Added missing `from enum import Enum` import
+- `scripts/manual_schema_audit.py` - New schema comparison script
+- `scripts/audit_schema_sync.py` - Automated audit script (created but less accurate)
+- `docs/api/schema-drift-report.md` - Comprehensive audit findings
+- `docs/api/openapi.json` - Regenerated from backend
+
+### Audit findings
+- **53 schemas** missing in frontend (backend has no corresponding Zod schema)
+- **18 schemas** in frontend without backend equivalents
+- **67 CRITICAL type mismatches** (mostly false positives - `int` vs `number` in Zod is correct)
+- **22 HIGH priority** missing fields in frontend schemas
+- **3 MEDIUM** fields in frontend not in backend
+
+### Learnings for future iterations:
+- **Pattern**: Use `python scripts/generate_openapi.py` to regenerate OpenAPI after any schema change
+- **Gotcha**: Zod's `z.number()` is semantically correct for both Python `int` and `float`
+- **Gotcha**: The audit script's regex-based type detection is limited; manual review may be needed
+- **Pattern**: Schema names normalize by removing Response/Request/Update/Create suffixes
+- **Useful context**: The project has 143 Pydantic schemas vs 103 Zod schemas - significant drift exists
+
+### Remaining work (for later stories)
+- CIT-002 will need to address duplicate type definitions in frontend
+- Schema synchronization is an ongoing process - automation would help
+- Consider implementing CI checks for schema alignment
+
+### Quality checks passed
+- ✅ `npm run type-check` - No errors
+- ✅ `npm run lint` - Only pre-existing warnings
+- ✅ Backend imports working correctly after Enum fix
+- ⚠️  `mypy` shows pre-existing type annotation issues (not related to this work)
+
+---
