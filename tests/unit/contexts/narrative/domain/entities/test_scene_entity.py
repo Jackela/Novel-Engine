@@ -613,3 +613,138 @@ class TestScenePacingLevels:
 
         assert "tension=7" in repr_str
         assert "energy=4" in repr_str
+
+
+class TestScenePlotlineManagement:
+    """Test suite for Scene plotline management (DIR-049)."""
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_default_plotline_ids_is_empty(self):
+        """Test that new scenes have empty plotline_ids list."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        assert scene.plotline_ids == []
+        assert len(scene.plotline_ids) == 0
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_add_plotline(self):
+        """Test adding a plotline to a scene."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+        original_timestamp = scene.updated_at
+
+        scene.add_plotline(plotline_id)
+
+        assert plotline_id in scene.plotline_ids
+        assert len(scene.plotline_ids) == 1
+        assert scene.updated_at >= original_timestamp
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_add_multiple_plotlines(self):
+        """Test adding multiple plotlines to a scene."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id_1 = uuid4()
+        plotline_id_2 = uuid4()
+        plotline_id_3 = uuid4()
+
+        scene.add_plotline(plotline_id_1)
+        scene.add_plotline(plotline_id_2)
+        scene.add_plotline(plotline_id_3)
+
+        assert plotline_id_1 in scene.plotline_ids
+        assert plotline_id_2 in scene.plotline_ids
+        assert plotline_id_3 in scene.plotline_ids
+        assert len(scene.plotline_ids) == 3
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_add_duplicate_plotline_no_change(self):
+        """Test that adding the same plotline twice doesn't duplicate it."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+        original_timestamp = scene.updated_at
+
+        scene.add_plotline(plotline_id)
+        scene.add_plotline(plotline_id)  # Add same plotline again
+
+        assert scene.plotline_ids.count(plotline_id) == 1
+        assert len(scene.plotline_ids) == 1
+        # Should not have updated timestamp on no-op
+        assert scene.updated_at == original_timestamp
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_remove_plotline(self):
+        """Test removing a plotline from a scene."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+        scene.add_plotline(plotline_id)
+
+        result = scene.remove_plotline(plotline_id)
+
+        assert result is True
+        assert plotline_id not in scene.plotline_ids
+        assert len(scene.plotline_ids) == 0
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_remove_nonexistent_plotline_returns_false(self):
+        """Test that removing a non-existent plotline returns False."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+
+        result = scene.remove_plotline(plotline_id)
+
+        assert result is False
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_set_plotlines_replaces_all(self):
+        """Test that set_plotlines replaces all existing plotlines."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id_1 = uuid4()
+        plotline_id_2 = uuid4()
+        plotline_id_3 = uuid4()
+
+        # Add initial plotlines
+        scene.add_plotline(plotline_id_1)
+        scene.add_plotline(plotline_id_2)
+
+        # Replace with new list
+        new_plotlines = [plotline_id_2, plotline_id_3]
+        scene.set_plotlines(new_plotlines)
+
+        assert len(scene.plotline_ids) == 2
+        assert plotline_id_2 in scene.plotline_ids
+        assert plotline_id_3 in scene.plotline_ids
+        assert plotline_id_1 not in scene.plotline_ids
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_set_plotlines_with_empty_list(self):
+        """Test that set_plotlines with empty list clears all plotlines."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id_1 = uuid4()
+        plotline_id_2 = uuid4()
+
+        scene.add_plotline(plotline_id_1)
+        scene.add_plotline(plotline_id_2)
+        scene.set_plotlines([])
+
+        assert len(scene.plotline_ids) == 0
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_plotline_operations_touch_timestamp(self):
+        """Test that plotline operations update the timestamp."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+
+        import time
+        time.sleep(0.01)  # Small delay to ensure timestamp changes
+
+        scene.add_plotline(plotline_id)
+
+        assert scene.updated_at > scene.created_at

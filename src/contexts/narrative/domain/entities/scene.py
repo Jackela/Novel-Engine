@@ -55,6 +55,7 @@ class Scene:
         location: Optional location/setting description.
         tension_level: Dramatic tension level 1-10 (default 5).
         energy_level: Narrative energy level 1-10 (default 5).
+        plotline_ids: List of plotline IDs this scene belongs to.
         created_at: Timestamp when the scene was created.
         updated_at: Timestamp of the last modification.
         _beats: Internal list of beats (access via beats property).
@@ -64,6 +65,8 @@ class Scene:
         order_index) and the workflow state (status) needed for the
         generation pipeline. Location is optional but useful for context.
         Tension and energy levels enable pacing analysis across scenes.
+        Plotline IDs enable tracking which narrative threads this scene
+        advances.
     """
 
     title: str
@@ -75,6 +78,7 @@ class Scene:
     location: str = ""
     tension_level: int = 5
     energy_level: int = 5
+    plotline_ids: list[UUID] = field(default_factory=list)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     _beats: list[Beat] = field(default_factory=list)
@@ -294,6 +298,48 @@ class Scene:
         if new_index < 0:
             raise ValueError("Scene order_index cannot be negative")
         self.order_index = new_index
+        self._touch()
+
+    def add_plotline(self, plotline_id: UUID) -> None:
+        """Add a plotline to this scene.
+
+        Args:
+            plotline_id: The ID of the plotline to add.
+
+        Why this method:
+            Enables tracking which narrative threads this scene advances.
+            A scene can belong to multiple plotlines simultaneously.
+        """
+        if plotline_id not in self.plotline_ids:
+            self.plotline_ids.append(plotline_id)
+            self._touch()
+
+    def remove_plotline(self, plotline_id: UUID) -> bool:
+        """Remove a plotline from this scene.
+
+        Args:
+            plotline_id: The ID of the plotline to remove.
+
+        Returns:
+            True if the plotline was found and removed, False otherwise.
+        """
+        if plotline_id in self.plotline_ids:
+            self.plotline_ids.remove(plotline_id)
+            self._touch()
+            return True
+        return False
+
+    def set_plotlines(self, plotline_ids: list[UUID]) -> None:
+        """Replace all plotlines with a new list.
+
+        Args:
+            plotline_ids: The new list of plotline IDs.
+
+        Why this method:
+            Provides atomic replacement of all plotline associations.
+            Useful for bulk updates from the UI.
+        """
+        self.plotline_ids = list(plotline_ids)
         self._touch()
 
     def _touch(self) -> None:

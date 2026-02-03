@@ -33,19 +33,27 @@ from src.api.schemas import (
     ConflictListResponse,
     ConflictResponse,
     ConflictUpdateRequest,
+    LinkSceneToPlotlineRequest,
     MoveChapterRequest,
     MoveSceneRequest,
     PacingIssueResponse,
+    PlotlineCreateRequest,
+    PlotlineListResponse,
+    PlotlineResponse,
+    PlotlineUpdateRequest,
     ReorderBeatsRequest,
     SceneCreateRequest,
     SceneListResponse,
+    ScenePlotlinesResponse,
     ScenePacingMetricsResponse,
     SceneResponse,
     SceneUpdateRequest,
+    SetScenePlotlinesRequest,
     StoryCreateRequest,
     StoryListResponse,
     StoryResponse,
     StoryUpdateRequest,
+    UnlinkSceneFromPlotlineRequest,
 )
 from src.contexts.narrative.application.ports.narrative_repository_port import (
     INarrativeRepository,
@@ -61,6 +69,10 @@ from src.contexts.narrative.domain.entities.conflict import (
     ConflictType,
     ConflictStakes,
     ResolutionStatus,
+)
+from src.contexts.narrative.domain.entities.plotline import (
+    Plotline,
+    PlotlineStatus,
 )
 from src.contexts.narrative.application.services.pacing_service import PacingService
 from src.contexts.narrative.infrastructure.repositories.in_memory_narrative_repository import (
@@ -1625,3 +1637,406 @@ async def delete_conflict(
 
     _delete_conflict(conflict_uuid)
     logger.info("Deleted conflict: %s", conflict_uuid)
+
+
+# ============ Plotline Endpoints (DIR-049) ============
+
+# Note: In production, plotlines would be stored in a repository.
+# For MVP, we use module-level storage similar to conflicts.
+
+_plotlines: dict[UUID, Plotline] = {}
+
+
+def _store_plotline(plotline: Plotline) -> None:
+    """Store a plotline in the in-memory storage."""
+    from copy import deepcopy
+
+    _plotlines[plotline.id] = deepcopy(plotline)
+
+
+def _get_plotline(plotline_id: UUID) -> Optional[Plotline]:
+    """Get a plotline by ID from storage."""
+    from copy import deepcopy
+
+    plotline = _plotlines.get(plotline_id)
+    return deepcopy(plotline) if plotline else None
+
+
+def _list_plotlines() -> list[Plotline]:
+    """Get all plotlines from storage."""
+    from copy import deepcopy
+
+    plotlines = list(_plotlines.values())
+    return sorted(plotlines, key=lambda p: p.created_at, reverse=True)
+
+
+def _delete_plotline(plotline_id: UUID) -> bool:
+    """Delete a plotline from storage. Returns True if deleted."""
+    if plotline_id in _plotlines:
+        del _plotlines[plotline_id]
+        return True
+    return False
+
+
+def reset_plotline_storage() -> None:
+    """Reset plotline storage. Useful for testing."""
+    _plotlines.clear()
+
+
+def _plotline_to_response(plotline: Plotline) -> PlotlineResponse:
+    """Convert a Plotline entity to a response model."""
+    return PlotlineResponse(
+        id=str(plotline.id),
+        name=plotline.name,
+        color=plotline.color,
+        description=plotline.description,
+        status=plotline.status.value,
+        created_at=plotline.created_at.isoformat(),
+        updated_at=plotline.updated_at.isoformat(),
+    )
+
+
+@router.post(
+    "/plotlines",
+    response_model=PlotlineResponse,
+    status_code=201,
+)
+async def create_plotline(
+    request: PlotlineCreateRequest,
+) -> PlotlineResponse:
+    """Create a new plotline.
+
+    Args:
+        request: Plotline creation data.
+
+    Returns:
+        The created plotline.
+
+    Raises:
+        HTTPException: If plotline creation fails.
+    """
+    try:
+        # Validate status
+        valid_statuses = [s.value for s in PlotlineStatus]
+        if request.status not in valid_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status: {request.status}. Must be one of {valid_statuses}",
+            )
+
+        plotline = Plotline(
+            name=request.name,
+            color=request.color,
+            description=request.description,
+            status=PlotlineStatus(request.status),
+        )
+
+        _store_plotline(plotline)
+        logger.info("Created plotline: %s (%s)", plotline.id, plotline.name)
+
+        return _plotline_to_response(plotline)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Failed to create plotline: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to create plotline: {str(e)}")
+
+
+@router.get(
+    "/plotlines",
+    response_model=PlotlineListResponse,
+)
+async def list_plotlines() -> PlotlineListResponse:
+    """List all plotlines.
+
+    Returns:
+        List of all plotlines.
+    """
+    plotlines = _list_plotlines()
+
+    return PlotlineListResponse(
+        plotlines=[_plotline_to_response(p) for p in plotlines],
+    )
+
+
+@router.get(
+    "/plotlines/{plotline_id}",
+    response_model=PlotlineResponse,
+)
+async def get_plotline(
+    plotline_id: str,
+) -> PlotlineResponse:
+    """Get a plotline by ID.
+
+    Args:
+        plotline_id: UUID of the plotline.
+
+    Returns:
+        The requested plotline.
+
+    Raises:
+        HTTPException: If plotline not found.
+    """
+    plotline_uuid = _parse_uuid(plotline_id, "plotline_id")
+
+    plotline = _get_plotline(plotline_uuid)
+    if plotline is None:
+        raise HTTPException(status_code=404, detail=f"Plotline not found: {plotline_id}")
+
+    return _plotline_to_response(plotline)
+
+
+@router.patch(
+    "/plotlines/{plotline_id}",
+    response_model=PlotlineResponse,
+)
+async def update_plotline(
+    plotline_id: str,
+    request: PlotlineUpdateRequest,
+) -> PlotlineResponse:
+    """Update a plotline's properties.
+
+    Args:
+        plotline_id: UUID of the plotline.
+        request: Fields to update.
+
+    Returns:
+        The updated plotline.
+
+    Raises:
+        HTTPException: If not found or update fails.
+    """
+    plotline_uuid = _parse_uuid(plotline_id, "plotline_id")
+
+    plotline = _get_plotline(plotline_uuid)
+    if plotline is None:
+        raise HTTPException(status_code=404, detail=f"Plotline not found: {plotline_id}")
+
+    try:
+        if request.name is not None:
+            plotline.update_name(request.name)
+
+        if request.color is not None:
+            plotline.update_color(request.color)
+
+        if request.description is not None:
+            plotline.update_description(request.description)
+
+        if request.status is not None:
+            valid_statuses = [s.value for s in PlotlineStatus]
+            if request.status not in valid_statuses:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid status: {request.status}. Must be one of {valid_statuses}",
+                )
+
+            # Map status to appropriate method
+            if request.status == "resolved":
+                plotline.resolve()
+            elif request.status == "abandoned":
+                plotline.abandon()
+            elif request.status == "active":
+                plotline.reactivate()
+
+        # Store the updated plotline
+        _store_plotline(plotline)
+        logger.info("Updated plotline: %s", plotline_uuid)
+
+        return _plotline_to_response(plotline)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to update plotline: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to update plotline: {str(e)}")
+
+
+@router.delete(
+    "/plotlines/{plotline_id}",
+    status_code=204,
+)
+async def delete_plotline(
+    plotline_id: str,
+) -> None:
+    """Delete a plotline.
+
+    Args:
+        plotline_id: UUID of the plotline.
+
+    Raises:
+        HTTPException: If not found.
+    """
+    plotline_uuid = _parse_uuid(plotline_id, "plotline_id")
+
+    if not _delete_plotline(plotline_uuid):
+        raise HTTPException(status_code=404, detail=f"Plotline not found: {plotline_id}")
+
+    logger.info("Deleted plotline: %s", plotline_uuid)
+
+
+@router.post(
+    "/scenes/{scene_id}/plotlines",
+    response_model=ScenePlotlinesResponse,
+)
+async def link_scene_to_plotline(
+    scene_id: str,
+    request: LinkSceneToPlotlineRequest,
+) -> ScenePlotlinesResponse:
+    """Link a scene to a plotline.
+
+    Args:
+        scene_id: UUID of the scene.
+        request: Request containing plotline_id to link.
+
+    Returns:
+        Updated list of plotline IDs for the scene.
+
+    Raises:
+        HTTPException: If scene or plotline not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    plotline_uuid = _parse_uuid(request.plotline_id, "plotline_id")
+
+    scene = _get_scene(scene_uuid)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    plotline = _get_plotline(plotline_uuid)
+    if plotline is None:
+        raise HTTPException(status_code=404, detail=f"Plotline not found: {request.plotline_id}")
+
+    scene.add_plotline(plotline_uuid)
+    _store_scene(scene)
+
+    logger.info("Linked scene %s to plotline %s", scene_uuid, plotline_uuid)
+
+    return ScenePlotlinesResponse(
+        scene_id=scene_id,
+        plotline_ids=[str(pid) for pid in scene.plotline_ids],
+    )
+
+
+@router.delete(
+    "/scenes/{scene_id}/plotlines",
+    response_model=ScenePlotlinesResponse,
+)
+async def unlink_scene_from_plotline(
+    scene_id: str,
+    request: UnlinkSceneFromPlotlineRequest,
+) -> ScenePlotlinesResponse:
+    """Unlink a scene from a plotline.
+
+    Args:
+        scene_id: UUID of the scene.
+        request: Request containing plotline_id to unlink.
+
+    Returns:
+        Updated list of plotline IDs for the scene.
+
+    Raises:
+        HTTPException: If scene not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    plotline_uuid = _parse_uuid(request.plotline_id, "plotline_id")
+
+    scene = _get_scene(scene_uuid)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    scene.remove_plotline(plotline_uuid)
+    _store_scene(scene)
+
+    logger.info("Unlinked scene %s from plotline %s", scene_uuid, plotline_uuid)
+
+    return ScenePlotlinesResponse(
+        scene_id=scene_id,
+        plotline_ids=[str(pid) for pid in scene.plotline_ids],
+    )
+
+
+@router.put(
+    "/scenes/{scene_id}/plotlines",
+    response_model=ScenePlotlinesResponse,
+)
+async def set_scene_plotlines(
+    scene_id: str,
+    request: SetScenePlotlinesRequest,
+) -> ScenePlotlinesResponse:
+    """Set all plotlines for a scene.
+
+    Args:
+        scene_id: UUID of the scene.
+        request: Request containing list of plotline IDs.
+
+    Returns:
+        Updated list of plotline IDs for the scene.
+
+    Raises:
+        HTTPException: If scene not found or plotline IDs invalid.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+
+    scene = _get_scene(scene_uuid)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    # Validate all plotline IDs
+    plotline_uuids = []
+    for pid_str in request.plotline_ids:
+        try:
+            pid = UUID(pid_str)
+            # Verify plotline exists
+            if _get_plotline(pid) is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Plotline not found: {pid_str}",
+                )
+            plotline_uuids.append(pid)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid plotline ID: {pid_str}",
+            )
+
+    scene.set_plotlines(plotline_uuids)
+    _store_scene(scene)
+
+    logger.info("Set plotlines for scene %s: %d plotlines", scene_uuid, len(plotline_uuids))
+
+    return ScenePlotlinesResponse(
+        scene_id=scene_id,
+        plotline_ids=[str(pid) for pid in scene.plotline_ids],
+    )
+
+
+@router.get(
+    "/scenes/{scene_id}/plotlines",
+    response_model=ScenePlotlinesResponse,
+)
+async def get_scene_plotlines(
+    scene_id: str,
+) -> ScenePlotlinesResponse:
+    """Get all plotlines for a scene.
+
+    Args:
+        scene_id: UUID of the scene.
+
+    Returns:
+        List of plotline IDs for the scene.
+
+    Raises:
+        HTTPException: If scene not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+
+    scene = _get_scene(scene_uuid)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    return ScenePlotlinesResponse(
+        scene_id=scene_id,
+        plotline_ids=[str(pid) for pid in scene.plotline_ids],
+    )

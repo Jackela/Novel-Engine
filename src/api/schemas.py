@@ -1124,6 +1124,83 @@ class ConflictListResponse(BaseModel):
     conflicts: List["ConflictResponse"] = Field(default_factory=list)
 
 
+# ============ Plotline Schemas (DIR-049) ============
+
+
+class PlotlineCreateRequest(BaseModel):
+    """Request model for creating a new plotline.
+
+    Plotlines represent narrative threads that weave through multiple scenes.
+    A scene can belong to multiple plotlines simultaneously.
+    """
+
+    name: str = Field(..., min_length=1, max_length=200, description="Plotline name")
+    color: str = Field(..., pattern=r"^#[0-9a-fA-F]{3,6}$", description="Hex color code (e.g., #ff5733)")
+    description: str = Field(default="", max_length=2000, description="Plotline description")
+    status: str = Field(
+        default="active",
+        description="Plotline status: 'active', 'resolved', 'abandoned'",
+    )
+
+
+class PlotlineUpdateRequest(BaseModel):
+    """Request model for updating a plotline."""
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    color: Optional[str] = Field(default=None, pattern=r"^#[0-9a-fA-F]{3,6}$")
+    description: Optional[str] = Field(default=None, max_length=2000)
+    status: Optional[str] = Field(
+        default=None,
+        description="Plotline status: 'active', 'resolved', 'abandoned'",
+    )
+
+
+class PlotlineResponse(BaseModel):
+    """Response model for a single plotline."""
+
+    id: str = Field(..., description="Plotline UUID")
+    name: str = Field(..., description="Plotline name")
+    color: str = Field(..., description="Hex color code")
+    description: str = Field(..., description="Plotline description")
+    status: str = Field(..., description="Current status")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class PlotlineListResponse(BaseModel):
+    """Response model for listing plotlines."""
+
+    plotlines: List["PlotlineResponse"] = Field(default_factory=list)
+
+
+class LinkSceneToPlotlineRequest(BaseModel):
+    """Request model for linking a scene to a plotline."""
+
+    plotline_id: str = Field(..., description="Plotline UUID to link")
+
+
+class UnlinkSceneFromPlotlineRequest(BaseModel):
+    """Request model for unlinking a scene from a plotline."""
+
+    plotline_id: str = Field(..., description="Plotline UUID to unlink")
+
+
+class SetScenePlotlinesRequest(BaseModel):
+    """Request model for setting all plotlines for a scene."""
+
+    plotline_ids: List[str] = Field(
+        default_factory=list,
+        description="List of plotline UUIDs to associate with the scene",
+    )
+
+
+class ScenePlotlinesResponse(BaseModel):
+    """Response model for listing a scene's plotlines."""
+
+    scene_id: str = Field(..., description="Scene UUID")
+    plotline_ids: List[str] = Field(default_factory=list, description="Associated plotline UUIDs")
+
+
 class MoveChapterRequest(BaseModel):
     """Request model for moving a chapter to a new position."""
 
@@ -1625,6 +1702,15 @@ __all__ = [
     "ConflictUpdateRequest",
     "ConflictResponse",
     "ConflictListResponse",
+    # Plotline Schemas (DIR-049)
+    "PlotlineCreateRequest",
+    "PlotlineUpdateRequest",
+    "PlotlineResponse",
+    "PlotlineListResponse",
+    "LinkSceneToPlotlineRequest",
+    "UnlinkSceneFromPlotlineRequest",
+    "SetScenePlotlinesRequest",
+    "ScenePlotlinesResponse",
     # Relationship Schemas
     "RelationshipCreateRequest",
     "RelationshipUpdateRequest",
