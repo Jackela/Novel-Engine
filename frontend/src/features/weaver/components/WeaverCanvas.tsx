@@ -6,6 +6,7 @@ import { ReactFlow, Background, Controls, MiniMap, type Node, type Edge } from '
 import '@xyflow/react/dist/style.css';
 
 import { nodeTypes, type CharacterNodeData } from './nodes';
+import { edgeTypes } from './edges';
 import {
   useWeaverEdges,
   useWeaverNodes,
@@ -15,6 +16,8 @@ import {
   useWeaverFilteredPlotlineId,
 } from '../store/weaverStore';
 import type { SceneNodeData } from '../types';
+import { useForeshadowings } from '@/features/director/api/foreshadowingApi';
+import { foreshadowingsToEdges } from '../utils/foreshadowingUtils';
 
 // Tailwind color palette values for React Flow API
 export const FLOW_COLORS = {
@@ -123,6 +126,10 @@ export function WeaverCanvas() {
   const onConnect = useWeaverOnConnect();
   const filteredPlotlineId = useWeaverFilteredPlotlineId();
 
+  // Fetch foreshadowings for visual connections (DIR-053)
+  const { data: foreshadowingsData } = useForeshadowings();
+  const foreshadowings = foreshadowingsData?.foreshadowings || [];
+
   // Apply plotline filtering to nodes and edges
   const filteredNodes = useMemo(
     () => applyPlotlineFilterToNodes(nodes, filteredPlotlineId),
@@ -134,16 +141,23 @@ export function WeaverCanvas() {
     [edges, nodes, filteredPlotlineId]
   );
 
+  // Create foreshadowing edges (DIR-053)
+  const foreshadowingEdges = useMemo(
+    () => foreshadowingsToEdges(foreshadowings),
+    [foreshadowings]
+  );
+
   const proOptions = useMemo(() => ({ hideAttribution: true }), []);
 
   return (
     <ReactFlow
       nodes={filteredNodes}
-      edges={filteredEdges}
+      edges={[...filteredEdges, ...foreshadowingEdges]}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
       proOptions={proOptions}
       fitView
       data-testid="weaver-canvas"

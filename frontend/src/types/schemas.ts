@@ -988,6 +988,77 @@ export type UnlinkSceneFromPlotlineRequest = z.infer<typeof UnlinkSceneFromPlotl
 export type SetScenePlotlinesRequest = z.infer<typeof SetScenePlotlinesRequestSchema>;
 export type ScenePlotlinesResponse = z.infer<typeof ScenePlotlinesResponseSchema>;
 
+// === Foreshadowing Schemas (DIR-052) ===
+
+/**
+ * Foreshadowing status enum matching backend ForeshadowingStatus.
+ * Tracks the progression from setup to payoff.
+ */
+export const ForeshadowingStatusEnum = z.enum([
+  'planted',    // Setup has been introduced
+  'paid_off',   // Payoff has been delivered
+  'abandoned',  // Setup was dropped without payoff
+]);
+
+/**
+ * Foreshadowing response schema matching backend ForeshadowingResponse.
+ *
+ * Why: Represents Chekhov's Gun - narrative setups that must be paid off.
+ * This enforces narrative discipline by tracking all planted threads.
+ */
+export const ForeshadowingResponseSchema = z.object({
+  id: z.string(),
+  setup_scene_id: z.string(),
+  payoff_scene_id: z.string().nullable(),
+  description: z.string(),
+  status: ForeshadowingStatusEnum,
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Foreshadowing list response schema.
+ */
+export const ForeshadowingListResponseSchema = z.object({
+  foreshadowings: z.array(ForeshadowingResponseSchema).default([]),
+});
+
+/**
+ * Foreshadowing create request schema matching backend ForeshadowingCreateRequest.
+ */
+export const ForeshadowingCreateRequestSchema = z.object({
+  setup_scene_id: z.string().min(1, 'Setup scene ID is required'),
+  description: z.string().min(1).max(2000, 'Description must be 1-2000 characters'),
+  status: ForeshadowingStatusEnum.default('planted'),
+});
+
+/**
+ * Foreshadowing update request schema matching backend ForeshadowingUpdateRequest.
+ */
+export const ForeshadowingUpdateRequestSchema = z.object({
+  description: z.string().max(2000).optional(),
+  status: ForeshadowingStatusEnum.optional(),
+  payoff_scene_id: z.string().nullable().optional(),
+});
+
+/**
+ * Link payoff request schema matching backend LinkPayoffRequest.
+ *
+ * Why: Separates payoff linking from general updates to validate
+ * temporal order (payoff must come after setup).
+ */
+export const LinkPayoffRequestSchema = z.object({
+  payoff_scene_id: z.string().min(1, 'Payoff scene ID is required'),
+});
+
+// Foreshadowing Types
+export type ForeshadowingStatus = z.infer<typeof ForeshadowingStatusEnum>;
+export type ForeshadowingResponse = z.infer<typeof ForeshadowingResponseSchema>;
+export type ForeshadowingListResponse = z.infer<typeof ForeshadowingListResponseSchema>;
+export type ForeshadowingCreateRequest = z.infer<typeof ForeshadowingCreateRequestSchema>;
+export type ForeshadowingUpdateRequest = z.infer<typeof ForeshadowingUpdateRequestSchema>;
+export type LinkPayoffRequest = z.infer<typeof LinkPayoffRequestSchema>;
+
 /**
  * Standard API response envelope matching backend's StandardResponse
  *

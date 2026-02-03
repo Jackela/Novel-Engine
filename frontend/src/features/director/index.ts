@@ -13,6 +13,7 @@ export { PacingGraph } from './components/PacingGraph';
 export { ChapterDashboard } from './components/ChapterDashboard';
 export { ConflictPanel } from './components/ConflictPanel';
 export { PlotlineManager } from './components/PlotlineManager';
+export { ForeshadowingPanel } from './components/ForeshadowingPanel';
 
 // API Hooks
 export { useBeats, useCreateBeat, useUpdateBeat, useDeleteBeat, useReorderBeats } from './api/beatApi';
@@ -37,3 +38,12 @@ export {
   useSetScenePlotlines,
   plotlineKeys,
 } from './api/plotlineApi';
+export {
+  useForeshadowings,
+  useForeshadowing,
+  useCreateForeshadowing,
+  useUpdateForeshadowing,
+  useLinkPayoff,
+  useDeleteForeshadowing,
+  foreshadowingKeys,
+} from './api/foreshadowingApi';
