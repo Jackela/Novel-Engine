@@ -23,7 +23,7 @@
         "Test: `pytest tests/unit/contexts/narrative/domain/test_beat.py`"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {
@@ -39,7 +39,7 @@
         "Verify: Changes persist after page refresh"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["DIR-041"]
     },
@@ -55,7 +55,7 @@
         "Test: `pytest` calculation and analysis logic"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {
@@ -71,7 +71,7 @@
         "Verify: Graph renders correctly with mock/real data"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["DIR-043"]
     },
@@ -87,7 +87,7 @@
         "Test: `pytest` conflict creation and linking"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {
@@ -103,7 +103,7 @@
         "Verify: Tagging and untagging works"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["DIR-045"]
     },

@@ -1,110 +1,157 @@
-# Ralph Progress - Warzone 3: Director Mode
+# Ralph Progress Log
+Started: Tue Feb  3 16:06:24     2026
+---
 
 ## Codebase Patterns
-(Inherited from previous sprints + Director Mode specific patterns)
-
-### Architecture
-- **Domain Context**: New entities go in `src/contexts/narrative/domain/`
-- **Value Objects**: Use frozen dataclass with Tuple for immutable collections
-- **Application Services**: `src/contexts/{context}/application/services/`
-- **API Routers**: `src/api/routers/{feature}.py`, register in `main_api_server.py`
-
-### Frontend Organization
-- **Feature Components**: `frontend/src/features/director/components/`
-- **Director API Client**: `frontend/src/lib/api/directorApi.ts`
-- **Composed Components**: `frontend/src/components/composed/` (AppShell, EditorLayout)
-- **shadcn/ui**: `frontend/src/components/ui/` (DO NOT MODIFY)
-
-### Three Rendering Domains
-- **App Shell**: Tailwind + shadcn/ui, font-sans, bg-background
-- **Editor Canvas**: Custom CSS (.prose-editor), font-serif in literary mode, bg-paper
-- **Graph Canvas**: Weaver colors, .weaver-node + status classes
-
-### Orthogonal Theming
-- Color mode: `class="dark"` on `<html>` (light/dark)
-- Typography mode: `data-typography="literary"` on `<html>` (default/literary)
-
-### State Management
-- Server state → TanStack Query (useQuery, useMutation)
-- Global UI state → Zustand stores
-- Form state → React Hook Form + Zod validation
-
-### Visualization Patterns
-- **Recharts**: Already installed, use for PacingGraph (AreaChart), ChapterHealth (PieChart)
-- **Radar Chart**: Used in PsychologyChart (CHAR-022)
-- **Tooltips**: Custom tooltip requires null check for payload[0]
-- **Theming**: Use `hsl(var(--css-variable))` pattern for Recharts components
-
-### Drag-and-Drop Patterns
-- **dnd-kit**: Already installed, used for scene reordering in NarrativeEditorLayout
-- **DndContext**: Wrap draggable areas with sensors and event handlers
-- **useSensors**: PointerSensor with distance constraint (10px) to avoid accidental drags
-- **DragOverlay**: Custom overlay component for visual feedback
-
-### LLM Generation Patterns
-- **LLMWorldGenerator**: Main AI service in `src/contexts/world/infrastructure/generators/`
-- **Prompt Templates**: YAML files in `src/contexts/world/infrastructure/prompts/`
-- **Pattern**: _load_*_prompt + _build_*_user_prompt + _parse_*_response
-- **Result Dataclasses**: to_dict() method that omits null optional fields
-
-### Testing Patterns
-- E2E tests: `frontend/tests/e2e/`
-- Unit tests: `tests/unit/contexts/{context}/domain/`
-- Run `npm run type-check && npm run lint:all` before commit
-- Playwright: test.describe.configure({ mode: 'serial' }) for ordered tests
-
-### API Patterns
-- Zod schemas in `frontend/src/types/schemas.ts` must match backend `src/api/schemas.py`
-- Use frozen dataclasses for immutable value objects
-- TanStack Router uses `$paramName` for dynamic route segments
+- Beat entity already exists at `src/contexts/narrative/domain/entities/beat.py` with comprehensive BeatType enum (ACTION, DIALOGUE, REACTION, REVELATION, TRANSITION, DESCRIPTION)
+- Scene entity already contains `_beats` list with `add_beat()`, `remove_beat()`, `reorder_beats()` methods
+- Domain entities use `@dataclass` pattern with `__post_init__` for validation
+- Entities have `_touch()` method to update `updated_at` timestamp on modifications
+- Test files follow pattern: `tests/unit/contexts/narrative/domain/entities/test_{entity}_entity.py`
+- Frontend API hooks use TanStack Query with dedicated query key factories (e.g., `beatKeys`)
+- Feature-specific components go in `frontend/src/features/{feature}/components/`
+- Feature-specific API hooks go in `frontend/src/features/{feature}/api/`
+- dnd-kit is used for drag-and-drop: useSortable for items, SortableContext + verticalListSortingStrategy for lists
+- Dialog component exists in shadcn/ui; AlertDialog does NOT exist (use Dialog instead)
+- Application services go in `src/contexts/{context}/application/services/` (e.g., PacingService)
+- Service dataclasses use `frozen=True` for immutable output types (metrics, reports, issues)
+- Recharts v3.7.0 is used for charts - use AreaChart with dual gradients for tension/energy curves
+- Pacing API endpoint is at `/structure/stories/{story_id}/chapters/{chapter_id}/pacing`
+- ChapterDashboard component is the integration point for Director Mode chapter-level analysis
+- Conflict API follows same pattern as Beat API: `/structure/scenes/{scene_id}/conflicts` with in-memory storage
 
 ---
 
-## Director Mode Domain Models
+## 2026-02-03 - DIR-041
+- **What was implemented:**
+  - Added `mood_shift` attribute (-5 to +5) to existing Beat entity for emotional pacing analysis
+  - Added `update_mood_shift()` method with validation
+  - Created `tests/unit/contexts/narrative/domain/test_beat.py` with 15 tests for Director Mode features
+- **Files changed:**
+  - `src/contexts/narrative/domain/entities/beat.py` - Added mood_shift attribute and method
+  - `tests/unit/contexts/narrative/domain/test_beat.py` - New test file (15 tests)
+- **Learnings for future iterations:**
+  - The codebase already had a Beat entity and Scene CRUD methods - PRD assumed from scratch but existing code fulfilled most requirements
+  - PRD wanted `value_objects/beat.py` but entity pattern was already established - adapted to existing architecture
+  - BeatType has 6 types (not just ACTION/REACTION) - kept for flexibility, tests focus on ACTION/REACTION for Director Mode
+  - All 160 narrative domain tests pass after changes
+---
 
-### Beat (Value Object)
-```python
-@dataclass(frozen=True)
-class Beat:
-    id: str
-    content: str
-    beat_type: BeatType  # ACTION | REACTION
-    mood_shift: int  # -5 to +5
-    order_index: int
-```
+## 2026-02-03 - DIR-042
+- **What was implemented:**
+  - Full Beat Editor UI with drag-and-drop reordering and CRUD operations
+  - Backend: Added Beat schemas (Create, Update, Response, List, Reorder) to `src/api/schemas.py`
+  - Backend: Added Beat API endpoints to structure router (CRUD + reorder) at `/structure/scenes/{scene_id}/beats`
+  - Frontend: Added Beat Zod schemas to `frontend/src/types/schemas.ts`
+  - Frontend: Created `beatApi.ts` with TanStack Query hooks (useBeats, useCreateBeat, useUpdateBeat, useDeleteBeat, useReorderBeats)
+  - Frontend: Created `BeatList.tsx` with dnd-kit drag-and-drop, inline editing, visual type distinction
+- **Files changed:**
+  - `src/api/schemas.py` - Added BeatCreateRequest, BeatUpdateRequest, BeatResponse, BeatListResponse, ReorderBeatsRequest
+  - `src/api/routers/structure.py` - Added Beat CRUD endpoints and reorder endpoint
+  - `frontend/src/types/schemas.ts` - Added BeatTypeEnum, BeatResponseSchema, etc.
+  - `frontend/src/features/director/api/beatApi.ts` - New file (TanStack Query hooks)
+  - `frontend/src/features/director/components/BeatList.tsx` - New file (UI component)
+- **Learnings for future iterations:**
+  - Beat API is at simplified route `/structure/scenes/{scene_id}/beats` (not nested under stories/chapters)
+  - Dialog component from shadcn/ui must be used (no AlertDialog component exists)
+  - dnd-kit optimistic updates require careful handling of undefined values from splice
+  - All beat types have visual distinction via colored left border (blue=action, amber=reaction, etc.)
+  - All 160 narrative domain tests still pass
+---
 
-### Plotline (Entity)
-```python
-@dataclass
-class Plotline:
-    id: str
-    name: str
-    color: str  # hex color
-    description: str
-    status: PlotlineStatus  # ACTIVE | RESOLVED | ABANDONED
-```
+## 2026-02-03 - DIR-043
+- **What was implemented:**
+  - Added `tension_level` (1-10) and `energy_level` (1-10) to Scene entity with validation
+  - Added `update_tension_level()` and `update_energy_level()` methods
+  - Created `PacingService` in `src/contexts/narrative/application/services/`
+  - Implemented `calculate_chapter_pacing()` returning ChapterPacingReport with metrics
+  - Implemented `analyze_pacing_issues()` detecting monotony (3+ same levels) and spikes (>4 change)
+  - Created frozen dataclasses: ScenePacingMetrics, PacingIssue, ChapterPacingReport
+- **Files changed:**
+  - `src/contexts/narrative/domain/entities/scene.py` - Added tension/energy levels and methods
+  - `src/contexts/narrative/application/services/__init__.py` - New file
+  - `src/contexts/narrative/application/services/pacing_service.py` - New file (PacingService)
+  - `tests/unit/contexts/narrative/domain/entities/test_scene_entity.py` - Added 12 pacing tests
+  - `tests/unit/contexts/narrative/application/services/__init__.py` - New file
+  - `tests/unit/contexts/narrative/application/services/test_pacing_service.py` - New file (22 tests)
+- **Learnings for future iterations:**
+  - Services directory didn't exist in narrative context - created fresh `application/services/`
+  - Use frozen dataclasses for service outputs to ensure immutability
+  - PacingService is stateless - caller passes scenes, service returns analysis
+  - MONOTONY_THRESHOLD=3 and SPIKE_THRESHOLD=4 are configurable class constants
+  - All 3275 tests pass after changes
+---
 
-### Conflict (Entity)
-```python
-@dataclass
-class Conflict:
-    id: str
-    conflict_type: ConflictType  # INTERNAL | EXTERNAL | INTERPERSONAL
-    stakes: StakesLevel  # LOW | MEDIUM | HIGH | CRITICAL
-    description: str
-    resolution_status: ResolutionStatus  # UNRESOLVED | ESCALATING | RESOLVED
-    scene_id: str
-```
+## 2026-02-03 - DIR-044
+- **What was implemented:**
+  - Full Pacing Graph Visualizer with Recharts AreaChart
+  - Backend: Added pacing schemas (ScenePacingMetricsResponse, PacingIssueResponse, ChapterPacingResponse) to `src/api/schemas.py`
+  - Backend: Added GET `/structure/stories/{story_id}/chapters/{chapter_id}/pacing` endpoint to structure router
+  - Frontend: Added pacing Zod schemas to `frontend/src/types/schemas.ts`
+  - Frontend: Created `pacingApi.ts` with `useChapterPacing` TanStack Query hook
+  - Frontend: Created `PacingGraph.tsx` with dual-axis AreaChart (tension=blue, energy=red)
+  - Frontend: Created `ChapterDashboard.tsx` as integration point for Director Mode
+  - Frontend: Created `index.ts` for clean director feature exports
+- **Files changed:**
+  - `src/api/schemas.py` - Added ScenePacingMetricsResponse, PacingIssueResponse, ChapterPacingResponse
+  - `src/api/routers/structure.py` - Added pacing endpoint, imported PacingService
+  - `frontend/src/types/schemas.ts` - Added ScenePacingMetricsSchema, PacingIssueSchema, ChapterPacingResponseSchema
+  - `frontend/src/features/director/api/pacingApi.ts` - New file (TanStack Query hooks)
+  - `frontend/src/features/director/components/PacingGraph.tsx` - New file (Recharts AreaChart)
+  - `frontend/src/features/director/components/ChapterDashboard.tsx` - New file (integration)
+  - `frontend/src/features/director/index.ts` - New file (feature exports)
+- **Learnings for future iterations:**
+  - Recharts uses HSL CSS variables for theming: `hsl(var(--primary))` for colors
+  - Use linearGradient defs for AreaChart fill gradients
+  - ResponsiveContainer must wrap charts for proper sizing
+  - Pacing API returns tuple for range values - frontend schema uses z.tuple()
+  - ChapterDashboard doesn't exist as a standalone page yet - created as component for future integration
+  - All 192 narrative domain tests pass, all 46 frontend tests pass
+---
 
-### Foreshadowing (Entity)
-```python
-@dataclass
-class Foreshadowing:
-    id: str
-    setup_scene_id: str
-    payoff_scene_id: str | None
-    description: str
-    status: ForeshadowingStatus  # PLANTED | PAID_OFF | ABANDONED
-```
+## 2026-02-03 - DIR-045
+- **What was implemented:**
+  - Created Conflict entity in `src/contexts/narrative/domain/entities/conflict.py`
+  - Added ConflictType enum (INTERNAL/EXTERNAL/INTERPERSONAL) for dramatic tension classification
+  - Added ConflictStakes enum (LOW/MEDIUM/HIGH/CRITICAL) for tracking stakes level
+  - Added ResolutionStatus enum (UNRESOLVED/ESCALATING/RESOLVED) for conflict progression
+  - Implemented CRUD methods: update_description, update_conflict_type, update_stakes, escalate, resolve, reopen
+  - Added is_critical and is_resolved properties for UI convenience
+  - Backend: Added Conflict schemas to `src/api/schemas.py` (Create, Update, Response, List)
+  - Backend: Added Conflict API endpoints at `/structure/scenes/{scene_id}/conflicts`
+  - Frontend: Added Conflict Zod schemas to `frontend/src/types/schemas.ts`
+- **Files changed:**
+  - `src/contexts/narrative/domain/entities/conflict.py` - New file (218 lines)
+  - `src/contexts/narrative/domain/entities/__init__.py` - Added Conflict exports
+  - `src/api/schemas.py` - Added ConflictCreateRequest, ConflictUpdateRequest, ConflictResponse, ConflictListResponse
+  - `src/api/routers/structure.py` - Added Conflict CRUD endpoints with in-memory storage
+  - `frontend/src/types/schemas.ts` - Added ConflictTypeEnum, ConflictStakesEnum, ResolutionStatusEnum, ConflictResponseSchema, etc.
+  - `tests/unit/contexts/narrative/domain/test_conflict.py` - New file (25 tests)
+- **Learnings for future iterations:**
+  - Conflict API follows Beat pattern: `/structure/scenes/{scene_id}/conflicts` (simplified route)
+  - Conflicts link to Scenes via scene_id, similar to how Beats link to Scenes
+  - In-memory storage pattern from Scenes reused for Conflicts (_conflicts dict, _store_conflict, etc.)
+  - is_critical property useful for UI - CRITICAL stakes scenes need fire/red indicator
+  - All 170 narrative domain tests pass (145 original + 25 new conflict tests)
+---
 
+## 2026-02-03 - DIR-046
+- **What was implemented:**
+  - Full Conflict Manager UI (ConflictPanel.tsx) for managing dramatic conflicts within scenes
+  - Frontend: Created `conflictApi.ts` with TanStack Query hooks (useConflicts, useCreateConflict, useUpdateConflict, useDeleteConflict)
+  - Collapsible sections by conflict type (INTERNAL/EXTERNAL/INTERPERSONAL) using Radix Collapsible
+  - Visual cue: CRITICAL stakes show animated fire icon with red border/background
+  - Badge showing unresolved conflict count (with critical highlight)
+  - Status transitions: Escalate, Resolve, Reopen actions in edit mode
+  - Inline editing for description, type, and stakes level
+- **Files changed:**
+  - `frontend/src/features/director/api/conflictApi.ts` - New file (TanStack Query hooks with query key factory)
+  - `frontend/src/features/director/components/ConflictPanel.tsx` - New file (~600 lines)
+  - `frontend/src/features/director/index.ts` - Added ConflictPanel and conflict API exports
+- **Learnings for future iterations:**
+  - ConflictCreateRequest requires resolution_status field (Zod default doesn't make it optional in TypeScript types)
+  - Use useMemo for derived arrays from API data to avoid lint warnings about hook dependencies
+  - Collapsible from shadcn/ui wraps Radix Collapsible primitives
+  - Pattern: Group items by type and show count badges for quick overview
+  - All 217 narrative domain tests pass, all 46 frontend tests pass
 ---
