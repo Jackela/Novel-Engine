@@ -1185,6 +1185,206 @@ Return valid JSON only with the exact structure specified in the system prompt."
 
         return BeatSuggestionResult(suggestions=suggestions)
 
+    # ==================== Scene Critique Generation ====================
+
+    def critique_scene(
+        self,
+        scene_text: str,
+        scene_goals: Optional[List[str]] = None,
+    ) -> "CritiqueResult":
+        """Analyze scene quality across multiple craft dimensions.
+
+        Provides AI-generated feedback on scene writing quality, evaluating
+        pacing, narrative voice, showing vs. telling, and dialogue naturalism.
+        Returns specific, actionable suggestions for improvement along with
+        recognition of what works well.
+
+        Why this matters: Writers need objective feedback beyond subjective
+        impressions. The AI critique analyzes specific craft elements and
+        provides actionable suggestions to elevate prose to professional
+        standards, similar to a harsh but fair literary editor.
+
+        Args:
+            scene_text: The full text content of the scene to analyze.
+            scene_goals: Optional list of writer's goals for the scene.
+                        Examples: ["reveal character motivation", "build tension",
+                        "establish setting", "advance plot"]. The critique will
+                        evaluate how well the scene achieves these goals.
+
+        Returns:
+            CritiqueResult containing overall score (1-10), category-specific
+            evaluations (pacing, voice, showing, dialogue), highlights of what
+            works, summary assessment, and actionable suggestions.
+
+        Example:
+            >>> result = generator.critique_scene(
+            ...     scene_text="The room was dark. John felt scared. "
+            ...                "'Who's there?' he asked nervously.",
+            ...     scene_goals=["build tension", "establish suspense"]
+            ... )
+            >>> print(result.summary)
+            >>> # "The scene establishes suspense but relies on telling
+            >>> #  emotions rather than showing them through action..."
+        """
+        log = logger.bind(
+            scene_text_length=len(scene_text),
+            has_scene_goals=scene_goals is not None,
+        )
+        log.info("Starting scene critique")
+
+        try:
+            system_prompt = self._load_critique_prompt()
+            user_prompt = self._build_critique_user_prompt(scene_text, scene_goals)
+
+            response_text = self._call_gemini(system_prompt, user_prompt)
+            result = self._parse_critique_response(response_text)
+
+            log.info(
+                "Scene critique completed",
+                overall_score=result.overall_score,
+                num_categories=len(result.category_scores),
+            )
+            return result
+
+        except Exception as exc:
+            log.error("Scene critique failed", error=str(exc))
+            return CritiqueResult(
+                overall_score=0,
+                category_scores=[],
+                highlights=[],
+                summary="Unable to generate critique.",
+                error=str(exc),
+            )
+
+    def _load_critique_prompt(self) -> str:
+        """Load the scene critique system prompt from YAML file.
+
+        Returns:
+            The system prompt string for scene critique.
+
+        Raises:
+            ValueError: If system_prompt key is missing in the YAML file.
+            FileNotFoundError: If the prompt file doesn't exist.
+        """
+        prompt_path = (
+            Path(__file__).resolve().parents[1] / "prompts" / "scene_critique.yaml"
+        )
+        with prompt_path.open("r", encoding="utf-8") as handle:
+            payload = yaml.safe_load(handle) or {}
+        prompt = str(payload.get("system_prompt", "")).strip()
+        if not prompt:
+            raise ValueError("Missing system_prompt in scene_critique.yaml")
+        return prompt
+
+    def _build_critique_user_prompt(
+        self,
+        scene_text: str,
+        scene_goals: Optional[List[str]],
+    ) -> str:
+        """Build the user prompt for scene critique generation.
+
+        Constructs a detailed prompt containing the scene text and optional
+        writer goals, guiding the AI to provide targeted, actionable feedback.
+
+        Args:
+            scene_text: The full text content of the scene.
+            scene_goals: Optional list of writer's goals for the scene.
+
+        Returns:
+            Formatted user prompt string.
+        """
+        # Truncate scene text if too long (max ~2000 words for context limit)
+        max_length = 12000  # ~2000 words
+        truncated_text = (
+            scene_text[:max_length] + "..."
+            if len(scene_text) > max_length
+            else scene_text
+        )
+
+        # Build goals section
+        if scene_goals:
+            goals_section = "\n".join(f"- {goal}" for goal in scene_goals)
+        else:
+            goals_section = "No specific goals provided - evaluate general quality."
+
+        return f"""Critique the following scene:
+
+SCENE TEXT:
+{truncated_text}
+
+SCENE GOALS:
+{goals_section}
+
+Analyze this scene across the four quality dimensions (pacing, voice, showing, dialogue)
+and provide specific, actionable feedback. Consider how well the scene achieves its
+stated goals.
+
+Return valid JSON only with the exact structure specified in the system prompt."""
+
+    def _parse_critique_response(self, content: str) -> "CritiqueResult":
+        """Parse the LLM response into a CritiqueResult.
+
+        Args:
+            content: Raw text response from the LLM.
+
+        Returns:
+            CritiqueResult with parsed critique data.
+        """
+        payload = self._extract_json(content)
+
+        # Parse overall score
+        overall_score = int(payload.get("overall_score", 5))
+        overall_score = max(1, min(10, overall_score))  # Clamp to 1-10
+
+        # Parse category scores
+        category_scores_data = payload.get("category_scores", [])
+        category_scores = []
+
+        valid_categories = {"pacing", "voice", "showing", "dialogue"}
+
+        for cat_data in category_scores_data:
+            category = str(cat_data.get("category", "")).lower()
+            # Normalize category names
+            if category not in valid_categories:
+                continue
+
+            score = int(cat_data.get("score", 5))
+            score = max(1, min(10, score))  # Clamp to 1-10
+
+            issues = cat_data.get("issues", []) or []
+            suggestions = cat_data.get("suggestions", []) or []
+
+            # Ensure lists
+            if not isinstance(issues, list):
+                issues = []
+            if not isinstance(suggestions, list):
+                suggestions = []
+
+            category_scores.append(
+                CritiqueCategoryScore(
+                    category=category,
+                    score=score,
+                    issues=issues,
+                    suggestions=suggestions,
+                )
+            )
+
+        # Parse highlights
+        highlights_data = payload.get("highlights", []) or []
+        if not isinstance(highlights_data, list):
+            highlights_data = []
+        highlights = [str(h) for h in highlights_data]
+
+        # Parse summary
+        summary = str(payload.get("summary", ""))
+
+        return CritiqueResult(
+            overall_score=overall_score,
+            category_scores=category_scores,
+            highlights=highlights,
+            summary=summary,
+        )
+
 
 @dataclass
 class BeatSuggestion:
@@ -1380,6 +1580,79 @@ class RelationshipHistoryResult:
             result["defining_moment"] = self.defining_moment
         if self.current_status:
             result["current_status"] = self.current_status
+        if self.error:
+            result["error"] = self.error
+        return result
+
+
+@dataclass
+class CritiqueCategoryScore:
+    """A category-specific critique score.
+
+    Represents evaluation of a single quality dimension (pacing, voice, showing,
+    dialogue) with specific issues and suggestions.
+
+    Attributes:
+        category: The quality dimension being evaluated.
+        score: Score from 1-10 for this category.
+        issues: List of specific problems identified in this category.
+        suggestions: List of actionable improvements for this category.
+    """
+
+    category: str
+    score: int
+    issues: List[str] = field(default_factory=list)
+    suggestions: List[str] = field(default_factory=list)
+
+
+@dataclass
+class CritiqueResult:
+    """Result of scene critique analysis.
+
+    Contains AI-generated feedback on scene quality across multiple dimensions.
+    Provides category-specific scores, overall assessment, highlights of what
+    works, and actionable suggestions for improvement.
+
+    Why scene critique:
+        Writers need objective feedback on their work beyond subjective
+        impressions. The AI critique analyzes specific craft elements like
+        pacing, voice, showing vs. telling, and dialogue quality, providing
+        actionable suggestions to elevate prose to professional standards.
+
+    Attributes:
+        overall_score: Overall quality score from 1-10.
+        category_scores: List of category-specific evaluations.
+        highlights: What works well in the scene.
+        summary: Brief 2-3 sentence assessment.
+        error: Error message if critique failed.
+    """
+
+    overall_score: int
+    category_scores: List[CritiqueCategoryScore] = field(default_factory=list)
+    highlights: List[str] = field(default_factory=list)
+    summary: str = ""
+    error: Optional[str] = None
+
+    def is_error(self) -> bool:
+        """Check if this result represents an error."""
+        return self.error is not None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format for API responses."""
+        result: Dict[str, Any] = {
+            "overall_score": self.overall_score,
+            "category_scores": [
+                {
+                    "category": cat.category,
+                    "score": cat.score,
+                    "issues": cat.issues,
+                    "suggestions": cat.suggestions,
+                }
+                for cat in self.category_scores
+            ],
+            "highlights": self.highlights,
+            "summary": self.summary,
+        }
         if self.error:
             result["error"] = self.error
         return result

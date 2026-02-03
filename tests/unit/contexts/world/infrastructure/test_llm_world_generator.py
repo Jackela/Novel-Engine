@@ -23,6 +23,8 @@ from src.contexts.world.domain.entities import (
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
     BeatSuggestion,
     BeatSuggestionResult,
+    CritiqueCategoryScore,
+    CritiqueResult,
     LLMWorldGenerator,
 )
 
@@ -913,6 +915,464 @@ class TestBeatSuggestionIntegration:
             scene_context="Test scene.",
             mood_target=None,
         )
+
+        assert result.is_error()
+        assert "GEMINI_API_KEY" in result.error
+
+
+# ==================== Scene Critique Tests ====================
+
+
+@pytest.fixture
+def sample_scene_critique_response() -> Dict[str, Any]:
+    """Sample LLM response for scene critique testing."""
+    return {
+        "overall_score": 7,
+        "category_scores": [
+            {
+                "category": "pacing",
+                "score": 8,
+                "issues": ["Some sections drag during the dialogue exchange."],
+                "suggestions": [
+                    "Consider trimming the middle dialogue exchange by 20%.",
+                    "Add a small action beat to break up the conversation.",
+                ],
+            },
+            {
+                "category": "voice",
+                "score": 6,
+                "issues": [
+                    "Narrative voice feels somewhat generic.",
+                    "Lack of distinct sensory details specific to the POV character.",
+                ],
+                "suggestions": [
+                    "Inject more of the character's personality into descriptions.",
+                    "Use sensory details that reflect the character's background.",
+                ],
+            },
+            {
+                "category": "showing",
+                "score": 5,
+                "issues": [
+                    "Multiple instances of telling emotions ('he felt angry').",
+                    "Adverb-heavy dialogue tags ('said nervously', 'asked angrily').",
+                ],
+                "suggestions": [
+                    "Replace 'he felt angry' with physical manifestations (clenched fists, flushed face).",
+                    "Remove dialogue tags and use action beats instead.",
+                    "Show emotion through subtext in dialogue rather than explanations.",
+                ],
+            },
+            {
+                "category": "dialogue",
+                "score": 7,
+                "issues": ["Some lines feel slightly on-the-nose with exposition."],
+                "suggestions": [
+                    "Rewrite exposition-heavy lines to be more subtle.",
+                    "Add subtext by having characters avoid direct questions.",
+                ],
+            },
+        ],
+        "highlights": [
+            "Opening hook is strong and immediately engaging.",
+            "Dialogue has good rhythmic flow when not doing exposition.",
+            "Clear sense of setting and atmosphere established.",
+        ],
+        "summary": "This scene has a solid foundation with strong opening and clear setting. The main areas for improvement are showing vs. telling (replace emotion words with physical manifestations) and injecting more distinct voice. With revision on dialogue tags and emotional descriptions, this could be professional quality.",
+    }
+
+
+@pytest.fixture
+def scene_text_fixture() -> str:
+    """Sample scene text for testing."""
+    return """The room was dark. John felt scared as he stepped inside.
+
+"Who's there?" he asked nervously.
+
+"Me," Sarah said angrily. "You're late."
+
+"I know," John said sadly. "I'm sorry."""
+class TestCritiqueCategoryScore:
+    """Tests for CritiqueCategoryScore dataclass."""
+
+    @pytest.mark.unit
+    def test_category_score_creation(self) -> None:
+        """Test creating a CritiqueCategoryScore."""
+        score = CritiqueCategoryScore(
+            category="pacing",
+            score=8,
+            issues=["Some sections drag."],
+            suggestions=["Trim dialogue by 20%."],
+        )
+        assert score.category == "pacing"
+        assert score.score == 8
+        assert len(score.issues) == 1
+        assert len(score.suggestions) == 1
+
+    @pytest.mark.unit
+    def test_category_score_defaults(self) -> None:
+        """Test CritiqueCategoryScore default values."""
+        score = CritiqueCategoryScore(category="voice", score=7)
+        assert score.issues == []
+        assert score.suggestions == []
+
+
+class TestCritiqueResult:
+    """Tests for CritiqueResult dataclass."""
+
+    @pytest.mark.unit
+    def test_critique_result_creation(self) -> None:
+        """Test creating a CritiqueResult."""
+        categories = [
+            CritiqueCategoryScore(category="pacing", score=8),
+            CritiqueCategoryScore(category="voice", score=6),
+        ]
+        result = CritiqueResult(
+            overall_score=7,
+            category_scores=categories,
+            highlights=["Strong opening"],
+            summary="Good scene with room for improvement.",
+        )
+
+        assert result.overall_score == 7
+        assert len(result.category_scores) == 2
+        assert len(result.highlights) == 1
+        assert "Good scene" in result.summary
+        assert not result.is_error()
+
+    @pytest.mark.unit
+    def test_critique_result_with_error(self) -> None:
+        """Test CritiqueResult with error."""
+        result = CritiqueResult(
+            overall_score=0,
+            category_scores=[],
+            highlights=[],
+            summary="",
+            error="API call failed",
+        )
+
+        assert result.is_error()
+        assert result.error == "API call failed"
+        assert result.overall_score == 0
+
+    @pytest.mark.unit
+    def test_to_dict(self) -> None:
+        """Test CritiqueResult.to_dict()."""
+        categories = [
+            CritiqueCategoryScore(
+                category="showing",
+                score=5,
+                issues=["Tells emotions"],
+                suggestions=["Show, don't tell"],
+            )
+        ]
+        result = CritiqueResult(
+            overall_score=6,
+            category_scores=categories,
+            highlights=["Good dialogue"],
+            summary="Needs work on showing.",
+        )
+        data = result.to_dict()
+
+        assert data["overall_score"] == 6
+        assert len(data["category_scores"]) == 1
+        assert data["category_scores"][0]["category"] == "showing"
+        assert data["category_scores"][0]["score"] == 5
+        assert data["category_scores"][0]["issues"] == ["Tells emotions"]
+        assert data["category_scores"][0]["suggestions"] == ["Show, don't tell"]
+        assert data["highlights"] == ["Good dialogue"]
+        assert "Needs work on showing" in data["summary"]
+
+    @pytest.mark.unit
+    def test_to_dict_with_error(self) -> None:
+        """Test CritiqueResult.to_dict() includes error."""
+        result = CritiqueResult(
+            overall_score=0,
+            category_scores=[],
+            highlights=[],
+            summary="",
+            error="Test error",
+        )
+        data = result.to_dict()
+
+        assert "error" in data
+        assert data["error"] == "Test error"
+
+
+class TestCritiqueParsing:
+    """Tests for scene critique response parsing."""
+
+    @pytest.mark.unit
+    def test_parse_critique_response(
+        self,
+        generator: LLMWorldGenerator,
+        sample_scene_critique_response: Dict[str, Any],
+    ) -> None:
+        """Test parsing a valid scene critique response."""
+        json_content = json.dumps(sample_scene_critique_response)
+        result = generator._parse_critique_response(json_content)
+
+        assert result.overall_score == 7
+        assert len(result.category_scores) == 4
+        assert not result.is_error()
+
+        # Check pacing category
+        pacing = next((c for c in result.category_scores if c.category == "pacing"), None)
+        assert pacing is not None
+        assert pacing.score == 8
+        assert len(pacing.issues) == 1
+        assert len(pacing.suggestions) == 2
+
+        # Check showing category
+        showing = next((c for c in result.category_scores if c.category == "showing"), None)
+        assert showing is not None
+        assert showing.score == 5
+        assert "he felt angry" in str(showing.issues)
+        assert len(showing.suggestions) == 3
+
+        # Check highlights
+        assert len(result.highlights) == 3
+        assert "Opening hook" in result.highlights[0]
+
+        # Check summary
+        assert len(result.summary) > 0
+        assert "solid foundation" in result.summary.lower()
+
+    @pytest.mark.unit
+    def test_parse_critique_clamps_overall_score(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that overall_score is clamped to valid range (1-10)."""
+        # Test too high
+        response = {"overall_score": 15, "category_scores": [], "highlights": [], "summary": ""}
+        json_content = json.dumps(response)
+        result = generator._parse_critique_response(json_content)
+        assert result.overall_score == 10
+
+        # Test too low
+        response = {"overall_score": -5, "category_scores": [], "highlights": [], "summary": ""}
+        json_content = json.dumps(response)
+        result = generator._parse_critique_response(json_content)
+        assert result.overall_score == 1
+
+    @pytest.mark.unit
+    def test_parse_critique_clamps_category_scores(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that category scores are clamped to valid range (1-10)."""
+        response = {
+            "overall_score": 5,
+            "category_scores": [
+                {"category": "pacing", "score": 15, "issues": [], "suggestions": []},
+                {"category": "voice", "score": -5, "issues": [], "suggestions": []},
+            ],
+            "highlights": [],
+            "summary": "",
+        }
+        json_content = json.dumps(response)
+        result = generator._parse_critique_response(json_content)
+
+        pacing = next((c for c in result.category_scores if c.category == "pacing"), None)
+        voice = next((c for c in result.category_scores if c.category == "voice"), None)
+
+        assert pacing is not None
+        assert pacing.score == 10
+        assert voice is not None
+        assert voice.score == 1
+
+    @pytest.mark.unit
+    def test_parse_critique_filters_invalid_categories(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that invalid categories are filtered out."""
+        response = {
+            "overall_score": 5,
+            "category_scores": [
+                {"category": "pacing", "score": 7, "issues": [], "suggestions": []},
+                {"category": "invalid_category", "score": 5, "issues": [], "suggestions": []},
+                {"category": "voice", "score": 6, "issues": [], "suggestions": []},
+            ],
+            "highlights": [],
+            "summary": "",
+        }
+        json_content = json.dumps(response)
+        result = generator._parse_critique_response(json_content)
+
+        # Should only have pacing and voice
+        assert len(result.category_scores) == 2
+        categories = {c.category for c in result.category_scores}
+        assert categories == {"pacing", "voice"}
+
+    @pytest.mark.unit
+    def test_parse_critique_handles_missing_fields(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test parsing handles missing optional fields."""
+        response = {
+            "overall_score": 5,
+            "category_scores": [
+                {
+                    "category": "pacing",
+                    "score": 7,
+                    # Missing issues and suggestions
+                }
+            ],
+            # Missing highlights
+            "summary": "Test summary",
+        }
+        json_content = json.dumps(response)
+        result = generator._parse_critique_response(json_content)
+
+        assert len(result.category_scores) == 1
+        assert result.category_scores[0].issues == []
+        assert result.category_scores[0].suggestions == []
+        assert result.highlights == []
+        assert result.summary == "Test summary"
+
+    @pytest.mark.unit
+    def test_parse_critique_ensures_lists(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that issues and suggestions are always lists."""
+        response = {
+            "overall_score": 5,
+            "category_scores": [
+                {
+                    "category": "pacing",
+                    "score": 7,
+                    "issues": "not a list",  # String instead of list
+                    "suggestions": None,  # None instead of list
+                }
+            ],
+            "highlights": "also not a list",
+            "summary": "Test",
+        }
+        json_content = json.dumps(response)
+        result = generator._parse_critique_response(json_content)
+
+        assert isinstance(result.category_scores[0].issues, list)
+        assert isinstance(result.category_scores[0].suggestions, list)
+        assert isinstance(result.highlights, list)
+
+
+class TestCritiquePromptBuilding:
+    """Tests for scene critique prompt building."""
+
+    @pytest.mark.unit
+    def test_build_critique_user_prompt_with_goals(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test prompt building with scene goals."""
+        scene_text = "The room was dark. John felt scared."
+        goals = ["build tension", "establish suspense"]
+
+        prompt = generator._build_critique_user_prompt(scene_text, goals)
+
+        assert "The room was dark" in prompt
+        assert "build tension" in prompt
+        assert "establish suspense" in prompt
+
+    @pytest.mark.unit
+    def test_build_critique_user_prompt_without_goals(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test prompt building without scene goals."""
+        scene_text = "She walked into the room. It was empty."
+
+        prompt = generator._build_critique_user_prompt(scene_text, None)
+
+        assert "She walked into the room" in prompt
+        assert "No specific goals provided" in prompt
+
+    @pytest.mark.unit
+    def test_build_critique_user_prompt_truncates_long_text(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that very long scene text is truncated."""
+        # Create a scene longer than 12000 characters
+        long_scene = "A" * 15000
+
+        prompt = generator._build_critique_user_prompt(long_scene, None)
+
+        # Should be truncated with "..." appended
+        assert len(prompt) < 16000  # Should be significantly less
+        assert "..." in prompt
+
+    @pytest.mark.unit
+    def test_build_critique_user_prompt_includes_dimensions(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that prompt mentions critique dimensions."""
+        scene_text = "Test scene."
+
+        prompt = generator._build_critique_user_prompt(scene_text, None)
+
+        # Should mention the four critique categories
+        assert "pacing" in prompt.lower()
+        assert "voice" in prompt.lower()
+        assert "showing" in prompt.lower() or "show" in prompt.lower()
+        assert "dialogue" in prompt.lower()
+
+
+class TestCritiqueIntegration:
+    """Integration-style tests for scene critique with mocked API."""
+
+    @pytest.mark.unit
+    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    def test_critique_scene_success(
+        self,
+        mock_post: MagicMock,
+        generator: LLMWorldGenerator,
+        sample_scene_critique_response: Dict[str, Any],
+        scene_text_fixture: str,
+    ) -> None:
+        """Test successful scene critique with mocked API."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [
+                {"content": {"parts": [{"text": json.dumps(sample_scene_critique_response)}]}}
+            ]
+        }
+        mock_post.return_value = mock_response
+
+        result = generator.critique_scene(
+            scene_text=scene_text_fixture,
+            scene_goals=["build tension"],
+        )
+
+        assert not result.is_error()
+        assert result.overall_score == 7
+        assert len(result.category_scores) == 4
+        assert len(result.highlights) == 3
+
+    @pytest.mark.unit
+    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    def test_critique_scene_api_error(
+        self,
+        mock_post: MagicMock,
+        generator: LLMWorldGenerator,
+    ) -> None:
+        """Test scene critique handles API errors gracefully."""
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.text = "Internal Server Error"
+        mock_post.return_value = mock_response
+
+        result = generator.critique_scene(scene_text="Test scene.")
+
+        assert result.is_error()
+        assert "500" in result.error
+        assert result.overall_score == 0
+        assert len(result.category_scores) == 0
+
+    @pytest.mark.unit
+    def test_critique_scene_missing_api_key(self) -> None:
+        """Test scene critique returns error when API key missing."""
+        gen = LLMWorldGenerator()
+        gen._api_key = ""
+
+        result = gen.critique_scene(scene_text="Test scene.")
 
         assert result.is_error()
         assert "GEMINI_API_KEY" in result.error
