@@ -424,3 +424,113 @@ Documents the Result[T, E] error handling with:
 - Focus: Refactor oversized test file (2144 lines) into focused modules
 
 ---
+
+## 2026-02-03 - CIT-009a: Test: Split test_narrative_context_value_object.py
+
+### What was implemented
+- Split `test_narrative_context_value_object.py` (2144 lines) into 9 focused test modules
+- Each resulting file is under 500 lines as required
+- Organized tests by functionality: enums, creation, validation, properties, calculations, methods, string, edge cases, collections
+- Fixed 2 syntax errors created during split (bracket mismatches in list comprehensions)
+- Updated TESTING.md with Section 9: "Test File Organization Guidelines"
+- Verified all 533 tests still pass after splitting
+
+### Files changed
+- `tests/unit/contexts/narratives/domain/test_narrative_context_value_object.py` - DELETED (split into 9 files)
+- `tests/unit/contexts/narratives/domain/test_narrative_context_enums.py` - NEW (126 lines) - ContextScope and ContextType enum tests
+- `tests/unit/contexts/narratives/domain/test_narrative_context_creation.py` - NEW (249 lines) - Object creation, defaults, immutability
+- `tests/unit/contexts/narratives/domain/test_narrative_context_validation.py` - NEW (426 lines) - Input validation and constraints
+- `tests/unit/contexts/narratives/domain/test_narrative_context_properties.py` - NEW (336 lines) - Computed properties and state checks
+- `tests/unit/contexts/narratives/domain/test_narrative_context_calculations.py` - NEW (219 lines) - Influence strength and complexity calculations
+- `tests/unit/contexts/narratives/domain/test_narrative_context_methods.py` - NEW (380 lines) - Instance methods and behavioral logic
+- `tests/unit/contexts/narratives/domain/test_narrative_context_string.py` - NEW (76 lines) - String representation tests
+- `tests/unit/contexts/narratives/domain/test_narrative_context_edge_cases.py` - NEW (227 lines) - Edge cases and complex metadata
+- `tests/unit/contexts/narratives/domain/test_narrative_context_collections.py` - NEW (230 lines) - Collections, equality, hashing, sorting
+- `docs/testing/TESTING.md` - Updated with Section 9 documenting test organization guidelines
+
+### Split breakdown
+| File | Lines | Focus |
+|------|-------|-------|
+| `test_narrative_context_enums.py` | 126 | ContextScope and ContextType enum validation |
+| `test_narrative_context_creation.py` | 249 | Object creation, defaults, immutability |
+| `test_narrative_context_validation.py` | 426 | Input validation and constraint enforcement |
+| `test_narrative_context_properties.py` | 336 | Computed properties and state checks |
+| `test_narrative_context_calculations.py` | 219 | Influence strength and complexity score calculations |
+| `test_narrative_context_methods.py` | 380 | Instance methods and behavioral logic |
+| `test_narrative_context_string.py` | 76 | String representation (__str__, __repr__) |
+| `test_narrative_context_edge_cases.py` | 227 | Edge cases, unicode, precision, complex metadata |
+| `test_narrative_context_collections.py` | 230 | Collections, equality, hashing, sorting |
+
+### Learnings for future iterations:
+- **Pattern**: Split test files by functional area (enums, creation, validation, etc.) rather than arbitrarily
+- **Pattern**: Each test module should focus on one aspect of the class being tested
+- **Gotcha**: Watch for bracket mismatches when creating list comprehensions - `]` not `}`
+- **Pattern**: Keep test files under 500 lines for maintainability; split when they exceed this
+- **Useful context**: The split pattern established here can be applied to CIT-009b, CIT-009c, and CIT-009d
+
+### Quality checks passed
+- ✅ `pytest tests/unit/contexts/narratives/domain/` - All 533 tests pass
+- ✅ All new files compile successfully
+- ✅ No test logic lost during split
+
+### Next story for Ralph
+- **CIT-009b**: Test: Split test_narrative_theme_value_object.py
+- Priority: 11 (highest pending after CIT-009a)
+- Focus: Refactor oversized test file (1724 lines) into focused modules
+
+---
+
+## 2026-02-03 - CIT-009b: Test: Split test_narrative_theme_value_object.py
+
+### What was implemented
+- Split `test_narrative_theme_value_object.py` (1724 lines) into 9 focused test modules
+- Each resulting file is under 500 lines as required
+- Organized tests by functionality: enums, creation, validation, properties, calculations, methods, factory, string, edge cases, collections
+- Updated TESTING.md with NarrativeTheme split example
+- Verified all 76 tests still pass after splitting
+
+### Files changed
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_value_object.py` - DELETED (split into 9 files)
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_enums.py` - NEW (125 lines) - ThemeType and ThemeIntensity enum validation
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_creation.py` - NEW (157 lines) - Object creation, defaults, immutability
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_validation.py` - NEW (311 lines) - Input validation and constraint enforcement
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_properties.py` - NEW (224 lines) - Computed properties and state checks
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_calculations.py` - NEW (212 lines) - Thematic complexity and narrative impact scores
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_methods.py` - NEW (175 lines) - Instance methods and behavioral logic
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_factory.py` - NEW (119 lines) - Factory methods (with_updated_intensity)
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_string.py` - NEW (73 lines) - String representation (__str__, __repr__)
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_edge_cases.py` - NEW (147 lines) - Edge cases, unicode, precision, large collections
+- `tests/unit/contexts/narratives/domain/test_narrative_theme_collections.py` - NEW (201 lines) - Collections, equality, hashing, sorting
+- `docs/testing/TESTING.md` - Updated with NarrativeTheme split example
+
+### Split breakdown
+| File | Lines | Focus |
+|------|-------|-------|
+| `test_narrative_theme_enums.py` | 125 | ThemeType and ThemeIntensity enum validation |
+| `test_narrative_theme_creation.py` | 157 | Object creation, defaults, immutability |
+| `test_narrative_theme_validation.py` | 311 | Input validation and constraint enforcement |
+| `test_narrative_theme_properties.py` | 224 | Computed properties and state checks |
+| `test_narrative_theme_calculations.py` | 212 | Thematic complexity and narrative impact scores |
+| `test_narrative_theme_methods.py` | 175 | Instance methods and behavioral logic |
+| `test_narrative_theme_factory.py` | 119 | Factory methods (with_updated_intensity) |
+| `test_narrative_theme_string.py` | 73 | String representation (__str__, __repr__) |
+| `test_narrative_theme_edge_cases.py` | 147 | Edge cases, unicode, precision, large collections |
+| `test_narrative_theme_collections.py` | 201 | Collections, equality, hashing, sorting |
+
+### Learnings for future iterations:
+- **Pattern**: Same split pattern as CIT-009a works well - organize by functionality area (enums, creation, validation, etc.)
+- **Pattern**: Factory methods like `with_updated_intensity` are small enough to be standalone files
+- **Gotcha**: The original file had 2 enum test classes (ThemeType and ThemeIntensity) which made the enums file slightly larger
+- **Useful context**: NarrativeTheme has fewer methods than NarrativeContext, resulting in slightly smaller files overall
+
+### Quality checks passed
+- ✅ `pytest tests/unit/contexts/narratives/domain/test_narrative_theme*.py` - All 76 tests pass
+- ✅ All new files compile successfully
+- ✅ No test logic lost during split
+
+### Next story for Ralph
+- **CIT-009c**: Test: Split test_causal_node_value_object.py
+- Priority: 12 (highest pending after CIT-009b)
+- Focus: Refactor oversized test file (1662 lines) into focused modules
+
+---

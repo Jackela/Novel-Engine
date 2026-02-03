@@ -178,7 +178,7 @@
         "Update docs/testing/test-organization.md with new structure"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {
@@ -193,7 +193,7 @@
         "Update docs/testing/test-organization.md with new structure"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {
