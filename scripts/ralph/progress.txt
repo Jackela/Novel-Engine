@@ -479,3 +479,26 @@ Started: Tue Feb  3 16:06:24     2026
   - All scores clamped to 1-10 range for consistency
   - All 573 world context tests pass (61 llm_world_generator tests + 512 other tests)
   - All 312 narrative context tests pass
+
+## 2026-02-03 - DIR-059
+- **What was implemented:**
+  - Outline export functionality for generating and downloading story outline reports as Markdown
+  - Created `outlineExportApi.ts` with functions to fetch story data and generate Markdown
+  - Report includes: Logline, Plotlines with status, Character Arcs (optional), Chapter summaries with scenes, Beat breakdown (optional)
+  - Download functionality using Blob API to trigger browser download of .md file
+  - Export options: includeBeats (scene-by-scene beat breakdown), includeCharacters (character arcs), filename
+- **Files changed:**
+  - `frontend/src/lib/api/outlineExportApi.ts` - New file (~230 lines)
+    - generateOutlineMarkdown(): Fetches story data and builds Markdown string
+    - downloadAsMarkdown(): Triggers browser download using Blob API
+    - exportOutlineAsMarkdown(): Main export function combining fetch + generate + download
+    - useExportOutline(): React hook for UI integration
+  - `frontend/src/lib/api/index.ts` - Added exports for new outline export functions
+- **Learnings for future iterations:**
+  - Use Blob API for file downloads: `new Blob([content], { type: 'text/markdown' })` then createObjectURL
+  - Export API uses sequential async/await to fetch chapters and scenes one-by-one (could be batched in future)
+  - Character data structure may vary - handle gracefully with Array.isArray check
+  - Plotline status emojis: 🔄 active, ✅ resolved, 🚫 abandoned for visual clarity
+  - Beat mood shift indicators: ⬆️ positive, ⬇️ negative, ➡️ neutral
+  - Story phase labels: convert snake_case to lowercase with spaces
+  - All typecheck and lint pass

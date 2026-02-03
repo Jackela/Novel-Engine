@@ -318,7 +318,7 @@
         "Verify: Download produces valid markdown"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["DIR-049"]
     },

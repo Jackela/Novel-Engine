@@ -44,3 +44,12 @@ export {
   downloadAsJson,
   type CharacterExportData,
 } from './exportApi';
+
+// Outline Export API (DIR-059)
+export {
+  generateOutlineMarkdown,
+  downloadAsMarkdown,
+  exportOutlineAsMarkdown,
+  useExportOutline,
+  type OutlineExportOptions,
+} from './outlineExportApi';
