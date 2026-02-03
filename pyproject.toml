@@ -36,6 +36,9 @@ dependencies = [
     "opentelemetry-sdk>=1.21.0,<2.0.0",  # OpenTelemetry SDK
     # Structured Logging (ARCH-003)
     "structlog>=24.0.0,<26.0.0",  # Industry-standard structured logging
+    # Warzone 4: AI Brain - RAG Engine (BRAIN-001)
+    "chromadb>=0.5.0,<1.0.0",  # Vector database for semantic search
+    "tiktoken>=0.7.0,<1.0.0",  # OpenAI token counter for context window management
 ]
 
 [project.optional-dependencies]

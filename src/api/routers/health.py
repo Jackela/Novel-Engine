@@ -56,3 +56,57 @@ async def health_check(request: Request) -> HealthCheckResponse:
         config=config_status,
         uptime=_uptime_seconds(request),
     )
+
+
+@router.get("/health/chromadb")
+async def chromadb_health_check() -> dict[str, Any]:
+    """
+    ChromaDB vector store health check endpoint.
+
+    Warzone 4: AI Brain - BRAIN-001
+    Returns the status of the ChromaDB vector database connection.
+    """
+    from typing import Any
+
+    try:
+        from src.contexts.knowledge.infrastructure.adapters.chromadb_vector_store import (
+            ChromaDBVectorStore,
+        )
+
+        store = ChromaDBVectorStore()
+        is_healthy = await store.health_check()
+
+        from pathlib import Path
+
+        persist_dir = Path(store._persist_dir)
+        collection_count = 0
+        if persist_dir.exists():
+            collection_count = len([p for p in persist_dir.iterdir() if p.is_dir()])
+
+        return {
+            "status": "healthy" if is_healthy else "unhealthy",
+            "message": "ChromaDB vector store is operational" if is_healthy else "ChromaDB connection failed",
+            "details": {
+                "persist_dir": str(persist_dir.absolute()),
+                "collection_count": collection_count,
+                "embedding_dimension": store._embedding_dimension,
+            },
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+
+    except ImportError:
+        return {
+            "status": "not_installed",
+            "message": "ChromaDB is not installed. Vector features are disabled.",
+            "details": {
+                "install_command": "pip install chromadb>=0.5.0",
+            },
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+    except Exception as exc:
+        logger.error("ChromaDB health check error: %s", exc)
+        return {
+            "status": "error",
+            "message": f"ChromaDB health check failed: {exc}",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }

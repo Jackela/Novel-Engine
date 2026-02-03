@@ -1,0 +1,1 @@
+"""Knowledge Infrastructure Adapters Tests."""

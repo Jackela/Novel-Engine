@@ -2,7 +2,7 @@
 Knowledge Management Bounded Context
 
 This context handles centralized agent knowledge and context assembly,
-replacing the static Markdown file-based system with a dynamic, 
+replacing the static Markdown file-based system with a dynamic,
 permission-controlled knowledge base.
 
 Domain Models:
@@ -15,10 +15,11 @@ Ports:
 - IKnowledgeRetriever
 - IAccessControlService
 - IContextAssembler
+- IVectorStore (Warzone 4: AI Brain - BRAIN-001)
 
 Constitution Compliance:
 - Article I (DDD): Pure domain models, no infrastructure dependencies
 - Article II (Hexagonal): Ports & Adapters architecture
 - Article III (TDD): Test-driven development with ≥80% domain coverage
-- Article IV (SSOT): PostgreSQL as authoritative source
+- Article IV (SSOT): PostgreSQL as authoritative source, ChromaDB for vector storage
 """
