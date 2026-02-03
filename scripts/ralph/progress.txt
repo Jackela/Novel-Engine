@@ -1,5 +1,7 @@
-# Ralph Progress Log
-Started: Tue Feb  3 20:12:59     2026
+# Ralph Progress Log - Code Citadel Campaign
+Started: Tue Feb  3 20:12:59 2026
+Reset: $(date +%Y-%m-%d)
+
 ---
 
 ## Codebase Patterns
@@ -26,6 +28,12 @@ Started: Tue Feb  3 20:12:59     2026
 - `scripts/generate_openapi.py` - Regenerate OpenAPI from FastAPI
 - `scripts/manual_schema_audit.py` - Compare backend/frontend schemas
 - `scripts/audit_schema_sync.py` - Automated schema diff tool (less accurate)
+
+### Zustand Store Locations
+- `frontend/src/features/weaver/store/weaverStore.ts` - Weaver graph state
+- `frontend/src/features/dashboard/stores/orchestrationStore.ts` - Orchestration state
+- `frontend/src/features/decision/decisionStore.ts` - Decision state
+- `frontend/src/features/auth/stores/authStore.ts` - Auth state
 
 ---
 
@@ -59,15 +67,59 @@ Started: Tue Feb  3 20:12:59     2026
 - **Pattern**: Schema names normalize by removing Response/Request/Update/Create suffixes
 - **Useful context**: The project has 143 Pydantic schemas vs 103 Zod schemas - significant drift exists
 
-### Remaining work (for later stories)
-- CIT-002 will need to address duplicate type definitions in frontend
-- Schema synchronization is an ongoing process - automation would help
-- Consider implementing CI checks for schema alignment
-
 ### Quality checks passed
 - ✅ `npm run type-check` - No errors
 - ✅ `npm run lint` - Only pre-existing warnings
 - ✅ Backend imports working correctly after Enum fix
 - ⚠️  `mypy` shows pre-existing type annotation issues (not related to this work)
+
+---
+
+## 2026-02-03 - PRD Reset
+
+### Changes made
+- PRD updated from 16 to 20 user stories
+- **CIT-004.5 added**: Backend: Extract Router Business Logic (NEW)
+- **CIT-005 updated**: Store count corrected from 5 to 4 stores
+- **CIT-006 updated**: TODO count corrected from 11 to 15 TODOs
+- **CIT-009 split**: Divided into 4 stories (CIT-009a, CIT-009b, CIT-009c, CIT-009d) - one per test file
+- All stories except CIT-001 reset to `passes: false`
+- Priorities renumbered 1-20
+
+### Next story for Ralph
+- **CIT-002**: Frontend: Eliminate Duplicate Type Definitions
+- Priority: 2 (highest pending)
+- Focus: Remove CombatStats, StructuredCharacterData, EquipmentItem from dtoTransforms.ts
+
+---
+
+## 2026-02-03 - CIT-002: Frontend: Eliminate Duplicate Type Definitions
+
+### What was implemented
+- Added Zod schemas for `CombatStats`, `PartialCombatStats`, `StructuredCharacterData`, and `EquipmentItem` to `frontend/src/types/schemas.ts`
+- Updated `dtoTransforms.ts` to import types from schemas.ts instead of defining them locally
+- Removed duplicate type definitions from dtoTransforms.ts (now only exports transformation functions)
+- Fixed type compatibility issue by using explicit field construction with null coalescing
+
+### Files changed
+- `frontend/src/types/schemas.ts` - Added 4 new Zod schemas with TypeScript type exports
+- `frontend/src/services/dtoTransforms.ts` - Removed local type definitions, added imports from schemas.ts
+
+### Learnings for future iterations:
+- **Pattern**: When combining Partial<T> with default values, use explicit field construction (`field ?? default`) instead of spread operator to avoid TypeScript `undefined` type errors
+- **Pattern**: Create both full and partial versions of stats types (e.g., `CombatStats` and `PartialCombatStats`) when data may be incomplete
+- **Gotcha**: TypeScript spread of `Partial<T>` over `T` doesn't eliminate `undefined` from the result type - need explicit construction
+- **Useful context**: `frontend/src/types/schemas.ts` is the SSOT for all frontend types that mirror backend schemas
+
+### Quality checks passed
+- ✅ `npm run type-check` - No errors
+- ✅ `npm run test` - All 46 tests pass
+- ✅ `npm run lint` - Only pre-existing warnings (4 react-hooks, 1 hex color - unrelated to this work)
+- ✅ No unused imports introduced
+
+### Next story for Ralph
+- **CIT-003**: Backend: Establish Result Pattern Implementation
+- Priority: 3 (highest pending after CIT-002)
+- Focus: Create Result[T, E] error handling pattern in src/core/result.py
 
 ---

@@ -42,7 +42,7 @@
         "Run npm run lint:all - no unused imports"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "effort": "low"
     },
     {
@@ -83,36 +83,55 @@
       "dependencies": ["CIT-003"]
     },
     {
+      "id": "CIT-004.5",
+      "title": "Backend: Extract Router Business Logic",
+      "description": "Move business logic from routers to services layer. Characters router has ~600 lines with logic that belongs in services.",
+      "acceptanceCriteria": [
+        "Audit src/api/routers/characters.py - identify all business logic functions",
+        "Create or update CharacterService with methods: gather_filesystem_character_info, summarize_workspace_character, summarize_public_character",
+        "Move helper functions: _normalize_numeric_map, _to_float to services",
+        "Move cache-related functions (_build_entity_etag, _apply_entity_cache_headers, _set_cache_headers) to a separate CacheService",
+        "Update router to only handle: request parsing, response formatting, error handling",
+        "Target: Router files max 200 lines, services handle business logic",
+        "Run pytest tests/unit/api/routers/ - all pass"
+      ],
+      "priority": 5,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["CIT-003"]
+    },
+    {
       "id": "CIT-005",
       "title": "Frontend: Consolidate State Management Strategy",
       "description": "Audit and document all Zustand stores, create consolidation plan.",
       "acceptanceCriteria": [
-        "Inventory all Zustand stores: authStore, orchestrationStore, decisionStore, exposeDecisionStore, weaverStore",
+        "Inventory all Zustand stores: authStore, orchestrationStore, decisionStore, weaverStore (4 total)",
         "Document each store's purpose, state shape, actions in docs/architecture/state-management.md",
-        "Identify overlapping responsibilities (e.g., decisionStore vs exposeDecisionStore)",
+        "Identify overlapping responsibilities between stores",
         "Create consolidation strategy document",
         "Mark stores for: KEEP, MERGE, SPLIT, DEPRECATE",
         "Define migration path for store consolidation",
         "Run npm run type-check - no errors after documentation"
       ],
-      "priority": 5,
+      "priority": 6,
       "passes": false,
       "effort": "high"
     },
     {
       "id": "CIT-006",
       "title": "Backend: Resolve TODOs",
-      "description": "Systematically resolve or document all 11 backend TODO/FIXME comments.",
+      "description": "Systematically resolve or document all 15 backend TODO/FIXME comments.",
       "acceptanceCriteria": [
         "Extract all TODOs/FIXMEs from backend using grep",
         "Categorize each: IMPLEMENT NOW, DEFERRED, or DOCUMENTED LIMITATION",
+        "Files with TODOs: src/api/knowledge_api.py (4), src/api/production_server.py (1), src/infrastructure/enterprise_storage_manager.py (1), src/contexts/character/application/commands/character_command_handlers.py (4), src/contexts/world/application/commands/handlers.py (1), src/contexts/knowledge/infrastructure/adapters/embedding_generator_adapter.py (2)",
         "For IMPLEMENT NOW: Implement the feature or fix",
         "For DEFERRED: Create GitHub issue with detailed task description",
         "For DOCUMENTED LIMITATION: Add explanatory comment why this is acceptable",
         "Run pytest after each resolved TODO",
         "Update docs/quality/todo-tracker.md with final status"
       ],
-      "priority": 6,
+      "priority": 7,
       "passes": false,
       "effort": "medium"
     },
@@ -128,7 +147,7 @@
         "Run npm run type-check - no errors",
         "Run npm run test - all component tests pass"
       ],
-      "priority": 7,
+      "priority": 8,
       "passes": false,
       "effort": "low"
     },
@@ -143,27 +162,69 @@
         "Use ADR template from docs/adr/ADR-001-iron-laws-validation.md",
         "Update docs/adr/index.md with new ADRs"
       ],
-      "priority": 8,
+      "priority": 9,
       "passes": false,
       "effort": "medium"
     },
     {
-      "id": "CIT-009",
-      "title": "Test: Split Large Test Files",
-      "description": "Refactor oversized test files into focused, maintainable modules.",
+      "id": "CIT-009a",
+      "title": "Test: Split test_narrative_context_value_object.py",
+      "description": "Refactor oversized test file (2144 lines) into focused, maintainable modules.",
       "acceptanceCriteria": [
-        "Split tests/unit/contexts/narratives/domain/test_narrative_context_value_object.py (2144 lines) - Separate by method group",
-        "Split tests/unit/contexts/narratives/domain/test_narrative_theme_value_object.py (1724 lines)",
-        "Split tests/unit/contexts/narratives/domain/test_causal_node_value_object.py (1662 lines)",
-        "Split tests/unit/contexts/character/domain/test_character_stats_value_object.py (1625 lines)",
-        "Target: Each test file max 500 lines",
-        "Create shared test utilities module for common fixtures",
-        "Run pytest tests/unit/ - all tests still pass",
+        "Split tests/unit/contexts/narratives/domain/test_narrative_context_value_object.py by method group",
+        "Target: Each resulting test file max 500 lines",
+        "Create shared test utilities module for common fixtures if applicable",
+        "Run pytest tests/unit/contexts/narratives/domain/ - all tests still pass",
         "Update docs/testing/test-organization.md with new structure"
       ],
-      "priority": 9,
+      "priority": 10,
       "passes": false,
-      "effort": "high"
+      "effort": "medium"
+    },
+    {
+      "id": "CIT-009b",
+      "title": "Test: Split test_narrative_theme_value_object.py",
+      "description": "Refactor oversized test file (1724 lines) into focused, maintainable modules.",
+      "acceptanceCriteria": [
+        "Split tests/unit/contexts/narratives/domain/test_narrative_theme_value_object.py by method group",
+        "Target: Each resulting test file max 500 lines",
+        "Use shared test utilities module created in CIT-009a if applicable",
+        "Run pytest tests/unit/contexts/narratives/domain/ - all tests still pass",
+        "Update docs/testing/test-organization.md with new structure"
+      ],
+      "priority": 11,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "CIT-009c",
+      "title": "Test: Split test_causal_node_value_object.py",
+      "description": "Refactor oversized test file (1662 lines) into focused, maintainable modules.",
+      "acceptanceCriteria": [
+        "Split tests/unit/contexts/narratives/domain/test_causal_node_value_object.py by method group",
+        "Target: Each resulting test file max 500 lines",
+        "Use shared test utilities module created in CIT-009a if applicable",
+        "Run pytest tests/unit/contexts/narratives/domain/ - all tests still pass",
+        "Update docs/testing/test-organization.md with new structure"
+      ],
+      "priority": 12,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "CIT-009d",
+      "title": "Test: Split test_character_stats_value_object.py",
+      "description": "Refactor oversized test file (1625 lines) into focused, maintainable modules.",
+      "acceptanceCriteria": [
+        "Split tests/unit/contexts/character/domain/test_character_stats_value_object.py by method group",
+        "Target: Each resulting test file max 500 lines",
+        "Create or use shared test utilities module for common fixtures",
+        "Run pytest tests/unit/contexts/character/domain/ - all tests still pass",
+        "Update docs/testing/test-organization.md with new structure"
+      ],
+      "priority": 13,
+      "passes": false,
+      "effort": "medium"
     },
     {
       "id": "CIT-010",
@@ -176,7 +237,7 @@
         "Run pytest tests/integration/ - all pass",
         "Add to CI pipeline"
       ],
-      "priority": 10,
+      "priority": 14,
       "passes": false,
       "effort": "medium",
       "dependencies": ["CIT-003"]
@@ -194,7 +255,7 @@
         "Implement route-based code splitting for /dashboard, /director, /weaver",
         "Run npm run build - verify reduced bundle sizes"
       ],
-      "priority": 11,
+      "priority": 15,
       "passes": false,
       "effort": "medium",
       "dependencies": ["CIT-005"]
@@ -210,7 +271,7 @@
         "Create frontend/src/features/weaver/CLAUDE.md - React Flow graph setup, node visual protocol, edge interaction patterns",
         "Follow existing CLAUDE.md format with 'Why this module exists', 'Key patterns', 'Gotchas'"
       ],
-      "priority": 12,
+      "priority": 16,
       "passes": false,
       "effort": "low",
       "dependencies": ["CIT-004", "CIT-005"]
@@ -226,7 +287,7 @@
         "Render diagrams to PNG in docs/assets/diagrams/",
         "Update ARCHITECTURE.md with diagram links"
       ],
-      "priority": 13,
+      "priority": 17,
       "passes": false,
       "effort": "low",
       "dependencies": ["CIT-008"]
@@ -243,7 +304,7 @@
         "Generate baseline report on first run",
         "Document metrics in docs/quality/metrics-definition.md"
       ],
-      "priority": 14,
+      "priority": 18,
       "passes": false,
       "effort": "medium"
     },
@@ -258,7 +319,7 @@
         "Include references to all ADRs and CLAUDE.md files",
         "Add checklist for PRD completion verification"
       ],
-      "priority": 15,
+      "priority": 19,
       "passes": false,
       "effort": "low"
     },
@@ -267,13 +328,13 @@
       "title": "Docs: Create Code Citadel Completion Report",
       "description": "Generate final report on technical debt repayment achievements.",
       "acceptanceCriteria": [
-        "Create docs/reports/code-citadel-final-report.md - Summary: Stories completed (16/16), Before/After metrics, Architectural improvements",
+        "Create docs/reports/code-citadel-final-report.md - Summary: Stories completed (20/20), Before/After metrics, Architectural improvements",
         "Generate bundle size comparison report",
-        "Document TODO count: 13 -> 0, Schema drift: X mismatches -> 0, Test file sizes: Max 2144 lines -> max 500 lines, Documentation: 7 ADRs -> 10 ADRs",
+        "Document TODO count: 15 -> 0, Schema drift: X mismatches -> reduced, Test file sizes: Max 2144 lines -> max 500 lines, Documentation: ADRs added",
         "Update CLAUDE.md with lessons learned",
         "Archive Code Citadel campaign to scripts/ralph/archive/"
       ],
-      "priority": 16,
+      "priority": 20,
       "passes": false,
       "effort": "low"
     }

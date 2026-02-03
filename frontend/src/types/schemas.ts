@@ -1,5 +1,61 @@
 import { z } from 'zod';
 
+// === Character Stats and Equipment Types ===
+
+/**
+ * Combat stats schema for character attributes.
+ * Represents the six primary character statistics used in gameplay.
+ */
+export const CombatStatsSchema = z.object({
+  strength: z.number(),
+  dexterity: z.number(),
+  intelligence: z.number(),
+  willpower: z.number(),
+  perception: z.number(),
+  charisma: z.number(),
+});
+
+/**
+ * Partial combat stats - each stat field is optional.
+ * Used in structured_data where only some stats may be present.
+ */
+export const PartialCombatStatsSchema = z.object({
+  strength: z.number().optional(),
+  dexterity: z.number().optional(),
+  intelligence: z.number().optional(),
+  willpower: z.number().optional(),
+  perception: z.number().optional(),
+  charisma: z.number().optional(),
+});
+
+/**
+ * Structured character data schema.
+ * Contains character stats and equipment information from structured_data field.
+ */
+export const StructuredCharacterDataSchema = z.object({
+  combat_stats: PartialCombatStatsSchema.optional(),
+  equipment: z.object({
+    primary_weapon: z.string().optional(),
+    armor: z.string().optional(),
+    special_gear: z.array(z.string()).optional(),
+  }).optional(),
+});
+
+/**
+ * Equipment item schema.
+ * Represents a single piece of equipment with its properties.
+ */
+export const EquipmentItemSchema = z.object({
+  name: z.string(),
+  equipment_type: z.string().optional(),
+  condition: z.number().optional(),
+});
+
+export type CombatStats = z.infer<typeof CombatStatsSchema>;
+export type PartialCombatStats = z.infer<typeof PartialCombatStatsSchema>;
+export type StructuredCharacterData = z.infer<typeof StructuredCharacterDataSchema>;
+export type EquipmentItem = z.infer<typeof EquipmentItemSchema>;
+
 // Character Psychology Schema (Big Five / OCEAN model)
 // All traits scored 0-100: 0-30 = Low, 31-70 = Average, 71-100 = High
 export const CharacterPsychologySchema = z.object({

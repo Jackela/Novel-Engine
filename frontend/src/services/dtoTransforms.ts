@@ -1,11 +1,8 @@
-type CombatStats = {
-  strength: number;
-  dexterity: number;
-  intelligence: number;
-  willpower: number;
-  perception: number;
-  charisma: number;
-};
+import type {
+  CombatStats,
+  StructuredCharacterData,
+  EquipmentItem,
+} from '@/types/schemas';
 
 const defaultStats: CombatStats = {
   strength: 5,
@@ -16,26 +13,18 @@ const defaultStats: CombatStats = {
   charisma: 5,
 };
 
-type StructuredCharacterData = {
-  combat_stats?: Partial<CombatStats>;
-  equipment?: {
-    primary_weapon?: string;
-    armor?: string;
-    special_gear?: string[];
-  };
-};
-
-type EquipmentItem = {
-  name: string;
-  equipment_type?: string;
-  condition?: number;
-};
-
 export function extractStatsFromData(
   data?: StructuredCharacterData | null
 ): CombatStats {
-  const stats = data?.combat_stats ?? {};
-  return { ...defaultStats, ...stats };
+  const partial = data?.combat_stats ?? {};
+  return {
+    strength: partial.strength ?? defaultStats.strength,
+    dexterity: partial.dexterity ?? defaultStats.dexterity,
+    intelligence: partial.intelligence ?? defaultStats.intelligence,
+    willpower: partial.willpower ?? defaultStats.willpower,
+    perception: partial.perception ?? defaultStats.perception,
+    charisma: partial.charisma ?? defaultStats.charisma,
+  };
 }
 
 export function extractEquipmentFromData(
