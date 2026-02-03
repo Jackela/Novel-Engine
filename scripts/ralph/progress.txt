@@ -49,7 +49,7 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 
 #### Core Infrastructure (7 stories)
 - BRAIN-001: ChromaDB setup ✅
-- BRAIN-002: Embedding service
+- BRAIN-002: Embedding service ✅
 - BRAIN-003: Knowledge entry entity
 - BRAIN-004: Knowledge ingestion service
 - BRAIN-005: Auto-sync event listeners
@@ -126,9 +126,33 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 
 ---
 
+## [2025-02-03] - BRAIN-002 ✅
+- Implemented EmbeddingService adapter with OpenAI embeddings API integration
+- Created IEmbeddingService port interface with embed, embed_batch, get_dimension, clear_cache methods
+- Added real OpenAI embeddings support (text-embedding-3-small, text-embedding-3-large, text-embedding-ada-002)
+- Implemented deterministic fallback mock embeddings for testing
+- Added batch embedding support with caching for efficiency
+- Maintained backward compatibility with EmbeddingGeneratorAdapter alias
+- All 32 unit tests passing
+- Files changed:
+  - `pyproject.toml`: Added openai>=1.0.0,<2.0.0 dependency
+  - `src/contexts/knowledge/application/ports/i_embedding_service.py`: IEmbeddingService port, EmbeddingError exception
+  - `src/contexts/knowledge/infrastructure/adapters/embedding_generator_adapter.py`: Complete rewrite of EmbeddingServiceAdapter
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_embedding_service_adapter.py`: Full test coverage
+
+**Learnings for future iterations:**
+- OpenAI's AsyncOpenAI client requires lazy loading to avoid import errors when package isn't installed
+- Use TYPE_CHECKING to import types only for mypy, not runtime
+- Mock embeddings use text hash for determinism - same text always produces same vector
+- Embeddings should be normalized to unit length (standard practice for semantic search)
+- Caching at the adapter level avoids redundant API calls for identical text
+- Batch mode can be more efficient but should still respect cache for individual items
+
+---
+
 ## Next Story for Ralph
-- **BRAIN-002**: Infra: Embedding Service Adapter
-- Priority: 2
-- Focus: Create EmbeddingService adapter wrapping OpenAI text-embedding-3-small
+- **BRAIN-003**: Domain: Knowledge Entry Entity
+- Priority: 3
+- Focus: Create KnowledgeEntry entity with ChunkingStrategy value object
 
 ---
