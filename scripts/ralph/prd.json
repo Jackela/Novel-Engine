@@ -1,342 +1,281 @@
 {
-  "project": "Novel-Engine-Warzone-3",
-  "branchName": "feat/director-mode",
-  "description": "WARZONE 3: Implementing the Director Mode - Beats, Pacing, Conflict, and Plotlines. Making AI the co-director.",
+  "project": "Novel-Engine-Code-Citadel",
+  "branchName": "feat/code-citadel",
+  "description": "OPERATION CODE CITADEL: Technical debt repayment, architectural strictness, performance optimization, and error handling standardization.",
   "techContext": {
-    "stack": "FastAPI + React + Recharts + Tiptap + dnd-kit",
-    "testCommand": "pytest",
-    "e2eCommand": "npm run test:e2e",
-    "typecheckCommand": "npm run typecheck",
-    "conventions": "READ CONVENTIONS.md AND DESIGN_SYSTEM.md BEFORE CODING",
-    "domainContext": "New entities go in src/contexts/narrative/domain/"
+    "stack": "FastAPI + React + Tailwind",
+    "testCommand": "pytest tests/ && npm run test:e2e",
+    "typecheckCommand": "mypy . && npm run type-check",
+    "conventions": "READ CONVENTIONS.md AND DESIGN_SYSTEM.md BEFORE CODING. STRICTLY FOLLOW HEXAGONAL ARCHITECTURE."
   },
   "userStories": [
     {
-      "id": "DIR-041",
-      "title": "Domain: Scene Beats Architecture",
-      "description": "Scenes are too big. Break them down into Beats (ACTION/REACTION micro-units).",
+      "id": "CIT-001",
+      "title": "Backend: Schema Synchronization Audit",
+      "description": "Audit and align all Pydantic backend schemas with Zod frontend schemas to eliminate contract drift.",
       "acceptanceCriteria": [
-        "Create `src/contexts/narrative/domain/value_objects/beat.py`",
-        "Beat value object: id, content, beat_type (ACTION/REACTION), mood_shift (-5 to +5), order_index",
-        "Update Scene entity to contain list of Beats",
-        "Add beat CRUD methods to Scene: add_beat(), remove_beat(), reorder_beats()",
-        "Test: `pytest tests/unit/contexts/narrative/domain/test_beat.py`"
+        "Run diff between src/api/schemas.py and frontend/src/types/schemas.ts",
+        "Document all misaligned fields in docs/api/schema-drift-report.md",
+        "Identify missing schemas (present in one but not the other)",
+        "Create checklist of schema discrepancies with severity levels (CRITICAL/HIGH/LOW)",
+        "Verify all field constraints match (min/max lengths, enums, validation rules)",
+        "Run scripts/generate_openapi.py and regenerate frontend schemas",
+        "Run npm run type-check - no schema-related errors",
+        "Verification: All API contracts align between backend and frontend"
       ],
       "priority": 1,
-      "passes": true,
-      "effort": "low"
+      "passes": false,
+      "effort": "medium"
     },
     {
-      "id": "DIR-042",
-      "title": "Frontend: Beat Editor UI",
-      "description": "A micro-editor inside the Scene detail view for managing beats.",
+      "id": "CIT-002",
+      "title": "Frontend: Eliminate Duplicate Type Definitions",
+      "description": "Remove duplicate type definitions from dtoTransforms.ts and establish single source of truth.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/BeatList.tsx`",
-        "Use dnd-kit for drag-and-drop reordering",
-        "Visual distinction: ACTION beats = blue border, REACTION beats = amber border",
-        "Add/Edit/Delete beat functionality with inline editing",
-        "API integration: beats persist to backend",
-        "Verify: Changes persist after page refresh"
+        "Audit frontend/src/services/dtoTransforms.ts for duplicate types",
+        "Move CombatStats, StructuredCharacterData, EquipmentItem to frontend/src/types/schemas.ts",
+        "Import from schemas.ts instead of local definitions",
+        "Update all imports across codebase to use centralized types",
+        "Delete duplicate definitions from dtoTransforms.ts",
+        "Keep only transformation functions (not types) in dtoTransforms",
+        "Run npm run type-check - zero errors",
+        "Run npm run lint:all - no unused imports"
       ],
       "priority": 2,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["DIR-041"]
+      "passes": false,
+      "effort": "low"
     },
     {
-      "id": "DIR-043",
-      "title": "Domain: Pacing Metrics",
-      "description": "Quantify the tension and energy of each scene.",
+      "id": "CIT-003",
+      "title": "Backend: Establish Result Pattern Implementation",
+      "description": "Implement consistent Result[T, E] pattern for error handling across all services.",
       "acceptanceCriteria": [
-        "Update Scene entity with `tension_level` (1-10) and `energy_level` (1-10)",
-        "Create `PacingService` in `src/contexts/narrative/application/services/`",
-        "Implement `calculate_chapter_pacing(chapter_id)` returning scene-by-scene metrics",
-        "Implement `analyze_pacing_issues()` detecting monotony (same level 3+ scenes)",
-        "Test: `pytest` calculation and analysis logic"
+        "Create src/core/result.py with Result[T, E], Ok[T], Error[E] classes",
+        "Add @dataclass for Error with code, message, recoverable fields",
+        "Update 3 service files as reference implementations: orchestration_service.py, character_application_service.py, pacing_service.py",
+        "Replace raw exception raising with Result returns",
+        "Update routers to unwrap Results and return appropriate HTTP status codes",
+        "Run pytest tests/unit/api/ - all service tests pass",
+        "Document Result pattern in docs/architecture/error-handling.md"
       ],
       "priority": 3,
-      "passes": true,
-      "effort": "low"
+      "passes": false,
+      "effort": "medium"
     },
     {
-      "id": "DIR-044",
-      "title": "Frontend: Pacing Graph Visualizer",
-      "description": "See the rhythm of the story as a tension/energy curve.",
+      "id": "CIT-004",
+      "title": "Backend: Remove Character-Orchestration Coupling",
+      "description": "Eliminate circular dependency between character context and orchestration context.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/PacingGraph.tsx`",
-        "Use Recharts AreaChart with dual Y-axis (tension + energy)",
-        "X-Axis: Scene sequence, Y-Axis: Tension (0-10) and Energy (0-10)",
-        "Add tooltips showing scene title on hover",
-        "Integrate into Chapter Dashboard view",
-        "Verify: Graph renders correctly with mock/real data"
+        "Audit src/contexts/orchestration/infrastructure/pipeline_phases/__init__.py",
+        "Identify what character-specific logic orchestration imports",
+        "Create domain event in character context: CharacterInteractionRequested",
+        "Emit event instead of direct import",
+        "Subscribe orchestration to character domain events",
+        "Remove all 'from src.contexts.character' imports from orchestration",
+        "Add import-linter rule to prevent re-introduction",
+        "Run pytest tests/unit/contexts/orchestration/ - all pass",
+        "Run scripts/validate_imports.sh - zero violations"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
-      "dependencies": ["DIR-043"]
+      "dependencies": ["CIT-003"]
     },
     {
-      "id": "DIR-045",
-      "title": "Domain: Conflict System",
-      "description": "No conflict, no story. Track conflicts per scene.",
+      "id": "CIT-005",
+      "title": "Frontend: Consolidate State Management Strategy",
+      "description": "Audit and document all Zustand stores, create consolidation plan.",
       "acceptanceCriteria": [
-        "Create `src/contexts/narrative/domain/entities/conflict.py`",
-        "Conflict entity: id, conflict_type (INTERNAL/EXTERNAL/INTERPERSONAL), stakes (LOW/MEDIUM/HIGH/CRITICAL), description, resolution_status (UNRESOLVED/ESCALATING/RESOLVED)",
-        "Link Conflicts to Scenes via scene_id",
-        "Add API endpoints for conflict CRUD",
-        "Test: `pytest` conflict creation and linking"
+        "Inventory all Zustand stores: authStore, orchestrationStore, decisionStore, exposeDecisionStore, weaverStore",
+        "Document each store's purpose, state shape, actions in docs/architecture/state-management.md",
+        "Identify overlapping responsibilities (e.g., decisionStore vs exposeDecisionStore)",
+        "Create consolidation strategy document",
+        "Mark stores for: KEEP, MERGE, SPLIT, DEPRECATE",
+        "Define migration path for store consolidation",
+        "Run npm run type-check - no errors after documentation"
       ],
       "priority": 5,
-      "passes": true,
-      "effort": "low"
+      "passes": false,
+      "effort": "high"
     },
     {
-      "id": "DIR-046",
-      "title": "Frontend: Conflict Manager",
-      "description": "Manage stakes and track conflict resolution.",
+      "id": "CIT-006",
+      "title": "Backend: Resolve TODOs",
+      "description": "Systematically resolve or document all 11 backend TODO/FIXME comments.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/ConflictPanel.tsx`",
-        "Add to Director Sidebar with collapsible sections by conflict type",
-        "Allow tagging a Scene with existing or new Conflict",
-        "Visual cue: Scenes with CRITICAL stakes show fire/red indicator",
-        "Badge showing unresolved conflict count",
-        "Verify: Tagging and untagging works"
+        "Extract all TODOs/FIXMEs from backend using grep",
+        "Categorize each: IMPLEMENT NOW, DEFERRED, or DOCUMENTED LIMITATION",
+        "For IMPLEMENT NOW: Implement the feature or fix",
+        "For DEFERRED: Create GitHub issue with detailed task description",
+        "For DOCUMENTED LIMITATION: Add explanatory comment why this is acceptable",
+        "Run pytest after each resolved TODO",
+        "Update docs/quality/todo-tracker.md with final status"
       ],
       "priority": 6,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["DIR-045"]
+      "passes": false,
+      "effort": "medium"
     },
     {
-      "id": "DIR-047",
-      "title": "AI: Beat Suggester",
-      "description": "Writer's block breaker - AI suggests next beats.",
+      "id": "CIT-007",
+      "title": "Frontend: Resolve TODOs",
+      "description": "Resolve 2 frontend TODOs in PlotlineManager and NarrativeEditorLayout.",
       "acceptanceCriteria": [
-        "Add `suggest_next_beats(current_beats, scene_context, mood_target)` to LLMWorldGenerator",
-        "Create `beat_suggester.yaml` prompt template",
-        "Prompt should consider: current beat sequence, desired mood shift, action/reaction balance",
-        "Return 3 suggestions with beat_type and content",
-        "Test: Mock LLM response parsing"
+        "Fix frontend/src/features/director/components/PlotlineManager.tsx:392 - Implement API call to GET /api/plotlines/{id}/scene-counts",
+        "Add backend endpoint if missing",
+        "Display real scene counts",
+        "Fix frontend/src/components/narrative/NarrativeEditorLayout.tsx:246 - Import useToast from shadcn/ui, add toast notification on error state",
+        "Run npm run type-check - no errors",
+        "Run npm run test - all component tests pass"
       ],
       "priority": 7,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["DIR-041"]
+      "passes": false,
+      "effort": "low"
     },
     {
-      "id": "DIR-048",
-      "title": "Frontend: AI Beat Suggestions UI",
-      "description": "One-click inspiration for beat creation.",
+      "id": "CIT-008",
+      "title": "Docs: Create Missing ADRs",
+      "description": "Document recent architectural decisions with proper ADRs.",
       "acceptanceCriteria": [
-        "Add 'Spark' button (Sparkles icon) to Beat Editor",
-        "Display suggestions in Popover with 3 beat cards",
-        "Each card shows: beat_type badge, content preview",
-        "Clicking a suggestion inserts it into the beat list",
-        "Loading state while AI generates",
-        "Verify: Mock data flows through UI correctly"
+        "Create docs/adr/ADR-004-director-mode.md - Document Director workflow orchestration, scene critique agent integration, beat suggestion system",
+        "Create docs/adr/ADR-005-state-management.md - Document Zustand store architecture, store splitting strategy, when to create new stores",
+        "Create docs/adr/ADR-006-result-pattern.md - Document Result[T, E] error handling, migration from exceptions, provide examples",
+        "Use ADR template from docs/adr/ADR-001-iron-laws-validation.md",
+        "Update docs/adr/index.md with new ADRs"
       ],
       "priority": 8,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["DIR-047"]
+      "passes": false,
+      "effort": "medium"
     },
     {
-      "id": "DIR-049",
-      "title": "Domain: Plotlines (Threads)",
-      "description": "Track multiple storylines weaving through the narrative.",
+      "id": "CIT-009",
+      "title": "Test: Split Large Test Files",
+      "description": "Refactor oversized test files into focused, maintainable modules.",
       "acceptanceCriteria": [
-        "Create `src/contexts/narrative/domain/entities/plotline.py`",
-        "Plotline entity: id, name, color (hex), description, status (ACTIVE/RESOLVED/ABANDONED)",
-        "Many-to-many: Scenes can belong to multiple Plotlines",
-        "Add plotline_ids to Scene entity",
-        "API: CRUD for plotlines + scene linking",
-        "Test: `pytest` plotline management"
+        "Split tests/unit/contexts/narratives/domain/test_narrative_context_value_object.py (2144 lines) - Separate by method group",
+        "Split tests/unit/contexts/narratives/domain/test_narrative_theme_value_object.py (1724 lines)",
+        "Split tests/unit/contexts/narratives/domain/test_causal_node_value_object.py (1662 lines)",
+        "Split tests/unit/contexts/character/domain/test_character_stats_value_object.py (1625 lines)",
+        "Target: Each test file max 500 lines",
+        "Create shared test utilities module for common fixtures",
+        "Run pytest tests/unit/ - all tests still pass",
+        "Update docs/testing/test-organization.md with new structure"
       ],
       "priority": 9,
-      "passes": true,
-      "effort": "low"
+      "passes": false,
+      "effort": "high"
     },
     {
-      "id": "DIR-050",
-      "title": "Frontend: Plotline Manager",
-      "description": "The strings of the puppet master.",
+      "id": "CIT-010",
+      "title": "Test: Add Integration Test Coverage",
+      "description": "Expand integration test coverage for critical API paths.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/PlotlineManager.tsx`",
-        "Color picker for each plotline (predefined palette)",
-        "CRUD operations: Create, rename, change status, delete",
-        "Visual tags on Scene Cards showing attached plotlines (colored dots)",
-        "Plotline sidebar with scene count per line",
-        "Verify: Creating/editing plotline updates across UI"
+        "Add tests/integration/api/test_schema_sync.py - Verify all Pydantic schemas have corresponding Zod schemas, test field constraint alignment",
+        "Add tests/integration/api/test_result_pattern.py - Verify Result pattern usage in all services, test error response format consistency",
+        "Add tests/integration/contexts/test_character_orchestration_isolation.py - Verify no direct imports between contexts, test domain event propagation",
+        "Run pytest tests/integration/ - all pass",
+        "Add to CI pipeline"
       ],
       "priority": 10,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
-      "dependencies": ["DIR-049"]
+      "dependencies": ["CIT-003"]
     },
     {
-      "id": "DIR-051",
-      "title": "Integration: Plotline Filtering",
-      "description": "Focus on one narrative thread at a time.",
+      "id": "CIT-011",
+      "title": "Frontend: Bundle Size Analysis & Optimization",
+      "description": "Analyze frontend bundle and optimize for performance.",
       "acceptanceCriteria": [
-        "Add 'Filter by Plotline' dropdown to Weaver toolbar",
-        "When filtering: dim (opacity 30%) scenes not in the plotline",
-        "Edges between filtered scenes remain visible, others dim",
-        "Clear filter button to reset view",
-        "Keyboard shortcut: Ctrl+L to toggle filter menu",
-        "Verify: Filtering state persists during session"
+        "Run npm run build and analyze bundle size",
+        "Create bundle report in docs/reports/bundle-analysis-{date}.md",
+        "Identify top 10 largest dependencies",
+        "For dependencies > 100KB: Consider code splitting, evaluate tree-shaking, document lazy loading opportunities",
+        "Add bundle size limit to CI (fail if increases > 5%)",
+        "Implement route-based code splitting for /dashboard, /director, /weaver",
+        "Run npm run build - verify reduced bundle sizes"
       ],
       "priority": 11,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
-      "dependencies": ["DIR-050"]
+      "dependencies": ["CIT-005"]
     },
     {
-      "id": "DIR-052",
-      "title": "Domain: Foreshadowing Tracker",
-      "description": "Chekhov's Gun enforcement - track setups and payoffs.",
+      "id": "CIT-012",
+      "title": "Docs: Enhance CLAUDE.md Coverage",
+      "description": "Add CLAUDE.md files to key directories lacking developer guidance.",
       "acceptanceCriteria": [
-        "Create `src/contexts/narrative/domain/entities/foreshadowing.py`",
-        "Foreshadowing entity: id, setup_scene_id, payoff_scene_id (nullable), description, status (PLANTED/PAID_OFF/ABANDONED)",
-        "Validation: payoff_scene must come after setup_scene in story order",
-        "API: CRUD + link payoff to setup",
-        "Test: `pytest` validation and linking logic"
+        "Create src/contexts/character/CLAUDE.md - Character entity lifecycle, domain events, service patterns, testing conventions",
+        "Create src/contexts/narrative/CLAUDE.md - Story/Chapter/Scene hierarchy, beat and conflict modeling, pacing analysis usage",
+        "Create frontend/src/features/director/CLAUDE.md - Director workflow architecture, scene editor state management, critique sidebar integration",
+        "Create frontend/src/features/weaver/CLAUDE.md - React Flow graph setup, node visual protocol, edge interaction patterns",
+        "Follow existing CLAUDE.md format with 'Why this module exists', 'Key patterns', 'Gotchas'"
       ],
       "priority": 12,
-      "passes": true,
+      "passes": false,
+      "effort": "low",
+      "dependencies": ["CIT-004", "CIT-005"]
+    },
+    {
+      "id": "CIT-013",
+      "title": "Docs: Create Architecture Decision Diagrams",
+      "description": "Create visual diagrams for key architectural flows.",
+      "acceptanceCriteria": [
+        "Create docs/architecture/diagrams/director-flow.md (Mermaid) - Scene creation to Beat addition to AI suggestions to Critique",
+        "Create docs/architecture/diagrams/context-communication.md - Show domain event flow between contexts, NO direct imports",
+        "Create docs/architecture/diagrams/data-flow.md - Backend schema to OpenAPI to Frontend types",
+        "Render diagrams to PNG in docs/assets/diagrams/",
+        "Update ARCHITECTURE.md with diagram links"
+      ],
+      "priority": 13,
+      "passes": false,
+      "effort": "low",
+      "dependencies": ["CIT-008"]
+    },
+    {
+      "id": "CIT-014",
+      "title": "CI: Establish Quality Metrics Dashboard",
+      "description": "Create automated tracking of code quality metrics over time.",
+      "acceptanceCriteria": [
+        "Extend src/quality/code_quality_monitor.py - Add TODO/FIXME count tracking, test file size violations, import lint violations",
+        "Create scripts/quality_report.py - Generate weekly quality metrics, output JSON with trend data",
+        "Create docs/reports/quality-metrics.json - Historical quality data, commit to repo for tracking",
+        "Add to CI: Fail if TODO count increases week-over-week",
+        "Generate baseline report on first run",
+        "Document metrics in docs/quality/metrics-definition.md"
+      ],
+      "priority": 14,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "CIT-015",
+      "title": "Docs: Create Onboarding Checklist",
+      "description": "Create comprehensive onboarding guide for new developers.",
+      "acceptanceCriteria": [
+        "Create docs/onboarding/first-week.md - Day 1: Setup, architecture overview, first bug fix. Day 2-3: Complete CIT-007. Day 4-5: Add test to CIT-009 suite",
+        "Create docs/onboarding/architecture-deep-dive.md - Hexagonal architecture explanation, context boundaries, common patterns",
+        "Create docs/onboarding/common-tasks.md - How to add API endpoint, schema field, UI component, write tests",
+        "Include references to all ADRs and CLAUDE.md files",
+        "Add checklist for PRD completion verification"
+      ],
+      "priority": 15,
+      "passes": false,
       "effort": "low"
     },
     {
-      "id": "DIR-053",
-      "title": "Frontend: Foreshadowing UI",
-      "description": "Connecting the dots visually in Weaver.",
+      "id": "CIT-016",
+      "title": "Docs: Create Code Citadel Completion Report",
+      "description": "Generate final report on technical debt repayment achievements.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/ForeshadowingConnector.tsx`",
-        "Draw dashed curved lines between setup and payoff scenes in Weaver",
-        "Line color: gold for PLANTED, green for PAID_OFF, red for ABANDONED",
-        "Hover on line shows foreshadowing description tooltip",
-        "Panel listing all foreshadowing items with status filters",
-        "Verify: Visual connection appears correctly"
-      ],
-      "priority": 13,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["DIR-052"]
-    },
-    {
-      "id": "DIR-054",
-      "title": "UX: Chapter Board View",
-      "description": "Kanban-style scene organization by story beats.",
-      "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/ChapterBoard.tsx`",
-        "Columns: Setup, Inciting Incident, Rising Action, Climax, Resolution",
-        "Scene cards can be dragged between columns (dnd-kit)",
-        "Scene.story_phase field updated on drop",
-        "Toggle between Board and List view",
-        "Verify: Dnd works, changes persist"
-      ],
-      "priority": 14,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["DIR-041"]
-    },
-    {
-      "id": "DIR-055",
-      "title": "Domain: Chapter Structural Analysis",
-      "description": "Is this chapter balanced? Automated health check.",
-      "acceptanceCriteria": [
-        "Create `ChapterAnalysisService` in application layer",
-        "Analyze: scene count per phase, estimated word count, tension arc shape",
-        "Generate warnings: 'Too much action, no rest', 'Missing climax', 'Unresolved conflicts'",
-        "Return ChapterHealthReport with scores and recommendations",
-        "Test: `pytest` analysis rules"
-      ],
-      "priority": 15,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["DIR-043"]
-    },
-    {
-      "id": "DIR-056",
-      "title": "Frontend: Chapter Health Dashboard",
-      "description": "Stats and health indicators for the chapter.",
-      "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/ChapterHealth.tsx`",
-        "Display: Word count target vs actual (progress bar)",
-        "Display: Phase distribution pie chart",
-        "Display: Health warnings as colored badges",
-        "Expandable recommendations section",
-        "Verify: Mock data renders correctly"
+        "Create docs/reports/code-citadel-final-report.md - Summary: Stories completed (16/16), Before/After metrics, Architectural improvements",
+        "Generate bundle size comparison report",
+        "Document TODO count: 13 -> 0, Schema drift: X mismatches -> 0, Test file sizes: Max 2144 lines -> max 500 lines, Documentation: 7 ADRs -> 10 ADRs",
+        "Update CLAUDE.md with lessons learned",
+        "Archive Code Citadel campaign to scripts/ralph/archive/"
       ],
       "priority": 16,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["DIR-055"]
-    },
-    {
-      "id": "DIR-057",
-      "title": "AI: Scene Critique Agent",
-      "description": "The harsh editor - AI analyzes scene quality.",
-      "acceptanceCriteria": [
-        "Add `critique_scene(scene_text, scene_goals)` to LLMWorldGenerator",
-        "Create `scene_critique.yaml` prompt template",
-        "Analyze: show-don't-tell ratio, pacing, character voice consistency, dialogue naturalism",
-        "Return CritiqueResult with category scores and specific suggestions",
-        "Test: Mock critique response parsing"
-      ],
-      "priority": 17,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["DIR-041"]
-    },
-    {
-      "id": "DIR-058",
-      "title": "Frontend: Critique Sidebar",
-      "description": "AI feedback loop in the editor.",
-      "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/CritiqueSidebar.tsx`",
-        "Add 'Critique' panel toggle to Editor toolbar",
-        "Display feedback points as checklist items with severity icons",
-        "Group by category: Pacing, Voice, Showing, Dialogue",
-        "'Critique Scene' button triggers analysis (loading state)",
-        "Verify: Mock critique renders in panel"
-      ],
-      "priority": 18,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["DIR-057"]
-    },
-    {
-      "id": "DIR-059",
-      "title": "Data: Export Outline Report",
-      "description": "The synopsis package for external sharing.",
-      "acceptanceCriteria": [
-        "Create `frontend/src/lib/api/outlineExportApi.ts`",
-        "Generate Markdown report: Logline, Character Arcs, Chapter Summaries, Plotline Status",
-        "Include scene-by-scene beat breakdown (optional toggle)",
-        "Download as .md file",
-        "Future: PDF generation (out of scope for now)",
-        "Verify: Download produces valid markdown"
-      ],
-      "priority": 19,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": ["DIR-049"]
-    },
-    {
-      "id": "DIR-060",
-      "title": "E2E: Director Workflow Test",
-      "description": "Full loop verification of director mode features.",
-      "acceptanceCriteria": [
-        "Create `frontend/tests/e2e/director-mode.spec.ts`",
-        "Flow: Create Plotline -> Add Scene -> Add Beats -> Set Pacing -> Check Graph",
-        "Verify: Foreshadowing connection visible",
-        "Verify: Chapter Health shows correct stats",
-        "Run `npm run test:e2e` passes"
-      ],
-      "priority": 20,
-      "passes": true,
-      "effort": "high",
-      "dependencies": ["DIR-044", "DIR-050"]
+      "passes": false,
+      "effort": "low"
     }
   ]
 }
