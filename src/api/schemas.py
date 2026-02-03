@@ -1201,6 +1201,61 @@ class ScenePlotlinesResponse(BaseModel):
     plotline_ids: List[str] = Field(default_factory=list, description="Associated plotline UUIDs")
 
 
+# ============ Foreshadowing Schemas (DIR-052) ============
+
+
+class ForeshadowingCreateRequest(BaseModel):
+    """Request model for creating a new foreshadowing.
+
+    Foreshadowing represents a narrative setup that will be paid off later.
+    This enforces Chekhov's Gun: every setup must have a payoff.
+    """
+
+    setup_scene_id: str = Field(..., description="Scene UUID where setup occurs")
+    description: str = Field(..., min_length=1, max_length=2000, description="Description of the setup")
+    status: str = Field(
+        default="planted",
+        description="Status: 'planted', 'paid_off', 'abandoned'",
+    )
+
+
+class ForeshadowingUpdateRequest(BaseModel):
+    """Request model for updating a foreshadowing."""
+
+    description: str = Field(default="", max_length=2000, description="Updated description")
+    status: str = Field(default="", description="Updated status")
+    payoff_scene_id: Optional[str] = Field(
+        default=None, description="Scene UUID where payoff occurs (for paid_off status)"
+    )
+
+
+class LinkPayoffRequest(BaseModel):
+    """Request model for linking a payoff scene to foreshadowing.
+
+    This validates that the payoff scene comes after the setup scene.
+    """
+
+    payoff_scene_id: str = Field(..., description="Scene UUID where payoff occurs")
+
+
+class ForeshadowingResponse(BaseModel):
+    """Response model for a single foreshadowing."""
+
+    id: str = Field(..., description="Foreshadowing UUID")
+    setup_scene_id: str = Field(..., description="Setup scene UUID")
+    payoff_scene_id: Optional[str] = Field(None, description="Payoff scene UUID (if paid off)")
+    description: str = Field(..., description="Foreshadowing description")
+    status: str = Field(..., description="Current status")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class ForeshadowingListResponse(BaseModel):
+    """Response model for listing foreshadowing."""
+
+    foreshadowings: List["ForeshadowingResponse"] = Field(default_factory=list)
+
+
 class MoveChapterRequest(BaseModel):
     """Request model for moving a chapter to a new position."""
 
@@ -1711,6 +1766,12 @@ __all__ = [
     "UnlinkSceneFromPlotlineRequest",
     "SetScenePlotlinesRequest",
     "ScenePlotlinesResponse",
+    # Foreshadowing Schemas (DIR-052)
+    "ForeshadowingCreateRequest",
+    "ForeshadowingUpdateRequest",
+    "LinkPayoffRequest",
+    "ForeshadowingResponse",
+    "ForeshadowingListResponse",
     # Relationship Schemas
     "RelationshipCreateRequest",
     "RelationshipUpdateRequest",

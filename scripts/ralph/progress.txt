@@ -22,6 +22,8 @@ Started: Tue Feb  3 16:06:24     2026
 - LLM prompts go in `src/contexts/world/infrastructure/prompts/` as YAML files with `system_prompt` key
 - LLMWorldGenerator follows pattern: `_load_X_prompt()`, `_build_X_user_prompt()`, `_parse_X_response()` for each feature
 - Use `field(default_factory=list)` for mutable defaults in dataclasses (requires `from dataclasses import field`)
+- In-memory storage pattern: module-level dict, _store_*(), _get_*(), _list_*(), _delete_*() helper functions
+- Entity validation can depend on external entities (e.g., Foreshadowing.validate_scene_order() needs Scene lookup)
 
 ---
 
@@ -286,3 +288,28 @@ Started: Tue Feb  3 16:06:24     2026
   - Non-scene nodes (character, location, etc.) are not affected by plotline filter
   - All typecheck and tests pass
 
+## 2026-02-03 - DIR-052
+- **What was implemented:**
+  - Created Foreshadowing entity in `src/contexts/narrative/domain/entities/foreshadowing.py`
+  - Added ForeshadowingStatus enum (PLANTED/PAID_OFF/ABANDONED) for tracking setup/payoff progression
+  - Implemented `validate_scene_order()` to ensure payoff_scene comes after setup_scene in story order
+  - Cross-chapter foreshadowing is allowed (skips order validation)
+  - Implemented CRUD methods: update_description, link_payoff (with validation), abandon, replant
+  - Added is_planted, is_paid_off, is_abandoned properties for UI convenience
+  - Backend: Added Foreshadowing schemas to `src/api/schemas.py` (Create, Update, LinkPayoff, Response, List)
+  - Backend: Added Foreshadowing API endpoints at `/structure/foreshadowings` (CRUD + link-payoff)
+  - Backend: Implemented in-memory foreshadowing storage following Plotline pattern
+- **Files changed:**
+  - `src/contexts/narrative/domain/entities/foreshadowing.py` - New file (237 lines)
+  - `src/contexts/narrative/domain/entities/__init__.py` - Added Foreshadowing exports
+  - `src/api/schemas.py` - Added ForeshadowingCreateRequest, ForeshadowingUpdateRequest, LinkPayoffRequest, ForeshadowingResponse, ForeshadowingListResponse
+  - `src/api/routers/structure.py` - Added Foreshadowing CRUD endpoints, storage helpers, _foreshadowing_to_response converter
+  - `tests/unit/contexts/narrative/domain/test_foreshadowing.py` - New file (33 tests)
+- **Learnings for future iterations:**
+  - Foreshadowing API follows Plotline pattern with in-memory storage and CRUD endpoints
+  - Scene order validation requires injecting a scene lookup function (get_scene_by_id) - enables entity validation without tight coupling to repository
+  - Cross-chapter foreshadowing skips order validation since we can't determine chapter sequence without additional context
+  - link_payoff method validates both scene existence AND temporal order in one operation
+  - __post_init__ validation ensures status/payoff_scene_id consistency (PAID_OFF requires payoff_scene_id)
+  - All 239 narrative domain tests pass (206 original + 33 new foreshadowing tests)
+  - Frontend typecheck and lint pass

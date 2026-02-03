@@ -7,6 +7,7 @@ This package contains the core domain entities for story structure:
 - Beat: The atomic unit of narrative
 - Conflict: Dramatic tension driver within a scene
 - Plotline: A narrative thread running through multiple scenes
+- Foreshadowing: Chekhov's Gun enforcement (setup/payoff tracking)
 """
 
 from .story import Story, StoryStatus
@@ -15,6 +16,7 @@ from .scene import Scene, SceneStatus
 from .beat import Beat, BeatType
 from .conflict import Conflict, ConflictType, ConflictStakes, ResolutionStatus
 from .plotline import Plotline, PlotlineStatus
+from .foreshadowing import Foreshadowing, ForeshadowingStatus
 
 __all__ = [
     "Story",
@@ -31,4 +33,6 @@ __all__ = [
     "ResolutionStatus",
     "Plotline",
     "PlotlineStatus",
+    "Foreshadowing",
+    "ForeshadowingStatus",
 ]

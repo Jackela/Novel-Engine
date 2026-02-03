@@ -33,6 +33,7 @@ from src.api.schemas import (
     ConflictListResponse,
     ConflictResponse,
     ConflictUpdateRequest,
+    LinkPayoffRequest,
     LinkSceneToPlotlineRequest,
     MoveChapterRequest,
     MoveSceneRequest,
@@ -54,6 +55,10 @@ from src.api.schemas import (
     StoryResponse,
     StoryUpdateRequest,
     UnlinkSceneFromPlotlineRequest,
+    ForeshadowingCreateRequest,
+    ForeshadowingUpdateRequest,
+    ForeshadowingResponse,
+    ForeshadowingListResponse,
 )
 from src.contexts.narrative.application.ports.narrative_repository_port import (
     INarrativeRepository,
@@ -73,6 +78,10 @@ from src.contexts.narrative.domain.entities.conflict import (
 from src.contexts.narrative.domain.entities.plotline import (
     Plotline,
     PlotlineStatus,
+)
+from src.contexts.narrative.domain.entities.foreshadowing import (
+    Foreshadowing,
+    ForeshadowingStatus,
 )
 from src.contexts.narrative.application.services.pacing_service import PacingService
 from src.contexts.narrative.infrastructure.repositories.in_memory_narrative_repository import (
@@ -1696,6 +1705,62 @@ def _plotline_to_response(plotline: Plotline) -> PlotlineResponse:
     )
 
 
+# ============ Foreshadowing Storage (MVP In-Memory) ============
+# Note: In production, foreshadowings would be stored in a repository.
+# For MVP, we use module-level storage similar to plotlines.
+
+_foreshadowings: dict[UUID, Foreshadowing] = {}
+
+
+def _store_foreshadowing(foreshadowing: Foreshadowing) -> None:
+    """Store a foreshadowing in the in-memory storage."""
+    from copy import deepcopy
+
+    _foreshadowings[foreshadowing.id] = deepcopy(foreshadowing)
+
+
+def _get_foreshadowing(foreshadowing_id: UUID) -> Optional[Foreshadowing]:
+    """Get a foreshadowing by ID from storage."""
+    from copy import deepcopy
+
+    foreshadowing = _foreshadowings.get(foreshadowing_id)
+    return deepcopy(foreshadowing) if foreshadowing else None
+
+
+def _list_foreshadowings() -> list[Foreshadowing]:
+    """Get all foreshadowings from storage."""
+    from copy import deepcopy
+
+    foreshadowings = list(_foreshadowings.values())
+    return sorted(foreshadowings, key=lambda f: f.created_at, reverse=True)
+
+
+def _delete_foreshadowing(foreshadowing_id: UUID) -> bool:
+    """Delete a foreshadowing from storage. Returns True if deleted."""
+    if foreshadowing_id in _foreshadowings:
+        del _foreshadowings[foreshadowing_id]
+        return True
+    return False
+
+
+def reset_foreshadowing_storage() -> None:
+    """Reset foreshadowing storage. Useful for testing."""
+    _foreshadowings.clear()
+
+
+def _foreshadowing_to_response(foreshadowing: Foreshadowing) -> ForeshadowingResponse:
+    """Convert a Foreshadowing entity to a response model."""
+    return ForeshadowingResponse(
+        id=str(foreshadowing.id),
+        setup_scene_id=str(foreshadowing.setup_scene_id),
+        payoff_scene_id=str(foreshadowing.payoff_scene_id) if foreshadowing.payoff_scene_id else None,
+        description=foreshadowing.description,
+        status=foreshadowing.status.value,
+        created_at=foreshadowing.created_at.isoformat(),
+        updated_at=foreshadowing.updated_at.isoformat(),
+    )
+
+
 @router.post(
     "/plotlines",
     response_model=PlotlineResponse,
@@ -2040,3 +2105,248 @@ async def get_scene_plotlines(
         scene_id=scene_id,
         plotline_ids=[str(pid) for pid in scene.plotline_ids],
     )
+
+
+# ============ Foreshadowing Endpoints (DIR-052) ============
+
+
+@router.post(
+    "/foreshadowings",
+    response_model=ForeshadowingResponse,
+    status_code=201,
+)
+async def create_foreshadowing(
+    request: ForeshadowingCreateRequest,
+) -> ForeshadowingResponse:
+    """Create a new foreshadowing.
+
+    Args:
+        request: Foreshadowing creation data.
+
+    Returns:
+        The created foreshadowing.
+
+    Raises:
+        HTTPException: If foreshadowing creation fails or setup scene not found.
+    """
+    setup_scene_uuid = _parse_uuid(request.setup_scene_id, "setup_scene_id")
+
+    # Verify setup scene exists
+    setup_scene = _get_scene(setup_scene_uuid)
+    if setup_scene is None:
+        raise HTTPException(status_code=404, detail=f"Setup scene not found: {request.setup_scene_id}")
+
+    try:
+        # Validate status
+        valid_statuses = [s.value for s in ForeshadowingStatus]
+        if request.status not in valid_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status: {request.status}. Must be one of: {valid_statuses}",
+            )
+
+        foreshadowing = Foreshadowing(
+            setup_scene_id=setup_scene_uuid,
+            description=request.description,
+            status=ForeshadowingStatus(request.status),
+        )
+
+        _store_foreshadowing(foreshadowing)
+        logger.info("Created foreshadowing %s for setup scene %s", foreshadowing.id, setup_scene_uuid)
+
+        return _foreshadowing_to_response(foreshadowing)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Failed to create foreshadowing: %s", e)
+        raise HTTPException(status_code=500, detail=f"Failed to create foreshadowing: {str(e)}")
+
+
+@router.get(
+    "/foreshadowings",
+    response_model=ForeshadowingListResponse,
+)
+async def list_foreshadowings() -> ForeshadowingListResponse:
+    """List all foreshadowings.
+
+    Returns:
+        List of all foreshadowings.
+    """
+    foreshadowings = _list_foreshadowings()
+
+    return ForeshadowingListResponse(
+        foreshadowings=[_foreshadowing_to_response(f) for f in foreshadowings],
+    )
+
+
+@router.get(
+    "/foreshadowings/{foreshadowing_id}",
+    response_model=ForeshadowingResponse,
+)
+async def get_foreshadowing(
+    foreshadowing_id: str,
+) -> ForeshadowingResponse:
+    """Get a foreshadowing by ID.
+
+    Args:
+        foreshadowing_id: UUID of the foreshadowing.
+
+    Returns:
+        The foreshadowing.
+
+    Raises:
+        HTTPException: If foreshadowing not found.
+    """
+    foreshadowing_uuid = _parse_uuid(foreshadowing_id, "foreshadowing_id")
+
+    foreshadowing = _get_foreshadowing(foreshadowing_uuid)
+    if foreshadowing is None:
+        raise HTTPException(status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}")
+
+    return _foreshadowing_to_response(foreshadowing)
+
+
+@router.put(
+    "/foreshadowings/{foreshadowing_id}",
+    response_model=ForeshadowingResponse,
+)
+async def update_foreshadowing(
+    foreshadowing_id: str,
+    request: ForeshadowingUpdateRequest,
+) -> ForeshadowingResponse:
+    """Update a foreshadowing.
+
+    Args:
+        foreshadowing_id: UUID of the foreshadowing.
+        request: Update data.
+
+    Returns:
+        The updated foreshadowing.
+
+    Raises:
+        HTTPException: If foreshadowing not found or update fails.
+    """
+    foreshadowing_uuid = _parse_uuid(foreshadowing_id, "foreshadowing_id")
+
+    foreshadowing = _get_foreshadowing(foreshadowing_uuid)
+    if foreshadowing is None:
+        raise HTTPException(status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}")
+
+    try:
+        # Update description if provided
+        if request.description:
+            foreshadowing.update_description(request.description)
+
+        # Update status if provided
+        if request.status:
+            valid_statuses = [s.value for s in ForeshadowingStatus]
+            if request.status not in valid_statuses:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid status: {request.status}. Must be one of: {valid_statuses}",
+                )
+
+            if request.status == ForeshadowingStatus.ABANDONED.value:
+                foreshadowing.abandon()
+            elif request.status == ForeshadowingStatus.PLANTED.value:
+                foreshadowing.replant()
+
+        # If payoff_scene_id is provided, validate and link it
+        if request.payoff_scene_id:
+            payoff_uuid = _parse_uuid(request.payoff_scene_id, "payoff_scene_id")
+
+            # Verify payoff scene exists
+            payoff_scene = _get_scene(payoff_uuid)
+            if payoff_scene is None:
+                raise HTTPException(status_code=404, detail=f"Payoff scene not found: {request.payoff_scene_id}")
+
+            # Link payoff with validation
+            foreshadowing.link_payoff(payoff_uuid, _get_scene)
+
+        _store_foreshadowing(foreshadowing)
+        logger.info("Updated foreshadowing %s", foreshadowing_uuid)
+
+        return _foreshadowing_to_response(foreshadowing)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Failed to update foreshadowing %s: %s", foreshadowing_uuid, e)
+        raise HTTPException(status_code=500, detail=f"Failed to update foreshadowing: {str(e)}")
+
+
+@router.post(
+    "/foreshadowings/{foreshadowing_id}/link-payoff",
+    response_model=ForeshadowingResponse,
+)
+async def link_payoff_to_foreshadowing(
+    foreshadowing_id: str,
+    request: LinkPayoffRequest,
+) -> ForeshadowingResponse:
+    """Link a payoff scene to a foreshadowing.
+
+    This validates that the payoff scene comes after the setup scene.
+
+    Args:
+        foreshadowing_id: UUID of the foreshadowing.
+        request: Request containing payoff_scene_id.
+
+    Returns:
+        The updated foreshadowing.
+
+    Raises:
+        HTTPException: If foreshadowing not found, payoff scene not found,
+            or validation fails.
+    """
+    foreshadowing_uuid = _parse_uuid(foreshadowing_id, "foreshadowing_id")
+
+    foreshadowing = _get_foreshadowing(foreshadowing_uuid)
+    if foreshadowing is None:
+        raise HTTPException(status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}")
+
+    payoff_uuid = _parse_uuid(request.payoff_scene_id, "payoff_scene_id")
+
+    # Verify payoff scene exists
+    payoff_scene = _get_scene(payoff_uuid)
+    if payoff_scene is None:
+        raise HTTPException(status_code=404, detail=f"Payoff scene not found: {request.payoff_scene_id}")
+
+    try:
+        # Link payoff with validation
+        foreshadowing.link_payoff(payoff_uuid, _get_scene)
+
+        _store_foreshadowing(foreshadowing)
+        logger.info("Linked payoff scene %s to foreshadowing %s", payoff_uuid, foreshadowing_uuid)
+
+        return _foreshadowing_to_response(foreshadowing)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Failed to link payoff to foreshadowing %s: %s", foreshadowing_uuid, e)
+        raise HTTPException(status_code=500, detail=f"Failed to link payoff: {str(e)}")
+
+
+@router.delete(
+    "/foreshadowings/{foreshadowing_id}",
+    status_code=204,
+)
+async def delete_foreshadowing(
+    foreshadowing_id: str,
+) -> None:
+    """Delete a foreshadowing.
+
+    Args:
+        foreshadowing_id: UUID of the foreshadowing.
+
+    Raises:
+        HTTPException: If foreshadowing not found.
+    """
+    foreshadowing_uuid = _parse_uuid(foreshadowing_id, "foreshadowing_id")
+
+    deleted = _delete_foreshadowing(foreshadowing_uuid)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}")
+
+    logger.info("Deleted foreshadowing %s", foreshadowing_uuid)
