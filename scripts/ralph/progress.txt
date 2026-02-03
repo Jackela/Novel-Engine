@@ -24,6 +24,10 @@ Started: Tue Feb  3 16:06:24     2026
 - Use `field(default_factory=list)` for mutable defaults in dataclasses (requires `from dataclasses import field`)
 - In-memory storage pattern: module-level dict, _store_*(), _get_*(), _list_*(), _delete_*() helper functions
 - Entity validation can depend on external entities (e.g., Foreshadowing.validate_scene_order() needs Scene lookup)
+- api is a named export from '@/lib/api', not a default export - use `import { api } from '@/lib/api'`
+- EdgeProps from @xyflow/react doesn't support generic typing - use `EdgeProps` and cast data
+- EdgeLabelRenderer requires absolute positioning with transform for proper label placement
+- Dashed lines in React Flow use strokeDasharray="5,5" on the path element
 
 ---
 
@@ -313,3 +317,33 @@ Started: Tue Feb  3 16:06:24     2026
   - __post_init__ validation ensures status/payoff_scene_id consistency (PAID_OFF requires payoff_scene_id)
   - All 239 narrative domain tests pass (206 original + 33 new foreshadowing tests)
   - Frontend typecheck and lint pass
+
+## 2026-02-03 - DIR-053
+- **What was implemented:**
+  - Full Foreshadowing UI with visual connections in Weaver and management panel
+  - Frontend: Added Foreshadowing Zod schemas to `frontend/src/types/schemas.ts` (Status, Response, Create, Update, LinkPayoff)
+  - Frontend: Created `foreshadowingApi.ts` with TanStack Query hooks (useForeshadowings, useCreateForeshadowing, useUpdateForeshadowing, useLinkPayoff, useDeleteForeshadowing)
+  - Frontend: Created `ForeshadowingEdge.tsx` custom edge component with dashed curved lines and status-based colors (gold=planted, green=paid_off, red=abandoned)
+  - Frontend: Created `ForeshadowingPanel.tsx` with status filters, CRUD operations, and payoff linking
+  - Frontend: Created `foreshadowingUtils.ts` for converting foreshadowing data to React Flow edges
+  - Frontend: Integrated foreshadowing edges into WeaverCanvas with edgeTypes and useForeshadowings query
+- **Files changed:**
+  - `frontend/src/types/schemas.ts` - Added ForeshadowingStatusEnum, ForeshadowingResponseSchema, etc.
+  - `frontend/src/features/director/api/foreshadowingApi.ts` - New file (TanStack Query hooks)
+  - `frontend/src/features/director/components/ForeshadowingPanel.tsx` - New file (~570 lines)
+  - `frontend/src/features/director/index.ts` - Added ForeshadowingPanel and API exports
+  - `frontend/src/features/weaver/components/edges/ForeshadowingEdge.tsx` - New file (custom edge with dashed lines and tooltips)
+  - `frontend/src/features/weaver/components/edges/index.ts` - New file (edgeTypes export)
+  - `frontend/src/features/weaver/components/WeaverCanvas.tsx` - Added foreshadowing edges integration
+  - `frontend/src/features/weaver/utils/foreshadowingUtils.ts` - New file (foreshadowingToEdges utility)
+  - `frontend/src/features/weaver/index.ts` - Added edges export
+- **Learnings for future iterations:**
+  - api is a named export from '@/lib/api', not a default export - use `import { api } from '@/lib/api'`
+  - AlertDialog does NOT exist in shadcn/ui - use Dialog component instead
+  - EdgeProps from @xyflow/react doesn't support generic typing - use `EdgeProps` and cast data with `as ForeshadowingEdgeData`
+  - Foreshadowing edges only render when payoff_scene_id is linked (null check in foreshadowingToEdge utility)
+  - EdgeLabelRenderer requires absolute positioning with transform for proper placement
+  - Dashed lines use strokeDasharray="5,5" on the path element
+  - Tooltip visibility uses group-hover pattern with hidden/block classes
+  - All typecheck and lint pass (4 warnings about useMemo dependencies are acceptable)
+  - All 33 foreshadowing tests pass
