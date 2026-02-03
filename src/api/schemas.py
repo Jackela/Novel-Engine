@@ -954,6 +954,57 @@ class ReorderBeatsRequest(BaseModel):
     beat_ids: List[str] = Field(..., description="Beat UUIDs in desired order")
 
 
+# === Pacing Schemas (DIR-043/DIR-044) ===
+
+
+class ScenePacingMetricsResponse(BaseModel):
+    """Pacing metrics for a single scene.
+
+    Why frozen on backend:
+        Metrics are immutable snapshots. Modifications should go through
+        the Scene entity and generate new metrics.
+    """
+
+    scene_id: str = Field(..., description="Scene UUID")
+    scene_title: str = Field(..., description="Scene title for display")
+    order_index: int = Field(..., description="Position in chapter")
+    tension_level: int = Field(..., ge=1, le=10, description="Dramatic tension (1-10)")
+    energy_level: int = Field(..., ge=1, le=10, description="Narrative momentum (1-10)")
+
+
+class PacingIssueResponse(BaseModel):
+    """A detected pacing problem in the chapter."""
+
+    issue_type: str = Field(..., description="Category: monotonous_tension, tension_spike, etc.")
+    description: str = Field(..., description="Human-readable description")
+    affected_scenes: List[str] = Field(..., description="Scene UUIDs involved")
+    severity: str = Field(..., description="low, medium, or high")
+    suggestion: str = Field(..., description="Recommendation for addressing the issue")
+
+
+class ChapterPacingResponse(BaseModel):
+    """Complete pacing analysis for a chapter.
+
+    Why this structure:
+        Provides the frontend with all data needed to render the PacingGraph:
+        - scene_metrics: ordered list for the X-axis (scene sequence)
+        - average/range values: for reference lines and scaling
+        - issues: for displaying warnings in the UI
+    """
+
+    chapter_id: str = Field(..., description="Chapter UUID")
+    scene_metrics: List[ScenePacingMetricsResponse] = Field(
+        default_factory=list, description="Per-scene metrics in order"
+    )
+    issues: List[PacingIssueResponse] = Field(
+        default_factory=list, description="Detected pacing problems"
+    )
+    average_tension: float = Field(..., ge=0, le=10, description="Mean tension")
+    average_energy: float = Field(..., ge=0, le=10, description="Mean energy")
+    tension_range: List[int] = Field(..., min_length=2, max_length=2, description="[min, max] tension")
+    energy_range: List[int] = Field(..., min_length=2, max_length=2, description="[min, max] energy")
+
+
 class MoveChapterRequest(BaseModel):
     """Request model for moving a chapter to a new position."""
 

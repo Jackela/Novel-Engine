@@ -24,13 +24,16 @@ from src.api.schemas import (
     BeatUpdateRequest,
     ChapterCreateRequest,
     ChapterListResponse,
+    ChapterPacingResponse,
     ChapterResponse,
     ChapterUpdateRequest,
     MoveChapterRequest,
     MoveSceneRequest,
+    PacingIssueResponse,
     ReorderBeatsRequest,
     SceneCreateRequest,
     SceneListResponse,
+    ScenePacingMetricsResponse,
     SceneResponse,
     SceneUpdateRequest,
     StoryCreateRequest,
@@ -47,6 +50,7 @@ from src.contexts.narrative.domain import (
     Story,
 )
 from src.contexts.narrative.domain.entities.beat import Beat, BeatType
+from src.contexts.narrative.application.services.pacing_service import PacingService
 from src.contexts.narrative.infrastructure.repositories.in_memory_narrative_repository import (
     InMemoryNarrativeRepository,
 )
@@ -1105,6 +1109,82 @@ async def reorder_beats(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ============ Pacing Endpoints (DIR-044) ============
+
+
+@router.get(
+    "/stories/{story_id}/chapters/{chapter_id}/pacing",
+    response_model=ChapterPacingResponse,
+)
+async def get_chapter_pacing(
+    story_id: str,
+    chapter_id: str,
+    repo: INarrativeRepository = Depends(get_repository),
+) -> ChapterPacingResponse:
+    """Get pacing analysis for a chapter.
+
+    Returns tension/energy metrics for each scene in the chapter,
+    along with aggregate statistics and detected pacing issues.
+
+    Args:
+        story_id: UUID of the parent story.
+        chapter_id: UUID of the chapter to analyze.
+        repo: Narrative repository (injected).
+
+    Returns:
+        ChapterPacingResponse with scene-by-scene metrics and issues.
+
+    Raises:
+        HTTPException: If story or chapter not found.
+    """
+    story_uuid = _parse_uuid(story_id, "story_id")
+    chapter_uuid = _parse_uuid(chapter_id, "chapter_id")
+
+    story = repo.get_by_id(story_uuid)
+    if story is None:
+        raise HTTPException(status_code=404, detail=f"Story not found: {story_id}")
+
+    chapter = story.get_chapter(chapter_uuid)
+    if chapter is None:
+        raise HTTPException(status_code=404, detail=f"Chapter not found: {chapter_id}")
+
+    # Get scenes for this chapter
+    scenes = _get_scenes_by_chapter(chapter_uuid)
+
+    # Use PacingService for analysis
+    pacing_service = PacingService()
+    report = pacing_service.calculate_chapter_pacing(chapter_uuid, scenes)
+
+    # Convert to response models
+    return ChapterPacingResponse(
+        chapter_id=chapter_id,
+        scene_metrics=[
+            ScenePacingMetricsResponse(
+                scene_id=str(m.scene_id),
+                scene_title=m.scene_title,
+                order_index=m.order_index,
+                tension_level=m.tension_level,
+                energy_level=m.energy_level,
+            )
+            for m in report.scene_metrics
+        ],
+        issues=[
+            PacingIssueResponse(
+                issue_type=issue.issue_type,
+                description=issue.description,
+                affected_scenes=[str(sid) for sid in issue.affected_scenes],
+                severity=issue.severity,
+                suggestion=issue.suggestion,
+            )
+            for issue in report.issues
+        ],
+        average_tension=report.average_tension,
+        average_energy=report.average_energy,
+        tension_range=list(report.tension_range),
+        energy_range=list(report.energy_range),
+    )
 
 
 # ============ Scene Storage (MVP In-Memory) ============

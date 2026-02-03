@@ -715,6 +715,50 @@ export type BeatCreateRequest = z.infer<typeof BeatCreateRequestSchema>;
 export type BeatUpdateRequest = z.infer<typeof BeatUpdateRequestSchema>;
 export type ReorderBeatsRequest = z.infer<typeof ReorderBeatsRequestSchema>;
 
+// === Pacing Schemas (DIR-043/DIR-044) ===
+
+/**
+ * Pacing metrics for a single scene.
+ * Used by the PacingGraph to plot tension/energy curves.
+ */
+export const ScenePacingMetricsSchema = z.object({
+  scene_id: z.string(),
+  scene_title: z.string(),
+  order_index: z.number(),
+  tension_level: z.number().min(1).max(10),
+  energy_level: z.number().min(1).max(10),
+});
+
+/**
+ * A detected pacing problem in the chapter.
+ */
+export const PacingIssueSchema = z.object({
+  issue_type: z.string(),
+  description: z.string(),
+  affected_scenes: z.array(z.string()),
+  severity: z.enum(['low', 'medium', 'high']),
+  suggestion: z.string(),
+});
+
+/**
+ * Complete pacing analysis for a chapter.
+ * Response from GET /structure/stories/{story_id}/chapters/{chapter_id}/pacing
+ */
+export const ChapterPacingResponseSchema = z.object({
+  chapter_id: z.string(),
+  scene_metrics: z.array(ScenePacingMetricsSchema).default([]),
+  issues: z.array(PacingIssueSchema).default([]),
+  average_tension: z.number(),
+  average_energy: z.number(),
+  tension_range: z.tuple([z.number(), z.number()]),
+  energy_range: z.tuple([z.number(), z.number()]),
+});
+
+// Pacing Types
+export type ScenePacingMetrics = z.infer<typeof ScenePacingMetricsSchema>;
+export type PacingIssue = z.infer<typeof PacingIssueSchema>;
+export type ChapterPacingResponse = z.infer<typeof ChapterPacingResponseSchema>;
+
 /**
  * Standard API response envelope matching backend's StandardResponse
  *
