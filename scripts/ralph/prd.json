@@ -40,7 +40,9 @@
       "priority": 2,
       "passes": true,
       "effort": "low",
-      "dependencies": ["BRAIN-001"]
+      "dependencies": [
+        "BRAIN-001"
+      ]
     },
     {
       "id": "BRAIN-003",
@@ -73,7 +75,10 @@
       "priority": 4,
       "passes": true,
       "effort": "high",
-      "dependencies": ["BRAIN-002", "BRAIN-003"]
+      "dependencies": [
+        "BRAIN-002",
+        "BRAIN-003"
+      ]
     },
     {
       "id": "BRAIN-005",
@@ -87,9 +92,11 @@
         "Test: Create a character via API and verify vectors appear in ChromaDB"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
-      "dependencies": ["BRAIN-004"]
+      "dependencies": [
+        "BRAIN-004"
+      ]
     },
     {
       "id": "BRAIN-006",
@@ -107,7 +114,9 @@
       "priority": 6,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-004"]
+      "dependencies": [
+        "BRAIN-004"
+      ]
     },
     {
       "id": "BRAIN-007",
@@ -125,7 +134,9 @@
       "priority": 7,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-006"]
+      "dependencies": [
+        "BRAIN-006"
+      ]
     },
     {
       "id": "BRAIN-008",
@@ -141,7 +152,9 @@
       "priority": 8,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-006"]
+      "dependencies": [
+        "BRAIN-006"
+      ]
     },
     {
       "id": "BRAIN-009",
@@ -158,7 +171,9 @@
       "priority": 9,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-006"]
+      "dependencies": [
+        "BRAIN-006"
+      ]
     },
     {
       "id": "BRAIN-010",
@@ -175,7 +190,9 @@
       "priority": 10,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-008"]
+      "dependencies": [
+        "BRAIN-008"
+      ]
     },
     {
       "id": "BRAIN-011",
@@ -192,7 +209,9 @@
       "priority": 11,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-006"]
+      "dependencies": [
+        "BRAIN-006"
+      ]
     },
     {
       "id": "BRAIN-012",
@@ -209,7 +228,9 @@
       "priority": 12,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-006"]
+      "dependencies": [
+        "BRAIN-006"
+      ]
     },
     {
       "id": "BRAIN-013",
@@ -227,7 +248,9 @@
       "priority": 13,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-010"]
+      "dependencies": [
+        "BRAIN-010"
+      ]
     },
     {
       "id": "BRAIN-014",
@@ -263,7 +286,9 @@
       "priority": 15,
       "passes": false,
       "effort": "low",
-      "dependencies": ["BRAIN-014"]
+      "dependencies": [
+        "BRAIN-014"
+      ]
     },
     {
       "id": "BRAIN-016",
@@ -280,7 +305,9 @@
       "priority": 16,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-015"]
+      "dependencies": [
+        "BRAIN-015"
+      ]
     },
     {
       "id": "BRAIN-017",
@@ -297,7 +324,9 @@
       "priority": 17,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-014"]
+      "dependencies": [
+        "BRAIN-014"
+      ]
     },
     {
       "id": "BRAIN-018",
@@ -315,7 +344,9 @@
       "priority": 18,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-015"]
+      "dependencies": [
+        "BRAIN-015"
+      ]
     },
     {
       "id": "BRAIN-019",
@@ -334,7 +365,9 @@
       "priority": 19,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-015"]
+      "dependencies": [
+        "BRAIN-015"
+      ]
     },
     {
       "id": "BRAIN-020",
@@ -353,7 +386,9 @@
       "priority": 20,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-019"]
+      "dependencies": [
+        "BRAIN-019"
+      ]
     },
     {
       "id": "BRAIN-021",
@@ -371,7 +406,9 @@
       "priority": 21,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-020"]
+      "dependencies": [
+        "BRAIN-020"
+      ]
     },
     {
       "id": "BRAIN-022",
@@ -389,7 +426,9 @@
       "priority": 22,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-018"]
+      "dependencies": [
+        "BRAIN-018"
+      ]
     },
     {
       "id": "BRAIN-023",
@@ -422,7 +461,9 @@
       "priority": 24,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-023"]
+      "dependencies": [
+        "BRAIN-023"
+      ]
     },
     {
       "id": "BRAIN-025",
@@ -439,7 +480,9 @@
       "priority": 25,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-023"]
+      "dependencies": [
+        "BRAIN-023"
+      ]
     },
     {
       "id": "BRAIN-026",
@@ -456,7 +499,9 @@
       "priority": 26,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-023"]
+      "dependencies": [
+        "BRAIN-023"
+      ]
     },
     {
       "id": "BRAIN-027",
@@ -474,7 +519,9 @@
       "priority": 27,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-023"]
+      "dependencies": [
+        "BRAIN-023"
+      ]
     },
     {
       "id": "BRAIN-028",
@@ -492,7 +539,11 @@
       "priority": 28,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-024", "BRAIN-025", "BRAIN-026"]
+      "dependencies": [
+        "BRAIN-024",
+        "BRAIN-025",
+        "BRAIN-026"
+      ]
     },
     {
       "id": "BRAIN-029",
@@ -526,7 +577,9 @@
       "priority": 30,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-029"]
+      "dependencies": [
+        "BRAIN-029"
+      ]
     },
     {
       "id": "BRAIN-031",
@@ -543,7 +596,9 @@
       "priority": 31,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-029"]
+      "dependencies": [
+        "BRAIN-029"
+      ]
     },
     {
       "id": "BRAIN-032",
@@ -560,7 +615,9 @@
       "priority": 32,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-031"]
+      "dependencies": [
+        "BRAIN-031"
+      ]
     },
     {
       "id": "BRAIN-033",
@@ -578,7 +635,9 @@
       "priority": 33,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-023"]
+      "dependencies": [
+        "BRAIN-023"
+      ]
     },
     {
       "id": "BRAIN-034",
@@ -596,7 +655,9 @@
       "priority": 34,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-028"]
+      "dependencies": [
+        "BRAIN-028"
+      ]
     },
     {
       "id": "BRAIN-035",
@@ -615,7 +676,9 @@
       "priority": 35,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-034"]
+      "dependencies": [
+        "BRAIN-034"
+      ]
     },
     {
       "id": "BRAIN-036",
@@ -632,7 +695,9 @@
       "priority": 36,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-007"]
+      "dependencies": [
+        "BRAIN-007"
+      ]
     },
     {
       "id": "BRAIN-037",
@@ -650,7 +715,9 @@
       "priority": 37,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-006"]
+      "dependencies": [
+        "BRAIN-006"
+      ]
     },
     {
       "id": "BRAIN-038",
@@ -684,7 +751,9 @@
       "priority": 39,
       "passes": false,
       "effort": "medium",
-      "dependencies": ["BRAIN-004"]
+      "dependencies": [
+        "BRAIN-004"
+      ]
     },
     {
       "id": "BRAIN-040",
@@ -701,7 +770,9 @@
       "priority": 40,
       "passes": false,
       "effort": "high",
-      "dependencies": ["BRAIN-037"]
+      "dependencies": [
+        "BRAIN-037"
+      ]
     }
   ]
 }

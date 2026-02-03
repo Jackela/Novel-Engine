@@ -178,14 +178,12 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 ---
 
 ## Next Story for Ralph
-- **BRAIN-004**: Service: Knowledge Ingestion Service
-- Priority: 4
-- Focus: Create service to ingest, batch_ingest, delete, update knowledge entries
-- Dependencies: BRAIN-002 (EmbeddingService), BRAIN-003 (KnowledgeEntry)
+- **BRAIN-005**: Integration: Auto-Sync Event Listeners
+- Priority: 5
+- Focus: Create domain event handlers to trigger ingestion on CharacterCreated/LoreCreated/etc.
+- Dependencies: BRAIN-004 (KnowledgeIngestionService)
 
 ---
-
-## [2025-02-03] - BRAIN-004 ✅
 - Implemented KnowledgeIngestionService with full ingestion pipeline (Text -> Chunk -> Embed -> Store)
 - Created `ingest()` method for single entry ingestion with configurable chunking strategy
 - Created `batch_ingest()` method for bulk processing with progress tracking via IngestionProgress callback
@@ -206,5 +204,32 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Mock vector stores need to track state properly for delete operations to be testable
 - ChunkingStrategy.from_string() normalizes string inputs to SourceType enum
 - VectorDocument metadata is the place to store source tracking info (source_id, source_type, chunk_index)
+
+---
+
+## [2025-02-03] - BRAIN-005 ✅
+- Implemented KnowledgeSyncEventHandler with async queue processing for knowledge ingestion
+- Created KnowledgeEventSubscriber to bridge domain events (CharacterCreated/Updated, LoreCreated/Updated, SceneCreated/Updated) to ingestion
+- Implemented async queue with configurable max_queue_size to avoid blocking
+- Added retry logic with exponential backoff (configurable: FIXED/EXPONENTIAL/NONE)
+- Implemented dead letter queue for failed tasks with manual retry capability
+- Added content formatting helpers: _character_to_content, _lore_to_content, _scene_to_content
+- Created IngestionTask value object for tracking retry state
+- All 36 unit tests passing (14 for subscriber, 22 for handler)
+- Files changed:
+  - `src/contexts/knowledge/application/event_handlers/knowledge_sync_event_handler.py`: Main handler with queue, retry, dead letter
+  - `src/contexts/knowledge/application/event_handlers/knowledge_event_subscriber.py`: Event subscriber bridging events to ingestion
+  - `src/contexts/knowledge/application/event_handlers/__init__.py`: Package exports
+  - `tests/unit/contexts/knowledge/application/event_handlers/test_knowledge_sync_event_handler.py`: 22 handler tests
+  - `tests/unit/contexts/knowledge/application/event_handlers/test_knowledge_event_subscriber.py`: 14 subscriber tests
+
+**Learnings for future iterations:**
+- Async queue processing requires proper event loop management - asyncio.create_task() must be tracked for cleanup
+- Use `asyncio.create_task()` with callback to track pending tasks: `task.add_done_callback(lambda t: self._pending_retry_tasks.discard(t))`
+- On handler stop, gather all pending retry tasks with `asyncio.gather(*tasks, return_exceptions=True)` for clean shutdown
+- asyncio.Queue(0) doesn't work as expected for testing full queue - it's a special synchronous queue
+- For testing async handlers with queues, use short delays and queue.join() to wait for processing
+- Test dead letter queue by setting max_retries=0 to skip the retry delay
+- Content formatting helpers should include all relevant metadata (IDs, categories, tags) for RAG context
 
 ---
