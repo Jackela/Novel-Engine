@@ -94,9 +94,9 @@ Assert-LastExitCode "Editable install"
 Write-Host "✓ Dependencies installed" -ForegroundColor Green
 Write-Host ""
 
-# Security scanning with CodeQL (falls back to bandit if CodeQL unavailable)
-Write-Host "🔒 Running security scan (CodeQL)..." -ForegroundColor Yellow
-& "$PSScriptRoot\codeql-local.ps1" -Language all
+# Security scanning with CodeQL (required for local CI parity)
+Write-Host "🔒 Running security scan (CodeQL required)..." -ForegroundColor Yellow
+& "$PSScriptRoot\codeql-local.ps1" -Language all -RequireCodeQL
 Assert-LastExitCode "CodeQL local scan"
 Write-Host ""
 

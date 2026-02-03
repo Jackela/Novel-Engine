@@ -17,6 +17,7 @@ param(
     [ValidateSet("python", "javascript", "all")]
     [string]$Language = "all",
     [switch]$QuickScan,
+    [switch]$RequireCodeQL,
     [switch]$Help
 )
 
@@ -35,6 +36,11 @@ Write-Host "Project: $ProjectRoot"
 # Check if CodeQL is installed
 $codeqlPath = Get-Command codeql -ErrorAction SilentlyContinue
 if (-not $codeqlPath) {
+    if ($RequireCodeQL) {
+        Write-Host "`nCodeQL CLI is required for this scan but was not found." -ForegroundColor Red
+        Write-Host "Install CodeQL and re-run the scan." -ForegroundColor Yellow
+        exit 1
+    }
     Write-Host @"
 
 CodeQL CLI not found. Install options:

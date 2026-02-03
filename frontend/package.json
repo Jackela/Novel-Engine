@@ -36,6 +36,7 @@
     "test:uat:ci": "ts-node --esm tests/e2e/run-uat.ts --ci",
     "playwright:install": "playwright install",
     "playwright:install-deps": "playwright install-deps",
+    "typecheck": "npm run type-check",
     "type-check": "tsc -p tsconfig.typecheck.json --noEmit",
     "size": "size-limit",
     "pretest": "node scripts/test-cleanup.js",

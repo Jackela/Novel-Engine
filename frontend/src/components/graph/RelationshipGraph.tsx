@@ -207,16 +207,24 @@ let dagreLoader: Promise<DagreApi | null> | null = null;
 async function loadDagre(): Promise<DagreApi | null> {
   if (!dagreLoader) {
     dagreLoader = import('@dagrejs/dagre')
-      .then((mod) => (mod as { default?: DagreApi }).default ?? (mod as DagreApi))
+      .then((mod) => {
+        const module = mod as unknown as { default?: DagreApi };
+        return module.default ?? (mod as unknown as DagreApi);
+      })
       .catch((error) => {
-        console.warn('RelationshipGraph: Dagre unavailable, falling back to grid layout.', error);
+        console.warn(
+          'RelationshipGraph: Dagre unavailable, falling back to grid layout.',
+          error
+        );
         return null;
       });
   }
   return dagreLoader;
 }
 
-function applyFallbackLayout(nodes: SimpleCharacterNodeType[]): SimpleCharacterNodeType[] {
+function applyFallbackLayout(
+  nodes: SimpleCharacterNodeType[]
+): SimpleCharacterNodeType[] {
   const columns = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
   const gapX = 220;
   const gapY = 140;
@@ -266,7 +274,10 @@ function applyDagreLayout(
   try {
     dagre.layout(g);
   } catch (error) {
-    console.warn('RelationshipGraph: Dagre layout failed, using fallback layout.', error);
+    console.warn(
+      'RelationshipGraph: Dagre layout failed, using fallback layout.',
+      error
+    );
     return applyFallbackLayout(nodes);
   }
 

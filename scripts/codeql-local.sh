@@ -6,12 +6,19 @@ set -euo pipefail
 LANGUAGE=${LANGUAGE:-all}
 QUICKSCAN=${QUICKSCAN:-0}
 PY_BIN=${PY_BIN:-python3}
+REQUIRE_CODEQL=${REQUIRE_CODEQL:-0}
 
 echo "=== CodeQL Local Security Scan ==="
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "Project: ${project_root}"
 
 if ! command -v codeql >/dev/null 2>&1; then
+  if [[ "$REQUIRE_CODEQL" == "1" ]]; then
+    echo ""
+    echo "CodeQL CLI is required for this scan but was not found."
+    echo "Install CodeQL and re-run the scan."
+    exit 1
+  fi
   cat <<'EOF'
 
 CodeQL CLI not found. Install options:

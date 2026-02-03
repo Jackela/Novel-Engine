@@ -36,7 +36,10 @@ export default function AnalyticsPanel() {
                   <span className="text-sm text-muted-foreground">{metric.label}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium" data-testid="performance-metric-value">
+                  <p
+                    className="text-sm font-medium"
+                    data-testid="performance-metric-value"
+                  >
                     {metric.value}
                   </p>
                   <p

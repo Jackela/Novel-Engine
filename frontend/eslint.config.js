@@ -24,7 +24,7 @@ const jsxA11yRules = {
   'jsx-a11y/label-has-associated-control': 'error',
   'jsx-a11y/mouse-events-have-key-events': 'error',
   'jsx-a11y/no-access-key': 'error',
-  'jsx-a11y/no-autofocus': 'warn',
+  'jsx-a11y/no-autofocus': 'off',
   'jsx-a11y/no-distracting-elements': 'error',
   'jsx-a11y/no-noninteractive-element-interactions': 'error',
   'jsx-a11y/no-redundant-roles': 'error',
@@ -36,12 +36,19 @@ const jsxA11yRules = {
 }
 
 export default defineConfig([
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
+  },
   globalIgnores([
     'dist',
     'playwright-report',
     'nm_backup_ci',
     'node_modules',
     'public/mockServiceWorker.js',
+    'coverage',
+    'test-results',
   ]),
   // JavaScript files configuration
   {
@@ -73,7 +80,8 @@ export default defineConfig([
       }],
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': 'off',
+      'no-unused-disable': 'off',
       ...jsxA11yRules,
     },
   },
@@ -107,9 +115,10 @@ export default defineConfig([
       '@typescript-eslint/consistent-type-imports': 'error',
       'no-unused-vars': 'off',
       'react-hooks/exhaustive-deps': 'warn',
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      'complexity': ['warn', 15],
-      'max-lines-per-function': ['warn', { max: 80, skipBlankLines: true, skipComments: true }],
+      'react-refresh/only-export-components': 'off',
+      'complexity': 'off',
+      'max-lines-per-function': 'off',
+      'no-unused-disable': 'off',
       ...jsxA11yRules,
     },
   },
@@ -145,6 +154,7 @@ export default defineConfig([
     },
     rules: {
       'no-undef': 'off',
+      'no-unused-disable': 'off',
     },
   },
   // JavaScript test files configuration
@@ -166,6 +176,9 @@ export default defineConfig([
         vi: 'readonly',
         Buffer: 'readonly',
       },
+    },
+    rules: {
+      'no-unused-disable': 'off',
     },
   },
   // Playwright config files

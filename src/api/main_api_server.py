@@ -372,38 +372,7 @@ def create_app() -> FastAPI:
     # Add middleware (order matters - last added = first executed)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # Define a raw ASGI middleware to ensure headers even on early errors
-    # Note: Currently disabled but kept for potential future use
-    class _UnusedRawHeaderASGIMiddleware:  # noqa: F841 - intentionally kept for future use
-        def __init__(self, app, headers: Dict[str, str]):
-            self.app = app
-            self._headers = headers
-
-        async def __call__(self, scope, receive, send):
-            async def send_wrapper(message):
-                if message.get("type") == "http.response.start":
-                    hdrs = message.setdefault("headers", [])
-                    existing = {k.decode().lower() for k, _ in hdrs}
-                    for k, v in self._headers.items():
-                        if k.lower() not in existing:
-                            hdrs.append((k.encode("latin-1"), v.encode("latin-1")))
-                await send(message)
-
-            try:
-                await self.app(scope, receive, send_wrapper)
-            except Exception:
-                start = {
-                    "type": "http.response.start",
-                    "status": 400,
-                    "headers": [
-                        (b"x-content-type-options", b"nosniff"),
-                        (b"x-frame-options", b"DENY"),
-                        (b"content-type", b"text/plain; charset=utf-8"),
-                    ],
-                }
-                body = {"type": "http.response.body", "body": b"Bad Request"}
-                await send(start)
-                await send(body)
+    # Raw ASGI header guard intentionally omitted until we re-enable it.
 
     # Add ASGI-level header guard last so it executes first among middlewares
     # app.add_middleware(

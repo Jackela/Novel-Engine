@@ -202,9 +202,11 @@ async def create_character_goal(
     logger.info(
         "Created goal for character",
         extra={
-            "character_id": str(char_uuid) if char_uuid else "invalid",
-            "goal_id": goal_id,
-            "urgency": goal_data["urgency"],
+            "character_id": _sanitize_for_log(
+                str(char_uuid) if char_uuid else "invalid"
+            ),
+            "goal_id": _sanitize_for_log(goal_id),
+            "urgency": _sanitize_for_log(goal_data["urgency"]),
         },
     )
 
