@@ -71,7 +71,7 @@
         "Test: Ingest a Character Profile and verify it's queryable by content"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["BRAIN-002", "BRAIN-003"]
     },

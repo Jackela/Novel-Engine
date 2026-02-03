@@ -184,3 +184,27 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Dependencies: BRAIN-002 (EmbeddingService), BRAIN-003 (KnowledgeEntry)
 
 ---
+
+## [2025-02-03] - BRAIN-004 ✅
+- Implemented KnowledgeIngestionService with full ingestion pipeline (Text -> Chunk -> Embed -> Store)
+- Created `ingest()` method for single entry ingestion with configurable chunking strategy
+- Created `batch_ingest()` method for bulk processing with progress tracking via IngestionProgress callback
+- Created `delete()` method to remove all chunks for a source with optional source_type filter
+- Created `update()` method to replace old chunks with new content (delete + ingest)
+- Created `query_by_source()` method to retrieve all chunks for a given source
+- Added health_check() and get_count() utility methods
+- Implemented value objects: IngestionProgress, IngestionResult, BatchIngestionResult, SourceChunk, RetrievedChunk
+- Files changed:
+  - `src/contexts/knowledge/application/services/knowledge_ingestion_service.py`: Complete service implementation
+  - `src/contexts/knowledge/application/services/__init__.py`: Service module exports
+  - `tests/unit/contexts/knowledge/application/services/test_knowledge_ingestion_service.py`: 23 comprehensive tests
+
+**Learnings for future iterations:**
+- Use `embed_batch()` for efficiency instead of calling `embed()` in a loop
+- The service layer should use `TYPE_CHECKING` for imports that are only needed for type hints
+- Progress callbacks can be sync or async - use `inspect.iscoroutinefunction()` to detect
+- Mock vector stores need to track state properly for delete operations to be testable
+- ChunkingStrategy.from_string() normalizes string inputs to SourceType enum
+- VectorDocument metadata is the place to store source tracking info (source_id, source_type, chunk_index)
+
+---
