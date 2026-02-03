@@ -223,3 +223,58 @@ jobs:
 - ✅ **NEW**: Added parallel execution guide
 - ✅ **NEW**: Documented all bug fixes and improvements
 
+## 9. Test File Organization Guidelines
+
+### File Size Limits
+
+To maintain maintainability and readability:
+- **Target**: Test files should not exceed 500 lines
+- **Maximum**: Hard limit of 1000 lines for exceptional cases
+- **Split Strategy**: When a test file grows beyond limits, split by functional area:
+
+1. **Identify logical groupings** - Group related test classes by functionality
+2. **Create focused files** - Each file should have a single clear responsibility
+3. **Use descriptive names** - File names should indicate what is being tested
+4. **Update imports** - Ensure all split files have correct imports
+5. **Run verification** - All tests must pass after splitting
+
+### Example: NarrativeContext Test Split
+
+The original `test_narrative_context_value_object.py` (2144 lines) was split into 9 focused modules:
+
+| File | Lines | Focus |
+|------|-------|-------|
+| `test_narrative_context_enums.py` | 126 | ContextScope and ContextType enum validation |
+| `test_narrative_context_creation.py` | 249 | Object creation, defaults, immutability |
+| `test_narrative_context_validation.py` | 426 | Input validation and constraint enforcement |
+| `test_narrative_context_properties.py` | 336 | Computed properties and state checks |
+| `test_narrative_context_calculations.py` | 219 | Influence strength and complexity score calculations |
+| `test_narrative_context_methods.py` | 380 | Instance methods and behavioral logic |
+| `test_narrative_context_string.py` | 76 | String representation (__str__, __repr__) |
+| `test_narrative_context_edge_cases.py` | 227 | Edge cases, unicode, precision, complex metadata |
+| `test_narrative_context_collections.py` | 230 | Collections, equality, hashing, sorting |
+
+### Example: NarrativeTheme Test Split
+
+The original `test_narrative_theme_value_object.py` (1724 lines) was split into 8 focused modules:
+
+| File | Lines | Focus |
+|------|-------|-------|
+| `test_narrative_theme_enums.py` | 125 | ThemeType and ThemeIntensity enum validation |
+| `test_narrative_theme_creation.py` | 157 | Object creation, defaults, immutability |
+| `test_narrative_theme_validation.py` | 311 | Input validation and constraint enforcement |
+| `test_narrative_theme_properties.py` | 224 | Computed properties and state checks |
+| `test_narrative_theme_calculations.py` | 212 | Thematic complexity and narrative impact scores |
+| `test_narrative_theme_methods.py` | 175 | Instance methods and behavioral logic |
+| `test_narrative_theme_factory.py` | 119 | Factory methods (with_updated_intensity) |
+| `test_narrative_theme_string.py` | 73 | String representation (__str__, __repr__) |
+| `test_narrative_theme_edge_cases.py` | 147 | Edge cases, unicode, precision, large collections |
+| `test_narrative_theme_collections.py` | 201 | Collections, equality, hashing, sorting |
+
+**Benefits**:
+- Easier to locate specific tests
+- Faster test discovery and execution
+- Better code organization
+- Reduced merge conflicts
+- Clearer test responsibility
+
