@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, List, Optional, Set
+from typing import TYPE_CHECKING, Any, List, Optional, Set
 
 from src.api.schemas import (
     NarrativeData,
@@ -17,6 +17,11 @@ from src.api.schemas import (
     SimulationRequest,
 )
 from src.api.services.paths import get_characters_directory_path
+from src.core.result import Error, Ok, Result
+
+if TYPE_CHECKING:
+    from src.core.result import _Error as ResultError
+    from src.core.result import _Ok as ResultOk
 
 logger = logging.getLogger(__name__)
 
@@ -27,30 +32,41 @@ class OrchestrationService:
     def __init__(self, api_service: Any = None):
         self.api_service = api_service
 
-    async def get_status(self) -> OrchestrationStatusResponse:
-        """Get current orchestration status."""
+    async def get_status(self) -> ResultOk[OrchestrationStatusData] | ResultError[Error]:
+        """
+        Get current orchestration status.
+
+        Returns:
+            Result with status data on success, Error if service unavailable
+        """
         if not self.api_service:
-            return OrchestrationStatusResponse(
-                success=False,
-                message="Orchestration service not available",
-                data=OrchestrationStatusData(status="error"),
+            return Err(
+                Error(
+                    code="SERVICE_UNAVAILABLE",
+                    message="Orchestration service not available",
+                    recoverable=True,
+                )
             )
 
         status = await self.api_service.get_status()
-        return OrchestrationStatusResponse(
-            success=True,
-            data=OrchestrationStatusData(**status),
-        )
+        return Ok(OrchestrationStatusData(**status))
 
     async def start(
         self, request: Optional[OrchestrationStartRequest] = None
-    ) -> OrchestrationStartResponse:
-        """Start orchestration with given parameters."""
+    ) -> ResultOk[dict[str, Any]] | ResultError[Error]:
+        """
+        Start orchestration with given parameters.
+
+        Returns:
+            Result with task info on success, Error if initialization fails
+        """
         if not self.api_service:
-            return OrchestrationStartResponse(
-                success=False,
-                status="error",
-                message="Orchestration service not initialized",
+            return Err(
+                Error(
+                    code="SERVICE_UNAVAILABLE",
+                    message="Orchestration service not initialized",
+                    recoverable=True,
+                )
             )
 
         params = request or OrchestrationStartRequest()
@@ -63,67 +79,95 @@ class OrchestrationService:
 
         try:
             result = await self.api_service.start_simulation(sim_request)
-            return OrchestrationStartResponse(
-                success=result.get("success", True),
-                status=result.get("status", "started"),
-                task_id=result.get("task_id"),
-                message=result.get("message"),
+            return Ok(
+                {
+                    "success": result.get("success", True),
+                    "status": result.get("status", "started"),
+                    "task_id": result.get("task_id"),
+                    "message": result.get("message"),
+                }
             )
         except ValueError as exc:
             logger.warning("Invalid orchestration request: %s", exc)
-            return OrchestrationStartResponse(
-                success=False,
-                status="error",
-                message="Invalid orchestration request.",
+            return Err(
+                Error(
+                    code="INVALID_REQUEST",
+                    message=str(exc),
+                    recoverable=True,
+                )
             )
 
-    async def stop(self) -> OrchestrationStopResponse:
-        """Stop the current orchestration."""
+    async def stop(self) -> ResultOk[dict[str, Any]] | ResultError[Error]:
+        """
+        Stop the current orchestration.
+
+        Returns:
+            Result with stop result on success, Error if service unavailable
+        """
         if not self.api_service:
-            return OrchestrationStopResponse(
-                success=False, message="Service unavailable"
+            return Err(
+                Error(
+                    code="SERVICE_UNAVAILABLE",
+                    message="Service unavailable",
+                    recoverable=True,
+                )
             )
         result = await self.api_service.stop_simulation()
-        return OrchestrationStopResponse(
-            success=result.get("success", True),
-            message=result.get("message"),
+        return Ok(
+            {
+                "success": result.get("success", True),
+                "message": result.get("message"),
+            }
         )
 
-    async def pause(self) -> OrchestrationStopResponse:
-        """Pause the current orchestration."""
+    async def pause(self) -> ResultOk[dict[str, Any]] | ResultError[Error]:
+        """
+        Pause the current orchestration.
+
+        Returns:
+            Result with pause result on success, Error if service unavailable
+        """
         if not self.api_service:
-            return OrchestrationStopResponse(
-                success=False, message="Service unavailable"
+            return Err(
+                Error(
+                    code="SERVICE_UNAVAILABLE",
+                    message="Service unavailable",
+                    recoverable=True,
+                )
             )
         result = await self.api_service.pause_simulation()
-        return OrchestrationStopResponse(
-            success=result.get("success", True),
-            message=result.get("message"),
+        return Ok(
+            {
+                "success": result.get("success", True),
+                "message": result.get("message"),
+            }
         )
 
-    async def get_narrative(self) -> NarrativeResponse:
-        """Get current narrative content."""
+    async def get_narrative(self) -> ResultOk[NarrativeData] | ResultError[Error]:
+        """
+        Get current narrative content.
+
+        Returns:
+            Result with narrative data on success, Error if service unavailable
+        """
         if not self.api_service:
-            return NarrativeResponse(
-                success=False,
-                data=NarrativeData(
-                    story="",
-                    participants=[],
-                    turns_completed=0,
-                    has_content=False,
-                ),
+            return Err(
+                Error(
+                    code="SERVICE_UNAVAILABLE",
+                    message="Orchestration service not available",
+                    recoverable=True,
+                )
             )
 
         narrative = await self.api_service.get_narrative()
-        return NarrativeResponse(
-            success=True,
-            data=NarrativeData(
+        return Ok(
+            NarrativeData(
                 story=narrative.get("story", ""),
                 participants=narrative.get("participants", []),
                 turns_completed=narrative.get("turns_completed", 0),
                 last_generated=narrative.get("last_generated"),
                 has_content=bool(narrative.get("story", "")),
-            ),
+            )
         )
 
     def _get_default_characters(self) -> List[str]:

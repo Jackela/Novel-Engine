@@ -27,6 +27,7 @@ from ..commands.character_commands import (
     UpdateCharacterSkillCommand,
     UpdateCharacterStatsCommand,
 )
+from .....core.result import ConflictError, Error, NotFoundError, Ok, Result
 
 logger = logging.getLogger(__name__)
 
@@ -61,9 +62,13 @@ class CharacterApplicationService:
         wisdom: int = 10,
         charisma: int = 10,
         **optional_data,
-    ) -> CharacterID:
+    ) -> Result[CharacterID, Error]:
         """
         Create a new character.
+
+        Why Result pattern:
+            Explicitly signals potential failures (name conflict) without
+            raising exceptions, allowing routers to handle errors gracefully.
 
         Args:
             character_name: Name of the character
@@ -80,11 +85,7 @@ class CharacterApplicationService:
             **optional_data: Additional optional character data
 
         Returns:
-            ID of the newly created character
-
-        Raises:
-            ValueError: If input data is invalid
-            RepositoryException: If creation fails
+            Result with CharacterID on success, Error if name already taken
         """
         self.logger.info(f"Creating character: {character_name}")
 
@@ -92,7 +93,12 @@ class CharacterApplicationService:
             # Check if character name is already taken
             existing_characters = await self.repository.find_by_name(character_name)
             if existing_characters:
-                raise ValueError(f"Character name '{character_name}' is already taken")
+                return Result.error(
+                    ConflictError(
+                        message=f"Character name '{character_name}' is already taken",
+                        details={"character_name": character_name},
+                    )
+                )
 
             # Create command
             command = CreateCharacterCommand(
@@ -114,34 +120,64 @@ class CharacterApplicationService:
             character_id = await self.command_handlers.handle_command(command)
 
             self.logger.info(f"Character created successfully: {character_id}")
-            return character_id
+            return Ok(character_id)
 
         except Exception as e:
             self.logger.error(f"Error creating character: {e}")
-            raise
+            return Result.error(
+                Error(
+                    code="CREATION_FAILED",
+                    message=f"Failed to create character: {e}",
+                    recoverable=False,
+                )
+            )
 
-    async def get_character(self, character_id: str) -> Optional[Character]:
+    async def get_character(self, character_id: str) -> Result[Character, Error]:
         """
         Get a character by ID.
+
+        Why Result pattern:
+            Explicitly signals when a character is not found, allowing
+            routers to return 404 instead of 500.
 
         Args:
             character_id: The character ID
 
         Returns:
-            Character if found, None otherwise
-
-        Raises:
-            ValueError: If character ID is invalid
-            RepositoryException: If retrieval fails
+            Result with Character on success, NotFoundError if not found
         """
         try:
             char_id = CharacterID.from_string(character_id)
             character = await self.repository.get_by_id(char_id)
-            return character
 
+            if character is None:
+                return Result.error(
+                    NotFoundError(
+                        message=f"Character with ID '{character_id}' not found",
+                        details={"character_id": character_id},
+                    )
+                )
+
+            return Ok(character)
+
+        except ValueError as e:
+            self.logger.error(f"Invalid character ID {character_id}: {e}")
+            return Result.error(
+                Error(
+                    code="INVALID_ID",
+                    message=f"Invalid character ID format: {e}",
+                    recoverable=False,
+                )
+            )
         except Exception as e:
             self.logger.error(f"Error getting character {character_id}: {e}")
-            raise
+            return Result.error(
+                Error(
+                    code="RETRIEVAL_FAILED",
+                    message=f"Failed to retrieve character: {e}",
+                    recoverable=False,
+                )
+            )
 
     async def update_character_stats(self, character_id: str, **stat_updates) -> None:
         """

@@ -15,6 +15,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from .....core.result import Error, Ok, Result
+
 if TYPE_CHECKING:
     from uuid import UUID
 
@@ -110,32 +112,37 @@ class PacingService:
 
     def calculate_chapter_pacing(
         self, chapter_id: UUID, scenes: list[Scene]
-    ) -> ChapterPacingReport:
-        """Calculate pacing metrics for a chapter.
+    ) -> Result[ChapterPacingReport, Error]:
+        """
+        Calculate pacing metrics for a chapter.
 
-        Produces a comprehensive pacing report including per-scene metrics
-        and aggregate statistics.
+        Why Result pattern:
+            Allows graceful handling of invalid input data while
+            keeping the service pure and testable.
 
         Args:
             chapter_id: The chapter's unique identifier.
             scenes: List of scenes belonging to the chapter.
 
         Returns:
-            ChapterPacingReport with metrics and detected issues.
+            Result with ChapterPacingReport on success, Error on validation failure
 
         Why scenes as parameter:
             Keeps the service stateless and independent of repositories.
             The caller (router/controller) handles data fetching.
         """
         if not scenes:
-            return ChapterPacingReport(
-                chapter_id=chapter_id,
-                scene_metrics=[],
-                issues=[],
-                average_tension=0.0,
-                average_energy=0.0,
-                tension_range=(0, 0),
-                energy_range=(0, 0),
+            # Empty scenes is not an error, just no pacing to report
+            return Ok(
+                ChapterPacingReport(
+                    chapter_id=chapter_id,
+                    scene_metrics=[],
+                    issues=[],
+                    average_tension=0.0,
+                    average_energy=0.0,
+                    tension_range=(0, 0),
+                    energy_range=(0, 0),
+                )
             )
 
         # Sort scenes by order_index for analysis
@@ -165,14 +172,16 @@ class PacingService:
         # Analyze for issues
         issues = self.analyze_pacing_issues(sorted_scenes)
 
-        return ChapterPacingReport(
-            chapter_id=chapter_id,
-            scene_metrics=scene_metrics,
-            issues=issues,
-            average_tension=round(avg_tension, 2),
-            average_energy=round(avg_energy, 2),
-            tension_range=tension_range,
-            energy_range=energy_range,
+        return Ok(
+            ChapterPacingReport(
+                chapter_id=chapter_id,
+                scene_metrics=scene_metrics,
+                issues=issues,
+                average_tension=round(avg_tension, 2),
+                average_energy=round(avg_energy, 2),
+                tension_range=tension_range,
+                energy_range=energy_range,
+            )
         )
 
     def analyze_pacing_issues(self, scenes: list[Scene]) -> list[PacingIssue]:

@@ -59,7 +59,7 @@
         "Document Result pattern in docs/architecture/error-handling.md"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {
