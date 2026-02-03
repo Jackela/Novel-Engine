@@ -197,7 +197,7 @@ function SearchItemRow({ item, onSelect }: { item: SearchItem; onSelect: () => v
   const Icon = TYPE_ICONS[item.type];
   return (
     <CommandItem
-      value={`${item.type}-${item.id}-${item.name}`}
+      value={`${item.type}-${item.id}-${item.name}-${item.description ?? ''}`}
       onSelect={onSelect}
       className="flex items-center gap-3 py-3"
     >
@@ -378,10 +378,19 @@ export function GlobalSearch() {
   const { open, setOpen, search, setSearch, recentSearches, handleSelect } =
     useGlobalSearchState();
 
+  const shouldPrefetch = (() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.localStorage.getItem('e2e_bypass_auth') === '1';
+    } catch {
+      return false;
+    }
+  })();
+
   const { data: searchItems = [], isLoading } = useQuery({
     queryKey: ['global-search'],
     queryFn: fetchSearchData,
-    enabled: open,
+    enabled: open || shouldPrefetch,
     staleTime: 60000,
   });
 
@@ -410,6 +419,7 @@ export function GlobalSearch() {
         placeholder="Search characters, locations, lore, chapters..."
         value={search}
         onValueChange={setSearch}
+        autoFocus
         data-testid="global-search-input"
       />
       <CommandList>

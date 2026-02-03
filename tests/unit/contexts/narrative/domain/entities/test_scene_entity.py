@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from src.contexts.narrative.domain.entities.scene import Scene, SceneStatus
-from src.contexts.narrative.domain.entities.beat import Beat, BeatType
+from src.contexts.narrative.domain.entities.beat import Beat
 
 
 class TestSceneCreation:

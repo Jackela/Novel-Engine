@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { CharacterGrid } from './components/CharacterGrid';
 import { CharacterForm } from './components/CharacterForm';
+import CharacterDetailsDialog from './CharacterDetailsDialog';
 import {
   useCharacters,
   useCharacter,
@@ -21,26 +22,37 @@ import { ErrorState } from '@/shared/components/feedback';
 import type { CreateCharacterInput, CharacterSummary } from '@/shared/types/character';
 
 export default function CharactersPage() {
-  const [selectedCharacter, setSelectedCharacter] = useState<CharacterSummary | null>(
+  const [editingCharacter, setEditingCharacter] = useState<CharacterSummary | null>(
+    null
+  );
+  const [detailsCharacter, setDetailsCharacter] = useState<CharacterSummary | null>(
     null
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const { data: characters = [], isLoading, error } = useCharacters();
-  const selectedCharacterId = selectedCharacter?.id ?? '';
-  const { data: selectedDetail } = useCharacter(selectedCharacterId);
+  const editingCharacterId = editingCharacter?.id ?? '';
+  const detailsCharacterId = detailsCharacter?.id ?? '';
+  const { data: editingDetail } = useCharacter(editingCharacterId);
+  const { data: detailsDetail } = useCharacter(detailsCharacterId);
   const createMutation = useCreateCharacter();
   const updateMutation = useUpdateCharacter();
   const deleteMutation = useDeleteCharacter();
 
   const handleCreate = () => {
-    setSelectedCharacter(null);
+    setEditingCharacter(null);
     setIsFormOpen(true);
   };
 
   const handleEdit = (character: CharacterSummary) => {
-    setSelectedCharacter(character);
+    setEditingCharacter(character);
     setIsFormOpen(true);
+  };
+
+  const handleViewDetails = (character: CharacterSummary) => {
+    setDetailsCharacter(character);
+    setIsDetailsOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -50,14 +62,14 @@ export default function CharactersPage() {
   };
 
   const handleSubmit = async (data: CreateCharacterInput) => {
-    if (selectedCharacter) {
+    if (editingCharacter) {
       const { agent_id: _agentId, ...payload } = data;
-      await updateMutation.mutateAsync({ ...payload, id: selectedCharacter.id });
+      await updateMutation.mutateAsync({ ...payload, id: editingCharacter.id });
     } else {
       await createMutation.mutateAsync(data);
     }
     setIsFormOpen(false);
-    setSelectedCharacter(null);
+    setEditingCharacter(null);
   };
 
   if (error) {
@@ -78,7 +90,7 @@ export default function CharactersPage() {
         isLoading={isLoading}
         onCreateNew={handleCreate}
         onEdit={handleEdit}
-        onSelect={handleEdit}
+        onSelect={handleViewDetails}
         onDelete={handleDelete}
       />
       <Dialog
@@ -86,27 +98,35 @@ export default function CharactersPage() {
         onOpenChange={(open) => {
           if (!open) {
             setIsFormOpen(false);
-            setSelectedCharacter(null);
+            setEditingCharacter(null);
           }
         }}
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedCharacter ? 'Edit Character' : 'Create Character'}
+              {editingCharacter ? 'Edit Character' : 'Create Character'}
             </DialogTitle>
           </DialogHeader>
           <CharacterForm
-            {...(selectedDetail ? { character: selectedDetail } : {})}
+            {...(editingDetail ? { character: editingDetail } : {})}
             onSubmit={handleSubmit}
             onCancel={() => {
               setIsFormOpen(false);
-              setSelectedCharacter(null);
+              setEditingCharacter(null);
             }}
             isLoading={createMutation.isPending || updateMutation.isPending}
           />
         </DialogContent>
       </Dialog>
+      <CharacterDetailsDialog
+        open={isDetailsOpen && !!detailsDetail}
+        onClose={() => {
+          setIsDetailsOpen(false);
+          setDetailsCharacter(null);
+        }}
+        character={detailsDetail ?? null}
+      />
     </div>
   );
 }

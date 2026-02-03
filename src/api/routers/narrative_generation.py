@@ -174,7 +174,7 @@ async def _sse_generator(request: GenerateStreamRequest) -> AsyncIterator[str]:
             # Mock mode: Stream hardcoded story content
             logger.info(
                 "Starting mock narrative stream",
-                extra={"mock_mode": True, "max_tokens": request.max_tokens},
+                extra={"mock_mode": True, "max_tokens": int(request.max_tokens)},
             )
 
             async for content, sequence in generate_mock_stream(request.max_tokens):
@@ -291,7 +291,7 @@ async def stream_narrative_generation(
             "scene_id": str(scene_uuid) if scene_uuid else None,
             "has_prompt": request.prompt is not None,
             "has_context": request.context is not None,
-            "max_tokens": request.max_tokens,
+            "max_tokens": int(request.max_tokens),
             "mock_mode": is_mock_mode(),
         },
     )

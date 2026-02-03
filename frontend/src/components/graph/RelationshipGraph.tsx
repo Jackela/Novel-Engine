@@ -23,7 +23,6 @@ import {
   BackgroundVariant,
   type OnSelectionChangeFunc,
 } from '@xyflow/react';
-import Dagre from '@dagrejs/dagre';
 import { X, Users, Sparkles, Loader2, User } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
@@ -182,6 +181,55 @@ const nodeTypes = {
   character: SimpleCharacterNode,
 } satisfies NodeTypes;
 
+type DagreGraph = {
+  setDefaultEdgeLabel: (value: () => unknown) => DagreGraph;
+  setGraph: (config: {
+    rankdir: 'TB' | 'LR';
+    nodesep: number;
+    ranksep: number;
+    marginx: number;
+    marginy: number;
+  }) => void;
+  setNode: (id: string, size: { width: number; height: number }) => void;
+  setEdge: (source: string, target: string) => void;
+  node: (id: string) => { x: number; y: number };
+};
+
+type DagreApi = {
+  graphlib: {
+    Graph: new (...args: unknown[]) => DagreGraph;
+  };
+  layout: (graph: DagreGraph) => void;
+};
+
+let dagreLoader: Promise<DagreApi | null> | null = null;
+
+async function loadDagre(): Promise<DagreApi | null> {
+  if (!dagreLoader) {
+    dagreLoader = import('@dagrejs/dagre')
+      .then((mod) => (mod as { default?: DagreApi }).default ?? (mod as DagreApi))
+      .catch((error) => {
+        console.warn('RelationshipGraph: Dagre unavailable, falling back to grid layout.', error);
+        return null;
+      });
+  }
+  return dagreLoader;
+}
+
+function applyFallbackLayout(nodes: SimpleCharacterNodeType[]): SimpleCharacterNodeType[] {
+  const columns = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
+  const gapX = 220;
+  const gapY = 140;
+
+  return nodes.map((node, index) => ({
+    ...node,
+    position: {
+      x: (index % columns) * gapX,
+      y: Math.floor(index / columns) * gapY,
+    },
+  }));
+}
+
 /**
  * Apply Dagre layout to nodes and edges.
  * Why: Automatic layout ensures readable graphs without manual positioning.
@@ -190,9 +238,14 @@ const nodeTypes = {
 function applyDagreLayout(
   nodes: SimpleCharacterNodeType[],
   edges: Edge[],
+  dagre: DagreApi | null,
   direction: 'TB' | 'LR' = 'TB'
 ): SimpleCharacterNodeType[] {
-  const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+  if (!dagre) {
+    return applyFallbackLayout(nodes);
+  }
+
+  const g = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
   g.setGraph({
     rankdir: direction,
@@ -210,7 +263,12 @@ function applyDagreLayout(
     g.setEdge(edge.source, edge.target);
   });
 
-  Dagre.layout(g);
+  try {
+    dagre.layout(g);
+  } catch (error) {
+    console.warn('RelationshipGraph: Dagre layout failed, using fallback layout.', error);
+    return applyFallbackLayout(nodes);
+  }
 
   return nodes.map((node) => {
     const nodeWithPosition = g.node(node.id);
@@ -240,7 +298,8 @@ interface RelationshipEdgeData extends Record<string, unknown> {
  */
 function transformDataToGraph(
   characters: CharacterSummary[],
-  relationships: RelationshipResponse[]
+  relationships: RelationshipResponse[],
+  dagre: DagreApi | null
 ): { nodes: SimpleCharacterNodeType[]; edges: Edge<RelationshipEdgeData>[] } {
   // Create a map for quick character lookup
   const characterMap = new Map(characters.map((c) => [c.id, c]));
@@ -293,7 +352,7 @@ function transformDataToGraph(
   }));
 
   // Apply dagre layout
-  const layoutedNodes = applyDagreLayout(nodes, edges);
+  const layoutedNodes = applyDagreLayout(nodes, edges, dagre);
 
   return { nodes: layoutedNodes, edges };
 }
@@ -323,6 +382,19 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingHistory, setIsGeneratingHistory] = useState(false);
   const [generatedBackstory, setGeneratedBackstory] = useState<string | null>(null);
+  const [dagreApi, setDagreApi] = useState<DagreApi | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    void loadDagre().then((module) => {
+      if (isMounted) {
+        setDagreApi(module);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Fetch data on mount
   useEffect(() => {
@@ -345,7 +417,8 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
 
         const { nodes: newNodes, edges: newEdges } = transformDataToGraph(
           charactersData.characters || [],
-          relationshipsData.relationships || []
+          relationshipsData.relationships || [],
+          dagreApi
         );
 
         setNodes(newNodes);
@@ -358,7 +431,14 @@ export function RelationshipGraph({ className, onNodeSelect }: RelationshipGraph
     };
 
     fetchData();
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, dagreApi]);
+
+  useEffect(() => {
+    if (!dagreApi || nodes.length === 0) {
+      return;
+    }
+    setNodes((currentNodes) => applyDagreLayout(currentNodes, edges, dagreApi));
+  }, [dagreApi, edges, nodes.length, setNodes]);
 
   /** Handle node selection changes */
   const onSelectionChange: OnSelectionChangeFunc = useCallback(

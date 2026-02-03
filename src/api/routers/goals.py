@@ -28,6 +28,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["goals"])
 
 
+def _sanitize_for_log(value: Optional[str]) -> Optional[str]:
+    """Normalize user-controlled values before logging.
+
+    Why: Prevent log forging by stripping CR/LF characters from strings.
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        value = str(value)
+    return value.replace("\r", "").replace("\n", "")
+
+
 def _parse_uuid_safe(value: str) -> UUID | None:
     """Parse a string as UUID, returning None if invalid.
 
@@ -192,7 +204,7 @@ async def create_character_goal(
         extra={
             "character_id": str(char_uuid) if char_uuid else "invalid",
             "goal_id": goal_id,
-            "urgency": payload.urgency,
+            "urgency": goal_data["urgency"],
         },
     )
 
@@ -335,10 +347,12 @@ async def update_character_goal(
     logger.info(
         "Updated goal for character",
         extra={
-            "goal_id": str(goal_uuid) if goal_uuid else "invalid",
-            "character_id": str(char_uuid) if char_uuid else "invalid",
-            "status": goal.get("status"),
-            "urgency": goal.get("urgency"),
+            "goal_id": _sanitize_for_log(str(goal_uuid) if goal_uuid else "invalid"),
+            "character_id": _sanitize_for_log(
+                str(char_uuid) if char_uuid else "invalid"
+            ),
+            "status": _sanitize_for_log(goal.get("status")),
+            "urgency": _sanitize_for_log(goal.get("urgency")),
         },
     )
 

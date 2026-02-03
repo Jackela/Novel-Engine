@@ -506,9 +506,10 @@ async def move_chapter(
         chapter.move_to_position(request.new_order_index)
         repo.save(story)
         # chapter_uuid is already a validated UUID from _parse_uuid
+        safe_position = int(request.new_order_index)
         logger.info(
             "Moved chapter to position",
-            extra={"chapter_id": str(chapter_uuid), "position": request.new_order_index},
+            extra={"chapter_id": str(chapter_uuid), "position": safe_position},
         )
         return _chapter_to_response(chapter)
     except ValueError as e:
@@ -831,9 +832,10 @@ async def move_scene(
         scene.move_to_position(request.new_order_index)
         _store_scene(scene)
         # scene_uuid is already a validated UUID from _parse_uuid
+        safe_position = int(request.new_order_index)
         logger.info(
             "Moved scene to position",
-            extra={"scene_id": str(scene_uuid), "position": request.new_order_index},
+            extra={"scene_id": str(scene_uuid), "position": safe_position},
         )
         return _scene_to_response(scene)
     except ValueError as e:

@@ -32,4 +32,6 @@ class SceneGeneratorPort(Protocol):
 
     def generate(self, request: SceneGenerationInput) -> SceneGenerationResult:
         """Generate a scene from structured input."""
-        ...
+        raise NotImplementedError(
+            "SceneGeneratorPort implementations must define `generate`."
+        )

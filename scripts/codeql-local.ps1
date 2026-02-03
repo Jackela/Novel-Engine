@@ -58,6 +58,9 @@ CodeQL CLI not found. Install options:
     if (Get-Command bandit -ErrorAction SilentlyContinue) {
         Write-Host "`n=== Bandit Security Scan ===" -ForegroundColor Cyan
         bandit -r src/ -ll --format txt
+        if ($LASTEXITCODE -ne 0) {
+            exit 1
+        }
     } else {
         Write-Host "bandit not installed. Run: pip install bandit" -ForegroundColor Yellow
     }
@@ -70,6 +73,7 @@ Write-Host "CodeQL found: $($codeqlPath.Source)" -ForegroundColor Green
 # Create temporary database directory
 $dbDir = Join-Path $env:TEMP "codeql-db-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 New-Item -ItemType Directory -Path $dbDir -Force | Out-Null
+$issuesFound = $false
 
 try {
     $languages = @()
@@ -120,6 +124,7 @@ try {
             if ($results.Count -eq 0) {
                 Write-Host "No security issues found!" -ForegroundColor Green
             } else {
+                $issuesFound = $true
                 Write-Host "`nFound $($results.Count) issues:" -ForegroundColor Yellow
                 foreach ($result in $results) {
                     $ruleId = $result.ruleId
@@ -136,10 +141,15 @@ try {
     }
 
     Write-Host "`n=== Scan Complete ===" -ForegroundColor Cyan
-
 } finally {
     # Cleanup
     if (Test-Path $dbDir) {
         Remove-Item -Recurse -Force $dbDir -ErrorAction SilentlyContinue
     }
 }
+
+if ($issuesFound) {
+    exit 1
+}
+
+exit 0

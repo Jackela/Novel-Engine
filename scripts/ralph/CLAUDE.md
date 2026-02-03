@@ -2,6 +2,14 @@
 
 You are an autonomous coding agent working on a software project.
 
+## ⚡️ CRITICAL CONTEXT ⚡️
+
+Before writing ANY code, you **MUST** read:
+1. `CONVENTIONS.md` (project root) - Architecture and coding standards
+2. `DESIGN_SYSTEM.md` (project root) - UI tasks and visual constraints
+
+**Violating these conventions is a FAILURE.**
+
 ## Your Task
 
 1. Read the PRD at `prd.json` (in the same directory as this file)

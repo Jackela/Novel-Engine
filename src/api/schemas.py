@@ -1431,12 +1431,6 @@ __all__ = [
 ]
 
 try:
-    from .character_api import (
-        CharacterCreationRequest,
-        CharacterListResponse,
-        CharacterResponse,
-        CharacterUpdateRequest,
-    )
     from .context7_integration_api import (
         BestPracticeItem,
         BestPracticeRequest,
@@ -1468,21 +1462,6 @@ try:
         KnowledgeEntryResponse,
         UpdateKnowledgeEntryRequest,
     )
-    from .prompts_router import (
-        AnalyzeRequest,
-        AnalyzeResponse,
-        ApplySuggestionRequest,
-        ApplySuggestionResponse,
-        OptimizeRequest,
-        OptimizeResponse,
-        TemplateDetailResponse,
-        TemplateInfo,
-        TemplatesListResponse,
-        UserPromptCreate,
-        UserPromptResponse,
-        UserPromptsListResponse,
-        UserPromptUpdate,
-    )
     from .subjective_reality_api import (
         BeliefModelData,
         BeliefModelRequest,
@@ -1496,10 +1475,6 @@ try:
     )
 
     __all__ += [
-        "CharacterCreationRequest",
-        "CharacterUpdateRequest",
-        "CharacterResponse",
-        "CharacterListResponse",
         "InteractionRequest",
         "InteractionResponse",
         "EmergentNarrativeRequest",
@@ -1535,19 +1510,6 @@ try:
         "BestPracticeRequest",
         "BestPracticeItem",
         "BestPracticesResponse",
-        "TemplateInfo",
-        "TemplateDetailResponse",
-        "TemplatesListResponse",
-        "AnalyzeRequest",
-        "AnalyzeResponse",
-        "OptimizeRequest",
-        "OptimizeResponse",
-        "ApplySuggestionRequest",
-        "ApplySuggestionResponse",
-        "UserPromptCreate",
-        "UserPromptUpdate",
-        "UserPromptResponse",
-        "UserPromptsListResponse",
     ]
 except ImportError:
     # Optional imports for extended API schemas - these modules may not exist in all environments

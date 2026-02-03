@@ -84,7 +84,9 @@ class TokenCounterProtocol(Protocol):
         Returns:
             Number of tokens in the text.
         """
-        ...
+        raise NotImplementedError(
+            "TokenCounterProtocol implementations must define `count`."
+        )
 
 
 class TiktokenCounter:

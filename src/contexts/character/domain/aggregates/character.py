@@ -31,7 +31,7 @@ from ..value_objects.character_stats import (
     CoreAbilities,
     VitalStats,
 )
-from ..value_objects.character_goal import CharacterGoal, GoalStatus, GoalUrgency
+from ..value_objects.character_goal import CharacterGoal, GoalUrgency
 from ..value_objects.character_memory import CharacterMemory
 from ..value_objects.character_psychology import CharacterPsychology
 from ..value_objects.skills import SkillCategory, Skills

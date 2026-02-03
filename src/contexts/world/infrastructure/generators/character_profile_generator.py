@@ -110,7 +110,10 @@ class CharacterProfileGeneratorPort(Protocol):
         Returns:
             CharacterProfileResult containing the generated profile data.
         """
-        ...
+        raise NotImplementedError(
+            "CharacterProfileGeneratorPort implementations must define "
+            "`generate_character_profile`."
+        )
 
 
 def _get_mock_profile(name: str, archetype: str) -> CharacterProfileResult:

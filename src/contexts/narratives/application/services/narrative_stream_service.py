@@ -53,7 +53,9 @@ class NarrativeGeneratorPort(Protocol):
         Why streaming: Reduces perceived latency for the user. They see
         content appearing immediately rather than waiting for full generation.
         """
-        ...
+        raise NotImplementedError(
+            "NarrativeGeneratorPort implementations must define `generate_stream`."
+        )
 
 
 def _build_context_summary(

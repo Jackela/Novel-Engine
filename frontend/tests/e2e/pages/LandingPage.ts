@@ -62,30 +62,14 @@ export class LandingPage {
 
     await this.page.addInitScript(() => {
       try {
-        const guestToken = {
-          accessToken: 'guest',
-          refreshToken: '',
-          tokenType: 'Guest',
-          expiresAt: Date.now() + 60 * 60 * 1000,
-          refreshExpiresAt: 0,
-          user: {
-            id: 'guest',
-            username: 'guest',
-            email: '',
-            roles: ['guest'],
-          },
-        };
-        const payload = {
-          state: {
-            token: guestToken,
-            isGuest: true,
-            workspaceId: 'ws-mock',
-          },
-          version: 0,
-        };
-        window.localStorage.setItem('novel-engine-auth', JSON.stringify(payload));
-        window.sessionStorage.setItem('novelengine_guest_session', '1');
-        window.localStorage.setItem('e2e_bypass_auth', '1');
+        const preserveAuth = window.localStorage.getItem('e2e_preserve_auth') === '1';
+        if (!preserveAuth) {
+          window.localStorage.removeItem('novel-engine-auth');
+          window.localStorage.removeItem('novelengine_guest_session');
+          window.sessionStorage.removeItem('novelengine_guest_session');
+          window.localStorage.setItem('e2e_bypass_auth', '0');
+          window.localStorage.removeItem('e2e_preserve_auth');
+        }
       } catch {
         // ignore storage failures
       }
@@ -140,6 +124,13 @@ export class LandingPage {
     await this.launchEngineButton.click();
     // Wait for navigation to complete
     await this.page.waitForURL('**/dashboard', { timeout: 30000 });
+    await this.page.evaluate(() => {
+      try {
+        window.localStorage.setItem('e2e_preserve_auth', '1');
+      } catch {
+        // ignore storage failures
+      }
+    });
   }
 
   /**

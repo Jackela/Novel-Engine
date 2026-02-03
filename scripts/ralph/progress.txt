@@ -1,13 +1,19 @@
-# Ralph Progress - Visual Rescue (Full Refactor)
+# Ralph Progress - Warzone 3: Director Mode
 
 ## Codebase Patterns
-(Inherited from Character Evolution + new patterns)
+(Inherited from previous sprints + Director Mode specific patterns)
 
-### Component Organization
-- Feature components: `frontend/src/features/{featureName}/components/`
-- API clients: `frontend/src/lib/api/{feature}Api.ts`
-- Composed components: `frontend/src/components/composed/` (AppShell, EditorLayout)
-- shadcn/ui components: `frontend/src/components/ui/` (DO NOT MODIFY)
+### Architecture
+- **Domain Context**: New entities go in `src/contexts/narrative/domain/`
+- **Value Objects**: Use frozen dataclass with Tuple for immutable collections
+- **Application Services**: `src/contexts/{context}/application/services/`
+- **API Routers**: `src/api/routers/{feature}.py`, register in `main_api_server.py`
+
+### Frontend Organization
+- **Feature Components**: `frontend/src/features/director/components/`
+- **Director API Client**: `frontend/src/lib/api/directorApi.ts`
+- **Composed Components**: `frontend/src/components/composed/` (AppShell, EditorLayout)
+- **shadcn/ui**: `frontend/src/components/ui/` (DO NOT MODIFY)
 
 ### Three Rendering Domains
 - **App Shell**: Tailwind + shadcn/ui, font-sans, bg-background
@@ -17,142 +23,88 @@
 ### Orthogonal Theming
 - Color mode: `class="dark"` on `<html>` (light/dark)
 - Typography mode: `data-typography="literary"` on `<html>` (default/literary)
-- 4 combinations must all work correctly
 
 ### State Management
 - Server state → TanStack Query (useQuery, useMutation)
 - Global UI state → Zustand stores
 - Form state → React Hook Form + Zod validation
-- Avoid duplicate truth in local + global stores
 
-### Testing
+### Visualization Patterns
+- **Recharts**: Already installed, use for PacingGraph (AreaChart), ChapterHealth (PieChart)
+- **Radar Chart**: Used in PsychologyChart (CHAR-022)
+- **Tooltips**: Custom tooltip requires null check for payload[0]
+- **Theming**: Use `hsl(var(--css-variable))` pattern for Recharts components
+
+### Drag-and-Drop Patterns
+- **dnd-kit**: Already installed, used for scene reordering in NarrativeEditorLayout
+- **DndContext**: Wrap draggable areas with sensors and event handlers
+- **useSensors**: PointerSensor with distance constraint (10px) to avoid accidental drags
+- **DragOverlay**: Custom overlay component for visual feedback
+
+### LLM Generation Patterns
+- **LLMWorldGenerator**: Main AI service in `src/contexts/world/infrastructure/generators/`
+- **Prompt Templates**: YAML files in `src/contexts/world/infrastructure/prompts/`
+- **Pattern**: _load_*_prompt + _build_*_user_prompt + _parse_*_response
+- **Result Dataclasses**: to_dict() method that omits null optional fields
+
+### Testing Patterns
 - E2E tests: `frontend/tests/e2e/`
-- Visual regression: Must capture all 4 theme combinations
+- Unit tests: `tests/unit/contexts/{context}/domain/`
 - Run `npm run type-check && npm run lint:all` before commit
+- Playwright: test.describe.configure({ mode: 'serial' }) for ordered tests
 
 ### API Patterns
-- Zod schemas in `frontend/src/types/schemas.ts` must match backend
+- Zod schemas in `frontend/src/types/schemas.ts` must match backend `src/api/schemas.py`
 - Use frozen dataclasses for immutable value objects
-- Character aggregate uses Optional fields for mutable state
-
-### Previous Sprint Patterns (Character Evolution)
-- recharts is installed - use Radar/RadarChart for personality visualization
-- CharacterDetailsDialog uses Tabs with TabsList/TabsTrigger/TabsContent
-- Character memories/goals stored in structured_data via workspace_character_store
-- LLMWorldGenerator is the main AI generation service in `src/contexts/world/infrastructure/generators/`
 - TanStack Router uses `$paramName` for dynamic route segments
-- EditorComponent uses @tiptap/extension-mention for @mention autocomplete
-- QuickCreateCharacterDialog provides minimal character creation flow
-- Export functionality uses exportApi.ts with downloadAsJson utility
 
 ---
 
-## 2026-02-02 - VIS-001
-- **What was implemented**: Design tokens and font system setup
-- **Files changed**:
-  - `frontend/index.html` - Added Lora font to Google Fonts import (400/500/600 + italic)
-  - `frontend/tailwind.config.js` - Added fontFamily.serif (Lora), fontFamily.display (Space Grotesk), fontFamily.mono (IBM Plex Mono), and paper/ink/accent-literary color utilities
-  - `frontend/src/styles/tailwind.css` - Added --paper, --ink, --accent-literary CSS variables for light/dark modes, and [data-typography="literary"] selector rules
-  - `CONVENTIONS.md` - Added project coding conventions document
-  - `DESIGN_SYSTEM.md` - Added design system documentation
-- **Learnings for future iterations:**
-  - Font families in tailwind.config.js should use Manrope (not Inter) as primary sans font per DESIGN_SYSTEM.md
-  - Literary theme CSS variables use HSL format without hsl() wrapper: e.g., `--paper: 40 30% 96%`
-  - The [data-typography="literary"] selector must target .prose-editor class specifically (Editor Canvas domain only)
-  - Dark mode literary theme uses warmer tones: `--paper: 30 15% 12%` (brownish dark) vs default dark `--background: 240 10% 3.9%` (bluish dark)
----
+## Director Mode Domain Models
 
-## 2026-02-02 - VIS-002
-- **What was implemented**: Refactored component directory structure
-- **Files changed**:
-  - Created `frontend/src/components/composed/` directory with `AppShell.tsx` and `index.ts`
-  - Deleted `frontend/src/shared/components/layout/AppLayout.tsx`
-  - Updated `frontend/src/shared/components/layout/index.ts` - removed AppLayout export
-  - Updated `frontend/src/app/ProtectedLayout.tsx` - import from `@/components/composed` instead of `@/shared/components/layout`
-  - Deleted `frontend/src/components/graph/nodes/CharacterNode.tsx` (duplicate)
-  - Deleted `frontend/src/components/graph/nodes/index.ts`
-  - Updated `frontend/src/components/graph/RelationshipGraph.tsx` - inlined SimpleCharacterNode component
-  - Updated `frontend/src/components/graph/index.ts` - removed CharacterNode export
-- **Learnings for future iterations:**
-  - Composed components go in `@/components/composed/` directory (AppShell, EditorLayout, etc.)
-  - When CharacterNode is needed for Weaver/Graph Canvas, import from `@/features/weaver/components/nodes`
-  - RelationshipGraph has its own SimpleCharacterNode inlined (simpler data model: name, archetype, avatarUrl)
-  - The Weaver CharacterNode is more feature-rich (has role, traits, status, bio, etc.)
-  - Named exports are preferred (`export function AppShell`) but default export is also provided for compatibility
----
+### Beat (Value Object)
+```python
+@dataclass(frozen=True)
+class Beat:
+    id: str
+    content: str
+    beat_type: BeatType  # ACTION | REACTION
+    mood_shift: int  # -5 to +5
+    order_index: int
+```
 
-## 2026-02-02 - VIS-003
-- **What was implemented**: Editor Typography System for Editor Canvas domain
-- **Files changed**:
-  - Created `frontend/src/styles/editor.css` - Complete Editor Canvas styling with prose-editor class
-  - Updated `frontend/src/main.tsx` - Imported editor.css
-  - Updated `frontend/src/components/narrative/EditorComponent.tsx`:
-    - Added @tiptap/extension-placeholder for empty editor state
-    - Applied .prose-editor class to editor container
-    - Removed inline editorProps.attributes.class (now handled by editor.css)
-  - Updated `frontend/.stylelintrc.cjs` - Added editor.css to ignoreFiles (ProseMirror classes don't follow BEM)
-  - Updated `frontend/package.json` - Added @tiptap/extension-placeholder dependency
-- **Learnings for future iterations:**
-  - ProseMirror uses `.ProseMirror` class for the editable area, must be targeted via `.prose-editor .ProseMirror`
-  - Tiptap placeholder extension uses `is-editor-empty` class and `data-placeholder` attribute
-  - editor.css is excluded from stylelint because ProseMirror class names are third-party (not BEM compliant)
-  - Literary mode uses `[data-typography="literary"] .prose-editor` selector to scope to Editor Canvas only
-  - The `--font-sans`, `--font-serif`, `--font-display`, `--font-mono` CSS variables are used for font families
-  - Ornamental horizontal rules in literary mode use `::before` pseudo-element with "• • •" content
----
+### Plotline (Entity)
+```python
+@dataclass
+class Plotline:
+    id: str
+    name: str
+    color: str  # hex color
+    description: str
+    status: PlotlineStatus  # ACTIVE | RESOLVED | ABANDONED
+```
 
-## 2026-02-02 - VIS-004
-- **What was implemented**: Enhanced Weaver Node Styling for Graph Canvas domain
-- **Files changed**:
-  - `frontend/src/styles/tailwind.css`:
-    - Added CSS variables for Weaver glow colors (--weaver-glow-rgb, --weaver-neon-rgb, etc.)
-    - Refactored node status classes to use CSS variables for theming (box-shadow uses rgb(var(--weaver-glow-rgb)))
-    - Added type-specific left border accents using `[data-node-type="character"]` selectors
-    - Added dark mode contrast improvements via `.dark .weaver-node` overrides
-  - `frontend/tailwind.config.js`:
-    - Added `transitionDuration` tokens (fast: 150ms, normal: 300ms, slow: 500ms) per DESIGN_SYSTEM.md
-- **Learnings for future iterations:**
-  - All Weaver nodes already use `data-node-type` attribute via WeaverNode wrapper component
-  - CSS custom properties for RGB values use format `--weaver-glow-rgb: 0 245 255` (no commas), consumed as `rgb(var(--weaver-glow-rgb) / 0.45)`
-  - Dark mode variants of glow colors are slightly brighter to maintain contrast on dark surfaces
-  - Type-specific styling should use `[data-node-type="xxx"]` selectors in CSS, not inline className props
-  - The `.dark .weaver-node .text-muted-foreground` selector improves text readability in dark mode
----
+### Conflict (Entity)
+```python
+@dataclass
+class Conflict:
+    id: str
+    conflict_type: ConflictType  # INTERNAL | EXTERNAL | INTERPERSONAL
+    stakes: StakesLevel  # LOW | MEDIUM | HIGH | CRITICAL
+    description: str
+    resolution_status: ResolutionStatus  # UNRESOLVED | ESCALATING | RESOLVED
+    scene_id: str
+```
 
-## 2026-02-02 - VIS-005
-- **What was implemented**: Typography Mode Switcher for TopBar
-- **Files changed**:
-  - Created `frontend/src/shared/components/layout/TypographyToggle.tsx`:
-    - Toggles between default and literary typography modes
-    - Uses Type icon for default mode, BookOpen icon for literary mode
-    - Sets `data-typography="literary"` attribute on html element
-    - Persists preference to localStorage with key `typography-mode`
-    - Full accessibility: aria-label and aria-pressed attributes
-  - Updated `frontend/src/shared/components/layout/index.ts` - Added TypographyToggle export
-  - Updated `frontend/src/shared/components/layout/TopBar.tsx`:
-    - Imported TypographyToggle component
-    - Added toggle to right-side actions (before notifications)
-- **Learnings for future iterations:**
-  - Typography mode is separate from color mode (class="dark") - they are orthogonal
-  - localStorage key for typography mode is `typography-mode`
-  - The toggle uses `data-typography` attribute (not class) on html element
-  - Literary mode is "opt-in" - default is sans-serif UI typography
-  - Button icons from lucide-react: `Type` for default, `BookOpen` for literary
----
+### Foreshadowing (Entity)
+```python
+@dataclass
+class Foreshadowing:
+    id: str
+    setup_scene_id: str
+    payoff_scene_id: str | None
+    description: str
+    status: ForeshadowingStatus  # PLANTED | PAID_OFF | ABANDONED
+```
 
-## 2026-02-02 - VIS-006
-- **What was implemented**: Visual regression tests for all 4 theme combinations
-- **Files changed**:
-  - Created `frontend/tests/e2e/visual-regression.spec.ts`:
-    - Dashboard theme baselines: light+default, light+literary, dark+default, dark+literary
-    - Landing page theme baselines: 4 combinations
-    - Theme switching validation tests
-    - Helper functions: setTheme(), navigateToDashboard(), captureBaseline()
-  - Baseline screenshots saved to `frontend/test-results/visual-baselines/`
-- **Learnings for future iterations:**
-  - To set dark mode in Playwright tests, use `page.evaluate(() => document.documentElement.classList.add('dark'))`
-  - To set literary mode, use `page.evaluate(() => document.documentElement.setAttribute('data-typography', 'literary'))`
-  - Visual baselines are captured with `page.screenshot({ path: '...', fullPage: false })` for consistent viewport sizing
-  - Allow 300ms after theme changes for CSS transitions to settle before capturing screenshots
-  - Test fixtures from `./fixtures` automatically mock API endpoints and EventSource
 ---

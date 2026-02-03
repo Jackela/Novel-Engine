@@ -94,38 +94,10 @@ Assert-LastExitCode "Editable install"
 Write-Host "✓ Dependencies installed" -ForegroundColor Green
 Write-Host ""
 
-# Security scanning with bandit (local alternative to CodeQL)
-Write-Host "🔒 Running security scan (bandit)..." -ForegroundColor Yellow
-$banditInstalled = python -m bandit --version 2>&1 | Select-String "bandit"
-if ($banditInstalled) {
-    # Run bandit with medium-low severity threshold (-ll = medium and above)
-    # Only fail on high severity issues (-lll would be high only)
-    $banditResult = python -m bandit -r src/ -ll -q --format json 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        $banditJson = $banditResult | ConvertFrom-Json -ErrorAction SilentlyContinue
-        if ($banditJson -and $banditJson.results) {
-            $highSeverity = ($banditJson.results | Where-Object { $_.issue_severity -eq "HIGH" }).Count
-            $mediumSeverity = ($banditJson.results | Where-Object { $_.issue_severity -eq "MEDIUM" }).Count
-            Write-Host "⚠ Security issues found: $highSeverity high, $mediumSeverity medium" -ForegroundColor Yellow
-
-            # Show high severity issues
-            $banditJson.results | Where-Object { $_.issue_severity -eq "HIGH" } | ForEach-Object {
-                Write-Host "  [$($_.test_id)] $($_.filename):$($_.line_number) - $($_.issue_text)" -ForegroundColor Red
-            }
-
-            # Fail only on high severity issues that are NOT marked with nosec
-            if ($highSeverity -gt 0) {
-                Write-Host "⚠ High severity issues found - review before pushing" -ForegroundColor Yellow
-                Write-Host "  Use '# nosec BXXX' comment to suppress false positives" -ForegroundColor Gray
-            }
-        }
-    } else {
-        Write-Host "✅ No high/medium security issues found" -ForegroundColor Green
-    }
-} else {
-    Write-Host "⚠ bandit not installed. Run: pip install bandit" -ForegroundColor Yellow
-    Write-Host "  Skipping security scan..." -ForegroundColor Gray
-}
+# Security scanning with CodeQL (falls back to bandit if CodeQL unavailable)
+Write-Host "🔒 Running security scan (CodeQL)..." -ForegroundColor Yellow
+& "$PSScriptRoot\codeql-local.ps1" -Language all
+Assert-LastExitCode "CodeQL local scan"
 Write-Host ""
 
 # Run backend CI gates (parity with GitHub Actions)

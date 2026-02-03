@@ -103,4 +103,6 @@ class WorldGeneratorPort(Protocol):
         Returns:
             WorldGenerationResult containing all generated entities
         """
-        ...
+        raise NotImplementedError(
+            "WorldGeneratorPort implementations must define `generate`."
+        )

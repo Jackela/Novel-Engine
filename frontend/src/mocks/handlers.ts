@@ -14,6 +14,49 @@ const API_PREFIX = '/api';
 
 const nowIso = () => new Date().toISOString();
 
+const CHARACTER_STORAGE_KEY = 'msw.characters.v1';
+
+type PersistedCharacters = {
+  summaries: CharacterSummary[];
+  details: CharacterDetail[];
+};
+
+const canUseStorage = () =>
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+const loadPersistedCharacters = (): PersistedCharacters | null => {
+  if (!canUseStorage()) {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(CHARACTER_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as Partial<PersistedCharacters>;
+    const summaries = Array.isArray(parsed?.summaries) ? parsed.summaries : [];
+    const details = Array.isArray(parsed?.details) ? parsed.details : [];
+    if (summaries.length === 0 && details.length === 0) {
+      return null;
+    }
+    return { summaries, details };
+  } catch {
+    return null;
+  }
+};
+
+const mergeCharacterSummaries = (
+  target: CharacterSummary[],
+  incoming: CharacterSummary[]
+) => {
+  const existing = new Set(target.map((item) => item.id));
+  for (const entry of incoming) {
+    if (!existing.has(entry.id)) {
+      target.push(entry);
+    }
+  }
+};
+
 const buildNarrativeSse = (chunks: string[], metadata?: Record<string, unknown>) => {
   let body = '';
   for (const chunk of chunks) {
@@ -32,7 +75,7 @@ const buildNarrativeSse = (chunks: string[], metadata?: Record<string, unknown>)
   return body;
 };
 
-const characterSummaries: CharacterSummary[] = [
+const defaultCharacterSummaries: CharacterSummary[] = [
   {
     id: 'aria-shadowbane',
     agent_id: 'aria-shadowbane',
@@ -63,7 +106,7 @@ const characterSummaries: CharacterSummary[] = [
   },
 ];
 
-const characterDetails: CharacterDetail[] = [
+const defaultCharacterDetails: CharacterDetail[] = [
   {
     agent_id: 'aria-shadowbane',
     character_id: 'aria-shadowbane',
@@ -193,6 +236,31 @@ const characterDetails: CharacterDetail[] = [
   },
 ];
 
+const persistedCharacters = loadPersistedCharacters();
+let characterSummaries: CharacterSummary[] = persistedCharacters?.summaries ?? [
+  ...defaultCharacterSummaries,
+];
+let characterDetails: CharacterDetail[] = persistedCharacters?.details ?? [
+  ...defaultCharacterDetails,
+];
+
+const persistCharacters = () => {
+  if (!canUseStorage()) {
+    return;
+  }
+  try {
+    window.localStorage.setItem(
+      CHARACTER_STORAGE_KEY,
+      JSON.stringify({
+        summaries: characterSummaries,
+        details: characterDetails,
+      })
+    );
+  } catch {
+    // ignore persistence failures in test environments
+  }
+};
+
 // Mock relationships for the graph visualization
 const mockRelationships: RelationshipResponse[] = [
   {
@@ -310,7 +378,7 @@ const additionalCharacterSummaries: CharacterSummary[] = [
 ];
 
 // Merge additional characters into the main array
-characterSummaries.push(...additionalCharacterSummaries);
+mergeCharacterSummaries(characterSummaries, additionalCharacterSummaries);
 
 // Mock locations with 3-level hierarchy for LocationTree testing
 const mockLocations: WorldLocation[] = [
@@ -883,6 +951,7 @@ export const handlers = [
       appearance: null,
       faction_id: null,
     });
+    persistCharacters();
     return HttpResponse.json(detail, { status: 201 });
   }),
 
@@ -929,6 +998,7 @@ export const handlers = [
         };
       }
     }
+    persistCharacters();
     return HttpResponse.json(updated);
   }),
 
@@ -943,6 +1013,7 @@ export const handlers = [
     if (summaryIndex !== -1) {
       characterSummaries.splice(summaryIndex, 1);
     }
+    persistCharacters();
     return HttpResponse.json({ success: true });
   }),
 

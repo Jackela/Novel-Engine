@@ -23,6 +23,39 @@ const TIMEOUTS = {
 
 // Mock API setup helper for E2E tests
 async function setupMockAPIs(page: Page) {
+  await page.addInitScript(() => {
+    try {
+      const guestToken = {
+        accessToken: 'guest',
+        refreshToken: '',
+        tokenType: 'Guest',
+        expiresAt: Date.now() + 60 * 60 * 1000,
+        refreshExpiresAt: 0,
+        user: {
+          id: 'guest',
+          username: 'guest',
+          email: '',
+          roles: ['guest'],
+        },
+      };
+      const payload = {
+        state: {
+          token: guestToken,
+          isGuest: true,
+          workspaceId: 'ws-e2e-test',
+        },
+        version: 0,
+      };
+      localStorage.setItem('novel-engine-auth', JSON.stringify(payload));
+      localStorage.setItem('novelengine_guest_session', '1');
+      sessionStorage.setItem('novelengine_guest_session', '1');
+      localStorage.setItem('e2e_bypass_auth', '1');
+      localStorage.setItem('e2e_preserve_auth', '1');
+    } catch {
+      // ignore storage errors
+    }
+  });
+
   // Mock guest session
   await page.route(/\/api\/guest\/sessions/, async (route) => {
     await route.fulfill({
@@ -470,7 +503,7 @@ test.describe('Character Lifecycle E2E Tests - CHAR-040', () => {
       await page.waitForTimeout(500);
 
       // Verify goals section is visible
-      const goalsSection = page.locator('[role="tabpanel"], .goals-list, [data-testid="goals-panel"]');
+      const goalsSection = page.getByRole('tabpanel', { name: /goals/i });
       await expect(goalsSection).toBeVisible({ timeout: TIMEOUTS.element });
 
       console.log('✅ Goals tab accessed successfully');
@@ -749,7 +782,7 @@ test.describe('Character Lifecycle E2E Tests - CHAR-040', () => {
       await page.waitForLoadState('networkidle');
 
       // Check world page loaded
-      const worldContent = page.locator('main, [data-testid="world-page"], .world-container');
+      const worldContent = page.locator('[data-testid="world-page"]');
       await expect(worldContent).toBeVisible({ timeout: TIMEOUTS.element });
 
       console.log('✅ Step 3: World view accessed');

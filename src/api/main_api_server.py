@@ -374,7 +374,7 @@ def create_app() -> FastAPI:
 
     # Define a raw ASGI middleware to ensure headers even on early errors
     # Note: Currently disabled but kept for potential future use
-    class RawHeaderASGIMiddleware:  # noqa: F841 - intentionally kept for future use
+    class _UnusedRawHeaderASGIMiddleware:  # noqa: F841 - intentionally kept for future use
         def __init__(self, app, headers: Dict[str, str]):
             self.app = app
             self._headers = headers

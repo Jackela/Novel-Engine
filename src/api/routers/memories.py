@@ -201,7 +201,7 @@ async def create_character_memory(
         extra={
             "character_id": str(char_uuid) if char_uuid else "invalid",
             "memory_id": memory_id,
-            "importance": payload.importance,
+            "importance": int(payload.importance),
         },
     )
 
