@@ -493,3 +493,123 @@ class TestSceneTimestamps:
         timestamp_after_complete = scene.updated_at
         scene.move_to_position(3)
         assert scene.updated_at >= timestamp_after_complete
+
+
+class TestScenePacingLevels:
+    """Test suite for Scene pacing level operations (Director Mode)."""
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_default_pacing_levels(self):
+        """Test that default tension and energy levels are 5."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+
+        assert scene.tension_level == 5
+        assert scene.energy_level == 5
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_create_scene_with_custom_pacing_levels(self):
+        """Test creating a scene with custom pacing levels."""
+        scene = Scene(
+            title="Climax Scene",
+            chapter_id=uuid4(),
+            tension_level=9,
+            energy_level=8,
+        )
+
+        assert scene.tension_level == 9
+        assert scene.energy_level == 8
+
+    @pytest.mark.unit
+    def test_create_scene_with_invalid_tension_level_raises_error(self):
+        """Test that invalid tension level raises ValueError."""
+        with pytest.raises(ValueError, match="tension_level must be between 1 and 10"):
+            Scene(title="Scene", chapter_id=uuid4(), tension_level=0)
+
+        with pytest.raises(ValueError, match="tension_level must be between 1 and 10"):
+            Scene(title="Scene", chapter_id=uuid4(), tension_level=11)
+
+    @pytest.mark.unit
+    def test_create_scene_with_invalid_energy_level_raises_error(self):
+        """Test that invalid energy level raises ValueError."""
+        with pytest.raises(ValueError, match="energy_level must be between 1 and 10"):
+            Scene(title="Scene", chapter_id=uuid4(), energy_level=0)
+
+        with pytest.raises(ValueError, match="energy_level must be between 1 and 10"):
+            Scene(title="Scene", chapter_id=uuid4(), energy_level=11)
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_update_tension_level(self):
+        """Test updating scene tension level."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        original_timestamp = scene.updated_at
+
+        scene.update_tension_level(8)
+
+        assert scene.tension_level == 8
+        assert scene.updated_at >= original_timestamp
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_update_energy_level(self):
+        """Test updating scene energy level."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        original_timestamp = scene.updated_at
+
+        scene.update_energy_level(3)
+
+        assert scene.energy_level == 3
+        assert scene.updated_at >= original_timestamp
+
+    @pytest.mark.unit
+    def test_update_tension_level_invalid_raises_error(self):
+        """Test that updating to invalid tension level raises ValueError."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+
+        with pytest.raises(ValueError, match="tension_level must be between 1 and 10"):
+            scene.update_tension_level(0)
+
+        with pytest.raises(ValueError, match="tension_level must be between 1 and 10"):
+            scene.update_tension_level(11)
+
+    @pytest.mark.unit
+    def test_update_energy_level_invalid_raises_error(self):
+        """Test that updating to invalid energy level raises ValueError."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+
+        with pytest.raises(ValueError, match="energy_level must be between 1 and 10"):
+            scene.update_energy_level(0)
+
+        with pytest.raises(ValueError, match="energy_level must be between 1 and 10"):
+            scene.update_energy_level(11)
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_pacing_levels_boundary_values(self):
+        """Test that boundary values (1 and 10) are valid."""
+        scene_min = Scene(
+            title="Low Scene", chapter_id=uuid4(), tension_level=1, energy_level=1
+        )
+        scene_max = Scene(
+            title="High Scene", chapter_id=uuid4(), tension_level=10, energy_level=10
+        )
+
+        assert scene_min.tension_level == 1
+        assert scene_min.energy_level == 1
+        assert scene_max.tension_level == 10
+        assert scene_max.energy_level == 10
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_repr_includes_pacing_levels(self):
+        """Test that repr includes tension and energy levels."""
+        scene = Scene(
+            title="Test", chapter_id=uuid4(), tension_level=7, energy_level=4
+        )
+
+        repr_str = repr(scene)
+
+        assert "tension=7" in repr_str
+        assert "energy=4" in repr_str
