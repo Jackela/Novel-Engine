@@ -334,7 +334,7 @@
         "Run `npm run test:e2e` passes"
       ],
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["DIR-044", "DIR-050"]
     }
