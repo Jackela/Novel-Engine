@@ -165,3 +165,37 @@ Reset: $(date +%Y-%m-%d)
 - Focus: Eliminate circular dependency between character context and orchestration context
 
 ---
+
+## 2026-02-03 - CIT-004: Backend: Remove Character-Orchestration Coupling
+
+### What was implemented
+- Audited orchestration context for character context imports - **NO direct imports found**
+- Verified that orchestration uses `_call_external_service` method for cross-context communication (proper architectural pattern)
+- Added import-linter Rule 9: "Orchestration Context Isolation" to prevent future coupling
+- The new rule forbids orchestration from directly importing: character, narratives, campaigns, interactions, story, knowledge, subjective, world contexts
+- Ran all orchestration-related unit tests - all pass
+
+### Files changed
+- `.importlinter` - Added Rule 9 for Orchestration Context Isolation
+
+### Audit findings
+- **No existing coupling**: The orchestration context properly uses service boundaries instead of direct imports
+- **Proper pattern**: `interaction_orchestration_phase.py` uses `_call_external_service(context, "agent_service_endpoint", ...)` to interact with other contexts
+- **Preventive measure**: Added import-linter rule to ensure this isolation continues
+
+### Learnings for future iterations:
+- **Pattern**: Orchestration context coordinates other contexts through domain events and service calls, not direct imports
+- **Pattern**: Use `_call_external_service` with endpoint names for cross-context communication in orchestration phases
+- **Gotcha**: The PRD description was based on potential issues rather than actual existing problems - the architecture was already correct
+- **Useful context**: The orchestration context is designed as a coordinator that operates through well-defined interfaces
+
+### Quality checks passed
+- ✅ `pytest tests/unit/test_api_orchestration_service.py tests/unit/test_turn_orchestrator.py` - All 5 tests pass
+- ✅ No existing import violations detected
+
+### Next story for Ralph
+- **CIT-004.5**: Backend: Extract Router Business Logic
+- Priority: 5 (highest pending after CIT-004)
+- Focus: Move business logic from characters router to services layer
+
+---

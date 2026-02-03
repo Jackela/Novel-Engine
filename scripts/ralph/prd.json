@@ -78,7 +78,7 @@
         "Run scripts/validate_imports.sh - zero violations"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["CIT-003"]
     },
