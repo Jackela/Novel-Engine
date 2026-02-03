@@ -15,11 +15,13 @@ export { ChapterBoard } from './components/ChapterBoard';
 export { ConflictPanel } from './components/ConflictPanel';
 export { PlotlineManager } from './components/PlotlineManager';
 export { ForeshadowingPanel } from './components/ForeshadowingPanel';
+export { ChapterHealth } from './components/ChapterHealth';
 
 // API Hooks
 export { useBeats, useCreateBeat, useUpdateBeat, useDeleteBeat, useReorderBeats } from './api/beatApi';
 export { useSuggestBeats, beatSuggestionKeys } from './api/beatSuggestionApi';
 export { useChapterPacing, pacingKeys } from './api/pacingApi';
+export { useChapterHealth, chapterAnalysisKeys } from './api/chapterAnalysisApi';
 export { useScenes, useScene, useUpdateScenePhase, sceneKeys } from './api/sceneApi';
 export {
   useConflicts,

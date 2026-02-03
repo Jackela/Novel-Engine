@@ -1213,6 +1213,87 @@ class ScenePlotlinesResponse(BaseModel):
 # ============ Foreshadowing Schemas (DIR-052) ============
 
 
+# ============ Chapter Analysis Schemas (DIR-055/DIR-056) ============
+
+
+class HealthScoreEnum(str, Enum):
+    """Overall health classification for a chapter."""
+
+    CRITICAL = "critical"  # Major structural issues
+    POOR = "poor"  # Multiple significant issues
+    FAIR = "fair"  # Some issues but functional
+    GOOD = "good"  # Minor issues or well-balanced
+    EXCELLENT = "excellent"  # No issues detected
+
+
+class WarningCategoryEnum(str, Enum):
+    """Categories of structural warnings."""
+
+    PACING = "pacing"  # Tension/energy issues
+    STRUCTURE = "structure"  # Phase distribution issues
+    CONFLICT = "conflict"  # Missing or unresolved conflicts
+    BALANCE = "balance"  # Word count and beat count issues
+    ARC = "arc"  # Tension arc shape issues
+
+
+class PhaseDistributionResponse(BaseModel):
+    """Distribution of scenes across story phases."""
+
+    setup: int = Field(..., description="Number of scenes in SETUP phase")
+    inciting_incident: int = Field(..., description="Number of scenes in INCITING_INCIDENT phase")
+    rising_action: int = Field(..., description="Number of scenes in RISING_ACTION phase")
+    climax: int = Field(..., description="Number of scenes in CLIMAX phase")
+    resolution: int = Field(..., description="Number of scenes in RESOLUTION phase")
+
+
+class WordCountEstimateResponse(BaseModel):
+    """Estimated word count metrics for a chapter."""
+
+    total_words: int = Field(..., description="Estimated total word count")
+    min_words: int = Field(..., description="Minimum estimated word count")
+    max_words: int = Field(..., description="Maximum estimated word count")
+    per_scene_average: float = Field(..., description="Average words per scene")
+
+
+class HealthWarningResponse(BaseModel):
+    """A detected structural issue in the chapter."""
+
+    category: str = Field(..., description="The type of issue")
+    title: str = Field(..., description="Short, human-readable title")
+    description: str = Field(..., description="Detailed explanation of the issue")
+    severity: str = Field(..., description="Issue severity (low, medium, high, critical)")
+    affected_scenes: List[str] = Field(default_factory=list, description="Scene UUIDs involved")
+    recommendation: str = Field(..., description="Actionable suggestion for fixing the issue")
+
+
+class TensionArcShapeResponse(BaseModel):
+    """Analysis of the tension arc shape."""
+
+    shape_type: str = Field(..., description="Descriptive name of the arc shape")
+    starts_at: int = Field(..., description="Opening tension level")
+    peaks_at: int = Field(..., description="Maximum tension level")
+    ends_at: int = Field(..., description="Closing tension level")
+    has_clear_climax: bool = Field(..., description="Whether there's a distinct tension peak")
+    is_monotonic: bool = Field(..., description="Whether tension stays flat throughout")
+
+
+class ChapterHealthReportResponse(BaseModel):
+    """Complete structural health analysis for a chapter."""
+
+    chapter_id: str = Field(..., description="Chapter UUID")
+    health_score: str = Field(..., description="Overall health classification")
+    phase_distribution: PhaseDistributionResponse = Field(..., description="Scene counts per story phase")
+    word_count: WordCountEstimateResponse = Field(..., description="Estimated word count metrics")
+    total_scenes: int = Field(..., description="Number of scenes in the chapter")
+    total_beats: int = Field(..., description="Total number of beats across all scenes")
+    tension_arc: TensionArcShapeResponse = Field(..., description="Analysis of tension arc shape")
+    warnings: List[HealthWarningResponse] = Field(default_factory=list, description="Detected structural issues")
+    recommendations: List[str] = Field(default_factory=list, description="Improvement suggestions")
+
+
+# ============ Foreshadowing Schemas (DIR-052) ============
+
+
 class ForeshadowingCreateRequest(BaseModel):
     """Request model for creating a new foreshadowing.
 
@@ -1781,6 +1862,14 @@ __all__ = [
     "LinkPayoffRequest",
     "ForeshadowingResponse",
     "ForeshadowingListResponse",
+    # Chapter Analysis Schemas (DIR-055/DIR-056)
+    "HealthScoreEnum",
+    "WarningCategoryEnum",
+    "PhaseDistributionResponse",
+    "WordCountEstimateResponse",
+    "HealthWarningResponse",
+    "TensionArcShapeResponse",
+    "ChapterHealthReportResponse",
     # Relationship Schemas
     "RelationshipCreateRequest",
     "RelationshipUpdateRequest",

@@ -1073,6 +1073,104 @@ export type ForeshadowingCreateRequest = z.infer<typeof ForeshadowingCreateReque
 export type ForeshadowingUpdateRequest = z.infer<typeof ForeshadowingUpdateRequestSchema>;
 export type LinkPayoffRequest = z.infer<typeof LinkPayoffRequestSchema>;
 
+// ============ Chapter Analysis Schemas (DIR-055/DIR-056) ============
+
+/**
+ * Health score enum for chapter analysis.
+ * CRITICAL: Major structural issues
+ * POOR: Multiple significant issues
+ * FAIR: Some issues but functional
+ * GOOD: Minor issues or well-balanced
+ * EXCELLENT: No issues detected
+ */
+export const HealthScoreEnum = z.enum([
+  'critical',
+  'poor',
+  'fair',
+  'good',
+  'excellent',
+]);
+
+/**
+ * Warning category enum for structural issues.
+ */
+export const WarningCategoryEnum = z.enum([
+  'pacing',     // Tension/energy issues
+  'structure',  // Phase distribution issues
+  'conflict',   // Missing or unresolved conflicts
+  'balance',    // Word count and beat count issues
+  'arc',        // Tension arc shape issues
+]);
+
+/**
+ * Phase distribution response schema.
+ */
+export const PhaseDistributionSchema = z.object({
+  setup: z.number().int().min(0),
+  inciting_incident: z.number().int().min(0),
+  rising_action: z.number().int().min(0),
+  climax: z.number().int().min(0),
+  resolution: z.number().int().min(0),
+});
+
+/**
+ * Word count estimate response schema.
+ */
+export const WordCountEstimateSchema = z.object({
+  total_words: z.number().int().min(0),
+  min_words: z.number().int().min(0),
+  max_words: z.number().int().min(0),
+  per_scene_average: z.number(),
+});
+
+/**
+ * Health warning response schema.
+ */
+export const HealthWarningSchema = z.object({
+  category: z.string(),
+  title: z.string(),
+  description: z.string(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  affected_scenes: z.array(z.string()).default([]),
+  recommendation: z.string(),
+});
+
+/**
+ * Tension arc shape response schema.
+ */
+export const TensionArcShapeSchema = z.object({
+  shape_type: z.string(),
+  starts_at: z.number().int().min(0).max(10),
+  peaks_at: z.number().int().min(0).max(10),
+  ends_at: z.number().int().min(0).max(10),
+  has_clear_climax: z.boolean(),
+  is_monotonic: z.boolean(),
+});
+
+/**
+ * Chapter health report response schema.
+ */
+export const ChapterHealthReportSchema = z.object({
+  chapter_id: z.string(),
+  health_score: HealthScoreEnum,
+  phase_distribution: PhaseDistributionSchema,
+  word_count: WordCountEstimateSchema,
+  total_scenes: z.number().int().min(0),
+  total_beats: z.number().int().min(0),
+  tension_arc: TensionArcShapeSchema,
+  warnings: z.array(HealthWarningSchema).default([]),
+  recommendations: z.array(z.string()).default([]),
+});
+
+// Type exports
+export type HealthScore = z.infer<typeof HealthScoreEnum>;
+export type WarningCategory = z.infer<typeof WarningCategoryEnum>;
+export type PhaseDistribution = z.infer<typeof PhaseDistributionSchema>;
+export type WordCountEstimate = z.infer<typeof WordCountEstimateSchema>;
+export type HealthWarning = z.infer<typeof HealthWarningSchema>;
+export type TensionArcShape = z.infer<typeof TensionArcShapeSchema>;
+export type ChapterHealthReport = z.infer<typeof ChapterHealthReportSchema>;
+
 /**
  * Standard API response envelope matching backend's StandardResponse
  *

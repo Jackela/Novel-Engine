@@ -29,15 +29,18 @@ from src.api.schemas import (
     ChapterPacingResponse,
     ChapterResponse,
     ChapterUpdateRequest,
+    ChapterHealthReportResponse,
     ConflictCreateRequest,
     ConflictListResponse,
     ConflictResponse,
     ConflictUpdateRequest,
+    HealthWarningResponse,
     LinkPayoffRequest,
     LinkSceneToPlotlineRequest,
     MoveChapterRequest,
     MoveSceneRequest,
     PacingIssueResponse,
+    PhaseDistributionResponse,
     PlotlineCreateRequest,
     PlotlineListResponse,
     PlotlineResponse,
@@ -54,7 +57,9 @@ from src.api.schemas import (
     StoryListResponse,
     StoryResponse,
     StoryUpdateRequest,
+    TensionArcShapeResponse,
     UnlinkSceneFromPlotlineRequest,
+    WordCountEstimateResponse,
     ForeshadowingCreateRequest,
     ForeshadowingUpdateRequest,
     ForeshadowingResponse,
@@ -85,6 +90,9 @@ from src.contexts.narrative.domain.entities.foreshadowing import (
     ForeshadowingStatus,
 )
 from src.contexts.narrative.application.services.pacing_service import PacingService
+from src.contexts.narrative.application.services.chapter_analysis_service import (
+    ChapterAnalysisService,
+)
 from src.contexts.narrative.infrastructure.repositories.in_memory_narrative_repository import (
     InMemoryNarrativeRepository,
 )
@@ -2373,3 +2381,91 @@ async def delete_foreshadowing(
         raise HTTPException(status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}")
 
     logger.info("Deleted foreshadowing %s", foreshadowing_uuid)
+
+
+# ============ Chapter Analysis Endpoint (DIR-056) ============
+
+
+@router.get(
+    "/stories/{story_id}/chapters/{chapter_id}/health",
+    response_model=ChapterHealthReportResponse,
+)
+async def get_chapter_health(
+    story_id: str,
+    chapter_id: str,
+    repo: INarrativeRepository = Depends(get_repository),
+) -> ChapterHealthReportResponse:
+    """Get structural health analysis for a chapter.
+
+    Returns comprehensive chapter-level analysis including phase distribution,
+    word count estimates, tension arc shape, and detected structural issues.
+
+    Args:
+        story_id: UUID of the parent story.
+        chapter_id: UUID of the chapter to analyze.
+        repo: Narrative repository (injected).
+
+    Returns:
+        ChapterHealthReportResponse with complete analysis.
+
+    Raises:
+        HTTPException: If story or chapter not found.
+    """
+    story_uuid = _parse_uuid(story_id, "story_id")
+    chapter_uuid = _parse_uuid(chapter_id, "chapter_id")
+
+    story = repo.get_by_id(story_uuid)
+    if story is None:
+        raise HTTPException(status_code=404, detail=f"Story not found: {story_id}")
+
+    chapter = story.get_chapter(chapter_uuid)
+    if chapter is None:
+        raise HTTPException(status_code=404, detail=f"Chapter not found: {chapter_id}")
+
+    # Get scenes for this chapter
+    scenes = _get_scenes_by_chapter(chapter_uuid)
+
+    # Use ChapterAnalysisService for analysis
+    analysis_service = ChapterAnalysisService()
+    report = analysis_service.analyze_chapter_structure(chapter_uuid, scenes)
+
+    # Convert to response models
+    return ChapterHealthReportResponse(
+        chapter_id=chapter_id,
+        health_score=report.health_score.value,
+        phase_distribution=PhaseDistributionResponse(
+            setup=report.phase_distribution.setup,
+            inciting_incident=report.phase_distribution.inciting_incident,
+            rising_action=report.phase_distribution.rising_action,
+            climax=report.phase_distribution.climax,
+            resolution=report.phase_distribution.resolution,
+        ),
+        word_count=WordCountEstimateResponse(
+            total_words=report.word_count.total_words,
+            min_words=report.word_count.min_words,
+            max_words=report.word_count.max_words,
+            per_scene_average=report.word_count.per_scene_average,
+        ),
+        total_scenes=report.total_scenes,
+        total_beats=report.total_beats,
+        tension_arc=TensionArcShapeResponse(
+            shape_type=report.tension_arc.shape_type,
+            starts_at=report.tension_arc.starts_at,
+            peaks_at=report.tension_arc.peaks_at,
+            ends_at=report.tension_arc.ends_at,
+            has_clear_climax=report.tension_arc.has_clear_climax,
+            is_monotonic=report.tension_arc.is_monotonic,
+        ),
+        warnings=[
+            HealthWarningResponse(
+                category=w.category.value,
+                title=w.title,
+                description=w.description,
+                severity=w.severity,
+                affected_scenes=[str(sid) for sid in w.affected_scenes],
+                recommendation=w.recommendation,
+            )
+            for w in report.warnings
+        ],
+        recommendations=report.recommendations,
+    )
