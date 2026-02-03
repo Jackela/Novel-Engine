@@ -426,3 +426,27 @@ Started: Tue Feb  3 16:06:24     2026
   - Use HSL format with CSS vars: `hsl(var(--primary))` or direct HSL values: `hsl(262 83% 58%)`
   - Phase colors: blue (setup), amber (inciting), purple (rising), red (climax), green (resolution)
   - All typecheck and lint pass (PlotlineManager has unrelated hex colors not part of this story)
+---
+
+## 2026-02-03 - DIR-057
+- **What was implemented:**
+  - AI-powered scene critique agent for analyzing writing quality
+  - Created scene_critique.yaml prompt template for structured critique analysis
+  - Added critique_scene() method to LLMWorldGenerator with scene_goals parameter
+  - Analyzes four quality dimensions: pacing, voice, showing vs. telling, dialogue
+  - Returns CritiqueResult with overall score (1-10), category scores, highlights, and summary
+  - Critique includes specific issues and actionable suggestions per category
+- **Files changed:**
+  - `src/contexts/world/infrastructure/prompts/scene_critique.yaml` - New file (prompt template)
+  - `src/contexts/world/infrastructure/generators/llm_world_generator.py` - Added critique_scene(), helper methods, CritiqueResult and CritiqueCategoryScore dataclasses
+  - `src/contexts/world/infrastructure/generators/__init__.py` - Added CritiqueCategoryScore, CritiqueResult exports
+  - `tests/unit/contexts/world/infrastructure/test_llm_world_generator.py` - Added 19 critique tests
+- **Learnings for future iterations:**
+  - LLM prompt pattern follows existing structure: _load_X_prompt(), _build_X_user_prompt(), _parse_X_response()
+  - Critique evaluates: pacing (flow speed), voice (consistency/distinctiveness), showing (sensory detail vs telling), dialogue (naturalism/subtext)
+  - Scoring guide: 9-10 excellent/professional, 7-8 strong with improvements needed, 5-6 competent but needs revision, 3-4 weak/major problems, 1-2 poor/rewrite needed
+  - Scene text truncated at 12000 chars (~2000 words) for context limit management
+  - Valid categories filtered to {pacing, voice, showing, dialogue} to reject invalid LLM output
+  - All scores clamped to 1-10 range for consistency
+  - All 573 world context tests pass (61 llm_world_generator tests + 512 other tests)
+  - All 312 narrative context tests pass
