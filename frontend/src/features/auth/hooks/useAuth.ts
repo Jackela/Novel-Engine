@@ -2,6 +2,7 @@
  * Auth Hooks
  * Convenience hooks for authentication
  */
+import { useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 
 /**
@@ -9,6 +10,13 @@ import { useAuthStore } from '../stores/authStore';
  */
 export function useAuth() {
   const store = useAuthStore();
+  const { isInitialized, isLoading, initialize } = store;
+
+  useEffect(() => {
+    if (!isInitialized && !isLoading) {
+      initialize();
+    }
+  }, [initialize, isInitialized, isLoading]);
 
   return {
     // State

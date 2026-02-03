@@ -29,6 +29,47 @@ A node-based narrative orchestration interface built with React Flow. Weaver pro
 
 ---
 
+## 🌍 World Generation
+
+Novel Engine 提供 AI 驱动的世界生成系统，能够一键创建完整的世界设定、势力、地点和历史事件。
+
+### 使用方式
+
+**通过 Weaver UI:**
+在 Weaver 画布中点击 "Generate World" 按钮，系统将自动生成世界内容并以力导向图的形式可视化展示。
+
+**通过 API:**
+```bash
+curl -X POST http://localhost:8000/api/world/generation \
+  -H "Content-Type: application/json" \
+  -d '{
+    "genre": "fantasy",
+    "era": "medieval",
+    "tone": "heroic",
+    "themes": ["adventure", "magic"],
+    "magic_level": 7,
+    "technology_level": 2,
+    "num_factions": 3,
+    "num_locations": 5,
+    "num_events": 3
+  }'
+```
+
+### 生成内容
+
+| 内容类型 | 说明 |
+|---------|------|
+| **WorldSetting** | 世界基础设定（流派、时代、基调、魔法/科技等级） |
+| **Factions** | 势力组织（王国、公会、教团等，含阵营、影响力、关系网络） |
+| **Locations** | 地点（城市、堡垒、遗迹等，含人口、危险等级、控制势力） |
+| **HistoryEvents** | 历史事件（战争、建国、灾难等，含参与者、因果链） |
+
+### 架构文档
+
+详细架构说明请参阅 [`docs/architecture/world_engine.mermaid`](docs/architecture/world_engine.mermaid)。
+
+---
+
 ## 🧩 技术栈
 
 - **UI**: Shadcn UI + Tailwind CSS

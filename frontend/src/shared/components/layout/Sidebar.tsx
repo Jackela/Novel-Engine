@@ -72,7 +72,7 @@ function SidebarHeader({ collapsed, onClose, onToggleCollapse }: SidebarHeaderPr
     <div className="flex h-16 items-center justify-between border-b border-border px-4">
       {!collapsed && (
         <Link
-          to="/dashboard"
+          to="/"
           className="text-xl font-bold text-foreground transition-colors hover:text-primary"
         >
           Novel Engine
@@ -92,7 +92,7 @@ function SidebarHeader({ collapsed, onClose, onToggleCollapse }: SidebarHeaderPr
         type="button"
         className="hidden rounded-md p-2 hover:bg-accent lg:flex"
         onClick={onToggleCollapse}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-label={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
       >
         {collapsed ? (
           <ChevronRight className="h-5 w-5" />

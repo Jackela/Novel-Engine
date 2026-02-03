@@ -1,11 +1,19 @@
 /**
  * CharacterForm - Form for creating/editing characters
  */
+import { useEffect } from 'react';
 import { useForm, type Resolver, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Form,
   FormControl,
@@ -79,7 +87,24 @@ export function CharacterForm({
     mode: 'onBlur',
   });
 
+  const agentId = form.watch('agent_id');
+  const name = form.watch('name');
   const inventoryItems = form.watch('inventory') ?? [];
+
+  useEffect(() => {
+    if (agentId?.trim() || !name?.trim()) {
+      return;
+    }
+    const normalized = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+    if (!normalized) {
+      return;
+    }
+    form.setValue('agent_id', normalized, { shouldValidate: true, shouldDirty: true });
+  }, [agentId, form, name]);
 
   const handleAddInventory = () => {
     form.setValue('inventory', [...inventoryItems, ''], { shouldDirty: true });
@@ -89,7 +114,18 @@ export function CharacterForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((values) => {
-          const parsed = WorkspaceCharacterCreateSchema.parse(values);
+          const normalizedAgentId =
+            values.agent_id.trim() ||
+            values.name
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)+/g, '') ||
+            `character-${Date.now()}`;
+          const parsed = WorkspaceCharacterCreateSchema.parse({
+            ...values,
+            agent_id: normalizedAgentId,
+          });
           onSubmit(parsed);
         })}
         className="space-y-6"
@@ -142,7 +178,30 @@ function CharacterDetailsFields({ form }: CharacterDetailsFieldsProps) {
           <FormItem>
             <FormLabel>Name</FormLabel>
             <FormControl>
-              <Input placeholder="Character name" {...field} />
+              <Input
+                placeholder="Character name"
+                {...field}
+                onChange={(event) => {
+                  field.onChange(event);
+                  const nextName = event.target.value;
+                  const currentAgentId = form.getValues('agent_id');
+                  if (currentAgentId?.trim()) {
+                    return;
+                  }
+                  const normalized = nextName
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)+/g, '');
+                  if (!normalized) {
+                    return;
+                  }
+                  form.setValue('agent_id', normalized, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -154,9 +213,9 @@ function CharacterDetailsFields({ form }: CharacterDetailsFieldsProps) {
         name="background_summary"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Background Summary</FormLabel>
+            <FormLabel>Character Description</FormLabel>
             <FormControl>
-              <Textarea rows={4} placeholder="Short background summary" {...field} />
+              <Textarea rows={4} placeholder="Character description" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -186,6 +245,53 @@ function CharacterDetailsFields({ form }: CharacterDetailsFieldsProps) {
             <FormControl>
               <Input placeholder="Current location" {...field} />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name={'metadata.role' as const}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Role</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Role"
+                value={typeof field.value === 'string' ? field.value : ''}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                ref={field.ref}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name={'metadata.faction_id' as const}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Faction</FormLabel>
+            <Select
+              value={typeof field.value === 'string' ? field.value : ''}
+              onValueChange={field.onChange}
+            >
+              <FormControl>
+                <SelectTrigger data-testid="faction-select">
+                  <SelectValue placeholder="Select faction" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="alliance-network">Alliance Network</SelectItem>
+                <SelectItem value="shadowbane-order">Shadowbane Order</SelectItem>
+                <SelectItem value="merchants-alliance">Merchants Alliance</SelectItem>
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}

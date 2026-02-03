@@ -6,7 +6,7 @@ Tests the Character API endpoints with full request/response validation.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 from datetime import datetime
 
 from src.api.character_api import (

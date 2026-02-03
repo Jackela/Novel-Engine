@@ -15,9 +15,18 @@ import {
 import type { OrchestrationStartRequest } from '@/shared/types/orchestration';
 import type { CharacterNodeData } from '../components/nodes/CharacterNode';
 import type { EventNodeData } from '../components/nodes/EventNode';
+import type { FactionNodeData } from '../components/nodes/FactionNode';
 import type { LocationNodeData } from '../components/nodes/LocationNode';
+import type { WorldNodeData } from '../components/nodes/WorldNode';
+import type { SceneNodeData } from '../types';
 
-export type WeaverNodeData = CharacterNodeData | EventNodeData | LocationNodeData;
+export type WeaverNodeData =
+  | CharacterNodeData
+  | EventNodeData
+  | FactionNodeData
+  | LocationNodeData
+  | WorldNodeData
+  | SceneNodeData;
 export type WeaverNode = Node<WeaverNodeData>;
 
 type WeaverState = {
@@ -39,7 +48,7 @@ const defaultNodes: WeaverNode[] = [
   {
     id: '1',
     type: 'character',
-    position: { x: 250, y: 50 },
+    position: { x: 160, y: 120 },
     data: {
       name: 'Alice',
       role: 'Protagonist',
@@ -50,7 +59,7 @@ const defaultNodes: WeaverNode[] = [
   {
     id: '2',
     type: 'character',
-    position: { x: 100, y: 250 },
+    position: { x: 480, y: 120 },
     data: {
       name: 'Bob',
       role: 'Mentor',
@@ -61,7 +70,7 @@ const defaultNodes: WeaverNode[] = [
   {
     id: '3',
     type: 'character',
-    position: { x: 400, y: 250 },
+    position: { x: 800, y: 120 },
     data: {
       name: 'Carol',
       role: 'Antagonist',
@@ -157,6 +166,15 @@ export const useWeaverOrchestrationRequest = () =>
   useWeaverStore((state) => state.getOrchestrationStartRequest());
 export const useWeaverNodeCount = () => useWeaverStore((state) => state.nodes.length);
 export const useWeaverEdgeCount = () => useWeaverStore((state) => state.edges.length);
+
+/**
+ * Returns the first selected character node, or null if none selected
+ */
+export const useSelectedCharacterNode = () =>
+  useWeaverStore(
+    (state) =>
+      state.nodes.find((node) => node.selected && node.type === 'character') ?? null
+  );
 
 if (
   (import.meta.env.DEV || import.meta.env.VITE_E2E_EXPOSE_WEAVER === 'true') &&

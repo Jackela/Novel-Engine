@@ -75,11 +75,24 @@ class FastTestPyramidMonitor:
             test_pattern = re.compile(r"^    def (test_\w+)", re.MULTILINE)
             class_pattern = re.compile(r"^class (Test\w+)", re.MULTILINE)
 
+            lines = content.split("\n")
+
+            # Check for module-level pytestmark first
+            module_markers = set()
+            for line in lines:
+                # Match: pytestmark = pytest.mark.unit (or [pytest.mark.unit, ...])
+                if "pytestmark" in line and "pytest.mark." in line:
+                    marker_match = re.search(r"pytest\.mark\.(unit|integration|e2e)", line)
+                    if marker_match:
+                        module_markers.add(marker_match.group(1))
+                # Stop looking after class definitions start
+                if line.startswith("class "):
+                    break
+
             # Track class-level and function-level markers separately
             class_markers = set()
             function_markers = set()
 
-            lines = content.split("\n")
             current_class = None
 
             for i, line in enumerate(lines):
@@ -115,8 +128,8 @@ class FastTestPyramidMonitor:
                     # Add to all tests
                     self.all_tests.add(test_id)
 
-                    # Combine class and function markers
-                    effective_markers = class_markers | function_markers
+                    # Combine module, class and function markers
+                    effective_markers = module_markers | class_markers | function_markers
 
                     # Add to marker sets
                     if effective_markers:

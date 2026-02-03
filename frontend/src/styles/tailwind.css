@@ -28,6 +28,17 @@
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
+
+    /* Literary Theme Tokens (Light Mode) */
+    --paper: 40 30% 96%;
+    --ink: 30 15% 20%;
+    --accent-literary: 35 80% 45%;
+
+    /* Weaver Graph Canvas Tokens */
+    --weaver-glow-rgb: 0 245 255;
+    --weaver-neon-rgb: 176 38 255;
+    --weaver-error-rgb: 255 92 77;
+    --weaver-loading-rgb: 0 229 255;
   }
 
   .dark {
@@ -54,6 +65,17 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+
+    /* Literary Theme Tokens (Dark Mode - Warm Dark Tones) */
+    --paper: 30 15% 12%;
+    --ink: 40 20% 85%;
+    --accent-literary: 35 70% 55%;
+
+    /* Weaver Graph Canvas Tokens (Dark mode - slightly brighter for contrast) */
+    --weaver-glow-rgb: 0 255 255;
+    --weaver-neon-rgb: 190 50 255;
+    --weaver-error-rgb: 255 100 85;
+    --weaver-loading-rgb: 0 240 255;
   }
 }
 
@@ -64,11 +86,37 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Literary Typography Mode - Editor Canvas Only */
+  [data-typography='literary'] .prose-editor {
+    font-family: Lora, Georgia, serif;
+    background-color: hsl(var(--paper));
+    color: hsl(var(--ink));
+  }
+
+  [data-typography='literary'] .prose-editor .ProseMirror {
+    font-size: 1.125rem;
+    line-height: 1.75;
+    max-width: 65ch;
+  }
+
+  [data-typography='literary'] .prose-editor .character-mention {
+    color: hsl(var(--accent-literary));
+    background-color: hsl(var(--accent-literary) / 0.1);
+  }
+
+  [data-typography='literary'] .prose-editor .character-mention:hover {
+    background-color: hsl(var(--accent-literary) / 0.2);
+  }
 }
 
 @layer components {
+  /* ===== Weaver Node Styles (Graph Canvas Domain) ===== */
+
   .weaver-node {
-    @apply relative overflow-hidden border border-weaver-border bg-weaver-surface text-foreground shadow-[0_12px_30px_rgba(0,0,0,0.35)] transition;
+    /* Base node styling with CSS variable-based shadows */
+    @apply relative overflow-hidden border border-weaver-border bg-weaver-surface text-foreground transition-all duration-normal;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   }
 
   .node-idle {
@@ -76,18 +124,71 @@
   }
 
   .node-active {
-    @apply border-weaver-glow shadow-[0_0_24px_rgba(0,245,255,0.45)];
+    @apply border-weaver-glow;
+    box-shadow: 0 0 24px rgb(var(--weaver-glow-rgb) / 0.45);
   }
 
   .node-loading {
     @apply animate-pulse border-weaver-glow/60 bg-weaver-loading/35;
+    box-shadow: 0 0 16px rgb(var(--weaver-loading-rgb) / 0.35);
   }
 
   .node-error {
-    @apply border-2 border-dashed border-weaver-error shadow-[0_0_16px_rgba(255,92,77,0.45)];
+    @apply border-2 border-dashed border-weaver-error;
+    box-shadow: 0 0 16px rgb(var(--weaver-error-rgb) / 0.45);
   }
 
   .weaver-node-alert {
     @apply absolute right-2 top-2 text-weaver-error drop-shadow;
+  }
+
+  /* Type-specific node accents */
+  .weaver-node[data-node-type='character'] {
+    @apply border-l-4 border-l-weaver-glow/70;
+  }
+
+  .weaver-node[data-node-type='location'] {
+    @apply border-l-4 border-l-emerald-400/70;
+  }
+
+  .weaver-node[data-node-type='event'] {
+    /* Event nodes have dynamic left border based on event type, handled in component */
+  }
+
+  .weaver-node[data-node-type='scene'] {
+    @apply border-l-4 border-l-weaver-neon/70;
+  }
+
+  .weaver-node[data-node-type='world'] {
+    @apply border-l-4 border-l-purple-400/70;
+  }
+
+  .weaver-node[data-node-type='faction'] {
+    @apply border-l-4 border-l-amber-400/70;
+  }
+
+  /* High contrast text for all nodes in dark mode */
+  .dark .weaver-node {
+    @apply text-white/95;
+  }
+
+  .dark .weaver-node .text-muted-foreground {
+    @apply text-white/70;
+  }
+
+  /* Character mention styles for Tiptap editor */
+  .character-mention {
+    @apply inline-flex items-center rounded-sm bg-primary/10 px-1 py-0.5 font-medium text-primary;
+    /* Subtle box shadow for depth */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .character-mention:hover {
+    @apply bg-primary/20;
+  }
+
+  /* Ensure prose styles don't override mention */
+  .prose .character-mention {
+    @apply text-primary no-underline;
   }
 }

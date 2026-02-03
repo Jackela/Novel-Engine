@@ -362,7 +362,7 @@ class Coordinates:
             precision=min(self.precision, other.precision),
         )
 
-    def __mul__(self, scalar: Union[int, float]) -> "Coordinates":
+    def __mul__(self, scalar: Union[int, float]) -> "Coordinates | type[NotImplemented]":
         """
         Multiply coordinates by a scalar value.
 
@@ -372,11 +372,12 @@ class Coordinates:
         Returns:
             New Coordinates with scaled values
 
-        Raises:
-            TypeError: If scalar is not numeric
+        Note:
+            Returns NotImplemented for non-numeric types to allow Python's
+            fallback mechanism to try the other operand's __rmul__.
         """
         if not isinstance(scalar, (int, float)):
-            raise TypeError("Can only multiply Coordinates by numeric values")
+            return NotImplemented
 
         return Coordinates(
             x=self.x * scalar,

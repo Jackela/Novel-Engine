@@ -1,25 +1,27 @@
 /**
  * WeaverToolbar - Toolbar for weaver actions
  */
-import { Users, Sparkles, MapPin, Zap, Save, Undo, Redo } from 'lucide-react';
-import { Button } from '@/shared/components/ui';
+import { Users, Sparkles, MapPin, Zap, Save, Undo, Redo, Film } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/shared/components/ui/tooltip';
+} from '@/components/ui/tooltip';
 
 interface WeaverToolbarProps {
   onAddCharacter?: (() => void) | undefined;
   onAddEvent?: (() => void) | undefined;
   onAddLocation?: (() => void) | undefined;
   onGenerateCharacter?: (() => void) | undefined;
+  onGenerateScene?: (() => void) | undefined;
   onSave?: (() => void) | undefined;
   onUndo?: (() => void) | undefined;
   onRedo?: (() => void) | undefined;
   canUndo?: boolean;
   canRedo?: boolean;
+  hasSelectedCharacter?: boolean;
 }
 
 export function WeaverToolbar({
@@ -27,11 +29,13 @@ export function WeaverToolbar({
   onAddEvent,
   onAddLocation,
   onGenerateCharacter,
+  onGenerateScene,
   onSave,
   onUndo,
   onRedo,
   canUndo = false,
   canRedo = false,
+  hasSelectedCharacter = false,
 }: WeaverToolbarProps) {
   return (
     <header className="flex items-center justify-between border-b bg-background px-6 py-3">
@@ -51,6 +55,13 @@ export function WeaverToolbar({
           tooltip="Generate a character node"
           onClick={onGenerateCharacter}
           icon={<Sparkles className="mr-2 h-4 w-4" />}
+        />
+        <TooltipButton
+          label="Generate Scene"
+          tooltip="Generate a scene from selected character"
+          onClick={onGenerateScene}
+          icon={<Film className="mr-2 h-4 w-4" />}
+          disabled={!hasSelectedCharacter}
         />
         <Divider />
         <WeaverHistoryControls

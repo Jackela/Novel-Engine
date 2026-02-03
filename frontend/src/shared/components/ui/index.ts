@@ -37,3 +37,4 @@ export {
   SelectItem,
   SelectSeparator,
 } from './Select';
+export { Progress } from './Progress';

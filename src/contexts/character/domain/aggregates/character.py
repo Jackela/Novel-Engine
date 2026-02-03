@@ -9,7 +9,7 @@ invariants across all character data.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ..events.character_events import (
     CharacterCreated,
@@ -31,6 +31,9 @@ from ..value_objects.character_stats import (
     CoreAbilities,
     VitalStats,
 )
+from ..value_objects.character_goal import CharacterGoal, GoalUrgency
+from ..value_objects.character_memory import CharacterMemory
+from ..value_objects.character_psychology import CharacterPsychology
 from ..value_objects.skills import SkillCategory, Skills
 
 
@@ -55,10 +58,27 @@ class Character:
     stats: CharacterStats
     skills: Skills
 
+    # Optional mutable state (not part of frozen CharacterProfile)
+    # Psychology uses the Big Five model for personality quantification
+    psychology: Optional[CharacterPsychology] = None
+
+    # Character memories - immutable records of experiences that shape behavior
+    memories: List[CharacterMemory] = field(default_factory=list)
+
+    # Character goals - what the character wants to achieve
+    goals: List[CharacterGoal] = field(default_factory=list)
+
+    # Faction membership - which faction/group the character belongs to
+    # Why optional: Characters may be unaffiliated (lone wolves, neutrals)
+    faction_id: Optional[str] = None
+
     # Entity state
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
     version: int = field(default=1)
+
+    # Inventory: List of item IDs owned by this character
+    inventory: List[str] = field(default_factory=list)
 
     # Domain events (not persisted)
     _events: List[CharacterEvent] = field(default_factory=list, init=False)
@@ -290,6 +310,362 @@ class Character:
             )
         )
 
+    def update_psychology(self, new_psychology: CharacterPsychology) -> None:
+        """Update character psychology (Big Five personality traits).
+
+        Why separate from profile: CharacterProfile is frozen and represents
+        the character's base identity. Psychology can evolve based on
+        narrative events and character development.
+
+        Args:
+            new_psychology: The new CharacterPsychology value object
+
+        Raises:
+            TypeError: If new_psychology is not a CharacterPsychology instance
+        """
+        if not isinstance(new_psychology, CharacterPsychology):
+            raise TypeError(
+                f"Expected CharacterPsychology, got {type(new_psychology).__name__}"
+            )
+
+        self.psychology = new_psychology
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["psychology"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def add_memory(self, memory: CharacterMemory) -> None:
+        """Add a memory to the character's memory list.
+
+        Why memories are separate from profile: CharacterProfile is frozen and
+        represents the character's base identity. Memories accumulate over time
+        and represent the character's experiences, affecting their behavior and
+        dialogue. They are immutable event logs, not mutable state.
+
+        Args:
+            memory: The CharacterMemory to add
+
+        Raises:
+            TypeError: If memory is not a CharacterMemory instance
+        """
+        if not isinstance(memory, CharacterMemory):
+            raise TypeError(
+                f"Expected CharacterMemory, got {type(memory).__name__}"
+            )
+
+        self.memories.append(memory)
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["memories"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def get_memories(self) -> List[CharacterMemory]:
+        """Get all memories for this character.
+
+        Returns:
+            A copy of the memories list
+        """
+        return self.memories.copy()
+
+    def get_core_memories(self) -> List[CharacterMemory]:
+        """Get only core memories (importance > 8).
+
+        Why this matters: Core memories are the defining experiences that
+        shape a character's identity. They should be prioritized in AI
+        context building and highlighted in the UI.
+
+        Returns:
+            List of memories with importance > 8
+        """
+        return [m for m in self.memories if m.is_core_memory()]
+
+    def get_memories_by_tag(self, tag: str) -> List[CharacterMemory]:
+        """Get memories filtered by a specific tag.
+
+        Args:
+            tag: The tag to filter by (case-insensitive)
+
+        Returns:
+            List of memories containing the specified tag
+        """
+        return [m for m in self.memories if m.has_tag(tag)]
+
+    def get_recent_memories(self, count: int = 5) -> List[CharacterMemory]:
+        """Get the most recent memories.
+
+        Args:
+            count: Number of memories to return (default 5)
+
+        Returns:
+            List of most recent memories, sorted by timestamp descending
+        """
+        sorted_memories = sorted(
+            self.memories, key=lambda m: m.timestamp, reverse=True
+        )
+        return sorted_memories[:count]
+
+    # ==================== Goal Operations ====================
+
+    def add_goal(self, goal: CharacterGoal) -> None:
+        """Add a goal to the character's goal list.
+
+        Why goals are separate from profile: CharacterProfile is frozen and
+        represents the character's base identity. Goals represent dynamic
+        desires that drive character motivation and narrative arcs.
+
+        Args:
+            goal: The CharacterGoal to add
+
+        Raises:
+            TypeError: If goal is not a CharacterGoal instance
+            ValueError: If a goal with the same ID already exists
+        """
+        if not isinstance(goal, CharacterGoal):
+            raise TypeError(
+                f"Expected CharacterGoal, got {type(goal).__name__}"
+            )
+
+        # Check for duplicate goal_id
+        if any(g.goal_id == goal.goal_id for g in self.goals):
+            raise ValueError(f"Goal with ID {goal.goal_id} already exists")
+
+        self.goals.append(goal)
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def get_goals(self) -> List[CharacterGoal]:
+        """Get all goals for this character.
+
+        Returns:
+            A copy of the goals list
+        """
+        return self.goals.copy()
+
+    def get_active_goals(self) -> List[CharacterGoal]:
+        """Get only active goals.
+
+        Returns:
+            List of goals with status ACTIVE
+        """
+        return [g for g in self.goals if g.is_active()]
+
+    def get_completed_goals(self) -> List[CharacterGoal]:
+        """Get only completed goals.
+
+        Returns:
+            List of goals with status COMPLETED
+        """
+        return [g for g in self.goals if g.is_completed()]
+
+    def get_failed_goals(self) -> List[CharacterGoal]:
+        """Get only failed goals.
+
+        Returns:
+            List of goals with status FAILED
+        """
+        return [g for g in self.goals if g.is_failed()]
+
+    def get_urgent_goals(self) -> List[CharacterGoal]:
+        """Get goals that require immediate attention (HIGH or CRITICAL urgency).
+
+        Returns:
+            List of active goals with HIGH or CRITICAL urgency
+        """
+        return [g for g in self.goals if g.is_active() and g.is_urgent()]
+
+    def get_goal_by_id(self, goal_id: str) -> Optional[CharacterGoal]:
+        """Find a goal by its ID.
+
+        Args:
+            goal_id: The unique identifier of the goal
+
+        Returns:
+            The CharacterGoal if found, None otherwise
+        """
+        return next((g for g in self.goals if g.goal_id == goal_id), None)
+
+    def complete_goal(self, goal_id: str) -> CharacterGoal:
+        """Mark a goal as completed.
+
+        Args:
+            goal_id: The ID of the goal to complete
+
+        Returns:
+            The updated CharacterGoal
+
+        Raises:
+            ValueError: If goal not found or cannot be completed
+        """
+        goal = self.get_goal_by_id(goal_id)
+        if not goal:
+            raise ValueError(f"Goal with ID {goal_id} not found")
+
+        completed_goal = goal.complete()
+
+        # Replace the goal in the list
+        self.goals = [
+            completed_goal if g.goal_id == goal_id else g
+            for g in self.goals
+        ]
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return completed_goal
+
+    def fail_goal(self, goal_id: str) -> CharacterGoal:
+        """Mark a goal as failed.
+
+        Args:
+            goal_id: The ID of the goal to fail
+
+        Returns:
+            The updated CharacterGoal
+
+        Raises:
+            ValueError: If goal not found or cannot be failed
+        """
+        goal = self.get_goal_by_id(goal_id)
+        if not goal:
+            raise ValueError(f"Goal with ID {goal_id} not found")
+
+        failed_goal = goal.fail()
+
+        # Replace the goal in the list
+        self.goals = [
+            failed_goal if g.goal_id == goal_id else g
+            for g in self.goals
+        ]
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return failed_goal
+
+    def update_goal_urgency(
+        self, goal_id: str, new_urgency: GoalUrgency
+    ) -> CharacterGoal:
+        """Update the urgency level of a goal.
+
+        Args:
+            goal_id: The ID of the goal to update
+            new_urgency: The new urgency level
+
+        Returns:
+            The updated CharacterGoal
+
+        Raises:
+            ValueError: If goal not found or cannot be updated
+        """
+        goal = self.get_goal_by_id(goal_id)
+        if not goal:
+            raise ValueError(f"Goal with ID {goal_id} not found")
+
+        updated_goal = goal.update_urgency(new_urgency)
+
+        # Replace the goal in the list
+        self.goals = [
+            updated_goal if g.goal_id == goal_id else g
+            for g in self.goals
+        ]
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return updated_goal
+
+    def remove_goal(self, goal_id: str) -> bool:
+        """Remove a goal from the character.
+
+        Note: In most cases, goals should be marked as completed or failed
+        rather than removed. This method exists for data correction.
+
+        Args:
+            goal_id: The ID of the goal to remove
+
+        Returns:
+            True if goal was found and removed, False otherwise
+        """
+        original_count = len(self.goals)
+        self.goals = [g for g in self.goals if g.goal_id != goal_id]
+
+        if len(self.goals) == original_count:
+            return False
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["goals"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return True
+
     def level_up(self) -> None:
         """Level up the character, increasing stats appropriately."""
         if self.profile.level >= 100:
@@ -458,6 +834,163 @@ class Character:
             )
         )
 
+    # ==================== Inventory Operations ====================
+
+    def give_item(self, item_id: str) -> None:
+        """Add an item to the character's inventory.
+
+        Why track by ID: Items may exist as separate entities with their own
+        lifecycle. Storing IDs enables loose coupling and avoids duplication.
+
+        Args:
+            item_id: The unique identifier of the item to add.
+
+        Raises:
+            ValueError: If item_id is empty or already in inventory.
+        """
+        if not item_id or not item_id.strip():
+            raise ValueError("Item ID cannot be empty")
+
+        if item_id in self.inventory:
+            raise ValueError(f"Item {item_id} is already in inventory")
+
+        self.inventory.append(item_id)
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["inventory_add"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def remove_item(self, item_id: str) -> bool:
+        """Remove an item from the character's inventory.
+
+        Args:
+            item_id: The unique identifier of the item to remove.
+
+        Returns:
+            True if item was found and removed, False otherwise.
+        """
+        if item_id in self.inventory:
+            self.inventory.remove(item_id)
+            self.updated_at = datetime.now()
+            self.version += 1
+
+            self._add_event(
+                CharacterUpdated.create(
+                    character_id=self.character_id,
+                    updated_fields=["inventory_remove"],
+                    old_version=self.version - 1,
+                    new_version=self.version,
+                    updated_at=self.updated_at,
+                )
+            )
+            return True
+        return False
+
+    def has_item(self, item_id: str) -> bool:
+        """Check if the character has a specific item.
+
+        Args:
+            item_id: The unique identifier of the item to check.
+
+        Returns:
+            True if item is in inventory.
+        """
+        return item_id in self.inventory
+
+    def get_inventory_count(self) -> int:
+        """Get the number of items in inventory."""
+        return len(self.inventory)
+
+    # ==================== Faction Operations ====================
+
+    def join_faction(self, faction_id: str) -> None:
+        """Join a faction/group.
+
+        Why separate from profile: Faction membership is dynamic and can change
+        during the narrative. Characters may leave, be expelled, or switch
+        allegiances based on story events.
+
+        Args:
+            faction_id: The unique identifier of the faction to join
+
+        Raises:
+            ValueError: If faction_id is empty or already a member
+        """
+        if not faction_id or not faction_id.strip():
+            raise ValueError("Faction ID cannot be empty")
+
+        if self.faction_id == faction_id:
+            raise ValueError(f"Already a member of faction {faction_id}")
+
+        self.faction_id = faction_id
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["faction_join"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def leave_faction(self) -> bool:
+        """Leave the current faction.
+
+        Returns:
+            True if successfully left a faction, False if not in any faction
+        """
+        if self.faction_id is None:
+            return False
+
+        self.faction_id = None
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["faction_leave"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+        return True
+
+    def get_faction_id(self) -> Optional[str]:
+        """Get the current faction ID.
+
+        Returns:
+            The faction ID or None if not in a faction
+        """
+        return self.faction_id
+
+    def is_in_faction(self, faction_id: Optional[str] = None) -> bool:
+        """Check if character is in a faction.
+
+        Args:
+            faction_id: If provided, check if in this specific faction.
+                        If None, check if in any faction.
+
+        Returns:
+            True if in the specified faction (or any faction if faction_id is None)
+        """
+        if faction_id is None:
+            return self.faction_id is not None
+        return self.faction_id == faction_id
+
     # ==================== Query Methods ====================
 
     def is_alive(self) -> bool:
@@ -470,7 +1003,7 @@ class Character:
 
     def get_character_summary(self) -> Dict[str, Any]:
         """Get a comprehensive summary of the character."""
-        return {
+        summary = {
             "id": str(self.character_id),
             "name": self.profile.name,
             "level": self.profile.level,
@@ -480,11 +1013,37 @@ class Character:
             "profile_summary": self.profile.get_character_summary(),
             "stats_summary": self.stats.get_stats_summary(),
             "skills_summary": self.skills.get_skill_summary(),
+            "inventory": self.inventory.copy(),
+            "inventory_count": len(self.inventory),
             "is_alive": self.is_alive(),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "version": self.version,
         }
+
+        # Include psychology if set
+        if self.psychology is not None:
+            summary["psychology"] = self.psychology.to_dict()
+            summary["psychology_summary"] = self.psychology.get_personality_summary()
+
+        # Include memories
+        if self.memories:
+            summary["memories"] = [m.to_dict() for m in self.memories]
+            summary["memory_count"] = len(self.memories)
+            summary["core_memory_count"] = len(self.get_core_memories())
+
+        # Include goals
+        if self.goals:
+            summary["goals"] = [g.to_dict() for g in self.goals]
+            summary["goal_count"] = len(self.goals)
+            summary["active_goal_count"] = len(self.get_active_goals())
+            summary["urgent_goal_count"] = len(self.get_urgent_goals())
+
+        # Include faction membership
+        if self.faction_id is not None:
+            summary["faction_id"] = self.faction_id
+
+        return summary
 
     @classmethod
     def create_new_character(

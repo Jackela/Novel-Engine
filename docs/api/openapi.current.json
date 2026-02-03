@@ -2,17 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Novel Engine API",
-    "description": "\n# Novel Engine API\n\nThe Novel Engine API provides comprehensive endpoints for character management,\nstory generation, and interactive narrative experiences. This RESTful API enables\ndevelopers to integrate advanced AI-driven storytelling capabilities into their applications.\n\n## Key Features\n\n- **Character Management**: Create, customize, and manage AI characters with detailed personalities\n- **Story Generation**: Generate dynamic stories through character interactions\n- **Real-time Interactions**: WebSocket-based real-time character interactions\n- **Health Monitoring**: Comprehensive system health and performance monitoring\n- **Versioning**: Full API versioning with backward compatibility\n- **Error Handling**: Standardized error responses with detailed information\n\n## Authentication\n\nCurrently, the API operates in open mode for development. Production deployments\nwill require API key authentication.\n\n## Rate Limiting\n\nThe API implements rate limiting to ensure fair usage:\n- **Development**: 1000 requests per hour per IP\n- **Production**: Custom limits based on subscription tier\n\n## Response Format\n\nAll API responses follow a standardized format:\n\n```json\n{\n  \"status\": \"success|error|partial|pending\",\n  \"data\": { /* response payload */ },\n  \"error\": { /* error information if status is error */ },\n  \"metadata\": {\n    \"timestamp\": \"2024-01-01T12:00:00Z\",\n    \"request_id\": \"uuid\",\n    \"api_version\": \"1.1\",\n    \"server_time\": 0.123\n  }\n}\n```\n\n## Error Handling\n\nErrors are returned with appropriate HTTP status codes and detailed information:\n\n- **400 Bad Request**: Invalid request parameters\n- **401 Unauthorized**: Authentication required\n- **403 Forbidden**: Insufficient permissions\n- **404 Not Found**: Resource not found\n- **422 Unprocessable Entity**: Validation errors\n- **429 Too Many Requests**: Rate limit exceeded\n- **500 Internal Server Error**: Server-side errors\n- **503 Service Unavailable**: System temporarily unavailable\n\n## WebSocket Connections\n\nReal-time features use WebSocket connections:\n\n- **Story Generation Progress**: `/api/stories/progress/{generation_id}`\n- **Character Interactions**: `/api/interactions/ws/{interaction_id}`\n\n## SDK and Libraries\n\nOfficial SDKs are available for:\n- Python: `pip install novel-engine-python`\n- JavaScript/TypeScript: `npm install novel-engine-js`\n- Java: Maven/Gradle support available\n\n## Support\n\n- **Documentation**: https://docs.novel-engine.app\n- **Support**: support@novel-engine.app\n- **GitHub**: https://github.com/novel-engine/api\n        ",
-    "version": "1.1.0",
-    "contact": {
-      "name": "Novel Engine API Support",
-      "url": "https://novel-engine.app/support",
-      "email": "support@novel-engine.app"
-    },
-    "license": {
-      "name": "MIT",
-      "url": "https://opensource.org/licenses/MIT"
-    }
+    "description": "Enhanced Dynamic Context Engineering Framework with comprehensive integration systems",
+    "version": "1.1.0"
   },
   "paths": {
     "/api/versions": {
@@ -252,83 +243,6 @@
         "responses": {
           "204": {
             "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stories/generate": {
-      "post": {
-        "summary": "Generate Story",
-        "description": "Generates a story from character interactions.",
-        "operationId": "generate_story_api_stories_generate_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StoryGenerationRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StoryGenerationResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/stories/status/{generation_id}": {
-      "get": {
-        "summary": "Get Generation Status",
-        "description": "Get current status of a story generation (REST fallback).",
-        "operationId": "get_generation_status_api_stories_status__generation_id__get",
-        "parameters": [
-          {
-            "name": "generation_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Generation Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
           },
           "422": {
             "description": "Validation Error",
@@ -2049,7 +1963,7 @@
           "generation"
         ],
         "summary": "Generate Character",
-        "description": "Stub endpoint for character generation (Contract-First).",
+        "description": "Generate a character card using deterministic fallback logic.",
         "operationId": "generate_character_generation_character_post",
         "requestBody": {
           "content": {
@@ -2149,6 +2063,88 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/narratives/stream": {
+      "post": {
+        "tags": [
+          "Narratives"
+        ],
+        "summary": "Stream Narrative",
+        "description": "Stream narrative generation via Server-Sent Events.\n\nThis endpoint accepts a prompt and world context, then streams\ngenerated narrative content in real-time. The response uses\nSSE format for browser-native streaming support.\n\nWhy streaming: Provides immediate feedback to users, reducing\nperceived latency. Users see content appearing as it's generated\nrather than waiting for the entire response.\n\nRequest body:\n    - prompt: The narrative direction/prompt\n    - world_context: Characters, locations, and entities for context\n    - chapter_title: Optional chapter title\n    - tone: Optional tone modifier (dark, hopeful, mysterious)\n    - max_tokens: Maximum tokens to generate (100-8000)\n\nResponse: SSE stream with events:\n    - type: \"chunk\" - Content chunk with sequence number\n    - type: \"done\" - Generation complete with metadata\n    - type: \"error\" - Error occurred during generation",
+        "operationId": "stream_narrative_narratives_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NarrativeStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generation/scene": {
+      "post": {
+        "tags": [
+          "generation"
+        ],
+        "summary": "Generate Scene",
+        "description": "Generate a scene based on character context.\n\nArgs:\n    request: Scene generation parameters including character context,\n             scene type, and optional tone.\n\nReturns:\n    Generated scene with title, content, summary, and visual prompt.",
+        "operationId": "generate_scene_generation_scene_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneGenerationResponse"
                 }
               }
             }
@@ -2374,6 +2370,954 @@
                   "type": "object",
                   "title": "Response Legacy Run Simulation Simulations Post"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/world/generation": {
+      "post": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Generate World",
+        "description": "Generate a complete world with factions, locations, and history events.",
+        "operationId": "generate_world_world_generation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorldGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "List Stories",
+        "description": "List all stories.\n\nReturns:\n    List of all stories sorted by creation time.",
+        "operationId": "list_stories_structure_stories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create Story",
+        "description": "Create a new story.\n\nArgs:\n    request: Story creation data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The created story.\n\nRaises:\n    HTTPException: If story creation fails.",
+        "operationId": "create_story_structure_stories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories/{story_id}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Get Story",
+        "description": "Get a story by ID.\n\nArgs:\n    story_id: UUID of the story.\n    repo: Narrative repository (injected).\n\nReturns:\n    The requested story.\n\nRaises:\n    HTTPException: If story not found.",
+        "operationId": "get_story_structure_stories__story_id__get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Update Story",
+        "description": "Update a story's properties.\n\nArgs:\n    story_id: UUID of the story.\n    request: Fields to update.\n    repo: Narrative repository (injected).\n\nReturns:\n    The updated story.\n\nRaises:\n    HTTPException: If story not found or update fails.",
+        "operationId": "update_story_structure_stories__story_id__patch",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete Story",
+        "description": "Delete a story and all its contents.\n\nArgs:\n    story_id: UUID of the story.\n    repo: Narrative repository (injected).\n\nRaises:\n    HTTPException: If story not found.",
+        "operationId": "delete_story_structure_stories__story_id__delete",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories/{story_id}/chapters": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create Chapter",
+        "description": "Create a new chapter in a story.\n\nArgs:\n    story_id: UUID of the parent story.\n    request: Chapter creation data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The created chapter.\n\nRaises:\n    HTTPException: If story not found or chapter creation fails.",
+        "operationId": "create_chapter_structure_stories__story_id__chapters_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChapterCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "List Chapters",
+        "description": "List all chapters in a story.\n\nArgs:\n    story_id: UUID of the story.\n    repo: Narrative repository (injected).\n\nReturns:\n    List of chapters sorted by order_index.\n\nRaises:\n    HTTPException: If story not found.",
+        "operationId": "list_chapters_structure_stories__story_id__chapters_get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories/{story_id}/chapters/{chapter_id}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Get Chapter",
+        "description": "Get a chapter by ID.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the chapter.\n    repo: Narrative repository (injected).\n\nReturns:\n    The requested chapter.\n\nRaises:\n    HTTPException: If story or chapter not found.",
+        "operationId": "get_chapter_structure_stories__story_id__chapters__chapter_id__get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Update Chapter",
+        "description": "Update a chapter's properties.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the chapter.\n    request: Fields to update.\n    repo: Narrative repository (injected).\n\nReturns:\n    The updated chapter.\n\nRaises:\n    HTTPException: If story/chapter not found or update fails.",
+        "operationId": "update_chapter_structure_stories__story_id__chapters__chapter_id__patch",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChapterUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete Chapter",
+        "description": "Delete a chapter from a story.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the chapter.\n    repo: Narrative repository (injected).\n\nRaises:\n    HTTPException: If story or chapter not found.",
+        "operationId": "delete_chapter_structure_stories__story_id__chapters__chapter_id__delete",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories/{story_id}/chapters/{chapter_id}/move": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Move Chapter",
+        "description": "Move a chapter to a new position within the story.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the chapter.\n    request: New position data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The moved chapter with updated order_index.\n\nRaises:\n    HTTPException: If story/chapter not found or move fails.",
+        "operationId": "move_chapter_structure_stories__story_id__chapters__chapter_id__move_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveChapterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories/{story_id}/chapters/{chapter_id}/scenes": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create Scene",
+        "description": "Create a new scene in a chapter.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    request: Scene creation data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The created scene.\n\nRaises:\n    HTTPException: If story/chapter not found or scene creation fails.",
+        "operationId": "create_scene_structure_stories__story_id__chapters__chapter_id__scenes_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "List Scenes",
+        "description": "List all scenes in a chapter.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    repo: Narrative repository (injected).\n\nReturns:\n    List of scenes sorted by order_index.\n\nRaises:\n    HTTPException: If story or chapter not found.",
+        "operationId": "list_scenes_structure_stories__story_id__chapters__chapter_id__scenes_get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Get Scene",
+        "description": "Get a scene by ID.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    repo: Narrative repository (injected).\n\nReturns:\n    The requested scene.\n\nRaises:\n    HTTPException: If story, chapter, or scene not found.",
+        "operationId": "get_scene_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Update Scene",
+        "description": "Update a scene's properties.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    request: Fields to update.\n    repo: Narrative repository (injected).\n\nReturns:\n    The updated scene.\n\nRaises:\n    HTTPException: If not found or update fails.",
+        "operationId": "update_scene_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__patch",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete Scene",
+        "description": "Delete a scene from a chapter.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    repo: Narrative repository (injected).\n\nRaises:\n    HTTPException: If not found.",
+        "operationId": "delete_scene_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__delete",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/move": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Move Scene",
+        "description": "Move a scene to a new position, optionally to a different chapter.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the current chapter.\n    scene_id: UUID of the scene.\n    request: Move destination data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The moved scene with updated position.\n\nRaises:\n    HTTPException: If not found or move fails.",
+        "operationId": "move_scene_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__move_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveSceneRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/narrative/generate/stream": {
+      "post": {
+        "tags": [
+          "narrative-generation"
+        ],
+        "summary": "Stream Narrative Generation",
+        "description": "Stream narrative generation via Server-Sent Events.\n\nThis endpoint generates narrative content and streams it in real-time.\nWhen MOCK_LLM=true, it streams a hardcoded story line by line.\nOtherwise, it calls the actual LLM service (when implemented).\n\nWhy streaming:\n    Provides immediate feedback to users, reducing perceived latency.\n    Users see content appearing as it's generated rather than\n    waiting for the entire response.\n\nRequest body:\n    - scene_id: Optional UUID of the scene to generate for\n    - prompt: Optional custom generation prompt\n    - context: Optional context string\n    - max_tokens: Maximum tokens (50-4000, default 500)\n\nResponse: SSE stream with events:\n    - type: \"chunk\" - Content chunk with sequence number\n    - type: \"done\" - Generation complete with metadata\n    - type: \"error\" - Error occurred during generation\n\nEnvironment:\n    - MOCK_LLM=true: Use mock generation (for testing)\n    - MOCK_LLM=false or unset: Use real LLM (when implemented)\n\nExample with curl:\n    ```bash\n    curl -N -X POST http://localhost:8000/api/narrative/generate/stream \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\"max_tokens\": 500}'\n    ```",
+        "operationId": "stream_narrative_generation_narrative_generate_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -3040,7 +3984,7 @@
           "generation"
         ],
         "summary": "Generate Character",
-        "description": "Stub endpoint for character generation (Contract-First).",
+        "description": "Generate a character card using deterministic fallback logic.",
         "operationId": "generate_character_api_generation_character_post",
         "requestBody": {
           "content": {
@@ -3140,6 +4084,88 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GuestSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/narratives/stream": {
+      "post": {
+        "tags": [
+          "Narratives"
+        ],
+        "summary": "Stream Narrative",
+        "description": "Stream narrative generation via Server-Sent Events.\n\nThis endpoint accepts a prompt and world context, then streams\ngenerated narrative content in real-time. The response uses\nSSE format for browser-native streaming support.\n\nWhy streaming: Provides immediate feedback to users, reducing\nperceived latency. Users see content appearing as it's generated\nrather than waiting for the entire response.\n\nRequest body:\n    - prompt: The narrative direction/prompt\n    - world_context: Characters, locations, and entities for context\n    - chapter_title: Optional chapter title\n    - tone: Optional tone modifier (dark, hopeful, mysterious)\n    - max_tokens: Maximum tokens to generate (100-8000)\n\nResponse: SSE stream with events:\n    - type: \"chunk\" - Content chunk with sequence number\n    - type: \"done\" - Generation complete with metadata\n    - type: \"error\" - Error occurred during generation",
+        "operationId": "stream_narrative_api_narratives_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NarrativeStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/generation/scene": {
+      "post": {
+        "tags": [
+          "generation"
+        ],
+        "summary": "Generate Scene",
+        "description": "Generate a scene based on character context.\n\nArgs:\n    request: Scene generation parameters including character context,\n             scene type, and optional tone.\n\nReturns:\n    Generated scene with title, content, summary, and visual prompt.",
+        "operationId": "generate_scene_api_generation_scene_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneGenerationResponse"
                 }
               }
             }
@@ -3408,6 +4434,954 @@
                 "schema": {
                   "$ref": "#/components/schemas/SimulationResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/generation": {
+      "post": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Generate World",
+        "description": "Generate a complete world with factions, locations, and history events.",
+        "operationId": "generate_world_api_world_generation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorldGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "List Stories",
+        "description": "List all stories.\n\nReturns:\n    List of all stories sorted by creation time.",
+        "operationId": "list_stories_api_structure_stories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create Story",
+        "description": "Create a new story.\n\nArgs:\n    request: Story creation data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The created story.\n\nRaises:\n    HTTPException: If story creation fails.",
+        "operationId": "create_story_api_structure_stories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories/{story_id}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Get Story",
+        "description": "Get a story by ID.\n\nArgs:\n    story_id: UUID of the story.\n    repo: Narrative repository (injected).\n\nReturns:\n    The requested story.\n\nRaises:\n    HTTPException: If story not found.",
+        "operationId": "get_story_api_structure_stories__story_id__get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Update Story",
+        "description": "Update a story's properties.\n\nArgs:\n    story_id: UUID of the story.\n    request: Fields to update.\n    repo: Narrative repository (injected).\n\nReturns:\n    The updated story.\n\nRaises:\n    HTTPException: If story not found or update fails.",
+        "operationId": "update_story_api_structure_stories__story_id__patch",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete Story",
+        "description": "Delete a story and all its contents.\n\nArgs:\n    story_id: UUID of the story.\n    repo: Narrative repository (injected).\n\nRaises:\n    HTTPException: If story not found.",
+        "operationId": "delete_story_api_structure_stories__story_id__delete",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories/{story_id}/chapters": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create Chapter",
+        "description": "Create a new chapter in a story.\n\nArgs:\n    story_id: UUID of the parent story.\n    request: Chapter creation data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The created chapter.\n\nRaises:\n    HTTPException: If story not found or chapter creation fails.",
+        "operationId": "create_chapter_api_structure_stories__story_id__chapters_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChapterCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "List Chapters",
+        "description": "List all chapters in a story.\n\nArgs:\n    story_id: UUID of the story.\n    repo: Narrative repository (injected).\n\nReturns:\n    List of chapters sorted by order_index.\n\nRaises:\n    HTTPException: If story not found.",
+        "operationId": "list_chapters_api_structure_stories__story_id__chapters_get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories/{story_id}/chapters/{chapter_id}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Get Chapter",
+        "description": "Get a chapter by ID.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the chapter.\n    repo: Narrative repository (injected).\n\nReturns:\n    The requested chapter.\n\nRaises:\n    HTTPException: If story or chapter not found.",
+        "operationId": "get_chapter_api_structure_stories__story_id__chapters__chapter_id__get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Update Chapter",
+        "description": "Update a chapter's properties.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the chapter.\n    request: Fields to update.\n    repo: Narrative repository (injected).\n\nReturns:\n    The updated chapter.\n\nRaises:\n    HTTPException: If story/chapter not found or update fails.",
+        "operationId": "update_chapter_api_structure_stories__story_id__chapters__chapter_id__patch",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChapterUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete Chapter",
+        "description": "Delete a chapter from a story.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the chapter.\n    repo: Narrative repository (injected).\n\nRaises:\n    HTTPException: If story or chapter not found.",
+        "operationId": "delete_chapter_api_structure_stories__story_id__chapters__chapter_id__delete",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories/{story_id}/chapters/{chapter_id}/move": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Move Chapter",
+        "description": "Move a chapter to a new position within the story.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the chapter.\n    request: New position data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The moved chapter with updated order_index.\n\nRaises:\n    HTTPException: If story/chapter not found or move fails.",
+        "operationId": "move_chapter_api_structure_stories__story_id__chapters__chapter_id__move_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveChapterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChapterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories/{story_id}/chapters/{chapter_id}/scenes": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create Scene",
+        "description": "Create a new scene in a chapter.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    request: Scene creation data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The created scene.\n\nRaises:\n    HTTPException: If story/chapter not found or scene creation fails.",
+        "operationId": "create_scene_api_structure_stories__story_id__chapters__chapter_id__scenes_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "List Scenes",
+        "description": "List all scenes in a chapter.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    repo: Narrative repository (injected).\n\nReturns:\n    List of scenes sorted by order_index.\n\nRaises:\n    HTTPException: If story or chapter not found.",
+        "operationId": "list_scenes_api_structure_stories__story_id__chapters__chapter_id__scenes_get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Get Scene",
+        "description": "Get a scene by ID.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    repo: Narrative repository (injected).\n\nReturns:\n    The requested scene.\n\nRaises:\n    HTTPException: If story, chapter, or scene not found.",
+        "operationId": "get_scene_api_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Update Scene",
+        "description": "Update a scene's properties.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    request: Fields to update.\n    repo: Narrative repository (injected).\n\nReturns:\n    The updated scene.\n\nRaises:\n    HTTPException: If not found or update fails.",
+        "operationId": "update_scene_api_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__patch",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SceneUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete Scene",
+        "description": "Delete a scene from a chapter.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    repo: Narrative repository (injected).\n\nRaises:\n    HTTPException: If not found.",
+        "operationId": "delete_scene_api_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__delete",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/move": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Move Scene",
+        "description": "Move a scene to a new position, optionally to a different chapter.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the current chapter.\n    scene_id: UUID of the scene.\n    request: Move destination data.\n    repo: Narrative repository (injected).\n\nReturns:\n    The moved scene with updated position.\n\nRaises:\n    HTTPException: If not found or move fails.",
+        "operationId": "move_scene_api_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__move_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveSceneRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SceneResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/narrative/generate/stream": {
+      "post": {
+        "tags": [
+          "narrative-generation"
+        ],
+        "summary": "Stream Narrative Generation",
+        "description": "Stream narrative generation via Server-Sent Events.\n\nThis endpoint generates narrative content and streams it in real-time.\nWhen MOCK_LLM=true, it streams a hardcoded story line by line.\nOtherwise, it calls the actual LLM service (when implemented).\n\nWhy streaming:\n    Provides immediate feedback to users, reducing perceived latency.\n    Users see content appearing as it's generated rather than\n    waiting for the entire response.\n\nRequest body:\n    - scene_id: Optional UUID of the scene to generate for\n    - prompt: Optional custom generation prompt\n    - context: Optional context string\n    - max_tokens: Maximum tokens (50-4000, default 500)\n\nResponse: SSE stream with events:\n    - type: \"chunk\" - Content chunk with sequence number\n    - type: \"done\" - Generation complete with metadata\n    - type: \"error\" - Error occurred during generation\n\nEnvironment:\n    - MOCK_LLM=true: Use mock generation (for testing)\n    - MOCK_LLM=false or unset: Use real LLM (when implemented)\n\nExample with curl:\n    ```bash\n    curl -N -X POST http://localhost:8000/api/narrative/generate/stream \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\"max_tokens\": 500}'\n    ```",
+        "operationId": "stream_narrative_generation_api_narrative_generate_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -4336,6 +6310,172 @@
         "title": "CausalLinkResponse",
         "description": "Causal relationship in narrative"
       },
+      "ChapterCreateRequest": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "description": "Chapter title"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Summary",
+            "description": "Chapter synopsis",
+            "default": ""
+          },
+          "order_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Index",
+            "description": "Position in story (0-based)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "ChapterCreateRequest",
+        "description": "Request model for creating a new chapter."
+      },
+      "ChapterListResponse": {
+        "properties": {
+          "story_id": {
+            "type": "string",
+            "title": "Story Id",
+            "description": "Parent story UUID"
+          },
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/ChapterResponse"
+            },
+            "type": "array",
+            "title": "Chapters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "story_id"
+        ],
+        "title": "ChapterListResponse",
+        "description": "Response model for listing chapters."
+      },
+      "ChapterResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Chapter UUID"
+          },
+          "story_id": {
+            "type": "string",
+            "title": "Story Id",
+            "description": "Parent story UUID"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Chapter title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Chapter synopsis",
+            "default": ""
+          },
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index",
+            "description": "Position in story"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Publication status"
+          },
+          "scene_count": {
+            "type": "integer",
+            "title": "Scene Count",
+            "description": "Number of scenes",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO 8601 creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At",
+            "description": "ISO 8601 last update timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "story_id",
+          "title",
+          "order_index",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ChapterResponse",
+        "description": "Response model for a single chapter."
+      },
+      "ChapterUpdateRequest": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "Chapter status: 'draft' or 'published'"
+          }
+        },
+        "type": "object",
+        "title": "ChapterUpdateRequest",
+        "description": "Request model for updating a chapter."
+      },
       "CharacterArchetype": {
         "type": "string",
         "enum": [
@@ -4698,6 +6838,42 @@
               }
             ],
             "title": "Workspace Id"
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Aliases"
+          },
+          "archetype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archetype"
+          },
+          "traits": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Traits"
+          },
+          "appearance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appearance"
           }
         },
         "type": "object",
@@ -5425,6 +7601,71 @@
         "title": "ExampleFormat",
         "description": "Code example formats."
       },
+      "FactionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "faction_type": {
+            "type": "string",
+            "title": "Faction Type"
+          },
+          "alignment": {
+            "type": "string",
+            "title": "Alignment"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Values"
+          },
+          "goals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Goals"
+          },
+          "influence": {
+            "type": "integer",
+            "title": "Influence"
+          },
+          "ally_count": {
+            "type": "integer",
+            "title": "Ally Count",
+            "default": 0
+          },
+          "enemy_count": {
+            "type": "integer",
+            "title": "Enemy Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "faction_type",
+          "alignment",
+          "values",
+          "goals",
+          "influence"
+        ],
+        "title": "FactionResponse",
+        "description": "Response model for faction."
+      },
       "FrameworkType": {
         "type": "string",
         "enum": [
@@ -5438,6 +7679,57 @@
         ],
         "title": "FrameworkType",
         "description": "Supported framework types for Context7 integration."
+      },
+      "GenerateStreamRequest": {
+        "properties": {
+          "scene_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scene Id",
+            "description": "UUID of the scene to generate content for"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt",
+            "description": "Custom prompt for generation"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context",
+            "description": "Context string to inform generation"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "maximum": 4000.0,
+            "minimum": 50.0,
+            "title": "Max Tokens",
+            "description": "Maximum tokens to generate",
+            "default": 500
+          }
+        },
+        "type": "object",
+        "title": "GenerateStreamRequest",
+        "description": "Request body for narrative streaming generation.\n\nAttributes:\n    scene_id: Optional UUID of the scene to generate content for.\n    prompt: Optional custom prompt for generation.\n    context: Optional context string to inform generation.\n    max_tokens: Maximum tokens to generate (controls length)."
       },
       "GuestSessionResponse": {
         "properties": {
@@ -5543,6 +7835,48 @@
           "message"
         ],
         "title": "HealthResponse"
+      },
+      "HistoryEventResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "significance": {
+            "type": "integer",
+            "title": "Significance"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Participants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "event_type",
+          "significance",
+          "participants"
+        ],
+        "title": "HistoryEventResponse",
+        "description": "Response model for history event."
       },
       "InformationFragmentResponse": {
         "properties": {
@@ -5713,6 +8047,64 @@
         "title": "InvalidationRequest"
       },
       "JsonValue": {},
+      "LocationResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "location_type": {
+            "type": "string",
+            "title": "Location Type"
+          },
+          "population": {
+            "type": "integer",
+            "title": "Population"
+          },
+          "controlling_faction_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Controlling Faction Id"
+          },
+          "notable_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notable Features"
+          },
+          "danger_level": {
+            "type": "string",
+            "title": "Danger Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "location_type",
+          "population",
+          "notable_features",
+          "danger_level"
+        ],
+        "title": "LocationResponse",
+        "description": "Response model for location."
+      },
       "LoginRequest": {
         "properties": {
           "email": {
@@ -5775,6 +8167,50 @@
           "message"
         ],
         "title": "LogoutResponse"
+      },
+      "MoveChapterRequest": {
+        "properties": {
+          "new_order_index": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "New Order Index",
+            "description": "New position in story"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_order_index"
+        ],
+        "title": "MoveChapterRequest",
+        "description": "Request model for moving a chapter to a new position."
+      },
+      "MoveSceneRequest": {
+        "properties": {
+          "target_chapter_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Chapter Id",
+            "description": "Target chapter UUID (for cross-chapter moves)"
+          },
+          "new_order_index": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "New Order Index",
+            "description": "New position in chapter"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_order_index"
+        ],
+        "title": "MoveSceneRequest",
+        "description": "Request model for moving a scene."
       },
       "MultiBriefData": {
         "properties": {
@@ -6026,6 +8462,55 @@
         "title": "NarrativeResponse",
         "description": "Response for narrative endpoint."
       },
+      "NarrativeStreamRequest": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Prompt"
+          },
+          "world_context": {
+            "$ref": "#/components/schemas/WorldContext"
+          },
+          "chapter_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chapter Title"
+          },
+          "tone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tone"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "maximum": 8000.0,
+            "minimum": 100.0,
+            "title": "Max Tokens",
+            "default": 2000
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt",
+          "world_context"
+        ],
+        "title": "NarrativeStreamRequest",
+        "description": "Request model for streaming narrative generation."
+      },
       "OrchestrationStartRequest": {
         "properties": {
           "character_names": {
@@ -6042,7 +8527,8 @@
                 "type": "null"
               }
             ],
-            "title": "Character Names"
+            "title": "Character Names",
+            "description": "List of character names to include (2-6 characters)"
           },
           "total_turns": {
             "anyOf": [
@@ -6056,6 +8542,7 @@
               }
             ],
             "title": "Total Turns",
+            "description": "Number of narrative turns to generate (1-10)",
             "default": 3
           },
           "setting": {
@@ -6067,7 +8554,8 @@
                 "type": "null"
               }
             ],
-            "title": "Setting"
+            "title": "Setting",
+            "description": "World setting name or ID"
           },
           "scenario": {
             "anyOf": [
@@ -6078,7 +8566,8 @@
                 "type": "null"
               }
             ],
-            "title": "Scenario"
+            "title": "Scenario",
+            "description": "Initial scenario description"
           }
         },
         "type": "object",
@@ -6130,26 +8619,31 @@
         "properties": {
           "status": {
             "type": "string",
-            "title": "Status"
+            "title": "Status",
+            "description": "Overall orchestration status: idle, running, paused, completed"
           },
           "current_turn": {
             "type": "integer",
             "title": "Current Turn",
+            "description": "Current turn number being processed",
             "default": 0
           },
           "total_turns": {
             "type": "integer",
             "title": "Total Turns",
+            "description": "Total number of turns to process",
             "default": 0
           },
           "queue_length": {
             "type": "integer",
             "title": "Queue Length",
+            "description": "Number of pending operations in the queue",
             "default": 0
           },
           "average_processing_time": {
             "type": "number",
             "title": "Average Processing Time",
+            "description": "Average time per turn in seconds",
             "default": 0.0
           },
           "steps": {
@@ -6157,7 +8651,8 @@
               "$ref": "#/components/schemas/OrchestrationStep"
             },
             "type": "array",
-            "title": "Steps"
+            "title": "Steps",
+            "description": "Detailed step breakdown"
           },
           "last_updated": {
             "anyOf": [
@@ -6168,7 +8663,8 @@
                 "type": "null"
               }
             ],
-            "title": "Last Updated"
+            "title": "Last Updated",
+            "description": "ISO 8601 timestamp of last status update"
           }
         },
         "type": "object",
@@ -6211,21 +8707,25 @@
         "properties": {
           "id": {
             "type": "string",
-            "title": "Id"
+            "title": "Id",
+            "description": "Unique identifier for this step"
           },
           "name": {
             "type": "string",
-            "title": "Name"
+            "title": "Name",
+            "description": "Human-readable name of the step"
           },
           "status": {
             "type": "string",
-            "title": "Status"
+            "title": "Status",
+            "description": "Current status: pending, running, completed, failed"
           },
           "progress": {
             "type": "number",
             "maximum": 100.0,
             "minimum": 0.0,
-            "title": "Progress"
+            "title": "Progress",
+            "description": "Completion percentage (0-100)"
           }
         },
         "type": "object",
@@ -6422,6 +8922,255 @@
         ],
         "title": "SSEStatsResponse",
         "description": "SSE connection statistics."
+      },
+      "SceneCreateRequest": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "description": "Scene title"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Summary",
+            "description": "Scene synopsis",
+            "default": ""
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Location",
+            "description": "Scene setting",
+            "default": ""
+          },
+          "order_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Index",
+            "description": "Position in chapter (0-based)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "SceneCreateRequest",
+        "description": "Request model for creating a new scene."
+      },
+      "SceneGenerationRequest": {
+        "properties": {
+          "character_context": {
+            "$ref": "#/components/schemas/CharacterGenerationResponse"
+          },
+          "scene_type": {
+            "type": "string",
+            "title": "Scene Type"
+          },
+          "tone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "character_context",
+          "scene_type"
+        ],
+        "title": "SceneGenerationRequest",
+        "description": "Request model for scene generation."
+      },
+      "SceneGenerationResponse": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "visual_prompt": {
+            "type": "string",
+            "title": "Visual Prompt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "content",
+          "summary",
+          "visual_prompt"
+        ],
+        "title": "SceneGenerationResponse",
+        "description": "Response model for scene generation."
+      },
+      "SceneListResponse": {
+        "properties": {
+          "chapter_id": {
+            "type": "string",
+            "title": "Chapter Id",
+            "description": "Parent chapter UUID"
+          },
+          "scenes": {
+            "items": {
+              "$ref": "#/components/schemas/SceneResponse"
+            },
+            "type": "array",
+            "title": "Scenes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "chapter_id"
+        ],
+        "title": "SceneListResponse",
+        "description": "Response model for listing scenes."
+      },
+      "SceneResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Scene UUID"
+          },
+          "chapter_id": {
+            "type": "string",
+            "title": "Chapter Id",
+            "description": "Parent chapter UUID"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Scene title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Scene synopsis",
+            "default": ""
+          },
+          "location": {
+            "type": "string",
+            "title": "Location",
+            "description": "Scene setting",
+            "default": ""
+          },
+          "order_index": {
+            "type": "integer",
+            "title": "Order Index",
+            "description": "Position in chapter"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Workflow status"
+          },
+          "beat_count": {
+            "type": "integer",
+            "title": "Beat Count",
+            "description": "Number of beats",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO 8601 creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At",
+            "description": "ISO 8601 last update timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "chapter_id",
+          "title",
+          "order_index",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SceneResponse",
+        "description": "Response model for a single scene."
+      },
+      "SceneUpdateRequest": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "Scene status: 'draft', 'generating', 'review', 'published'"
+          }
+        },
+        "type": "object",
+        "title": "SceneUpdateRequest",
+        "description": "Request model for updating a scene."
       },
       "SimulationRequest": {
         "properties": {
@@ -6939,53 +9688,138 @@
         ],
         "title": "StandardResponse"
       },
-      "StoryGenerationRequest": {
+      "StoryCreateRequest": {
         "properties": {
-          "characters": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Characters"
-          },
           "title": {
             "type": "string",
             "maxLength": 200,
+            "minLength": 1,
             "title": "Title",
-            "default": "A Generated Story"
+            "description": "Story title"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Summary",
+            "description": "Story synopsis",
+            "default": ""
           }
         },
         "type": "object",
         "required": [
-          "characters"
+          "title"
         ],
-        "title": "StoryGenerationRequest",
-        "description": "Request model for story generation."
+        "title": "StoryCreateRequest",
+        "description": "Request model for creating a new story."
       },
-      "StoryGenerationResponse": {
+      "StoryListResponse": {
         "properties": {
-          "generation_id": {
+          "stories": {
+            "items": {
+              "$ref": "#/components/schemas/StoryResponse"
+            },
+            "type": "array",
+            "title": "Stories"
+          }
+        },
+        "type": "object",
+        "title": "StoryListResponse",
+        "description": "Response model for listing stories."
+      },
+      "StoryResponse": {
+        "properties": {
+          "id": {
             "type": "string",
-            "title": "Generation Id"
+            "title": "Id",
+            "description": "Story UUID"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Story title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Story synopsis",
+            "default": ""
           },
           "status": {
             "type": "string",
-            "title": "Status"
+            "title": "Status",
+            "description": "Publication status"
           },
-          "message": {
+          "chapter_count": {
+            "type": "integer",
+            "title": "Chapter Count",
+            "description": "Number of chapters",
+            "default": 0
+          },
+          "created_at": {
             "type": "string",
-            "title": "Message"
+            "title": "Created At",
+            "description": "ISO 8601 creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At",
+            "description": "ISO 8601 last update timestamp"
           }
         },
         "type": "object",
         "required": [
-          "generation_id",
+          "id",
+          "title",
           "status",
-          "message"
+          "created_at",
+          "updated_at"
         ],
-        "title": "StoryGenerationResponse",
-        "description": "Response model for story generation requests."
+        "title": "StoryResponse",
+        "description": "Response model for a single story."
+      },
+      "StoryUpdateRequest": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "Story status: 'draft' or 'published'"
+          }
+        },
+        "type": "object",
+        "title": "StoryUpdateRequest",
+        "description": "Request model for updating a story."
       },
       "SystemStatusResponse": {
         "properties": {
@@ -7468,133 +10302,271 @@
         },
         "type": "object",
         "title": "WorkspaceCharacterUpdateRequest"
+      },
+      "WorldContext": {
+        "properties": {
+          "characters": {
+            "items": {
+              "$ref": "#/components/schemas/WorldContextEntity"
+            },
+            "type": "array",
+            "title": "Characters"
+          },
+          "locations": {
+            "items": {
+              "$ref": "#/components/schemas/WorldContextEntity"
+            },
+            "type": "array",
+            "title": "Locations"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/WorldContextEntity"
+            },
+            "type": "array",
+            "title": "Entities"
+          },
+          "current_scene": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Scene"
+          },
+          "narrative_style": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narrative Style"
+          }
+        },
+        "type": "object",
+        "title": "WorldContext",
+        "description": "World context for narrative generation."
+      },
+      "WorldContextEntity": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "attributes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Attributes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "title": "WorldContextEntity",
+        "description": "Entity within the world context."
+      },
+      "WorldGenerationRequest": {
+        "properties": {
+          "genre": {
+            "type": "string",
+            "title": "Genre",
+            "description": "Primary genre (fantasy, sci-fi, etc.)",
+            "default": "fantasy"
+          },
+          "era": {
+            "type": "string",
+            "title": "Era",
+            "description": "Temporal era (medieval, modern, etc.)",
+            "default": "medieval"
+          },
+          "tone": {
+            "type": "string",
+            "title": "Tone",
+            "description": "Narrative tone (dark, heroic, etc.)",
+            "default": "heroic"
+          },
+          "themes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Themes",
+            "description": "Thematic elements"
+          },
+          "magic_level": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Magic Level",
+            "description": "Magic level (0-10)",
+            "default": 5
+          },
+          "technology_level": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Technology Level",
+            "description": "Technology level (0-10)",
+            "default": 3
+          },
+          "num_factions": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Num Factions",
+            "description": "Number of factions",
+            "default": 3
+          },
+          "num_locations": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Num Locations",
+            "description": "Number of locations",
+            "default": 5
+          },
+          "num_events": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Num Events",
+            "description": "Number of history events",
+            "default": 3
+          }
+        },
+        "type": "object",
+        "title": "WorldGenerationRequest",
+        "description": "Request model for world generation."
+      },
+      "WorldGenerationResponse": {
+        "properties": {
+          "world_setting": {
+            "$ref": "#/components/schemas/WorldSettingResponse"
+          },
+          "factions": {
+            "items": {
+              "$ref": "#/components/schemas/FactionResponse"
+            },
+            "type": "array",
+            "title": "Factions"
+          },
+          "locations": {
+            "items": {
+              "$ref": "#/components/schemas/LocationResponse"
+            },
+            "type": "array",
+            "title": "Locations"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryEventResponse"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "generation_summary": {
+            "type": "string",
+            "title": "Generation Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "world_setting",
+          "factions",
+          "locations",
+          "events",
+          "generation_summary"
+        ],
+        "title": "WorldGenerationResponse",
+        "description": "Response model for world generation."
+      },
+      "WorldSettingResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "genre": {
+            "type": "string",
+            "title": "Genre"
+          },
+          "era": {
+            "type": "string",
+            "title": "Era"
+          },
+          "tone": {
+            "type": "string",
+            "title": "Tone"
+          },
+          "themes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Themes"
+          },
+          "magic_level": {
+            "type": "integer",
+            "title": "Magic Level"
+          },
+          "technology_level": {
+            "type": "integer",
+            "title": "Technology Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "genre",
+          "era",
+          "tone",
+          "themes",
+          "magic_level",
+          "technology_level"
+        ],
+        "title": "WorldSettingResponse",
+        "description": "Response model for world setting."
       }
     },
     "securitySchemes": {
-      "APIKeyHeader": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-API-Key",
-        "description": "API key for authenticated requests"
-      },
-      "BearerAuth": {
+      "HTTPBearer": {
         "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "JWT token for authenticated requests"
-      }
-    },
-    "examples": {
-      "CharacterSuccessResponse": {
-        "summary": "Successful character creation",
-        "value": {
-          "status": "success",
-          "data": {
-            "agent_id": "aragorn_ranger",
-            "name": "Aragorn",
-            "status": "active",
-            "created_at": "2024-01-01T12:00:00Z",
-            "background_summary": "A skilled ranger and heir to the throne of Gondor",
-            "skills": {
-              "combat": 0.9,
-              "leadership": 0.8,
-              "tracking": 0.95
-            }
-          },
-          "metadata": {
-            "timestamp": "2024-01-01T12:00:00Z",
-            "request_id": "req_123456",
-            "api_version": "1.1",
-            "server_time": 0.045
-          }
-        }
-      },
-      "ValidationErrorResponse": {
-        "summary": "Validation error example",
-        "value": {
-          "status": "error",
-          "data": null,
-          "error": {
-            "type": "validation_error",
-            "message": "Character name is required",
-            "detail": "The 'name' field cannot be empty",
-            "field": "name"
-          },
-          "metadata": {
-            "timestamp": "2024-01-01T12:00:00Z",
-            "request_id": "req_123457",
-            "api_version": "1.1",
-            "server_time": 0.012
-          }
-        }
-      },
-      "CharacterCreationRequest": {
-        "summary": "Create a new character",
-        "value": {
-          "agent_id": "aragorn_ranger",
-          "name": "Aragorn",
-          "background_summary": "A skilled ranger and heir to the throne of Gondor",
-          "personality_traits": "Brave, noble, skilled in combat and leadership",
-          "skills": {
-            "combat": 0.9,
-            "leadership": 0.8,
-            "tracking": 0.95,
-            "diplomacy": 0.7
-          },
-          "current_location": "Rivendell",
-          "metadata": {
-            "source": "tolkien",
-            "category": "hero"
-          }
-        }
-      },
-      "StoryGenerationRequest": {
-        "summary": "Generate a story with multiple characters",
-        "value": {
-          "characters": [
-            "aragorn_ranger",
-            "legolas_elf",
-            "gimli_dwarf"
-          ],
-          "title": "The Fellowship's Journey"
-        }
+        "scheme": "bearer"
       }
     }
-  },
-  "tags": [
-    {
-      "name": "System",
-      "description": "System health, version info, and API metadata endpoints"
-    },
-    {
-      "name": "Characters",
-      "description": "Character creation, management, and customization endpoints"
-    },
-    {
-      "name": "Stories",
-      "description": "Story generation, export, and narrative management endpoints"
-    },
-    {
-      "name": "Interactions",
-      "description": "Real-time character interactions and conversation management"
-    },
-    {
-      "name": "Monitoring",
-      "description": "Performance metrics, monitoring, and observability endpoints"
-    }
-  ],
-  "servers": [
-    {
-      "url": "http://localhost:8000",
-      "description": "Development server"
-    },
-    {
-      "url": "https://api.novel-engine.app",
-      "description": "Production server"
-    }
-  ],
-  "externalDocs": {
-    "description": "Full API Documentation",
-    "url": "https://docs.novel-engine.app"
   }
 }

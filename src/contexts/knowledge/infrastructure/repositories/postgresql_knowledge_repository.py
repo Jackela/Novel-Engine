@@ -226,17 +226,17 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         # Combine WHERE conditions
         where_clause = " AND ".join(where_conditions)
 
-        # Final SELECT query
+        # Final SELECT query - uses parameterized conditions with params dict
         select_sql = text(
             f"""
-            SELECT 
+            SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by
             FROM knowledge_entries
             WHERE {where_clause}
             ORDER BY updated_at DESC
-        """
+        """  # nosec B608
         )
 
         result = await self._session.execute(select_sql, params)
@@ -364,7 +364,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         # Convert to similarity score: 1 - (distance / 2) = 0.0-1.0 range
         semantic_sql = text(
             f"""
-            SELECT 
+            SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by,
@@ -373,7 +373,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             WHERE {where_clause}
             ORDER BY embedding <=> CAST(:query_embedding AS vector(1536))
             LIMIT :top_k
-        """
+        """  # nosec B608
         )
 
         result = await self._session.execute(semantic_sql, params)

@@ -1,0 +1,101 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#3730a3', 'lineColor': '#6366f1', 'secondaryColor': '#f0f9ff', 'tertiaryColor': '#fef3c7'}}}%%
+flowchart TB
+    subgraph API["API Layer (Composition Root)"]
+        direction LR
+        WorldRouter["/api/world/generation<br/>POST Endpoint"]
+        WorldRequest["WorldGenerationRequest"]
+        WorldResponse["WorldGenerationResponse"]
+    end
+
+    subgraph Application["Application Layer"]
+        direction TB
+        WorldGenPort["WorldGeneratorPort<br/>(Protocol/Interface)"]
+        WorldGenInput["WorldGenerationInput"]
+        WorldGenResult["WorldGenerationResult"]
+    end
+
+    subgraph Domain["Domain Layer (World Context)"]
+        direction TB
+
+        subgraph Entities["Domain Entities"]
+            WorldSetting["WorldSetting<br/>━━━━━━━━━━━━━<br/>genre: Genre<br/>era: Era<br/>tone: ToneType<br/>themes: List[str]<br/>magic_level: int<br/>technology_level: int"]
+            Faction["Faction<br/>━━━━━━━━━━━━━<br/>faction_type: FactionType<br/>alignment: FactionAlignment<br/>values: List[str]<br/>goals: List[str]<br/>influence: int<br/>relations: List[FactionRelation]"]
+            Location["Location<br/>━━━━━━━━━━━━━<br/>location_type: LocationType<br/>population: int<br/>danger_level: int<br/>notable_features: List[str]<br/>controlling_faction_id: str"]
+            HistoryEvent["HistoryEvent<br/>━━━━━━━━━━━━━<br/>event_type: EventType<br/>significance: int<br/>participant_ids: Set[str]<br/>outcome: str"]
+        end
+
+        subgraph Enums["Value Objects / Enums"]
+            Genre["Genre<br/>(fantasy, sci_fi, ...)"]
+            Era["Era<br/>(medieval, modern, ...)"]
+            ToneType["ToneType<br/>(dark, heroic, ...)"]
+            FactionType["FactionType<br/>(kingdom, guild, ...)"]
+            FactionAlignment["FactionAlignment<br/>(lawful_good, ...)"]
+            LocationType["LocationType<br/>(city, fortress, ...)"]
+            EventType["EventType<br/>(war, founding, ...)"]
+        end
+    end
+
+    subgraph Infrastructure["Infrastructure Layer"]
+        direction TB
+        LLMGenerator["LLMWorldGenerator<br/>━━━━━━━━━━━━━<br/>Uses Gemini API<br/>Structured JSON output<br/>temp_id resolution"]
+        PromptTemplate["world_gen.yaml<br/>(Prompt Template)"]
+    end
+
+    subgraph Frontend["Frontend (Weaver Canvas)"]
+        direction TB
+        useWorldGen["useWorldGeneration Hook"]
+        WorldNode["WorldNode Component"]
+        FactionNode["FactionNode Component"]
+        worldApi["worldApi.ts"]
+    end
+
+    %% API Flow
+    WorldRouter --> WorldRequest
+    WorldRequest --> WorldGenInput
+    WorldGenInput --> WorldGenPort
+    WorldGenPort -.->|implements| LLMGenerator
+    LLMGenerator --> PromptTemplate
+    LLMGenerator --> WorldGenResult
+    WorldGenResult --> WorldResponse
+    WorldResponse --> worldApi
+
+    %% Frontend Flow
+    worldApi --> useWorldGen
+    useWorldGen --> WorldNode
+    useWorldGen --> FactionNode
+
+    %% Domain Relationships
+    WorldSetting --> Genre
+    WorldSetting --> Era
+    WorldSetting --> ToneType
+    Faction --> FactionType
+    Faction --> FactionAlignment
+    Location --> LocationType
+    HistoryEvent --> EventType
+
+    %% Entity Relationships
+    Location -.->|controlled by| Faction
+    HistoryEvent -.->|involves| Faction
+    HistoryEvent -.->|occurs at| Location
+    Faction -.->|allied/enemy| Faction
+
+    %% Result aggregation
+    WorldGenResult --> WorldSetting
+    WorldGenResult --> Faction
+    WorldGenResult --> Location
+    WorldGenResult --> HistoryEvent
+
+    %% Styling
+    classDef apiLayer fill:#4f46e5,stroke:#3730a3,color:#fff
+    classDef appLayer fill:#0ea5e9,stroke:#0284c7,color:#fff
+    classDef domainLayer fill:#10b981,stroke:#059669,color:#fff
+    classDef infraLayer fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef frontendLayer fill:#ec4899,stroke:#db2777,color:#fff
+    classDef enumClass fill:#e0e7ff,stroke:#6366f1,color:#1e1b4b
+
+    class WorldRouter,WorldRequest,WorldResponse apiLayer
+    class WorldGenPort,WorldGenInput,WorldGenResult appLayer
+    class WorldSetting,Faction,Location,HistoryEvent domainLayer
+    class LLMGenerator,PromptTemplate infraLayer
+    class useWorldGen,WorldNode,FactionNode,worldApi frontendLayer
+    class Genre,Era,ToneType,FactionType,FactionAlignment,LocationType,EventType enumClass

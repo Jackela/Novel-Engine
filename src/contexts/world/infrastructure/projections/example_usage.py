@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CQRS World Context Usage Examples
+"""CQRS World Context Usage Examples.
 
 This file demonstrates the complete CQRS implementation for the World context,
 showing how the read model, projector, and query handlers work together to
@@ -8,24 +7,25 @@ provide high-performance querying capabilities.
 
 NOTE: These are examples for reference - not executable tests due to
 platform naming conflicts with Python's standard library.
+
+Example imports (would work without platform naming conflicts)::
+
+    from src.contexts.world.infrastructure.projections import (
+        WorldSliceReadModel,
+        WorldProjector,
+        get_world_projector,
+        initialize_world_projector
+    )
+    from src.contexts.world.application.queries import (
+        GetWorldSlice,
+        GetWorldSummary,
+        GetEntitiesInArea,
+        execute_query
+    )
+    from src.contexts.world.domain.events.world_events import WorldStateChanged
 """
 
 from typing import Any, Dict
-
-# Example imports (would work without platform naming conflicts)
-# from src.contexts.world.infrastructure.projections import (
-#     WorldSliceReadModel,
-#     WorldProjector,
-#     get_world_projector,
-#     initialize_world_projector
-# )
-# from src.contexts.world.application.queries import (
-#     GetWorldSlice,
-#     GetWorldSummary,
-#     GetEntitiesInArea,
-#     execute_query
-# )
-# from src.contexts.world.domain.events.world_events import WorldStateChanged
 
 
 def example_cqrs_workflow():

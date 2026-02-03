@@ -19,7 +19,9 @@ vi.mock('@/lib/api/generationApi', () => ({
   generateCharacter: vi.fn(),
 }));
 
-const mockedGenerateCharacter = generationApi.generateCharacter as ReturnType<typeof vi.fn>;
+const mockedGenerateCharacter = generationApi.generateCharacter as ReturnType<
+  typeof vi.fn
+>;
 
 // Create a wrapper with QueryClient for testing
 function createWrapper() {
@@ -37,6 +39,8 @@ function createWrapper() {
 
 describe('useCharacterGeneration', () => {
   beforeEach(() => {
+    // Use fake timers with shouldAdvanceTime to allow waitFor to work
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     // Reset the Weaver store to clean state before each test
     useWeaverStore.setState({
       nodes: [],
@@ -47,7 +51,7 @@ describe('useCharacterGeneration', () => {
   });
 
   afterEach(() => {
-    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   describe('Optimistic UI (onMutate)', () => {
@@ -73,16 +77,14 @@ describe('useCharacterGeneration', () => {
       // THEN: Store should have a loading node
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      expect(nodes[0].data.status).toBe('loading');
-      expect(nodes[0].data.name).toBe('Generating...');
-      expect(nodes[0].type).toBe('character');
+      expect(nodes[0]!.data.status).toBe('loading');
+      expect(nodes[0]!.data.name).toBe('Generating...');
+      expect(nodes[0]!.type).toBe('character');
     });
 
     it('uses default role when archetype is not provided', async () => {
       // GIVEN: API is pending
-      mockedGenerateCharacter.mockImplementation(
-        () => new Promise(() => {})
-      );
+      mockedGenerateCharacter.mockImplementation(() => new Promise(() => {}));
 
       // WHEN: Hook is called without archetype
       const { result } = renderHook(() => useCharacterGeneration(), {
@@ -99,7 +101,7 @@ describe('useCharacterGeneration', () => {
       // THEN: Store should have a node with default role
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      expect(nodes[0].data.role).toBe('New Character');
+      expect(nodes[0]!.data.role).toBe('New Character');
     });
 
     it('creates node with correct position based on existing nodes', async () => {
@@ -110,7 +112,12 @@ describe('useCharacterGeneration', () => {
             id: 'existing-1',
             type: 'character',
             position: { x: 100, y: 100 },
-            data: { name: 'Existing', role: 'Test', traits: [], status: 'idle' as const },
+            data: {
+              name: 'Existing',
+              role: 'Test',
+              traits: [],
+              status: 'idle' as const,
+            },
           },
         ],
         edges: [],
@@ -135,7 +142,7 @@ describe('useCharacterGeneration', () => {
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(2);
       // New node should have index-based positioning
-      const newNode = nodes[1];
+      const newNode = nodes[1]!;
       expect(newNode.position.x).toBeGreaterThan(0);
       expect(newNode.position.y).toBeGreaterThan(0);
     });
@@ -171,10 +178,15 @@ describe('useCharacterGeneration', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
+      // Advance timers to trigger the delayed updateNode call
+      await act(async () => {
+        vi.runAllTimers();
+      });
+
       // THEN: Node should be updated to idle with character data
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      const node = nodes[0];
+      const node = nodes[0]!;
       expect(node.data.status).toBe('idle');
       expect(node.data.name).toBe('Zenith Arc');
       expect(node.data.tagline).toBe('A spark that bends the grid.');
@@ -208,9 +220,14 @@ describe('useCharacterGeneration', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
+      // Advance timers to trigger the delayed updateNode call
+      await act(async () => {
+        vi.runAllTimers();
+      });
+
       // THEN: Role should match the archetype from the request
       const nodes = useWeaverStore.getState().nodes;
-      expect(nodes[0].data.role).toBe('Guardian');
+      expect(nodes[0]!.data.role).toBe('Guardian');
     });
   });
 
@@ -239,10 +256,15 @@ describe('useCharacterGeneration', () => {
         expect(result.current.isError).toBe(true);
       });
 
+      // Advance timers to trigger the delayed updateNode call
+      await act(async () => {
+        vi.runAllTimers();
+      });
+
       // THEN: Node should have error status and error message
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      const node = nodes[0];
+      const node = nodes[0]!;
       expect(node.data.status).toBe('error');
       expect(node.data.errorMessage).toBe('LLM service unavailable');
 
@@ -272,9 +294,14 @@ describe('useCharacterGeneration', () => {
         expect(result.current.isError).toBe(true);
       });
 
+      // Advance timers to trigger the delayed updateNode call
+      await act(async () => {
+        vi.runAllTimers();
+      });
+
       // THEN: Fallback message should be used
       const nodes = useWeaverStore.getState().nodes;
-      expect(nodes[0].data.errorMessage).toBe('Generation failed');
+      expect(nodes[0]!.data.errorMessage).toBe('Generation failed');
 
       consoleSpy.mockRestore();
     });
@@ -340,7 +367,7 @@ describe('useCharacterGeneration', () => {
       // THEN: Node should have a unique ID starting with 'char'
       const nodes = useWeaverStore.getState().nodes;
       expect(nodes).toHaveLength(1);
-      expect(nodes[0].id).toMatch(/^char[_-]/);
+      expect(nodes[0]!.id).toMatch(/^char[_-]/);
     });
   });
 
@@ -377,7 +404,10 @@ describe('useCharacterGeneration', () => {
       const mockVariables = { concept: 'Test', archetype: 'Test' };
 
       // WHEN: handleMutationSuccess is called with empty nodeId
-      handleMutationSuccess(updateNode, mockData, mockVariables, { nodeId: '' });
+      handleMutationSuccess(updateNode, mockData, mockVariables, {
+        nodeId: '',
+        startedAt: Date.now(),
+      });
 
       // THEN: updateNode should NOT be called (early return due to falsy nodeId)
       expect(updateNode).not.toHaveBeenCalled();
@@ -401,7 +431,7 @@ describe('useCharacterGeneration', () => {
       const mockError = new Error('Test error');
 
       // WHEN: handleMutationError is called with empty nodeId
-      handleMutationError(updateNode, mockError, { nodeId: '' });
+      handleMutationError(updateNode, mockError, { nodeId: '', startedAt: Date.now() });
 
       // THEN: updateNode should NOT be called (early return due to falsy nodeId)
       expect(updateNode).not.toHaveBeenCalled();
@@ -409,6 +439,7 @@ describe('useCharacterGeneration', () => {
 
     it('handleMutationSuccess calls updateNode when context is valid', () => {
       // GIVEN: updateNode mock and valid context
+      // Use a startedAt in the past (>300ms ago) to avoid setTimeout delay
       const updateNode = vi.fn();
       const mockData = {
         name: 'Zenith',
@@ -420,7 +451,10 @@ describe('useCharacterGeneration', () => {
       const mockVariables = { concept: 'Test', archetype: 'Warrior' };
 
       // WHEN: handleMutationSuccess is called with valid context
-      handleMutationSuccess(updateNode, mockData, mockVariables, { nodeId: 'node-123' });
+      handleMutationSuccess(updateNode, mockData, mockVariables, {
+        nodeId: 'node-123',
+        startedAt: Date.now() - 500, // 500ms ago, so delayMs = 0
+      });
 
       // THEN: updateNode should be called with the correct nodeId
       expect(updateNode).toHaveBeenCalledTimes(1);
@@ -429,11 +463,15 @@ describe('useCharacterGeneration', () => {
 
     it('handleMutationError calls updateNode when context is valid', () => {
       // GIVEN: updateNode mock and valid context
+      // Use a startedAt in the past (>300ms ago) to avoid setTimeout delay
       const updateNode = vi.fn();
       const mockError = new Error('Generation failed');
 
       // WHEN: handleMutationError is called with valid context
-      handleMutationError(updateNode, mockError, { nodeId: 'node-456' });
+      handleMutationError(updateNode, mockError, {
+        nodeId: 'node-456',
+        startedAt: Date.now() - 500, // 500ms ago, so delayMs = 0
+      });
 
       // THEN: updateNode should be called with the correct nodeId
       expect(updateNode).toHaveBeenCalledTimes(1);

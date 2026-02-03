@@ -57,6 +57,18 @@ class TestMarkerValidator:
         violations = []
         lines = content.split("\n")
 
+        # Check for module-level pytestmark
+        module_markers = set()
+        for line in lines:
+            # Match: pytestmark = pytest.mark.unit (or [pytest.mark.unit, ...])
+            if "pytestmark" in line and "pytest.mark." in line:
+                for marker in self.PYRAMID_MARKERS:
+                    if f"pytest.mark.{marker}" in line:
+                        module_markers.add(marker)
+            # Stop looking after class definitions start
+            if line.startswith("class "):
+                break
+
         # Track test functions and their markers
         current_class = None
         class_markers = set()
@@ -90,8 +102,8 @@ class TestMarkerValidator:
                 test_name = test_match.group(1)
                 self.total_tests_checked += 1
 
-                # Check if test has pyramid marker (either function-level or class-level)
-                effective_markers = pending_markers | class_markers
+                # Check if test has pyramid marker (function-level, class-level, or module-level)
+                effective_markers = pending_markers | class_markers | module_markers
 
                 if not effective_markers:
                     location = (

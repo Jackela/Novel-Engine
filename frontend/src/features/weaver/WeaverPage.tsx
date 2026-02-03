@@ -5,18 +5,40 @@ import { useCallback, useState } from 'react';
 import { WeaverLayout } from '@/layouts/WeaverLayout';
 import { WeaverCanvas } from './WeaverCanvas';
 import { CharacterGenerationDialog } from './components/CharacterGenerationDialog';
+import { SceneGenerationDialog } from './components/SceneGenerationDialog';
 import { WeaverToolbar } from './components/WeaverToolbar';
-import { useWeaverAddNode, useWeaverStore, type WeaverNode } from './store/weaverStore';
+import {
+  useWeaverAddNode,
+  useWeaverStore,
+  useSelectedCharacterNode,
+  type WeaverNode,
+} from './store/weaverStore';
+import type { CharacterNodeData } from './components/nodes/CharacterNode';
 
 export default function WeaverPage() {
   const addNode = useWeaverAddNode();
   const [generationOpen, setGenerationOpen] = useState(false);
+  const [sceneGenerationOpen, setSceneGenerationOpen] = useState(false);
+  const selectedCharacterNode = useSelectedCharacterNode();
+
+  const selectedCharacterName = selectedCharacterNode
+    ? (selectedCharacterNode.data as CharacterNodeData).name
+    : undefined;
+
+  const getNextNodePosition = useCallback(() => {
+    const { nodes } = useWeaverStore.getState();
+    const index = nodes.length;
+    const columns = 3;
+    const col = index % columns;
+    const row = Math.floor(index / columns);
+    return { x: 160 + col * 320, y: 120 + row * 240 };
+  }, []);
 
   const handleAddCharacter = useCallback(() => {
     const newNode: WeaverNode = {
       id: `char-${Date.now()}`,
       type: 'character',
-      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      position: getNextNodePosition(),
       data: {
         name: 'New Character',
         role: 'Supporting',
@@ -25,13 +47,13 @@ export default function WeaverPage() {
       },
     };
     addNode(newNode);
-  }, [addNode]);
+  }, [addNode, getNextNodePosition]);
 
   const handleAddEvent = useCallback(() => {
     const newNode: WeaverNode = {
       id: `event-${Date.now()}`,
       type: 'event',
-      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      position: getNextNodePosition(),
       data: {
         title: 'New Event',
         type: 'action',
@@ -40,13 +62,13 @@ export default function WeaverPage() {
       },
     };
     addNode(newNode);
-  }, [addNode]);
+  }, [addNode, getNextNodePosition]);
 
   const handleAddLocation = useCallback(() => {
     const newNode: WeaverNode = {
       id: `loc-${Date.now()}`,
       type: 'location',
-      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      position: getNextNodePosition(),
       data: {
         name: 'New Location',
         type: 'other',
@@ -55,7 +77,7 @@ export default function WeaverPage() {
       },
     };
     addNode(newNode);
-  }, [addNode]);
+  }, [addNode, getNextNodePosition]);
 
   const handleSave = useCallback(() => {
     const { nodes, edges } = useWeaverStore.getState();
@@ -65,21 +87,31 @@ export default function WeaverPage() {
 
   return (
     <WeaverLayout>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex h-screen flex-col">
         <WeaverToolbar
           onAddCharacter={handleAddCharacter}
           onAddEvent={handleAddEvent}
           onAddLocation={handleAddLocation}
           onGenerateCharacter={() => setGenerationOpen(true)}
+          onGenerateScene={() => setSceneGenerationOpen(true)}
           onSave={handleSave}
+          hasSelectedCharacter={selectedCharacterNode !== null}
         />
-        <div className="flex-1">
-          <WeaverCanvas />
+        <div className="relative flex-1">
+          <div className="absolute inset-0">
+            <WeaverCanvas />
+          </div>
         </div>
       </div>
       <CharacterGenerationDialog
         open={generationOpen}
         onOpenChange={setGenerationOpen}
+      />
+      <SceneGenerationDialog
+        open={sceneGenerationOpen}
+        onOpenChange={setSceneGenerationOpen}
+        selectedCharacterNodeId={selectedCharacterNode?.id ?? null}
+        selectedCharacterName={selectedCharacterName}
       />
     </WeaverLayout>
   );

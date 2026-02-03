@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 
 import App from './App';
 import './styles/tailwind.css';
+import './styles/editor.css';
 
 const rootEl = document.getElementById('root');
 
@@ -29,6 +30,12 @@ const prepareApp = async () => {
     } catch (error) {
       console.warn('MSW worker failed to start. Continuing without mocks.', error);
     }
+  }
+
+  if (import.meta.env.DEV && import.meta.env.VITE_E2E_EXPOSE_WEAVER === 'true') {
+    const { exposeDecisionStoreForE2E } =
+      await import('./features/decision/exposeDecisionStore');
+    exposeDecisionStoreForE2E();
   }
 
   renderApp();

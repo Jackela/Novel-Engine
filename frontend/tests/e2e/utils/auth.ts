@@ -6,6 +6,8 @@ export const resetAuthState = async (page: Page) => {
     try {
       localStorage.clear();
       sessionStorage.clear();
+      localStorage.setItem('e2e_bypass_auth', '0');
+      localStorage.removeItem('e2e_preserve_auth');
     } catch {
       // ignore storage errors on opaque origins
     }
@@ -50,6 +52,7 @@ export const activateGuestSession = async (page: Page) => {
       localStorage.setItem('novelengine_guest_session', '1');
       sessionStorage.setItem('novelengine_guest_session', '1');
       localStorage.setItem('e2e_bypass_auth', '1');
+      localStorage.setItem('e2e_preserve_auth', '1');
     } catch {
       // ignore storage errors on opaque origins
     }

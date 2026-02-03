@@ -171,6 +171,11 @@ class CharacterProfile:
     title: Optional[str] = None
     affiliation: Optional[str] = None
     languages: Optional[List[str]] = None
+    # New fields for WORLD-001: Enhanced character profiles
+    aliases: Optional[List[str]] = None
+    archetype: Optional[str] = None
+    traits: Optional[List[str]] = None
+    appearance: Optional[str] = None
 
     def __post_init__(self):
         """Validate character profile data."""

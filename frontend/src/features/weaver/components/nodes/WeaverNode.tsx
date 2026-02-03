@@ -3,7 +3,7 @@
  */
 import type { ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { Card } from '@/shared/components/ui';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { WeaverNodeStatus } from '../../types';
 import { nodeStatusClasses, resolveNodeStatus } from './nodeStyles';

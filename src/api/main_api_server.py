@@ -372,37 +372,7 @@ def create_app() -> FastAPI:
     # Add middleware (order matters - last added = first executed)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # Define and add a raw ASGI middleware to ensure headers even on early errors
-    class RawHeaderASGIMiddleware:
-        def __init__(self, app, headers: Dict[str, str]):
-            self.app = app
-            self._headers = headers
-
-        async def __call__(self, scope, receive, send):
-            async def send_wrapper(message):
-                if message.get("type") == "http.response.start":
-                    hdrs = message.setdefault("headers", [])
-                    existing = {k.decode().lower() for k, _ in hdrs}
-                    for k, v in self._headers.items():
-                        if k.lower() not in existing:
-                            hdrs.append((k.encode("latin-1"), v.encode("latin-1")))
-                await send(message)
-
-            try:
-                await self.app(scope, receive, send_wrapper)
-            except Exception:
-                start = {
-                    "type": "http.response.start",
-                    "status": 400,
-                    "headers": [
-                        (b"x-content-type-options", b"nosniff"),
-                        (b"x-frame-options", b"DENY"),
-                        (b"content-type", b"text/plain; charset=utf-8"),
-                    ],
-                }
-                body = {"type": "http.response.body", "body": b"Bad Request"}
-                await send(start)
-                await send(body)
+    # Raw ASGI header guard intentionally omitted until we re-enable it.
 
     # Add ASGI-level header guard last so it executes first among middlewares
     # app.add_middleware(
@@ -762,10 +732,25 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.events import router as events_router
     from src.api.routers.generation import router as generation_router
     from src.api.routers.guest import router as guest_router
+    from src.api.routers.narratives import router as narratives_router
+    from src.api.routers.scene import router as scene_router
     from src.api.routers.health import router as health_router
     from src.api.routers.meta import router as meta_router
     from src.api.routers.orchestration import router as orchestration_router
     from src.api.routers.simulations import router as simulations_router
+    from src.api.routers.world import router as world_gen_router
+    from src.api.routers.structure import router as structure_router
+    from src.api.routers.narrative_generation import router as narrative_generation_router
+    from src.api.routers.relationships import router as relationships_router
+    from src.api.routers.items import router as items_router
+    from src.api.routers.items import character_inventory_router
+    from src.api.routers.lore import router as lore_router
+    from src.api.routers.memories import router as memories_router
+    from src.api.routers.goals import router as goals_router
+    from src.api.routers.world_rules import router as world_rules_router
+    from src.api.routers.dialogue import router as dialogue_router
+    from src.api.routers.social import router as social_router
+    from src.api.routers.factions import router as factions_router
 
     # Register all routers with and without /api prefix for backward compatibility
     # Order matters: register without prefix first, then with prefix
@@ -776,10 +761,25 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(events_router)
     app.include_router(generation_router)
     app.include_router(guest_router)
+    app.include_router(narratives_router)
+    app.include_router(scene_router)
     app.include_router(health_router)
     app.include_router(meta_router)
     app.include_router(orchestration_router)
     app.include_router(simulations_router)
+    app.include_router(world_gen_router)
+    app.include_router(structure_router)
+    app.include_router(narrative_generation_router)
+    app.include_router(relationships_router)
+    app.include_router(items_router)
+    app.include_router(character_inventory_router)
+    app.include_router(lore_router)
+    app.include_router(memories_router)
+    app.include_router(goals_router)
+    app.include_router(world_rules_router)
+    app.include_router(dialogue_router)
+    app.include_router(social_router)
+    app.include_router(factions_router)
 
     # Register with /api prefix
     app.include_router(auth_router, prefix="/api")
@@ -789,10 +789,25 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(events_router, prefix="/api")
     app.include_router(generation_router, prefix="/api")
     app.include_router(guest_router, prefix="/api")
+    app.include_router(narratives_router, prefix="/api")
+    app.include_router(scene_router, prefix="/api")
     app.include_router(health_router, prefix="/api")
     app.include_router(meta_router, prefix="/api")
     app.include_router(orchestration_router, prefix="/api")
     app.include_router(simulations_router, prefix="/api")
+    app.include_router(world_gen_router, prefix="/api")
+    app.include_router(structure_router, prefix="/api")
+    app.include_router(narrative_generation_router, prefix="/api")
+    app.include_router(relationships_router, prefix="/api")
+    app.include_router(items_router, prefix="/api")
+    app.include_router(character_inventory_router, prefix="/api")
+    app.include_router(lore_router, prefix="/api")
+    app.include_router(memories_router, prefix="/api")
+    app.include_router(goals_router, prefix="/api")
+    app.include_router(world_rules_router, prefix="/api")
+    app.include_router(dialogue_router, prefix="/api")
+    app.include_router(social_router, prefix="/api")
+    app.include_router(factions_router, prefix="/api")
 
     @app.get("/", response_model=dict)
     async def root_index():

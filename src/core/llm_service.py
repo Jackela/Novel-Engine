@@ -417,7 +417,7 @@ class UnifiedLLMService:
 
     def _generate_request_id(self, request: LLMRequest) -> str:
         """Generate unique request ID."""
-        prompt_hash = hashlib.md5(request.prompt.encode()).hexdigest()[:8]
+        prompt_hash = hashlib.md5(request.prompt.encode(), usedforsecurity=False).hexdigest()[:8]  # nosec B324
         timestamp = int(time.time() * 1000) % 10000
         return f"{request.requester}_{prompt_hash}_{timestamp}"
 

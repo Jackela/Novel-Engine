@@ -3,13 +3,79 @@ import type { CharacterDetail, CharacterSummary } from '@/shared/types/character
 import {
   CharactersListResponseSchema,
   OrchestrationStartRequestSchema,
+  type RelationshipResponse,
+  type WorldLocation,
+  type ItemResponse,
+  type LoreEntryResponse,
+  type WorldRuleResponse,
 } from '@/types/schemas';
 
 const API_PREFIX = '/api';
 
 const nowIso = () => new Date().toISOString();
 
-const characterSummaries: CharacterSummary[] = [
+const CHARACTER_STORAGE_KEY = 'msw.characters.v1';
+
+type PersistedCharacters = {
+  summaries: CharacterSummary[];
+  details: CharacterDetail[];
+};
+
+const canUseStorage = () =>
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+const loadPersistedCharacters = (): PersistedCharacters | null => {
+  if (!canUseStorage()) {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(CHARACTER_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as Partial<PersistedCharacters>;
+    const summaries = Array.isArray(parsed?.summaries) ? parsed.summaries : [];
+    const details = Array.isArray(parsed?.details) ? parsed.details : [];
+    if (summaries.length === 0 && details.length === 0) {
+      return null;
+    }
+    return { summaries, details };
+  } catch {
+    return null;
+  }
+};
+
+const mergeCharacterSummaries = (
+  target: CharacterSummary[],
+  incoming: CharacterSummary[]
+) => {
+  const existing = new Set(target.map((item) => item.id));
+  for (const entry of incoming) {
+    if (!existing.has(entry.id)) {
+      target.push(entry);
+    }
+  }
+};
+
+const buildNarrativeSse = (chunks: string[], metadata?: Record<string, unknown>) => {
+  let body = '';
+  for (const chunk of chunks) {
+    body += `data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`;
+  }
+  body += `data: ${JSON.stringify({
+    type: 'done',
+    content: '',
+    metadata: metadata ?? {
+      total_chunks: chunks.length,
+      total_characters: chunks.join('').length,
+      generation_time_ms: 1200,
+      model_used: 'mock-llm-v1',
+    },
+  })}\n\n`;
+  return body;
+};
+
+const defaultCharacterSummaries: CharacterSummary[] = [
   {
     id: 'aria-shadowbane',
     agent_id: 'aria-shadowbane',
@@ -18,6 +84,11 @@ const characterSummaries: CharacterSummary[] = [
     type: 'protagonist',
     updated_at: nowIso(),
     workspace_id: 'guest-workspace',
+    aliases: ['The Shadow'],
+    archetype: 'Tactician',
+    traits: ['Strategic', 'Resilient', 'Decisive'],
+    appearance: 'Tall with dark hair and piercing eyes',
+    faction_id: 'faction-shadowbane-order',
   },
   {
     id: 'merchant-aldric',
@@ -27,10 +98,15 @@ const characterSummaries: CharacterSummary[] = [
     type: 'npc',
     updated_at: nowIso(),
     workspace_id: 'guest-workspace',
+    aliases: [],
+    archetype: 'Merchant',
+    traits: ['Shrewd', 'Friendly'],
+    appearance: null,
+    faction_id: 'faction-merchants-alliance',
   },
 ];
 
-const characterDetails: CharacterDetail[] = [
+const defaultCharacterDetails: CharacterDetail[] = [
   {
     agent_id: 'aria-shadowbane',
     character_id: 'aria-shadowbane',
@@ -46,6 +122,78 @@ const characterDetails: CharacterDetail[] = [
     inventory: [],
     metadata: {},
     structured_data: {},
+    memories: [
+      {
+        memory_id: 'mem-001',
+        content: 'The day I first saw the fractured realm from Meridian Station.',
+        importance: 9,
+        tags: ['origin', 'awakening'],
+        timestamp: '2024-01-15T10:30:00Z',
+        is_core_memory: true,
+        importance_level: 'core',
+      },
+      {
+        memory_id: 'mem-002',
+        content: 'Meeting Aldric for the first time at the Trade Hub.',
+        importance: 6,
+        tags: ['relationship', 'ally'],
+        timestamp: '2024-02-20T14:00:00Z',
+        is_core_memory: false,
+        importance_level: 'moderate',
+      },
+    ],
+    goals: [
+      {
+        goal_id: 'goal-001',
+        description: 'Unite the fractured territories under a single banner',
+        status: 'ACTIVE',
+        urgency: 'HIGH',
+        created_at: '2024-01-20T08:00:00Z',
+        completed_at: null,
+        is_active: true,
+        is_urgent: true,
+      },
+      {
+        goal_id: 'goal-002',
+        description: 'Discover the truth about the Sundering War',
+        status: 'ACTIVE',
+        urgency: 'MEDIUM',
+        created_at: '2024-02-01T10:00:00Z',
+        completed_at: null,
+        is_active: true,
+        is_urgent: false,
+      },
+      {
+        goal_id: 'goal-003',
+        description: 'Find a reliable source of information in each major city',
+        status: 'COMPLETED',
+        urgency: 'LOW',
+        created_at: '2024-01-05T12:00:00Z',
+        completed_at: '2024-02-15T16:30:00Z',
+        is_active: false,
+        is_urgent: false,
+      },
+      {
+        goal_id: 'goal-004',
+        description: 'Defeat Lord Vexar in open combat',
+        status: 'ACTIVE',
+        urgency: 'CRITICAL',
+        created_at: '2024-03-01T09:00:00Z',
+        completed_at: null,
+        is_active: true,
+        is_urgent: true,
+      },
+      {
+        goal_id: 'goal-005',
+        description: 'Negotiate peace with the Mountain Clans',
+        status: 'FAILED',
+        urgency: 'HIGH',
+        created_at: '2024-01-10T14:00:00Z',
+        completed_at: '2024-02-28T11:00:00Z',
+        is_active: false,
+        is_urgent: false,
+      },
+    ],
   },
   {
     agent_id: 'merchant-aldric',
@@ -62,6 +210,516 @@ const characterDetails: CharacterDetail[] = [
     inventory: [],
     metadata: {},
     structured_data: {},
+    memories: [],
+    goals: [
+      {
+        goal_id: 'goal-101',
+        description: 'Establish trade routes to all major cities',
+        status: 'ACTIVE',
+        urgency: 'MEDIUM',
+        created_at: '2024-01-15T09:00:00Z',
+        completed_at: null,
+        is_active: true,
+        is_urgent: false,
+      },
+      {
+        goal_id: 'goal-102',
+        description: 'Accumulate enough wealth to buy a seat on the Merchant Council',
+        status: 'ACTIVE',
+        urgency: 'LOW',
+        created_at: '2024-01-01T08:00:00Z',
+        completed_at: null,
+        is_active: true,
+        is_urgent: false,
+      },
+    ],
+  },
+];
+
+const persistedCharacters = loadPersistedCharacters();
+let characterSummaries: CharacterSummary[] = persistedCharacters?.summaries ?? [
+  ...defaultCharacterSummaries,
+];
+let characterDetails: CharacterDetail[] = persistedCharacters?.details ?? [
+  ...defaultCharacterDetails,
+];
+
+const persistCharacters = () => {
+  if (!canUseStorage()) {
+    return;
+  }
+  try {
+    window.localStorage.setItem(
+      CHARACTER_STORAGE_KEY,
+      JSON.stringify({
+        summaries: characterSummaries,
+        details: characterDetails,
+      })
+    );
+  } catch {
+    // ignore persistence failures in test environments
+  }
+};
+
+// Mock relationships for the graph visualization
+const mockRelationships: RelationshipResponse[] = [
+  {
+    id: 'rel-001',
+    source_id: 'aria-shadowbane',
+    source_type: 'character',
+    target_id: 'merchant-aldric',
+    target_type: 'character',
+    relationship_type: 'ally',
+    description: 'Trusted business partner and information source',
+    strength: 75,
+    is_active: true,
+    trust: 80,
+    romance: 0,
+    interaction_history: [],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rel-002',
+    source_id: 'aria-shadowbane',
+    source_type: 'character',
+    target_id: 'lord-vexar',
+    target_type: 'character',
+    relationship_type: 'enemy',
+    description: 'Long-standing rivalry over territorial control',
+    strength: 90,
+    is_active: true,
+    trust: 5,
+    romance: 0,
+    interaction_history: [],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rel-003',
+    source_id: 'merchant-aldric',
+    source_type: 'character',
+    target_id: 'lord-vexar',
+    target_type: 'character',
+    relationship_type: 'rival',
+    description: 'Competing for trade route dominance',
+    strength: 60,
+    is_active: true,
+    trust: 25,
+    romance: 0,
+    interaction_history: [],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rel-004',
+    source_id: 'finn-bard',
+    source_type: 'character',
+    target_id: 'aria-shadowbane',
+    target_type: 'character',
+    relationship_type: 'mentor',
+    description: 'Trained Aria in diplomacy and negotiation',
+    strength: 85,
+    is_active: true,
+    trust: 95,
+    romance: 0,
+    interaction_history: [],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rel-005',
+    source_id: 'finn-bard',
+    source_type: 'character',
+    target_id: 'merchant-aldric',
+    target_type: 'character',
+    relationship_type: 'family',
+    description: 'Distant cousins through maternal lineage',
+    strength: 50,
+    is_active: true,
+    trust: 70,
+    romance: 0,
+    interaction_history: [],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+];
+
+// Add additional mock characters for the graph
+const additionalCharacterSummaries: CharacterSummary[] = [
+  {
+    id: 'lord-vexar',
+    agent_id: 'lord-vexar',
+    name: 'Lord Vexar',
+    status: 'active',
+    type: 'antagonist',
+    updated_at: nowIso(),
+    workspace_id: 'guest-workspace',
+    aliases: ['The Dark Prince'],
+    archetype: 'Antagonist',
+    traits: ['Cunning', 'Ambitious', 'Ruthless'],
+    appearance: 'Pale complexion with silver hair and cold grey eyes',
+    faction_id: 'faction-vexars-dominion',
+  },
+  {
+    id: 'finn-bard',
+    agent_id: 'finn-bard',
+    name: 'Finn the Bard',
+    status: 'active',
+    type: 'npc',
+    updated_at: nowIso(),
+    workspace_id: 'guest-workspace',
+    aliases: ['The Wandering Minstrel'],
+    archetype: 'Mentor',
+    traits: ['Wise', 'Musical', 'Mysterious'],
+    appearance: 'An elderly man with a warm smile and a worn lute',
+    faction_id: 'faction-merchants-alliance',
+  },
+];
+
+// Merge additional characters into the main array
+mergeCharacterSummaries(characterSummaries, additionalCharacterSummaries);
+
+// Mock locations with 3-level hierarchy for LocationTree testing
+const mockLocations: WorldLocation[] = [
+  // Root: Continent
+  {
+    id: 'loc-continent-eldara',
+    name: 'Eldara Continent',
+    description: 'A vast landmass spanning temperate to arctic regions.',
+    location_type: 'continent',
+    population: 15000000,
+    controlling_faction_id: null,
+    notable_features: ['Great Mountain Range', 'Endless Forests'],
+    danger_level: 'low',
+    parent_location_id: null,
+    child_location_ids: ['loc-region-heartlands', 'loc-region-frostpeaks'],
+  },
+  // Level 2: Regions
+  {
+    id: 'loc-region-heartlands',
+    name: 'The Heartlands',
+    description: 'Fertile plains with numerous settlements.',
+    location_type: 'region',
+    population: 5000000,
+    controlling_faction_id: null,
+    notable_features: ['River Valley', 'Golden Fields'],
+    danger_level: 'low',
+    parent_location_id: 'loc-continent-eldara',
+    child_location_ids: ['loc-city-meridian', 'loc-town-crossroads'],
+  },
+  {
+    id: 'loc-region-frostpeaks',
+    name: 'Frostpeak Mountains',
+    description: 'Treacherous mountain range with ancient ruins.',
+    location_type: 'mountain',
+    population: 50000,
+    controlling_faction_id: null,
+    notable_features: ['Frozen Waterfalls', 'Ancient Dwarf Mines'],
+    danger_level: 'high',
+    parent_location_id: 'loc-continent-eldara',
+    child_location_ids: ['loc-fortress-ironhold', 'loc-dungeon-depths'],
+  },
+  // Level 3: Cities/Towns/Fortresses
+  {
+    id: 'loc-city-meridian',
+    name: 'Meridian City',
+    description: 'The capital and largest trading hub.',
+    location_type: 'capital',
+    population: 500000,
+    controlling_faction_id: null,
+    notable_features: ['Grand Market', 'Royal Palace', 'Mage Academy'],
+    danger_level: 'low',
+    parent_location_id: 'loc-region-heartlands',
+    child_location_ids: [],
+  },
+  {
+    id: 'loc-town-crossroads',
+    name: 'Crossroads Town',
+    description: 'A bustling town at the junction of major trade routes.',
+    location_type: 'town',
+    population: 15000,
+    controlling_faction_id: null,
+    notable_features: ['Four Winds Inn', 'Weekly Market'],
+    danger_level: 'low',
+    parent_location_id: 'loc-region-heartlands',
+    child_location_ids: [],
+  },
+  {
+    id: 'loc-fortress-ironhold',
+    name: 'Ironhold Fortress',
+    description: 'An ancient dwarven stronghold carved into the mountain.',
+    location_type: 'fortress',
+    population: 5000,
+    controlling_faction_id: null,
+    notable_features: ['Great Forge', 'Deep Mines'],
+    danger_level: 'medium',
+    parent_location_id: 'loc-region-frostpeaks',
+    child_location_ids: [],
+  },
+  {
+    id: 'loc-dungeon-depths',
+    name: 'The Frozen Depths',
+    description: 'A vast underground complex filled with ancient horrors.',
+    location_type: 'dungeon',
+    population: 0,
+    controlling_faction_id: null,
+    notable_features: ['Ice Caverns', 'Lost Treasures'],
+    danger_level: 'extreme',
+    parent_location_id: 'loc-region-frostpeaks',
+    child_location_ids: [],
+  },
+  // Additional standalone location (forest)
+  {
+    id: 'loc-forest-whisper',
+    name: 'Whisperwood Forest',
+    description: 'An ancient forest filled with fey creatures.',
+    location_type: 'forest',
+    population: 1000,
+    controlling_faction_id: null,
+    notable_features: ['Fairy Circles', 'Talking Trees'],
+    danger_level: 'medium',
+    parent_location_id: null,
+    child_location_ids: ['loc-temple-moonlight'],
+  },
+  {
+    id: 'loc-temple-moonlight',
+    name: 'Temple of Moonlight',
+    description: 'A sacred elven temple hidden deep in the forest.',
+    location_type: 'temple',
+    population: 50,
+    controlling_faction_id: null,
+    notable_features: ['Lunar Altar', 'Ancient Library'],
+    danger_level: 'low',
+    parent_location_id: 'loc-forest-whisper',
+    child_location_ids: [],
+  },
+];
+
+// Mock items for inventory testing
+const mockItems: ItemResponse[] = [
+  {
+    id: 'item-001',
+    name: 'Starfall Blade',
+    item_type: 'weapon',
+    description: 'A legendary sword forged from a fallen star.',
+    rarity: 'legendary',
+    weight: 3.5,
+    value: 10000,
+    is_equippable: true,
+    is_consumable: false,
+    effects: ['+20 Attack', 'Glow in darkness'],
+    lore: 'Said to have been wielded by the first king of Eldara.',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-002',
+    name: 'Leather Armor',
+    item_type: 'armor',
+    description: 'Standard leather armor providing basic protection.',
+    rarity: 'common',
+    weight: 8,
+    value: 50,
+    is_equippable: true,
+    is_consumable: false,
+    effects: ['+5 Defense'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-003',
+    name: 'Health Potion',
+    item_type: 'consumable',
+    description: 'Restores 50 health points when consumed.',
+    rarity: 'common',
+    weight: 0.5,
+    value: 25,
+    is_equippable: false,
+    is_consumable: true,
+    effects: ['Restore 50 HP'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-004',
+    name: 'Moonstone Amulet',
+    item_type: 'key_item',
+    description: 'An amulet required to enter the Temple of Moonlight.',
+    rarity: 'rare',
+    weight: 0.2,
+    value: null,
+    is_equippable: false,
+    is_consumable: false,
+    effects: [],
+    lore: 'Given only to those deemed worthy by the elven priests.',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-005',
+    name: 'Iron Shield',
+    item_type: 'armor',
+    description: 'A sturdy iron shield.',
+    rarity: 'uncommon',
+    weight: 12,
+    value: 150,
+    is_equippable: true,
+    is_consumable: false,
+    effects: ['+10 Defense', 'Block chance +5%'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-006',
+    name: 'Rusty Dagger',
+    item_type: 'weapon',
+    description: 'An old rusty dagger. Not very effective.',
+    rarity: 'common',
+    weight: 0.3,
+    value: 5,
+    is_equippable: true,
+    is_consumable: false,
+    effects: ['+2 Attack'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-007',
+    name: 'Mana Crystal',
+    item_type: 'consumable',
+    description: 'Restores 30 mana points when consumed.',
+    rarity: 'uncommon',
+    weight: 0.3,
+    value: 40,
+    is_equippable: false,
+    is_consumable: true,
+    effects: ['Restore 30 MP'],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'item-008',
+    name: "Traveler's Pack",
+    item_type: 'misc',
+    description: 'A simple backpack for carrying supplies.',
+    rarity: 'common',
+    weight: 1,
+    value: 10,
+    is_equippable: false,
+    is_consumable: false,
+    effects: [],
+    lore: '',
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+];
+
+// Track which items are in which character's inventory
+const characterInventories: Record<string, string[]> = {
+  'aria-shadowbane': ['item-001', 'item-004'],
+  'merchant-aldric': ['item-002', 'item-003', 'item-008'],
+};
+
+// Mock lore entries for Wiki Dashboard
+const mockLoreEntries: LoreEntryResponse[] = [
+  {
+    id: 'lore-001',
+    title: 'The Sundering War',
+    content:
+      'A devastating conflict that split the continent of Eldara into warring kingdoms. The war lasted for three centuries and forever changed the political landscape.',
+    category: 'history',
+    tags: ['war', 'eldara', 'ancient'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'lore-002',
+    title: 'Elven Moonweaving',
+    content:
+      'The ancient art of channeling lunar energy into protective wards and healing magic. Only practiced by elven priests at the Temple of Moonlight.',
+    category: 'magic',
+    tags: ['elven', 'magic', 'healing'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'lore-003',
+    title: 'Dwarven Forgecraft',
+    content:
+      'The secret techniques passed down through generations of dwarven smiths. Ironhold Fortress is home to the greatest masters of this craft.',
+    category: 'technology',
+    tags: ['dwarven', 'smithing', 'ironhold'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'lore-004',
+    title: 'Festival of First Light',
+    content:
+      'An annual celebration marking the end of winter. Communities gather for feasts, dances, and the lighting of the Great Bonfire.',
+    category: 'culture',
+    tags: ['festival', 'tradition', 'celebration'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'lore-005',
+    title: 'The Arcane Compact',
+    content:
+      'A treaty between mortal kingdoms and the fey courts, establishing boundaries and rules of engagement. Breaking this compact invites dire consequences.',
+    category: 'history',
+    tags: ['fey', 'treaty', 'law'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+];
+
+// Mock world rules for the World Rules Editor
+const mockWorldRules: WorldRuleResponse[] = [
+  {
+    id: 'rule-001',
+    name: 'Magic requires stamina',
+    description:
+      "All magical abilities draw from the caster's physical reserves. More powerful spells demand greater stamina expenditure.",
+    consequence: 'Exhaustion and potential unconsciousness if stamina is depleted',
+    exceptions: ['Divine magic from gods', 'Artifacts with stored energy'],
+    category: 'magic',
+    severity: 85,
+    related_rule_ids: ['rule-002'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rule-002',
+    name: 'No teleportation within wards',
+    description:
+      'Magical wards placed around settlements prevent all forms of instantaneous travel, including teleportation, dimension doors, and phase shifting.',
+    consequence: 'Spell failure and magical backlash',
+    exceptions: ['Ward keepers with authorization tokens', 'Emergency royal override'],
+    category: 'magic',
+    severity: 95,
+    related_rule_ids: ['rule-001'],
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  },
+  {
+    id: 'rule-003',
+    name: 'Iron repels the fey',
+    description:
+      'Cold iron causes discomfort and weakening to fey creatures. Direct contact with pure iron causes burning damage.',
+    consequence: 'Fey creatures suffer weakness and pain near iron',
+    exceptions: ['Half-fey with mortal blood', 'Fey who have sworn iron-pacts'],
+    category: 'physics',
+    severity: 100,
+    related_rule_ids: [],
+    created_at: nowIso(),
+    updated_at: nowIso(),
   },
 ];
 
@@ -140,6 +798,8 @@ const buildCharacterDetail = (body: Record<string, unknown>) => {
       inventory: arrayField(body, 'inventory', []),
       metadata: recordField(body, 'metadata', {}),
       structured_data: recordField(body, 'structured_data', {}),
+      memories: [],
+      goals: [],
     } as CharacterDetail,
   };
 };
@@ -221,6 +881,41 @@ export const handlers = [
     });
   }),
 
+  http.post(`${API_PREFIX}/narratives/stream`, async ({ request }) => {
+    const mode = request.headers.get('x-e2e-narrative-mode');
+    const delayMs = Number(request.headers.get('x-e2e-narrative-delay') ?? 0);
+    if (Number.isFinite(delayMs) && delayMs > 0) {
+      await delay(delayMs);
+    }
+
+    if (mode === 'error') {
+      return HttpResponse.json(
+        { detail: 'Narrative generation service unavailable' },
+        { status: 500 }
+      );
+    }
+
+    const chunks = [
+      '## The Beginning\n\n',
+      'The ancient library stretched endlessly before Elena, ',
+      'its towering shelves heavy with forgotten knowledge. ',
+      'In the depths of the ancient forest, ',
+      'where shadows danced with moonlight, ',
+      'a figure emerged from the mist. ',
+      'Her name was whispered among the trees—',
+      'Elara, the last keeper of forgotten memories.',
+    ];
+
+    return new HttpResponse(buildNarrativeSse(chunks), {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+    });
+  }),
+
   http.get(`${API_PREFIX}/characters`, async () => {
     await withLatency();
     return HttpResponse.json(
@@ -250,7 +945,13 @@ export const handlers = [
       type: 'npc',
       updated_at: nowIso(),
       workspace_id: 'guest-workspace',
+      aliases: [],
+      archetype: null,
+      traits: [],
+      appearance: null,
+      faction_id: null,
     });
+    persistCharacters();
     return HttpResponse.json(detail, { status: 201 });
   }),
 
@@ -297,6 +998,7 @@ export const handlers = [
         };
       }
     }
+    persistCharacters();
     return HttpResponse.json(updated);
   }),
 
@@ -311,6 +1013,1185 @@ export const handlers = [
     if (summaryIndex !== -1) {
       characterSummaries.splice(summaryIndex, 1);
     }
+    persistCharacters();
     return HttpResponse.json({ success: true });
+  }),
+
+  // === Relationships API ===
+
+  http.get(`${API_PREFIX}/relationships`, async () => {
+    await withLatency();
+    return HttpResponse.json({
+      relationships: mockRelationships,
+      total: mockRelationships.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/relationships/by-entity/:entityId`, async ({ params }) => {
+    await withLatency();
+    const entityId = params.entityId as string;
+    const filtered = mockRelationships.filter(
+      (r) => r.source_id === entityId || r.target_id === entityId
+    );
+    return HttpResponse.json({
+      relationships: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/relationships/:id`, async ({ params }) => {
+    await withLatency();
+    const relationship = mockRelationships.find((r) => r.id === params.id);
+    if (!relationship) {
+      return HttpResponse.json({ detail: 'Relationship not found' }, { status: 404 });
+    }
+    return HttpResponse.json(relationship);
+  }),
+
+  // === Relationship History Generation (CHAR-034) ===
+  http.post(`${API_PREFIX}/relationships/:id/generate-history`, async ({ params }) => {
+    // Simulate AI processing delay
+    await delay(1500);
+
+    const relationship = mockRelationships.find((r) => r.id === params.id);
+    if (!relationship) {
+      return HttpResponse.json({ detail: 'Relationship not found' }, { status: 404 });
+    }
+
+    // Generate mock backstory based on trust and romance levels
+    const formatName = (id: string) =>
+      id
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+
+    const sourceName = formatName(relationship.source_id);
+    const targetName = formatName(relationship.target_id);
+    const trust = relationship.trust;
+    const romance = relationship.romance;
+
+    let backstoryTemplate: {
+      backstory: string;
+      first_meeting: string;
+      defining_moment: string;
+      current_status: string;
+    };
+
+    // Select backstory template based on trust/romance levels
+    if (trust >= 70 && romance >= 50) {
+      // High trust, romantic
+      backstoryTemplate = {
+        backstory: `${sourceName} and ${targetName} first crossed paths during a tumultuous period in both their lives. What began as a chance encounter quickly evolved into something deeper. Their shared experiences forged a bond of trust that few could understand. Through trials and tribulations, they found in each other a kindred spirit—someone who truly understood the weight of their struggles and the fire of their ambitions.`,
+        first_meeting: `They met at the Trade Hub during the Festival of First Light, when ${sourceName} helped ${targetName} navigate a dangerous confrontation with local bandits.`,
+        defining_moment: `When ${sourceName} risked everything to save ${targetName} from Lord Vexar's machinations, their bond transformed from friendship into something unbreakable.`,
+        current_status: `Now inseparable allies, they face the challenges of the fractured realm together, their trust and affection evident to all who know them.`,
+      };
+    } else if (trust <= 30) {
+      // Low trust - adversarial
+      backstoryTemplate = {
+        backstory: `The history between ${sourceName} and ${targetName} is marked by betrayal and broken promises. Once, there may have been potential for alliance, but a series of unfortunate events shattered any goodwill between them. Now they regard each other with suspicion at best, open hostility at worst. Their paths continue to cross, each encounter adding another layer to their complicated history.`,
+        first_meeting: `They first encountered each other as competitors for the same prize—control of a vital trade route through the Frostpeak Mountains.`,
+        defining_moment: `The betrayal at the Meridian Council, where one's actions cost the other dearly, created an irreparable rift between them.`,
+        current_status: `They maintain a cold, calculated distance, each watching the other for signs of treachery while secretly hoping for an opportunity to settle old scores.`,
+      };
+    } else if (trust >= 50 && romance === 0) {
+      // Neutral trust, no romance - professional
+      backstoryTemplate = {
+        backstory: `${sourceName} and ${targetName} have built their relationship on a foundation of mutual respect and professional necessity. Neither seeks more than what the other can provide—reliable partnership in an unreliable world. They understand each other's capabilities and limitations, making them effective collaborators when circumstances require.`,
+        first_meeting: `Their first interaction was a business transaction at the Crossroads Town market, each recognizing in the other a competent operator in the realm's complex political landscape.`,
+        defining_moment: `A successful joint venture during the chaos of the Sundering War's anniversary demonstrated that they could rely on each other when it mattered most.`,
+        current_status: `They maintain cordial relations, calling upon each other when mutual interests align, always professional but never quite friends.`,
+      };
+    } else {
+      // Default moderate relationship
+      backstoryTemplate = {
+        backstory: `The connection between ${sourceName} and ${targetName} defies simple categorization. They have shared moments of genuine camaraderie and periods of frustrating misunderstanding. Their relationship reflects the complexities of life in the fractured realm—alliances of convenience, moments of genuine connection, and the ever-present uncertainty of tomorrow.`,
+        first_meeting: `They first became aware of each other through mutual acquaintances in the Heartlands, their reputations preceding actual introduction.`,
+        defining_moment: `A shared adventure in the Whisperwood Forest, where they had to rely on each other against unexpected dangers, revealed new dimensions to their relationship.`,
+        current_status: `They navigate their connection day by day, neither fully trusting nor entirely dismissing the other, their future together as uncertain as the realm itself.`,
+      };
+    }
+
+    return HttpResponse.json({
+      backstory: backstoryTemplate.backstory,
+      first_meeting: backstoryTemplate.first_meeting,
+      defining_moment: backstoryTemplate.defining_moment,
+      current_status: backstoryTemplate.current_status,
+      error: null,
+    });
+  }),
+
+  // === Locations API ===
+
+  http.get(`${API_PREFIX}/locations`, async () => {
+    await withLatency();
+    return HttpResponse.json({
+      locations: mockLocations,
+      total: mockLocations.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/locations/:id`, async ({ params }) => {
+    await withLatency();
+    const location = mockLocations.find((l) => l.id === params.id);
+    if (!location) {
+      return HttpResponse.json({ detail: 'Location not found' }, { status: 404 });
+    }
+    return HttpResponse.json(location);
+  }),
+
+  http.get(`${API_PREFIX}/locations/:id/children`, async ({ params }) => {
+    await withLatency();
+    const parentId = params.id as string;
+    const children = mockLocations.filter((l) => l.parent_location_id === parentId);
+    return HttpResponse.json({
+      locations: children,
+      total: children.length,
+    });
+  }),
+
+  // === Items API ===
+
+  http.get(`${API_PREFIX}/items`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const itemType = url.searchParams.get('item_type');
+
+    let filtered = mockItems;
+    if (itemType) {
+      filtered = mockItems.filter((item) => item.item_type === itemType);
+    }
+
+    return HttpResponse.json({
+      items: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/items/:id`, async ({ params }) => {
+    await withLatency();
+    const item = mockItems.find((i) => i.id === params.id);
+    if (!item) {
+      return HttpResponse.json({ detail: 'Item not found' }, { status: 404 });
+    }
+    return HttpResponse.json(item);
+  }),
+
+  // === Character Inventory API ===
+
+  http.get(`${API_PREFIX}/characters/:id/inventory`, async ({ params }) => {
+    await withLatency();
+    const characterId = params.id as string;
+    const inventoryIds = characterInventories[characterId] || [];
+    const items = mockItems.filter((item) => inventoryIds.includes(item.id));
+
+    return HttpResponse.json({
+      items,
+      total: items.length,
+    });
+  }),
+
+  http.post(`${API_PREFIX}/characters/:id/give-item`, async ({ params, request }) => {
+    await withLatency();
+    const characterId = params.id as string;
+    const body = asObject(await request.json().catch(() => ({})));
+    const itemId = stringField(body, 'item_id');
+
+    const item = mockItems.find((i) => i.id === itemId);
+    if (!item) {
+      return HttpResponse.json({ detail: 'Item not found' }, { status: 404 });
+    }
+
+    if (!characterInventories[characterId]) {
+      characterInventories[characterId] = [];
+    }
+
+    if (characterInventories[characterId].includes(itemId)) {
+      return HttpResponse.json(
+        { detail: `Item ${itemId} is already in character's inventory` },
+        { status: 409 }
+      );
+    }
+
+    characterInventories[characterId].push(itemId);
+
+    return HttpResponse.json({
+      success: true,
+      message: `Item '${item.name}' added to character ${characterId}'s inventory`,
+    });
+  }),
+
+  http.delete(
+    `${API_PREFIX}/characters/:id/remove-item/:itemId`,
+    async ({ params }) => {
+      await withLatency();
+      const characterId = params.id as string;
+      const itemId = params.itemId as string;
+
+      if (!characterInventories[characterId]) {
+        return HttpResponse.json({
+          success: false,
+          message: `Character ${characterId} has no inventory`,
+        });
+      }
+
+      const idx = characterInventories[characterId].indexOf(itemId);
+      if (idx === -1) {
+        return HttpResponse.json({
+          success: false,
+          message: `Item ${itemId} not in character's inventory`,
+        });
+      }
+
+      characterInventories[characterId].splice(idx, 1);
+
+      return HttpResponse.json({
+        success: true,
+        message: `Item ${itemId} removed from character ${characterId}'s inventory`,
+      });
+    }
+  ),
+
+  // === Lore API ===
+
+  http.get(`${API_PREFIX}/lore`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const category = url.searchParams.get('category');
+
+    let filtered = mockLoreEntries;
+    if (category) {
+      filtered = mockLoreEntries.filter((entry) => entry.category === category);
+    }
+
+    return HttpResponse.json({
+      entries: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/lore/search`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q')?.toLowerCase() || '';
+    const tags = url.searchParams.get('tags')?.split(',').filter(Boolean) || [];
+    const category = url.searchParams.get('category');
+
+    let filtered = mockLoreEntries;
+
+    if (query) {
+      filtered = filtered.filter(
+        (entry) =>
+          entry.title.toLowerCase().includes(query) ||
+          entry.content.toLowerCase().includes(query)
+      );
+    }
+
+    if (tags.length > 0) {
+      filtered = filtered.filter((entry) =>
+        tags.some((tag) => entry.tags.includes(tag))
+      );
+    }
+
+    if (category) {
+      filtered = filtered.filter((entry) => entry.category === category);
+    }
+
+    return HttpResponse.json({
+      entries: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/lore/:id`, async ({ params }) => {
+    await withLatency();
+    const entry = mockLoreEntries.find((e) => e.id === params.id);
+    if (!entry) {
+      return HttpResponse.json({ detail: 'Lore entry not found' }, { status: 404 });
+    }
+    return HttpResponse.json(entry);
+  }),
+
+  // === Generation API ===
+
+  http.post(`${API_PREFIX}/generation/character-profile`, async ({ request }) => {
+    // Simulate LLM processing delay
+    await delay(1500);
+
+    const body = asObject(await request.json().catch(() => ({})));
+    const name = stringField(body, 'name', 'Unknown Character');
+    const archetype = stringField(body, 'archetype', 'Hero');
+    const context = stringField(body, 'context', '');
+
+    // Mock profile generation based on archetype
+    const archetypeKey = archetype.toLowerCase();
+    const templates: Record<
+      string,
+      {
+        aliases: string[];
+        traits: string[];
+        appearance: string;
+        backstory: string;
+        motivations: string[];
+        quirks: string[];
+      }
+    > = {
+      hero: {
+        aliases: ['The Lightbringer', 'Champion of the Dawn'],
+        traits: ['courageous', 'selfless', 'determined', 'honorable'],
+        appearance:
+          'Tall and well-built with confident posture. Eyes gleam with inner resolve. Wears practical armor with subtle heroic embellishments.',
+        backstory:
+          'Rose from humble origins after witnessing injustice firsthand. Trained under a renowned mentor before embarking on their quest.',
+        motivations: ['protect the innocent', 'right past wrongs', 'find redemption'],
+        quirks: ['always helps those in need', 'never breaks a promise'],
+      },
+      villain: {
+        aliases: ['The Dark Tyrant', 'Lord of Shadows'],
+        traits: ['ruthless', 'calculating', 'charismatic', 'ambitious'],
+        appearance:
+          'Imposing figure cloaked in darkness. Sharp features with piercing eyes that seem to see through deception.',
+        backstory:
+          'Once a respected figure, twisted by betrayal and loss. Now seeks to reshape the world according to their vision.',
+        motivations: [
+          'absolute power',
+          'revenge on betrayers',
+          'create order through fear',
+        ],
+        quirks: ['speaks in measured tones', 'collects trophies from fallen foes'],
+      },
+      mentor: {
+        aliases: ['The Sage', 'Keeper of Ancient Ways'],
+        traits: ['wise', 'patient', 'cryptic', 'protective'],
+        appearance:
+          'Weathered features that speak of long experience. Gentle eyes that hold depths of knowledge.',
+        backstory:
+          'Has walked many paths and learned from countless trials. Now seeks to pass on wisdom to the next generation.',
+        motivations: [
+          'guide the worthy',
+          'preserve ancient knowledge',
+          'prevent past mistakes',
+        ],
+        quirks: ['speaks in riddles', 'appears when least expected'],
+      },
+      rogue: {
+        aliases: ['Shadow Dancer', 'The Ghost'],
+        traits: ['cunning', 'charming', 'resourceful', 'independent'],
+        appearance:
+          'Lithe and agile with quick, graceful movements. Unremarkable features that blend into any crowd.',
+        backstory:
+          'Learned to survive on the streets from a young age. Trust is hard-earned, but loyalty once given is absolute.',
+        motivations: ['freedom', 'wealth', 'protect street family'],
+        quirks: ['fidgets with coins', 'always knows the exits'],
+      },
+    };
+
+    const template = templates[archetypeKey] || {
+      aliases: [`${name} the Unknown`, 'The Mysterious One'],
+      traits: ['enigmatic', 'adaptable', 'observant'],
+      appearance:
+        'Average build with nondescript features. Something about them defies easy categorization.',
+      backstory: `Origins shrouded in mystery. ${context || 'Their past remains unknown.'}`,
+      motivations: ['unknown goals', 'hidden agenda'],
+      quirks: ['rarely speaks of the past'],
+    };
+
+    return HttpResponse.json({
+      name,
+      aliases: template.aliases,
+      archetype,
+      traits: template.traits,
+      appearance: template.appearance,
+      backstory: template.backstory,
+      motivations: template.motivations,
+      quirks: template.quirks,
+    });
+  }),
+
+  // === World Rules API ===
+
+  http.get(`${API_PREFIX}/world-rules`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const category = url.searchParams.get('category');
+    const minSeverity = url.searchParams.get('min_severity');
+    const maxSeverity = url.searchParams.get('max_severity');
+
+    let filtered = mockWorldRules;
+
+    if (category) {
+      filtered = filtered.filter((rule) => rule.category === category);
+    }
+
+    if (minSeverity) {
+      const min = parseInt(minSeverity, 10);
+      filtered = filtered.filter((rule) => rule.severity >= min);
+    }
+
+    if (maxSeverity) {
+      const max = parseInt(maxSeverity, 10);
+      filtered = filtered.filter((rule) => rule.severity <= max);
+    }
+
+    return HttpResponse.json({
+      rules: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/world-rules/search`, async ({ request }) => {
+    await withLatency();
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q')?.toLowerCase() || '';
+    const category = url.searchParams.get('category');
+
+    let filtered = mockWorldRules;
+
+    if (query) {
+      filtered = filtered.filter((rule) => rule.name.toLowerCase().includes(query));
+    }
+
+    if (category) {
+      filtered = filtered.filter((rule) => rule.category === category);
+    }
+
+    return HttpResponse.json({
+      rules: filtered,
+      total: filtered.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/world-rules/absolute`, async () => {
+    await withLatency();
+    const absoluteRules = mockWorldRules.filter((rule) => rule.severity >= 90);
+    return HttpResponse.json({
+      rules: absoluteRules,
+      total: absoluteRules.length,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/world-rules/:id`, async ({ params }) => {
+    await withLatency();
+    const rule = mockWorldRules.find((r) => r.id === params.id);
+    if (!rule) {
+      return HttpResponse.json({ detail: 'World rule not found' }, { status: 404 });
+    }
+    return HttpResponse.json(rule);
+  }),
+
+  http.post(`${API_PREFIX}/world-rules`, async ({ request }) => {
+    await withLatency();
+    const body = asObject(await request.json().catch(() => ({})));
+
+    const name = stringField(body, 'name');
+    if (!name) {
+      return HttpResponse.json({ detail: 'Name is required' }, { status: 400 });
+    }
+
+    const newRule: WorldRuleResponse = {
+      id: `rule-${Date.now()}`,
+      name,
+      description: stringField(body, 'description'),
+      consequence: stringField(body, 'consequence'),
+      exceptions: arrayField(body, 'exceptions', []),
+      category: stringField(body, 'category'),
+      severity: typeof body.severity === 'number' ? body.severity : 50,
+      related_rule_ids: [],
+      created_at: nowIso(),
+      updated_at: nowIso(),
+    };
+
+    mockWorldRules.push(newRule);
+    return HttpResponse.json(newRule, { status: 201 });
+  }),
+
+  http.put(`${API_PREFIX}/world-rules/:id`, async ({ params, request }) => {
+    await withLatency();
+    const ruleIndex = mockWorldRules.findIndex((r) => r.id === params.id);
+    if (ruleIndex === -1) {
+      return HttpResponse.json({ detail: 'World rule not found' }, { status: 404 });
+    }
+
+    const body = asObject(await request.json().catch(() => ({})));
+    const existingRule = mockWorldRules[ruleIndex];
+    if (!existingRule) {
+      return HttpResponse.json({ detail: 'World rule not found' }, { status: 404 });
+    }
+
+    const updatedRule: WorldRuleResponse = {
+      ...existingRule,
+      name: 'name' in body ? stringField(body, 'name') : existingRule.name,
+      description:
+        'description' in body
+          ? stringField(body, 'description')
+          : existingRule.description,
+      consequence:
+        'consequence' in body
+          ? stringField(body, 'consequence')
+          : existingRule.consequence,
+      exceptions:
+        'exceptions' in body
+          ? arrayField(body, 'exceptions', [])
+          : existingRule.exceptions,
+      category:
+        'category' in body ? stringField(body, 'category') : existingRule.category,
+      severity:
+        'severity' in body && typeof body.severity === 'number'
+          ? body.severity
+          : existingRule.severity,
+      updated_at: nowIso(),
+    };
+
+    mockWorldRules[ruleIndex] = updatedRule;
+    return HttpResponse.json(updatedRule);
+  }),
+
+  http.delete(`${API_PREFIX}/world-rules/:id`, async ({ params }) => {
+    await withLatency();
+    const ruleIndex = mockWorldRules.findIndex((r) => r.id === params.id);
+    if (ruleIndex === -1) {
+      return HttpResponse.json({ detail: 'World rule not found' }, { status: 404 });
+    }
+
+    mockWorldRules.splice(ruleIndex, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // === Dialogue Generation (CHAR-028) ===
+  http.post(`${API_PREFIX}/dialogue/generate`, async ({ request }) => {
+    await withLatency();
+    const body = asObject(await request.json().catch(() => ({})));
+
+    const characterId = stringField(body, 'character_id');
+    const context = stringField(body, 'context');
+    const mood = stringField(body, 'mood');
+
+    if (!characterId || !context) {
+      return HttpResponse.json(
+        { detail: 'character_id and context are required' },
+        { status: 400 }
+      );
+    }
+
+    // Generate mock dialogue based on mood and context
+    const dialogueResponses: Record<
+      string,
+      { dialogue: string; tone: string; thought: string; body: string }
+    > = {
+      angry: {
+        dialogue: "Don't test my patience. I've dealt with far worse than this.",
+        tone: 'threatening',
+        thought: 'This is beneath me, but I must maintain composure.',
+        body: 'clenches fist, jaw tightens',
+      },
+      happy: {
+        dialogue: 'What a wonderful surprise! This day just keeps getting better.',
+        tone: 'enthusiastic',
+        thought: "I should savor this moment - they're rare enough.",
+        body: 'eyes brighten, slight smile appears',
+      },
+      sad: {
+        dialogue: 'I... I suppose that makes sense. Things rarely go the way we hope.',
+        tone: 'melancholic',
+        thought: 'Another disappointment. But I expected as much.',
+        body: 'shoulders slump slightly, gaze drops',
+      },
+      fearful: {
+        dialogue: 'We should... we should proceed carefully. Something feels wrong.',
+        tone: 'nervous',
+        thought: 'Every instinct tells me to run.',
+        body: 'eyes dart around, steps back slightly',
+      },
+      cautious: {
+        dialogue: "I've seen deals like this before. What's the catch?",
+        tone: 'suspicious',
+        thought: "Nothing is ever this simple. There's always a price.",
+        body: 'narrows eyes, crosses arms',
+      },
+      excited: {
+        dialogue: "Finally! I've been waiting for something like this!",
+        tone: 'eager',
+        thought: 'This could change everything.',
+        body: 'leans forward, eyes wide with anticipation',
+      },
+      default: {
+        dialogue: 'Interesting. Tell me more about what you have in mind.',
+        tone: 'neutral',
+        thought: "Let's see where this leads before committing.",
+        body: 'maintains neutral expression, tilts head slightly',
+      },
+    };
+
+    const responseKey = mood || 'default';
+    const response = dialogueResponses[responseKey] ?? dialogueResponses['default'];
+
+    return HttpResponse.json({
+      dialogue: response?.dialogue ?? '...',
+      tone: response?.tone ?? 'neutral',
+      internal_thought: response?.thought ?? null,
+      body_language: response?.body ?? null,
+      character_id: characterId,
+      error: null,
+    });
+  }),
+
+  // === Social Network Analysis (CHAR-031/CHAR-032) ===
+  http.get(`${API_PREFIX}/social/analysis`, async () => {
+    await withLatency();
+
+    // Compute social analysis from mock relationships (character-to-character only)
+    const charRelationships = mockRelationships.filter(
+      (r) => r.source_type === 'character' && r.target_type === 'character'
+    );
+
+    // Unique characters in relationships
+    const characterIds = new Set<string>();
+    charRelationships.forEach((r) => {
+      characterIds.add(r.source_id);
+      characterIds.add(r.target_id);
+    });
+
+    // Calculate centrality for each character
+    interface CentralityMetrics {
+      character_id: string;
+      relationship_count: number;
+      positive_count: number;
+      negative_count: number;
+      average_trust: number;
+      average_romance: number;
+      centrality_score: number;
+    }
+
+    const centralities: Record<string, CentralityMetrics> = {};
+    const positiveTypes = ['ally', 'family', 'mentor', 'romantic'];
+    const negativeTypes = ['enemy', 'rival'];
+
+    characterIds.forEach((charId) => {
+      const related = charRelationships.filter(
+        (r) => r.source_id === charId || r.target_id === charId
+      );
+
+      const positiveCount = related.filter((r) =>
+        positiveTypes.includes(r.relationship_type)
+      ).length;
+      const negativeCount = related.filter((r) =>
+        negativeTypes.includes(r.relationship_type)
+      ).length;
+
+      const avgTrust =
+        related.length > 0
+          ? related.reduce((sum, r) => sum + r.trust, 0) / related.length
+          : 0;
+      const avgRomance =
+        related.length > 0
+          ? related.reduce((sum, r) => sum + r.romance, 0) / related.length
+          : 0;
+
+      centralities[charId] = {
+        character_id: charId,
+        relationship_count: related.length,
+        positive_count: positiveCount,
+        negative_count: negativeCount,
+        average_trust: avgTrust,
+        average_romance: avgRomance,
+        centrality_score: 0, // computed after
+      };
+    });
+
+    // Normalize centrality scores (highest relationship count = 100)
+    const maxRelCount = Math.max(
+      ...Object.values(centralities).map((c) => c.relationship_count),
+      1
+    );
+    Object.values(centralities).forEach((c) => {
+      c.centrality_score = (c.relationship_count / maxRelCount) * 100;
+    });
+
+    // Find most connected (highest relationship_count)
+    const mostConnected = Object.values(centralities).reduce(
+      (max, c) => (c.relationship_count > (max?.relationship_count ?? 0) ? c : max),
+      null as CentralityMetrics | null
+    );
+
+    // Find most hated (most negative relationships)
+    const mostHated = Object.values(centralities).reduce(
+      (max, c) => (c.negative_count > (max?.negative_count ?? 0) ? c : max),
+      null as CentralityMetrics | null
+    );
+
+    // Find most loved (highest weighted score: trust * 0.6 + romance * 0.4)
+    const mostLoved = Object.values(centralities).reduce(
+      (max, c) => {
+        const score = c.average_trust * 0.6 + c.average_romance * 0.4;
+        const maxScore = max ? max.average_trust * 0.6 + max.average_romance * 0.4 : 0;
+        return score > maxScore ? c : max;
+      },
+      null as CentralityMetrics | null
+    );
+
+    // Network density
+    const totalChars = characterIds.size;
+    const maxPossibleEdges = totalChars * (totalChars - 1);
+    const density =
+      maxPossibleEdges > 0
+        ? Math.min(charRelationships.length / maxPossibleEdges, 1)
+        : 0;
+
+    return HttpResponse.json({
+      character_centralities: centralities,
+      most_connected: mostConnected?.character_id ?? null,
+      most_hated: mostHated?.character_id ?? null,
+      most_loved: mostLoved?.character_id ?? null,
+      total_relationships: charRelationships.length,
+      total_characters: totalChars,
+      network_density: density,
+    });
+  }),
+
+  http.get(`${API_PREFIX}/social/analysis/:characterId`, async ({ params }) => {
+    await withLatency();
+
+    const { characterId } = params;
+    if (typeof characterId !== 'string') {
+      return HttpResponse.json({ detail: 'Invalid character ID' }, { status: 400 });
+    }
+
+    // Get relationships for this character
+    const charRelationships = mockRelationships.filter(
+      (r) =>
+        r.source_type === 'character' &&
+        r.target_type === 'character' &&
+        (r.source_id === characterId || r.target_id === characterId)
+    );
+
+    if (charRelationships.length === 0) {
+      return HttpResponse.json(
+        { detail: `No relationships found for character: ${characterId}` },
+        { status: 404 }
+      );
+    }
+
+    const positiveTypes = ['ally', 'family', 'mentor', 'romantic'];
+    const negativeTypes = ['enemy', 'rival'];
+
+    const positiveCount = charRelationships.filter((r) =>
+      positiveTypes.includes(r.relationship_type)
+    ).length;
+    const negativeCount = charRelationships.filter((r) =>
+      negativeTypes.includes(r.relationship_type)
+    ).length;
+
+    const avgTrust =
+      charRelationships.reduce((sum, r) => sum + r.trust, 0) / charRelationships.length;
+    const avgRomance =
+      charRelationships.reduce((sum, r) => sum + r.romance, 0) /
+      charRelationships.length;
+
+    // Get max relationship count for normalization
+    const allCharRelationships = mockRelationships.filter(
+      (r) => r.source_type === 'character' && r.target_type === 'character'
+    );
+    const charIds = new Set<string>();
+    allCharRelationships.forEach((r) => {
+      charIds.add(r.source_id);
+      charIds.add(r.target_id);
+    });
+    const maxRelCount = Math.max(
+      ...Array.from(charIds).map(
+        (id) =>
+          allCharRelationships.filter((r) => r.source_id === id || r.target_id === id)
+            .length
+      ),
+      1
+    );
+
+    return HttpResponse.json({
+      character_id: characterId,
+      relationship_count: charRelationships.length,
+      positive_count: positiveCount,
+      negative_count: negativeCount,
+      average_trust: avgTrust,
+      average_romance: avgRomance,
+      centrality_score: (charRelationships.length / maxRelCount) * 100,
+    });
+  }),
+
+  // === Factions API (CHAR-036) ===
+
+  http.get(`${API_PREFIX}/factions/:factionId`, async ({ params }) => {
+    await withLatency();
+
+    const factionId = params.factionId as string;
+
+    // Mock faction data with members
+    const mockFactionDetails: Record<
+      string,
+      {
+        id: string;
+        name: string;
+        description: string;
+        faction_type: string;
+        alignment: string;
+        status: string;
+        leader_id: string | null;
+        leader_name: string | null;
+        influence: number;
+        members: Array<{
+          character_id: string;
+          name: string;
+          is_leader: boolean;
+        }>;
+      }
+    > = {
+      'faction-merchants-alliance': {
+        id: 'faction-merchants-alliance',
+        name: "Merchants' Alliance",
+        description:
+          'A powerful coalition of traders and merchants controlling major trade routes.',
+        faction_type: 'merchant',
+        alignment: 'lawful_neutral',
+        status: 'active',
+        leader_id: 'merchant-aldric',
+        leader_name: 'Merchant Aldric',
+        influence: 75,
+        members: [
+          { character_id: 'merchant-aldric', name: 'Merchant Aldric', is_leader: true },
+          { character_id: 'finn-bard', name: 'Finn the Bard', is_leader: false },
+        ],
+      },
+      'faction-shadowbane-order': {
+        id: 'faction-shadowbane-order',
+        name: 'Order of the Shadowbane',
+        description: 'An elite order dedicated to combating darkness and corruption.',
+        faction_type: 'military',
+        alignment: 'lawful_good',
+        status: 'active',
+        leader_id: 'aria-shadowbane',
+        leader_name: 'Aria Shadowbane',
+        influence: 60,
+        members: [
+          { character_id: 'aria-shadowbane', name: 'Aria Shadowbane', is_leader: true },
+        ],
+      },
+      'faction-vexars-dominion': {
+        id: 'faction-vexars-dominion',
+        name: "Vexar's Dominion",
+        description: 'A dark empire ruled by fear and ambition.',
+        faction_type: 'empire',
+        alignment: 'lawful_evil',
+        status: 'active',
+        leader_id: 'lord-vexar',
+        leader_name: 'Lord Vexar',
+        influence: 85,
+        members: [{ character_id: 'lord-vexar', name: 'Lord Vexar', is_leader: true }],
+      },
+    };
+
+    const faction = mockFactionDetails[factionId];
+    if (!faction) {
+      return HttpResponse.json(
+        { detail: `Faction '${factionId}' not found` },
+        { status: 404 }
+      );
+    }
+
+    return HttpResponse.json({
+      id: faction.id,
+      name: faction.name,
+      description: faction.description,
+      faction_type: faction.faction_type,
+      alignment: faction.alignment,
+      status: faction.status,
+      leader_id: faction.leader_id,
+      leader_name: faction.leader_name,
+      influence: faction.influence,
+      member_count: faction.members.length,
+      members: faction.members,
+    });
+  }),
+
+  // === Stories API ===
+  // Provide full Story shape for UI components.
+  http.get(`${API_PREFIX}/stories`, async () => {
+    await withLatency();
+    const baseStory = {
+      id: 'story-001',
+      title: 'Echoes of Meridian',
+      content:
+        'The fractured realm trembles as alliances shift and the mist rolls across Meridian Station.',
+      summary: 'A fractured realm unites under a reluctant tactician.',
+      campaignId: 'campaign-001',
+      turnNumber: 42,
+      characters: ['Aria Shadowbane', 'Merchant Aldric'],
+      events: [
+        {
+          id: 'evt-001',
+          type: 'discovery',
+          description: 'A hidden alliance is uncovered in the marketplace.',
+          involvedCharacters: ['Aria Shadowbane'],
+          timestamp: nowIso(),
+        },
+      ],
+      mood: 'dramatic',
+      tags: ['meridian', 'tactician', 'politics'],
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    return HttpResponse.json([baseStory]);
+  }),
+
+  http.get(`${API_PREFIX}/stories/:storyId`, async ({ params }) => {
+    await withLatency();
+    const storyId = params.storyId as string;
+    return HttpResponse.json({
+      id: storyId,
+      title: 'Echoes of Meridian',
+      content:
+        'The fractured realm trembles as alliances shift and the mist rolls across Meridian Station.',
+      summary: 'A fractured realm unites under a reluctant tactician.',
+      campaignId: 'campaign-001',
+      turnNumber: 42,
+      characters: ['Aria Shadowbane', 'Merchant Aldric'],
+      events: [
+        {
+          id: 'evt-001',
+          type: 'discovery',
+          description: 'A hidden alliance is uncovered in the marketplace.',
+          involvedCharacters: ['Aria Shadowbane'],
+          timestamp: nowIso(),
+        },
+      ],
+      mood: 'dramatic',
+      tags: ['meridian', 'tactician', 'politics'],
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    });
+  }),
+
+  http.get(`${API_PREFIX}/structure/stories`, async () => {
+    await withLatency();
+    return HttpResponse.json({
+      stories: [
+        {
+          id: 'story-1',
+          title: 'Chronicles of Meridian',
+          summary: 'A fractured realm unites under a reluctant tactician.',
+          status: 'draft',
+          chapter_count: 3,
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+      ],
+    });
+  }),
+
+  http.get(`${API_PREFIX}/structure/stories/:storyId`, async ({ params }) => {
+    await withLatency();
+    const storyId = params.storyId as string;
+    return HttpResponse.json({
+      id: storyId,
+      title: 'Chronicles of Meridian',
+      summary: 'A fractured realm unites under a reluctant tactician.',
+      status: 'draft',
+      chapter_count: 3,
+      created_at: nowIso(),
+      updated_at: nowIso(),
+    });
+  }),
+
+  http.get(`${API_PREFIX}/structure/stories/:storyId/chapters`, async ({ params }) => {
+    await withLatency();
+    const storyId = params.storyId as string;
+    return HttpResponse.json({
+      story_id: storyId,
+      chapters: [
+        {
+          id: 'chapter-1',
+          story_id: storyId,
+          title: 'Chapter 1: The Beginning',
+          summary: 'The opening movement.',
+          order_index: 0,
+          status: 'published',
+          scene_count: 3,
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+        {
+          id: 'chapter-2',
+          story_id: storyId,
+          title: 'Chapter 2: Rising Action',
+          summary: 'The plot accelerates.',
+          order_index: 1,
+          status: 'draft',
+          scene_count: 2,
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+        {
+          id: 'chapter-3',
+          story_id: storyId,
+          title: 'Chapter 3: The Conflict',
+          summary: 'Tensions reach a breaking point.',
+          order_index: 2,
+          status: 'draft',
+          scene_count: 1,
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+      ],
+    });
+  }),
+
+  http.get(
+    `${API_PREFIX}/structure/stories/:storyId/chapters/:chapterId/scenes`,
+    async ({ params }) => {
+      await withLatency();
+      const chapterId = params.chapterId as string;
+      const scenesByChapter: Record<
+        string,
+        Array<{
+          id: string;
+          chapter_id: string;
+          title: string;
+          summary: string;
+          location: string;
+          order_index: number;
+          status: string;
+          beat_count: number;
+          created_at: string;
+          updated_at: string;
+        }>
+      > = {
+        'chapter-1': [
+          {
+            id: 'scene-1-1',
+            chapter_id: 'chapter-1',
+            title: 'Opening Scene',
+            summary: 'The first encounter.',
+            location: 'Meridian Station',
+            order_index: 0,
+            status: 'published',
+            beat_count: 3,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+          {
+            id: 'scene-1-2',
+            chapter_id: 'chapter-1',
+            title: 'First Encounter',
+            summary: 'A pivotal meeting.',
+            location: 'Meridian Station',
+            order_index: 1,
+            status: 'review',
+            beat_count: 2,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+          {
+            id: 'scene-1-3',
+            chapter_id: 'chapter-1',
+            title: 'The Decision',
+            summary: 'A turning point.',
+            location: 'Meridian Station',
+            order_index: 2,
+            status: 'draft',
+            beat_count: 1,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+        ],
+        'chapter-2': [
+          {
+            id: 'scene-2-1',
+            chapter_id: 'chapter-2',
+            title: 'Journey Begins',
+            summary: 'The road unfolds.',
+            location: 'Wilderness',
+            order_index: 0,
+            status: 'generating',
+            beat_count: 1,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+          {
+            id: 'scene-2-2',
+            chapter_id: 'chapter-2',
+            title: 'Unexpected Ally',
+            summary: 'An unlikely friendship.',
+            location: 'Wilderness',
+            order_index: 1,
+            status: 'draft',
+            beat_count: 2,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+        ],
+        'chapter-3': [
+          {
+            id: 'scene-3-1',
+            chapter_id: 'chapter-3',
+            title: 'Confrontation',
+            summary: 'Conflict ignites.',
+            location: 'Meridian Station',
+            order_index: 0,
+            status: 'draft',
+            beat_count: 2,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+        ],
+      };
+      return HttpResponse.json({
+        chapter_id: chapterId,
+        scenes: scenesByChapter[chapterId] ?? [],
+      });
+    }
+  ),
+
+  http.post(`${API_PREFIX}/generation/character`, async ({ request }) => {
+    const mode = request.headers.get('x-e2e-generation-mode');
+    const delayMs = Number(request.headers.get('x-e2e-generation-delay') ?? 0);
+    if (Number.isFinite(delayMs) && delayMs > 0) {
+      await delay(delayMs);
+    } else {
+      await withLatency();
+    }
+
+    if (mode === 'error') {
+      return HttpResponse.json({ detail: 'LLM service unavailable' }, { status: 500 });
+    }
+
+    return HttpResponse.json({
+      name: 'Zenith Arc',
+      tagline: 'A spark that bends the grid.',
+      bio: 'Zenith navigates lost circuits with quiet precision.',
+      visual_prompt: 'neon silhouette, cyan glow, circuit motifs',
+      traits: ['curious', 'steady'],
+    });
+  }),
+
+  http.post(`${API_PREFIX}/generation/scene`, async ({ request }) => {
+    const mode = request.headers.get('x-e2e-scene-mode');
+    const delayMs = Number(request.headers.get('x-e2e-scene-delay') ?? 0);
+    if (Number.isFinite(delayMs) && delayMs > 0) {
+      await delay(delayMs);
+    } else {
+      await withLatency();
+    }
+
+    if (mode === 'error') {
+      return HttpResponse.json(
+        { detail: 'Scene generation service unavailable' },
+        { status: 500 }
+      );
+    }
+
+    return HttpResponse.json({
+      title: 'The Shadows Whisper',
+      content:
+        'In the dim corridors of the ancient library, Nyx discovered a tome that pulsed with forbidden knowledge...',
+      summary: 'Nyx discovers a mysterious tome in an ancient library.',
+      visual_prompt: 'dark library, ancient tomes, ethereal glow, shadowy figure',
+    });
   }),
 ];

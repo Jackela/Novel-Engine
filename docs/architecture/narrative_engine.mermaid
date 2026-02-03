@@ -1,0 +1,125 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#3730a3', 'lineColor': '#6366f1', 'secondaryColor': '#f0f9ff', 'tertiaryColor': '#fef3c7'}}}%%
+flowchart TB
+    subgraph API["API Layer (FastAPI Routers)"]
+        direction LR
+        StructureRouter["/api/structure<br/>CRUD for Story/Chapter/Scene"]
+        StreamRouter["/api/narrative/generate/stream<br/>POST SSE Endpoint"]
+        StreamRequest["GenerateStreamRequest<br/>scene_id, prompt, context, max_tokens"]
+        StreamChunk["StreamChunk<br/>type: chunk|done|error<br/>content, sequence"]
+    end
+
+    subgraph SSE["SSE Streaming Flow"]
+        direction TB
+        SSEGen["_sse_generator()<br/>AsyncIterator[str]"]
+        MockGen["generate_mock_stream()<br/>Simulates LLM delay"]
+        StreamResp["StreamingResponse<br/>media_type: text/event-stream<br/>Cache-Control: no-cache"]
+    end
+
+    subgraph Application["Application Layer (Ports)"]
+        direction TB
+        NarrativeRepoPort["INarrativeRepository<br/>(Protocol)"]
+        RepoMethods["save() | get_by_id()<br/>list_all() | delete() | exists()"]
+    end
+
+    subgraph Domain["Domain Layer (Narrative Context)"]
+        direction TB
+
+        subgraph Aggregates["Aggregate Roots"]
+            Story["Story<br/>--------------<br/>title: str<br/>summary: str<br/>status: StoryStatus<br/>_chapters: List[Chapter]<br/>--------------<br/>add_chapter()<br/>reorder_chapters()<br/>publish() | unpublish()"]
+        end
+
+        subgraph Entities["Child Entities"]
+            Chapter["Chapter<br/>--------------<br/>title: str<br/>story_id: UUID<br/>order_index: int<br/>status: ChapterStatus<br/>_scenes: List[Scene]"]
+            Scene["Scene<br/>--------------<br/>title: str<br/>chapter_id: UUID<br/>order_index: int<br/>status: SceneStatus<br/>location: str<br/>_beats: List[Beat]<br/>--------------<br/>reorder_beats()<br/>start_generation()<br/>complete_generation()"]
+            Beat["Beat<br/>--------------<br/>scene_id: UUID<br/>content: str<br/>order_index: int<br/>beat_type: BeatType<br/>notes: str<br/>--------------<br/>append_content()<br/>word_count()"]
+        end
+
+        subgraph ValueObjects["Value Objects / Enums"]
+            StoryStatus["StoryStatus<br/>(DRAFT, PUBLISHED)"]
+            ChapterStatus["ChapterStatus<br/>(DRAFT, PUBLISHED)"]
+            SceneStatus["SceneStatus<br/>(DRAFT, GENERATING,<br/>REVIEW, PUBLISHED)"]
+            BeatType["BeatType<br/>(ACTION, DIALOGUE,<br/>REACTION, REVELATION,<br/>TRANSITION, DESCRIPTION)"]
+        end
+    end
+
+    subgraph Infrastructure["Infrastructure Layer"]
+        direction TB
+        InMemoryRepo["InMemoryNarrativeRepository<br/>--------------<br/>Uses deep copy for isolation<br/>Implements INarrativeRepository"]
+        MockLLM["MOCK_LLM Flag<br/>--------------<br/>true: Stream mock content<br/>false: Fallback to mock<br/>(Real LLM not implemented)"]
+    end
+
+    subgraph Frontend["Frontend (React + Tiptap)"]
+        direction TB
+
+        subgraph Hooks["Custom Hooks"]
+            useStoryStream["useStoryStream<br/>--------------<br/>buffer: string<br/>isStreaming: boolean<br/>error, metadata, isComplete<br/>--------------<br/>startStream() | stopStream()"]
+            useStoryStructure["useStoryStructure<br/>--------------<br/>Fetches chapters from API<br/>Transforms to OutlinerChapter[]"]
+        end
+
+        subgraph Components["UI Components"]
+            NarrativeSidebar["NarrativeSidebar<br/>--------------<br/>shadcn ScrollArea<br/>dnd-kit drag-and-drop<br/>Chapter/Scene tree view<br/>Status badges"]
+            EditorComponent["EditorComponent<br/>--------------<br/>Tiptap rich text editor<br/>Toolbar (Bold/Italic/H1/H2)<br/>Streaming insertion<br/>'Generating...' indicator"]
+            NarrativeLayout["NarrativeEditorLayout<br/>--------------<br/>Sidebar (20%) | Editor (80%)"]
+        end
+
+        subgraph ApiClient["API Client"]
+            narrativeApi["narrativeApi.ts<br/>--------------<br/>listStories, listChapters<br/>createStory, moveScene"]
+        end
+    end
+
+    %% API Flow
+    StreamRouter --> StreamRequest
+    StreamRequest --> SSEGen
+    SSEGen --> MockLLM
+    MockLLM --> MockGen
+    MockGen --> StreamChunk
+    StreamChunk --> StreamResp
+
+    %% Structure API Flow
+    StructureRouter --> NarrativeRepoPort
+    NarrativeRepoPort --> RepoMethods
+    NarrativeRepoPort -.->|implements| InMemoryRepo
+    InMemoryRepo --> Story
+
+    %% Domain Hierarchy
+    Story --> Chapter
+    Chapter --> Scene
+    Scene --> Beat
+
+    %% Value Object Relationships
+    Story --> StoryStatus
+    Chapter --> ChapterStatus
+    Scene --> SceneStatus
+    Beat --> BeatType
+
+    %% Frontend Flow
+    StreamResp --> useStoryStream
+    useStoryStream --> EditorComponent
+    narrativeApi --> useStoryStructure
+    useStoryStructure --> NarrativeSidebar
+
+    %% Layout Composition
+    NarrativeLayout --> NarrativeSidebar
+    NarrativeLayout --> EditorComponent
+
+    %% API Client to Backend
+    narrativeApi --> StructureRouter
+
+    %% Styling
+    classDef apiLayer fill:#4f46e5,stroke:#3730a3,color:#fff
+    classDef sseLayer fill:#7c3aed,stroke:#5b21b6,color:#fff
+    classDef appLayer fill:#0ea5e9,stroke:#0284c7,color:#fff
+    classDef domainLayer fill:#10b981,stroke:#059669,color:#fff
+    classDef entityLayer fill:#34d399,stroke:#10b981,color:#000
+    classDef infraLayer fill:#f59e0b,stroke:#d97706,color:#fff
+    classDef frontendLayer fill:#ec4899,stroke:#db2777,color:#fff
+    classDef enumClass fill:#e0e7ff,stroke:#6366f1,color:#1e1b4b
+
+    class StructureRouter,StreamRouter,StreamRequest,StreamChunk apiLayer
+    class SSEGen,MockGen,StreamResp sseLayer
+    class NarrativeRepoPort,RepoMethods appLayer
+    class Story domainLayer
+    class Chapter,Scene,Beat entityLayer
+    class InMemoryRepo,MockLLM infraLayer
+    class useStoryStream,useStoryStructure,NarrativeSidebar,EditorComponent,NarrativeLayout,narrativeApi frontendLayer
+    class StoryStatus,ChapterStatus,SceneStatus,BeatType enumClass

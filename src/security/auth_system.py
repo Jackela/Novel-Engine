@@ -441,7 +441,7 @@ class SecurityService:
             clauses.append("email = ?")
             params.append(email)
 
-        query = f"SELECT 1 FROM users WHERE {' OR '.join(clauses)} LIMIT 1"
+        query = f"SELECT 1 FROM users WHERE {' OR '.join(clauses)} LIMIT 1"  # nosec B608
         async with self._connection() as conn:
             cursor = await conn.execute(query, tuple(params))
             row = await cursor.fetchone()

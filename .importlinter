@@ -1,6 +1,17 @@
 [importlinter]
 root_package = src
 
+# =============================================================================
+# HEXAGONAL ARCHITECTURE ENFORCEMENT
+# =============================================================================
+# Domain Layer: Pure business logic, no dependencies on application/infrastructure
+# Application Layer: Use cases, ports. Can import domain, not infrastructure
+# Infrastructure Layer: Adapters, external integrations. Can import domain & application
+
+# -----------------------------------------------------------------------------
+# Global Rules
+# -----------------------------------------------------------------------------
+
 # Rule 1: Functional Core Integrity
 # The Core domain logic must not depend on the API layer or Infrastructure (DB/External Services).
 [importlinter:contract:1]
@@ -9,45 +20,150 @@ type = forbidden
 source_modules =
     src.core
     src.agents
-    src.contexts
 forbidden_modules =
     src.api
     src.infrastructure
     src.database
 
-# Rule 2: Character Context Isolation
+# -----------------------------------------------------------------------------
+# Hexagonal Layer Rules for ALL Contexts
+# -----------------------------------------------------------------------------
+
+# Rule 2: Domain Layer Purity - Domain cannot import Application or Infrastructure
+# This ensures domain layer remains pure with no external dependencies
 [importlinter:contract:2]
+name = Domain Layer Purity (All Contexts)
+type = forbidden
+source_modules =
+    src.contexts.character.domain
+    src.contexts.ai.domain
+    src.contexts.interactions.domain
+    src.contexts.narratives.domain
+    src.contexts.knowledge.domain
+    src.contexts.subjective.domain
+    src.contexts.world.domain
+forbidden_modules =
+    src.contexts.character.application
+    src.contexts.character.infrastructure
+    src.contexts.ai.application
+    src.contexts.ai.infrastructure
+    src.contexts.interactions.application
+    src.contexts.interactions.infrastructure
+    src.contexts.narratives.application
+    src.contexts.narratives.infrastructure
+    src.contexts.knowledge.application
+    src.contexts.knowledge.infrastructure
+    src.contexts.subjective.application
+    src.contexts.subjective.infrastructure
+    src.contexts.world.application
+    src.contexts.world.infrastructure
+    src.contexts.story.application
+    src.contexts.story.infrastructure
+    src.api
+    src.infrastructure
+    src.database
+
+# Rule 3: Application Layer Cannot Import Infrastructure
+# Application layer defines ports (interfaces), infrastructure implements them
+[importlinter:contract:3]
+name = Application Layer Isolation (All Contexts)
+type = forbidden
+source_modules =
+    src.contexts.character.application
+    src.contexts.ai.application
+    src.contexts.interactions.application
+    src.contexts.narratives.application
+    src.contexts.knowledge.application
+    src.contexts.subjective.application
+    src.contexts.world.application
+    src.contexts.story.application
+forbidden_modules =
+    src.contexts.character.infrastructure
+    src.contexts.ai.infrastructure
+    src.contexts.interactions.infrastructure
+    src.contexts.narratives.infrastructure
+    src.contexts.knowledge.infrastructure
+    src.contexts.subjective.infrastructure
+    src.contexts.world.infrastructure
+    src.contexts.story.infrastructure
+    src.infrastructure
+    src.database
+
+# -----------------------------------------------------------------------------
+# Bounded Context Isolation Rules
+# -----------------------------------------------------------------------------
+
+# Rule 4: Character Context Isolation
+[importlinter:contract:4]
 name = Character Context Isolation
 type = forbidden
 source_modules = src.contexts.character
-forbidden_modules = 
+forbidden_modules =
     src.contexts.narratives
     src.contexts.campaigns
     src.contexts.interactions
     src.contexts.orchestration
+    src.contexts.story
+    src.contexts.knowledge
+    src.contexts.subjective
+    src.contexts.world
 
-# Rule 3: Narrative Context Isolation
-[importlinter:contract:3]
+# Rule 5: Story Context Isolation
+[importlinter:contract:5]
+name = Story Context Isolation
+type = forbidden
+source_modules = src.contexts.story
+forbidden_modules =
+    src.contexts.character
+    src.contexts.narratives
+    src.contexts.campaigns
+    src.contexts.interactions
+    src.contexts.orchestration
+    src.contexts.knowledge
+    src.contexts.subjective
+    src.contexts.world
+
+# Rule 6: Narrative Context Isolation
+[importlinter:contract:6]
 name = Narrative Context Isolation
 type = forbidden
 source_modules = src.contexts.narratives
-forbidden_modules = 
+forbidden_modules =
     src.contexts.character
     src.contexts.campaigns
     src.contexts.interactions
     src.contexts.orchestration
+    src.contexts.story
+    src.contexts.knowledge
+    src.contexts.subjective
+    src.contexts.world
 
-# Rule 4: Campaign Context Isolation
-[importlinter:contract:4]
-name = Campaign Context Isolation
+# Rule 7: Knowledge Context Isolation
+[importlinter:contract:7]
+name = Knowledge Context Isolation
 type = forbidden
-source_modules = src.contexts.campaigns
-forbidden_modules = 
+source_modules = src.contexts.knowledge
+forbidden_modules =
     src.contexts.character
     src.contexts.narratives
+    src.contexts.campaigns
     src.contexts.interactions
     src.contexts.orchestration
+    src.contexts.story
+    src.contexts.subjective
+    src.contexts.world
 
-# Rule 5: API Layer Dependencies
-# The API layer is the entry point and can import from anywhere (Imperative Shell).
-# But we monitor it to ensure it doesn't have circular deps.
+# Rule 8: AI Context Isolation (shared infrastructure context, more permissive)
+# AI context can be used by other contexts as a shared service
+[importlinter:contract:8]
+name = AI Context Isolation
+type = forbidden
+source_modules = src.contexts.ai
+forbidden_modules =
+    src.contexts.narratives
+    src.contexts.campaigns
+    src.contexts.interactions
+    src.contexts.orchestration
+    src.contexts.knowledge
+    src.contexts.subjective
+    src.contexts.world

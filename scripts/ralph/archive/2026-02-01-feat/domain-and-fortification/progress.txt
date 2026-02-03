@@ -1,0 +1,12 @@
+# Ralph Progress - War Zone 1: World Deep Dive
+Started: 2026-02-01
+---
+
+## Codebase Patterns (from previous phase)
+- Domain entities use dataclasses with `__post_init__` for validation
+- Character exists in src/contexts/character/ with CharacterProfile value object
+- Location exists with parent_id/child_ids hierarchy in src/contexts/world/
+- WorldSetting has world_rules: List[str] field
+- Frontend typecheck: `npm run type-check` (with hyphen)
+- dnd-kit already installed for drag-drop
+- SSE streaming: use fetch + ReadableStream for POST endpoints

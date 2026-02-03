@@ -1,0 +1,369 @@
+{
+  "project": "Novel-Engine-Warzone-2",
+  "branchName": "feat/character-evolution",
+  "description": "WARZONE 2: Making characters dynamic with Memories, Relationships Evolution, and Voice.",
+  "techContext": {
+    "stack": "FastAPI + React + Recharts + OpenAI (Mocked)",
+    "testCommand": "pytest",
+    "e2eCommand": "npm run test:e2e",
+    "typecheckCommand": "npm run type-check",
+    "conventions": [
+      "Use `recharts` for visualizing psychological traits",
+      "Character events must be immutable logs",
+      "Extend Character aggregate (not frozen CharacterProfile) for mutable state",
+      "Relationship.metadata can store dynamic properties for prototyping"
+    ]
+  },
+  "userStories": [
+    {
+      "id": "CHAR-021",
+      "title": "Domain: Character Psychology Model (Big 5)",
+      "description": "Quantify personality using the Big Five model.",
+      "acceptanceCriteria": [
+        "Create `CharacterPsychology` value object in `src/contexts/character/domain/value_objects/character_psychology.py`",
+        "Fields: openness, conscientiousness, extraversion, agreeableness, neuroticism (all 0-100 int)",
+        "Add `psychology: Optional[CharacterPsychology]` to Character aggregate (NOT CharacterProfile which is frozen)",
+        "Add validation: each trait must be 0-100",
+        "Create Pydantic schema `CharacterPsychologySchema` in `src/api/schemas.py`",
+        "Run `pytest tests/unit/contexts/character/` - all pass"
+      ],
+      "priority": 1,
+      "passes": false,
+      "effort": "low"
+    },
+    {
+      "id": "CHAR-022",
+      "title": "Frontend: Psychology Radar Chart",
+      "description": "Visualize personality using a radar chart.",
+      "acceptanceCriteria": [
+        "Run `cd frontend && npm install recharts`",
+        "Create `frontend/src/components/charts/PsychologyRadarChart.tsx`",
+        "Use Recharts' RadarChart with 5 axes for Big 5 traits",
+        "Style to match shadcn theme (use CSS variables)",
+        "Embed in CharacterDetailsDialog as a new 'Psychology' tab",
+        "Add mock psychology data to character mock handlers",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Chart renders with 5-point radar"
+      ],
+      "priority": 2,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["CHAR-021"]
+    },
+    {
+      "id": "CHAR-023",
+      "title": "Domain: Character Memory System",
+      "description": "Characters need to remember things.",
+      "acceptanceCriteria": [
+        "Create `CharacterMemory` entity in `src/contexts/character/domain/entities/character_memory.py`",
+        "Fields: character_id, content (str), importance (1-10), tags (List[str]), timestamp, is_core_memory (importance > 8)",
+        "Create `ICharacterMemoryRepository` protocol with list_by_character, add, search_by_tag methods",
+        "Implement `InMemoryCharacterMemoryRepository`",
+        "Add CRUD API at `/api/characters/{id}/memories`",
+        "Run `pytest tests/unit/contexts/character/domain/test_character_memory.py` - all pass"
+      ],
+      "priority": 3,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "CHAR-024",
+      "title": "Frontend: Memory Timeline",
+      "description": "A scrollable history of the character.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/characters/MemoryTimeline.tsx`",
+        "UI: Vertical timeline with date markers using shadcn Card",
+        "Core memories (importance > 8) highlighted with golden border/star icon",
+        "Add memory form with content, importance slider, tags input",
+        "Add CharacterMemory schemas to frontend types",
+        "Add mock handlers for /api/characters/:id/memories",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Add memory, see it appear in timeline"
+      ],
+      "priority": 4,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["CHAR-023"]
+    },
+    {
+      "id": "CHAR-025",
+      "title": "Domain: Dynamic Relationship Evolution",
+      "description": "Relationships change over time.",
+      "acceptanceCriteria": [
+        "Update `Relationship` entity to add `trust: int` (0-100) and `romance: int` (0-100) fields with defaults of 50",
+        "Create `RelationshipInteraction` value object: summary, trust_delta, romance_delta, timestamp",
+        "Add `interactions: List[RelationshipInteraction]` to Relationship",
+        "Implement `log_interaction()` method that appends to interactions list and updates trust/romance",
+        "Update Pydantic schemas and API responses",
+        "Run `pytest tests/unit/contexts/world/domain/test_relationship.py` - all pass"
+      ],
+      "priority": 5,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "CHAR-026",
+      "title": "Frontend: Relationship Status Bars",
+      "description": "The Sims style relationship bars.",
+      "acceptanceCriteria": [
+        "Update RelationshipGraph node detail panel",
+        "Add Trust progress bar (red 0-30, yellow 31-60, green 61-100) using shadcn Progress",
+        "Add Romance progress bar (gray if 0, pink gradient otherwise)",
+        "Show interaction history as collapsible list",
+        "Add 'Log Interaction' form dialog",
+        "Update Relationship frontend schemas with trust/romance/interactions",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Bars update after logging interaction"
+      ],
+      "priority": 6,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["CHAR-025"]
+    },
+    {
+      "id": "CHAR-027",
+      "title": "AI: Voice/Dialogue Generator",
+      "description": "Generate dialogue in character.",
+      "acceptanceCriteria": [
+        "Create `CharacterVoiceGenerator` in `src/contexts/character/infrastructure/generators/`",
+        "Method: `generate_dialogue(character_id, context, mood)` returns generated dialogue",
+        "Prompt engineering: Inject character's psychology, traits, archetype, and a new `speaking_style` field",
+        "Add `speaking_style: Optional[str]` to CharacterProfile (e.g., 'formal', 'casual', 'archaic')",
+        "Support MOCK_LLM flag with templated responses",
+        "Add API endpoint `POST /api/generation/dialogue`",
+        "Run `pytest tests/unit/contexts/character/infrastructure/test_voice_generator.py` - mock tests pass"
+      ],
+      "priority": 7,
+      "passes": false,
+      "effort": "high"
+    },
+    {
+      "id": "CHAR-028",
+      "title": "Frontend: Dialogue Tester",
+      "description": "Playground to test character voice.",
+      "acceptanceCriteria": [
+        "Create `/characters/{id}/voice` route and `VoiceTestPage.tsx`",
+        "UI: Chat-like interface with user input and AI response bubbles",
+        "Context input field (e.g., 'You meet them in a tavern')",
+        "Mood selector dropdown (happy, angry, sad, neutral, excited)",
+        "Call `generate_dialogue` API on submit",
+        "Show loading state during generation",
+        "Add mock handler for /api/generation/dialogue",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Chat works, character responds in voice"
+      ],
+      "priority": 8,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["CHAR-027"]
+    },
+    {
+      "id": "CHAR-029",
+      "title": "Domain: Character Goals System",
+      "description": "What do they want?",
+      "acceptanceCriteria": [
+        "Create `CharacterGoal` entity in `src/contexts/character/domain/entities/character_goal.py`",
+        "Fields: character_id, description, status (ACTIVE/COMPLETED/FAILED/ABANDONED), urgency (1-10), deadline (Optional[datetime])",
+        "Create `ICharacterGoalRepository` protocol",
+        "Implement `InMemoryCharacterGoalRepository`",
+        "Add CRUD API at `/api/characters/{id}/goals`",
+        "Run `pytest tests/unit/contexts/character/domain/test_character_goal.py` - all pass"
+      ],
+      "priority": 9,
+      "passes": false,
+      "effort": "low"
+    },
+    {
+      "id": "CHAR-030",
+      "title": "Frontend: Goals Tracker",
+      "description": "Kanban-style list for character goals.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/characters/GoalsList.tsx`",
+        "UI: Checkbox list with strikethrough for completed, red for failed",
+        "Urgency indicator (exclamation icons: 1-3 low, 4-6 medium, 7-10 high)",
+        "Add/Edit goal form with description, urgency slider, optional deadline",
+        "Filter by status dropdown",
+        "Add CharacterGoal schemas to frontend types",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Add goal, complete it, see strikethrough"
+      ],
+      "priority": 10,
+      "passes": false,
+      "effort": "low",
+      "dependencies": ["CHAR-029"]
+    },
+    {
+      "id": "CHAR-031",
+      "title": "Domain: Social Network Analysis",
+      "description": "Calculate character importance in the network.",
+      "acceptanceCriteria": [
+        "Create `SocialGraphService` in `src/contexts/world/application/services/`",
+        "Implement degree centrality: count of relationships per character",
+        "Implement weighted centrality: sum of relationship strengths",
+        "Compute 'most_connected', 'most_loved' (positive relationships), 'most_hated' (negative)",
+        "Add API `GET /api/social/analysis` returning all stats",
+        "Run `pytest tests/unit/contexts/world/application/test_social_graph_service.py` - all pass"
+      ],
+      "priority": 11,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "CHAR-032",
+      "title": "Frontend: Social Dashboard Widget",
+      "description": "Show network stats.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/components/world/SocialStatsWidget.tsx`",
+        "Display: 'Most Connected' (with connection count)",
+        "Display: 'Most Loved' (highest positive relationship sum)",
+        "Display: 'Most Controversial' (has both strong positive and negative)",
+        "Add to WorldPage as a card widget",
+        "Add SocialAnalysis schema to frontend types",
+        "Add mock handler for /api/social/analysis",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Stats match expected from graph"
+      ],
+      "priority": 12,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["CHAR-031"]
+    },
+    {
+      "id": "CHAR-033",
+      "title": "AI: Relationship History Generator",
+      "description": "Generate backstory between characters.",
+      "acceptanceCriteria": [
+        "Create `RelationshipHistoryGenerator` in `src/contexts/world/infrastructure/generators/`",
+        "Method: `generate_history(relationship_id)` returns backstory text",
+        "Prompt: Include both characters' profiles, current trust/romance levels, relationship type",
+        "Support MOCK_LLM flag with templated backstories",
+        "Add API endpoint `POST /api/generation/relationship-history`",
+        "Run `pytest tests/unit/contexts/world/infrastructure/test_relationship_history_generator.py` - mock tests pass"
+      ],
+      "priority": 13,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "CHAR-034",
+      "title": "Frontend: Generate Backstory Button",
+      "description": "Fill in relationship description via AI.",
+      "acceptanceCriteria": [
+        "In RelationshipGraph edge detail panel, add 'Generate History' button with Sparkles icon",
+        "On click: Show loading state, call generate API",
+        "On success: Fill the description field with generated text",
+        "Show toast on success/error",
+        "Add mock handler for /api/generation/relationship-history",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Click button fills description textarea"
+      ],
+      "priority": 14,
+      "passes": false,
+      "effort": "low",
+      "dependencies": ["CHAR-033"]
+    },
+    {
+      "id": "CHAR-035",
+      "title": "Domain: Character-Faction Membership",
+      "description": "Characters belong to groups.",
+      "acceptanceCriteria": [
+        "Add `faction_id: Optional[str]` to Character aggregate",
+        "Add `leader_id: Optional[str]` and `member_ids: List[str]` to Faction entity",
+        "Create `join_faction()` and `leave_faction()` methods on Character",
+        "Create `set_leader()` and `add_member()` methods on Faction",
+        "Add API endpoints: `POST /api/factions/{id}/join`, `POST /api/factions/{id}/leave`",
+        "Run `pytest` - all pass"
+      ],
+      "priority": 15,
+      "passes": false,
+      "effort": "medium"
+    },
+    {
+      "id": "CHAR-036",
+      "title": "Frontend: Faction Roster",
+      "description": "Show faction membership.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/factions/FactionRoster.tsx`",
+        "Display leader with crown icon, members as list",
+        "Join/Leave button for the current user's context",
+        "Link to character detail on click",
+        "Add to FactionPage or create `/factions/{id}` route",
+        "Add mock handlers for faction membership APIs",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Join faction updates roster"
+      ],
+      "priority": 16,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["CHAR-035"]
+    },
+    {
+      "id": "CHAR-037",
+      "title": "Integration: Character List Sorting",
+      "description": "Organize the cast.",
+      "acceptanceCriteria": [
+        "Update NarrativeSidebarWithTabs character list",
+        "Add sort dropdown: By Name (A-Z), By Faction, By Archetype, By Creation Date",
+        "Add filter: By Faction (dropdown of all factions)",
+        "Persist sort preference in localStorage",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Sorting and filtering work correctly"
+      ],
+      "priority": 17,
+      "passes": false,
+      "effort": "low",
+      "dependencies": ["CHAR-035"]
+    },
+    {
+      "id": "CHAR-038",
+      "title": "UX: Quick Create from Editor",
+      "description": "Don't break writing flow.",
+      "acceptanceCriteria": [
+        "In EditorComponent, detect `@` followed by text not matching any character",
+        "Show inline autocomplete with 'Create [NewName]...' option at bottom",
+        "On select: Open shadcn Dialog with minimal character form (name, archetype)",
+        "On submit: Create character via API, insert @mention into editor",
+        "On cancel: Insert plain text",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Type @NewName, create character without leaving page"
+      ],
+      "priority": 18,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["WORLD-017"]
+    },
+    {
+      "id": "CHAR-039",
+      "title": "Data: Export Character Sheet",
+      "description": "Download character data.",
+      "acceptanceCriteria": [
+        "Add 'Export' button to CharacterDetailsDialog header",
+        "Generate JSON download containing: profile, psychology, goals, memories, relationships",
+        "Use `download` attribute on anchor tag for browser download",
+        "Filename format: `{character-name}-sheet.json`",
+        "Run `npm run type-check` - no errors",
+        "Browser verification: Click export, file downloads"
+      ],
+      "priority": 19,
+      "passes": false,
+      "effort": "low"
+    },
+    {
+      "id": "CHAR-040",
+      "title": "E2E: Character Lifecycle Test",
+      "description": "Full lifecycle smoke test.",
+      "acceptanceCriteria": [
+        "Create `frontend/tests/e2e/character-lifecycle.spec.ts`",
+        "Test Flow: Create Character -> Set Psychology -> Add Goal -> Complete Goal",
+        "Test Flow: Create Relationship -> Log Interaction -> Generate Backstory",
+        "Test Flow: Test Voice -> Export Sheet",
+        "Use stateful mocks similar to WORLD-020",
+        "Run `npm run test:e2e` - character-lifecycle tests pass"
+      ],
+      "priority": 20,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["CHAR-022", "CHAR-026", "CHAR-030", "CHAR-039"]
+    }
+  ]
+}

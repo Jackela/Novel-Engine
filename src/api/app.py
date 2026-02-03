@@ -80,10 +80,20 @@ def create_app(
     from src.api.routers.events import router as events_router
     from src.api.routers.generation import router as generation_router
     from src.api.routers.guest import router as guest_router
+    from src.api.routers.narratives import router as narratives_router
+    from src.api.routers.scene import router as scene_router
     from src.api.routers.health import router as health_router
     from src.api.routers.meta import router as meta_router
     from src.api.routers.orchestration import router as orchestration_router
     from src.api.routers.simulations import router as simulations_router
+    from src.api.routers.world import router as world_gen_router
+    from src.api.routers.structure import router as structure_router
+    from src.api.routers.narrative_generation import router as narrative_generation_router
+    from src.api.routers.relationships import router as relationships_router
+    from src.api.routers.items import router as items_router
+    from src.api.routers.items import character_inventory_router
+    from src.api.routers.lore import router as lore_router
+    from src.api.routers.world_rules import router as world_rules_router
 
     app.include_router(health_router)
     app.include_router(meta_router)
@@ -95,7 +105,17 @@ def create_app(
     app.include_router(guest_router)
     app.include_router(events_router)
     app.include_router(generation_router)
+    app.include_router(narratives_router)
+    app.include_router(scene_router)
     app.include_router(auth_router)
+    app.include_router(world_gen_router)
+    app.include_router(structure_router)
+    app.include_router(narrative_generation_router)
+    app.include_router(relationships_router)
+    app.include_router(items_router)
+    app.include_router(character_inventory_router)
+    app.include_router(lore_router)
+    app.include_router(world_rules_router)
 
     app.include_router(health_router, prefix="/api")
     app.include_router(meta_router, prefix="/api")
@@ -107,7 +127,17 @@ def create_app(
     app.include_router(guest_router, prefix="/api")
     app.include_router(events_router, prefix="/api")
     app.include_router(generation_router, prefix="/api")
+    app.include_router(narratives_router, prefix="/api")
+    app.include_router(scene_router, prefix="/api")
     app.include_router(auth_router, prefix="/api")
+    app.include_router(world_gen_router, prefix="/api")
+    app.include_router(structure_router, prefix="/api")
+    app.include_router(narrative_generation_router, prefix="/api")
+    app.include_router(relationships_router, prefix="/api")
+    app.include_router(items_router, prefix="/api")
+    app.include_router(character_inventory_router, prefix="/api")
+    app.include_router(lore_router, prefix="/api")
+    app.include_router(world_rules_router, prefix="/api")
 
     try:
         from src.api.prompts_router import router as prompts_router

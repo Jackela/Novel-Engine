@@ -958,5 +958,5 @@ async def general_exception_handler(request, exc):
 # Development Server
 if __name__ == "__main__":
     uvicorn.run(
-        "turn_api:app", host="0.0.0.0", port=8000, log_level="info", reload=True
+        "turn_api:app", host="0.0.0.0", port=8000, log_level="info", reload=True  # nosec B104 - dev server
     )

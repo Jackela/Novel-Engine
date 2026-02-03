@@ -242,7 +242,7 @@ class ErrorHandler:
         error_context = {
             "error_type": api_error.type.value,
             "status_code": status_code,
-            "message": api_error.message,
+            "error_message": api_error.message,
             "error_count": self.error_count,
         }
 
@@ -288,7 +288,8 @@ def setup_error_handlers(app, debug: bool = False):
         )
 
         return JSONResponse(
-            status_code=exc.status_code, content=error_response.model_dump()
+            status_code=exc.status_code,
+            content=error_response.model_dump(mode="json"),
         )
 
     @app.exception_handler(HTTPException)
@@ -305,7 +306,8 @@ def setup_error_handlers(app, debug: bool = False):
         )
 
         return JSONResponse(
-            status_code=exc.status_code, content=error_response.model_dump()
+            status_code=exc.status_code,
+            content=error_response.model_dump(mode="json"),
         )
 
     @app.exception_handler(RequestValidationError)
@@ -320,9 +322,20 @@ def setup_error_handlers(app, debug: bool = False):
         validation_errors = []
         for error in exc.errors():
             field_path = ".".join(str(loc) for loc in error["loc"])
+            # Safely serialize the input value to avoid JSON serialization errors
+            raw_value = error.get("input")
+            try:
+                # Attempt to convert to JSON-serializable format
+                import json
+
+                json.dumps(raw_value)
+                safe_value = raw_value
+            except (TypeError, ValueError):
+                # Convert non-serializable values to string representation
+                safe_value = repr(raw_value) if raw_value is not None else None
             validation_errors.append(
                 ValidationError(
-                    field=field_path, message=error["msg"], value=error.get("input")
+                    field=field_path, message=error["msg"], value=safe_value
                 )
             )
 
@@ -334,7 +347,7 @@ def setup_error_handlers(app, debug: bool = False):
 
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content=error_response.model_dump(),
+            content=error_response.model_dump(mode="json"),
         )
 
     @app.exception_handler(Exception)
@@ -352,7 +365,7 @@ def setup_error_handlers(app, debug: bool = False):
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=error_response.model_dump(),
+            content=error_response.model_dump(mode="json"),
         )
 
     return error_handler

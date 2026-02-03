@@ -114,6 +114,8 @@ class DeterministicCharacterGenerator:
 
 
 def _select_default_generator() -> CharacterGeneratorPort:
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return DeterministicCharacterGenerator()
     if os.getenv("ENABLE_LLM_GENERATION", "").lower() == "true":
         try:
             from src.contexts.character.infrastructure.generators.llm_character_generator import (

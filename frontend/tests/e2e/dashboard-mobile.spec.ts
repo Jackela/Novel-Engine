@@ -70,12 +70,12 @@ test.describe('Dashboard Responsive Layout', () => {
     test('Given desktop layout, When sidebar is expanded, Then collapse button appears', async ({ page }) => {
       await dashboardPage.navigateToDashboard({ mockAPIs: true });
 
-      const expandButton = page.locator('button[aria-label="Expand Sidebar"]');
-      await expect(expandButton).toBeVisible();
-      await expandButton.click();
-
       const collapseButton = page.locator('button[aria-label="Collapse Sidebar"]');
       await expect(collapseButton).toBeVisible();
+      await collapseButton.click();
+
+      const expandButton = page.locator('button[aria-label="Expand Sidebar"]');
+      await expect(expandButton).toBeVisible();
     });
   });
 

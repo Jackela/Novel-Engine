@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui
 
 export default function WorldPanel() {
   return (
-    <Card className="h-full" data-testid="world-panel">
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe className="h-5 w-5 text-primary" />
@@ -42,9 +42,30 @@ export default function WorldPanel() {
           </div>
 
           {/* World map placeholder */}
-          <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30">
+          <div
+            className="relative flex aspect-video items-center justify-center rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30"
+            data-testid="world-state-map"
+          >
             <p className="text-sm text-muted-foreground">World Map</p>
+            <div className="absolute inset-0">
+              {[
+                { id: 'meridian', label: 'Meridian Station', x: '22%', y: '30%' },
+                { id: 'trade-hub', label: 'Trade Hub', x: '58%', y: '48%' },
+                { id: 'forest-path', label: 'Forest Path', x: '72%', y: '22%' },
+              ].map((marker) => (
+                <div
+                  key={marker.id}
+                  data-location={marker.id}
+                  className="MuiAvatar-root absolute flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground shadow"
+                  style={{ left: marker.x, top: marker.y }}
+                  title={marker.label}
+                >
+                  •
+                </div>
+              ))}
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground">Last updated: just now</p>
         </div>
       </CardContent>
     </Card>

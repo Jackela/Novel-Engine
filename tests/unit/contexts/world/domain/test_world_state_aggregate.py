@@ -67,6 +67,8 @@ from src.contexts.world.domain.aggregates.world_state import (
 )
 from src.contexts.world.domain.value_objects.coordinates import Coordinates
 
+pytestmark = pytest.mark.unit
+
 
 class TestWorldStateAggregate:
     """Test suite for WorldState aggregate root."""

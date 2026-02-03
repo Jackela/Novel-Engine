@@ -1,9 +1,10 @@
 /**
  * TopBar - Top navigation bar
- * Contains mobile menu button, breadcrumbs, and user menu
+ * Contains mobile menu button, breadcrumbs, user menu, and typography toggle
  */
 import { Menu, Bell, User, LogOut } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
+import { TypographyToggle } from './TypographyToggle';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -26,18 +27,22 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           className="lg:hidden"
           onClick={onMenuClick}
           aria-label="Open menu"
+          data-testid="mobile-menu-toggle"
         >
           <Menu className="h-5 w-5" />
         </Button>
 
         {/* Page title or breadcrumbs */}
         <nav aria-label="Breadcrumb">
-          <h1 className="text-lg font-semibold">Dashboard</h1>
+          <span className="text-lg font-semibold">Dashboard</span>
         </nav>
       </div>
 
       {/* Right side */}
       <div className="flex items-center gap-2">
+        {/* Typography mode toggle */}
+        <TypographyToggle />
+
         {/* Notifications */}
         <Button
           variant="ghost"

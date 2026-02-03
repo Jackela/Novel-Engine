@@ -9,15 +9,80 @@ interface RequestConfig extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
 }
 
+/**
+ * Validation error from backend (field-level error).
+ */
+interface ValidationError {
+  field: string;
+  message: string;
+  value?: unknown;
+}
+
+/**
+ * Structured error from backend API.
+ */
+interface BackendError {
+  status: 'error';
+  error?: {
+    type: string;
+    message: string;
+    detail?: string | null;
+    code?: string | null;
+  };
+  errors?: ValidationError[];
+  metadata?: {
+    timestamp: string;
+    request_id?: string | null;
+  };
+}
+
+/**
+ * API error with status code and parsed backend error data.
+ */
 interface ApiError extends Error {
   status: number;
   data?: unknown;
+  /** Validation errors if this was a 422 response */
+  validationErrors?: ValidationError[];
+  /** Error type from backend */
+  errorType?: string;
 }
 
+/**
+ * Check if the error data matches the backend error response structure.
+ */
+function isBackendError(data: unknown): data is BackendError {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'status' in data &&
+    (data as BackendError).status === 'error'
+  );
+}
+
+/**
+ * Create a structured API error from response data.
+ *
+ * Handles the Novel Engine backend error format:
+ * - `error.message` for the main error message
+ * - `errors` array for validation errors (422 responses)
+ * - Falls back to `detail` for simple error messages
+ */
 function createApiError(message: string, status: number, data?: unknown): ApiError {
   const error = new Error(message) as ApiError;
   error.status = status;
   error.data = data;
+
+  // Extract structured error information from backend response
+  if (isBackendError(data)) {
+    if (data.error?.type) {
+      error.errorType = data.error.type;
+    }
+    if (data.errors && data.errors.length > 0) {
+      error.validationErrors = data.errors;
+    }
+  }
+
   return error;
 }
 
@@ -42,6 +107,37 @@ function buildUrl(
   return url.toString();
 }
 
+/**
+ * Extract a human-readable error message from backend response.
+ *
+ * Priority:
+ * 1. `error.message` (structured Novel Engine error)
+ * 2. `detail` (FastAPI HTTPException)
+ * 3. Fallback to HTTP status
+ */
+function extractErrorMessage(errorData: unknown, status: number): string {
+  if (isBackendError(errorData)) {
+    // For validation errors, summarize the field errors
+    if (errorData.errors && errorData.errors.length > 0) {
+      const fieldErrors = errorData.errors
+        .map((e) => `${e.field}: ${e.message}`)
+        .join('; ');
+      return `Validation failed: ${fieldErrors}`;
+    }
+    // Use main error message
+    if (errorData.error?.message) {
+      return errorData.error.message;
+    }
+  }
+
+  // Fallback: check for simple 'detail' field (FastAPI HTTPException)
+  if (typeof errorData === 'object' && errorData !== null && 'detail' in errorData) {
+    return String((errorData as { detail: unknown }).detail);
+  }
+
+  return `HTTP ${status}`;
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let errorData: unknown;
@@ -51,11 +147,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
       errorData = await response.text();
     }
 
-    const message =
-      typeof errorData === 'object' && errorData !== null && 'detail' in errorData
-        ? String((errorData as { detail: unknown }).detail)
-        : `HTTP ${response.status}`;
-
+    const message = extractErrorMessage(errorData, response.status);
     throw createApiError(message, response.status, errorData);
   }
 
@@ -157,4 +249,4 @@ export const api = {
   },
 };
 
-export type { ApiError };
+export type { ApiError, ValidationError, BackendError };

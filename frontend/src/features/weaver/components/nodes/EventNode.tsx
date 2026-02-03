@@ -1,10 +1,14 @@
 /**
  * EventNode - React Flow node for story events
+ *
+ * Memoized component to prevent unnecessary re-renders during canvas interactions.
  */
+import { memo } from 'react';
 import type { NodeProps, Node } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 import { Calendar, Zap } from 'lucide-react';
-import { CardContent, Badge } from '@/shared/components/ui';
+import { CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { WeaverNodeStatus } from '../../types';
 import { resolveNodeStatus } from './nodeStyles';
@@ -36,7 +40,7 @@ const eventTypeLabels: Record<EventNodeData['type'], string> = {
   resolution: 'Resolution',
 };
 
-export function EventNode({ data, id, selected }: NodeProps<EventNodeType>) {
+function EventNodeComponent({ data, id, selected }: NodeProps<EventNodeType>) {
   const status = resolveNodeStatus(data.status, selected);
   const eventAccent = status === 'error' ? '' : eventTypeStyles[data.type];
   return (
@@ -81,3 +85,5 @@ export function EventNode({ data, id, selected }: NodeProps<EventNodeType>) {
     </WeaverNode>
   );
 }
+
+export const EventNode = memo(EventNodeComponent);

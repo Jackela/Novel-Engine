@@ -29,7 +29,11 @@ export default function TimelinePanel() {
           {/* Events */}
           <div className="space-y-4">
             {events.map((event) => (
-              <div key={event.id} className="relative flex items-start gap-4 pl-8">
+              <div
+                key={event.id}
+                className="relative flex items-start gap-4 pl-8"
+                data-testid={event.status === 'active' ? 'current-turn' : undefined}
+              >
                 {/* Dot */}
                 <div
                   className={`absolute left-3 mt-2 h-2 w-2 -translate-x-1/2 rounded-full ${
@@ -52,6 +56,12 @@ export default function TimelinePanel() {
                     )}
                   </div>
                   <p className="text-sm font-medium">{event.title}</p>
+                  {event.status === 'active' && (
+                    <div
+                      className="mt-1 h-1 w-24 rounded-full bg-primary/30"
+                      data-testid="arc-progress"
+                    />
+                  )}
                 </div>
 
                 {/* Arrow */}

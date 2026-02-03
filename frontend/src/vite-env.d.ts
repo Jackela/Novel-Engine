@@ -13,3 +13,18 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+interface Window {
+  __REDUX_STORE__?: {
+    dispatch: (action: { type: string; payload?: unknown }) => void;
+    getState: () => {
+      decision: {
+        currentDecision: unknown;
+        pauseState: string;
+        selectedOptionId: number | null;
+        freeTextInput: string;
+        remainingSeconds: number;
+      };
+    };
+  };
+}

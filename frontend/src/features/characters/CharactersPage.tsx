@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { CharacterGrid } from './components/CharacterGrid';
 import { CharacterForm } from './components/CharacterForm';
+import CharacterDetailsDialog from './CharacterDetailsDialog';
 import {
   useCharacters,
   useCharacter,
@@ -11,35 +12,47 @@ import {
   useUpdateCharacter,
   useDeleteCharacter,
 } from './api/characterApi';
-import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ErrorState } from '@/shared/components/feedback';
-import type {
-  CreateCharacterInput,
-  CharacterSummary,
-  CharacterDetail,
-} from '@/shared/types/character';
+import type { CreateCharacterInput, CharacterSummary } from '@/shared/types/character';
 
 export default function CharactersPage() {
-  const [selectedCharacter, setSelectedCharacter] = useState<CharacterSummary | null>(
+  const [editingCharacter, setEditingCharacter] = useState<CharacterSummary | null>(
+    null
+  );
+  const [detailsCharacter, setDetailsCharacter] = useState<CharacterSummary | null>(
     null
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const { data: characters = [], isLoading, error } = useCharacters();
-  const selectedCharacterId = selectedCharacter?.id ?? '';
-  const { data: selectedDetail } = useCharacter(selectedCharacterId);
+  const editingCharacterId = editingCharacter?.id ?? '';
+  const detailsCharacterId = detailsCharacter?.id ?? '';
+  const { data: editingDetail } = useCharacter(editingCharacterId);
+  const { data: detailsDetail } = useCharacter(detailsCharacterId);
   const createMutation = useCreateCharacter();
   const updateMutation = useUpdateCharacter();
   const deleteMutation = useDeleteCharacter();
 
   const handleCreate = () => {
-    setSelectedCharacter(null);
+    setEditingCharacter(null);
     setIsFormOpen(true);
   };
 
   const handleEdit = (character: CharacterSummary) => {
-    setSelectedCharacter(character);
+    setEditingCharacter(character);
     setIsFormOpen(true);
+  };
+
+  const handleViewDetails = (character: CharacterSummary) => {
+    setDetailsCharacter(character);
+    setIsDetailsOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -49,14 +62,14 @@ export default function CharactersPage() {
   };
 
   const handleSubmit = async (data: CreateCharacterInput) => {
-    if (selectedCharacter) {
+    if (editingCharacter) {
       const { agent_id: _agentId, ...payload } = data;
-      await updateMutation.mutateAsync({ ...payload, id: selectedCharacter.id });
+      await updateMutation.mutateAsync({ ...payload, id: editingCharacter.id });
     } else {
       await createMutation.mutateAsync(data);
     }
     setIsFormOpen(false);
-    setSelectedCharacter(null);
+    setEditingCharacter(null);
   };
 
   if (error) {
@@ -72,26 +85,48 @@ export default function CharactersPage() {
   return (
     <div className="space-y-6">
       <CharactersHeader />
-      {isFormOpen ? (
-        <CharacterFormPanel
-          selectedCharacter={selectedCharacter}
-          selectedDetail={selectedDetail}
-          isLoading={createMutation.isPending || updateMutation.isPending}
-          onSubmit={handleSubmit}
-          onCancel={() => {
+      <CharacterGrid
+        characters={characters}
+        isLoading={isLoading}
+        onCreateNew={handleCreate}
+        onEdit={handleEdit}
+        onSelect={handleViewDetails}
+        onDelete={handleDelete}
+      />
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) {
             setIsFormOpen(false);
-            setSelectedCharacter(null);
-          }}
-        />
-      ) : (
-        <CharacterGrid
-          characters={characters}
-          isLoading={isLoading}
-          onCreateNew={handleCreate}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      )}
+            setEditingCharacter(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCharacter ? 'Edit Character' : 'Create Character'}
+            </DialogTitle>
+          </DialogHeader>
+          <CharacterForm
+            {...(editingDetail ? { character: editingDetail } : {})}
+            onSubmit={handleSubmit}
+            onCancel={() => {
+              setIsFormOpen(false);
+              setEditingCharacter(null);
+            }}
+            isLoading={createMutation.isPending || updateMutation.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+      <CharacterDetailsDialog
+        open={isDetailsOpen && !!detailsDetail}
+        onClose={() => {
+          setIsDetailsOpen(false);
+          setDetailsCharacter(null);
+        }}
+        character={detailsDetail ?? null}
+      />
     </div>
   );
 }
@@ -104,39 +139,5 @@ function CharactersHeader() {
         Manage your story characters and their relationships
       </p>
     </div>
-  );
-}
-
-type CharacterFormPanelProps = {
-  selectedCharacter: CharacterSummary | null;
-  selectedDetail?: CharacterDetail | undefined;
-  isLoading: boolean;
-  onSubmit: (data: CreateCharacterInput) => void;
-  onCancel: () => void;
-};
-
-function CharacterFormPanel({
-  selectedCharacter,
-  selectedDetail,
-  isLoading,
-  onSubmit,
-  onCancel,
-}: CharacterFormPanelProps) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {selectedCharacter ? 'Edit Character' : 'Create Character'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <CharacterForm
-          {...(selectedDetail ? { character: selectedDetail } : {})}
-          onSubmit={onSubmit}
-          onCancel={onCancel}
-          isLoading={isLoading}
-        />
-      </CardContent>
-    </Card>
   );
 }

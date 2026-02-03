@@ -70,6 +70,10 @@ VENV_PIP="$VENV_DIR/bin/pip"
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 echo ""
 
+echo "🔒 Running security scan (CodeQL required)..."
+REQUIRE_CODEQL=1 PY_BIN="$VENV_PY" bash scripts/codeql-local.sh
+echo ""
+
 echo "🧹 Running formatting and lint checks..."
 FORMAT_PATHS=(src tests scripts)
 if [ -d "ai_testing" ]; then

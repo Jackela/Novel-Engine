@@ -34,6 +34,8 @@ export function CharacterCard({
         selected && 'ring-2 ring-primary'
       )}
       onClick={() => onSelect?.(character)}
+      data-testid="character-card"
+      data-character-id={character.id}
     >
       <CardContent className="p-4">
         <CharacterCardHeader

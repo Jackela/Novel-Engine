@@ -6,9 +6,9 @@ import { BarChart3, TrendingUp, Zap } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui/Card';
 
 const metrics = [
-  { label: 'Tokens/sec', value: '42.5', trend: '+12%', icon: Zap },
-  { label: 'Avg Response', value: '1.2s', trend: '-8%', icon: TrendingUp },
-  { label: 'Success Rate', value: '99.1%', trend: '+0.5%', icon: BarChart3 },
+  { label: 'LCP', value: '1.2s', trend: '-8%', icon: Zap },
+  { label: 'CLS', value: '0.03', trend: '-0.01', icon: BarChart3 },
+  { label: 'INP', value: '180ms', trend: '-12%', icon: TrendingUp },
 ];
 
 export default function AnalyticsPanel() {
@@ -20,7 +20,7 @@ export default function AnalyticsPanel() {
           Analytics
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent data-testid="performance-metrics">
         <div className="space-y-3">
           {metrics.map((metric) => {
             const Icon = metric.icon;
@@ -36,7 +36,12 @@ export default function AnalyticsPanel() {
                   <span className="text-sm text-muted-foreground">{metric.label}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium">{metric.value}</p>
+                  <p
+                    className="text-sm font-medium"
+                    data-testid="performance-metric-value"
+                  >
+                    {metric.value}
+                  </p>
                   <p
                     className={`text-xs ${isPositive ? 'text-green-500' : 'text-red-500'}`}
                   >

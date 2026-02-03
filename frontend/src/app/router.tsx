@@ -27,17 +27,28 @@ const isAuthenticated = () => {
 };
 
 const shouldBypassAuth = () => {
-  if (import.meta.env.VITE_E2E_BYPASS_AUTH === 'true') {
-    return true;
-  }
   if (typeof window !== 'undefined') {
     try {
-      return window.localStorage.getItem('e2e_bypass_auth') === '1';
+      const override = window.localStorage.getItem('e2e_bypass_auth');
+      if (override === '0') {
+        return false;
+      }
+      if (override === '1') {
+        return true;
+      }
     } catch {
-      return false;
+      // ignore storage errors
     }
   }
-  return false;
+  return import.meta.env.VITE_E2E_BYPASS_AUTH === 'true';
+};
+
+const ensureAuthInitialized = async () => {
+  const authStore = useAuthStore as AuthStoreWithPersist;
+  if (authStore.persist && !authStore.persist.hasHydrated()) {
+    await authStore.persist.rehydrate();
+  }
+  await useAuthStore.getState().initialize();
 };
 
 // Root route with layout
@@ -81,11 +92,7 @@ const protectedLayoutRoute = createRoute({
     if (shouldBypassAuth()) {
       return;
     }
-    const authStore = useAuthStore as AuthStoreWithPersist;
-    if (authStore.persist && !authStore.persist.hasHydrated()) {
-      await authStore.persist.rehydrate();
-    }
-    await useAuthStore.getState().initialize();
+    await ensureAuthInitialized();
     if (!isAuthenticated()) {
       throw redirect({
         to: '/',
@@ -120,10 +127,41 @@ const storiesRoute = createRoute({
   component: lazyRouteComponent(() => import('@/pages/StoriesPage')),
 });
 
-// Catch-all route
+const storyEditorRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/stories/editor',
+  component: lazyRouteComponent(() => import('@/pages/StoryEditorPage')),
+});
+
+const worldRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/world',
+  component: lazyRouteComponent(() => import('@/pages/WorldPage')),
+});
+
+const wikiRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/world/wiki',
+  component: lazyRouteComponent(() => import('@/pages/WikiPage')),
+});
+
+const storyRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/story',
+  component: lazyRouteComponent(() => import('@/pages/NarrativePage')),
+});
+
+// Character Voice Tester route (CHAR-028)
+const characterVoiceRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/world/characters/$characterId/voice',
+  component: lazyRouteComponent(() => import('@/pages/CharacterVoicePage')),
+});
+
+// Catch-all route (splat route using $ syntax)
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '*',
+  path: '$',
   beforeLoad: () => {
     throw redirect({
       to: '/',
@@ -142,6 +180,11 @@ const routeTree = rootRoute.addChildren([
     charactersRoute,
     campaignsRoute,
     storiesRoute,
+    storyEditorRoute,
+    worldRoute,
+    wikiRoute,
+    storyRoute,
+    characterVoiceRoute,
   ]),
   notFoundRoute,
 ]);

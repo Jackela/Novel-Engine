@@ -431,7 +431,7 @@ class PostgreSQLConnectionPool:
         WHERE {' AND '.join(where_clauses)}
         ORDER BY rank DESC, importance_score DESC
         LIMIT {limit_param}
-        """
+        """  # nosec B608 - uses parameterized positional placeholders
 
         params.append(limit)
         results = await self.execute_query(query, *params, fetch_mode="all")

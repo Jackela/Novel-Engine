@@ -173,6 +173,7 @@ export class DashboardPage {
         window.localStorage.setItem('novelengine_guest_session', '1');
         window.sessionStorage.setItem('novelengine_guest_session', '1');
         window.localStorage.setItem('e2e_bypass_auth', '1');
+        window.localStorage.setItem('e2e_preserve_auth', '1');
         (window as any).__FORCE_SHOW_METRICS__ = true;
       } catch {
         // ignore storage failures in CI
@@ -735,7 +736,37 @@ export class DashboardPage {
     });
 
     // Characters Mock with persistence across refreshes
-    let characters = ['char-1', 'char-2'];
+    const nowIso = () => new Date().toISOString();
+    let characters = [
+      {
+        id: 'char-1',
+        agent_id: 'char-1',
+        name: 'Aria Shadowbane',
+        status: 'active',
+        type: 'protagonist',
+        updated_at: nowIso(),
+        workspace_id: 'ws-mock',
+        aliases: ['The Shadow'],
+        archetype: 'Tactician',
+        traits: ['Strategic', 'Resilient'],
+        appearance: 'Tall with dark hair',
+        faction_id: null,
+      },
+      {
+        id: 'char-2',
+        agent_id: 'char-2',
+        name: 'Merchant Aldric',
+        status: 'active',
+        type: 'npc',
+        updated_at: nowIso(),
+        workspace_id: 'ws-mock',
+        aliases: [],
+        archetype: 'Merchant',
+        traits: ['Shrewd'],
+        appearance: null,
+        faction_id: null,
+      },
+    ];
     await page.route(url => !url.pathname.includes('/src/') && /\/api\/characters(\/|\?|$)/.test(url.pathname), async route => {
       if (options?.failCharacters) {
         await route.fulfill({
@@ -757,27 +788,48 @@ export class DashboardPage {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            characters: characters.map((id) => ({ id, name: id })),
+            characters,
           }),
         });
         return;
       }
 
       if (request.method() === 'GET' && characterId) {
+        const character = characters.find((c) => c.id === characterId);
+        if (!character) {
+          await route.fulfill({
+            status: 404,
+            contentType: 'application/json',
+            body: JSON.stringify({ error: 'Not found' }),
+          });
+          return;
+        }
+
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            id: characterId,
-            name: characterId,
-            role: 'protagonist',
+            agent_id: character.agent_id,
+            character_id: character.id,
+            character_name: character.name,
+            name: character.name,
             status: 'active',
             background_summary: 'Mock character profile',
+            personality_traits: 'Focused and resourceful',
+            current_status: character.status,
             metadata: { faction: 'Mock Faction', role: 'Agent' },
             structured_data: {
               stats: { strength: 5, dexterity: 5, intelligence: 5, willpower: 5, perception: 5, charisma: 5 },
               equipment: [],
             },
+            narrative_context: '',
+            skills: {},
+            relationships: {},
+            current_location: 'Meridian',
+            inventory: [],
+            psychology: null,
+            memories: [],
+            goals: [],
           }),
         });
         return;
@@ -790,14 +842,47 @@ export class DashboardPage {
         } catch {
           payload = {};
         }
-        const name = payload?.name || payload?.character_name || `char-${Date.now()}`;
-        if (!characters.includes(name)) {
-          characters.push(name);
+        const name = (payload?.name as string) || (payload?.character_name as string) || `char-${Date.now()}`;
+        const agentId = (payload?.agent_id as string) || name;
+        const id = agentId;
+        if (!characters.find((c) => c.id === id)) {
+          characters.push({
+            id,
+            agent_id: agentId,
+            name,
+            status: 'active',
+            type: (payload?.type as string) || 'npc',
+            updated_at: nowIso(),
+            workspace_id: 'ws-mock',
+            aliases: (payload?.aliases as string[]) || [],
+            archetype: (payload?.archetype as string) || null,
+            traits: (payload?.traits as string[]) || [],
+            appearance: (payload?.appearance as string) || null,
+            faction_id: null,
+          });
         }
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ success: true, data: { character_id: name } }),
+          body: JSON.stringify({
+            agent_id: agentId,
+            character_id: id,
+            character_name: name,
+            name,
+            background_summary: (payload?.background_summary as string) ?? 'Mock character profile',
+            personality_traits: (payload?.personality_traits as string) ?? 'Focused and resourceful',
+            current_status: 'active',
+            narrative_context: '',
+            skills: {},
+            relationships: {},
+            current_location: 'Meridian',
+            inventory: [],
+            metadata: payload?.metadata ?? {},
+            structured_data: payload?.structured_data ?? {},
+            psychology: null,
+            memories: [],
+            goals: [],
+          }),
         });
         return;
       }
@@ -809,27 +894,55 @@ export class DashboardPage {
         } catch {
           payload = {};
         }
-        const name = payload?.name || characterId;
-        if (!characters.includes(name)) {
-          characters.push(name);
+        const name = (payload?.name as string) || characterId;
+        const existing = characters.find((c) => c.id === characterId);
+        if (existing) {
+          existing.name = name;
+          existing.updated_at = nowIso();
+        } else {
+          characters.push({
+            id: characterId,
+            agent_id: characterId,
+            name,
+            status: 'active',
+            type: 'protagonist',
+            updated_at: nowIso(),
+            workspace_id: 'ws-mock',
+            aliases: [],
+            archetype: null,
+            traits: [],
+            appearance: null,
+            faction_id: null,
+          });
         }
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            id: name,
+            agent_id: characterId,
+            character_id: characterId,
+            character_name: name,
             name,
-            role: payload?.role ?? 'protagonist',
+            status: 'active',
+            current_status: 'active',
+            narrative_context: '',
+            skills: {},
+            relationships: {},
+            current_location: 'Meridian',
+            inventory: [],
+            metadata: payload?.metadata ?? {},
             background_summary: payload?.background_summary ?? 'Updated character',
-            metadata: { faction: payload?.metadata?.faction ?? 'Mock Faction', role: payload?.metadata?.role ?? 'Agent' },
             structured_data: payload?.structured_data ?? { stats: {}, equipment: [] },
+            psychology: null,
+            memories: [],
+            goals: [],
           }),
         });
         return;
       }
 
       if (request.method() === 'DELETE' && characterId) {
-        characters = characters.filter(c => c !== characterId);
+        characters = characters.filter((c) => c.id !== characterId);
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -950,9 +1063,10 @@ export class DashboardPage {
         orchestrationState.steps[0].status = 'processing';
       }
 
-       latestNarrative = {
-        story: `Run ${orchestrationState.current_turn}: Narrative generated for ${characters.join(', ')}`,
-        participants: [...characters],
+      const participantNames = characters.map((character) => character.name);
+      latestNarrative = {
+        story: `Run ${orchestrationState.current_turn}: Narrative generated for ${participantNames.join(', ')}`,
+        participants: [...participantNames],
         turns_completed: orchestrationState.current_turn,
         has_content: true,
       };

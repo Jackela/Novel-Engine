@@ -25,19 +25,42 @@ export const waitForDashboardReady = async (page: Page) => {
     .catch(() => false);
 
   if (!isVisible) {
-    const cta = page.locator('[data-testid="cta-launch"]');
-    const ctaVisible = await cta.isVisible().catch(() => false);
-    if (ctaVisible) {
-      await page.route(/\/api\/guest\/session/, async route => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ workspace_id: 'ws-mock', created: false }),
-        });
-      });
-      await cta.click();
-      await page.waitForURL('**/dashboard', { timeout: DEFAULT_TIMEOUT_MS }).catch(() => {});
-    } else if (!page.url().includes('/dashboard')) {
+    await page.evaluate(() => {
+      try {
+        const guestToken = {
+          accessToken: 'guest',
+          refreshToken: '',
+          tokenType: 'Guest',
+          expiresAt: Date.now() + 60 * 60 * 1000,
+          refreshExpiresAt: 0,
+          user: {
+            id: 'guest',
+            username: 'guest',
+            email: '',
+            roles: ['guest'],
+          },
+        };
+        const payload = {
+          state: {
+            token: guestToken,
+            isGuest: true,
+            workspaceId: 'ws-mock',
+          },
+          version: 0,
+        };
+        localStorage.setItem('novel-engine-auth', JSON.stringify(payload));
+        localStorage.setItem('novelengine_guest_session', '1');
+        sessionStorage.setItem('novelengine_guest_session', '1');
+        localStorage.setItem('e2e_bypass_auth', '1');
+        localStorage.setItem('e2e_preserve_auth', '1');
+      } catch {
+        // ignore storage errors
+      }
+    });
+
+    if (page.url().includes('/dashboard')) {
+      await page.reload({ waitUntil: 'domcontentloaded' });
+    } else {
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
     }
   }

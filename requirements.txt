@@ -39,6 +39,7 @@ python-dateutil>=2.8.2
 pytz>=2023.3
 uuid>=1.30
 PyYAML>=6.0.1
+structlog>=24.0.0  # Structured logging for security and validation modules
 
 # Environment and configuration
 python-dotenv>=1.0.0

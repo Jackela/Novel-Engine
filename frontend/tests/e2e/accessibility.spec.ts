@@ -68,6 +68,13 @@ test.describe('Keyboard-Only User Journey', () => {
    * Test 1: Complete keyboard navigation through CharacterSelection
    */
   test('Skip link jumps to CTA region', async ({ page }) => {
+    await page.evaluate(() => {
+      try {
+        document.body.focus();
+      } catch {
+        // ignore focus errors
+      }
+    });
     await page.keyboard.press('Tab');
     const skipLink = page.getByText('Skip to main content');
     await expect(skipLink).toBeFocused();

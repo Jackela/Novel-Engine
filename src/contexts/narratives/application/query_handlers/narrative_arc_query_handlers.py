@@ -13,9 +13,7 @@ from typing import Any, Dict, List, Optional
 from ...domain.services.causal_graph_service import CausalGraphService
 from ...domain.services.narrative_flow_service import NarrativeFlowService
 from ...domain.value_objects.narrative_id import NarrativeId
-from ...infrastructure.repositories.narrative_arc_repository import (
-    NarrativeArcRepository,
-)
+from ..ports.narrative_arc_repository_port import INarrativeArcRepository
 from ..queries.narrative_arc_queries import (
     GetArcMetricsQuery,
     GetArcSummaryQuery,
@@ -43,7 +41,7 @@ class NarrativeArcQueryHandler:
 
     def __init__(
         self,
-        repository: NarrativeArcRepository,
+        repository: INarrativeArcRepository,
         flow_service: Optional[NarrativeFlowService] = None,
         causal_service: Optional[CausalGraphService] = None,
     ):

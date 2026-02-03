@@ -1,0 +1,15 @@
+# Code Owners
+
+# Global owner
+* @Jackela
+
+# Docs
+docs/ @Jackela
+README.md @Jackela
+
+# Backend
+src/ @Jackela
+tests/ @Jackela
+
+# Frontend
+frontend/ @Jackela

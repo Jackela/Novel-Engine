@@ -1,8 +1,7 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 // Test configuration
 const BASE_URL = 'http://localhost:3000';
-const TEST_TIMEOUT = 30000;
 
 test.describe('Character Creation E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
