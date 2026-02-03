@@ -262,3 +262,27 @@ Started: Tue Feb  3 16:06:24     2026
   - Scene nodes show up to 5 colored dots for plotlines, with "+N" indicator for additional plotlines
   - Plotlines are grouped by status (Active/Resolved/Abandoned) in the manager UI
   - All typecheck and lint pass
+
+## 2026-02-03 - DIR-051
+- **What was implemented:**
+  - Added plotline filtering to Weaver canvas for focusing on single narrative threads
+  - Added `filteredPlotlineId` state to weaverStore with setter hook
+  - Created `PlotlineFilter.tsx` component with dropdown, clear button, and selected plotline badge
+  - Implemented dimming (opacity 30%) for scenes not in filtered plotline
+  - Implemented edge dimming when either endpoint is not in filtered plotline
+  - Added keyboard shortcut Ctrl+L to focus filter dropdown
+  - Filter state persists during session via Zustand store
+- **Files changed:**
+  - `frontend/src/features/weaver/store/weaverStore.ts` - Added filteredPlotlineId state and hooks
+  - `frontend/src/features/weaver/components/PlotlineFilter.tsx` - New file (~140 lines)
+  - `frontend/src/features/weaver/components/WeaverToolbar.tsx` - Added PlotlineFilter
+  - `frontend/src/features/weaver/components/WeaverCanvas.tsx` - Added dimming logic with useMemo
+  - `frontend/src/features/weaver/index.ts` - Export PlotlineFilter
+- **Learnings for future iterations:**
+  - Weaver toolbar is the integration point for canvas-level controls like filtering
+  - Zustand store provides automatic session persistence (no localStorage needed)
+  - useWeaverStore selector pattern prevents unnecessary re-renders of components
+  - Dimming logic applies opacity via style prop on node/edge objects
+  - Non-scene nodes (character, location, etc.) are not affected by plotline filter
+  - All typecheck and tests pass
+

@@ -186,7 +186,7 @@
         "Verify: Filtering state persists during session"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["DIR-050"]
     },
