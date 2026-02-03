@@ -237,3 +237,28 @@ Started: Tue Feb  3 16:06:24     2026
   - Plotline CRUD endpoints are at `/structure/plotlines` (not nested under stories)
   - Scene linking uses POST (link), DELETE (unlink), PUT (set all) pattern
   - All 206 narrative domain tests pass (145 original + 25 conflict + 27 plotline + 9 scene plotline methods)
+
+## 2026-02-03 - DIR-050
+- **What was implemented:**
+  - Full Plotline Manager UI with CRUD operations for narrative thread tracking
+  - Frontend: Added Plotline Zod schemas to `frontend/src/types/schemas.ts` (Status, Response, Create, Update, Link/Unlink)
+  - Frontend: Created `plotlineApi.ts` with TanStack Query hooks (usePlotlines, useCreatePlotline, useUpdatePlotline, useDeletePlotline)
+  - Frontend: Added scene-plotline linking hooks (useScenePlotlines, useLinkSceneToPlotline, useUnlinkSceneFromPlotline, useSetScenePlotlines)
+  - Frontend: Created `PlotlineManager.tsx` with color picker, status management, and inline editing
+  - Frontend: Added plotline indicators to `SceneNode.tsx` as colored dots
+  - Frontend: Updated Weaver types to include plotlines in SceneNodeData
+- **Files changed:**
+  - `frontend/src/types/schemas.ts` - Added PlotlineStatusEnum, PlotlineResponseSchema, etc.
+  - `frontend/src/features/director/api/plotlineApi.ts` - New file (TanStack Query hooks)
+  - `frontend/src/features/director/components/PlotlineManager.tsx` - New file (~700 lines)
+  - `frontend/src/features/director/index.ts` - Added PlotlineManager and plotline API exports
+  - `frontend/src/features/weaver/types.ts` - Added plotlines to SceneNodeData interface
+  - `frontend/src/features/weaver/components/nodes/SceneNode.tsx` - Added PlotlineIndicators component with colored dots
+  - `scripts/ralph/prd.json` - Set DIR-050 passes: true
+- **Learnings for future iterations:**
+  - DELETE with request body requires special handling - use `body` and `headers: { 'Content-Type': 'application/json' }` in api.delete call
+  - For accessibility, form labels must be associated with controls using `htmlFor` and `id`, or use `<span>` instead of `<label>` for non-form groups
+  - Plotline color palette uses 10 predefined colors for consistency and accessibility
+  - Scene nodes show up to 5 colored dots for plotlines, with "+N" indicator for additional plotlines
+  - Plotlines are grouped by status (Active/Resolved/Abandoned) in the manager UI
+  - All typecheck and lint pass

@@ -169,7 +169,7 @@
         "Verify: Creating/editing plotline updates across UI"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["DIR-049"]
     },

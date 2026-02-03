@@ -12,6 +12,7 @@ export { BeatSuggestionPopover } from './components/BeatSuggestionPopover';
 export { PacingGraph } from './components/PacingGraph';
 export { ChapterDashboard } from './components/ChapterDashboard';
 export { ConflictPanel } from './components/ConflictPanel';
+export { PlotlineManager } from './components/PlotlineManager';
 
 // API Hooks
 export { useBeats, useCreateBeat, useUpdateBeat, useDeleteBeat, useReorderBeats } from './api/beatApi';
@@ -24,3 +25,15 @@ export {
   useDeleteConflict,
   conflictKeys,
 } from './api/conflictApi';
+export {
+  usePlotlines,
+  usePlotline,
+  useScenePlotlines,
+  useCreatePlotline,
+  useUpdatePlotline,
+  useDeletePlotline,
+  useLinkSceneToPlotline,
+  useUnlinkSceneFromPlotline,
+  useSetScenePlotlines,
+  plotlineKeys,
+} from './api/plotlineApi';

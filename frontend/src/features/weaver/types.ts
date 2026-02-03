@@ -21,4 +21,6 @@ export interface SceneNodeData extends Record<string, unknown> {
   visualPrompt: string;
   status?: WeaverNodeStatus;
   errorMessage?: string;
+  /** Plotlines associated with this scene (DIR-050) */
+  plotlines?: Array<{ id: string; name: string; color: string }>;
 }

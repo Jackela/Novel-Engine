@@ -886,6 +886,108 @@ export type ConflictListResponse = z.infer<typeof ConflictListResponseSchema>;
 export type ConflictCreateRequest = z.infer<typeof ConflictCreateRequestSchema>;
 export type ConflictUpdateRequest = z.infer<typeof ConflictUpdateRequestSchema>;
 
+// === Plotline Schemas (DIR-049) ===
+
+/**
+ * Plotline status enum matching backend PlotlineStatus.
+ * Tracks the lifecycle state of a narrative thread.
+ */
+export const PlotlineStatusEnum = z.enum([
+  'active',     // Currently unfolding in the story
+  'resolved',   // Concluded and tied up
+  'abandoned',  // Dropped or no longer relevant
+]);
+
+/**
+ * Plotline response schema matching backend PlotlineResponse.
+ *
+ * Why: Represents a narrative thread that weaves through multiple scenes.
+ * A scene can belong to multiple plotlines simultaneously for complex
+ * storytelling (e.g., main plot + subplot + character arc).
+ */
+export const PlotlineResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/, 'Invalid hex color code'),
+  description: z.string(),
+  status: PlotlineStatusEnum,
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Plotline list response schema.
+ */
+export const PlotlineListResponseSchema = z.object({
+  plotlines: z.array(PlotlineResponseSchema).default([]),
+});
+
+/**
+ * Plotline create request schema matching backend PlotlineCreateRequest.
+ */
+export const PlotlineCreateRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+  color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/, 'Color must be a valid hex code (e.g., #ff5733)'),
+  description: z.string().max(2000).default(''),
+  status: PlotlineStatusEnum.default('active'),
+});
+
+/**
+ * Plotline update request schema matching backend PlotlineUpdateRequest.
+ */
+export const PlotlineUpdateRequestSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/, 'Color must be a valid hex code').optional(),
+  description: z.string().max(2000).optional(),
+  status: PlotlineStatusEnum.optional(),
+});
+
+/**
+ * Link scene to plotline request schema.
+ */
+export const LinkSceneToPlotlineRequestSchema = z.object({
+  plotline_id: z.string(),
+});
+
+/**
+ * Unlink scene from plotline request schema.
+ */
+export const UnlinkSceneFromPlotlineRequestSchema = z.object({
+  plotline_id: z.string(),
+});
+
+/**
+ * Set scene plotlines request schema matching backend SetScenePlotlinesRequest.
+ *
+ * Why: Replaces all plotlines for a scene in a single operation.
+ * Used for bulk plotline assignment changes.
+ */
+export const SetScenePlotlinesRequestSchema = z.object({
+  plotline_ids: z.array(z.string()).default([]),
+});
+
+/**
+ * Scene plotlines response schema matching backend ScenePlotlinesResponse.
+ *
+ * Why: Returns the list of plotline IDs associated with a scene.
+ * The frontend fetches full plotline details separately for display.
+ */
+export const ScenePlotlinesResponseSchema = z.object({
+  scene_id: z.string(),
+  plotline_ids: z.array(z.string()).default([]),
+});
+
+// Plotline Types
+export type PlotlineStatus = z.infer<typeof PlotlineStatusEnum>;
+export type PlotlineResponse = z.infer<typeof PlotlineResponseSchema>;
+export type PlotlineListResponse = z.infer<typeof PlotlineListResponseSchema>;
+export type PlotlineCreateRequest = z.infer<typeof PlotlineCreateRequestSchema>;
+export type PlotlineUpdateRequest = z.infer<typeof PlotlineUpdateRequestSchema>;
+export type LinkSceneToPlotlineRequest = z.infer<typeof LinkSceneToPlotlineRequestSchema>;
+export type UnlinkSceneFromPlotlineRequest = z.infer<typeof UnlinkSceneFromPlotlineRequestSchema>;
+export type SetScenePlotlinesRequest = z.infer<typeof SetScenePlotlinesRequestSchema>;
+export type ScenePlotlinesResponse = z.infer<typeof ScenePlotlinesResponseSchema>;
+
 /**
  * Standard API response envelope matching backend's StandardResponse
  *
