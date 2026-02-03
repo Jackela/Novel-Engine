@@ -10,6 +10,8 @@ from .character_profile_generator import (
     generate_character_profile,
 )
 from .llm_world_generator import (
+    BeatSuggestion,
+    BeatSuggestionResult,
     CharacterData,
     DialogueResult,
     LLMWorldGenerator,
@@ -18,6 +20,8 @@ from .llm_world_generator import (
 
 __all__ = [
     "LLMWorldGenerator",
+    "BeatSuggestion",
+    "BeatSuggestionResult",
     "CharacterData",
     "DialogueResult",
     "RelationshipHistoryResult",

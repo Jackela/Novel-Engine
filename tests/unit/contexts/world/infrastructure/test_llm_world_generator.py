@@ -21,6 +21,8 @@ from src.contexts.world.domain.entities import (
     ToneType,
 )
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
+    BeatSuggestion,
+    BeatSuggestionResult,
     LLMWorldGenerator,
 )
 
@@ -572,3 +574,345 @@ class TestWorldGenerationResult:
         assert len(result.factions) == 0
         assert len(result.locations) == 0
         assert len(result.events) == 0
+
+
+# ==================== Beat Suggestion Tests ====================
+
+
+@pytest.fixture
+def sample_beat_suggestion_response() -> Dict[str, Any]:
+    """Sample LLM response for beat suggestion testing."""
+    return {
+        "suggestions": [
+            {
+                "beat_type": "reaction",
+                "content": "She froze, her hand still on the sword hilt, eyes locked with the stranger.",
+                "mood_shift": -1,
+                "rationale": "After the warning dialogue, a reaction beat shows the tension building.",
+            },
+            {
+                "beat_type": "action",
+                "content": "The mysterious figure stepped forward, revealing a glint of metal at their hip.",
+                "mood_shift": -2,
+                "rationale": "An unexpected action raises stakes and moves the confrontation forward.",
+            },
+            {
+                "beat_type": "dialogue",
+                "content": "'I didn't come here to fight,' the figure said, raising empty hands. 'But I will if you force me.'",
+                "mood_shift": 0,
+                "rationale": "Dialogue reveals motivation while maintaining tension through the threat.",
+            },
+        ]
+    }
+
+
+@pytest.fixture
+def current_beats_fixture() -> list:
+    """Sample current beats for testing."""
+    return [
+        {"beat_type": "action", "content": "She drew her sword.", "mood_shift": 0},
+        {"beat_type": "dialogue", "content": "'Stay back!' she warned.", "mood_shift": -1},
+    ]
+
+
+class TestBeatSuggestion:
+    """Tests for BeatSuggestion dataclass."""
+
+    @pytest.mark.unit
+    def test_beat_suggestion_creation(self) -> None:
+        """Test creating a BeatSuggestion."""
+        suggestion = BeatSuggestion(
+            beat_type="action",
+            content="She lunged forward.",
+            mood_shift=-2,
+            rationale="Escalates the conflict.",
+        )
+        assert suggestion.beat_type == "action"
+        assert suggestion.content == "She lunged forward."
+        assert suggestion.mood_shift == -2
+        assert suggestion.rationale == "Escalates the conflict."
+
+    @pytest.mark.unit
+    def test_beat_suggestion_defaults(self) -> None:
+        """Test BeatSuggestion default values."""
+        suggestion = BeatSuggestion(beat_type="reaction", content="She paused.")
+        assert suggestion.mood_shift == 0
+        assert suggestion.rationale is None
+
+
+class TestBeatSuggestionResult:
+    """Tests for BeatSuggestionResult dataclass."""
+
+    @pytest.mark.unit
+    def test_result_with_suggestions(self) -> None:
+        """Test BeatSuggestionResult with suggestions."""
+        suggestions = [
+            BeatSuggestion(beat_type="action", content="Test 1"),
+            BeatSuggestion(beat_type="reaction", content="Test 2"),
+            BeatSuggestion(beat_type="dialogue", content="Test 3"),
+        ]
+        result = BeatSuggestionResult(suggestions=suggestions)
+
+        assert len(result.suggestions) == 3
+        assert not result.is_error()
+
+    @pytest.mark.unit
+    def test_result_with_error(self) -> None:
+        """Test BeatSuggestionResult with error."""
+        result = BeatSuggestionResult(suggestions=[], error="API call failed")
+
+        assert result.is_error()
+        assert result.error == "API call failed"
+        assert len(result.suggestions) == 0
+
+    @pytest.mark.unit
+    def test_to_dict(self) -> None:
+        """Test BeatSuggestionResult.to_dict()."""
+        suggestions = [
+            BeatSuggestion(
+                beat_type="action",
+                content="Test content",
+                mood_shift=-1,
+                rationale="Test reason",
+            )
+        ]
+        result = BeatSuggestionResult(suggestions=suggestions)
+        data = result.to_dict()
+
+        assert "suggestions" in data
+        assert len(data["suggestions"]) == 1
+        assert data["suggestions"][0]["beat_type"] == "action"
+        assert data["suggestions"][0]["content"] == "Test content"
+        assert data["suggestions"][0]["mood_shift"] == -1
+        assert data["suggestions"][0]["rationale"] == "Test reason"
+
+    @pytest.mark.unit
+    def test_to_dict_with_error(self) -> None:
+        """Test BeatSuggestionResult.to_dict() includes error."""
+        result = BeatSuggestionResult(suggestions=[], error="Test error")
+        data = result.to_dict()
+
+        assert "error" in data
+        assert data["error"] == "Test error"
+
+
+class TestBeatSuggestionParsing:
+    """Tests for beat suggestion response parsing."""
+
+    @pytest.mark.unit
+    def test_parse_beat_suggestion_response(
+        self,
+        generator: LLMWorldGenerator,
+        sample_beat_suggestion_response: Dict[str, Any],
+    ) -> None:
+        """Test parsing a valid beat suggestion response."""
+        json_content = json.dumps(sample_beat_suggestion_response)
+        result = generator._parse_beat_suggestion_response(json_content)
+
+        assert len(result.suggestions) == 3
+        assert result.suggestions[0].beat_type == "reaction"
+        assert "froze" in result.suggestions[0].content
+        assert result.suggestions[0].mood_shift == -1
+        assert "tension" in str(result.suggestions[0].rationale)
+
+    @pytest.mark.unit
+    def test_parse_beat_suggestion_limits_to_three(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that parsing limits to 3 suggestions max."""
+        response = {
+            "suggestions": [
+                {"beat_type": "action", "content": f"Beat {i}", "mood_shift": 0}
+                for i in range(5)
+            ]
+        }
+        json_content = json.dumps(response)
+        result = generator._parse_beat_suggestion_response(json_content)
+
+        assert len(result.suggestions) == 3
+
+    @pytest.mark.unit
+    def test_parse_beat_suggestion_clamps_mood_shift(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that mood_shift values are clamped to valid range."""
+        response = {
+            "suggestions": [
+                {"beat_type": "action", "content": "Extreme positive", "mood_shift": 10},
+                {"beat_type": "reaction", "content": "Extreme negative", "mood_shift": -10},
+            ]
+        }
+        json_content = json.dumps(response)
+        result = generator._parse_beat_suggestion_response(json_content)
+
+        assert result.suggestions[0].mood_shift == 5  # Clamped to max
+        assert result.suggestions[1].mood_shift == -5  # Clamped to min
+
+    @pytest.mark.unit
+    def test_parse_beat_suggestion_handles_missing_fields(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test parsing handles missing optional fields."""
+        response = {
+            "suggestions": [
+                {"beat_type": "action", "content": "Minimal beat"}
+                # Missing mood_shift and rationale
+            ]
+        }
+        json_content = json.dumps(response)
+        result = generator._parse_beat_suggestion_response(json_content)
+
+        assert len(result.suggestions) == 1
+        assert result.suggestions[0].mood_shift == 0  # Default
+        assert result.suggestions[0].rationale is None
+
+
+class TestBeatSuggestionPromptBuilding:
+    """Tests for beat suggestion prompt building."""
+
+    @pytest.mark.unit
+    def test_build_beat_suggester_user_prompt_with_beats(
+        self,
+        generator: LLMWorldGenerator,
+        current_beats_fixture: list,
+    ) -> None:
+        """Test prompt building with existing beats."""
+        prompt = generator._build_beat_suggester_user_prompt(
+            current_beats=current_beats_fixture,
+            scene_context="A tense standoff in an abandoned warehouse.",
+            mood_target=-2,
+        )
+
+        assert "tense standoff" in prompt
+        assert "[ACTION]" in prompt
+        assert "[DIALOGUE]" in prompt
+        assert "drew her sword" in prompt
+        assert "'Stay back!' she warned." in prompt
+        assert "mood: +0" in prompt or "mood: -1" in prompt
+        assert "target:" in prompt.lower()
+
+    @pytest.mark.unit
+    def test_build_beat_suggester_user_prompt_empty_beats(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test prompt building with no existing beats."""
+        prompt = generator._build_beat_suggester_user_prompt(
+            current_beats=[],
+            scene_context="Opening scene of a heist.",
+            mood_target=None,
+        )
+
+        assert "Opening scene of a heist" in prompt
+        assert "start of the scene" in prompt.lower()
+        assert "Follow natural story momentum" in prompt
+
+    @pytest.mark.unit
+    def test_build_beat_suggester_user_prompt_action_heavy(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that action-heavy beats get appropriate hint."""
+        beats = [
+            {"beat_type": "action", "content": "He ran."},
+            {"beat_type": "action", "content": "He jumped."},
+            {"beat_type": "action", "content": "He climbed."},
+        ]
+        prompt = generator._build_beat_suggester_user_prompt(
+            current_beats=beats,
+            scene_context="Chase scene.",
+            mood_target=None,
+        )
+
+        assert "heavy on action" in prompt.lower()
+        assert "reaction" in prompt.lower() or "dialogue" in prompt.lower()
+
+    @pytest.mark.unit
+    def test_build_beat_suggester_user_prompt_calculates_mood(
+        self, generator: LLMWorldGenerator
+    ) -> None:
+        """Test that prompt calculates cumulative mood correctly."""
+        beats = [
+            {"beat_type": "action", "content": "Test 1", "mood_shift": -2},
+            {"beat_type": "reaction", "content": "Test 2", "mood_shift": -1},
+            {"beat_type": "dialogue", "content": "Test 3", "mood_shift": +1},
+        ]
+        prompt = generator._build_beat_suggester_user_prompt(
+            current_beats=beats,
+            scene_context="Test scene.",
+            mood_target=None,
+        )
+
+        # Cumulative: -2 + -1 + 1 = -2
+        assert "cumulative: -2" in prompt
+
+
+class TestBeatSuggestionIntegration:
+    """Integration-style tests for beat suggestion with mocked API."""
+
+    @pytest.mark.unit
+    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    def test_suggest_next_beats_success(
+        self,
+        mock_post: MagicMock,
+        generator: LLMWorldGenerator,
+        sample_beat_suggestion_response: Dict[str, Any],
+        current_beats_fixture: list,
+    ) -> None:
+        """Test successful beat suggestion with mocked API."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [
+                {"content": {"parts": [{"text": json.dumps(sample_beat_suggestion_response)}]}}
+            ]
+        }
+        mock_post.return_value = mock_response
+
+        result = generator.suggest_next_beats(
+            current_beats=current_beats_fixture,
+            scene_context="A tense standoff in an abandoned warehouse.",
+            mood_target=-2,
+        )
+
+        assert not result.is_error()
+        assert len(result.suggestions) == 3
+        assert result.suggestions[0].beat_type == "reaction"
+        assert result.suggestions[1].beat_type == "action"
+        assert result.suggestions[2].beat_type == "dialogue"
+
+    @pytest.mark.unit
+    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    def test_suggest_next_beats_api_error(
+        self,
+        mock_post: MagicMock,
+        generator: LLMWorldGenerator,
+    ) -> None:
+        """Test beat suggestion handles API errors gracefully."""
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.text = "Internal Server Error"
+        mock_post.return_value = mock_response
+
+        result = generator.suggest_next_beats(
+            current_beats=[],
+            scene_context="Test scene.",
+            mood_target=None,
+        )
+
+        assert result.is_error()
+        assert "500" in result.error
+        assert len(result.suggestions) == 0
+
+    @pytest.mark.unit
+    def test_suggest_next_beats_missing_api_key(self) -> None:
+        """Test beat suggestion returns error when API key missing."""
+        gen = LLMWorldGenerator()
+        gen._api_key = ""
+
+        result = gen.suggest_next_beats(
+            current_beats=[],
+            scene_context="Test scene.",
+            mood_target=None,
+        )
+
+        assert result.is_error()
+        assert "GEMINI_API_KEY" in result.error

@@ -37,7 +37,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -984,6 +984,269 @@ Return valid JSON only with the exact structure specified in the system prompt."
             defining_moment=payload.get("defining_moment"),
             current_status=payload.get("current_status"),
         )
+
+    # ==================== Beat Suggestion Generation ====================
+
+    def suggest_next_beats(
+        self,
+        current_beats: List[Dict[str, Any]],
+        scene_context: str,
+        mood_target: Optional[int] = None,
+    ) -> "BeatSuggestionResult":
+        """Suggest next beats for a scene based on current sequence and context.
+
+        Breaks writer's block by generating 3 AI-suggested beats that could
+        logically follow the current beat sequence. Considers the scene context,
+        current beat types, and desired mood trajectory.
+
+        Why this matters: Writers often struggle with "what happens next?"
+        This method provides creative sparks while respecting the established
+        narrative flow and emotional pacing.
+
+        Args:
+            current_beats: List of existing beats with 'beat_type', 'content',
+                          and optionally 'mood_shift' keys. Can be empty.
+            scene_context: Description of the scene including setting, characters
+                          involved, and current situation/goals.
+            mood_target: Optional target mood level (-5 to +5) for the scene's
+                        direction. If None, suggestions maintain current mood.
+
+        Returns:
+            BeatSuggestionResult containing 3 suggestions with beat_type,
+            content, mood_shift, and rationale.
+
+        Example:
+            >>> result = generator.suggest_next_beats(
+            ...     current_beats=[
+            ...         {"beat_type": "action", "content": "She drew her sword."},
+            ...         {"beat_type": "dialogue", "content": "'Stay back!' she warned."},
+            ...     ],
+            ...     scene_context="A tense standoff in an abandoned warehouse between
+            ...                   the hero and a mysterious figure blocking her path.",
+            ...     mood_target=-2  # Building tension
+            ... )
+            >>> print(result.suggestions[0].content)
+        """
+        log = logger.bind(
+            num_current_beats=len(current_beats),
+            has_mood_target=mood_target is not None,
+        )
+        log.info("Starting beat suggestion generation")
+
+        try:
+            system_prompt = self._load_beat_suggester_prompt()
+            user_prompt = self._build_beat_suggester_user_prompt(
+                current_beats, scene_context, mood_target
+            )
+
+            response_text = self._call_gemini(system_prompt, user_prompt)
+            result = self._parse_beat_suggestion_response(response_text)
+
+            log.info(
+                "Beat suggestion generation completed",
+                num_suggestions=len(result.suggestions),
+            )
+            return result
+
+        except Exception as exc:
+            log.error("Beat suggestion generation failed", error=str(exc))
+            return BeatSuggestionResult(
+                suggestions=[],
+                error=str(exc),
+            )
+
+    def _load_beat_suggester_prompt(self) -> str:
+        """Load the beat suggester system prompt from YAML file.
+
+        Returns:
+            The system prompt string for beat suggestion generation.
+
+        Raises:
+            ValueError: If system_prompt key is missing in the YAML file.
+            FileNotFoundError: If the prompt file doesn't exist.
+        """
+        prompt_path = (
+            Path(__file__).resolve().parents[1] / "prompts" / "beat_suggester.yaml"
+        )
+        with prompt_path.open("r", encoding="utf-8") as handle:
+            payload = yaml.safe_load(handle) or {}
+        prompt = str(payload.get("system_prompt", "")).strip()
+        if not prompt:
+            raise ValueError("Missing system_prompt in beat_suggester.yaml")
+        return prompt
+
+    def _build_beat_suggester_user_prompt(
+        self,
+        current_beats: List[Dict[str, Any]],
+        scene_context: str,
+        mood_target: Optional[int],
+    ) -> str:
+        """Build the user prompt for beat suggestion generation.
+
+        Constructs a detailed prompt containing the current beat sequence,
+        scene context, and mood trajectory to guide the AI's suggestions.
+
+        Args:
+            current_beats: List of existing beats with type and content.
+            scene_context: Description of the scene.
+            mood_target: Optional target mood level.
+
+        Returns:
+            Formatted user prompt string.
+        """
+        # Build current beats section
+        if current_beats:
+            beats_section = ""
+            for i, beat in enumerate(current_beats, 1):
+                beat_type = beat.get("beat_type", "unknown")
+                content = beat.get("content", "")
+                mood = beat.get("mood_shift", 0)
+                beats_section += f"{i}. [{beat_type.upper()}] (mood: {mood:+d}) {content}\n"
+        else:
+            beats_section = "No beats yet - this is the start of the scene."
+
+        # Analyze beat type balance
+        beat_types = [b.get("beat_type", "").lower() for b in current_beats]
+        action_count = sum(1 for t in beat_types if t in ("action", "transition"))
+        reaction_count = sum(1 for t in beat_types if t in ("reaction", "dialogue"))
+
+        if action_count > reaction_count + 1:
+            balance_hint = "The scene is heavy on action - consider a reaction or dialogue."
+        elif reaction_count > action_count + 1:
+            balance_hint = "The scene is heavy on reaction/dialogue - consider an action."
+        else:
+            balance_hint = "The action/reaction balance is good."
+
+        # Calculate current mood trajectory
+        if current_beats:
+            mood_shifts = [b.get("mood_shift", 0) for b in current_beats]
+            current_mood = sum(mood_shifts)
+            mood_trend = "upward" if current_mood > 0 else "downward" if current_mood < 0 else "neutral"
+        else:
+            current_mood = 0
+            mood_trend = "neutral"
+
+        # Build mood target section
+        if mood_target is not None:
+            mood_diff = mood_target - current_mood
+            if mood_diff > 0:
+                mood_direction = f"Aim for positive mood shifts (target: {mood_target:+d}, current: {current_mood:+d})"
+            elif mood_diff < 0:
+                mood_direction = f"Aim for negative mood shifts (target: {mood_target:+d}, current: {current_mood:+d})"
+            else:
+                mood_direction = f"Maintain current mood level ({current_mood:+d})"
+        else:
+            mood_direction = "Follow natural story momentum"
+
+        return f"""Suggest 3 beats to continue this scene:
+
+SCENE CONTEXT:
+{scene_context}
+
+CURRENT BEAT SEQUENCE:
+{beats_section}
+
+PACING ANALYSIS:
+- Beat type balance: {balance_hint}
+- Current mood trajectory: {mood_trend} (cumulative: {current_mood:+d})
+- Mood target: {mood_direction}
+
+Generate 3 suggested beats that could follow this sequence. Each suggestion should:
+1. Logically follow from the current beats
+2. Move toward the mood target
+3. Serve the scene's dramatic purpose
+
+Return valid JSON only with the exact structure specified in the system prompt."""
+
+    def _parse_beat_suggestion_response(self, content: str) -> "BeatSuggestionResult":
+        """Parse the LLM response into a BeatSuggestionResult.
+
+        Args:
+            content: Raw text response from the LLM.
+
+        Returns:
+            BeatSuggestionResult with parsed suggestions.
+        """
+        payload = self._extract_json(content)
+
+        suggestions_data = payload.get("suggestions", [])
+        suggestions = []
+
+        for item in suggestions_data[:3]:  # Limit to 3 suggestions
+            suggestion = BeatSuggestion(
+                beat_type=str(item.get("beat_type", "action")).lower(),
+                content=str(item.get("content", "")),
+                mood_shift=int(item.get("mood_shift", 0)),
+                rationale=item.get("rationale"),
+            )
+            # Clamp mood_shift to valid range
+            suggestion.mood_shift = max(-5, min(5, suggestion.mood_shift))
+            suggestions.append(suggestion)
+
+        return BeatSuggestionResult(suggestions=suggestions)
+
+
+@dataclass
+class BeatSuggestion:
+    """A single beat suggestion from the AI.
+
+    Represents one suggested narrative beat with its type, content, emotional
+    impact, and the AI's reasoning for the suggestion.
+
+    Attributes:
+        beat_type: Classification of the beat (action, reaction, dialogue, etc.)
+        content: The suggested narrative text (1-3 sentences).
+        mood_shift: Emotional impact (-5 to +5).
+        rationale: AI's explanation of why this beat fits.
+    """
+
+    beat_type: str
+    content: str
+    mood_shift: int = 0
+    rationale: Optional[str] = None
+
+
+@dataclass
+class BeatSuggestionResult:
+    """Result of beat suggestion generation.
+
+    Contains 3 AI-generated beat suggestions that could follow the current
+    sequence, along with optional error information.
+
+    Why 3 suggestions:
+        Offering multiple options gives writers creative choice while
+        preventing paralysis from too many options. The suggestions represent
+        different approaches: expected continuation, dramatic turn, and
+        character-focused moment.
+
+    Attributes:
+        suggestions: List of 3 BeatSuggestion objects.
+        error: Error message if generation failed.
+    """
+
+    suggestions: List[BeatSuggestion] = field(default_factory=list)
+    error: Optional[str] = None
+
+    def is_error(self) -> bool:
+        """Check if this result represents an error."""
+        return self.error is not None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format for API responses."""
+        result: Dict[str, Any] = {
+            "suggestions": [
+                {
+                    "beat_type": s.beat_type,
+                    "content": s.content,
+                    "mood_shift": s.mood_shift,
+                    "rationale": s.rationale,
+                }
+                for s in self.suggestions
+            ]
+        }
+        if self.error:
+            result["error"] = self.error
+        return result
 
 
 @dataclass
