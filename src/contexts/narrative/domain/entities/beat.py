@@ -57,13 +57,15 @@ class Beat:
         content: The actual narrative text of the beat.
         order_index: Position of the beat within the scene (0-based).
         beat_type: Classification of the beat's narrative function.
+        mood_shift: Emotional impact of this beat (-5 to +5).
         notes: Optional authorial notes or comments.
         created_at: Timestamp when the beat was created.
         updated_at: Timestamp of the last modification.
 
     Why these attributes:
         Content is the core text. Beat_type provides semantic classification
-        for better generation and analysis. Notes allow for meta-commentary
+        for better generation and analysis. Mood_shift tracks emotional pacing
+        across beats for Director Mode analysis. Notes allow for meta-commentary
         without polluting the narrative content.
     """
 
@@ -72,6 +74,7 @@ class Beat:
     content: str = ""
     order_index: int = 0
     beat_type: BeatType = BeatType.ACTION
+    mood_shift: int = 0
     notes: str = ""
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -81,11 +84,14 @@ class Beat:
 
         Why validation here:
             Ensures the beat is always in a valid state. Order_index
-            validation prevents negative indices. Unlike Scene and Chapter,
-            empty content is allowed (for placeholder beats).
+            validation prevents negative indices. Mood_shift must be
+            within -5 to +5 range for pacing analysis. Unlike Scene and
+            Chapter, empty content is allowed (for placeholder beats).
         """
         if self.order_index < 0:
             raise ValueError("Beat order_index cannot be negative")
+        if not -5 <= self.mood_shift <= 5:
+            raise ValueError("Beat mood_shift must be between -5 and +5")
 
     def update_content(self, new_content: str) -> None:
         """Update the beat's narrative content.
@@ -125,6 +131,25 @@ class Beat:
     def update_notes(self, new_notes: str) -> None:
         """Update authorial notes."""
         self.notes = new_notes
+        self._touch()
+
+    def update_mood_shift(self, new_mood_shift: int) -> None:
+        """Update the emotional impact value of this beat.
+
+        Args:
+            new_mood_shift: New mood shift value (-5 to +5).
+
+        Raises:
+            ValueError: If mood_shift is outside valid range.
+
+        Why this range:
+            -5 to +5 provides granular emotional pacing while remaining
+            intuitive. Negative values indicate tension/sadness, positive
+            values indicate relief/joy, zero is neutral.
+        """
+        if not -5 <= new_mood_shift <= 5:
+            raise ValueError("Beat mood_shift must be between -5 and +5")
+        self.mood_shift = new_mood_shift
         self._touch()
 
     def move_to_position(self, new_index: int) -> None:
