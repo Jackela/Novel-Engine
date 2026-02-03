@@ -33,9 +33,12 @@ type WeaverState = {
   nodes: WeaverNode[];
   edges: Edge[];
   startParams: Pick<OrchestrationStartRequest, 'total_turns' | 'setting' | 'scenario'>;
+  /** Plotline filter: when set, only show scenes in this plotline (DIR-051) */
+  filteredPlotlineId: string | null;
   setNodes: (nodes: WeaverNode[]) => void;
   setEdges: (edges: Edge[]) => void;
   setStartParams: (params: Partial<WeaverState['startParams']>) => void;
+  setFilteredPlotlineId: (plotlineId: string | null) => void;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: (connection: Connection) => void;
@@ -128,10 +131,12 @@ export const useWeaverStore = create<WeaverState>((set, get) => ({
     setting: undefined,
     scenario: undefined,
   },
+  filteredPlotlineId: null,
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
   setStartParams: (params) =>
     set((state) => ({ startParams: { ...state.startParams, ...params } })),
+  setFilteredPlotlineId: (plotlineId) => set({ filteredPlotlineId: plotlineId }),
   onNodesChange: (changes) =>
     set((state) => ({ nodes: applyNodeChanges(changes, state.nodes) as WeaverNode[] })),
   onEdgesChange: (changes) =>
@@ -166,6 +171,10 @@ export const useWeaverOrchestrationRequest = () =>
   useWeaverStore((state) => state.getOrchestrationStartRequest());
 export const useWeaverNodeCount = () => useWeaverStore((state) => state.nodes.length);
 export const useWeaverEdgeCount = () => useWeaverStore((state) => state.edges.length);
+export const useWeaverFilteredPlotlineId = () =>
+  useWeaverStore((state) => state.filteredPlotlineId);
+export const useWeaverSetFilteredPlotlineId = () =>
+  useWeaverStore((state) => state.setFilteredPlotlineId);
 
 /**
  * Returns the first selected character node, or null if none selected

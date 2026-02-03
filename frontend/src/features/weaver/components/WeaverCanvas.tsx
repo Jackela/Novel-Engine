@@ -2,7 +2,7 @@
  * WeaverCanvas - Main React Flow canvas for story weaving
  */
 import { useMemo } from 'react';
-import { ReactFlow, Background, Controls, MiniMap, type Node } from '@xyflow/react';
+import { ReactFlow, Background, Controls, MiniMap, type Node, type Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { nodeTypes, type CharacterNodeData } from './nodes';
@@ -12,7 +12,9 @@ import {
   useWeaverOnConnect,
   useWeaverOnEdgesChange,
   useWeaverOnNodesChange,
+  useWeaverFilteredPlotlineId,
 } from '../store/weaverStore';
+import type { SceneNodeData } from '../types';
 
 // Tailwind color palette values for React Flow API
 export const FLOW_COLORS = {
@@ -47,19 +49,97 @@ function getNodeColor(node: Node): string {
       return FLOW_COLORS.zinc;
   }
 }
+/**
+ * Check if a scene node belongs to the filtered plotline (DIR-051)
+ */
+function sceneMatchesPlotline(node: Node, filteredPlotlineId: string | null): boolean {
+  if (node.type !== 'scene' || !filteredPlotlineId) {
+    return true;
+  }
+  const sceneData = node.data as SceneNodeData;
+  return sceneData.plotlines?.some((p) => p.id === filteredPlotlineId) ?? false;
+}
+
+/**
+ * Apply dimming to nodes that don't match the plotline filter
+ * Non-matching nodes get opacity 30%, matching nodes remain at full opacity
+ */
+function applyPlotlineFilterToNodes(
+  nodes: Node[],
+  filteredPlotlineId: string | null
+): Node[] {
+  if (!filteredPlotlineId) {
+    return nodes;
+  }
+  return nodes.map((node) => ({
+    ...node,
+    style: {
+      ...node.style,
+      opacity: sceneMatchesPlotline(node, filteredPlotlineId) ? 1 : 0.3,
+    },
+  }));
+}
+
+/**
+ * Apply dimming to edges based on filtered plotline
+ * - Edges between filtered scenes remain visible
+ * - Edges where either endpoint is not in the filter are dimmed
+ * - Non-scene nodes (character, location, etc.) are not affected by filter
+ */
+function applyPlotlineFilterToEdges(
+  edges: Edge[],
+  nodes: Node[],
+  filteredPlotlineId: string | null
+): Edge[] {
+  if (!filteredPlotlineId) {
+    return edges;
+  }
+
+  return edges.map((edge) => {
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
+
+    const sourceMatches = sourceNode ? sceneMatchesPlotline(sourceNode, filteredPlotlineId) : true;
+    const targetMatches = targetNode ? sceneMatchesPlotline(targetNode, filteredPlotlineId) : true;
+
+    // Dim the edge if either endpoint doesn't match the filter
+    const shouldDim = !sourceMatches || !targetMatches;
+
+    return {
+      ...edge,
+      style: {
+        ...edge.style,
+        opacity: shouldDim ? 0.3 : 1,
+      },
+    };
+  });
+}
+
 export function WeaverCanvas() {
   const nodes = useWeaverNodes();
   const edges = useWeaverEdges();
   const onNodesChange = useWeaverOnNodesChange();
   const onEdgesChange = useWeaverOnEdgesChange();
   const onConnect = useWeaverOnConnect();
+  const filteredPlotlineId = useWeaverFilteredPlotlineId();
+
+  // Apply plotline filtering to nodes and edges
+  const filteredNodes = useMemo(
+    () => applyPlotlineFilterToNodes(nodes, filteredPlotlineId),
+    [nodes, filteredPlotlineId]
+  );
+
+  const filteredEdges = useMemo(
+    () => applyPlotlineFilterToEdges(edges, nodes, filteredPlotlineId),
+    [edges, nodes, filteredPlotlineId]
+  );
 
   const proOptions = useMemo(() => ({ hideAttribution: true }), []);
 
   return (
     <ReactFlow
-      nodes={nodes}
-      edges={edges}
+      nodes={filteredNodes}
+      edges={filteredEdges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
