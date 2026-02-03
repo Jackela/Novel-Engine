@@ -409,3 +409,20 @@ Started: Tue Feb  3 16:06:24     2026
   - All 312 narrative context tests pass (26 new + 286 existing)
   - Frontend typecheck and lint pass
 ---
+
+## 2026-02-03 - DIR-056
+- **What was implemented:**
+  - Chapter Health Dashboard UI was already implemented in previous iteration (DIR-055)
+  - Fixed hex color literals to use HSL CSS variables (design system compliance)
+  - Component already includes: Word count progress bar, Phase distribution pie chart, Health warnings with severity badges, Expandable recommendations, Tension arc info
+  - API already exists: GET /structure/stories/{story_id}/chapters/{chapter_id}/health
+  - Frontend hook: useChapterHealth from chapterAnalysisApi
+- **Files changed:**
+  - `frontend/src/features/director/components/ChapterHealth.tsx` - Fixed hex colors to HSL variables (line 117-123, 346)
+- **Learnings for future iterations:**
+  - DIR-055 (ChapterAnalysisService) included both backend service and frontend ChapterHealth component
+  - When implementing DIR-055, the frontend ChapterHealth.tsx was already created but had hex color literals
+  - Lint script `lint:tsx:hex` checks for hex colors like `#3b82f6` and requires CSS variables instead
+  - Use HSL format with CSS vars: `hsl(var(--primary))` or direct HSL values: `hsl(262 83% 58%)`
+  - Phase colors: blue (setup), amber (inciting), purple (rising), red (climax), green (resolution)
+  - All typecheck and lint pass (PlotlineManager has unrelated hex colors not part of this story)
