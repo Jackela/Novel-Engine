@@ -178,6 +178,10 @@ class HistoryEvent(Entity):
     sources: List[str] = field(default_factory=list)
     narrative_importance: int = 50
 
+    def __eq__(self, other: object) -> bool:
+        """Equality comparison based on entity identity (inherited from Entity)."""
+        return super().__eq__(other)
+
     def _validate_business_rules(self) -> List[str]:
         """Validate HistoryEvent-specific business rules."""
         errors = []

@@ -17,12 +17,27 @@ import logging
 import os
 import time
 from typing import AsyncIterator, Optional
+from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_uuid_safe(value: str | None) -> UUID | None:
+    """Parse a string as UUID, returning None if invalid.
+
+    This provides a safe way to validate and sanitize user input for logging.
+    The returned UUID string representation is guaranteed safe for logs.
+    """
+    if not value:
+        return None
+    try:
+        return UUID(value)
+    except (ValueError, TypeError):
+        return None
 
 router = APIRouter(prefix="/narrative/generate", tags=["narrative-generation"])
 
@@ -268,15 +283,12 @@ async def stream_narrative_generation(
             -d '{"max_tokens": 500}'
         ```
     """
-    # Sanitize scene_id for logging (truncate and remove unsafe characters)
-    safe_scene_id = (
-        request.scene_id[:64].replace("\n", " ").replace("\r", " ")
-        if request.scene_id else None
-    )
+    # Parse scene_id as UUID to ensure safe logging
+    scene_uuid = _parse_uuid_safe(request.scene_id)
     logger.info(
         "Starting narrative generation stream",
         extra={
-            "scene_id": safe_scene_id,
+            "scene_id": str(scene_uuid) if scene_uuid else None,
             "has_prompt": request.prompt is not None,
             "has_context": request.context is not None,
             "max_tokens": request.max_tokens,

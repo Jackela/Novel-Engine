@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -27,6 +28,18 @@ from src.api.schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["factions"])
+
+
+def _parse_uuid_safe(value: str) -> UUID | None:
+    """Parse a string as UUID, returning None if invalid.
+
+    This provides a safe way to validate and sanitize user input for logging.
+    The returned UUID string representation is guaranteed safe for logs.
+    """
+    try:
+        return UUID(value)
+    except (ValueError, TypeError):
+        return None
 
 
 def _get_faction_store(request: Request) -> Dict[str, Dict[str, Any]]:
@@ -228,12 +241,14 @@ async def join_faction(
 
     faction_name = faction.get("name", faction_id)
 
+    # Parse UUIDs to ensure safe logging - only log validated UUID format
+    char_uuid = _parse_uuid_safe(payload.character_id)
+    faction_uuid = _parse_uuid_safe(faction_id)
     logger.info(
         "Character joined faction",
         extra={
-            "character_id": payload.character_id[:64] if payload.character_id else "unknown",
-            "faction_id": faction_id[:64] if faction_id else "unknown",
-            "faction_name": faction_name[:64] if faction_name else "unknown",
+            "character_id": str(char_uuid) if char_uuid else "invalid",
+            "faction_id": str(faction_uuid) if faction_uuid else "invalid",
         },
     )
 
@@ -303,19 +318,25 @@ async def leave_faction(
         faction["leader_id"] = None
         faction["leader_name"] = None
         _update_faction_in_store(request, faction_id, faction)
+        # Parse UUIDs to ensure safe logging
+        char_uuid = _parse_uuid_safe(payload.character_id)
+        faction_uuid = _parse_uuid_safe(faction_id)
         logger.info(
             "Removed leader from faction",
             extra={
-                "character_id": payload.character_id[:64] if payload.character_id else "unknown",
-                "faction_id": faction_id[:64] if faction_id else "unknown",
+                "character_id": str(char_uuid) if char_uuid else "invalid",
+                "faction_id": str(faction_uuid) if faction_uuid else "invalid",
             },
         )
 
+    # Parse UUIDs to ensure safe logging
+    char_uuid = _parse_uuid_safe(payload.character_id)
+    faction_uuid = _parse_uuid_safe(faction_id)
     logger.info(
         "Character left faction",
         extra={
-            "character_id": payload.character_id[:64] if payload.character_id else "unknown",
-            "faction_id": faction_id[:64] if faction_id else "unknown",
+            "character_id": str(char_uuid) if char_uuid else "invalid",
+            "faction_id": str(faction_uuid) if faction_uuid else "invalid",
         },
     )
 
@@ -391,12 +412,14 @@ async def set_faction_leader(
             detail="Failed to update faction leader",
         )
 
+    # Parse UUIDs to ensure safe logging
+    char_uuid = _parse_uuid_safe(payload.character_id)
+    faction_uuid = _parse_uuid_safe(faction_id)
     logger.info(
         "Set leader of faction",
         extra={
-            "faction_id": faction_id[:64] if faction_id else "unknown",
-            "character_id": payload.character_id[:64] if payload.character_id else "unknown",
-            "leader_name": (leader_name[:64] if leader_name else None),
+            "faction_id": str(faction_uuid) if faction_uuid else "invalid",
+            "character_id": str(char_uuid) if char_uuid else "invalid",
         },
     )
 

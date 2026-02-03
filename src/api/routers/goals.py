@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import List, Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -26,6 +26,18 @@ from src.api.schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["goals"])
+
+
+def _parse_uuid_safe(value: str) -> UUID | None:
+    """Parse a string as UUID, returning None if invalid.
+
+    This provides a safe way to validate and sanitize user input for logging.
+    The returned UUID string representation is guaranteed safe for logs.
+    """
+    try:
+        return UUID(value)
+    except (ValueError, TypeError):
+        return None
 
 
 def _goal_to_schema(goal_data: dict) -> CharacterGoalSchema:
@@ -173,10 +185,12 @@ async def create_character_goal(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
+    # Parse UUID to ensure safe logging
+    char_uuid = _parse_uuid_safe(character_id)
     logger.info(
         "Created goal for character",
         extra={
-            "character_id": character_id[:64] if character_id else "unknown",
+            "character_id": str(char_uuid) if char_uuid else "invalid",
             "goal_id": goal_id,
             "urgency": payload.urgency,
         },
@@ -315,11 +329,14 @@ async def update_character_goal(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
+    # Parse UUIDs to ensure safe logging
+    char_uuid = _parse_uuid_safe(character_id)
+    goal_uuid = _parse_uuid_safe(goal_id)
     logger.info(
         "Updated goal for character",
         extra={
-            "goal_id": goal_id[:64] if goal_id else "unknown",
-            "character_id": character_id[:64] if character_id else "unknown",
+            "goal_id": str(goal_uuid) if goal_uuid else "invalid",
+            "character_id": str(char_uuid) if char_uuid else "invalid",
             "status": goal.get("status"),
             "urgency": goal.get("urgency"),
         },
@@ -382,10 +399,13 @@ async def delete_character_goal(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
+    # Parse UUIDs to ensure safe logging
+    char_uuid = _parse_uuid_safe(character_id)
+    goal_uuid = _parse_uuid_safe(goal_id)
     logger.info(
         "Deleted goal from character",
         extra={
-            "goal_id": goal_id[:64] if goal_id else "unknown",
-            "character_id": character_id[:64] if character_id else "unknown",
+            "goal_id": str(goal_uuid) if goal_uuid else "invalid",
+            "character_id": str(char_uuid) if char_uuid else "invalid",
         },
     )

@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import List, Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -25,6 +25,18 @@ from src.api.schemas import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["memories"])
+
+
+def _parse_uuid_safe(value: str) -> UUID | None:
+    """Parse a string as UUID, returning None if invalid.
+
+    This provides a safe way to validate and sanitize user input for logging.
+    The returned UUID string representation is guaranteed safe for logs.
+    """
+    try:
+        return UUID(value)
+    except (ValueError, TypeError):
+        return None
 
 
 def _memory_to_schema(memory_data: dict) -> CharacterMemorySchema:
@@ -182,10 +194,12 @@ async def create_character_memory(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
+    # Parse UUID to ensure safe logging
+    char_uuid = _parse_uuid_safe(character_id)
     logger.info(
         "Created memory for character",
         extra={
-            "character_id": character_id[:64] if character_id else "unknown",
+            "character_id": str(char_uuid) if char_uuid else "invalid",
             "memory_id": memory_id,
             "importance": payload.importance,
         },
@@ -296,10 +310,13 @@ async def delete_character_memory(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
 
+    # Parse UUIDs to ensure safe logging
+    char_uuid = _parse_uuid_safe(character_id)
+    mem_uuid = _parse_uuid_safe(memory_id)
     logger.info(
         "Deleted memory from character",
         extra={
-            "memory_id": memory_id[:64] if memory_id else "unknown",
-            "character_id": character_id[:64] if character_id else "unknown",
+            "memory_id": str(mem_uuid) if mem_uuid else "invalid",
+            "character_id": str(char_uuid) if char_uuid else "invalid",
         },
     )

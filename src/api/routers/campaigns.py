@@ -135,7 +135,8 @@ async def get_campaign(campaign_id: str) -> CampaignDetailResponse:
     # SECURITY: Re-validate path safety before any file operations
     # This provides defense-in-depth against path traversal attacks
     if not _validate_path_safety(campaign_file, _CAMPAIGN_ALLOWED_BASES):
-        logger.warning("Path validation failed for campaign file", extra={"safe_id": safe_id})
+        # safe_id validated by _sanitize_campaign_id: [a-zA-Z0-9_-] only
+        logger.warning("Path validation failed for campaign file")
         raise HTTPException(status_code=404, detail="Campaign not found")
 
     try:

@@ -190,6 +190,10 @@ class Relationship(Entity):
     romance: int = 0
     _interaction_history: Tuple[InteractionLog, ...] = field(default_factory=tuple)
 
+    def __eq__(self, other: object) -> bool:
+        """Equality comparison based on entity identity (inherited from Entity)."""
+        return super().__eq__(other)
+
     def _validate_business_rules(self) -> List[str]:
         """Validate Relationship-specific business rules."""
         errors = []

@@ -79,6 +79,10 @@ class LoreEntry(Entity):
     related_entry_ids: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def __eq__(self, other: object) -> bool:
+        """Equality comparison based on entity identity (inherited from Entity)."""
+        return super().__eq__(other)
+
     def _validate_business_rules(self) -> List[str]:
         """Validate LoreEntry-specific business rules."""
         errors = []

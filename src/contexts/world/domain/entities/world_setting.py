@@ -158,6 +158,10 @@ class WorldSetting(Entity):
     world_rules: List[str] = field(default_factory=list)
     cultural_influences: List[str] = field(default_factory=list)
 
+    def __eq__(self, other: object) -> bool:
+        """Equality comparison based on entity identity (inherited from Entity)."""
+        return super().__eq__(other)
+
     def _validate_business_rules(self) -> List[str]:
         """Validate WorldSetting-specific business rules."""
         errors = []
