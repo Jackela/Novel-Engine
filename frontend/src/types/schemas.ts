@@ -1016,6 +1016,7 @@ export const PlotlineResponseSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/, 'Invalid hex color code'),
   description: z.string(),
   status: PlotlineStatusEnum,
+  scene_count: z.number().int().nonnegative().default(0),
   created_at: z.string(),
   updated_at: z.string(),
 });

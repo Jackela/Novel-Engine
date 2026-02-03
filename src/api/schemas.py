@@ -1173,6 +1173,7 @@ class PlotlineResponse(BaseModel):
     color: str = Field(..., description="Hex color code")
     description: str = Field(..., description="Plotline description")
     status: str = Field(..., description="Current status")
+    scene_count: int = Field(default=0, description="Number of scenes linked to this plotline")
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 last update timestamp")
 

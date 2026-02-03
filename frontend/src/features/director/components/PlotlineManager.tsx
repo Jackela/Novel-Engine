@@ -387,13 +387,11 @@ export function PlotlineManager({ sceneId, onSelectPlotline, className }: Plotli
     description: '',
   });
 
-  // Calculate scene counts (placeholder - would come from actual scene data)
+  // Scene counts are now included in the API response (scene_count field)
   const sceneCounts = useMemo<Record<string, number>>(() => {
-    // TODO: Fetch actual scene counts from backend
-    // For now, return mock data
     const counts: Record<string, number> = {};
     plotlines?.plotlines.forEach((p) => {
-      counts[p.id] = Math.floor(Math.random() * 5); // Mock: 0-4 scenes
+      counts[p.id] = p.scene_count ?? 0;
     });
     return counts;
   }, [plotlines]);

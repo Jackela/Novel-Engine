@@ -328,3 +328,41 @@ Reset: $(date +%Y-%m-%d)
 - Focus: Resolve 2 frontend TODOs in PlotlineManager and NarrativeEditorLayout
 
 ---
+
+## 2026-02-03 - CIT-007: Frontend: Resolve TODOs
+
+### What was implemented
+- Added `scene_count` field to `PlotlineResponse` schema in backend
+- Added `_count_scenes_for_plotline()` helper function in structure router
+- Updated `list_plotlines`, `get_plotline`, `update_plotline` endpoints to include scene counts
+- Updated frontend `PlotlineResponseSchema` to include `scene_count` field
+- Replaced mock scene count generation in PlotlineManager with real API data
+- Added `toast` import from sonner to NarrativeEditorLayout
+- Added error toast notification when scene move fails
+
+### Files changed
+- `src/api/schemas.py` - Added `scene_count` field to PlotlineResponse
+- `src/api/routers/structure.py` - Added scene count logic to plotline endpoints, created `_count_scenes_for_plotline` helper
+- `frontend/src/types/schemas.ts` - Added `scene_count` field to PlotlineResponseSchema
+- `frontend/src/features/director/components/PlotlineManager.tsx` - Removed mock data, uses API scene_count
+- `frontend/src/components/narrative/NarrativeEditorLayout.tsx` - Added toast import and error notification
+
+### Learnings for future iterations:
+- **Pattern**: Include derived counts (like scene_count) in list responses rather than requiring separate API calls
+- **Pattern**: When adding a field to a response model, update the helper function to accept it as a parameter with a default value
+- **Gotcha**: The plotline uses in-memory storage with `_scenes` dict - iterate through scenes to count plotline references
+- **Pattern**: Use sonner's `toast.error()` for user-facing error notifications in catch blocks
+- **Useful context**: Scenes have a `plotline_ids` list (many-to-many relationship), so counting requires iterating all scenes
+
+### Quality checks passed
+- ✅ `npm run type-check` - No errors
+- ✅ `npm run test` - All 46 tests pass
+- ✅ `npm run lint` - Only pre-existing warnings (4 react-hooks - unrelated to this work)
+- ✅ Frontend TODOs resolved: 2 TODOs → 0 TODOs
+
+### Next story for Ralph
+- **CIT-008**: Docs: Create Missing ADRs
+- Priority: 9 (highest pending after CIT-007)
+- Focus: Document Director Mode, State Management, and Result Pattern with ADRs
+
+---

@@ -17,6 +17,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 import { NarrativeSidebarWithTabs } from './NarrativeSidebarWithTabs';
@@ -243,7 +244,7 @@ export function NarrativeEditorLayout({
         );
       } catch (error) {
         console.error('Failed to move scene:', error);
-        // TODO: Show error toast to user
+        toast.error('Failed to move scene. Please try again.');
       }
     },
     [chapters, useMockData, loadStories]

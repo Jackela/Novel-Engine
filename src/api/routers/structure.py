@@ -1804,17 +1804,42 @@ def reset_plotline_storage() -> None:
     _plotlines.clear()
 
 
-def _plotline_to_response(plotline: Plotline) -> PlotlineResponse:
-    """Convert a Plotline entity to a response model."""
+def _plotline_to_response(plotline: Plotline, scene_count: int = 0) -> PlotlineResponse:
+    """Convert a Plotline entity to a response model.
+
+    Args:
+        plotline: The plotline entity.
+        scene_count: Number of scenes linked to this plotline. Defaults to 0.
+
+    Returns:
+        A PlotlineResponse with scene count included.
+    """
     return PlotlineResponse(
         id=str(plotline.id),
         name=plotline.name,
         color=plotline.color,
         description=plotline.description,
         status=plotline.status.value,
+        scene_count=scene_count,
         created_at=plotline.created_at.isoformat(),
         updated_at=plotline.updated_at.isoformat(),
     )
+
+
+def _count_scenes_for_plotline(plotline_id: UUID) -> int:
+    """Count the number of scenes linked to a plotline.
+
+    Args:
+        plotline_id: UUID of the plotline.
+
+    Returns:
+        Number of scenes that have this plotline in their plotline_ids list.
+    """
+    count = 0
+    for scene in _list_scenes():
+        if plotline_id in scene.plotline_ids:
+            count += 1
+    return count
 
 
 # ============ Foreshadowing Storage (MVP In-Memory) ============
@@ -1911,7 +1936,7 @@ async def create_plotline(
         _store_plotline(plotline)
         logger.info("Created plotline: %s (%s)", plotline.id, plotline.name)
 
-        return _plotline_to_response(plotline)
+        return _plotline_to_response(plotline, scene_count=0)
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -1925,15 +1950,25 @@ async def create_plotline(
     response_model=PlotlineListResponse,
 )
 async def list_plotlines() -> PlotlineListResponse:
-    """List all plotlines.
+    """List all plotlines with scene counts.
 
     Returns:
-        List of all plotlines.
+        List of all plotlines with the number of scenes linked to each.
     """
     plotlines = _list_plotlines()
+    scenes = _list_scenes()
+
+    # Build a mapping of plotline_id -> scene count
+    scene_counts: dict[UUID, int] = {}
+    for scene in scenes:
+        for plotline_id in scene.plotline_ids:
+            scene_counts[plotline_id] = scene_counts.get(plotline_id, 0) + 1
 
     return PlotlineListResponse(
-        plotlines=[_plotline_to_response(p) for p in plotlines],
+        plotlines=[
+            _plotline_to_response(p, scene_count=scene_counts.get(p.id, 0))
+            for p in plotlines
+        ],
     )
 
 
@@ -1961,7 +1996,8 @@ async def get_plotline(
     if plotline is None:
         raise HTTPException(status_code=404, detail=f"Plotline not found: {plotline_id}")
 
-    return _plotline_to_response(plotline)
+    scene_count = _count_scenes_for_plotline(plotline_uuid)
+    return _plotline_to_response(plotline, scene_count=scene_count)
 
 
 @router.patch(
@@ -2020,7 +2056,8 @@ async def update_plotline(
         _store_plotline(plotline)
         logger.info("Updated plotline: %s", plotline_uuid)
 
-        return _plotline_to_response(plotline)
+        scene_count = _count_scenes_for_plotline(plotline_uuid)
+        return _plotline_to_response(plotline, scene_count=scene_count)
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
