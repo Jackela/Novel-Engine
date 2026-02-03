@@ -1005,6 +1005,73 @@ class ChapterPacingResponse(BaseModel):
     energy_range: List[int] = Field(..., min_length=2, max_length=2, description="[min, max] energy")
 
 
+# === Conflict Schemas (DIR-045) ===
+
+
+class ConflictCreateRequest(BaseModel):
+    """Request model for creating a new conflict.
+
+    Conflicts represent sources of dramatic tension in a scene.
+    Every compelling scene should have at least one conflict.
+    """
+
+    conflict_type: str = Field(
+        ...,
+        description="Conflict type: 'internal', 'external', 'interpersonal'",
+    )
+    stakes: str = Field(
+        default="medium",
+        description="Stakes level: 'low', 'medium', 'high', 'critical'",
+    )
+    description: str = Field(
+        ..., min_length=1, max_length=2000, description="Description of the conflict"
+    )
+    resolution_status: str = Field(
+        default="unresolved",
+        description="Resolution status: 'unresolved', 'escalating', 'resolved'",
+    )
+
+
+class ConflictUpdateRequest(BaseModel):
+    """Request model for updating a conflict."""
+
+    conflict_type: Optional[str] = Field(
+        default=None,
+        description="Conflict type: 'internal', 'external', 'interpersonal'",
+    )
+    stakes: Optional[str] = Field(
+        default=None,
+        description="Stakes level: 'low', 'medium', 'high', 'critical'",
+    )
+    description: Optional[str] = Field(
+        default=None, min_length=1, max_length=2000
+    )
+    resolution_status: Optional[str] = Field(
+        default=None,
+        description="Resolution status: 'unresolved', 'escalating', 'resolved'",
+    )
+
+
+class ConflictResponse(BaseModel):
+    """Response model for a single conflict."""
+
+    id: str = Field(..., description="Conflict UUID")
+    scene_id: str = Field(..., description="Parent scene UUID")
+    conflict_type: str = Field(..., description="Conflict classification")
+    stakes: str = Field(..., description="Stakes level")
+    description: str = Field(..., description="Conflict description")
+    resolution_status: str = Field(..., description="Current resolution state")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class ConflictListResponse(BaseModel):
+    """Response model for listing conflicts."""
+
+    scene_id: str = Field(..., description="Parent scene UUID")
+    conflicts: List["ConflictResponse"] = Field(default_factory=list)
+
+
 class MoveChapterRequest(BaseModel):
     """Request model for moving a chapter to a new position."""
 
@@ -1501,6 +1568,11 @@ __all__ = [
     "MoveChapterRequest",
     "MoveSceneRequest",
     "StructureErrorResponse",
+    # Conflict Schemas (DIR-045)
+    "ConflictCreateRequest",
+    "ConflictUpdateRequest",
+    "ConflictResponse",
+    "ConflictListResponse",
     # Relationship Schemas
     "RelationshipCreateRequest",
     "RelationshipUpdateRequest",

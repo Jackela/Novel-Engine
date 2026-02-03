@@ -5,12 +5,14 @@ This package contains the core domain entities for story structure:
 - Chapter: A container for scenes within a story
 - Scene: A dramatic unit within a chapter
 - Beat: The atomic unit of narrative
+- Conflict: Dramatic tension driver within a scene
 """
 
 from .story import Story, StoryStatus
 from .chapter import Chapter, ChapterStatus
 from .scene import Scene, SceneStatus
 from .beat import Beat, BeatType
+from .conflict import Conflict, ConflictType, ConflictStakes, ResolutionStatus
 
 __all__ = [
     "Story",
@@ -21,4 +23,8 @@ __all__ = [
     "SceneStatus",
     "Beat",
     "BeatType",
+    "Conflict",
+    "ConflictType",
+    "ConflictStakes",
+    "ResolutionStatus",
 ]

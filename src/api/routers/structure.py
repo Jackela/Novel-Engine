@@ -27,6 +27,10 @@ from src.api.schemas import (
     ChapterPacingResponse,
     ChapterResponse,
     ChapterUpdateRequest,
+    ConflictCreateRequest,
+    ConflictListResponse,
+    ConflictResponse,
+    ConflictUpdateRequest,
     MoveChapterRequest,
     MoveSceneRequest,
     PacingIssueResponse,
@@ -50,6 +54,12 @@ from src.contexts.narrative.domain import (
     Story,
 )
 from src.contexts.narrative.domain.entities.beat import Beat, BeatType
+from src.contexts.narrative.domain.entities.conflict import (
+    Conflict,
+    ConflictType,
+    ConflictStakes,
+    ResolutionStatus,
+)
 from src.contexts.narrative.application.services.pacing_service import PacingService
 from src.contexts.narrative.infrastructure.repositories.in_memory_narrative_repository import (
     InMemoryNarrativeRepository,
@@ -1228,3 +1238,303 @@ def _delete_scene(scene_id: UUID) -> bool:
 def reset_scene_storage() -> None:
     """Reset scene storage. Useful for testing."""
     _scenes.clear()
+
+
+# ============ Conflict Storage (MVP In-Memory) ============
+# Note: In production, conflicts would be stored in a repository.
+# For MVP, we use module-level storage similar to scenes.
+
+_conflicts: dict[UUID, Conflict] = {}
+
+
+def _store_conflict(conflict: Conflict) -> None:
+    """Store a conflict in the in-memory storage."""
+    from copy import deepcopy
+
+    _conflicts[conflict.id] = deepcopy(conflict)
+
+
+def _get_conflict(conflict_id: UUID) -> Optional[Conflict]:
+    """Get a conflict by ID from storage."""
+    from copy import deepcopy
+
+    conflict = _conflicts.get(conflict_id)
+    return deepcopy(conflict) if conflict else None
+
+
+def _get_conflicts_by_scene(scene_id: UUID) -> list[Conflict]:
+    """Get all conflicts for a scene."""
+    from copy import deepcopy
+
+    conflicts = [deepcopy(c) for c in _conflicts.values() if c.scene_id == scene_id]
+    return sorted(conflicts, key=lambda c: c.created_at)
+
+
+def _delete_conflict(conflict_id: UUID) -> bool:
+    """Delete a conflict from storage. Returns True if deleted."""
+    if conflict_id in _conflicts:
+        del _conflicts[conflict_id]
+        return True
+    return False
+
+
+def reset_conflict_storage() -> None:
+    """Reset conflict storage. Useful for testing."""
+    _conflicts.clear()
+
+
+def _conflict_to_response(conflict: Conflict) -> ConflictResponse:
+    """Convert a Conflict entity to a response model."""
+    return ConflictResponse(
+        id=str(conflict.id),
+        scene_id=str(conflict.scene_id),
+        conflict_type=conflict.conflict_type.value,
+        stakes=conflict.stakes.value,
+        description=conflict.description,
+        resolution_status=conflict.resolution_status.value,
+        created_at=conflict.created_at.isoformat(),
+        updated_at=conflict.updated_at.isoformat(),
+    )
+
+
+# ============ Conflict Endpoints (DIR-045) ============
+
+
+@router.post(
+    "/scenes/{scene_id}/conflicts",
+    response_model=ConflictResponse,
+    status_code=201,
+)
+async def create_conflict(
+    scene_id: str,
+    request: ConflictCreateRequest,
+) -> ConflictResponse:
+    """Create a new conflict in a scene.
+
+    Args:
+        scene_id: UUID of the parent scene.
+        request: Conflict creation data.
+
+    Returns:
+        The created conflict.
+
+    Raises:
+        HTTPException: If scene not found or conflict creation fails.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    scene = _get_scene(scene_uuid)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    try:
+        # Validate conflict_type
+        valid_types = [t.value for t in ConflictType]
+        if request.conflict_type not in valid_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid conflict_type: {request.conflict_type}. Must be one of {valid_types}",
+            )
+
+        # Validate stakes
+        valid_stakes = [s.value for s in ConflictStakes]
+        if request.stakes not in valid_stakes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid stakes: {request.stakes}. Must be one of {valid_stakes}",
+            )
+
+        # Validate resolution_status
+        valid_statuses = [s.value for s in ResolutionStatus]
+        if request.resolution_status not in valid_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid resolution_status: {request.resolution_status}. Must be one of {valid_statuses}",
+            )
+
+        conflict = Conflict(
+            scene_id=scene_uuid,
+            conflict_type=ConflictType(request.conflict_type),
+            stakes=ConflictStakes(request.stakes),
+            description=request.description,
+            resolution_status=ResolutionStatus(request.resolution_status),
+        )
+        _store_conflict(conflict)
+
+        logger.info("Created conflict: %s in scene: %s", conflict.id, scene_uuid)
+        return _conflict_to_response(conflict)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get(
+    "/scenes/{scene_id}/conflicts",
+    response_model=ConflictListResponse,
+)
+async def list_conflicts(
+    scene_id: str,
+) -> ConflictListResponse:
+    """List all conflicts in a scene.
+
+    Args:
+        scene_id: UUID of the scene.
+
+    Returns:
+        List of conflicts for the scene.
+
+    Raises:
+        HTTPException: If scene not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    scene = _get_scene(scene_uuid)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    conflicts = _get_conflicts_by_scene(scene_uuid)
+
+    return ConflictListResponse(
+        scene_id=scene_id,
+        conflicts=[_conflict_to_response(c) for c in conflicts],
+    )
+
+
+@router.get(
+    "/scenes/{scene_id}/conflicts/{conflict_id}",
+    response_model=ConflictResponse,
+)
+async def get_conflict(
+    scene_id: str,
+    conflict_id: str,
+) -> ConflictResponse:
+    """Get a conflict by ID.
+
+    Args:
+        scene_id: UUID of the parent scene.
+        conflict_id: UUID of the conflict.
+
+    Returns:
+        The requested conflict.
+
+    Raises:
+        HTTPException: If scene or conflict not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    conflict_uuid = _parse_uuid(conflict_id, "conflict_id")
+
+    scene = _get_scene(scene_uuid)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    conflict = _get_conflict(conflict_uuid)
+    if conflict is None or conflict.scene_id != scene_uuid:
+        raise HTTPException(status_code=404, detail=f"Conflict not found: {conflict_id}")
+
+    return _conflict_to_response(conflict)
+
+
+@router.patch(
+    "/scenes/{scene_id}/conflicts/{conflict_id}",
+    response_model=ConflictResponse,
+)
+async def update_conflict(
+    scene_id: str,
+    conflict_id: str,
+    request: ConflictUpdateRequest,
+) -> ConflictResponse:
+    """Update a conflict's properties.
+
+    Args:
+        scene_id: UUID of the parent scene.
+        conflict_id: UUID of the conflict.
+        request: Fields to update.
+
+    Returns:
+        The updated conflict.
+
+    Raises:
+        HTTPException: If not found or update fails.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    conflict_uuid = _parse_uuid(conflict_id, "conflict_id")
+
+    scene = _get_scene(scene_uuid)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    conflict = _get_conflict(conflict_uuid)
+    if conflict is None or conflict.scene_id != scene_uuid:
+        raise HTTPException(status_code=404, detail=f"Conflict not found: {conflict_id}")
+
+    try:
+        if request.description is not None:
+            conflict.update_description(request.description)
+
+        if request.conflict_type is not None:
+            valid_types = [t.value for t in ConflictType]
+            if request.conflict_type not in valid_types:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid conflict_type: {request.conflict_type}. Must be one of {valid_types}",
+                )
+            conflict.update_conflict_type(ConflictType(request.conflict_type))
+
+        if request.stakes is not None:
+            valid_stakes = [s.value for s in ConflictStakes]
+            if request.stakes not in valid_stakes:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid stakes: {request.stakes}. Must be one of {valid_stakes}",
+                )
+            conflict.update_stakes(ConflictStakes(request.stakes))
+
+        if request.resolution_status is not None:
+            valid_statuses = [s.value for s in ResolutionStatus]
+            if request.resolution_status not in valid_statuses:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid resolution_status: {request.resolution_status}. Must be one of {valid_statuses}",
+                )
+            # Use the appropriate method based on new status
+            if request.resolution_status == "escalating":
+                conflict.escalate()
+            elif request.resolution_status == "resolved":
+                conflict.resolve()
+            elif request.resolution_status == "unresolved":
+                conflict.reopen()
+
+        _store_conflict(conflict)
+        logger.info("Updated conflict: %s", conflict_uuid)
+        return _conflict_to_response(conflict)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete(
+    "/scenes/{scene_id}/conflicts/{conflict_id}",
+    status_code=204,
+)
+async def delete_conflict(
+    scene_id: str,
+    conflict_id: str,
+) -> None:
+    """Delete a conflict from a scene.
+
+    Args:
+        scene_id: UUID of the parent scene.
+        conflict_id: UUID of the conflict.
+
+    Raises:
+        HTTPException: If not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    conflict_uuid = _parse_uuid(conflict_id, "conflict_id")
+
+    scene = _get_scene(scene_uuid)
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    conflict = _get_conflict(conflict_uuid)
+    if conflict is None or conflict.scene_id != scene_uuid:
+        raise HTTPException(status_code=404, detail=f"Conflict not found: {conflict_id}")
+
+    _delete_conflict(conflict_uuid)
+    logger.info("Deleted conflict: %s", conflict_uuid)

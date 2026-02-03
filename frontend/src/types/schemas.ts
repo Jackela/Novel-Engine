@@ -759,6 +759,91 @@ export type ScenePacingMetrics = z.infer<typeof ScenePacingMetricsSchema>;
 export type PacingIssue = z.infer<typeof PacingIssueSchema>;
 export type ChapterPacingResponse = z.infer<typeof ChapterPacingResponseSchema>;
 
+// === Conflict Schemas (DIR-045) ===
+
+/**
+ * Conflict type enum matching backend ConflictType.
+ * Classifications for dramatic tension sources.
+ */
+export const ConflictTypeEnum = z.enum([
+  'internal', // Character vs self (moral dilemma, fear, desire)
+  'external', // Character vs environment/nature/fate
+  'interpersonal', // Character vs character
+]);
+
+/**
+ * Stakes level enum matching backend ConflictStakes.
+ * Indicates how much is at risk in the conflict.
+ */
+export const ConflictStakesEnum = z.enum([
+  'low', // Minor inconvenience, embarrassment
+  'medium', // Significant loss, relationship damage
+  'high', // Major life impact, severe consequences
+  'critical', // Life or death, irreversible change
+]);
+
+/**
+ * Resolution status enum matching backend ResolutionStatus.
+ * Tracks conflict progression through the narrative.
+ */
+export const ResolutionStatusEnum = z.enum([
+  'unresolved', // Conflict is active, no resolution yet
+  'escalating', // Conflict is intensifying
+  'resolved', // Conflict has been addressed
+]);
+
+/**
+ * Conflict response schema matching backend ConflictResponse.
+ * Conflicts are dramatic tension drivers within a scene.
+ */
+export const ConflictResponseSchema = z.object({
+  id: z.string(),
+  scene_id: z.string(),
+  conflict_type: ConflictTypeEnum,
+  stakes: ConflictStakesEnum,
+  description: z.string(),
+  resolution_status: ResolutionStatusEnum,
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Conflict list response schema matching backend ConflictListResponse.
+ */
+export const ConflictListResponseSchema = z.object({
+  scene_id: z.string(),
+  conflicts: z.array(ConflictResponseSchema).default([]),
+});
+
+/**
+ * Conflict create request schema.
+ */
+export const ConflictCreateRequestSchema = z.object({
+  conflict_type: ConflictTypeEnum,
+  stakes: ConflictStakesEnum.default('medium'),
+  description: z.string().min(1).max(2000),
+  resolution_status: ResolutionStatusEnum.default('unresolved'),
+});
+
+/**
+ * Conflict update request schema.
+ */
+export const ConflictUpdateRequestSchema = z.object({
+  conflict_type: ConflictTypeEnum.optional(),
+  stakes: ConflictStakesEnum.optional(),
+  description: z.string().min(1).max(2000).optional(),
+  resolution_status: ResolutionStatusEnum.optional(),
+});
+
+// Conflict Types
+export type ConflictType = z.infer<typeof ConflictTypeEnum>;
+export type ConflictStakes = z.infer<typeof ConflictStakesEnum>;
+export type ResolutionStatus = z.infer<typeof ResolutionStatusEnum>;
+export type ConflictResponse = z.infer<typeof ConflictResponseSchema>;
+export type ConflictListResponse = z.infer<typeof ConflictListResponseSchema>;
+export type ConflictCreateRequest = z.infer<typeof ConflictCreateRequestSchema>;
+export type ConflictUpdateRequest = z.infer<typeof ConflictUpdateRequestSchema>;
+
 /**
  * Standard API response envelope matching backend's StandardResponse
  *
