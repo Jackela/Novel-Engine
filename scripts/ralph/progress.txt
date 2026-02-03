@@ -19,6 +19,9 @@ Started: Tue Feb  3 16:06:24     2026
 - Pacing API endpoint is at `/structure/stories/{story_id}/chapters/{chapter_id}/pacing`
 - ChapterDashboard component is the integration point for Director Mode chapter-level analysis
 - Conflict API follows same pattern as Beat API: `/structure/scenes/{scene_id}/conflicts` with in-memory storage
+- LLM prompts go in `src/contexts/world/infrastructure/prompts/` as YAML files with `system_prompt` key
+- LLMWorldGenerator follows pattern: `_load_X_prompt()`, `_build_X_user_prompt()`, `_parse_X_response()` for each feature
+- Use `field(default_factory=list)` for mutable defaults in dataclasses (requires `from dataclasses import field`)
 
 ---
 
@@ -154,4 +157,56 @@ Started: Tue Feb  3 16:06:24     2026
   - Collapsible from shadcn/ui wraps Radix Collapsible primitives
   - Pattern: Group items by type and show count badges for quick overview
   - All 217 narrative domain tests pass, all 46 frontend tests pass
+---
+
+## 2026-02-03 - DIR-047
+- **What was implemented:**
+  - AI Beat Suggester - Breaks writer's block by generating 3 AI-suggested beats
+  - Created `beat_suggester.yaml` prompt template in `src/contexts/world/infrastructure/prompts/`
+  - Added `suggest_next_beats(current_beats, scene_context, mood_target)` to LLMWorldGenerator
+  - Analyzes action/reaction balance and calculates cumulative mood trajectory
+  - Returns 3 suggestions: expected continuation, dramatic turn, and character-focused moment
+  - Created `BeatSuggestion` and `BeatSuggestionResult` dataclasses with to_dict() for API
+  - Clamps mood_shift values to valid range (-5 to +5)
+- **Files changed:**
+  - `src/contexts/world/infrastructure/prompts/beat_suggester.yaml` - New file (prompt template)
+  - `src/contexts/world/infrastructure/generators/llm_world_generator.py` - Added suggest_next_beats(), BeatSuggestion, BeatSuggestionResult
+  - `src/contexts/world/infrastructure/generators/__init__.py` - Added new exports
+  - `tests/unit/contexts/world/infrastructure/test_llm_world_generator.py` - Added 17 tests
+- **Learnings for future iterations:**
+  - LLMWorldGenerator already has patterns for prompt loading, API calls, JSON extraction - follow existing _load_X_prompt(), _build_X_user_prompt(), _parse_X_response() pattern
+  - Prompt templates go in `src/contexts/world/infrastructure/prompts/` as YAML with `system_prompt` key
+  - Use `field(default_factory=list)` for mutable defaults in dataclasses (requires `field` import)
+  - Clamping values in parsing is safer than trusting LLM output to be within range
+  - All 42 world generator tests pass, all 342 context unit tests pass
+---
+
+## 2026-02-03 - DIR-048
+- **What was implemented:**
+  - Full AI Beat Suggestions UI with Spark button for writer's block breaking
+  - Backend: Added BeatSuggestion schemas (Request, Suggestion, Response) to `src/api/schemas.py`
+  - Backend: Added POST `/structure/scenes/{scene_id}/suggest-beats` endpoint to structure router
+  - Backend: Added `_get_llm_generator()` helper to structure router for LLMWorldGenerator access
+  - Frontend: Added Beat Suggestion Zod schemas to `frontend/src/types/schemas.ts`
+  - Frontend: Created `beatSuggestionApi.ts` with `useSuggestBeats` TanStack Query hook
+  - Frontend: Created `BeatSuggestionDialog.tsx` with Dialog UI (renamed from Popover as it doesn't exist)
+  - Frontend: Updated `BeatList.tsx` with Spark button and `sceneContext` prop
+  - Frontend: Updated director feature index.ts to export new components and hooks
+- **Files changed:**
+  - `src/api/schemas.py` - Added BeatSuggestionRequest, BeatSuggestion, BeatSuggestionResponse
+  - `src/api/routers/structure.py` - Added suggest_beats endpoint and _get_llm_generator helper
+  - `frontend/src/types/schemas.ts` - Added beat suggestion Zod schemas and types
+  - `frontend/src/features/director/api/beatSuggestionApi.ts` - New file (TanStack Query hook)
+  - `frontend/src/features/director/components/BeatSuggestionPopover.tsx` - New file (Dialog component)
+  - `frontend/src/features/director/components/BeatList.tsx` - Added Spark button, sceneContext prop
+  - `frontend/src/features/director/index.ts` - Added exports for new components and hooks
+  - `scripts/ralph/prd.json` - Set DIR-048 passes: true
+- **Learnings for future iterations:**
+  - Popover component does not exist in shadcn/ui - use Dialog instead for similar functionality
+  - LLMWorldGenerator should be cached in app.state for reuse across requests (_get_llm_generator pattern)
+  - The `@/lib/api` module is used for API calls, not `@/lib/api-client`
+  - Use `api.post()` and then parse with Zod schemas for type safety
+  - Beat suggestions auto-create the beat on selection (via onSelectSuggestion callback)
+  - Dialog includes loading state, error state, and regenerate button
+  - All 17 beat suggestion tests pass, frontend typecheck and lint pass
 ---

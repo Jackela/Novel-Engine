@@ -954,6 +954,58 @@ class ReorderBeatsRequest(BaseModel):
     beat_ids: List[str] = Field(..., description="Beat UUIDs in desired order")
 
 
+# === Beat Suggestion Schemas (DIR-047/DIR-048) ===
+
+
+class BeatSuggestionRequest(BaseModel):
+    """Request model for AI beat suggestions.
+
+    Asks the AI to suggest 3 possible next beats based on the current
+    beat sequence and scene context.
+    """
+
+    scene_id: str = Field(..., description="Scene UUID")
+    current_beats: List[Dict[str, JsonValue]] = Field(
+        default_factory=list,
+        description="Current beats in scene with 'beat_type', 'content', 'mood_shift'",
+    )
+    scene_context: str = Field(
+        ...,
+        min_length=1,
+        max_length=5000,
+        description="Scene context: setting, characters, situation/goals",
+    )
+    mood_target: Optional[int] = Field(
+        None,
+        ge=-5,
+        le=5,
+        description="Optional target mood direction (-5 to +5)",
+    )
+
+
+class BeatSuggestion(BaseModel):
+    """A single AI-generated beat suggestion."""
+
+    beat_type: str = Field(..., description="Suggested beat type")
+    content: str = Field(..., description="Suggested narrative text (1-3 sentences)")
+    mood_shift: int = Field(default=0, ge=-5, le=5, description="Emotional impact")
+    rationale: Optional[str] = Field(None, description="AI's explanation for this suggestion")
+
+
+class BeatSuggestionResponse(BaseModel):
+    """Response model for AI beat suggestions.
+
+    Contains 3 AI-generated beat suggestions that could follow
+    the current sequence.
+    """
+
+    scene_id: str = Field(..., description="Scene UUID")
+    suggestions: List[BeatSuggestion] = Field(
+        default_factory=list, min_length=0, max_length=3, description="3 suggested beats"
+    )
+    error: Optional[str] = Field(None, description="Error message if generation failed")
+
+
 # === Pacing Schemas (DIR-043/DIR-044) ===
 
 

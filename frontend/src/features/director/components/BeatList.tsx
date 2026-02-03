@@ -64,6 +64,7 @@ import {
   useDeleteBeat,
   useReorderBeats,
 } from '../api/beatApi';
+import { BeatSuggestionPopover } from './BeatSuggestionPopover';
 import type { BeatResponse, BeatType } from '@/types/schemas';
 
 /**
@@ -342,6 +343,8 @@ function BeatDragOverlay({ beat }: { beat: BeatResponse }) {
 interface BeatListProps {
   /** Scene ID to load beats for */
   sceneId: string;
+  /** Scene context for AI suggestions (setting, characters, situation) */
+  sceneContext?: string;
   /** Optional CSS class name */
   className?: string;
 }
@@ -356,7 +359,7 @@ interface BeatListProps {
  * - Add/Delete beat functionality
  * - API integration with optimistic updates
  */
-export function BeatList({ sceneId, className }: BeatListProps) {
+export function BeatList({ sceneId, sceneContext = '', className }: BeatListProps) {
   const [editingBeatId, setEditingBeatId] = useState<string | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [isAddingBeat, setIsAddingBeat] = useState(false);
@@ -494,20 +497,46 @@ export function BeatList({ sceneId, className }: BeatListProps) {
 
   return (
     <div className={cn('space-y-4', className)}>
-      {/* Header with Add button */}
+      {/* Header with Add and Spark buttons */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-muted-foreground">
           Scene Beats ({beats.length})
         </h3>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsAddingBeat(true)}
-          disabled={isAddingBeat}
-        >
-          <Plus className="mr-1 h-3.5 w-3.5" />
-          Add Beat
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* AI Spark Button - Writer's Block Breaker */}
+          <BeatSuggestionPopover
+            sceneId={sceneId}
+            currentBeats={beats}
+            sceneContext={sceneContext}
+            onSelectSuggestion={(suggestion) => {
+              // Auto-create the beat from suggestion
+              createBeat.mutate(
+                {
+                  sceneId,
+                  input: {
+                    content: suggestion.content,
+                    beat_type: suggestion.beat_type,
+                    mood_shift: suggestion.mood_shift,
+                  },
+                },
+                {
+                  onSuccess: () => {
+                    // Optional: Show success feedback
+                  },
+                }
+              );
+            }}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsAddingBeat(true)}
+            disabled={isAddingBeat}
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Add Beat
+          </Button>
+        </div>
       </div>
 
       {/* New Beat Form */}

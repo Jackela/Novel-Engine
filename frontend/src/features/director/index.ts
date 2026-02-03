@@ -8,12 +8,14 @@
 
 // Components
 export { BeatList } from './components/BeatList';
+export { BeatSuggestionPopover } from './components/BeatSuggestionPopover';
 export { PacingGraph } from './components/PacingGraph';
 export { ChapterDashboard } from './components/ChapterDashboard';
 export { ConflictPanel } from './components/ConflictPanel';
 
 // API Hooks
 export { useBeats, useCreateBeat, useUpdateBeat, useDeleteBeat, useReorderBeats } from './api/beatApi';
+export { useSuggestBeats, beatSuggestionKeys } from './api/beatSuggestionApi';
 export { useChapterPacing, pacingKeys } from './api/pacingApi';
 export {
   useConflicts,

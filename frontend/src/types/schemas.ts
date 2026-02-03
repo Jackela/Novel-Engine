@@ -707,6 +707,45 @@ export const ReorderBeatsRequestSchema = z.object({
   beat_ids: z.array(z.string()),
 });
 
+// === Beat Suggestion Schemas (DIR-047/DIR-048) ===
+
+/**
+ * A single AI-generated beat suggestion.
+ */
+export const BeatSuggestionSchema = z.object({
+  beat_type: z.string(),
+  content: z.string(),
+  mood_shift: z.number().min(-5).max(5).default(0),
+  rationale: z.string().optional(),
+});
+
+/**
+ * Beat suggestion request schema.
+ */
+export const BeatSuggestionRequestSchema = z.object({
+  scene_id: z.string(),
+  current_beats: z
+    .array(
+      z.object({
+        beat_type: z.string(),
+        content: z.string(),
+        mood_shift: z.number().optional(),
+      })
+    )
+    .default([]),
+  scene_context: z.string().min(1).max(5000),
+  mood_target: z.number().min(-5).max(5).optional(),
+});
+
+/**
+ * Beat suggestion response schema.
+ */
+export const BeatSuggestionResponseSchema = z.object({
+  scene_id: z.string(),
+  suggestions: z.array(BeatSuggestionSchema).min(0).max(3),
+  error: z.string().optional(),
+});
+
 // Beat Types
 export type BeatType = z.infer<typeof BeatTypeEnum>;
 export type BeatResponse = z.infer<typeof BeatResponseSchema>;
@@ -714,6 +753,9 @@ export type BeatListResponse = z.infer<typeof BeatListResponseSchema>;
 export type BeatCreateRequest = z.infer<typeof BeatCreateRequestSchema>;
 export type BeatUpdateRequest = z.infer<typeof BeatUpdateRequestSchema>;
 export type ReorderBeatsRequest = z.infer<typeof ReorderBeatsRequestSchema>;
+export type BeatSuggestion = z.infer<typeof BeatSuggestionSchema>;
+export type BeatSuggestionRequest = z.infer<typeof BeatSuggestionRequestSchema>;
+export type BeatSuggestionResponse = z.infer<typeof BeatSuggestionResponseSchema>;
 
 // === Pacing Schemas (DIR-043/DIR-044) ===
 

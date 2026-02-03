@@ -23,7 +23,7 @@
         "Test: `pytest tests/unit/contexts/narrative/domain/test_beat.py`"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "effort": "low"
     },
     {
@@ -39,7 +39,7 @@
         "Verify: Changes persist after page refresh"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["DIR-041"]
     },
@@ -55,7 +55,7 @@
         "Test: `pytest` calculation and analysis logic"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "effort": "low"
     },
     {
@@ -71,7 +71,7 @@
         "Verify: Graph renders correctly with mock/real data"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["DIR-043"]
     },
@@ -87,7 +87,7 @@
         "Test: `pytest` conflict creation and linking"
       ],
       "priority": 5,
-      "passes": true,
+      "passes": false,
       "effort": "low"
     },
     {
@@ -103,7 +103,7 @@
         "Verify: Tagging and untagging works"
       ],
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["DIR-045"]
     },
@@ -119,7 +119,7 @@
         "Test: Mock LLM response parsing"
       ],
       "priority": 7,
-      "passes": true,
+      "passes": false,
       "effort": "high",
       "dependencies": ["DIR-041"]
     },
@@ -136,7 +136,7 @@
         "Verify: Mock data flows through UI correctly"
       ],
       "priority": 8,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
       "dependencies": ["DIR-047"]
     },

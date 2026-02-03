@@ -15,12 +15,14 @@ import logging
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.schemas import (
     BeatCreateRequest,
     BeatListResponse,
     BeatResponse,
+    BeatSuggestionRequest,
+    BeatSuggestionResponse,
     BeatUpdateRequest,
     ChapterCreateRequest,
     ChapterListResponse,
@@ -1119,6 +1121,91 @@ async def reorder_beats(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ============ Beat Suggestion Endpoint (DIR-048) ============
+
+
+def _get_llm_generator(request: Request):
+    """Get or create the LLM World Generator from app state.
+
+    Why this pattern:
+        Centralizes generator access and enables lazy initialization.
+        The generator is cached in app.state for reuse across requests.
+    """
+    from src.contexts.world.infrastructure.generators.llm_world_generator import (
+        LLMWorldGenerator,
+    )
+
+    generator = getattr(request.app.state, "llm_world_generator", None)
+    if generator is None:
+        generator = LLMWorldGenerator()
+        request.app.state.llm_world_generator = generator
+    return generator
+
+
+@router.post(
+    "/scenes/{scene_id}/suggest-beats",
+    response_model=BeatSuggestionResponse,
+)
+async def suggest_beats(
+    scene_id: str,
+    request: Request,
+    payload: BeatSuggestionRequest,
+) -> BeatSuggestionResponse:
+    """Generate AI beat suggestions for a scene.
+
+    Uses the LLM to suggest 3 possible next beats that could
+    logically follow the current beat sequence, considering
+    scene context and desired mood trajectory.
+
+    Args:
+        scene_id: UUID of the scene.
+        payload: Current beats, scene context, and optional mood target.
+
+    Returns:
+        Three AI-generated beat suggestions with type, content,
+        mood shift, and rationale.
+    """
+    log = logger.bind(scene_id=scene_id, num_current_beats=len(payload.current_beats))
+    log.info("Generating beat suggestions")
+
+    try:
+        generator = _get_llm_generator(request)
+        result = generator.suggest_next_beats(
+            current_beats=payload.current_beats,
+            scene_context=payload.scene_context,
+            mood_target=payload.mood_target,
+        )
+
+        if result.is_error():
+            log.warning("Beat suggestion generation failed", error=result.error)
+            return BeatSuggestionResponse(
+                scene_id=scene_id,
+                suggestions=[],
+                error=result.error,
+            )
+
+        log.info("Beat suggestions generated successfully", num_suggestions=len(result.suggestions))
+        return BeatSuggestionResponse(
+            scene_id=scene_id,
+            suggestions=[
+                {
+                    "beat_type": s.beat_type,
+                    "content": s.content,
+                    "mood_shift": s.mood_shift,
+                    "rationale": s.rationale,
+                }
+                for s in result.suggestions
+            ],
+        )
+    except Exception as e:
+        log.error("Beat suggestion endpoint error", error=str(e))
+        return BeatSuggestionResponse(
+            scene_id=scene_id,
+            suggestions=[],
+            error=str(e),
+        )
 
 
 # ============ Pacing Endpoints (DIR-044) ============
