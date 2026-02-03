@@ -251,7 +251,7 @@
         "Test: `pytest` analysis rules"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["DIR-043"]
     },
