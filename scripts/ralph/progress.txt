@@ -383,3 +383,29 @@ Started: Tue Feb  3 16:06:24     2026
   - Keyboard support (Enter/Space) required for clickable divs to pass a11y lint - add role="button", tabIndex={0}, onKeyDown
   - All 55 scene entity tests pass, typecheck and lint pass
 ---
+
+## 2026-02-03 - DIR-055
+- **What was implemented:**
+  - Created ChapterAnalysisService in `src/contexts/narrative/application/services/`
+  - Implemented `analyze_chapter_structure()` returning ChapterHealthReport
+  - Added frozen dataclasses: PhaseDistribution, WordCountEstimate, HealthWarning, TensionArcShape, ChapterHealthReport
+  - Added HealthScore enum (CRITICAL/POOR/FAIR/GOOD/EXCELLENT)
+  - Added WarningCategory enum (PACING/STRUCTURE/CONFLICT/BALANCE/ARC)
+  - Analyzes: scene count per phase, estimated word count (beat count * 250), tension arc shape
+  - Generates warnings: missing climax, missing resolution, overlong rising action, flat tension arc, underdeveloped scenes
+  - Health score calculation based on warning severity
+  - Actionable recommendations for each warning category
+- **Files changed:**
+  - `src/contexts/narrative/application/services/chapter_analysis_service.py` - New file (~500 lines)
+  - `src/contexts/narrative/application/services/__init__.py` - Added ChapterAnalysisService export
+  - `tests/unit/contexts/narrative/application/services/test_chapter_analysis_service.py` - New file (26 tests)
+- **Learnings for future iterations:**
+  - Service pattern from PacingService applies directly: stateless analysis service with frozen output dataclasses
+  - Tension arc classification: mountain (rise-peak-fall), flat, rising, valley, irregular
+  - Clear climax detection: peak must be in final 40% of chapter and have tension >= 7
+  - Phase distribution uses Counter from collections for efficient counting
+  - Word count estimation uses heuristic: 250 words per beat (±20% uncertainty range)
+  - Health score logic: critical=2+ high or 1+ critical; poor=1 high or 3+ medium; fair=1+ medium; good=2+ low; excellent=no warnings
+  - All 312 narrative context tests pass (26 new + 286 existing)
+  - Frontend typecheck and lint pass
+---
