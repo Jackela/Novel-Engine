@@ -163,7 +163,7 @@
         "Update docs/adr/index.md with new ADRs"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {

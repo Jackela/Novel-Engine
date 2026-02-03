@@ -366,3 +366,61 @@ Reset: $(date +%Y-%m-%d)
 - Focus: Document Director Mode, State Management, and Result Pattern with ADRs
 
 ---
+
+## 2026-02-03 - CIT-008: Docs: Create Missing ADRs
+
+### What was implemented
+- Created `docs/adr/ADR-004-director-mode.md` - Documented Director workflow orchestration, beat system, AI suggestions, critique integration
+- Created `docs/adr/ADR-005-state-management.md` - Documented Zustand store architecture, store creation guidelines, state management hierarchy
+- Created `docs/adr/ADR-006-result-pattern.md` - Documented Result[T, E] error handling, migration from exceptions, testing patterns
+- Updated `docs/adr/index.md` with links to the three new ADRs
+- Used ADR-001 template as the format reference (Context, Decision, Alternatives, Consequences sections)
+
+### Files changed
+- `docs/adr/ADR-004-director-mode.md` - New: Director Mode architecture and workflow documentation
+- `docs/adr/ADR-005-state-management.md` - New: Zustand store architecture and decision patterns
+- `docs/adr/ADR-006-result-pattern.md` - New: Result pattern error handling documentation
+- `docs/adr/index.md` - Updated with links to ADR-004, ADR-005, ADR-006
+
+### ADR-004: Director Mode
+Documents the hierarchical narrative model (Story → Chapter → Scene → Beat) with:
+- Six beat types: Action, Dialogue, Reaction, Revelation, Transition, Description
+- AI suggestion workflow via Spark button
+- Multi-dimensional critique system (Pacing, Voice, Showing vs. Telling, Dialogue, Structure)
+- Pacing visualization with dual-area charts
+- Contract-first API approach
+
+### ADR-005: State Management
+Documents the Zustand store architecture with:
+- State management hierarchy (TanStack Query → Zustand → React Hook Form → useState)
+- Store creation guidelines (when to create vs. extend stores)
+- Store summaries: authStore (388 lines), orchestrationStore (90 lines), decisionStore (114 lines), weaverStore (194 lines)
+- Decision tree for state type selection
+- Persistence strategy and testing patterns
+
+### ADR-006: Result Pattern
+Documents the Result[T, E] error handling with:
+- Core implementation (_Ok[T], _Error[E], Error dataclass)
+- Built-in error types (NotFoundError, ValidationError, ConflictError, PermissionError)
+- Service layer usage examples
+- Router integration (mapping errors to HTTP status codes)
+- Migration guide from exception-based handling
+- Testing patterns for Results
+
+### Learnings for future iterations:
+- **Pattern**: ADRs should follow the template structure: Context, Decision, Implementation Details, Alternatives, Consequences
+- **Pattern**: Include ASCII diagrams for architecture flows where helpful (Director Mode uses text diagrams)
+- **Gotcha**: ADRs document past decisions that were already implemented - they capture historical context rather than proposing new changes
+- **Useful context**: The project now has 6 ADRs total (ADR-001 through ADR-006), plus ARC (architecture) and FE (frontend) decision records
+
+### Quality checks passed
+- ✅ `npm run type-check` - No errors
+- ✅ `npm run test` - All 46 tests pass
+- ✅ `npm run lint:all` - Only pre-existing warnings (4 react-hooks, 1 hex color - unrelated to this work)
+
+### Next story for Ralph
+- **CIT-009a**: Test: Split test_narrative_context_value_object.py
+- Priority: 10 (highest pending after CIT-008)
+- Focus: Refactor oversized test file (2144 lines) into focused modules
+
+---
