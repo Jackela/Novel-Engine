@@ -15,6 +15,7 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Domain Events**: Use events for cross-context communication, not direct imports
 - **Import Linting**: Rules defined in `.importlinter` to enforce architectural boundaries
 - **Vector Storage**: ChromaDB adapter in `src/contexts/knowledge/infrastructure/adapters/chromadb_vector_store.py`
+- **Type Annotations**: Use `from __future__ import annotations` and import List/Tuple from typing for complex types
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -50,7 +51,7 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 #### Core Infrastructure (7 stories)
 - BRAIN-001: ChromaDB setup ✅
 - BRAIN-002: Embedding service ✅
-- BRAIN-003: Knowledge entry entity
+- BRAIN-003: Knowledge entry entity ✅
 - BRAIN-004: Knowledge ingestion service
 - BRAIN-005: Auto-sync event listeners
 - BRAIN-006: Context retrieval service (RAG)
@@ -150,9 +151,36 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 
 ---
 
+## [2025-02-03] - BRAIN-003 ✅
+- Created ChunkingStrategy value object with FIXED/SEMANTIC/SENTENCE/PARAGRAPH strategies
+  - Configurable chunk_size (50-2000), overlap, and min_chunk_size
+  - Presets for character, scene, and lore content types
+- Created SourceType enumeration (CHARACTER, LORE, SCENE, PLOTLINE, ITEM, LOCATION)
+- Created SourceKnowledgeEntry entity for RAG with embedding tracking
+- Implemented TextChunker domain service with multiple chunking strategies
+- Added metadata enrichment with word_count, chunk_index, total_chunks, tags
+- All 68 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/domain/models/chunking_strategy.py`: ChunkingStrategy VO, ChunkStrategyType enum, ChunkingStrategies factory
+  - `src/contexts/knowledge/domain/models/source_type.py`: SourceType enum with from_string()
+  - `src/contexts/knowledge/domain/models/source_knowledge_entry.py`: SourceKnowledgeEntry entity, SourceMetadata VO
+  - `src/contexts/knowledge/domain/services/text_chunker.py`: TextChunker with FIXED/SENTENCE/PARAGRAPH/SEMANTIC strategies
+  - `tests/unit/contexts/knowledge/domain/models/`: Tests for chunking_strategy, source_type, source_knowledge_entry
+  - `tests/unit/contexts/knowledge/domain/services/test_text_chunker.py`: 18 tests for all chunking strategies
+
+**Learnings for future iterations:**
+- Use `from __future__ import annotations` to enable forward references in enum classmethod return types
+- The domain/models directory is gitignored - use `git add -f` to add new model files
+- Chunking with overlap means total_words sum includes overlaps (2000 words + overlap = 2200 total_words)
+- TextChunker._WORD_PATTERN.findall() is the reliable way to count words (handles irregular spacing)
+- For paragraph chunking, exclude delimiter length when calculating text position: end_pos - len(match.group())
+
+---
+
 ## Next Story for Ralph
-- **BRAIN-003**: Domain: Knowledge Entry Entity
-- Priority: 3
-- Focus: Create KnowledgeEntry entity with ChunkingStrategy value object
+- **BRAIN-004**: Service: Knowledge Ingestion Service
+- Priority: 4
+- Focus: Create service to ingest, batch_ingest, delete, update knowledge entries
+- Dependencies: BRAIN-002 (EmbeddingService), BRAIN-003 (KnowledgeEntry)
 
 ---

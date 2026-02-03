@@ -54,7 +54,7 @@
         "Test: Split a 2000-word text into chunks with 500-word size and 50-word overlap"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {
