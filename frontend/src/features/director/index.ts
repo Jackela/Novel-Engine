@@ -16,6 +16,7 @@ export { ConflictPanel } from './components/ConflictPanel';
 export { PlotlineManager } from './components/PlotlineManager';
 export { ForeshadowingPanel } from './components/ForeshadowingPanel';
 export { ChapterHealth } from './components/ChapterHealth';
+export { CritiqueSidebar } from './components/CritiqueSidebar';
 
 // API Hooks
 export { useBeats, useCreateBeat, useUpdateBeat, useDeleteBeat, useReorderBeats } from './api/beatApi';
@@ -51,3 +52,4 @@ export {
   useDeleteForeshadowing,
   foreshadowingKeys,
 } from './api/foreshadowingApi';
+export { useCritiqueScene, critiqueKeys } from './api/critiqueApi';

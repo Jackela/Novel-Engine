@@ -34,6 +34,9 @@ from src.api.schemas import (
     ConflictListResponse,
     ConflictResponse,
     ConflictUpdateRequest,
+    CritiqueCategoryScoreResponse,
+    CritiqueSceneRequest,
+    CritiqueSceneResponse,
     HealthWarningResponse,
     LinkPayoffRequest,
     LinkSceneToPlotlineRequest,
@@ -1256,6 +1259,84 @@ async def suggest_beats(
         return BeatSuggestionResponse(
             scene_id=scene_id,
             suggestions=[],
+            error=str(e),
+        )
+
+
+# ============ Scene Critique Endpoint (DIR-058) ============
+
+
+@router.post(
+    "/scenes/{scene_id}/critique",
+    response_model=CritiqueSceneResponse,
+)
+async def critique_scene(
+    scene_id: str,
+    request: Request,
+    payload: CritiqueSceneRequest,
+) -> CritiqueSceneResponse:
+    """Analyze scene writing quality using AI.
+
+    Provides AI-generated feedback on scene quality across multiple
+    craft dimensions: pacing, narrative voice, showing vs. telling,
+    and dialogue naturalism. Returns specific, actionable suggestions
+    for improvement along with recognition of what works well.
+
+    Args:
+        scene_id: UUID of the scene (for logging, not used in lookup).
+        payload: Scene text and optional writer's goals.
+
+    Returns:
+        CritiqueResult containing overall score (1-10), category-specific
+        evaluations (pacing, voice, showing, dialogue), highlights of what
+        works, summary assessment, and actionable suggestions.
+    """
+    log = logger.bind(scene_id=scene_id, text_length=len(payload.scene_text))
+    log.info("Generating scene critique")
+
+    try:
+        generator = _get_llm_generator(request)
+        result = generator.critique_scene(
+            scene_text=payload.scene_text,
+            scene_goals=payload.scene_goals,
+        )
+
+        if result.is_error():
+            log.warning("Scene critique generation failed", error=result.error)
+            return CritiqueSceneResponse(
+                overall_score=1,
+                category_scores=[],
+                highlights=[],
+                summary="Critique failed.",
+                error=result.error,
+            )
+
+        log.info(
+            "Scene critique generated successfully",
+            overall_score=result.overall_score,
+            num_categories=len(result.category_scores),
+        )
+        return CritiqueSceneResponse(
+            overall_score=result.overall_score,
+            category_scores=[
+                {
+                    "category": cat.category,
+                    "score": cat.score,
+                    "issues": cat.issues,
+                    "suggestions": cat.suggestions,
+                }
+                for cat in result.category_scores
+            ],
+            highlights=result.highlights,
+            summary=result.summary,
+        )
+    except Exception as e:
+        log.error("Scene critique endpoint error", error=str(e))
+        return CritiqueSceneResponse(
+            overall_score=1,
+            category_scores=[],
+            highlights=[],
+            summary="An error occurred during critique.",
             error=str(e),
         )
 

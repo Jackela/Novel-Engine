@@ -450,3 +450,32 @@ Started: Tue Feb  3 16:06:24     2026
   - All scores clamped to 1-10 range for consistency
   - All 573 world context tests pass (61 llm_world_generator tests + 512 other tests)
   - All 312 narrative context tests pass
+
+## 2026-02-03 - DIR-058
+- **What was implemented:**
+  - Full Critique Sidebar UI with AI feedback panel for scene quality analysis
+  - Backend: Added Critique schemas (Request, CategoryScoreResponse, Response) to `src/api/schemas.py`
+  - Backend: Added POST `/structure/scenes/{scene_id}/critique` endpoint to structure router
+  - Frontend: Added Critique Zod schemas to `frontend/src/types/schemas.ts`
+  - Frontend: Created `critiqueApi.ts` with `useCritiqueScene` TanStack Query hook
+  - Frontend: Created `CritiqueSidebar.tsx` with Sheet panel, category grouping, severity icons
+  - Frontend: Updated director feature index.ts to export CritiqueSidebar and critique API
+- **Files changed:**
+  - `src/api/schemas.py` - Added CritiqueSceneRequest, CritiqueCategoryScoreResponse, CritiqueSceneResponse
+  - `src/api/routers/structure.py` - Added critique endpoint, imported critique schemas
+  - `frontend/src/types/schemas.ts` - Added CritiqueCategoryScoreSchema, CritiqueSceneRequestSchema, CritiqueSceneResponseSchema
+  - `frontend/src/features/director/api/critiqueApi.ts` - New file (TanStack Query hook)
+  - `frontend/src/features/director/components/CritiqueSidebar.tsx` - New file (~370 lines)
+  - `frontend/src/features/director/index.ts` - Added CritiqueSidebar and critique API exports
+- **Learnings for future iterations:**
+  - Critique API endpoint follows same pattern as BeatSuggestion: POST to `/structure/scenes/{scene_id}/critique`
+  - Sheet component from shadcn/ui used for sidebar panel (not Dialog)
+  - Severity icons based on score: CheckCircle2 (8+), AlertTriangle (6-7), AlertCircle (4-5), XCircle (1-3)
+  - Category configuration uses Record<string, {label, icon, color}> for visual styling
+  - Error handling: display error message from API or Error.message fallback
+  - Critique only enabled when scene text is >= 50 characters (API requirement)
+  - All typecheck and lint pass
+
+  - All scores clamped to 1-10 range for consistency
+  - All 573 world context tests pass (61 llm_world_generator tests + 512 other tests)
+  - All 312 narrative context tests pass

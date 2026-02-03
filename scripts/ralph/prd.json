@@ -301,7 +301,7 @@
         "Verify: Mock critique renders in panel"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["DIR-057"]
     },

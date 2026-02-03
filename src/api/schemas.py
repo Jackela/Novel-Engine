@@ -1291,6 +1291,52 @@ class ChapterHealthReportResponse(BaseModel):
     recommendations: List[str] = Field(default_factory=list, description="Improvement suggestions")
 
 
+# ============ Scene Critique Schemas (DIR-057/DIR-058) ============
+
+
+class CritiqueCategoryScoreResponse(BaseModel):
+    """Category-specific critique score with issues and suggestions."""
+
+    category: str = Field(..., description="Quality dimension: pacing, voice, showing, dialogue")
+    score: int = Field(..., ge=1, le=10, description="Score from 1-10 for this category")
+    issues: List[str] = Field(default_factory=list, description="Specific problems identified")
+    suggestions: List[str] = Field(default_factory=list, description="Actionable improvements")
+
+
+class CritiqueSceneRequest(BaseModel):
+    """Request model for AI scene critique.
+
+    Asks the AI to analyze scene writing quality across multiple craft dimensions.
+    """
+
+    scene_text: str = Field(
+        ...,
+        min_length=50,
+        max_length=12000,
+        description="Full text content of the scene to analyze",
+    )
+    scene_goals: Optional[List[str]] = Field(
+        None,
+        description="Optional list of writer's goals for the scene (e.g., reveal motivation, build tension)",
+    )
+
+
+class CritiqueSceneResponse(BaseModel):
+    """Response model for AI scene critique.
+
+    Contains AI-generated feedback on scene quality including overall score,
+    category-specific evaluations, highlights, and actionable suggestions.
+    """
+
+    overall_score: int = Field(..., ge=1, le=10, description="Overall quality score (1-10)")
+    category_scores: List[CritiqueCategoryScoreResponse] = Field(
+        default_factory=list, description="Evaluations by category"
+    )
+    highlights: List[str] = Field(default_factory=list, description="What works well in the scene")
+    summary: str = Field(..., description="Brief 2-3 sentence assessment")
+    error: Optional[str] = Field(None, description="Error message if critique failed")
+
+
 # ============ Foreshadowing Schemas (DIR-052) ============
 
 

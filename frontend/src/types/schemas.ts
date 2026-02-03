@@ -771,6 +771,41 @@ export type BeatSuggestion = z.infer<typeof BeatSuggestionSchema>;
 export type BeatSuggestionRequest = z.infer<typeof BeatSuggestionRequestSchema>;
 export type BeatSuggestionResponse = z.infer<typeof BeatSuggestionResponseSchema>;
 
+// === Scene Critique Schemas (DIR-057/DIR-058) ===
+
+/**
+ * Category-specific critique score with issues and suggestions.
+ */
+export const CritiqueCategoryScoreSchema = z.object({
+  category: z.string(), // 'pacing', 'voice', 'showing', 'dialogue'
+  score: z.number().min(1).max(10),
+  issues: z.array(z.string()),
+  suggestions: z.array(z.string()),
+});
+
+/**
+ * Request model for AI scene critique.
+ */
+export const CritiqueSceneRequestSchema = z.object({
+  scene_text: z.string().min(50).max(12000),
+  scene_goals: z.array(z.string()).optional(),
+});
+
+/**
+ * Response model for AI scene critique.
+ */
+export const CritiqueSceneResponseSchema = z.object({
+  overall_score: z.number().min(1).max(10),
+  category_scores: z.array(CritiqueCategoryScoreSchema),
+  highlights: z.array(z.string()),
+  summary: z.string(),
+  error: z.string().optional(),
+});
+
+export type CritiqueCategoryScore = z.infer<typeof CritiqueCategoryScoreSchema>;
+export type CritiqueSceneRequest = z.infer<typeof CritiqueSceneRequestSchema>;
+export type CritiqueSceneResponse = z.infer<typeof CritiqueSceneResponseSchema>;
+
 // === Pacing Schemas (DIR-043/DIR-044) ===
 
 /**
