@@ -96,7 +96,7 @@
         "Run pytest tests/unit/api/routers/ - all pass"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["CIT-003"]
     },
@@ -114,7 +114,7 @@
         "Run npm run type-check - no errors after documentation"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "high"
     },
     {

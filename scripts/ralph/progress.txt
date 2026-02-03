@@ -199,3 +199,87 @@ Reset: $(date +%Y-%m-%d)
 - Focus: Move business logic from characters router to services layer
 
 ---
+
+## 2026-02-03 - CIT-004.5: Backend: Extract Router Business Logic
+
+### What was implemented
+- Created `CharacterRouterService` for filesystem character access and summarization logic
+- Created `HttpCacheService` for HTTP caching headers (ETag, Last-Modified)
+- Refactored `characters.py` router from ~710 to 443 lines (~38% reduction)
+- Moved helper functions: `_normalize_numeric_map`, `_to_float` to CharacterRouterService
+- Moved cache functions: `_build_entity_etag`, `_set_cache_headers`, `_is_not_modified` to HttpCacheService
+- Router now focuses only on HTTP request/response handling
+
+### Files changed
+- `src/api/routers/characters.py` - Reduced from ~710 to 443 lines, now uses services
+- `src/api/services/character_router_service.py` - New: filesystem access, character summarization (459 lines)
+- `src/api/services/http_cache_service.py` - New: HTTP caching logic (179 lines)
+- `src/api/services/__init__.py` - Added exports for new services
+
+### Learnings for future iterations:
+- **Pattern**: Create a `{Router}Service` class to encapsulate router business logic (e.g., `CharacterRouterService`)
+- **Pattern**: Separate HTTP concerns (caching) from domain logic in dedicated services
+- **Gotcha**: The target of 200 lines per router may be too aggressive; focus on separation of concerns rather than arbitrary line counts
+- **Pattern**: Helper functions used by multiple router methods should become service methods
+- **Useful context**: The router still contains ~200 lines of get_character_detail function - this could be further extracted but is acceptable as it's router-specific
+
+### Quality checks passed
+- ✅ `pytest tests/unit/api/routers/` - All 23 tests pass
+- ✅ Service imports work correctly
+- ✅ No mypy errors in new service files
+- ✅ Router functionality preserved via service calls
+
+### Next story for Ralph
+- **CIT-005**: Frontend: Consolidate State Management Strategy
+- Priority: 6 (highest pending after CIT-004.5)
+- Focus: Audit and document all Zustand stores
+
+---
+
+## 2026-02-03 - CIT-005: Frontend: Consolidate State Management Strategy
+
+### What was implemented
+- Audited all 4 Zustand stores: authStore, orchestrationStore, decisionStore, weaverStore
+- Created comprehensive documentation at `docs/architecture/state-management.md`
+- Documented each store's purpose, state shape, actions, and selector hooks
+- Identified overlapping responsibilities - **NO significant overlap found**
+- Created consolidation strategy with verdicts for all stores
+- All stores marked as **KEEP** - no migration needed
+
+### Files changed
+- `docs/architecture/state-management.md` - New: comprehensive state management documentation
+
+### Audit findings
+- **4 stores total**: authStore (388 lines), orchestrationStore (90 lines), decisionStore (114 lines), weaverStore (194 lines)
+- **23 total exports**: 6 selector hooks from authStore, 13 from weaverStore
+- **No overlapping responsibilities**: Each store has a distinct domain
+- **Storage**: Only authStore uses persistence (localStorage)
+- **E2E exposure**: decisionStore and weaverStore have E2E testing interfaces
+
+### Store verdicts
+| Store | Decision | Reasoning |
+|-------|----------|-----------|
+| authStore | KEEP | Well-scoped, follows auth best practices, properly persisted |
+| orchestrationStore | KEEP | Separate concern from actual orchestration logic (UI simulation only) |
+| decisionStore | KEEP | Distinct domain (narrative decisions), clean interface |
+| weaverStore | KEEP | Manages complex graph state, many selectors, distinct purpose |
+
+### Migration path
+**No migration required** - all stores are properly scoped and non-overlapping.
+
+### Learnings for future iterations:
+- **Pattern**: Feature-based store organization (one store per feature domain) is working well
+- **Pattern**: Export selector hooks for common state slices (e.g., `useIsAuthenticated()`)
+- **Pattern**: Use Zustand persist middleware for state that should survive page refreshes
+- **Gotcha**: orchestrationStore is UI simulation only - when real orchestration SSE is implemented, consider migrating to TanStack Query
+- **Useful context**: The project has 786 lines of store code across 4 files with 18 selector hooks
+
+### Quality checks passed
+- ✅ `npm run type-check` - No errors
+
+### Next story for Ralph
+- **CIT-006**: Backend: Resolve TODOs
+- Priority: 7 (highest pending after CIT-005)
+- Focus: Systematically resolve or document all 15 backend TODO/FIXME comments
+
+---
