@@ -781,7 +781,7 @@
         "Test: Adapter initialization"
       ],
       "priority": 44,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-023"
@@ -796,7 +796,7 @@
         "Test: Generate text using local Llama 3"
       ],
       "priority": 45,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-027A"

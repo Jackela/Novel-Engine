@@ -1338,4 +1338,28 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 
 ---
 
+## [2025-02-04] - BRAIN-027A & BRAIN-027B ✅
+- Implemented OllamaLLMClient adapter for local LLM inference
+- Added support for 11 popular local models: llama3.2, llama3.1, llama3, mistral, phi3, gemma2, qwen2.5, and more
+- Implemented generate() method with Ollama's /api/generate endpoint
+- Implemented generate_stream() method with line-by-line JSON streaming format
+- Added check_connection() method to verify Ollama server and list available models via /api/tags
+- Configuration via environment variables: OLLAMA_MODEL, OLLAMA_BASE_URL (default: localhost:11434), OLLAMA_API_KEY
+- Longer default timeout (120s) for local inference vs cloud APIs
+- Proper Ollama request format: model, prompt, system (optional), options (temperature, num_predict)
+- All 30 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/infrastructure/adapters/ollama_llm_client.py`: Complete implementation (460+ lines) with generate(), generate_stream(), check_connection(), _build_request_body(), _make_request(), _extract_response_text(), _format_http_error()
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_ollama_llm_client.py`: New test file (580+ lines) with 30 comprehensive tests
+
+**Learnings for future iterations:**
+- Ollama's streaming format is line-by-line JSON, not SSE: each line is a complete JSON object with "response" field
+- Ollama API endpoints: /api/generate (non-streaming and streaming), /api/tags (list models)
+- Local inference needs longer timeout (120s) compared to cloud APIs (60s) due to hardware constraints
+- Ollama puts parameters in "options" object: temperature, num_predict (not max_tokens)
+- System prompt is optional in Ollama requests - only include if provided
+- The check_connection() method is useful for verifying Ollama is running and listing available models
+- Ollama's response format includes "done": true to indicate completion
+- For type hints with optional base_url, add None check before calling rstrip() to satisfy mypy
+
 
