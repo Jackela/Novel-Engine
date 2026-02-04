@@ -192,8 +192,8 @@ export function PromptsPage() {
               key={prompt.id}
               prompt={prompt}
               onDelete={() => handleDelete(prompt.id, prompt.name)}
-              onEdit={() => navigate({ to: `/brain/prompts/${prompt.id}` })}
-              onView={() => navigate({ to: `/brain/prompts/${prompt.id}` })}
+              onEdit={() => navigate({ to: `/brain/prompts/${prompt.id}` as '/brain/prompts/new' })}
+              onView={() => navigate({ to: `/brain/prompts/${prompt.id}` as '/brain/prompts/new' })}
             />
           ))}
         </div>
@@ -215,7 +215,7 @@ function PromptsHeader({ navigate }: PromptsHeaderProps) {
           Manage and version your AI prompt templates
         </p>
       </div>
-      <Button onClick={() => navigate({ to: '/brain/prompts' })}>
+      <Button onClick={() => navigate({ to: '/brain/prompts/new' as '/brain/prompts/new' })}>
         <Plus className="mr-2 h-4 w-4" />
         New Prompt
       </Button>
