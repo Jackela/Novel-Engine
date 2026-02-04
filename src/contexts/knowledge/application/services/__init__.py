@@ -44,6 +44,17 @@ from .bm25_retriever import (
     DEFAULT_B,
 )
 
+from .hybrid_retriever import (
+    HybridRetriever,
+    HybridConfig,
+    HybridResult,
+    FusionMetadata,
+    DEFAULT_VECTOR_WEIGHT,
+    DEFAULT_BM25_WEIGHT,
+    DEFAULT_RRF_K,
+    DEFAULT_RRF_ALPHA,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -77,4 +88,13 @@ __all__ = [
     "tokenize",
     "DEFAULT_K1",
     "DEFAULT_B",
+    # Hybrid Retriever
+    "HybridRetriever",
+    "HybridConfig",
+    "HybridResult",
+    "FusionMetadata",
+    "DEFAULT_VECTOR_WEIGHT",
+    "DEFAULT_BM25_WEIGHT",
+    "DEFAULT_RRF_K",
+    "DEFAULT_RRF_ALPHA",
 ]

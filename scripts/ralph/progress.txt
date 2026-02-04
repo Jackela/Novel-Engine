@@ -18,6 +18,7 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Type Annotations**: Use `from __future__ import annotations` and import List/Tuple from typing for complex types
 - **RAG Retrieval**: RetrievalService in `src/contexts/knowledge/application/services/retrieval_service.py` with filtering and deduplication
 - **BM25 Keyword Search**: BM25Retriever in `src/contexts/knowledge/application/services/bm25_retriever.py` for exact keyword matching
+- **Hybrid Retrieval**: HybridRetriever in `src/contexts/knowledge/application/services/hybrid_retriever.py` combines vector and BM25 with RRF
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -361,5 +362,34 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - For keyword search, tokens should be pre-computed and stored to avoid re-tokenizing on every search
 - Use `type: ignore[import-untyped]` for libraries without type stubs like rank-bm25
 - When using argsort on numpy arrays, reverse with `[::-1]` to get highest scores first
+
+---
+
+## [2025-02-04] - BRAIN-008B ✅
+- Implemented HybridRetriever service combining vector (semantic) and BM25 (keyword) search
+- Created HybridConfig value object with configurable weights and RRF parameters
+- Implemented Reciprocal Rank Fusion (RRF) with configurable k constant (default 60)
+- Implemented Linear Score Fusion for pure score-based combination
+- Implemented Hybrid Score Fusion combining RRF and linear with alpha parameter (0.0-1.0)
+- Added support for per-search config_override to customize fusion behavior
+- Graceful degradation: if one search method fails, returns results from the other
+- Content-based deduplication using MD5 hashing
+- All 44 unit tests passing (covering normalization, RRF, linear fusion, hybrid fusion, config, retriever)
+- Files changed:
+  - `src/contexts/knowledge/application/services/hybrid_retriever.py`: Complete HybridRetriever implementation (730 lines)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new HybridRetriever types
+  - `tests/unit/contexts/knowledge/application/services/test_hybrid_retriever.py`: 44 comprehensive tests
+
+**Learnings for future iterations:**
+- Hybrid retrieval provides the best of both worlds: semantic understanding from vector search + exact keyword matching from BM25
+- Reciprocal Rank Fusion (RRF) is robust to score scale differences because it operates on ranks, not raw scores
+- The RRF k parameter controls the influence of rank (default 60): smaller k = top ranks dominate, larger k = more influence from lower ranks
+- Linear fusion requires careful normalization because vector scores (0-1) and BM25 scores (unbounded) have different scales
+- The rrf_alpha parameter allows blending between pure rank-based (1.0) and pure score-based (0.0) fusion
+- When using TYPE_CHECKING for imports, make sure to use correct relative import depth (e.g., `...domain.models` not `.domain.models`)
+- For frozen dataclasses, `__post_init__` must have `-> None` return type annotation to satisfy mypy
+- The fusion method naming: "linear" (use_rrf=False or rrf_alpha=0), "rrf" (rrf_alpha=1.0), "hybrid" (0 < rrf_alpha < 1.0)
+- Deduplication should use content hash (MD5) to detect identical chunks from both sources
+- When ranking results from different sources, store both score and rank for fusion algorithms
 
 ---

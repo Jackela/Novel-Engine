@@ -200,7 +200,7 @@
         "Test: Compare pure vector vs hybrid search quality"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-008A"
