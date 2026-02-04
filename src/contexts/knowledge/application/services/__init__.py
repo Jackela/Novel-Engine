@@ -149,6 +149,18 @@ from .entity_extraction_service import (
     DEFAULT_MAX_TOKENS,
 )
 
+from .coreference_resolution_service import (
+    CoreferenceResolutionService,
+    CoreferenceConfig,
+    CoreferenceResult,
+    ResolvedReference,
+    CoreferenceResolutionError,
+    DEFAULT_COREF_TEMPERATURE,
+    DEFAULT_COREF_MAX_TOKENS,
+    DEFAULT_MAX_REFERENCES,
+    DEFAULT_WINDOW_SIZE,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -267,4 +279,14 @@ __all__ = [
     "EntityExtractionError",
     "DEFAULT_TEMPERATURE",
     "DEFAULT_MAX_TOKENS",
+    # Co-reference Resolution
+    "CoreferenceResolutionService",
+    "CoreferenceConfig",
+    "CoreferenceResult",
+    "ResolvedReference",
+    "CoreferenceResolutionError",
+    "DEFAULT_COREF_TEMPERATURE",
+    "DEFAULT_COREF_MAX_TOKENS",
+    "DEFAULT_MAX_REFERENCES",
+    "DEFAULT_WINDOW_SIZE",
 ]

@@ -441,3 +441,165 @@ Respond with ONLY valid JSON matching the schema above."""
             results.append(result)
 
         return results
+
+    async def extract_large_text(
+        self,
+        text: str,
+        config: ExtractionConfig | None = None,
+        chunk_size: int = 8000,
+        overlap: int = 500,
+    ) -> ExtractionResult:
+        """
+        Extract entities from a large text by chunking it.
+
+        Processes large texts that exceed prompt token limits by splitting
+        them into overlapping chunks, extracting entities from each chunk,
+        and merging the results.
+
+        Args:
+            text: Large narrative text to process
+            config: Optional override configuration
+            chunk_size: Maximum characters per chunk
+            overlap: Character overlap between chunks for context continuity
+
+        Returns:
+            Merged ExtractionResult with deduplicated entities and mentions
+        """
+        effective_config = config or self._config
+        source_length = len(text)
+
+        self._logger.info(
+            "starting_large_text_extraction",
+            text_length=source_length,
+            chunk_size=chunk_size,
+            overlap=overlap,
+        )
+
+        # Skip chunking for small texts
+        if source_length <= chunk_size:
+            return await self.extract(text, config)
+
+        # Split into chunks
+        chunks: list[str] = []
+        start = 0
+
+        while start < source_length:
+            end = min(start + chunk_size, source_length)
+            chunks.append(text[start:end])
+            start = end - overlap if end < source_length else source_length
+
+        self._logger.info(
+            "split_into_chunks",
+            chunk_count=len(chunks),
+        )
+
+        # Extract from each chunk
+        chunk_results: list[ExtractionResult] = []
+        offset = 0
+
+        for i, chunk in enumerate(chunks):
+            self._logger.info(
+                "processing_chunk",
+                chunk_index=i,
+                total_chunks=len(chunks),
+            )
+
+            result = await self.extract(chunk, effective_config)
+
+            # Adjust entity and mention positions for original text
+            adjusted_entities = [
+                ExtractedEntity(
+                    name=e.name,
+                    entity_type=e.entity_type,
+                    aliases=e.aliases,
+                    description=e.description,
+                    first_appearance=e.first_appearance + offset,
+                    confidence=e.confidence,
+                    metadata=e.metadata,
+                )
+                for e in result.entities
+            ]
+
+            adjusted_mentions = [
+                EntityMention(
+                    entity_name=m.entity_name,
+                    mention_text=m.mention_text,
+                    start_pos=m.start_pos + offset,
+                    end_pos=m.end_pos + offset,
+                    is_pronoun=m.is_pronoun,
+                )
+                for m in result.mentions
+            ]
+
+            # Create adjusted result
+            chunk_results.append(ExtractionResult(
+                entities=tuple(adjusted_entities),
+                mentions=tuple(adjusted_mentions),
+                source_length=len(chunk),
+                timestamp=result.timestamp,
+                model_used=result.model_used,
+                tokens_used=result.tokens_used,
+            ))
+
+            offset += len(chunk) - overlap if i < len(chunks) - 1 else len(chunk)
+
+        # Merge results
+        merged = self._merge_extraction_results(chunk_results, source_length)
+
+        self._logger.info(
+            "large_text_extraction_complete",
+            total_entities=merged.entity_count,
+            total_mentions=merged.mention_count,
+        )
+
+        return merged
+
+    def _merge_extraction_results(
+        self,
+        results: list[ExtractionResult],
+        source_length: int,
+    ) -> ExtractionResult:
+        """
+        Merge multiple extraction results into one.
+
+        Deduplicates entities by name and merges mentions.
+
+        Args:
+            results: List of ExtractionResults to merge
+            source_length: Length of the original source text
+
+        Returns:
+            Merged ExtractionResult
+        """
+        seen_entities: dict[str, ExtractedEntity] = {}
+        all_mentions: list[EntityMention] = []
+        total_tokens = 0
+        models_used: set[str] = set()
+
+        for result in results:
+            # Merge entities (keep first occurrence, highest confidence)
+            for entity in result.entities:
+                key = entity.name.lower()
+                if key not in seen_entities:
+                    seen_entities[key] = entity
+                else:
+                    # Update if this has higher confidence
+                    if entity.confidence > seen_entities[key].confidence:
+                        seen_entities[key] = entity
+
+            # Collect all mentions
+            all_mentions.extend(result.mentions)
+
+            # Track tokens and models
+            if result.tokens_used:
+                total_tokens += result.tokens_used
+            if result.model_used:
+                models_used.add(result.model_used)
+
+        return ExtractionResult(
+            entities=tuple(seen_entities.values()),
+            mentions=tuple(all_mentions),
+            source_length=source_length,
+            model_used=", ".join(sorted(models_used)),
+            tokens_used=total_tokens if total_tokens > 0 else None,
+        )
