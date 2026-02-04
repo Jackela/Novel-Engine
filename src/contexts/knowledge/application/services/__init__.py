@@ -14,7 +14,18 @@ from .knowledge_ingestion_service import (
     SourceChunk,
 )
 
+from .retrieval_service import (
+    DEFAULT_DEDUPLICATION_SIMILARITY,
+    DEFAULT_RELEVANCE_THRESHOLD,
+    FormattedContext,
+    RetrievalFilter,
+    RetrievalOptions,
+    RetrievalResult,
+    RetrievalService,
+)
+
 __all__ = [
+    # Knowledge Ingestion Service
     "KnowledgeIngestionService",
     "IngestionProgress",
     "IngestionResult",
@@ -22,4 +33,12 @@ __all__ = [
     "SourceChunk",
     "RetrievedChunk",
     "DEFAULT_COLLECTION",
+    # Retrieval Service
+    "RetrievalService",
+    "RetrievalFilter",
+    "RetrievalOptions",
+    "FormattedContext",
+    "RetrievalResult",
+    "DEFAULT_RELEVANCE_THRESHOLD",
+    "DEFAULT_DEDUPLICATION_SIMILARITY",
 ]
