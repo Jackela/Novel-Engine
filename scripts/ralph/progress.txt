@@ -997,3 +997,35 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Import schemas without Schema suffix for types, and with Schema suffix for Zod schemas
 - Route must be added both as a createRoute call AND in the routeTree.addChildren array
 - Prompt cards display metadata: version badge, tags (with +N overflow), variable count, model name, date
+
+## [2025-02-04] - BRAIN-019B ✅
+- Implemented full-featured Prompt Lab editor with tabbed interface
+- Created PromptEditorPage component with Content, Variables, Config, and History tabs
+- Added syntax highlighting for {{variable}} placeholders using overlay technique
+- Implemented variable definition table with inline editing (name, type, default, required, description)
+- Added model configuration selector with provider/model dropdowns and sliders for all LLM parameters
+- Added version history sidebar displaying all prompt versions
+- Implemented autosave to localStorage with automatic restoration for new prompts
+- Added tag management with add/remove functionality
+- Added extends (inheritance) management for template composition
+- Added "Add detected variables" button to auto-populate variables from {{var}} patterns in content
+- All type-check and lint passing
+- Files changed:
+  - `frontend/src/features/prompts/components/PromptEditorPage.tsx`: New editor component (1035 lines)
+  - `frontend/src/pages/BrainPromptEditorPage.tsx`: Route wrapper page
+  - `frontend/src/app/router.tsx`: Added /brain/prompts/$id route with parameter
+  - `frontend/src/features/prompts/components/PromptsPage.tsx`: Updated navigation to use /brain/prompts/new
+  - `frontend/src/features/prompts/index.ts`: Export PromptEditorPage
+
+**Learnings for future iterations:**
+- TanStack Router route types need to be cast when using dynamic routes not yet recognized by type system
+- The overlay technique for syntax highlighting uses a transparent div with HTML overlay behind textarea
+- For overlay highlighting to work, both div and textarea must have identical font, spacing, and padding
+- useRef is needed for both textarea and overlay div to sync scroll positions
+- usePrompt and usePromptVersions hooks accept only one argument (the id), no config object
+- For Partial<> updates to objects with required fields, provide explicit defaults for all required fields
+- The variable type enum uses "list" and "dict" not "array" and "json" - must match backend PromptVariableTypeEnum
+- Autosave uses localStorage with key prefix pattern: `{PREFIX}{id}` to isolate drafts by prompt ID
+- LazyRouteComponent requires proper typing in router.tsx for code splitting to work
+- Versions API returns PromptSummary objects (not full PromptDetailResponse) - only has summary fields
+
