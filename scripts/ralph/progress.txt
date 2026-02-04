@@ -1656,3 +1656,73 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Context manager (__enter__/__exit__) useful for resource cleanup (Neo4j driver connection)
 - For ruff auto-fix, it removes unused imports and fixes f-string prefixes automatically
 - The `_get_driver()` method needs Any type hint since neo4j.GraphDatabase is optional
+
+
+## [2026-02-04] - BRAIN-032A ✅
+- Implemented GraphRetrievalService combining vector search with knowledge graph traversal
+- Created GraphEntityContext value object with entity, relationships, connected_entities, degree, metadata
+- Created GraphEnhancedChunk value object with original_chunk, entity_contexts, relationship_count, entity_descriptions
+- Created GraphRetrievalConfig with entity_expansion_depth, max_entities_per_chunk, filters, cache settings
+- Created GraphRetrievalResult with enhanced_chunks, entities_found, relationships_found, cache stats
+- Implemented enrich_chunks_with_graph() for graph-enhanced retrieval:
+  * Extracts entity names from chunk content using regex patterns (capitalized words, quoted names, title case)
+  * Fetches related entities from graph for each extracted name
+  * Builds entity descriptions with relationships and connected entities
+  * Returns enhanced chunks with graph context
+- Implemented get_entity_context() for complete graph context of a single entity
+- Implemented find_related_entities() with BFS traversal for related entity discovery
+- Implemented graph analysis methods: get_entity_centrality(), find_shortest_path(), get_graph_stats(), find_cliques()
+- Implemented export_graph() with JSON and GraphML format support
+- Added caching hooks (_get_entity_cached, _get_neighbors_cached, _get_relationships_cached)
+- Added cache statistics tracking (hits, misses, hit_rate)
+- Added 15 unit tests covering initialization, enrichment, entity context, related entities, graph methods, and caching
+- All 1335 knowledge context tests passing (15 new + 1320 existing)
+- Files changed:
+  - : GraphRetrievalService implementation (560+ lines)
+  - : Export GraphRetrievalService and related types
+  - : 15 comprehensive tests
+
+**Learnings for future iterations:**
+- GraphNeighbor has relationship attribute (not relationship_type) - the relationship itself has relationship_type
+- RetrievedChunk is defined in knowledge_ingestion_service.py with fields: chunk_id, source_id, source_type, content, score, metadata
+- For get_cache_stats() return type, use dict[str, float] instead of dict[str, int] because hit_rate is a float
+- Entity extraction from text uses simple heuristics (capitalized words, quoted strings, title case patterns)
+- In production, consider using EntityExtractionService instead of regex-based extraction for better accuracy
+- Cache hooks are stubbed for future implementation - currently just track misses for analytics
+- BFS traversal uses deque for queue with (entity_name, depth) tuples for efficient neighbor discovery
+- Graph context expansion adds significant value to RAG by including related entities and relationships
+
+
+## [2026-02-04] - BRAIN-032A ✅
+- Implemented GraphRetrievalService combining vector search with knowledge graph traversal
+- Created GraphEntityContext value object with entity, relationships, connected_entities, degree, metadata
+- Created GraphEnhancedChunk value object with original_chunk, entity_contexts, relationship_count, entity_descriptions
+- Created GraphRetrievalConfig with entity_expansion_depth, max_entities_per_chunk, filters, cache settings
+- Created GraphRetrievalResult with enhanced_chunks, entities_found, relationships_found, cache stats
+- Implemented enrich_chunks_with_graph() for graph-enhanced retrieval:
+  * Extracts entity names from chunk content using regex patterns (capitalized words, quoted names, title case)
+  * Fetches related entities from graph for each extracted name
+  * Builds entity descriptions with relationships and connected entities
+  * Returns enhanced chunks with graph context
+- Implemented get_entity_context() for complete graph context of a single entity
+- Implemented find_related_entities() with BFS traversal for related entity discovery
+- Implemented graph analysis methods: get_entity_centrality(), find_shortest_path(), get_graph_stats(), find_cliques()
+- Implemented export_graph() with JSON and GraphML format support
+- Added caching hooks (_get_entity_cached, _get_neighbors_cached, _get_relationships_cached)
+- Added cache statistics tracking (hits, misses, hit_rate)
+- Added 15 unit tests covering initialization, enrichment, entity context, related entities, graph methods, and caching
+- All 1335 knowledge context tests passing (15 new + 1320 existing)
+- Files changed:
+  - `src/contexts/knowledge/application/services/graph_retrieval_service.py`: GraphRetrievalService implementation (560+ lines)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export GraphRetrievalService and related types
+  - `tests/unit/contexts/knowledge/application/services/test_graph_retrieval_service.py`: 15 comprehensive tests
+
+**Learnings for future iterations:**
+- GraphNeighbor has relationship attribute (not relationship_type) - the relationship itself has relationship_type
+- RetrievedChunk is defined in knowledge_ingestion_service.py with fields: chunk_id, source_id, source_type, content, score, metadata
+- For get_cache_stats() return type, use dict[str, float] instead of dict[str, int] because hit_rate is a float
+- Entity extraction from text uses simple heuristics (capitalized words, quoted strings, title case patterns)
+- In production, consider using EntityExtractionService instead of regex-based extraction for better accuracy
+- Cache hooks are stubbed for future implementation - currently just track misses for analytics
+- BFS traversal uses deque for queue with (entity_name, depth) tuples for efficient neighbor discovery
+- Graph context expansion adds significant value to RAG by including related entities and relationships

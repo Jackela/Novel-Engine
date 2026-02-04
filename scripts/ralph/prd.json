@@ -949,7 +949,7 @@
         "Test: Query shows connected entities"
       ],
       "priority": 54,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-031B"
