@@ -44,6 +44,15 @@ from .prompt_usage import (
     PromptUsage,
     PromptUsageStats,
 )
+from .entity import (
+    EntityType,
+    ExtractedEntity,
+    EntityMention,
+    ExtractionResult,
+    DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD,
+    DEFAULT_MAX_ENTITIES,
+    PRONOUNS,
+)
 
 __all__ = [
     "AccessLevel",
@@ -79,4 +88,12 @@ __all__ = [
     "PromptExperiment",
     "PromptUsage",
     "PromptUsageStats",
+    # Entity Models
+    "EntityType",
+    "ExtractedEntity",
+    "EntityMention",
+    "ExtractionResult",
+    "DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD",
+    "DEFAULT_MAX_ENTITIES",
+    "PRONOUNS",
 ]

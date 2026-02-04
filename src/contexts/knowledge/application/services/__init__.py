@@ -141,6 +141,14 @@ from .model_registry import (
     create_model_registry,
 )
 
+from .entity_extraction_service import (
+    EntityExtractionService,
+    ExtractionConfig,
+    EntityExtractionError,
+    DEFAULT_TEMPERATURE,
+    DEFAULT_MAX_TOKENS,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -253,4 +261,10 @@ __all__ = [
     "ModelLookupResult",
     "ModelRegistryConfigFile",
     "create_model_registry",
+    # Entity Extraction
+    "EntityExtractionService",
+    "ExtractionConfig",
+    "EntityExtractionError",
+    "DEFAULT_TEMPERATURE",
+    "DEFAULT_MAX_TOKENS",
 ]
