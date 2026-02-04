@@ -110,6 +110,14 @@ from .context_optimizer import (
     DEFAULT_MAX_TOKENS,
 )
 
+from .citation_formatter import (
+    CitationFormatter,
+    CitationFormatterConfig,
+    SourceReference,
+    ChunkCitation,
+    CitationFormat,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -197,4 +205,10 @@ __all__ = [
     "DEFAULT_SYSTEM_PROMPT_TOKENS",
     "DEFAULT_OVERHEAD_TOKENS",
     "DEFAULT_MAX_TOKENS",
+    # Citation Formatter
+    "CitationFormatter",
+    "CitationFormatterConfig",
+    "SourceReference",
+    "ChunkCitation",
+    "CitationFormat",
 ]

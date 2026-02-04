@@ -772,3 +772,310 @@ class TestRetrievalService:
         source = retrieval_service._format_source(chunk)
 
         assert source == "CHARACTER:char_alice"
+
+
+class TestRetrievalServiceGetSources:
+    """Tests for get_sources method (BRAIN-012)."""
+
+    @pytest.fixture
+    def retrieval_service(self):
+        """Create retrieval service without mocks for get_sources tests."""
+        from src.contexts.knowledge.application.ports.i_embedding_service import IEmbeddingService
+        from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
+        from unittest.mock import AsyncMock
+
+        embedding_service = AsyncMock(spec=IEmbeddingService)
+        vector_store = AsyncMock(spec=IVectorStore)
+        return RetrievalService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+        )
+
+    def test_get_sources_empty_list(self, retrieval_service):
+        """Empty chunks should return empty sources."""
+        sources = retrieval_service.get_sources([])
+        assert sources == []
+
+    def test_get_sources_single_chunk(self, retrieval_service):
+        """Single chunk should return one source."""
+        chunks = [
+            RetrievedChunk(
+                chunk_id="1",
+                source_id="char_alice",
+                source_type=SourceType.CHARACTER,
+                content="Alice is brave",
+                score=0.9,
+                metadata={"name": "Alice the Brave"},
+            ),
+        ]
+
+        sources = retrieval_service.get_sources(chunks)
+
+        assert len(sources) == 1
+        assert sources[0]["source_id"] == "char_alice"
+        assert sources[0]["source_type"] == "CHARACTER"
+        assert sources[0]["chunk_count"] == 1
+        assert sources[0]["relevance_score"] == 0.9
+        assert sources[0]["citation_id"] == "C1"
+
+    def test_get_sources_groups_by_source(self, retrieval_service):
+        """Multiple chunks from same source should be grouped."""
+        chunks = [
+            RetrievedChunk(
+                chunk_id="1",
+                source_id="char_alice",
+                source_type=SourceType.CHARACTER,
+                content="Alice is brave",
+                score=0.9,
+                metadata={},
+            ),
+            RetrievedChunk(
+                chunk_id="2",
+                source_id="char_alice",
+                source_type=SourceType.CHARACTER,
+                content="Alice has a sword",
+                score=0.85,
+                metadata={},
+            ),
+            RetrievedChunk(
+                chunk_id="3",
+                source_id="lore_kingdom",
+                source_type=SourceType.LORE,
+                content="The kingdom is old",
+                score=0.8,
+                metadata={},
+            ),
+        ]
+
+        sources = retrieval_service.get_sources(chunks)
+
+        # Should have 2 unique sources
+        assert len(sources) == 2
+
+        alice = next(s for s in sources if s["source_id"] == "char_alice")
+        assert alice["chunk_count"] == 2
+        assert alice["relevance_score"] == pytest.approx(0.875, 0.01)  # Average of 0.9 and 0.85
+
+    def test_get_sources_with_custom_names(self, retrieval_service):
+        """Should use provided display names."""
+        chunks = [
+            RetrievedChunk(
+                chunk_id="1",
+                source_id="char_alice",
+                source_type=SourceType.CHARACTER,
+                content="Alice is brave",
+                score=0.9,
+                metadata={"name": "Ignored Name"},
+            ),
+        ]
+
+        source_names = {"char_alice": "Alice, Warrior of Light"}
+        sources = retrieval_service.get_sources(chunks, source_names)
+
+        assert sources[0]["display_name"] == "Alice, Warrior of Light"
+
+    def test_get_sources_falls_back_to_metadata_name(self, retrieval_service):
+        """Should use metadata name when no custom names provided."""
+        chunks = [
+            RetrievedChunk(
+                chunk_id="1",
+                source_id="char_alice",
+                source_type=SourceType.CHARACTER,
+                content="Alice is brave",
+                score=0.9,
+                metadata={"name": "Alice from Metadata"},
+            ),
+        ]
+
+        sources = retrieval_service.get_sources(chunks)
+
+        assert sources[0]["display_name"] == "Alice from Metadata"
+
+    def test_get_sources_sorted_by_relevance(self, retrieval_service):
+        """Sources should be sorted by relevance score."""
+        chunks = [
+            RetrievedChunk(
+                chunk_id="1",
+                source_id="lore_low",
+                source_type=SourceType.LORE,
+                content="Low relevance",
+                score=0.6,
+                metadata={},
+            ),
+            RetrievedChunk(
+                chunk_id="2",
+                source_id="char_high",
+                source_type=SourceType.CHARACTER,
+                content="High relevance",
+                score=0.95,
+                metadata={},
+            ),
+            RetrievedChunk(
+                chunk_id="3",
+                source_id="scene_medium",
+                source_type=SourceType.SCENE,
+                content="Medium relevance",
+                score=0.75,
+                metadata={},
+            ),
+        ]
+
+        sources = retrieval_service.get_sources(chunks)
+
+        # Should be sorted by relevance (highest first)
+        assert sources[0]["source_id"] == "char_high"
+        assert sources[0]["relevance_score"] == 0.95
+        assert sources[1]["source_id"] == "scene_medium"
+        assert sources[2]["source_id"] == "lore_low"
+
+    def test_get_sources_citation_id_prefixes(self, retrieval_service):
+        """Citation IDs should use source type prefixes."""
+        chunks = [
+            RetrievedChunk(
+                chunk_id="1",
+                source_id="char_alice",
+                source_type=SourceType.CHARACTER,
+                content="Alice",
+                score=0.9,
+                metadata={},
+            ),
+            RetrievedChunk(
+                chunk_id="2",
+                source_id="lore_kingdom",
+                source_type=SourceType.LORE,
+                content="Kingdom",
+                score=0.8,
+                metadata={},
+            ),
+            RetrievedChunk(
+                chunk_id="3",
+                source_id="scene_tavern",
+                source_type=SourceType.SCENE,
+                content="Tavern",
+                score=0.75,
+                metadata={},
+            ),
+            RetrievedChunk(
+                chunk_id="4",
+                source_id="item_sword",
+                source_type=SourceType.ITEM,
+                content="Sword",
+                score=0.7,
+                metadata={},
+            ),
+            RetrievedChunk(
+                chunk_id="5",
+                source_id="loc_castle",
+                source_type=SourceType.LOCATION,
+                content="Castle",
+                score=0.65,
+                metadata={},
+            ),
+        ]
+
+        sources = retrieval_service.get_sources(chunks)
+        citation_ids = [s["citation_id"] for s in sources]
+
+        # Check prefixes
+        assert any("C" in id for id in citation_ids)  # Character
+        assert any("L" in id for id in citation_ids)  # Lore
+        assert any("S" in id for id in citation_ids)  # Scene
+        assert any("I" in id for id in citation_ids)  # Item
+        assert any("Loc" in id for id in citation_ids)  # Location
+
+
+class TestRetrievalServiceCitationFormatting:
+    """Tests for citation formatting features (BRAIN-012)."""
+
+    @pytest.fixture
+    def retrieval_service(self):
+        """Create retrieval service without mocks for citation tests."""
+        from src.contexts.knowledge.application.ports.i_embedding_service import IEmbeddingService
+        from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
+        from unittest.mock import AsyncMock
+
+        embedding_service = AsyncMock(spec=IEmbeddingService)
+        vector_store = AsyncMock(spec=IVectorStore)
+        return RetrievalService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+        )
+
+    @pytest.mark.asyncio
+    async def test_format_context_with_citation_data(self, retrieval_service):
+        """Should include citation data when requested."""
+        chunks = [
+            RetrievedChunk(
+                chunk_id="1",
+                source_id="char_alice",
+                source_type=SourceType.CHARACTER,
+                content="Alice is brave",
+                score=0.9,
+                metadata={"name": "Alice the Brave"},
+            ),
+        ]
+
+        result = RetrievalResult(
+            chunks=chunks,
+            query="test",
+            total_retrieved=1,
+        )
+
+        context = retrieval_service.format_context(result, include_citation_data=True)
+
+        # Should have source_references with citation data
+        assert context.source_references is not None
+        assert "sources" in context.source_references
+        assert "citations" in context.source_references
+
+    @pytest.mark.asyncio
+    async def test_format_context_without_citation_data(self, retrieval_service):
+        """Should not include citation data by default."""
+        chunks = [
+            RetrievedChunk(
+                chunk_id="1",
+                source_id="char_alice",
+                source_type=SourceType.CHARACTER,
+                content="Alice is brave",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = RetrievalResult(
+            chunks=chunks,
+            query="test",
+            total_retrieved=1,
+        )
+
+        context = retrieval_service.format_context(result)
+
+        # Should have empty source_references by default
+        assert context.source_references == {}
+
+    def test_get_source_type_prefix(self, retrieval_service):
+        """Should return correct prefix for each source type."""
+        assert retrieval_service._get_source_type_prefix(SourceType.CHARACTER) == "C"
+        assert retrieval_service._get_source_type_prefix(SourceType.LORE) == "L"
+        assert retrieval_service._get_source_type_prefix(SourceType.SCENE) == "S"
+        assert retrieval_service._get_source_type_prefix(SourceType.PLOTLINE) == "P"
+        assert retrieval_service._get_source_type_prefix(SourceType.ITEM) == "I"
+        assert retrieval_service._get_source_type_prefix(SourceType.LOCATION) == "Loc"
+
+    @pytest.mark.asyncio
+    async def test_format_chunk_with_citation(self, retrieval_service):
+        """Should format chunk with citation marker."""
+        chunk = RetrievedChunk(
+            chunk_id="1",
+            source_id="char_alice",
+            source_type=SourceType.CHARACTER,
+            content="Alice is brave",
+            score=0.9,
+            metadata={"chunk_index": 0, "total_chunks": 1},
+        )
+
+        formatted = retrieval_service._format_chunk_with_citation(chunk, 1)
+
+        assert "[1]" in formatted
+        assert "CHARACTER:char_alice" in formatted
+        assert "Alice is brave" in formatted

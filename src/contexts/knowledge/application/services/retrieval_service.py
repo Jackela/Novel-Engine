@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from difflib import SequenceMatcher
 import hashlib
 
@@ -29,6 +29,9 @@ from ...application.ports.i_vector_store import (
 )
 from ...domain.models.source_type import SourceType
 from ..services.knowledge_ingestion_service import RetrievedChunk
+
+if TYPE_CHECKING:
+    from .citation_formatter import CitationFormatter, SourceReference
 
 
 logger = structlog.get_logger()
@@ -166,12 +169,14 @@ class FormattedContext:
         sources: List of source references
         total_tokens: Estimated token count
         chunk_count: Number of chunks included
+        source_references: Detailed source references with citation data
     """
 
     text: str
     sources: list[str]
     total_tokens: int
     chunk_count: int
+    source_references: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -394,6 +399,7 @@ class RetrievalService:
         result: RetrievalResult,
         max_tokens: int | None = None,
         include_sources: bool = True,
+        include_citation_data: bool = False,
     ) -> FormattedContext:
         """
         Convert retrieved chunks to formatted context for LLM.
@@ -402,9 +408,10 @@ class RetrievalService:
             result: RetrievalResult from retrieve_relevant
             max_tokens: Maximum tokens to include (None for unlimited)
             include_sources: Whether to include source citations
+            include_citation_data: Whether to include detailed citation data
 
         Returns:
-            FormattedContext with text, sources, and token count
+            FormattedContext with text, sources, token count, and citation data
 
         Example:
             >>> context = service.format_context(results, max_tokens=2000)
@@ -417,18 +424,20 @@ class RetrievalService:
                 sources=[],
                 total_tokens=0,
                 chunk_count=0,
+                source_references={},
             )
 
         # Build context sections
         sections: list[str] = []
         sources: list[str] = []
+        citation_data: dict[str, Any] = {}
 
         # Estimate tokens (rough estimate: ~4 chars per token)
         char_budget = max_tokens * 4 if max_tokens else None
 
         for i, chunk in enumerate(result.chunks, 1):
-            # Format chunk
-            section = self._format_chunk(chunk, i)
+            # Format chunk with citation marker
+            section = self._format_chunk_with_citation(chunk, i)
             section_with_newline = section + "\n\n"
 
             # Check token budget
@@ -457,11 +466,26 @@ class RetrievalService:
         # Estimate tokens
         estimated_tokens = len(context_text) // 4
 
+        # Include citation data if requested
+        if include_citation_data:
+            citation_data["sources"] = self.get_sources(result.chunks)
+            citation_data["citations"] = [
+                {
+                    "chunk_id": chunk.chunk_id,
+                    "source_id": chunk.source_id,
+                    "source_type": chunk.source_type.value,
+                    "citation_index": i,
+                    "citation_id": f"[{i}]",
+                }
+                for i, chunk in enumerate(result.chunks, 1)
+            ]
+
         return FormattedContext(
             text=context_text.strip(),
             sources=sources,
             total_tokens=estimated_tokens,
             chunk_count=len(sections),
+            source_references=citation_data,
         )
 
     def format_context_simple(
@@ -489,6 +513,119 @@ class RetrievalService:
         )
         formatted = self.format_context(result, max_tokens=max_tokens)
         return formatted.text
+
+    def get_sources(
+        self,
+        chunks: list[RetrievedChunk],
+        source_names: dict[str, str] | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Extract unique sources from retrieved chunks.
+
+        Provides a summary of all sources that contributed to the retrieved
+        chunks, including chunk counts and average relevance scores.
+
+        Args:
+            chunks: List of retrieved chunks
+            source_names: Optional mapping of source_id to display names
+
+        Returns:
+            List of source dictionaries with:
+                - source_type: Type of source (CHARACTER, LORE, etc.)
+                - source_id: Unique ID of the source
+                - display_name: Human-readable name
+                - chunk_count: Number of chunks from this source
+                - relevance_score: Average relevance score
+                - citation_id: Short ID for display (e.g., "1", "C1")
+
+        Example:
+            >>> sources = service.get_sources(result.chunks)
+            >>> for source in sources:
+            >>>     print(f"{source['source_type']}:{source['source_id']}")
+        """
+        if not chunks:
+            return []
+
+        # Group chunks by source
+        from collections import defaultdict
+
+        source_groups: dict[tuple[SourceType, str], list[RetrievedChunk]] = defaultdict(list)
+        for chunk in chunks:
+            key = (chunk.source_type, chunk.source_id)
+            source_groups[key].append(chunk)
+
+        # Build source list
+        sources: list[dict[str, Any]] = []
+        for idx, ((source_type, source_id), group_chunks) in enumerate(source_groups.items(), 1):
+            avg_score = sum(c.score for c in group_chunks) / len(group_chunks)
+
+            # Get display name
+            if source_names and source_id in source_names:
+                display_name = source_names[source_id]
+            else:
+                # Try to extract from metadata
+                metadata = group_chunks[0].metadata or {}
+                display_name = metadata.get("name", source_id)
+
+            # Generate citation ID with source type prefix
+            prefix = self._get_source_type_prefix(source_type)
+            citation_id = f"{prefix}{idx}"
+
+            sources.append({
+                "source_type": source_type.value,
+                "source_id": source_id,
+                "display_name": display_name,
+                "chunk_count": len(group_chunks),
+                "relevance_score": round(avg_score, 3),
+                "citation_id": citation_id,
+            })
+
+        # Sort by relevance score
+        sources.sort(key=lambda s: s["relevance_score"], reverse=True)
+        return sources
+
+    def _get_source_type_prefix(self, source_type: SourceType) -> str:
+        """
+        Get the citation prefix for a source type.
+
+        Args:
+            source_type: The source type
+
+        Returns:
+            Single or double character prefix (C, L, S, P, I, Loc)
+        """
+        prefixes = {
+            SourceType.CHARACTER: "C",
+            SourceType.LORE: "L",
+            SourceType.SCENE: "S",
+            SourceType.PLOTLINE: "P",
+            SourceType.ITEM: "I",
+            SourceType.LOCATION: "Loc",
+        }
+        return prefixes.get(source_type, source_type.value[0].upper())
+
+    def _format_chunk_with_citation(self, chunk: RetrievedChunk, index: int) -> str:
+        """
+        Format a single chunk with citation marker.
+
+        Args:
+            chunk: Chunk to format
+            index: Chunk index in results
+
+        Returns:
+            Formatted chunk string with citation marker
+        """
+        # Extract metadata
+        source_type = chunk.source_type.value
+        chunk_index = chunk.metadata.get("chunk_index", "?")
+        total_chunks = chunk.metadata.get("total_chunks", "?")
+
+        # Get source type prefix for citation
+        prefix = self._get_source_type_prefix(chunk.source_type)
+
+        header = f"[{index}] {source_type}:{chunk.source_id} (part {chunk_index}/{total_chunks})"
+
+        return f"{header}\n{chunk.content}"
 
     def _format_chunk(self, chunk: RetrievedChunk, index: int) -> str:
         """
