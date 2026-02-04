@@ -672,7 +672,7 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         self,
         query: str,
         base_prompt: str,
-    ) -> str:
+    ) -> tuple[str, int, int]:
         """Enrich a prompt with RAG context if available.
 
         Args:
@@ -680,29 +680,30 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             base_prompt: The base prompt to enrich
 
         Returns:
-            Enriched prompt with RAG context, or original prompt if RAG unavailable
+            Tuple of (enriched_prompt, chunks_retrieved, tokens_added)
+            Returns original prompt if RAG unavailable
         """
         if self._rag_service is None:
-            return base_prompt
+            return base_prompt, 0, 0
 
         try:
             result = await self._rag_service.enrich_prompt(
                 query=query,
                 base_prompt=base_prompt,
             )
-            logger.debug(
+            logger.info(
                 "rag_enrichment",
                 chunks_retrieved=result.chunks_retrieved,
                 tokens_added=result.tokens_added,
             )
-            return result.prompt
+            return result.prompt, result.chunks_retrieved, result.tokens_added
         except Exception as exc:
             logger.warning(
                 "rag_enrichment_failed",
                 error=str(exc),
                 error_type=type(exc).__name__,
             )
-            return base_prompt
+            return base_prompt, 0, 0
 
     def _extract_keywords_for_dialogue(
         self,
@@ -793,6 +794,8 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             When use_rag is True and a RAGIntegrationService is available,
             the generator retrieves relevant character knowledge, lore, and
             context from the knowledge base to inform the dialogue.
+            Retrieved context is injected into the System Prompt as a
+            "Relevant Context:" section.
 
         Why this matters: Characters need consistent voices. A high-neuroticism
         character should hedge and worry, while a high-extraversion character
@@ -830,15 +833,22 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         log.info("Starting dialogue generation")
 
         try:
-            system_prompt = self._load_dialogue_prompt()
-            base_user_prompt = self._build_dialogue_user_prompt(character, context, mood)
+            base_system_prompt = self._load_dialogue_prompt()
+            user_prompt = self._build_dialogue_user_prompt(character, context, mood)
 
-            # Enrich with RAG if enabled and available
+            # Enrich system prompt with RAG if enabled and available
             if use_rag and self._rag_service is not None:
                 rag_query = self._extract_keywords_for_dialogue(character, context, mood)
-                user_prompt = await self._enrich_with_rag(rag_query, base_user_prompt)
+                system_prompt, chunks_retrieved, tokens_added = await self._enrich_with_rag(
+                    rag_query, base_system_prompt
+                )
+                log.info(
+                    "rag_context_injected",
+                    chunks_retrieved=chunks_retrieved,
+                    tokens_added=tokens_added,
+                )
             else:
-                user_prompt = base_user_prompt
+                system_prompt = base_system_prompt
 
             response_text = self._call_gemini(system_prompt, user_prompt)
             result = self._parse_dialogue_response(response_text)
@@ -1148,6 +1158,8 @@ Return valid JSON only with the exact structure specified in the system prompt."
             When use_rag is True and a RAGIntegrationService is available,
             the generator retrieves relevant scene patterns, narrative conventions,
             and story context to inform beat suggestions.
+            Retrieved context is injected into the System Prompt as a
+            "Relevant Context:" section.
 
         Why this matters: Writers often struggle with "what happens next?"
         This method provides creative sparks while respecting the established
@@ -1186,19 +1198,26 @@ Return valid JSON only with the exact structure specified in the system prompt."
         log.info("Starting beat suggestion generation")
 
         try:
-            system_prompt = self._load_beat_suggester_prompt()
-            base_user_prompt = self._build_beat_suggester_user_prompt(
+            base_system_prompt = self._load_beat_suggester_prompt()
+            user_prompt = self._build_beat_suggester_user_prompt(
                 current_beats, scene_context, mood_target
             )
 
-            # Enrich with RAG if enabled and available
+            # Enrich system prompt with RAG if enabled and available
             if use_rag and self._rag_service is not None:
                 rag_query = self._extract_keywords_for_beats(
                     current_beats, scene_context, mood_target
                 )
-                user_prompt = await self._enrich_with_rag(rag_query, base_user_prompt)
+                system_prompt, chunks_retrieved, tokens_added = await self._enrich_with_rag(
+                    rag_query, base_system_prompt
+                )
+                log.info(
+                    "rag_context_injected",
+                    chunks_retrieved=chunks_retrieved,
+                    tokens_added=tokens_added,
+                )
             else:
-                user_prompt = base_user_prompt
+                system_prompt = base_system_prompt
 
             response_text = self._call_gemini(system_prompt, user_prompt)
             result = self._parse_beat_suggestion_response(response_text)

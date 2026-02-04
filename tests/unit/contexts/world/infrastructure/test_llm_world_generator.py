@@ -1493,12 +1493,14 @@ class TestRAGIntegration:
         """Test enrichment when no RAG service is available."""
         base_prompt = "Generate dialogue for Alice."
 
-        result = await generator._enrich_with_rag(
+        prompt, chunks, tokens = await generator._enrich_with_rag(
             query="Alice",
             base_prompt=base_prompt,
         )
 
-        assert result == base_prompt
+        assert prompt == base_prompt
+        assert chunks == 0
+        assert tokens == 0
 
     @pytest.mark.unit
     async def test_enrich_with_rag_service_error(self, generator: LLMWorldGenerator) -> None:
@@ -1511,13 +1513,15 @@ class TestRAGIntegration:
 
         base_prompt = "Generate dialogue for Alice."
 
-        result = await gen._enrich_with_rag(
+        prompt, chunks, tokens = await gen._enrich_with_rag(
             query="Alice",
             base_prompt=base_prompt,
         )
 
         # Should fall back to original prompt on error
-        assert result == base_prompt
+        assert prompt == base_prompt
+        assert chunks == 0
+        assert tokens == 0
 
     @pytest.mark.unit
     async def test_enrich_with_rag_service_success(self) -> None:
@@ -1535,13 +1539,15 @@ class TestRAGIntegration:
 
         base_prompt = "Generate dialogue for Alice."
 
-        result = await gen._enrich_with_rag(
+        prompt, chunks, tokens = await gen._enrich_with_rag(
             query="Alice brave warrior",
             base_prompt=base_prompt,
         )
 
-        assert "Relevant Context:" in result
-        assert result != base_prompt
+        assert "Relevant Context:" in prompt
+        assert prompt != base_prompt
+        assert chunks == 2
+        assert tokens == 50
 
         # Verify the service was called correctly
         rag_mock.enrich_prompt.assert_called_once_with(
@@ -1554,16 +1560,11 @@ class TestRAGIntegration:
         self, generator: LLMWorldGenerator
     ) -> None:
         """Test dialogue generation with RAG disabled."""
-        from src.contexts.world.infrastructure.generators.llm_world_generator import (
-            CharacterData,
-        )
-
-        character = CharacterData(name="Alice", traits=["brave"])
-
-        # This will fail at the API call level, but we can verify the flow
-        # Since we can't actually call the API, we'll just check the method signature
-        # and that use_rag=False doesn't raise
+        # Verify the method accepts use_rag parameter
+        # Since we can't actually call the API without a key, we just verify
+        # the method signature is valid
         assert callable(generator.generate_dialogue)
+        assert hasattr(generator.generate_dialogue, "__annotations__")
 
     @pytest.mark.unit
     async def test_suggest_next_beats_with_rag_disabled(
@@ -1599,3 +1600,275 @@ class TestRAGIntegration:
         rag_mock = MagicMock()
         gen_with_rag = LLMWorldGenerator(rag_service=rag_mock)
         assert gen_with_rag._rag_service is rag_mock
+
+    @pytest.mark.unit
+    async def test_enrich_with_rag_returns_context_in_prompt(self) -> None:
+        """Test that RAG enrichment injects context with 'Relevant Context:' header."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        # Create a mock RAG service that returns enriched prompt
+        rag_mock = MagicMock()
+        enriched_result = MagicMock()
+        enriched_result.prompt = """Relevant Context:
+[1] CHARACTER:alice (part 1/1)
+Alice is a brave warrior known for exceptional courage.
+
+---
+
+Generate dialogue for Alice."""
+        enriched_result.chunks_retrieved = 1
+        enriched_result.tokens_added = 25
+
+        rag_mock.enrich_prompt = AsyncMock(return_value=enriched_result)
+        gen = LLMWorldGenerator(rag_service=rag_mock)
+
+        base_prompt = "Generate dialogue for Alice."
+        prompt, chunks, tokens = await gen._enrich_with_rag(
+            query="Alice brave warrior",
+            base_prompt=base_prompt,
+        )
+
+        # Verify the prompt structure contains the context section
+        assert "Relevant Context:" in prompt
+        assert "CHARACTER:alice" in prompt
+        assert "---" in prompt  # Context separator
+        assert "Generate dialogue for Alice." in prompt
+        assert chunks == 1
+        assert tokens == 25
+
+    @pytest.mark.unit
+    async def test_enrich_with_rag_logs_chunks_and_tokens(self) -> None:
+        """Test that RAG enrichment logs chunks retrieved and tokens added."""
+        from unittest.mock import AsyncMock, MagicMock
+        import structlog
+
+        rag_mock = MagicMock()
+        enriched_result = MagicMock()
+        enriched_result.prompt = "Relevant Context:\n[Context here]\n\n---\n\nOriginal prompt"
+        enriched_result.chunks_retrieved = 3
+        enriched_result.tokens_added = 150
+
+        rag_mock.enrich_prompt = AsyncMock(return_value=enriched_result)
+        gen = LLMWorldGenerator(rag_service=rag_mock)
+
+        base_prompt = "Original prompt"
+
+        # Capture log output
+        with structlog.testing.capture_logs() as logs:
+            prompt, chunks, tokens = await gen._enrich_with_rag(
+                query="test query",
+                base_prompt=base_prompt,
+            )
+
+            # Verify the info log contains RAG metrics
+            rag_logs = [log for log in logs if log.get("event") == "rag_enrichment"]
+            assert len(rag_logs) > 0
+            assert rag_logs[0].get("chunks_retrieved") == 3
+            assert rag_logs[0].get("tokens_added") == 150
+            # Verify the returned values match
+            assert chunks == 3
+            assert tokens == 150
+
+    @pytest.mark.unit
+    async def test_generate_dialogue_use_rag_toggle(self) -> None:
+        """Test that use_rag parameter controls RAG enrichment."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+        from src.contexts.world.infrastructure.generators.llm_world_generator import (
+            CharacterData,
+        )
+
+        # Create a mock RAG service
+        rag_mock = MagicMock()
+        enriched_result = MagicMock()
+        enriched_result.prompt = "Relevant Context:\n[Context]\n\n---\n\nBase prompt"
+        enriched_result.chunks_retrieved = 2
+        enriched_result.tokens_added = 50
+        rag_mock.enrich_prompt = AsyncMock(return_value=enriched_result)
+
+        gen = LLMWorldGenerator(rag_service=rag_mock)
+        gen._api_key = "test-key"
+
+        # Mock the Gemini API call
+        with patch.object(gen, "_call_gemini", return_value='{"dialogue": "Test response", "tone": "neutral"}'):
+            character = CharacterData(name="Alice", traits=["brave"])
+
+            # Test with use_rag=True (default)
+            await gen.generate_dialogue(
+                character=character,
+                context="Test context",
+                use_rag=True,
+            )
+            # RAG service should have been called
+            assert rag_mock.enrich_prompt.called
+
+            # Reset mock
+            rag_mock.enrich_prompt.reset_mock()
+
+            # Test with use_rag=False
+            await gen.generate_dialogue(
+                character=character,
+                context="Test context",
+                use_rag=False,
+            )
+            # RAG service should NOT have been called
+            assert not rag_mock.enrich_prompt.called
+
+    @pytest.mark.unit
+    async def test_suggest_next_beats_use_rag_toggle(self) -> None:
+        """Test that use_rag parameter controls RAG enrichment for beat suggestions."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        # Create a mock RAG service
+        rag_mock = MagicMock()
+        enriched_result = MagicMock()
+        enriched_result.prompt = "Relevant Context:\n[Context]\n\n---\n\nBase prompt"
+        enriched_result.chunks_retrieved = 1
+        enriched_result.tokens_added = 30
+        rag_mock.enrich_prompt = AsyncMock(return_value=enriched_result)
+
+        gen = LLMWorldGenerator(rag_service=rag_mock)
+        gen._api_key = "test-key"
+
+        # Mock the Gemini API call
+        with patch.object(gen, "_call_gemini", return_value='{"suggestions": [{"beat_type": "action", "content": "Test"}]}'):
+            # Test with use_rag=True (default)
+            await gen.suggest_next_beats(
+                current_beats=[],
+                scene_context="Test scene",
+                use_rag=True,
+            )
+            # RAG service should have been called
+            assert rag_mock.enrich_prompt.called
+
+            # Reset mock
+            rag_mock.enrich_prompt.reset_mock()
+
+            # Test with use_rag=False
+            await gen.suggest_next_beats(
+                current_beats=[],
+                scene_context="Test scene",
+                use_rag=False,
+            )
+            # RAG service should NOT have been called
+            assert not rag_mock.enrich_prompt.called
+
+    @pytest.mark.unit
+    async def test_enrich_with_rag_no_context_returns_original(self) -> None:
+        """Test that enrichment returns original prompt when no context is retrieved."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        rag_mock = MagicMock()
+        # Simulate no chunks retrieved
+        enriched_result = MagicMock()
+        enriched_result.prompt = "Original prompt"  # No context added
+        enriched_result.chunks_retrieved = 0
+        enriched_result.tokens_added = 0
+        rag_mock.enrich_prompt = AsyncMock(return_value=enriched_result)
+
+        gen = LLMWorldGenerator(rag_service=rag_mock)
+
+        base_prompt = "Original prompt"
+        prompt, chunks, tokens = await gen._enrich_with_rag(
+            query="test query",
+            base_prompt=base_prompt,
+        )
+
+        # Should return the (unchanged) prompt with zero metrics
+        assert prompt == "Original prompt"
+        assert chunks == 0
+        assert tokens == 0
+        assert rag_mock.enrich_prompt.called
+
+    @pytest.mark.unit
+    async def test_rag_context_injected_into_system_prompt(self) -> None:
+        """Test that RAG context is injected into the system prompt, not user prompt.
+
+        BRAIN-007C: Context should be injected into the System Prompt as
+        'Relevant Context:' section, not the user prompt.
+        """
+        from unittest.mock import AsyncMock, MagicMock, patch
+        from src.contexts.world.infrastructure.generators.llm_world_generator import (
+            CharacterData,
+        )
+
+        # Create a mock RAG service
+        rag_mock = MagicMock()
+        enriched_result = MagicMock()
+        enriched_result.prompt = """Relevant Context:
+[1] CHARACTER:alice (part 1/1)
+Alice is a brave warrior.
+
+---
+
+Original system prompt"""
+        enriched_result.chunks_retrieved = 1
+        enriched_result.tokens_added = 25
+
+        rag_mock.enrich_prompt = AsyncMock(return_value=enriched_result)
+
+        gen = LLMWorldGenerator(rag_service=rag_mock)
+        gen._api_key = "test-key"
+
+        # Track what's passed to _call_gemini
+        call_args = []
+
+        def capture_call(system_prompt: str, user_prompt: str) -> str:
+            call_args.append({"system": system_prompt, "user": user_prompt})
+            return '{"dialogue": "Test", "tone": "neutral"}'
+
+        with patch.object(gen, "_call_gemini", side_effect=capture_call):
+            character = CharacterData(name="Alice", traits=["brave"])
+
+            await gen.generate_dialogue(
+                character=character,
+                context="Test context",
+                use_rag=True,
+            )
+
+        # Verify context was injected into SYSTEM prompt
+        assert len(call_args) == 1
+        assert "Relevant Context:" in call_args[0]["system"]
+        assert "CHARACTER:alice" in call_args[0]["system"]
+        # User prompt should NOT contain the RAG context
+        assert "Relevant Context:" not in call_args[0]["user"]
+
+    @pytest.mark.unit
+    async def test_rag_context_injection_logs_metrics(self) -> None:
+        """Test that context injection logs chunks and tokens at info level.
+
+        BRAIN-007C: Log number of chunks retrieved and tokens added.
+        """
+        from unittest.mock import AsyncMock, MagicMock, patch
+        from src.contexts.world.infrastructure.generators.llm_world_generator import (
+            CharacterData,
+        )
+        import structlog
+
+        # Create a mock RAG service
+        rag_mock = MagicMock()
+        enriched_result = MagicMock()
+        enriched_result.prompt = "Relevant Context:\n[Test]\n\n---\n\nBase"
+        enriched_result.chunks_retrieved = 3
+        enriched_result.tokens_added = 120
+
+        rag_mock.enrich_prompt = AsyncMock(return_value=enriched_result)
+
+        gen = LLMWorldGenerator(rag_service=rag_mock)
+        gen._api_key = "test-key"
+
+        with patch.object(gen, "_call_gemini", return_value='{"dialogue": "Test", "tone": "neutral"}'):
+            with structlog.testing.capture_logs() as logs:
+                character = CharacterData(name="Alice", traits=["brave"])
+
+                await gen.generate_dialogue(
+                    character=character,
+                    context="Test context",
+                    use_rag=True,
+                )
+
+                # Verify info-level log with chunks_retrieved and tokens_added
+                rag_logs = [log for log in logs if log.get("event") == "rag_context_injected"]
+                assert len(rag_logs) > 0
+                assert rag_logs[0].get("chunks_retrieved") == 3
+                assert rag_logs[0].get("tokens_added") == 120
+
