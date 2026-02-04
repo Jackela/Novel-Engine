@@ -92,6 +92,24 @@ from .token_counter import (
     TIKTOKEN_AVAILABLE,
 )
 
+from .context_optimizer import (
+    ContextOptimizer,
+    PackingStrategy,
+    OptimizationConfig,
+    OptimizationResult,
+    ChunkPriority,
+    OptimizedChunk,
+    IPackingStrategy,
+    RelevancePackingStrategy,
+    DiversityPackingStrategy,
+    RemoveRedundancyPackingStrategy,
+    CompressSummariesPackingStrategy,
+    create_context_optimizer,
+    DEFAULT_SYSTEM_PROMPT_TOKENS,
+    DEFAULT_OVERHEAD_TOKENS,
+    DEFAULT_MAX_TOKENS,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -163,4 +181,20 @@ __all__ = [
     "TokenCountResult",
     "create_token_counter",
     "TIKTOKEN_AVAILABLE",
+    # Context Optimizer
+    "ContextOptimizer",
+    "PackingStrategy",
+    "OptimizationConfig",
+    "OptimizationResult",
+    "ChunkPriority",
+    "OptimizedChunk",
+    "IPackingStrategy",
+    "RelevancePackingStrategy",
+    "DiversityPackingStrategy",
+    "RemoveRedundancyPackingStrategy",
+    "CompressSummariesPackingStrategy",
+    "create_context_optimizer",
+    "DEFAULT_SYSTEM_PROMPT_TOKENS",
+    "DEFAULT_OVERHEAD_TOKENS",
+    "DEFAULT_MAX_TOKENS",
 ]

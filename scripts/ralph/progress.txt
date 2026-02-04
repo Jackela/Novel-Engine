@@ -22,6 +22,7 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Query Rewriting**: QueryRewriter in `src/contexts/knowledge/application/services/query_rewriter.py` with SYNONYM/DECOMPOSE/CLARIFICATION strategies
 - **Reranking**: IReranker port in `src/contexts/knowledge/application/ports/i_reranker.py` and RerankService with fallback behavior
 - **Token Counting**: TokenCounter in `src/contexts/knowledge/application/services/token_counter.py` with multi-provider tiktoken support
+- **Context Optimization**: ContextOptimizer in `src/contexts/knowledge/application/services/context_optimizer.py` with 4 packing strategies (relevance, diversity, remove_redundancy, compress_summaries)
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -65,10 +66,10 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 
 #### RAG Enhancement (6 stories)
 - BRAIN-008A: Hybrid Search - BM25 Implementation ✅
-- BRAIN-008B: Hybrid Search - Score Fusion
-- BRAIN-009: Query rewriting & expansion
-- BRAIN-010: Re-ranking service
-- BRAIN-011: Context window optimization
+- BRAIN-008B: Hybrid Search - Score Fusion ✅
+- BRAIN-009: Query rewriting & expansion ✅
+- BRAIN-010: Re-ranking service ✅
+- BRAIN-011: Context window optimization ✅
 - BRAIN-012: Citation & source attribution
 - BRAIN-013: Multi-hop reasoning
 
@@ -537,5 +538,33 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - For frozen dataclasses with Literal types, use `# type: ignore[arg-type]` when the value is guaranteed valid
 - The `TIKTOKEN_AVAILABLE` flag allows graceful degradation when tiktoken isn't installed
 - Caching tiktoken encodings by ModelFamily avoids repeated `tiktoken.get_encoding()` calls
+
+---
+
+## [2025-02-04] - BRAIN-011B ✅
+- Implemented ContextOptimizer service with 4 packing strategies
+- Created `RelevancePackingStrategy` - prioritizes chunks by relevance score only
+- Created `DiversityPackingStrategy` - maximizes source diversity via round-robin selection
+- Created `RemoveRedundancyPackingStrategy` - removes similar content using SequenceMatcher
+- Created `CompressSummariesPackingStrategy` - compresses low-relevance chunks to summaries
+- Added `optimize_context(chunks, max_tokens, strategy, config)` method with full configuration support
+- Added `calculate_available_tokens()` to reserve space for system prompt and response
+- Added `estimate_chunk_tokens()` for batch token estimation
+- Created value objects: OptimizationConfig, OptimizationResult, ChunkPriority, OptimizedChunk
+- All 32 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/application/services/context_optimizer.py`: Complete ContextOptimizer implementation (600+ lines)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new ContextOptimizer types
+  - `tests/unit/contexts/knowledge/application/services/test_context_optimizer.py`: 32 comprehensive tests
+
+**Learnings for future iterations:**
+- Strategy pattern via IPackingStrategy ABC allows easy extension with new packing algorithms
+- Round-robin selection for diversity requires tracking indices per source
+- SequenceMatcher from difflib provides decent content similarity for redundancy detection
+- Summary generation uses first/last sentence extraction - simple but effective for low-relevance chunks
+- Token budget must account for: system_prompt_tokens + overhead_tokens + reserve_for_response
+- The `optimize_context()` method returns OptimizationResult with metrics (tokens_saved, compressed, removed_redundant)
+- Factory function `create_context_optimizer()` provides convenient instantiation with defaults
+- When implementing async strategies, all test methods must use `@pytest.mark.asyncio`
 
 ---
