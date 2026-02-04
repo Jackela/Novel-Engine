@@ -271,7 +271,7 @@
         "Test: Verify top-3 results improve after reranking"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-010A"

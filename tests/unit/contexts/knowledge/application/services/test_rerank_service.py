@@ -1,7 +1,7 @@
 """
 Unit tests for RerankService and IReranker port.
 
-Warzone 4: AI Brain - BRAIN-010A
+Warzone 4: AI Brain - BRAIN-010A, BRAIN-010B
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from src.contexts.knowledge.application.ports.i_reranker import (
     RerankerError,
     RerankOutput,
     RerankResult,
+    RerankDocument,
 )
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
 from src.contexts.knowledge.domain.models.source_type import SourceType
@@ -81,28 +82,34 @@ def mock_reranker_impl() -> IReranker:
 
     async def mock_rerank(
         query: str,
-        results: list[RerankResult],
+        documents: list[RerankDocument],
         top_k: int | None = None,
     ) -> RerankOutput:
         # Simulate reranking by reversing order and boosting scores
         reranked = [
             RerankResult(
-                index=r.index,
-                score=r.score + 0.1,
-                relevance_score=min(r.score + 0.15, 1.0),
+                index=d.index,
+                score=d.score + 0.1,
+                relevance_score=min(d.score + 0.15, 1.0),
             )
-            for r in reversed(results)
+            for d in reversed(documents)
         ]
 
         if top_k is not None:
             reranked = reranked[:top_k]
 
+        # Calculate score improvement
+        avg_original = sum(d.score for d in documents) / len(documents)
+        avg_new = sum(r.relevance_score for r in reranked) / len(reranked)
+        score_improvement = max(0.0, avg_new - avg_original)
+
         return RerankOutput(
             results=reranked,
             query=query,
-            total_reranked=len(results),
+            total_reranked=len(documents),
             model="test_model",
             latency_ms=50.0,
+            score_improvement=score_improvement,
         )
 
     reranker.rerank = mock_rerank
@@ -344,14 +351,14 @@ class TestMockReranker:
         """Test that MockReranker returns valid results."""
         reranker = MockReranker(latency_ms=10.0)
 
-        results = [
-            RerankResult(index=0, score=0.7, relevance_score=0.7),
-            RerankResult(index=1, score=0.6, relevance_score=0.6),
+        documents = [
+            RerankDocument(index=0, content="test content 1", score=0.7),
+            RerankDocument(index=1, content="test content 2", score=0.6),
         ]
 
         output = await reranker.rerank(
             query="test query",
-            results=results,
+            documents=documents,
             top_k=2,
         )
 
@@ -365,14 +372,14 @@ class TestMockReranker:
         """Test that MockReranker respects top_k parameter."""
         reranker = MockReranker()
 
-        results = [
-            RerankResult(index=i, score=0.5 + i * 0.1, relevance_score=0.5 + i * 0.1)
+        documents = [
+            RerankDocument(index=i, content=f"content {i}", score=0.5 + i * 0.1)
             for i in range(5)
         ]
 
         output = await reranker.rerank(
             query="test query",
-            results=results,
+            documents=documents,
             top_k=3,
         )
 
@@ -387,14 +394,14 @@ class TestFailingReranker:
         """Test that FailingReranker always raises RerankerError."""
         reranker = FailingReranker("Test failure")
 
-        results = [
-            RerankResult(index=0, score=0.7, relevance_score=0.7),
+        documents = [
+            RerankDocument(index=0, content="test content", score=0.7),
         ]
 
         with pytest.raises(RerankerError, match="Test failure"):
             await reranker.rerank(
                 query="test query",
-                results=results,
+                documents=documents,
             )
 
 

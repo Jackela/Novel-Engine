@@ -43,6 +43,9 @@ dependencies = [
     "openai>=1.0.0,<2.0.0",  # OpenAI API for embeddings (text-embedding-3-small)
     # Warzone 4: AI Brain - Hybrid Search (BRAIN-008A)
     "rank-bm25>=0.2.2,<1.0.0",  # BM25 keyword search for hybrid retrieval
+    # Warzone 4: AI Brain - Re-ranking (BRAIN-010B)
+    "cohere>=5.0.0,<6.0.0",  # Cohere API for cross-encoder reranking
+    "sentence-transformers>=2.2.0,<4.0.0",  # Local reranking with sentence-transformers
 ]
 
 [project.optional-dependencies]

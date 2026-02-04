@@ -478,3 +478,34 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Minimum score threshold filtering happens after reranking, not before
 
 ---
+
+## [2025-02-04] - BRAIN-010B ✅
+- Implemented CohereReranker adapter using Cohere Rerank API (rerank-v3.5)
+- Implemented LocalReranker adapter using sentence-transformers cross-encoder models
+- Added RerankDocument value object to pass content to rerankers (was missing from BRAIN-010A)
+- Updated IReranker protocol to accept RerankDocument instead of just RerankResult
+- Added score_improvement tracking to RerankOutput for measuring reranking effectiveness
+- Added NoOpReranker for testing and graceful fallback
+- Implemented create_reranker() factory function for configurable reranker selection
+- Added cohere>=5.0.0 and sentence-transformers>=2.2.0 dependencies to pyproject.toml
+- All 55 unit tests passing (19 for RerankService, 29 for reranker adapters, 7 for port)
+- Files changed:
+  - `pyproject.toml`: Added cohere>=5.0.0,<6.0.0 and sentence-transformers>=2.2.0,<4.0.0 dependencies
+  - `src/contexts/knowledge/application/ports/i_reranker.py`: Added RerankDocument VO, updated IReranker to accept documents, added score_improvement to RerankOutput
+  - `src/contexts/knowledge/application/services/rerank_service.py`: Updated to pass RerankDocument with content, added score_improvement to RerankServiceResult, added RerankerType enum and create_reranker factory
+  - `src/contexts/knowledge/infrastructure/adapters/reranker_adapters.py`: Complete implementations of CohereReranker, LocalReranker, NoOpReranker (550+ lines)
+  - `tests/unit/contexts/knowledge/application/services/test_rerank_service.py`: Updated tests for new interface
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_reranker_adapters.py`: 29 comprehensive tests for new adapters
+
+**Learnings for future iterations:**
+- Rerankers need access to document content, not just scores - RerankDocument includes index, content, and score
+- Cohere's rerank API returns `index` and `relevance_score` in results array - need to map back to original documents
+- sentence-transformers CrossEncoder.predict() returns raw scores that need normalization to 0-1 range
+- The factory pattern with RerankerType enum allows easy switching between rerankers (cohere/local/mock/noop)
+- Lazy loading of sentence-transformers models avoids import errors when package isn't installed
+- Score improvement tracking: avg_new_score - avg_original_score, useful for measuring reranking effectiveness
+- httpx.AsyncClient requires proper context manager usage for connection pooling
+- Early return for empty documents saves unnecessary API calls and edge case handling
+- For type hints, use `str` instead of `str | None` when a value is guaranteed to be non-null after initialization
+
+---
