@@ -23,6 +23,8 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Reranking**: IReranker port in `src/contexts/knowledge/application/ports/i_reranker.py` and RerankService with fallback behavior
 - **Token Counting**: TokenCounter in `src/contexts/knowledge/application/services/token_counter.py` with multi-provider tiktoken support
 - **Context Optimization**: ContextOptimizer in `src/contexts/knowledge/application/services/context_optimizer.py` with 4 packing strategies (relevance, diversity, remove_redundancy, compress_summaries)
+- **Prompt Templates**: PromptTemplate entity in `src/contexts/knowledge/domain/models/prompt_template.py` with {{variable}} syntax and version tracking
+- **Prompt Repository**: IPromptRepository port in `src/contexts/knowledge/application/ports/i_prompt_repository.py` with CRUD, version history, and search
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -593,5 +595,99 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - CitationFormatterConfig allows customization: format_style, include_chunk_index, include_relevance, max_sources_display
 - The `include_citation_data` parameter in format_context() adds structured source data without changing text output
 - Test classes outside the main test class need their own fixture definitions
+
+---
+
+## [2025-02-04] - BRAIN-013A ✅
+- Implemented QueryDecomposer service to break complex queries into sub-queries
+- Created MultiHopRetriever service for chained reasoning across retrieval hops
+- Added HopConfig, MultiHopConfig, HopResult, and MultiHopResult value objects
+- Implemented LLM-based query decomposition with SYNONYM/DECOMPOSE strategies
+- Added max_hops limit (default 3) to prevent infinite loops
+- Implemented reasoning chain tracking for debugging and explainability
+- Added answer synthesis from all retrieved chunks using LLM
+- Implemented graceful degradation on LLM errors (returns original query)
+- Implemented early termination when sufficient chunks found or hop returns empty
+- All 47 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/application/services/multi_hop_retriever.py`: Complete implementation (850+ lines)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new MultiHopRetriever types
+  - `tests/unit/contexts/knowledge/application/services/test_multi_hop_retriever.py`: 47 comprehensive tests
+
+**Learnings for future iterations:**
+- Multi-hop retrieval enables complex question answering by chaining multiple retrieval steps
+- The decompose method uses LLM to break queries into sub-queries (e.g., "Who killed the king?" -> ["Who killed the king?", "What was their motive?"])
+- Early termination conditions: enough chunks (>=10) or last hop returned 0 chunks
+- The reasoning_chain property provides debug visibility into how each hop informed the next
+- Hop tracking includes: hop_number, query, chunks, status, latency_ms, and context_used
+- Graceful degradation: on LLM error, return original query as single sub-query
+- JSON parsing from LLM responses needs multiple fallback strategies (direct parse, markdown extraction, line splitting)
+- The `time` module must be imported at the top of the file for use across all methods
+- When using `patch.object` to mock methods in tests, ensure the method signature matches
+- The `_needs_decomposition` method uses simple heuristics (conjunctions, multiple question marks) to detect complex queries
+
+---
+
+## [2025-02-04] - BRAIN-013B ✅
+- Implemented reasoning chain logging with detailed step tracking for multi-hop retrieval
+- Added ExplainConfig value object for explain mode configuration (enabled, include_chunk_content, include_source_info, max_content_length)
+- Added ReasoningStep value object with detailed hop information:
+  * hop_number, query, query_type (original/decomposed/followup)
+  * chunks_found, top_sources (tuple of source identifiers), latency_ms, context_summary
+- Extended MultiHopConfig with explain field for explain mode
+- Extended MultiHopResult with reasoning_steps list and get_explain_output(verbose) method
+- Extended HopResult with reasoning_step field containing detailed ReasoningStep
+- Added _extract_top_sources() helper to extract top 3 source identifiers from chunks
+- Added _build_reasoning_chain() helper to build human-readable reasoning chain format
+- Enhanced logging in retrieval loop with reasoning_step details at info level
+- Added debug logging for full reasoning chain after retrieval completes
+- All 58 unit tests passing (47 original + 11 new for BRAIN-013B)
+- Files changed:
+  - `src/contexts/knowledge/application/services/multi_hop_retriever.py`: Added ~150 lines (ExplainConfig, ReasoningStep, enhanced logging, helper methods)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export ExplainConfig and ReasoningStep
+  - `tests/unit/contexts/knowledge/application/services/test_multi_hop_retriever.py`: Added 11 tests for reasoning chain features
+
+**Learnings for future iterations:**
+- The new reasoning chain format uses "Step" instead of "Hop" for clearer language
+- ReasoningStep.to_explain_line() provides a human-readable one-line format for each step
+- get_explain_output() generates a formatted multi-line explanation with all key details
+- Query type tracking (original/decomposed/followup) helps understand how each query was generated
+- Top sources extraction uses "SourceType:source_id" format for clear identification
+- The reasoning_steps list provides structured access to hop details for programmatic use
+- ReasoningStep is a frozen dataclass to ensure immutability of the reasoning history
+- Context summaries are truncated to 100 chars to avoid cluttering logs
+- The explain mode is disabled by default (enabled=False) to avoid performance impact
+- When updating reasoning chain format, update tests that check for specific text patterns
+
+---
+
+## [2025-02-04] - BRAIN-014A ✅
+- Implemented PromptTemplate entity with version tracking and model configuration
+- Created VariableDefinition value object with type validation and coercion
+- Created ModelConfig value object for LLM provider configuration
+- Implemented IPromptRepository port with CRUD operations, version history, search, and filtering
+- Added template validation for undefined variables, syntax errors (unbalanced braces), and required/optional variable checks
+- Implemented {{variable}} placeholder syntax with extraction and rendering
+- Added factory method `PromptTemplate.create()` for convenient instantiation with auto-detection of variables
+- Implemented `create_new_version()` method for version chaining with parent_version_id tracking
+- All 68 unit tests passing (54 for PromptTemplate entity, 14 for IPromptRepository port)
+- Files changed:
+  - `src/contexts/knowledge/domain/models/prompt_template.py`: Complete implementation (670+ lines)
+  - `src/contexts/knowledge/domain/models/__init__.py`: Export PromptTemplate, VariableDefinition, VariableType, ModelConfig
+  - `src/contexts/knowledge/application/ports/i_prompt_repository.py`: Repository port interface (170+ lines)
+  - `tests/unit/contexts/knowledge/domain/models/test_prompt_template.py`: 54 comprehensive tests
+  - `tests/unit/contexts/knowledge/application/ports/test_i_prompt_repository.py`: 14 port tests with mock implementation
+
+**Learnings for future iterations:**
+- The PromptTemplate entity follows the existing pattern: dataclass with frozen value objects (VariableDefinition, ModelConfig) and mutable entity (PromptTemplate)
+- VariableDefinition.validate_value() and coerce_value() provide runtime type safety for template rendering
+- The {{variable}} syntax is extracted via regex pattern r"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}" and must match defined variables
+- Template validation happens in __post_init__ to catch errors early (undefined variables, empty required fields)
+- The IPromptRepository port uses async methods following the existing repository pattern (IKnowledgeRepository)
+- ModelConfig encapsulates all LLM parameters (temperature, max_tokens, top_p, penalties, supports_functions)
+- Version tracking uses parent_version_id to link versions, with get_version_history() returning the full chain
+- The domain/models directory is gitignored - use `git add -f` to add new model files
+- Factory methods should handle common defaults (provider, model_name) while allowing full customization
+- When using f-strings with braces for error messages, escape them as {{{{var}}}} to produce {{var}}
 
 ---

@@ -344,7 +344,7 @@
         "Test: Verify multi-hop question returns correct answer"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-010B"
@@ -362,7 +362,7 @@
         "Test: Verify reasoning chain is captured"
       ],
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-013A"
@@ -380,7 +380,7 @@
         "Test: CRUD operations on prompt templates"
       ],
       "priority": 21,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {
