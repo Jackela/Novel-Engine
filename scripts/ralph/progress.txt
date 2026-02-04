@@ -422,3 +422,29 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - JSON parsing from LLM responses needs multiple fallback strategies (direct parse, markdown extraction, line splitting)
 
 ---
+
+## [2025-02-04] - BRAIN-009B ✅
+- Enhanced QueryRewriter with CLARIFICATION strategy for ambiguous queries
+- Added token usage tracking to caching (tokens_saved, tokens_used fields)
+- Created QueryAwareRetrievalService that integrates QueryRewriter with RetrievalService
+- Implemented multi-query execution with concurrency control (Semaphore)
+- Implemented Reciprocal Rank Fusion (RRF) and score-based result merging
+- Added QueryAwareMetrics for tracking queries, cache hits, and token usage
+- All 70 unit tests passing (49 for QueryRewriter, 21 for QueryAwareRetrievalService)
+- Files changed:
+  - `src/contexts/knowledge/application/services/query_rewriter.py`: Added CLARIFICATION strategy, token tracking, clarifications field
+  - `src/contexts/knowledge/application/services/query_aware_retrieval_service.py`: Complete new service (550 lines)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new service and types
+  - `tests/unit/contexts/knowledge/application/services/test_query_aware_retrieval_service.py`: 21 comprehensive tests
+
+**Learnings for future iterations:**
+- The CLARIFICATION strategy generates questions to disambiguate user queries (e.g., "Did you mean the protagonist or antagonist?")
+- Token estimation uses ~4 chars per token as a rough estimate (sufficient for cache efficiency tracking)
+- When using frozen dataclass with tuple default values, use `tuple[str, ...]` as type annotation
+- Reciprocal Rank Fusion (RRF) formula: score = 1 / (k + rank) where k is typically 60
+- RRF is robust to score scale differences because it operates on ranks, not raw scores
+- Semaphore limits concurrent retrieval queries to avoid overwhelming the system
+- Content deduplication after merging uses MD5 hash to detect identical chunks
+- The QueryAwareRetrievalService provides a complete RAG pipeline: Rewrite -> Retrieve (all variants) -> Merge -> Deduplicate
+
+---

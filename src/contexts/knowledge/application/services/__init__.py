@@ -66,6 +66,14 @@ from .query_rewriter import (
     DEFAULT_INCLUDE_ORIGINAL,
 )
 
+from .query_aware_retrieval_service import (
+    QueryAwareRetrievalService,
+    QueryAwareConfig,
+    QueryAwareRetrievalResult,
+    QueryAwareMetrics,
+    DEFAULT_MAX_CONCURRENT,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -117,4 +125,10 @@ __all__ = [
     "DEFAULT_TEMPERATURE",
     "DEFAULT_MAX_VARIANTS",
     "DEFAULT_INCLUDE_ORIGINAL",
+    # Query-Aware Retrieval Service
+    "QueryAwareRetrievalService",
+    "QueryAwareConfig",
+    "QueryAwareRetrievalResult",
+    "QueryAwareMetrics",
+    "DEFAULT_MAX_CONCURRENT",
 ]

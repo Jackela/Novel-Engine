@@ -38,11 +38,13 @@ class RewriteStrategy(str, Enum):
         SYNONYM: Expand query with synonyms and related terms
         DECOMPOSE: Break complex query into sub-queries
         HYBRID: Combination of synonym expansion and decomposition
+        CLARIFICATION: Detect ambiguity and ask clarifying questions
     """
 
     SYNONYM = "synonym"
     DECOMPOSE = "decompose"
     HYBRID = "hybrid"
+    CLARIFICATION = "clarification"
 
 
 # Default configuration
@@ -92,12 +94,18 @@ class RewriteResult:
         variants: List of query variants (including original if configured)
         strategy: Strategy used for rewriting
         cached: Whether the result was retrieved from cache
+        tokens_used: Estimated tokens used for LLM call (0 if cached)
+        tokens_saved: Estimated tokens saved by using cache
+        clarifications: List of clarifying questions (for CLARIFICATION strategy)
     """
 
     original_query: str
     variants: list[str]
     strategy: RewriteStrategy
     cached: bool = False
+    tokens_used: int = 0
+    tokens_saved: int = 0
+    clarifications: tuple[str, ...] = ()
 
 
 @dataclass
@@ -108,10 +116,20 @@ class QueryRewriterCacheEntry:
     Attributes:
         variants: Cached query variants
         strategy: Strategy used for rewriting
+        tokens_saved: Estimated tokens saved by using cache
+        created_at: Timestamp when cache entry was created
     """
 
     variants: list[str]
     strategy: RewriteStrategy
+    tokens_saved: int = 0
+    created_at: float = 0.0
+
+    def __post_init__(self) -> None:
+        """Set creation timestamp if not provided."""
+        if self.created_at == 0.0:
+            import time
+            self.created_at = time.time()
 
 
 class QueryRewriter:
@@ -122,8 +140,10 @@ class QueryRewriter:
     - Synonym expansion: Add related terms and synonyms
     - Sub-query decomposition: Break complex queries into simpler parts
     - Hybrid: Combine both approaches
+    - Clarification: Detect ambiguity and generate clarifying questions
 
     Includes caching to avoid redundant LLM calls for similar queries.
+    Tracks token usage to measure caching efficiency.
 
     Constitution Compliance:
         - Article II (Hexagonal): Application service using LLM port
@@ -134,6 +154,8 @@ class QueryRewriter:
         >>> result = await rewriter.rewrite("protagonist motivation")
         >>> print(result.variants)
         ["protagonist motivation", "main character goals", "hero driving forces"]
+        >>> print(result.tokens_saved)
+        150  # Tokens saved by caching
     """
 
     def __init__(
@@ -154,6 +176,7 @@ class QueryRewriter:
         self._config = default_config or RewriteConfig()
         self._cache_enabled = cache_enabled
         self._cache: dict[str, QueryRewriterCacheEntry] = {}
+        self._total_tokens_saved: int = 0  # Track cumulative tokens saved
 
         logger.info(
             "query_rewriter_initialized",
@@ -175,7 +198,7 @@ class QueryRewriter:
             config: Optional configuration override
 
         Returns:
-            RewriteResult with original and variant queries
+            RewriteResult with original and variant queries, token tracking
 
         Raises:
             ValueError: If query is empty
@@ -185,6 +208,8 @@ class QueryRewriter:
             >>> result = await rewriter.rewrite("brave warrior")
             >>> print(result.variants)
             ["brave warrior", "courageous fighter", "heroic soldier"]
+            >>> print(result.tokens_saved)
+            0  # No tokens saved on cache miss
         """
         if not query or not query.strip():
             raise ValueError("query cannot be empty")
@@ -200,12 +225,16 @@ class QueryRewriter:
                     "query_rewrite_cache_hit",
                     query=query,
                     strategy=rewrite_config.strategy.value,
+                    tokens_saved=cached.tokens_saved,
                 )
+                # Track cumulative tokens saved
+                self._total_tokens_saved += cached.tokens_saved
                 return RewriteResult(
                     original_query=query,
                     variants=self._build_result_variants(query, cached.variants, rewrite_config),
                     strategy=rewrite_config.strategy,
                     cached=True,
+                    tokens_saved=cached.tokens_saved,
                 )
 
         logger.debug(
@@ -216,7 +245,10 @@ class QueryRewriter:
 
         # Generate variants based on strategy
         try:
-            variants = await self._generate_variants(query, rewrite_config)
+            generate_result = await self._generate_variants(query, rewrite_config)
+            variants = generate_result["variants"]
+            clarifications = generate_result.get("clarifications", [])
+            tokens_used = generate_result.get("tokens_used", 0)
         except LLMError as e:
             logger.error(
                 "query_rewrite_llm_failed",
@@ -229,11 +261,12 @@ class QueryRewriter:
                 variants=[query] if rewrite_config.include_original else [],
                 strategy=rewrite_config.strategy,
                 cached=False,
+                tokens_used=0,
             )
 
-        # Cache the results
+        # Cache the results with token estimate for future cache hits
         if self._cache_enabled:
-            self._add_to_cache(query, variants, rewrite_config.strategy)
+            self._add_to_cache(query, variants, rewrite_config.strategy, tokens_used)
 
         result_variants = self._build_result_variants(query, variants, rewrite_config)
 
@@ -242,6 +275,7 @@ class QueryRewriter:
             query=query,
             strategy=rewrite_config.strategy.value,
             variant_count=len(result_variants),
+            tokens_used=tokens_used,
         )
 
         return RewriteResult(
@@ -249,6 +283,8 @@ class QueryRewriter:
             variants=result_variants,
             strategy=rewrite_config.strategy,
             cached=False,
+            tokens_used=tokens_used,
+            clarifications=tuple(clarifications),
         )
 
     def rewrite_sync(
@@ -291,21 +327,22 @@ class QueryRewriter:
 
     def get_cache_stats(self) -> dict[str, Any]:
         """
-        Get cache statistics.
+        Get cache statistics including token tracking.
 
         Returns:
-            Dict with cache size and related stats
+            Dict with cache size, tokens saved, and related stats
         """
         return {
             "cache_size": len(self._cache),
             "cache_enabled": self._cache_enabled,
+            "total_tokens_saved": self._total_tokens_saved,
         }
 
     async def _generate_variants(
         self,
         query: str,
         config: RewriteConfig,
-    ) -> list[str]:
+    ) -> dict[str, Any]:
         """
         Generate query variants using LLM.
 
@@ -314,7 +351,7 @@ class QueryRewriter:
             config: Rewrite configuration
 
         Returns:
-            List of query variants
+            Dict with variants, clarifications (for CLARIFICATION strategy), and tokens_used
         """
         prompt = self._build_prompt(query, config)
 
@@ -326,7 +363,24 @@ class QueryRewriter:
         )
 
         response = await self._llm.generate(request)
-        return self._parse_response(response.text, config.max_variants)
+
+        # Estimate tokens used (rough estimate: ~4 chars per token)
+        tokens_used = self._estimate_tokens(prompt + response.text)
+
+        # Parse based on strategy
+        if config.strategy == RewriteStrategy.CLARIFICATION:
+            clarifications = self._parse_clarifications(response.text)
+            # For clarification, also generate search queries
+            variants = [query]  # Include original as search query
+        else:
+            variants = self._parse_response(response.text, config.max_variants)
+            clarifications = []
+
+        return {
+            "variants": variants,
+            "clarifications": clarifications,
+            "tokens_used": tokens_used,
+        }
 
     def _get_system_prompt(self, strategy: RewriteStrategy) -> str:
         """
@@ -357,6 +411,17 @@ Guidelines:
 - Sub-queries should be independently searchable
 - Return valid JSON array of strings
 - Generate 2-4 sub-queries"""
+        elif strategy == RewriteStrategy.CLARIFICATION:
+            return """You are an expert at identifying ambiguity in search queries.
+Your task is to analyze queries and generate clarifying questions that would help
+disambiguate the user's intent.
+
+Guidelines:
+- Identify terms that could have multiple meanings
+- Generate 2-4 clarifying questions
+- Each question should help narrow down the search intent
+- Return valid JSON array of strings
+- Focus on story/narrative domain ambiguities"""
         else:  # HYBRID
             return """You are an expert at query optimization for information retrieval.
 Your task is to both expand queries with synonyms AND decompose complex queries into parts.
@@ -378,6 +443,13 @@ Guidelines:
         Returns:
             Formatted prompt for LLM
         """
+        if config.strategy == RewriteStrategy.CLARIFICATION:
+            return f"""Original query: "{query}"
+
+Analyze this query for ambiguity and generate clarifying questions.
+Return ONLY a valid JSON array of questions, like this:
+["Did you mean X or Y?", "Which specific aspect are you interested in?"]"""
+
         return f"""Original query: "{query}"
 
 Generate {config.max_variants} alternative queries that would improve search retrieval.
@@ -523,6 +595,7 @@ Return ONLY a valid JSON array of strings, like this:
         query: str,
         variants: list[str],
         strategy: RewriteStrategy,
+        tokens_used: int = 0,
     ) -> None:
         """
         Add rewrite results to cache.
@@ -531,11 +604,13 @@ Return ONLY a valid JSON array of strings, like this:
             query: Original query
             variants: Generated variants
             strategy: Rewrite strategy used
+            tokens_used: Estimated tokens used for this rewrite
         """
         cache_key = self._make_cache_key(query, strategy)
         self._cache[cache_key] = QueryRewriterCacheEntry(
             variants=variants,
             strategy=strategy,
+            tokens_saved=tokens_used,  # Store tokens used = what would be saved on cache hit
         )
 
     def _make_cache_key(self, query: str, strategy: RewriteStrategy) -> str:
@@ -550,6 +625,65 @@ Return ONLY a valid JSON array of strings, like this:
             Cache key string
         """
         return f"{strategy.value}:{query.lower().strip()}"
+
+    def _parse_clarifications(self, text: str) -> list[str]:
+        """
+        Parse LLM response to extract clarifying questions.
+
+        Args:
+            text: LLM response text
+
+        Returns:
+            List of parsed clarifying questions
+        """
+        # Try to parse as JSON array
+        try:
+            # Extract JSON from response (might be in markdown)
+            clean_text = text.strip()
+            if clean_text.startswith("```"):
+                # Remove markdown code block
+                lines = clean_text.split("\n")
+                clean_text = "\n".join(lines[1:-1])
+
+            questions = json.loads(clean_text)
+
+            if isinstance(questions, list):
+                # Ensure all items are strings
+                result = [str(q).strip() for q in questions if q]
+                return result[:4]  # Max 4 clarifying questions
+
+        except (json.JSONDecodeError, ValueError, TypeError):
+            logger.warning(
+                "query_rewrite_clarifications_parse_failed",
+                response=text[:200],
+            )
+
+        # Fallback: extract questions from text
+        result = []
+        for line in text.split("\n"):
+            line = line.strip()
+            # Lines ending with '?' are likely questions
+            if line.endswith("?") and len(line) > 5:
+                result.append(line)
+
+        return result[:4]
+
+    def _estimate_tokens(self, text: str) -> int:
+        """
+        Estimate token count for text.
+
+        Uses a rough estimate of ~4 characters per token.
+        This is approximate but sufficient for tracking cache efficiency.
+
+        Args:
+            text: Text to estimate tokens for
+
+        Returns:
+            Estimated token count
+        """
+        if not text:
+            return 0
+        return max(1, len(text) // 4)
 
 
 __all__ = [
