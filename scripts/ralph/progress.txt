@@ -821,3 +821,34 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Service-level tests are easier to write and maintain than HTTP endpoint tests
 - Rollback preserves version history by creating a NEW version (v4) that copies content from target version (v2), not by overwriting
 ---
+
+## [2025-02-04] - BRAIN-017A ✅
+- Implemented template inheritance for PromptTemplate entity
+- Added extends field to PromptTemplate for inheritance declarations
+- Added {{> template_name}} include syntax support with regex pattern matching
+- Added get_includes() method to extract template names from content
+- Added resolve_content() method to replace includes with parent content (recursive with circular reference detection)
+- Added resolve_variables() method to merge parent variables with child variables
+- Child variables override parent variables with same name
+- Added render_with_inheritance() method for rendering with inheritance
+- Updated to_dict() and from_dict() to serialize/deserialize extends field
+- Updated create_new_version() and create_version_diff() to handle extends
+- Updated API schemas: PromptCreateRequest, PromptUpdateRequest, PromptDetailResponse
+- Updated PromptRouterService.to_detail() to include extends in API responses
+- Updated router create/update endpoints to handle extends field
+- All 161 prompt-related tests passing (75 domain + 26 router + 60 service)
+- Files changed:
+  - `src/contexts/knowledge/domain/models/prompt_template.py`: Added extends field, _INCLUDE_PATTERN, and inheritance methods (200+ lines)
+  - `src/api/schemas.py`: Added extends to PromptCreateRequest, PromptUpdateRequest, PromptDetailResponse
+  - `src/api/services/prompt_router_service.py`: Updated to_detail() to include extends
+  - `src/api/routers/prompts.py`: Updated create and update endpoints to handle extends
+  - `tests/unit/contexts/knowledge/domain/models/test_prompt_template.py`: Added TestPromptTemplateInheritance (21 tests)
+
+**Learnings for future iterations:**
+- The include pattern regex must support dashes: `[a-zA-Z_][a-zA-Z0-9_-]*` for IDs like `parent-id-123`
+- Variables from included templates ({{> parent}}) need to be merged even when extends field is empty
+- resolve_variables() should check both extends field AND {{> includes}} in content
+- render_with_inheritance() must bypass PromptTemplate validation to avoid errors for resolved content
+- Use visited set (copied) for circular reference detection in recursive resolution
+- When creating temporary templates for rendering, use the same ID to avoid self-reference detection
+- Child variables override parent variables by checking child_names set before adding parent vars
