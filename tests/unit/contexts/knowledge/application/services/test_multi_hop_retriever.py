@@ -1,10 +1,12 @@
 """
 Unit Tests for Multi-Hop Retrieval Service
 
-Warzone 4: AI Brain - BRAIN-013A
+Warzone 4: AI Brain - BRAIN-013A, BRAIN-013B
 
 Tests for the multi-hop retrieval service that enables complex question
 answering through chained reasoning across multiple retrieval hops.
+
+BRAIN-013B: Adds reasoning chain logging and explain mode for debugging.
 """
 
 from __future__ import annotations
@@ -17,9 +19,11 @@ from src.contexts.knowledge.application.services.multi_hop_retriever import (
     QueryDecomposer,
     MultiHopConfig,
     HopConfig,
+    ExplainConfig,
     MultiHopResult,
     HopResult,
     HopStatus,
+    ReasoningStep,
     DEFAULT_MAX_HOPS,
     DEFAULT_HOP_K,
 )
@@ -740,8 +744,8 @@ class TestMultiHopIntegration:
 
         assert result.reasoning_chain is not None
         assert len(result.reasoning_chain) > 0
-        # Either has "Hop" (multi-hop) or "Single-hop" (single hop)
-        assert "Hop" in result.reasoning_chain or "Single-hop" in result.reasoning_chain
+        # New format uses "Query:" and "Reasoning Path:" or "Single-hop" for single hop
+        assert "Query:" in result.reasoning_chain or "Single-hop" in result.reasoning_chain
 
     @pytest.mark.asyncio
     async def test_multi_hop_latency_tracking(self, multi_hop_retriever):
@@ -751,3 +755,183 @@ class TestMultiHopIntegration:
         assert result.total_latency_ms >= 0
         for hop in result.hops:
             assert hop.latency_ms >= 0
+
+
+class TestReasoningChain:
+    """Tests for reasoning chain logging and explain mode (BRAIN-013B)."""
+
+    @pytest.mark.asyncio
+    async def test_reasoning_chain_captured(self, multi_hop_retriever):
+        """Test that reasoning chain is captured for multi-hop retrieval."""
+        from unittest.mock import patch
+
+        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+            result = await multi_hop_retriever.retrieve("Who is the villain that killed the king?")
+
+        # Reasoning chain should exist and contain query info
+        assert result.reasoning_chain is not None
+        assert len(result.reasoning_chain) > 0
+        assert "Query:" in result.reasoning_chain or "Hop" in result.reasoning_chain
+
+    @pytest.mark.asyncio
+    async def test_reasoning_steps_created(self, multi_hop_retriever):
+        """Test that ReasoningStep objects are created for each hop."""
+        from unittest.mock import patch
+
+        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+            result = await multi_hop_retriever.retrieve("Who is the villain that killed the king?")
+
+        # Should have reasoning steps if multi-hop occurred
+        if result.total_hops > 1:
+            assert len(result.reasoning_steps) > 0
+
+            # Check first step structure
+            first_step = result.reasoning_steps[0]
+            assert hasattr(first_step, 'hop_number')
+            assert hasattr(first_step, 'query')
+            assert hasattr(first_step, 'query_type')
+            assert hasattr(first_step, 'chunks_found')
+            assert hasattr(first_step, 'top_sources')
+            assert hasattr(first_step, 'latency_ms')
+
+    @pytest.mark.asyncio
+    async def test_reasoning_step_includes_query_type(self, multi_hop_retriever):
+        """Test that reasoning steps track query type (original/decomposed/followup)."""
+        from unittest.mock import patch
+
+        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+            result = await multi_hop_retriever.retrieve("Complex multi-part question")
+
+        if result.reasoning_steps:
+            # First hop should be "original"
+            assert result.reasoning_steps[0].query_type == "original"
+
+            # Subsequent hops should be "decomposed"
+            if len(result.reasoning_steps) > 1:
+                for step in result.reasoning_steps[1:]:
+                    assert step.query_type in ("decomposed", "followup")
+
+    @pytest.mark.asyncio
+    async def test_reasoning_step_includes_top_sources(self, multi_hop_retriever):
+        """Test that reasoning steps include top sources."""
+        from unittest.mock import patch
+
+        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+            result = await multi_hop_retriever.retrieve("Who killed the king?")
+
+        if result.reasoning_steps:
+            # At least one step should have sources
+            has_sources = any(
+                len(step.top_sources) > 0
+                for step in result.reasoning_steps
+            )
+            assert has_sources, "At least one reasoning step should have sources"
+
+    @pytest.mark.asyncio
+    async def test_explain_output_format(self, multi_hop_retriever):
+        """Test get_explain_output() returns formatted explanation."""
+        from unittest.mock import patch
+
+        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+            result = await multi_hop_retriever.retrieve("Who killed the king?")
+
+        explain_output = result.get_explain_output()
+
+        # Should contain key sections
+        assert "Multi-Hop Retrieval Explanation:" in explain_output
+        assert "Original Query:" in explain_output
+        assert "Total Hops:" in explain_output
+        assert "Total Chunks:" in explain_output
+        assert "Total Latency:" in explain_output
+        assert "Reasoning Path:" in explain_output
+
+    @pytest.mark.asyncio
+    async def test_explain_output_verbose(self, multi_hop_retriever):
+        """Test verbose explain output includes context summaries."""
+        from unittest.mock import patch
+
+        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+            result = await multi_hop_retriever.retrieve("Who killed the king?")
+
+        # Verbose output should include more detail
+        verbose_output = result.get_explain_output(verbose=True)
+        non_verbose_output = result.get_explain_output(verbose=False)
+
+        # Verbose should be longer or equal
+        assert len(verbose_output) >= len(non_verbose_output)
+
+    @pytest.mark.asyncio
+    async def test_explain_output_with_answer(self, multi_hop_retriever):
+        """Test explain output includes final answer when available."""
+        from unittest.mock import patch
+
+        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+            result = await multi_hop_retriever.retrieve("Who killed the king?")
+
+        explain_output = result.get_explain_output()
+
+        # If answer synthesis succeeded, should include it
+        if result.final_answer:
+            assert "Final Answer:" in explain_output
+            assert result.final_answer in explain_output
+
+    def test_reasoning_step_to_explain_line(self):
+        """Test ReasoningStep.to_explain_line() format."""
+        from src.contexts.knowledge.application.services.multi_hop_retriever import ReasoningStep
+
+        step = ReasoningStep(
+            hop_number=0,
+            query="Who killed the king?",
+            query_type="original",
+            chunks_found=3,
+            top_sources=("LORE:lore1", "CHARACTER:char1"),
+            latency_ms=150,
+            context_summary="Previous context...",
+        )
+
+        line = step.to_explain_line()
+
+        assert "Step 0:" in line
+        assert "Who killed the king?" in line
+        assert "(original)" in line
+        assert "3 chunks" in line
+        assert "150ms" in line
+
+
+class TestExplainConfig:
+    """Tests for ExplainConfig value object (BRAIN-013B)."""
+
+    def test_default_explain_config(self):
+        """Test default ExplainConfig values."""
+        from src.contexts.knowledge.application.services.multi_hop_retriever import ExplainConfig
+
+        config = ExplainConfig()
+
+        assert config.enabled is False
+        assert config.include_chunk_content is True
+        assert config.include_source_info is True
+        assert config.max_content_length == 150
+
+    def test_custom_explain_config(self):
+        """Test custom ExplainConfig values."""
+        from src.contexts.knowledge.application.services.multi_hop_retriever import ExplainConfig
+
+        config = ExplainConfig(
+            enabled=True,
+            include_chunk_content=False,
+            include_source_info=False,
+            max_content_length=300,
+        )
+
+        assert config.enabled is True
+        assert config.include_chunk_content is False
+        assert config.include_source_info is False
+        assert config.max_content_length == 300
+
+    def test_explain_config_frozen(self):
+        """Test ExplainConfig is immutable (frozen dataclass)."""
+        from src.contexts.knowledge.application.services.multi_hop_retriever import ExplainConfig
+
+        config = ExplainConfig()
+        with pytest.raises(AttributeError):
+            config.enabled = True

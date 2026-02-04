@@ -9,7 +9,7 @@ Constitution Compliance:
 - Article II (Hexagonal): Application service using retrieval and LLM ports
 - Article V (SOLID): SRP - multi-hop retrieval coordination only
 
-Warzone 4: AI Brain - BRAIN-013A
+Warzone 4: AI Brain - BRAIN-013A, BRAIN-013B
 """
 
 from __future__ import annotations
@@ -76,6 +76,27 @@ class HopConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class ExplainConfig:
+    """
+    Configuration for explain mode in multi-hop retrieval.
+
+    Why frozen:
+        Immutable config ensures consistent explain behavior.
+
+    Attributes:
+        enabled: Whether explain mode is active
+        include_chunk_content: Whether to include actual chunk content in explanation
+        include_source_info: Whether to include source (type, id) for each chunk
+        max_content_length: Maximum characters of chunk content to include
+    """
+
+    enabled: bool = False
+    include_chunk_content: bool = True
+    include_source_info: bool = True
+    max_content_length: int = 150
+
+
+@dataclass(frozen=True, slots=True)
 class MultiHopConfig:
     """
     Configuration for multi-hop retrieval.
@@ -85,12 +106,14 @@ class MultiHopConfig:
         default_hop_config: Default configuration for each hop
         temperature: Temperature for query decomposition LLM calls
         enable_answer_synthesis: Whether to synthesize final answer from all hops
+        explain: Configuration for explain mode (detailed reasoning chain)
     """
 
     max_hops: int = DEFAULT_MAX_HOPS
     default_hop_config: HopConfig = field(default_factory=HopConfig)
     temperature: float = DEFAULT_TEMPERATURE
     enable_answer_synthesis: bool = True
+    explain: ExplainConfig = field(default_factory=ExplainConfig)
 
     def __post_init__(self) -> None:
         """Validate configuration parameters."""
@@ -100,6 +123,47 @@ class MultiHopConfig:
             raise ValueError("max_hops must not exceed 10")
         if not 0.0 <= self.temperature <= 2.0:
             raise ValueError("temperature must be between 0.0 and 2.0")
+
+
+@dataclass(frozen=True, slots=True)
+class ReasoningStep:
+    """
+    Detailed step in the reasoning chain.
+
+    Why frozen:
+        Immutable record ensures reasoning history isn't modified.
+
+    Attributes:
+        hop_number: The hop index (0-based)
+        query: The query used for this hop
+        query_type: Type of query (original, decomposed, followup)
+        chunks_found: Number of chunks retrieved
+        top_sources: Top sources (source_type:source_id) from this hop
+        latency_ms: Execution time in milliseconds
+        context_summary: Summary of context used from previous hops
+    """
+
+    hop_number: int
+    query: str
+    query_type: str  # "original", "decomposed", "followup"
+    chunks_found: int
+    top_sources: tuple[str, ...]  # Top 3 source identifiers
+    latency_ms: int
+    context_summary: str | None = None
+
+    def to_explain_line(self) -> str:
+        """
+        Convert reasoning step to human-readable explanation line.
+
+        Returns:
+            Formatted explanation string
+        """
+        sources_str = ", ".join(self.top_sources) if self.top_sources else "None"
+        return (
+            f"  Step {self.hop_number}: Query='{self.query}' "
+            f"({self.query_type}) -> {self.chunks_found} chunks, "
+            f"sources=[{sources_str}], {self.latency_ms}ms"
+        )
 
 
 @dataclass
@@ -114,6 +178,7 @@ class HopResult:
         status: Status of the hop
         latency_ms: Execution time in milliseconds
         context_used: Context from previous hops used in this hop
+        reasoning_step: Detailed reasoning step for explain mode
     """
 
     hop_number: int
@@ -122,6 +187,7 @@ class HopResult:
     status: HopStatus
     latency_ms: int = 0
     context_used: str | None = None
+    reasoning_step: ReasoningStep | None = None
 
     @property
     def chunk_count(self) -> int:
@@ -149,6 +215,7 @@ class MultiHopResult:
         total_hops: Total number of hops performed
         total_latency_ms: Total execution time in milliseconds
         terminated_early: Whether retrieval terminated early (e.g., found answer)
+        reasoning_steps: Detailed reasoning steps for explain mode
     """
 
     original_query: str
@@ -159,6 +226,7 @@ class MultiHopResult:
     total_hops: int
     total_latency_ms: int
     terminated_early: bool = False
+    reasoning_steps: list[ReasoningStep] = field(default_factory=list)
 
     @property
     def succeeded(self) -> bool:
@@ -169,6 +237,49 @@ class MultiHopResult:
     def total_chunks(self) -> int:
         """Get total unique chunks retrieved."""
         return len(self.all_chunks)
+
+    def get_explain_output(self, verbose: bool = True) -> str:
+        """
+        Get detailed explanation of the reasoning path.
+
+        Args:
+            verbose: Whether to include detailed chunk information
+
+        Returns:
+            Formatted explanation string
+
+        Example:
+            >>> result = await retriever.retrieve("Who killed the king?")
+            >>> print(result.get_explain_output())
+            Multi-Hop Retrieval Explanation:
+            Original Query: Who killed the king?
+              Step 0: Query='Who killed the king?' (original) -> 3 chunks...
+              Step 1: Query='What was their motive?' (followup) -> 2 chunks...
+            """
+        lines = [
+            "Multi-Hop Retrieval Explanation:",
+            f"Original Query: {self.original_query}",
+            f"Total Hops: {self.total_hops}",
+            f"Total Chunks: {self.total_chunks}",
+            f"Total Latency: {self.total_latency_ms}ms",
+            "",
+            "Reasoning Path:",
+        ]
+
+        if self.reasoning_steps:
+            for step in self.reasoning_steps:
+                lines.append(step.to_explain_line())
+                if verbose and step.context_summary:
+                    lines.append(f"    Context: {step.context_summary}")
+        else:
+            # Fallback to reasoning_chain
+            lines.append(f"  {self.reasoning_chain}")
+
+        if self.final_answer:
+            lines.append("")
+            lines.append(f"Final Answer: {self.final_answer}")
+
+        return "\n".join(lines)
 
 
 class QueryDecomposer:
@@ -438,6 +549,7 @@ class MultiHopRetriever:
 
     Prevents infinite loops with max_hops limit.
     Tracks reasoning chain for debugging and explainability.
+    Supports explain mode for detailed reasoning path visualization.
 
     Constitution Compliance:
         - Article II (Hexagonal): Application service coordinating ports
@@ -449,9 +561,18 @@ class MultiHopRetriever:
         ...     llm_client=gemini_client,
         ... )
         >>> result = await retriever.retrieve(
-        ...     query="Who killed the king and why?",
+        ...     query="Who is the villain that killed the king?",
         ... )
         >>> print(result.reasoning_chain)
+        >>> # Query: Who is the villain that killed the king?
+        >>> # Reasoning Path:
+        >>> #   Step 0: Query='Who killed the king?' (original) -> 3 chunks...
+        >>> #   Step 1: Query='What was their motive?' (decomposed) -> 2 chunks...
+        >>> print(result.get_explain_output())
+        >>> # Multi-Hop Retrieval Explanation:
+        >>> # Original Query: Who is the villain that killed the king?
+        >>> # Total Hops: 2
+        >>> # ...
         >>> print(result.final_answer)
     """
 
@@ -537,11 +658,15 @@ class MultiHopRetriever:
         all_chunks: list[RetrievedChunk] = []
         seen_chunk_ids: set[str] = set()
         reasoning_parts: list[str] = []
+        reasoning_steps: list[ReasoningStep] = []
 
         previous_hop_chunks: list[RetrievedChunk] = []
 
         for hop_num, sub_query in enumerate(sub_queries[:multi_hop_config.max_hops]):
             hop_start = time.time()
+
+            # Determine query type
+            query_type = "original" if hop_num == 0 else "decomposed"
 
             # Build query with context from previous hops
             context_from_previous = self._build_context_from_chunks(previous_hop_chunks)
@@ -555,6 +680,7 @@ class MultiHopRetriever:
                 "multi_hop_retrieval_hop_start",
                 hop_number=hop_num,
                 query=hop_query,
+                query_type=query_type,
                 has_context=bool(context_from_previous),
             )
 
@@ -578,6 +704,21 @@ class MultiHopRetriever:
                 all_chunks.extend(unique_chunks)
                 previous_hop_chunks = unique_chunks
 
+                # Extract top sources for reasoning step
+                top_sources = self._extract_top_sources(unique_chunks, limit=3)
+
+                # Create reasoning step
+                reasoning_step = ReasoningStep(
+                    hop_number=hop_num,
+                    query=sub_query,
+                    query_type=query_type,
+                    chunks_found=len(unique_chunks),
+                    top_sources=tuple(top_sources),
+                    latency_ms=hop_latency,
+                    context_summary=context_from_previous[:100] + "..." if context_from_previous and len(context_from_previous) > 100 else context_from_previous,
+                )
+                reasoning_steps.append(reasoning_step)
+
                 # Create hop result
                 hop = HopResult(
                     hop_number=hop_num,
@@ -586,6 +727,7 @@ class MultiHopRetriever:
                     status=HopStatus.COMPLETED,
                     latency_ms=hop_latency,
                     context_used=context_from_previous,
+                    reasoning_step=reasoning_step,
                 )
 
                 # Track reasoning
@@ -593,11 +735,16 @@ class MultiHopRetriever:
                     f"Hop {hop_num}: '{sub_query}' -> {len(unique_chunks)} chunks"
                 )
 
+                # Log reasoning step at info level for debugging
                 logger.info(
                     "multi_hop_retrieval_hop_complete",
                     hop_number=hop_num,
+                    query=sub_query,
+                    query_type=query_type,
                     chunk_count=len(unique_chunks),
+                    sources=top_sources,
                     latency_ms=hop_latency,
+                    reasoning_step=reasoning_step.to_explain_line(),
                 )
 
             except Exception as e:
@@ -606,6 +753,7 @@ class MultiHopRetriever:
                 logger.error(
                     "multi_hop_retrieval_hop_failed",
                     hop_number=hop_num,
+                    query=sub_query,
                     error=str(e),
                 )
 
@@ -643,7 +791,16 @@ class MultiHopRetriever:
             )
 
         # Build reasoning chain
-        reasoning_chain = "\n".join(reasoning_parts) if reasoning_parts else "Single-hop retrieval"
+        reasoning_chain = self._build_reasoning_chain(
+            query, reasoning_parts, reasoning_steps, context_from_previous
+        )
+
+        # Log full reasoning chain for debugging
+        logger.debug(
+            "multi_hop_retrieval_reasoning_chain",
+            reasoning_chain=reasoning_chain,
+            reasoning_steps_count=len(reasoning_steps),
+        )
 
         result = MultiHopResult(
             original_query=query,
@@ -654,6 +811,7 @@ class MultiHopRetriever:
             total_hops=len(hops),
             total_latency_ms=total_latency,
             terminated_early=len(hops) < len(sub_queries),
+            reasoning_steps=reasoning_steps,
         )
 
         logger.info(
@@ -662,6 +820,7 @@ class MultiHopRetriever:
             total_hops=result.total_hops,
             total_chunks=result.total_chunks,
             total_latency_ms=total_latency,
+            has_reasoning_steps=bool(reasoning_steps),
         )
 
         return result
@@ -868,6 +1027,69 @@ class MultiHopRetriever:
 
         return False
 
+    def _extract_top_sources(
+        self,
+        chunks: list[RetrievedChunk],
+        limit: int = 3,
+    ) -> list[str]:
+        """
+        Extract top source identifiers from chunks.
+
+        Args:
+            chunks: Chunks to extract sources from
+            limit: Maximum number of sources to return
+
+        Returns:
+            List of source identifiers in format "SourceType:source_id"
+        """
+        if not chunks:
+            return []
+
+        sources: set[str] = set()
+        for chunk in chunks[:limit * 2]:  # Check more chunks to find unique sources
+            if chunk.source_id:
+                source_key = f"{chunk.source_type}:{chunk.source_id}"
+                sources.add(source_key)
+            if len(sources) >= limit:
+                break
+
+        return list(sources)[:limit]
+
+    def _build_reasoning_chain(
+        self,
+        original_query: str,
+        reasoning_parts: list[str],
+        reasoning_steps: list[ReasoningStep],
+        final_context: str | None,
+    ) -> str:
+        """
+        Build a human-readable reasoning chain.
+
+        Args:
+            original_query: The original user query
+            reasoning_parts: Simple reasoning parts
+            reasoning_steps: Detailed reasoning steps
+            final_context: Final context used
+
+        Returns:
+            Formatted reasoning chain string
+        """
+        if not reasoning_steps:
+            return f"Single-hop retrieval: {original_query}"
+
+        lines = [
+            f"Query: {original_query}",
+            "Reasoning Path:",
+        ]
+
+        for step in reasoning_steps:
+            lines.append(f"  {step.to_explain_line()}")
+
+        if final_context:
+            lines.append(f"\nFinal Context: {final_context[:200]}...")
+
+        return "\n".join(lines)
+
     async def _synthesize_answer(
         self,
         query: str,
@@ -926,9 +1148,11 @@ __all__ = [
     "QueryDecomposer",
     "MultiHopConfig",
     "HopConfig",
+    "ExplainConfig",
     "MultiHopResult",
     "HopResult",
     "HopStatus",
+    "ReasoningStep",
     "DEFAULT_MAX_HOPS",
     "DEFAULT_HOP_K",
     "DEFAULT_TEMPERATURE",
