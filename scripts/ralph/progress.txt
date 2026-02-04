@@ -1726,3 +1726,27 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Cache hooks are stubbed for future implementation - currently just track misses for analytics
 - BFS traversal uses deque for queue with (entity_name, depth) tuples for efficient neighbor discovery
 - Graph context expansion adds significant value to RAG by including related entities and relationships
+
+## [2025-02-04] - BRAIN-032B ✅
+- Implemented explain mode for GraphRetrievalService showing reasoning path
+- Created GraphExplanationStep and GraphExplanation value objects
+- Added explain_mode flag to GraphRetrievalConfig (default: False)
+- Updated GraphRetrievalResult to include optional explanation field
+- Added explanation tracking to enrich_chunks_with_graph method
+- Implemented _build_explanation_summary for human-readable summary
+- Added 12 new tests for explain mode functionality
+- Files changed:
+  - `src/contexts/knowledge/application/services/graph_retrieval_service.py`: Added GraphExplanationStep, GraphExplanation, explain_mode flag, explanation tracking
+  - `src/contexts/knowledge/application/services/__init__.py`: Exported new GraphExplanation types
+  - `tests/unit/contexts/knowledge/application/services/test_graph_retrieval_service.py`: Added 12 tests for explain mode (TestGraphRetrievalServiceExplainMode class)
+
+**Learnings for future iterations:**
+- Frozen dataclasses raise `FrozenInstanceError` when attempting to modify attributes - use this for immutability guarantees
+- When adding optional features, use a boolean flag in the config (e.g., `explain_mode: bool = False`) to avoid breaking existing code
+- Explanation steps should be numbered sequentially (1, 2, 3, ...) to provide clear ordering
+- The `metadata: dict[str, Any]` field on explanation steps allows for flexible context without changing the schema
+- When tracking traversal depth, use `max()` to keep the maximum depth reached across all steps
+- Explanation summaries should include: total steps, entities found, relationships found, traversal depth, and a breakdown by step type
+- Tests should verify both the presence and absence of features (e.g., with and without explain_mode enabled)
+
+---
