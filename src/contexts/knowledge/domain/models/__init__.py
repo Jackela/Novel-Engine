@@ -21,6 +21,12 @@ from .prompt_template import (
     VariableDefinition,
     VariableType,
 )
+from .prompt_experiment import (
+    ExperimentMetric,
+    ExperimentMetrics,
+    ExperimentStatus,
+    PromptExperiment,
+)
 from .prompt_version import (
     PromptVersion,
     VersionDiff,
@@ -51,4 +57,8 @@ __all__ = [
     "VariableDefinition",
     "VariableType",
     "VersionDiff",
+    "ExperimentMetric",
+    "ExperimentMetrics",
+    "ExperimentStatus",
+    "PromptExperiment",
 ]

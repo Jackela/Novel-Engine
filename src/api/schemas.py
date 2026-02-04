@@ -1945,6 +1945,179 @@ class PromptRenderResponse(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+# === Prompt Experiment Schemas (BRAIN-018B) ===
+
+
+class ExperimentMetricsResponse(BaseModel):
+    """Schema for experiment metrics."""
+
+    total_runs: int = Field(default=0, ge=0, description="Total number of runs")
+    success_count: int = Field(default=0, ge=0, description="Number of successful runs")
+    failure_count: int = Field(default=0, ge=0, description="Number of failed runs")
+    success_rate: float = Field(default=0.0, ge=0, le=100, description="Success rate percentage")
+    total_tokens: int = Field(default=0, ge=0, description="Total tokens consumed")
+    avg_tokens_per_run: float = Field(default=0.0, ge=0, description="Average tokens per run")
+    token_efficiency: float = Field(default=0.0, ge=0, description="Tokens per successful generation")
+    total_latency_ms: float = Field(default=0.0, ge=0, description="Total latency in milliseconds")
+    avg_latency_ms: float = Field(default=0.0, ge=0, description="Average latency in milliseconds")
+    rating_sum: float = Field(default=0.0, description="Sum of all ratings")
+    rating_count: int = Field(default=0, ge=0, description="Number of ratings")
+    avg_rating: float = Field(default=0.0, ge=0, le=5, description="Average user rating")
+
+
+class ConfidenceIntervalResponse(BaseModel):
+    """Schema for confidence interval of a metric."""
+
+    lower: float = Field(..., ge=0, le=100, description="Lower bound of confidence interval")
+    upper: float = Field(..., ge=0, le=100, description="Upper bound of confidence interval")
+
+
+class ExperimentVariantResponse(BaseModel):
+    """Schema for an experiment variant with metrics."""
+
+    prompt_id: str = Field(..., description="Prompt template ID")
+    total_runs: int = Field(default=0, ge=0, description="Total number of runs")
+    success_count: int = Field(default=0, ge=0, description="Number of successful runs")
+    failure_count: int = Field(default=0, ge=0, description="Number of failed runs")
+    success_rate: float = Field(default=0.0, ge=0, le=100, description="Success rate percentage")
+    total_tokens: int = Field(default=0, ge=0, description="Total tokens consumed")
+    avg_tokens_per_run: float = Field(default=0.0, ge=0, description="Average tokens per run")
+    token_efficiency: float = Field(default=0.0, ge=0, description="Tokens per successful generation")
+    total_latency_ms: float = Field(default=0.0, ge=0, description="Total latency in milliseconds")
+    avg_latency_ms: float = Field(default=0.0, ge=0, description="Average latency in milliseconds")
+    rating_sum: float = Field(default=0.0, description="Sum of all ratings")
+    rating_count: int = Field(default=0, ge=0, description="Number of ratings")
+    avg_rating: float = Field(default=0.0, ge=0, le=5, description="Average user rating")
+    confidence_interval: Optional[ConfidenceIntervalResponse] = Field(
+        default=None, description="Confidence interval for success rate"
+    )
+
+
+class ExperimentComparisonResponse(BaseModel):
+    """Schema for variant comparison."""
+
+    success_rate_diff: float = Field(default=0.0, description="Difference in success rate (A - B)")
+    success_rate_rel_diff: float = Field(default=0.0, description="Relative difference in success rate (%)")
+    avg_rating_diff: float = Field(default=0.0, description="Difference in average rating (A - B)")
+    avg_rating_rel_diff: float = Field(default=0.0, description="Relative difference in rating (%)")
+    token_efficiency_diff: float = Field(default=0.0, description="Difference in token efficiency (A - B)")
+    avg_latency_diff: float = Field(default=0.0, description="Difference in latency (A - B)")
+    avg_latency_rel_diff: float = Field(default=0.0, description="Relative difference in latency (%)")
+
+
+class ExperimentTimelineResponse(BaseModel):
+    """Schema for experiment timeline."""
+
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    started_at: Optional[str] = Field(None, description="ISO 8601 start timestamp")
+    ended_at: Optional[str] = Field(None, description="ISO 8601 end timestamp")
+
+
+class ExperimentResultsResponse(BaseModel):
+    """Schema for experiment results."""
+
+    experiment_id: str = Field(..., description="Experiment ID")
+    name: str = Field(..., description="Experiment name")
+    status: str = Field(..., description="Experiment status")
+    metric: str = Field(..., description="Primary metric for comparison")
+    winner: Optional[str] = Field(None, description="Winning variant (A or B)")
+    min_sample_size: int = Field(default=100, ge=1, description="Minimum sample size")
+    traffic_split: Dict[str, int] = Field(default_factory=dict, description="Traffic split percentage")
+    variant_a: ExperimentVariantResponse = Field(..., description="Variant A metrics")
+    variant_b: ExperimentVariantResponse = Field(..., description="Variant B metrics")
+    comparison: ExperimentComparisonResponse = Field(..., description="Variant comparison")
+    timeline: ExperimentTimelineResponse = Field(..., description="Experiment timeline")
+    statistical_significance: Optional[Dict[str, Any]] = Field(
+        None, description="Statistical significance analysis"
+    )
+
+
+class ExperimentSummaryResponse(BaseModel):
+    """Schema for experiment summary (list view)."""
+
+    id: str = Field(..., description="Experiment ID")
+    name: str = Field(..., description="Experiment name")
+    description: str = Field(default="", description="Experiment description")
+    status: str = Field(..., description="Experiment status")
+    metric: str = Field(..., description="Primary metric for comparison")
+    prompt_a_id: str = Field(..., description="Variant A prompt ID")
+    prompt_b_id: str = Field(..., description="Variant B prompt ID")
+    traffic_split: int = Field(default=50, description="Traffic split for variant A")
+    winner: Optional[str] = Field(None, description="Winning variant (A or B)")
+    total_runs: int = Field(default=0, ge=0, description="Total runs across both variants")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    started_at: Optional[str] = Field(None, description="ISO 8601 start timestamp")
+    ended_at: Optional[str] = Field(None, description="ISO 8601 end timestamp")
+
+
+class ExperimentListResponse(BaseModel):
+    """Response model for listing experiments."""
+
+    experiments: List[ExperimentSummaryResponse] = Field(default_factory=list)
+    total: int = Field(default=0, description="Total count of experiments")
+    limit: int = Field(default=100, description="Page size limit")
+    offset: int = Field(default=0, description="Pagination offset")
+
+
+class ExperimentCreateRequest(BaseModel):
+    """Request model for creating an experiment."""
+
+    name: str = Field(..., min_length=1, max_length=200, description="Experiment name")
+    description: str = Field(default="", max_length=1000, description="Experiment description")
+    prompt_a_id: str = Field(..., description="Variant A prompt template ID")
+    prompt_b_id: str = Field(..., description="Variant B prompt template ID")
+    metric: str = Field(
+        ...,
+        description="Primary metric: success_rate, user_rating, token_efficiency, latency",
+    )
+    traffic_split: int = Field(default=50, ge=0, le=100, description="Traffic split for variant A (0-100)")
+    min_sample_size: int = Field(default=100, ge=10, description="Minimum sample size per variant")
+    confidence_threshold: float = Field(default=0.95, ge=0.5, le=0.99, description="Confidence threshold")
+
+    @field_validator("metric")
+    @classmethod
+    def validate_metric(cls, v: str) -> str:
+        valid_metrics = {"success_rate", "user_rating", "token_efficiency", "latency"}
+        if v not in valid_metrics:
+            raise ValueError(f"Metric must be one of: {valid_metrics}")
+        return v
+
+
+class ExperimentUpdateRequest(BaseModel):
+    """Request model for updating an experiment."""
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=1000)
+    status: Optional[str] = Field(default=None, description="New status: draft, running, paused, completed")
+    min_sample_size: Optional[int] = Field(default=None, ge=10)
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        valid_statuses = {"draft", "running", "paused", "completed", "archived"}
+        if v not in valid_statuses:
+            raise ValueError(f"Status must be one of: {valid_statuses}")
+        return v
+
+
+class ExperimentRecordRequest(BaseModel):
+    """Request model for recording a run result."""
+
+    variant_id: str = Field(..., description="The variant that was used (prompt_a_id or prompt_b_id)")
+    success: bool = Field(..., description="Whether the generation was successful")
+    tokens: int = Field(default=0, ge=0, description="Number of tokens consumed")
+    latency_ms: float = Field(default=0.0, ge=0, description="Response time in milliseconds")
+    rating: Optional[float] = Field(None, ge=1.0, le=5.0, description="User rating (1-5)")
+
+
+class ExperimentActionRequest(BaseModel):
+    """Request model for experiment actions (start, pause, resume, complete)."""
+
+    winner: Optional[str] = Field(None, description="Winning variant (for complete action)")
+
+
 __all__ = [
     # Orchestration Schemas
     "OrchestrationStep",
@@ -2099,6 +2272,18 @@ __all__ = [
     "FactionSetLeaderResponse",
     "FactionMemberSchema",
     "FactionDetailResponse",
+    # Prompt Experiment Schemas (BRAIN-018B)
+    "ExperimentMetricsResponse",
+    "ExperimentVariantResponse",
+    "ExperimentComparisonResponse",
+    "ExperimentTimelineResponse",
+    "ExperimentResultsResponse",
+    "ExperimentSummaryResponse",
+    "ExperimentListResponse",
+    "ExperimentCreateRequest",
+    "ExperimentUpdateRequest",
+    "ExperimentRecordRequest",
+    "ExperimentActionRequest",
 ]
 
 try:
