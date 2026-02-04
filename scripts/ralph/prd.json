@@ -253,7 +253,7 @@
         "Test: Verify rerank maintains results order on failure"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-008B"
