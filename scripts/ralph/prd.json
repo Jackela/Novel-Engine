@@ -289,7 +289,7 @@
         "Test: Verify counting matches tiktoken"
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-006"

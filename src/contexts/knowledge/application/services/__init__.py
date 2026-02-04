@@ -83,6 +83,15 @@ from .rerank_service import (
     DEFAULT_TOP_K,
 )
 
+from .token_counter import (
+    TokenCounter,
+    LLMProvider,
+    ModelFamily,
+    TokenCountResult,
+    create_token_counter,
+    TIKTOKEN_AVAILABLE,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -147,4 +156,11 @@ __all__ = [
     "MockReranker",
     "FailingReranker",
     "DEFAULT_TOP_K",
+    # Token Counter
+    "TokenCounter",
+    "LLMProvider",
+    "ModelFamily",
+    "TokenCountResult",
+    "create_token_counter",
+    "TIKTOKEN_AVAILABLE",
 ]

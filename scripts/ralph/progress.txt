@@ -21,6 +21,7 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Hybrid Retrieval**: HybridRetriever in `src/contexts/knowledge/application/services/hybrid_retriever.py` combines vector and BM25 with RRF
 - **Query Rewriting**: QueryRewriter in `src/contexts/knowledge/application/services/query_rewriter.py` with SYNONYM/DECOMPOSE/CLARIFICATION strategies
 - **Reranking**: IReranker port in `src/contexts/knowledge/application/ports/i_reranker.py` and RerankService with fallback behavior
+- **Token Counting**: TokenCounter in `src/contexts/knowledge/application/services/token_counter.py` with multi-provider tiktoken support
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -507,5 +508,34 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - httpx.AsyncClient requires proper context manager usage for connection pooling
 - Early return for empty documents saves unnecessary API calls and edge case handling
 - For type hints, use `str` instead of `str | None` when a value is guaranteed to be non-null after initialization
+
+## [2025-02-04] - BRAIN-011A ✅
+- Implemented TokenCounter utility class with multi-provider support
+- Created LLMProvider enum (OPENAI, ANTHROPIC, GEMINI, COHERE, GENERIC)
+- Created ModelFamily enum for different tokenizer families within providers
+- Added `count(text, model, provider, model_family)` method with TokenCountResult
+- Added `count_batch(texts)` for efficient batch token counting
+- Added `count_from_messages(messages)` for chat format token counting (includes overhead)
+- Added `estimate_max_chunks(text, max_tokens)` to estimate how many chunks fit in budget
+- Added `truncate_to_tokens(text, max_tokens, add_ellipsis)` to truncate text to token limit
+- Added `is_available()` method to check tiktoken availability
+- Implemented auto-detection of provider/family from model names (GPT-4o, Claude-3, Gemini, etc.)
+- Added factory function `create_token_counter(model, provider)` for easy instantiation
+- All 49 unit tests passing (2 skipped due to tiktoken being available)
+- Files changed:
+  - `src/contexts/knowledge/application/services/token_counter.py`: Complete TokenCounter implementation (500+ lines)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new TokenCounter types
+  - `tests/unit/contexts/knowledge/application/services/test_token_counter.py`: 51 comprehensive tests
+
+**Learnings for future iterations:**
+- TokenCounter uses `str` enum values for compatibility (LLMProvider(str, Enum) pattern)
+- Model family detection uses prefix matching for flexible model name variants (e.g., "gpt-4o-mini" matches "gpt-4o")
+- tiktoken encoding names differ by model family: "o200k_base" for GPT-4o, "cl100k_base" for GPT-4/GPT-3.5
+- Anthropic uses tiktoken's cl100k_base as a close approximation (no official tiktoken support)
+- Gemini and Cohere fall back to character-based estimation (~4 chars per token)
+- Chat message format overhead is ~4 tokens per message + 3 tokens for reply priming
+- For frozen dataclasses with Literal types, use `# type: ignore[arg-type]` when the value is guaranteed valid
+- The `TIKTOKEN_AVAILABLE` flag allows graceful degradation when tiktoken isn't installed
+- Caching tiktoken encodings by ModelFamily avoids repeated `tiktoken.get_encoding()` calls
 
 ---
