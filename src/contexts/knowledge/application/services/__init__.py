@@ -118,6 +118,19 @@ from .citation_formatter import (
     CitationFormat,
 )
 
+from .multi_hop_retriever import (
+    MultiHopRetriever,
+    QueryDecomposer,
+    MultiHopConfig,
+    HopConfig,
+    MultiHopResult,
+    HopResult,
+    HopStatus,
+    DEFAULT_MAX_HOPS,
+    DEFAULT_HOP_K,
+    DEFAULT_TEMPERATURE as DEFAULT_MULTIHOP_TEMPERATURE,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -211,4 +224,15 @@ __all__ = [
     "SourceReference",
     "ChunkCitation",
     "CitationFormat",
+    # Multi-Hop Retriever
+    "MultiHopRetriever",
+    "QueryDecomposer",
+    "MultiHopConfig",
+    "HopConfig",
+    "MultiHopResult",
+    "HopResult",
+    "HopStatus",
+    "DEFAULT_MAX_HOPS",
+    "DEFAULT_HOP_K",
+    "DEFAULT_MULTIHOP_TEMPERATURE",
 ]
