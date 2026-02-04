@@ -74,6 +74,15 @@ from .query_aware_retrieval_service import (
     DEFAULT_MAX_CONCURRENT,
 )
 
+from .rerank_service import (
+    RerankService,
+    RerankConfig,
+    RerankServiceResult,
+    MockReranker,
+    FailingReranker,
+    DEFAULT_TOP_K,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -131,4 +140,11 @@ __all__ = [
     "QueryAwareRetrievalResult",
     "QueryAwareMetrics",
     "DEFAULT_MAX_CONCURRENT",
+    # Rerank Service
+    "RerankService",
+    "RerankConfig",
+    "RerankServiceResult",
+    "MockReranker",
+    "FailingReranker",
+    "DEFAULT_TOP_K",
 ]
