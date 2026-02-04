@@ -833,7 +833,7 @@
         "Test: Configure custom routing rules"
       ],
       "priority": 47,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-028A"
