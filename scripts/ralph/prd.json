@@ -112,7 +112,7 @@
         "Test: Search for 'brave warrior' and get relevant character with that trait"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-004"

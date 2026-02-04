@@ -16,6 +16,7 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Import Linting**: Rules defined in `.importlinter` to enforce architectural boundaries
 - **Vector Storage**: ChromaDB adapter in `src/contexts/knowledge/infrastructure/adapters/chromadb_vector_store.py`
 - **Type Annotations**: Use `from __future__ import annotations` and import List/Tuple from typing for complex types
+- **RAG Retrieval**: RetrievalService in `src/contexts/knowledge/application/services/retrieval_service.py` with filtering and deduplication
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -52,9 +53,9 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - BRAIN-001: ChromaDB setup ✅
 - BRAIN-002: Embedding service ✅
 - BRAIN-003: Knowledge entry entity ✅
-- BRAIN-004: Knowledge ingestion service
-- BRAIN-005: Auto-sync event listeners
-- BRAIN-006: Context retrieval service (RAG)
+- BRAIN-004: Knowledge ingestion service ✅
+- BRAIN-005: Auto-sync event listeners ✅
+- BRAIN-006: Context retrieval service (RAG) ✅
 - BRAIN-007: RAG-enhanced generation
 
 #### RAG Enhancement (6 stories)
@@ -178,9 +179,10 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 ---
 
 ## Next Story for Ralph
-- **BRAIN-005**: Integration: Auto-Sync Event Listeners
-- Priority: 5
-- Focus: Create domain event handlers to trigger ingestion on CharacterCreated/LoreCreated/etc.
+- **BRAIN-007**: Integration: RAG-Enhanced Generation
+- Priority: 7
+- Focus: Update LLMWorldGenerator to inject retrieved context into prompts
+- Dependencies: BRAIN-006 (Context Retrieval Service)
 - Dependencies: BRAIN-004 (KnowledgeIngestionService)
 
 ---
@@ -231,5 +233,30 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - For testing async handlers with queues, use short delays and queue.join() to wait for processing
 - Test dead letter queue by setting max_retries=0 to skip the retry delay
 - Content formatting helpers should include all relevant metadata (IDs, categories, tags) for RAG context
+
+---
+
+## [2025-02-04] - BRAIN-006 ✅
+- Implemented RetrievalService with full RAG retrieval pipeline (Query -> Embed -> Search -> Filter -> Format)
+- Created `retrieve_relevant()` method with configurable k, filters, and options
+- Created `format_context()` method that converts chunks to LLM-ready context with token estimation
+- Implemented RetrievalFilter for source_type, tags, and date range filtering
+- Added RetrievalOptions for relevance threshold (min_score) and deduplication control
+- Implemented content-based deduplication using SequenceMatcher for similarity detection
+- Created value objects: FormattedContext, RetrievalResult, RetrievalFilter, RetrievalOptions
+- All 36 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/application/services/retrieval_service.py`: Complete RetrievalService implementation
+  - `src/contexts/knowledge/application/services/__init__.py`: Export RetrievalService and related types
+  - `tests/unit/contexts/knowledge/application/services/test_retrieval_service.py`: 36 comprehensive tests
+
+**Learnings for future iterations:**
+- For token estimation, use ~4 chars per token as a rough estimate (actual tokenization varies by model)
+- When deduplicating, sort by score first so highest-scoring chunks are kept when duplicates are found
+- Use `set()` for seen_hashes, not `[]` - type hint `set[str] = []` creates a list, not a set
+- The `matches()` method should distinguish between `None` metadata (no document) and `{}` metadata (document with no fields)
+- ChromaDB's `$in` operator works for OR queries on metadata fields (e.g., source_type in [CHARACTER, LORE])
+- SequenceMatcher from difflib provides decent similarity detection for text deduplication
+- When fetching k results, request 2x-3x from vector store to account for filtering/deduplication
 
 ---
