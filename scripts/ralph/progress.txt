@@ -1615,3 +1615,44 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Auto-creating placeholder entities when adding relationships is useful for incomplete data
 - The MultiDiGraph `get_edge_data(u, v)` returns a dict of {key: edge_data} for parallel edges
 - Graph statistics should count both nodes and edges, with breakdowns by entity/relationship types
+
+---
+
+## [2026-02-04] - BRAIN-031B ✅
+- Implemented Neo4j adapter for persistent graph storage
+- Created Neo4jGraphStore adapter with full IGraphStore port implementation
+- Added environment variable configuration (NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, NEO4J_DATABASE)
+- Implemented lazy driver initialization with graceful degradation when neo4j unavailable
+- Added value objects: CliqueResult, CentralityResult, GraphExportResult
+- Extended IGraphStore port with advanced graph query methods:
+  - find_cliques(): Detect fully connected subgraphs with min/max size and entity type filtering
+  - get_centrality(): Calculate degree/betweenness/closeness/pagerank with top_n limit
+  - find_all_shortest_paths(): Find paths from source to all reachable entities
+  - export_graphml(): Export to GraphML format for visualization tools
+  - export_json(): Export to JSON format with pretty/compact options
+- Implemented advanced queries in NetworkX adapter:
+  - Clique detection using NetworkX's find_cliques() on undirected graph view
+  - Centrality metrics using NetworkX algorithms (degree, betweenness, closeness, pagerank)
+  - Shortest paths to all nodes using single_source_shortest_path_length
+  - GraphML export with list-to-string conversion for GraphML compatibility
+  - JSON export with metadata preservation and timestamp tracking
+- Added 19 new tests (14 for advanced queries, 5 for export)
+- All 53 tests passing (39 original + 14 new)
+- Files changed:
+  - `src/contexts/knowledge/application/ports/i_graph_store.py`: Added new value objects and port methods (200+ new lines)
+  - `src/contexts/knowledge/infrastructure/adapters/networkx_graph_store.py`: Implemented advanced queries and export (400+ new lines)
+  - `src/contexts/knowledge/infrastructure/adapters/neo4j_graph_store.py`: Complete Neo4j adapter (1600+ lines)
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py`: Export Neo4jGraphStore
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_networkx_graph_store.py`: Added 19 new tests
+
+**Learnings for future iterations:**
+- GraphML format doesn't support list types - convert lists to comma-separated strings before export
+- Neo4j uses Cypher query language with variable-length patterns: `[:RELATES*1..3]`
+- PageRank uses damping factor (typically 0.85) so isolated nodes still have small pagerank values
+- Neo4j doesn't have built-in clique detection - fall back to NetworkX for complex algorithms
+- When using f-strings for multi-line queries, don't use f-prefix if no placeholders (ruff F541)
+- Lazy driver initialization prevents import errors when neo4j package isn't installed
+- Neo4j's normalized name pattern uses `normalized_name` property while preserving `name` for display
+- Context manager (__enter__/__exit__) useful for resource cleanup (Neo4j driver connection)
+- For ruff auto-fix, it removes unused imports and fixes f-string prefixes automatically
+- The `_get_driver()` method needs Any type hint since neo4j.GraphDatabase is optional
