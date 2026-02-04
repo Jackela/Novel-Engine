@@ -1649,3 +1649,183 @@ export type FactionType = z.infer<typeof FactionTypeEnum>;
 export type FactionAlignment = z.infer<typeof FactionAlignmentEnum>;
 export type FactionStatus = z.infer<typeof FactionStatusEnum>;
 export type FactionDetailResponse = z.infer<typeof FactionDetailResponseSchema>;
+
+// === Prompt Management Schemas (BRAIN-015, BRAIN-019) ===
+
+/**
+ * Prompt variable type enum matching backend VariableType.
+ */
+export const PromptVariableTypeEnum = z.enum([
+  'string',
+  'integer',
+  'float',
+  'boolean',
+  'list',
+  'dict',
+]);
+
+/**
+ * Schema for a prompt variable definition.
+ * Defines the structure of variables used in prompt templates.
+ */
+export const PromptVariableDefinitionSchema = z.object({
+  name: z.string().min(1).max(100),
+  type: PromptVariableTypeEnum,
+  default_value: z.unknown().nullable().optional(),
+  description: z.string().default(''),
+  required: z.boolean().default(true),
+});
+
+/**
+ * Schema for a prompt variable value during rendering.
+ * Used when providing values to replace {{variable}} placeholders.
+ */
+export const PromptVariableValueSchema = z.object({
+  name: z.string().min(1),
+  value: z.unknown(),
+});
+
+/**
+ * Schema for prompt model configuration.
+ * LLM settings associated with a prompt template.
+ */
+export const PromptModelConfigSchema = z.object({
+  provider: z.string().default('openai'),
+  model_name: z.string().default('gpt-4'),
+  temperature: z.number().min(0).max(2).default(0.7),
+  max_tokens: z.number().int().positive().default(1000),
+  top_p: z.number().min(0).max(1).default(1.0),
+  frequency_penalty: z.number().min(-2).max(2).default(0.0),
+  presence_penalty: z.number().min(-2).max(2).default(0.0),
+});
+
+/**
+ * Schema for a prompt template summary (list view).
+ * Lightweight representation for listing prompts.
+ */
+export const PromptSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().default(''),
+  tags: z.array(z.string()).default([]),
+  model_provider: z.string().optional(),
+  model_name: z.string().optional(),
+  version: z.number().int().positive().default(1),
+  variable_count: z.number().int().nonnegative().default(0),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Schema for a full prompt template detail.
+ * Complete representation including all fields.
+ */
+export const PromptDetailResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().default(''),
+  content: z.string(),
+  tags: z.array(z.string()).default([]),
+  variables: z.array(PromptVariableDefinitionSchema).default([]),
+  version: z.number().int().positive().default(1),
+  parent_version_id: z.string().nullable().optional(),
+  extends: z.array(z.string()).default([]),
+  created_at: z.string(),
+  updated_at: z.string(),
+  model_provider: z.string().optional(),
+  model_name: z.string().optional(),
+  temperature: z.number().optional(),
+  max_tokens: z.number().optional(),
+  top_p: z.number().optional(),
+  frequency_penalty: z.number().optional(),
+  presence_penalty: z.number().optional(),
+});
+
+/**
+ * Response model for listing prompts.
+ */
+export const PromptListResponseSchema = z.object({
+  prompts: z.array(PromptSummarySchema).default([]),
+  total: z.number().int().nonnegative().default(0),
+  limit: z.number().int().positive().default(100),
+  offset: z.number().int().nonnegative().default(0),
+});
+
+/**
+ * Request model for creating a new prompt template.
+ */
+export const PromptCreateRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+  content: z.string().min(1),
+  description: z.string().max(1000).default(''),
+  tags: z.array(z.string()).max(20).default([]),
+  extends: z.array(z.string()).max(10).default([]),
+  variables: z.array(PromptVariableDefinitionSchema).max(50).default([]),
+  model_provider: z.string().optional(),
+  model_name: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  max_tokens: z.number().int().positive().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  frequency_penalty: z.number().min(-2).max(2).optional(),
+  presence_penalty: z.number().min(-2).max(2).optional(),
+});
+
+/**
+ * Request model for updating a prompt template (creates new version).
+ */
+export const PromptUpdateRequestSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  content: z.string().min(1).optional(),
+  description: z.string().max(1000).optional(),
+  tags: z.array(z.string()).max(20).optional(),
+  extends: z.array(z.string()).max(10).optional(),
+  variables: z.array(PromptVariableDefinitionSchema).max(50).optional(),
+  model_provider: z.string().optional(),
+  model_name: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  max_tokens: z.number().int().positive().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  frequency_penalty: z.number().min(-2).max(2).optional(),
+  presence_penalty: z.number().min(-2).max(2).optional(),
+});
+
+/**
+ * Request model for rendering a prompt template.
+ */
+export const PromptRenderRequestSchema = z.object({
+  variables: z.array(PromptVariableValueSchema).default([]),
+  strict: z.boolean().default(true),
+});
+
+/**
+ * Response model for a rendered prompt.
+ */
+export const PromptRenderResponseSchema = z.object({
+  rendered: z.string(),
+  variables_used: z.array(z.string()).default([]),
+  variables_missing: z.array(z.string()).default([]),
+  template_id: z.string(),
+  template_name: z.string(),
+  token_count: z.number().int().nonnegative().optional(),
+  llm_config: PromptModelConfigSchema.optional(),
+});
+
+/**
+ * Schema for prompt tags response.
+ * Dictionary of tag categories to their values.
+ */
+export const PromptTagsResponseSchema = z.record(z.string(), z.array(z.string()));
+
+// Prompt Types
+export type PromptVariableType = z.infer<typeof PromptVariableTypeEnum>;
+export type PromptVariableDefinition = z.infer<typeof PromptVariableDefinitionSchema>;
+export type PromptVariableValue = z.infer<typeof PromptVariableValueSchema>;
+export type PromptModelConfig = z.infer<typeof PromptModelConfigSchema>;
+export type PromptSummary = z.infer<typeof PromptSummarySchema>;
+export type PromptDetailResponse = z.infer<typeof PromptDetailResponseSchema>;
+export type PromptListResponse = z.infer<typeof PromptListResponseSchema>;
+export type PromptCreateRequest = z.infer<typeof PromptCreateRequestSchema>;
+export type PromptUpdateRequest = z.infer<typeof PromptUpdateRequestSchema>;
+export type PromptRenderRequest = z.infer<typeof PromptRenderRequestSchema>;
+export type PromptRenderResponse = z.infer<typeof PromptRenderResponseSchema>;
+export type PromptTagsResponse = z.infer<typeof PromptTagsResponseSchema>;

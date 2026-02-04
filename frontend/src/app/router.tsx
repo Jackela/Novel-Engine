@@ -158,6 +158,13 @@ const characterVoiceRoute = createRoute({
   component: lazyRouteComponent(() => import('@/pages/CharacterVoicePage')),
 });
 
+// Prompt Lab route (BRAIN-019A)
+const brainPromptsRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/brain/prompts',
+  component: lazyRouteComponent(() => import('@/pages/BrainPromptsPage')),
+});
+
 // Catch-all route (splat route using $ syntax)
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -185,6 +192,7 @@ const routeTree = rootRoute.addChildren([
     wikiRoute,
     storyRoute,
     characterVoiceRoute,
+    brainPromptsRoute,
   ]),
   notFoundRoute,
 ]);

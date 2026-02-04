@@ -959,3 +959,41 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Cohen's h for proportions: 2 * (asin(sqrt(p1)) - asin(sqrt(p2)))
 - Normal CDF approximation uses Abramowitz and Stegun error function formula
 ---
+
+## [2025-02-04] - BRAIN-019A ✅
+- Implemented Prompt Lab frontend list view with search and filter capabilities
+- Added prompt-related Zod schemas to frontend/src/types/schemas.ts
+  - PromptVariableDefinitionSchema, PromptVariableValueSchema, PromptModelConfigSchema
+  - PromptSummarySchema, PromptDetailResponseSchema, PromptListResponseSchema
+  - PromptCreateRequestSchema, PromptUpdateRequestSchema, PromptRenderRequestSchema
+  - PromptRenderResponseSchema, PromptTagsResponseSchema
+- Created frontend/src/features/prompts/api/promptApi.ts with TanStack Query hooks
+  - usePrompts, usePromptsSearch, usePrompt, usePromptVersions, usePromptTags
+  - useCreatePrompt, useUpdatePrompt, useDeletePrompt, useRenderPrompt, useRollbackPrompt
+- Created PromptsPage component with:
+  - Search input for filtering by name/description
+  - Model filter dropdown (dynamically populated from available models)
+  - Tag filter dropdown (populated from backend tags endpoint)
+  - Responsive grid of prompt cards with View/Edit/Delete actions
+  - Loading skeleton state and empty state with action button
+  - Version badge display, variable count, and last updated date
+- Created BrainPromptsPage.tsx route wrapper page
+- Added /brain/prompts route to TanStack Router
+- Used useNavigate from TanStack Router for navigation
+- All type-check and lint passing
+- Files changed:
+  - `frontend/src/types/schemas.ts`: Added prompt-related Zod schemas
+  - `frontend/src/features/prompts/api/promptApi.ts`: API hooks with TanStack Query
+  - `frontend/src/features/prompts/components/PromptsPage.tsx`: Main page component
+  - `frontend/src/features/prompts/index.ts`: Feature exports
+  - `frontend/src/pages/BrainPromptsPage.tsx`: Route wrapper
+  - `frontend/src/app/router.tsx`: Added brain/prompts route
+
+**Learnings for future iterations:**
+- Use `useNavigate` from '@tanstack/react-router' for type-safe navigation
+- EmptyState action prop doesn't accept undefined - conditionally render with/without action
+- When building filters object, only include defined properties to satisfy exactOptionalPropertyTypes
+- For model_name which can be string | undefined, use `.filter((m): m is string => Boolean(m))` type guard
+- Import schemas without Schema suffix for types, and with Schema suffix for Zod schemas
+- Route must be added both as a createRoute call AND in the routeTree.addChildren array
+- Prompt cards display metadata: version badge, tags (with +N overflow), variable count, model name, date
