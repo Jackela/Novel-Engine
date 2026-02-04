@@ -23,11 +23,15 @@ from src.contexts.knowledge.application.ports.i_prompt_repository import (
     PromptNotFoundError,
     PromptRepositoryError,
 )
+from src.contexts.knowledge.application.ports.i_prompt_usage_repository import (
+    IPromptUsageRepository,
+)
 from src.contexts.knowledge.domain.models.prompt_template import (
     ModelConfig,
     PromptTemplate,
     VariableType,
 )
+from src.contexts.knowledge.domain.models.prompt_usage import PromptUsage
 
 if TYPE_CHECKING:
     pass
@@ -61,16 +65,23 @@ class PromptRouterService:
 
     Attributes:
         _repository: The prompt repository port
+        _usage_repository: Optional prompt usage repository for analytics
     """
 
-    def __init__(self, repository: IPromptRepository) -> None:
+    def __init__(
+        self,
+        repository: IPromptRepository,
+        usage_repository: Optional[IPromptUsageRepository] = None,
+    ) -> None:
         """
         Initialize the prompt router service.
 
         Args:
             repository: Prompt repository implementing IPromptRepository
+            usage_repository: Optional usage repository for analytics tracking
         """
         self._repository = repository
+        self._usage_repository = usage_repository
 
     async def list_prompts(
         self,
@@ -515,12 +526,17 @@ class PromptRouterService:
         top_p_override: Optional[float] = None,
         frequency_penalty_override: Optional[float] = None,
         presence_penalty_override: Optional[float] = None,
+        workspace_id: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """
         Generate output using a prompt template and LLM.
 
         BRAIN-020B: Frontend: Prompt Playground - Integration
+        BRAIN-022A: Backend: Prompt Analytics - Data Model (usage tracking)
+
         Combines rendering and LLM generation in a single operation.
+        Records usage analytics if usage_repository is configured.
 
         Args:
             prompt_id: Prompt template ID
@@ -533,6 +549,8 @@ class PromptRouterService:
             top_p_override: Override nucleus sampling
             frequency_penalty_override: Override frequency penalty
             presence_penalty_override: Override presence penalty
+            workspace_id: Optional workspace identifier for analytics
+            user_id: Optional user identifier for analytics
 
         Returns:
             Dictionary with rendered prompt, LLM output, and metadata
@@ -557,23 +575,56 @@ class PromptRouterService:
 
         # Start timing
         start_time = time.time()
+        error_message = None
+        success = True
+        output = ""
 
-        # Call LLM
-        output = await self._call_llm(
-            rendered=rendered,
-            provider=provider,
-            model_name=model_name,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-        )
+        try:
+            # Call LLM
+            output = await self._call_llm(
+                rendered=rendered,
+                provider=provider,
+                model_name=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+            )
+        except Exception as e:
+            success = False
+            error_message = str(e)
+            logger.warning(f"LLM generation failed for prompt {prompt_id}: {error_message}")
+            raise
+        finally:
+            # Calculate latency
+            latency_ms = (time.time() - start_time) * 1000
 
-        # Calculate latency
-        latency_ms = (time.time() - start_time) * 1000
+            # Estimate tokens
+            prompt_tokens = _estimate_tokens(rendered)
+            output_tokens = _estimate_tokens(output)
 
-        # Estimate tokens
-        prompt_tokens = _estimate_tokens(rendered)
-        output_tokens = _estimate_tokens(output)
+            # Record usage analytics if repository is configured
+            if self._usage_repository is not None:
+                try:
+                    usage = PromptUsage.create(
+                        prompt_id=template.id,
+                        prompt_name=template.name,
+                        prompt_version=template.version,
+                        input_tokens=prompt_tokens,
+                        output_tokens=output_tokens,
+                        latency_ms=latency_ms,
+                        model_provider=provider,
+                        model_name=model_name,
+                        success=success,
+                        error_message=error_message,
+                        workspace_id=workspace_id,
+                        user_id=user_id,
+                        # Sanitize variables for storage (exclude sensitive values)
+                        variables={k: type(v).__name__ for k, v in variables.items()},
+                    )
+                    await self._usage_repository.record(usage)
+                except Exception as record_error:
+                    # Don't fail the request if analytics recording fails
+                    logger.debug(f"Failed to record prompt usage: {record_error}")
 
         return {
             "rendered": rendered,
@@ -585,7 +636,7 @@ class PromptRouterService:
             "total_tokens": prompt_tokens + output_tokens,
             "latency_ms": latency_ms,
             "model_used": f"{provider}:{model_name}",
-            "error": None,
+            "error": error_message,
         }
 
     async def _call_llm(

@@ -1127,3 +1127,33 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - The GitCompare icon from lucide-react is appropriate for version comparison UI
 
 ---
+
+## [2025-02-04] - BRAIN-022A ✅
+- Implemented PromptUsage entity for tracking prompt generation events
+- Created PromptUsageStats value object for aggregated statistics
+- Created IPromptUsageRepository port interface with full CRUD operations
+- Implemented InMemoryPromptUsageRepository adapter with indexes and LRU eviction
+- Integrated usage tracking into PromptRouterService.generate_prompt()
+- Added per-workspace and per-user tracking support
+- All 40 new unit tests passing (24 for PromptUsage, 16 for repository)
+- Files changed:
+  - `src/contexts/knowledge/domain/models/prompt_usage.py`: PromptUsage entity and PromptUsageStats VO (450+ lines)
+  - `src/contexts/knowledge/domain/models/__init__.py`: Export PromptUsage and PromptUsageStats
+  - `src/contexts/knowledge/application/ports/i_prompt_usage_repository.py`: Repository port interface (290+ lines)
+  - `src/contexts/knowledge/infrastructure/adapters/in_memory_prompt_usage_repository.py`: In-memory adapter (520+ lines)
+  - `src/api/services/prompt_router_service.py`: Added usage tracking to generate_prompt() with try/finally
+  - `src/api/routers/prompts.py`: Added get_prompt_service_with_usage() dependency injection
+  - `tests/unit/contexts/knowledge/domain/models/test_prompt_usage.py`: 24 comprehensive tests
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_in_memory_prompt_usage_repository.py`: 16 comprehensive tests
+
+**Learnings for future iterations:**
+- PromptUsage tracks: input/output/total_tokens, latency_ms, model_provider/model_name, success/error_message
+- Multi-tenant support via optional workspace_id and user_id parameters for filtering stats
+- try/finally ensures usage is logged even when LLM generation fails
+- InMemoryPromptUsageRepository uses OrderedDict for LRU eviction (move_to_end on access)
+- Indexes by prompt_id, workspace_id, and user_id enable efficient filtered queries
+- PromptUsageStats.from_usages() aggregates: total_uses, successful/failed counts, tokens, latency, ratings
+- The id field validation is disabled to allow factory-generated UUIDs (common pattern for entities)
+- When testing with timestamps, use a _utcnow() helper function that returns datetime.now(timezone.utc)
+
+---

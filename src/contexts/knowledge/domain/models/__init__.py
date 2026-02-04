@@ -33,6 +33,10 @@ from .prompt_version import (
 )
 from .source_knowledge_entry import SourceKnowledgeEntry, SourceMetadata
 from .source_type import SourceType
+from .prompt_usage import (
+    PromptUsage,
+    PromptUsageStats,
+)
 
 __all__ = [
     "AccessLevel",
@@ -61,4 +65,6 @@ __all__ = [
     "ExperimentMetrics",
     "ExperimentStatus",
     "PromptExperiment",
+    "PromptUsage",
+    "PromptUsageStats",
 ]

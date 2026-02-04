@@ -47,6 +47,9 @@ from src.contexts.knowledge.domain.models.prompt_template import (
 from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_repository import (
     InMemoryPromptRepository,
 )
+from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_usage_repository import (
+    InMemoryPromptUsageRepository,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +82,8 @@ def get_prompt_service(
     """
     Get the prompt router service.
 
+    BRAIN-022A: Now includes optional usage repository for analytics.
+
     Why: Dependency injection for testability.
 
     Args:
@@ -88,6 +93,32 @@ def get_prompt_service(
         PromptRouterService instance
     """
     return PromptRouterService(repository)
+
+
+def get_prompt_service_with_usage(
+    request: Request,
+    repository: InMemoryPromptRepository = Depends(get_prompt_repository),
+) -> PromptRouterService:
+    """
+    Get the prompt router service with usage tracking enabled.
+
+    BRAIN-022A: Analytics tracking for prompt usage.
+
+    Why: Separate function for endpoints that need usage tracking.
+
+    Args:
+        request: FastAPI request object
+        repository: The prompt repository
+
+    Returns:
+        PromptRouterService instance with usage repository configured
+    """
+    usage_repo = getattr(request.app.state, "prompt_usage_repository", None)
+    if usage_repo is None:
+        usage_repo = InMemoryPromptUsageRepository()
+        request.app.state.prompt_usage_repository = usage_repo
+        logger.info("Initialized InMemoryPromptUsageRepository")
+    return PromptRouterService(repository, usage_repo)
 
 
 # ==================== Query/List Endpoints ====================
@@ -543,23 +574,29 @@ async def generate_prompt(
     prompt_id: str,
     payload: PromptGenerateRequest,
     request: Request,
-    service: PromptRouterService = Depends(get_prompt_service),
+    service: PromptRouterService = Depends(get_prompt_service_with_usage),
 ) -> PromptGenerateResponse:
     """
     Generate output using a prompt template and LLM.
 
     BRAIN-020B: Frontend: Prompt Playground - Integration
+    BRAIN-022A: Backend: Prompt Analytics - Data Model (usage tracking)
     Combines rendering and LLM generation in a single request.
+    Tracks usage analytics for token consumption and latency.
 
     Args:
         prompt_id: ID of the prompt to use
         payload: Variable values and optional model config overrides
         request: FastAPI request
-        service: Prompt router service
+        service: Prompt router service with usage tracking
 
     Returns:
         Generated output with rendered prompt and metadata
     """
+    # Extract workspace/user identifiers from request for analytics
+    workspace_id = getattr(request.state, "workspace_id", None)
+    user_id = getattr(request.state, "user_id", None)
+
     try:
         result = await service.generate_prompt(
             prompt_id=prompt_id,
@@ -572,6 +609,8 @@ async def generate_prompt(
             top_p_override=payload.top_p,
             frequency_penalty_override=payload.frequency_penalty,
             presence_penalty_override=payload.presence_penalty,
+            workspace_id=workspace_id,
+            user_id=user_id,
         )
 
         return PromptGenerateResponse(
