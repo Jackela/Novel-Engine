@@ -774,3 +774,50 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - The `isinstance(self.tags, list)` check with tuple type hint causes mypy unreachable warning - use `# type: ignore[unreachable]`
 
 ---
+
+## [2025-02-04] - BRAIN-016B ✅
+- Implemented version rollback API endpoint POST /api/prompts/{id}/rollback/{version}
+- Implemented version comparison API endpoint GET /api/prompts/{id}/compare
+- Added rollback_to_version() method to PromptRouterService for restoring previous versions
+- Added compare_versions() method with character-level diff using difflib.SequenceMatcher
+- Added _compute_character_diff() helper for line-by-line diff computation
+- Rollback creates new version (v4) with content from target version (v2)
+- Comparison supports content diff, variable changes, model config changes, and metadata changes
+- All 185 prompt-related tests passing (26 router + 46 service + 113 domain/model/repository)
+- Files changed:
+  - `src/api/routers/prompts.py`: Added rollback and compare endpoints (70+ lines)
+  - `src/api/services/prompt_router_service.py`: Added rollback_to_version() and compare_versions() methods (280+ lines)
+  - `tests/unit/api/services/test_prompt_router_service.py`: Added TestPromptRouterServiceRollback (4 tests) and TestPromptRouterServiceCompare (5 tests)
+
+**Learnings for future iterations:**
+- Route order is critical: specific routes (/health, /search, /tags, /versions, /compare) must come BEFORE parameterized routes (/{id})
+- When using path parameters in POST endpoint like /rollback/{version}, FastAPI requires the parameter to be after all path segments
+- difflib.SequenceMatcher with autojunk=False provides reliable line-by-line diffing for text comparison
+- The get_opcodes() method returns operations: "replace" (both old and new), "delete" (old only), "insert" (new only), "equal" (no change)
+- When testing router endpoints, use service-level tests rather than complex router tests to avoid dependency override complexity
+- Service-level tests are easier to write and maintain than HTTP endpoint tests
+- Rollback preserves version history by creating a NEW version (v4) that copies content from target version (v2), not by overwriting
+
+## [2025-02-04] - BRAIN-016B ✅
+- Implemented version rollback API endpoint POST /api/prompts/{id}/rollback/{version}
+- Implemented version comparison API endpoint GET /api/prompts/{id}/compare
+- Added rollback_to_version() method to PromptRouterService for restoring previous versions
+- Added compare_versions() method with character-level diff using difflib.SequenceMatcher
+- Added _compute_character_diff() helper for line-by-line diff computation
+- Rollback creates new version (v4) with content from target version (v2)
+- Comparison supports content diff, variable changes, model config changes, and metadata changes
+- All 185 prompt-related tests passing (26 router + 46 service + 113 domain/model/repository)
+- Files changed:
+  - `src/api/routers/prompts.py`: Added rollback and compare endpoints (70+ lines)
+  - `src/api/services/prompt_router_service.py`: Added rollback_to_version() and compare_versions() methods (280+ lines)
+  - `tests/unit/api/services/test_prompt_router_service.py`: Added TestPromptRouterServiceRollback (4 tests) and TestPromptRouterServiceCompare (5 tests)
+
+**Learnings for future iterations:**
+- Route order is critical: specific routes (/health, /search, /tags, /versions, /compare) must come BEFORE parameterized routes (/{id})
+- When using path parameters in POST endpoint like /rollback/{version}, FastAPI requires the parameter to be after all path segments
+- difflib.SequenceMatcher with autojunk=False provides reliable line-by-line diffing for text comparison
+- The get_opcodes() method returns operations: "replace" (both old and new), "delete" (old only), "insert" (new only), "equal" (no change)
+- When testing router endpoints, use service-level tests rather than complex router tests to avoid dependency override complexity
+- Service-level tests are easier to write and maintain than HTTP endpoint tests
+- Rollback preserves version history by creating a NEW version (v4) that copies content from target version (v2), not by overwriting
+---

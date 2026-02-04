@@ -535,6 +535,7 @@ class PromptRouterService:
             "description": template.description,
             "content": template.content,
             "tags": list(template.tags),
+            "extends": list(template.extends),
             "version": template.version,
             "parent_version_id": template.parent_version_id,
             "llm_config": {

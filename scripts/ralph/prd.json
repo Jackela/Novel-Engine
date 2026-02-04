@@ -450,7 +450,7 @@
         "Test: Verify rollback restores correct version"
       ],
       "priority": 25,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-016A"

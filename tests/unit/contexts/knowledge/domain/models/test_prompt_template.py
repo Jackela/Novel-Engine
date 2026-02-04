@@ -720,3 +720,504 @@ Generate a story scene featuring this character with {{mood}} tone.""",
         assert "Age: 28" in result
         assert "Traits: brave, curious, kind" in result
         assert "mysterious tone" in result
+
+
+class TestPromptTemplateInheritance:
+    """Tests for PromptTemplate inheritance and include functionality."""
+
+    def test_extends_field_initialization(self) -> None:
+        """Should initialize with empty extends tuple by default."""
+        template = PromptTemplate(
+            id="test-1",
+            name="Child",
+            content="Child content with {{var}}",
+            variables=(VariableDefinition(name="var", type=VariableType.STRING),),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+        assert template.extends == ()
+
+    def test_extends_field_with_parents(self) -> None:
+        """Should initialize with parent template references."""
+        template = PromptTemplate(
+            id="test-1",
+            name="Child",
+            content="{{> parent_a}} and {{> parent_b}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("parent_a", "parent_b"),
+        )
+        assert template.extends == ("parent_a", "parent_b")
+
+    def test_extends_normalized_to_tuple(self) -> None:
+        """Should convert list extends to tuple."""
+        template = PromptTemplate(
+            id="test-1",
+            name="Child",
+            content="{{> parent}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=["parent_a", "parent_b"],  # type: ignore[arg-type]
+        )
+        assert isinstance(template.extends, tuple)
+        assert template.extends == ("parent_a", "parent_b")
+
+    def test_cannot_extend_self(self) -> None:
+        """Should raise error when template extends itself."""
+        with pytest.raises(ValueError, match="cannot extend itself"):
+            PromptTemplate(
+                id="test-1",
+                name="SelfRef",
+                content="{{var}}",
+                variables=(VariableDefinition(name="var", type=VariableType.STRING),),
+                model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+                extends=("test-1",),
+            )
+
+    def test_get_includes_extracts_template_names(self) -> None:
+        """Should extract template names from {{> template}} directives."""
+        template = PromptTemplate(
+            id="test-1",
+            name="Child",
+            content="{{> base_prompt}}\nSome content\n{{> another_template}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+        includes = template.get_includes()
+        assert includes == {"base_prompt", "another_template"}
+
+    def test_get_includes_empty_when_no_includes(self) -> None:
+        """Should return empty set when no includes present."""
+        template = PromptTemplate(
+            id="test-1",
+            name="NoIncludes",
+            content="Just {{var}} content",
+            variables=(VariableDefinition(name="var", type=VariableType.STRING),),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+        assert template.get_includes() == set()
+
+    def test_resolve_content_replaces_single_include(self) -> None:
+        """Should replace {{> template}} with parent content."""
+        parent = PromptTemplate(
+            id="parent-1",
+            name="BasePrompt",
+            content="Base content with {{var}}",
+            variables=(VariableDefinition(name="var", type=VariableType.STRING),),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="ChildPrompt",
+            content="{{> BasePrompt}}\nAdditional child content",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        resolved = child.resolve_content({"BasePrompt": parent, "child-1": child})
+        assert "Base content with {{var}}" in resolved
+        assert "Additional child content" in resolved
+        assert "{{>" not in resolved  # Include directive should be replaced
+
+    def test_resolve_content_replaces_multiple_includes(self) -> None:
+        """Should replace multiple {{> template}} directives."""
+        header = PromptTemplate(
+            id="header-1",
+            name="Header",
+            content="# System Header\nYou are a helpful assistant.",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        footer = PromptTemplate(
+            id="footer-1",
+            name="Footer",
+            content="# System Footer\nEnd of conversation.",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="Combined",
+            content="{{> Header}}\n\nMiddle content\n\n{{> Footer}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        resolved = child.resolve_content({
+            "Header": header,
+            "Footer": footer,
+            "child-1": child,
+        })
+
+        assert "# System Header" in resolved
+        assert "You are a helpful assistant" in resolved
+        assert "Middle content" in resolved
+        assert "# System Footer" in resolved
+        assert "End of conversation" in resolved
+
+    def test_resolve_content_by_id(self) -> None:
+        """Should find parent template by ID."""
+        parent = PromptTemplate(
+            id="parent-id-123",
+            name="BasePrompt",
+            content="Parent content",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="ChildPrompt",
+            content="{{> parent-id-123}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        resolved = child.resolve_content({
+            "parent-id-123": parent,
+            "child-1": child,
+        })
+
+        assert "Parent content" in resolved
+
+    def test_resolve_content_missing_parent_raises_error(self) -> None:
+        """Should raise error when parent template not found."""
+        child = PromptTemplate(
+            id="child-1",
+            name="ChildPrompt",
+            content="{{> nonexistent}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        with pytest.raises(ValueError, match="Parent template 'nonexistent' not found"):
+            child.resolve_content({"child-1": child})
+
+    def test_resolve_content_detects_circular_reference(self) -> None:
+        """Should detect circular references in includes."""
+        template_a = PromptTemplate(
+            id="a-1",
+            name="TemplateA",
+            content="{{> TemplateB}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        template_b = PromptTemplate(
+            id="b-1",
+            name="TemplateB",
+            content="{{> TemplateA}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        with pytest.raises(ValueError, match="Circular reference detected"):
+            template_a.resolve_content({
+                "TemplateA": template_a,
+                "TemplateB": template_b,
+            })
+
+    def test_resolve_variables_merges_parent_variables(self) -> None:
+        """Should merge variables from parent templates."""
+        parent = PromptTemplate(
+            id="parent-1",
+            name="BasePrompt",
+            content="Base {{parent_var}}",
+            variables=(
+                VariableDefinition(name="parent_var", type=VariableType.STRING),
+                VariableDefinition(name="shared_var", type=VariableType.STRING),
+            ),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="ChildPrompt",
+            content="Child {{child_var}} and {{shared_var}}",
+            variables=(
+                VariableDefinition(name="child_var", type=VariableType.STRING),
+                VariableDefinition(name="shared_var", type=VariableType.STRING),  # Override
+            ),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("BasePrompt",),
+        )
+
+        resolved = child.resolve_variables({"BasePrompt": parent, "child-1": child})
+
+        var_names = [v.name for v in resolved]
+        assert "parent_var" in var_names  # From parent
+        assert "child_var" in var_names  # From child
+        # shared_var should appear once (child overrides parent)
+        assert var_names.count("shared_var") == 1
+
+    def test_resolve_variables_child_overrides_parent(self) -> None:
+        """Should allow child to override parent variables."""
+        parent_var = VariableDefinition(
+            name="context",
+            type=VariableType.STRING,
+            description="Parent context",
+            required=True,
+        )
+
+        child_var = VariableDefinition(
+            name="context",
+            type=VariableType.STRING,
+            description="Child context (overrides parent)",
+            required=False,
+            default_value="default context",
+        )
+
+        parent = PromptTemplate(
+            id="parent-1",
+            name="BasePrompt",
+            content="Base {{context}}",
+            variables=(parent_var,),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="ChildPrompt",
+            content="Child {{context}}",
+            variables=(child_var,),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("BasePrompt",),
+        )
+
+        resolved = child.resolve_variables({"BasePrompt": parent, "child-1": child})
+
+        # Should have only one context variable (child's version)
+        context_vars = [v for v in resolved if v.name == "context"]
+        assert len(context_vars) == 1
+        assert context_vars[0].required is False  # Child's version
+        assert context_vars[0].default_value == "default context"
+
+    def test_resolve_variables_multiple_parents(self) -> None:
+        """Should merge variables from multiple parent templates."""
+        parent_a = PromptTemplate(
+            id="parent-a",
+            name="ParentA",
+            content="A {{var_a}}",
+            variables=(
+                VariableDefinition(name="var_a", type=VariableType.STRING),
+                VariableDefinition(name="shared", type=VariableType.STRING),
+            ),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        parent_b = PromptTemplate(
+            id="parent-b",
+            name="ParentB",
+            content="B {{var_b}}",
+            variables=(
+                VariableDefinition(name="var_b", type=VariableType.STRING),
+                VariableDefinition(name="shared", type=VariableType.STRING),
+            ),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="Child",
+            content="Child {{var_c}}",
+            variables=(VariableDefinition(name="var_c", type=VariableType.STRING),),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("ParentA", "ParentB"),
+        )
+
+        resolved = child.resolve_variables({
+            "ParentA": parent_a,
+            "ParentB": parent_b,
+            "child-1": child,
+        })
+
+        var_names = [v.name for v in resolved]
+        assert "var_a" in var_names  # From ParentA
+        assert "var_b" in var_names  # From ParentB
+        assert "var_c" in var_names  # From child
+        assert "shared" in var_names  # From parents (first occurrence kept)
+
+    def test_render_with_inheritance_simple(self) -> None:
+        """Should render template with inheritance."""
+        parent = PromptTemplate(
+            id="parent-1",
+            name="BasePrompt",
+            content="Hello {{name}}, welcome to {{place}}.",
+            variables=(
+                VariableDefinition(name="name", type=VariableType.STRING),
+                VariableDefinition(name="place", type=VariableType.STRING),
+            ),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="Greeting",
+            content="{{> BasePrompt}}\nHave a great day!",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        result = child.render_with_inheritance(
+            variables={"name": "Alice", "place": "Wonderland"},
+            parent_templates={"BasePrompt": parent, "Greeting": child},
+        )
+
+        assert "Hello Alice, welcome to Wonderland." in result
+        assert "Have a great day!" in result
+
+    def test_render_with_inheritance_variable_override(self) -> None:
+        """Should render with child variables overriding parent."""
+        parent = PromptTemplate(
+            id="parent-1",
+            name="BasePrompt",
+            content="Tone: {{tone}}\nContent: {{content}}",
+            variables=(
+                VariableDefinition(
+                    name="tone",
+                    type=VariableType.STRING,
+                    default_value="neutral",
+                ),
+                VariableDefinition(name="content", type=VariableType.STRING),
+            ),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        # Child overrides tone to have different default
+        child = PromptTemplate(
+            id="child-1",
+            name="EnthusiasticPrompt",
+            content="{{> BasePrompt}}",
+            variables=(
+                VariableDefinition(
+                    name="tone",
+                    type=VariableType.STRING,
+                    default_value="enthusiastic",
+                    required=False,
+                ),
+            ),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        result = child.render_with_inheritance(
+            variables={"content": "Great news!"},
+            parent_templates={"BasePrompt": parent, "EnthusiasticPrompt": child},
+            strict=False,
+        )
+
+        assert "Tone: enthusiastic" in result  # Child's default used
+        assert "Content: Great news!" in result
+
+    def test_render_with_inheritance_composition(self) -> None:
+        """Should compose multiple parent templates."""
+        header = PromptTemplate(
+            id="header-1",
+            name="Header",
+            content="=== {{title}} ===",
+            variables=(VariableDefinition(name="title", type=VariableType.STRING),),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        body = PromptTemplate(
+            id="body-1",
+            name="Body",
+            content="By {{author}}:\n{{text}}",
+            variables=(
+                VariableDefinition(name="author", type=VariableType.STRING),
+                VariableDefinition(name="text", type=VariableType.STRING),
+            ),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="Document",
+            content="{{> Header}}\n\n{{> Body}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        result = child.render_with_inheritance(
+            variables={
+                "title": "My Story",
+                "author": "Alice",
+                "text": "Once upon a time...",
+            },
+            parent_templates={
+                "Header": header,
+                "Body": body,
+                "Document": child,
+            },
+        )
+
+        assert "=== My Story ===" in result
+        assert "By Alice:" in result
+        assert "Once upon a time..." in result
+
+    def test_to_dict_includes_extends(self) -> None:
+        """Should serialize extends field to dict."""
+        template = PromptTemplate(
+            id="test-1",
+            name="Child",
+            content="{{> parent}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("parent_a", "parent_b"),
+        )
+
+        data = template.to_dict()
+        assert "extends" in data
+        assert data["extends"] == ["parent_a", "parent_b"]
+
+    def test_from_dict_loads_extends(self) -> None:
+        """Should load extends field from dict."""
+        data = {
+            "id": "test-1",
+            "name": "Child",
+            "content": "{{> parent}}",
+            "variables": [],
+            "model_config": {
+                "provider": "openai",
+                "model_name": "gpt-4",
+            },
+            "extends": ["parent_a", "parent_b"],
+            "created_at": "2024-01-01T00:00:00+00:00",
+            "updated_at": "2024-01-01T00:00:00+00:00",
+        }
+
+        template = PromptTemplate.from_dict(data)
+        assert template.extends == ("parent_a", "parent_b")
+
+    def test_create_version_diff_includes_extends(self) -> None:
+        """Should include extends_changed in version diff."""
+        template = PromptTemplate(
+            id="test-1",
+            name="Child",
+            content="{{> parent}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("parent_a",),
+        )
+
+        diff = template.create_version_diff(extends=("parent_a", "parent_b"))
+        assert diff["extends_changed"] is True
+
+    def test_create_new_version_preserves_extends(self) -> None:
+        """Should preserve extends when creating new version."""
+        v1 = PromptTemplate(
+            id="v1",
+            name="Child",
+            content="Original {{> parent}}",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("parent_a", "parent_b"),
+        )
+
+        v2 = v1.create_new_version(content="Updated {{> parent}}")
+
+        assert v2.extends == ("parent_a", "parent_b")
+        assert v2.version == 2
+        assert v2.parent_version_id == "v1"
+

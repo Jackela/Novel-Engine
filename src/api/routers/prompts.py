@@ -297,6 +297,7 @@ async def create_prompt(
             content=payload.content,
             variables=variables,
             model_config=model_config,
+            extends=tuple(payload.extends or []),
             tags=tuple(payload.tags or []),
             description=payload.description or "",
         )
@@ -427,6 +428,7 @@ async def update_prompt(
             if payload.description is not None
             else None,
             tags=tuple(payload.tags) if payload.tags is not None else None,
+            extends=tuple(payload.extends) if payload.extends is not None else None,
         )
 
         new_id = await service.save_prompt(new_template)

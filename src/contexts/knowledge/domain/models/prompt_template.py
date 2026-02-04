@@ -251,6 +251,7 @@ class PromptTemplate:
         content: The template content with {{variable}} placeholders
         variables: List of variable definitions for this template
         model_config: Model configuration for using this template
+        extends: Template IDs this template extends (inheritance/composition)
         version: Version number of this template
         parent_version_id: ID of the parent version (for version history)
         tags: Tags for categorizing and filtering templates
@@ -261,9 +262,10 @@ class PromptTemplate:
     Invariants:
         - id must be non-empty
         - name must be non-empty
-        - content must be non-empty
+        - content must be non-empty (after processing includes)
         - All {{variables}} in content must have corresponding definitions
         - All variable definitions must have matching {{variables}} in content (if required)
+        - extends cannot contain self-reference (circular inheritance is detected at resolution time)
     """
 
     id: str
@@ -271,6 +273,7 @@ class PromptTemplate:
     content: str
     variables: tuple[VariableDefinition, ...]
     model_config: ModelConfig
+    extends: tuple[str, ...] = ()
     version: int = 1
     parent_version_id: Optional[str] = None
     tags: tuple[str, ...] = ()
@@ -280,6 +283,10 @@ class PromptTemplate:
 
     # Pattern for matching {{variable}} placeholders
     _VARIABLE_PATTERN = re.compile(r"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}")
+
+    # Pattern for matching {{> prompt_name}} include directives
+    # Supports: names, IDs with dashes, underscores, and alphanumeric chars
+    _INCLUDE_PATTERN = re.compile(r"\{\{>\s*([a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}")
 
     def __post_init__(self) -> None:
         """Validate template invariants."""
@@ -311,12 +318,24 @@ class PromptTemplate:
         if isinstance(self.tags, list):
             object.__setattr__(self, "tags", tuple(self.tags))
 
-        # Validate content against variables
+        # Ensure extends is a tuple (immutable)
+        if isinstance(self.extends, list):  # type: ignore[unreachable]
+            object.__setattr__(self, "extends", tuple(self.extends))
+
+        # Check for self-reference in extends
+        if self.id in self.extends:
+            raise ValueError(f"PromptTemplate '{self.name}' cannot extend itself")
+
+        # Validate content against variables (include directives are allowed)
         self._validate_template()
 
     def _validate_template(self) -> None:
         """
         Validate that the template content is well-formed.
+
+        Note: Include directives {{> prompt_name}} are allowed and will be
+        resolved during rendering. Variables from parent templates should be
+        defined or will be treated as coming from the parent.
 
         Raises:
             ValueError: If template has syntax errors or mismatched variables
@@ -324,16 +343,25 @@ class PromptTemplate:
         # Find all {{variable}} placeholders in content
         content_vars = set(self._VARIABLE_PATTERN.findall(self.content))
 
+        # Find all {{> prompt_name}} include directives
+        included_templates = set(self._INCLUDE_PATTERN.findall(self.content))
+
         # Get defined variable names
         defined_vars = {v.name for v in self.variables}
 
-        # Check for undefined variables in content
-        undefined_vars = content_vars - defined_vars
-        if undefined_vars:
-            raise ValueError(
-                f"Template contains undefined variables: {', '.join(sorted(undefined_vars))}. "
-                f"Define them in the variables list."
-            )
+        # Variables that come from included templates are allowed
+        # We only validate variables that are NOT in included templates
+        # For now, we allow undefined variables if there are includes
+        # Full validation happens during rendering with parent templates
+
+        if not included_templates:
+            # No includes - strict validation
+            undefined_vars = content_vars - defined_vars
+            if undefined_vars:
+                raise ValueError(
+                    f"Template contains undefined variables: {', '.join(sorted(undefined_vars))}. "
+                    f"Define them in the variables list."
+                )
 
         # Check for required variables not used in content (warning only)
         unused_required_vars = defined_vars - content_vars
@@ -477,6 +505,7 @@ class PromptTemplate:
         name: str | None = None,
         description: str | None = None,
         tags: tuple[str, ...] | None = None,
+        extends: tuple[str, ...] | None = None,
     ) -> PromptTemplate:
         """
         Create a new version of this template.
@@ -488,6 +517,7 @@ class PromptTemplate:
             name: New name (keeps current if None)
             description: New description (keeps current if None)
             tags: New tags (keeps current if None)
+            extends: New extends (keeps current if None)
 
         Returns:
             New PromptTemplate with incremented version
@@ -498,43 +528,12 @@ class PromptTemplate:
             content=content if content is not None else self.content,
             variables=variables if variables is not None else self.variables,
             model_config=model_config if model_config is not None else self.model_config,
+            extends=extends if extends is not None else self.extends,
             version=self.version + 1,
             parent_version_id=self.id,
             tags=tags if tags is not None else self.tags,
             description=description if description is not None else self.description,
         )
-
-    def create_version_diff(
-        self,
-        content: str | None = None,
-        variables: tuple[VariableDefinition, ...] | None = None,
-        model_config: ModelConfig | None = None,
-        name: str | None = None,
-        description: str | None = None,
-        tags: tuple[str, ...] | None = None,
-    ) -> dict[str, bool]:
-        """
-        Create a diff of changes from the current template.
-
-        Args:
-            content: New content (None means no change)
-            variables: New variables (None means no change)
-            model_config: New model config (None means no change)
-            name: New name (None means no change)
-            description: New description (None means no change)
-            tags: New tags (None means no change)
-
-        Returns:
-            Dictionary with boolean flags for each change type
-        """
-        return {
-            "content_changed": content is not None and content != self.content,
-            "variables_changed": variables is not None and variables != self.variables,
-            "model_config_changed": model_config is not None and model_config != self.model_config,
-            "name_changed": name is not None and name != self.name,
-            "description_changed": description is not None and description != self.description,
-            "tags_changed": tags is not None and tags != self.tags,
-        }
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -568,6 +567,7 @@ class PromptTemplate:
                 "supports_functions": self.model_config.supports_functions,
                 "extra": self.model_config.extra,
             },
+            "extends": list(self.extends),
             "version": self.version,
             "parent_version_id": self.parent_version_id,
             "tags": list(self.tags),
@@ -615,12 +615,16 @@ class PromptTemplate:
         tags_data = data.get("tags", [])
         tags = tuple(tags_data) if isinstance(tags_data, list) else ()
 
+        extends_data = data.get("extends", [])
+        extends = tuple(extends_data) if isinstance(extends_data, list) else ()
+
         return cls(
             id=data["id"],
             name=data["name"],
             content=data["content"],
             variables=variables,
             model_config=model_config,
+            extends=extends,
             version=data.get("version", 1),
             parent_version_id=data.get("parent_version_id"),
             tags=tags,
@@ -699,6 +703,226 @@ class PromptTemplate:
             tags=tags,
             description=description,
         )
+
+    def get_includes(self) -> set[str]:
+        """
+        Extract all template names referenced in {{> prompt_name}} directives.
+
+        Returns:
+            Set of template names that this template includes
+        """
+        return set(self._INCLUDE_PATTERN.findall(self.content))
+
+    def resolve_content(
+        self,
+        parent_templates: dict[str, PromptTemplate],
+        visited: set[str] | None = None,
+    ) -> str:
+        """
+        Resolve all {{> prompt_name}} include directives by replacing them
+        with parent template content.
+
+        Args:
+            parent_templates: Dictionary mapping template names/IDs to PromptTemplate objects
+            visited: Set of already visited template IDs (for circular reference detection)
+
+        Returns:
+            Resolved content with all includes replaced
+
+        Raises:
+            ValueError: If circular reference is detected or parent template not found
+        """
+        if visited is None:
+            visited = set()
+
+        if self.id in visited:
+            raise ValueError(
+                f"Circular reference detected: template '{self.name}' (id: {self.id}) "
+                f"is referenced multiple times in the inheritance chain"
+            )
+
+        visited.add(self.id)
+        result = self.content
+
+        # Process includes in order of appearance
+        for include_name in self.get_includes():
+            # Find parent by name or ID
+            parent = None
+            for template in parent_templates.values():
+                if template.name == include_name or template.id == include_name:
+                    parent = template
+                    break
+
+            if parent is None:
+                raise ValueError(
+                    f"Parent template '{include_name}' not found. "
+                    f"Available templates: {list(parent_templates.keys())}"
+                )
+
+            # Recursively resolve parent content
+            parent_content = parent.resolve_content(parent_templates, visited.copy())
+
+            # Replace the include directive with parent content
+            include_pattern = re.compile(rf"\{{{{>\s*{re.escape(include_name)}\s*\}}}}")
+            result = include_pattern.sub(parent_content, result)
+
+        return result
+
+    def resolve_variables(
+        self,
+        parent_templates: dict[str, PromptTemplate],
+    ) -> tuple[VariableDefinition, ...]:
+        """
+        Resolve all variables by merging with parent template variables.
+
+        Child variables override parent variables with the same name.
+        Variables from all parents (both extends and {{> includes}}) are merged.
+
+        Args:
+            parent_templates: Dictionary mapping template names/IDs to PromptTemplate objects
+
+        Returns:
+            Tuple of combined variable definitions
+
+        Raises:
+            ValueError: If parent template not found
+        """
+        # Start with parent variables (in order of extends and includes)
+        parent_vars: list[VariableDefinition] = []
+        child_names = {v.name for v in self.variables}
+
+        # Track visited templates to avoid duplicates
+        seen_parents: set[str] = set()
+
+        # Process both extends and {{> includes}}
+        parent_refs = list(self.extends) + list(self.get_includes())
+
+        for parent_ref in parent_refs:
+            # Find parent by name or ID
+            parent = None
+            for template in parent_templates.values():
+                if template.name == parent_ref or template.id == parent_ref:
+                    parent = template
+                    break
+
+            if parent is None:
+                raise ValueError(
+                    f"Parent template '{parent_ref}' not found. "
+                    f"Available templates: {list(parent_templates.keys())}"
+                )
+
+            if parent.id in seen_parents:
+                continue  # Already processed this parent
+            seen_parents.add(parent.id)
+
+            # Recursively get parent's variables
+            for var_def in parent.variables:
+                # Only include if not overridden by child
+                if var_def.name not in child_names:
+                    parent_vars.append(var_def)
+
+        # Add child variables (they override parents)
+        return tuple(parent_vars) + self.variables
+
+    def render_with_inheritance(
+        self,
+        variables: dict[str, Any],
+        parent_templates: dict[str, PromptTemplate],
+        strict: bool = True,
+    ) -> str:
+        """
+        Render the template with inheritance support.
+
+        Resolves {{> prompt_name}} includes and merges variables from parent templates.
+
+        Args:
+            variables: Dictionary of variable names to values
+            parent_templates: Dictionary mapping template names/IDs to PromptTemplate objects
+            strict: If True, raise error for missing required variables
+
+        Returns:
+            Rendered template string with variables substituted
+
+        Raises:
+            ValueError: If circular reference detected, parent not found, or validation fails
+        """
+        # Resolve content with includes
+        resolved_content = self.resolve_content(parent_templates)
+
+        # Resolve variables with inheritance
+        resolved_vars = self.resolve_variables(parent_templates)
+
+        # Directly render using resolved content and variables
+        # This bypasses PromptTemplate validation since we've already merged
+        rendered_vars: dict[str, Any] = {}
+
+        for var_def in resolved_vars:
+            if var_def.name in variables:
+                try:
+                    rendered_vars[var_def.name] = var_def.coerce_value(
+                        variables[var_def.name]
+                    )
+                except ValueError as e:
+                    raise ValueError(
+                        f"Failed to coerce value for variable '{var_def.name}': {e}"
+                    )
+            elif var_def.required:
+                if strict:
+                    raise ValueError(
+                        f"Required variable '{var_def.name}' not provided. "
+                        f"Description: {var_def.description}"
+                    )
+                # Use default value
+                rendered_vars[var_def.name] = var_def.default_value
+            else:
+                # Optional variable, use default
+                rendered_vars[var_def.name] = var_def.default_value
+
+        # Perform substitution
+        result = resolved_content
+
+        for var_name, var_value in rendered_vars.items():
+            placeholder = f"{{{{{var_name}}}}}"
+            # Convert value to string for substitution
+            str_value = self._value_to_string(var_value)
+            result = result.replace(placeholder, str_value)
+
+        return result
+
+    def create_version_diff(
+        self,
+        content: str | None = None,
+        variables: tuple[VariableDefinition, ...] | None = None,
+        model_config: ModelConfig | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        tags: tuple[str, ...] | None = None,
+        extends: tuple[str, ...] | None = None,
+    ) -> dict[str, bool]:
+        """
+        Create a diff of changes from the current template.
+
+        Args:
+            content: New content (None means no change)
+            variables: New variables (None means no change)
+            model_config: New model config (None means no change)
+            name: New name (None means no change)
+            description: New description (None means no change)
+            tags: New tags (None means no change)
+            extends: New extends (None means no change)
+
+        Returns:
+            Dictionary with boolean flags for each change type
+        """
+        return {
+            "content_changed": content is not None and content != self.content,
+            "variables_changed": variables is not None and variables != self.variables,
+            "model_config_changed": model_config is not None and model_config != self.model_config,
+            "name_changed": name is not None and name != self.name,
+            "description_changed": description is not None and description != self.description,
+            "tags_changed": tags is not None and tags != self.tags,
+            "extends_changed": extends is not None and extends != self.extends,
+        }
 
 
 __all__ = [
