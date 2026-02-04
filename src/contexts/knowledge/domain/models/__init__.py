@@ -15,6 +15,12 @@ from .chunking_strategy import (
 )
 from .knowledge_entry import KnowledgeEntry
 from .knowledge_type import KnowledgeType
+from .prompt_template import (
+    ModelConfig,
+    PromptTemplate,
+    VariableDefinition,
+    VariableType,
+)
 from .source_knowledge_entry import SourceKnowledgeEntry, SourceMetadata
 from .source_type import SourceType
 
@@ -32,7 +38,11 @@ __all__ = [
     "MIN_CHUNK_SIZE",
     "KnowledgeEntry",
     "KnowledgeType",
+    "ModelConfig",
+    "PromptTemplate",
     "SourceKnowledgeEntry",
     "SourceMetadata",
     "SourceType",
+    "VariableDefinition",
+    "VariableType",
 ]
