@@ -713,7 +713,7 @@
         "Test: Adapter initialization"
       ],
       "priority": 40,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-023"
@@ -729,7 +729,7 @@
         "Test: Generate text using Gemini Pro"
       ],
       "priority": 41,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-025A"

@@ -1286,4 +1286,31 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 
 ---
 
+## [2025-02-04] - BRAIN-025A & BRAIN-025B ✅
+- Enhanced GeminiLLMClient with full Gemini API support (v1beta endpoint)
+- Added ChatMessage class for multi-turn conversation support
+- Implemented chat_history parameter in generate() method for context-aware conversations
+- Added GEMINI_MODELS dict with 7 supported models (2.5 Pro/Flash, 2.0 Flash/Thinking, 1.5 Pro/Flash/8B)
+- Upgraded from requests library to httpx.AsyncClient for proper async support
+- Added token counting via usageMetadata (promptTokenCount + candidatesTokenCount)
+- Added systemInstruction support (separate from user messages in Gemini API)
+- Implemented _format_http_error() for user-friendly error messages
+- Created comprehensive test suite with 33 tests covering all functionality
+- All 33 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/infrastructure/adapters/gemini_llm_client.py`: Major enhancement (400+ lines) with ChatMessage class, updated generate() method, async _make_request(), updated _extract_response_text()
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_gemini_llm_client.py`: New test file (550+ lines) with 33 comprehensive tests
+
+**Learnings for future iterations:**
+- Gemini API uses v1beta for latest models with :generateContent endpoint suffix
+- Gemini's chat format: contents array with role ("user"/"model") and parts array with text
+- System instructions go in separate "systemInstruction" field, not in contents array
+- When mixing sync/async code in tests, use asyncio.run() outside async context or ThreadPoolExecutor inside
+- The generate() method is synchronous but wraps async internally - this pattern allows use from sync code while still using async httpx internally
+- Token counting from Gemini: promptTokenCount + candidatesTokenCount = totalTokenCount
+- Usage metadata is optional in Gemini responses - always check for None before accessing
+- The mock pattern for httpx.AsyncClient: AsyncMock with __aenter__ returning mock client with post returning mock response
+
+---
+
 

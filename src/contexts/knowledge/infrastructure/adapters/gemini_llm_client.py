@@ -8,7 +8,7 @@ Constitution Compliance:
 - Article II (Hexagonal): Infrastructure adapter implementing application port
 - Article V (SOLID): SRP - Gemini API interaction only
 
-Warzone 4: AI Brain - BRAIN-009A
+Warzone 4: AI Brain - BRAIN-009A, BRAIN-025A
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-import requests
+import httpx
 import structlog
 
 from ...application.ports.i_llm_client import LLMRequest, LLMResponse, LLMError
@@ -28,9 +28,53 @@ logger = structlog.get_logger()
 
 
 # Default model configuration
-DEFAULT_MODEL = "gemini-2.0-flash"
+DEFAULT_MODEL = "gemini-2.0-flash-exp"
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_MAX_TOKENS = 1000
+
+# Supported Gemini models
+GEMINI_MODELS = {
+    "gemini-2.5-pro": "Gemini 2.5 Pro",
+    "gemini-2.5-flash": "Gemini 2.5 Flash",
+    "gemini-2.0-flash-exp": "Gemini 2.0 Flash Experimental",
+    "gemini-2.0-flash-thinking-exp": "Gemini 2.0 Flash Thinking Experimental",
+    "gemini-1.5-pro": "Gemini 1.5 Pro",
+    "gemini-1.5-flash": "Gemini 1.5 Flash",
+    "gemini-1.5-flash-8b": "Gemini 1.5 Flash (8B)",
+}
+
+
+class ChatMessage:
+    """
+    A chat message in Gemini's format.
+
+    Gemini uses a specific chat history format with role and content.
+    Valid roles are "user" and "model".
+
+    Attributes:
+        role: Message role ("user" or "model")
+        content: Text content of the message
+    """
+
+    def __init__(self, role: str, content: str):
+        """
+        Initialize a chat message.
+
+        Args:
+            role: Message role ("user" or "model")
+            content: Text content of the message
+
+        Raises:
+            ValueError: If role is not "user" or "model"
+        """
+        if role not in ("user", "model"):
+            raise ValueError(f"Role must be 'user' or 'model', got '{role}'")
+        self.role = role
+        self.content = content
+
+    def to_dict(self) -> dict:
+        """Convert to Gemini API format."""
+        return {"role": self.role, "parts": [{"text": self.content}]}
 
 
 class GeminiLLMClient:
@@ -43,21 +87,40 @@ class GeminiLLMClient:
 
     Configuration via environment variables:
         - GEMINI_API_KEY: Required API authentication key
-        - GEMINI_MODEL: Model name (default: gemini-2.0-flash)
+        - GEMINI_MODEL: Model name (default: gemini-2.0-flash-exp)
+
+    Supported models:
+        - gemini-2.5-pro: Latest Pro model
+        - gemini-2.5-flash: Latest Flash model
+        - gemini-2.0-flash-exp: Experimental Flash
+        - gemini-1.5-pro: Previous generation Pro
+        - gemini-1.5-flash: Previous generation Flash
 
     Attributes:
         _model: Gemini model identifier
         _api_key: Gemini API authentication key
         _base_url: Gemini API endpoint URL
+        _timeout: HTTP request timeout in seconds
 
-    Example:
-        >>> client = GeminiLLMClient(model="gemini-2.0-flash")
+    Example (single turn):
+        >>> client = GeminiLLMClient(model="gemini-2.5-pro")
         >>> request = LLMRequest(
         ...     system_prompt="Rewrite queries for better search.",
         ...     user_prompt="protagonist motivation"
         ... )
         >>> response = await client.generate(request)
         >>> print(response.text)
+
+    Example (multi-turn with chat history):
+        >>> history = [
+        ...     ChatMessage("user", "What is the capital of France?"),
+        ...     ChatMessage("model", "The capital of France is Paris."),
+        ... ]
+        >>> request = LLMRequest(
+        ...     system_prompt="You are helpful.",
+        ...     user_prompt="And what's the population?",
+        ... )
+        >>> response = await client.generate(request, chat_history=history)
     """
 
     def __init__(
@@ -65,37 +128,51 @@ class GeminiLLMClient:
         model: str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
+        timeout: int = 60,
     ):
         """
         Initialize the Gemini LLM client.
 
         Args:
-            model: Gemini model name (defaults to GEMINI_MODEL env var or gemini-2.0-flash)
+            model: Gemini model name (defaults to GEMINI_MODEL env var or gemini-2.0-flash-exp)
             api_key: Gemini API key (defaults to GEMINI_API_KEY env var)
             base_url: Custom API base URL (for testing/proxies)
+            timeout: HTTP request timeout in seconds (default: 60)
 
         Raises:
             ValueError: If API key is not provided and not in environment
         """
         self._model = model or os.getenv("GEMINI_MODEL", DEFAULT_MODEL)
         self._api_key = api_key or os.getenv("GEMINI_API_KEY", "")
+        self._timeout = timeout
 
         if not self._api_key:
             raise ValueError(
                 "GEMINI_API_KEY environment variable or api_key parameter is required"
             )
 
-        self._base_url = base_url or (
-            f"https://generativelanguage.googleapis.com/v1/models/"
-            f"{self._model}:generateContent"
-        )
+        # Build base URL for the specific model
+        # Gemini API format: https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent
+        if base_url:
+            self._base_url = base_url
+        else:
+            # Use v1beta for latest models
+            self._base_url = (
+                f"https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{self._model}:generateContent"
+            )
 
-    async def generate(self, request: LLMRequest) -> LLMResponse:
+    def generate(
+        self,
+        request: LLMRequest,
+        chat_history: list[ChatMessage] | None = None,
+    ) -> LLMResponse:
         """
         Generate text using the Gemini API.
 
         Args:
             request: LLMRequest with system/user prompts and parameters
+            chat_history: Optional list of ChatMessage for multi-turn conversations
 
         Returns:
             LLMResponse with generated text and metadata
@@ -113,66 +190,121 @@ class GeminiLLMClient:
             ... )
             >>> print(response.text)
         """
-        log = logger.bind(model=self._model, temperature=request.temperature)
+        import asyncio
 
-        # Combine system and user prompts
-        combined_prompt = self._build_combined_prompt(request)
+        async def _generate_async() -> LLMResponse:
+            log = logger.bind(model=self._model, temperature=request.temperature)
 
-        # Build request body
-        request_body = {
-            "contents": [{"parts": [{"text": combined_prompt}]}],
-            "generationConfig": {
-                "temperature": request.temperature,
-                "maxOutputTokens": request.max_tokens,
-            },
-        }
+            # Build contents array with chat history
+            contents = self._build_contents(request, chat_history)
 
-        log.debug(
-            "gemini_generate_start",
-            prompt_length=len(combined_prompt),
-        )
+            # Build request body
+            request_body = {
+                "contents": contents,
+                "generationConfig": {
+                    "temperature": request.temperature,
+                    "maxOutputTokens": request.max_tokens,
+                },
+            }
 
-        try:
-            response = await self._make_request(request_body)
-            text = self._extract_response_text(response)
+            # Add system instruction if provided (Gemini API supports this)
+            if request.system_prompt:
+                request_body["systemInstruction"] = {
+                    "parts": [{"text": request.system_prompt}]
+                }
 
             log.debug(
-                "gemini_generate_complete",
-                response_length=len(text),
+                "gemini_generate_start",
+                prompt_length=len(request.user_prompt),
+                has_system_prompt=bool(request.system_prompt),
+                chat_history_length=len(chat_history) if chat_history else 0,
             )
 
-            return LLMResponse(
-                text=text,
-                model=self._model,
-                tokens_used=None,  # Gemini doesn't return token count in basic API
-            )
+            try:
+                response = await self._make_request(request_body)
+                text, usage = self._extract_response_text(response)
 
-        except requests.RequestException as e:
-            log.error("gemini_request_failed", error=str(e))
-            raise LLMError(f"Gemini API request failed: {e}") from e
-        except (KeyError, IndexError, TypeError) as e:
-            log.error("gemini_response_parse_failed", error=str(e))
-            raise LLMError(f"Failed to parse Gemini response: {e}") from e
+                log.debug(
+                    "gemini_generate_complete",
+                    response_length=len(text),
+                    usage=usage,
+                )
 
-    def _build_combined_prompt(self, request: LLMRequest) -> str:
+                tokens_used = None
+                if usage:
+                    tokens_used = (
+                        usage.get("promptTokenCount", 0) + usage.get("candidatesTokenCount", 0)
+                    ) or None
+
+                return LLMResponse(
+                    text=text,
+                    model=str(self._model),
+                    tokens_used=tokens_used,
+                )
+
+            except httpx.HTTPStatusError as e:
+                log.error(
+                    "gemini_http_error",
+                    status_code=e.response.status_code,
+                    error=str(e),
+                )
+                error_message = self._format_http_error(e)
+                raise LLMError(error_message) from e
+            except httpx.RequestError as e:
+                log.error("gemini_request_failed", error=str(e))
+                raise LLMError(f"Gemini API request failed: {e}") from e
+            except (KeyError, IndexError, TypeError) as e:
+                log.error("gemini_response_parse_failed", error=str(e))
+                raise LLMError(f"Failed to parse Gemini response: {e}") from e
+
+        try:
+            # Try to get the running event loop
+            asyncio.get_running_loop()
+            # If we're in an async context (running loop exists), we need to run differently
+            import concurrent.futures
+
+            # Create a thread to run the async function
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(
+                    asyncio.run,
+                    _generate_async(),
+                )
+                return future.result()
+        except RuntimeError:
+            # No running event loop, use asyncio.run() directly
+            return asyncio.run(_generate_async())
+
+    def _build_contents(
+        self,
+        request: LLMRequest,
+        chat_history: list[ChatMessage] | None = None,
+    ) -> list[dict]:
         """
-        Build combined prompt from system and user prompts.
+        Build contents array for Gemini API.
 
-        Gemini doesn't have separate system/user message separation,
-        so we combine them with clear delimiters.
+        Gemini API format uses an array of content objects with role and parts.
 
         Args:
             request: LLMRequest with system and user prompts
+            chat_history: Optional list of previous messages
 
         Returns:
-            Combined prompt string
+            Contents array for Gemini API
         """
-        if request.system_prompt and request.user_prompt:
-            return f"SYSTEM INSTRUCTIONS:\n{request.system_prompt}\n\nUSER REQUEST:\n{request.user_prompt}"
-        elif request.system_prompt:
-            return request.system_prompt
-        else:
-            return request.user_prompt
+        contents = []
+
+        # Add chat history if provided
+        if chat_history:
+            for msg in chat_history:
+                contents.append(msg.to_dict())
+
+        # Add current user message
+        contents.append({
+            "role": "user",
+            "parts": [{"text": request.user_prompt}],
+        })
+
+        return contents
 
     async def _make_request(self, request_body: dict) -> dict:
         """
@@ -185,49 +317,101 @@ class GeminiLLMClient:
             Parsed JSON response
 
         Raises:
-            requests.RequestException: On HTTP errors
+            httpx.HTTPStatusError: On HTTP errors
+            httpx.RequestError: On network/connection errors
             LLMError: On API-specific errors
         """
-        headers = {
+        headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "x-goog-api-key": self._api_key,
+            "x-goog-api-key": self._api_key,  # type: ignore[dict-item]
         }
 
-        # Use synchronous requests for now (can be upgraded to httpx later)
-        response = requests.post(
-            self._base_url,
-            headers=headers,
-            json=request_body,
-            timeout=60,
-        )
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            response = await client.post(
+                self._base_url,
+                headers=headers,
+                json=request_body,
+            )
+            response.raise_for_status()
+            return response.json()  # type: ignore[no-any-return]
 
-        # Handle specific error codes
-        if response.status_code == 401:
-            raise LLMError("Gemini API authentication failed - check GEMINI_API_KEY")
-        elif response.status_code == 429:
-            raise LLMError("Gemini API rate limit exceeded")
-        elif response.status_code != 200:
-            raise LLMError(f"Gemini API error {response.status_code}: {response.text}")
-
-        return response.json()
-
-    def _extract_response_text(self, response_json: dict) -> str:
+    def _format_http_error(self, error: httpx.HTTPStatusError) -> str:
         """
-        Extract text content from Gemini API response.
+        Format HTTP error into a user-friendly message.
+
+        Args:
+            error: HTTPStatusError from the API call
+
+        Returns:
+            User-friendly error message
+        """
+        status = error.response.status_code
+
+        if status == 400:
+            return "Gemini API bad request - check request format"
+        elif status == 401:
+            return "Gemini API authentication failed - check GEMINI_API_KEY"
+        elif status == 403:
+            return "Gemini API permission denied - check API key permissions"
+        elif status == 429:
+            return "Gemini API rate limit exceeded"
+        elif status >= 500:
+            return f"Gemini API server error {status} - please retry"
+        else:
+            return f"Gemini API error {status}: {error.response.text}"
+
+    def _extract_response_text(self, response_json: dict) -> tuple[str, dict | None]:
+        """
+        Extract text content and usage from Gemini API response.
+
+        Gemini response format:
+        {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [{"text": "Generated text here"}]
+                    },
+                    "finishReason": "STOP"
+                }
+            ],
+            "usageMetadata": {
+                "promptTokenCount": 10,
+                "candidatesTokenCount": 20,
+                "totalTokenCount": 30
+            }
+        }
 
         Args:
             response_json: Parsed JSON response from Gemini
 
         Returns:
-            Extracted text content
+            Tuple of (text content, usage dict or None)
 
         Raises:
             LLMError: If response structure is invalid
         """
         try:
-            return response_json["candidates"][0]["content"]["parts"][0]["text"]
-        except (KeyError, IndexError) as e:
-            raise LLMError(f"Invalid Gemini response structure: {e}")
+            # Extract text from candidates
+            candidates = response_json.get("candidates", [])
+            if not candidates:
+                raise LLMError("No candidates in Gemini response")
+
+            content = candidates[0].get("content", {})
+            parts = content.get("parts", [])
+            if not parts:
+                raise LLMError("No parts in candidate content")
+
+            text = parts[0].get("text", "")
+            if not text:
+                raise LLMError("Empty text in Gemini response")
+
+            # Extract usage metadata if available
+            usage = response_json.get("usageMetadata")
+
+            return text, usage
+
+        except (KeyError, IndexError, TypeError) as e:
+            raise LLMError(f"Invalid Gemini response structure: {e}") from e
 
 
 class MockLLMClient:
@@ -326,8 +510,10 @@ class MockLLMClient:
 
 __all__ = [
     "GeminiLLMClient",
+    "ChatMessage",
     "MockLLMClient",
     "DEFAULT_MODEL",
     "DEFAULT_TEMPERATURE",
     "DEFAULT_MAX_TOKENS",
+    "GEMINI_MODELS",
 ]
