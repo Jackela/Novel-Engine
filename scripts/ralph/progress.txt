@@ -1260,3 +1260,30 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 
 ---
 
+## [2025-02-04] - BRAIN-024B ✅
+- Implemented streaming support for ClaudeLLMClient with Server-Sent Events (SSE) parsing
+- Added `generate_stream()` async generator method yielding text chunks as they arrive
+- Streaming handles Claude's SSE format with event types: message_start, content_block_delta, message_stop
+- Added proper error handling for streaming (HTTPStatusError, RequestError)
+- Handles malformed JSON gracefully by logging and continuing
+- Skips empty lines and [DONE] termination markers
+- Updated class docstring to reflect streaming capability
+- Added 5 new streaming tests (test_generate_stream_success, test_generate_stream_handles_empty_lines, test_generate_stream_401_error, test_generate_stream_network_error, test_generate_stream_handles_malformed_json)
+- All 35 unit tests passing (30 original + 5 new for BRAIN-024B)
+- Files changed:
+  - `src/contexts/knowledge/infrastructure/adapters/claude_llm_client.py`: Added generate_stream() method (100+ lines), updated imports and docstring
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_claude_llm_client.py`: Added TestGenerateStream class with 5 tests
+
+**Learnings for future iterations:**
+- Claude's streaming format uses Server-Sent Events (SSE) with "data: " prefix for each line
+- Event types to look for: content_block_delta (contains text), message_stop (termination)
+- Text delta is at event["delta"]["text"] within content_block_delta events
+- For mocking async stream contexts: use AsyncMock with __aenter__/__aexit__ methods, not __aenter__.return_value
+- When using MagicMock().aiter_lines, assign an async function directly (not wrapped)
+- The httpx.AsyncClient.stream() method returns a context manager that yields response with aiter_lines()
+- Empty lines and malformed JSON should be silently skipped in streaming to avoid breaking the flow
+- The "data: [DONE]" marker signals the end of the stream (similar to OpenAI's format)
+
+---
+
+

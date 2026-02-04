@@ -696,7 +696,7 @@
         "Test: Generate text using Claude Sonnet"
       ],
       "priority": 39,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-024A"

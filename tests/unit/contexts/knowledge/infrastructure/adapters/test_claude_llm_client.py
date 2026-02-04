@@ -505,6 +505,201 @@ class TestGenerate:
                 await claude_client.generate(request)
 
 
+class TestGenerateStream:
+    """Tests for the generate_stream method - BRAIN-024B."""
+
+    @pytest.mark.asyncio
+    async def test_generate_stream_success(
+        self,
+        claude_client: ClaudeLLMClient,
+    ) -> None:
+        """Test successful streaming text generation."""
+        request = LLMRequest(
+            system_prompt="You are a test assistant.",
+            user_prompt="Say hello",
+            temperature=0.5,
+            max_tokens=100,
+        )
+
+        # Mock streaming response with SSE events
+        stream_events = [
+            'data: {"type":"message_start","message":{"id":"msg_123","role":"assistant"}}',
+            'data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}',
+            'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}',
+            'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" world"}}',
+            'data: {"type":"content_block_stop","index":0}',
+            'data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":2}}',
+            'data: {"type":"message_stop"}',
+        ]
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = MagicMock()
+
+        # Create an async iterator for the stream
+        async def aiter_lines():
+            for event in stream_events:
+                yield event
+
+        mock_response.aiter_lines = aiter_lines
+
+        # Create a mock stream context manager
+        mock_stream_context = AsyncMock()
+        mock_stream_context.__aenter__.return_value = mock_response
+        mock_stream_context.__aexit__.return_value = None
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client.stream = MagicMock(return_value=mock_stream_context)
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            # Collect all chunks
+            chunks = []
+            async for chunk in claude_client.generate_stream(request):
+                chunks.append(chunk)
+
+            assert chunks == ["Hello", " world"]
+
+    @pytest.mark.asyncio
+    async def test_generate_stream_handles_empty_lines(
+        self,
+        claude_client: ClaudeLLMClient,
+    ) -> None:
+        """Test that streaming handles empty lines gracefully."""
+        request = LLMRequest(
+            system_prompt="",
+            user_prompt="Test",
+        )
+
+        stream_events = [
+            "",
+            'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Response"}}',
+            "data: [DONE]",
+            "",  # Extra empty line at end
+        ]
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = MagicMock()
+
+        async def aiter_lines():
+            for event in stream_events:
+                yield event
+
+        mock_response.aiter_lines = aiter_lines
+
+        mock_stream_context = AsyncMock()
+        mock_stream_context.__aenter__.return_value = mock_response
+        mock_stream_context.__aexit__.return_value = None
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client.stream = MagicMock(return_value=mock_stream_context)
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            chunks = []
+            async for chunk in claude_client.generate_stream(request):
+                chunks.append(chunk)
+
+            assert chunks == ["Response"]
+
+    @pytest.mark.asyncio
+    async def test_generate_stream_401_error(self, claude_client: ClaudeLLMClient) -> None:
+        """Test streaming with 401 authentication error."""
+        request = LLMRequest(system_prompt="", user_prompt="Test")
+
+        from httpx import HTTPStatusError
+
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        mock_response.text = "Unauthorized"
+        error = HTTPStatusError(
+            "Authentication failed",
+            request=MagicMock(),
+            response=mock_response,
+        )
+
+        mock_stream_context = AsyncMock()
+        mock_stream_context.__aenter__.side_effect = error
+        mock_stream_context.__aexit__.return_value = None
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client.stream = MagicMock(return_value=mock_stream_context)
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            with pytest.raises(LLMError, match="authentication failed"):
+                chunks = []
+                async for chunk in claude_client.generate_stream(request):
+                    chunks.append(chunk)
+
+    @pytest.mark.asyncio
+    async def test_generate_stream_network_error(self, claude_client: ClaudeLLMClient) -> None:
+        """Test streaming with network error."""
+        request = LLMRequest(system_prompt="", user_prompt="Test")
+
+        from httpx import RequestError
+
+        error = RequestError("Network connection failed")
+
+        mock_stream_context = AsyncMock()
+        mock_stream_context.__aenter__.side_effect = error
+        mock_stream_context.__aexit__.return_value = None
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client.stream = MagicMock(return_value=mock_stream_context)
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            with pytest.raises(LLMError, match="request failed"):
+                chunks = []
+                async for chunk in claude_client.generate_stream(request):
+                    chunks.append(chunk)
+
+    @pytest.mark.asyncio
+    async def test_generate_stream_handles_malformed_json(
+        self,
+        claude_client: ClaudeLLMClient,
+    ) -> None:
+        """Test that streaming handles malformed JSON gracefully."""
+        request = LLMRequest(
+            system_prompt="",
+            user_prompt="Test",
+        )
+
+        stream_events = [
+            'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Valid"}}',
+            'data: {invalid json here',  # Malformed JSON - should be skipped
+            'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" text"}}',
+        ]
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = MagicMock()
+
+        async def aiter_lines():
+            for event in stream_events:
+                yield event
+
+        mock_response.aiter_lines = aiter_lines
+
+        mock_stream_context = AsyncMock()
+        mock_stream_context.__aenter__.return_value = mock_response
+        mock_stream_context.__aexit__.return_value = None
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client.stream = MagicMock(return_value=mock_stream_context)
+            mock_client_class.return_value.__aenter__.return_value = mock_client
+
+            chunks = []
+            async for chunk in claude_client.generate_stream(request):
+                chunks.append(chunk)
+
+            # Should collect valid chunks and skip malformed JSON
+            assert chunks == ["Valid", " text"]
+
+
 class TestClaudeLLMClientIntegration:
     """Integration-style tests for ClaudeLLMClient."""
 
