@@ -873,3 +873,42 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
   - {{> includes}}: Content composition directives
 - Both need circular reference detection but in different contexts
 - Self-reference is validated in __post_init__ for extends field, but circular chains need runtime detection
+
+## [2025-02-04] - BRAIN-018A ✅
+- Implemented PromptExperiment entity for A/B testing prompt templates
+- Created ExperimentStatus enum (DRAFT, RUNNING, PAUSED, COMPLETED, ARCHIVED)
+- Created ExperimentMetric enum (SUCCESS_RATE, USER_RATING, TOKEN_EFFICIENCY, LATENCY)
+- Created ExperimentMetrics value object with aggregation properties:
+  * success_rate: Percentage of successful generations (0-100)
+  * avg_rating: Average user rating from feedback
+  * avg_tokens_per_run: Average tokens consumed per run
+  * token_efficiency: Tokens per successful generation (lower is better)
+  * avg_latency_ms: Average response time
+- Implemented PromptExperiment entity with full lifecycle:
+  * create(): Factory method for convenient instantiation
+  * assign_variant(): Consistent hashing using SHA-256 for deterministic assignment
+  * record_success()/record_failure(): Track results per variant
+  * start()/pause()/resume()/complete(): Lifecycle management
+  * _detect_winner(): Auto-detect winner based on configured metric
+  * get_results(): Generate experiment results summary with comparison
+- Added serialization support (to_dict/from_dict) for persistence
+- All 53 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/domain/models/prompt_experiment.py`: Complete implementation (650+ lines)
+  - `src/contexts/knowledge/domain/models/__init__.py`: Export new types
+  - `tests/unit/contexts/knowledge/domain/models/test_prompt_experiment.py`: 53 comprehensive tests
+
+**Learnings for future iterations:**
+- Consistent hashing uses SHA-256 on user_id:session_id to ensure same user always gets same variant
+- For proper A/B testing, variant assignment must be deterministic - users should not switch between variants
+- Hash-based assignment distributes users proportionally to traffic_split (e.g., 30/70)
+- ExperimentMetrics validation enforces total_runs == success_count + failure_count for data integrity
+- Token efficiency is a key metric - lower tokens per successful generation is better
+- The winner detection logic varies by metric type:
+  * SUCCESS_RATE: Higher percentage wins
+  * USER_RATING: Higher average wins
+  * TOKEN_EFFICIENCY: Lower value wins (fewer tokens per success)
+  * LATENCY: Lower value wins (faster response)
+- When using TYPE_CHECKING for type hints only, remove the import if the type is never actually referenced
+- Experiment lifecycle prevents invalid state transitions (e.g., can't start a running experiment)
+- min_sample_size ensures statistical significance before declaring winners
