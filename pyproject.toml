@@ -41,6 +41,8 @@ dependencies = [
     "tiktoken>=0.7.0,<1.0.0",  # OpenAI token counter for context window management
     # Warzone 4: AI Brain - Embedding Service (BRAIN-002)
     "openai>=1.0.0,<2.0.0",  # OpenAI API for embeddings (text-embedding-3-small)
+    # Warzone 4: AI Brain - Hybrid Search (BRAIN-008A)
+    "rank-bm25>=0.2.2,<1.0.0",  # BM25 keyword search for hybrid retrieval
 ]
 
 [project.optional-dependencies]

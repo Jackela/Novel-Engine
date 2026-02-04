@@ -34,6 +34,16 @@ from .rag_integration_service import (
     RAGMetrics,
 )
 
+from .bm25_retriever import (
+    BM25Retriever,
+    BM25Result,
+    IndexedDocument,
+    BM25IndexStats,
+    tokenize,
+    DEFAULT_K1,
+    DEFAULT_B,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -59,4 +69,12 @@ __all__ = [
     "DEFAULT_MAX_CHUNKS",
     "DEFAULT_CONTEXT_TOKEN_LIMIT",
     "DEFAULT_ENABLED",
+    # BM25 Retriever
+    "BM25Retriever",
+    "BM25Result",
+    "IndexedDocument",
+    "BM25IndexStats",
+    "tokenize",
+    "DEFAULT_K1",
+    "DEFAULT_B",
 ]
