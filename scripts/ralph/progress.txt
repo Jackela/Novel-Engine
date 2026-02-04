@@ -1363,3 +1363,32 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - For type hints with optional base_url, add None check before calling rstrip() to satisfy mypy
 
 
+---
+
+## [2026-02-04] - BRAIN-028A ✅
+- Implemented ModelRouter service with intelligent model selection and routing logic
+- Created RoutingDecision dataclass for tracking routing decisions with reason, provider, model, fallback_used flags
+- Created RoutingConfig for routing constraints (cost budget, latency, preferred/blocked providers, circuit breaker toggle)
+- Implemented RoutingReason enum: TASK_DEFAULT, COST_BUDGET, LOW_LATENCY, FALLBACK, CIRCUIT_OPEN, CAPABILITY_REQUIRED, UNAVAILABLE, MANUAL_OVERRIDE
+- Created CircuitBreaker class with CLOSED/OPEN/HALF_OPEN states and configurable thresholds
+- Implemented fallback chain: primary model -> fallback providers -> mock model as last resort
+- Added circuit breaker pattern: opens after failure_threshold, transitions to HALF_OPEN after timeout, closes on success_threshold
+- Implemented select_model() for task-based routing with constraint filtering
+- Implemented select_model_by_name() for direct model selection with alias resolution
+- Added record_model_success() and record_model_failure() for circuit breaker state management
+- Implemented routing analytics: get_routing_stats(), list_recent_decisions(), get_circuit_breaker_state()
+- Added reset_circuit_breaker() for manual circuit breaker reset
+- Fixed test async issues: replaced asyncio.create_task() with proper asyncio.run() for sync test contexts
+- All 39 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/application/services/model_router.py`: Complete implementation (900+ lines) with ModelRouter, CircuitBreaker, RoutingDecision, RoutingConfig, and related enums
+  - `tests/unit/contexts/knowledge/application/services/test_model_router.py`: Fixed test async patterns, all 39 tests passing
+
+**Learnings for future iterations:**
+- Use `asyncio.run(coro)` instead of `asyncio.create_task(coro)` in sync test contexts - create_task requires a running event loop
+- The fallback chain includes mock as the ultimate fallback, added after all provider fallbacks
+- Circuit breaker transitions: CLOSED -> OPEN (after failures) -> HALF_OPEN (after timeout) -> CLOSED (on successes) or OPEN (on any failure in HALF_OPEN)
+- Routing decisions are logged with structured logging via to_log_dict() for analytics
+- ModelRouter uses ModelRegistry for model lookups, enabling dependency injection and testability
+- The routing_history is limited to max_history_size (1000) to prevent unbounded memory growth
+

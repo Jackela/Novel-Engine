@@ -815,7 +815,7 @@
         "Test: Verify correct model selection per task type"
       ],
       "priority": 46,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-024B",
