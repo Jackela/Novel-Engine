@@ -984,5 +984,337 @@ class PromptRouterService:
             "updated_at": template.updated_at.isoformat(),
         }
 
+    async def get_prompt_analytics(
+        self,
+        prompt_id: str,
+        period: str = "all",
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        workspace_id: Optional[str] = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        """
+        Get analytics for a prompt template.
+
+        BRAIN-022B: Backend: Prompt Analytics - API
+        Provides usage statistics and metrics over time with period aggregation.
+
+        Args:
+            prompt_id: Prompt template ID
+            period: Time period for aggregation (day, week, month, all)
+            start_date: Optional ISO 8601 start date for filtering
+            end_date: Optional ISO 8601 end date for filtering
+            workspace_id: Optional filter by workspace
+            limit: Maximum time series data points
+
+        Returns:
+            Dictionary with analytics data including time series
+
+        Raises:
+            PromptNotFoundError: If prompt not found
+            ValueError: If usage repository is not configured
+        """
+        from datetime import datetime, timezone, timedelta
+
+        if self._usage_repository is None:
+            raise ValueError("Usage repository is not configured for analytics")
+
+        # Verify prompt exists
+        template = await self.get_prompt_by_id(prompt_id)
+
+        # Parse date filters
+        start_dt: Optional[datetime] = None
+        end_dt: Optional[datetime] = None
+
+        if start_date:
+            try:
+                start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            except ValueError as e:
+                raise ValueError(f"Invalid start_date format: {e}")
+
+        if end_date:
+            try:
+                end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            except ValueError as e:
+                raise ValueError(f"Invalid end_date format: {e}")
+
+        # Get base stats
+        stats = await self._usage_repository.get_stats(
+            prompt_id=prompt_id,
+            workspace_id=workspace_id,
+            start_date=start_dt,
+            end_date=end_dt,
+        )
+
+        # Get all usages for time series and rating distribution
+        usages = await self._usage_repository.list_by_prompt(
+            prompt_id=prompt_id,
+            limit=limit * 10,  # Get more to allow for grouping
+            workspace_id=workspace_id,
+        )
+
+        # Filter by date range if specified
+        if start_dt:
+            usages = [u for u in usages if u.timestamp >= start_dt]
+        if end_dt:
+            usages = [u for u in usages if u.timestamp <= end_dt]
+
+        # Calculate rating distribution
+        rating_dist = self._calculate_rating_distribution(usages)
+
+        # Calculate latency min/max
+        latencies = [u.latency_ms for u in usages if u.latency_ms > 0]
+        min_latency = min(latencies) if latencies else 0.0
+        max_latency = max(latencies) if latencies else 0.0
+
+        # Build time series data
+        time_series = self._build_time_series(usages, period, limit)
+
+        return {
+            "prompt_id": prompt_id,
+            "prompt_name": template.name,
+            "period": period,
+            # Overall metrics
+            "total_uses": stats.total_uses,
+            "successful_uses": stats.successful_uses,
+            "failed_uses": stats.failed_uses,
+            "success_rate": round(stats.success_rate, 2),
+            # Token metrics
+            "total_tokens": stats.total_tokens,
+            "total_input_tokens": stats.total_input_tokens,
+            "total_output_tokens": stats.total_output_tokens,
+            "avg_tokens_per_use": round(stats.avg_tokens_per_use, 2),
+            "avg_input_tokens": round(stats.avg_input_tokens, 2),
+            "avg_output_tokens": round(stats.avg_output_tokens, 2),
+            # Latency metrics
+            "total_latency_ms": round(stats.total_latency_ms, 2),
+            "avg_latency_ms": round(stats.avg_latency_ms, 2),
+            "min_latency_ms": round(min_latency, 2),
+            "max_latency_ms": round(max_latency, 2),
+            # Rating metrics
+            "rating_sum": round(stats.rating_sum, 2),
+            "rating_count": stats.rating_count,
+            "avg_rating": round(stats.avg_rating, 2),
+            "rating_distribution": rating_dist,
+            # Time series
+            "time_series": time_series,
+            # Metadata
+            "first_used": stats.first_used.isoformat() if stats.first_used else None,
+            "last_used": stats.last_used.isoformat() if stats.last_used else None,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def _calculate_rating_distribution(self, usages: list[PromptUsage]) -> dict[str, int]:
+        """
+        Calculate rating distribution from usage events.
+
+        Args:
+            usages: List of PromptUsage events
+
+        Returns:
+            Dictionary with rating counts
+        """
+        distribution = {
+            "one_star": 0,
+            "two_star": 0,
+            "three_star": 0,
+            "four_star": 0,
+            "five_star": 0,
+        }
+
+        for usage in usages:
+            if usage.user_rating is not None:
+                rating = int(usage.user_rating)
+                if rating == 1:
+                    distribution["one_star"] += 1
+                elif rating == 2:
+                    distribution["two_star"] += 1
+                elif rating == 3:
+                    distribution["three_star"] += 1
+                elif rating == 4:
+                    distribution["four_star"] += 1
+                elif rating == 5:
+                    distribution["five_star"] += 1
+
+        return distribution
+
+    def _build_time_series(
+        self, usages: list[PromptUsage], period: str, limit: int
+    ) -> list[dict[str, Any]]:
+        """
+        Build time series data from usage events.
+
+        Args:
+            usages: List of PromptUsage events
+            period: Aggregation period (day, week, month, all)
+            limit: Maximum data points to return
+
+        Returns:
+            List of time series data points
+        """
+        from collections import defaultdict
+        from datetime import timezone
+
+        if not usages or period == "all":
+            return []
+
+        # Sort usages by timestamp
+        sorted_usages = sorted(usages, key=lambda u: u.timestamp)
+
+        # Group by period
+        grouped: defaultdict[str, list[PromptUsage]] = defaultdict(list)
+
+        for usage in sorted_usages:
+            if period == "day":
+                # Group by ISO date (YYYY-MM-DD)
+                key = usage.timestamp.strftime("%Y-%m-%d")
+            elif period == "week":
+                # Group by ISO week (YYYY-Www)
+                year, week, _ = usage.timestamp.isocalendar()
+                key = f"{year}-W{week:02d}"
+            elif period == "month":
+                # Group by month (YYYY-MM)
+                key = usage.timestamp.strftime("%Y-%m")
+            else:
+                key = "all"
+
+            grouped[key].append(usage)
+
+        # Convert to data points
+        data_points = []
+        for period_key in sorted(grouped.keys(), reverse=True)[:limit]:
+            period_usages = grouped[period_key]
+
+            total = len(period_usages)
+            successful = sum(1 for u in period_usages if u.success)
+            failed = total - successful
+            total_tokens = sum(u.total_tokens for u in period_usages)
+            avg_latency = sum(u.latency_ms for u in period_usages) / total if total > 0 else 0
+
+            ratings = [u.user_rating for u in period_usages if u.user_rating is not None]
+            avg_rating = sum(ratings) / len(ratings) if ratings else 0
+
+            data_points.append({
+                "period": period_key,
+                "total_uses": total,
+                "successful_uses": successful,
+                "failed_uses": failed,
+                "total_tokens": total_tokens,
+                "avg_latency_ms": round(avg_latency, 2),
+                "avg_rating": round(avg_rating, 2),
+            })
+
+        # Sort by period (most recent first)
+        return sorted(data_points, key=lambda x: x["period"], reverse=True)[:limit]
+
+    async def export_analytics_csv(
+        self,
+        prompt_id: str,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        workspace_id: Optional[str] = None,
+    ) -> str:
+        """
+        Export prompt analytics as CSV.
+
+        BRAIN-022B: Backend: Prompt Analytics - API (CSV export)
+
+        Args:
+            prompt_id: Prompt template ID
+            start_date: Optional ISO 8601 start date for filtering
+            end_date: Optional ISO 8601 end date for filtering
+            workspace_id: Optional filter by workspace
+
+        Returns:
+            CSV formatted string
+
+        Raises:
+            PromptNotFoundError: If prompt not found
+            ValueError: If usage repository is not configured
+        """
+        import io
+        import csv
+        from datetime import datetime, timezone
+
+        if self._usage_repository is None:
+            raise ValueError("Usage repository is not configured for analytics")
+
+        # Verify prompt exists
+        template = await self.get_prompt_by_id(prompt_id)
+
+        # Parse date filters
+        start_dt: Optional[datetime] = None
+        end_dt: Optional[datetime] = None
+
+        if start_date:
+            try:
+                start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            except ValueError as e:
+                raise ValueError(f"Invalid start_date format: {e}")
+
+        if end_date:
+            try:
+                end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            except ValueError as e:
+                raise ValueError(f"Invalid end_date format: {e}")
+
+        # Get usages
+        usages = await self._usage_repository.list_by_prompt(
+            prompt_id=prompt_id,
+            limit=10000,  # Large limit for export
+            workspace_id=workspace_id,
+        )
+
+        # Filter by date range if specified
+        if start_dt:
+            usages = [u for u in usages if u.timestamp >= start_dt]
+        if end_dt:
+            usages = [u for u in usages if u.timestamp <= end_dt]
+
+        # Build CSV
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Header
+        writer.writerow([
+            "Timestamp",
+            "Prompt ID",
+            "Prompt Name",
+            "Version",
+            "Input Tokens",
+            "Output Tokens",
+            "Total Tokens",
+            "Latency (ms)",
+            "Model Provider",
+            "Model Name",
+            "Success",
+            "Error Message",
+            "User Rating",
+            "Workspace ID",
+            "User ID",
+        ])
+
+        # Rows
+        for usage in sorted(usages, key=lambda u: u.timestamp, reverse=True):
+            writer.writerow([
+                usage.timestamp.isoformat(),
+                usage.prompt_id,
+                usage.prompt_name,
+                usage.prompt_version,
+                usage.input_tokens,
+                usage.output_tokens,
+                usage.total_tokens,
+                round(usage.latency_ms, 2),
+                usage.model_provider,
+                usage.model_name,
+                "Yes" if usage.success else "No",
+                usage.error_message or "",
+                usage.user_rating or "",
+                usage.workspace_id or "",
+                usage.user_id or "",
+            ])
+
+        return output.getvalue()
+
 
 __all__ = ["PromptRouterService"]

@@ -2019,6 +2019,122 @@ class PromptGenerateResponse(BaseModel):
     error: Optional[str] = Field(None, description="Error message if generation failed")
 
 
+# === Prompt Analytics Schemas (BRAIN-022B) ===
+
+
+class PromptAnalyticsTimePeriod(str, Enum):
+    """Time period for analytics aggregation."""
+
+    day = "day"
+    week = "week"
+    month = "month"
+    all = "all"
+
+
+class PromptTimeSeriesDataPoint(BaseModel):
+    """Single data point in time series analytics."""
+
+    period: str = Field(..., description="Time period identifier (ISO date or week number)")
+    total_uses: int = Field(default=0, ge=0, description="Total uses in this period")
+    successful_uses: int = Field(default=0, ge=0, description="Successful uses in this period")
+    failed_uses: int = Field(default=0, ge=0, description="Failed uses in this period")
+    total_tokens: int = Field(default=0, ge=0, description="Total tokens consumed")
+    avg_latency_ms: float = Field(default=0.0, ge=0, description="Average latency")
+    avg_rating: float = Field(default=0.0, ge=0, le=5, description="Average rating")
+
+
+class PromptRatingDistribution(BaseModel):
+    """Distribution of user ratings."""
+
+    one_star: int = Field(default=0, ge=0, description="Count of 1-star ratings")
+    two_star: int = Field(default=0, ge=0, description="Count of 2-star ratings")
+    three_star: int = Field(default=0, ge=0, description="Count of 3-star ratings")
+    four_star: int = Field(default=0, ge=0, description="Count of 4-star ratings")
+    five_star: int = Field(default=0, ge=0, description="Count of 5-star ratings")
+
+
+class PromptAnalyticsResponse(BaseModel):
+    """Response model for prompt analytics.
+
+    BRAIN-022B: Backend: Prompt Analytics - API
+    Provides usage statistics and metrics over time.
+    """
+
+    prompt_id: str = Field(..., description="Prompt template ID")
+    prompt_name: str = Field(..., description="Prompt name")
+    period: PromptAnalyticsTimePeriod = Field(
+        default=PromptAnalyticsTimePeriod.all,
+        description="Time period for aggregation"
+    )
+
+    # Overall metrics
+    total_uses: int = Field(default=0, ge=0, description="Total number of uses")
+    successful_uses: int = Field(default=0, ge=0, description="Successful generations")
+    failed_uses: int = Field(default=0, ge=0, description="Failed generations")
+    success_rate: float = Field(default=0.0, ge=0, le=100, description="Success rate percentage")
+
+    # Token metrics
+    total_tokens: int = Field(default=0, ge=0, description="Total tokens consumed")
+    total_input_tokens: int = Field(default=0, ge=0, description="Total input tokens")
+    total_output_tokens: int = Field(default=0, ge=0, description="Total output tokens")
+    avg_tokens_per_use: float = Field(default=0.0, ge=0, description="Average tokens per use")
+    avg_input_tokens: float = Field(default=0.0, ge=0, description="Average input tokens")
+    avg_output_tokens: float = Field(default=0.0, ge=0, description="Average output tokens")
+
+    # Latency metrics
+    total_latency_ms: float = Field(default=0.0, ge=0, description="Total latency")
+    avg_latency_ms: float = Field(default=0.0, ge=0, description="Average latency in ms")
+    min_latency_ms: float = Field(default=0.0, ge=0, description="Minimum latency")
+    max_latency_ms: float = Field(default=0.0, ge=0, description="Maximum latency")
+
+    # Rating metrics
+    rating_sum: float = Field(default=0.0, description="Sum of ratings")
+    rating_count: int = Field(default=0, ge=0, description="Number of ratings")
+    avg_rating: float = Field(default=0.0, ge=0, le=5, description="Average rating")
+    rating_distribution: PromptRatingDistribution = Field(
+        default_factory=PromptRatingDistribution,
+        description="Distribution of ratings"
+    )
+
+    # Time series data
+    time_series: List[PromptTimeSeriesDataPoint] = Field(
+        default_factory=list,
+        description="Usage over time grouped by period"
+    )
+
+    # Metadata
+    first_used: Optional[str] = Field(None, description="First use timestamp")
+    last_used: Optional[str] = Field(None, description="Last use timestamp")
+    generated_at: str = Field(..., description="When analytics were generated")
+
+
+class PromptAnalyticsRequest(BaseModel):
+    """Request parameters for analytics query."""
+
+    period: PromptAnalyticsTimePeriod = Field(
+        default=PromptAnalyticsTimePeriod.all,
+        description="Time period for aggregation (day, week, month, all)"
+    )
+    start_date: Optional[str] = Field(
+        None,
+        description="ISO 8601 start date for filtering (exclusive of period)"
+    )
+    end_date: Optional[str] = Field(
+        None,
+        description="ISO 8601 end date for filtering (exclusive of period)"
+    )
+    workspace_id: Optional[str] = Field(
+        None,
+        description="Filter by workspace ID"
+    )
+    limit: int = Field(
+        default=100,
+        ge=1,
+        le=1000,
+        description="Maximum time series data points"
+    )
+
+
 # === Prompt Experiment Schemas (BRAIN-018B) ===
 
 
@@ -2322,6 +2438,14 @@ __all__ = [
     "PromptUpdateRequest",
     "PromptRenderRequest",
     "PromptRenderResponse",
+    "PromptGenerateRequest",
+    "PromptGenerateResponse",
+    # Prompt Analytics Schemas (BRAIN-022B)
+    "PromptAnalyticsTimePeriod",
+    "PromptTimeSeriesDataPoint",
+    "PromptRatingDistribution",
+    "PromptAnalyticsResponse",
+    "PromptAnalyticsRequest",
     "ItemResponse",
     "ItemListResponse",
     "GiveItemRequest",

@@ -647,7 +647,7 @@
         "Test: Verify analytics aggregation"
       ],
       "priority": 36,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-022A"

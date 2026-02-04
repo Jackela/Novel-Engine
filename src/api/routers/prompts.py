@@ -17,9 +17,12 @@ from typing import Any, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from src.api.schemas import (
+    PromptAnalyticsRequest,
+    PromptAnalyticsResponse,
+    PromptAnalyticsTimePeriod,
     PromptCreateRequest,
     PromptDetailResponse,
     PromptGenerateRequest,
@@ -238,6 +241,113 @@ async def list_prompt_tags(
         return await service.get_all_tags()
     except PromptRepositoryError as e:
         logger.error(f"Failed to list tags: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/prompts/{prompt_id}/analytics", response_model=dict[str, Any])
+async def get_prompt_analytics(
+    prompt_id: str,
+    period: PromptAnalyticsTimePeriod = PromptAnalyticsTimePeriod.all,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    workspace_id: Optional[str] = None,
+    limit: int = 100,
+    service: PromptRouterService = Depends(get_prompt_service_with_usage),
+) -> dict[str, Any]:
+    """
+    Get analytics for a prompt template.
+
+    BRAIN-022B: Backend: Prompt Analytics - API
+    Provides usage statistics and metrics over time with period aggregation.
+
+    Query Parameters:
+        period: Time period for aggregation (day, week, month, all)
+        start_date: Optional ISO 8601 start date for filtering
+        end_date: Optional ISO 8601 end date for filtering
+        workspace_id: Optional filter by workspace ID
+        limit: Maximum time series data points (default: 100)
+
+    Returns:
+        Analytics data with time series, metrics, and rating distribution
+
+    Raises:
+        404: If prompt not found
+        400: If date format is invalid or usage repository not configured
+        500: If analytics retrieval fails
+    """
+    try:
+        return await service.get_prompt_analytics(
+            prompt_id=prompt_id,
+            period=period.value,
+            start_date=start_date,
+            end_date=end_date,
+            workspace_id=workspace_id,
+            limit=limit,
+        )
+
+    except PromptNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except (ValueError, KeyError) as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except PromptRepositoryError as e:
+        logger.error(f"Failed to get analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/prompts/{prompt_id}/analytics/export")
+async def export_prompt_analytics(
+    prompt_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    workspace_id: Optional[str] = None,
+    service: PromptRouterService = Depends(get_prompt_service_with_usage),
+) -> Response:
+    """
+    Export prompt analytics as CSV.
+
+    BRAIN-022B: Backend: Prompt Analytics - API (CSV export)
+
+    Query Parameters:
+        start_date: Optional ISO 8601 start date for filtering
+        end_date: Optional ISO 8601 end date for filtering
+        workspace_id: Optional filter by workspace ID
+
+    Returns:
+        CSV file with all usage data
+
+    Raises:
+        404: If prompt not found
+        400: If date format is invalid or usage repository not configured
+        500: If export fails
+    """
+    import io
+
+    try:
+        csv_data = await service.export_analytics_csv(
+            prompt_id=prompt_id,
+            start_date=start_date,
+            end_date=end_date,
+            workspace_id=workspace_id,
+        )
+
+        # Create streaming response with generator
+        def generate():
+            yield csv_data
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={prompt_id}_analytics.csv",
+            },
+        )
+
+    except PromptNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except (ValueError, KeyError) as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except PromptRepositoryError as e:
+        logger.error(f"Failed to export analytics: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
