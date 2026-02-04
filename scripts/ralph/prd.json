@@ -518,7 +518,7 @@
         "Test: Verify significance calculation"
       ],
       "priority": 29,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-018A"

@@ -912,3 +912,50 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - When using TYPE_CHECKING for type hints only, remove the import if the type is never actually referenced
 - Experiment lifecycle prevents invalid state transitions (e.g., can't start a running experiment)
 - min_sample_size ensures statistical significance before declaring winners
+
+## [2025-02-04] - BRAIN-018B ✅
+- Implemented Experiment API endpoints for prompt A/B testing
+- Created IExperimentRepository port interface following hexagonal architecture
+- Created InMemoryExperimentRepository adapter for development/testing
+- Implemented ExperimentRouterService with statistical calculations:
+  * Two-proportion z-test for comparing success rates
+  * Cohen's h effect size measurement
+  * Wilson score confidence intervals
+  * Normal CDF approximation for p-values
+- Created experiments router with 10 REST API endpoints:
+  * GET /api/experiments - List with filtering (status, prompt_id, limit, offset)
+  * POST /api/experiments - Create A/B test experiment
+  * GET /api/experiments/{id} - Get experiment details
+  * GET /api/experiments/{id}/results - Get results with statistical analysis
+  * POST /api/experiments/{id}/start - Start experiment
+  * POST /api/experiments/{id}/pause - Pause experiment
+  * POST /api/experiments/{id}/resume - Resume experiment
+  * POST /api/experiments/{id}/complete - Complete with optional winner
+  * POST /api/experiments/{id}/record - Record generation result
+  * DELETE /api/experiments/{id} - Delete experiment
+- Added 13 new API schema classes for experiments
+- Added ConfidenceIntervalResponse schema for confidence intervals
+- Added JSON sanitization for inf/nan values (domain returns inf for token_efficiency with no successes)
+- All 27 new tests passing + 76 existing API router tests
+- Files changed:
+  - `src/api/routers/experiments.py`: Complete router implementation (510+ lines)
+  - `src/api/services/experiment_router_service.py`: Service layer with stats (650+ lines)
+  - `src/contexts/knowledge/application/ports/i_experiment_repository.py`: Repository port (185 lines)
+  - `src/contexts/knowledge/infrastructure/adapters/in_memory_experiment_repository.py`: In-memory adapter (250+ lines)
+  - `src/api/schemas.py`: Added 14 new schema classes
+  - `src/api/main_api_server.py`: Registered experiments router
+  - `tests/unit/api/routers/test_experiments_router.py`: 27 comprehensive tests
+
+**Learnings for future iterations:**
+- When domain models return float("inf") for valid business reasons (no successes = infinite cost), sanitize at API layer
+- Use `math.isinf(value) or math.isnan(value)` to detect non-finite floats before JSON serialization
+- Replace inf with 0.0 (not None) when schema fields are required (e.g., token_efficiency: float)
+- Dependency override pattern: import functions directly from router module (`from src.api.routers.experiments import get_experiment_repository`)
+- For test fixtures that need multiple repositories, create separate async setup functions and run them with asyncio.run()
+- PromptTemplate validation requires VariableDefinition for all variables used in content {{var}}
+- Route order matters: /health must be before /{id} routes
+- Confidence intervals require special handling in schemas: Optional[ConfidenceIntervalResponse] with lower/upper bounds
+- Statistical z-test uses pooled proportion: p_pooled = (p1*n1 + p2*n2) / (n1 + n2)
+- Cohen's h for proportions: 2 * (asin(sqrt(p1)) - asin(sqrt(p2)))
+- Normal CDF approximation uses Abramowitz and Stegun error function formula
+---
