@@ -27,6 +27,9 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Prompt Inheritance**: Use `extends` field and `{{> template}}` syntax for template composition. Variable override works by child having same-named variable.
 - **Prompt Repository**: IPromptRepository port in `src/contexts/knowledge/application/ports/i_prompt_repository.py` with CRUD, version history, and search
 - **Model Registry**: ModelRegistry in `src/contexts/knowledge/application/services/model_registry.py` with task-based routing and aliases
+- **Entity Extraction**: EntityExtractionService in `src/contexts/knowledge/application/services/entity_extraction_service.py` with LLM-based extraction
+- **Co-reference Resolution**: CoreferenceResolutionService in `src/contexts/knowledge/application/services/coreference_resolution_service.py` with heuristic + LLM fallback
+- **Large Text Processing**: extract_large_text() with chunking (chunk_size, overlap) and merging for texts exceeding token limits
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -1475,4 +1478,50 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - The get_entities_by_type() helper method provides convenient filtering by entity type
 - Type narrowing with isinstance() required when parsing JSON for mypy compliance
 - The domain/models directory may be gitignored - use `git add -f` to stage files
+
+
+
+## [2026-02-04] - BRAIN-029B ✅
+- Implemented Co-reference Resolution Service for pronoun-to-entity mapping
+- Created domain models for co-reference resolution:
+  - CoreferenceConfig: window_size, max_references, temperature, max_tokens, use_llm_fallback
+  - ResolvedReference: mention_text, entity_name, position, confidence, resolution_method
+  - CoreferenceResult: resolved_references, unresolved_mentions, resolution_rate, method_counts
+- Created CoreferenceResolutionService in knowledge context:
+  - Hybrid approach: heuristic-based resolution for common patterns + LLM fallback for ambiguous cases
+  - Heuristic resolution: prefers most recently mentioned entity within window
+  - Gender-based filtering: feminine names for "she/her", masculine for "he/him"
+  - Gender inference from name endings (o/er/or -> masculine, a/ia/ette -> feminine)
+  - async resolve_with_text() for explicit text and extracted data
+  - async resolve_batch() for processing multiple texts
+  - Method tracking: "heuristic", "llm", "explicit" for analytics
+- Enhanced EntityExtractionService with large text batch processing:
+  - extract_large_text() method with chunking (chunk_size, overlap parameters)
+  - Text splitting with overlapping chunks for context continuity
+  - _merge_extraction_results() for deduplicating entities across chunks
+  - Preserves first appearance positions from original text
+  - Token counting aggregation for cost tracking
+- Added comprehensive tests:
+  - 31 tests for co-reference resolution (config, models, service, integration)
+  - Tests for large text chunking and merging
+  - Tests for gender inference and pronoun filtering
+- All 72 unit tests passing (41 entity extraction + 31 co-reference)
+- Files changed:
+  - `src/contexts/knowledge/application/services/coreference_resolution_service.py`: CoreferenceResolutionService (670+ lines)
+  - `src/contexts/knowledge/application/services/entity_extraction_service.py`: Added extract_large_text(), _merge_extraction_results()
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new co-reference types
+  - `tests/unit/contexts/knowledge/application/services/test_coreference_resolution_service.py`: 31 comprehensive tests
+
+**Learnings for future iterations:**
+- Co-reference resolution uses window-based context (default 500 chars) to find candidate entities
+- The hybrid approach (heuristic + LLM fallback) balances speed and accuracy
+- Heuristics work well for simple cases (single gender, recent mention), LLM for ambiguous
+- Gender inference from name endings is a useful heuristic but not 100% reliable
+- For large text processing, overlapping chunks (default 500 chars) maintain context continuity
+- When merging extraction results, keep the entity with highest confidence when duplicates exist
+- Position adjustment is critical when chunking: add offset to entity.first_appearance and mention positions
+- Batch processing validates input lengths match to avoid silent errors
+- The resolution_rate metric tracks percentage of pronouns successfully resolved
+- Use frozen dataclasses for immutable result types (ResolvedReference, CoreferenceResult)
+- Type narrowing required when parsing JSON from LLM for mypy compliance (confidence: object -> float)
 

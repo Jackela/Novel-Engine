@@ -864,7 +864,7 @@
         "Test: Verify co-reference resolution"
       ],
       "priority": 49,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-029A"
