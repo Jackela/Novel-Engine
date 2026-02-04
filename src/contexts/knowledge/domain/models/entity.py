@@ -14,6 +14,7 @@ Warzone 4: AI Brain - BRAIN-029A
 
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -401,6 +402,164 @@ class ExtractionResultWithRelationships(ExtractionResult):
         """Total number of relationships extracted."""
         return len(self.relationships)
 
+    def normalize_bidirectional(self) -> "ExtractionResultWithRelationships":
+        """
+        Normalize bidirectional relationships by adding inverse relationships.
+
+        For relationships marked as bidirectional or of inherently symmetric types,
+        ensures that both directions exist in the result. If a bidirectional
+        relationship exists A->B but not B->A, the inverse is added.
+
+        Returns:
+            New ExtractionResultWithRelationships with normalized relationships
+        """
+        existing_pairs: set[tuple[str, str, RelationshipType]] = set()
+        normalized: list[Relationship] = list(self.relationships)
+
+        # Track existing relationships (source, target, type)
+        for rel in self.relationships:
+            key = (rel.source.lower(), rel.target.lower(), rel.relationship_type)
+            existing_pairs.add(key)
+
+        # Add missing inverse relationships for bidirectional ones
+        for rel in self.relationships:
+            should_add_inverse = rel.bidirectional or is_naturally_bidirectional(
+                rel.relationship_type
+            )
+
+            if should_add_inverse:
+                inverse_key = (
+                    rel.target.lower(),
+                    rel.source.lower(),
+                    rel.relationship_type,
+                )
+                symmetric_key = (
+                    rel.source.lower(),
+                    rel.target.lower(),
+                    rel.relationship_type,
+                )
+
+                # For symmetric types, check both directions
+                # For non-symmetric with bidirectional=True, check for inverse type
+                if is_naturally_bidirectional(rel.relationship_type):
+                    # Symmetric relationship - both directions should exist
+                    if inverse_key not in existing_pairs:
+                        inverted = rel.invert()
+                        normalized.append(inverted)
+                        existing_pairs.add(inverse_key)
+                elif rel.bidirectional:
+                    # Check if inverse relationship exists (with inverse type)
+                    inverse_type = _INVERSE_RELATIONSHIP_MAP.get(rel.relationship_type)
+                    if inverse_type:
+                        inverse_with_type_key = (
+                            rel.target.lower(),
+                            rel.source.lower(),
+                            inverse_type,
+                        )
+                        if inverse_with_type_key not in existing_pairs:
+                            inverted = rel.invert()
+                            normalized.append(inverted)
+                            existing_pairs.add(inverse_with_type_key)
+
+        return dataclasses.replace(
+            self,
+            relationships=tuple(normalized),
+        )
+
+    def filter_by_temporal(
+        self,
+        temporal_marker: str | None = None,
+        contains_marker: str | None = None,
+    ) -> "ExtractionResultWithRelationships":
+        """
+        Filter relationships by temporal marker.
+
+        Args:
+            temporal_marker: Exact temporal marker to match (e.g., "during chapter 1")
+            contains_marker: Substring to match in temporal markers (e.g., "chapter")
+
+        Returns:
+            New ExtractionResultWithRelationships with filtered relationships
+
+        Examples:
+            >>> # Get relationships during chapter 1
+            >>> result.filter_by_temporal(temporal_marker="during chapter 1")
+            >>> # Get all relationships mentioning "chapter"
+            >>> result.filter_by_temporal(contains_marker="chapter")
+            >>> # Get relationships without temporal info
+            >>> result.filter_by_temporal(temporal_marker="")
+        """
+        if temporal_marker is not None:
+            # Exact match (empty string matches relationships without temporal info)
+            filtered = tuple(
+                r for r in self.relationships
+                if r.temporal_marker == temporal_marker
+            )
+        elif contains_marker is not None:
+            # Substring match
+            marker_lower = contains_marker.lower()
+            filtered = tuple(
+                r for r in self.relationships
+                if marker_lower in r.temporal_marker.lower()
+            )
+        else:
+            # No filter
+            filtered = self.relationships
+
+        return dataclasses.replace(
+            self,
+            relationships=filtered,
+        )
+
+    def get_temporal_markers(self) -> tuple[str, ...]:
+        """
+        Get all unique temporal markers from relationships.
+
+        Returns:
+            Tuple of unique temporal markers
+        """
+        markers = {r.temporal_marker for r in self.relationships if r.temporal_marker}
+        return tuple(sorted(markers))
+
+    def get_relationships_at_time(
+        self,
+        time_reference: str,
+    ) -> tuple[Relationship, ...]:
+        """
+        Get relationships valid at a specific time reference.
+
+        Matches relationships whose temporal_marker contains the time reference,
+        or relationships without temporal information (assumed always valid).
+
+        Args:
+            time_reference: Time reference to match (e.g., "chapter 1", "before the battle")
+
+        Returns:
+            Tuple of relationships valid at the specified time
+        """
+        time_lower = time_reference.lower()
+        return tuple(
+            r for r in self.relationships
+            if not r.temporal_marker or time_lower in r.temporal_marker.lower()
+        )
+
+    def has_temporal_relationship(self, entity_name: str) -> bool:
+        """
+        Check if an entity has any relationships with temporal information.
+
+        Args:
+            entity_name: Name of the entity (case-insensitive)
+
+        Returns:
+            True if the entity has relationships with temporal markers
+        """
+        name_lower = entity_name.lower()
+        return any(
+            (r.source.lower() == name_lower or r.target.lower() == name_lower)
+            and r.temporal_marker
+            for r in self.relationships
+        )
+
 
 # Mapping of relationship types to their inverses
 _INVERSE_RELATIONSHIP_MAP: dict[RelationshipType, RelationshipType] = {
@@ -416,6 +575,29 @@ _INVERSE_RELATIONSHIP_MAP: dict[RelationshipType, RelationshipType] = {
     RelationshipType.ALLIED_WITH: RelationshipType.ALLIED_WITH,  # Symmetric
     RelationshipType.ENEMY_OF: RelationshipType.ENEMY_OF,  # Symmetric
 }
+
+# Relationship types that are inherently bidirectional (symmetric)
+_BIDIRECTIONAL_RELATIONSHIP_TYPES: frozenset[RelationshipType] = frozenset([
+    RelationshipType.KNOWS,
+    RelationshipType.LOVES,
+    RelationshipType.HATES,
+    RelationshipType.ALLIED_WITH,
+    RelationshipType.ENEMY_OF,
+    RelationshipType.LOCATED_AT,
+])
+
+
+def is_naturally_bidirectional(relationship_type: RelationshipType) -> bool:
+    """
+    Check if a relationship type is naturally bidirectional.
+
+    Args:
+        relationship_type: The relationship type to check
+
+    Returns:
+        True if the relationship type is inherently symmetric/bidirectional
+    """
+    return relationship_type in _BIDIRECTIONAL_RELATIONSHIP_TYPES
 
 # Constants for entity extraction
 DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD = 0.5

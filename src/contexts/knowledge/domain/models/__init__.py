@@ -49,9 +49,13 @@ from .entity import (
     ExtractedEntity,
     EntityMention,
     ExtractionResult,
+    ExtractionResultWithRelationships,
+    Relationship,
+    RelationshipType,
     DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD,
     DEFAULT_MAX_ENTITIES,
     PRONOUNS,
+    is_naturally_bidirectional,
 )
 
 __all__ = [
@@ -93,7 +97,11 @@ __all__ = [
     "ExtractedEntity",
     "EntityMention",
     "ExtractionResult",
+    "ExtractionResultWithRelationships",
+    "Relationship",
+    "RelationshipType",
     "DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD",
     "DEFAULT_MAX_ENTITIES",
     "PRONOUNS",
+    "is_naturally_bidirectional",
 ]

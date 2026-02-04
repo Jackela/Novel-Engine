@@ -1550,3 +1550,31 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Mock LLM fixtures must include all entities referenced in relationships or tests will fail validation
 - Test fixtures for relationship extraction need custom entity JSON that includes all relationship participants
 
+
+## [2026-02-04] - BRAIN-030B ✅
+- Implemented bidirectional relationship normalization with auto-inversion
+- Added `is_naturally_bidirectional()` helper function for symmetric relationship types
+- Implemented `normalize_bidirectional()` method on ExtractionResultWithRelationships:
+  - Automatically adds inverse relationships for symmetric types (KNOWS, ALLIED_WITH, ENEMY_OF, etc.)
+  - Respects explicit bidirectional flag for non-symmetric types
+  - Uses inverse type mapping for PARENT_OF <-> CHILD_OF, LEADS <-> SERVES
+  - Avoids creating duplicate inverse relationships
+- Implemented temporal relationship filtering and querying:
+  - `filter_by_temporal()`: Filter by exact marker or substring
+  - `get_temporal_markers()`: Get all unique temporal markers
+  - `get_relationships_at_time()`: Get relationships valid at a specific time
+  - `has_temporal_relationship()`: Check if entity has temporal relationships
+- Added 16 comprehensive tests (all passing):
+  - 7 tests for bidirectional normalization
+  - 9 tests for temporal relationship features
+- Files changed:
+  - `src/contexts/knowledge/domain/models/entity.py`: Added is_naturally_bidirectional(), normalize_bidirectional(), filter_by_temporal(), get_temporal_markers(), get_relationships_at_time(), has_temporal_relationship()
+  - `src/contexts/knowledge/domain/models/__init__.py`: Exported new types and functions
+  - `tests/unit/contexts/knowledge/application/services/test_entity_extraction_service.py`: Added TestBidirectionalRelationshipNormalization and TestTemporalRelationships test classes
+
+**Learnings for future iterations:**
+- Bidirectional normalization must handle two cases: naturally symmetric types (KNOWS, ALLIED_WITH) and types with explicit inverses (PARENT_OF -> CHILD_OF)
+- Temporal filtering uses case-insensitive substring matching for flexibility
+- The `dataclasses.replace()` function is essential for creating new instances of frozen dataclasses with modified fields
+- For symmetric relationship types, the inverse uses the same type; for asymmetric types with defined inverses, the mapped type is used
+- Empty temporal_marker ("") is treated as "no temporal info" and included in get_relationships_at_time() results (assumed always valid)

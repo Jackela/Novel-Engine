@@ -1258,3 +1258,450 @@ class TestRelationshipExtractionIntegration:
                 assert rel.target
                 assert isinstance(rel.relationship_type, RelationshipType)
                 assert 0.0 <= rel.strength <= 1.0
+
+
+@pytest.mark.unit
+@pytest.mark.medium
+class TestBidirectionalRelationshipNormalization:
+    """Tests for BRAIN-030B: Bidirectional relationship normalization."""
+
+    def test_normalize_bidirectional_symmetric_knows(self):
+        """Test normalization adds inverse for symmetric KNOWS relationship."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                bidirectional=False,
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        normalized = result.normalize_bidirectional()
+
+        # Should add Bob -> Alice relationship
+        assert normalized.relationship_count == 2
+        alice_to_bob = [r for r in normalized.relationships if r.source == "Alice" and r.target == "Bob"]
+        bob_to_alice = [r for r in normalized.relationships if r.source == "Bob" and r.target == "Alice"]
+        assert len(alice_to_bob) == 1
+        assert len(bob_to_alice) == 1
+        assert bob_to_alice[0].relationship_type == RelationshipType.KNOWS
+
+    def test_normalize_bidirectional_symmetric_allied_with(self):
+        """Test normalization adds inverse for ALLIED_WITH relationship."""
+        relationships = (
+            Relationship(
+                source="Kingdom A",
+                target="Kingdom B",
+                relationship_type=RelationshipType.ALLIED_WITH,
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        normalized = result.normalize_bidirectional()
+
+        assert normalized.relationship_count == 2
+        b_to_a = [r for r in normalized.relationships if r.source == "Kingdom B" and r.target == "Kingdom A"]
+        assert len(b_to_a) == 1
+        assert b_to_a[0].relationship_type == RelationshipType.ALLIED_WITH
+
+    def test_normalize_bidirectional_explicit_flag(self):
+        """Test normalization respects explicit bidirectional flag with inverse type."""
+        # Use PARENT_OF which has an inverse type defined
+        relationships = (
+            Relationship(
+                source="Arthur",
+                target="Mordred",
+                relationship_type=RelationshipType.PARENT_OF,
+                bidirectional=True,  # Explicitly bidirectional
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        normalized = result.normalize_bidirectional()
+
+        # Should add inverse with CHILD_OF type
+        assert normalized.relationship_count == 2
+        child_of_rel = [r for r in normalized.relationships if r.source == "Mordred" and r.target == "Arthur"]
+        assert len(child_of_rel) == 1
+        assert child_of_rel[0].relationship_type == RelationshipType.CHILD_OF
+
+    def test_normalize_bidirectional_no_duplicates(self):
+        """Test normalization doesn't create duplicates if both directions exist."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+            ),
+            Relationship(
+                source="Bob",
+                target="Alice",
+                relationship_type=RelationshipType.KNOWS,
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        normalized = result.normalize_bidirectional()
+
+        # Should not add duplicates
+        assert normalized.relationship_count == 2
+
+    def test_normalize_bidirectional_parent_child(self):
+        """Test normalization for PARENT_OF -> CHILD_OF pair."""
+        relationships = (
+            Relationship(
+                source="Arthur",
+                target="Mordred",
+                relationship_type=RelationshipType.PARENT_OF,
+                bidirectional=True,
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        normalized = result.normalize_bidirectional()
+
+        # Should add Mordred -> Arthur with CHILD_OF type
+        assert normalized.relationship_count == 2
+        child_of_rel = [r for r in normalized.relationships if r.source == "Mordred" and r.target == "Arthur"]
+        assert len(child_of_rel) == 1
+        assert child_of_rel[0].relationship_type == RelationshipType.CHILD_OF
+
+    def test_normalize_bidirectional_empty_relationships(self):
+        """Test normalization handles empty relationships."""
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=(),
+        )
+
+        normalized = result.normalize_bidirectional()
+
+        assert normalized.relationship_count == 0
+
+    def test_is_naturally_bidirectional(self):
+        """Test is_naturally_bidirectional function."""
+        from src.contexts.knowledge.domain.models.entity import is_naturally_bidirectional
+
+        assert is_naturally_bidirectional(RelationshipType.KNOWS) is True
+        assert is_naturally_bidirectional(RelationshipType.ALLIED_WITH) is True
+        assert is_naturally_bidirectional(RelationshipType.ENEMY_OF) is True
+        assert is_naturally_bidirectional(RelationshipType.LOVES) is True
+        assert is_naturally_bidirectional(RelationshipType.HATES) is True
+        assert is_naturally_bidirectional(RelationshipType.LOCATED_AT) is True
+
+        assert is_naturally_bidirectional(RelationshipType.KILLED) is False
+        assert is_naturally_bidirectional(RelationshipType.PARENT_OF) is False
+        assert is_naturally_bidirectional(RelationshipType.LEADS) is False
+
+
+@pytest.mark.unit
+@pytest.mark.medium
+class TestTemporalRelationships:
+    """Tests for BRAIN-030B: Temporal relationship filtering."""
+
+    def test_filter_by_temporal_exact_match(self):
+        """Test filtering by exact temporal marker."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 1",
+            ),
+            Relationship(
+                source="Alice",
+                target="Charlie",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 2",
+            ),
+            Relationship(
+                source="Bob",
+                target="Charlie",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="",  # No temporal info
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        filtered = result.filter_by_temporal(temporal_marker="during chapter 1")
+
+        assert filtered.relationship_count == 1
+        assert filtered.relationships[0].target == "Bob"
+
+    def test_filter_by_temporal_contains_substring(self):
+        """Test filtering by temporal marker substring."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 1",
+            ),
+            Relationship(
+                source="Alice",
+                target="Charlie",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="before the battle of chapter 1",
+            ),
+            Relationship(
+                source="Bob",
+                target="Charlie",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="after chapter 2",
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        filtered = result.filter_by_temporal(contains_marker="chapter 1")
+
+        assert filtered.relationship_count == 2
+
+    def test_filter_by_temporal_empty_marker(self):
+        """Test filtering for relationships without temporal info."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 1",
+            ),
+            Relationship(
+                source="Bob",
+                target="Charlie",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="",  # No temporal info
+            ),
+            Relationship(
+                source="Charlie",
+                target="Dave",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="",  # No temporal info
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        filtered = result.filter_by_temporal(temporal_marker="")
+
+        assert filtered.relationship_count == 2
+
+    def test_filter_by_temporal_no_filter(self):
+        """Test that no filter returns all relationships."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 1",
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        filtered = result.filter_by_temporal()
+
+        assert filtered.relationship_count == 1
+
+    def test_get_temporal_markers(self):
+        """Test getting all unique temporal markers."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 1",
+            ),
+            Relationship(
+                source="Alice",
+                target="Charlie",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 1",  # Duplicate
+            ),
+            Relationship(
+                source="Bob",
+                target="Charlie",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="before the battle",
+            ),
+            Relationship(
+                source="Charlie",
+                target="Dave",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="",  # Empty marker excluded
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        markers = result.get_temporal_markers()
+
+        assert len(markers) == 2
+        assert "before the battle" in markers
+        assert "during chapter 1" in markers
+
+    def test_get_relationships_at_time(self):
+        """Test getting relationships valid at a specific time."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 1",
+            ),
+            Relationship(
+                source="Alice",
+                target="Charlie",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 2",
+            ),
+            Relationship(
+                source="Bob",
+                target="Charlie",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="",  # No temporal info - assumed always valid
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        chapter1_rels = result.get_relationships_at_time("chapter 1")
+
+        # Should match "during chapter 1" and empty marker (always valid)
+        assert len(chapter1_rels) == 2
+
+    def test_has_temporal_relationship(self):
+        """Test checking if entity has temporal relationships."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 1",
+            ),
+            Relationship(
+                source="Charlie",
+                target="Dave",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="",  # No temporal info
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        assert result.has_temporal_relationship("Alice") is True
+        assert result.has_temporal_relationship("Bob") is True
+        assert result.has_temporal_relationship("Charlie") is False
+        assert result.has_temporal_relationship("Dave") is False
+
+    def test_combined_bidirectional_and_temporal(self):
+        """Test combining bidirectional normalization with temporal filtering."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 1",
+            ),
+            Relationship(
+                source="Charlie",
+                target="Dave",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="during chapter 2",
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        # First normalize, then filter
+        normalized = result.normalize_bidirectional()
+        chapter1_rels = normalized.filter_by_temporal(contains_marker="chapter 1")
+
+        # Should have Alice->Bob and Bob->Alice for chapter 1
+        assert chapter1_rels.relationship_count == 2
+
+    def test_temporal_case_insensitive(self):
+        """Test temporal filtering is case-insensitive."""
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                temporal_marker="During Chapter 1",
+            ),
+        )
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        # Different cases should match
+        filtered1 = result.filter_by_temporal(contains_marker="chapter 1")
+        filtered2 = result.filter_by_temporal(contains_marker="CHAPTER 1")
+        filtered3 = result.filter_by_temporal(contains_marker="Chapter 1")
+
+        assert filtered1.relationship_count == 1
+        assert filtered2.relationship_count == 1
+        assert filtered3.relationship_count == 1
