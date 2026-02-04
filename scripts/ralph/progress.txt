@@ -853,3 +853,23 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Use visited set (copied) for circular reference detection in recursive resolution
 - When creating temporary templates for rendering, use the same ID to avoid self-reference detection
 - Child variables override parent variables by checking child_names set before adding parent vars
+
+## [2025-02-04] - BRAIN-017B ✅
+- Implemented circular dependency detection in extends chain
+- Added check_circular_extends() method to PromptTemplate entity
+- Detects both direct self-reference and indirect circular chains (A->B->C->A)
+- Raises ValueError with helpful error message: "Circular reference detected in extends chain"
+- Validates extends chain recursively with visited set tracking
+- All 78 prompt template tests passing (up from 75 with 3 new tests for circular detection)
+- Files changed:
+  - `src/contexts/knowledge/domain/models/prompt_template.py`: Added check_circular_extends() method (30+ lines)
+  - `tests/unit/contexts/knowledge/domain/models/test_prompt_template.py`: Added 3 circular detection tests
+
+**Learnings for future iterations:**
+- Circular reference detection requires tracking visited set across recursive calls
+- Use visited.copy() to avoid mutating the parent's visited set in recursion
+- The extends field and {{> includes}} are two different inheritance mechanisms:
+  - `extends`: Explicit inheritance declaration for variable merging
+  - {{> includes}}: Content composition directives
+- Both need circular reference detection but in different contexts
+- Self-reference is validated in __post_init__ for extends field, but circular chains need runtime detection
