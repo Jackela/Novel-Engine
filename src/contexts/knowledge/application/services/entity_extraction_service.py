@@ -1,7 +1,7 @@
 """
 Entity Extraction Service
 
-Extracts entities from narrative text using LLM-based extraction.
+Extracts entities and relationships from narrative text using LLM-based extraction.
 Supports Characters, Locations, Items, Events, and Organizations.
 Uses structured output for reliable entity data extraction.
 
@@ -9,11 +9,12 @@ Constitution Compliance:
 - Article II (Hexagonal): Application service using LLM port
 - Article V (SOLID): SRP - entity extraction only
 
-Warzone 4: AI Brain - BRAIN-029A
+Warzone 4: AI Brain - BRAIN-029A, BRAIN-030A
 """
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -26,6 +27,9 @@ from ...domain.models.entity import (
     ExtractedEntity,
     EntityMention,
     ExtractionResult,
+    ExtractionResultWithRelationships,
+    Relationship,
+    RelationshipType,
     DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD,
     DEFAULT_MAX_ENTITIES,
     PRONOUNS,
@@ -55,6 +59,9 @@ class ExtractionConfig:
         confidence_threshold: Minimum confidence for extracted entities (0.0-1.0)
         max_entities: Maximum number of entities to extract
         include_mentions: Whether to extract individual mentions
+        extract_relationships: Whether to extract relationships between entities
+        max_relationships: Maximum number of relationships to extract
+        relationship_strength_threshold: Minimum strength for relationships (0.0-1.0)
         temperature: LLM temperature for extraction
         max_tokens: Maximum tokens in LLM response
     """
@@ -62,6 +69,9 @@ class ExtractionConfig:
     confidence_threshold: float = DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD
     max_entities: int = DEFAULT_MAX_ENTITIES
     include_mentions: bool = True
+    extract_relationships: bool = False
+    max_relationships: int = 30
+    relationship_strength_threshold: float = 0.3
     temperature: float = DEFAULT_TEMPERATURE
     max_tokens: int = DEFAULT_MAX_TOKENS
 
@@ -73,6 +83,12 @@ class ExtractionConfig:
             raise ValueError("max_entities must be at least 1")
         if self.max_entities > 100:
             raise ValueError("max_entities must not exceed 100")
+        if self.max_relationships < 1:
+            raise ValueError("max_relationships must be at least 1")
+        if self.max_relationships > 100:
+            raise ValueError("max_relationships must not exceed 100")
+        if not 0.0 <= self.relationship_strength_threshold <= 1.0:
+            raise ValueError("relationship_strength_threshold must be between 0.0 and 1.0")
         if not 0.0 <= self.temperature <= 2.0:
             raise ValueError("temperature must be between 0.0 and 2.0")
 
@@ -602,4 +618,266 @@ Respond with ONLY valid JSON matching the schema above."""
             source_length=source_length,
             model_used=", ".join(sorted(models_used)),
             tokens_used=total_tokens if total_tokens > 0 else None,
+        )
+
+    # Relationship extraction methods
+
+    def _build_relationship_extraction_prompt(
+        self, text: str, entities: tuple[ExtractedEntity, ...]
+    ) -> tuple[str, str]:
+        """
+        Build prompts for relationship extraction.
+
+        Args:
+            text: The narrative text to extract relationships from
+            entities: Previously extracted entities to find relationships between
+
+        Returns:
+            Tuple of (system_prompt, user_prompt)
+        """
+        # Build list of known entities for context
+        entity_list = "\n".join(
+            f"- {e.name} ({e.entity_type.value})"
+            for e in entities
+        )
+
+        # Build list of relationship types
+        relationship_types = ", ".join([rt.value for rt in RelationshipType])
+
+        system_prompt = f"""You are an expert at analyzing narrative text and extracting relationships between entities.
+
+Known entities in this text:
+{entity_list}
+
+Extract relationships of these types: {relationship_types}.
+
+For each relationship, provide:
+- source: Name of the source entity (from the list above)
+- target: Name of the target entity (from the list above)
+- type: One of: {relationship_types}
+- context: Brief quote or description showing where this relationship appears
+- strength: Confidence 0.0-1.0 (use 1.0 for explicitly stated, 0.5-0.7 for implied)
+- bidirectional: true if relationship works both ways (e.g., KNOWS, ALLIED_WITH)
+- temporal: Time reference if applicable (e.g., "during chapter 1", "before the battle")
+
+Return ONLY valid JSON. Format:
+{{
+  "relationships": [
+    {{
+      "source": "Entity Name",
+      "target": "Another Entity",
+      "type": "knows|killed|loves|hates|parent_of|child_of|member_of|leads|serves|owns|located_at|occurred_at|participated_in|allied_with|enemy_of|mentored|other",
+      "context": "Brief context from text",
+      "strength": 1.0,
+      "bidirectional": false,
+      "temporal": ""
+    }}
+  ]
+}}"""
+
+        user_prompt = f"""Extract relationships from this narrative text:
+
+{text}
+
+Respond with ONLY valid JSON matching the schema above."""
+
+        return system_prompt, user_prompt
+
+    def _build_relationships(
+        self,
+        relationships_data: list[dict],
+        known_entities: tuple[ExtractedEntity, ...],
+    ) -> list[Relationship]:
+        """
+        Build Relationship objects from parsed data.
+
+        Args:
+            relationships_data: List of relationship dictionaries from LLM
+            known_entities: Tuple of known entities for validation
+
+        Returns:
+            List of Relationship objects
+        """
+        relationships: list[Relationship] = []
+        known_names = {e.name.lower() for e in known_entities}
+
+        for rel_data in relationships_data[:self._config.max_relationships]:
+            try:
+                source = rel_data.get("source", "").strip()
+                target = rel_data.get("target", "").strip()
+
+                # Skip if entities aren't recognized
+                if source.lower() not in known_names or target.lower() not in known_names:
+                    self._logger.warning(
+                        "relationship_references_unknown_entity",
+                        source=source,
+                        target=target,
+                    )
+                    continue
+
+                # Skip self-relationships
+                if source.lower() == target.lower():
+                    continue
+
+                # Parse relationship type
+                type_str = rel_data.get("type", "other").lower().replace("-", "_")
+                try:
+                    relationship_type = RelationshipType(type_str)
+                except ValueError:
+                    # Map common variations
+                    type_mapping = {
+                        "know": RelationshipType.KNOWS,
+                        "kill": RelationshipType.KILLED,
+                        "love": RelationshipType.LOVES,
+                        "hate": RelationshipType.HATES,
+                        "parent": RelationshipType.PARENT_OF,
+                        "child": RelationshipType.CHILD_OF,
+                        "member": RelationshipType.MEMBER_OF,
+                        "lead": RelationshipType.LEADS,
+                        "serve": RelationshipType.SERVES,
+                        "own": RelationshipType.OWNS,
+                        "located": RelationshipType.LOCATED_AT,
+                        "occurred": RelationshipType.OCCURRED_AT,
+                        "participated": RelationshipType.PARTICIPATED_IN,
+                        "ally": RelationshipType.ALLIED_WITH,
+                        "enemy": RelationshipType.ENEMY_OF,
+                        "mentor": RelationshipType.MENTORED,
+                    }
+                    relationship_type = type_mapping.get(type_str, RelationshipType.OTHER)
+
+                strength = float(rel_data.get("strength", 1.0))
+                # Filter by strength threshold
+                if strength < self._config.relationship_strength_threshold:
+                    continue
+
+                relationship = Relationship(
+                    source=source,
+                    target=target,
+                    relationship_type=relationship_type,
+                    context=rel_data.get("context", ""),
+                    strength=min(1.0, max(0.0, strength)),  # Clamp to 0-1
+                    bidirectional=rel_data.get("bidirectional", False),
+                    temporal_marker=rel_data.get("temporal", ""),
+                    metadata=rel_data.get("metadata", {}),
+                )
+                relationships.append(relationship)
+
+            except (ValueError, KeyError) as e:
+                self._logger.warning(
+                    "failed_to_build_relationship",
+                    error=str(e),
+                    relationship_data=rel_data,
+                )
+                continue
+
+        return relationships
+
+    async def extract_with_relationships(
+        self,
+        text: str,
+        config: ExtractionConfig | None = None,
+    ) -> ExtractionResultWithRelationships:
+        """
+        Extract entities and relationships from narrative text.
+
+        First extracts entities, then extracts relationships between them.
+        Returns an enhanced result containing both entities and relationships.
+
+        Args:
+            text: The narrative text to extract from
+            config: Optional override configuration (must have extract_relationships=True)
+
+        Returns:
+            ExtractionResultWithRelationships containing entities and relationships
+
+        Raises:
+            EntityExtractionError: If extraction fails
+        """
+        effective_config = config or self._config
+
+        # Enable relationship extraction for this call
+        if isinstance(config, ExtractionConfig):
+            extraction_config = dataclasses.replace(
+                effective_config,
+                extract_relationships=True
+            )
+        else:
+            extraction_config = effective_config
+
+        # First extract entities
+        entity_result = await self.extract(text, extraction_config)
+
+        self._logger.info(
+            "starting_relationship_extraction",
+            entity_count=entity_result.entity_count,
+            max_relationships=extraction_config.max_relationships,
+        )
+
+        # Build relationship extraction prompts
+        system_prompt, user_prompt = self._build_relationship_extraction_prompt(
+            text, entity_result.entities
+        )
+
+        # Create LLM request for relationships
+        request = LLMRequest(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            temperature=extraction_config.temperature,
+            max_tokens=extraction_config.max_tokens,
+        )
+
+        # Call LLM for relationships
+        try:
+            response = await self._llm_client.generate(request)
+        except LLMError as e:
+            self._logger.error("relationship_llm_generation_failed", error=str(e))
+            # Return entities only on failure
+            return ExtractionResultWithRelationships(
+                entities=entity_result.entities,
+                mentions=entity_result.mentions,
+                source_length=entity_result.source_length,
+                relationships=(),
+                timestamp=entity_result.timestamp,
+                model_used=entity_result.model_used,
+                tokens_used=entity_result.tokens_used,
+            )
+
+        # Parse relationship response
+        try:
+            parsed = self._parse_llm_response(response.text)
+        except EntityExtractionError:
+            # Return entities only on parse failure
+            return ExtractionResultWithRelationships(
+                entities=entity_result.entities,
+                mentions=entity_result.mentions,
+                source_length=entity_result.source_length,
+                relationships=(),
+                timestamp=entity_result.timestamp,
+                model_used=entity_result.model_used,
+                tokens_used=entity_result.tokens_used,
+            )
+
+        # Build relationships
+        relationships_data_raw = parsed.get("relationships", [])
+        relationships_data: list[dict] = (
+            relationships_data_raw if isinstance(relationships_data_raw, list) else []
+        )
+
+        relationships = self._build_relationships(
+            relationships_data, entity_result.entities
+        )
+
+        self._logger.info(
+            "relationship_extraction_complete",
+            relationship_count=len(relationships),
+        )
+
+        return ExtractionResultWithRelationships(
+            entities=entity_result.entities,
+            mentions=entity_result.mentions,
+            source_length=entity_result.source_length,
+            relationships=tuple(relationships),
+            timestamp=entity_result.timestamp,
+            model_used=entity_result.model_used,
+            tokens_used=entity_result.tokens_used,
         )

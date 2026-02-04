@@ -20,7 +20,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    pass
 
 
 class EntityType(str, Enum):
@@ -43,6 +43,52 @@ class EntityType(str, Enum):
     ITEM = "item"
     EVENT = "event"
     ORGANIZATION = "organization"
+
+
+class RelationshipType(str, Enum):
+    """
+    Types of relationships between entities in the knowledge graph.
+
+    Why enum:
+        Provides type safety and enables semantic querying of relationships.
+
+    Relationship Types:
+        KNOWS: Entities are acquainted or aware of each other
+        KILLED: One entity caused the death of another
+        LOVES: Romantic or familial affection
+        HATES: Strong dislike or enmity
+        PARENT_OF: Familial parent-child relationship
+        CHILD_OF: Familial child-parent relationship (inverse of PARENT_OF)
+        MEMBER_OF: Entity belongs to an organization or group
+        LEADS: Entity leads or commands another
+        SERVES: Entity serves or follows another
+        OWNS: Entity possesses another
+        LOCATED_AT: Entity is found at a location
+        OCCURRED_AT: Event took place at a location
+        PARTICIPATED_IN: Entity took part in an event
+        ALLIED_WITH: Entities are allies or partners
+        ENEMY_OF: Entities are opposed or at war
+        MENTORED: One entity taught or guided another
+        OTHER: Catch-all for unspecified relationships
+    """
+
+    KNOWS = "knows"
+    KILLED = "killed"
+    LOVES = "loves"
+    HATES = "hates"
+    PARENT_OF = "parent_of"
+    CHILD_OF = "child_of"
+    MEMBER_OF = "member_of"
+    LEADS = "leads"
+    SERVES = "serves"
+    OWNS = "owns"
+    LOCATED_AT = "located_at"
+    OCCURRED_AT = "occurred_at"
+    PARTICIPATED_IN = "participated_in"
+    ALLIED_WITH = "allied_with"
+    ENEMY_OF = "enemy_of"
+    MENTORED = "mentored"
+    OTHER = "other"
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,6 +237,185 @@ class ExtractionResult:
         """Total number of entity mentions found."""
         return len(self.mentions)
 
+
+@dataclass(frozen=True, slots=True)
+class Relationship:
+    """
+    A relationship between two entities in the knowledge graph.
+
+    Represents a directed relationship from a source entity to a target entity,
+    with context about where this relationship was established.
+
+    Why frozen:
+        Immutable snapshot ensures relationship data doesn't change during processing.
+
+    Attributes:
+        source: Name of the source entity (the subject of the relationship)
+        target: Name of the target entity (the object of the relationship)
+        relationship_type: Type of relationship from RelationshipType enum
+        context: Text snippet providing context for this relationship
+        strength: Confidence score 0.0-1.0, or 1.0 if explicitly stated
+        bidirectional: Whether the relationship naturally works both ways (e.g., KNOWS)
+        temporal_marker: Optional time reference (e.g., "during chapter 1", "before the battle")
+        metadata: Additional attributes about the relationship
+    """
+
+    source: str
+    target: str
+    relationship_type: RelationshipType
+    context: str = ""
+    strength: float = 1.0
+    bidirectional: bool = False
+    temporal_marker: str = ""
+    metadata: dict = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Validate relationship data."""
+        if not self.source or not self.source.strip():
+            raise ValueError("Source entity name must not be empty")
+        if not self.target or not self.target.strip():
+            raise ValueError("Target entity name must not be empty")
+        if not 0.0 <= self.strength <= 1.0:
+            raise ValueError("Strength must be between 0.0 and 1.0")
+
+    @property
+    def is_self_relationship(self) -> bool:
+        """Check if this is a self-referential relationship."""
+        return self.source.lower().strip() == self.target.lower().strip()
+
+    def invert(self) -> Relationship:
+        """
+        Create an inverted version of this relationship.
+
+        Swaps source and target, and adjusts the relationship type
+        to its inverse if one exists (e.g., PARENT_OF -> CHILD_OF).
+
+        Returns:
+            New Relationship with inverted direction
+        """
+        inverted_type = _INVERSE_RELATIONSHIP_MAP.get(self.relationship_type)
+
+        if inverted_type:
+            return Relationship(
+                source=self.target,
+                target=self.source,
+                relationship_type=inverted_type,
+                context=self.context,
+                strength=self.strength,
+                bidirectional=self.bidirectional,
+                temporal_marker=self.temporal_marker,
+                metadata=self.metadata.copy(),
+            )
+        else:
+            # No inverse type, just swap directions
+            return Relationship(
+                source=self.target,
+                target=self.source,
+                relationship_type=self.relationship_type,
+                context=self.context,
+                strength=self.strength,
+                bidirectional=self.bidirectional,
+                temporal_marker=self.temporal_marker,
+                metadata=self.metadata.copy(),
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class ExtractionResultWithRelationships(ExtractionResult):
+    """
+    Extended extraction result that includes relationships between entities.
+
+    Attributes:
+        relationships: All relationships extracted between entities
+    """
+
+    relationships: tuple[Relationship, ...] = field(default_factory=tuple)
+
+    def get_relationships_for_entity(
+        self, entity_name: str
+    ) -> tuple[Relationship, ...]:
+        """
+        Get all relationships involving a specific entity.
+
+        Args:
+            entity_name: Name of the entity (case-insensitive)
+
+        Returns:
+            Tuple of relationships where the entity is source or target
+        """
+        name_lower = entity_name.lower()
+        return tuple(
+            r for r in self.relationships
+            if r.source.lower() == name_lower or r.target.lower() == name_lower
+        )
+
+    def get_relationships_by_type(
+        self, relationship_type: RelationshipType
+    ) -> tuple[Relationship, ...]:
+        """
+        Get all relationships of a specific type.
+
+        Args:
+            relationship_type: The type of relationships to filter
+
+        Returns:
+            Tuple of relationships matching the type
+        """
+        return tuple(
+            r for r in self.relationships
+            if r.relationship_type == relationship_type
+        )
+
+    def find_relationship(
+        self,
+        source: str,
+        target: str,
+        relationship_type: RelationshipType | None = None,
+    ) -> tuple[Relationship, ...]:
+        """
+        Find relationships between two specific entities.
+
+        Args:
+            source: Source entity name (case-insensitive)
+            target: Target entity name (case-insensitive)
+            relationship_type: Optional filter by relationship type
+
+        Returns:
+            Tuple of matching relationships
+        """
+        source_lower = source.lower()
+        target_lower = target.lower()
+
+        matches = (
+            r for r in self.relationships
+            if r.source.lower() == source_lower and r.target.lower() == target_lower
+        )
+
+        if relationship_type:
+            matches = (r for r in matches if r.relationship_type == relationship_type)
+
+        return tuple(matches)
+
+    @property
+    def relationship_count(self) -> int:
+        """Total number of relationships extracted."""
+        return len(self.relationships)
+
+
+# Mapping of relationship types to their inverses
+_INVERSE_RELATIONSHIP_MAP: dict[RelationshipType, RelationshipType] = {
+    RelationshipType.PARENT_OF: RelationshipType.CHILD_OF,
+    RelationshipType.CHILD_OF: RelationshipType.PARENT_OF,
+    RelationshipType.LEADS: RelationshipType.SERVES,
+    RelationshipType.SERVES: RelationshipType.LEADS,
+    RelationshipType.MENTORED: RelationshipType.CHILD_OF,  # Approximation
+    RelationshipType.LOCATED_AT: RelationshipType.LOCATED_AT,  # Symmetric
+    RelationshipType.KNOWS: RelationshipType.KNOWS,  # Symmetric
+    RelationshipType.LOVES: RelationshipType.LOVES,  # Potentially symmetric
+    RelationshipType.HATES: RelationshipType.HATES,  # Potentially symmetric
+    RelationshipType.ALLIED_WITH: RelationshipType.ALLIED_WITH,  # Symmetric
+    RelationshipType.ENEMY_OF: RelationshipType.ENEMY_OF,  # Symmetric
+}
 
 # Constants for entity extraction
 DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD = 0.5

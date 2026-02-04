@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import pytest
 from unittest.mock import AsyncMock
-from datetime import datetime
 
 from src.contexts.knowledge.application.services.entity_extraction_service import (
     EntityExtractionService,
@@ -31,6 +30,9 @@ from src.contexts.knowledge.domain.models.entity import (
     ExtractedEntity,
     EntityMention,
     ExtractionResult,
+    ExtractionResultWithRelationships,
+    Relationship,
+    RelationshipType,
     DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD,
     DEFAULT_MAX_ENTITIES,
     PRONOUNS,
@@ -661,3 +663,598 @@ class TestEntityExtractionServiceIntegration:
         # Verify mention tracking
         alice_mentions = result.get_entity_mentions("Alice")
         assert len(alice_mentions) >= 1
+
+
+# Relationship extraction samples and fixtures
+SAMPLE_RELATIONSHIP_JSON = """{
+  "relationships": [
+    {
+      "source": "Alice",
+      "target": "Bob",
+      "type": "killed",
+      "context": "Alice killed Bob with a single strike",
+      "strength": 1.0,
+      "bidirectional": false,
+      "temporal": ""
+    },
+    {
+      "source": "Alice",
+      "target": "The Rusty Sword",
+      "type": "owns",
+      "context": "Alice wielded The Rusty Sword",
+      "strength": 0.9,
+      "bidirectional": false,
+      "temporal": ""
+    },
+    {
+      "source": "Alice",
+      "target": "Golden Dragon Tavern",
+      "type": "located_at",
+      "context": "Alice was at the Golden Dragon Tavern",
+      "strength": 1.0,
+      "bidirectional": false,
+      "temporal": "during chapter 1"
+    },
+    {
+      "source": "Alice",
+      "target": "Bob",
+      "type": "knows",
+      "context": "Alice and Bob were old friends",
+      "strength": 0.8,
+      "bidirectional": true,
+      "temporal": ""
+    },
+    {
+      "source": "Bob",
+      "target": "Adventurers Guild",
+      "type": "member_of",
+      "context": "Bob was a member of the Adventurers Guild",
+      "strength": 1.0,
+      "bidirectional": false,
+      "temporal": ""
+    }
+  ]
+}"""
+
+
+@pytest.fixture
+def relationship_llm_client():
+    """Create a mock LLM client that returns relationship data."""
+    client = AsyncMock(spec=ILLMClient)
+
+    async def mock_generate(request: LLMRequest) -> LLMResponse:
+        # Check if this is a relationship extraction request by the prompt content
+        if "relationships" in request.system_prompt.lower():
+            return LLMResponse(
+                text=SAMPLE_RELATIONSHIP_JSON,
+                model="test-model",
+                tokens_used=100,
+            )
+        else:
+            # Return entity data for entity extraction
+            # Include Bob and Carol as entities for relationship tests
+            return LLMResponse(
+                text="""{
+  "entities": [
+    {
+      "name": "Alice",
+      "type": "character",
+      "aliases": ["the warrior"],
+      "description": "A brave warrior",
+      "first_appearance": 0,
+      "confidence": 0.95
+    },
+    {
+      "name": "Bob",
+      "type": "character",
+      "aliases": [],
+      "description": "Alice's adversary",
+      "first_appearance": 20,
+      "confidence": 0.90
+    },
+    {
+      "name": "Carol",
+      "type": "character",
+      "aliases": [],
+      "description": "Another character",
+      "first_appearance": 40,
+      "confidence": 0.90
+    },
+    {
+      "name": "The Rusty Sword",
+      "type": "item",
+      "aliases": [],
+      "description": "An ancient weapon",
+      "first_appearance": 30,
+      "confidence": 0.88
+    },
+    {
+      "name": "Golden Dragon Tavern",
+      "type": "location",
+      "aliases": ["the tavern"],
+      "description": "A tavern",
+      "first_appearance": 10,
+      "confidence": 0.92
+    },
+    {
+      "name": "Adventurers Guild",
+      "type": "organization",
+      "aliases": ["the guild"],
+      "description": "An organization",
+      "first_appearance": 50,
+      "confidence": 0.90
+    }
+  ],
+  "mentions": []
+}""",
+                model="test-model",
+                tokens_used=150,
+            )
+
+    client.generate = mock_generate
+    return client
+
+
+class TestRelationshipType:
+    """Tests for RelationshipType enum."""
+
+    def test_all_relationship_types_defined(self):
+        """Test that expected relationship types are defined."""
+        assert RelationshipType.KNOWS.value == "knows"
+        assert RelationshipType.KILLED.value == "killed"
+        assert RelationshipType.LOVES.value == "loves"
+        assert RelationshipType.HATES.value == "hates"
+        assert RelationshipType.PARENT_OF.value == "parent_of"
+        assert RelationshipType.CHILD_OF.value == "child_of"
+        assert RelationshipType.MEMBER_OF.value == "member_of"
+        assert RelationshipType.LEADS.value == "leads"
+        assert RelationshipType.SERVES.value == "serves"
+        assert RelationshipType.OWNS.value == "owns"
+        assert RelationshipType.LOCATED_AT.value == "located_at"
+        assert RelationshipType.OCCURRED_AT.value == "occurred_at"
+        assert RelationshipType.PARTICIPATED_IN.value == "participated_in"
+        assert RelationshipType.ALLIED_WITH.value == "allied_with"
+        assert RelationshipType.ENEMY_OF.value == "enemy_of"
+        assert RelationshipType.MENTORED.value == "mentored"
+        assert RelationshipType.OTHER.value == "other"
+
+    def test_relationship_type_from_string(self):
+        """Test creating RelationshipType from string values."""
+        assert RelationshipType("knows") == RelationshipType.KNOWS
+        assert RelationshipType("killed") == RelationshipType.KILLED
+        assert RelationshipType("loves") == RelationshipType.LOVES
+
+
+class TestRelationship:
+    """Tests for Relationship value object."""
+
+    def test_relationship_creation(self):
+        """Test creating a valid relationship."""
+        relationship = Relationship(
+            source="Alice",
+            target="Bob",
+            relationship_type=RelationshipType.KILLED,
+            context="Alice killed Bob in battle",
+            strength=1.0,
+        )
+
+        assert relationship.source == "Alice"
+        assert relationship.target == "Bob"
+        assert relationship.relationship_type == RelationshipType.KILLED
+        assert relationship.context == "Alice killed Bob in battle"
+        assert relationship.strength == 1.0
+        assert relationship.bidirectional is False
+
+    def test_relationship_validation_empty_source(self):
+        """Test validation rejects empty source."""
+        with pytest.raises(ValueError, match="Source"):
+            Relationship(
+                source="",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+            )
+
+    def test_relationship_validation_empty_target(self):
+        """Test validation rejects empty target."""
+        with pytest.raises(ValueError, match="Target"):
+            Relationship(
+                source="Alice",
+                target="",
+                relationship_type=RelationshipType.KNOWS,
+            )
+
+    def test_relationship_validation_strength_too_low(self):
+        """Test validation rejects strength < 0."""
+        with pytest.raises(ValueError, match="Strength"):
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                strength=-0.1,
+            )
+
+    def test_relationship_validation_strength_too_high(self):
+        """Test validation rejects strength > 1."""
+        with pytest.raises(ValueError, match="Strength"):
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                strength=1.1,
+            )
+
+    def test_is_self_relationship(self):
+        """Test self-relationship detection."""
+        self_rel = Relationship(
+            source="Alice",
+            target="Alice",
+            relationship_type=RelationshipType.KNOWS,
+        )
+        normal_rel = Relationship(
+            source="Alice",
+            target="Bob",
+            relationship_type=RelationshipType.KNOWS,
+        )
+
+        assert self_rel.is_self_relationship is True
+        assert normal_rel.is_self_relationship is False
+
+    def test_invert_parent_child(self):
+        """Test inverting parent-child relationship."""
+        parent_rel = Relationship(
+            source="Alice",
+            target="Bob",
+            relationship_type=RelationshipType.PARENT_OF,
+        )
+
+        inverted = parent_rel.invert()
+
+        assert inverted.source == "Bob"
+        assert inverted.target == "Alice"
+        assert inverted.relationship_type == RelationshipType.CHILD_OF
+
+    def test_invert_kills(self):
+        """Test inverting kill relationship (no inverse type)."""
+        kill_rel = Relationship(
+            source="Alice",
+            target="Bob",
+            relationship_type=RelationshipType.KILLED,
+        )
+
+        inverted = kill_rel.invert()
+
+        assert inverted.source == "Bob"
+        assert inverted.target == "Alice"
+        # KILLED has no inverse, so type stays the same
+        assert inverted.relationship_type == RelationshipType.KILLED
+
+    def test_invert_symmetric(self):
+        """Test inverting symmetric relationship (type stays same)."""
+        knows_rel = Relationship(
+            source="Alice",
+            target="Bob",
+            relationship_type=RelationshipType.KNOWS,
+        )
+
+        inverted = knows_rel.invert()
+
+        assert inverted.source == "Bob"
+        assert inverted.target == "Alice"
+        assert inverted.relationship_type == RelationshipType.KNOWS
+
+
+class TestExtractionResultWithRelationships:
+    """Tests for ExtractionResultWithRelationships."""
+
+    def test_result_with_relationships_creation(self):
+        """Test creating result with relationships."""
+        entities = (
+            ExtractedEntity(name="Alice", entity_type=EntityType.CHARACTER),
+            ExtractedEntity(name="Bob", entity_type=EntityType.CHARACTER),
+        )
+        relationships = (
+            Relationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KILLED,
+            ),
+        )
+
+        result = ExtractionResultWithRelationships(
+            entities=entities,
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        assert result.entity_count == 2
+        assert result.relationship_count == 1
+
+    def test_get_relationships_for_entity(self):
+        """Test getting relationships for a specific entity."""
+        relationships = (
+            Relationship(
+                source="Alice", target="Bob", relationship_type=RelationshipType.KILLED
+            ),
+            Relationship(
+                source="Bob", target="Carol", relationship_type=RelationshipType.KNOWS
+            ),
+            Relationship(
+                source="Carol", target="Alice", relationship_type=RelationshipType.LOVES
+            ),
+        )
+
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        alice_rels = result.get_relationships_for_entity("Alice")
+        bob_rels = result.get_relationships_for_entity("Bob")
+
+        # Alice is source of one, target of another
+        assert len(alice_rels) == 2
+        # Bob is target of one, source of another
+        assert len(bob_rels) == 2
+
+    def test_get_relationships_by_type(self):
+        """Test filtering relationships by type."""
+        relationships = (
+            Relationship(
+                source="Alice", target="Bob", relationship_type=RelationshipType.KILLED
+            ),
+            Relationship(
+                source="Carol", target="Dave", relationship_type=RelationshipType.KILLED
+            ),
+            Relationship(
+                source="Alice", target="Carol", relationship_type=RelationshipType.KNOWS
+            ),
+        )
+
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        killed_rels = result.get_relationships_by_type(RelationshipType.KILLED)
+        knows_rels = result.get_relationships_by_type(RelationshipType.KNOWS)
+
+        assert len(killed_rels) == 2
+        assert len(knows_rels) == 1
+
+    def test_find_relationship(self):
+        """Test finding relationships between specific entities."""
+        relationships = (
+            Relationship(
+                source="Alice", target="Bob", relationship_type=RelationshipType.KILLED
+            ),
+            Relationship(
+                source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS
+            ),
+            Relationship(
+                source="Alice", target="Carol", relationship_type=RelationshipType.KNOWS
+            ),
+        )
+
+        result = ExtractionResultWithRelationships(
+            entities=(),
+            mentions=(),
+            source_length=100,
+            relationships=relationships,
+        )
+
+        # Find all relationships between Alice and Bob
+        alice_bob_rels = result.find_relationship("Alice", "Bob")
+        assert len(alice_bob_rels) == 2
+
+        # Find specific type
+        killed_rel = result.find_relationship(
+            "Alice", "Bob", RelationshipType.KILLED
+        )
+        assert len(killed_rel) == 1
+
+        # Find non-existent relationships
+        none_rel = result.find_relationship("Bob", "Carol")
+        assert len(none_rel) == 0
+
+
+class TestRelationshipExtraction:
+    """Tests for relationship extraction in EntityExtractionService."""
+
+    @pytest.mark.asyncio
+    async def test_extract_with_relationships_success(self, relationship_llm_client):
+        """Test successful extraction of entities and relationships."""
+        service = EntityExtractionService(llm_client=relationship_llm_client)
+        text = "Alice killed Bob with a single strike at the Golden Dragon Tavern."
+
+        result = await service.extract_with_relationships(text)
+
+        assert isinstance(result, ExtractionResultWithRelationships)
+        assert result.entity_count > 0
+        assert result.relationship_count > 0
+
+    @pytest.mark.asyncio
+    async def test_extract_with_relationships_filters_by_strength(
+        self, relationship_llm_client
+    ):
+        """Test that relationships below strength threshold are filtered."""
+        service = EntityExtractionService(
+            llm_client=relationship_llm_client,
+            config=ExtractionConfig(relationship_strength_threshold=0.95),
+        )
+        text = "Alice killed Bob."
+
+        result = await service.extract_with_relationships(text)
+
+        # Only relationships with strength >= 0.95 should be included
+        for rel in result.relationships:
+            assert rel.strength >= 0.95
+
+    @pytest.mark.asyncio
+    async def test_extract_with_relationships_max_limit(
+        self, relationship_llm_client
+    ):
+        """Test that max_relationships limit is respected."""
+        service = EntityExtractionService(
+            llm_client=relationship_llm_client,
+            config=ExtractionConfig(max_relationships=2),
+        )
+        text = "Alice killed Bob. Alice loves Carol. Bob hates Dave."
+
+        result = await service.extract_with_relationships(text)
+
+        assert result.relationship_count <= 2
+
+    @pytest.mark.asyncio
+    async def test_extract_with_relationships_ignores_unknown_entities(
+        self, mock_llm_client
+    ):
+        """Test that relationships referencing unknown entities are skipped."""
+        client = mock_llm_client
+
+        async def mock_generate(request: LLMRequest) -> LLMResponse:
+            if "relationships" in request.system_prompt.lower():
+                return LLMResponse(
+                    text='{"relationships": ['
+                    '{"source": "Alice", "target": "UnknownPerson", '
+                    '"type": "knows", "strength": 1.0}'
+                    ']}',
+                    model="test-model",
+                    tokens_used=50,
+                )
+            return LLMResponse(
+                text=SAMPLE_EXTRACTION_JSON,
+                model="test-model",
+                tokens_used=150,
+            )
+
+        client.generate = mock_generate
+
+        service = EntityExtractionService(llm_client=client)
+        result = await service.extract_with_relationships("Alice entered the tavern.")
+
+        # Relationship to UnknownPerson should be skipped
+        assert result.relationship_count == 0
+
+    @pytest.mark.asyncio
+    async def test_extract_with_relationships_handles_parse_failure(
+        self, mock_llm_client
+    ):
+        """Test that relationship parse failure returns entities only."""
+        client = mock_llm_client
+
+        async def mock_generate(request: LLMRequest) -> LLMResponse:
+            if "relationships" in request.system_prompt.lower():
+                return LLMResponse(
+                    text="Invalid JSON response",
+                    model="test-model",
+                )
+            return LLMResponse(
+                text=SAMPLE_EXTRACTION_JSON,
+                model="test-model",
+                tokens_used=150,
+            )
+
+        client.generate = mock_generate
+
+        service = EntityExtractionService(llm_client=client)
+        result = await service.extract_with_relationships("Alice entered the tavern.")
+
+        # Should return entities even if relationship parsing fails
+        assert result.entity_count > 0
+        assert result.relationship_count == 0
+
+    @pytest.mark.asyncio
+    async def test_extract_killed_relationship(self, relationship_llm_client):
+        """Test extracting 'killed' relationship."""
+        service = EntityExtractionService(llm_client=relationship_llm_client)
+        text = "Alice killed Bob with a single strike."
+
+        result = await service.extract_with_relationships(text)
+
+        killed_rels = result.get_relationships_by_type(RelationshipType.KILLED)
+        assert len(killed_rels) > 0
+        assert killed_rels[0].source == "Alice"
+        assert killed_rels[0].target == "Bob"
+
+    @pytest.mark.asyncio
+    async def test_extract_knows_relationship(self, relationship_llm_client):
+        """Test extracting 'knows' relationship."""
+        service = EntityExtractionService(llm_client=relationship_llm_client)
+        text = "Alice and Bob were old friends."
+
+        result = await service.extract_with_relationships(text)
+
+        knows_rels = result.get_relationships_by_type(RelationshipType.KNOWS)
+        assert len(knows_rels) > 0
+
+    @pytest.mark.asyncio
+    async def test_extract_owns_relationship(self, relationship_llm_client):
+        """Test extracting 'owns' relationship."""
+        service = EntityExtractionService(llm_client=relationship_llm_client)
+        text = "Alice wielded The Rusty Sword."
+
+        result = await service.extract_with_relationships(text)
+
+        owns_rels = result.get_relationships_by_type(RelationshipType.OWNS)
+        assert len(owns_rels) > 0
+
+    @pytest.mark.asyncio
+    async def test_extract_member_of_relationship(self, relationship_llm_client):
+        """Test extracting 'member_of' relationship."""
+        service = EntityExtractionService(llm_client=relationship_llm_client)
+        text = "Bob was a member of the Adventurers Guild."
+
+        result = await service.extract_with_relationships(text)
+
+        member_rels = result.get_relationships_by_type(RelationshipType.MEMBER_OF)
+        assert len(member_rels) > 0
+
+    @pytest.mark.asyncio
+    async def test_extract_located_at_relationship(self, relationship_llm_client):
+        """Test extracting 'located_at' relationship."""
+        service = EntityExtractionService(llm_client=relationship_llm_client)
+        text = "Alice was at the Golden Dragon Tavern."
+
+        result = await service.extract_with_relationships(text)
+
+        located_rels = result.get_relationships_by_type(RelationshipType.LOCATED_AT)
+        assert len(located_rels) > 0
+
+
+@pytest.mark.unit
+@pytest.mark.medium
+class TestRelationshipExtractionIntegration:
+    """Integration tests for relationship extraction."""
+
+    @pytest.mark.asyncio
+    async def test_full_relationship_extraction_pipeline(
+        self, relationship_llm_client
+    ):
+        """Test the complete relationship extraction pipeline."""
+        service = EntityExtractionService(llm_client=relationship_llm_client)
+        text = """
+        Alice entered the Golden Dragon Tavern. She was looking for Bob,
+        who had killed her father. Little did she know, Bob was also there,
+        sitting in the corner with his sword The Rusty Sword.
+        """
+
+        result = await service.extract_with_relationships(text)
+
+        # Verify result structure
+        assert isinstance(result, ExtractionResultWithRelationships)
+        assert result.entity_count > 0
+        assert result.source_length == len(text)
+
+        # Verify we can query relationships
+        if result.relationship_count > 0:
+            # Check that relationships have valid source/target
+            for rel in result.relationships:
+                assert rel.source
+                assert rel.target
+                assert isinstance(rel.relationship_type, RelationshipType)
+                assert 0.0 <= rel.strength <= 1.0
