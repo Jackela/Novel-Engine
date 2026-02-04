@@ -964,7 +964,7 @@
         "Test: Verify explain mode shows graph traversal"
       ],
       "priority": 55,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-032A"
