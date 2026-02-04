@@ -22,6 +22,8 @@ from fastapi.responses import JSONResponse
 from src.api.schemas import (
     PromptCreateRequest,
     PromptDetailResponse,
+    PromptGenerateRequest,
+    PromptGenerateResponse,
     PromptListResponse,
     PromptModelConfig,
     PromptRenderRequest,
@@ -530,6 +532,71 @@ async def render_prompt(
         raise HTTPException(status_code=400, detail=str(e)) from e
     except PromptRepositoryError as e:
         logger.error(f"Failed to render prompt: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post(
+    "/prompts/{prompt_id}/generate",
+    response_model=PromptGenerateResponse,
+)
+async def generate_prompt(
+    prompt_id: str,
+    payload: PromptGenerateRequest,
+    request: Request,
+    service: PromptRouterService = Depends(get_prompt_service),
+) -> PromptGenerateResponse:
+    """
+    Generate output using a prompt template and LLM.
+
+    BRAIN-020B: Frontend: Prompt Playground - Integration
+    Combines rendering and LLM generation in a single request.
+
+    Args:
+        prompt_id: ID of the prompt to use
+        payload: Variable values and optional model config overrides
+        request: FastAPI request
+        service: Prompt router service
+
+    Returns:
+        Generated output with rendered prompt and metadata
+    """
+    try:
+        result = await service.generate_prompt(
+            prompt_id=prompt_id,
+            variables={v.name: v.value for v in (payload.variables or [])},
+            strict=payload.strict,
+            provider_override=payload.provider,
+            model_name_override=payload.model_name,
+            temperature_override=payload.temperature,
+            max_tokens_override=payload.max_tokens,
+            top_p_override=payload.top_p,
+            frequency_penalty_override=payload.frequency_penalty,
+            presence_penalty_override=payload.presence_penalty,
+        )
+
+        return PromptGenerateResponse(
+            rendered=result["rendered"],
+            output=result["output"],
+            template_id=result["template_id"],
+            template_name=result["template_name"],
+            prompt_tokens=result["prompt_tokens"],
+            output_tokens=result.get("output_tokens"),
+            total_tokens=result["total_tokens"],
+            latency_ms=result["latency_ms"],
+            model_used=result["model_used"],
+            error=result.get("error"),
+        )
+
+    except PromptNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except RuntimeError as e:
+        # LLM generation errors
+        logger.error(f"LLM generation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    except (ValueError, KeyError) as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except PromptRepositoryError as e:
+        logger.error(f"Failed to generate prompt: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 

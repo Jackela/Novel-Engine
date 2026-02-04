@@ -12,7 +12,11 @@ Constitution Compliance:
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+import os
+import time
+from typing import TYPE_CHECKING, Any, Optional
+
+import requests
 
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
     IPromptRepository,
@@ -24,6 +28,9 @@ from src.contexts.knowledge.domain.models.prompt_template import (
     PromptTemplate,
     VariableType,
 )
+
+if TYPE_CHECKING:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -495,6 +502,371 @@ class PromptRouterService:
             diffs.append(hunk)
 
         return diffs
+
+    async def generate_prompt(
+        self,
+        prompt_id: str,
+        variables: dict[str, Any],
+        strict: bool = True,
+        provider_override: Optional[str] = None,
+        model_name_override: Optional[str] = None,
+        temperature_override: Optional[float] = None,
+        max_tokens_override: Optional[int] = None,
+        top_p_override: Optional[float] = None,
+        frequency_penalty_override: Optional[float] = None,
+        presence_penalty_override: Optional[float] = None,
+    ) -> dict[str, Any]:
+        """
+        Generate output using a prompt template and LLM.
+
+        BRAIN-020B: Frontend: Prompt Playground - Integration
+        Combines rendering and LLM generation in a single operation.
+
+        Args:
+            prompt_id: Prompt template ID
+            variables: Variable values for rendering
+            strict: Whether to raise errors for missing variables
+            provider_override: Override LLM provider
+            model_name_override: Override model name
+            temperature_override: Override sampling temperature
+            max_tokens_override: Override max tokens to generate
+            top_p_override: Override nucleus sampling
+            frequency_penalty_override: Override frequency penalty
+            presence_penalty_override: Override presence penalty
+
+        Returns:
+            Dictionary with rendered prompt, LLM output, and metadata
+
+        Raises:
+            PromptNotFoundError: If prompt not found
+            RuntimeError: If LLM generation fails
+        """
+        # Get the template
+        template = await self.get_prompt_by_id(prompt_id)
+
+        # Render the template
+        rendered = template.render(variables, strict=strict)
+
+        # Get model config (use overrides if provided)
+        config = template.model_config
+        provider = provider_override or config.provider
+        model_name = model_name_override or config.model_name
+        temperature = temperature_override if temperature_override is not None else config.temperature
+        max_tokens = max_tokens_override if max_tokens_override is not None else config.max_tokens
+        top_p = top_p_override if top_p_override is not None else config.top_p
+
+        # Start timing
+        start_time = time.time()
+
+        # Call LLM
+        output = await self._call_llm(
+            rendered=rendered,
+            provider=provider,
+            model_name=model_name,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+        )
+
+        # Calculate latency
+        latency_ms = (time.time() - start_time) * 1000
+
+        # Estimate tokens
+        prompt_tokens = _estimate_tokens(rendered)
+        output_tokens = _estimate_tokens(output)
+
+        return {
+            "rendered": rendered,
+            "output": output,
+            "template_id": template.id,
+            "template_name": template.name,
+            "prompt_tokens": prompt_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": prompt_tokens + output_tokens,
+            "latency_ms": latency_ms,
+            "model_used": f"{provider}:{model_name}",
+            "error": None,
+        }
+
+    async def _call_llm(
+        self,
+        rendered: str,
+        provider: str,
+        model_name: str,
+        temperature: float,
+        max_tokens: int,
+        top_p: float,
+    ) -> str:
+        """
+        Call LLM to generate output from a rendered prompt.
+
+        Currently supports Gemini (default) with placeholder for other providers.
+
+        Why: Isolates LLM calling logic for easy extension to multiple providers.
+
+        Args:
+            rendered: The rendered prompt content
+            provider: LLM provider (gemini, openai, anthropic, ollama)
+            model_name: Model name to use
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens to generate
+            top_p: Nucleus sampling parameter
+
+        Returns:
+            Generated text output
+
+        Raises:
+            RuntimeError: If API call fails or provider not supported
+        """
+        if provider == "gemini":
+            return await self._call_gemini(rendered, model_name, temperature, max_tokens)
+        elif provider == "openai":
+            return await self._call_openai(rendered, model_name, temperature, max_tokens, top_p)
+        elif provider == "anthropic":
+            return await self._call_anthropic(rendered, model_name, temperature, max_tokens)
+        elif provider == "ollama":
+            return await self._call_ollama(rendered, model_name, temperature, max_tokens)
+        else:
+            raise RuntimeError(f"Unsupported LLM provider: {provider}")
+
+    async def _call_gemini(
+        self,
+        rendered: str,
+        model_name: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> str:
+        """
+        Call Gemini API to generate output.
+
+        Args:
+            rendered: Rendered prompt content
+            model_name: Gemini model name
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens to generate
+
+        Returns:
+            Generated text
+
+        Raises:
+            RuntimeError: If API call fails
+        """
+        api_key = os.getenv("GEMINI_API_KEY", "")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY environment variable is not set")
+
+        # Default to gemini-2.0-flash if not specified
+        if not model_name or model_name == "gpt-4":
+            model_name = "gemini-2.0-flash"
+
+        base_url = f"https://generativelanguage.googleapis.com/v1/models/{model_name}:generateContent"
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key,
+        }
+
+        request_body = {
+            "contents": [{"parts": [{"text": rendered}]}],
+            "generationConfig": {
+                "temperature": temperature,
+                "maxOutputTokens": max_tokens,
+            },
+        }
+
+        response = requests.post(base_url, headers=headers, json=request_body, timeout=120)
+
+        if response.status_code == 401:
+            raise RuntimeError("Gemini API authentication failed - check GEMINI_API_KEY")
+        elif response.status_code == 429:
+            raise RuntimeError("Gemini API rate limit exceeded")
+        elif response.status_code != 200:
+            raise RuntimeError(f"Gemini API error {response.status_code}: {response.text}")
+
+        try:
+            response_json = response.json()
+            content = response_json["candidates"][0]["content"]["parts"][0]["text"]
+            return content
+        except (KeyError, IndexError, TypeError) as e:
+            raise RuntimeError(f"Failed to parse Gemini response: {e}")
+
+    async def _call_openai(
+        self,
+        rendered: str,
+        model_name: str,
+        temperature: float,
+        max_tokens: int,
+        top_p: float,
+    ) -> str:
+        """
+        Call OpenAI API to generate output.
+
+        Args:
+            rendered: Rendered prompt content
+            model_name: OpenAI model name
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens to generate
+            top_p: Nucleus sampling parameter
+
+        Returns:
+            Generated text
+
+        Raises:
+            RuntimeError: If API call fails
+        """
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY environment variable is not set")
+
+        # Default to gpt-4o-mini if not specified
+        if not model_name:
+            model_name = "gpt-4o-mini"
+
+        base_url = "https://api.openai.com/v1/chat/completions"
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        }
+
+        request_body = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": rendered}],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "top_p": top_p,
+        }
+
+        response = requests.post(base_url, headers=headers, json=request_body, timeout=120)
+
+        if response.status_code == 401:
+            raise RuntimeError("OpenAI API authentication failed - check OPENAI_API_KEY")
+        elif response.status_code == 429:
+            raise RuntimeError("OpenAI API rate limit exceeded")
+        elif response.status_code != 200:
+            raise RuntimeError(f"OpenAI API error {response.status_code}: {response.text}")
+
+        try:
+            response_json = response.json()
+            content = response_json["choices"][0]["message"]["content"]
+            return content
+        except (KeyError, IndexError, TypeError) as e:
+            raise RuntimeError(f"Failed to parse OpenAI response: {e}")
+
+    async def _call_anthropic(
+        self,
+        rendered: str,
+        model_name: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> str:
+        """
+        Call Anthropic Claude API to generate output.
+
+        Args:
+            rendered: Rendered prompt content
+            model_name: Claude model name
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens to generate
+
+        Returns:
+            Generated text
+
+        Raises:
+            RuntimeError: If API call fails
+        """
+        api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
+
+        # Default to claude-3-haiku if not specified
+        if not model_name:
+            model_name = "claude-3-5-haiku-20241022"
+
+        base_url = "https://api.anthropic.com/v1/messages"
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+        }
+
+        request_body = {
+            "model": model_name,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": [{"role": "user", "content": rendered}],
+        }
+
+        response = requests.post(base_url, headers=headers, json=request_body, timeout=120)
+
+        if response.status_code == 401:
+            raise RuntimeError("Anthropic API authentication failed - check ANTHROPIC_API_KEY")
+        elif response.status_code == 429:
+            raise RuntimeError("Anthropic API rate limit exceeded")
+        elif response.status_code != 200:
+            raise RuntimeError(f"Anthropic API error {response.status_code}: {response.text}")
+
+        try:
+            response_json = response.json()
+            content = response_json["content"][0]["text"]
+            return content
+        except (KeyError, IndexError, TypeError) as e:
+            raise RuntimeError(f"Failed to parse Anthropic response: {e}")
+
+    async def _call_ollama(
+        self,
+        rendered: str,
+        model_name: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> str:
+        """
+        Call Ollama API to generate output.
+
+        Args:
+            rendered: Rendered prompt content
+            model_name: Ollama model name
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens to generate
+
+        Returns:
+            Generated text
+
+        Raises:
+            RuntimeError: If API call fails
+        """
+        # Default to llama3 if not specified
+        if not model_name:
+            model_name = "llama3"
+
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        endpoint = f"{base_url}/api/generate"
+
+        request_body = {
+            "model": model_name,
+            "prompt": rendered,
+            "stream": False,
+            "options": {
+                "temperature": temperature,
+                "num_predict": max_tokens,
+            },
+        }
+
+        try:
+            response = requests.post(endpoint, json=request_body, timeout=120)
+        except requests.exceptions.ConnectionError:
+            raise RuntimeError(f"Could not connect to Ollama at {base_url}. Make sure Ollama is running.")
+
+        if response.status_code != 200:
+            raise RuntimeError(f"Ollama API error {response.status_code}: {response.text}")
+
+        try:
+            response_json = response.json()
+            content = response_json.get("response", "")
+            return content
+        except (KeyError, TypeError) as e:
+            raise RuntimeError(f"Failed to parse Ollama response: {e}")
 
     def to_summary(self, template: PromptTemplate) -> dict[str, Any]:
         """

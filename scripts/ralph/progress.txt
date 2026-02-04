@@ -1058,3 +1058,39 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - For BRAIN-020B, the LLM output section will need to call a generation endpoint (currently just shows placeholder message)
 
 ---
+
+## [2025-02-04] - BRAIN-020B ✅
+- Implemented Prompt Playground backend integration with LLM generation
+- Created PromptGenerateRequest and PromptGenerateResponse schemas in backend
+- Added `generate_prompt()` method to PromptRouterService with LLM provider abstraction
+- Implemented LLM calling methods for Gemini, OpenAI, Anthropic, and Ollama
+- Added POST /api/prompts/{id}/generate endpoint to prompts router
+- Created PromptGenerateRequestSchema and PromptGenerateResponseSchema in frontend
+- Added useGeneratePrompt hook to promptApi.ts with config overrides
+- Updated PromptPlaygroundModal to call the generate endpoint with model config
+- Enhanced token display to show both input and output tokens
+- All 29 prompt router service tests passing
+- Files changed:
+  - `src/api/schemas.py`: Added PromptGenerateRequest and PromptGenerateResponse schemas
+  - `src/api/services/prompt_router_service.py`: Added generate_prompt() and LLM provider methods (400+ lines)
+  - `src/api/routers/prompts.py`: Added generate endpoint, updated imports
+  - `frontend/src/types/schemas.ts`: Added PromptGenerateRequest and PromptGenerateResponse Zod schemas
+  - `frontend/src/features/prompts/api/promptApi.ts`: Added useGeneratePrompt hook
+  - `frontend/src/features/prompts/components/PromptPlaygroundModal.tsx`: Integrated generate endpoint, updated token display
+
+**Learnings for future iterations:**
+- LLM provider abstraction via _call_llm() dispatches to provider-specific methods (gemini/openai/anthropic/ollama)
+- Each provider has different API formats: Gemini uses generateContent, OpenAI uses chat/completions, Anthropic uses messages, Ollama uses api/generate
+- Gemini model name default is "gemini-2.0-flash" for speed and cost efficiency
+- OpenAI default is "gpt-4o-mini" for cost-effective generation
+- Anthropic default is "claude-3-5-haiku-20241022" for fast responses
+- Ollama base URL is configurable via OLLAMA_BASE_URL env var (default: localhost:11434)
+- The generate endpoint combines rendering and generation in one call, returning both rendered prompt and LLM output
+- Token estimation uses ~4 chars per token for UI display purposes
+- Latency tracking (ms) provides immediate feedback on generation performance
+- Model config overrides (provider, model_name, temperature, max_tokens, top_p, penalties) allow per-request customization
+- Error handling falls back to showing the rendered prompt even when LLM generation fails
+- When adding new API endpoints, remember to update both backend schemas and frontend Zod schemas
+- The useGeneratePrompt hook accepts config object with optional overrides for all LLM parameters
+
+---

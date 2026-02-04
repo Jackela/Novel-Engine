@@ -18,6 +18,8 @@ import type {
   PromptUpdateRequest,
   PromptRenderRequest,
   PromptRenderResponse,
+  PromptGenerateRequest,
+  PromptGenerateResponse,
 } from '@/types/schemas';
 
 const PROMPTS_KEY = ['prompts'];
@@ -152,6 +154,40 @@ export function useRenderPrompt() {
         strict,
       };
       return api.post<PromptRenderResponse>(`/prompts/${id}/render`, payload);
+    },
+  });
+}
+
+// Generate output using prompt with variables
+// BRAIN-020B: Frontend: Prompt Playground - Integration
+export function useGeneratePrompt() {
+  return useMutation({
+    mutationFn: ({ id, config, variables }: {
+      id: string;
+      variables?: Array<{ name: string; value: unknown }>;
+      config?: {
+        provider?: string;
+        model_name?: string;
+        temperature?: number;
+        max_tokens?: number;
+        top_p?: number;
+        frequency_penalty?: number;
+        presence_penalty?: number;
+      };
+      strict?: boolean;
+    }) => {
+      const payload: PromptGenerateRequest = {
+        variables: variables || [],
+        provider: config?.provider,
+        model_name: config?.model_name,
+        temperature: config?.temperature,
+        max_tokens: config?.max_tokens,
+        top_p: config?.top_p,
+        frequency_penalty: config?.frequency_penalty,
+        presence_penalty: config?.presence_penalty,
+        strict: true,
+      };
+      return api.post<PromptGenerateResponse>(`/prompts/${id}/generate`, payload);
     },
   });
 }

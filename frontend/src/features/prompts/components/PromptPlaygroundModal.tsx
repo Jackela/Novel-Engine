@@ -42,7 +42,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { useRenderPrompt } from '../api/promptApi';
+import { useRenderPrompt, useGeneratePrompt } from '../api/promptApi';
 import type {
   PromptVariableDefinition,
   PromptVariableType,
@@ -108,6 +108,7 @@ export function PromptPlaygroundModal({
   onOpenChange,
 }: PromptPlaygroundModalProps) {
   const renderMutation = useRenderPrompt();
+  const generateMutation = useGeneratePrompt();
 
   // State for variable values
   const [variableValues, setVariableValues] = useState<Record<string, unknown>>({});
@@ -195,22 +196,42 @@ export function PromptPlaygroundModal({
     }
   };
 
-  // Run the full flow: render + simulate LLM output (placeholder for now)
+  // Run the full flow: render + LLM generation
   const handleRun = async () => {
     if (!prompt) return;
 
     setIsRunning(true);
     try {
-      // First render the prompt
-      await handleRender();
+      // Prepare variables for the API
+      const variables = Object.entries(variableValues).map(([name, value]) => ({
+        name,
+        value,
+      }));
 
-      // TODO: BRAIN-020B - Call actual LLM generation endpoint
-      // For now, show a placeholder message
-      setLlmOutput('[LLM output will be generated in BRAIN-020B]\n\nThe rendered prompt is shown on the left. Once the backend generation endpoint is implemented, this area will display the actual LLM response.');
+      // Call the generate endpoint
+      const result = await generateMutation.mutateAsync({
+        id: prompt.id,
+        variables,
+        config: {
+          provider: config.provider,
+          model_name: config.model_name,
+          temperature: config.temperature,
+          max_tokens: config.max_tokens,
+          top_p: config.top_p,
+          frequency_penalty: config.frequency_penalty,
+          presence_penalty: config.presence_penalty,
+        },
+      });
 
-      toast.success('Prompt rendered successfully');
+      // Update both rendered prompt and LLM output
+      setRenderedPrompt(result.rendered);
+      setLlmOutput(result.output);
+
+      toast.success(`Generated ${result.total_tokens} tokens in ${result.latency_ms.toFixed(0)}ms`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to run prompt');
+      toast.error(err instanceof Error ? err.message : 'Failed to generate prompt');
+      // Still render the prompt on error so user can see what they're working with
+      await handleRender();
     } finally {
       setIsRunning(false);
     }
@@ -568,7 +589,12 @@ export function PromptPlaygroundModal({
               )}
             </div>
             <div>
-              {renderedPrompt && (
+              {renderedPrompt && llmOutput && (
+                <span>
+                  ~{Math.ceil(renderedPrompt.length / 4)} in, ~{Math.ceil(llmOutput.length / 4)} out
+                </span>
+              )}
+              {renderedPrompt && !llmOutput && (
                 <span>~{Math.ceil(renderedPrompt.length / 4)} tokens</span>
               )}
             </div>

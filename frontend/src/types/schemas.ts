@@ -1811,6 +1811,39 @@ export const PromptRenderResponseSchema = z.object({
 });
 
 /**
+ * Schema for prompt generate request.
+ * BRAIN-020B: Frontend: Prompt Playground - Integration
+ */
+export const PromptGenerateRequestSchema = z.object({
+  variables: z.array(PromptVariableValueSchema).default([]),
+  provider: z.string().optional(),
+  model_name: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  max_tokens: z.number().int().positive().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  frequency_penalty: z.number().min(-2).max(2).optional(),
+  presence_penalty: z.number().min(-2).max(2).optional(),
+  strict: z.boolean().default(true),
+});
+
+/**
+ * Schema for prompt generate response.
+ * BRAIN-020B: Frontend: Prompt Playground - Integration
+ */
+export const PromptGenerateResponseSchema = z.object({
+  rendered: z.string(),
+  output: z.string(),
+  template_id: z.string(),
+  template_name: z.string(),
+  prompt_tokens: z.number().int().nonnegative(),
+  output_tokens: z.number().int().nonnegative().optional(),
+  total_tokens: z.number().int().nonnegative(),
+  latency_ms: z.number().nonnegative(),
+  model_used: z.string(),
+  error: z.string().nullable().optional(),
+});
+
+/**
  * Schema for prompt tags response.
  * Dictionary of tag categories to their values.
  */
@@ -1828,4 +1861,6 @@ export type PromptCreateRequest = z.infer<typeof PromptCreateRequestSchema>;
 export type PromptUpdateRequest = z.infer<typeof PromptUpdateRequestSchema>;
 export type PromptRenderRequest = z.infer<typeof PromptRenderRequestSchema>;
 export type PromptRenderResponse = z.infer<typeof PromptRenderResponseSchema>;
+export type PromptGenerateRequest = z.infer<typeof PromptGenerateRequestSchema>;
+export type PromptGenerateResponse = z.infer<typeof PromptGenerateResponseSchema>;
 export type PromptTagsResponse = z.infer<typeof PromptTagsResponseSchema>;

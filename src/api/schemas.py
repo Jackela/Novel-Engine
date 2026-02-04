@@ -1945,6 +1945,80 @@ class PromptRenderResponse(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class PromptGenerateRequest(BaseModel):
+    """Request model for generating output using a prompt template.
+
+    BRAIN-020B: Frontend: Prompt Playground - Integration
+    Combines rendering and LLM generation in a single request.
+    """
+
+    variables: List[PromptVariableValue] = Field(
+        default_factory=list,
+        description="Variable values for rendering the prompt"
+    )
+    # Override model config from the prompt template
+    provider: Optional[str] = Field(
+        None,
+        description="Override LLM provider (uses prompt config if not specified)"
+    )
+    model_name: Optional[str] = Field(
+        None,
+        description="Override model name (uses prompt config if not specified)"
+    )
+    temperature: Optional[float] = Field(
+        None,
+        ge=0.0,
+        le=2.0,
+        description="Override sampling temperature"
+    )
+    max_tokens: Optional[int] = Field(
+        None,
+        ge=1,
+        description="Override max tokens to generate"
+    )
+    top_p: Optional[float] = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Override nucleus sampling"
+    )
+    frequency_penalty: Optional[float] = Field(
+        None,
+        ge=-2.0,
+        le=2.0,
+        description="Override frequency penalty"
+    )
+    presence_penalty: Optional[float] = Field(
+        None,
+        ge=-2.0,
+        le=2.0,
+        description="Override presence penalty"
+    )
+    strict: bool = Field(
+        default=True,
+        description="Raise errors for missing required variables"
+    )
+
+
+class PromptGenerateResponse(BaseModel):
+    """Response model for prompt generation output.
+
+    BRAIN-020B: Frontend: Prompt Playground - Integration
+    Contains both the rendered prompt and the LLM-generated output.
+    """
+
+    rendered: str = Field(..., description="The rendered prompt content")
+    output: str = Field(..., description="The LLM-generated output")
+    template_id: str = Field(..., description="Template ID that was used")
+    template_name: str = Field(..., description="Template name")
+    prompt_tokens: int = Field(..., description="Estimated input token count")
+    output_tokens: Optional[int] = Field(None, description="Output token count if available")
+    total_tokens: int = Field(..., description="Total token count")
+    latency_ms: float = Field(..., description="Generation time in milliseconds")
+    model_used: str = Field(..., description="Model that was used for generation")
+    error: Optional[str] = Field(None, description="Error message if generation failed")
+
+
 # === Prompt Experiment Schemas (BRAIN-018B) ===
 
 

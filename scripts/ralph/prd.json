@@ -591,7 +591,7 @@
         "Test: Run prompt with variables and see output"
       ],
       "priority": 33,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-020A"
