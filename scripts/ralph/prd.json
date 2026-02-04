@@ -468,7 +468,7 @@
         "Test: Create base prompt and extend it with child"
       ],
       "priority": 26,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-014A"
