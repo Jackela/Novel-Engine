@@ -1392,3 +1392,50 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - ModelRouter uses ModelRegistry for model lookups, enabling dependency injection and testability
 - The routing_history is limited to max_history_size (1000) to prevent unbounded memory growth
 
+
+## [2026-02-04] - BRAIN-028B ✅
+- Implemented configurable routing rules per workspace
+- Created routing configuration domain models: TaskRoutingRule, RoutingConstraints, CircuitBreakerRule, WorkspaceRoutingConfig
+- Created IRoutingConfigRepository port with methods for CRUD operations on routing configs
+- Implemented InMemoryRoutingConfigRepository adapter for development/testing
+- Added routing configuration API endpoints:
+  - GET/PUT /api/routing/config - Get/update routing configuration (per workspace or global)
+  - GET /api/routing/config/global - Get global configuration
+  - GET /api/routing/config/list - List all workspace configs
+  - GET /api/routing/stats - Get routing statistics and analytics
+  - POST /api/routing/config/reset - Reset to defaults
+  - DELETE /api/routing/config - Delete workspace config
+  - POST /api/routing/circuit-breaker/{model_key}/reset - Reset circuit breaker
+  - GET /api/routing/circuit-breaker/{model_key} - Get circuit breaker state
+- Created BrainSettingsPage frontend component at /brain/settings with tabs:
+  - Model Routing tab: Task-based model configuration with provider/model selection
+  - Constraints tab: Cost, latency, and provider preferences
+  - Circuit Breakers tab: View open circuits and reset capability
+  - Statistics tab: Routing decisions, provider usage, fallback rate
+- Added routingApi client for API communication
+- Added 17 unit tests for routing configuration domain models (all passing)
+- Integrated routing router into FastAPI app
+- All quality checks passing (pytest, mypy, npm type-check)
+- Files changed:
+  - `src/contexts/knowledge/domain/models/routing_config.py`: Routing configuration domain models
+  - `src/contexts/knowledge/application/ports/i_routing_config_repository.py`: Repository port interface
+  - `src/contexts/knowledge/infrastructure/adapters/in_memory_routing_config_repository.py`: In-memory repository adapter
+  - `src/api/routers/routing.py`: REST API endpoints for routing configuration
+  - `src/api/schemas.py`: Added TaskRoutingRuleSchema, RoutingConstraintsSchema, CircuitBreakerRuleSchema, RoutingConfigResponse, RoutingStatsResponse
+  - `src/api/app.py`: Added routing router registration
+  - `frontend/src/features/routing/`: Complete routing feature with API client and settings page
+  - `frontend/src/pages/BrainSettingsPage.tsx`: Page wrapper for brain settings
+  - `frontend/src/app/router.tsx`: Added /brain/settings route
+  - `tests/unit/contexts/knowledge/domain/models/test_routing_config.py`: 17 tests for routing models
+
+**Learnings for future iterations:**
+- Routing configurations support workspace inheritance: empty task_rules means inherit from global
+- Use frozen dataclass for immutable configuration with create_updated() for changes
+- Circuit breaker state is tracked per-model-key (provider:model) for isolation
+- The to_dict() method provides API-friendly serialization with workspace_id normalization
+- Frontend tabs work well for organizing complex settings (routing, constraints, circuits, stats)
+- Use animate-pulse CSS class for loading states instead of Skeleton components when Skeleton is unavailable
+- For UI state, use simple console.log toast() when useToast hook is not available
+- Route types need to be explicitly added to TanStack Router for type safety
+
+---
