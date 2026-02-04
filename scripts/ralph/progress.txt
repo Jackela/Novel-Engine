@@ -26,6 +26,7 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Prompt Templates**: PromptTemplate entity in `src/contexts/knowledge/domain/models/prompt_template.py` with {{variable}} syntax and version tracking
 - **Prompt Inheritance**: Use `extends` field and `{{> template}}` syntax for template composition. Variable override works by child having same-named variable.
 - **Prompt Repository**: IPromptRepository port in `src/contexts/knowledge/application/ports/i_prompt_repository.py` with CRUD, version history, and search
+- **Model Registry**: ModelRegistry in `src/contexts/knowledge/application/services/model_registry.py` with task-based routing and aliases
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -1157,3 +1158,70 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - When testing with timestamps, use a _utcnow() helper function that returns datetime.now(timezone.utc)
 
 ---
+
+## [2025-02-04] - BRAIN-022B ✅
+- Implemented Prompt Analytics API endpoints with full aggregation capabilities
+- Added GET /api/prompts/{id}/analytics with period-based aggregation (day/week/month/all)
+- Added GET /api/prompts/{id}/analytics/export for CSV export
+- Implemented service methods: get_prompt_analytics(), export_analytics_csv()
+- Added time series data points showing usage trends over time
+- Added rating distribution breakdown (1-5 stars)
+- Added filtering by workspace_id and date range (start_date, end_date)
+- Metrics include: total uses, success rate, token usage, latency, ratings
+- All 8 new analytics tests passing + 26 existing router tests passing
+- Files changed:
+  - : Added PromptAnalyticsTimePeriod, PromptTimeSeriesDataPoint, PromptRatingDistribution, PromptAnalyticsResponse, PromptAnalyticsRequest schemas
+  - : Added get_prompt_analytics(), export_analytics_csv(), _calculate_rating_distribution(), _build_time_series() methods (~300 lines)
+  - : Added analytics and export endpoints with StreamingResponse for CSV
+  - : 8 new analytics tests
+
+**Learnings for future iterations:**
+- The analytics endpoint should come BEFORE /health and /{prompt_id} routes to avoid path capture issues
+- Use time period strings (day/week/month/all) as Enum for type safety
+- Time series grouping uses strftime formats: YYYY-MM-DD for day, YYYY-Www for week, YYYY-MM for month
+- CSV export uses StreamingResponse with generator function for memory efficiency
+- The get_promptRepository dependency returns the same repo instance across calls (singleton pattern in app.state)
+- When using StreamingResponse, pass a generator function, not a file-like object
+- Analytics aggregations leverage existing PromptUsageStats.from_usages() for consistency
+- Latency min/max calculation requires filtering out zero-latency entries
+- Rating distribution counts integers (1-5 stars), not floats
+- Export includes all usage fields: timestamp, tokens, latency, model, success status, errors
+
+---
+
+## [2025-02-04] - BRAIN-023 ✅
+- Implemented LLMProvider enum with OPENAI, ANTHROPIC, GEMINI, OLLAMA, MOCK providers
+- Implemented TaskType enum with CREATIVE, LOGICAL, FAST, CHEAP task types
+- Implemented ModelDefinition value object with capabilities, cost, and context info
+- Implemented TaskModelConfig value object for per-task model configuration
+- Implemented ModelAlias value object for shorthand model references
+- Implemented ModelRegistry service with full model management capabilities
+- Added 14 default model definitions across 5 providers (OpenAI: 4, Anthropic: 3, Gemini: 3, Ollama: 3, Mock: 1)
+- Added 4 task-based default configs (Creative/Logical/Fast/Cheap) with fallback providers
+- Added 19 default model aliases (gpt4, claude, gemini, fast, cheap, creative, logical, etc.)
+- Supported alias loading from JSON config file and MODEL_ALIASES environment variable
+- Added model lookup by provider+name, alias resolution, and qualified name parsing
+- Added get_recommended_model() with capability, cost, and provider filtering
+- Added registry statistics and model availability checking
+- All 55 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/domain/models/model_registry.py`: Domain models (LLMProvider, TaskType, ModelDefinition, TaskModelConfig, ModelAlias)
+  - `src/contexts/knowledge/domain/models/__init__.py`: Export new domain models
+  - `src/contexts/knowledge/application/services/model_registry.py`: ModelRegistry service with full CRUD and lookup (~600 lines)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export ModelRegistry and related types
+  - `tests/unit/contexts/knowledge/application/services/test_model_registry.py`: 55 comprehensive tests
+
+**Learnings for future iterations:**
+- Use `field(default_factory=dict)` for mutable default values in dataclasses (not `metadata: dict = ()`)
+- str, Enum pattern allows both enum comparison and string serialization for JSON
+- Cost factor calculation weights output cost higher (0.7) than input cost (0.3) since output tokens are typically more expensive
+- Ollama models have zero cost, so they always match low-cost filters
+- Task-based configs use higher temperature for CREATIVE (0.9) and lower for LOGICAL (0.2)
+- The ModelRegistry.resolve_model() supports three formats: "alias", "provider:model", and bare "model" (with default_provider)
+- Aliases from config files use Pydantic BaseModel for validation: `ModelRegistryConfigFile`
+- Environment variable format: `alias1=provider:model1;alias2=provider:model2` (semicolon-separated)
+- Deprecated models (like gpt-3.5-turbo) are excluded from is_model_available() checks
+- When checking for "no match" in tests, filter by provider + capabilities that provider doesn't support (e.g., Ollama + vision)
+
+---
+

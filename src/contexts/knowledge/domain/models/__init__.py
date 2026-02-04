@@ -15,6 +15,13 @@ from .chunking_strategy import (
 )
 from .knowledge_entry import KnowledgeEntry
 from .knowledge_type import KnowledgeType
+from .model_registry import (
+    LLMProvider,
+    ModelAlias,
+    ModelDefinition,
+    TaskModelConfig,
+    TaskType,
+)
 from .prompt_template import (
     ModelConfig,
     PromptTemplate,
@@ -52,12 +59,17 @@ __all__ = [
     "MIN_CHUNK_SIZE",
     "KnowledgeEntry",
     "KnowledgeType",
+    "LLMProvider",
+    "ModelAlias",
     "ModelConfig",
+    "ModelDefinition",
     "PromptTemplate",
     "PromptVersion",
     "SourceKnowledgeEntry",
     "SourceMetadata",
     "SourceType",
+    "TaskModelConfig",
+    "TaskType",
     "VariableDefinition",
     "VariableType",
     "VersionDiff",

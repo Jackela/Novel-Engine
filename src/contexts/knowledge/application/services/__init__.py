@@ -133,6 +133,14 @@ from .multi_hop_retriever import (
     DEFAULT_TEMPERATURE as DEFAULT_MULTIHOP_TEMPERATURE,
 )
 
+from .model_registry import (
+    ModelRegistry,
+    ModelRegistryConfig,
+    ModelLookupResult,
+    ModelRegistryConfigFile,
+    create_model_registry,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -239,4 +247,10 @@ __all__ = [
     "DEFAULT_MAX_HOPS",
     "DEFAULT_HOP_K",
     "DEFAULT_MULTIHOP_TEMPERATURE",
+    # Model Registry
+    "ModelRegistry",
+    "ModelRegistryConfig",
+    "ModelLookupResult",
+    "ModelRegistryConfigFile",
+    "create_model_registry",
 ]

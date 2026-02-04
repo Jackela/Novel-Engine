@@ -666,7 +666,7 @@
         "Test: Switch between models dynamically"
       ],
       "priority": 37,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {
