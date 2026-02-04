@@ -20,8 +20,11 @@ from typing import TYPE_CHECKING, Any
 import networkx as nx
 
 from src.contexts.knowledge.application.ports.i_graph_store import (
+    CliqueResult,
+    CentralityResult,
     GraphAddResult,
     GraphEntity,
+    GraphExportResult,
     GraphNeighbor,
     GraphRelationship,
     GraphStats,
@@ -32,7 +35,7 @@ from src.contexts.knowledge.application.ports.i_graph_store import (
 from src.contexts.knowledge.domain.models.entity import EntityType, RelationshipType
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -733,7 +736,7 @@ class NetworkXGraphStore(IGraphStore):
         Returns:
             True if entity exists, False otherwise
         """
-        return self._graph.has_node(self._normalize_name(name))
+        return self._graph.has_node(self._normalize_name(name))  # type: ignore[no-any-return]
 
     async def get_all_entities(
         self,
@@ -774,6 +777,441 @@ class NetworkXGraphStore(IGraphStore):
                 break
 
         return entities
+
+    async def find_cliques(
+        self,
+        min_size: int = 3,
+        max_size: int | None = None,
+        entity_type: EntityType | None = None,
+    ) -> CliqueResult:
+        """
+        Find all cliques (fully connected subgraphs) in the graph.
+
+        Uses an undirected view of the graph for clique detection since
+        cliques are traditionally defined on undirected graphs.
+
+        Args:
+            min_size: Minimum clique size to report (default: 3)
+            max_size: Maximum clique size to report (default: unlimited)
+            entity_type: Optional filter for entities of specific type
+
+        Returns:
+            CliqueResult with all cliques found
+        """
+        # Filter by entity type if specified
+        working_graph = self._graph
+
+        if entity_type is not None:
+            entity_type_str = self._entity_type_to_str(entity_type)
+            nodes_to_keep = [
+                n for n, d in self._graph.nodes(data=True)
+                if d.get("entity_type") == entity_type_str
+            ]
+            working_graph = self._graph.subgraph(nodes_to_keep).copy()
+
+        # Convert to undirected for clique detection
+        undirected_graph = working_graph.to_undirected()
+
+        # Find all cliques
+        all_cliques = list(nx.find_cliques(undirected_graph))
+
+        # Filter by size
+        filtered_cliques = [
+            clique for clique in all_cliques
+            if len(clique) >= min_size and (max_size is None or len(clique) <= max_size)
+        ]
+
+        # Convert normalized names back to display names and sort by size
+        cliques_with_display_names: list[tuple[str, ...]] = []
+        for clique in sorted(filtered_cliques, key=len, reverse=True):
+            display_names = []
+            for node in clique:
+                node_data = self._graph.nodes[node]
+                display_names.append(node_data.get("name", node))
+            cliques_with_display_names.append(tuple(display_names))
+
+        max_clique_size = max((len(c) for c in filtered_cliques), default=0)
+
+        return CliqueResult(
+            cliques=tuple(cliques_with_display_names),
+            max_clique_size=max_clique_size,
+            clique_count=len(cliques_with_display_names),
+        )
+
+    async def get_centrality(
+        self,
+        entity_name: str | None = None,
+        top_n: int | None = None,
+    ) -> list[CentralityResult]:
+        """
+        Calculate centrality metrics for entities in the graph.
+
+        Args:
+            entity_name: Optional specific entity to analyze. If None, analyzes all entities.
+            top_n: Optional limit to return only top N entities by each metric
+
+        Returns:
+            List of CentralityResult objects sorted by pagerank descending
+        """
+        if entity_name is not None:
+            # Analyze single entity
+            normalized_name = self._normalize_name(entity_name)
+            if not self._graph.has_node(normalized_name):
+                return []
+
+            nodes_to_analyze = [normalized_name]
+        else:
+            nodes_to_analyze = list(self._graph.nodes())
+
+        if not nodes_to_analyze:
+            return []
+
+        # Calculate centrality metrics
+        # Use undirected graph for closeness/degree as it's more meaningful
+        undirected_graph = self._graph.to_undirected()
+
+        # Degree centrality
+        degree_centralities = nx.degree_centrality(undirected_graph)
+
+        # Betweenness centrality
+        betweenness_centralities = nx.betweenness_centrality(undirected_graph)
+
+        # Closeness centrality
+        closeness_centralities = nx.closeness_centrality(undirected_graph)
+
+        # PageRank (works on directed graph)
+        pagerank_scores = nx.pagerank(self._graph)
+
+        results: list[CentralityResult] = []
+        for node in nodes_to_analyze:
+            node_data = self._graph.nodes[node]
+            display_name = node_data.get("name", node)
+
+            results.append(
+                CentralityResult(
+                    entity_name=display_name,
+                    degree_centrality=degree_centralities.get(node, 0.0),
+                    betweenness_centrality=betweenness_centralities.get(node, 0.0),
+                    closeness_centrality=closeness_centralities.get(node, 0.0),
+                    pagerank=pagerank_scores.get(node, 0.0),
+                )
+            )
+
+        # Sort by pagerank descending
+        results.sort(key=lambda r: r.pagerank, reverse=True)
+
+        # Apply top_n limit if specified
+        if top_n is not None:
+            results = results[:top_n]
+
+        return results
+
+    async def find_all_shortest_paths(
+        self,
+        source: str,
+        max_length: int | None = None,
+        cutoff: int | None = None,
+    ) -> dict[str, PathResult]:
+        """
+        Find shortest paths from source to all reachable entities.
+
+        Args:
+            source: Source entity name
+            max_length: Maximum path length to search (default: unlimited)
+            cutoff: Stop searching after finding this many paths
+
+        Returns:
+            Dict mapping target entity name to PathResult
+        """
+        source_norm = self._normalize_name(source)
+
+        if not self._graph.has_node(source_norm):
+            raise GraphStoreError(
+                f"Source entity not found: {source}",
+                code="ENTITY_NOT_FOUND",
+                details={"entity": source},
+            )
+
+        results: dict[str, PathResult] = {}
+        count = 0
+
+        # Use single_source_shortest_path_length to efficiently find reachable nodes
+        try:
+            # Get path lengths from source to all reachable nodes
+            path_lengths = nx.single_source_shortest_path_length(
+                self._graph, source_norm, cutoff=max_length
+            )
+
+            for target in path_lengths:
+                if target == source_norm:
+                    continue
+
+                if cutoff is not None and count >= cutoff:
+                    break
+
+                # Find the actual path
+                try:
+                    path_nodes = nx.shortest_path(self._graph, source_norm, target)
+
+                    # Build relationships along the path
+                    relationships: list[GraphRelationship] = []
+                    for i in range(len(path_nodes) - 1):
+                        from_node = path_nodes[i]
+                        to_node = path_nodes[i + 1]
+
+                        edge_data = None
+                        if self._graph.has_edge(from_node, to_node):
+                            edges = self._graph.get_edge_data(from_node, to_node)
+                            if edges:
+                                edge_data = next(iter(edges.values()))
+
+                        if edge_data is None:
+                            continue
+
+                        from_entity = self._graph.nodes[from_node]
+                        to_entity = self._graph.nodes[to_node]
+
+                        rel_type_str = edge_data.get("relationship_type", "other")
+                        relationships.append(
+                            GraphRelationship(
+                                source=edge_data.get("source", from_entity.get("name", from_node)),
+                                target=edge_data.get("target", to_entity.get("name", to_node)),
+                                relationship_type=self._str_to_relationship_type(rel_type_str),
+                                context=edge_data.get("context", ""),
+                                strength=edge_data.get("strength", 1.0),
+                            )
+                        )
+
+                    # Convert normalized names to display names
+                    display_names = []
+                    for node in path_nodes:
+                        node_data = self._graph.nodes[node]
+                        display_names.append(node_data.get("name", node))
+
+                    target_display = display_names[-1]
+                    results[target_display] = PathResult(
+                        path=tuple(display_names),
+                        relationships=tuple(relationships),
+                        length=len(relationships),
+                    )
+                    count += 1
+
+                except nx.NetworkXNoPath:
+                    continue
+
+        except Exception as e:
+            raise GraphStoreError(
+                f"Failed to find paths from {source}",
+                code="FIND_PATHS_FAILED",
+                details={"error": str(e), "source": source},
+            ) from e
+
+        return results
+
+    async def export_graphml(
+        self,
+        output_path: str,
+        include_metadata: bool = True,
+    ) -> GraphExportResult:
+        """
+        Export the graph to GraphML format for visualization tools.
+
+        Args:
+            output_path: File path to write GraphML output
+            include_metadata: Whether to include entity/relationship metadata
+
+        Returns:
+            GraphExportResult with export statistics
+        """
+        import os
+        from pathlib import Path
+
+        try:
+            # Create parent directory if it doesn't exist
+            output_file = Path(output_path)
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+
+            # Prepare graph for export
+            export_graph = self._graph.copy()
+
+            # Convert lists to strings (GraphML doesn't support list types)
+            for node, node_data in export_graph.nodes(data=True):
+                for key, value in list(node_data.items()):
+                    if isinstance(value, list):
+                        node_data[key] = ",".join(str(v) for v in value)
+
+            if not include_metadata:
+                # Strip metadata, keeping only essential attributes
+                for node, node_data in export_graph.nodes(data=True):
+                    keep_keys = {"name", "entity_type"}
+                    keys_to_remove = list(set(node_data.keys()) - keep_keys)
+                    for key in keys_to_remove:
+                        del node_data[key]
+
+                for _, _, edge_data in export_graph.edges(data=True):
+                    keep_keys = {"relationship_type", "source", "target"}
+                    keys_to_remove = list(set(edge_data.keys()) - keep_keys)
+                    for key in keys_to_remove:
+                        del edge_data[key]
+
+            # Convert enums to strings for GraphML compatibility
+            for node, node_data in export_graph.nodes(data=True):
+                # Ensure entity_type is a string
+                if "entity_type" in node_data:
+                    entity_type_value = node_data["entity_type"]
+                    if isinstance(entity_type_value, EntityType):
+                        node_data["entity_type"] = entity_type_value.value
+
+            for _, _, edge_data in export_graph.edges(data=True):
+                # Ensure relationship_type is a string
+                if "relationship_type" in edge_data:
+                    rel_type_value = edge_data["relationship_type"]
+                    if isinstance(rel_type_value, RelationshipType):
+                        edge_data["relationship_type"] = rel_type_value.value
+
+            # Write to GraphML
+            nx.readwrite.write_graphml(export_graph, output_path)
+
+            # Get file size
+            file_size = os.path.getsize(output_path)
+
+            logger.info(f"Exported graph to GraphML: {output_path} ({export_graph.number_of_nodes()} nodes, {export_graph.number_of_edges()} edges)")
+
+            return GraphExportResult(
+                format="graphml",
+                node_count=export_graph.number_of_nodes(),
+                edge_count=export_graph.number_of_edges(),
+                data=output_path,
+                size_bytes=file_size,
+            )
+
+        except Exception as e:
+            raise GraphStoreError(
+                f"Failed to export graph to GraphML: {output_path}",
+                code="EXPORT_FAILED",
+                details={"error": str(e), "output_path": output_path},
+            ) from e
+
+    async def export_json(
+        self,
+        output_path: str | None = None,
+        pretty: bool = True,
+    ) -> GraphExportResult:
+        """
+        Export the graph to JSON format.
+
+        Args:
+            output_path: File path to write JSON output (if None, returns JSON string in data field)
+            pretty: Whether to format JSON with indentation
+
+        Returns:
+            GraphExportResult with export statistics
+        """
+        import json
+        from pathlib import Path
+
+        try:
+            # Build export structure
+            nodes_data: list[dict[str, Any]] = []
+            edges_data: list[dict[str, Any]] = []
+
+            for node, node_data in self._graph.nodes(data=True):
+                node_dict = {
+                    "id": node,
+                    "name": node_data.get("name", node),
+                    "entity_type": self._entity_type_to_str(
+                        node_data.get("entity_type", "unknown")
+                    ),
+                }
+
+                # Add optional fields if present
+                if "aliases" in node_data:
+                    node_dict["aliases"] = node_data["aliases"]
+                if "description" in node_data:
+                    node_dict["description"] = node_data["description"]
+
+                # Add remaining metadata
+                for key, value in node_data.items():
+                    if key not in {"id", "name", "entity_type", "aliases", "description"}:
+                        node_dict[key] = value
+
+                nodes_data.append(node_dict)
+
+            for source, target, edge_data in self._graph.edges(data=True):
+                edge_dict = {
+                    "source": source,
+                    "target": target,
+                    "source_name": edge_data.get("source", source),
+                    "target_name": edge_data.get("target", target),
+                    "relationship_type": self._relationship_type_to_str(
+                        edge_data.get("relationship_type", "other")
+                    ),
+                }
+
+                # Add optional fields if present
+                if "context" in edge_data:
+                    edge_dict["context"] = edge_data["context"]
+                if "strength" in edge_data:
+                    edge_dict["strength"] = edge_data["strength"]
+
+                # Add remaining metadata
+                for key, value in edge_data.items():
+                    if key not in {"source", "target", "source_name", "target_name", "relationship_type", "context", "strength"}:
+                        edge_dict[key] = value
+
+                edges_data.append(edge_dict)
+
+            export_data = {
+                "graph": {
+                    "nodes": nodes_data,
+                    "edges": edges_data,
+                },
+                "metadata": {
+                    "node_count": len(nodes_data),
+                    "edge_count": len(edges_data),
+                    "export_timestamp": self._get_timestamp(),
+                },
+            }
+
+            # Serialize to JSON
+            json_string = json.dumps(export_data, indent=2 if pretty else None, ensure_ascii=False)
+            data_size = len(json_string.encode("utf-8"))
+
+            # Write to file if path provided
+            if output_path:
+                output_file = Path(output_path)
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+                output_file.write_text(json_string, encoding="utf-8")
+                logger.info(f"Exported graph to JSON: {output_path} ({len(nodes_data)} nodes, {len(edges_data)} edges)")
+
+                return GraphExportResult(
+                    format="json",
+                    node_count=len(nodes_data),
+                    edge_count=len(edges_data),
+                    data=output_path,
+                    size_bytes=data_size,
+                )
+            else:
+                return GraphExportResult(
+                    format="json",
+                    node_count=len(nodes_data),
+                    edge_count=len(edges_data),
+                    data=json_string,
+                    size_bytes=data_size,
+                )
+
+        except Exception as e:
+            raise GraphStoreError(
+                f"Failed to export graph to JSON: {output_path or 'string'}",
+                code="EXPORT_FAILED",
+                details={"error": str(e), "output_path": output_path},
+            ) from e
+
+    @staticmethod
+    def _get_timestamp() -> str:
+        """Get current timestamp in ISO format."""
+        from datetime import datetime, timezone
+        return datetime.now(timezone.utc).isoformat()
 
 
 __all__ = ["NetworkXGraphStore"]

@@ -154,6 +154,62 @@ class GraphAddResult:
     relationships_skipped: int
 
 
+@dataclass(frozen=True, slots=True)
+class CentralityResult:
+    """
+    Centrality metrics for an entity in the graph.
+
+    Attributes:
+        entity_name: Name of the entity
+        degree_centrality: Number of direct connections normalized by total nodes
+        betweenness_centrality: How often the entity appears on shortest paths
+        closeness_centrality: Inverse of the average shortest path to all other nodes
+        pagerank: Probability of landing on this entity via random walks
+    """
+
+    entity_name: str
+    degree_centrality: float
+    betweenness_centrality: float
+    closeness_centrality: float
+    pagerank: float
+
+
+@dataclass(frozen=True)
+class CliqueResult:
+    """
+    Result of a clique detection operation.
+
+    Attributes:
+        cliques: List of cliques (each clique is a tuple of entity names)
+        max_clique_size: Size of the largest clique found
+        clique_count: Total number of cliques found
+    """
+
+    cliques: tuple[tuple[str, ...], ...]
+    max_clique_size: int
+    clique_count: int
+
+
+@dataclass(frozen=True)
+class GraphExportResult:
+    """
+    Result of a graph export operation.
+
+    Attributes:
+        format: Export format (graphml, json, etc.)
+        node_count: Number of nodes exported
+        edge_count: Number of edges exported
+        data: Export data (file path or JSON string)
+        size_bytes: Size of exported data in bytes
+    """
+
+    format: str
+    node_count: int
+    edge_count: int
+    data: str
+    size_bytes: int
+
+
 class IGraphStore(ABC):
     """
     Port for graph storage operations.
@@ -470,6 +526,120 @@ class IGraphStore(ABC):
             GraphStoreError: If operation fails
         """
 
+    @abstractmethod
+    async def find_cliques(
+        self,
+        min_size: int = 3,
+        max_size: int | None = None,
+        entity_type: EntityType | None = None,
+    ) -> CliqueResult:
+        """
+        Find all cliques (fully connected subgraphs) in the graph.
+
+        Args:
+            min_size: Minimum clique size to report (default: 3)
+            max_size: Maximum clique size to report (default: unlimited)
+            entity_type: Optional filter for entities of specific type
+
+        Returns:
+            CliqueResult with all cliques found
+
+        Raises:
+            GraphStoreError: If operation fails
+
+        Warzone 4: AI Brain - BRAIN-031B
+        """
+
+    @abstractmethod
+    async def get_centrality(
+        self,
+        entity_name: str | None = None,
+        top_n: int | None = None,
+    ) -> list[CentralityResult]:
+        """
+        Calculate centrality metrics for entities in the graph.
+
+        Args:
+            entity_name: Optional specific entity to analyze. If None, analyzes all entities.
+            top_n: Optional limit to return only top N entities by each metric
+
+        Returns:
+            List of CentralityResult objects sorted by pagerank descending
+
+        Raises:
+            GraphStoreError: If operation fails
+
+        Warzone 4: AI Brain - BRAIN-031B
+        """
+
+    @abstractmethod
+    async def find_all_shortest_paths(
+        self,
+        source: str,
+        max_length: int | None = None,
+        cutoff: int | None = None,
+    ) -> dict[str, PathResult]:
+        """
+        Find shortest paths from source to all reachable entities.
+
+        Args:
+            source: Source entity name
+            max_length: Maximum path length to search (default: unlimited)
+            cutoff: Stop searching after finding this many paths
+
+        Returns:
+            Dict mapping target entity name to PathResult
+
+        Raises:
+            GraphStoreError: If operation fails
+
+        Warzone 4: AI Brain - BRAIN-031B
+        """
+
+    @abstractmethod
+    async def export_graphml(
+        self,
+        output_path: str,
+        include_metadata: bool = True,
+    ) -> GraphExportResult:
+        """
+        Export the graph to GraphML format for visualization tools.
+
+        Args:
+            output_path: File path to write GraphML output
+            include_metadata: Whether to include entity/relationship metadata
+
+        Returns:
+            GraphExportResult with export statistics
+
+        Raises:
+            GraphStoreError: If export fails
+
+        Warzone 4: AI Brain - BRAIN-031B
+        """
+
+    @abstractmethod
+    async def export_json(
+        self,
+        output_path: str | None = None,
+        pretty: bool = True,
+    ) -> GraphExportResult:
+        """
+        Export the graph to JSON format.
+
+        Args:
+            output_path: File path to write JSON output (if None, returns JSON string in data field)
+            pretty: Whether to format JSON with indentation
+
+        Returns:
+            GraphExportResult with export statistics
+
+        Raises:
+            GraphStoreError: If export fails
+
+        Warzone 4: AI Brain - BRAIN-031B
+        """
+
 
 class GraphStoreError(Exception):
     """Base exception for graph store operations."""
@@ -493,5 +663,8 @@ __all__ = [
     "PathResult",
     "GraphStats",
     "GraphAddResult",
+    "CentralityResult",
+    "CliqueResult",
+    "GraphExportResult",
     "GraphStoreError",
 ]

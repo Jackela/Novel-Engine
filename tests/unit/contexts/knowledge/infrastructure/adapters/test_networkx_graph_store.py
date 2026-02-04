@@ -16,8 +16,11 @@ from typing import Any
 import pytest
 
 from src.contexts.knowledge.application.ports.i_graph_store import (
+    CliqueResult,
+    CentralityResult,
     GraphAddResult,
     GraphEntity,
+    GraphExportResult,
     GraphNeighbor,
     GraphRelationship,
     GraphStats,
@@ -803,3 +806,380 @@ class TestNetworkXGraphStoreComplexGraph:
         stats = await graph_store.get_stats()
         assert stats.node_count == 5
         assert stats.edge_count == 4
+
+
+class TestNetworkXGraphStoreAdvancedQueries:
+    """Tests for advanced graph query operations - BRAIN-031B."""
+
+    @pytest.mark.asyncio
+    async def test_find_cliques_basic(self, graph_store: NetworkXGraphStore) -> None:
+        """Finding cliques in a graph."""
+        # Create a clique of 3: Alice <-> Bob <-> Carol <-> Alice
+        entities = [
+            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="Bob", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="Carol", entity_type=EntityType.CHARACTER),
+        ]
+        await graph_store.add_entities(entities)
+
+        # Create bidirectional relationships for clique
+        relationships = [
+            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Bob", target="Alice", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Bob", target="Carol", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Carol", target="Bob", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Carol", target="Alice", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Alice", target="Carol", relationship_type=RelationshipType.KNOWS),
+        ]
+        await graph_store.add_relationships(relationships)
+
+        result = await graph_store.find_cliques(min_size=3)
+
+        assert isinstance(result, CliqueResult)
+        assert result.max_clique_size >= 3
+        assert result.clique_count >= 1
+        # The clique should contain all three characters
+        assert any(
+            set(clique) == {"Alice", "Bob", "Carol"}
+            for clique in result.cliques
+        )
+
+    @pytest.mark.asyncio
+    async def test_find_cliques_with_filter(self, graph_store: NetworkXGraphStore) -> None:
+        """Finding cliques with entity type filter."""
+        entities = [
+            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="Bob", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="Castle", entity_type=EntityType.LOCATION),
+        ]
+        await graph_store.add_entities(entities)
+
+        # Create clique among characters
+        relationships = [
+            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Bob", target="Alice", relationship_type=RelationshipType.KNOWS),
+        ]
+        await graph_store.add_relationships(relationships)
+
+        # Filter by CHARACTER type - should find the character clique
+        result = await graph_store.find_cliques(min_size=2, entity_type=EntityType.CHARACTER)
+
+        assert result.clique_count >= 1
+
+        # Filter by LOCATION type - should find no cliques (single node)
+        result = await graph_store.find_cliques(min_size=2, entity_type=EntityType.LOCATION)
+
+        assert result.clique_count == 0
+
+    @pytest.mark.asyncio
+    async def test_find_cliques_max_size(self, graph_store: NetworkXGraphStore) -> None:
+        """Finding cliques with maximum size constraint."""
+        entities = [
+            GraphEntity(name="A", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="B", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="C", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="D", entity_type=EntityType.CHARACTER),
+        ]
+        await graph_store.add_entities(entities)
+
+        # Create fully connected clique of 4
+        for i, entity1 in enumerate(entities):
+            for entity2 in entities[i + 1:]:
+                relationships = [
+                    GraphRelationship(source=entity1.name, target=entity2.name, relationship_type=RelationshipType.KNOWS),
+                    GraphRelationship(source=entity2.name, target=entity1.name, relationship_type=RelationshipType.KNOWS),
+                ]
+                await graph_store.add_relationships(relationships)
+
+        result = await graph_store.find_cliques(min_size=2, max_size=3)
+
+        # Should not return the 4-node clique
+        assert result.max_clique_size <= 3
+        # All returned cliques should be <= 3
+        for clique in result.cliques:
+            assert len(clique) <= 3
+
+    @pytest.mark.asyncio
+    async def test_get_centrality_all(self, graph_store: NetworkXGraphStore) -> None:
+        """Calculate centrality for all entities."""
+        entities = [
+            GraphEntity(name="Hub", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="Node1", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="Node2", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="Node3", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="Isolated", entity_type=EntityType.CHARACTER),
+        ]
+        await graph_store.add_entities(entities)
+
+        # Hub connects to all others (except Isolated)
+        relationships = [
+            GraphRelationship(source="Hub", target="Node1", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Hub", target="Node2", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Hub", target="Node3", relationship_type=RelationshipType.KNOWS),
+        ]
+        await graph_store.add_relationships(relationships)
+
+        results = await graph_store.get_centrality()
+
+        assert len(results) == 5
+
+        # Hub should have highest centrality metrics
+        hub_result = next(r for r in results if r.entity_name == "Hub")
+        assert hub_result.degree_centrality > 0
+        assert hub_result.pagerank > 0
+
+        # Isolated node should have zero degree centrality
+        isolated_result = next(r for r in results if r.entity_name == "Isolated")
+        assert isolated_result.degree_centrality == 0
+        # PageRank has a damping factor so isolated nodes still have small pagerank
+        assert isolated_result.pagerank < 0.2
+
+        # Results should be sorted by pagerank descending
+        pageranks = [r.pagerank for r in results]
+        assert pageranks == sorted(pageranks, reverse=True)
+
+    @pytest.mark.asyncio
+    async def test_get_centrality_single_entity(self, graph_store: NetworkXGraphStore) -> None:
+        """Calculate centrality for a single entity."""
+        await graph_store.add_entity(
+            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER)
+        )
+        await graph_store.add_entity(
+            GraphEntity(name="Bob", entity_type=EntityType.CHARACTER)
+        )
+        await graph_store.add_relationship(
+            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS)
+        )
+
+        result = await graph_store.get_centrality(entity_name="Alice")
+
+        assert len(result) == 1
+        assert result[0].entity_name == "Alice"
+        assert result[0].degree_centrality > 0
+
+    @pytest.mark.asyncio
+    async def test_get_centrality_top_n(self, graph_store: NetworkXGraphStore) -> None:
+        """Calculate centrality with top_n limit."""
+        entities = [
+            GraphEntity(name=f"Entity{i}", entity_type=EntityType.CHARACTER)
+            for i in range(10)
+        ]
+        await graph_store.add_entities(entities)
+
+        # Create a star pattern with Entity0 as hub
+        for i in range(1, 10):
+            await graph_store.add_relationship(
+                GraphRelationship(
+                    source="Entity0",
+                    target=f"Entity{i}",
+                    relationship_type=RelationshipType.KNOWS
+                )
+            )
+
+        results = await graph_store.get_centrality(top_n=5)
+
+        assert len(results) == 5
+        # Hub should have the highest degree centrality among all entities
+        # Check that Entity0 has degree_centrality = 1.0 (connected to all 9 others)
+        all_results = await graph_store.get_centrality()  # Get all to verify
+        hub_result = next((r for r in all_results if r.entity_name == "Entity0"), None)
+        assert hub_result is not None
+        assert hub_result.degree_centrality == 1.0
+        # With top_n=5, the first 5 entities are returned (sorted by pagerank)
+        # Just verify the limit is respected
+        assert len(results) == 5
+
+    @pytest.mark.asyncio
+    async def test_find_all_shortest_paths(self, graph_store: NetworkXGraphStore) -> None:
+        """Find shortest paths from source to all reachable entities."""
+        # Create a line: A -> B -> C -> D
+        entities = [
+            GraphEntity(name="A", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="B", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="C", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="D", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="Isolated", entity_type=EntityType.CHARACTER),
+        ]
+        await graph_store.add_entities(entities)
+
+        relationships = [
+            GraphRelationship(source="A", target="B", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="B", target="C", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="C", target="D", relationship_type=RelationshipType.KNOWS),
+        ]
+        await graph_store.add_relationships(relationships)
+
+        results = await graph_store.find_all_shortest_paths("A")
+
+        # Should find paths to B, C, D but not Isolated
+        assert "B" in results
+        assert "C" in results
+        assert "D" in results
+        assert "Isolated" not in results
+
+        # Check path lengths
+        assert results["B"].length == 1
+        assert results["C"].length == 2
+        assert results["D"].length == 3
+
+    @pytest.mark.asyncio
+    async def test_find_all_shortest_paths_with_cutoff(self, graph_store: NetworkXGraphStore) -> None:
+        """Find shortest paths with cutoff limit."""
+        entities = [
+            GraphEntity(name="Source", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="T1", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="T2", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="T3", entity_type=EntityType.CHARACTER),
+        ]
+        await graph_store.add_entities(entities)
+
+        relationships = [
+            GraphRelationship(source="Source", target="T1", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Source", target="T2", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="Source", target="T3", relationship_type=RelationshipType.KNOWS),
+        ]
+        await graph_store.add_relationships(relationships)
+
+        results = await graph_store.find_all_shortest_paths("Source", cutoff=2)
+
+        # Should only return 2 paths due to cutoff
+        assert len(results) == 2
+
+    @pytest.mark.asyncio
+    async def test_find_all_shortest_paths_max_length(self, graph_store: NetworkXGraphStore) -> None:
+        """Find shortest paths with max_length constraint."""
+        entities = [
+            GraphEntity(name="A", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="B", entity_type=EntityType.CHARACTER),
+            GraphEntity(name="C", entity_type=EntityType.CHARACTER),
+        ]
+        await graph_store.add_entities(entities)
+
+        relationships = [
+            GraphRelationship(source="A", target="B", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(source="B", target="C", relationship_type=RelationshipType.KNOWS),
+        ]
+        await graph_store.add_relationships(relationships)
+
+        results = await graph_store.find_all_shortest_paths("A", max_length=1)
+
+        # Should only find direct connection to B, not C (2 hops)
+        assert "B" in results
+        assert "C" not in results
+
+
+class TestNetworkXGraphStoreExport:
+    """Tests for graph export operations - BRAIN-031B."""
+
+    @pytest.mark.asyncio
+    async def test_export_graphml(self, graph_store: NetworkXGraphStore, tmp_path: Any) -> None:
+        """Export graph to GraphML format."""
+        import os
+
+        entities = [
+            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, description="A warrior"),
+            GraphEntity(name="Bob", entity_type=EntityType.CHARACTER, description="A wizard"),
+        ]
+        await graph_store.add_entities(entities)
+
+        await graph_store.add_relationship(
+            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS, context="Friends")
+        )
+
+        output_path = str(tmp_path / "test_graph.graphml")
+        result = await graph_store.export_graphml(output_path)
+
+        assert isinstance(result, GraphExportResult)
+        assert result.format == "graphml"
+        assert result.node_count == 2
+        assert result.edge_count == 1
+        assert result.data == output_path
+        assert result.size_bytes > 0
+        assert os.path.exists(output_path)
+
+        # Verify file content
+        with open(output_path, "r") as f:
+            content = f.read()
+            assert "graphml" in content.lower()
+
+    @pytest.mark.asyncio
+    async def test_export_graphml_without_metadata(self, graph_store: NetworkXGraphStore, tmp_path: Any) -> None:
+        """Export graph to GraphML without metadata."""
+        import os
+
+        entities = [
+            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, metadata={"custom": "data"}),
+        ]
+        await graph_store.add_entities(entities)
+
+        output_path = str(tmp_path / "test_no_metadata.graphml")
+        result = await graph_store.export_graphml(output_path, include_metadata=False)
+
+        assert result.node_count == 1
+        assert os.path.exists(output_path)
+
+    @pytest.mark.asyncio
+    async def test_export_json_to_file(self, graph_store: NetworkXGraphStore, tmp_path: Any) -> None:
+        """Export graph to JSON file."""
+        import json
+        import os
+
+        entities = [
+            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, aliases=("Ally",)),
+        ]
+        await graph_store.add_entities(entities)
+
+        await graph_store.add_relationship(
+            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS)
+        )
+
+        output_path = str(tmp_path / "test_graph.json")
+        result = await graph_store.export_json(output_path, pretty=True)
+
+        assert isinstance(result, GraphExportResult)
+        assert result.format == "json"
+        assert result.node_count == 2  # Alice + auto-created Bob
+        assert result.edge_count == 1
+        assert result.data == output_path
+        assert os.path.exists(output_path)
+
+        # Verify JSON content
+        with open(output_path, "r") as f:
+            data = json.load(f)
+            assert "graph" in data
+            assert "nodes" in data["graph"]
+            assert "edges" in data["graph"]
+            assert data["metadata"]["node_count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_export_json_to_string(self, graph_store: NetworkXGraphStore) -> None:
+        """Export graph to JSON string."""
+        import json
+
+        await graph_store.add_entity(
+            GraphEntity(name="Test", entity_type=EntityType.CHARACTER)
+        )
+
+        result = await graph_store.export_json(output_path=None, pretty=True)
+
+        assert isinstance(result, GraphExportResult)
+        assert result.format == "json"
+        assert result.node_count == 1
+
+        # Verify data is valid JSON string
+        data = json.loads(result.data)
+        assert "graph" in data
+        assert len(data["graph"]["nodes"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_export_json_compact(self, graph_store: NetworkXGraphStore) -> None:
+        """Export graph to compact JSON (no pretty printing)."""
+        await graph_store.add_entity(
+            GraphEntity(name="Test", entity_type=EntityType.CHARACTER)
+        )
+
+        result = await graph_store.export_json(output_path=None, pretty=False)
+
+        # Compact JSON should have no unnecessary whitespace
+        assert "\n" not in result.data
+        assert "  " not in result.data
