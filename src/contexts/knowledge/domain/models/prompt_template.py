@@ -16,8 +16,11 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from uuid import uuid4
+
+if TYPE_CHECKING:
+    from .prompt_version import VersionDiff, PromptVersion
 
 
 def _utcnow() -> datetime:
@@ -500,6 +503,38 @@ class PromptTemplate:
             tags=tags if tags is not None else self.tags,
             description=description if description is not None else self.description,
         )
+
+    def create_version_diff(
+        self,
+        content: str | None = None,
+        variables: tuple[VariableDefinition, ...] | None = None,
+        model_config: ModelConfig | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        tags: tuple[str, ...] | None = None,
+    ) -> dict[str, bool]:
+        """
+        Create a diff of changes from the current template.
+
+        Args:
+            content: New content (None means no change)
+            variables: New variables (None means no change)
+            model_config: New model config (None means no change)
+            name: New name (None means no change)
+            description: New description (None means no change)
+            tags: New tags (None means no change)
+
+        Returns:
+            Dictionary with boolean flags for each change type
+        """
+        return {
+            "content_changed": content is not None and content != self.content,
+            "variables_changed": variables is not None and variables != self.variables,
+            "model_config_changed": model_config is not None and model_config != self.model_config,
+            "name_changed": name is not None and name != self.name,
+            "description_changed": description is not None and description != self.description,
+            "tags_changed": tags is not None and tags != self.tags,
+        }
 
     def to_dict(self) -> dict[str, Any]:
         """

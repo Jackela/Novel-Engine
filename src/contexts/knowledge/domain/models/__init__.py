@@ -21,6 +21,10 @@ from .prompt_template import (
     VariableDefinition,
     VariableType,
 )
+from .prompt_version import (
+    PromptVersion,
+    VersionDiff,
+)
 from .source_knowledge_entry import SourceKnowledgeEntry, SourceMetadata
 from .source_type import SourceType
 
@@ -40,9 +44,11 @@ __all__ = [
     "KnowledgeType",
     "ModelConfig",
     "PromptTemplate",
+    "PromptVersion",
     "SourceKnowledgeEntry",
     "SourceMetadata",
     "SourceType",
     "VariableDefinition",
     "VariableType",
+    "VersionDiff",
 ]
