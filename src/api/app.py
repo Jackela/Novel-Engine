@@ -172,4 +172,16 @@ def create_app(
         app.state.world_router_available = False
         logger.warning("World context router not available: %s", exc)
 
+    # BRAIN-028B: Model Routing Configuration
+    try:
+        from src.api.routers.routing import router as routing_router
+
+        app.include_router(routing_router)
+        app.include_router(routing_router, prefix="/api")
+        app.state.routing_router_available = True
+        logger.info("Routing configuration router included with prefix /api")
+    except ImportError as exc:
+        app.state.routing_router_available = False
+        logger.warning("Routing configuration router not available: %s", exc)
+
     return app

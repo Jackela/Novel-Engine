@@ -2606,3 +2606,83 @@ try:
 except ImportError:
     # Optional imports for extended API schemas - these modules may not exist in all environments
     pass
+
+
+# === Routing Configuration Schemas ===
+# BRAIN-028B: Model Routing Configuration
+
+
+class TaskRoutingRuleSchema(BaseModel):
+    """Routing rule for a specific task type."""
+
+    task_type: str = Field(..., description="Task type: creative, logical, fast, cheap")
+    provider: str = Field(..., description="LLM provider: openai, anthropic, gemini, ollama, mock")
+    model_name: str = Field("", description="Model name (empty for provider default)")
+    temperature: Optional[float] = Field(None, ge=0, le=2, description="Temperature override")
+    max_tokens: Optional[int] = Field(None, ge=1, le=1000000, description="Max tokens override")
+    priority: int = Field(0, ge=0, description="Rule priority (higher = more important)")
+    enabled: bool = Field(True, description="Whether this rule is active")
+
+
+class RoutingConstraintsSchema(BaseModel):
+    """Constraints for model routing decisions."""
+
+    max_cost_per_1m_tokens: Optional[float] = Field(None, ge=0, description="Maximum cost per 1M tokens (USD)")
+    max_latency_ms: Optional[int] = Field(None, ge=0, description="Maximum acceptable latency (ms)")
+    preferred_providers: List[str] = Field(default_factory=list, description="Provider preference order")
+    blocked_providers: List[str] = Field(default_factory=list, description="Providers to never use")
+    require_capabilities: List[str] = Field(default_factory=list, description="Required capabilities")
+
+
+class CircuitBreakerRuleSchema(BaseModel):
+    """Circuit breaker configuration for a specific model."""
+
+    model_key: str = Field(..., description="Model identifier (provider:model)")
+    failure_threshold: int = Field(5, ge=1, le=100, description="Failures before opening circuit")
+    timeout_seconds: int = Field(60, ge=1, le=3600, description="Seconds before half-open state")
+    enabled: bool = Field(True, description="Whether circuit breaker is enabled")
+
+
+class RoutingConfigResponse(BaseModel):
+    """Response model for routing configuration."""
+
+    workspace_id: str = Field(..., description="Workspace identifier (empty for global)")
+    scope: str = Field(..., description="Configuration scope: global or workspace")
+    task_rules: List[TaskRoutingRuleSchema] = Field(default_factory=list, description="Task routing rules")
+    constraints: Optional[RoutingConstraintsSchema] = Field(None, description="Routing constraints")
+    circuit_breaker_rules: List[CircuitBreakerRuleSchema] = Field(default_factory=list, description="Circuit breaker rules")
+    enable_circuit_breaker: bool = Field(True, description="Whether circuit breaker is enabled")
+    enable_fallback: bool = Field(True, description="Whether fallback chain is enabled")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 update timestamp")
+    version: int = Field(..., ge=1, description="Configuration version")
+
+
+class RoutingConfigUpdateRequest(BaseModel):
+    """Request model for updating routing configuration."""
+
+    task_rules: Optional[List[TaskRoutingRuleSchema]] = Field(None, description="New task rules")
+    constraints: Optional[RoutingConstraintsSchema] = Field(None, description="New constraints")
+    circuit_breaker_rules: Optional[List[CircuitBreakerRuleSchema]] = Field(None, description="New circuit breaker rules")
+    enable_circuit_breaker: Optional[bool] = Field(None, description="Circuit breaker setting")
+    enable_fallback: Optional[bool] = Field(None, description="Fallback setting")
+
+
+class RoutingConfigResetRequest(BaseModel):
+    """Request model for resetting routing configuration."""
+
+    workspace_id: str = Field(..., description="Workspace identifier (empty for global)")
+
+
+class RoutingStatsResponse(BaseModel):
+    """Response model for routing statistics."""
+
+    total_decisions: int = Field(..., ge=0, description="Total routing decisions made")
+    fallback_count: int = Field(..., ge=0, description="Number of times fallback was used")
+    fallback_rate: float = Field(..., ge=0, le=1, description="Rate of fallback usage (0-1)")
+    reason_counts: Dict[str, int] = Field(default_factory=dict, description="Count by routing reason")
+    provider_counts: Dict[str, int] = Field(default_factory=dict, description="Count by provider")
+    avg_routing_time_ms: float = Field(..., ge=0, description="Average routing decision time")
+    open_circuits: List[Dict[str, Any]] = Field(default_factory=list, description="Currently open circuits")
+    total_circuits: int = Field(..., ge=0, description="Total circuit breakers tracked")
+
