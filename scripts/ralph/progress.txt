@@ -19,6 +19,8 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **RAG Retrieval**: RetrievalService in `src/contexts/knowledge/application/services/retrieval_service.py` with filtering and deduplication
 - **BM25 Keyword Search**: BM25Retriever in `src/contexts/knowledge/application/services/bm25_retriever.py` for exact keyword matching
 - **Hybrid Retrieval**: HybridRetriever in `src/contexts/knowledge/application/services/hybrid_retriever.py` combines vector and BM25 with RRF
+- **Query Rewriting**: QueryRewriter in `src/contexts/knowledge/application/services/query_rewriter.py` with SYNONYM/DECOMPOSE/CLARIFICATION strategies
+- **Reranking**: IReranker port in `src/contexts/knowledge/application/ports/i_reranker.py` and RerankService with fallback behavior
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -446,5 +448,33 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Semaphore limits concurrent retrieval queries to avoid overwhelming the system
 - Content deduplication after merging uses MD5 hash to detect identical chunks
 - The QueryAwareRetrievalService provides a complete RAG pipeline: Rewrite -> Retrieve (all variants) -> Merge -> Deduplicate
+
+---
+
+## [2025-02-04] - BRAIN-010A ✅
+- Created IReranker port interface with rerank(query, results, top_k) method
+- Created RerankResult value object with index, score, and relevance_score fields
+- Created RerankOutput value object with results, query, total_reranked, model, and latency_ms
+- Implemented RerankService with graceful fallback to original order on failure
+- Added RerankConfig for enabled/disabled state, fallback behavior, and min_score_threshold
+- Created MockReranker for testing without external APIs
+- Created FailingReranker for testing fallback behavior
+- All 26 unit tests passing (19 for RerankService, 4 for IReranker port, 3 for value objects)
+- Files changed:
+  - `src/contexts/knowledge/application/ports/i_reranker.py`: IReranker port, RerankResult, RerankOutput, RerankerError
+  - `src/contexts/knowledge/application/services/rerank_service.py`: Complete RerankService with MockReranker and FailingReranker
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new reranker types
+  - `tests/unit/contexts/knowledge/application/services/test_rerank_service.py`: 19 comprehensive tests
+  - `tests/unit/contexts/knowledge/application/ports/test_i_reranker.py`: 7 port and value object tests
+
+**Learnings for future iterations:**
+- The IReranker port provides abstraction for different reranking providers (Cohere, local sentence-transformers, etc.)
+- Frozen dataclasses raise `FrozenInstanceError` not `TypeError` when attempting to modify attributes
+- RerankerError should be a distinct exception type from generic Exception for proper error handling
+- Fallback to original order is critical for graceful degradation when reranking fails
+- The `top_k` parameter limits output while preserving the ability to process more results for filtering
+- Mock rerankers are essential for testing services without external API dependencies
+- Latency tracking (latency_ms) helps identify performance bottlenecks in the retrieval pipeline
+- Minimum score threshold filtering happens after reranking, not before
 
 ---
