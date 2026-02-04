@@ -284,3 +284,52 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Use `TYPE_CHECKING` for imports only needed in type hints to avoid circular dependencies
 
 ---
+
+## [2025-02-04] - BRAIN-007B ✅
+- Added optional RAGIntegrationService dependency to LLMWorldGenerator
+- Modified `generate_dialogue()` to async with RAG context enrichment before LLM call
+- Modified `suggest_next_beats()` to async with RAG context enrichment before LLM call
+- Added `_enrich_with_rag()` helper method that calls RAGIntegrationService.enrich_prompt()
+- Added `_extract_keywords_for_dialogue()` for building RAG queries from character data
+- Added `_extract_keywords_for_beats()` for building RAG queries from beat context
+- Added `use_rag` parameter to enable/disable RAG per request (default: True)
+- Updated 3 existing tests to async (suggest_next_beats integration tests)
+- All 75 unit tests passing (14 new RAG integration tests)
+- Files changed:
+  - `src/contexts/world/infrastructure/generators/llm_world_generator.py`: Added RAG integration to dialogue and beat suggestion
+  - `tests/unit/contexts/world/infrastructure/test_llm_world_generator.py`: Added 14 RAG integration tests
+
+**Learnings for future iterations:**
+- When changing a method from sync to async, all calling tests must also be marked async with `@pytest.mark.asyncio`
+- Use `TYPE_CHECKING` for type hints of optional dependencies (RAGIntegrationService) to avoid import errors
+- The `use_rag` parameter allows per-request control without changing the generator configuration
+- Keyword extraction should include character name, top traits, context keywords, and mood direction
+- RAG enrichment gracefully falls back to original prompt on error - logged as warning level
+- The generator must remain backward compatible (works without RAG service configured)
+- When using `await` in tests, ensure the test function is marked with `@pytest.mark.asyncio`
+
+---
+
+## [2025-02-04] - BRAIN-007C ✅
+- Updated `_enrich_with_rag()` to return tuple `(prompt, chunks_retrieved, tokens_added)` instead of just prompt
+- Modified `generate_dialogue()` to inject RAG context into **system prompt** (not user prompt)
+- Modified `suggest_next_beats()` to inject RAG context into **system prompt** (not user prompt)
+- Enhanced logging from `debug` to `info` level for RAG enrichment metrics
+- Added `rag_context_injected` info log after successful RAG enrichment
+- Added 2 new tests: `test_rag_context_injected_into_system_prompt` and `test_rag_context_injection_logs_metrics`
+- All 82 unit tests passing (up from 75 - added 7 new tests for BRAIN-007C)
+- Files changed:
+  - `src/contexts/world/infrastructure/generators/llm_world_generator.py`: Updated RAG context injection to system prompt
+  - `tests/unit/contexts/world/infrastructure/test_llm_world_generator.py`: Updated existing tests and added 7 new tests
+
+**Learnings for future iterations:**
+- The System Prompt is the correct place to inject RAG context because it provides consistent background knowledge
+- The User Prompt should remain clean and focused on the specific request/task
+- Returning metrics (chunks, tokens) from `_enrich_with_rag()` enables better observability without additional log calls
+- When updating return types of methods, all test assertions must be updated to unpack the new return values
+- The `use_rag` parameter already existed from BRAIN-007B - this story focused on proper context placement
+- Context injection follows the pattern: "Relevant Context:\n{context}\n\n---\n\n{original_prompt}"
+- RAGIntegrationService's `enrich_prompt()` method already handles the "Relevant Context:" header formatting
+- Tests that verify internal behavior (like which prompt receives context) require mocking `_call_gemini` to inspect arguments
+
+---
