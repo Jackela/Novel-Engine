@@ -24,6 +24,7 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Token Counting**: TokenCounter in `src/contexts/knowledge/application/services/token_counter.py` with multi-provider tiktoken support
 - **Context Optimization**: ContextOptimizer in `src/contexts/knowledge/application/services/context_optimizer.py` with 4 packing strategies (relevance, diversity, remove_redundancy, compress_summaries)
 - **Prompt Templates**: PromptTemplate entity in `src/contexts/knowledge/domain/models/prompt_template.py` with {{variable}} syntax and version tracking
+- **Prompt Inheritance**: Use `extends` field and `{{> template}}` syntax for template composition. Variable override works by child having same-named variable.
 - **Prompt Repository**: IPromptRepository port in `src/contexts/knowledge/application/ports/i_prompt_repository.py` with CRUD, version history, and search
 
 ### Frontend

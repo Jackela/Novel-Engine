@@ -713,6 +713,48 @@ class PromptTemplate:
         """
         return set(self._INCLUDE_PATTERN.findall(self.content))
 
+    def check_circular_extends(
+        self,
+        parent_templates: dict[str, PromptTemplate],
+        visited: set[str] | None = None,
+    ) -> None:
+        """
+        Check for circular references in the extends chain.
+
+        Args:
+            parent_templates: Dictionary mapping template names/IDs to PromptTemplate objects
+            visited: Set of already visited template IDs in the current chain
+
+        Raises:
+            ValueError: If circular reference is detected in the extends chain
+        """
+        if visited is None:
+            visited = set()
+
+        if self.id in visited:
+            raise ValueError(
+                f"Circular reference detected in extends chain: "
+                f"template '{self.name}' (id: {self.id}) "
+                f"is referenced multiple times"
+            )
+
+        visited.add(self.id)
+
+        for parent_ref in self.extends:
+            # Find parent by name or ID
+            parent = None
+            for template in parent_templates.values():
+                if template.name == parent_ref or template.id == parent_ref:
+                    parent = template
+                    break
+
+            if parent is None:
+                # Can't validate if parent not found, skip silently
+                continue
+
+            # Recursively check parent's extends
+            parent.check_circular_extends(parent_templates, visited.copy())
+
     def resolve_content(
         self,
         parent_templates: dict[str, PromptTemplate],

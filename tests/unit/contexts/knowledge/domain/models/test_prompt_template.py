@@ -1221,3 +1221,114 @@ class TestPromptTemplateInheritance:
         assert v2.version == 2
         assert v2.parent_version_id == "v1"
 
+    def test_check_circular_extends_chain(self) -> None:
+        """Should detect circular references in extends chain."""
+        template_a = PromptTemplate(
+            id="a-1",
+            name="TemplateA",
+            content="Content A",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("TemplateB",),
+        )
+
+        template_b = PromptTemplate(
+            id="b-1",
+            name="TemplateB",
+            content="Content B",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("TemplateC",),
+        )
+
+        template_c = PromptTemplate(
+            id="c-1",
+            name="TemplateC",
+            content="Content C",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("TemplateA",),  # Creates circular chain A -> B -> C -> A
+        )
+
+        parent_templates = {
+            "TemplateA": template_a,
+            "TemplateB": template_b,
+            "TemplateC": template_c,
+        }
+
+        with pytest.raises(ValueError, match="Circular reference detected"):
+            template_a.check_circular_extends(parent_templates)
+
+    def test_check_circular_extends_no_cycles(self) -> None:
+        """Should not raise error for valid non-circular extends."""
+        base = PromptTemplate(
+            id="base-1",
+            name="BaseTemplate",
+            content="Base content",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        middle = PromptTemplate(
+            id="middle-1",
+            name="MiddleTemplate",
+            content="Middle content",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("BaseTemplate",),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="ChildTemplate",
+            content="Child content",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("MiddleTemplate",),
+        )
+
+        parent_templates = {
+            "BaseTemplate": base,
+            "MiddleTemplate": middle,
+            "ChildTemplate": child,
+        }
+
+        # Should not raise any error
+        child.check_circular_extends(parent_templates)
+
+    def test_check_circular_extends_multiple_parents_no_cycle(self) -> None:
+        """Should handle multiple extends without cycles."""
+        parent_a = PromptTemplate(
+            id="parent-a",
+            name="ParentA",
+            content="Content A",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        parent_b = PromptTemplate(
+            id="parent-b",
+            name="ParentB",
+            content="Content B",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+        )
+
+        child = PromptTemplate(
+            id="child-1",
+            name="Child",
+            content="Child content",
+            variables=(),
+            model_config=ModelConfig(provider="openai", model_name="gpt-4"),
+            extends=("ParentA", "ParentB"),
+        )
+
+        parent_templates = {
+            "ParentA": parent_a,
+            "ParentB": parent_b,
+            "child-1": child,
+        }
+
+        # Should not raise any error
+        child.check_circular_extends(parent_templates)
+
