@@ -57,6 +57,7 @@ import {
   AlertCircle,
   Loader2,
   Tag,
+  Play,
 } from 'lucide-react';
 import type {
   PromptVariableDefinition,
@@ -65,6 +66,7 @@ import type {
 } from '@/types/schemas';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { PromptPlaygroundModal } from './PromptPlaygroundModal';
 
 // Local storage key for autosave
 const AUTOSAVE_KEY_PREFIX = 'prompt_autosave_';
@@ -148,6 +150,7 @@ export function PromptEditorPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'variables' | 'config' | 'history'>('content');
+  const [playgroundOpen, setPlaygroundOpen] = useState(false);
 
   // Load prompt data into form
   useEffect(() => {
@@ -422,6 +425,16 @@ export function PromptEditorPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {!isNew && promptData && (
+            <Button
+              variant="outline"
+              onClick={() => setPlaygroundOpen(true)}
+              className="gap-2"
+            >
+              <Play className="h-4 w-4" />
+              Run
+            </Button>
+          )}
           {isNew && (
             <Button
               variant="outline"
@@ -852,6 +865,13 @@ export function PromptEditorPage() {
           </Tabs>
         </div>
       </div>
+
+      {/* Playground Modal */}
+      <PromptPlaygroundModal
+        prompt={promptData ?? null}
+        open={playgroundOpen}
+        onOpenChange={setPlaygroundOpen}
+      />
     </div>
   );
 }

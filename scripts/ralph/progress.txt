@@ -1029,3 +1029,32 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - LazyRouteComponent requires proper typing in router.tsx for code splitting to work
 - Versions API returns PromptSummary objects (not full PromptDetailResponse) - only has summary fields
 
+
+## [2025-02-04] - BRAIN-020A ✅
+- Implemented PromptPlaygroundModal with split-view playground UI
+- Added 'Run' button in PromptEditorPage that opens the playground modal (only visible for existing prompts, not new)
+- Created dynamic variable input forms based on prompt variable definitions
+- Implemented type-specific input components: text (Textarea), number (Input), boolean (Switch), list/dict (Textarea with JSON)
+- Added model configuration UI with provider dropdown, model selector, temperature slider, max_tokens slider
+- Added advanced settings toggle for top_p, frequency_penalty, presence_penalty
+- Implemented split view layout: rendered prompt on left, LLM output placeholder on right
+- Added copy to clipboard buttons for both rendered prompt and LLM output
+- Added token count estimation display (~4 chars per token)
+- Integrated useRenderPrompt hook for rendering prompts with variables
+- Files changed:
+  - `frontend/src/features/prompts/components/PromptPlaygroundModal.tsx`: New playground modal component (520+ lines)
+  - `frontend/src/features/prompts/components/PromptEditorPage.tsx`: Added Run button in header, playground modal integration
+  - `frontend/src/features/prompts/index.ts`: Export PromptPlaygroundModal
+
+**Learnings for future iterations:**
+- The Run button should only appear for existing prompts (not "new" unsaved prompts) since we need a prompt_id for rendering
+- Variable input types need different UI components: boolean uses Switch, numbers use Input type="number", list/dict use Textarea for JSON input
+- Model suggestions array should be indexed by provider name for dynamic model list updates when provider changes
+- Token estimation uses ~4 characters per token as a rough approximation (sufficient for UI display)
+- Copy feedback uses a 2-second timeout with state tracking to show "Copied" checkmark
+- Dialog with max-w-6xl and h-[85vh] provides ample space for the split-view playground while keeping it on screen
+- Advanced settings toggle (More/Less) helps declutter the UI while keeping power-user features accessible
+- The playground modal should initialize variable values from prompt defaults, with fallback to type-appropriate empty values
+- For BRAIN-020B, the LLM output section will need to call a generation endpoint (currently just shows placeholder message)
+
+---
