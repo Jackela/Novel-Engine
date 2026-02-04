@@ -11,6 +11,7 @@ import {
   PromptListResponseSchema,
   PromptDetailResponseSchema,
   PromptTagsResponseSchema,
+  PromptCompareResponseSchema,
 } from '@/types/schemas';
 import type {
   PromptDetailResponse,
@@ -204,5 +205,23 @@ export function useRollbackPrompt() {
       queryClient.invalidateQueries({ queryKey: [...PROMPTS_KEY, 'detail', variables.id] });
       queryClient.invalidateQueries({ queryKey: [...PROMPTS_KEY, 'versions', variables.id] });
     },
+  });
+}
+
+// Compare two versions of a prompt
+// BRAIN-021: Frontend: Prompt Comparison View
+// Hook for comparing with auto-fetch
+export function usePromptCompareAuto(id: string, versionA: number, versionB: number) {
+  return useQuery({
+    queryKey: [...PROMPTS_KEY, 'compare', id, versionA, versionB],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        version_a: String(versionA),
+        version_b: String(versionB),
+      });
+      const data = await api.get<unknown>(`/prompts/${id}/compare?${params.toString()}`);
+      return PromptCompareResponseSchema.parse(data);
+    },
+    enabled: !!id && versionA > 0 && versionB > 0,
   });
 }

@@ -1094,3 +1094,36 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - The useGeneratePrompt hook accepts config object with optional overrides for all LLM parameters
 
 ---
+
+## [2025-02-04] - BRAIN-021 ✅
+- Implemented Prompt Comparison View with side-by-side diff modal
+- Created PromptCompareModal component with collapsible sections for content, variables, and config diffs
+- Added frontend Zod schemas: PromptCompareResponseSchema, PromptDiffHunkSchema, PromptVariableChangeSchema, PromptConfigChangeSchema
+- Added usePromptCompareAuto hook to promptApi.ts for fetching comparison data
+- Added "Compare Versions" button to PromptEditorPage History tab (visible when 2+ versions exist)
+- Implemented side-by-side diff view for prompt content with color-coded additions/deletions
+- Implemented variable comparison table showing added, removed, and changed variables
+- Implemented model config diff table showing changed settings
+- Implemented metadata changes view for name, description, and tags
+- Added one-click swap button to flip comparison order (Version A ↔ Version B)
+- All 5 existing compare tests passing
+- Files changed:
+  - `frontend/src/types/schemas.ts`: Added PromptCompareResponseSchema and related schemas
+  - `frontend/src/features/prompts/api/promptApi.ts`: Added usePromptCompareAuto hook
+  - `frontend/src/features/prompts/components/PromptCompareModal.tsx`: New comparison modal component (550+ lines)
+  - `frontend/src/features/prompts/components/PromptEditorPage.tsx`: Added Compare button and modal integration
+  - `frontend/src/features/prompts/index.ts`: Exported PromptCompareModal
+
+**Learnings for future iterations:**
+- The backend compare endpoint at GET /api/prompts/{id}/compare?version_a=X&version_b=Y returns structured diff data
+- Content diff uses character-level line-by-line diff with opcodes: replace, delete, insert, equal
+- Variable changes are grouped into: added (new variables), removed (deleted variables), changed (modified definitions)
+- Model config changes list field name with old and new values for each changed setting
+- Metadata changes include name, description, and tags (with added/removed arrays)
+- For exactOptionalPropertyTypes: true, use `|| 0` instead of `|| undefined` for optional number props to avoid type errors
+- The CollapsibleSection pattern using chevron icons provides clean UX for expandable content sections
+- TanStack Query's enabled flag with boolean expression allows conditional fetching (only when versions are valid)
+- Color coding: green for additions/new values, red for deletions/old values, line-through for changed old values
+- The GitCompare icon from lucide-react is appropriate for version comparison UI
+
+---

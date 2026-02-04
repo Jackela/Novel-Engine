@@ -58,6 +58,7 @@ import {
   Loader2,
   Tag,
   Play,
+  GitCompare,
 } from 'lucide-react';
 import type {
   PromptVariableDefinition,
@@ -67,6 +68,7 @@ import type {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PromptPlaygroundModal } from './PromptPlaygroundModal';
+import { PromptCompareModal } from './PromptCompareModal';
 
 // Local storage key for autosave
 const AUTOSAVE_KEY_PREFIX = 'prompt_autosave_';
@@ -151,6 +153,7 @@ export function PromptEditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'variables' | 'config' | 'history'>('content');
   const [playgroundOpen, setPlaygroundOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   // Load prompt data into form
   useEffect(() => {
@@ -834,11 +837,25 @@ export function PromptEditorPage() {
             {/* History Tab */}
             <TabsContent value="history" className="flex-1 overflow-hidden p-6 m-0">
               <div className="h-full flex flex-col gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold">Version History</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Track changes to this prompt over time
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Version History</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Track changes to this prompt over time
+                    </p>
+                  </div>
+                  {/* BRAIN-021: Compare Mode Button */}
+                  {versionsData && versionsData.prompts.length >= 2 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCompareOpen(true)}
+                      className="gap-2"
+                    >
+                      <GitCompare className="h-4 w-4" />
+                      Compare Versions
+                    </Button>
+                  )}
                 </div>
 
                 {!versionsData || versionsData.prompts.length === 0 ? (
@@ -872,6 +889,16 @@ export function PromptEditorPage() {
         open={playgroundOpen}
         onOpenChange={setPlaygroundOpen}
       />
+
+      {/* Compare Modal - BRAIN-021 */}
+      {versionsData && versionsData.prompts.length >= 2 && (
+        <PromptCompareModal
+          promptId={id || ''}
+          versions={versionsData.prompts}
+          open={compareOpen}
+          onOpenChange={setCompareOpen}
+        />
+      )}
     </div>
   );
 }

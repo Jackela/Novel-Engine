@@ -611,7 +611,7 @@
         "Test: Compare two versions and see differences highlighted"
       ],
       "priority": 34,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-020B"

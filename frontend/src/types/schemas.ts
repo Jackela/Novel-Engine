@@ -1849,6 +1849,74 @@ export const PromptGenerateResponseSchema = z.object({
  */
 export const PromptTagsResponseSchema = z.record(z.string(), z.array(z.string()));
 
+/**
+ * Schema for prompt compare response.
+ * BRAIN-021: Frontend: Prompt Comparison View
+ * Shows differences between two versions of a prompt.
+ */
+
+// Diff hunk schema
+const PromptDiffHunkSchema = z.object({
+  type: z.enum(['equal', 'delete', 'insert', 'replace']),
+  old_lines: z.array(z.string()).default([]),
+  new_lines: z.array(z.string()).default([]),
+  old_start: z.number().int().optional(),
+  new_start: z.number().int().optional(),
+});
+
+// Variable change schema
+const PromptVariableChangeSchema = z.object({
+  name: z.string(),
+  old: z.object({
+    type: z.string(),
+    default_value: z.unknown().nullable(),
+    required: z.boolean(),
+  }),
+  new: z.object({
+    type: z.string(),
+    default_value: z.unknown().nullable(),
+    required: z.boolean(),
+  }),
+});
+
+// Config change schema
+const PromptConfigChangeSchema = z.object({
+  field: z.string(),
+  old: z.unknown(),
+  new: z.unknown(),
+});
+
+// Metadata changes schema
+const PromptMetadataChangeSchema = z.object({
+  name: z.object({ old: z.string(), new: z.string() }).optional(),
+  description: z.object({ old: z.string(), new: z.string() }).optional(),
+  tags: z.object({
+    added: z.array(z.string()),
+    removed: z.array(z.string()),
+  }).optional(),
+});
+
+// Version info schema
+const PromptVersionInfoSchema = z.object({
+  version: z.number().int().positive(),
+  id: z.string(),
+  created_at: z.string(),
+});
+
+// Full compare response schema
+export const PromptCompareResponseSchema = z.object({
+  version_a: PromptVersionInfoSchema,
+  version_b: PromptVersionInfoSchema,
+  content_diff: z.array(PromptDiffHunkSchema).default([]),
+  variables: z.object({
+    added: z.array(z.string()).default([]),
+    removed: z.array(z.string()).default([]),
+    changed: z.array(PromptVariableChangeSchema).default([]),
+  }),
+  model_config: z.array(PromptConfigChangeSchema).default([]),
+  metadata: PromptMetadataChangeSchema.optional(),
+});
+
 // Prompt Types
 export type PromptVariableType = z.infer<typeof PromptVariableTypeEnum>;
 export type PromptVariableDefinition = z.infer<typeof PromptVariableDefinitionSchema>;
@@ -1864,3 +1932,9 @@ export type PromptRenderResponse = z.infer<typeof PromptRenderResponseSchema>;
 export type PromptGenerateRequest = z.infer<typeof PromptGenerateRequestSchema>;
 export type PromptGenerateResponse = z.infer<typeof PromptGenerateResponseSchema>;
 export type PromptTagsResponse = z.infer<typeof PromptTagsResponseSchema>;
+export type PromptCompareResponse = z.infer<typeof PromptCompareResponseSchema>;
+export type PromptDiffHunk = z.infer<typeof PromptDiffHunkSchema>;
+export type PromptVariableChange = z.infer<typeof PromptVariableChangeSchema>;
+export type PromptConfigChange = z.infer<typeof PromptConfigChangeSchema>;
+export type PromptMetadataChange = z.infer<typeof PromptMetadataChangeSchema>;
+export type PromptVersionInfo = z.infer<typeof PromptVersionInfoSchema>;
