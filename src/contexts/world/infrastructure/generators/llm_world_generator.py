@@ -38,7 +38,7 @@ import json
 import os
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import requests
 import structlog
@@ -65,6 +65,11 @@ from src.contexts.world.domain.entities import (
     WorldSetting,
 )
 
+if TYPE_CHECKING:
+    from src.contexts.knowledge.application.services.rag_integration_service import (
+        RAGIntegrationService,
+    )
+
 logger = structlog.get_logger(__name__)
 
 
@@ -76,17 +81,31 @@ class LLMWorldGenerator(WorldGeneratorPort):
     WorldSetting, multiple Factions, Locations, and HistoryEvents in a single
     API call, maintaining cross-references between entities.
 
+    Warzone 4 Integration:
+        Optionally uses RAG (Retrieval-Augmented Generation) to enrich
+        dialogue and beat suggestions with relevant context from the knowledge
+        base. When a RAGIntegrationService is provided, the generator will
+        retrieve relevant character, lore, and scene information to inform
+        its outputs.
+
     Attributes:
         _model: Gemini model name (e.g., "gemini-2.0-flash").
         _temperature: Generation temperature controlling creativity (0-2).
         _prompt_path: Path to the YAML file containing system prompts.
         _api_key: Gemini API authentication key.
         _base_url: Gemini API endpoint URL.
+        _rag_service: Optional RAG integration service for context enrichment.
 
     Example:
         >>> generator = LLMWorldGenerator(model="gemini-2.0-flash", temperature=0.7)
         >>> result = generator.generate(WorldGenerationInput(genre=Genre.FANTASY))
         >>> print(f"Generated {result.total_entities} entities")
+
+        >>> # With RAG integration
+        >>> from src.contexts.knowledge.application.services import RAGIntegrationService
+        >>> rag_service = RAGIntegrationService.create(...)
+        >>> generator_with_rag = LLMWorldGenerator(rag_service=rag_service)
+        >>> dialogue = generator_with_rag.generate_dialogue(...)
     """
 
     def __init__(
@@ -94,6 +113,7 @@ class LLMWorldGenerator(WorldGeneratorPort):
         model: str | None = None,
         temperature: float = 0.8,
         prompt_path: Path | None = None,
+        rag_service: RAGIntegrationService | None = None,
     ) -> None:
         """Initialize the LLM world generator.
 
@@ -101,6 +121,7 @@ class LLMWorldGenerator(WorldGeneratorPort):
             model: Gemini model name (defaults to env GEMINI_MODEL)
             temperature: Generation temperature (0-2)
             prompt_path: Path to prompt YAML file
+            rag_service: Optional RAG integration service for context enrichment
         """
         self._model = model or os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         self._temperature = temperature
@@ -112,6 +133,7 @@ class LLMWorldGenerator(WorldGeneratorPort):
             f"https://generativelanguage.googleapis.com/v1/models/"
             f"{self._model}:generateContent"
         )
+        self._rag_service = rag_service
 
     def generate(self, request: WorldGenerationInput) -> WorldGenerationResult:
         """Generate a complete world using the Gemini API.
@@ -644,13 +666,121 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             generation_summary=f"Error: {reason}",
         )
 
+    # ==================== RAG Integration Helpers ====================
+
+    async def _enrich_with_rag(
+        self,
+        query: str,
+        base_prompt: str,
+    ) -> str:
+        """Enrich a prompt with RAG context if available.
+
+        Args:
+            query: Search query for retrieving relevant context
+            base_prompt: The base prompt to enrich
+
+        Returns:
+            Enriched prompt with RAG context, or original prompt if RAG unavailable
+        """
+        if self._rag_service is None:
+            return base_prompt
+
+        try:
+            result = await self._rag_service.enrich_prompt(
+                query=query,
+                base_prompt=base_prompt,
+            )
+            logger.debug(
+                "rag_enrichment",
+                chunks_retrieved=result.chunks_retrieved,
+                tokens_added=result.tokens_added,
+            )
+            return result.prompt
+        except Exception as exc:
+            logger.warning(
+                "rag_enrichment_failed",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
+            return base_prompt
+
+    def _extract_keywords_for_dialogue(
+        self,
+        character: "CharacterData",
+        context: str,
+        mood: Optional[str] | None,
+    ) -> str:
+        """Extract keywords from dialogue request for RAG query.
+
+        Builds a search query combining character name, traits, and context
+        to retrieve relevant knowledge base entries.
+
+        Args:
+            character: Character data for name and traits
+            context: The dialogue context/situation
+            mood: Optional current mood
+
+        Returns:
+            Search query string for RAG retrieval
+        """
+        parts = [character.name]
+
+        if character.traits:
+            parts.extend(character.traits[:3])  # Top 3 traits
+
+        if mood:
+            parts.append(mood)
+
+        # Extract key phrases from context (simple extraction)
+        context_words = context.split()[:5]  # First 5 words
+        parts.extend(context_words)
+
+        return " ".join(parts)
+
+    def _extract_keywords_for_beats(
+        self,
+        current_beats: List[Dict[str, Any]],
+        scene_context: str,
+        mood_target: Optional[int] | None,
+    ) -> str:
+        """Extract keywords from beat request for RAG query.
+
+        Args:
+            current_beats: Existing beat sequence
+            scene_context: Scene description
+            mood_target: Optional target mood
+
+        Returns:
+            Search query string for RAG retrieval
+        """
+        parts = []
+
+        # Add scene context keywords
+        context_words = scene_context.split()[:8]
+        parts.extend(context_words)
+
+        # Add mood direction if specified
+        if mood_target is not None:
+            if mood_target > 0:
+                parts.append("uplifting positive")
+            elif mood_target < 0:
+                parts.append("tense negative dramatic")
+
+        # Add recent beat types for pattern matching
+        if current_beats:
+            recent_types = [b.get("beat_type", "") for b in current_beats[-3:]]
+            parts.extend(recent_types)
+
+        return " ".join(parts)
+
     # ==================== Dialogue Generation ====================
 
-    def generate_dialogue(
+    async def generate_dialogue(
         self,
         character: "CharacterData",
         context: str,
         mood: Optional[str] = None,
+        use_rag: bool = True,
     ) -> "DialogueResult":
         """Generate dialogue in character voice using psychology, traits, and speaking style.
 
@@ -658,6 +788,11 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         prompt. The dialogue generator considers the Big Five psychology traits,
         character-specific traits, and speaking style to produce responses that
         sound like the character would naturally speak.
+
+        RAG Integration (Warzone 4):
+            When use_rag is True and a RAGIntegrationService is available,
+            the generator retrieves relevant character knowledge, lore, and
+            context from the knowledge base to inform the dialogue.
 
         Why this matters: Characters need consistent voices. A high-neuroticism
         character should hedge and worry, while a high-extraversion character
@@ -671,13 +806,14 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
                     Examples: "A stranger asks for directions", "Their rival insults them".
             mood: Optional current emotional state that modifies normal patterns.
                  Examples: "angry", "melancholic", "excited", "fearful".
+            use_rag: Whether to use RAG for context enrichment (default: True).
 
         Returns:
             DialogueResult containing the generated dialogue, internal thought,
             tone, and optional body language.
 
         Example:
-            >>> result = generator.generate_dialogue(
+            >>> result = await generator.generate_dialogue(
             ...     character=my_character,
             ...     context="A merchant offers a suspiciously good deal",
             ...     mood="cautious"
@@ -689,12 +825,20 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             character_name=character.name,
             has_psychology=character.psychology is not None,
             mood=mood,
+            has_rag=self._rag_service is not None and use_rag,
         )
         log.info("Starting dialogue generation")
 
         try:
             system_prompt = self._load_dialogue_prompt()
-            user_prompt = self._build_dialogue_user_prompt(character, context, mood)
+            base_user_prompt = self._build_dialogue_user_prompt(character, context, mood)
+
+            # Enrich with RAG if enabled and available
+            if use_rag and self._rag_service is not None:
+                rag_query = self._extract_keywords_for_dialogue(character, context, mood)
+                user_prompt = await self._enrich_with_rag(rag_query, base_user_prompt)
+            else:
+                user_prompt = base_user_prompt
 
             response_text = self._call_gemini(system_prompt, user_prompt)
             result = self._parse_dialogue_response(response_text)
@@ -987,17 +1131,23 @@ Return valid JSON only with the exact structure specified in the system prompt."
 
     # ==================== Beat Suggestion Generation ====================
 
-    def suggest_next_beats(
+    async def suggest_next_beats(
         self,
         current_beats: List[Dict[str, Any]],
         scene_context: str,
         mood_target: Optional[int] = None,
+        use_rag: bool = True,
     ) -> "BeatSuggestionResult":
         """Suggest next beats for a scene based on current sequence and context.
 
         Breaks writer's block by generating 3 AI-suggested beats that could
         logically follow the current beat sequence. Considers the scene context,
         current beat types, and desired mood trajectory.
+
+        RAG Integration (Warzone 4):
+            When use_rag is True and a RAGIntegrationService is available,
+            the generator retrieves relevant scene patterns, narrative conventions,
+            and story context to inform beat suggestions.
 
         Why this matters: Writers often struggle with "what happens next?"
         This method provides creative sparks while respecting the established
@@ -1010,13 +1160,14 @@ Return valid JSON only with the exact structure specified in the system prompt."
                           involved, and current situation/goals.
             mood_target: Optional target mood level (-5 to +5) for the scene's
                         direction. If None, suggestions maintain current mood.
+            use_rag: Whether to use RAG for context enrichment (default: True).
 
         Returns:
             BeatSuggestionResult containing 3 suggestions with beat_type,
             content, mood_shift, and rationale.
 
         Example:
-            >>> result = generator.suggest_next_beats(
+            >>> result = await generator.suggest_next_beats(
             ...     current_beats=[
             ...         {"beat_type": "action", "content": "She drew her sword."},
             ...         {"beat_type": "dialogue", "content": "'Stay back!' she warned."},
@@ -1030,14 +1181,24 @@ Return valid JSON only with the exact structure specified in the system prompt."
         log = logger.bind(
             num_current_beats=len(current_beats),
             has_mood_target=mood_target is not None,
+            has_rag=self._rag_service is not None and use_rag,
         )
         log.info("Starting beat suggestion generation")
 
         try:
             system_prompt = self._load_beat_suggester_prompt()
-            user_prompt = self._build_beat_suggester_user_prompt(
+            base_user_prompt = self._build_beat_suggester_user_prompt(
                 current_beats, scene_context, mood_target
             )
+
+            # Enrich with RAG if enabled and available
+            if use_rag and self._rag_service is not None:
+                rag_query = self._extract_keywords_for_beats(
+                    current_beats, scene_context, mood_target
+                )
+                user_prompt = await self._enrich_with_rag(rag_query, base_user_prompt)
+            else:
+                user_prompt = base_user_prompt
 
             response_text = self._call_gemini(system_prompt, user_prompt)
             result = self._parse_beat_suggestion_response(response_text)
