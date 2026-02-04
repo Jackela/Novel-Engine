@@ -167,6 +167,8 @@ from .graph_retrieval_service import (
     GraphRetrievalConfig,
     GraphRetrievalResult,
     GraphRetrievalService,
+    GraphExplanationStep,
+    GraphExplanation,
 )
 
 __all__ = [
@@ -303,4 +305,6 @@ __all__ = [
     "GraphEnhancedChunk",
     "GraphRetrievalConfig",
     "GraphRetrievalResult",
+    "GraphExplanationStep",
+    "GraphExplanation",
 ]

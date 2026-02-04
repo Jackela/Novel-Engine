@@ -9,13 +9,14 @@ Constitution Compliance:
 - Article II (Hexagonal): Application service coordinating domain and infrastructure
 - Article V (SOLID): SRP - graph-enhanced retrieval coordination
 
-Warzone 4: AI Brain - BRAIN-032A
+Warzone 4: AI Brain - BRAIN-032A, BRAIN-032B
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING
+from datetime import datetime
 
 import structlog
 
@@ -41,6 +42,59 @@ logger = structlog.get_logger()
 
 # Cache TTL for graph queries (5 minutes)
 GRAPH_CACHE_TTL = 300
+
+
+@dataclass(frozen=True, slots=True)
+class GraphExplanationStep:
+    """
+    A single step in the graph traversal reasoning path.
+
+    Attributes:
+        step_number: Order of this step in the reasoning chain
+        step_type: Type of operation (entity_lookup, relationship_traversal, path_finding, etc.)
+        description: Human-readable description of what was done
+        entity_name: Primary entity involved in this step
+        related_entities: Other entities discovered in this step
+        relationships_traversed: Relationships that were followed
+        relevance_score: Why this step was relevant (0-1)
+        metadata: Additional context about this step
+    """
+
+    step_number: int
+    step_type: str
+    description: str
+    entity_name: str
+    related_entities: tuple[str, ...] = ()
+    relationships_traversed: tuple[str, ...] = ()
+    relevance_score: float = 1.0
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class GraphExplanation:
+    """
+    Complete explanation of graph traversal reasoning path.
+
+    Provides visibility into why certain entities and relationships were included
+    in the retrieval result, enabling debugging and transparency.
+
+    Attributes:
+        query: The original query or chunk content that triggered traversal
+        steps: Ordered sequence of reasoning steps
+        entities_examined: Total entities looked up during traversal
+        relationships_examined: Total relationships examined
+        total_traversal_depth: Maximum depth reached during traversal
+        timestamp: When the explanation was generated
+        summary_text: Human-readable summary of the reasoning path
+    """
+
+    query: str
+    steps: tuple[GraphExplanationStep, ...]
+    entities_examined: int
+    relationships_examined: int
+    total_traversal_depth: int
+    timestamp: datetime = field(default_factory=datetime.utcnow)
+    summary_text: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +147,7 @@ class GraphRetrievalConfig:
         include_entity_types: Filter for specific entity types
         min_relevance: Minimum relevance score for including entities
         cache_enabled: Enable LRU caching of graph queries (default: True)
+        explain_mode: Enable reasoning path tracking for debugging (default: False)
     """
 
     entity_expansion_depth: int = 1
@@ -101,6 +156,7 @@ class GraphRetrievalConfig:
     include_entity_types: tuple[str, ...] = ()
     min_relevance: float = 0.3
     cache_enabled: bool = True
+    explain_mode: bool = False
 
 
 @dataclass
@@ -114,6 +170,7 @@ class GraphRetrievalResult:
         relationships_found: Total unique relationships discovered
         cache_hits: Number of cache hits during retrieval
         cache_misses: Number of cache misses during retrieval
+        explanation: Optional explanation of reasoning path (when explain_mode=True)
     """
 
     enhanced_chunks: list[GraphEnhancedChunk]
@@ -121,6 +178,7 @@ class GraphRetrievalResult:
     relationships_found: int
     cache_hits: int = 0
     cache_misses: int = 0
+    explanation: GraphExplanation | None = None
 
 
 class GraphRetrievalService:
@@ -169,19 +227,40 @@ class GraphRetrievalService:
         3. Get relationships between entities
         4. Build enhanced chunk with graph context
 
+        When explain_mode is enabled, tracks the reasoning path through the graph.
+
         Args:
             chunks: Retrieved chunks from vector store
 
         Returns:
-            GraphRetrievalResult with enhanced chunks and statistics
+            GraphRetrievalResult with enhanced chunks, statistics, and optional explanation
         """
         enhanced_chunks: list[GraphEnhancedChunk] = []
         all_entities: dict[str, GraphEntity] = {}
         all_relationships: set[tuple[str, str, str]] = set()
 
+        # Explanation tracking
+        explanation_steps: list[GraphExplanationStep] = []
+        step_counter = 0
+        max_depth_reached = 0
+        relationships_examined = 0
+
         for chunk in chunks:
             # Extract potential entity names from chunk content
             entity_names = await self._extract_entity_names(chunk.content)
+
+            if self._config.explain_mode:
+                step_counter += 1
+                explanation_steps.append(
+                    GraphExplanationStep(
+                        step_number=step_counter,
+                        step_type="entity_extraction",
+                        description=f"Extracted {len(entity_names)} potential entity names from chunk",
+                        entity_name=chunk.chunk_id,
+                        related_entities=tuple(entity_names),
+                        relevance_score=1.0,
+                        metadata={"chunk_content_preview": chunk.content[:100]}),
+                )
 
             # Fetch graph context for each entity
             entity_contexts: list[GraphEntityContext] = []
@@ -190,9 +269,32 @@ class GraphRetrievalService:
                 # Get entity from graph
                 entity = await self._get_entity_cached(entity_name)
                 if entity is None:
+                    if self._config.explain_mode:
+                        step_counter += 1
+                        explanation_steps.append(
+                            GraphExplanationStep(
+                                step_number=step_counter,
+                                step_type="entity_lookup",
+                                description=f"Entity '{entity_name}' not found in graph",
+                                entity_name=entity_name,
+                                relevance_score=0.0,
+                                metadata={"found": False}),
+                        )
                     continue
 
                 all_entities[entity.name] = entity
+
+                if self._config.explain_mode:
+                    step_counter += 1
+                    explanation_steps.append(
+                        GraphExplanationStep(
+                            step_number=step_counter,
+                            step_type="entity_lookup",
+                            description=f"Found entity '{entity_name}' in graph (type: {entity.entity_type.value})",
+                            entity_name=entity_name,
+                            relevance_score=1.0,
+                            metadata={"found": True, "entity_type": entity.entity_type.value}),
+                    )
 
                 # Get neighbors (connected entities)
                 neighbors = await self._get_neighbors_cached(
@@ -202,6 +304,28 @@ class GraphRetrievalService:
 
                 # Get relationships for this entity
                 relationships = await self._get_relationships_cached(entity_name)
+                relationships_examined += len(relationships)
+
+                if self._config.explain_mode and neighbors:
+                    step_counter += 1
+                    neighbor_names = tuple(n.entity.name for n in neighbors)
+                    rel_types = tuple(str(n.relationship.relationship_type) for n in neighbors)
+                    max_depth_reached = max(max_depth_reached, self._config.entity_expansion_depth)
+
+                    explanation_steps.append(
+                        GraphExplanationStep(
+                            step_number=step_counter,
+                            step_type="relationship_traversal",
+                            description=f"Traversed {len(neighbors)} relationships from '{entity_name}'",
+                            entity_name=entity_name,
+                            related_entities=neighbor_names,
+                            relationships_traversed=rel_types,
+                            relevance_score=sum(n.relationship.strength or 1.0 for n in neighbors) / len(neighbors),
+                            metadata={
+                                "depth": self._config.entity_expansion_depth,
+                                "neighbor_count": len(neighbors),
+                            }),
+                    )
 
                 # Build connected entities list
                 connected_entities: list[GraphEntity] = []
@@ -239,12 +363,26 @@ class GraphRetrievalService:
                 )
             )
 
+        # Build explanation if enabled
+        explanation: GraphExplanation | None = None
+        if self._config.explain_mode:
+            summary = self._build_explanation_summary(explanation_steps, len(all_entities), len(all_relationships))
+            explanation = GraphExplanation(
+                query=f"enriched_{len(chunks)}_chunks",
+                steps=tuple(explanation_steps),
+                entities_examined=len(all_entities),
+                relationships_examined=relationships_examined,
+                total_traversal_depth=max_depth_reached,
+                summary_text=summary,
+            )
+
         return GraphRetrievalResult(
             enhanced_chunks=enhanced_chunks,
             entities_found=len(all_entities),
             relationships_found=len(all_relationships),
             cache_hits=self._cache_hits,
             cache_misses=self._cache_misses,
+            explanation=explanation,
         )
 
     async def get_entity_context(
@@ -440,6 +578,62 @@ class GraphRetrievalService:
 
         return "\n".join(descriptions)
 
+    def _build_explanation_summary(
+        self,
+        steps: list[GraphExplanationStep],
+        entities_found: int,
+        relationships_found: int,
+    ) -> str:
+        """
+        Build a human-readable summary of the graph traversal reasoning path.
+
+        Args:
+            steps: All explanation steps recorded during traversal
+            entities_found: Total number of unique entities discovered
+            relationships_found: Total number of unique relationships found
+
+        Returns:
+            Formatted summary text describing the reasoning path
+        """
+        if not steps:
+            return "No graph traversal steps recorded."
+
+        lines: list[str] = [
+            "Graph Traversal Explanation",
+            "=" * 40,
+        ]
+
+        # Count step types
+        step_counts: dict[str, int] = {}
+        for step in steps:
+            step_counts[step.step_type] = step_counts.get(step.step_type, 0) + 1
+
+        lines.append(f"Total Steps: {len(steps)}")
+        lines.append(f"Entities Found: {entities_found}")
+        lines.append(f"Relationships Found: {relationships_found}")
+        lines.append(f"Traversal Depth: {max(s.metadata.get('depth', 0) for s in steps)}")
+        lines.append("")
+
+        # Summary by step type
+        lines.append("Steps by Type:")
+        for step_type, count in sorted(step_counts.items()):
+            lines.append(f"  - {step_type}: {count}")
+
+        lines.append("")
+
+        # Entities examined
+        entities_seen = set()
+        for step in steps:
+            if step.step_type == "entity_lookup" and step.metadata.get("found"):
+                entities_seen.add(step.entity_name)
+
+        if entities_seen:
+            lines.append("Entities Examined:")
+            for entity in sorted(entities_seen):
+                lines.append(f"  - {entity}")
+
+        return "\n".join(lines)
+
     async def _extract_entity_names(self, text: str) -> list[str]:
         """
         Extract potential entity names from text.
@@ -557,4 +751,6 @@ __all__ = [
     "GraphRetrievalConfig",
     "GraphRetrievalResult",
     "GraphRetrievalService",
+    "GraphExplanationStep",
+    "GraphExplanation",
 ]

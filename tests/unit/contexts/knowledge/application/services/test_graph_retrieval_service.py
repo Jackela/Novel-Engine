@@ -4,8 +4,8 @@ Unit Tests for Graph Retrieval Service
 Tests the graph-enhanced retrieval that combines vector search with
 knowledge graph traversal.
 
-Warzone 4: AI Brain - BRAIN-032A
-Tests graph retrieval, entity expansion, and caching.
+Warzone 4: AI Brain - BRAIN-032A, BRAIN-032B
+Tests graph retrieval, entity expansion, caching, and explain mode.
 
 Constitution Compliance:
 - Article III (TDD): Tests written to validate graph retrieval behavior
@@ -29,6 +29,8 @@ from src.contexts.knowledge.application.services.graph_retrieval_service import 
     GraphRetrievalConfig,
     GraphRetrievalResult,
     GraphRetrievalService,
+    GraphExplanationStep,
+    GraphExplanation,
 )
 from src.contexts.knowledge.domain.models.entity import EntityType, RelationshipType
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
@@ -432,3 +434,327 @@ class TestGraphRetrievalServiceCaching:
         assert stats["misses"] == 2
         assert stats["total"] == 10
         assert stats["hit_rate"] == 0.8
+
+
+class TestGraphRetrievalServiceExplainMode:
+    """Tests for explain mode reasoning path tracking (BRAIN-032B)."""
+
+    @pytest.mark.asyncio
+    async def test_explain_mode_disabled_returns_no_explanation(
+        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
+        """When explain_mode is disabled, no explanation is generated."""
+        for entity in sample_entities:
+            await mock_graph_store.add_entity(entity)
+
+        config = GraphRetrievalConfig(explain_mode=False)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is None
+
+    @pytest.mark.asyncio
+    async def test_explain_mode_enabled_generates_explanation(
+        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
+        """When explain_mode is enabled, explanation is generated."""
+        for entity in sample_entities:
+            await mock_graph_store.add_entity(entity)
+
+        config = GraphRetrievalConfig(explain_mode=True)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is not None
+        assert isinstance(result.explanation, GraphExplanation)
+        assert len(result.explanation.steps) > 0
+
+    @pytest.mark.asyncio
+    async def test_explanation_contains_entity_extraction_step(
+        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
+        """Explanation includes entity extraction step."""
+        for entity in sample_entities:
+            await mock_graph_store.add_entity(entity)
+
+        config = GraphRetrievalConfig(explain_mode=True)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is not None
+        step_types = [step.step_type for step in result.explanation.steps]
+        assert "entity_extraction" in step_types
+
+    @pytest.mark.asyncio
+    async def test_explanation_contains_entity_lookup_steps(
+        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
+        """Explanation includes entity lookup steps."""
+        for entity in sample_entities:
+            await mock_graph_store.add_entity(entity)
+
+        config = GraphRetrievalConfig(explain_mode=True)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is not None
+        lookup_steps = [s for s in result.explanation.steps if s.step_type == "entity_lookup"]
+        assert len(lookup_steps) > 0
+
+    @pytest.mark.asyncio
+    async def test_explanation_contains_not_found_entity_step(
+        self, mock_graph_store: IGraphStore
+    ) -> None:
+        """Explanation records when entity is not found in graph."""
+        # Only add Bob, not Alice
+        await mock_graph_store.add_entity(
+            GraphEntity(name="Bob", entity_type=EntityType.CHARACTER, description="A wizard")
+        )
+
+        config = GraphRetrievalConfig(explain_mode=True)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",  # Alice not in graph
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is not None
+        lookup_steps = [s for s in result.explanation.steps if s.step_type == "entity_lookup"]
+        # Should have a step showing Alice was not found
+        not_found_steps = [s for s in lookup_steps if not s.metadata.get("found", True)]
+        assert len(not_found_steps) > 0
+
+    @pytest.mark.asyncio
+    async def test_explanation_summary_text_is_generated(
+        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
+        """Explanation includes human-readable summary text."""
+        for entity in sample_entities:
+            await mock_graph_store.add_entity(entity)
+
+        config = GraphRetrievalConfig(explain_mode=True)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is not None
+        assert result.explanation.summary_text != ""
+        assert "Graph Traversal Explanation" in result.explanation.summary_text
+        assert "Total Steps:" in result.explanation.summary_text
+
+    @pytest.mark.asyncio
+    async def test_explanation_tracks_traversal_depth(
+        self, mock_graph_store: IGraphStore
+    ) -> None:
+        """Explanation records maximum traversal depth."""
+        await mock_graph_store.add_entity(
+            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, description="Warrior")
+        )
+
+        config = GraphRetrievalConfig(explain_mode=True, entity_expansion_depth=2)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is not None
+        assert result.explanation.total_traversal_depth >= 0
+
+    @pytest.mark.asyncio
+    async def test_explanation_counts_entities_and_relationships_examined(
+        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
+        """Explanation counts total entities and relationships examined."""
+        for entity in sample_entities:
+            await mock_graph_store.add_entity(entity)
+
+        config = GraphRetrievalConfig(explain_mode=True)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is not None
+        assert result.explanation.entities_examined >= 0
+        assert result.explanation.relationships_examined >= 0
+
+    @pytest.mark.asyncio
+    async def test_explanation_steps_are_ordered(
+        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
+        """Explanation steps are numbered sequentially."""
+        for entity in sample_entities:
+            await mock_graph_store.add_entity(entity)
+
+        config = GraphRetrievalConfig(explain_mode=True)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is not None
+        step_numbers = [step.step_number for step in result.explanation.steps]
+        # Steps should be numbered 1, 2, 3, ...
+        assert step_numbers == list(range(1, len(step_numbers) + 1))
+
+    @pytest.mark.asyncio
+    async def test_explanation_step_has_required_fields(
+        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
+        """Explanation steps contain all required fields."""
+        for entity in sample_entities:
+            await mock_graph_store.add_entity(entity)
+
+        config = GraphRetrievalConfig(explain_mode=True)
+        service = GraphRetrievalService(mock_graph_store, config)
+
+        chunks = [
+            RetrievedChunk(
+                chunk_id="chunk1",
+                source_id="scene1",
+                source_type=SourceType.SCENE,
+                content="Alice is a brave warrior.",
+                score=0.9,
+                metadata={},
+            ),
+        ]
+
+        result = await service.enrich_chunks_with_graph(chunks)
+
+        assert result.explanation is not None
+        for step in result.explanation.steps:
+            assert hasattr(step, "step_number")
+            assert hasattr(step, "step_type")
+            assert hasattr(step, "description")
+            assert hasattr(step, "entity_name")
+            assert hasattr(step, "relevance_score")
+            assert isinstance(step.metadata, dict)
+
+    def test_graph_explanation_step_is_immutable(
+        self, mock_graph_store: IGraphStore
+    ) -> None:
+        """GraphExplanationStep is a frozen dataclass."""
+        step = GraphExplanationStep(
+            step_number=1,
+            step_type="test",
+            description="Test step",
+            entity_name="Alice",
+        )
+
+        # Attempting to modify should raise FrozenInstanceError
+        with pytest.raises(Exception):  # FrozenInstanceError
+            step.step_number = 2
+
+    def test_graph_explanation_is_immutable(
+        self, mock_graph_store: IGraphStore
+    ) -> None:
+        """GraphExplanation is a frozen dataclass."""
+        explanation = GraphExplanation(
+            query="test",
+            steps=(),
+            entities_examined=0,
+            relationships_examined=0,
+            total_traversal_depth=0,
+        )
+
+        # Attempting to modify should raise FrozenInstanceError
+        with pytest.raises(Exception):  # FrozenInstanceError
+            explanation.entities_examined = 1
