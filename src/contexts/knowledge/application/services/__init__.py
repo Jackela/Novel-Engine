@@ -161,6 +161,14 @@ from .coreference_resolution_service import (
     DEFAULT_WINDOW_SIZE,
 )
 
+from .graph_retrieval_service import (
+    GraphEntityContext,
+    GraphEnhancedChunk,
+    GraphRetrievalConfig,
+    GraphRetrievalResult,
+    GraphRetrievalService,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -289,4 +297,10 @@ __all__ = [
     "DEFAULT_COREF_MAX_TOKENS",
     "DEFAULT_MAX_REFERENCES",
     "DEFAULT_WINDOW_SIZE",
+    # Graph Retrieval Service
+    "GraphRetrievalService",
+    "GraphEntityContext",
+    "GraphEnhancedChunk",
+    "GraphRetrievalConfig",
+    "GraphRetrievalResult",
 ]
