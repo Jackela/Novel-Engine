@@ -881,7 +881,7 @@
         "Test: Extract 'Alice killed Bob' relationship"
       ],
       "priority": 50,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-029A"

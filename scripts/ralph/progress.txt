@@ -1525,3 +1525,28 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Use frozen dataclasses for immutable result types (ResolvedReference, CoreferenceResult)
 - Type narrowing required when parsing JSON from LLM for mypy compliance (confidence: object -> float)
 
+---
+
+## [2025-02-04] - BRAIN-030A ✅
+- Implemented Relationship Extraction feature for the knowledge graph
+- Added RelationshipType enum with 16 relationship types: KNOWS, KILLED, LOVES, HATES, PARENT_OF, CHILD_OF, MEMBER_OF, LEADS, SERVES, OWNS, LOCATED_AT, OCCURRED_AT, PARTICIPATED_IN, ALLIED_WITH, ENEMY_OF, MENTORED, OTHER
+- Created Relationship value object with source, target, type, context, strength, bidirectional, temporal_marker
+- Created ExtractionResultWithRelationships extending ExtractionResult with relationship tuple
+- Extended ExtractionConfig with extract_relationships, max_relationships, relationship_strength_threshold
+- Added extract_with_relationships() method to EntityExtractionService for two-phase extraction (entities first, then relationships)
+- Implemented relationship validation: skips self-relationships and relationships to unknown entities
+- Added _INVERSE_RELATIONSHIP_MAP for bidirectional relationship inversion (PARENT_OF <-> CHILD_OF, etc.)
+- Added relationship query methods: get_relationships_for_entity(), get_relationships_by_type(), find_relationship()
+- All 67 unit tests passing (including 10 new relationship tests)
+- Files changed:
+  - `src/contexts/knowledge/domain/models/entity.py`: RelationshipType enum, Relationship entity, ExtractionResultWithRelationships
+  - `src/contexts/knowledge/application/services/entity_extraction_service.py`: extract_with_relationships(), _build_relationship_extraction_prompt(), _build_relationships()
+  - `tests/unit/contexts/knowledge/application/services/test_entity_extraction_service.py`: 33 new tests for relationships
+
+**Learnings for future iterations:**
+- Relationship extraction requires known entities to be validated - relationships to unknown entities are skipped with a warning log
+- The _INVERSE_RELATIONSHIP_MAP enables automatic relationship inversion for symmetric types (KNOWS, ALLIED_WITH, ENEMY_OF)
+- For frozen dataclasses with default mutable values (dict), use field(default_factory=dict) not field(default={})
+- Mock LLM fixtures must include all entities referenced in relationships or tests will fail validation
+- Test fixtures for relationship extraction need custom entity JSON that includes all relationship participants
+
