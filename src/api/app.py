@@ -184,4 +184,16 @@ def create_app(
         app.state.routing_router_available = False
         logger.warning("Routing configuration router not available: %s", exc)
 
+    # BRAIN-033: Brain Settings
+    try:
+        from src.api.routers.brain_settings import router as brain_settings_router
+
+        app.include_router(brain_settings_router)
+        app.include_router(brain_settings_router, prefix="/api")
+        app.state.brain_settings_router_available = True
+        logger.info("Brain settings router included with prefix /api")
+    except ImportError as exc:
+        app.state.brain_settings_router_available = False
+        logger.warning("Brain settings router not available: %s", exc)
+
     return app

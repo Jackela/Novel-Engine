@@ -2686,3 +2686,76 @@ class RoutingStatsResponse(BaseModel):
     open_circuits: List[Dict[str, Any]] = Field(default_factory=list, description="Currently open circuits")
     total_circuits: int = Field(..., ge=0, description="Total circuit breakers tracked")
 
+
+# === Brain Settings Schemas ===
+# BRAIN-033: Frontend Brain Settings
+
+
+class APIKeysRequest(BaseModel):
+    """Request model for updating API keys."""
+
+    openai_key: Optional[str] = Field(None, description="OpenAI API key")
+    anthropic_key: Optional[str] = Field(None, description="Anthropic API key")
+    gemini_key: Optional[str] = Field(None, description="Google Gemini API key")
+    ollama_base_url: Optional[str] = Field(None, description="Ollama base URL")
+
+
+class APIKeysResponse(BaseModel):
+    """Response model for API keys (values masked)."""
+
+    openai_key: str = Field(..., description="Masked OpenAI API key")
+    anthropic_key: str = Field(..., description="Masked Anthropic API key")
+    gemini_key: str = Field(..., description="Masked Gemini API key")
+    ollama_base_url: Optional[str] = Field(None, description="Ollama base URL")
+    has_openai: bool = Field(default=False, description="Whether OpenAI key is set")
+    has_anthropic: bool = Field(default=False, description="Whether Anthropic key is set")
+    has_gemini: bool = Field(default=False, description="Whether Gemini key is set")
+
+
+class RAGConfigRequest(BaseModel):
+    """Request model for updating RAG configuration."""
+
+    enabled: Optional[bool] = Field(None, description="Whether RAG is enabled")
+    max_chunks: Optional[int] = Field(None, ge=1, le=50, description="Maximum chunks to retrieve")
+    score_threshold: Optional[float] = Field(None, ge=0, le=1, description="Minimum relevance score")
+    context_token_limit: Optional[int] = Field(None, ge=100, le=100000, description="Max tokens for context")
+    include_sources: Optional[bool] = Field(None, description="Whether to include source citations")
+    chunk_size: Optional[int] = Field(None, ge=100, le=10000, description="Default chunk size for ingestion")
+    chunk_overlap: Optional[int] = Field(None, ge=0, le=1000, description="Chunk overlap for ingestion")
+    hybrid_search_weight: Optional[float] = Field(
+        None, ge=0, le=1, description="Vector search weight (1-BM25 weight)"
+    )
+
+
+class RAGConfigResponse(BaseModel):
+    """Response model for RAG configuration."""
+
+    enabled: bool = Field(..., description="Whether RAG is enabled")
+    max_chunks: int = Field(..., description="Maximum chunks to retrieve")
+    score_threshold: float = Field(..., description="Minimum relevance score")
+    context_token_limit: int = Field(..., description="Max tokens for context")
+    include_sources: bool = Field(..., description="Whether to include source citations")
+    chunk_size: int = Field(..., description="Default chunk size for ingestion")
+    chunk_overlap: int = Field(..., description="Chunk overlap for ingestion")
+    hybrid_search_weight: float = Field(..., description="Vector search weight (1-BM25 weight)")
+
+
+class KnowledgeBaseStatusResponse(BaseModel):
+    """Response model for knowledge base status."""
+
+    total_entries: int = Field(..., ge=0, description="Total entries in knowledge base")
+    characters_count: int = Field(..., ge=0, description="Number of character entries")
+    lore_count: int = Field(..., ge=0, description="Number of lore entries")
+    scenes_count: int = Field(..., ge=0, description="Number of scene entries")
+    plotlines_count: int = Field(..., ge=0, description="Number of plotline entries")
+    last_sync: Optional[str] = Field(None, description="ISO 8601 timestamp of last sync")
+    is_healthy: bool = Field(..., description="Whether the vector store is healthy")
+
+
+class BrainSettingsResponse(BaseModel):
+    """Combined response for all brain settings."""
+
+    api_keys: APIKeysResponse
+    rag_config: RAGConfigResponse
+    knowledge_base: KnowledgeBaseStatusResponse
+

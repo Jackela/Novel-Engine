@@ -984,7 +984,7 @@
         "Test: Configure API key and verify connection"
       ],
       "priority": 56,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-023"

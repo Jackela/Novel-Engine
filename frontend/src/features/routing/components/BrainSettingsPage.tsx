@@ -8,10 +8,22 @@
  * - Model routing preferences per task type
  * - Circuit breaker configuration
  * - Routing constraints and fallback settings
+ * - API Keys management
+ * - RAG configuration
+ * - Knowledge base status
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { RefreshCw, Settings2 } from 'lucide-react';
+import {
+  CheckCircle2,
+  Database,
+  Eye,
+  EyeOff,
+  Key,
+  RefreshCw,
+  Settings2,
+  XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -27,7 +39,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { brainSettingsApi } from '@/features/routing/api/brainSettingsApi';
 import { routingApi } from '@/features/routing/api/routingApi';
+
+// Types for brain settings
+interface RAGConfigData {
+  enabled: boolean;
+  max_chunks: number;
+  score_threshold: number;
+  context_token_limit: number;
+  include_sources: boolean;
+  chunk_size: number;
+  chunk_overlap: number;
+  hybrid_search_weight: number;
+}
 
 type TaskType = 'creative' | 'logical' | 'fast' | 'cheap';
 type Provider = 'openai' | 'anthropic' | 'gemini' | 'ollama' | 'mock';
@@ -127,6 +152,82 @@ export function BrainSettingsPage() {
     queryFn: () => routingApi.getStats(),
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // BRAIN-033: Fetch brain settings data
+  const {
+    data: brainSettings,
+    isLoading: brainSettingsLoading,
+    refetch: refetchBrainSettings,
+  } = useQuery({
+    queryKey: ['brain-settings'],
+    queryFn: () => brainSettingsApi.getSettings(),
+  });
+
+  const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
+  const [localKeys, setLocalKeys] = useState<Record<string, string>>({
+    openai: '',
+    anthropic: '',
+    gemini: '',
+  });
+  const [localOllamaUrl, setLocalOllamaUrl] = useState('http://localhost:11434');
+
+  const handleSaveAPIKey = async (provider: string, key: string) => {
+    setIsSaving(true);
+    try {
+      await brainSettingsApi.updateAPIKeys({ [`${provider}_key`]: key || null });
+      await refetchBrainSettings();
+      setLocalKeys({ ...localKeys, [provider]: '' });
+      toast({
+        title: 'API Key saved',
+        description: `${provider.charAt(0).toUpperCase() + provider.slice(1)} API key has been updated.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to save',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveOllamaUrl = async (url: string) => {
+    setIsSaving(true);
+    try {
+      await brainSettingsApi.updateAPIKeys({ ollama_base_url: url });
+      await refetchBrainSettings();
+      toast({
+        title: 'Ollama URL saved',
+        description: 'Ollama base URL has been updated.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to save',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveRAGConfig = async (updates: Partial<RAGConfigData>) => {
+    setIsSaving(true);
+    try {
+      await brainSettingsApi.updateRAGConfig(updates);
+      await refetchBrainSettings();
+      toast({
+        title: 'RAG configuration saved',
+        description: 'Your RAG settings have been updated.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to save',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleSaveConfig = async (updates: Partial<RoutingConfig>) => {
     if (!config) return;
@@ -362,11 +463,13 @@ export function BrainSettingsPage() {
       </div>
 
       <Tabs defaultValue="routing" className="space-y-6">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto">
           <TabsTrigger value="routing">Model Routing</TabsTrigger>
           <TabsTrigger value="constraints">Constraints</TabsTrigger>
           <TabsTrigger value="circuits">Circuit Breakers</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
+          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+          <TabsTrigger value="rag-settings">RAG Settings</TabsTrigger>
         </TabsList>
 
         {/* Model Routing Tab */}
@@ -635,6 +738,352 @@ export function BrainSettingsPage() {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* BRAIN-033: API Keys Tab */}
+        <TabsContent value="api-keys" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5" />
+                API Keys
+              </CardTitle>
+              <CardDescription>
+                Configure API keys for LLM providers. Keys are encrypted and stored securely.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Knowledge Base Status */}
+              <div className="border rounded-lg p-4 bg-muted/50">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Database className="w-4 h-4" />
+                  Knowledge Base Status
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {brainSettingsLoading ? '...' : brainSettings?.knowledge_base.total_entries ?? 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Total Entries</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {brainSettingsLoading ? '...' : brainSettings?.knowledge_base.characters_count ?? 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Characters</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {brainSettingsLoading ? '...' : brainSettings?.knowledge_base.lore_count ?? 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Lore</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {brainSettingsLoading ? '...' : brainSettings?.knowledge_base.scenes_count ?? 0}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Scenes</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {brainSettings?.knowledge_base.is_healthy ? (
+                        <CheckCircle2 className="w-6 h-6 text-green-500" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-red-500" />
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Health</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* OpenAI API Key */}
+              <div className="space-y-3">
+                <Label htmlFor="openai-key" className="flex items-center gap-2">
+                  <span>OpenAI API Key</span>
+                  {brainSettings?.api_keys.has_openai && (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  )}
+                </Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id="openai-key"
+                      type={visibleKeys.openai ? 'text' : 'password'}
+                      placeholder={brainSettings?.api_keys.has_openai ? brainSettings.api_keys.openai_key : 'sk-...'}
+                      value={localKeys.openai || ''}
+                      onChange={(e) => setLocalKeys({ ...localKeys, openai: e.target.value || '' })}
+                      className="pr-20"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
+                      onClick={() => setVisibleKeys({ ...visibleKeys, openai: !visibleKeys.openai })}
+                    >
+                      {visibleKeys.openai ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSaveAPIKey('openai', localKeys.openai || '')}
+                    disabled={!localKeys.openai || isSaving}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+
+              {/* Anthropic API Key */}
+              <div className="space-y-3">
+                <Label htmlFor="anthropic-key" className="flex items-center gap-2">
+                  <span>Anthropic API Key</span>
+                  {brainSettings?.api_keys.has_anthropic && (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  )}
+                </Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id="anthropic-key"
+                      type={visibleKeys.anthropic ? 'text' : 'password'}
+                      placeholder={brainSettings?.api_keys.has_anthropic ? brainSettings.api_keys.anthropic_key : 'sk-ant-...'}
+                      value={localKeys.anthropic || ''}
+                      onChange={(e) => setLocalKeys({ ...localKeys, anthropic: e.target.value || '' })}
+                      className="pr-20"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
+                      onClick={() => setVisibleKeys({ ...visibleKeys, anthropic: !visibleKeys.anthropic })}
+                    >
+                      {visibleKeys.anthropic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSaveAPIKey('anthropic', localKeys.anthropic || '')}
+                    disabled={!localKeys.anthropic || isSaving}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+
+              {/* Gemini API Key */}
+              <div className="space-y-3">
+                <Label htmlFor="gemini-key" className="flex items-center gap-2">
+                  <span>Google Gemini API Key</span>
+                  {brainSettings?.api_keys.has_gemini && (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  )}
+                </Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id="gemini-key"
+                      type={visibleKeys.gemini ? 'text' : 'password'}
+                      placeholder={brainSettings?.api_keys.has_gemini ? brainSettings.api_keys.gemini_key : 'AIza-...'}
+                      value={localKeys.gemini || ''}
+                      onChange={(e) => setLocalKeys({ ...localKeys, gemini: e.target.value || '' })}
+                      className="pr-20"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
+                      onClick={() => setVisibleKeys({ ...visibleKeys, gemini: !visibleKeys.gemini })}
+                    >
+                      {visibleKeys.gemini ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSaveAPIKey('gemini', localKeys.gemini || '')}
+                    disabled={!localKeys.gemini || isSaving}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+
+              {/* Ollama Base URL */}
+              <div className="space-y-3">
+                <Label htmlFor="ollama-url">Ollama Base URL</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="ollama-url"
+                    type="text"
+                    placeholder="http://localhost:11434"
+                    value={localOllamaUrl}
+                    onChange={(e) => setLocalOllamaUrl(e.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => handleSaveOllamaUrl(localOllamaUrl)}
+                    disabled={isSaving}
+                  >
+                    Save
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  For local models using Ollama. Leave default unless running Ollama on a different host.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* BRAIN-033: RAG Settings Tab */}
+        <TabsContent value="rag-settings" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="w-5 h-5" />
+                RAG Configuration
+              </CardTitle>
+              <CardDescription>
+                Configure retrieval-augmented generation settings for knowledge base queries.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Enable RAG */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <Label htmlFor="rag-enabled" className="text-base">Enable RAG</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Use knowledge base context when generating responses
+                  </p>
+                </div>
+                <Switch
+                  id="rag-enabled"
+                  checked={brainSettings?.rag_config.enabled ?? true}
+                  onCheckedChange={(checked) => handleSaveRAGConfig({ enabled: checked })}
+                />
+              </div>
+
+              {/* Chunk Settings */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Chunking Settings</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="chunk-size">Chunk Size</Label>
+                    <Input
+                      id="chunk-size"
+                      type="number"
+                      min={100}
+                      max={10000}
+                      value={brainSettings?.rag_config.chunk_size ?? 500}
+                      onChange={(e) => handleSaveRAGConfig({ chunk_size: parseInt(e.target.value, 10) })}
+                    />
+                    <p className="text-xs text-muted-foreground">Default: 500 tokens</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="chunk-overlap">Chunk Overlap</Label>
+                    <Input
+                      id="chunk-overlap"
+                      type="number"
+                      min={0}
+                      max={1000}
+                      value={brainSettings?.rag_config.chunk_overlap ?? 50}
+                      onChange={(e) => handleSaveRAGConfig({ chunk_overlap: parseInt(e.target.value, 10) })}
+                    />
+                    <p className="text-xs text-muted-foreground">Default: 50 tokens</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Retrieval Settings */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Retrieval Settings</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="max-chunks">Max Chunks</Label>
+                    <Input
+                      id="max-chunks"
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={brainSettings?.rag_config.max_chunks ?? 5}
+                      onChange={(e) => handleSaveRAGConfig({ max_chunks: parseInt(e.target.value, 10) })}
+                    />
+                    <p className="text-xs text-muted-foreground">Maximum chunks to retrieve</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="score-threshold">Score Threshold</Label>
+                    <Input
+                      id="score-threshold"
+                      type="number"
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      value={brainSettings?.rag_config.score_threshold ?? 0}
+                      onChange={(e) => handleSaveRAGConfig({ score_threshold: parseFloat(e.target.value) })}
+                    />
+                    <p className="text-xs text-muted-foreground">Minimum relevance score (0-1)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hybrid Search Weight */}
+              <div className="space-y-2">
+                <Label htmlFor="hybrid-weight">Hybrid Search Weight</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="hybrid-weight"
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    className="flex-1"
+                    value={brainSettings?.rag_config.hybrid_search_weight ?? 0.7}
+                    onChange={(e) => handleSaveRAGConfig({ hybrid_search_weight: parseFloat(e.target.value) })}
+                  />
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    Vector: {Math.round((brainSettings?.rag_config.hybrid_search_weight ?? 0.7) * 100)}% / BM25: {Math.round((1 - (brainSettings?.rag_config.hybrid_search_weight ?? 0.7)) * 100)}%
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Balance between semantic (vector) and keyword (BM25) search
+                </p>
+              </div>
+
+              {/* Context Token Limit */}
+              <div className="space-y-2">
+                <Label htmlFor="token-limit">Context Token Limit</Label>
+                <Input
+                  id="token-limit"
+                  type="number"
+                  min={100}
+                  max={100000}
+                  value={brainSettings?.rag_config.context_token_limit ?? 4000}
+                  onChange={(e) => handleSaveRAGConfig({ context_token_limit: parseInt(e.target.value, 10) })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Maximum tokens for retrieved context (default: 4000)
+                </p>
+              </div>
+
+              {/* Include Sources */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <Label htmlFor="include-sources" className="text-base">Include Source Citations</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Add source references to retrieved context
+                  </p>
+                </div>
+                <Switch
+                  id="include-sources"
+                  checked={brainSettings?.rag_config.include_sources ?? true}
+                  onCheckedChange={(checked) => handleSaveRAGConfig({ include_sources: checked })}
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
