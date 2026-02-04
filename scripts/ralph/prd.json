@@ -745,7 +745,7 @@
         "Test: Generate with GPT-4o"
       ],
       "priority": 42,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-023"
@@ -762,7 +762,7 @@
         "Test: Generate structured JSON using GPT-4o"
       ],
       "priority": 43,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-026A"
