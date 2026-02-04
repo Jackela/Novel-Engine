@@ -1439,3 +1439,40 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Route types need to be explicitly added to TanStack Router for type safety
 
 ---
+
+
+## [2026-02-04] - BRAIN-029A ✅
+- Implemented Entity Extraction Service with LLM-based entity extraction from narrative text
+- Created domain models for Knowledge Graph entities:
+  - EntityType enum: CHARACTER, LOCATION, ITEM, EVENT, ORGANIZATION
+  - ExtractedEntity: name, type, aliases, description, first_appearance, confidence, metadata
+  - EntityMention: entity_name, mention_text, position tracking (start_pos, end_pos), pronoun detection
+  - ExtractionResult: entities tuple, mentions tuple, source metadata with helper methods
+- Created EntityExtractionService in knowledge context:
+  - async extract() method using ILLMClient with structured JSON output
+  - ExtractionConfig: confidence_threshold, max_entities, include_mentions, temperature, max_tokens
+  - JSON response parsing with markdown code block extraction support
+  - Graceful fallback on parse errors (returns empty result instead of crashing)
+  - Batch processing support via extract_batch()
+  - Type normalization for entity types (handles plural/singular variations)
+- Created pronoun detection constant (PRONOUNS) for co-reference resolution foundation
+- All 41 unit tests passing (config validation, entity/mention models, service behavior)
+- Files changed:
+  - `src/contexts/knowledge/domain/models/entity.py`: Complete entity domain models (200+ lines)
+  - `src/contexts/knowledge/application/services/entity_extraction_service.py`: EntityExtractionService implementation (430+ lines)
+  - `src/contexts/knowledge/domain/models/__init__.py`: Export entity models
+  - `src/contexts/knowledge/application/services/__init__.py`: Export EntityExtractionService and related types
+  - `tests/unit/contexts/knowledge/application/services/test_entity_extraction_service.py`: 41 comprehensive tests
+
+**Learnings for future iterations:**
+- Entity extraction uses structured JSON output from LLM for reliable parsing
+- The service extracts entities with confidence scores for filtering low-quality results
+- Pronoun detection (he/she/it/they) is a building block for co-reference resolution (BRAIN-029B)
+- Entity aliases support name variations (e.g., "the Dark Lord" = "Voldemort")
+- First appearance tracking enables linking entities back to source text positions
+- Use TYPE_CHECKING for type-only imports to avoid circular dependencies
+- Frozen dataclasses ensure immutability for value objects (ExtractionConfig, ExtractedEntity, EntityMention)
+- The get_entities_by_type() helper method provides convenient filtering by entity type
+- Type narrowing with isinstance() required when parsing JSON for mypy compliance
+- The domain/models directory may be gitignored - use `git add -f` to stage files
+

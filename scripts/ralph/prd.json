@@ -851,7 +851,7 @@
         "Test: Extract named entities from a chapter"
       ],
       "priority": 48,
-      "passes": false,
+      "passes": true,
       "effort": "medium"
     },
     {
