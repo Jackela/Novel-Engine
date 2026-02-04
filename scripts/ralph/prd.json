@@ -914,7 +914,7 @@
         "Test: Build character relationship graph and query it"
       ],
       "priority": 52,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-029A"

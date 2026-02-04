@@ -1578,3 +1578,40 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - The `dataclasses.replace()` function is essential for creating new instances of frozen dataclasses with modified fields
 - For symmetric relationship types, the inverse uses the same type; for asymmetric types with defined inverses, the mapped type is used
 - Empty temporal_marker ("") is treated as "no temporal info" and included in get_relationships_at_time() results (assumed always valid)
+
+## [2026-02-04] - BRAIN-031A ✅
+- Implemented in-memory graph storage using NetworkX for knowledge graph operations
+- Created IGraphStore port interface with full CRUD operations for entities and relationships
+- Created NetworkXGraphStore adapter implementing the port with MultiDiGraph for directed multi-graph support
+- Implemented value objects: GraphEntity, GraphRelationship, GraphNeighbor, PathResult, GraphStats, GraphAddResult
+- Added methods for graph operations:
+  * add_entity/add_entities: Add nodes to the graph
+  * add_relationship/add_relationships: Add edges between nodes (auto-creates placeholder entities)
+  * get_entity: Retrieve entity by name
+  * get_neighbors: BFS-based neighbor discovery with configurable depth and relationship type filtering
+  * find_path: Shortest path using bidirectional Dijkstra algorithm
+  * find_paths_multiple: Find paths to multiple target entities
+  * get_relationships/get_relationships_between: Query edges
+  * remove_entity/remove_relationship: Delete operations
+  * get_stats: Graph statistics (node/edge counts, type breakdowns)
+  * get_all_entities: List all entities with optional filtering
+  * entity_exists/health_check: Utility methods
+- Added networkx>=3.0,<4.0.0 dependency to pyproject.toml
+- All 39 unit tests passing
+- Files changed:
+  - `pyproject.toml`: Added networkx dependency
+  - `src/contexts/knowledge/application/ports/i_graph_store.py`: Port interface (370+ lines)
+  - `src/contexts/knowledge/infrastructure/adapters/networkx_graph_store.py`: NetworkX adapter (790+ lines)
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py`: Export NetworkXGraphStore
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_networkx_graph_store.py`: 39 comprehensive tests
+
+**Learnings for future iterations:**
+- NetworkX MultiDiGraph allows parallel edges between same nodes (keyed by relationship_type)
+- Entity names are normalized (lowercase, stripped) for consistent storage and lookup
+- When using enum types like EntityType that inherit from str, Enum, use .value property for string storage, not str()
+- mypy reports "unreachable" for return statements after `if isinstance` checks - use `# type: ignore[unreachable]` to suppress
+- BFS is simpler than ego_graph for neighbor discovery - use queue with (node, distance, incoming_edge) tracking
+- For path finding, use NetworkX's bidirectional_shortest_path for efficiency over large graphs
+- Auto-creating placeholder entities when adding relationships is useful for incomplete data
+- The MultiDiGraph `get_edge_data(u, v)` returns a dict of {key: edge_data} for parallel edges
+- Graph statistics should count both nodes and edges, with breakdowns by entity/relationship types
