@@ -568,3 +568,30 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - When implementing async strategies, all test methods must use `@pytest.mark.asyncio`
 
 ---
+
+## [2025-02-04] - BRAIN-012 ✅
+- Implemented CitationFormatter service with multiple citation styles (numeric, alphabetic, source_type)
+- Created SourceReference, ChunkCitation, and CitationFormat value objects
+- Added get_sources() method to RetrievalService for extracting unique sources from chunks
+- Extended FormattedContext with source_references dict for detailed citation data
+- Added _get_source_type_prefix() method for citation ID generation (C, L, S, P, I, Loc)
+- Created _format_chunk_with_citation() helper for chunk formatting with citations
+- All 33 new tests passing (20 for CitationFormatter, 13 for RetrievalService citation features)
+- Files changed:
+  - `src/contexts/knowledge/application/services/citation_formatter.py`: New CitationFormatter service (450+ lines)
+  - `src/contexts/knowledge/application/services/retrieval_service.py`: Added get_sources, _get_source_type_prefix, _format_chunk_with_citation, extended format_context with citation data
+  - `src/contexts/knowledge/application/services/__init__.py`: Export citation types (CitationFormatter, SourceReference, ChunkCitation, CitationFormat, CitationFormatterConfig)
+  - `tests/unit/contexts/knowledge/application/services/test_citation_formatter.py`: 20 comprehensive tests
+  - `tests/unit/contexts/knowledge/application/services/test_retrieval_service.py`: Added 13 tests for get_sources and citation formatting
+
+**Learnings for future iterations:**
+- Citation formatting separates concerns: marker generation ([1], source lists, and reference dictionaries
+- Source type prefixes help users quickly identify citation types: C (Character), L (Lore), S (Scene), P (Plotline), I (Item), Loc (Location)
+- The `get_sources()` method groups chunks by (source_type, source_id) and calculates average relevance scores
+- When using frozen dataclasses with tuple default values, use `tuple[str, ...]` as type annotation
+- Alphabetic citation IDs use base-26 style: 1=a, 26=z, 27=aa, 52=az, 53=ba for flexible numbering
+- CitationFormatterConfig allows customization: format_style, include_chunk_index, include_relevance, max_sources_display
+- The `include_citation_data` parameter in format_context() adds structured source data without changing text output
+- Test classes outside the main test class need their own fixture definitions
+
+---

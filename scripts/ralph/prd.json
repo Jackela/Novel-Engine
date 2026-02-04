@@ -326,7 +326,7 @@
         "Test: Verify each fact in response has correct source"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-006"
