@@ -262,6 +262,240 @@ class PromptRouterService:
             },
         }
 
+    async def rollback_to_version(
+        self,
+        prompt_id: str,
+        target_version: int,
+    ) -> PromptTemplate:
+        """
+        Rollback a prompt to a specific version.
+
+        Args:
+            prompt_id: ID of the current prompt version
+            target_version: Version number to rollback to
+
+        Returns:
+            New PromptTemplate created from the target version
+
+        Raises:
+            PromptNotFoundError: If prompt or target version not found
+            ValueError: If target version is the same as current
+        """
+        # Get current template
+        current = await self.get_prompt_by_id(prompt_id)
+
+        if current.version == target_version:
+            raise ValueError(
+                f"Cannot rollback: already at version {target_version}"
+            )
+
+        # Get version history to find target version
+        versions = await self.get_version_history(prompt_id)
+
+        # Find the target version
+        target = None
+        for v in versions:
+            if v.version == target_version:
+                target = v
+                break
+
+        if target is None:
+            raise PromptNotFoundError(
+                f"Version {target_version} not found in history"
+            )
+
+        # Create a new version based on the target version content
+        # This preserves history by creating a new version (v4) that copies v2 content
+        from uuid import uuid4
+
+        new_version = current.create_new_version(
+            content=target.content,
+            variables=target.variables,
+            model_config=target.model_config,
+            name=target.name,
+            description=target.description + f" (rolled back from v{current.version})",
+            tags=target.tags,
+        )
+
+        # Save the new version
+        new_id = await self.save_prompt(new_version)
+
+        # Fetch and return the saved template
+        return await self.get_prompt_by_id(new_id)
+
+    async def compare_versions(
+        self,
+        prompt_id: str,
+        version_a: int,
+        version_b: int,
+    ) -> dict[str, Any]:
+        """
+        Compare two versions of a prompt template.
+
+        Args:
+            prompt_id: ID of any version of the prompt
+            version_a: First version number
+            version_b: Second version number
+
+        Returns:
+            Dictionary with comparison results including diffs
+
+        Raises:
+            PromptNotFoundError: If prompt or versions not found
+        """
+        # Get version history
+        versions = await self.get_version_history(prompt_id)
+
+        # Find both versions
+        template_a = None
+        template_b = None
+
+        for v in versions:
+            if v.version == version_a:
+                template_a = v
+            if v.version == version_b:
+                template_b = v
+
+        if template_a is None:
+            raise PromptNotFoundError(f"Version {version_a} not found")
+        if template_b is None:
+            raise PromptNotFoundError(f"Version {version_b} not found")
+
+        # Compute diffs
+        content_diff = self._compute_character_diff(template_a.content, template_b.content)
+
+        # Check for variable changes
+        variables_a = {var.name: var for var in template_a.variables}
+        variables_b = {var.name: var for var in template_b.variables}
+
+        added_vars = set(variables_b.keys()) - set(variables_a.keys())
+        removed_vars = set(variables_a.keys()) - set(variables_b.keys())
+        common_vars = set(variables_a.keys()) & set(variables_b.keys())
+
+        changed_vars = []
+        for var_name in common_vars:
+            var_a = variables_a[var_name]
+            var_b = variables_b[var_name]
+            if (
+                var_a.type != var_b.type
+                or var_a.default_value != var_b.default_value
+                or var_a.required != var_b.required
+            ):
+                changed_vars.append(
+                    {
+                        "name": var_name,
+                        "old": {
+                            "type": var_a.type.value,
+                            "default_value": var_a.default_value,
+                            "required": var_a.required,
+                        },
+                        "new": {
+                            "type": var_b.type.value,
+                            "default_value": var_b.default_value,
+                            "required": var_b.required,
+                        },
+                    }
+                )
+
+        # Check model config changes
+        config_a = template_a.model_config
+        config_b = template_b.model_config
+
+        config_changes = []
+        if config_a.provider != config_b.provider:
+            config_changes.append({"field": "provider", "old": config_a.provider, "new": config_b.provider})
+        if config_a.model_name != config_b.model_name:
+            config_changes.append({"field": "model_name", "old": config_a.model_name, "new": config_b.model_name})
+        if config_a.temperature != config_b.temperature:
+            config_changes.append({"field": "temperature", "old": config_a.temperature, "new": config_b.temperature})
+        if config_a.max_tokens != config_b.max_tokens:
+            config_changes.append({"field": "max_tokens", "old": config_a.max_tokens, "new": config_b.max_tokens})
+
+        # Check metadata changes
+        metadata_changes = {}
+        if template_a.name != template_b.name:
+            metadata_changes["name"] = {"old": template_a.name, "new": template_b.name}
+        if template_a.description != template_b.description:
+            metadata_changes["description"] = {"old": template_a.description, "new": template_b.description}
+
+        tags_a = set(template_a.tags)
+        tags_b = set(template_b.tags)
+        if tags_a != tags_b:
+            metadata_changes["tags"] = {
+                "added": list(tags_b - tags_a),
+                "removed": list(tags_a - tags_b),
+            }
+
+        return {
+            "version_a": {
+                "version": template_a.version,
+                "id": template_a.id,
+                "created_at": template_a.created_at.isoformat(),
+            },
+            "version_b": {
+                "version": template_b.version,
+                "id": template_b.id,
+                "created_at": template_b.created_at.isoformat(),
+            },
+            "content_diff": content_diff,
+            "variables": {
+                "added": list(added_vars),
+                "removed": list(removed_vars),
+                "changed": changed_vars,
+            },
+            "model_config": config_changes,
+            "metadata": metadata_changes,
+        }
+
+    def _compute_character_diff(
+        self,
+        text_a: str,
+        text_b: str,
+    ) -> list[dict[str, Any]]:
+        """
+        Compute character-level diff between two strings.
+
+        Uses a simple line-by-line diff algorithm for efficiency.
+
+        Args:
+            text_a: Original text
+            text_b: New text
+
+        Returns:
+            List of diff hunks with added/removed sections
+        """
+        import difflib
+
+        lines_a = text_a.splitlines(keepends=True)
+        lines_b = text_b.splitlines(keepends=True)
+
+        matcher = difflib.SequenceMatcher(None, lines_a, lines_b, autojunk=False)
+
+        diffs = []
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == "equal":
+                continue
+
+            hunk = {
+                "type": tag,
+                "old_start": i1,
+                "old_end": i2,
+                "new_start": j1,
+                "new_end": j2,
+            }
+
+            if tag == "replace":
+                hunk["old_lines"] = "".join(lines_a[i1:i2])
+                hunk["new_lines"] = "".join(lines_b[j1:j2])
+            elif tag == "delete":
+                hunk["old_lines"] = "".join(lines_a[i1:i2])
+            elif tag == "insert":
+                hunk["new_lines"] = "".join(lines_b[j1:j2])
+
+            diffs.append(hunk)
+
+        return diffs
+
     def to_summary(self, template: PromptTemplate) -> dict[str, Any]:
         """
         Convert a PromptTemplate to a summary dictionary.

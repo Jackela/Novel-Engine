@@ -433,7 +433,7 @@
         "Test: Create versions and verify parent linkage"
       ],
       "priority": 24,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-015"

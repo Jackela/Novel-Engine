@@ -749,3 +749,28 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - When updating tests to match API changes, check both the response dict keys and the Pydantic schema aliases
 - The service layer uses `llm_config` as the key, but the API response uses `model_config` due to Pydantic alias
 
+
+## [2025-02-04] - BRAIN-016A ✅
+- Implemented PromptVersion entity for explicit version tracking
+- Created VersionDiff value object for structured change tracking (content, variables, model_config, metadata)
+- Added create_version_diff() method to PromptTemplate for diff generation
+- Added helper methods: is_first_version(), is_rollback_target(), get_lineage_description(), add_tag()
+- Added from_template() factory method for convenient PromptVersion creation
+- All 31 new tests passing (27 for PromptVersion, 4 integration tests)
+- Files changed:
+  - `src/contexts/knowledge/domain/models/prompt_version.py`: Complete PromptVersion entity (380+ lines)
+  - `src/contexts/knowledge/domain/models/prompt_template.py`: Added create_version_diff() method, TYPE_CHECKING imports
+  - `src/contexts/knowledge/domain/models/__init__.py`: Export PromptVersion and VersionDiff
+  - `tests/unit/contexts/knowledge/domain/models/test_prompt_version.py`: 31 comprehensive tests
+
+**Learnings for future iterations:**
+- PromptVersion is a separate entity that tracks version metadata, separate from PromptTemplate itself
+- VersionDiff provides structured change tracking with boolean flags for each change type
+- The get_lineage_description() method provides human-readable version history (e.g., "v3 (from v2)")
+- Rollback targets are identified by tags: "stable", "rollback"
+- Version chain uses template_snapshot_id to reference the actual PromptTemplate entity
+- parent_version_id points to the previous version's template_snapshot_id for lineage tracking
+- When using TYPE_CHECKING for imports, the imported types are only available for type hints, not runtime
+- The `isinstance(self.tags, list)` check with tuple type hint causes mypy unreachable warning - use `# type: ignore[unreachable]`
+
+---

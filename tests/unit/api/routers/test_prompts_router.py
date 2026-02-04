@@ -465,3 +465,4 @@ class TestPromptsHealth:
         assert data["repository_type"] == "InMemoryPromptRepository"
         assert data["total_prompts"] >= 0
         assert "timestamp" in data
+

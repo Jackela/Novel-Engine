@@ -573,4 +573,71 @@ async def get_prompt_versions(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@router.post("/prompts/{prompt_id}/rollback/{version}", response_model=PromptDetailResponse)
+async def rollback_prompt(
+    prompt_id: str,
+    version: int,
+    request: Request,
+    service: PromptRouterService = Depends(get_prompt_service),
+) -> PromptDetailResponse:
+    """
+    Rollback a prompt to a specific version.
+
+    Why: Restore previous versions by creating a new version with the target content.
+
+    Args:
+        prompt_id: ID of the current prompt version
+        version: Target version number to rollback to
+        request: FastAPI request
+        service: Prompt router service
+
+    Returns:
+        New PromptTemplate created from the target version
+    """
+    try:
+        rolled_back = await service.rollback_to_version(prompt_id, version)
+        return service.to_detail(rolled_back)
+
+    except PromptNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except PromptRepositoryError as e:
+        logger.error(f"Failed to rollback prompt: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/prompts/{prompt_id}/compare", response_model=dict[str, Any])
+async def compare_prompt_versions(
+    prompt_id: str,
+    version_a: int,
+    version_b: int,
+    request: Request,
+    service: PromptRouterService = Depends(get_prompt_service),
+) -> dict[str, Any]:
+    """
+    Compare two versions of a prompt template.
+
+    Why: View differences between versions for review and debugging.
+
+    Args:
+        prompt_id: ID of any version of the prompt
+        version_a: First version number to compare
+        version_b: Second version number to compare
+        request: FastAPI request
+        service: Prompt router service
+
+    Returns:
+        Comparison result with diffs
+    """
+    try:
+        return await service.compare_versions(prompt_id, version_a, version_b)
+
+    except PromptNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except PromptRepositoryError as e:
+        logger.error(f"Failed to compare versions: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
 __all__ = ["router"]
