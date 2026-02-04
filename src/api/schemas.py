@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, JsonValue, field_validator
 
@@ -1813,6 +1813,135 @@ class FactionDetailResponse(BaseModel):
     members: List[FactionMemberSchema] = Field(default_factory=list, description="List of faction members")
 
 
+# === Prompt Management Schemas (BRAIN-015) ===
+
+
+class PromptVariableDefinition(BaseModel):
+    """Schema for a prompt variable definition."""
+
+    name: str = Field(..., min_length=1, max_length=100, description="Variable name (must match {{var}} in template)")
+    type: str = Field(..., description="Variable type: string, integer, float, boolean, list, dict")
+    default_value: Optional[JsonValue] = Field(None, description="Default value if not provided")
+    description: str = Field(default="", max_length=500, description="Human-readable description")
+    required: bool = Field(default=True, description="Whether this variable must be provided")
+
+
+class PromptVariableValue(BaseModel):
+    """Schema for a prompt variable value during rendering."""
+
+    name: str = Field(..., min_length=1, description="Variable name")
+    value: JsonValue = Field(..., description="Variable value")
+
+
+class PromptSummary(BaseModel):
+    """Schema for a prompt template summary (list view)."""
+
+    id: str = Field(..., description="Prompt template UUID")
+    name: str = Field(..., description="Prompt name")
+    description: str = Field(default="", description="Prompt description")
+    tags: List[str] = Field(default_factory=list, description="Tags for categorization")
+    version: int = Field(default=1, description="Version number")
+    model_provider: str = Field(default="openai", description="LLM provider")
+    model_name: str = Field(default="gpt-4", description="Model name")
+    variable_count: int = Field(default=0, description="Number of variables")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+class PromptModelConfig(BaseModel):
+    """Schema for prompt model configuration."""
+
+    provider: str = Field(default="openai", description="LLM provider")
+    model_name: str = Field(default="gpt-4", description="Model name")
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Sampling temperature")
+    max_tokens: int = Field(default=1000, ge=1, description="Maximum tokens to generate")
+    top_p: float = Field(default=1.0, ge=0.0, le=1.0, description="Nucleus sampling")
+    frequency_penalty: float = Field(default=0.0, ge=-2.0, le=2.0, description="Frequency penalty")
+    presence_penalty: float = Field(default=0.0, ge=-2.0, le=2.0, description="Presence penalty")
+
+
+class PromptDetailResponse(BaseModel):
+    """Schema for a full prompt template detail."""
+
+    id: str = Field(..., description="Prompt template UUID")
+    name: str = Field(..., description="Prompt name")
+    description: str = Field(default="", description="Prompt description")
+    content: str = Field(..., description="Template content with {{variable}} placeholders")
+    tags: List[str] = Field(default_factory=list, description="Tags for categorization")
+    version: int = Field(default=1, description="Version number")
+    parent_version_id: Optional[str] = Field(None, description="Parent version ID")
+    llm_config: PromptModelConfig = Field(..., description="Model configuration", alias="model_config")
+    variables: List[PromptVariableDefinition] = Field(default_factory=list, description="Variable definitions")
+    created_at: str = Field(..., description="ISO 8601 creation timestamp")
+    updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+    model_config = {"populate_by_name": True}
+
+
+class PromptListResponse(BaseModel):
+    """Response model for listing prompts."""
+
+    prompts: List[PromptSummary] = Field(default_factory=list, description="List of prompt summaries")
+    total: int = Field(default=0, description="Total count of prompts")
+    limit: int = Field(default=100, description="Page size limit")
+    offset: int = Field(default=0, description="Pagination offset")
+
+
+class PromptCreateRequest(BaseModel):
+    """Request model for creating a new prompt template."""
+
+    name: str = Field(..., min_length=1, max_length=200, description="Prompt name")
+    content: str = Field(..., min_length=1, description="Template content with {{variable}} placeholders")
+    description: str = Field(default="", max_length=1000, description="Prompt description")
+    tags: List[str] = Field(default_factory=list, max_length=20, description="Tags for categorization")
+    variables: List[PromptVariableDefinition] = Field(default_factory=list, description="Variable definitions")
+    model_provider: str = Field(default="openai", description="LLM provider")
+    model_name: str = Field(default="gpt-4", description="Model name")
+    temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0, description="Sampling temperature")
+    max_tokens: Optional[int] = Field(default=None, ge=1, description="Maximum tokens to generate")
+    top_p: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Nucleus sampling")
+    frequency_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0, description="Frequency penalty")
+    presence_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0, description="Presence penalty")
+
+
+class PromptUpdateRequest(BaseModel):
+    """Request model for updating a prompt template (creates new version)."""
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200, description="Prompt name")
+    content: Optional[str] = Field(default=None, min_length=1, description="Template content")
+    description: Optional[str] = Field(default=None, max_length=1000, description="Prompt description")
+    tags: Optional[List[str]] = Field(default=None, max_length=20, description="Tags for categorization")
+    variables: Optional[List[PromptVariableDefinition]] = Field(default=None, description="Variable definitions")
+    model_provider: Optional[str] = Field(default=None, description="LLM provider")
+    model_name: Optional[str] = Field(default=None, description="Model name")
+    temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0, description="Sampling temperature")
+    max_tokens: Optional[int] = Field(default=None, ge=1, description="Maximum tokens to generate")
+    top_p: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Nucleus sampling")
+    frequency_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0, description="Frequency penalty")
+    presence_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0, description="Presence penalty")
+
+
+class PromptRenderRequest(BaseModel):
+    """Request model for rendering a prompt template."""
+
+    variables: List[PromptVariableValue] = Field(default_factory=list, description="Variable values for rendering")
+    strict: bool = Field(default=True, description="Raise errors for missing required variables")
+
+
+class PromptRenderResponse(BaseModel):
+    """Response model for a rendered prompt."""
+
+    rendered: str = Field(..., description="Rendered prompt content")
+    variables_used: List[str] = Field(default_factory=list, description="Variable names that were used")
+    variables_missing: List[str] = Field(default_factory=list, description="Required variables that were missing")
+    template_id: str = Field(..., description="Template ID that was rendered")
+    template_name: str = Field(..., description="Template name")
+    token_count: Optional[int] = Field(None, description="Estimated token count")
+    llm_config: Optional[Dict[str, Any]] = Field(None, description="Model configuration used", alias="model_config")
+
+    model_config = {"populate_by_name": True}
+
+
 __all__ = [
     # Orchestration Schemas
     "OrchestrationStep",
@@ -1932,6 +2061,17 @@ __all__ = [
     # Item Schemas
     "ItemCreateRequest",
     "ItemUpdateRequest",
+    # Prompt Management Schemas (BRAIN-015)
+    "PromptVariableDefinition",
+    "PromptVariableValue",
+    "PromptSummary",
+    "PromptModelConfig",
+    "PromptDetailResponse",
+    "PromptListResponse",
+    "PromptCreateRequest",
+    "PromptUpdateRequest",
+    "PromptRenderRequest",
+    "PromptRenderResponse",
     "ItemResponse",
     "ItemListResponse",
     "GiveItemRequest",

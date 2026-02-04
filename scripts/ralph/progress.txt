@@ -691,3 +691,61 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - When using f-strings with braces for error messages, escape them as {{{{var}}}} to produce {{var}}
 
 ---
+## [2025-02-04] - BRAIN-014B ✅
+- Implemented YAMLPromptMigrator to convert hardcoded YAML prompts to PromptTemplate entities
+- Created InMemoryPromptRepository adapter implementing IPromptRepository with full CRUD support
+- Added support for {{> other_prompt}} include syntax with circular reference detection
+- Implemented automatic variable extraction from {{var}} placeholders
+- Added configurable model config based on prompt type (dialogue, world, scene, etc.)
+- All 61 unit tests passing (31 for repository, 30 for migration)
+- Migration script successfully discovers all 7 YAML prompt files in the codebase
+- Files changed:
+  - `src/contexts/knowledge/infrastructure/adapters/in_memory_prompt_repository.py`: Complete repository adapter (320+ lines)
+  - `src/contexts/knowledge/infrastructure/migrations/migrate_yaml_prompts.py`: Migration script (450+ lines)
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_in_memory_prompt_repository.py`: 31 comprehensive tests
+  - `tests/unit/contexts/knowledge/infrastructure/migrations/test_migrate_yaml_prompts.py`: 30 comprehensive tests
+
+**Learnings for future iterations:**
+- PromptTemplate.create() doesn't accept model_config directly - use the PromptTemplate constructor instead
+- Use `from uuid import uuid4` for generating IDs in migration scripts
+- Include pattern regex: `r"\{\{>\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}"` matches {{> prompt_name}}
+- Variable pattern regex: `r"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}"` matches {{variable}}
+- Circular reference detection is essential when supporting includes - track visited set
+- Model configuration defaults should vary by prompt type (dialogue needs higher temp, world gen needs more tokens)
+- Tags are auto-generated from context and filename patterns for easy filtering
+- The migration script can be run with dry_run=True to preview changes without saving
+
+---
+
+## [2025-02-04] - BRAIN-015 ✅
+- Implemented Prompt Management API with full CRUD endpoints
+- Created routers/prompts.py with GET/POST/PUT/DELETE endpoints for prompt templates
+- GET /api/prompts - List all prompts with tag, model, limit, offset filtering
+- POST /api/prompts - Create new prompt template with validation
+- GET /api/prompts/{id} - Get specific prompt by ID
+- PUT /api/prompts/{id} - Update prompt (creates new version)
+- DELETE /api/prompts/{id} - Soft delete prompt
+- POST /api/prompts/{id}/render - Render prompt with variables (supports strict mode)
+- GET /api/prompts/search - Search prompts by name or description
+- GET /api/prompts/tags - Get all unique tags with model-specific grouping
+- GET /api/prompts/{id}/versions - Get version history
+- GET /api/prompts/health - Health check endpoint (must be before parameterized routes!)
+- Created PromptRouterService with to_summary() and to_detail() conversion methods
+- All 46 unit tests passing (27 for router, 19 for service)
+- Files changed:
+  - `src/api/routers/prompts.py`: Complete router implementation (580+ lines)
+  - `src/api/services/prompt_router_service.py`: Service layer (330+ lines)
+  - `src/api/main_api_server.py`: Registered prompts router with /api prefix
+  - `tests/unit/api/routers/test_prompts_router.py`: 27 router tests
+  - `tests/unit/api/services/test_prompt_router_service.py`: 19 service tests
+
+**Learnings for future iterations:**
+- Route order matters: define specific routes (/health, /search, /tags) BEFORE parameterized routes (/{id})
+- The health check endpoint must be defined before /api/prompts/{id} to avoid 'health' being captured as a prompt_id
+- When ModelConfig fields are None, use explicit default values (temperature=0.7, max_tokens=1000) instead of passing None
+- Optional variables (required=False) must have a default_value to pass validation
+- The schema uses `llm_config` as field name with `alias="model_config"` - serialized JSON uses the alias
+- Test fixtures using dependency_overrides require importing the router module first
+- When updating tests to match API changes, check both the response dict keys and the Pydantic schema aliases
+- The service layer uses `llm_config` as the key, but the API response uses `model_config` due to Pydantic alias
+
