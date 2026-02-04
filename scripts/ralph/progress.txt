@@ -260,3 +260,27 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - When fetching k results, request 2x-3x from vector store to account for filtering/deduplication
 
 ---
+
+## [2025-02-04] - BRAIN-007A ✅
+- Implemented RAGIntegrationService as a high-level wrapper for RAG prompt enrichment
+- Created `enrich_prompt(query, base_prompt)` method that retrieves, formats, and injects context
+- Added RAGConfig value object for max_chunks, score_threshold, context_token_limit, enabled flags
+- Implemented RAGMetrics for tracking queries_total, chunks_retrieved_total, tokens_added_total, failed_queries
+- Added factory method `create()` for convenient dependency injection
+- Support for RetrievalFilter and per-call config_override
+- All 25 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/application/services/rag_integration_service.py`: Complete RAGIntegrationService implementation
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new service and types
+  - `tests/unit/contexts/knowledge/application/services/test_rag_integration_service.py`: 25 comprehensive tests
+
+**Learnings for future iterations:**
+- RAGIntegrationService provides a cleaner abstraction than directly using RetrievalService for prompt enrichment
+- The service follows a clear pattern: Retrieve -> Format -> Inject -> Return EnrichedPrompt
+- Metrics tracking is valuable for debugging RAG performance (avg chunks per query, tokens added)
+- Config overrides allow per-request customization without changing global configuration
+- When RAG is disabled (enabled=False), the service returns base_prompt unchanged - useful for A/B testing
+- The `@dataclass(frozen=True, slots=True)` pattern is ideal for immutable config value objects
+- Use `TYPE_CHECKING` for imports only needed in type hints to avoid circular dependencies
+
+---
