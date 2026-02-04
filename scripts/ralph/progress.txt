@@ -393,3 +393,32 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - When ranking results from different sources, store both score and rank for fusion algorithms
 
 ---
+
+## [2025-02-04] - BRAIN-009A ✅
+- Implemented ILLMClient port interface for LLM abstraction
+- Implemented GeminiLLMClient adapter with Gemini API integration
+- Implemented QueryRewriter service with three strategies:
+  * SYNONYM: Expand queries with synonyms and related terms
+  * DECOMPOSE: Break complex queries into sub-queries
+  * HYBRID: Combine both approaches
+- Added caching for rewritten queries to reduce token usage
+- Added graceful degradation on LLM errors (returns original query)
+- Added MockLLMClient for testing without API calls
+- All 49 unit tests passing
+- Files changed:
+  - `src/contexts/knowledge/application/ports/i_llm_client.py`: ILLMClient port, LLMRequest, LLMResponse value objects
+  - `src/contexts/knowledge/infrastructure/adapters/gemini_llm_client.py`: GeminiLLMClient and MockLLMClient
+  - `src/contexts/knowledge/application/services/query_rewriter.py`: Complete QueryRewriter implementation (550 lines)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new types
+  - `tests/unit/contexts/knowledge/application/services/test_query_rewriter.py`: 49 comprehensive tests
+
+**Learnings for future iterations:**
+- The ILLMClient port interface provides abstraction for different LLM providers (OpenAI, Anthropic, Gemini, etc.)
+- When creating async services, always mark test methods with @pytest.mark.asyncio
+- RewriteStrategy as str, Enum works for string-compatible enums (strategy.value == "synonym")
+- Query rewriting uses lower temperature (0.3) for more deterministic rewrites
+- Cache keys should be strategy-specific and case-insensitive for better hit rates
+- Graceful degradation: on LLM error, return original query rather than failing
+- JSON parsing from LLM responses needs multiple fallback strategies (direct parse, markdown extraction, line splitting)
+
+---
