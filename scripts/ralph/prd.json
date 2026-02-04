@@ -148,7 +148,7 @@
         "Test: Mock retrieval and verify method is called"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-007A"
@@ -165,7 +165,7 @@
         "Test: Verify prompt structure contains context when enabled"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-007B"
