@@ -17,6 +17,7 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Vector Storage**: ChromaDB adapter in `src/contexts/knowledge/infrastructure/adapters/chromadb_vector_store.py`
 - **Type Annotations**: Use `from __future__ import annotations` and import List/Tuple from typing for complex types
 - **RAG Retrieval**: RetrievalService in `src/contexts/knowledge/application/services/retrieval_service.py` with filtering and deduplication
+- **BM25 Keyword Search**: BM25Retriever in `src/contexts/knowledge/application/services/bm25_retriever.py` for exact keyword matching
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -56,10 +57,11 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - BRAIN-004: Knowledge ingestion service ✅
 - BRAIN-005: Auto-sync event listeners ✅
 - BRAIN-006: Context retrieval service (RAG) ✅
-- BRAIN-007: RAG-enhanced generation
+- BRAIN-007: RAG-enhanced generation ✅
 
 #### RAG Enhancement (6 stories)
-- BRAIN-008: Hybrid search (Vector + BM25)
+- BRAIN-008A: Hybrid Search - BM25 Implementation ✅
+- BRAIN-008B: Hybrid Search - Score Fusion
 - BRAIN-009: Query rewriting & expansion
 - BRAIN-010: Re-ranking service
 - BRAIN-011: Context window optimization
@@ -331,5 +333,33 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Context injection follows the pattern: "Relevant Context:\n{context}\n\n---\n\n{original_prompt}"
 - RAGIntegrationService's `enrich_prompt()` method already handles the "Relevant Context:" header formatting
 - Tests that verify internal behavior (like which prompt receives context) require mocking `_call_gemini` to inspect arguments
+
+---
+
+## [2025-02-04] - BRAIN-008A ✅
+- Implemented BM25Retriever service for keyword-based search using BM25Plus algorithm
+- Added `index_documents()` method for indexing documents with configurable k1 and b parameters
+- Added `search(query, k, collection, filters)` method returning BM25Result list sorted by relevance
+- Added `remove_document()` and `clear_collection()` methods for index management
+- Added `get_stats()` method returning BM25IndexStats with document count, token count, and average doc length
+- Implemented `tokenize()` utility function for word-based tokenization with lowercase normalization
+- Created value objects: IndexedDocument (frozen), BM25Result (mutable), BM25IndexStats (frozen)
+- Added rank-bm25>=0.2.2 dependency to pyproject.toml
+- All 51 unit tests passing (including tokenization, indexing, search, filters, and statistics)
+- Files changed:
+  - `pyproject.toml`: Added rank-bm25>=0.2.2 dependency
+  - `src/contexts/knowledge/application/services/bm25_retriever.py`: Complete BM25Retriever implementation (575 lines)
+  - `src/contexts/knowledge/application/services/__init__.py`: Export new BM25 types
+  - `tests/unit/contexts/knowledge/application/services/test_bm25_retriever.py`: 51 comprehensive tests
+
+**Learnings for future iterations:**
+- BM25Plus works better than BM25Okapi for small corpora because it adds a delta parameter that prevents zero IDF scores
+- With BM25, when a term appears in exactly half the documents (df = N/2), IDF becomes log(1) = 0, resulting in zero scores
+- BM25 scores can be negative for short documents or rare terms - this is normal behavior due to length normalization
+- The `k1` parameter controls term saturation (1.0-2.0 typical): higher = more weight to term frequency
+- The `b` parameter controls length normalization (0.0-1.0): higher = more penalty for longer documents
+- For keyword search, tokens should be pre-computed and stored to avoid re-tokenizing on every search
+- Use `type: ignore[import-untyped]` for libraries without type stubs like rank-bm25
+- When using argsort on numpy arrays, reverse with `[::-1]` to get highest scores first
 
 ---
