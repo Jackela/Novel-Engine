@@ -55,6 +55,17 @@ from .hybrid_retriever import (
     DEFAULT_RRF_ALPHA,
 )
 
+from .query_rewriter import (
+    QueryRewriter,
+    RewriteStrategy,
+    RewriteConfig,
+    RewriteResult,
+    DEFAULT_STRATEGY,
+    DEFAULT_TEMPERATURE,
+    DEFAULT_MAX_VARIANTS,
+    DEFAULT_INCLUDE_ORIGINAL,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -97,4 +108,13 @@ __all__ = [
     "DEFAULT_BM25_WEIGHT",
     "DEFAULT_RRF_K",
     "DEFAULT_RRF_ALPHA",
+    # Query Rewriter
+    "QueryRewriter",
+    "RewriteStrategy",
+    "RewriteConfig",
+    "RewriteResult",
+    "DEFAULT_STRATEGY",
+    "DEFAULT_TEMPERATURE",
+    "DEFAULT_MAX_VARIANTS",
+    "DEFAULT_INCLUDE_ORIGINAL",
 ]

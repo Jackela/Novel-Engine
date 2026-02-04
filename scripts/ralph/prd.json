@@ -217,7 +217,7 @@
         "Test: Query 'protagonist motivation' expands to variants"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-006"
