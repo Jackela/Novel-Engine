@@ -450,3 +450,24 @@ Branch: feat/code-citadel
   - Tags are automatically normalized to lowercase and hyphenated for consistency
 
 ---
+
+## 2025-02-05 - BRAIN-038-03
+- **What was implemented:**
+  - Created SmartTaggingEventHandler for automatic tag generation on content events
+  - Integrated with KnowledgeEventSubscriber to handle LoreCreated, LoreUpdated, SceneCreated, SceneUpdated events
+  - Added async tag generation methods: _generate_and_store_lore_tags, _generate_and_store_scene_tags
+  - Smart tags are merged with existing manual tags to preserve user edits
+  - Enabled/disabled toggle for auto-tagging functionality
+- **Files changed:**
+  - `src/contexts/knowledge/application/event_handlers/smart_tagging_event_handler.py` - New handler with generate_tags_for_lore, generate_tags_for_scene, generate_tags_for_character methods
+  - `src/contexts/knowledge/application/event_handlers/knowledge_event_subscriber.py` - Added tagging_handler integration and async tag generation
+  - `src/contexts/knowledge/application/event_handlers/__init__.py` - Exported SmartTaggingEventHandler
+  - `tests/unit/contexts/knowledge/application/event_handlers/test_smart_tagging_event_handler.py` - 15 comprehensive tests
+- **Learnings for future iterations:**
+  - KnowledgeEventSubscriber accepts optional tagging_handler parameter for dependency injection
+  - SmartTaggingEventHandler uses _build_lore_content, _build_scene_content, _build_character_content to format content for tagging
+  - Tags are stored as dict[str, list[str]] with category names as keys
+  - Manual tags are preserved via _merge_tags which does set union of generated and existing tags
+  - All 15 tests pass including end-to-end integration test
+
+---
