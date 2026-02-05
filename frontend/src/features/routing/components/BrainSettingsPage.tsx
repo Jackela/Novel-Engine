@@ -41,7 +41,7 @@ import {
   TrendingUp,
   XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,7 +62,241 @@ import {
   type DailyStatsResponse,
   type ModelPricingResponse,
   type ModelUsageResponse,
+  type RealtimeUsageEvent,
 } from '@/features/routing/api/brainSettingsApi';
+
+// BRAIN-035B-04: Real-time Usage Counter Hook
+interface ActiveSession {
+  session_id: string;
+  provider: string;
+  model_name: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  cost: number;
+  is_complete: boolean;
+}
+
+interface UseRealtimeUsageResult {
+  activeSessions: ActiveSession[];
+  currentSession: ActiveSession | null;
+  totalTokens: number;
+  totalCost: number;
+  isConnected: boolean;
+}
+
+function useRealtimeUsage(): UseRealtimeUsageResult {
+  const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  useEffect(() => {
+    // Subscribe to real-time usage events
+    eventSourceRef.current = brainSettingsApi.streamRealtimeUsage(
+      (event: RealtimeUsageEvent) => {
+        if (event.type === 'session_start') {
+          setActiveSessions((prev) => [
+            ...prev,
+            {
+              session_id: event.session_id,
+              provider: event.provider,
+              model_name: event.model_name,
+              input_tokens: 0,
+              output_tokens: 0,
+              total_tokens: 0,
+              cost: 0,
+              is_complete: false,
+            },
+          ]);
+        } else if (event.type === 'token_update') {
+          setActiveSessions((prev) =>
+            prev.map((s) =>
+              s.session_id === event.session_id
+                ? {
+                    ...s,
+                    input_tokens: event.input_tokens,
+                    output_tokens: event.output_tokens,
+                    total_tokens: event.total_tokens,
+                    cost: event.cost,
+                  }
+                : s
+            )
+          );
+        } else if (event.type === 'session_complete') {
+          setActiveSessions((prev) =>
+            prev.map((s) =>
+              s.session_id === event.session_id
+                ? { ...s, is_complete: true }
+                : s
+            )
+          );
+          // Remove completed sessions after a delay
+          setTimeout(() => {
+            setActiveSessions((prev) =>
+              prev.filter((s) => s.session_id !== event.session_id)
+            );
+          }, 5000);
+        } else if (event.type === 'session_state') {
+          setActiveSessions((prev) => {
+            const existing = prev.find((s) => s.session_id === event.session_id);
+            if (existing) {
+              return prev.map((s) =>
+                s.session_id === event.session_id
+                  ? {
+                      ...s,
+                      input_tokens: event.input_tokens,
+                      output_tokens: event.output_tokens,
+                      total_tokens: event.total_tokens,
+                      cost: event.cost,
+                      is_complete: event.is_complete,
+                    }
+                  : s
+              );
+            }
+            return [
+              ...prev,
+              {
+                session_id: event.session_id,
+                provider: event.provider,
+                model_name: event.model_name,
+                input_tokens: event.input_tokens,
+                output_tokens: event.output_tokens,
+                total_tokens: event.total_tokens,
+                cost: event.cost,
+                is_complete: event.is_complete,
+              },
+            ];
+          });
+        }
+        setIsConnected(true);
+      },
+      (error) => {
+        console.error('Real-time usage error:', error);
+        setIsConnected(false);
+      }
+    );
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
+
+  // Calculate totals across all active sessions
+  const totalTokens = activeSessions.reduce((sum, s) => sum + s.total_tokens, 0);
+  const totalCost = activeSessions.reduce((sum, s) => sum + s.cost, 0);
+
+  // Get the most recently updated active session
+  const currentSession = activeSessions.length > 0
+    ? activeSessions.reduce((latest, s) =>
+        !latest || s.total_tokens > latest.total_tokens ? s : latest
+      )
+    : null;
+
+  return {
+    activeSessions,
+    currentSession,
+    totalTokens,
+    totalCost,
+    isConnected,
+  };
+}
+
+// BRAIN-035B-04: Real-time Usage Counter Component
+function RealtimeUsageCounter() {
+  const { activeSessions, currentSession, isConnected } = useRealtimeUsage();
+
+  // Don't show if no active sessions and not connected
+  if (!isConnected && activeSessions.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card className={isConnected && activeSessions.length > 0 ? 'border-primary/50' : ''}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              {activeSessions.length > 0 ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  Live Usage
+                </>
+              ) : (
+                'Real-time Counter'
+              )}
+            </CardTitle>
+            <CardDescription>
+              {activeSessions.length > 0
+                ? `Active generation${activeSessions.length > 1 ? `s (${activeSessions.length})` : ''}`
+                : isConnected
+                  ? 'Connected - waiting for generation...'
+                  : 'Connecting...'}
+            </CardDescription>
+          </div>
+          <div className={`flex items-center gap-1.5 text-xs ${isConnected ? 'text-green-500' : 'text-muted-foreground'}`}>
+            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground'}`} />
+            {isConnected ? 'Live' : 'Offline'}
+          </div>
+        </div>
+      </CardHeader>
+      {activeSessions.length > 0 && (
+        <CardContent className="space-y-4">
+          {/* Current session summary */}
+          {currentSession && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Tokens</p>
+                <p className="text-xl font-semibold">{currentSession.total_tokens.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">
+                  {currentSession.input_tokens} in / {currentSession.output_tokens} out
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Cost</p>
+                <p className="text-xl font-semibold text-green-600">${currentSession.cost.toFixed(4)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Model</p>
+                <p className="text-sm font-medium capitalize">{currentSession.provider}</p>
+                <p className="text-xs text-muted-foreground">{currentSession.model_name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Status</p>
+                <p className={`text-sm font-medium ${currentSession.is_complete ? 'text-green-500' : 'text-primary'}`}>
+                  {currentSession.is_complete ? 'Complete' : 'Generating...'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* All active sessions list */}
+          {activeSessions.length > 1 && (
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-xs text-muted-foreground">All Active Sessions</p>
+              {activeSessions.map((session) => (
+                <div key={session.session_id} className="flex items-center justify-between p-2 rounded bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-2 w-2 rounded-full ${session.is_complete ? 'bg-green-500' : 'bg-primary animate-pulse'}`} />
+                    <div>
+                      <p className="text-sm font-medium capitalize">{session.provider}</p>
+                      <p className="text-xs text-muted-foreground">{session.model_name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{session.total_tokens.toLocaleString()} tokens</p>
+                    <p className="text-xs text-green-600">${session.cost.toFixed(4)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  );
+}
 import { routingApi } from '@/features/routing/api/routingApi';
 
 // Types for brain settings
@@ -821,6 +1055,9 @@ export function BrainSettingsPage() {
 
         {/* BRAIN-035A: Usage Analytics Tab */}
         <TabsContent value="usage" className="space-y-6">
+          {/* BRAIN-035B-04: Real-time Usage Counter */}
+          <RealtimeUsageCounter />
+
           {/* Summary Stats */}
           <div className="grid gap-4 md:grid-cols-4">
             <Card>

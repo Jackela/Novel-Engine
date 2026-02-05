@@ -106,6 +106,104 @@ export interface ModelPricingResponse {
   deprecated: boolean;
 }
 
+// BRAIN-035B-04: Real-time Usage Counter
+
+export type RealtimeUsageEventType =
+  | 'session_start'
+  | 'token_update'
+  | 'session_complete'
+  | 'session_state'
+  | 'error';
+
+export interface BaseRealtimeUsageEvent {
+  type: RealtimeUsageEventType;
+  timestamp: string;
+}
+
+export interface SessionStartEvent extends BaseRealtimeUsageEvent {
+  type: 'session_start';
+  session_id: string;
+  provider: string;
+  model_name: string;
+}
+
+export interface TokenUpdateEvent extends BaseRealtimeUsageEvent {
+  type: 'token_update';
+  session_id: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  cost: number;
+}
+
+export interface SessionCompleteEvent extends BaseRealtimeUsageEvent {
+  type: 'session_complete';
+  session_id: string;
+  provider: string;
+  model_name: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  cost: number;
+  start_time: string;
+  is_complete: boolean;
+}
+
+export interface SessionStateEvent extends BaseRealtimeUsageEvent {
+  type: 'session_state';
+  session_id: string;
+  provider: string;
+  model_name: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  cost: number;
+  start_time: string;
+  is_complete: boolean;
+}
+
+export interface ErrorEvent extends BaseRealtimeUsageEvent {
+  type: 'error';
+  message: string;
+}
+
+export type RealtimeUsageEvent =
+  | SessionStartEvent
+  | TokenUpdateEvent
+  | SessionCompleteEvent
+  | SessionStateEvent
+  | ErrorEvent;
+
+/**
+ * Subscribe to real-time usage events via SSE
+ * BRAIN-035B-04: Real-time Usage Counter
+ *
+ * Returns an EventSource that can be used with onmessage callback
+ * and should be closed when no longer needed.
+ */
+function streamRealtimeUsage(
+  onEvent: (event: RealtimeUsageEvent) => void,
+  onError?: (error: Error) => void,
+): EventSource {
+  const eventSource = new EventSource('/api/brain/usage/stream');
+
+  eventSource.onmessage = (e) => {
+    try {
+      const event = JSON.parse(e.data) as RealtimeUsageEvent;
+      onEvent(event);
+    } catch (error) {
+      onError?.(error as Error);
+    }
+  };
+
+  eventSource.onerror = (e) => {
+    onError?.(new Error('SSE connection error'));
+    // EventSource will automatically attempt to reconnect
+  };
+
+  return eventSource;
+}
+
 const API_BASE = '/api/brain/settings';
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -246,5 +344,20 @@ export const brainSettingsApi = {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(downloadUrl);
+  },
+
+  /**
+   * Subscribe to real-time usage events via SSE
+   * BRAIN-035B-04: Real-time Usage Counter
+   *
+   * @param onEvent Callback for each usage event
+   * @param onError Optional callback for errors
+   * @returns EventSource that should be closed when done
+   */
+  streamRealtimeUsage(
+    onEvent: (event: RealtimeUsageEvent) => void,
+    onError?: (error: Error) => void,
+  ): EventSource {
+    return streamRealtimeUsage(onEvent, onError);
   },
 };
