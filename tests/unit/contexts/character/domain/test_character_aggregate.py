@@ -1065,3 +1065,200 @@ class TestCharacterAggregate:
 
         # Character should still pass validation
         sample_character._validate_character_consistency()  # Should not raise exception
+
+
+class TestCharacterMetadataSmartTags:
+    """Tests for Character metadata and smart tags functionality."""
+
+    @pytest.fixture
+    def sample_core_abilities(self) -> CoreAbilities:
+        """Create sample core abilities for testing."""
+        return CoreAbilities(
+            strength=15,
+            dexterity=14,
+            constitution=16,
+            intelligence=12,
+            wisdom=13,
+            charisma=11,
+        )
+
+    @pytest.fixture
+    def sample_vital_stats(self) -> VitalStats:
+        """Create sample vital stats for testing."""
+        return VitalStats(
+            max_health=36,
+            current_health=36,
+            max_mana=15,
+            current_mana=15,
+            max_stamina=31,
+            current_stamina=31,
+            armor_class=12,
+            speed=30,
+        )
+
+    @pytest.fixture
+    def sample_combat_stats(self) -> CombatStats:
+        """Create sample combat stats for testing."""
+        return CombatStats(
+            base_attack_bonus=0,
+            initiative_modifier=2,
+            damage_reduction=0,
+            spell_resistance=0,
+            critical_hit_chance=0.05,
+            critical_damage_multiplier=2.0,
+        )
+
+    @pytest.fixture
+    def sample_character_stats(
+        self, sample_core_abilities, sample_vital_stats, sample_combat_stats
+    ) -> CharacterStats:
+        """Create sample character stats for testing."""
+        return CharacterStats(
+            core_abilities=sample_core_abilities,
+            vital_stats=sample_vital_stats,
+            combat_stats=sample_combat_stats,
+            experience_points=0,
+            skill_points=5,
+        )
+
+    @pytest.fixture
+    def sample_character_profile(self) -> CharacterProfile:
+        """Create sample character profile for testing."""
+        return CharacterProfile(
+            name="Test Warrior",
+            gender=Gender.MALE,
+            race=CharacterRace.HUMAN,
+            character_class=CharacterClass.FIGHTER,
+            age=25,
+            level=1,
+            physical_traits=PhysicalTraits(
+                height_cm=180, weight_kg=75, hair_color="brown", eye_color="blue"
+            ),
+            personality_traits=PersonalityTraits(
+                traits={
+                    "courage": 0.8,
+                    "intelligence": 0.6,
+                    "charisma": 0.5,
+                    "loyalty": 0.9,
+                }
+            ),
+            background=Background(),
+        )
+
+    @pytest.fixture
+    def sample_skills(self) -> Skills:
+        """Create sample skills for testing."""
+        combat_skill = Skill(
+            name="Melee Combat",
+            category=SkillCategory.COMBAT,
+            proficiency_level=ProficiencyLevel.NOVICE,
+            modifier=0,
+        )
+
+        physical_skill = Skill(
+            name="Athletics",
+            category=SkillCategory.PHYSICAL,
+            proficiency_level=ProficiencyLevel.APPRENTICE,
+            modifier=1,
+        )
+
+        skills = Mock()
+        skills.skill_groups = {
+            SkillCategory.COMBAT: [combat_skill],
+            SkillCategory.PHYSICAL: [physical_skill],
+        }
+        skills.get_skills_by_category = Mock(
+            side_effect=lambda cat: skills.skill_groups.get(cat, [])
+        )
+        skills.get_skill_summary = Mock(
+            return_value={"total_skills": 2, "trained_skills": 2}
+        )
+
+        return skills
+
+    @pytest.fixture
+    def sample_character(
+        self, sample_character_profile, sample_character_stats, sample_skills
+    ) -> Character:
+        """Create a test Character instance."""
+        return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills,
+        )
+
+    @pytest.fixture
+    def character_with_metadata(self, sample_character):
+        """Character with metadata for testing."""
+        return sample_character
+
+    @pytest.mark.unit
+    def test_update_metadata_adds_key_value(self, character_with_metadata):
+        """Test updating metadata with a key-value pair."""
+        character_with_metadata.update_metadata("custom_field", "custom_value")
+
+        assert character_with_metadata.get_metadata("custom_field") == "custom_value"
+        assert character_with_metadata.version > 1
+
+    @pytest.mark.unit
+    def test_update_metadata_overwrites_existing(self, character_with_metadata):
+        """Test that updating metadata overwrites existing values."""
+        character_with_metadata.update_metadata("key", "value1")
+        character_with_metadata.update_metadata("key", "value2")
+
+        assert character_with_metadata.get_metadata("key") == "value2"
+
+    @pytest.mark.unit
+    def test_get_metadata_returns_default_for_missing_key(
+        self, character_with_metadata
+    ):
+        """Test that get_metadata returns default for missing keys."""
+        assert character_with_metadata.get_metadata("nonexistent", "default") == "default"
+        assert character_with_metadata.get_metadata("nonexistent") is None
+
+    @pytest.mark.unit
+    def test_set_smart_tags_stores_tags(self, character_with_metadata):
+        """Test storing smart tags in metadata."""
+        tags = {
+            "role": ["protagonist", "warrior"],
+            "personality": ["brave", "impulsive"],
+        }
+        character_with_metadata.set_smart_tags(tags)
+
+        assert character_with_metadata.get_smart_tags() == tags
+        assert character_with_metadata.version > 1
+
+    @pytest.mark.unit
+    def test_get_smart_tags_empty_when_none_set(self, character_with_metadata):
+        """Test that get_smart_tags returns empty dict when none set."""
+        assert character_with_metadata.get_smart_tags() == {}
+
+    @pytest.mark.unit
+    def test_smart_tags_stored_alongside_other_metadata(
+        self, character_with_metadata
+    ):
+        """Test that smart tags coexist with other metadata."""
+        character_with_metadata.update_metadata("other_key", "other_value")
+        character_with_metadata.set_smart_tags({"role": ["protagonist"]})
+
+        assert character_with_metadata.get_metadata("other_key") == "other_value"
+        assert character_with_metadata.get_smart_tags() == {"role": ["protagonist"]}
+
+    @pytest.mark.unit
+    def test_metadata_triggers_domain_event(self, character_with_metadata):
+        """Test that metadata update triggers a domain event."""
+        initial_event_count = len(character_with_metadata.get_events())
+        character_with_metadata.update_metadata("test", "value")
+
+        # Metadata updates trigger CharacterUpdated event
+        assert len(character_with_metadata.get_events()) > initial_event_count
+
+    @pytest.mark.unit
+    def test_smart_tags_trigger_domain_event(self, character_with_metadata):
+        """Test that setting smart tags triggers a domain event."""
+        initial_event_count = len(character_with_metadata.get_events())
+        character_with_metadata.set_smart_tags({"role": ["protagonist"]})
+
+        # Smart tag updates trigger CharacterUpdated event
+        assert len(character_with_metadata.get_events()) > initial_event_count

@@ -748,3 +748,93 @@ class TestScenePlotlineManagement:
         scene.add_plotline(plotline_id)
 
         assert scene.updated_at > scene.created_at
+
+
+class TestSceneMetadataSmartTags:
+    """Tests for Scene metadata and smart tags functionality."""
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_update_metadata_adds_key_value(self):
+        """Test updating metadata with a key-value pair."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        scene.update_metadata("custom_field", "custom_value")
+
+        assert scene.get_metadata("custom_field") == "custom_value"
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_update_metadata_overwrites_existing(self):
+        """Test that updating metadata overwrites existing values."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        scene.update_metadata("key", "value1")
+        scene.update_metadata("key", "value2")
+
+        assert scene.get_metadata("key") == "value2"
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_get_metadata_returns_default_for_missing_key(self):
+        """Test that get_metadata returns default for missing keys."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+
+        assert scene.get_metadata("nonexistent", "default") == "default"
+        assert scene.get_metadata("nonexistent") is None
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_set_smart_tags_stores_tags(self):
+        """Test storing smart tags in metadata."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        tags = {
+            "mood": ["tense", "mysterious"],
+            "pacing": ["fast"],
+        }
+        scene.set_smart_tags(tags)
+
+        assert scene.get_smart_tags() == tags
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_get_smart_tags_empty_when_none_set(self):
+        """Test that get_smart_tags returns empty dict when none set."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+
+        assert scene.get_smart_tags() == {}
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_smart_tags_stored_alongside_other_metadata(self):
+        """Test that smart tags coexist with other metadata."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        scene.update_metadata("other_key", "other_value")
+        scene.set_smart_tags({"mood": ["tense"]})
+
+        assert scene.get_metadata("other_key") == "other_value"
+        assert scene.get_smart_tags() == {"mood": ["tense"]}
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_metadata_updates_touch_timestamp(self):
+        """Test that metadata updates trigger timestamp change."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        original_timestamp = scene.updated_at
+
+        import time
+        time.sleep(0.01)
+        scene.update_metadata("test", "value")
+
+        assert scene.updated_at > original_timestamp
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_smart_tags_updates_touch_timestamp(self):
+        """Test that smart tags updates trigger timestamp change."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        original_timestamp = scene.updated_at
+
+        import time
+        time.sleep(0.01)
+        scene.set_smart_tags({"mood": ["tense"]})
+
+        assert scene.updated_at > original_timestamp
