@@ -278,9 +278,9 @@
         "Test: Filter by tag returns matching entities"
       ],
       "priority": 78,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-038-03"],
-      "notes": ""
+      "notes": "Added `metadata` field to Scene and Character entities. Added smart tags methods (set_smart_tags, get_smart_tags, has_smart_tag) to LoreEntry, Scene, Character. Added metadata/smart tag search methods to ILoreEntryRepository and ICharacterRepository. 24 new tests pass."
     },
     {
       "id": "BRAIN-038-05",

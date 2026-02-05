@@ -471,3 +471,40 @@ Branch: feat/code-citadel
   - All 15 tests pass including end-to-end integration test
 
 ---
+
+## 2025-02-05 - BRAIN-038-04
+- **What was implemented:**
+  - Added `metadata` field to Scene entity (narrative context) for flexible metadata storage
+  - Added `metadata` field to Character aggregate (character context) for flexible metadata storage
+  - Added smart tags methods to LoreEntry, Scene, and Character entities:
+    - `set_smart_tags(tags: dict[str, list[str]])` - Store smart tags in metadata
+    - `get_smart_tags() -> dict[str, list[str]]` - Retrieve smart tags
+    - `has_smart_tag(category, tag)` - Check if specific tag exists (LoreEntry only)
+    - `get_all_tags_combined()` - Get manual + smart tags combined (LoreEntry only)
+  - Added metadata search methods to ILoreEntryRepository:
+    - `find_by_smart_tag(category, tag, limit, offset)` - Find by single smart tag
+    - `find_by_smart_tags(tags, match_all, limit)` - Find by multiple smart tags
+    - `find_by_metadata(key, value, limit)` - Find by metadata key-value
+  - Added metadata search methods to ICharacterRepository:
+    - `find_by_smart_tag(category, tag, limit)` - Find by single smart tag
+    - `find_by_smart_tags(tags, match_all, limit)` - Find by multiple smart tags
+    - `find_by_metadata(key, value, limit)` - Find by metadata key-value
+  - Added 24 comprehensive tests (8 per entity) for metadata and smart tags functionality
+- **Files changed:**
+  - `src/contexts/narrative/domain/entities/scene.py` - Added metadata field and smart tag methods
+  - `src/contexts/character/domain/aggregates/character.py` - Added metadata field and smart tag methods
+  - `src/contexts/world/domain/entities/lore_entry.py` - Added smart tag methods
+  - `src/contexts/world/domain/repositories/lore_entry_repository.py` - Added metadata search methods
+  - `src/contexts/character/domain/repositories/character_repository.py` - Added metadata search methods
+  - `tests/unit/contexts/narrative/domain/entities/test_scene_entity.py` - 8 metadata tests
+  - `tests/unit/contexts/character/domain/test_character_aggregate.py` - 8 metadata tests
+  - `tests/unit/contexts/world/domain/test_lore_entry.py` - 8 smart tag tests
+- **Learnings for future iterations:**
+  - Scene already had `metadata: dict[str, Any]` field but it wasn't documented
+  - Character's `metadata` field was added after `faction_id` to maintain dataclass field order
+  - Smart tags are stored under `metadata["smart_tags"]` key to avoid conflicts with other metadata
+  - Repository search methods use `Dict[str, List[str]]` type hint for tag filtering (match_all vs any)
+  - LoreEntry already had manual `tags` field; smart tags are separate to allow auto-updating without overwriting user edits
+  - Character is a frozen dataclass; metadata updates trigger version increment and domain events
+
+---
