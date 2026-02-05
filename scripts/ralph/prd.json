@@ -334,9 +334,9 @@
         "Test: Chunk by sentence boundaries"
       ],
       "priority": 82,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-039A-02"],
-      "notes": ""
+      "notes": "Implemented SentenceChunkingStrategy and ParagraphChunkingStrategy adapters. Both implement IChunkingStrategy port with async chunk() method, configurable chunk_size/overlap, and fallback to fixed chunking when boundaries not found. 19 tests for Sentence, 12 for Paragraph. All 46 total tests pass."
     },
     {
       "id": "BRAIN-039A-04",

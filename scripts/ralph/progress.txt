@@ -587,3 +587,35 @@ Branch: feat/code-citadel
   - Existing TextChunker domain service has similar logic but this follows hexagonal architecture
 
 ---
+
+## 2025-02-05 - BRAIN-039A-03
+- **What was implemented:**
+  - Created SentenceChunkingStrategy adapter implementing IChunkingStrategy port
+  - Created ParagraphChunkingStrategy adapter implementing IChunkingStrategy port
+  - Sentence-aware chunking using _SENTENCE_END regex pattern `[.!?]+\s+`
+  - Paragraph-aware chunking using _PARAGRAPH_DELIM regex pattern `\n\n+`
+  - Both strategies support configurable chunk_size and overlap parameters
+  - Fallback to fixed chunking when no sentence/paragraph breaks are found
+  - Metadata includes strategy type (sentence/paragraph/sentence_fixed_fallback/paragraph_fixed_fallback)
+  - Overlap preserves complete sentences/paragraphs for context continuity
+- **Files changed:**
+  - `src/contexts/knowledge/infrastructure/adapters/chunking_strategy_adapters.py`
+    - Added SentenceChunkingStrategy class
+    - Added ParagraphChunkingStrategy class
+    - Added _SENTENCE_END and _PARAGRAPH_DELIM regex patterns
+    - Both use shared _create_chunk helper method
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py`
+    - Exported SentenceChunkingStrategy and ParagraphChunkingStrategy
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_chunking_strategy_adapters.py`
+    - Added 19 tests for SentenceChunkingStrategy
+    - Added 12 tests for ParagraphChunkingStrategy
+- **Learnings for future iterations:**
+  - Sentence boundary detection uses `[.!?]+\s+` pattern (punctuation followed by whitespace)
+  - Paragraph boundary detection uses `\n\n+` pattern (two or more newlines)
+  - When no boundaries found, strategies fall back to FixedChunkingStrategy
+  - Fallback metadata indicates "sentence_fixed_fallback" or "paragraph_fixed_fallback"
+  - Overlap is preserved by walking backwards through accumulated sentences/paragraphs
+  - min_chunk_size must be < chunk_size in ChunkingStrategy value object (validation constraint)
+  - All 46 total tests pass (27 Fixed + 19 Sentence/Paragraph)
+
+--
