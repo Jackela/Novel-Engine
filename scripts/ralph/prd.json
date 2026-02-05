@@ -1002,7 +1002,7 @@
         "Test: Verify counting logic matches tiktoken"
       ],
       "priority": 57,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": [
         "BRAIN-028B"
@@ -1017,7 +1017,7 @@
         "Test: Verify alerts trigger at threshold"
       ],
       "priority": 58,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": [
         "BRAIN-034A"

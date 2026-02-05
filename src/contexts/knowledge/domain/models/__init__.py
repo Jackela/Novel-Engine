@@ -44,6 +44,10 @@ from .prompt_usage import (
     PromptUsage,
     PromptUsageStats,
 )
+from .token_usage import (
+    TokenUsage,
+    TokenUsageStats,
+)
 from .entity import (
     EntityType,
     ExtractedEntity,
@@ -56,6 +60,16 @@ from .entity import (
     DEFAULT_MAX_ENTITIES,
     PRONOUNS,
     is_naturally_bidirectional,
+)
+from .budget_alert import (
+    AlertThresholdType,
+    AlertComparisonOperator,
+    AlertSeverity,
+    AlertFrequency,
+    AlertTriggeredEvent,
+    BudgetAlertConfig,
+    BudgetAlertState,
+    AlertEvaluationResult,
 )
 
 __all__ = [
@@ -92,6 +106,8 @@ __all__ = [
     "PromptExperiment",
     "PromptUsage",
     "PromptUsageStats",
+    "TokenUsage",
+    "TokenUsageStats",
     # Entity Models
     "EntityType",
     "ExtractedEntity",
@@ -104,4 +120,13 @@ __all__ = [
     "DEFAULT_MAX_ENTITIES",
     "PRONOUNS",
     "is_naturally_bidirectional",
+    # Budget Alert Models
+    "AlertThresholdType",
+    "AlertComparisonOperator",
+    "AlertSeverity",
+    "AlertFrequency",
+    "AlertTriggeredEvent",
+    "BudgetAlertConfig",
+    "BudgetAlertState",
+    "AlertEvaluationResult",
 ]

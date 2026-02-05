@@ -171,6 +171,21 @@ from .graph_retrieval_service import (
     GraphExplanation,
 )
 
+from .token_tracker import (
+    TokenTracker,
+    TrackingContext,
+    TokenTrackerConfig,
+    TokenAwareConfig,
+    create_token_tracker,
+)
+
+from .budget_alert_service import (
+    BudgetAlertService,
+    BudgetAlertServiceConfig,
+    AlertHandler,
+    create_budget_alert_service,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -307,4 +322,15 @@ __all__ = [
     "GraphRetrievalResult",
     "GraphExplanationStep",
     "GraphExplanation",
+    # Token Tracker
+    "TokenTracker",
+    "TrackingContext",
+    "TokenTrackerConfig",
+    "TokenAwareConfig",
+    "create_token_tracker",
+    # Budget Alert Service
+    "BudgetAlertService",
+    "BudgetAlertServiceConfig",
+    "AlertHandler",
+    "create_budget_alert_service",
 ]
