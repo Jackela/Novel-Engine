@@ -2773,6 +2773,10 @@ class RetrievedChunkResponse(BaseModel):
     score: float = Field(..., ge=0, le=1, description="Relevance score (0-1)")
     token_count: int = Field(..., ge=0, description="Estimated token count")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    used: bool = Field(
+        default=False,
+        description="Whether this chunk was used in the generated response (BRAIN-036-03)",
+    )
 
 
 class RAGContextResponse(BaseModel):

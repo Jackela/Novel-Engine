@@ -175,6 +175,7 @@ export type RealtimeUsageEvent =
   | ErrorEvent;
 
 // BRAIN-036-02: Context Inspector
+// BRAIN-036-03: Highlight used chunks
 
 export interface RetrievedChunkResponse {
   chunk_id: string;
@@ -184,6 +185,8 @@ export interface RetrievedChunkResponse {
   score: number;
   token_count: number;
   metadata: Record<string, unknown>;
+  /** Whether this chunk was used in the generated response (BRAIN-036-03) */
+  used: boolean;
 }
 
 export interface RAGContextResponse {

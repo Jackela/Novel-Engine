@@ -1117,17 +1117,20 @@ async def get_rag_context(
     query: str = Query(..., description="Query to retrieve context for"),
     scene_id: str | None = Query(None, description="Scene ID to get context for"),
     max_chunks: int = Query(5, ge=1, le=20, description="Maximum chunks to retrieve"),
+    used_threshold: float = Query(0.7, ge=0, le=1, description="Score threshold to mark chunk as used"),
     repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
 ) -> RAGContextResponse:
     """
     Get RAG context for a query or scene.
 
     BRAIN-036-02: Context Inspector backend endpoint
+    BRAIN-036-03: Highlight used chunks based on relevance threshold
 
     Args:
         query: Search query for context retrieval
         scene_id: Optional scene ID (if provided, uses scene content as query base)
         max_chunks: Maximum number of chunks to retrieve
+        used_threshold: Score threshold to mark chunk as "used" (default: 0.7)
 
     Returns:
         RAGContextResponse with retrieved chunks, scores, and metadata
@@ -1194,6 +1197,9 @@ async def get_rag_context(
             token_result = token_counter.count(chunk.content)
             token_count = token_result.token_count
 
+            # BRAIN-036-03: Mark chunk as used if score meets threshold
+            is_used = chunk.score >= used_threshold
+
             chunks_response.append(
                 RetrievedChunkResponse(
                     chunk_id=chunk.chunk_id,
@@ -1203,6 +1209,7 @@ async def get_rag_context(
                     score=round(chunk.score, 3),
                     token_count=token_count,
                     metadata=chunk.metadata or {},
+                    used=is_used,
                 )
             )
             total_tokens += token_count

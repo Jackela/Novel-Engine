@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Brain, FileText, Hash, Loader2, X } from 'lucide-react';
+import { Brain, CheckCircle2, FileText, Hash, Loader2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -163,12 +163,22 @@ export function ContextInspector({ open, onClose, query, sceneId }: ContextInspe
 
 /**
  * Individual chunk card component
+ * BRAIN-036-03: Visual distinction for used vs unused chunks
  */
 function ChunkCard({ chunk, index }: { chunk: RetrievedChunkResponse; index: number }) {
   const scoreColor = chunk.score >= 0.8 ? 'text-green-600' : chunk.score >= 0.6 ? 'text-yellow-600' : 'text-orange-600';
 
+  // BRAIN-036-03: Visual styling for used chunks
+  const usedBgClass = chunk.used ? 'bg-green-50/50 border-green-200 dark:bg-green-950/30 dark:border-green-800' : 'border-border';
+  const usedBadge = chunk.used ? (
+    <div className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400" title="This chunk was used in the response">
+      <CheckCircle2 className="h-3 w-3" />
+      <span>Used</span>
+    </div>
+  ) : null;
+
   return (
-    <div className="border rounded-lg p-4 space-y-3 hover:bg-muted/50 transition-colors">
+    <div className={`border rounded-lg p-4 space-y-3 hover:bg-muted/50 transition-colors ${usedBgClass}`}>
       {/* Header with source and score */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
@@ -179,6 +189,7 @@ function ChunkCard({ chunk, index }: { chunk: RetrievedChunkResponse; index: num
             {chunk.source_type}
           </Badge>
           <span className="text-sm font-medium">{chunk.source_id}</span>
+          {usedBadge}
         </div>
         <div className="flex items-center gap-1" title={`Relevance: ${(chunk.score * 100).toFixed(0)}%`}>
           <Hash className="h-3 w-3 text-muted-foreground" />
