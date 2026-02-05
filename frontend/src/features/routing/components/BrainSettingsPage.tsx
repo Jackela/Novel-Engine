@@ -3,6 +3,7 @@
  *
  * BRAIN-028B: Model Routing Configuration
  * BRAIN-033: Brain Settings UI
+ * BRAIN-035A: Token Usage Analytics Dashboard
  *
  * Manages AI Brain settings including:
  * - Model routing preferences per task type
@@ -11,17 +12,32 @@
  * - API Keys management
  * - RAG configuration
  * - Knowledge base status
+ * - Token usage and cost analytics
  */
 
 import { useQuery } from '@tanstack/react-query';
 import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
+import {
   CheckCircle2,
   Database,
+  DollarSign,
   Eye,
   EyeOff,
   Key,
+  Loader2,
   RefreshCw,
   Settings2,
+  TrendingUp,
   XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -40,6 +56,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { brainSettingsApi } from '@/features/routing/api/brainSettingsApi';
+import {
+  type DailyStatsResponse,
+  type ModelUsageResponse,
+} from '@/features/routing/api/brainSettingsApi';
 import { routingApi } from '@/features/routing/api/routingApi';
 
 // Types for brain settings
@@ -170,6 +190,32 @@ export function BrainSettingsPage() {
     gemini: '',
   });
   const [localOllamaUrl, setLocalOllamaUrl] = useState('http://localhost:11434');
+  const [usageDays, setUsageDays] = useState(30);
+
+  // BRAIN-035A: Fetch usage analytics data
+  const {
+    data: usageSummary,
+    isLoading: usageSummaryLoading,
+  } = useQuery({
+    queryKey: ['usage-summary', usageDays],
+    queryFn: () => brainSettingsApi.getUsageSummary(usageDays),
+  });
+
+  const {
+    data: dailyUsage,
+    isLoading: dailyUsageLoading,
+  } = useQuery({
+    queryKey: ['daily-usage', usageDays],
+    queryFn: () => brainSettingsApi.getDailyUsage(usageDays),
+  });
+
+  const {
+    data: usageByModel,
+    isLoading: usageByModelLoading,
+  } = useQuery({
+    queryKey: ['usage-by-model'],
+    queryFn: () => brainSettingsApi.getUsageByModel(),
+  });
 
   const handleSaveAPIKey = async (provider: string, key: string) => {
     setIsSaving(true);
@@ -463,11 +509,12 @@ export function BrainSettingsPage() {
       </div>
 
       <Tabs defaultValue="routing" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto">
+        <TabsList className="grid w-full grid-cols-7 lg:w-auto">
           <TabsTrigger value="routing">Model Routing</TabsTrigger>
           <TabsTrigger value="constraints">Constraints</TabsTrigger>
           <TabsTrigger value="circuits">Circuit Breakers</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
+          <TabsTrigger value="usage">Usage</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="rag-settings">RAG Settings</TabsTrigger>
         </TabsList>
@@ -736,6 +783,300 @@ export function BrainSettingsPage() {
                       <span className="font-medium">{count}</span>
                     </div>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* BRAIN-035A: Usage Analytics Tab */}
+        <TabsContent value="usage" className="space-y-6">
+          {/* Summary Stats */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Tokens</CardDescription>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  {usageSummaryLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      {(usageSummary?.total_tokens ?? 0).toLocaleString()}
+                    </>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <p className="text-xs text-muted-foreground">
+                  {usageSummary?.period_end ? `Last ${usageDays} days` : '-'}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Cost</CardDescription>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  {usageSummaryLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      <DollarSign className="h-5 w-5 text-green-500" />
+                      ${(usageSummary?.total_cost ?? 0).toFixed(4)}
+                    </>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <p className="text-xs text-muted-foreground">
+                  {usageSummary?.period_end ? `Last ${usageDays} days` : '-'}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Requests</CardDescription>
+                <CardTitle className="text-2xl">
+                  {usageSummaryLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    (usageSummary?.total_requests ?? 0).toLocaleString()
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <p className="text-xs text-muted-foreground">
+                  {usageSummary?.period_end ? `Avg ${((usageSummary?.total_tokens ?? 0) / (usageSummary?.total_requests || 1) || 0).toFixed(0)} tokens/request` : '-'}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Avg Latency</CardDescription>
+                <CardTitle className="text-2xl">
+                  {usageSummaryLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    `${(usageSummary?.avg_latency_ms ?? 0).toFixed(0)}ms`
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <p className="text-xs text-muted-foreground">
+                  {usageSummary?.period_end ? 'Across all requests' : '-'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tokens Over Time Chart */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Tokens Over Time</CardTitle>
+                  <CardDescription>Daily token usage trend</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  {[7, 30, 90].map((days) => (
+                    <Button
+                      key={days}
+                      size="sm"
+                      variant={usageDays === days ? 'default' : 'outline'}
+                      onClick={() => setUsageDays(days)}
+                    >
+                      {days}d
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {dailyUsageLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : dailyUsage && dailyUsage.length > 0 ? (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dailyUsage}>
+                      <defs>
+                        <linearGradient id="tokensGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                        tickLine={{ stroke: 'hsl(var(--border))' }}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <YAxis
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                        tickLine={{ stroke: 'hsl(var(--border))' }}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.[0]) return null;
+                          const data = payload[0].payload as DailyStatsResponse;
+                          return (
+                            <div className="rounded-md border bg-popover px-3 py-2 shadow-md">
+                              <p className="mb-1 font-medium">
+                                {new Date(data.date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </p>
+                              <p className="text-sm">
+                                Tokens: <span className="font-medium">{data.total_tokens.toLocaleString()}</span>
+                              </p>
+                              <p className="text-sm">
+                                Cost: <span className="font-medium">${data.total_cost.toFixed(4)}</span>
+                              </p>
+                              <p className="text-sm">
+                                Requests: <span className="font-medium">{data.total_requests}</span>
+                              </p>
+                            </div>
+                          );
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="total_tokens"
+                        stroke="hsl(var(--primary))"
+                        fill="url(#tokensGradient)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  No usage data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Cost by Model Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cost by Model</CardTitle>
+              <CardDescription>Total cost breakdown per model</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {usageByModelLoading ? (
+                <div className="h-64 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : usageByModel && usageByModel.length > 0 ? (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={usageByModel}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                      <XAxis
+                        dataKey="model_identifier"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                        tickLine={{ stroke: 'hsl(var(--border))' }}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <YAxis
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                        tickLine={{ stroke: 'hsl(var(--border))' }}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.[0]) return null;
+                          const data = payload[0].payload as ModelUsageResponse;
+                          return (
+                            <div className="rounded-md border bg-popover px-3 py-2 shadow-md">
+                              <p className="mb-1 font-medium">{data.model_identifier}</p>
+                              <p className="text-sm">
+                                Cost: <span className="font-medium">${data.total_cost.toFixed(4)}</span>
+                              </p>
+                              <p className="text-sm">
+                                Tokens: <span className="font-medium">{data.total_tokens.toLocaleString()}</span>
+                              </p>
+                              <p className="text-sm">
+                                Requests: <span className="font-medium">{data.total_requests}</span>
+                              </p>
+                            </div>
+                          );
+                        }}
+                      />
+                      <Bar
+                        dataKey="total_cost"
+                        fill="hsl(var(--primary))"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  No usage data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Provider Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Provider Distribution</CardTitle>
+              <CardDescription>Usage breakdown by LLM provider</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {usageByModelLoading ? (
+                <div className="h-48 flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : usageByModel && usageByModel.length > 0 ? (
+                <div className="space-y-3">
+                  {Object.entries(
+                    usageByModel.reduce((acc, item) => {
+                      const provider = item.provider;
+                      if (!acc[provider]) {
+                        acc[provider] = { cost: 0, tokens: 0, requests: 0 };
+                      }
+                      acc[provider].cost += item.total_cost;
+                      acc[provider].tokens += item.total_tokens;
+                      acc[provider].requests += item.total_requests;
+                      return acc;
+                    }, {} as Record<string, { cost: number; tokens: number; requests: number }>)
+                  ).map(([provider, stats]) => {
+                    const totalCost = usageByModel.reduce((sum, item) => sum + item.total_cost, 0);
+                    const percentage = totalCost > 0 ? (stats.cost / totalCost) * 100 : 0;
+                    return (
+                      <div key={provider} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium capitalize">{provider}</span>
+                          <span className="text-muted-foreground">${stats.cost.toFixed(4)} ({percentage.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-muted-foreground">
+                  No usage data available
                 </div>
               )}
             </CardContent>

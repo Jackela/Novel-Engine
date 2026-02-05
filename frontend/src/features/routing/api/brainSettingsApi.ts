@@ -2,6 +2,7 @@
  * Brain Settings API
  *
  * BRAIN-033: Frontend Brain Settings
+ * BRAIN-035A: Token Usage Analytics
  * API client for brain settings endpoints
  */
 
@@ -13,6 +14,38 @@ export interface APIKeysResponse {
   has_openai: boolean;
   has_anthropic: boolean;
   has_gemini: boolean;
+}
+
+// BRAIN-035A: Token Usage Analytics Types
+
+export interface UsageSummaryResponse {
+  total_tokens: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_cost: number;
+  total_requests: number;
+  successful_requests: number;
+  failed_requests: number;
+  avg_latency_ms: number;
+  period_start: string | null;
+  period_end: string | null;
+}
+
+export interface DailyStatsResponse {
+  date: string;
+  total_tokens: number;
+  total_cost: number;
+  total_requests: number;
+  providers: Record<string, { tokens: number; cost: number; requests: number }>;
+}
+
+export interface ModelUsageResponse {
+  provider: string;
+  model_name: string;
+  model_identifier: string;
+  total_tokens: number;
+  total_cost: number;
+  total_requests: number;
 }
 
 export interface APIKeysRequest {
@@ -135,5 +168,31 @@ export const brainSettingsApi = {
       method: 'POST',
     });
     return handleResponse<Record<string, string>>(response);
+  },
+
+  // BRAIN-035A: Token Usage Analytics
+
+  /**
+   * Get token usage summary
+   */
+  async getUsageSummary(days: number = 30): Promise<UsageSummaryResponse> {
+    const response = await fetch(`/api/brain/usage/summary?days=${days}`);
+    return handleResponse<UsageSummaryResponse>(response);
+  },
+
+  /**
+   * Get daily usage statistics
+   */
+  async getDailyUsage(days: number = 30): Promise<DailyStatsResponse[]> {
+    const response = await fetch(`/api/brain/usage/daily?days=${days}`);
+    return handleResponse<DailyStatsResponse[]>(response);
+  },
+
+  /**
+   * Get usage breakdown by model
+   */
+  async getUsageByModel(): Promise<ModelUsageResponse[]> {
+    const response = await fetch('/api/brain/usage/by-model');
+    return handleResponse<ModelUsageResponse[]>(response);
   },
 };
