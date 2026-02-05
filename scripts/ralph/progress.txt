@@ -35,31 +35,10 @@ Branch: feat/code-citadel
 - **Budget Alerts**: BudgetAlertService in `src/contexts/knowledge/application/services/budget_alert_service.py` with threshold-based alerting
 - **Alert Configuration**: BudgetAlertConfig in `src/contexts/knowledge/domain/models/budget_alert.py` with threshold types, operators, severity, frequency
 - **Real-time Broadcasting**: RealtimeUsageBroadcaster in `src/api/routers/brain_settings.py` provides SSE-based live token updates to frontend clients
-- **Hexagonal Architecture**: Routers -> Services -> Domain. No business logic in routers.
-- **Result Pattern**: Use `Result[T, E]` for error handling in services (see `src/core/result.py`)
-- **Domain Events**: Use events for cross-context communication, not direct imports
-- **Import Linting**: Rules defined in `.importlinter` to enforce architectural boundaries
-- **Vector Storage**: ChromaDB adapter in `src/contexts/knowledge/infrastructure/adapters/chromadb_vector_store.py`
-- **Type Annotations**: Use `from __future__ import annotations` and import List/Tuple from typing for complex types
-- **RAG Retrieval**: RetrievalService in `src/contexts/knowledge/application/services/retrieval_service.py` with filtering and deduplication
-- **BM25 Keyword Search**: BM25Retriever in `src/contexts/knowledge/application/services/bm25_retriever.py` for exact keyword matching
-- **Hybrid Retrieval**: HybridRetriever in `src/contexts/knowledge/application/services/hybrid_retriever.py` combines vector and BM25 with RRF
-- **Query Rewriting**: QueryRewriter in `src/contexts/knowledge/application/services/query_rewriter.py` with SYNONYM/DECOMPOSE/CLARIFICATION strategies
-- **Reranking**: IReranker port in `src/contexts/knowledge/application/ports/i_reranker.py` and RerankService with fallback behavior
-- **Token Counting**: TokenCounter in `src/contexts/knowledge/application/services/token_counter.py` with multi-provider tiktoken support
-- **Context Optimization**: ContextOptimizer in `src/contexts/knowledge/application/services/context_optimizer.py` with 4 packing strategies (relevance, diversity, remove_redundancy, compress_summaries)
-- **Prompt Templates**: PromptTemplate entity in `src/contexts/knowledge/domain/models/prompt_template.py` with {{variable}} syntax and version tracking
-- **Prompt Inheritance**: Use `extends` field and `{{> template}}` syntax for template composition. Variable override works by child having same-named variable.
-- **Prompt Repository**: IPromptRepository port in `src/contexts/knowledge/application/ports/i_prompt_repository.py` with CRUD, version history, and search
-- **Model Registry**: ModelRegistry in `src/contexts/knowledge/application/services/model_registry.py` with task-based routing and aliases
-- **Entity Extraction**: EntityExtractionService in `src/contexts/knowledge/application/services/entity_extraction_service.py` with LLM-based extraction
-- **Co-reference Resolution**: CoreferenceResolutionService in `src/contexts/knowledge/application/services/coreference_resolution_service.py` with heuristic + LLM fallback
-- **Large Text Processing**: extract_large_text() with chunking (chunk_size, overlap) and merging for texts exceeding token limits
-- **Token Tracking**: TokenTracker in `src/contexts/knowledge/application/services/token_tracker.py` with decorator/context manager support
-- **Token Usage Entity**: TokenUsage in `src/contexts/knowledge/domain/models/token_usage.py` with cost calculation using model pricing
-- **Token Usage Repository**: ITokenUsageRepository port in `src/contexts/knowledge/application/ports/i_token_usage_repository.py` with InMemoryTokenUsageRepository implementation
-- **Budget Alerts**: BudgetAlertService in `src/contexts/knowledge/application/services/budget_alert_service.py` with threshold-based alerting
-- **Alert Configuration**: BudgetAlertConfig in `src/contexts/knowledge/domain/models/budget_alert.py` with threshold types, operators, severity, frequency
+- **Chunking Strategies**: IChunkingStrategy port with multiple adapters (Fixed, Sentence, Paragraph, Semantic, NarrativeFlow, Auto) in `src/contexts/knowledge/infrastructure/adapters/chunking_strategy_adapters.py`
+- **Narrative Flow Chunking**: NarrativeFlowChunkingStrategy preserves sentence boundaries and dialogue exchanges, tracks narrative composition in metadata
+- **Chunk Strategy Types**: FIXED, SEMANTIC, SENTENCE, PARAGRAPH, NARRATIVE_FLOW, AUTO - each with distinct chunking behavior for different content types
+- **Git Ignore Note**: The `src/contexts/knowledge/domain/models/` directory is gitignored. Use `git add -f` to add files from this directory.
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -681,5 +660,33 @@ Branch: feat/code-citadel
   - Content type can be hinted via factory method; auto-detection analyzes structure when UNKNOWN
   - Paragraph density = paragraph_count / char_count * 1000
   - Dialogue ratio = quote_count / word_count
+
+--
+
+## 2025-02-05 - BRAIN-039B-01
+- **What was implemented:**
+  - Added NARRATIVE_FLOW to ChunkStrategyType enum in chunking_strategy.py
+  - Created NarrativeFlowChunkingStrategy adapter implementing IChunkingStrategy port
+  - Narrative flow preservation features:
+    - Preserves sentence boundaries (never breaks mid-sentence)
+    - Respects dialogue boundaries (never breaks mid-dialogue exchange)
+    - Groups related narrative beats together
+    - Maintains scene continuity through overlap
+    - Tracks narrative composition in metadata (dialogue_units, paragraph_units, sentence_units, has_dialogue)
+  - Added _DIALOGUE_TAGS set with 80+ dialogue tag verbs for boundary detection
+  - Fallback to SentenceChunkingStrategy when narrative flow chunking fails
+  - Configurable preserve_dialogue and preserve_paragraphs flags
+- **Files changed:**
+  - `src/contexts/knowledge/domain/models/chunking_strategy.py` - Added NARRATIVE_FLOW enum value
+  - `src/contexts/knowledge/infrastructure/adapters/chunking_strategy_adapters.py` - Added NarrativeFlowChunkingStrategy (~380 lines)
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py` - Exported NarrativeFlowChunkingStrategy
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_chunking_strategy_adapters.py` - Added 23 tests
+- **Learnings for future iterations:**
+  - NarrativeFlowChunkingStrategy uses _identify_narrative_boundaries() to detect sentence, paragraph, and dialogue boundaries
+  - Dialogue unit extraction handles both double and single quotes, and tracks dialogue exchanges
+  - Overlap preserves complete narrative units (sentences, paragraphs, dialogue) rather than arbitrary word counts
+  - Metadata includes "has_dialogue" boolean and counts for dialogue_units, paragraph_units, sentence_units
+  - All 114 chunking strategy tests pass (91 original + 23 narrative flow tests)
+  - The domain/models directory is gitignored - use `git add -f` to add files
 
 --
