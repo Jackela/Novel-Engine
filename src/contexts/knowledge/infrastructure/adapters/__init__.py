@@ -11,6 +11,7 @@ from .in_memory_token_usage_repository import (
     InMemoryTokenUsageRepository,
     create_in_memory_token_usage_repository,
 )
+from .chunking_strategy_adapters import FixedChunkingStrategy
 
 __all__ = [
     "InMemoryPromptRepository",
@@ -18,4 +19,5 @@ __all__ = [
     "Neo4jGraphStore",
     "InMemoryTokenUsageRepository",
     "create_in_memory_token_usage_repository",
+    "FixedChunkingStrategy",
 ]
