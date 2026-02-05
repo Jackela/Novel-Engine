@@ -293,3 +293,25 @@ Branch: feat/code-citadel
   - Using Tailwind's `[&>div]:bg-*` syntax allows targeting ProgressPrimitive.Indicator
 
 ---
+
+## 2025-02-05 - BRAIN-037A-01
+- **What was implemented:**
+  - Added POST /api/brain/chat endpoint
+  - Created ChatMessage, ChatRequest, ChatChunk Pydantic models
+  - Endpoint accepts query parameter and optional chat_history
+  - Returns SSE (Server-Sent Events) streaming response
+  - Integrates with RAG when enabled (RetrievalService for context)
+  - Mock streaming response with word-by-word chunks for now
+  - Full LLM integration will be in future story (BRAIN-037A-02)
+- **Files changed:**
+  - `src/api/routers/brain_settings.py` - Added chat endpoint and models
+- **Learnings for future iterations:**
+  - Use AsyncIterator for SSE streaming responses in FastAPI
+  - ChatMessage has role ("user"/"assistant") and content fields
+  - ChatRequest has query, chat_history (optional), scene_id (optional), max_chunks
+  - ChatChunk has delta (text content) and done (boolean) fields
+  - StreamingResponse requires media_type="text/event-stream" for SSE
+  - Set Cache-Control: no-cache, Connection: keep-alive, X-Accel-Buffering: no headers
+  - Mock response word-by-word with asyncio.sleep(0.02) simulates LLM streaming
+
+---

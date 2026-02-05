@@ -1238,3 +1238,157 @@ async def get_rag_context(
             chunk_count=0,
             sources=[],
         )
+
+
+# ==================== Chat Endpoint (BRAIN-037A-01) ====================
+
+
+import json
+import asyncio
+from typing import AsyncIterator
+
+
+class ChatMessage(BaseModel):
+    """A single chat message."""
+    role: str  # "user" or "assistant"
+    content: str
+
+
+class ChatRequest(BaseModel):
+    """Request for chat completion."""
+    query: str  # User's question/prompt
+    chat_history: list[ChatMessage] | None = None  # Optional conversation history
+    scene_id: str | None = None  # Optional scene ID for context
+    max_chunks: int = 5  # Maximum chunks to retrieve for RAG
+
+
+class ChatChunk(BaseModel):
+    """A single chunk of streaming response."""
+    delta: str  # Text content added
+    done: bool = False  # Whether this is the final chunk
+
+
+@router.post("/brain/chat")
+async def chat_completion(
+    request: Request,
+    payload: ChatRequest,
+    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+) -> StreamingResponse:
+    """
+    Chat completion with RAG context.
+
+    BRAIN-037A-01: Chat Backend POST Endpoint
+    Accepts query and optional chat history, returns streaming response.
+
+    Args:
+        payload: Chat request with query, optional history, and scene_id
+
+    Returns:
+        StreamingResponse with SSE-formatted chat chunks
+    """
+    async def _stream_chat() -> AsyncIterator[str]:
+        """Stream chat response with RAG context."""
+        try:
+            # Check if RAG is enabled
+            rag_config = await repository.get_rag_config()
+
+            # Build system prompt
+            system_prompt = "You are a helpful AI assistant for a novel writing tool."
+
+            # If RAG is enabled, retrieve relevant context
+            rag_context_text = ""
+            if rag_config.get("enabled", False):
+                try:
+                    from src.contexts.knowledge.application.services.retrieval_service import (
+                        RetrievalService,
+                    )
+                    from src.contexts.knowledge.infrastructure.adapters.chromadb_vector_store import (
+                        ChromaDBVectorStore,
+                    )
+                    from src.contexts.knowledge.infrastructure.adapters.embedding_generator_adapter import (
+                        EmbeddingServiceAdapter,
+                    )
+
+                    # Get or create singleton instances
+                    embedding_service = getattr(request.app.state, "embedding_service", None)
+                    if embedding_service is None:
+                        embedding_service = EmbeddingServiceAdapter(use_mock=True)
+                        request.app.state.embedding_service = embedding_service
+
+                    vector_store = getattr(request.app.state, "vector_store", None)
+                    if vector_store is None:
+                        vector_store = ChromaDBVectorStore()
+                        request.app.state.vector_store = vector_store
+
+                    # Retrieve relevant chunks
+                    retrieval_service = RetrievalService(
+                        embedding_service=embedding_service,
+                        vector_store=vector_store,
+                    )
+
+                    result = await retrieval_service.retrieve_relevant(
+                        query=payload.query,
+                        k=payload.max_chunks,
+                        filters=None,
+                    )
+
+                    if result.chunks:
+                        # Format context from retrieved chunks
+                        context_parts = []
+                        for i, chunk in enumerate(result.chunks, 1):
+                            context_parts.append(f"[Source {i}: {chunk.source_type}:{chunk.source_id}]")
+                            context_parts.append(chunk.content)
+
+                        rag_context_text = "\n".join(context_parts)
+                        system_prompt += f"\n\nUse the following context to answer the user's question:\n\n{rag_context_text}"
+
+                except Exception as e:
+                    logger.warning(f"RAG retrieval failed, continuing without context: {e}")
+
+            # Format conversation history
+            messages: list[dict] = [{"role": "system", "content": system_prompt}]
+
+            # Add chat history if provided
+            if payload.chat_history:
+                for msg in payload.chat_history:
+                    messages.append({"role": msg.role, "content": msg.content})
+
+            # Add current query
+            messages.append({"role": "user", "content": payload.query})
+
+            # For now, return a mock streaming response
+            # In a full implementation, this would call an LLM service
+            response_text = f"I received your question: \"{payload.query}\""
+
+            if rag_context_text:
+                response_text += f"\n\nI found {len(rag_context_text.split('[Source')) - 1} relevant chunks from the knowledge base."
+            else:
+                response_text += "\n\nNo relevant context was found in the knowledge base."
+
+            response_text += "\n\n(Note: This is a mock response. Full LLM integration will be implemented in a future story.)"
+
+            # Stream the response in chunks
+            words = response_text.split()
+            for i, word in enumerate(words):
+                chunk = ChatChunk(delta=word + " ", done=i == len(words) - 1)
+                yield f"data: {chunk.model_dump_json()}\n\n"
+                await asyncio.sleep(0.02)  # Simulate streaming delay
+
+            # Send final done signal
+            final_chunk = ChatChunk(delta="", done=True)
+            yield f"data: {final_chunk.model_dump_json()}\n\n"
+
+        except Exception as e:
+            logger.error(f"Chat completion error: {e}")
+            error_chunk = ChatChunk(delta=f"Error: {str(e)}", done=True)
+            yield f"data: {error_chunk.model_dump_json()}\n\n"
+
+    return StreamingResponse(
+        _stream_chat(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

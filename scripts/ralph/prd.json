@@ -150,7 +150,7 @@
         "Test: Endpoint returns 200"
       ],
       "priority": 69,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
