@@ -49,7 +49,7 @@
         "Typecheck passes"
       ],
       "priority": 62,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-035B-02"],
       "notes": ""
     },
