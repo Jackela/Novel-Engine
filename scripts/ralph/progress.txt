@@ -541,4 +541,25 @@ Branch: feat/code-citadel
   - All 15 tests pass: 9 for LoreEntry, 3 for Scene, 3 for Character
 
 ---
+
+## 2025-02-05 - BRAIN-039A-01
+- **What was implemented:**
+  - Created IChunkingStrategy port interface in knowledge context application layer
+  - Added Chunk domain entity with text, index, and metadata fields
+  - Added ChunkingError exception with default and custom error codes
+  - Port defines async chunk(text, config) -> list[Chunk] method
+  - Port defines supports_strategy_type(strategy_type) -> bool method
+  - Chunk entity has equality, hash, and repr implementations for use in collections
+- **Files changed:**
+  - `src/contexts/knowledge/application/ports/i_chunking_strategy.py` - New port interface
+  - `tests/unit/contexts/knowledge/application/ports/test_i_chunking_strategy.py` - 20 comprehensive tests
+- **Learnings for future iterations:**
+  - Existing codebase already has TextChunker domain service and ChunkingStrategy value object
+  - This port provides hexagonal architecture abstraction over existing TextChunker
+  - Chunk entity is a domain entity (not frozen) with mutable metadata dict
+  - Chunk equality and hash based on text + index enables use in sets/dicts
+  - The existing TextChunker service can be adapted to implement this port
+  - Import path: use absolute `from src.contexts.knowledge.domain.models...` not relative
+
 ---
+
