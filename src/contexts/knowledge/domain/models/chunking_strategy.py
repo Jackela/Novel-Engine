@@ -26,12 +26,14 @@ class ChunkStrategyType(str, Enum):
     SEMANTIC: Split by semantic boundaries (sentences, paragraphs)
     SENTENCE: Split by sentences with overlap
     PARAGRAPH: Split by paragraphs with overlap
+    AUTO: Auto-detect best strategy based on content type and structure
     """
 
     FIXED = "fixed"
     SEMANTIC = "semantic"
     SENTENCE = "sentence"
     PARAGRAPH = "paragraph"
+    AUTO = "auto"
 
 
 # Default chunking configurations
@@ -157,6 +159,27 @@ class ChunkingStrategy:
             strategy=ChunkStrategyType.FIXED,
             chunk_size=400,
             overlap=40,
+        )
+
+    @classmethod
+    def for_auto(cls, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP) -> ChunkingStrategy:
+        """
+        Create chunking strategy with auto-detection.
+
+        Auto-detection selects the best strategy based on content type
+        and text structure analysis.
+
+        Args:
+            chunk_size: Maximum words per chunk (default: 500)
+            overlap: Number of overlapping words (default: 50)
+
+        Returns:
+            ChunkingStrategy with AUTO strategy type
+        """
+        return cls(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=chunk_size,
+            overlap=overlap,
         )
 
     def effective_chunk_size(self) -> int:

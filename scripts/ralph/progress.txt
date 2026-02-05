@@ -652,3 +652,34 @@ Branch: feat/code-citadel
   - ChunkingStrategy value object validates min_chunk_size < chunk_size
 
 --
+
+## 2025-02-05 - BRAIN-039A-05
+- **What was implemented:**
+  - Added AUTO strategy type to ChunkStrategyType enum
+  - Created AutoChunkingStrategy adapter class with IChunkingStrategy port implementation
+  - Added ContentType enum (SCENE, CHARACTER, LORE, DIALOGUE, NARRATIVE, DOCUMENT, UNKNOWN)
+  - Content type to strategy mapping: Scene->Semantic, Character->Paragraph, Lore->Fixed, Dialogue->Sentence, Narrative->Semantic, Document->Paragraph
+  - Auto-detection analyzes text structure for best strategy selection:
+    - Paragraph density (>2.0 per 1000 chars) -> Paragraph strategy
+    - Dialogue marker ratio (>0.3 per word) -> Sentence strategy
+    - Sentence density (>0.12 per word) -> Semantic (with embedding) or Sentence (fallback)
+    - Default -> Fixed strategy
+  - Chunk metadata includes: auto_detected=True, content_type, original_strategy, strategy (prefixed with "auto_")
+  - Semantic strategy falls back to Paragraph if no embedding service provided
+  - Added ChunkingStrategy.for_auto() factory method
+  - Added 25 comprehensive tests for AutoChunkingStrategy
+- **Files changed:**
+  - `src/contexts/knowledge/domain/models/chunking_strategy.py` - Added AUTO to enum, for_auto() factory method
+  - `src/contexts/knowledge/infrastructure/adapters/chunking_strategy_adapters.py` - Added AutoChunkingStrategy, ContentType enum (~380 lines)
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py` - Exported AutoChunkingStrategy, ContentType
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_chunking_strategy_adapters.py` - Added 25 tests for AutoChunkingStrategy
+- **Learnings for future iterations:**
+  - AutoChunkingStrategy uses lazy initialization for delegate strategies (fixed, sentence, paragraph, semantic)
+  - Type: ignore[no-any-return] comments needed for delegate method calls returning Any
+  - Delegate strategy instance variables typed as Any to avoid mypy incompatibility issues
+  - All 91 chunking strategy tests pass (66 original + 25 new auto tests)
+  - Content type can be hinted via factory method; auto-detection analyzes structure when UNKNOWN
+  - Paragraph density = paragraph_count / char_count * 1000
+  - Dialogue ratio = quote_count / word_count
+
+--

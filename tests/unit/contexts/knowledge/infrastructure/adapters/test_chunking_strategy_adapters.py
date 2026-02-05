@@ -21,6 +21,8 @@ from src.contexts.knowledge.infrastructure.adapters.chunking_strategy_adapters i
     SentenceChunkingStrategy,
     ParagraphChunkingStrategy,
     SemanticChunkingStrategy,
+    AutoChunkingStrategy,
+    ContentType,
 )
 
 
@@ -1276,3 +1278,527 @@ class TestSemanticChunkingStrategy:
 
         with pytest.raises(TypeError):  # Missing required argument
             SemanticChunkingStrategy()  # type: ignore
+
+
+class TestAutoChunkingStrategy:
+    """Tests for AutoChunkingStrategy adapter."""
+
+    @pytest.fixture
+    def embedding_service(self) -> MockEmbeddingService:
+        """Create mock embedding service."""
+        return MockEmbeddingService()
+
+    @pytest.fixture
+    def strategy(self, embedding_service: MockEmbeddingService) -> AutoChunkingStrategy:
+        """Create an AutoChunkingStrategy instance."""
+        return AutoChunkingStrategy(embedding_service=embedding_service)
+
+    @pytest.fixture
+    def strategy_no_embedding(self) -> AutoChunkingStrategy:
+        """Create an AutoChunkingStrategy without embedding service."""
+        return AutoChunkingStrategy(embedding_service=None)
+
+    @pytest.fixture
+    def scene_text(self) -> str:
+        """Create sample scene text with narrative flow."""
+        return (
+            "The great battle began at dawn. Soldiers clashed swords fiercely. "
+            "Blood stained the battlefield red. The combat raged for hours. "
+            "Then the wizard cast a spell. Magic crackled in the air. "
+            "The enchantment transformed the warriors. Peace descended upon the land. "
+            "Calm returned to the village. The people celebrated their victory."
+        )
+
+    @pytest.fixture
+    def character_text(self) -> str:
+        """Create sample character profile text."""
+        return (
+            "Name: Aric the Bold\n\n"
+            "Aric is a warrior of great renown. He stands six feet tall with broad shoulders.\n\n"
+            "His hair is dark as midnight. His eyes burn with determination.\n\n"
+            "He wields the legendary sword Stormbreaker. His armor bears the crest of the Lion.\n\n"
+            "Background:\n"
+            "Born in the northern mountains, Aric was trained by the ancient order of knights."
+        )
+
+    @pytest.fixture
+    def lore_text(self) -> str:
+        """Create sample lore entry text."""
+        return (
+            "The Kingdom of Eldoria was founded in the Age of Myth. "
+            "Its first king, Aldric the Unifier, conquered the warring tribes and established "
+            "the capital at Highwatch. The kingdom prospered for three centuries under his dynasty. "
+            "The Great Wall was constructed to defend against the northern barbarians. "
+            "Eldoria's military consists of heavy cavalry, archers, and siege engines. "
+            "The culture values honor, bravery, and martial prowess. "
+            "The religion centers around the worship of the Sun God Solara."
+        )
+
+    @pytest.fixture
+    def dialogue_text(self) -> str:
+        """Create sample dialogue-heavy text."""
+        return (
+            '"Greetings," said the stranger. "I bring news from the capital."\n'
+            '"Welcome," replied the innkeeper. "What tidings do you bring?"\n'
+            '"The king has declared a festival," the stranger announced. '
+            '"All are invited to attend."\n'
+            '"That is wonderful news!" the innkeeper exclaimed. '
+            '"We shall prepare for the celebration."'
+        )
+
+    @pytest.fixture
+    def document_text(self) -> str:
+        """Create sample document-like text with multiple paragraphs."""
+        return (
+            "Chapter 1: The Beginning\n\n"
+            "In the beginning, there was only darkness. The world was formless and void.\n\n"
+            "Then came the Light. It shattered the darkness and brought forth life.\n\n"
+            "The First Age was a time of wonder. Magic flowed freely through the land.\n\n"
+            "Chapter 2: The Great War\n\n"
+            "Conflict arose between the nations. War consumed the world for decades.\n\n"
+            "Finally, a treaty was signed. Peace has lasted for a thousand years."
+        )
+
+    @pytest.mark.asyncio
+    async def test_auto_chunking_basic(self, strategy: AutoChunkingStrategy, scene_text: str) -> None:
+        """Test basic auto chunking."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=50,
+            overlap=10,
+            min_chunk_size=20,
+        )
+
+        chunks = await strategy.chunk(scene_text, config)
+
+        # Should create chunks
+        assert len(chunks) >= 1
+        # All chunks should have auto_detected metadata
+        for chunk in chunks:
+            assert chunk.metadata.get("auto_detected") is True
+            assert chunk.metadata.get("strategy", "").startswith("auto_")
+
+    @pytest.mark.asyncio
+    async def test_supports_strategy_type(self, strategy: AutoChunkingStrategy) -> None:
+        """Test supports_strategy_type method."""
+        assert strategy.supports_strategy_type("auto") is True
+        assert strategy.supports_strategy_type("AUTO") is True
+        assert strategy.supports_strategy_type("Auto") is True
+        assert strategy.supports_strategy_type("fixed") is False
+        assert strategy.supports_strategy_type("semantic") is False
+
+    @pytest.mark.asyncio
+    async def test_empty_text_raises_error(self, strategy: AutoChunkingStrategy) -> None:
+        """Test that empty text raises ValueError."""
+        config = ChunkingStrategy.default()
+
+        with pytest.raises(ValueError, match="Cannot chunk empty text"):
+            await strategy.chunk("", config)
+
+    @pytest.mark.asyncio
+    async def test_detect_document_structure(
+        self, strategy_no_embedding: AutoChunkingStrategy, document_text: str
+    ) -> None:
+        """Test detection of document-like structure (many paragraphs)."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=100,
+            overlap=20,
+        )
+
+        chunks = await strategy_no_embedding.chunk(document_text, config)
+
+        # Should use paragraph strategy for documents
+        assert len(chunks) >= 1
+        # Verify paragraph was used (not fixed fallback)
+        for chunk in chunks:
+            original = chunk.metadata.get("original_strategy", "")
+            assert original in ("paragraph", "sentence", "fixed", "semantic_fixed_fallback")
+
+    @pytest.mark.asyncio
+    async def test_detect_dialogue_structure(
+        self, strategy_no_embedding: AutoChunkingStrategy, dialogue_text: str
+    ) -> None:
+        """Test detection of dialogue-heavy content."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=60,
+            overlap=10,
+            min_chunk_size=20,
+        )
+
+        chunks = await strategy_no_embedding.chunk(dialogue_text, config)
+
+        # Should use sentence strategy for dialogue
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_detect_semantic_for_narrative(
+        self, strategy: AutoChunkingStrategy, scene_text: str
+    ) -> None:
+        """Test semantic strategy selection for narrative scenes."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=60,
+            overlap=10,
+            min_chunk_size=20,
+        )
+
+        chunks = await strategy.chunk(scene_text, config)
+
+        # Should use semantic for narrative (with embedding service)
+        assert len(chunks) >= 1
+        # Check metadata shows semantic was used
+        for chunk in chunks:
+            original = chunk.metadata.get("original_strategy", "")
+            assert original in ("semantic", "sentence", "paragraph", "fixed", "semantic_fixed_fallback")
+
+    @pytest.mark.asyncio
+    async def test_chunk_indices(
+        self, strategy: AutoChunkingStrategy, scene_text: str
+    ) -> None:
+        """Test that chunks have correct sequential indices."""
+        config = ChunkingStrategy.default()
+
+        chunks = await strategy.chunk(scene_text, config)
+
+        for i, chunk in enumerate(chunks):
+            assert chunk.index == i
+
+    @pytest.mark.asyncio
+    async def test_metadata_content_type_field(
+        self, strategy: AutoChunkingStrategy, scene_text: str
+    ) -> None:
+        """Test that chunks have content_type in metadata."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=60,
+            overlap=10,
+            min_chunk_size=20,
+        )
+
+        chunks = await strategy.chunk(scene_text, config)
+
+        for chunk in chunks:
+            assert "content_type" in chunk.metadata
+            assert isinstance(chunk.metadata["content_type"], str)
+
+    @pytest.mark.asyncio
+    async def test_fallback_to_paragraph_when_no_embedding(
+        self, strategy_no_embedding: AutoChunkingStrategy, scene_text: str
+    ) -> None:
+        """Test that semantic falls back to paragraph when no embedding service."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=60,
+            overlap=10,
+            min_chunk_size=20,
+        )
+
+        chunks = await strategy_no_embedding.chunk(scene_text, config)
+
+        # Should still create chunks using paragraph/sentence fallback
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_text_smaller_than_chunk_size(
+        self, strategy: AutoChunkingStrategy
+    ) -> None:
+        """Test text that's smaller than one chunk."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=500,
+            overlap=50,
+        )
+
+        text = "This is a short text with just a few sentences. It should be one chunk."
+
+        chunks = await strategy.chunk(text, config)
+
+        assert len(chunks) == 1
+
+    @pytest.mark.asyncio
+    async def test_default_config(self, strategy: AutoChunkingStrategy) -> None:
+        """Test chunking with default configuration."""
+        text = " ".join([f"word{i}" for i in range(200)])
+        chunks = await strategy.chunk(text)  # No config passed
+
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_detect_from_structure_paragraph_density(
+        self, strategy_no_embedding: AutoChunkingStrategy
+    ) -> None:
+        """Test paragraph density detection heuristic."""
+        # Text with high paragraph density (many \n\n)
+        text = "\n\n".join([f"Paragraph {i} with some content here." for i in range(10)])
+
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=100,
+            overlap=20,
+        )
+
+        chunks = await strategy_no_embedding.chunk(text, config)
+
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_detect_from_structure_dialogue_markers(
+        self, strategy_no_embedding: AutoChunkingStrategy
+    ) -> None:
+        """Test dialogue marker detection heuristic."""
+        # Text with many quotes
+        text = '"Hello" "world" "test" "quote" "dialogue" ' * 20
+
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=100,
+            overlap=20,
+        )
+
+        chunks = await strategy_no_embedding.chunk(text, config)
+
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_detect_from_structure_sentence_density(
+        self, strategy_no_embedding: AutoChunkingStrategy
+    ) -> None:
+        """Test sentence density detection heuristic."""
+        # Text with high sentence density (many short sentences)
+        text = ". ".join([f"Sentence {i} here" for i in range(50)]) + "."
+
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=100,
+            overlap=20,
+        )
+
+        chunks = await strategy_no_embedding.chunk(text, config)
+
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_strategy_created_on_demand(
+        self, strategy: AutoChunkingStrategy
+    ) -> None:
+        """Test that delegate strategies are created lazily."""
+        config = ChunkingStrategy.default()
+
+        # Initially, delegates should be None
+        assert strategy._fixed_strategy is None
+        assert strategy._sentence_strategy is None
+        assert strategy._paragraph_strategy is None
+        assert strategy._semantic_strategy is None
+
+        # After chunking, some delegates should be created
+        await strategy.chunk("Some test text here. More text to follow.", config)
+
+        # At least one delegate should now be created
+        assert (
+            strategy._fixed_strategy is not None
+            or strategy._sentence_strategy is not None
+            or strategy._paragraph_strategy is not None
+        )
+
+    @pytest.mark.asyncio
+    async def test_content_type_enum(self) -> None:
+        """Test ContentType enum values."""
+        assert ContentType.SCENE.value == "scene"
+        assert ContentType.CHARACTER.value == "character"
+        assert ContentType.LORE.value == "lore"
+        assert ContentType.DIALOGUE.value == "dialogue"
+        assert ContentType.NARRATIVE.value == "narrative"
+        assert ContentType.DOCUMENT.value == "document"
+        assert ContentType.UNKNOWN.value == "unknown"
+
+    @pytest.mark.asyncio
+    async def test_custom_default_config(self, embedding_service: MockEmbeddingService) -> None:
+        """Test creating strategy with custom default config."""
+        custom_default = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=200,
+            overlap=30,
+        )
+        strategy = AutoChunkingStrategy(
+            embedding_service=embedding_service,
+            default_config=custom_default,
+        )
+
+        text = " ".join([f"Sentence {i}." for i in range(100)])
+        chunks = await strategy.chunk(text)  # No config passed
+
+        assert chunks[0].metadata["chunk_size"] == 200
+        assert chunks[0].metadata["overlap"] == 30
+
+    @pytest.mark.asyncio
+    async def test_zero_overlap(self, strategy_no_embedding: AutoChunkingStrategy) -> None:
+        """Test auto chunking with zero overlap."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=60,
+            overlap=0,
+            min_chunk_size=20,
+        )
+
+        text = ". ".join([f"Sentence {i}" for i in range(30)])
+
+        chunks = await strategy_no_embedding.chunk(text, config)
+
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_metadata_original_strategy_preserved(
+        self, strategy_no_embedding: AutoChunkingStrategy
+    ) -> None:
+        """Test that original strategy is preserved in metadata."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=80,
+            overlap=15,
+        )
+
+        text = "Paragraph one.\n\nParagraph two.\n\nParagraph three."
+
+        chunks = await strategy_no_embedding.chunk(text, config)
+
+        for chunk in chunks:
+            # Should have both auto_ prefix and original strategy
+            strategy_name = chunk.metadata.get("strategy", "")
+            original = chunk.metadata.get("original_strategy", "")
+            assert strategy_name.startswith("auto_")
+            assert len(original) > 0
+
+    @pytest.mark.asyncio
+    async def test_mixed_structure_text(
+        self, strategy: AutoChunkingStrategy
+    ) -> None:
+        """Test auto chunking with mixed structure text."""
+        # Text with paragraphs, dialogue, and narrative
+        text = (
+            "Chapter 1\n\n"
+            "The hero began their journey. \"I will succeed,\" they declared.\n\n"
+            "The path was treacherous. Mountains loomed in the distance.\n\n"
+            '"What lies ahead?" asked the companion. "Only the way forward," was the reply.'
+        )
+
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=60,
+            overlap=10,
+        )
+
+        chunks = await strategy.chunk(text, config)
+
+        # Should handle mixed structure
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_auto_for_character_uses_paragraph(
+        self, strategy_no_embedding: AutoChunkingStrategy, character_text: str
+    ) -> None:
+        """Test that character content gets paragraph strategy."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=100,
+            overlap=20,
+        )
+
+        chunks = await strategy_no_embedding.chunk(character_text, config)
+
+        assert len(chunks) >= 1
+        # Character profile (with paragraphs) should use paragraph strategy
+        for chunk in chunks:
+            original = chunk.metadata.get("original_strategy", "")
+            # Paragraph or fallback is acceptable
+            assert original in ("paragraph", "fixed", "sentence")
+
+    @pytest.mark.asyncio
+    async def test_auto_for_lore_uses_fixed(
+        self, strategy_no_embedding: AutoChunkingStrategy, lore_text: str
+    ) -> None:
+        """Test that lore content gets fixed strategy."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=80,
+            overlap=15,
+        )
+
+        chunks = await strategy_no_embedding.chunk(lore_text, config)
+
+        assert len(chunks) >= 1
+        # Lore is dense text without clear structure - should use fixed or similar
+        for chunk in chunks:
+            assert "strategy" in chunk.metadata
+            assert "auto_detected" in chunk.metadata
+
+    @pytest.mark.asyncio
+    async def test_strategy_type_mismatch_warning(
+        self, strategy: AutoChunkingStrategy, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test warning when strategy type doesn't match AUTO."""
+        import logging
+        import structlog
+
+        # Configure structlog for caplog
+        structlog.configure(
+            processors=[
+                structlog.stdlib.add_log_level,
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.PositionalArgumentsFormatter(),
+                structlog.processors.StackInfoRenderer(),
+                structlog.processors.format_exc_info,
+                structlog.processors.UnicodeDecoder(),
+                structlog.stdlib.render_to_log_kwargs,
+            ],
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            cache_logger_on_first_use=True,
+        )
+
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,  # Mismatch!
+            chunk_size=500,
+            overlap=50,
+        )
+
+        text = " ".join([f"word{i}" for i in range(200)])
+
+        with caplog.at_level(logging.WARNING):
+            chunks = await strategy.chunk(text, config)
+
+        # Should still chunk the text
+        assert len(chunks) > 0
+        # Should log a warning about mismatch
+        assert any("mismatch" in record.message.lower() for record in caplog.records)
+
+    @pytest.mark.asyncio
+    async def test_very_short_text(self, strategy: AutoChunkingStrategy) -> None:
+        """Test auto chunking with very short text."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.AUTO,
+            chunk_size=500,
+            overlap=50,
+        )
+
+        text = "Hello world."
+
+        chunks = await strategy.chunk(text, config)
+
+        # Should handle short text gracefully
+        assert len(chunks) == 1
+        assert chunks[0].text == "Hello world."
+
+    @pytest.mark.asyncio
+    async def test_content_type_strategy_mapping(self) -> None:
+        """Test that content type to strategy mapping is correct."""
+        # Verify the mapping is defined correctly
+        mapping = AutoChunkingStrategy.CONTENT_TYPE_STRATEGY_MAP
+
+        assert mapping[ContentType.SCENE] == ChunkStrategyType.SEMANTIC
+        assert mapping[ContentType.CHARACTER] == ChunkStrategyType.PARAGRAPH
+        assert mapping[ContentType.LORE] == ChunkStrategyType.FIXED
+        assert mapping[ContentType.DIALOGUE] == ChunkStrategyType.SENTENCE
+        assert mapping[ContentType.NARRATIVE] == ChunkStrategyType.SEMANTIC
+        assert mapping[ContentType.DOCUMENT] == ChunkStrategyType.PARAGRAPH

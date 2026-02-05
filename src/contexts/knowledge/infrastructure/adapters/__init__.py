@@ -16,6 +16,8 @@ from .chunking_strategy_adapters import (
     SentenceChunkingStrategy,
     ParagraphChunkingStrategy,
     SemanticChunkingStrategy,
+    AutoChunkingStrategy,
+    ContentType,
 )
 
 __all__ = [
@@ -28,4 +30,6 @@ __all__ = [
     "SentenceChunkingStrategy",
     "ParagraphChunkingStrategy",
     "SemanticChunkingStrategy",
+    "AutoChunkingStrategy",
+    "ContentType",
 ]

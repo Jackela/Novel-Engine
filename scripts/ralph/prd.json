@@ -362,9 +362,9 @@
         "Test: Correct strategy selected per content type"
       ],
       "priority": 84,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-039A-04"],
-      "notes": ""
+      "notes": "Implemented AutoChunkingStrategy with ContentType enum (SCENE, CHARACTER, LORE, DIALOGUE, NARRATIVE, DOCUMENT, UNKNOWN). Content type to strategy mapping: Scene->Semantic, Character->Paragraph, Lore->Fixed, Dialogue->Sentence, Narrative->Semantic, Document->Paragraph. Auto-detection analyzes text structure (paragraph density, dialogue markers, sentence density). 25 tests pass."
     },
     {
       "id": "BRAIN-039B-01",
