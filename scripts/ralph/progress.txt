@@ -775,3 +775,22 @@ Branch: feat/code-citadel
   - Tests should be serializable using `test.describe.configure({ mode: 'serial' })` for state-dependent tests
   - The Playwright config already supports E2E testing with webServer, globalSetup, and globalTeardown
   - All 17 tests are discovered by Playwright and typecheck passes
+
+## 2025-02-05 - BRAIN-040A-02
+- **What was implemented:**
+  - Fixed all E2E tests in brain-rag.spec.ts to use browser fetch instead of page.request API
+  - page.request API doesn't go through page.route() mocks, causing test failures
+  - Added page navigation before API calls to establish base URL for fetch
+  - Added SSE parsing for chat response verification (delta chunks -> full message)
+  - Fixed assertions to match mock response content (prophecies vs prophecy)
+- **Files changed:**
+  - `frontend/tests/e2e/brain-rag.spec.ts` - Fixed all API-based tests to use page.evaluate + fetch
+- **Learnings for future iterations:**
+  - Playwright's page.route() only intercepts requests from the browser page context
+  - page.request.get/post() bypass page.route() mocks and hit real (non-existent) endpoints
+  - Use page.evaluate(() => fetch(...)) for API calls that need to be mocked
+  - SSE format is `data: {json}\n\n` - parse each line to extract delta chunks
+  - Always navigate to a page first to establish base URL before using relative fetch URLs
+  - All 17 E2E tests now pass (Test File Setup, Lore Entry Creation, Chat Verification, Hybrid Search, Citations, Multi-hop, Brain Settings Page)
+
+---
