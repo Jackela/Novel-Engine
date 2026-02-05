@@ -818,4 +818,88 @@ async def get_model_pricing(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+# ==================== CSV Export (BRAIN-035B-03) ====================
+
+
+from fastapi.responses import Response
+
+
+@router.get("/brain/usage/export")
+async def export_usage_csv(
+    days: int = Query(30, ge=1, le=365, description="Number of days to export"),
+    repository: InMemoryTokenUsageRepository = Depends(get_token_usage_repository),
+) -> Response:
+    """
+    Export usage data as CSV file.
+
+    BRAIN-035B-03: CSV Export for usage analytics
+
+    Args:
+        days: Number of days to look back (default: 30)
+
+    Returns:
+        CSV file with usage data including timestamp, model, tokens, and cost
+    """
+    try:
+        end_time = datetime.now(UTC)
+        start_time = end_time - timedelta(days=days)
+
+        # Get usage data
+        usages = await repository.get_usages(start_time, end_time)
+
+        # Build CSV content
+        import csv
+        import io
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Write header
+        writer.writerow([
+            "Timestamp",
+            "Provider",
+            "Model",
+            "Input Tokens",
+            "Output Tokens",
+            "Total Tokens",
+            "Input Cost",
+            "Output Cost",
+            "Total Cost",
+            "Latency (ms)",
+            "Success"
+        ])
+
+        # Write data rows
+        for usage in usages:
+            writer.writerow([
+                usage["timestamp"],
+                usage["provider"],
+                usage["model_name"],
+                usage["input_tokens"],
+                usage["output_tokens"],
+                usage["total_tokens"],
+                usage.get("input_cost", "0"),
+                usage.get("output_cost", "0"),
+                usage.get("total_cost", "0"),
+                usage.get("latency_ms", 0),
+                usage.get("success", True),
+            ])
+
+        # Create response with CSV file
+        csv_content = output.getvalue()
+        filename = f"usage_export_{end_time.strftime('%Y%m%d_%H%M%S')}.csv"
+
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to export usage CSV: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
 __all__ = ["router"]

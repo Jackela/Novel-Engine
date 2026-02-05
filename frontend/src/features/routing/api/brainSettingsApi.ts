@@ -222,4 +222,29 @@ export const brainSettingsApi = {
     const response = await fetch(url);
     return handleResponse<ModelPricingResponse[]>(response);
   },
+
+  /**
+   * Export usage data as CSV file
+   * BRAIN-035B-03: CSV Export for usage analytics
+   */
+  async exportUsageCsv(days: number = 30): Promise<void> {
+    const url = `/api/brain/usage/export?days=${days}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new Error(error.detail || error.message || 'Export failed');
+    }
+
+    // Download the CSV file
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = response.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || `usage_export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  },
 };

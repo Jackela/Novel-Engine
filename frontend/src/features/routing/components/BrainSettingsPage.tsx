@@ -30,6 +30,7 @@ import {
 import {
   CheckCircle2,
   Database,
+  Download,
   DollarSign,
   Eye,
   EyeOff,
@@ -970,6 +971,17 @@ export function BrainSettingsPage() {
                       </Button>
                     </div>
                   )}
+
+                  {/* BRAIN-035B-03: CSV Export button */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => brainSettingsApi.exportUsageCsv(effectiveDays)}
+                    className="gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export CSV
+                  </Button>
                 </div>
               </div>
             </CardHeader>
