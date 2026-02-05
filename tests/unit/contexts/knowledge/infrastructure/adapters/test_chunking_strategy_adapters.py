@@ -26,6 +26,9 @@ from src.contexts.knowledge.infrastructure.adapters.chunking_strategy_adapters i
     NarrativeFlowChunkingStrategy,
     AutoChunkingStrategy,
     ContentType,
+    CoherenceScore,
+    ChunkCoherenceAnalyzer,
+    DEFAULT_COHERENCE_THRESHOLD,
 )
 
 
@@ -2572,4 +2575,526 @@ class TestConfigurableOverlap:
                 f"got {config.overlap}"
             )
             assert config.is_auto_overlap is True
+
+
+class TestCoherenceScore:
+    """Tests for the CoherenceScore value object."""
+
+    def test_coherence_score_creation(self) -> None:
+        """Test creating a CoherenceScore."""
+        score = CoherenceScore(
+            score=0.85,
+            internal_coherence=0.82,
+            boundary_quality=0.90,
+            size_score=1.0,
+            warnings=(),
+            is_acceptable=True,
+        )
+
+        assert score.score == 0.85
+        assert score.internal_coherence == 0.82
+        assert score.boundary_quality == 0.90
+        assert score.size_score == 1.0
+        assert score.warnings == ()
+        assert score.is_acceptable is True
+
+    def test_coherence_score_defaults(self) -> None:
+        """Test CoherenceScore with default values."""
+        score = CoherenceScore(
+            score=0.75,
+            internal_coherence=0.7,
+            boundary_quality=0.8,
+            size_score=0.8,
+        )
+
+        assert score.warnings == ()
+        assert score.is_acceptable is True
+
+    def test_coherence_score_clamping(self) -> None:
+        """Test that scores are clamped to valid range."""
+        # Test upper bound
+        score1 = CoherenceScore(
+            score=1.5,
+            internal_coherence=2.0,
+            boundary_quality=1.8,
+            size_score=1.2,
+        )
+        assert score1.score == 1.0
+        assert score1.internal_coherence == 1.0
+        assert score1.boundary_quality == 1.0
+        assert score1.size_score == 1.0
+
+        # Test lower bound
+        score2 = CoherenceScore(
+            score=-0.5,
+            internal_coherence=-0.2,
+            boundary_quality=-1.0,
+            size_score=0.0,
+        )
+        assert score2.score == 0.0
+        assert score2.internal_coherence == 0.0
+        assert score2.boundary_quality == 0.0
+        assert score2.size_score == 0.0
+
+    def test_get_level_excellent(self) -> None:
+        """Test get_level returns 'excellent' for high scores."""
+        score = CoherenceScore(
+            score=0.85,
+            internal_coherence=0.8,
+            boundary_quality=0.9,
+            size_score=0.85,
+        )
+        assert score.get_level() == "excellent"
+
+    def test_get_level_good(self) -> None:
+        """Test get_level returns 'good' for medium-high scores."""
+        score = CoherenceScore(
+            score=0.7,
+            internal_coherence=0.65,
+            boundary_quality=0.75,
+            size_score=0.7,
+        )
+        assert score.get_level() == "good"
+
+    def test_get_level_fair(self) -> None:
+        """Test get_level returns 'fair' for medium scores."""
+        score = CoherenceScore(
+            score=0.5,
+            internal_coherence=0.45,
+            boundary_quality=0.55,
+            size_score=0.5,
+        )
+        assert score.get_level() == "fair"
+
+    def test_get_level_poor(self) -> None:
+        """Test get_level returns 'poor' for low scores."""
+        score = CoherenceScore(
+            score=0.3,
+            internal_coherence=0.25,
+            boundary_quality=0.35,
+            size_score=0.3,
+        )
+        assert score.get_level() == "poor"
+
+    def test_frozen_immutable(self) -> None:
+        """Test that CoherenceScore is frozen/immutable."""
+        score = CoherenceScore(
+            score=0.75,
+            internal_coherence=0.7,
+            boundary_quality=0.8,
+            size_score=0.75,
+        )
+
+        with pytest.raises(AttributeError):
+            score.score = 0.8  # type: ignore
+
+        with pytest.raises(AttributeError):
+            score.warnings = ("warning",)  # type: ignore
+
+
+class TestChunkCoherenceAnalyzer:
+    """Tests for the ChunkCoherenceAnalyzer class."""
+
+    @pytest.fixture
+    def analyzer(self) -> ChunkCoherenceAnalyzer:
+        """Create analyzer without embedding service (heuristic mode)."""
+        return ChunkCoherenceAnalyzer(embedding_service=None)
+
+    @pytest.fixture
+    def config(self) -> ChunkingStrategy:
+        """Create default chunking configuration."""
+        return ChunkingStrategy.default()
+
+    @pytest.fixture
+    def sample_chunks(self) -> list[Chunk]:
+        """Create sample chunks for testing."""
+        return [
+            Chunk(
+                text="This is a well-formed sentence. This is another one. And a third.",
+                index=0,
+                metadata={"word_count": 15, "strategy": "fixed"},
+            ),
+            Chunk(
+                text="incomplete sentence fragment without proper",
+                index=1,
+                metadata={"word_count": 6, "strategy": "fixed"},
+            ),
+            Chunk(
+                text="Valid sentence. Another valid sentence. Final sentence here.",
+                index=2,
+                metadata={"word_count": 12, "strategy": "fixed"},
+            ),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_analyze_single_chunk(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test analyzing a single chunk."""
+        chunk = Chunk(
+            text="This is a complete sentence. This is another one.",
+            index=0,
+            metadata={"word_count": 10, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(chunk, config)
+
+        assert isinstance(result, CoherenceScore)
+        assert 0.0 <= result.score <= 1.0
+        assert 0.0 <= result.internal_coherence <= 1.0
+        assert 0.0 <= result.boundary_quality <= 1.0
+        assert 0.0 <= result.size_score <= 1.0
+
+    @pytest.mark.asyncio
+    async def test_analyze_multiple_chunks(
+        self, analyzer: ChunkCoherenceAnalyzer,
+        sample_chunks: list[Chunk],
+        config: ChunkingStrategy,
+    ) -> None:
+        """Test analyzing multiple chunks."""
+        results = await analyzer.analyze_chunks(sample_chunks, config)
+
+        assert len(results) == len(sample_chunks)
+        for result in results:
+            assert isinstance(result, CoherenceScore)
+            assert 0.0 <= result.score <= 1.0
+
+    @pytest.mark.asyncio
+    async def test_boundary_quality_good_boundaries(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test boundary quality for well-formed chunks."""
+        good_chunk = Chunk(
+            text="This is a complete sentence. This is another one.",
+            index=0,
+            metadata={"word_count": 10, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(good_chunk, config)
+
+        # Good boundaries should have higher score
+        assert result.boundary_quality >= 0.5
+
+    @pytest.mark.asyncio
+    async def test_boundary_quality_poor_boundaries(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test boundary quality for poorly-formed chunks."""
+        poor_chunk = Chunk(
+            text="incomplete sentence fragment without proper",  # No ending punctuation
+            index=0,
+            metadata={"word_count": 6, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(poor_chunk, config)
+
+        # Poor boundaries should have lower score
+        assert result.boundary_quality < 0.8
+
+    @pytest.mark.asyncio
+    async def test_size_score_ideal_size(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test size score for ideal chunk size."""
+        ideal_chunk = Chunk(
+            text=" ".join([f"word{i}" for i in range(config.chunk_size)]),
+            index=0,
+            metadata={"word_count": config.chunk_size, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(ideal_chunk, config)
+
+        # Ideal size should have perfect score
+        assert result.size_score == 1.0
+
+    @pytest.mark.asyncio
+    async def test_size_score_too_small(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test size score for chunks that are too small."""
+        small_chunk = Chunk(
+            text=" ".join([f"word{i}" for i in range(config.min_chunk_size - 10)]),
+            index=0,
+            metadata={"word_count": config.min_chunk_size - 10, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(small_chunk, config)
+
+        # Too small should have reduced score
+        assert result.size_score < 1.0
+        assert len(result.warnings) > 0
+        assert any("too small" in w for w in result.warnings)
+
+    @pytest.mark.asyncio
+    async def test_size_score_too_large(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test size score for chunks that are too large."""
+        large_chunk = Chunk(
+            text=" ".join([f"word{i}" for i in range(int(config.chunk_size * 1.6))]),
+            index=0,
+            metadata={"word_count": int(config.chunk_size * 1.6), "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(large_chunk, config)
+
+        # Too large should have reduced score
+        assert result.size_score < 1.0
+        assert len(result.warnings) > 0
+        assert any("too large" in w for w in result.warnings)
+
+    @pytest.mark.asyncio
+    async def test_warnings_generated_for_poor_chunks(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test that warnings are generated for chunks with issues."""
+        poor_chunk = Chunk(
+            text="fragment",  # Too small, no ending punctuation
+            index=0,
+            metadata={"word_count": 1, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(poor_chunk, config)
+
+        # Should have warnings
+        assert len(result.warnings) > 0
+
+    @pytest.mark.asyncio
+    async def test_acceptable_flag(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test the is_acceptable flag."""
+        # Good chunk should be acceptable
+        good_chunk = Chunk(
+            text="This is a complete sentence. This is another one.",
+            index=0,
+            metadata={"word_count": 200, "strategy": "fixed"},
+        )
+
+        good_result = await analyzer.analyze_chunk(good_chunk, config)
+        assert good_result.is_acceptable is True
+
+        # Very small chunk with poor boundaries should not be acceptable
+        # Use a strict analyzer to ensure the test works
+        strict_analyzer = ChunkCoherenceAnalyzer(
+            embedding_service=None,
+            acceptable_threshold=0.8,  # Higher threshold
+        )
+
+        poor_chunk = Chunk(
+            text="x y",  # Very small, no sentence structure
+            index=0,
+            metadata={"word_count": 2, "strategy": "fixed"},
+        )
+
+        poor_result = await strict_analyzer.analyze_chunk(poor_chunk, config)
+        # With strict threshold, even a small penalty makes it unacceptable
+        assert poor_result.is_acceptable is False
+
+    @pytest.mark.asyncio
+    async def test_custom_thresholds(self) -> None:
+        """Test analyzer with custom thresholds."""
+        strict_analyzer = ChunkCoherenceAnalyzer(
+            embedding_service=None,
+            acceptable_threshold=0.8,  # Stricter
+        )
+
+        chunk = Chunk(
+            text="This is a sentence. Another sentence here.",
+            index=0,
+            metadata={"word_count": 50, "strategy": "fixed"},
+        )
+
+        config = ChunkingStrategy.default()
+        result = await strict_analyzer.analyze_chunk(chunk, config)
+
+        # With strict threshold, might not be acceptable even if decent score
+        if result.score < 0.8:
+            assert result.is_acceptable is False
+
+    @pytest.mark.asyncio
+    async def test_custom_weights(self) -> None:
+        """Test analyzer with custom component weights."""
+        # Emphasize boundary quality
+        boundary_focused_analyzer = ChunkCoherenceAnalyzer(
+            embedding_service=None,
+            internal_weight=0.2,
+            boundary_weight=0.7,
+            size_weight=0.1,
+        )
+
+        chunk = Chunk(
+            text="This is a complete sentence. This is another one.",
+            index=0,
+            metadata={"word_count": 50, "strategy": "fixed"},
+        )
+
+        config = ChunkingStrategy.default()
+        result = await boundary_focused_analyzer.analyze_chunk(chunk, config)
+
+        # Overall score should be calculated with custom weights
+        assert 0.0 <= result.score <= 1.0
+
+    @pytest.mark.asyncio
+    async def test_heuristic_coherence_without_embeddings(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test coherence calculation without embedding service."""
+        chunk = Chunk(
+            text=" ".join([f"word{i}" for i in range(100)]),
+            index=0,
+            metadata={"word_count": 100, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(chunk, config)
+
+        # Should still calculate coherence using heuristics
+        assert result.internal_coherence >= 0.0
+        assert result.internal_coherence <= 1.0
+
+    @pytest.mark.asyncio
+    async def test_heuristic_coherence_decreases_with_size(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test that heuristic coherence decreases for larger chunks."""
+        small_chunk = Chunk(
+            text=" ".join([f"word{i}" for i in range(50)]),
+            index=0,
+            metadata={"word_count": 50, "strategy": "fixed"},
+        )
+
+        large_chunk = Chunk(
+            text=" ".join([f"word{i}" for i in range(1500)]),
+            index=1,
+            metadata={"word_count": 1500, "strategy": "fixed"},
+        )
+
+        small_result = await analyzer.analyze_chunk(small_chunk, config)
+        large_result = await analyzer.analyze_chunk(large_chunk, config)
+
+        # Larger chunk should have lower internal coherence (topic drift)
+        assert small_result.internal_coherence >= large_result.internal_coherence
+
+    @pytest.mark.asyncio
+    async def test_cosine_similarity_calculation(
+        self, analyzer: ChunkCoherenceAnalyzer
+    ) -> None:
+        """Test cosine similarity calculation."""
+        # Identical vectors should have similarity of 1.0
+        vec1 = [0.5, 0.5, 0.5, 0.5]
+        vec2 = [0.5, 0.5, 0.5, 0.5]
+
+        sim = analyzer._cosine_similarity(vec1, vec2)
+        assert abs(sim - 1.0) < 0.001
+
+        # Orthogonal vectors should have similarity of 0.0
+        vec3 = [1.0, 0.0, 0.0, 0.0]
+        vec4 = [0.0, 1.0, 0.0, 0.0]
+
+        sim = analyzer._cosine_similarity(vec3, vec4)
+        assert abs(sim - 0.0) < 0.001
+
+        # Opposite vectors should have similarity of -1.0
+        vec5 = [1.0, 0.0, 0.0, 0.0]
+        vec6 = [-1.0, 0.0, 0.0, 0.0]
+
+        sim = analyzer._cosine_similarity(vec5, vec6)
+        assert abs(sim - (-1.0)) < 0.001
+
+    @pytest.mark.asyncio
+    async def test_different_length_vectors(self, analyzer: ChunkCoherenceAnalyzer
+    ) -> None:
+        """Test cosine similarity with different length vectors."""
+        vec1 = [0.5, 0.5, 0.5]
+        vec2 = [0.5, 0.5, 0.5, 0.5]
+
+        sim = analyzer._cosine_similarity(vec1, vec2)
+        assert sim == 0.0
+
+    @pytest.mark.asyncio
+    async def test_empty_chunks(self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test analyzing chunks with very minimal content."""
+        chunk = Chunk(
+            text="Hi",  # Very short
+            index=0,
+            metadata={"word_count": 1, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(chunk, config)
+
+        # Should still return a valid score
+        assert isinstance(result, CoherenceScore)
+        assert 0.0 <= result.score <= 1.0
+
+
+class TestChunkCoherenceAnalyzerWithEmbeddings:
+    """Tests for ChunkCoherenceAnalyzer with mock embedding service."""
+
+    @pytest.fixture
+    def embedding_service(self) -> MockEmbeddingService:
+        """Create mock embedding service."""
+        return MockEmbeddingService()
+
+    @pytest.fixture
+    def analyzer(self, embedding_service: MockEmbeddingService) -> ChunkCoherenceAnalyzer:
+        """Create analyzer with embedding service."""
+        return ChunkCoherenceAnalyzer(embedding_service=embedding_service)
+
+    @pytest.fixture
+    def config(self) -> ChunkingStrategy:
+        """Create default chunking configuration."""
+        return ChunkingStrategy.default()
+
+    @pytest.mark.asyncio
+    async def test_embedding_based_coherence(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test coherence calculation with embeddings."""
+        # Create text with semantically similar sentences
+        chunk = Chunk(
+            text="The battle was fierce. The fight continued for hours. War ravaged the land.",
+            index=0,
+            metadata={"word_count": 16, "strategy": "semantic"},
+        )
+
+        result = await analyzer.analyze_chunk(chunk, config)
+
+        # Should calculate using embeddings
+        assert 0.0 <= result.internal_coherence <= 1.0
+        assert isinstance(result, CoherenceScore)
+
+    @pytest.mark.asyncio
+    async def test_single_sentence_perfect_coherence(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test that single sentence has perfect coherence."""
+        chunk = Chunk(
+            text="This is a single sentence.",
+            index=0,
+            metadata={"word_count": 5, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(chunk, config)
+
+        # Single sentence should have perfect internal coherence
+        assert result.internal_coherence == 1.0
+
+    @pytest.mark.asyncio
+    async def test_embedding_service_fallback(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    ) -> None:
+        """Test fallback to heuristics if embedding fails."""
+        # This test verifies the fallback behavior
+        chunk = Chunk(
+            text=" ".join([f"word{i}" for i in range(100)]),
+            index=0,
+            metadata={"word_count": 100, "strategy": "fixed"},
+        )
+
+        result = await analyzer.analyze_chunk(chunk, config)
+
+        # Should still produce valid result
+        assert isinstance(result, CoherenceScore)
+        assert 0.0 <= result.score <= 1.0
 

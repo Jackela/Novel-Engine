@@ -712,3 +712,34 @@ Branch: feat/code-citadel
   - All 131 chunking strategy tests pass (114 original + 17 new configurable overlap tests)
 
 --
+
+## 2025-02-05 - BRAIN-039B-03
+- **What was implemented:**
+  - Created CoherenceScore frozen dataclass with detailed chunk quality metrics
+  - Added score, internal_coherence, boundary_quality, size_score fields
+  - Added warnings tuple for issue messages and is_acceptable flag for pass/fail
+  - Added get_level() method returning "excellent"/"good"/"fair"/"poor"
+  - Created ChunkCoherenceAnalyzer class for analyzing chunk coherence
+  - Implements embedding-based coherence using sentence embeddings and cosine similarity
+  - Implements heuristic coherence fallback when no embedding service available
+  - Calculates boundary quality (sentence ending, capitalization, paragraph structure)
+  - Calculates size score based on target chunk_size and min_chunk_size
+  - Generates warnings for low internal coherence, poor boundaries, and size issues
+  - Supports custom thresholds (acceptable, good, excellent) and component weights
+  - Added 27 comprehensive tests (8 CoherenceScore, 16 Analyzer, 3 with Embeddings)
+- **Files changed:**
+  - `src/contexts/knowledge/infrastructure/adapters/chunking_strategy_adapters.py` - Added CoherenceScore and ChunkCoherenceAnalyzer
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py` - Exported new classes
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_chunking_strategy_adapters.py` - Added 27 tests
+- **Learnings for future iterations:**
+  - CoherenceScore is frozen (immutable) like other value objects in the codebase
+  - Use field(default_factory=tuple) for tuple fields in dataclasses
+  - Internal coherence uses average cosine similarity between adjacent sentences
+  - Single sentence chunks have perfect internal coherence (1.0)
+  - Heuristic coherence decreases with chunk size (larger = more topic drift)
+  - Boundary quality checks for sentence-ending punctuation, capitalization, paragraph structure
+  - Size score penalizes chunks smaller than min_chunk_size or larger than 1.5x target
+  - Warnings are generated as tuples for immutability
+  - All 158 chunking strategy tests pass (131 original + 27 new coherence tests)
+
+--

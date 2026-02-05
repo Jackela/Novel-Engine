@@ -16,8 +16,12 @@ from .chunking_strategy_adapters import (
     SentenceChunkingStrategy,
     ParagraphChunkingStrategy,
     SemanticChunkingStrategy,
+    NarrativeFlowChunkingStrategy,
     AutoChunkingStrategy,
     ContentType,
+    CoherenceScore,
+    ChunkCoherenceAnalyzer,
+    DEFAULT_COHERENCE_THRESHOLD,
 )
 
 __all__ = [
@@ -30,6 +34,10 @@ __all__ = [
     "SentenceChunkingStrategy",
     "ParagraphChunkingStrategy",
     "SemanticChunkingStrategy",
+    "NarrativeFlowChunkingStrategy",
     "AutoChunkingStrategy",
     "ContentType",
+    "CoherenceScore",
+    "ChunkCoherenceAnalyzer",
+    "DEFAULT_COHERENCE_THRESHOLD",
 ]
