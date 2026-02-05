@@ -26,6 +26,7 @@ class ChunkStrategyType(str, Enum):
     SEMANTIC: Split by semantic boundaries (sentences, paragraphs)
     SENTENCE: Split by sentences with overlap
     PARAGRAPH: Split by paragraphs with overlap
+    NARRATIVE_FLOW: Split while preserving narrative flow and dialogue
     AUTO: Auto-detect best strategy based on content type and structure
     """
 
@@ -33,6 +34,7 @@ class ChunkStrategyType(str, Enum):
     SEMANTIC = "semantic"
     SENTENCE = "sentence"
     PARAGRAPH = "paragraph"
+    NARRATIVE_FLOW = "narrative_flow"
     AUTO = "auto"
 
 

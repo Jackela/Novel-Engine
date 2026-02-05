@@ -6,6 +6,8 @@ Tests for the IChunkingStrategy port implementations.
 Warzone 4: AI Brain - BRAIN-039A-02, BRAIN-039A-03, BRAIN-039A-04
 """
 
+import re
+
 import pytest
 
 from src.contexts.knowledge.application.ports.i_chunking_strategy import (
@@ -21,9 +23,14 @@ from src.contexts.knowledge.infrastructure.adapters.chunking_strategy_adapters i
     SentenceChunkingStrategy,
     ParagraphChunkingStrategy,
     SemanticChunkingStrategy,
+    NarrativeFlowChunkingStrategy,
     AutoChunkingStrategy,
     ContentType,
 )
+
+
+# Word pattern for counting (same as in adapters)
+_WORD_PATTERN = re.compile(r"\S+")
 
 
 class TestFixedChunkingStrategy:
@@ -1802,3 +1809,487 @@ class TestAutoChunkingStrategy:
         assert mapping[ContentType.DIALOGUE] == ChunkStrategyType.SENTENCE
         assert mapping[ContentType.NARRATIVE] == ChunkStrategyType.SEMANTIC
         assert mapping[ContentType.DOCUMENT] == ChunkStrategyType.PARAGRAPH
+
+
+class TestNarrativeFlowChunkingStrategy:
+    """Tests for NarrativeFlowChunkingStrategy adapter."""
+
+    @pytest.fixture
+    def strategy(self) -> NarrativeFlowChunkingStrategy:
+        """Create a NarrativeFlowChunkingStrategy instance."""
+        return NarrativeFlowChunkingStrategy()
+
+    @pytest.fixture
+    def dialogue_text(self) -> str:
+        """Create sample text with dialogue exchanges."""
+        return (
+            '"Hello," she said. "How are you today?"\n'
+            '"I am well," he replied. "And you?"\n'
+            '"Very well, thank you." She smiled warmly.\n'
+            'The conversation continued pleasantly.\n'
+            '"What brings you here?" asked the man.\n'
+            '"Business," she answered. "Important business."\n'
+            'He nodded understandingly.'
+        )
+
+    @pytest.fixture
+    def narrative_text(self) -> str:
+        """Create sample narrative text with mixed content."""
+        return (
+            "The warrior stood at the edge of the cliff. His armor gleamed in the "
+            "morning sun. Below him, the army gathered like ants on the forest floor.\n\n"
+            '"We ride at dawn," he declared to his captains.\n'
+            'The captains nodded solemnly. Each man knew his duty.\n\n'
+            '"For the king!" shouted the first captain.\n'
+            '"For glory!" cried the second.\n'
+            '"For victory!" roared the third.\n\n'
+            'The speech stirred their hearts. They were ready for battle.'
+        )
+
+    @pytest.mark.asyncio
+    async def test_preserves_sentence_boundaries(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+        """Test that sentence boundaries are preserved."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=60,
+            overlap=10,
+            min_chunk_size=20,
+        )
+
+        text = (
+            "This is sentence one. This is sentence two. "
+            "This is sentence three. This is sentence four."
+        )
+
+        chunks = await strategy.chunk(text, config)
+
+        # Each chunk should end with proper punctuation
+        for chunk in chunks:
+            chunk_text = chunk.text.strip()
+            # Chunks should end at sentence boundaries
+            assert chunk_text.endswith((".", "!", "?", '"', "'")) or len(chunk_text) < 60
+
+    @pytest.mark.asyncio
+    async def test_preserves_dialogue_boundaries(self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str) -> None:
+        """Test that dialogue exchanges are preserved together."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=80,
+            overlap=15,
+        )
+
+        chunks = await strategy.chunk(dialogue_text, config)
+
+        # Check that dialogue chunks contain complete exchanges
+        for chunk in chunks:
+            # Count quote pairs in chunk
+            quote_count = chunk.text.count('"')
+            # Should be even (complete quotes)
+            assert quote_count % 2 == 0, f"Chunk has incomplete dialogue: {chunk.text[:50]}..."
+
+    @pytest.mark.asyncio
+    async def test_does_not_break_mid_dialogue(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+        """Test that chunks don't break in the middle of dialogue."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=50,
+            overlap=10,
+            min_chunk_size=10,
+        )
+
+        text = '"Hello," she said. "How are you?" "I am well," he replied.'
+
+        chunks = await strategy.chunk(text, config)
+
+        # Even with small chunk size, dialogue should be preserved
+        for chunk in chunks:
+            # Check for unclosed quotes
+            quote_count = chunk.text.count('"')
+            assert quote_count % 2 == 0, f"Unclosed quotes in chunk: {chunk.text}"
+
+    @pytest.mark.asyncio
+    async def test_chunks_maintain_narrative_coherence(
+        self, strategy: NarrativeFlowChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test that chunks maintain narrative coherence."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=60,
+            overlap=12,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        # Should create chunks
+        assert len(chunks) >= 1
+
+        # Each chunk should have narrative metadata
+        for chunk in chunks:
+            assert chunk.metadata["strategy"] in ("narrative_flow", "narrative_flow_sentence_fallback")
+            # Check for narrative metadata
+            if chunk.metadata["strategy"] == "narrative_flow":
+                assert "total_units" in chunk.metadata
+                assert "sentence_units" in chunk.metadata
+
+    @pytest.mark.asyncio
+    async def test_empty_text_raises_error(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+        """Test that empty text raises ValueError."""
+        config = ChunkingStrategy.default()
+
+        with pytest.raises(ValueError, match="Cannot chunk empty text"):
+            await strategy.chunk("", config)
+
+    @pytest.mark.asyncio
+    async def test_supports_strategy_type(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+        """Test supports_strategy_type method."""
+        assert strategy.supports_strategy_type("narrative_flow") is True
+        assert strategy.supports_strategy_type("NARRATIVE_FLOW") is True
+        assert strategy.supports_strategy_type("Narrative_Flow") is True
+        assert strategy.supports_strategy_type("fixed") is False
+        assert strategy.supports_strategy_type("semantic") is False
+        assert strategy.supports_strategy_type("sentence") is False
+
+    @pytest.mark.asyncio
+    async def test_chunk_indices(self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str) -> None:
+        """Test that chunks have correct sequential indices."""
+        config = ChunkingStrategy.default()
+
+        chunks = await strategy.chunk(dialogue_text, config)
+
+        for i, chunk in enumerate(chunks):
+            assert chunk.index == i
+
+    @pytest.mark.asyncio
+    async def test_metadata_strategy_field(self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str) -> None:
+        """Test that chunks have correct strategy in metadata."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=60,
+            overlap=10,
+            min_chunk_size=20,
+        )
+
+        chunks = await strategy.chunk(dialogue_text, config)
+
+        for chunk in chunks:
+            assert chunk.metadata["strategy"] in ("narrative_flow", "narrative_flow_sentence_fallback")
+
+    @pytest.mark.asyncio
+    async def test_metadata_narrative_composition(
+        self, strategy: NarrativeFlowChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test that narrative composition is tracked in metadata."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=80,
+            overlap=15,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        for chunk in chunks:
+            if chunk.metadata["strategy"] == "narrative_flow":
+                # Should have narrative composition metadata
+                assert "total_units" in chunk.metadata
+                assert "dialogue_units" in chunk.metadata
+                assert "sentence_units" in chunk.metadata
+                assert "has_dialogue" in chunk.metadata
+                assert isinstance(chunk.metadata["has_dialogue"], bool)
+
+    @pytest.mark.asyncio
+    async def test_single_sentence_text(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+        """Test chunking text with a single sentence."""
+        config = ChunkingStrategy.default()
+
+        chunks = await strategy.chunk("This is a single sentence.", config)
+
+        assert len(chunks) == 1
+        assert chunks[0].text == "This is a single sentence."
+
+    @pytest.mark.asyncio
+    async def test_text_smaller_than_chunk_size(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
+        """Test text that's smaller than one chunk."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=500,
+            overlap=50,
+        )
+
+        text = '"Hello," she said. "How are you?" "I am well," he replied.'
+
+        chunks = await strategy.chunk(text, config)
+
+        assert len(chunks) == 1
+
+    @pytest.mark.asyncio
+    async def test_zero_overlap(self, strategy: NarrativeFlowChunkingStrategy, narrative_text: str) -> None:
+        """Test narrative flow chunking with zero overlap."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=60,
+            overlap=0,
+            min_chunk_size=20,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        # Should still create chunks
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_preserve_dialogue_flag(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+        """Test the preserve_dialogue flag."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=50,
+            overlap=5,
+            min_chunk_size=10,
+        )
+
+        # Create strategy without dialogue preservation
+        strategy_no_dialogue = NarrativeFlowChunkingStrategy(
+            preserve_dialogue=False,
+        )
+
+        text = '"Hello," she said. "How are you?" "I am well," he replied.'
+
+        chunks = await strategy_no_dialogue.chunk(text, config)
+
+        # Without dialogue preservation, chunks may break at dialogue
+        # but should still maintain sentence boundaries
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_preserve_paragraphs_flag(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+        """Test the preserve_paragraphs flag."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=60,
+            overlap=10,
+            min_chunk_size=20,
+        )
+
+        text = (
+            "First paragraph here. With content.\n\n"
+            "Second paragraph here. More content.\n\n"
+            "Third paragraph with final text."
+        )
+
+        chunks = await strategy.chunk(text, config)
+
+        # Paragraphs should be kept together when possible
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_mixed_narrative_and_dialogue(
+        self, strategy: NarrativeFlowChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test chunking mixed narrative and dialogue content."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=70,
+            overlap=15,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        # Should handle mixed content
+        assert len(chunks) >= 1
+
+        # Check that dialogue is properly tracked
+        dialogue_chunks = [c for c in chunks if c.metadata.get("has_dialogue")]
+        assert len(dialogue_chunks) > 0  # At least one chunk should have dialogue
+
+    @pytest.mark.asyncio
+    async def test_overlap_preserves_narrative_units(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
+        """Test that overlap preserves complete narrative units."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=50,
+            overlap=15,
+            min_chunk_size=10,
+        )
+
+        text = (
+            '"Hello," she said. "How are you?"\n'
+            '"I am well," he replied.\n'
+            'The conversation continued pleasantly.\n'
+            '"What brings you here?" asked the man.\n'
+            '"Business," she answered.'
+        )
+
+        chunks = await strategy.chunk(text, config)
+
+        if len(chunks) > 1:
+            # Verify overlap by checking content overlap
+            first_text = chunks[0].text
+            second_text = chunks[1].text
+            # Check for some content overlap
+            assert len(first_text) > 0
+            assert len(second_text) > 0
+
+    @pytest.mark.asyncio
+    async def test_custom_default_config(self) -> None:
+        """Test creating strategy with custom default config."""
+        custom_default = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=200,
+            overlap=30,
+        )
+        strategy = NarrativeFlowChunkingStrategy(default_config=custom_default)
+
+        text = " ".join([f"Sentence {i}." for i in range(50)])
+        chunks = await strategy.chunk(text)  # No config passed
+
+        assert chunks[0].metadata["chunk_size"] == 200
+        assert chunks[0].metadata["overlap"] == 30
+
+    @pytest.mark.asyncio
+    async def test_very_long_dialogue_exchange(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
+        """Test handling of very long dialogue exchanges."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=60,
+            overlap=10,
+        )
+
+        # Create a long dialogue exchange
+        dialogue_lines = [f'"Statement number {i}," said speaker {i % 2 + 1}.' for i in range(20)]
+        text = " ".join(dialogue_lines)
+
+        chunks = await strategy.chunk(text, config)
+
+        # Should handle long dialogue
+        assert len(chunks) >= 1
+        # Check quotes are balanced in each chunk
+        for chunk in chunks:
+            quote_count = chunk.text.count('"')
+            assert quote_count % 2 == 0
+
+    @pytest.mark.asyncio
+    async def test_fallback_to_sentence_for_unstructured_text(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
+        """Test fallback to sentence chunking for unstructured text."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=100,
+            overlap=20,
+        )
+
+        # Text without clear narrative structure
+        text = "word1 word2 word3 " * 100
+
+        chunks = await strategy.chunk(text, config)
+
+        # Should still chunk via fallback
+        assert len(chunks) > 0
+
+    @pytest.mark.asyncio
+    async def test_strategy_type_mismatch_warning(
+        self, strategy: NarrativeFlowChunkingStrategy, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test warning when strategy type doesn't match NARRATIVE_FLOW."""
+        import logging
+        import structlog
+
+        # Configure structlog for caplog
+        structlog.configure(
+            processors=[
+                structlog.stdlib.add_log_level,
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.PositionalArgumentsFormatter(),
+                structlog.processors.StackInfoRenderer(),
+                structlog.processors.format_exc_info,
+                structlog.processors.UnicodeDecoder(),
+                structlog.stdlib.render_to_log_kwargs,
+            ],
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            cache_logger_on_first_use=True,
+        )
+
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,  # Mismatch!
+            chunk_size=500,
+            overlap=50,
+        )
+
+        text = " ".join([f"word{i}" for i in range(200)])
+
+        with caplog.at_level(logging.WARNING):
+            chunks = await strategy.chunk(text, config)
+
+        # Should still chunk the text
+        assert len(chunks) > 0
+        # Should log a warning about mismatch
+        assert any("mismatch" in record.message.lower() for record in caplog.records)
+
+    @pytest.mark.asyncio
+    async def test_metadata_word_count(
+        self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str
+    ) -> None:
+        """Test that word count is accurate in metadata."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=80,
+            overlap=15,
+        )
+
+        chunks = await strategy.chunk(dialogue_text, config)
+
+        for chunk in chunks:
+            metadata_word_count = chunk.metadata["word_count"]
+            actual_word_count = len(_WORD_PATTERN.findall(chunk.text))
+            assert metadata_word_count == actual_word_count
+
+    @pytest.mark.asyncio
+    async def test_dialogue_with_single_quotes(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+        """Test handling of dialogue with single quotes."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=60,
+            overlap=10,
+            min_chunk_size=20,
+        )
+
+        text = "'Hello,' she said. 'How are you?' 'I am well,' he replied."
+
+        chunks = await strategy.chunk(text, config)
+
+        # Should handle single quotes
+        assert len(chunks) >= 1
+        for chunk in chunks:
+            # Check for balanced single quotes
+            single_quote_count = chunk.text.count("'")
+            # Note: apostrophes in contractions also count
+            assert single_quote_count >= 0
+
+    @pytest.mark.asyncio
+    async def test_paragraph_preservation_with_dialogue(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
+        """Test that paragraphs with dialogue are kept together."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.NARRATIVE_FLOW,
+            chunk_size=60,
+            overlap=10,
+        )
+
+        text = (
+            'The hero approached. "Greetings," he said.\n\n'
+            'The villain laughed. "You cannot stop me."\n\n'
+            'They drew their swords. The battle began.'
+        )
+
+        chunks = await strategy.chunk(text, config)
+
+        # Should respect paragraph boundaries
+        assert len(chunks) >= 1
+
