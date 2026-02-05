@@ -10,1190 +10,492 @@
   },
   "userStories": [
     {
-      "id": "BRAIN-001",
-      "title": "Infra: Setup Vector Database (ChromaDB)",
-      "description": "Initialize the long-term memory storage for the AI system.",
+      "id": "BRAIN-035B-01",
+      "title": "Dashboard: Model Comparison Table",
+      "description": "Add cost comparison table for different models.",
       "acceptanceCriteria": [
-        "Install `chromadb` and `tiktoken` dependencies",
-        "Create `VectorStore` adapter in `infrastructure/adapters/vector_store/`",
-        "Implement `IVectorStore` port with methods: upsert, query, delete, clear",
-        "Support persistent storage in `.data/chroma/` directory",
-        "Add health check endpoint to verify ChromaDB connection",
-        "Test: Verify data persistence across restarts using temporary local folder"
-      ],
-      "priority": 1,
-      "passes": true,
-      "effort": "medium"
-    },
-    {
-      "id": "BRAIN-002",
-      "title": "Infra: Embedding Service Adapter",
-      "description": "Convert text to vectors for semantic search.",
-      "acceptanceCriteria": [
-        "Create `EmbeddingService` adapter wrapping OpenAI `text-embedding-3-small`",
-        "Implement `IEmbeddingPort` with `embed(text: str) -> list[float]` method",
-        "Add batch embedding support for efficiency",
-        "Implement fallback mock embedding for testing (deterministic random vectors)",
-        "Add dimension configuration (default: 1536 for OpenAI)",
-        "Test: Verify vectors have correct dimensions and are deterministic for same input"
-      ],
-      "priority": 2,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-001"
-      ]
-    },
-    {
-      "id": "BRAIN-003",
-      "title": "Domain: Knowledge Entry Entity",
-      "description": "Define the unit of memory storage.",
-      "acceptanceCriteria": [
-        "Create `KnowledgeEntry` entity with: id, content, source_type (CHARACTER/LORE/SCENE/PLOTLINE), source_id, metadata, embedding_id",
-        "Define `ChunkingStrategy` value object: chunk_size, overlap, strategy (FIXED/SEMANTIC)",
-        "Implement chunker that splits long text into overlapping chunks",
-        "Add metadata enrichment (timestamp, word_count, tags)",
-        "Test: Split a 2000-word text into chunks with 500-word size and 50-word overlap"
-      ],
-      "priority": 3,
-      "passes": true,
-      "effort": "medium"
-    },
-    {
-      "id": "BRAIN-004",
-      "title": "Service: Knowledge Ingestion Service",
-      "description": "Feed knowledge into the vector database.",
-      "acceptanceCriteria": [
-        "Create `KnowledgeIngestionService` in knowledge context",
-        "Method `ingest(entity)`: Text -> Chunk -> Embed -> Store in Chroma",
-        "Method `batch_ingest(entities)`: Efficient bulk processing",
-        "Method `delete(source_id)`: Remove all chunks for a source",
-        "Method `update(source_id, content)`: Replace old chunks with new",
-        "Add progress tracking for large ingestions",
-        "Test: Ingest a Character Profile and verify it's queryable by content"
-      ],
-      "priority": 4,
-      "passes": true,
-      "effort": "high",
-      "dependencies": [
-        "BRAIN-002",
-        "BRAIN-003"
-      ]
-    },
-    {
-      "id": "BRAIN-005",
-      "title": "Integration: Auto-Sync Event Listeners",
-      "description": "Keep memory fresh automatically by listening to domain events.",
-      "acceptanceCriteria": [
-        "Create domain event handlers for: CharacterCreated, CharacterUpdated, LoreCreated, LoreUpdated, SceneCreated, SceneUpdated",
-        "Handlers trigger `KnowledgeIngestionService.ingest()` on events",
-        "Add async processing queue for ingestions to avoid blocking",
-        "Add error handling and retry logic for failed ingestions",
-        "Test: Create a character via API and verify vectors appear in ChromaDB"
-      ],
-      "priority": 5,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-004"
-      ]
-    },
-    {
-      "id": "BRAIN-006",
-      "title": "Service: Context Retrieval Service (RAG)",
-      "description": "The 'Recall' mechanism for fetching relevant knowledge.",
-      "acceptanceCriteria": [
-        "Create `RetrievalService` in knowledge context",
-        "Method `retrieve_relevant(query: str, k: int = 5, filters: dict)`: Search VectorDB",
-        "Method `format_context(results, max_tokens)`: Convert results to LLM prompt block",
-        "Support filtering by source_type, tags, date ranges",
-        "Add relevance score threshold to filter low-quality results",
-        "Implement deduplication of similar chunks",
-        "Test: Search for 'brave warrior' and get relevant character with that trait"
-      ],
-      "priority": 6,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-004"
-      ]
-    },
-    {
-      "id": "BRAIN-007A",
-      "title": "Integration: RAG-Enhanced Generation - Service Wrapper",
-      "description": "Create RAG integration wrapper/service.",
-      "acceptanceCriteria": [
-        "Create `RAGIntegrationService` in knowledge context",
-        "Method `enrich_prompt(query: str, base_prompt: str) -> str`",
-        "Wire up RetrievalService dependency",
-        "Add configuration for max_chunks, score_threshold",
-        "Test: Verify service calls RetrievalService correctly"
-      ],
-      "priority": 7,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-006"
-      ]
-    },
-    {
-      "id": "BRAIN-007B",
-      "title": "Integration: RAG-Enhanced Generation - LLM Integration",
-      "description": "Update LLMWorldGenerator with RetrievalService.",
-      "acceptanceCriteria": [
-        "Update `LLMWorldGenerator` to accept optional RetrievalService",
-        "Modify `generate_scene` to call RAG before generation",
-        "Modify `generate_beat` to call RAG before generation",
-        "Extract keywords/summary from request for retrieval",
-        "Test: Mock retrieval and verify method is called"
-      ],
-      "priority": 8,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-007A"
-      ]
-    },
-    {
-      "id": "BRAIN-007C",
-      "title": "Integration: RAG-Enhanced Generation - Context Injection",
-      "description": "Add context injection and RAG toggle.",
-      "acceptanceCriteria": [
-        "Inject retrieved context into System Prompt as 'Relevant Context:' section",
-        "Add toggle to enable/disable RAG per request",
-        "Log number of chunks retrieved and tokens added",
-        "Test: Verify prompt structure contains context when enabled"
-      ],
-      "priority": 9,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-007B"
-      ]
-    },
-    {
-      "id": "BRAIN-008A",
-      "title": "RAG: Hybrid Search - BM25 Implementation",
-      "description": "Implement BM25 keyword search.",
-      "acceptanceCriteria": [
-        "Install `rank-bm25` dependency",
-        "Create `BM25Retriever` class",
-        "Index documents with BM25 on ingestion",
-        "Method `search(query: str, k: int) -> list[Result]`",
-        "Test: Verify keyword search returns relevant results"
-      ],
-      "priority": 10,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-006"
-      ]
-    },
-    {
-      "id": "BRAIN-008B",
-      "title": "RAG: Hybrid Search - Score Fusion",
-      "description": "Create HybridRetriever with score fusion.",
-      "acceptanceCriteria": [
-        "Create `HybridRetriever` combining vector and BM25",
-        "Configurable weight: vector (default 0.7), BM25 (default 0.3)",
-        "Implement Reciprocal Rank Fusion with alpha parameter",
-        "Test: Compare pure vector vs hybrid search quality"
-      ],
-      "priority": 11,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-008A"
-      ]
-    },
-    {
-      "id": "BRAIN-009A",
-      "title": "RAG: Query Rewriting - Service",
-      "description": "Create QueryRewriter service.",
-      "acceptanceCriteria": [
-        "Create `QueryRewriter` service using LLM",
-        "Strategies: synonym expansion, sub-query decomposition",
-        "Method `rewrite(query: str) -> list[str]` returns variants",
-        "Test: Query 'protagonist motivation' expands to variants"
-      ],
-      "priority": 12,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-006"
-      ]
-    },
-    {
-      "id": "BRAIN-009B",
-      "title": "RAG: Query Rewriting - Caching & Integration",
-      "description": "Add caching and expansion strategies.",
-      "acceptanceCriteria": [
-        "Add caching for rewritten queries to save tokens",
-        "Clarification strategy for ambiguous queries",
-        "Execute retrieval for all variants and merge results",
-        "Integration with RetrievalService",
-        "Test: Verify cache hit reduces token usage"
-      ],
-      "priority": 13,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-009A"
-      ]
-    },
-    {
-      "id": "BRAIN-010A",
-      "title": "RAG: Re-ranking - Interface",
-      "description": "Create RerankService interface.",
-      "acceptanceCriteria": [
-        "Create `IReranker` port interface",
-        "Create `RerankService` with `rerank(query, results, top_k)` method",
-        "Define `RerankResult` with score and original index",
-        "Add fallback to original order if reranking fails",
-        "Test: Verify rerank maintains results order on failure"
-      ],
-      "priority": 14,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-008B"
-      ]
-    },
-    {
-      "id": "BRAIN-010B",
-      "title": "RAG: Re-ranking - Implementations",
-      "description": "Implement Cohere/local rerankers.",
-      "acceptanceCriteria": [
-        "Implement `CohereReranker` using Cohere API",
-        "Implement `LocalReranker` using sentence-transformers",
-        "Add latency and score improvement tracking",
-        "Configurable reranker selection",
-        "Test: Verify top-3 results improve after reranking"
-      ],
-      "priority": 15,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-010A"
-      ]
-    },
-    {
-      "id": "BRAIN-011A",
-      "title": "RAG: Context Optimization - Token Counter",
-      "description": "Token counter with tiktoken.",
-      "acceptanceCriteria": [
-        "Install tiktoken dependency",
-        "Create `TokenCounter` utility class",
-        "Method `count_tokens(text: str, model: str) -> int`",
-        "Support for OpenAI, Anthropic, Gemini tokenizers",
-        "Test: Verify counting matches tiktoken"
-      ],
-      "priority": 16,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-006"
-      ]
-    },
-    {
-      "id": "BRAIN-011B",
-      "title": "RAG: Context Optimization - Packing Strategies",
-      "description": "Context packing strategies.",
-      "acceptanceCriteria": [
-        "Create `ContextOptimizer` that packs chunks efficiently",
-        "Strategies: remove redundancy, prioritize high-relevance, compress summaries",
-        "Reserve tokens for system prompt (calculate available space)",
-        "Method `optimize_context(chunks, max_tokens)` returns optimal subset",
-        "Test: Verify packed context stays under token limit"
-      ],
-      "priority": 17,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-011A"
-      ]
-    },
-    {
-      "id": "BRAIN-012",
-      "title": "RAG: Citation & Source Attribution",
-      "description": "Show where retrieved information comes from.",
-      "acceptanceCriteria": [
-        "Add source tracking to all retrieved chunks (source_type, source_id, chunk_index)",
-        "Implement citation formatter that generates [Source: Character:alice] markers",
-        "Insert citations into generated text at appropriate positions",
-        "Create `get_sources(context)` method to list all sources for a response",
-        "UI: Render citations as clickable links in the interface",
-        "Test: Verify each fact in response has correct source"
-      ],
-      "priority": 18,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-006"
-      ]
-    },
-    {
-      "id": "BRAIN-013A",
-      "title": "RAG: Multi-Hop - Query Decomposition",
-      "description": "Query decomposer and hop retrieval.",
-      "acceptanceCriteria": [
-        "Create `QueryDecomposer` to break complex queries into sub-queries",
-        "Create `MultiHopRetriever` for chained reasoning",
-        "Use results from first hop to inform second hop query",
-        "Add max_hops limit (default 3) to prevent infinite loops",
-        "Test: Verify multi-hop question returns correct answer"
-      ],
-      "priority": 19,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-010B"
-      ]
-    },
-    {
-      "id": "BRAIN-013B",
-      "title": "RAG: Multi-Hop - Reasoning Chain",
-      "description": "Reasoning chain logging.",
-      "acceptanceCriteria": [
-        "Log reasoning chain for debugging",
-        "Track intermediate queries and results per hop",
-        "Add explain mode showing reasoning path",
-        "Example: 'Who is the villain that killed the king?' -> Find king's killer -> Get their details",
-        "Test: Verify reasoning chain is captured"
-      ],
-      "priority": 20,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-013A"
-      ]
-    },
-    {
-      "id": "BRAIN-014A",
-      "title": "Domain: Prompt Template Entity",
-      "description": "Treat prompts as versioned, manageable code.",
-      "acceptanceCriteria": [
-        "Create `PromptTemplate` entity: id, name, content, variables ({{var}}), model_config, version, created_at",
-        "Define `VariableDefinition`: name, type, default_value, description",
-        "Create `IPromptRepository` port for CRUD operations",
-        "Add template validation (undefined variables, syntax errors)",
-        "Test: CRUD operations on prompt templates"
-      ],
-      "priority": 21,
-      "passes": true,
-      "effort": "medium"
-    },
-    {
-      "id": "BRAIN-014B",
-      "title": "Prompt: Template Migration",
-      "description": "Migrate existing hardcoded prompts from YAML to DB.",
-      "acceptanceCriteria": [
-        "Identify all hardcoded prompts in YAML files",
-        "Create migration script to import prompts to database",
-        "Support nested includes ({{> other_prompt}})",
-        "Verify all prompts work after migration",
-        "Test: Load migrated prompt and verify content"
-      ],
-      "priority": 22,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-014A"
-      ]
-    },
-    {
-      "id": "BRAIN-015",
-      "title": "Backend: Prompt Management API",
-      "description": "REST API for managing prompt templates.",
-      "acceptanceCriteria": [
-        "Create `routers/prompts.py` with full CRUD endpoints",
-        "GET /api/prompts - List all prompts with filtering",
-        "POST /api/prompts - Create new prompt template",
-        "GET /api/prompts/{id} - Get specific prompt",
-        "PUT /api/prompts/{id} - Update prompt (creates new version)",
-        "DELETE /api/prompts/{id} - Archive (soft delete) prompt",
-        "POST /api/prompts/{id}/render - Render prompt with variables",
-        "Test: Verify variable substitution and validation"
-      ],
-      "priority": 23,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-014A"
-      ]
-    },
-    {
-      "id": "BRAIN-016A",
-      "title": "Prompt: Version Control - Data Model",
-      "description": "Track changes to prompts over time.",
-      "acceptanceCriteria": [
-        "Extend `PromptTemplate` with version field and parent_version_id",
-        "Create `PromptVersion` entity linking to previous versions",
-        "Update repository to handle version creation",
-        "Test: Create versions and verify parent linkage"
-      ],
-      "priority": 24,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-015"
-      ]
-    },
-    {
-      "id": "BRAIN-016B",
-      "title": "Prompt: Version Control - API & UI",
-      "description": "Version history and rollback endpoints.",
-      "acceptanceCriteria": [
-        "GET /api/prompts/{id}/versions - List all versions",
-        "POST /api/prompts/{id}/rollback/{version} - Restore previous version",
-        "Add diff view between versions (character-level diff)",
-        "Test: Verify rollback restores correct version"
-      ],
-      "priority": 25,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-016A"
-      ]
-    },
-    {
-      "id": "BRAIN-017A",
-      "title": "Prompt: Inheritance - Data Model",
-      "description": "Template inheritance support.",
-      "acceptanceCriteria": [
-        "Add `extends` field to `PromptTemplate` for inheritance",
-        "Support `{{> base_prompt}}` syntax for including other prompts",
-        "Child templates can override parent variables",
-        "Allow multiple inheritance (composition of several base prompts)",
-        "Test: Create base prompt and extend it with child"
-      ],
-      "priority": 26,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-014A"
-      ]
-    },
-    {
-      "id": "BRAIN-017B",
-      "title": "Prompt: Inheritance - Validation",
-      "description": "Circular dependency detection.",
-      "acceptanceCriteria": [
-        "Implement circular dependency detection in extends chain",
-        "Error on circular references with helpful message",
-        "Test: Verify circular reference is caught"
-      ],
-      "priority": 27,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-017A"
-      ]
-    },
-    {
-      "id": "BRAIN-018A",
-      "title": "Prompt: A/B Testing - Data Model",
-      "description": "Compare prompt variants.",
-      "acceptanceCriteria": [
-        "Create `PromptExperiment` entity: id, prompt_a_id, prompt_b_id, metric, traffic_split, status",
-        "Implement experiment assignment logic (consistent hashing)",
-        "Track metrics: success_rate, user_rating, token_efficiency, latency",
-        "Test: Run experiment and verify traffic split"
-      ],
-      "priority": 28,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-015"
-      ]
-    },
-    {
-      "id": "BRAIN-018B",
-      "title": "Prompt: A/B Testing - API & Analytics",
-      "description": "Experiment API and statistical analysis.",
-      "acceptanceCriteria": [
-        "POST /api/prompts/experiments - Create A/B test",
-        "GET /api/prompts/experiments/{id}/results - View experiment results",
-        "Statistical significance calculation for winner declaration",
-        "Test: Verify significance calculation"
-      ],
-      "priority": 29,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-018A"
-      ]
-    },
-    {
-      "id": "BRAIN-019A",
-      "title": "Frontend: Prompt Lab - List View",
-      "description": "Prompt list page with search and filter.",
-      "acceptanceCriteria": [
-        "Create `/brain/prompts` route",
-        "UI: List of all prompts with search",
-        "UI: Filter by model, tags, date range",
-        "UI: Click to edit prompt",
-        "Test: Search and filter work correctly"
-      ],
-      "priority": 30,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-015"
-      ]
-    },
-    {
-      "id": "BRAIN-019B",
-      "title": "Frontend: Prompt Lab - Editor",
-      "description": "Prompt editor with syntax highlighting.",
-      "acceptanceCriteria": [
-        "UI: Prompt editor with textarea",
-        "UI: Syntax highlighting for {{variables}}",
-        "UI: Variable definition table (name, type, default, description)",
-        "UI: Model configuration selector (temperature, max_tokens)",
-        "UI: Version history sidebar",
-        "Autosave draft to localStorage",
-        "Test: Create, edit, and save a prompt"
-      ],
-      "priority": 31,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-019A"
-      ]
-    },
-    {
-      "id": "BRAIN-020A",
-      "title": "Frontend: Prompt Playground - UI",
-      "description": "Playground modal UI.",
-      "acceptanceCriteria": [
-        "Add 'Run' button in Prompt Editor",
-        "UI: Form fields for all variables defined in prompt",
-        "UI: Model selector and parameters (temperature, etc.)",
-        "UI: Split view - rendered prompt on left, LLM output on right",
-        "Test: UI renders correctly"
-      ],
-      "priority": 32,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-019B"
-      ]
-    },
-    {
-      "id": "BRAIN-020B",
-      "title": "Frontend: Prompt Playground - Integration",
-      "description": "Backend integration for playground.",
-      "acceptanceCriteria": [
-        "Action: Call backend /api/prompts/{id}/render and /api/generate",
-        "Token count display for rendered prompt and response",
-        "Copy to clipboard button for output",
-        "Test: Run prompt with variables and see output"
-      ],
-      "priority": 33,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-020A"
-      ]
-    },
-    {
-      "id": "BRAIN-021",
-      "title": "Frontend: Prompt Comparison View",
-      "description": "Side-by-side comparison of prompt variants.",
-      "acceptanceCriteria": [
-        "Add 'Compare' mode in Prompt Lab",
-        "UI: Select two prompt versions to compare",
-        "Side-by-side diff view of prompt content",
-        "Variable comparison table",
-        "Model config diff view",
-        "One-click swap for testing",
-        "Test: Compare two versions and see differences highlighted"
-      ],
-      "priority": 34,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-020B"
-      ]
-    },
-    {
-      "id": "BRAIN-022A",
-      "title": "Backend: Prompt Analytics - Data Model",
-      "description": "Track prompt performance.",
-      "acceptanceCriteria": [
-        "Create `PromptUsage` entity: prompt_id, timestamp, tokens, latency, user_rating",
-        "Log usage for every prompt generation",
-        "Store stats in database for aggregation",
-        "Support per-workspace and global tracking",
-        "Test: Generate with prompt and verify analytics recorded"
-      ],
-      "priority": 35,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-018B"
-      ]
-    },
-    {
-      "id": "BRAIN-022B",
-      "title": "Backend: Prompt Analytics - API",
-      "description": "Analytics endpoints.",
-      "acceptanceCriteria": [
-        "GET /api/prompts/{id}/analytics - Usage stats over time",
-        "Metrics: Total uses, avg tokens, avg latency, rating distribution",
-        "Aggregate by time period (day/week/month)",
-        "Export analytics as CSV",
-        "Test: Verify analytics aggregation"
-      ],
-      "priority": 36,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-022A"
-      ]
-    },
-    {
-      "id": "BRAIN-023",
-      "title": "Domain: Model Registry",
-      "description": "Support multiple LLM providers and models.",
-      "acceptanceCriteria": [
-        "Create `LLMProvider` enum: OPENAI, ANTHROPIC, GEMINI, OLLAMA, MOCK",
-        "Create `ModelConfig` value object: provider, model_name, api_key_ref, base_url, max_tokens, supports_functions",
-        "Create `ModelRegistry` service to manage available models",
-        "Add per-task default model config (CREATIVE, LOGICAL, FAST, CHEAP)",
-        "Config file for model aliases (gpt4 -> OPENAI:gpt-4-turbo)",
-        "Test: Switch between models dynamically"
-      ],
-      "priority": 37,
-      "passes": true,
-      "effort": "medium"
-    },
-    {
-      "id": "BRAIN-024A",
-      "title": "LLM: Anthropic Claude - Adapter",
-      "description": "Create Claude adapter.",
-      "acceptanceCriteria": [
-        "Create `ClaudeAdapter` implementing `ILLMPort`",
-        "Support Claude 3 Opus, Sonnet, Haiku models",
-        "Implement message format conversion (Claude uses different format than OpenAI)",
-        "Test: Adapter initialization"
-      ],
-      "priority": 38,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-023"
-      ]
-    },
-    {
-      "id": "BRAIN-024B",
-      "title": "LLM: Anthropic Claude - Streaming & Tokens",
-      "description": "Streaming and token counting for Claude.",
-      "acceptanceCriteria": [
-        "Support streaming responses",
-        "Handle Claude's token counting differently",
-        "Test: Generate text using Claude Sonnet"
-      ],
-      "priority": 39,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-024A"
-      ]
-    },
-    {
-      "id": "BRAIN-025A",
-      "title": "LLM: Google Gemini - Adapter",
-      "description": "Create Gemini adapter.",
-      "acceptanceCriteria": [
-        "Create `GeminiAdapter` implementing `ILLMPort`",
-        "Support Gemini Pro and Gemini Ultra models",
-        "Handle Gemini's chat history format",
-        "Test: Adapter initialization"
-      ],
-      "priority": 40,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-023"
-      ]
-    },
-    {
-      "id": "BRAIN-025B",
-      "title": "LLM: Google Gemini - Multimodal & Safety",
-      "description": "Gemini multimodal and safety features.",
-      "acceptanceCriteria": [
-        "Support multimodal inputs (text + images)",
-        "Configure safety settings",
-        "Test: Generate text using Gemini Pro"
-      ],
-      "priority": 41,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-025A"
-      ]
-    },
-    {
-      "id": "BRAIN-026A",
-      "title": "LLM: OpenAI GPT-4 Turbo - Update Adapter",
-      "description": "Upgrade OpenAI adapter to latest models.",
-      "acceptanceCriteria": [
-        "Update `OpenAIAdapter` to support GPT-4 Turbo and GPT-4o",
-        "Add support for vision capabilities (GPT-4o)",
-        "Test: Generate with GPT-4o"
-      ],
-      "priority": 42,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-023"
-      ]
-    },
-    {
-      "id": "BRAIN-026B",
-      "title": "LLM: OpenAI - Advanced Features",
-      "description": "Parallel calling and JSON mode.",
-      "acceptanceCriteria": [
-        "Implement parallel function calling",
-        "Add support for JSON mode",
-        "Configure lower temperature for JSON outputs",
-        "Test: Generate structured JSON using GPT-4o"
-      ],
-      "priority": 43,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-026A"
-      ]
-    },
-    {
-      "id": "BRAIN-027A",
-      "title": "LLM: Ollama - Adapter",
-      "description": "Create Ollama adapter.",
-      "acceptanceCriteria": [
-        "Create `OllamaAdapter` implementing `ILLMPort`",
-        "Config: Base URL (localhost:11434) and model name",
-        "Support popular local models: Llama 3, Mistral, Phi-3",
-        "Auto-detect available Ollama models via /api/tags",
-        "Connection check endpoint",
-        "Test: Adapter initialization"
-      ],
-      "priority": 44,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-023"
-      ]
-    },
-    {
-      "id": "BRAIN-027B",
-      "title": "LLM: Ollama - Streaming",
-      "description": "Ollama streaming support.",
-      "acceptanceCriteria": [
-        "Handle Ollama's streaming format",
-        "Test: Generate text using local Llama 3"
-      ],
-      "priority": 45,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-027A"
-      ]
-    },
-    {
-      "id": "BRAIN-028A",
-      "title": "LLM: Model Routing - Logic",
-      "description": "Automatic model selection logic.",
-      "acceptanceCriteria": [
-        "Create `ModelRouter` service with routing logic",
-        "Routes based on: task type, complexity, cost budget, latency requirement",
-        "Implement fallback chain (primary -> secondary -> mock)",
-        "Add circuit breaker for failing models",
-        "Log routing decisions for analytics",
-        "Test: Verify correct model selection per task type"
-      ],
-      "priority": 46,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-024B",
-        "BRAIN-025B",
-        "BRAIN-026B"
-      ]
-    },
-    {
-      "id": "BRAIN-028B",
-      "title": "LLM: Model Routing - Configuration",
-      "description": "Configurable routing rules.",
-      "acceptanceCriteria": [
-        "Configurable routing rules per workspace",
-        "UI for managing routing preferences",
-        "Test: Configure custom routing rules"
-      ],
-      "priority": 47,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-028A"
-      ]
-    },
-    {
-      "id": "BRAIN-029A",
-      "title": "KG: Entity Extraction - Service",
-      "description": "Extract entities from text.",
-      "acceptanceCriteria": [
-        "Create `EntityExtractionService` in knowledge context",
-        "Extract: Characters, Locations, Items, Events, Organizations",
-        "Use LLM with structured output for extraction",
-        "Return entities with: name, type, aliases, first_appearance",
-        "Test: Extract named entities from a chapter"
-      ],
-      "priority": 48,
-      "passes": true,
-      "effort": "medium"
-    },
-    {
-      "id": "BRAIN-029B",
-      "title": "KG: Entity Extraction - Co-reference",
-      "description": "Handle entity co-reference.",
-      "acceptanceCriteria": [
-        "Handle entity co-reference (he -> Alice)",
-        "Batch processing for large texts",
-        "Test: Verify co-reference resolution"
-      ],
-      "priority": 49,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-029A"
-      ]
-    },
-    {
-      "id": "BRAIN-030A",
-      "title": "KG: Relationship Extraction - Types",
-      "description": "Extract relationships between entities.",
-      "acceptanceCriteria": [
-        "Extend entity extraction to capture relationships",
-        "Relationship types: KNOWS, KILLED, LOVES, HATES, PARENT_OF, MEMBER_OF",
-        "Create `Relationship` entity: source, target, type, context, strength",
-        "Test: Extract 'Alice killed Bob' relationship"
-      ],
-      "priority": 50,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-029A"
-      ]
-    },
-    {
-      "id": "BRAIN-030B",
-      "title": "KG: Relationship Extraction - Advanced",
-      "description": "Advanced relationship features.",
-      "acceptanceCriteria": [
-        "Bidirectional relationship normalization",
-        "Temporal relationships (valid at specific time in story)",
-        "Test: Verify bidirectional and temporal relationships"
-      ],
-      "priority": 51,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-030A"
-      ]
-    },
-    {
-      "id": "BRAIN-031A",
-      "title": "KG: Graph Storage - NetworkX",
-      "description": "In-memory graph storage.",
-      "acceptanceCriteria": [
-        "Create `GraphStore` adapter using NetworkX",
-        "Store nodes (entities) and edges (relationships)",
-        "Implement `IGraphStore` port: add_entity, add_relationship, get_neighbors, find_path",
-        "Test: Build character relationship graph and query it"
-      ],
-      "priority": 52,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-029A"
-      ]
-    },
-    {
-      "id": "BRAIN-031B",
-      "title": "KG: Graph Storage - Neo4j & Export",
-      "description": "Persistent storage and export.",
-      "acceptanceCriteria": [
-        "Add Neo4j adapter option for persistent storage",
-        "Support graph queries: shortest path, cliques, centrality",
-        "Export graph as GraphML for visualization",
-        "Test: Verify Neo4j persistence and export"
-      ],
-      "priority": 53,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-031A"
-      ]
-    },
-    {
-      "id": "BRAIN-032A",
-      "title": "KG: Graph Retrieval - Service",
-      "description": "Graph-based context retrieval.",
-      "acceptanceCriteria": [
-        "Create `GraphRetrievalService` combining vector + graph search",
-        "For each retrieved chunk, fetch related entities from graph",
-        "Expand context by including entity descriptions and relationships",
-        "Cache frequently accessed graph queries",
-        "Test: Query shows connected entities"
-      ],
-      "priority": 54,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-031B"
-      ]
-    },
-    {
-      "id": "BRAIN-032B",
-      "title": "KG: Graph Retrieval - Explain Mode",
-      "description": "Reasoning path visualization.",
-      "acceptanceCriteria": [
-        "Implement 'explain' mode showing reasoning path",
-        "Test: Verify explain mode shows graph traversal"
-      ],
-      "priority": 55,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-032A"
-      ]
-    },
-    {
-      "id": "BRAIN-033",
-      "title": "Frontend: Brain Settings",
-      "description": "Configure AI Brain settings.",
-      "acceptanceCriteria": [
-        "Create `/brain/settings` page",
-        "UI: Input fields for API Keys (OpenAI, Anthropic, Gemini) with visibility toggle",
-        "UI: Model selector dropdown for each task type (Creative, Logical, Fast)",
-        "UI: RAG settings (chunk size, number of chunks, hybrid search weight)",
-        "UI: Knowledge base status (total entries, last sync)",
-        "Settings persist to backend with encryption",
-        "Test: Configure API key and verify connection"
-      ],
-      "priority": 56,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-023"
-      ]
-    },
-    {
-      "id": "BRAIN-034A",
-      "title": "Service: Token Tracker - Backend",
-      "description": "Monitor AI usage and costs.",
-      "acceptanceCriteria": [
-        "Implement `TokenTracker` middleware/decorator for all LLM calls",
-        "Log: input_tokens, output_tokens, model, cost, timestamp, user_id",
-        "Store stats in database for aggregation",
-        "Support per-workspace and global tracking",
-        "Test: Verify counting logic matches tiktoken"
-      ],
-      "priority": 57,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-028B"
-      ]
-    },
-    {
-      "id": "BRAIN-034B",
-      "title": "Service: Token Tracker - Alerts",
-      "description": "Budget alert system.",
-      "acceptanceCriteria": [
-        "Alert system for budget thresholds",
-        "Test: Verify alerts trigger at threshold"
-      ],
-      "priority": 58,
-      "passes": true,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-034A"
-      ]
-    },
-    {
-      "id": "BRAIN-035A",
-      "title": "Frontend: Cost Dashboard - Charts",
-      "description": "Visualize AI usage.",
-      "acceptanceCriteria": [
-        "Add 'Usage' tab to Brain Settings",
-        "Chart: Tokens used over time (line chart)",
-        "Chart: Cost per model type (bar chart)",
-        "Stats: Total tokens, total cost, requests per day",
-        "Test: Display mock usage data"
-      ],
-      "priority": 59,
-      "passes": true,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-034A"
-      ]
-    },
-    {
-      "id": "BRAIN-035B",
-      "title": "Frontend: Cost Dashboard - Features",
-      "description": "Dashboard additional features.",
-      "acceptanceCriteria": [
-        "Model comparison table (cost per 1M tokens)",
-        "Date range filter for analytics",
-        "Export usage report as CSV",
-        "Real-time usage counter in UI",
-        "Test: Verify all features work"
+        "Create model comparison table component",
+        "Display cost per 1M tokens for each model",
+        "Group by provider (OpenAI, Anthropic, Gemini, Ollama)",
+        "Typecheck passes"
       ],
       "priority": 60,
-      "passes": false,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-035A"
-      ]
+      "passes": true,
+      "notes": ""
     },
     {
-      "id": "BRAIN-036",
-      "title": "UX: Context Inspector",
-      "description": "Debug what the AI sees during generation.",
+      "id": "BRAIN-035B-02",
+      "title": "Dashboard: Date Range Filter",
+      "description": "Add date range filter for analytics charts.",
       "acceptanceCriteria": [
-        "Add 'View AI Context' button in Director scene editor",
-        "Panel shows: Retrieved chunks with sources, relevance scores, token count",
-        "Highlight which chunks were actually used in generation",
-        "Allow manual chunk selection for regeneration",
-        "Show total context window usage vs limit",
-        "Test: Inspect context for a scene generation"
+        "Add date range picker component to Usage tab",
+        "Filter applies to all charts and stats",
+        "Default to last 30 days",
+        "Typecheck passes"
       ],
       "priority": 61,
       "passes": false,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-007C"
-      ]
+      "dependencies": ["BRAIN-035B-01"],
+      "notes": ""
     },
     {
-      "id": "BRAIN-037A",
-      "title": "Feature: Chat with Story - Backend",
-      "description": "Backend for story chat.",
+      "id": "BRAIN-035B-03",
+      "title": "Dashboard: CSV Export",
+      "description": "Export usage report as CSV file.",
       "acceptanceCriteria": [
-        "Backend: POST /api/brain/chat endpoint using RAG",
-        "Support conversational context (multi-turn chat)",
-        "Stream responses for better UX",
-        "Chat history persistence",
-        "Test: Ask question and verify answer uses RAG"
+        "Add export button to Usage tab",
+        "Generate CSV with timestamp, model, tokens, cost columns",
+        "Respect date range filter",
+        "Typecheck passes"
       ],
       "priority": 62,
       "passes": false,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-006"
-      ]
+      "dependencies": ["BRAIN-035B-02"],
+      "notes": ""
     },
     {
-      "id": "BRAIN-037B",
-      "title": "Feature: Chat with Story - UI",
-      "description": "Chat interface UI.",
+      "id": "BRAIN-035B-04",
+      "title": "Dashboard: Real-time Usage Counter",
+      "description": "Show live token usage during generation.",
       "acceptanceCriteria": [
-        "Create `ChatInterface` component (floating bottom-right widget)",
-        "Questions like: 'Who killed the king?', 'List all scenes in Chapter 1'",
-        "Test: Chat interface renders correctly"
+        "Add real-time counter in UI",
+        "Update via WebSocket or polling during generation",
+        "Display current session tokens and cost",
+        "Typecheck passes"
       ],
       "priority": 63,
       "passes": false,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-037A"
-      ]
+      "notes": ""
     },
     {
-      "id": "BRAIN-038",
-      "title": "Backend: Smart Tagging Service",
-      "description": "Auto-organize content with tags.",
+      "id": "BRAIN-036-01",
+      "title": "Context Inspector: Button Placement",
+      "description": "Add View AI Context button to scene editor.",
       "acceptanceCriteria": [
-        "Create service to auto-generate tags for Lore/Scenes using LLM",
-        "Tags: genre, mood, themes, characters_present, locations",
-        "Trigger: On creation/update of content",
-        "Store tags in metadata for filtering",
-        "Allow manual tag override",
-        "Test: Create scene and verify auto-generated tags"
+        "Add button in Director scene editor toolbar",
+        "Button only visible when RAG is enabled",
+        "Typecheck passes"
       ],
       "priority": 64,
       "passes": false,
-      "effort": "low"
+      "notes": ""
     },
     {
-      "id": "BRAIN-039A",
-      "title": "RAG: Auto Chunking - Strategies",
-      "description": "Intelligent chunking strategies.",
+      "id": "BRAIN-036-02",
+      "title": "Context Inspector: Panel Component",
+      "description": "Create context inspector panel UI.",
       "acceptanceCriteria": [
-        "Implement chunking strategies: Fixed, Sentence, Paragraph, Semantic",
-        "Auto-detect best strategy based on content type",
-        "For scenes: chunk by beat/section",
-        "For character sheets: chunk by attribute group",
-        "Test: Chunk different content types"
+        "Create sliding panel component",
+        "Show retrieved chunks with source info",
+        "Display relevance scores",
+        "Show token count per chunk",
+        "Typecheck passes"
       ],
       "priority": 65,
       "passes": false,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-004"
-      ]
+      "dependencies": ["BRAIN-036-01"],
+      "notes": ""
     },
     {
-      "id": "BRAIN-039B",
-      "title": "RAG: Auto Chunking - Coherence",
-      "description": "Maintain narrative flow.",
+      "id": "BRAIN-036-03",
+      "title": "Context Inspector: Highlight Used Chunks",
+      "description": "Indicate which chunks were used in generation.",
       "acceptanceCriteria": [
-        "Maintain narrative flow within chunks",
-        "Configurable overlap size",
-        "Test: Chunk a scene and verify semantic coherence"
+        "Highlight chunks that contributed to response",
+        "Visual distinction between used and unused chunks",
+        "Typecheck passes"
       ],
       "priority": 66,
       "passes": false,
-      "effort": "low",
-      "dependencies": [
-        "BRAIN-039A"
-      ]
+      "dependencies": ["BRAIN-036-02"],
+      "notes": ""
     },
     {
-      "id": "BRAIN-040A",
-      "title": "E2E: Brain Test - Basic Flow",
-      "description": "Verify basic RAG loop.",
+      "id": "BRAIN-036-04",
+      "title": "Context Inspector: Manual Chunk Selection",
+      "description": "Allow manually selecting chunks for regeneration.",
       "acceptanceCriteria": [
-        "Create `tests/e2e/brain-rag.spec.ts` Playwright test",
-        "Flow: Create Lore Entry -> Wait for Ingestion -> Chat with Story -> Verify Answer contains Lore content",
-        "Test: Basic RAG retrieval works"
+        "Add checkboxes to chunk list",
+        "Regenerate button passes selected chunks to RAG",
+        "Typecheck passes"
       ],
       "priority": 67,
       "passes": false,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-037B"
-      ]
+      "dependencies": ["BRAIN-036-03"],
+      "notes": ""
     },
     {
-      "id": "BRAIN-040B",
-      "title": "E2E: Brain Test - Advanced",
-      "description": "Verify advanced RAG features.",
+      "id": "BRAIN-036-05",
+      "title": "Context Inspector: Context Window Display",
+      "description": "Show context window usage vs limit.",
       "acceptanceCriteria": [
-        "Test hybrid search: Create character with trait, search by trait",
-        "Test citations: Verify sources are correctly attributed",
-        "Test multi-hop: Query requiring relationship traversal",
-        "Run `npm run test:e2e` and ensure all pass"
+        "Display progress bar for context window usage",
+        "Show percentage and token count",
+        "Warning when approaching limit",
+        "Typecheck passes"
       ],
       "priority": 68,
       "passes": false,
-      "effort": "medium",
-      "dependencies": [
-        "BRAIN-040A"
-      ]
+      "dependencies": ["BRAIN-036-02"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-037A-01",
+      "title": "Chat Backend: POST Endpoint",
+      "description": "Create /api/brain/chat endpoint.",
+      "acceptanceCriteria": [
+        "Create POST /api/brain/chat endpoint",
+        "Accept query parameter and optional chat history",
+        "Return streaming response",
+        "Test: Endpoint returns 200"
+      ],
+      "priority": 69,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-037A-02",
+      "title": "Chat Backend: RAG Integration",
+      "description": "Wire up RAG for chat responses.",
+      "acceptanceCriteria": [
+        "Call RetrievalService with user query",
+        "Inject retrieved context into LLM prompt",
+        "Test: Answer uses knowledge base content"
+      ],
+      "priority": 70,
+      "passes": false,
+      "dependencies": ["BRAIN-037A-01"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-037A-03",
+      "title": "Chat Backend: Conversational Context",
+      "description": "Support multi-turn chat with history.",
+      "acceptanceCriteria": [
+        "Store chat history per session",
+        "Include previous messages in RAG query",
+        "Test: Context maintained across turns"
+      ],
+      "priority": 71,
+      "passes": false,
+      "dependencies": ["BRAIN-037A-02"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-037A-04",
+      "title": "Chat Backend: Streaming",
+      "description": "Stream responses for better UX.",
+      "acceptanceCriteria": [
+        "Use SSE for streaming tokens",
+        "Test: Streaming works end-to-end"
+      ],
+      "priority": 72,
+      "passes": false,
+      "dependencies": ["BRAIN-037A-03"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-037B-01",
+      "title": "Chat UI: Floating Widget",
+      "description": "Create floating chat interface.",
+      "acceptanceCriteria": [
+        "Create ChatInterface component",
+        "Position fixed bottom-right",
+        "Collapsible when not in use",
+        "Typecheck passes"
+      ],
+      "priority": 73,
+      "passes": false,
+      "dependencies": ["BRAIN-037A-04"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-037B-02",
+      "title": "Chat UI: Message Display",
+      "description": "Display chat messages and handle input.",
+      "acceptanceCriteria": [
+        "Show user and AI messages in different styles",
+        "Auto-scroll to latest message",
+        "Input field with send button",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 74,
+      "passes": false,
+      "dependencies": ["BRAIN-037B-01"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-038-01",
+      "title": "Smart Tagging: Service Setup",
+      "description": "Create auto-tagging service.",
+      "acceptanceCriteria": [
+        "Create SmartTaggingService in knowledge context",
+        "Method: generate_tags(content, content_type) -> list[str]",
+        "Use LLM for tag generation",
+        "Test: Generate tags for sample content"
+      ],
+      "priority": 75,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-038-02",
+      "title": "Smart Tagging: Tag Categories",
+      "description": "Define tag categories for different content types.",
+      "acceptanceCriteria": [
+        "Support categories: genre, mood, themes, characters_present, locations",
+        "Category-specific tag generation prompts",
+        "Test: Generate tags for each category"
+      ],
+      "priority": 76,
+      "passes": false,
+      "dependencies": ["BRAIN-038-01"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-038-03",
+      "title": "Smart Tagging: Auto-trigger",
+      "description": "Trigger tagging on content creation/update.",
+      "acceptanceCriteria": [
+        "Add event handlers for LoreCreated, LoreUpdated, SceneCreated, SceneUpdated",
+        "Handlers call SmartTaggingService",
+        "Store tags in entity metadata",
+        "Test: Create scene and verify tags generated"
+      ],
+      "priority": 77,
+      "passes": false,
+      "dependencies": ["BRAIN-038-02"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-038-04",
+      "title": "Smart Tagging: Metadata Storage",
+      "description": "Store tags in metadata for filtering.",
+      "acceptanceCriteria": [
+        "Add tags field to entity metadata",
+        "Support tag search/filter",
+        "Test: Filter by tag returns matching entities"
+      ],
+      "priority": 78,
+      "passes": false,
+      "dependencies": ["BRAIN-038-03"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-038-05",
+      "title": "Smart Tagging: Manual Override",
+      "description": "Allow manual tag editing.",
+      "acceptanceCriteria": [
+        "Add UI for editing tags",
+        "Manual edits persist (not overwritten by auto-tagging)",
+        "Test: Manual tag persists after entity update"
+      ],
+      "priority": 79,
+      "passes": false,
+      "dependencies": ["BRAIN-038-04"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-039A-01",
+      "title": "Chunking: Strategy Interface",
+      "description": "Define chunking strategy interface.",
+      "acceptanceCriteria": [
+        "Create IChunkingStrategy port",
+        "Method: chunk(text, config) -> list[Chunk]",
+        "Define Chunk entity with text, index, metadata",
+        "Test: Interface implementation"
+      ],
+      "priority": 80,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-039A-02",
+      "title": "Chunking: Fixed Strategy",
+      "description": "Implement fixed-size chunking.",
+      "acceptanceCriteria": [
+        "Create FixedChunkingStrategy",
+        "Config: chunk_size, overlap",
+        "Test: Chunk 2000 words with 500 size, 50 overlap"
+      ],
+      "priority": 81,
+      "passes": false,
+      "dependencies": ["BRAIN-039A-01"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-039A-03",
+      "title": "Chunking: Sentence/Paragraph Strategies",
+      "description": "Implement sentence and paragraph chunking.",
+      "acceptanceCriteria": [
+        "Create SentenceChunkingStrategy",
+        "Create ParagraphChunkingStrategy",
+        "Test: Chunk by sentence boundaries"
+      ],
+      "priority": 82,
+      "passes": false,
+      "dependencies": ["BRAIN-039A-02"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-039A-04",
+      "title": "Chunking: Semantic Strategy",
+      "description": "Implement semantic-aware chunking.",
+      "acceptanceCriteria": [
+        "Create SemanticChunkingStrategy using embeddings",
+        "Group semantically related sentences",
+        "Test: Semantic chunks are coherent"
+      ],
+      "priority": 83,
+      "passes": false,
+      "dependencies": ["BRAIN-039A-03"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-039A-05",
+      "title": "Chunking: Auto-detection",
+      "description": "Auto-select best strategy by content type.",
+      "acceptanceCriteria": [
+        "Map content types to strategies: Scene->Semantic, Character->Paragraph",
+        "Auto-detect strategy based on content structure",
+        "Test: Correct strategy selected per content type"
+      ],
+      "priority": 84,
+      "passes": false,
+      "dependencies": ["BRAIN-039A-04"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-039B-01",
+      "title": "Chunking: Narrative Flow",
+      "description": "Maintain narrative flow in chunks.",
+      "acceptanceCriteria": [
+        "Preserve sentence boundaries",
+        "Don't break in middle of dialogue",
+        "Test: Chunks maintain narrative coherence"
+      ],
+      "priority": 85,
+      "passes": false,
+      "dependencies": ["BRAIN-039A-05"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-039B-02",
+      "title": "Chunking: Configurable Overlap",
+      "description": "Allow overlap size configuration.",
+      "acceptanceCriteria": [
+        "Add overlap parameter to chunking config",
+        "Default overlap: 10% of chunk_size",
+        "Test: Overlap creates expected context continuity"
+      ],
+      "priority": 86,
+      "passes": false,
+      "dependencies": ["BRAIN-039B-01"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-039B-03",
+      "title": "Chunking: Coherence Verification",
+      "description": "Verify chunk semantic coherence.",
+      "acceptanceCriteria": [
+        "Add coherence score calculation",
+        "Warn if chunks have low coherence",
+        "Test: Coherence scoring works"
+      ],
+      "priority": 87,
+      "passes": false,
+      "dependencies": ["BRAIN-039B-02"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-040A-01",
+      "title": "E2E: Test File Setup",
+      "description": "Create E2E test file structure.",
+      "acceptanceCriteria": [
+        "Create tests/e2e/brain-rag.spec.ts",
+        "Setup Playwright test configuration",
+        "Test: File runs without errors"
+      ],
+      "priority": 88,
+      "passes": false,
+      "dependencies": ["BRAIN-037B-02"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-040A-02",
+      "title": "E2E: Lore Entry Creation",
+      "description": "Test: Create lore entry and wait for ingestion.",
+      "acceptanceCriteria": [
+        "Navigate to lore creation page",
+        "Fill form and submit",
+        "Wait for ingestion confirmation",
+        "Test: Lore entry appears in knowledge base"
+      ],
+      "priority": 89,
+      "passes": false,
+      "dependencies": ["BRAIN-040A-01"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-040A-03",
+      "title": "E2E: Chat Verification",
+      "description": "Test: Chat returns knowledge base content.",
+      "acceptanceCriteria": [
+        "Open chat interface",
+        "Ask question about created lore",
+        "Verify answer contains lore content",
+        "Test: Basic RAG retrieval verified"
+      ],
+      "priority": 90,
+      "passes": false,
+      "dependencies": ["BRAIN-040A-02"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-040B-01",
+      "title": "E2E: Hybrid Search Test",
+      "description": "Test: Hybrid search with traits.",
+      "acceptanceCriteria": [
+        "Create character with specific trait",
+        "Search for trait using chat",
+        "Verify character found via hybrid search",
+        "Test: Hybrid search works"
+      ],
+      "priority": 91,
+      "passes": false,
+      "dependencies": ["BRAIN-040A-03"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-040B-02",
+      "title": "E2E: Citations Test",
+      "description": "Test: Source citations are correct.",
+      "acceptanceCriteria": [
+        "Query that returns multiple sources",
+        "Verify citations are displayed",
+        "Click citation and verify source",
+        "Test: Citations accurate"
+      ],
+      "priority": 92,
+      "passes": false,
+      "dependencies": ["BRAIN-040B-01"],
+      "notes": ""
+    },
+    {
+      "id": "BRAIN-040B-03",
+      "title": "E2E: Multi-hop Test",
+      "description": "Test: Multi-hop relationship traversal.",
+      "acceptanceCriteria": [
+        "Create connected entities (A->B->C)",
+        "Ask question requiring traversal",
+        "Verify answer uses multi-hop reasoning",
+        "Test: Multi-hop retrieval works"
+      ],
+      "priority": 93,
+      "passes": false,
+      "dependencies": ["BRAIN-040B-02"],
+      "notes": ""
     }
   ]
 }
