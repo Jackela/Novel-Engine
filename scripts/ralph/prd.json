@@ -177,7 +177,7 @@
         "Test: Context maintained across turns"
       ],
       "priority": 71,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-037A-02"],
       "notes": ""
     },
@@ -190,9 +190,9 @@
         "Test: Streaming works end-to-end"
       ],
       "priority": 72,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-037A-03"],
-      "notes": ""
+      "notes": "Streaming was already implemented as part of BRAIN-037A-01"
     },
     {
       "id": "BRAIN-037B-01",

@@ -332,3 +332,38 @@ Branch: feat/code-citadel
   - The system prompt is built with context when RAG is enabled
 
 ---
+
+## 2025-02-05 - BRAIN-037A-03
+- **What was implemented:**
+  - Added ChatSessionStore for in-memory session-based chat history
+  - Added session_id parameter to ChatRequest
+  - Chat history is stored per session and retrieved on subsequent requests
+  - Previous assistant response is included in RAG query for better context retrieval
+  - Messages are saved to session after generation (user and assistant)
+  - Response includes context indicator showing message count in session
+- **Files changed:**
+  - `src/api/routers/brain_settings.py` - Added ChatSessionStore, session_id, history tracking
+- **Learnings for future iterations:**
+  - In-memory storage is sufficient for development; production would use Redis/database
+  - Session-based storage allows multi-turn conversations without client-side history
+  - Including last assistant response in RAG query improves context retrieval
+  - get_session() returns empty list for new sessions (no error handling needed)
+  - Session ID defaults to "default" if not provided
+
+---
+
+## 2025-02-05 - BRAIN-037A-04
+- **What was implemented:**
+  - Streaming was already implemented as part of BRAIN-037A-01
+  - SSE (Server-Sent Events) is used for streaming tokens
+  - ChatChunk contains delta (text) and done (boolean) fields
+  - Streaming works end-to-end with word-by-word mock response
+- **Files changed:**
+  - None (already implemented in BRAIN-037A-01)
+- **Learnings for future iterations:**
+  - SSE format: `data: {json}\n\n` for each chunk
+  - StreamingResponse with media_type="text/event-stream" for SSE
+  - AsyncIterator[str] is the return type for SSE generators
+  - Client receives chunks as they're generated (real-time feedback)
+
+---

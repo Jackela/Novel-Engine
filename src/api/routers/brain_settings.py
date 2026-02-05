@@ -1260,6 +1260,33 @@ class ChatRequest(BaseModel):
     chat_history: list[ChatMessage] | None = None  # Optional conversation history
     scene_id: str | None = None  # Optional scene ID for context
     max_chunks: int = 5  # Maximum chunks to retrieve for RAG
+    session_id: str | None = None  # BRAIN-037A-03: Optional session ID for conversation tracking
+
+
+# BRAIN-037A-03: In-memory session storage for chat history
+class ChatSessionStore:
+    """In-memory store for chat sessions."""
+
+    def __init__(self) -> None:
+        self._sessions: dict[str, list[ChatMessage]] = {}
+
+    def get_session(self, session_id: str) -> list[ChatMessage]:
+        """Get chat history for a session."""
+        return self._sessions.get(session_id, [])
+
+    def add_message(self, session_id: str, message: ChatMessage) -> None:
+        """Add a message to a session."""
+        if session_id not in self._sessions:
+            self._sessions[session_id] = []
+        self._sessions[session_id].append(message)
+
+    def clear_session(self, session_id: str) -> None:
+        """Clear chat history for a session."""
+        self._sessions.pop(session_id, None)
+
+
+# Global session store
+_chat_session_store = ChatSessionStore()
 
 
 class ChatChunk(BaseModel):
@@ -1289,6 +1316,14 @@ async def chat_completion(
     async def _stream_chat() -> AsyncIterator[str]:
         """Stream chat response with RAG context."""
         try:
+            # BRAIN-037A-03: Handle session-based chat history
+            session_id = payload.session_id or "default"
+            chat_history = _chat_session_store.get_session(session_id)
+
+            # If chat_history was provided in request, use it (for backward compatibility)
+            if payload.chat_history is not None:
+                chat_history = payload.chat_history
+
             # Check if RAG is enabled
             rag_config = await repository.get_rag_config()
 
@@ -1296,6 +1331,14 @@ async def chat_completion(
             system_prompt = "You are a helpful AI assistant for a novel writing tool."
 
             # If RAG is enabled, retrieve relevant context
+            # BRAIN-037A-03: Include conversation context in RAG query for better retrieval
+            rag_query = payload.query
+            if chat_history and len(chat_history) > 0:
+                # Include last assistant response for context
+                last_assistant_msg = next((m for m in reversed(chat_history) if m.role == "assistant"), None)
+                if last_assistant_msg:
+                    rag_query = f"{last_assistant_msg.content}\n\nUser: {payload.query}"
+
             rag_context_text = ""
             if rag_config.get("enabled", False):
                 try:
@@ -1346,12 +1389,12 @@ async def chat_completion(
                     logger.warning(f"RAG retrieval failed, continuing without context: {e}")
 
             # Format conversation history
+            # BRAIN-037A-03: Include session history in messages
             messages: list[dict] = [{"role": "system", "content": system_prompt}]
 
-            # Add chat history if provided
-            if payload.chat_history:
-                for msg in payload.chat_history:
-                    messages.append({"role": msg.role, "content": msg.content})
+            # Add chat history from session or request
+            for msg in chat_history:
+                messages.append({"role": msg.role, "content": msg.content})
 
             # Add current query
             messages.append({"role": "user", "content": payload.query})
@@ -1365,6 +1408,10 @@ async def chat_completion(
             else:
                 response_text += "\n\nNo relevant context was found in the knowledge base."
 
+            # BRAIN-037A-03: Indicate context awareness
+            if chat_history:
+                response_text += f"\n\n(Context: You have sent {len(chat_history)} messages in this session.)"
+
             response_text += "\n\n(Note: This is a mock response. Full LLM integration will be implemented in a future story.)"
 
             # Stream the response in chunks
@@ -1377,6 +1424,12 @@ async def chat_completion(
             # Send final done signal
             final_chunk = ChatChunk(delta="", done=True)
             yield f"data: {final_chunk.model_dump_json()}\n\n"
+
+            # BRAIN-037A-03: Save messages to session store
+            user_msg = ChatMessage(role="user", content=payload.query)
+            _chat_session_store.add_message(session_id, user_msg)
+            assistant_msg = ChatMessage(role="assistant", content=response_text)
+            _chat_session_store.add_message(session_id, assistant_msg)
 
         except Exception as e:
             logger.error(f"Chat completion error: {e}")
