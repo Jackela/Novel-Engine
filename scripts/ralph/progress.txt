@@ -619,3 +619,36 @@ Branch: feat/code-citadel
   - All 46 total tests pass (27 Fixed + 19 Sentence/Paragraph)
 
 --
+
+## 2025-02-05 - BRAIN-039A-04
+- **What was implemented:**
+  - Created SemanticChunkingStrategy adapter implementing IChunkingStrategy port
+  - Semantic-aware chunking using embeddings and cosine similarity
+  - Groups sentences by semantic relatedness (0.75 similarity threshold by default)
+  - Configurable max_sentences_per_chunk (default: 10) to limit group size
+  - Splits text into sentences, generates embeddings via IEmbeddingService
+  - Groups sentences when similarity < threshold OR word count >= chunk_size OR sentence count >= max
+  - Creates chunks from semantic groups with overlap support
+  - Falls back to FixedChunkingStrategy when no sentence breaks found
+  - Cosine similarity calculation for vector comparison
+  - Metadata includes strategy type, word_count, sentence_count, positions
+- **Files changed:**
+  - `src/contexts/knowledge/infrastructure/adapters/chunking_strategy_adapters.py`
+    - Added SemanticChunkingStrategy class (250+ lines)
+    - Added imports: IEmbeddingService (TYPE_CHECKING), math module
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py` - Exported SemanticChunkingStrategy
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_chunking_strategy_adapters.py`
+    - Added MockEmbeddingService for testing (50+ lines)
+    - Added TestSemanticChunkingStrategy class with 20 tests
+- **Learnings for future iterations:**
+  - SemanticChunkingStrategy requires IEmbeddingService as constructor dependency (not optional)
+  - The embedding service is used via embed_batch() for efficiency
+  - Cosine similarity formula: dot(v1,v2) / (|v1| * |v2|)
+  - Sentence splitting uses existing _SENTENCE_END regex pattern
+  - MockEmbeddingService generates embeddings with semantic group patterns for testing
+  - Similarity threshold determines how aggressive grouping is (lower = more aggressive)
+  - Grouping happens when similarity drops below threshold OR limits are hit
+  - All 66 chunking tests pass (46 original + 20 new semantic tests)
+  - ChunkingStrategy value object validates min_chunk_size < chunk_size
+
+--

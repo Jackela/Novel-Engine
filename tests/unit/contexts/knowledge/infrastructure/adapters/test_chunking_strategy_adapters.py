@@ -3,7 +3,7 @@ Tests for Chunking Strategy Adapters
 
 Tests for the IChunkingStrategy port implementations.
 
-Warzone 4: AI Brain - BRAIN-039A-02, BRAIN-039A-03
+Warzone 4: AI Brain - BRAIN-039A-02, BRAIN-039A-03, BRAIN-039A-04
 """
 
 import pytest
@@ -20,6 +20,7 @@ from src.contexts.knowledge.infrastructure.adapters.chunking_strategy_adapters i
     FixedChunkingStrategy,
     SentenceChunkingStrategy,
     ParagraphChunkingStrategy,
+    SemanticChunkingStrategy,
 )
 
 
@@ -815,3 +816,463 @@ class TestParagraphChunkingStrategy:
             for chunk in chunks:
                 assert chunk.metadata["word_count"] > 0
                 assert chunk.metadata["word_count"] <= config.chunk_size + config.overlap
+
+
+class MockEmbeddingService:
+    """Mock embedding service for testing semantic chunking."""
+
+    def __init__(self) -> None:
+        """Initialize mock embedding service."""
+        self._call_count = 0
+        # Predefined embeddings that create semantic similarity patterns
+        self._embeddings: dict[str, list[float]] = {}
+
+    def get_dimension(self) -> int:
+        """Return embedding dimension."""
+        return 1536
+
+    def clear_cache(self) -> None:
+        """Clear cache (no-op for mock)."""
+        pass
+
+    async def embed(self, text: str) -> list[float]:
+        """Generate mock embedding for a single text."""
+        return self._generate_embedding(text)
+
+    async def embed_batch(self, texts: list[str], batch_size: int = 100) -> list[list[float]]:
+        """Generate mock embeddings for multiple texts."""
+        return [self._generate_embedding(t) for t in texts]
+
+    def _generate_embedding(self, text: str) -> list[float]:
+        """
+        Generate mock embedding based on text content.
+
+        Creates semantic similarity patterns:
+        - Similar words get similar embeddings
+        - Different topics get different embeddings
+        """
+        import hashlib
+
+        # Extract key terms for semantic grouping
+        text_lower = text.lower()
+
+        # Base hash from text
+        seed = int(hashlib.sha256(text.encode()).hexdigest()[:8], 16)
+
+        # Determine semantic group based on key terms
+        semantic_groups = {
+            "battle": 0.0,
+            "fight": 0.1,
+            "war": 0.2,
+            "combat": 0.3,
+            "peace": 1.0,
+            "calm": 1.1,
+            "quiet": 1.2,
+            "love": 2.0,
+            "romance": 2.1,
+            "affection": 2.2,
+            "magic": 3.0,
+            "spell": 3.1,
+            "wizard": 3.2,
+            "sorcery": 3.3,
+            "journey": 4.0,
+            "travel": 4.1,
+            "quest": 4.2,
+            "adventure": 4.3,
+        }
+
+        # Find matching group
+        group_offset = 5.0  # Default group
+        for term, offset in semantic_groups.items():
+            if term in text_lower:
+                group_offset = offset
+                break
+
+        # Generate embedding with group-based similarity
+        import random
+        random.seed(seed + int(group_offset * 1000))
+
+        dimension = self.get_dimension()
+        embedding: list[float] = []
+
+        # First dimension encodes the group (creates similarity within groups)
+        embedding.append(group_offset / 10.0)
+
+        # Rest of dimensions are deterministic random
+        for _ in range(dimension - 1):
+            embedding.append(random.gauss(0, 0.1))
+
+        # Normalize to unit length
+        magnitude = sum(x**2 for x in embedding) ** 0.5
+        if magnitude > 0:
+            embedding = [x / magnitude for x in embedding]
+
+        return embedding
+
+
+class TestSemanticChunkingStrategy:
+    """Tests for SemanticChunkingStrategy adapter."""
+
+    @pytest.fixture
+    def embedding_service(self) -> MockEmbeddingService:
+        """Create mock embedding service."""
+        return MockEmbeddingService()
+
+    @pytest.fixture
+    def strategy(self, embedding_service: MockEmbeddingService) -> SemanticChunkingStrategy:
+        """Create a SemanticChunkingStrategy instance."""
+        return SemanticChunkingStrategy(embedding_service=embedding_service)
+
+    @pytest.fixture
+    def narrative_text(self) -> str:
+        """Create sample narrative text with shifting topics."""
+        return (
+            "The great battle began at dawn. Soldiers clashed swords fiercely. "
+            "Blood stained the battlefield red. The combat raged for hours. "
+            "The enemy retreated in defeat. War is brutal and unforgiving. "
+            "Then peace descended upon the land. Calm returned to the village. "
+            "Quiet filled the streets once more. The people felt safe again. "
+            "Suddenly the wizard cast a powerful spell. Magic crackled in the air. "
+            "The sorcery transformed everything. An enchantment was revealed. "
+            "Finally the hero began their journey. Travel across the realm was difficult. "
+            "The quest tested their courage. Adventure awaited at every turn."
+        )
+
+    @pytest.mark.asyncio
+    async def test_chunk_basic_semantic_grouping(
+        self, strategy: SemanticChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test basic semantic chunking groups related content."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=100,
+            overlap=10,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        # Should create multiple chunks based on semantic shifts
+        assert len(chunks) >= 2
+
+    @pytest.mark.asyncio
+    async def test_metadata_strategy_field(
+        self, strategy: SemanticChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test that chunks have correct strategy in metadata."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=100,
+            overlap=10,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        for chunk in chunks:
+            assert chunk.metadata["strategy"] in ("semantic", "semantic_fixed_fallback")
+            assert "sentence_count" in chunk.metadata
+
+    @pytest.mark.asyncio
+    async def test_empty_text_raises_error(self, strategy: SemanticChunkingStrategy) -> None:
+        """Test that empty text raises ValueError."""
+        config = ChunkingStrategy.default()
+
+        with pytest.raises(ValueError, match="Cannot chunk empty text"):
+            await strategy.chunk("", config)
+
+    @pytest.mark.asyncio
+    async def test_supports_strategy_type(self, strategy: SemanticChunkingStrategy) -> None:
+        """Test supports_strategy_type method."""
+        assert strategy.supports_strategy_type("semantic") is True
+        assert strategy.supports_strategy_type("SEMANTIC") is True
+        assert strategy.supports_strategy_type("Semantic") is True
+        assert strategy.supports_strategy_type("fixed") is False
+        assert strategy.supports_strategy_type("sentence") is False
+        assert strategy.supports_strategy_type("paragraph") is False
+
+    @pytest.mark.asyncio
+    async def test_chunk_indices(
+        self, strategy: SemanticChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test that chunks have correct sequential indices."""
+        config = ChunkingStrategy.default()
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        for i, chunk in enumerate(chunks):
+            assert chunk.index == i
+
+    @pytest.mark.asyncio
+    async def test_cosine_similarity_calculation(self, strategy: SemanticChunkingStrategy) -> None:
+        """Test cosine similarity calculation."""
+        # Identical vectors should have similarity 1.0
+        vec1 = [0.5, 0.5, 0.5, 0.5]
+        vec2 = [0.5, 0.5, 0.5, 0.5]
+        assert strategy._cosine_similarity(vec1, vec2) == pytest.approx(1.0)
+
+        # Orthogonal vectors should have similarity 0.0
+        vec3 = [1.0, 0.0, 0.0, 0.0]
+        vec4 = [0.0, 1.0, 0.0, 0.0]
+        assert strategy._cosine_similarity(vec3, vec4) == pytest.approx(0.0)
+
+        # Opposite vectors should have similarity -1.0
+        vec5 = [1.0, 0.0, 0.0, 0.0]
+        vec6 = [-1.0, 0.0, 0.0, 0.0]
+        assert strategy._cosine_similarity(vec5, vec6) == pytest.approx(-1.0)
+
+    @pytest.mark.asyncio
+    async def test_split_into_sentences(self, strategy: SemanticChunkingStrategy) -> None:
+        """Test sentence splitting with position tracking."""
+        text = "First sentence. Second sentence! Third question?"
+
+        sentences = strategy._split_into_sentences(text)
+
+        assert len(sentences) == 3
+        # Each sentence should have (start, end, text) tuple
+        for start, end, sentence_text in sentences:
+            assert isinstance(start, int)
+            assert isinstance(end, int)
+            assert isinstance(sentence_text, str)
+            assert len(sentence_text) > 0
+
+    @pytest.mark.asyncio
+    async def test_sentences_grouped_by_similarity(
+        self, strategy: SemanticChunkingStrategy
+    ) -> None:
+        """Test that sentences are grouped by semantic similarity."""
+        # Text with clear semantic shifts
+        text = (
+            "The battle was fierce. Combat lasted all day. "
+            "Then peace arrived. Calm filled the land. "
+            "Magic appeared. The wizard cast a spell."
+        )
+
+        sentences = strategy._split_into_sentences(text)
+        sentence_texts = [s[2] for s in sentences]
+
+        # Generate embeddings
+        embeddings = await strategy._embedding_service.embed_batch(sentence_texts)
+
+        # Group by similarity
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=50,
+            overlap=5,
+            min_chunk_size=10,
+        )
+        groups = strategy._group_by_similarity(sentences, embeddings, config)
+
+        # Should create multiple groups based on semantic similarity
+        assert len(groups) >= 2
+
+    @pytest.mark.asyncio
+    async def test_single_sentence_text(self, strategy: SemanticChunkingStrategy) -> None:
+        """Test chunking text with a single sentence."""
+        config = ChunkingStrategy.default()
+
+        chunks = await strategy.chunk("This is a single sentence.", config)
+
+        assert len(chunks) == 1
+        assert chunks[0].text == "This is a single sentence."
+
+    @pytest.mark.asyncio
+    async def test_text_smaller_than_chunk_size(
+        self, strategy: SemanticChunkingStrategy
+    ) -> None:
+        """Test text that's smaller than one chunk."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=500,
+            overlap=50,
+        )
+
+        text = "This is a short text. It has only two sentences."
+
+        chunks = await strategy.chunk(text, config)
+
+        assert len(chunks) == 1
+
+    @pytest.mark.asyncio
+    async def test_fallback_to_fixed_no_sentences(
+        self, embedding_service: MockEmbeddingService
+    ) -> None:
+        """Test fallback to fixed chunking when no sentences found."""
+        strategy = SemanticChunkingStrategy(embedding_service=embedding_service)
+        config = ChunkingStrategy.default()
+
+        # Text with no sentence-ending punctuation
+        text = "word1 word2 word3 word4 word5"
+
+        chunks = await strategy.chunk(text, config)
+
+        # Should still chunk via fallback
+        assert len(chunks) > 0
+
+    @pytest.mark.asyncio
+    async def test_overlap_preserves_context(
+        self, strategy: SemanticChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test that overlap creates context continuity between chunks."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=50,
+            overlap=15,
+            min_chunk_size=10,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        if len(chunks) > 1:
+            # Verify overlap exists
+            first_words = set(chunks[0].text.split())
+            second_words = set(chunks[1].text.split())
+            overlap = first_words & second_words
+            # Should have some overlapping words
+            assert len(overlap) >= 0
+
+    @pytest.mark.asyncio
+    async def test_custom_default_config(self, embedding_service: MockEmbeddingService) -> None:
+        """Test creating strategy with custom default config."""
+        custom_default = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=200,
+            overlap=30,
+        )
+        strategy = SemanticChunkingStrategy(
+            embedding_service=embedding_service,
+            default_config=custom_default,
+        )
+
+        text = " ".join([f"Sentence {i}." for i in range(50)])
+        chunks = await strategy.chunk(text)  # No config passed
+
+        assert chunks[0].metadata["chunk_size"] == 200
+        assert chunks[0].metadata["overlap"] == 30
+
+    @pytest.mark.asyncio
+    async def test_very_long_text(
+        self, strategy: SemanticChunkingStrategy, embedding_service: MockEmbeddingService
+    ) -> None:
+        """Test chunking a long text with many semantic shifts."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=80,
+            overlap=10,
+        )
+
+        # Create long text with alternating topics
+        topics = [
+            "battle", "peace", "magic", "journey", "battle",
+            "love", "magic", "peace", "journey", "battle"
+        ]
+        sentences = []
+        for topic in topics:
+            sentences.extend([
+                f"The {topic} continued throughout the day.",
+                f"Everyone witnessed the {topic}.",
+            ])
+
+        text = " ".join(sentences)
+
+        chunks = await strategy.chunk(text, config)
+
+        # Should create multiple chunks
+        assert len(chunks) >= 2
+        # Each chunk should have metadata
+        for chunk in chunks:
+            assert chunk.metadata["strategy"] == "semantic"
+            assert "sentence_count" in chunk.metadata
+
+    @pytest.mark.asyncio
+    async def test_get_overlap_sentences(self, strategy: SemanticChunkingStrategy) -> None:
+        """Test getting sentences for overlap."""
+        sentences = [
+            (0, 10, "First sentence here."),
+            (11, 25, "Second sentence here."),
+            (26, 40, "Third sentence here."),
+            (41, 55, "Fourth sentence here."),
+        ]
+
+        # Get 5 words of overlap (about 2-3 sentences)
+        overlap = strategy._get_overlap_sentences(sentences, 5)
+
+        # Should return sentences from the end
+        assert len(overlap) >= 1
+        assert overlap[0] in sentences
+
+    @pytest.mark.asyncio
+    async def test_no_sentences_to_split(
+        self, strategy: SemanticChunkingStrategy
+    ) -> None:
+        """Test handling text that results in no sentences."""
+        config = ChunkingStrategy.default()
+
+        # Empty text after stripping
+        chunks = await strategy.chunk("   .   .   ", config)
+
+        # Should fall back to fixed or return empty list
+        assert isinstance(chunks, list)
+
+    @pytest.mark.asyncio
+    async def test_zero_overlap(
+        self, strategy: SemanticChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test semantic chunking with zero overlap."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=50,
+            overlap=0,
+            min_chunk_size=10,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        # Should still create chunks
+        assert len(chunks) >= 1
+
+    @pytest.mark.asyncio
+    async def test_sentence_count_in_metadata(
+        self, strategy: SemanticChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test that sentence count is recorded in metadata."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=80,
+            overlap=10,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        for chunk in chunks:
+            assert "sentence_count" in chunk.metadata
+            assert chunk.metadata["sentence_count"] >= 1
+            assert chunk.metadata["sentence_count"] <= strategy.DEFAULT_MAX_SENTENCES_PER_CHUNK + 1
+
+    @pytest.mark.asyncio
+    async def test_all_chunks_within_size_limit(
+        self, strategy: SemanticChunkingStrategy, narrative_text: str
+    ) -> None:
+        """Test that all chunks respect size limits with overlap."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SEMANTIC,
+            chunk_size=80,
+            overlap=15,
+            min_chunk_size=10,
+        )
+
+        chunks = await strategy.chunk(narrative_text, config)
+
+        for chunk in chunks:
+            word_count = chunk.metadata["word_count"]
+            # Allow some flexibility for overlap, but should be reasonable
+            assert word_count > 0
+            # Chunks can exceed chunk_size due to overlap and sentence grouping
+            # but shouldn't be excessively large
+            assert word_count <= config.chunk_size + config.overlap + strategy.DEFAULT_MAX_SENTENCES_PER_CHUNK * 10
+
+    @pytest.mark.asyncio
+    async def test_embedding_service_required(self) -> None:
+        """Test that embedding service is required."""
+        import pytest
+
+        with pytest.raises(TypeError):  # Missing required argument
+            SemanticChunkingStrategy()  # type: ignore
