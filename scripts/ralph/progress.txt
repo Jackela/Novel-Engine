@@ -72,3 +72,20 @@ Branch: feat/code-citadel
   - Table component from shadcn/ui provides consistent styling
 
 ---
+
+## 2025-02-05 - BRAIN-035B-02
+- **What was implemented:**
+  - Added preset/custom mode toggle for date range filtering in Usage tab
+  - Preset mode: 7, 30, 90 day quick-select buttons (existing functionality enhanced)
+  - Custom mode: Native HTML date inputs for start/end date selection
+  - Apply button calculates days from custom date range
+  - Filter applies to all Usage tab charts (Tokens Over Time, Cost by Model, Provider Distribution)
+  - Defaults to 30 days in preset mode
+- **Files changed:**
+  - `frontend/src/features/routing/components/BrainSettingsPage.tsx` - Added date range picker UI
+- **Learnings for future iterations:**
+  - Use `effectiveDays` pattern to calculate days from both preset and custom date ranges
+  - Native HTML date inputs work well and don't require additional dependencies
+  - Mode toggle (preset vs custom) provides good UX flexibility
+
+---
