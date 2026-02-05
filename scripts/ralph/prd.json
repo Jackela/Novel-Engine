@@ -292,9 +292,9 @@
         "Test: Manual tag persists after entity update"
       ],
       "priority": 79,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-038-04"],
-      "notes": ""
+      "notes": "Implemented manual smart tags override functionality. Added manual_smart_tags tracking to LoreEntry, Scene, Character entities. Created SmartTagsEditor UI component. Added API endpoints for manual tag management. 15 tests pass."
     },
     {
       "id": "BRAIN-039A-01",
