@@ -367,3 +367,29 @@ Branch: feat/code-citadel
   - Client receives chunks as they're generated (real-time feedback)
 
 ---
+
+## 2025-02-05 - BRAIN-037B-01
+- **What was implemented:**
+  - Created ChatInterface component as floating chat widget
+  - Added fixed positioning (bottom-right) with toggle button
+  - Collapsible panel with minimize/expand functionality
+  - Integrated streaming chat API with real-time message updates
+  - Added ChatMessage, ChatRequest, ChatChunk types to brainSettingsApi
+  - Added `chat()` function to brainSettingsApi for streaming responses
+  - Integrated ChatInterface into AppShell for global availability
+  - Panel shows user messages (right-aligned) and AI responses (left-aligned)
+  - Auto-scroll to latest message
+  - Loading indicator with pulsing cursor during streaming
+- **Files changed:**
+  - `frontend/src/components/ChatInterface.tsx` - New component
+  - `frontend/src/features/routing/api/brainSettingsApi.ts` - Added chat types and function
+  - `frontend/src/components/composed/AppShell.tsx` - Added ChatInterface
+- **Learnings for future iterations:**
+  - Use type-only imports when `verbatimModuleSyntax` is enabled (e.g., `type ChatMessage`)
+  - SSE streaming on frontend: Use `response.body?.getReader()` and TextDecoder
+  - Parse SSE format: lines starting with `data: ` contain JSON payloads
+  - AbortController allows canceling in-flight requests
+  - The `cn` utility for className merging exists at `@/lib/utils`
+  - Pre-existing typecheck errors in PromptsPage.tsx are unrelated to this story
+
+---

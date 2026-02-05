@@ -197,6 +197,26 @@ export interface RAGContextResponse {
   sources: string[];
 }
 
+// BRAIN-037A-01: Chat Backend API Types
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatRequest {
+  query: string;
+  chat_history?: ChatMessage[];
+  scene_id?: string;
+  max_chunks?: number;
+  session_id?: string;
+}
+
+export interface ChatChunk {
+  delta: string;
+  done: boolean;
+}
+
 /**
  * Subscribe to real-time usage events via SSE
  * BRAIN-035B-04: Real-time Usage Counter
@@ -405,5 +425,74 @@ export const brainSettingsApi = {
 
     const response = await fetch(`/api/brain/context?${params.toString()}`);
     return handleResponse<RAGContextResponse>(response);
+  },
+
+  /**
+   * Send chat message and get streaming response
+   * BRAIN-037A-01: Chat Backend API
+   *
+   * @param request Chat request with query and optional history
+   * @param onChunk Callback for each streaming chunk
+   * @param onError Callback for errors
+   * @returns AbortController to cancel the request
+   */
+  async chat(
+    request: ChatRequest,
+    onChunk: (chunk: ChatChunk) => void,
+    onError?: (error: Error) => void,
+  ): Promise<AbortController> {
+    const controller = new AbortController();
+
+    try {
+      const response = await fetch('/api/brain/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: response.statusText }));
+        throw new Error(error.detail || error.message || 'Chat request failed');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data.trim()) {
+              try {
+                const chunk = JSON.parse(data) as ChatChunk;
+                onChunk(chunk);
+                if (chunk.done) break;
+              } catch (e) {
+                // Ignore invalid JSON
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        onError?.(error as Error);
+      }
+    }
+
+    return controller;
   },
 };

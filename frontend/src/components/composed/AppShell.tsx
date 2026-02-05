@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Sidebar } from '@/shared/components/layout/Sidebar';
 import { TopBar } from '@/shared/components/layout/TopBar';
 import { DecisionDialog } from '@/features/decision/DecisionDialog';
+import { ChatInterface } from '@/components/ChatInterface';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface AppShellProps {
@@ -74,6 +75,7 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
         <DecisionDialog />
+        <ChatInterface />
       </div>
     </div>
   );
