@@ -186,6 +186,17 @@ from .budget_alert_service import (
     create_budget_alert_service,
 )
 
+from .smart_tagging_service import (
+    SmartTaggingService,
+    TagCategory,
+    GeneratedTag,
+    TaggingResult,
+    TaggingConfig,
+    SmartTaggingError,
+    DEFAULT_TEMPERATURE as DEFAULT_TAGGING_TEMPERATURE,
+    DEFAULT_MAX_TOKENS as DEFAULT_TAGGING_MAX_TOKENS,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -333,4 +344,13 @@ __all__ = [
     "BudgetAlertServiceConfig",
     "AlertHandler",
     "create_budget_alert_service",
+    # Smart Tagging Service
+    "SmartTaggingService",
+    "TagCategory",
+    "GeneratedTag",
+    "TaggingResult",
+    "TaggingConfig",
+    "SmartTaggingError",
+    "DEFAULT_TAGGING_TEMPERATURE",
+    "DEFAULT_TAGGING_MAX_TOKENS",
 ]

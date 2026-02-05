@@ -413,3 +413,40 @@ Branch: feat/code-citadel
   - Pulsing cursor created with `animate-pulse` Tailwind class
 
 ---
+
+## 2025-02-05 - BRAIN-038-01
+- **What was implemented:**
+  - Created SmartTaggingService in knowledge context application services
+  - TagCategory enum with: GENRE, MOOD, THEMES, CHARACTERS_PRESENT, LOCATIONS
+  - GeneratedTag dataclass with category, value, confidence fields
+  - TaggingResult with get_tags_by_category() and get_all_tags() helper methods
+  - TaggingConfig dataclass with validation for configuration
+  - LLM-based tag generation using JSON schema prompt
+  - Tag value normalization (lowercase, stripped, hyphenated multi-word)
+  - Content truncation for long texts (4000 char limit)
+- **Files changed:**
+  - `src/contexts/knowledge/application/services/smart_tagging_service.py` - New service
+  - `src/contexts/knowledge/application/services/__init__.py` - Exported service and types
+  - `tests/unit/contexts/knowledge/application/services/test_smart_tagging_service.py` - 14 tests, all passing
+- **Learnings for future iterations:**
+  - ILLMClient port uses `LLMRequest` with `system_prompt` and `user_prompt` fields (not `messages`)
+  - LLMResponse has `text` field (not `content`), and method is `generate` (not `complete`)
+  - Frozen dataclass with `__post_init__` is pattern for validation + immutability
+  - Use `object.__setattr__(self, ...)` for modifying frozen dataclass in __post_init__
+
+---
+
+## 2025-02-05 - BRAIN-038-02
+- **What was implemented:**
+  - Tag categories were already implemented as part of BRAIN-038-01
+  - TagCategory enum defines all required categories: genre, mood, themes, characters_present, locations
+  - Category-specific prompts built via `_get_category_descriptions()` method
+  - Each category includes description for prompt generation
+- **Files changed:**
+  - None (categories were part of SmartTaggingService from BRAIN-038-01)
+- **Learnings for future iterations:**
+  - Category descriptions are embedded in system prompt for LLM context
+  - TagCategory enum provides type-safe category selection
+  - Tags are automatically normalized to lowercase and hyphenated for consistency
+
+---
