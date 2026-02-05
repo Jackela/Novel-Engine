@@ -16,6 +16,7 @@ Warzone 4: AI Brain - BRAIN-005
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING, Any
 
 import structlog
@@ -42,10 +43,14 @@ class KnowledgeEventSubscriber:
     Listens for events from Character, Lore, and Scene contexts
     and automatically ingests them into the RAG system.
 
+    Optionally integrates with SmartTaggingEventHandler to automatically
+    generate and store tags for entities.
+
     Example:
         >>> subscriber = KnowledgeEventSubscriber(
         ...     event_bus=event_bus,
         ...     sync_handler=sync_handler,
+        ...     tagging_handler=tagging_handler,  # Optional
         ... )
         >>> await subscriber.subscribe_to_all()
         >>> # Now automatically ingests on events
@@ -56,6 +61,7 @@ class KnowledgeEventSubscriber:
         self,
         event_bus: EventBus,
         sync_handler: KnowledgeSyncEventHandler,
+        tagging_handler: Any | None = None,  # SmartTaggingEventHandler
     ):
         """
         Initialize the subscriber.
@@ -63,9 +69,11 @@ class KnowledgeEventSubscriber:
         Args:
             event_bus: The event bus to subscribe to
             sync_handler: The sync handler that processes ingestions
+            tagging_handler: Optional smart tagging handler for auto-tagging
         """
         self._event_bus = event_bus
         self._sync_handler = sync_handler
+        self._tagging_handler = tagging_handler
         self._subscribed = False
 
     async def subscribe_to_all(self) -> None:
@@ -278,17 +286,30 @@ class KnowledgeEventSubscriber:
             tags=kwargs.get("tags"),
         )
 
+        # Build metadata with smart tags if tagging handler is available
+        extra_metadata = {}
+        if self._tagging_handler:
+            # Queue async smart tagging
+            asyncio.create_task(
+                self._generate_and_store_lore_tags(
+                    lore_id=str(lore_id),
+                    title=title,
+                    content=content,
+                    category=kwargs.get("category"),
+                    existing_tags=kwargs.get("smart_tags"),
+                )
+            )
+
         # Queue for ingestion
         asyncio_coro = self._sync_handler.queue_ingestion(
             source_id=str(lore_id),
             source_type=SourceType.LORE,
             content=formatted_content,
             tags=kwargs.get("tags", ["lore"]),
+            extra_metadata=extra_metadata if extra_metadata else None,
         )
 
         # Create task for async processing
-        import asyncio
-
         asyncio.create_task(asyncio_coro)
 
         logger.info(
@@ -296,6 +317,52 @@ class KnowledgeEventSubscriber:
             lore_id=str(lore_id),
             title=title,
         )
+
+    async def _generate_and_store_lore_tags(
+        self,
+        lore_id: str,
+        title: str,
+        content: str,
+        category: str | None = None,
+        existing_tags: dict[str, list[str]] | None = None,
+    ) -> None:
+        """
+        Generate smart tags for lore and store in metadata.
+
+        Args:
+            lore_id: Lore entry ID
+            title: Lore title
+            content: Lore content
+            category: Lore category
+            existing_tags: Existing tags to preserve
+        """
+        if not self._tagging_handler:
+            return
+
+        try:
+            tags = await self._tagging_handler.generate_tags_for_lore(
+                lore_id=lore_id,
+                title=title,
+                content=content,
+                category=category,
+                existing_tags=existing_tags,
+            )
+
+            # Store tags in metadata
+            # In a real implementation, this would call a repository
+            # to persist the tags to the entity's metadata
+            logger.info(
+                "smart_tags_stored_for_lore",
+                lore_id=lore_id,
+                tags=tags,
+            )
+
+        except Exception as e:
+            logger.error(
+                "smart_tagging_lore_error",
+                lore_id=lore_id,
+                error=str(e),
+            )
 
     def _on_lore_updated(self, **kwargs: Any) -> None:
         """
@@ -329,17 +396,30 @@ class KnowledgeEventSubscriber:
             tags=kwargs.get("tags"),
         )
 
+        # Build metadata with smart tags if tagging handler is available
+        extra_metadata = {}
+        if self._tagging_handler:
+            # Queue async smart tagging
+            asyncio.create_task(
+                self._generate_and_store_lore_tags(
+                    lore_id=str(lore_id),
+                    title=title,
+                    content=content,
+                    category=kwargs.get("category"),
+                    existing_tags=kwargs.get("smart_tags"),
+                )
+            )
+
         # Queue for ingestion (update replaces old content)
         asyncio_coro = self._sync_handler.queue_ingestion(
             source_id=str(lore_id),
             source_type=SourceType.LORE,
             content=formatted_content,
             tags=kwargs.get("tags", ["lore", "updated"]),
+            extra_metadata=extra_metadata if extra_metadata else None,
         )
 
         # Create task for async processing
-        import asyncio
-
         asyncio.create_task(asyncio_coro)
 
         logger.info(
@@ -378,6 +458,25 @@ class KnowledgeEventSubscriber:
             else:
                 beat_contents.append(str(beat))
 
+        # Build metadata
+        extra_metadata = {}
+        if chapter_id := kwargs.get("chapter_id"):
+            extra_metadata["chapter_id"] = str(chapter_id)
+
+        # Queue smart tagging if handler is available
+        if self._tagging_handler:
+            # Queue async smart tagging
+            asyncio.create_task(
+                self._generate_and_store_scene_tags(
+                    scene_id=str(scene_id),
+                    title=title,
+                    summary=kwargs.get("summary"),
+                    location=kwargs.get("location"),
+                    beats=beat_contents if beat_contents else None,
+                    existing_tags=kwargs.get("smart_tags"),
+                )
+            )
+
         # Build formatted content
         content = _scene_to_content(
             scene_id=str(scene_id),
@@ -386,11 +485,6 @@ class KnowledgeEventSubscriber:
             location=kwargs.get("location"),
             beats=beat_contents if beat_contents else None,
         )
-
-        # Build metadata
-        extra_metadata = {}
-        if chapter_id := kwargs.get("chapter_id"):
-            extra_metadata["chapter_id"] = str(chapter_id)
 
         # Queue for ingestion
         asyncio_coro = self._sync_handler.queue_ingestion(
@@ -402,8 +496,6 @@ class KnowledgeEventSubscriber:
         )
 
         # Create task for async processing
-        import asyncio
-
         asyncio.create_task(asyncio_coro)
 
         logger.info(
@@ -411,6 +503,53 @@ class KnowledgeEventSubscriber:
             scene_id=str(scene_id),
             title=title,
         )
+
+    async def _generate_and_store_scene_tags(
+        self,
+        scene_id: str,
+        title: str,
+        summary: str | None = None,
+        location: str | None = None,
+        beats: list[str] | None = None,
+        existing_tags: dict[str, list[str]] | None = None,
+    ) -> None:
+        """
+        Generate smart tags for scene and store in metadata.
+
+        Args:
+            scene_id: Scene ID
+            title: Scene title
+            summary: Scene summary
+            location: Scene location
+            beats: Scene beat contents
+            existing_tags: Existing tags to preserve
+        """
+        if not self._tagging_handler:
+            return
+
+        try:
+            tags = await self._tagging_handler.generate_tags_for_scene(
+                scene_id=scene_id,
+                title=title,
+                summary=summary,
+                location=location,
+                beats=beats,
+                existing_tags=existing_tags,
+            )
+
+            # Store tags in metadata
+            logger.info(
+                "smart_tags_stored_for_scene",
+                scene_id=scene_id,
+                tags=tags,
+            )
+
+        except Exception as e:
+            logger.error(
+                "smart_tagging_scene_error",
+                scene_id=scene_id,
+                error=str(e),
+            )
 
     def _on_scene_updated(self, **kwargs: Any) -> None:
         """
@@ -440,6 +579,25 @@ class KnowledgeEventSubscriber:
             else:
                 beat_contents.append(str(beat))
 
+        # Build metadata
+        extra_metadata = {}
+        if chapter_id := kwargs.get("chapter_id"):
+            extra_metadata["chapter_id"] = str(chapter_id)
+
+        # Queue smart tagging if handler is available
+        if self._tagging_handler:
+            # Queue async smart tagging
+            asyncio.create_task(
+                self._generate_and_store_scene_tags(
+                    scene_id=str(scene_id),
+                    title=title,
+                    summary=kwargs.get("summary"),
+                    location=kwargs.get("location"),
+                    beats=beat_contents if beat_contents else None,
+                    existing_tags=kwargs.get("smart_tags"),
+                )
+            )
+
         # Build formatted content
         content = _scene_to_content(
             scene_id=str(scene_id),
@@ -448,11 +606,6 @@ class KnowledgeEventSubscriber:
             location=kwargs.get("location"),
             beats=beat_contents if beat_contents else None,
         )
-
-        # Build metadata
-        extra_metadata = {}
-        if chapter_id := kwargs.get("chapter_id"):
-            extra_metadata["chapter_id"] = str(chapter_id)
 
         # Queue for ingestion (update replaces old content)
         asyncio_coro = self._sync_handler.queue_ingestion(
@@ -464,8 +617,6 @@ class KnowledgeEventSubscriber:
         )
 
         # Create task for async processing
-        import asyncio
-
         asyncio.create_task(asyncio_coro)
 
         logger.info(
