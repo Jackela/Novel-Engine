@@ -13,9 +13,12 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Final, Optional
+
+# Default overlap percentage (10% of chunk_size)
+DEFAULT_OVERLAP_PERCENTAGE: Final[float] = 0.1
 
 
 class ChunkStrategyType(str, Enum):
@@ -40,9 +43,28 @@ class ChunkStrategyType(str, Enum):
 
 # Default chunking configurations
 DEFAULT_CHUNK_SIZE: Final[int] = 500
-DEFAULT_OVERLAP: Final[int] = 50
+DEFAULT_OVERLAP: Final[int] = 50  # Legacy fixed default (10% of 500 = 50)
 MIN_CHUNK_SIZE: Final[int] = 50
 MAX_CHUNK_SIZE: Final[int] = 2000
+
+
+def _calculate_overlap_from_chunk_size(
+    chunk_size: int,
+    percentage: float = DEFAULT_OVERLAP_PERCENTAGE,
+) -> int:
+    """
+    Calculate overlap as a percentage of chunk_size.
+
+    Args:
+        chunk_size: The target chunk size
+        percentage: Percentage to use (default: 0.1 for 10%)
+
+    Returns:
+        Calculated overlap (minimum 1, maximum chunk_size - 1)
+    """
+    overlap = int(chunk_size * percentage)
+    # Ensure at least 1 word overlap, but less than chunk_size
+    return max(1, min(overlap, chunk_size - 1))
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,27 +79,28 @@ class ChunkingStrategy:
     Attributes:
         strategy: Type of chunking strategy (FIXED, SEMANTIC, SENTENCE, PARAGRAPH)
         chunk_size: Maximum words per chunk
-        overlap: Number of overlapping words between chunks
+        overlap: Number of overlapping words between chunks, or None to auto-calculate (10% of chunk_size)
         min_chunk_size: Minimum chunk size to avoid tiny fragments
 
     Example:
         >>> strategy = ChunkingStrategy(
         ...     strategy=ChunkStrategyType.FIXED,
         ...     chunk_size=500,
-        ...     overlap=50
+        ...     overlap=None  # Auto-calculated as 10% of chunk_size (50)
         ... )
         >>> chunks = TextChunker.chunk(text, strategy)
     """
 
     strategy: ChunkStrategyType
     chunk_size: int = DEFAULT_CHUNK_SIZE
-    overlap: int = DEFAULT_OVERLAP
+    overlap: int | None = None  # None = auto-calculate as 10% of chunk_size
     min_chunk_size: int = MIN_CHUNK_SIZE
+    _auto_calculated_overlap: int = field(default=0, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        """Validate chunking parameters."""
+        """Validate chunking parameters and auto-calculate overlap if needed."""
         chunk_size = int(self.chunk_size)
-        overlap = int(self.overlap)
+        overlap_input = self.overlap
         min_chunk_size = int(self.min_chunk_size)
 
         if chunk_size < MIN_CHUNK_SIZE:
@@ -88,6 +111,16 @@ class ChunkingStrategy:
             raise ValueError(
                 f"chunk_size must be at most {MAX_CHUNK_SIZE}, got {chunk_size}"
             )
+
+        # Auto-calculate overlap as 10% of chunk_size if not specified
+        if overlap_input is None:
+            calculated_overlap = _calculate_overlap_from_chunk_size(chunk_size)
+            object.__setattr__(self, "_auto_calculated_overlap", calculated_overlap)
+            overlap = calculated_overlap
+        else:
+            overlap = int(overlap_input)
+            object.__setattr__(self, "_auto_calculated_overlap", 0)
+
         if overlap < 0:
             raise ValueError(f"overlap must be non-negative, got {overlap}")
         if overlap >= chunk_size:
@@ -104,8 +137,31 @@ class ChunkingStrategy:
 
         # Ensure integer values
         object.__setattr__(self, "chunk_size", chunk_size)
+        # Replace None with calculated overlap for storage
         object.__setattr__(self, "overlap", overlap)
         object.__setattr__(self, "min_chunk_size", min_chunk_size)
+
+    @property
+    def is_auto_overlap(self) -> bool:
+        """
+        Check if overlap was auto-calculated.
+
+        Returns:
+            True if overlap was auto-calculated as 10% of chunk_size
+        """
+        return self._auto_calculated_overlap > 0
+
+    @property
+    def overlap_percentage(self) -> float:
+        """
+        Get overlap as percentage of chunk_size.
+
+        Returns:
+            Overlap as decimal (e.g., 0.1 for 10%)
+        """
+        # overlap is guaranteed to be int after __post_init__
+        assert self.overlap is not None  # for type checker
+        return self.overlap / self.chunk_size if self.chunk_size > 0 else 0.0
 
     @classmethod
     def default(cls) -> ChunkingStrategy:
@@ -113,12 +169,12 @@ class ChunkingStrategy:
         Create default chunking strategy.
 
         Returns:
-            ChunkingStrategy with fixed 500-word chunks and 50-word overlap
+            ChunkingStrategy with fixed 500-word chunks and 10% overlap (auto-calculated)
         """
         return cls(
             strategy=ChunkStrategyType.FIXED,
             chunk_size=DEFAULT_CHUNK_SIZE,
-            overlap=DEFAULT_OVERLAP,
+            overlap=None,  # Auto-calculated as 10% of chunk_size
         )
 
     @classmethod
@@ -127,12 +183,12 @@ class ChunkingStrategy:
         Create chunking strategy optimized for character profiles.
 
         Returns:
-            ChunkingStrategy with smaller chunks for profile data
+            ChunkingStrategy with smaller chunks and 10% overlap (auto-calculated)
         """
         return cls(
             strategy=ChunkStrategyType.SEMANTIC,
             chunk_size=200,
-            overlap=20,
+            overlap=None,  # Auto-calculated as 10% of chunk_size (20)
         )
 
     @classmethod
@@ -141,12 +197,12 @@ class ChunkingStrategy:
         Create chunking strategy optimized for scenes.
 
         Returns:
-            ChunkingStrategy with paragraph-aware chunking
+            ChunkingStrategy with paragraph-aware chunking and 10% overlap
         """
         return cls(
             strategy=ChunkStrategyType.PARAGRAPH,
             chunk_size=300,
-            overlap=30,
+            overlap=None,  # Auto-calculated as 10% of chunk_size (30)
         )
 
     @classmethod
@@ -155,16 +211,16 @@ class ChunkingStrategy:
         Create chunking strategy optimized for lore entries.
 
         Returns:
-            ChunkingStrategy with fixed chunks for world-building content
+            ChunkingStrategy with fixed chunks and 10% overlap
         """
         return cls(
             strategy=ChunkStrategyType.FIXED,
             chunk_size=400,
-            overlap=40,
+            overlap=None,  # Auto-calculated as 10% of chunk_size (40)
         )
 
     @classmethod
-    def for_auto(cls, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP) -> ChunkingStrategy:
+    def for_auto(cls, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int | None = None) -> ChunkingStrategy:
         """
         Create chunking strategy with auto-detection.
 
@@ -173,7 +229,7 @@ class ChunkingStrategy:
 
         Args:
             chunk_size: Maximum words per chunk (default: 500)
-            overlap: Number of overlapping words (default: 50)
+            overlap: Number of overlapping words, or None for 10% auto-calculation (default: None)
 
         Returns:
             ChunkingStrategy with AUTO strategy type
@@ -191,6 +247,8 @@ class ChunkingStrategy:
         Returns:
             Number of new words per chunk (chunk_size - overlap)
         """
+        # overlap is guaranteed to be int after __post_init__
+        assert self.overlap is not None  # for type checker
         return self.chunk_size - self.overlap
 
 
@@ -245,6 +303,8 @@ __all__ = [
     "ChunkingStrategies",
     "DEFAULT_CHUNK_SIZE",
     "DEFAULT_OVERLAP",
+    "DEFAULT_OVERLAP_PERCENTAGE",
     "MIN_CHUNK_SIZE",
     "MAX_CHUNK_SIZE",
+    "_calculate_overlap_from_chunk_size",
 ]

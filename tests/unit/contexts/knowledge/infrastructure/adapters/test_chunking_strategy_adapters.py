@@ -2293,3 +2293,283 @@ class TestNarrativeFlowChunkingStrategy:
         # Should respect paragraph boundaries
         assert len(chunks) >= 1
 
+
+class TestConfigurableOverlap:
+    """Tests for BRAIN-039B-02: Configurable Overlap feature."""
+
+    @pytest.mark.asyncio
+    async def test_auto_overlap_calculated_as_10_percent(self) -> None:
+        """Test that overlap=None auto-calculates to 10% of chunk_size."""
+        from src.contexts.knowledge.domain.models.chunking_strategy import (
+            _calculate_overlap_from_chunk_size,
+        )
+
+        # Test various chunk sizes
+        assert _calculate_overlap_from_chunk_size(100) == 10  # 10% of 100
+        assert _calculate_overlap_from_chunk_size(500) == 50  # 10% of 500
+        assert _calculate_overlap_from_chunk_size(1000) == 100  # 10% of 1000
+        assert _calculate_overlap_from_chunk_size(250) == 25  # 10% of 250
+
+    @pytest.mark.asyncio
+    async def test_auto_overlap_minimum_is_1(self) -> None:
+        """Test that auto-calculated overlap has minimum of 1."""
+        from src.contexts.knowledge.domain.models.chunking_strategy import (
+            _calculate_overlap_from_chunk_size,
+        )
+
+        # Very small chunk sizes should still have at least 1 overlap
+        assert _calculate_overlap_from_chunk_size(5) == 1  # Would be 0.5, rounded to 1
+        assert _calculate_overlap_from_chunk_size(10) == 1  # Would be 1.0
+
+    @pytest.mark.asyncio
+    async def test_auto_overlap_less_than_chunk_size(self) -> None:
+        """Test that auto-calculated overlap is always less than chunk_size."""
+        from src.contexts.knowledge.domain.models.chunking_strategy import (
+            _calculate_overlap_from_chunk_size,
+        )
+
+        # Ensure overlap is always less than chunk size
+        for size in [10, 20, 50, 100, 500, 1000]:
+            overlap = _calculate_overlap_from_chunk_size(size)
+            assert overlap < size, f"Overlap {overlap} should be < chunk_size {size}"
+            assert overlap >= 1, f"Overlap {overlap} should be >= 1"
+
+    @pytest.mark.asyncio
+    async def test_chunking_strategy_with_none_overlap(self) -> None:
+        """Test that ChunkingStrategy accepts None for overlap."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,
+            chunk_size=300,
+            overlap=None,  # Auto-calculate
+        )
+
+        # Should be auto-calculated as 10% = 30
+        assert config.overlap == 30
+        assert config.is_auto_overlap is True
+        assert config.overlap_percentage == 0.1
+
+    @pytest.mark.asyncio
+    async def test_chunking_strategy_with_explicit_overlap(self) -> None:
+        """Test that explicit overlap values work correctly."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,
+            chunk_size=500,
+            overlap=75,  # Explicit value (15%)
+        )
+
+        assert config.overlap == 75
+        assert config.is_auto_overlap is False
+        assert config.overlap_percentage == 0.15
+
+    @pytest.mark.asyncio
+    async def test_default_strategy_uses_auto_overlap(self) -> None:
+        """Test that default() factory method uses auto-calculated overlap."""
+        config = ChunkingStrategy.default()
+
+        # Default chunk_size is 500, so overlap should be 50 (10%)
+        assert config.chunk_size == 500
+        assert config.overlap == 50
+        assert config.is_auto_overlap is True
+
+    @pytest.mark.asyncio
+    async def test_for_character_uses_auto_overlap(self) -> None:
+        """Test that for_character() uses auto-calculated overlap."""
+        config = ChunkingStrategy.for_character()
+
+        # Character chunk_size is 200, so overlap should be 20 (10%)
+        assert config.chunk_size == 200
+        assert config.overlap == 20
+        assert config.is_auto_overlap is True
+
+    @pytest.mark.asyncio
+    async def test_for_scene_uses_auto_overlap(self) -> None:
+        """Test that for_scene() uses auto-calculated overlap."""
+        config = ChunkingStrategy.for_scene()
+
+        # Scene chunk_size is 300, so overlap should be 30 (10%)
+        assert config.chunk_size == 300
+        assert config.overlap == 30
+        assert config.is_auto_overlap is True
+
+    @pytest.mark.asyncio
+    async def test_for_lore_uses_auto_overlap(self) -> None:
+        """Test that for_lore() uses auto-calculated overlap."""
+        config = ChunkingStrategy.for_lore()
+
+        # Lore chunk_size is 400, so overlap should be 40 (10%)
+        assert config.chunk_size == 400
+        assert config.overlap == 40
+        assert config.is_auto_overlap is True
+
+    @pytest.mark.asyncio
+    async def test_for_auto_accepts_none_overlap(self) -> None:
+        """Test that for_auto() factory method accepts None for overlap."""
+        config = ChunkingStrategy.for_auto(
+            chunk_size=600,
+            overlap=None,  # Auto-calculate as 60 (10%)
+        )
+
+        assert config.chunk_size == 600
+        assert config.overlap == 60
+        assert config.is_auto_overlap is True
+
+    @pytest.mark.asyncio
+    async def test_fixed_chunking_with_auto_overlap(self) -> None:
+        """Test FixedChunkingStrategy with auto-calculated overlap."""
+        strategy = FixedChunkingStrategy()
+
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,
+            chunk_size=200,
+            overlap=None,  # Auto-calculate as 20
+        )
+
+        text = " ".join([f"word{i}" for i in range(600)])
+        chunks = await strategy.chunk(text, config)
+
+        # Should have 3+ chunks with 20 word overlap
+        assert len(chunks) >= 3
+        assert chunks[0].metadata["overlap"] == 20
+        assert chunks[0].metadata["chunk_size"] == 200
+
+    @pytest.mark.asyncio
+    async def test_overlap_continuity_with_auto_overlap(self) -> None:
+        """Test that auto-calculated overlap creates proper context continuity."""
+        strategy = FixedChunkingStrategy()
+
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,
+            chunk_size=100,
+            overlap=None,  # Auto-calculate as 10
+        )
+
+        # Create text where each word is unique
+        words = [f"unique_word_{i}" for i in range(300)]
+        text = " ".join(words)
+
+        chunks = await strategy.chunk(text, config)
+
+        if len(chunks) > 1:
+            # First chunk: words 0-100
+            first_chunk_words = chunks[0].text.split()
+            assert len(first_chunk_words) == 100
+
+            # Second chunk: should start at word 90 (100 - 10 overlap)
+            second_chunk_words = chunks[1].text.split()
+            assert second_chunk_words[0] == "unique_word_90"
+            # Second chunk should overlap with last 10 words of first
+            assert second_chunk_words[0] == first_chunk_words[-10]
+
+    @pytest.mark.asyncio
+    async def test_chunking_strategies_preserve_auto_overlap(
+        self,
+    ) -> None:
+        """Test that all chunking strategies preserve auto-calculated overlap in metadata."""
+        config = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,
+            chunk_size=250,
+            overlap=None,  # Auto-calculate as 25
+        )
+
+        text = " ".join([f"word{i}" for i in range(1000)])
+
+        # Test FixedChunkingStrategy
+        fixed = FixedChunkingStrategy()
+        fixed_chunks = await fixed.chunk(text, config)
+        assert fixed_chunks[0].metadata["overlap"] == 25
+
+        # Test SentenceChunkingStrategy with converted config
+        sentence_config = ChunkingStrategy(
+            strategy=ChunkStrategyType.SENTENCE,
+            chunk_size=250,
+            overlap=None,
+        )
+        sentence = SentenceChunkingStrategy()
+        sentence_text = ". ".join([f"Sentence {i}" for i in range(50)]) + "."
+        sentence_chunks = await sentence.chunk(sentence_text, sentence_config)
+        if sentence_chunks:
+            # Check overlap in metadata (may differ due to sentence preservation)
+            assert "overlap" in sentence_chunks[0].metadata
+
+    @pytest.mark.asyncio
+    async def test_overlap_percentage_property(self) -> None:
+        """Test the overlap_percentage property."""
+        # 10% overlap (auto)
+        config1 = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,
+            chunk_size=500,
+            overlap=None,
+        )
+        assert config1.overlap_percentage == 0.1
+
+        # 20% overlap (explicit)
+        config2 = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,
+            chunk_size=500,
+            overlap=100,
+        )
+        assert config2.overlap_percentage == 0.2
+
+        # 5% overlap (explicit)
+        config3 = ChunkingStrategy(
+            strategy=ChunkStrategyType.FIXED,
+            chunk_size=400,
+            overlap=20,
+        )
+        assert config3.overlap_percentage == 0.05
+
+    @pytest.mark.asyncio
+    async def test_custom_percentage_overlap_calculation(self) -> None:
+        """Test overlap calculation with custom percentage."""
+        from src.contexts.knowledge.domain.models.chunking_strategy import (
+            _calculate_overlap_from_chunk_size,
+        )
+
+        # Test with 20% percentage
+        assert _calculate_overlap_from_chunk_size(500, 0.2) == 100
+        assert _calculate_overlap_from_chunk_size(250, 0.2) == 50
+
+        # Test with 5% percentage
+        assert _calculate_overlap_from_chunk_size(500, 0.05) == 25
+        assert _calculate_overlap_from_chunk_size(1000, 0.05) == 50
+
+    @pytest.mark.asyncio
+    async def test_zero_chunk_size_protection(self) -> None:
+        """Test that zero chunk_size is handled safely."""
+        from src.contexts.knowledge.domain.models.chunking_strategy import (
+            _calculate_overlap_from_chunk_size,
+        )
+
+        # Should return 1 for edge case (though chunk_size validation prevents this)
+        result = _calculate_overlap_from_chunk_size(1, 0.1)
+        # For chunk_size=1, overlap would be 0.1, rounded to 1, but must be < chunk_size
+        # So it should be 1 (but validation prevents chunk_size <= overlap)
+        assert result == 1
+
+    @pytest.mark.asyncio
+    async def test_auto_overlap_different_chunk_sizes(self) -> None:
+        """Test auto-overlap with various chunk sizes."""
+        strategy = FixedChunkingStrategy()
+
+        test_cases = [
+            (60, 6),    # 10% of 60 (must be > min_chunk_size of 50)
+            (100, 10),  # 10% of 100
+            (200, 20),  # 10% of 200
+            (400, 40),  # 10% of 400
+            (800, 80),  # 10% of 800
+        ]
+
+        for chunk_size, expected_overlap in test_cases:
+            config = ChunkingStrategy(
+                strategy=ChunkStrategyType.FIXED,
+                chunk_size=chunk_size,
+                overlap=None,
+                min_chunk_size=20,  # Set smaller min_chunk_size for all test cases
+            )
+
+            assert config.overlap == expected_overlap, (
+                f"Chunk size {chunk_size} should have overlap {expected_overlap}, "
+                f"got {config.overlap}"
+            )
+            assert config.is_auto_overlap is True
+
