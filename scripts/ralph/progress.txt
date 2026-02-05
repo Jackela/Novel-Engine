@@ -508,3 +508,37 @@ Branch: feat/code-citadel
   - Character is a frozen dataclass; metadata updates trigger version increment and domain events
 
 ---
+
+## 2025-02-05 - BRAIN-038-05
+- **What was implemented:**
+  - Added `manual_smart_tags` tracking to LoreEntry, Scene, and Character entities
+  - Manual tags are stored separately in `metadata["manual_smart_tags"]` to distinguish from auto-generated tags
+  - Added entity methods: `set_manual_smart_tags()`, `get_manual_smart_tags()`, `get_manual_smart_tags_for_category()`, `remove_manual_smart_tag()`, `clear_manual_smart_tags()`, `get_effective_smart_tags()`
+  - Updated SmartTaggingEventHandler to accept `manual_only_tags` parameter for preserving manual tags
+  - Added new API schemas: `SmartTagsResponse`, `ManualSmartTagsUpdateRequest`
+  - Added metadata field to LoreEntryResponse and SceneResponse
+  - Added GET/PUT/DELETE endpoints for manual smart tags on lore entries and scenes
+  - Created frontend `smartTagsApi.ts` API client and `SmartTagsEditor.tsx` UI component
+  - SmartTagsEditor provides category-based tag editing with visual distinction between manual and auto tags
+- **Files changed:**
+  - `src/contexts/world/domain/entities/lore_entry.py` - Added manual smart tags methods
+  - `src/contexts/narrative/domain/entities/scene.py` - Added manual smart tags methods
+  - `src/contexts/character/domain/aggregates/character.py` - Added manual smart tags methods
+  - `src/contexts/knowledge/application/event_handlers/smart_tagging_event_handler.py` - Updated to preserve manual tags
+  - `src/api/schemas.py` - Added SmartTagsResponse, ManualSmartTagsUpdateRequest, metadata to responses
+  - `src/api/routers/lore.py` - Added manual smart tags endpoints
+  - `src/api/routers/structure.py` - Added manual smart tags endpoints for scenes, updated scene response
+  - `frontend/src/features/routing/api/smartTagsApi.ts` - New API client
+  - `frontend/src/components/narrative/SmartTagsEditor.tsx` - New UI component
+  - `tests/unit/contexts/knowledge/application/event_handlers/test_manual_smart_tags.py` - 15 new tests
+- **Learnings for future iterations:**
+  - Manual tags are stored under a separate key (`manual_smart_tags`) to distinguish from auto-generated tags
+  - The `get_effective_smart_tags()` method combines both auto and manual tags
+  - UI shows manual tags with a lock icon and removal button, auto tags are read-only
+  - SmartTaggingEventHandler's `_merge_tags` now accepts `manual_only_tags` to always preserve them
+  - When auto-tagging runs, existing manual tags are preserved and merged with newly generated tags
+  - Character's `set_manual_smart_tags()` triggers domain event and version increment (frozen dataclass)
+  - All 15 tests pass: 9 for LoreEntry, 3 for Scene, 3 for Character
+
+---
+---
