@@ -155,3 +155,50 @@ Branch: feat/code-citadel
   - Real-time counter appears at top of Usage tab when active sessions exist
 
 ---
+
+## 2025-02-05 - BRAIN-034A
+- **What was implemented:**
+  - Added ITokenUsageRepository port with filtering, aggregation, and persistence methods
+  - Added InMemoryTokenUsageRepository adapter for development/testing
+  - Added TokenTracker service with decorator and context manager support
+  - Added input_tokens, output_tokens, raw_usage fields to LLMResponse
+  - Updated Claude, Gemini, Ollama, and OpenAI LLM clients to populate new token fields
+  - Added comprehensive unit tests for TokenTracker
+- **Files changed:**
+  - `src/contexts/knowledge/application/ports/i_llm_client.py` - Added input_tokens, output_tokens, raw_usage to LLMResponse
+  - `src/contexts/knowledge/application/ports/i_token_usage_repository.py` - New port for token usage persistence
+  - `src/contexts/knowledge/application/services/token_tracker.py` - New service with decorator/context manager
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py` - Exported new repository
+  - `src/contexts/knowledge/infrastructure/adapters/in_memory_token_usage_repository.py` - New adapter
+  - `src/contexts/knowledge/infrastructure/adapters/claude_llm_client.py` - Populate token fields
+  - `src/contexts/knowledge/infrastructure/adapters/gemini_llm_client.py` - Populate token fields
+  - `src/contexts/knowledge/infrastructure/adapters/ollama_llm_client.py` - Populate token fields
+  - `src/contexts/knowledge/infrastructure/adapters/openai_llm_client.py` - Populate token fields
+  - `tests/unit/contexts/knowledge/application/services/test_token_tracker.py` - New test file
+- **Learnings for future iterations:**
+  - Use regular class instead of dataclass when defining custom __init__ with keyword-only arguments
+  - Move runtime type imports (like LLMResponse) out of TYPE_CHECKING block if used for isinstance checks
+  - TokenTracker decorator tracks LLM calls automatically via @tracker.track_llm_call(model_ref="...")
+  - Context manager pattern: async with tracker.track_call(model, prompt=...) as ctx: ctx.record_success(...)
+  - All 16 tests pass for TokenTracker functionality
+
+---
+
+## 2025-02-05 - BRAIN-036-01
+- **What was implemented:**
+  - Added View AI Context button to scene editor toolbar
+  - Added ragEnabled and onViewAIContext props to EditorComponent
+  - Button uses Brain icon from lucide-react
+  - Button only visible when RAG is enabled (ragEnabled prop)
+  - Button is disabled during streaming generation
+  - Follows existing shadcn/ui Button patterns with outline variant
+- **Files changed:**
+  - `frontend/src/components/narrative/EditorComponent.tsx` - Added View AI Context button
+- **Learnings for future iterations:**
+  - EditorToolbar is nested function inside EditorComponent (lines 84-184)
+  - Brain icon from lucide-react fits the AI theme
+  - Use spread operator with conditional check for optional props: `{...(prop !== undefined && { prop })}`
+  - EditorComponent receives sceneId, prompt, context props from parent
+  - Parent component needs to pass ragEnabled from brainSettings.rag_config.enabled
+
+---
