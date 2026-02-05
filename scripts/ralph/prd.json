@@ -448,9 +448,9 @@
         "Test: Basic RAG retrieval verified"
       ],
       "priority": 90,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-040A-02"],
-      "notes": ""
+      "notes": "Tests pass as part of BRAIN-040A-02 fixes. Chat interface test runs, API response test verifies RAG content, context retrieval test validates chunks."
     },
     {
       "id": "BRAIN-040B-01",
@@ -463,9 +463,9 @@
         "Test: Hybrid search works"
       ],
       "priority": 91,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-040A-03"],
-      "notes": ""
+      "notes": "Tests pass as part of BRAIN-040A-02 fixes. Character creation with traits works, trait-based search returns chunks."
     },
     {
       "id": "BRAIN-040B-02",
@@ -478,9 +478,9 @@
         "Test: Citations accurate"
       ],
       "priority": 92,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-040B-01"],
-      "notes": ""
+      "notes": "Tests pass as part of BRAIN-040A-02 fixes. Multiple sources returned, chunks have valid citation info (source_id, source_type), used chunks marked."
     },
     {
       "id": "BRAIN-040B-03",
@@ -493,9 +493,9 @@
         "Test: Multi-hop retrieval works"
       ],
       "priority": 93,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-040B-02"],
-      "notes": ""
+      "notes": "Tests pass as part of BRAIN-040A-02 fixes. Connected entity creation works, multi-hop query returns chunks."
     }
   ]
 }
