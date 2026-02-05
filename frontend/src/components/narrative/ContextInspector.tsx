@@ -1,14 +1,16 @@
 /**
  * Context Inspector - BRAIN-036-02
  * BRAIN-036-04: Manual Chunk Selection
+ * BRAIN-036-05: Context Window Display
  *
  * Sliding panel component for viewing AI RAG context.
  * Shows retrieved chunks with source info, relevance scores, and token counts.
  * Allows manual selection of chunks for regeneration.
+ * Displays context window usage with progress bar.
  */
 
 import { useEffect, useState } from 'react';
-import { Brain, CheckCircle2, FileText, Hash, Loader2, RefreshCw, X } from 'lucide-react';
+import { Brain, CheckCircle2, FileText, Hash, Loader2, RefreshCw, X, AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +23,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 import { brainSettingsApi, type RetrievedChunkResponse, type RAGContextResponse } from '@/features/routing/api/brainSettingsApi';
 import { toast } from 'sonner';
 
@@ -35,6 +38,8 @@ interface ContextInspectorProps {
   sceneId?: string;
   /** Optional callback for regenerate with selected chunks */
   onRegenerateWithChunks?: (chunkIds: string[]) => void;
+  /** Optional context token limit (defaults to 4000) */
+  contextTokenLimit?: number;
 }
 
 /**
@@ -57,8 +62,9 @@ const SOURCE_TYPE_COLORS: Record<string, string> = {
  * - Relevance score
  * - Token count
  * - Chunk content
+ * - BRAIN-036-05: Context window usage display
  */
-export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWithChunks }: ContextInspectorProps) {
+export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWithChunks, contextTokenLimit = 4000 }: ContextInspectorProps) {
   const [context, setContext] = useState<RAGContextResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +141,21 @@ export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWi
     }
   };
 
+  // BRAIN-036-05: Calculate context window usage
+  const getContextWindowStatus = () => {
+    if (!context) return null;
+
+    const usedTokens = context.total_tokens;
+    const limit = contextTokenLimit;
+    const percentage = Math.min((usedTokens / limit) * 100, 100);
+    const isNearLimit = percentage >= 80;
+    const isAtLimit = percentage >= 95;
+
+    return { usedTokens, limit, percentage, isNearLimit, isAtLimit };
+  };
+
+  const contextWindowStatus = getContextWindowStatus();
+
   return (
     <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="w-full sm:max-w-lg flex flex-col gap-0 p-0">
@@ -188,6 +209,50 @@ export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWi
             </div>
           )}
         </SheetHeader>
+
+        {/* BRAIN-036-05: Context Window Display */}
+        {contextWindowStatus && (
+          <div className="border-b px-6 py-3 bg-muted/30">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Context Window</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">
+                    {contextWindowStatus.usedTokens.toLocaleString()} / {contextWindowStatus.limit.toLocaleString()} tokens
+                  </span>
+                  <span className={`text-xs font-medium ${
+                    contextWindowStatus.isAtLimit
+                      ? 'text-destructive'
+                      : contextWindowStatus.isNearLimit
+                        ? 'text-orange-600 dark:text-orange-400'
+                        : 'text-muted-foreground'
+                  }`}>
+                    ({contextWindowStatus.percentage.toFixed(0)}%)
+                  </span>
+                </div>
+              </div>
+              <Progress
+                value={contextWindowStatus.percentage}
+                className={contextWindowStatus.isAtLimit ? '[&>div]:bg-destructive' : contextWindowStatus.isNearLimit ? '[&>div]:bg-orange-500' : ''}
+              />
+              {/* BRAIN-036-05: Warning when approaching limit */}
+              {contextWindowStatus.isNearLimit && (
+                <div className={`flex items-center gap-2 text-xs ${
+                  contextWindowStatus.isAtLimit
+                    ? 'text-destructive'
+                    : 'text-orange-600 dark:text-orange-400'
+                }`}>
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>
+                    {contextWindowStatus.isAtLimit
+                      ? 'Context window nearly full. Consider reducing chunk count or size.'
+                      : 'Approaching context window limit.'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-hidden">

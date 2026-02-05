@@ -273,3 +273,23 @@ Branch: feat/code-citadel
   - The actual scene generation integration with selected chunks is a future enhancement
 
 ---
+
+## 2025-02-05 - BRAIN-036-05
+- **What was implemented:**
+  - Added Progress component from shadcn/ui for context window display
+  - Added context window usage display between header and content
+  - Shows used tokens / limit with percentage
+  - Progress bar with color coding (default, orange at 80%, red at 95%)
+  - Warning message with AlertTriangle icon when approaching limit (80%+)
+  - Different warning messages for near limit vs nearly full
+  - Added contextTokenLimit prop (defaults to 4000)
+- **Files changed:**
+  - `frontend/src/components/ui/progress.tsx` - New component from shadcn/ui
+  - `frontend/src/components/narrative/ContextInspector.tsx` - Added context window display
+- **Learnings for future iterations:**
+  - Use @radix-ui/react-progress for accessible progress bar
+  - Threshold-based color coding helps users understand urgency
+  - The default context token limit of 4000 is typical for many LLMs
+  - Using Tailwind's `[&>div]:bg-*` syntax allows targeting ProgressPrimitive.Indicator
+
+---
