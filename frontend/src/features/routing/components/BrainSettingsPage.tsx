@@ -192,23 +192,41 @@ export function BrainSettingsPage() {
     gemini: '',
   });
   const [localOllamaUrl, setLocalOllamaUrl] = useState('http://localhost:11434');
+
+  // BRAIN-035B-02: Date range filter state
+  const [dateRangeMode, setDateRangeMode] = useState<'preset' | 'custom'>('preset');
   const [usageDays, setUsageDays] = useState(30);
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
+
+  // Calculate effective date range for queries
+  const getDaysFromDateRange = (): number => {
+    if (dateRangeMode === 'custom' && customStartDate && customEndDate) {
+      const start = new Date(customStartDate);
+      const end = new Date(customEndDate);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    }
+    return usageDays;
+  };
+
+  const effectiveDays = getDaysFromDateRange();
 
   // BRAIN-035A: Fetch usage analytics data
   const {
     data: usageSummary,
     isLoading: usageSummaryLoading,
   } = useQuery({
-    queryKey: ['usage-summary', usageDays],
-    queryFn: () => brainSettingsApi.getUsageSummary(usageDays),
+    queryKey: ['usage-summary', effectiveDays],
+    queryFn: () => brainSettingsApi.getUsageSummary(effectiveDays),
   });
 
   const {
     data: dailyUsage,
     isLoading: dailyUsageLoading,
   } = useQuery({
-    queryKey: ['daily-usage', usageDays],
-    queryFn: () => brainSettingsApi.getDailyUsage(usageDays),
+    queryKey: ['daily-usage', effectiveDays],
+    queryFn: () => brainSettingsApi.getDailyUsage(effectiveDays),
   });
 
   const {
@@ -888,17 +906,70 @@ export function BrainSettingsPage() {
                   <CardTitle>Tokens Over Time</CardTitle>
                   <CardDescription>Daily token usage trend</CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  {[7, 30, 90].map((days) => (
+                <div className="flex items-center gap-4">
+                  {/* BRAIN-035B-02: Date range filter */}
+                  <div className="flex items-center gap-2">
                     <Button
-                      key={days}
                       size="sm"
-                      variant={usageDays === days ? 'default' : 'outline'}
-                      onClick={() => setUsageDays(days)}
+                      variant={dateRangeMode === 'preset' ? 'default' : 'outline'}
+                      onClick={() => setDateRangeMode('preset')}
                     >
-                      {days}d
+                      Preset
                     </Button>
-                  ))}
+                    <Button
+                      size="sm"
+                      variant={dateRangeMode === 'custom' ? 'default' : 'outline'}
+                      onClick={() => setDateRangeMode('custom')}
+                    >
+                      Custom
+                    </Button>
+                  </div>
+
+                  {dateRangeMode === 'preset' ? (
+                    <div className="flex gap-2">
+                      {[7, 30, 90].map((days) => (
+                        <Button
+                          key={days}
+                          size="sm"
+                          variant={usageDays === days ? 'default' : 'outline'}
+                          onClick={() => setUsageDays(days)}
+                        >
+                          {days}d
+                        </Button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="w-auto"
+                      />
+                      <span className="text-muted-foreground">to</span>
+                      <Input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        className="w-auto"
+                      />
+                      <Button
+                        size="sm"
+                        disabled={!customStartDate || !customEndDate}
+                        onClick={() => {
+                          if (customStartDate && customEndDate) {
+                            const start = new Date(customStartDate);
+                            const end = new Date(customEndDate);
+                            const diffTime = Math.abs(end.getTime() - start.getTime());
+                            const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                            setUsageDays(days);
+                          }
+                        }}
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardHeader>
