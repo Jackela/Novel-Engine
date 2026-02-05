@@ -47,11 +47,17 @@ class LLMResponse:
         text: Generated text content
         model: Model identifier used for generation
         tokens_used: Total tokens used (input + output), if available
+        input_tokens: Input tokens used (if available, for tracking)
+        output_tokens: Output tokens used (if available, for tracking)
+        raw_usage: Raw usage dict from API (for detailed tracking)
     """
 
     text: str
     model: str
     tokens_used: int | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    raw_usage: dict | None = None
 
 
 class LLMError(Exception):

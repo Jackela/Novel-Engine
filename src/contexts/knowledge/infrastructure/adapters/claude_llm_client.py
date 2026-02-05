@@ -263,15 +263,21 @@ class ClaudeLLMClient:
             )
 
             tokens_used = None
+            input_tokens = None
+            output_tokens = None
+
             if usage:
-                tokens_used = (
-                    usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
-                ) or None
+                input_tokens = usage.get("input_tokens", 0)
+                output_tokens = usage.get("output_tokens", 0)
+                tokens_used = (input_tokens + output_tokens) or None
 
             return LLMResponse(
                 text=text,
                 model=str(self._model),
                 tokens_used=tokens_used,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                raw_usage=usage,
             )
 
         except httpx.HTTPStatusError as e:

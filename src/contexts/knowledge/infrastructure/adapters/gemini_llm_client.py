@@ -231,15 +231,21 @@ class GeminiLLMClient:
                 )
 
                 tokens_used = None
+                input_tokens = None
+                output_tokens = None
+
                 if usage:
-                    tokens_used = (
-                        usage.get("promptTokenCount", 0) + usage.get("candidatesTokenCount", 0)
-                    ) or None
+                    input_tokens = usage.get("promptTokenCount", 0)
+                    output_tokens = usage.get("candidatesTokenCount", 0)
+                    tokens_used = (input_tokens + output_tokens) or None
 
                 return LLMResponse(
                     text=text,
                     model=str(self._model),
                     tokens_used=tokens_used,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    raw_usage=usage,
                 )
 
             except httpx.HTTPStatusError as e:
@@ -470,6 +476,9 @@ class MockLLMClient:
                     text=response,
                     model="mock-model",
                     tokens_used=None,
+                    input_tokens=None,
+                    output_tokens=None,
+                    raw_usage=None,
                 )
 
         # Default mock response based on prompt content
@@ -478,18 +487,27 @@ class MockLLMClient:
                 text='["alternative query", "related search"]',
                 model="mock-model",
                 tokens_used=None,
+                input_tokens=None,
+                output_tokens=None,
+                raw_usage=None,
             )
         elif "expand" in combined:
             return LLMResponse(
                 text="expanded version of the prompt",
                 model="mock-model",
                 tokens_used=None,
+                input_tokens=None,
+                output_tokens=None,
+                raw_usage=None,
             )
         else:
             return LLMResponse(
                 text="mock response",
                 model="mock-model",
                 tokens_used=None,
+                input_tokens=None,
+                output_tokens=None,
+                raw_usage=None,
             )
 
     @property
