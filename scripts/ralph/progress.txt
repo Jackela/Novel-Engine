@@ -563,3 +563,27 @@ Branch: feat/code-citadel
 
 ---
 
+## 2025-02-05 - BRAIN-039A-02
+- **What was implemented:**
+  - Created FixedChunkingStrategy adapter implementing IChunkingStrategy port
+  - Fixed-size chunking with configurable chunk_size and overlap parameters
+  - async chunk() method that returns list[Chunk] entities
+  - Metadata tracking: word_count, start_char, end_char, chunk_size, overlap, strategy
+  - supports_strategy_type() method returns True for "fixed" strategy type
+  - Character position tracking for chunk boundaries in metadata
+  - Custom default config support via constructor parameter
+- **Files changed:**
+  - `src/contexts/knowledge/infrastructure/adapters/chunking_strategy_adapters.py` (new)
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py` - Exported FixedChunkingStrategy
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_chunking_strategy_adapters.py` (new)
+- **Learnings for future iterations:**
+  - Chunking adapters go in infrastructure/adapters, not application/services
+  - Word pattern `\S+` matches any non-whitespace characters for word counting
+  - Overlap creates context continuity: second chunk starts at (chunk_size - overlap)
+  - The effective_chunk_size() = chunk_size - overlap determines stride
+  - With overlap, total word count across all chunks will be higher than input word count
+  - Character position tracking uses regex finditer for accurate positions
+  - All 27 tests pass including edge cases: empty text, single word, zero/large overlap
+  - Existing TextChunker domain service has similar logic but this follows hexagonal architecture
+
+---
