@@ -221,9 +221,9 @@
         "Verify in browser"
       ],
       "priority": 74,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-037B-01"],
-      "notes": ""
+      "notes": "Implemented as part of BRAIN-037B-01 - user messages (right-aligned, primary bg), AI messages (left-aligned, muted bg), auto-scroll via useEffect, input with Enter key support"
     },
     {
       "id": "BRAIN-038-01",

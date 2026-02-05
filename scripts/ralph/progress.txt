@@ -393,3 +393,23 @@ Branch: feat/code-citadel
   - Pre-existing typecheck errors in PromptsPage.tsx are unrelated to this story
 
 ---
+
+## 2025-02-05 - BRAIN-037B-02
+- **What was implemented:**
+  - Message display was already implemented as part of BRAIN-037B-01
+  - User messages: right-aligned (`ml-auto`), primary background color
+  - AI messages: left-aligned (`mr-auto`), muted background color
+  - Auto-scroll to latest message using useEffect with scrollRef
+  - Input field with Enter key support (handleKeyDown callback)
+  - Send button disabled during streaming and when input is empty
+  - Streaming indicator with pulsing cursor (`▊`)
+- **Files changed:**
+  - None (functionality already in ChatInterface from BRAIN-037B-01)
+- **Learnings for future iterations:**
+  - ChatInterface was designed with all message display features from the start
+  - User messages use `bg-primary text-primary-foreground` for contrast
+  - AI messages use `bg-muted` for subtle differentiation
+  - Auto-scroll uses `scrollTop = scrollHeight` pattern
+  - Pulsing cursor created with `animate-pulse` Tailwind class
+
+---
