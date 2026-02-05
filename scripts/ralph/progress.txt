@@ -30,6 +30,11 @@ Stories: 40 (BRAIN-001 through BRAIN-040)
 - **Entity Extraction**: EntityExtractionService in `src/contexts/knowledge/application/services/entity_extraction_service.py` with LLM-based extraction
 - **Co-reference Resolution**: CoreferenceResolutionService in `src/contexts/knowledge/application/services/coreference_resolution_service.py` with heuristic + LLM fallback
 - **Large Text Processing**: extract_large_text() with chunking (chunk_size, overlap) and merging for texts exceeding token limits
+- **Token Tracking**: TokenTracker in `src/contexts/knowledge/application/services/token_tracker.py` with decorator/context manager support
+- **Token Usage Entity**: TokenUsage in `src/contexts/knowledge/domain/models/token_usage.py` with cost calculation using model pricing
+- **Token Usage Repository**: ITokenUsageRepository port in `src/contexts/knowledge/application/ports/i_token_usage_repository.py` with InMemoryTokenUsageRepository implementation
+- **Budget Alerts**: BudgetAlertService in `src/contexts/knowledge/application/services/budget_alert_service.py` with threshold-based alerting
+- **Alert Configuration**: BudgetAlertConfig in `src/contexts/knowledge/domain/models/budget_alert.py` with threshold types, operators, severity, frequency
 
 ### Frontend
 - **Zustand Stores**: Feature-based organization (4 stores: authStore, orchestrationStore, decisionStore, weaverStore)
@@ -1751,7 +1756,45 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 
 ---
 
-## [2026-02-04 15:06] - BRAIN-033
+## [2026-02-05 11:22] - BRAIN-034A
+- Implemented TokenTracker middleware/decorator for tracking LLM token usage and costs
+- Created TokenUsage domain entity with cost calculation (using model pricing per 1M tokens)
+- Created ITokenUsageRepository port with InMemoryTokenUsageRepository implementation
+- Updated LLMResponse to include input_tokens, output_tokens, and raw_usage fields
+- Updated all LLM adapters (OpenAI, Claude, Gemini, Ollama) to return detailed token usage
+- Added TrackingContext for manual tracking with record_success() and record_failure()
+- Implemented TokenTracker with decorator (@track_llm_call) and context manager (track_call) support
+- Added batch writes and auto-flush for efficient storage
+- Created comprehensive tests for TokenUsage, TokenUsageStats, and TokenTracker
+- Files changed:
+  - `src/contexts/knowledge/domain/models/token_usage.py`: TokenUsage entity, TokenUsageStats value object, _calculate_cost function
+  - `src/contexts/knowledge/domain/models/__init__.py`: Exported TokenUsage, TokenUsageStats
+  - `src/contexts/knowledge/application/ports/i_token_usage_repository.py`: ITokenUsageRepository port, TokenUsageFilter, TokenUsageSummary
+  - `src/contexts/knowledge/infrastructure/adapters/in_memory_token_usage_repository.py`: InMemoryTokenUsageRepository implementation
+  - `src/contexts/knowledge/application/services/token_tracker.py`: TokenTracker service, TrackingContext, TokenTrackerConfig
+  - `src/contexts/knowledge/application/ports/i_llm_client.py`: Extended LLMResponse with input_tokens, output_tokens, raw_usage
+  - `src/contexts/knowledge/infrastructure/adapters/openai_llm_client.py`: Updated to return detailed token usage
+  - `src/contexts/knowledge/infrastructure/adapters/claude_llm_client.py`: Updated to return detailed token usage
+  - `src/contexts/knowledge/infrastructure/adapters/gemini_llm_client.py`: Updated to return detailed token usage
+  - `src/contexts/knowledge/infrastructure/adapters/ollama_llm_client.py`: Updated to return detailed token usage
+  - `src/contexts/knowledge/application/services/__init__.py`: Exported TokenTracker, TrackingContext, configs
+  - `src/contexts/knowledge/infrastructure/adapters/__init__.py`: Exported InMemoryTokenUsageRepository
+  - `tests/unit/contexts/knowledge/domain/models/test_token_usage.py`: 35+ tests for TokenUsage and TokenUsageStats
+  - `tests/unit/contexts/knowledge/application/services/test_token_tracker.py`: Tests for TokenTracker service
+  - `scripts/ralph/prd.json`: Marked BRAIN-034A as passing
+
+**Learnings for future iterations:**
+- TokenUsage stores cost as Decimal for precise monetary calculations (6 decimal places for microdollar precision)
+- Cost calculation: (tokens * cost_per_1M) / 1,000,000
+- ModelRegistry has ModelDefinition with cost_per_1m_input_tokens and cost_per_1m_output_tokens
+- All LLM clients use different field names for usage (OpenAI: prompt_tokens/completion_tokens, Claude: input_tokens/output_tokens, Gemini: promptTokenCount/candidatesTokenCount)
+- LLMResponse now includes raw_usage dict to preserve full API response for analytics
+- TokenTracker supports batch writes (configurable via batch_size) and auto-flush (flush_interval_seconds)
+- TrackingContext allows manual tracking when decorator is not suitable
+- The type: ignore[arg-type] comment is needed for provider.value when mypy doesn't understand str enum
+- Use field(default_factory=lambda: Decimal("0")) instead of field(default_factory=Decimal) to avoid type errors
+
+---
 - Implemented Brain Settings page with API Keys, RAG Settings, and Knowledge Base Status
 - Files changed:
   - `src/api/schemas.py`: Added APIKeysRequest/Response, RAGConfigRequest/Response, KnowledgeBaseStatusResponse, BrainSettingsResponse
@@ -1765,4 +1808,48 @@ Build a RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab t
 - Used Fernet encryption for API keys (in-memory for now, keys persist across server restarts)
 - Model selector dropdowns already existed - added API keys and RAG settings tabs
 - Knowledge base status is a summary display showing total entries, breakdown by type, and health status
+---
+
+## [2025-02-05] - BRAIN-034B ✅
+- Implemented Budget Alert System for monitoring LLM token usage and costs
+- Created `BudgetAlertConfig` value object with threshold types (COST, TOKENS, REQUESTS, API_CALLS)
+- Created `AlertComparisonOperator` enum (GREATER_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN, LESS_THAN_OR_EQUAL)
+- Created `AlertSeverity` enum (INFO, WARNING, ERROR, CRITICAL)
+- Created `AlertFrequency` enum (ONCE, DAILY, WEEKLY, ALWAYS) for controlling notification frequency
+- Created `BudgetAlertState` entity for tracking alert state with `should_notify` property
+- Created `AlertTriggeredEvent` for triggered alert events
+- Created `AlertEvaluationResult` for evaluation results with `has_critical` and `has_error_or_higher` properties
+- Created `IBudgetAlertRepository` port interface with methods: save_alert, get_alert, get_all_alerts, delete_alert, log_triggered_event, get_triggered_events
+- Created `InMemoryBudgetAlertRepository` adapter for testing
+- Created `BudgetAlertService` with:
+  - `evaluate_usage()` - Real-time usage evaluation against alert thresholds
+  - `check_thresholds()` - Periodic background checks against aggregated stats
+  - `add_alert()` / `remove_alert()` - Alert CRUD operations
+  - `register_handler()` / `unregister_handler()` - Notification handler registration
+  - `get_alerts()` / `get_triggered_history()` - Query methods
+- Implemented cooldown periods to prevent alert spam
+- Implemented frequency-based notification (once, daily, weekly, always)
+- Supported per-workspace, per-user, per-provider, and per-model filtering
+- Added configurable time windows for aggregation
+- All 25+ unit tests passing (config, state, service, handlers, filtering)
+
+Files changed:
+- `src/contexts/knowledge/domain/models/budget_alert.py`: New domain models (340 lines)
+- `src/contexts/knowledge/domain/models/__init__.py`: Export budget alert types
+- `src/contexts/knowledge/application/ports/i_budget_alert_repository.py`: Repository port interface
+- `src/contexts/knowledge/application/services/budget_alert_service.py`: Alert service (730 lines)
+- `src/contexts/knowledge/application/services/__init__.py`: Export service
+- `src/contexts/knowledge/infrastructure/adapters/in_memory_budget_alert_repository.py`: In-memory repo (90 lines)
+- `tests/unit/contexts/knowledge/application/services/test_budget_alert_service.py`: Tests (530 lines)
+
+**Learnings for future iterations:**
+- The `match` statement with enum exhaustiveness triggers mypy "unreachable" warnings for the final fallback case - this is expected behavior
+- When using frozen dataclasses with `match`, all enum cases must be explicitly handled before the fallback
+- Alert state tracking needs separate `last_triggered` and `last_notified` timestamps to handle frequency-based notifications
+- Cooldown periods should be checked before frequency checks to avoid unnecessary evaluation
+- The `should_notify` property on `BudgetAlertState` encapsulates the logic for determining if notification should be sent based on frequency and cooldown
+- For testing alert systems that involve time-based logic, use short cooldown durations and `time.sleep()` for testing
+- Repository events (`log_triggered_event`) are important for audit trails and debugging alert behavior
+- Handler registration using `Callable[..., Awaitable[None] | None]` allows both sync and async handlers
+
 ---
