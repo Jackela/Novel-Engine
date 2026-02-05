@@ -1,12 +1,14 @@
 /**
  * Context Inspector - BRAIN-036-02
+ * BRAIN-036-04: Manual Chunk Selection
  *
  * Sliding panel component for viewing AI RAG context.
  * Shows retrieved chunks with source info, relevance scores, and token counts.
+ * Allows manual selection of chunks for regeneration.
  */
 
 import { useEffect, useState } from 'react';
-import { Brain, CheckCircle2, FileText, Hash, Loader2, X } from 'lucide-react';
+import { Brain, CheckCircle2, FileText, Hash, Loader2, RefreshCw, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +20,9 @@ import {
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { brainSettingsApi, type RetrievedChunkResponse, type RAGContextResponse } from '@/features/routing/api/brainSettingsApi';
+import { toast } from 'sonner';
 
 interface ContextInspectorProps {
   /** Whether the panel is open */
@@ -29,6 +33,8 @@ interface ContextInspectorProps {
   query: string;
   /** Optional scene ID for context */
   sceneId?: string;
+  /** Optional callback for regenerate with selected chunks */
+  onRegenerateWithChunks?: (chunkIds: string[]) => void;
 }
 
 /**
@@ -52,10 +58,13 @@ const SOURCE_TYPE_COLORS: Record<string, string> = {
  * - Token count
  * - Chunk content
  */
-export function ContextInspector({ open, onClose, query, sceneId }: ContextInspectorProps) {
+export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWithChunks }: ContextInspectorProps) {
   const [context, setContext] = useState<RAGContextResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // BRAIN-036-04: Track selected chunks for manual regeneration
+  const [selectedChunkIds, setSelectedChunkIds] = useState<Set<string>>(new Set());
 
   // Fetch context when query changes or panel opens
   useEffect(() => {
@@ -64,6 +73,8 @@ export function ContextInspector({ open, onClose, query, sceneId }: ContextInspe
     const fetchContext = async () => {
       setIsLoading(true);
       setError(null);
+      // BRAIN-036-04: Clear selections when fetching new context
+      setSelectedChunkIds(new Set());
       try {
         const result = await brainSettingsApi.getRAGContext(query, sceneId, 10);
         setContext(result);
@@ -78,6 +89,51 @@ export function ContextInspector({ open, onClose, query, sceneId }: ContextInspe
 
     fetchContext();
   }, [open, query, sceneId]);
+
+  // BRAIN-036-04: Handle chunk selection
+  const toggleChunkSelection = (chunkId: string) => {
+    setSelectedChunkIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(chunkId)) {
+        next.delete(chunkId);
+      } else {
+        next.add(chunkId);
+      }
+      return next;
+    });
+  };
+
+  // BRAIN-036-04: Select all chunks
+  const selectAllChunks = () => {
+    if (context) {
+      setSelectedChunkIds(new Set(context.chunks.map((c) => c.chunk_id)));
+    }
+  };
+
+  // BRAIN-036-04: Deselect all chunks
+  const deselectAllChunks = () => {
+    setSelectedChunkIds(new Set());
+  };
+
+  // BRAIN-036-04: Handle regenerate with selected chunks
+  const handleRegenerate = () => {
+    if (selectedChunkIds.size === 0) {
+      toast.error('Please select at least one chunk to regenerate with');
+      return;
+    }
+
+    const selectedIds = Array.from(selectedChunkIds);
+
+    // Call the parent callback if provided
+    if (onRegenerateWithChunks) {
+      onRegenerateWithChunks(selectedIds);
+      toast.success(`Regenerating with ${selectedIds.length} selected chunk${selectedIds.length > 1 ? 's' : ''}`);
+    } else {
+      // For now, just log the selected chunks
+      console.log('BRAIN-036-04: Selected chunks for regeneration:', selectedIds);
+      toast.info(`Selected ${selectedIds.length} chunk${selectedIds.length > 1 ? 's' : ''} for regeneration. Connect to scene generation to complete.`);
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
@@ -98,11 +154,39 @@ export function ContextInspector({ open, onClose, query, sceneId }: ContextInspe
             {context ? (
               <>
                 {context.chunk_count} chunks retrieved · {context.total_tokens} tokens
+                {selectedChunkIds.size > 0 && (
+                  <span className="ml-2 text-primary font-medium">
+                    ({selectedChunkIds.size} selected)
+                  </span>
+                )}
               </>
             ) : (
               'Retrieving context for current scene...'
             )}
           </SheetDescription>
+          {/* BRAIN-036-04: Selection actions */}
+          {context && context.chunks.length > 0 && (
+            <div className="flex items-center gap-2 pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={selectAllChunks}
+                disabled={selectedChunkIds.size === context.chunks.length}
+              >
+                Select All
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={deselectAllChunks}
+                disabled={selectedChunkIds.size === 0}
+              >
+                Deselect All
+              </Button>
+            </div>
+          )}
         </SheetHeader>
 
         {/* Content */}
@@ -126,7 +210,13 @@ export function ContextInspector({ open, onClose, query, sceneId }: ContextInspe
             ) : context && context.chunks.length > 0 ? (
               <div className="space-y-4">
                 {context.chunks.map((chunk, index) => (
-                  <ChunkCard key={chunk.chunk_id} chunk={chunk} index={index} />
+                  <ChunkCard
+                    key={chunk.chunk_id}
+                    chunk={chunk}
+                    index={index}
+                    selected={selectedChunkIds.has(chunk.chunk_id)}
+                    onToggleSelection={() => toggleChunkSelection(chunk.chunk_id)}
+                  />
                 ))}
               </div>
             ) : context ? (
@@ -143,17 +233,33 @@ export function ContextInspector({ open, onClose, query, sceneId }: ContextInspe
           </ScrollArea>
         </div>
 
-        {/* Footer with sources */}
-        {context && context.sources.length > 0 && (
-          <div className="border-t px-6 py-3 bg-muted/30">
-            <p className="text-xs text-muted-foreground mb-2">Sources:</p>
-            <div className="flex flex-wrap gap-1">
-              {context.sources.map((source) => (
-                <Badge key={source} variant="outline" className="text-xs">
-                  {source}
-                </Badge>
-              ))}
-            </div>
+        {/* Footer with sources and BRAIN-036-04: Regenerate action */}
+        {context && (
+          <div className="border-t px-6 py-3 bg-muted/30 space-y-3">
+            {/* BRAIN-036-04: Regenerate button */}
+            {selectedChunkIds.size > 0 && (
+              <Button
+                onClick={handleRegenerate}
+                className="w-full"
+                size="sm"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Regenerate with {selectedChunkIds.size} Selected Chunk{selectedChunkIds.size > 1 ? 's' : ''}
+              </Button>
+            )}
+            {/* Sources */}
+            {context.sources.length > 0 && (
+              <>
+                <p className="text-xs text-muted-foreground mb-2">Sources:</p>
+                <div className="flex flex-wrap gap-1">
+                  {context.sources.map((source) => (
+                    <Badge key={source} variant="outline" className="text-xs">
+                      {source}
+                    </Badge>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
       </SheetContent>
@@ -164,12 +270,26 @@ export function ContextInspector({ open, onClose, query, sceneId }: ContextInspe
 /**
  * Individual chunk card component
  * BRAIN-036-03: Visual distinction for used vs unused chunks
+ * BRAIN-036-04: Manual chunk selection with checkbox
  */
-function ChunkCard({ chunk, index }: { chunk: RetrievedChunkResponse; index: number }) {
+interface ChunkCardProps {
+  chunk: RetrievedChunkResponse;
+  index: number;
+  /** Whether this chunk is selected */
+  selected: boolean;
+  /** Called when checkbox is toggled */
+  onToggleSelection: () => void;
+}
+
+function ChunkCard({ chunk, index, selected, onToggleSelection }: ChunkCardProps) {
   const scoreColor = chunk.score >= 0.8 ? 'text-green-600' : chunk.score >= 0.6 ? 'text-yellow-600' : 'text-orange-600';
 
   // BRAIN-036-03: Visual styling for used chunks
   const usedBgClass = chunk.used ? 'bg-green-50/50 border-green-200 dark:bg-green-950/30 dark:border-green-800' : 'border-border';
+  // BRAIN-036-04: Additional styling for selected chunks
+  const selectedBgClass = selected ? 'ring-2 ring-primary ring-offset-2' : '';
+  const combinedBgClass = `${usedBgClass} ${selectedBgClass}`.trim();
+
   const usedBadge = chunk.used ? (
     <div className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400" title="This chunk was used in the response">
       <CheckCircle2 className="h-3 w-3" />
@@ -178,10 +298,17 @@ function ChunkCard({ chunk, index }: { chunk: RetrievedChunkResponse; index: num
   ) : null;
 
   return (
-    <div className={`border rounded-lg p-4 space-y-3 hover:bg-muted/50 transition-colors ${usedBgClass}`}>
-      {/* Header with source and score */}
+    <div className={`border rounded-lg p-4 space-y-3 hover:bg-muted/50 transition-colors ${combinedBgClass}`}>
+      {/* Header with checkbox, source, and score */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
+          {/* BRAIN-036-04: Checkbox for manual selection */}
+          <Checkbox
+            checked={selected}
+            onCheckedChange={onToggleSelection}
+            className="cursor-pointer"
+            aria-label={`Select chunk ${index + 1}`}
+          />
           <span className="text-xs font-mono text-muted-foreground">#{index + 1}</span>
           <Badge
             className={SOURCE_TYPE_COLORS[chunk.source_type] || 'bg-gray-100 text-gray-800'}

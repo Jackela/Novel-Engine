@@ -250,3 +250,26 @@ Branch: feat/code-citadel
   - Green color scheme indicates "used" state (consistent with success/positive semantics)
 
 ---
+
+## 2025-02-05 - BRAIN-036-04
+- **What was implemented:**
+  - Added Checkbox component from shadcn/ui for chunk selection
+  - Added checkboxes to each chunk card in ContextInspector
+  - Added Select All / Deselect All buttons in header
+  - Added Regenerate button in footer that appears when chunks are selected
+  - Added visual ring styling (ring-2 ring-primary) for selected chunks
+  - Added selection count indicator in header description
+  - Added optional onRegenerateWithChunks callback prop for future integration
+  - Chunks are deselected when fetching new context
+- **Files changed:**
+  - `frontend/src/components/ui/checkbox.tsx` - New component from shadcn/ui
+  - `frontend/src/components/narrative/ContextInspector.tsx` - Added checkboxes, selection state, regenerate button
+  - `frontend/src/components/narrative/NarrativeEditorLayout.tsx` - Added onRegenerateWithChunks prop
+- **Learnings for future iterations:**
+  - Use @radix-ui/react-checkbox for accessible checkbox implementation
+  - Set<string> is efficient for tracking selected IDs with O(1) lookup
+  - Ring styling (ring-2 ring-primary ring-offset-2) provides clear visual feedback for selection
+  - Toast notifications provide feedback for regenerate action
+  - The actual scene generation integration with selected chunks is a future enhancement
+
+---

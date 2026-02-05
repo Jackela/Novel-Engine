@@ -330,11 +330,17 @@ export function NarrativeEditorLayout({
         </main>
 
         {/* BRAIN-036-02: Context Inspector Panel */}
+        {/* BRAIN-036-04: Pass optional regenerate callback */}
         <ContextInspector
           open={contextInspectorOpen}
           onClose={() => setContextInspectorOpen(false)}
           query={getSceneContent(activeSceneId)}
           {...(activeSceneId && { sceneId: activeSceneId })}
+          onRegenerateWithChunks={(chunkIds) => {
+            // BRAIN-036-04: Handle regenerate with selected chunks
+            // This will be connected to scene generation in a future story
+            console.log('Regenerate with chunks:', chunkIds);
+          }}
         />
 
         {/* Drag overlay for character being dragged */}
