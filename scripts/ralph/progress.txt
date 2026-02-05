@@ -202,3 +202,28 @@ Branch: feat/code-citadel
   - Parent component needs to pass ragEnabled from brainSettings.rag_config.enabled
 
 ---
+
+## 2025-02-05 - BRAIN-036-02
+- **What was implemented:**
+  - Created ContextInspector sliding panel component using shadcn/ui Sheet
+  - Added GET `/api/brain/context` endpoint returning retrieved RAG chunks with metadata
+  - Added RetrievedChunkResponse and RAGContextResponse schemas
+  - Panel shows retrieved chunks with source info (type, ID, content)
+  - Displays relevance scores with color coding (green >= 0.8, yellow >= 0.6, orange < 0.6)
+  - Shows token count per chunk
+  - Integrated with NarrativeEditorLayout with state management
+  - Uses scene content as query for context retrieval
+- **Files changed:**
+  - `src/api/schemas.py` - Added RAGContextResponse, RetrievedChunkResponse
+  - `src/api/routers/brain_settings.py` - Added get_rag_context endpoint
+  - `frontend/src/features/routing/api/brainSettingsApi.ts` - Added getRAGContext API function and types
+  - `frontend/src/components/narrative/ContextInspector.tsx` - New component
+  - `frontend/src/components/narrative/NarrativeEditorLayout.tsx` - Integrated ContextInspector
+- **Learnings for future iterations:**
+  - TokenCounter.count(text) returns TokenCountResult, access token_count via result.token_count
+  - Sheet component from shadcn/ui provides sliding panel behavior (side="right" default)
+  - Use exactOptionalPropertyTypes: true requires handling undefined props carefully with spread operator
+  - RetrievalService.get_sources() returns list of source dicts with source_type, source_id, display_name, etc.
+  - Source type badges use color mapping for visual distinction (CHARACTER=purple, LORE=blue, etc.)
+
+---

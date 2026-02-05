@@ -29,6 +29,7 @@ import { useStoryStructure } from '@/hooks/useStoryStructure';
 import { moveScene } from '@/lib/api';
 import type { OutlinerChapter, SceneMoveResult } from './NarrativeSidebar';
 import { useCharacters } from '@/features/characters/api/characterApi';
+import { ContextInspector } from './ContextInspector';
 
 interface NarrativeEditorLayoutProps {
   /** Story ID to load (optional, loads from backend when provided) */
@@ -57,6 +58,9 @@ export function NarrativeEditorLayout({
   // CHAR-038: Get characters list for @mention suggestions
   const { data: characters = [] } = useCharacters();
   const queryClient = useQueryClient();
+
+  // BRAIN-036-02: Context Inspector state
+  const [contextInspectorOpen, setContextInspectorOpen] = useState(false);
 
   // Load story structure from backend
   const {
@@ -320,8 +324,18 @@ export function NarrativeEditorLayout({
             onMentionInserted={handleMentionInserted}
             characters={characters}
             onCharacterCreated={handleCharacterCreated}
+            ragEnabled={true}
+            onViewAIContext={() => setContextInspectorOpen(true)}
           />
         </main>
+
+        {/* BRAIN-036-02: Context Inspector Panel */}
+        <ContextInspector
+          open={contextInspectorOpen}
+          onClose={() => setContextInspectorOpen(false)}
+          query={getSceneContent(activeSceneId)}
+          {...(activeSceneId && { sceneId: activeSceneId })}
+        />
 
         {/* Drag overlay for character being dragged */}
         <DragOverlay>

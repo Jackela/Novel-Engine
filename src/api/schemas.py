@@ -2759,3 +2759,28 @@ class BrainSettingsResponse(BaseModel):
     rag_config: RAGConfigResponse
     knowledge_base: KnowledgeBaseStatusResponse
 
+
+# BRAIN-036-02: Context Inspector Schemas
+
+
+class RetrievedChunkResponse(BaseModel):
+    """A retrieved chunk from the knowledge base."""
+
+    chunk_id: str = Field(..., description="ID of the chunk")
+    source_id: str = Field(..., description="ID of the source entity")
+    source_type: str = Field(..., description="Type of source (CHARACTER, LORE, SCENE, etc.)")
+    content: str = Field(..., description="Chunk content text")
+    score: float = Field(..., ge=0, le=1, description="Relevance score (0-1)")
+    token_count: int = Field(..., ge=0, description="Estimated token count")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+
+
+class RAGContextResponse(BaseModel):
+    """Response model for RAG context retrieval."""
+
+    query: str = Field(..., description="The query used for retrieval")
+    chunks: List[RetrievedChunkResponse] = Field(..., description="Retrieved chunks")
+    total_tokens: int = Field(..., ge=0, description="Total tokens in retrieved context")
+    chunk_count: int = Field(..., ge=0, description="Number of chunks retrieved")
+    sources: List[str] = Field(default_factory=list, description="Source references")
+

@@ -174,6 +174,26 @@ export type RealtimeUsageEvent =
   | SessionStateEvent
   | ErrorEvent;
 
+// BRAIN-036-02: Context Inspector
+
+export interface RetrievedChunkResponse {
+  chunk_id: string;
+  source_id: string;
+  source_type: string;
+  content: string;
+  score: number;
+  token_count: number;
+  metadata: Record<string, unknown>;
+}
+
+export interface RAGContextResponse {
+  query: string;
+  chunks: RetrievedChunkResponse[];
+  total_tokens: number;
+  chunk_count: number;
+  sources: string[];
+}
+
 /**
  * Subscribe to real-time usage events via SSE
  * BRAIN-035B-04: Real-time Usage Counter
@@ -359,5 +379,28 @@ export const brainSettingsApi = {
     onError?: (error: Error) => void,
   ): EventSource {
     return streamRealtimeUsage(onEvent, onError);
+  },
+
+  /**
+   * Get RAG context for a query
+   * BRAIN-036-02: Context Inspector backend API
+   *
+   * @param query Search query for context retrieval
+   * @param sceneId Optional scene ID
+   * @param maxChunks Maximum chunks to retrieve (default: 5)
+   * @returns RAG context with retrieved chunks
+   */
+  async getRAGContext(
+    query: string,
+    sceneId?: string,
+    maxChunks = 5,
+  ): Promise<RAGContextResponse> {
+    const params = new URLSearchParams();
+    params.append('query', query);
+    if (sceneId) params.append('scene_id', sceneId);
+    params.append('max_chunks', maxChunks.toString());
+
+    const response = await fetch(`/api/brain/context?${params.toString()}`);
+    return handleResponse<RAGContextResponse>(response);
   },
 };
