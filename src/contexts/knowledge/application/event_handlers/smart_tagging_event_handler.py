@@ -82,6 +82,7 @@ class SmartTaggingEventHandler:
         content: str,
         category: str | None = None,
         existing_tags: dict[str, list[str]] | None = None,
+        manual_only_tags: dict[str, list[str]] | None = None,
     ) -> dict[str, list[str]]:
         """
         Generate tags for a lore entry.
@@ -91,7 +92,8 @@ class SmartTaggingEventHandler:
             title: Lore title
             content: Lore content
             category: Lore category (optional)
-            existing_tags: Existing tags to preserve (manual tags)
+            existing_tags: Existing tags to preserve
+            manual_only_tags: Manual tags that should never be overridden
 
         Returns:
             Dictionary mapping category names to tag lists
@@ -112,7 +114,7 @@ class SmartTaggingEventHandler:
 
             # Preserve existing manual tags if provided
             if existing_tags:
-                tags_dict = self._merge_tags(tags_dict, existing_tags)
+                tags_dict = self._merge_tags(tags_dict, existing_tags, manual_only_tags)
 
             self._logger.info(
                 "smart_tags_generated_for_lore",
@@ -139,6 +141,7 @@ class SmartTaggingEventHandler:
         location: str | None = None,
         beats: list[str] | None = None,
         existing_tags: dict[str, list[str]] | None = None,
+        manual_only_tags: dict[str, list[str]] | None = None,
     ) -> dict[str, list[str]]:
         """
         Generate tags for a scene.
@@ -149,7 +152,8 @@ class SmartTaggingEventHandler:
             summary: Scene summary
             location: Scene location
             beats: Scene beat contents
-            existing_tags: Existing tags to preserve (manual tags)
+            existing_tags: Existing tags to preserve
+            manual_only_tags: Manual tags that should never be overridden
 
         Returns:
             Dictionary mapping category names to tag lists
@@ -170,7 +174,7 @@ class SmartTaggingEventHandler:
 
             # Preserve existing manual tags if provided
             if existing_tags:
-                tags_dict = self._merge_tags(tags_dict, existing_tags)
+                tags_dict = self._merge_tags(tags_dict, existing_tags, manual_only_tags)
 
             self._logger.info(
                 "smart_tags_generated_for_scene",
@@ -197,6 +201,7 @@ class SmartTaggingEventHandler:
         backstory: str | None = None,
         traits: list[str] | None = None,
         existing_tags: dict[str, list[str]] | None = None,
+        manual_only_tags: dict[str, list[str]] | None = None,
     ) -> dict[str, list[str]]:
         """
         Generate tags for a character.
@@ -207,7 +212,8 @@ class SmartTaggingEventHandler:
             description: Character description
             backstory: Character backstory
             traits: Character traits
-            existing_tags: Existing tags to preserve (manual tags)
+            existing_tags: Existing tags to preserve
+            manual_only_tags: Manual tags that should never be overridden
 
         Returns:
             Dictionary mapping category names to tag lists
@@ -230,7 +236,7 @@ class SmartTaggingEventHandler:
 
             # Preserve existing manual tags if provided
             if existing_tags:
-                tags_dict = self._merge_tags(tags_dict, existing_tags)
+                tags_dict = self._merge_tags(tags_dict, existing_tags, manual_only_tags)
 
             self._logger.info(
                 "smart_tags_generated_for_character",
@@ -321,6 +327,7 @@ class SmartTaggingEventHandler:
         self,
         generated_tags: dict[str, list[str]],
         existing_tags: dict[str, list[str]],
+        manual_only_tags: dict[str, list[str]] | None = None,
     ) -> dict[str, list[str]]:
         """
         Merge generated tags with existing tags, preserving manual edits.
@@ -328,9 +335,13 @@ class SmartTaggingEventHandler:
         Tags from existing_tags that aren't in generated_tags are preserved
         as manual edits. Duplicates are removed.
 
+        Manual-only tags (user-added tags that should never be overridden)
+        are always preserved.
+
         Args:
             generated_tags: Newly generated tags
             existing_tags: Existing tags (may include manual edits)
+            manual_only_tags: Tags that are purely manual (never overridden)
 
         Returns:
             Merged tags dictionary
@@ -339,13 +350,17 @@ class SmartTaggingEventHandler:
 
         # All categories
         all_categories = set(generated_tags.keys()) | set(existing_tags.keys())
+        if manual_only_tags:
+            all_categories |= set(manual_only_tags.keys())
 
         for category in all_categories:
             gen = set(generated_tags.get(category, []))
             exi = set(existing_tags.get(category, []))
+            manual = set(manual_only_tags.get(category, [])) if manual_only_tags else set()
 
-            # Union of both sets (no duplicates)
-            merged[category] = list(gen | exi)
+            # Union of all sets: generated + existing + manual-only
+            # Manual-only tags are always preserved even if not in generated
+            merged[category] = list(gen | exi | manual)
 
         return merged
 

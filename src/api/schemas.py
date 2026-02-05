@@ -893,6 +893,7 @@ class SceneResponse(BaseModel):
     status: str = Field(..., description="Workflow status")
     story_phase: str = Field(default="setup", description="Story structure phase")
     beat_count: int = Field(default=0, description="Number of beats")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Flexible metadata including smart tags")
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 last update timestamp")
 
@@ -1668,8 +1669,40 @@ class LoreEntryResponse(BaseModel):
     category: str
     summary: str
     related_entry_ids: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Flexible metadata including smart tags")
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 last update timestamp")
+
+
+# === Smart Tag Management Schemas ===
+
+
+class SmartTagsResponse(BaseModel):
+    """Response model for smart tags."""
+
+    smart_tags: Dict[str, List[str]] = Field(
+        default_factory=dict,
+        description="Auto-generated smart tags by category"
+    )
+    manual_smart_tags: Dict[str, List[str]] = Field(
+        default_factory=dict,
+        description="Manual-only smart tags by category (never overridden)"
+    )
+    effective_tags: Dict[str, List[str]] = Field(
+        default_factory=dict,
+        description="Combined tags (auto + manual) by category"
+    )
+
+
+class ManualSmartTagsUpdateRequest(BaseModel):
+    """Request model for updating manual smart tags."""
+
+    category: str = Field(..., description="Tag category (e.g., 'genre', 'mood', 'themes')")
+    tags: List[str] = Field(..., description="List of manual tags for this category")
+    replace: bool = Field(
+        default=False,
+        description="If True, replace existing tags. If False, append to existing."
+    )
 
 
 class LoreEntryListResponse(BaseModel):

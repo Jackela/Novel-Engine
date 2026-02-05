@@ -40,6 +40,7 @@ from src.api.schemas import (
     HealthWarningResponse,
     LinkPayoffRequest,
     LinkSceneToPlotlineRequest,
+    ManualSmartTagsUpdateRequest,
     MoveChapterRequest,
     MoveSceneRequest,
     PacingIssueResponse,
@@ -56,6 +57,7 @@ from src.api.schemas import (
     SceneResponse,
     SceneUpdateRequest,
     SetScenePlotlinesRequest,
+    SmartTagsResponse,
     StoryCreateRequest,
     StoryListResponse,
     StoryResponse,
@@ -186,6 +188,7 @@ def _scene_to_response(scene: Scene) -> SceneResponse:
         status=scene.status.value,
         story_phase=scene.story_phase.value,
         beat_count=len(scene.beats),
+        metadata=scene.metadata.copy(),
         created_at=scene.created_at.isoformat(),
         updated_at=scene.updated_at.isoformat(),
     )
@@ -862,6 +865,146 @@ async def delete_scene(
         raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
 
     logger.info("Deleted scene: %s", scene_uuid)
+
+
+# === Smart Tags Management Routes ===
+
+
+@router.get(
+    "/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/smart-tags",
+    response_model=SmartTagsResponse,
+)
+async def get_scene_smart_tags(
+    story_id: str,
+    chapter_id: str,
+    scene_id: str,
+    repo: INarrativeRepository = Depends(get_repository),
+) -> SmartTagsResponse:
+    """Get smart tags for a scene.
+
+    Returns both auto-generated and manual smart tags.
+
+    Args:
+        story_id: UUID of the parent story.
+        chapter_id: UUID of the parent chapter.
+        scene_id: UUID of the scene.
+        repo: Narrative repository (injected).
+
+    Returns:
+        Smart tags response with auto, manual, and effective tags.
+
+    Raises:
+        HTTPException: If not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    scene = _get_scene(scene_uuid)
+
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    return SmartTagsResponse(
+        smart_tags=scene.get_smart_tags(),
+        manual_smart_tags=scene.get_manual_smart_tags(),
+        effective_tags=scene.get_effective_smart_tags(),
+    )
+
+
+@router.put(
+    "/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/smart-tags/manual",
+    response_model=SmartTagsResponse,
+)
+async def update_scene_manual_smart_tags(
+    story_id: str,
+    chapter_id: str,
+    scene_id: str,
+    request: ManualSmartTagsUpdateRequest,
+    repo: INarrativeRepository = Depends(get_repository),
+) -> SmartTagsResponse:
+    """Update manual smart tags for a scene.
+
+    Manual tags are never overridden by auto-tagging.
+
+    Args:
+        story_id: UUID of the parent story.
+        chapter_id: UUID of the parent chapter.
+        scene_id: UUID of the scene.
+        request: Manual tags update request.
+        repo: Narrative repository (injected).
+
+    Returns:
+        Updated smart tags response.
+
+    Raises:
+        HTTPException: If not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    scene = _get_scene(scene_uuid)
+
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    # Get existing manual tags for this category
+    existing_manual = scene.get_manual_smart_tags_for_category(request.category)
+
+    if request.replace:
+        # Replace entirely
+        scene.set_manual_smart_tags(request.category, request.tags)
+    else:
+        # Append to existing
+        combined = existing_manual + request.tags
+        # Remove duplicates while preserving order
+        seen: set[str] = set()
+        unique: list[str] = []
+        for tag in combined:
+            normalized = tag.lower()
+            if normalized not in seen:
+                seen.add(normalized)
+                unique.append(tag)
+        scene.set_manual_smart_tags(request.category, unique)
+
+    # Store the updated scene
+    _store_scene(scene)
+    logger.info("Updated manual smart tags for scene: %s", scene_uuid)
+
+    return SmartTagsResponse(
+        smart_tags=scene.get_smart_tags(),
+        manual_smart_tags=scene.get_manual_smart_tags(),
+        effective_tags=scene.get_effective_smart_tags(),
+    )
+
+
+@router.delete(
+    "/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/smart-tags/manual/{category}",
+    status_code=204,
+)
+async def delete_scene_manual_smart_tags(
+    story_id: str,
+    chapter_id: str,
+    scene_id: str,
+    category: str,
+    repo: INarrativeRepository = Depends(get_repository),
+) -> None:
+    """Delete manual smart tags for a specific category.
+
+    Args:
+        story_id: UUID of the parent story.
+        chapter_id: UUID of the parent chapter.
+        scene_id: UUID of the scene.
+        category: The tag category to clear.
+        repo: Narrative repository (injected).
+
+    Raises:
+        HTTPException: If not found.
+    """
+    scene_uuid = _parse_uuid(scene_id, "scene_id")
+    scene = _get_scene(scene_uuid)
+
+    if scene is None:
+        raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")
+
+    scene.clear_manual_smart_tags(category)
+    _store_scene(scene)
+    logger.info("Cleared manual smart tags for category %s in scene: %s", category, scene_uuid)
 
 
 @router.post(

@@ -428,6 +428,108 @@ class Scene:
         """
         return self.metadata.get("smart_tags", {})
 
+    # ==================== Manual Smart Tags Override ====================
+
+    def set_manual_smart_tags(self, category: str, tags: list[str]) -> None:
+        """Set manual tags for a specific category.
+
+        These tags are marked as manual-only and will never be overridden
+        by auto-tagging. They are stored under a separate key in metadata.
+
+        Args:
+            category: The tag category (e.g., "genre", "mood", "themes")
+            tags: List of manual tags for this category
+        """
+        if "manual_smart_tags" not in self.metadata:
+            self.metadata["manual_smart_tags"] = {}
+
+        self.metadata["manual_smart_tags"][category] = [
+            t.strip().lower() for t in tags if t.strip()
+        ]
+        self._touch()
+
+    def get_manual_smart_tags(self) -> dict[str, list[str]]:
+        """Get manual-only smart tags.
+
+        Returns:
+            Dictionary mapping category names to manual tag lists.
+        """
+        return self.metadata.get("manual_smart_tags", {})
+
+    def get_manual_smart_tags_for_category(self, category: str) -> list[str]:
+        """Get manual tags for a specific category.
+
+        Args:
+            category: The tag category
+
+        Returns:
+            List of manual tags for this category
+        """
+        manual_tags = self.get_manual_smart_tags()
+        return manual_tags.get(category, [])
+
+    def remove_manual_smart_tag(self, category: str, tag: str) -> bool:
+        """Remove a manual smart tag.
+
+        Args:
+            category: The tag category
+            tag: The tag to remove
+
+        Returns:
+            True if tag was found and removed
+        """
+        manual_tags = self.get_manual_smart_tags()
+        if category in manual_tags:
+            tag_normalized = tag.strip().lower()
+            if tag_normalized in [t.lower() for t in manual_tags[category]]:
+                manual_tags[category] = [
+                    t for t in manual_tags[category]
+                    if t.lower() != tag_normalized
+                ]
+                self.metadata["manual_smart_tags"] = manual_tags
+                self._touch()
+                return True
+        return False
+
+    def clear_manual_smart_tags(self, category: str | None = None) -> None:
+        """Clear manual smart tags.
+
+        Args:
+            category: If provided, only clear this category.
+                     If None, clear all manual tags.
+        """
+        if "manual_smart_tags" not in self.metadata:
+            return
+
+        if category:
+            self.metadata["manual_smart_tags"].pop(category, None)
+        else:
+            self.metadata["manual_smart_tags"] = {}
+
+        self._touch()
+
+    def get_effective_smart_tags(self) -> dict[str, list[str]]:
+        """Get all smart tags (auto + manual) combined.
+
+        Returns:
+            Dictionary with all tags by category, merging auto-generated
+            and manual tags.
+        """
+        auto_tags = self.get_smart_tags()
+        manual_tags = self.get_manual_smart_tags()
+
+        effective: dict[str, list[str]] = {}
+
+        # All categories
+        all_categories = set(auto_tags.keys()) | set(manual_tags.keys())
+
+        for category in all_categories:
+            auto = set(auto_tags.get(category, []))
+            manual = set(manual_tags.get(category, []))
+            effective[category] = list(auto | manual)
+
+        return effective
+
     def __str__(self) -> str:
         """Human-readable representation."""
         return f"Scene('{self.title}', order={self.order_index}, {self.status.value})"
