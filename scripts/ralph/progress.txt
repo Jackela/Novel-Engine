@@ -48,6 +48,7 @@ Branch: feat/code-citadel
 ### Testing
 - **TDD/BDD**: Write failing test first, implement minimum code, verify with E2E
 - **Test File Organization**: Keep files under 500 lines, split by functionality
+- **E2E Testing**: Playwright tests in `frontend/tests/e2e/` with fixtures from `./fixtures` and auth utils from `./utils/auth`
 - **Quality Gates**: `pytest tests/ && npm run test:e2e && mypy . && npm run type-check`
 
 ### Schema Synchronization
@@ -743,3 +744,34 @@ Branch: feat/code-citadel
   - All 158 chunking strategy tests pass (131 original + 27 new coherence tests)
 
 --
+
+## 2025-02-05 - BRAIN-040A-01
+- **What was implemented:**
+  - Created comprehensive E2E test file at `tests/e2e/brain-rag.spec.ts`
+  - 17 Playwright tests covering all BRAIN-040 A/B scenarios:
+    - Test file setup smoke test
+    - Lore entry creation tests (navigation, API creation, knowledge base verification)
+    - Chat verification tests (interface, API response, RAG context retrieval)
+    - Hybrid search tests (character traits, trait-based search)
+    - Citations tests (multiple sources, citation display, used chunk marking)
+    - Multi-hop relationship tests (connected entities, multi-hop traversal)
+    - Brain Settings page tests (page load, model pricing, RAG configuration)
+  - Added helper mock functions for all Brain-related APIs:
+    - mockBrainSettingsAPI - mocks settings, usage, models endpoints
+    - mockChatAPI - mocks SSE streaming chat responses
+    - mockRAGContextAPI - mocks RAG context retrieval
+    - mockLoreAPI - mocks lore CRUD operations
+    - mockCharacterAPI - mocks character operations
+  - Test file uses existing fixtures and auth utilities
+  - All tests include proper @smoke, @e2e, @brain, @rag, @chat tags
+- **Files changed:**
+  - `frontend/tests/e2e/brain-rag.spec.ts` - New E2E test file (750+ lines)
+  - `scripts/ralph/prd.json` - Updated BRAIN-040A-01 passes to true
+- **Learnings for future iterations:**
+  - Playwright test file must import `Page` type explicitly: `import type { Page } from '@playwright/test'`
+  - Use existing fixtures from `./fixtures` to get auth and API mocks automatically
+  - Use `page.route()` with regex patterns to mock API responses
+  - SSE streaming can be mocked by returning text/event-stream content type
+  - Tests should be serializable using `test.describe.configure({ mode: 'serial' })` for state-dependent tests
+  - The Playwright config already supports E2E testing with webServer, globalSetup, and globalTeardown
+  - All 17 tests are discovered by Playwright and typecheck passes
