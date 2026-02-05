@@ -47,6 +47,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -58,6 +59,7 @@ import {
 import { brainSettingsApi } from '@/features/routing/api/brainSettingsApi';
 import {
   type DailyStatsResponse,
+  type ModelPricingResponse,
   type ModelUsageResponse,
 } from '@/features/routing/api/brainSettingsApi';
 import { routingApi } from '@/features/routing/api/routingApi';
@@ -215,6 +217,15 @@ export function BrainSettingsPage() {
   } = useQuery({
     queryKey: ['usage-by-model'],
     queryFn: () => brainSettingsApi.getUsageByModel(),
+  });
+
+  // BRAIN-035B-01: Fetch model pricing data
+  const {
+    data: modelPricing,
+    isLoading: modelPricingLoading,
+  } = useQuery({
+    queryKey: ['model-pricing'],
+    queryFn: () => brainSettingsApi.getModelPricing(),
   });
 
   const handleSaveAPIKey = async (provider: string, key: string) => {
@@ -1077,6 +1088,90 @@ export function BrainSettingsPage() {
               ) : (
                 <div className="h-48 flex items-center justify-center text-muted-foreground">
                   No usage data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* BRAIN-035B-01: Model Comparison Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Model Pricing Comparison</CardTitle>
+              <CardDescription>
+                Cost per 1M tokens for each available model
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {modelPricingLoading ? (
+                <div className="h-48 flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : modelPricing && modelPricing.length > 0 ? (
+                <div className="space-y-6">
+                  {(() => {
+                    // Group models by provider
+                    const grouped = modelPricing.reduce((acc, model) => {
+                      const provider = model.provider ?? 'unknown';
+                      if (!acc[provider]) {
+                        acc[provider] = [];
+                      }
+                      acc[provider].push(model);
+                      return acc;
+                    }, {} as Record<string, ModelPricingResponse[]>);
+
+                    const providerLabels: Record<string, string> = {
+                      openai: 'OpenAI',
+                      anthropic: 'Anthropic',
+                      gemini: 'Google Gemini',
+                      ollama: 'Ollama (Local)',
+                      mock: 'Mock',
+                    };
+
+                    return Object.entries(grouped).map(([provider, models]) => (
+                      <div key={provider} className="space-y-3">
+                        <h3 className="text-lg font-semibold capitalize flex items-center gap-2">
+                          {providerLabels[provider] || provider}
+                        </h3>
+                        <div className="overflow-x-auto border rounded-lg">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Model</TableHead>
+                                <TableHead className="text-right">Input / 1M</TableHead>
+                                <TableHead className="text-right">Output / 1M</TableHead>
+                                <TableHead className="text-right">Context</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {models.map((model) => (
+                                <TableRow key={`${model.provider}-${model.model_name}`}>
+                                  <TableCell>
+                                    <div>
+                                      <div className="font-medium">{model.display_name}</div>
+                                      <div className="text-xs text-muted-foreground">{model.model_name}</div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    ${model.cost_per_1m_input_tokens.toFixed(2)}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    ${model.cost_per_1m_output_tokens.toFixed(2)}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {model.max_context_tokens.toLocaleString()}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-muted-foreground">
+                  No model pricing data available
                 </div>
               )}
             </CardContent>

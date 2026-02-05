@@ -21,6 +21,7 @@ from typing import Optional
 
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
 
 from src.api.schemas import (
     APIKeysRequest,
@@ -720,6 +721,100 @@ async def get_usage_by_model(
 
     except Exception as e:
         logger.error(f"Failed to get usage by model: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# ==================== Model Pricing (BRAIN-035B-01) ====================
+
+
+class ModelPricingResponse(BaseModel):
+    """
+    Model pricing information response.
+
+    Attributes:
+        provider: LLM provider name
+        model_name: Model identifier
+        display_name: Human-readable model name
+        cost_per_1m_input_tokens: Cost per 1M input tokens in USD
+        cost_per_1m_output_tokens: Cost per 1M output tokens in USD
+        max_context_tokens: Maximum input context window
+        max_output_tokens: Maximum output tokens
+        deprecated: Whether model is deprecated
+    """
+
+    provider: str
+    model_name: str
+    display_name: str
+    cost_per_1m_input_tokens: float
+    cost_per_1m_output_tokens: float
+    max_context_tokens: int
+    max_output_tokens: int
+    deprecated: bool = False
+
+
+@router.get("/brain/models", response_model=list[ModelPricingResponse])
+async def get_model_pricing(
+    include_deprecated: bool = Query(False, description="Include deprecated models"),
+    provider: str | None = Query(None, description="Filter by provider"),
+) -> list[ModelPricingResponse]:
+    """
+    Get model pricing information from the ModelRegistry.
+
+    Returns:
+        List of models with pricing data grouped by provider
+
+    Raises:
+        500: If retrieval fails
+    """
+    try:
+        from src.contexts.knowledge.application.services.model_registry import (
+            DEFAULT_MODELS,
+            LLMProvider,
+        )
+
+        models: list[ModelPricingResponse] = []
+
+        # Provider filter
+        provider_filter = None
+        if provider:
+            try:
+                provider_filter = LLMProvider(provider)
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid provider: {provider}. Must be one of: {[p.value for p in LLMProvider]}",
+                )
+
+        for llm_provider, model_list in DEFAULT_MODELS.items():
+            if provider_filter and llm_provider != provider_filter:
+                continue
+
+            for model_def in model_list:
+                if not include_deprecated and model_def.deprecated:
+                    continue
+
+                models.append(
+                    ModelPricingResponse(
+                        provider=model_def.provider.value,
+                        model_name=model_def.model_name,
+                        display_name=model_def.display_name,
+                        cost_per_1m_input_tokens=model_def.cost_per_1m_input_tokens,
+                        cost_per_1m_output_tokens=model_def.cost_per_1m_output_tokens,
+                        max_context_tokens=model_def.max_context_tokens,
+                        max_output_tokens=model_def.max_output_tokens,
+                        deprecated=model_def.deprecated,
+                    )
+                )
+
+        # Sort by provider, then by cost (descending for comparison)
+        models.sort(key=lambda m: (m.provider, -m.cost_per_1m_output_tokens))
+
+        return models
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get model pricing: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 

@@ -93,6 +93,19 @@ export interface BrainSettingsResponse {
   knowledge_base: KnowledgeBaseStatusResponse;
 }
 
+// BRAIN-035B-01: Model Pricing Comparison
+
+export interface ModelPricingResponse {
+  provider: string;
+  model_name: string;
+  display_name: string;
+  cost_per_1m_input_tokens: number;
+  cost_per_1m_output_tokens: number;
+  max_context_tokens: number;
+  max_output_tokens: number;
+  deprecated: boolean;
+}
+
 const API_BASE = '/api/brain/settings';
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -194,5 +207,19 @@ export const brainSettingsApi = {
   async getUsageByModel(): Promise<ModelUsageResponse[]> {
     const response = await fetch('/api/brain/usage/by-model');
     return handleResponse<ModelUsageResponse[]>(response);
+  },
+
+  /**
+   * Get model pricing information
+   * BRAIN-035B-01: Model Comparison Table
+   */
+  async getModelPricing(includeDeprecated = false, provider?: string): Promise<ModelPricingResponse[]> {
+    const params = new URLSearchParams();
+    if (includeDeprecated) params.append('include_deprecated', 'true');
+    if (provider) params.append('provider', provider);
+
+    const url = `/api/brain/models${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await fetch(url);
+    return handleResponse<ModelPricingResponse[]>(response);
   },
 };
