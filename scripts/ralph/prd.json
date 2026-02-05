@@ -390,9 +390,9 @@
         "Test: Overlap creates expected context continuity"
       ],
       "priority": 86,
-      "passes": false,
+      "passes": true,
       "dependencies": ["BRAIN-039B-01"],
-      "notes": ""
+      "notes": "Implemented configurable overlap with auto-calculation as 10% of chunk_size. Added _calculate_overlap_from_chunk_size() helper, is_auto_overlap and overlap_percentage properties. Updated all factory methods to use auto-overlap. 17 new tests pass, all 131 chunking tests pass."
     },
     {
       "id": "BRAIN-039B-03",

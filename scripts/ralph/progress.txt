@@ -690,3 +690,25 @@ Branch: feat/code-citadel
   - The domain/models directory is gitignored - use `git add -f` to add files
 
 --
+
+## 2025-02-05 - BRAIN-039B-02
+- **What was implemented:**
+  - Added configurable overlap with auto-calculation as 10% of chunk_size
+  - Modified ChunkingStrategy dataclass to accept `overlap: int | None = None`
+  - Added `_calculate_overlap_from_chunk_size()` helper function with percentage parameter (default 0.1)
+  - Added `is_auto_overlap` property to check if overlap was auto-calculated
+  - Added `overlap_percentage` property to get overlap as percentage of chunk_size
+  - Updated all factory methods (default, for_character, for_scene, for_lore, for_auto) to use overlap=None
+  - Added 17 comprehensive tests for configurable overlap feature
+- **Files changed:**
+  - `src/contexts/knowledge/domain/models/chunking_strategy.py` - Added overlap auto-calculation, properties, helper function
+  - `tests/unit/contexts/knowledge/infrastructure/adapters/test_chunking_strategy_adapters.py` - Added TestConfigurableOverlap class with 17 tests
+- **Learnings for future iterations:**
+  - Use `assert self.overlap is not None` in properties for type checker after __post_init__ converts None to int
+  - The overlap parameter can be `None` to trigger 10% auto-calculation: `ChunkingStrategy(chunk_size=500, overlap=None)` -> overlap=50
+  - The `_auto_calculated_overlap` private field tracks whether overlap was auto-calculated (set to the calculated value, 0 if explicit)
+  - All factory methods now use auto-overlap by default: default() -> 50 (10% of 500), for_character() -> 20 (10% of 200), etc.
+  - The _calculate_overlap_from_chunk_size() function ensures minimum overlap of 1 and always less than chunk_size
+  - All 131 chunking strategy tests pass (114 original + 17 new configurable overlap tests)
+
+--
