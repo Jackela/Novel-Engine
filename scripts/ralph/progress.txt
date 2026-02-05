@@ -315,3 +315,20 @@ Branch: feat/code-citadel
   - Mock response word-by-word with asyncio.sleep(0.02) simulates LLM streaming
 
 ---
+
+## 2025-02-05 - BRAIN-037A-02
+- **What was implemented:**
+  - RAG Integration was already implemented as part of BRAIN-037A-01
+  - The chat endpoint calls RetrievalService with user query
+  - Retrieved context is injected into the system prompt
+  - Chat responses include formatted context from knowledge base
+  - Shows number of relevant chunks found in response
+- **Files changed:**
+  - None (already implemented in BRAIN-037A-01)
+- **Learnings for future iterations:**
+  - RAG integration was done alongside the POST endpoint creation
+  - RetrievalService.retrieve_relevant() is called with query and k chunks
+  - Context is formatted as "[Source N: type:id]" followed by content
+  - The system prompt is built with context when RAG is enabled
+
+---
