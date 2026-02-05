@@ -227,3 +227,26 @@ Branch: feat/code-citadel
   - Source type badges use color mapping for visual distinction (CHARACTER=purple, LORE=blue, etc.)
 
 ---
+
+## 2025-02-05 - BRAIN-036-03
+- **What was implemented:**
+  - Added `used` boolean field to RetrievedChunkResponse Pydantic model
+  - Added `used_threshold` query parameter to GET `/api/brain/context` endpoint (default: 0.7)
+  - Chunks with score >= used_threshold are marked as "used" in the response
+  - Updated frontend RetrievedChunkResponse TypeScript interface with `used` field
+  - Added visual highlighting for used chunks in ContextInspector:
+    - Green border and background tint (bg-green-50/50, border-green-200)
+    - "Used" badge with CheckCircle2 icon
+    - Dark mode support (bg-green-950/30, border-green-800)
+- **Files changed:**
+  - `src/api/schemas.py` - Added `used` field to RetrievedChunkResponse
+  - `src/api/routers/brain_settings.py` - Added used_threshold parameter and logic
+  - `frontend/src/features/routing/api/brainSettingsApi.ts` - Added `used` field to interface
+  - `frontend/src/components/narrative/ContextInspector.tsx` - Added visual highlighting
+- **Learnings for future iterations:**
+  - Used chunks are determined by relevance threshold (0.7 by default)
+  - Visual distinction uses conditional classes based on `chunk.used` boolean
+  - CheckCircle2 icon from lucide-react for used indicator badge
+  - Green color scheme indicates "used" state (consistent with success/positive semantics)
+
+---
