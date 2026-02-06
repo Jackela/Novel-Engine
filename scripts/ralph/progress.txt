@@ -52,3 +52,35 @@ Started: Fri Feb  6 19:52:52 CST 2026
 - docs/index.md uses the format "### [Architecture](./architecture/) ⭐" - add new items under existing sections
 
 ---
+
+## [2026-02-06] - OPT-014
+- API Key Storage Hardening - Security improvements for brain settings
+- Files changed:
+  - src/api/routers/brain_settings.py - Removed random fallback key, added encryption requirement
+  - tests/unit/api/routers/test_brain_settings_security.py - NEW: 25 security tests
+  - config/env/.env.example - Added BRAIN_SETTINGS_ENCRYPTION_KEY documentation
+  - SECURITY.md - Added API key storage security guidelines
+  - README.md - Added encryption setup instructions
+- Security improvements:
+  - Removed random `_DEFAULT_ENCRYPTION_KEY = Fernet.generate_key()` fallback
+  - get_fernet() now returns None when key not set (was: random key)
+  - get_encryption_key() raises ValueError if key not set
+  - _encrypt_api_key() and _decrypt_api_key() handle None fernet gracefully
+  - _require_encryption() helper for API endpoints returns 503 when encryption unavailable
+  - set_api_key() only stores if encryption succeeds (non-empty result)
+- Unit tests cover:
+  - Encrypted storage (keys stored encrypted, retrieved decrypted)
+  - Masked output (first 8 + last 4 chars, dots in middle)
+  - Log safety (no raw keys in logs, encrypted values don't contain original)
+  - Encryption key requirement (503 error when key not set)
+  - Graceful failure (operations return empty string, don't crash)
+
+**Learnings for future iterations:**
+- Fernet.generate_key() on every restart makes stored keys unreadable - was a latent bug
+- Type annotations needed updating from `Fernet` to `Fernet | None` in many places
+- The router endpoints using `Depends(get_fernet)` needed to handle None
+- test_brain_settings_security.py needed `@pytest.mark.asyncio` for async repository methods
+- config/env/ directory is in .gitignore - needed `git add -f` for .env.example
+- Warning logs should use _ENCRYPTION_KEY_WARNING_SHOWN flag to avoid spamming
+
+---
