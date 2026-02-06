@@ -174,4 +174,24 @@ Started: Fri Feb  6 10:46:57 CST 2026
   - E402 pycodestyle warnings for `sys.path.insert` are acceptable for utility scripts
   - Current baseline: 77% pass rate (17/22 questions) with MockReranker
   - tests/evaluation and scripts/evaluation directories were in .gitignore and needed force-add
+
+## 2026-02-06 - OPT-008
+- What was implemented:
+  - Created Markdown renderer component using markdown-it with safe HTML settings (html: false)
+  - Added highlight.js integration for code block syntax highlighting
+  - Styled all markdown elements using Tailwind CSS classes only (no custom CSS)
+  - Updated ChatInterface to render assistant messages with Markdown, user messages stay plain text
+  - Added support for tables, lists, headings, code blocks, links, and blockquotes
+  - Made code blocks focusable for keyboard navigation (tabindex="0")
+- Files changed:
+  - frontend/src/components/ui/markdown.tsx (new - Markdown component with PlainText export)
+  - frontend/src/components/ChatInterface.tsx (modified - integrated Markdown for assistant messages)
+  - frontend/package.json (modified - added highlight.js and @types/markdown-it)
+- **Learnings for future iterations:**
+  - markdown-it highlight option takes (str: string, lang: string): string
+  - Use Tailwind arbitrary selectors [&_element]:class to style markdown-generated HTML
+  - For unknown languages in code blocks, fall back to plain text with HTML escaping
+  - Tables need overflow-x-auto wrapper for proper scrolling on mobile
+  - Assistant messages use Markdown component, user messages use PlainText component
+  - Pre-existing type error in checkbox.tsx is unrelated to this work
 ---

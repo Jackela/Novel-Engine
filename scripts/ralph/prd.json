@@ -125,7 +125,7 @@
         "Verify tables, lists, and code blocks render correctly in ChatInterface."
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "notes": "No custom CSS files; shadcn/ui where appropriate."
     },
