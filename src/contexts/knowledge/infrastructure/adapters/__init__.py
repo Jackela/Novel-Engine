@@ -23,6 +23,8 @@ from .chunking_strategy_adapters import (
     ChunkCoherenceAnalyzer,
     DEFAULT_COHERENCE_THRESHOLD,
 )
+from .embedding_generator_adapter import EmbeddingServiceAdapter
+from .cached_embedding_service import CachedEmbeddingService
 
 __all__ = [
     "InMemoryPromptRepository",
@@ -40,4 +42,6 @@ __all__ = [
     "CoherenceScore",
     "ChunkCoherenceAnalyzer",
     "DEFAULT_COHERENCE_THRESHOLD",
+    "EmbeddingServiceAdapter",
+    "CachedEmbeddingService",
 ]

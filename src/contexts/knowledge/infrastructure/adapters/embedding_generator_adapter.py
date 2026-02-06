@@ -7,6 +7,11 @@ or fallback mock implementation for testing.
 Constitution Compliance:
 - Article II (Hexagonal): Infrastructure adapter for external embedding service
 - Article V (SOLID): SRP - embedding generation only
+
+Note:
+    For production LRU + TTL caching, use CachedEmbeddingService wrapper
+    instead of relying on the internal cache. The internal cache here
+    is kept for backward compatibility but does not have TTL or LRU eviction.
 """
 
 import hashlib
@@ -37,6 +42,10 @@ class EmbeddingServiceAdapter(IEmbeddingService):
     Constitution Compliance:
         - Article II (Hexagonal): External service adapter
         - Article V (SOLID): Single responsibility - embedding generation
+
+    Note:
+        The internal cache is kept for backward compatibility. For production,
+        wrap this adapter with CachedEmbeddingService for proper LRU + TTL caching.
     """
 
     # Model dimension mapping
@@ -51,6 +60,7 @@ class EmbeddingServiceAdapter(IEmbeddingService):
         api_key: str | None = None,
         model: str = "text-embedding-3-small",
         use_mock: bool = False,
+        enable_internal_cache: bool = True,
     ):
         """
         Initialize embedding service with API configuration.
@@ -59,6 +69,8 @@ class EmbeddingServiceAdapter(IEmbeddingService):
             api_key: Optional API key for OpenAI. If None, reads OPENAI_API_KEY env var.
             model: Embedding model to use (default: text-embedding-3-small)
             use_mock: Force mock mode regardless of API key availability
+            enable_internal_cache: Enable simple internal cache (default: True).
+                                  For production, set to False and use CachedEmbeddingService.
 
         Models:
             - text-embedding-ada-002: 1536 dimensions (OpenAI legacy)
@@ -68,8 +80,12 @@ class EmbeddingServiceAdapter(IEmbeddingService):
         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
         self._model = model
         self._use_mock = use_mock or not self._api_key
-        self._embedding_cache: dict[str, list[float]] = {}
         self._client: Union["AsyncOpenAI", None] = None
+
+        # Internal cache (simple dict, no TTL/LRU)
+        # Can be disabled in favor of CachedEmbeddingService
+        self._embedding_cache: dict[str, list[float]] = {} if enable_internal_cache else {}
+        self._cache_enabled = enable_internal_cache
 
         # Validate model
         if model not in self.DIMENSIONS:
@@ -100,10 +116,11 @@ class EmbeddingServiceAdapter(IEmbeddingService):
         if not text or not text.strip():
             raise EmbeddingError("Cannot generate embedding for empty text", "EMPTY_TEXT")
 
-        # Check cache first
-        cache_key = self._get_cache_key(text)
-        if cache_key in self._embedding_cache:
-            return self._embedding_cache[cache_key]
+        # Check internal cache first (if enabled)
+        if self._cache_enabled:
+            cache_key = self._get_cache_key(text)
+            if cache_key in self._embedding_cache:
+                return self._embedding_cache[cache_key]
 
         # Generate embedding
         try:
@@ -112,8 +129,10 @@ class EmbeddingServiceAdapter(IEmbeddingService):
             else:
                 embedding = await self._call_openai_api(text)
 
-            # Cache result
-            self._embedding_cache[cache_key] = embedding
+            # Cache result (if enabled)
+            if self._cache_enabled:
+                cache_key = self._get_cache_key(text)
+                self._embedding_cache[cache_key] = embedding
             return embedding
 
         except Exception as e:
@@ -121,7 +140,9 @@ class EmbeddingServiceAdapter(IEmbeddingService):
             if not self._use_mock:
                 # On API failure, silently fall back to mock
                 embedding = self._generate_mock_embedding(text)
-                self._embedding_cache[cache_key] = embedding
+                if self._cache_enabled:
+                    cache_key = self._get_cache_key(text)
+                    self._embedding_cache[cache_key] = embedding
                 return embedding
             raise EmbeddingError(f"Failed to generate embedding: {e}", "EMBEDDING_FAILED")
 
@@ -162,14 +183,17 @@ class EmbeddingServiceAdapter(IEmbeddingService):
             if self._use_mock:
                 batch_embeddings = []
                 for t in batch:
-                    # Check cache first for each text
-                    cache_key = self._get_cache_key(t)
-                    if cache_key in self._embedding_cache:
-                        batch_embeddings.append(self._embedding_cache[cache_key])
-                    else:
-                        embedding = self._generate_mock_embedding(t)
+                    # Check cache first for each text (if enabled)
+                    if self._cache_enabled:
+                        cache_key = self._get_cache_key(t)
+                        if cache_key in self._embedding_cache:
+                            batch_embeddings.append(self._embedding_cache[cache_key])
+                            continue
+                    embedding = self._generate_mock_embedding(t)
+                    if self._cache_enabled:
+                        cache_key = self._get_cache_key(t)
                         self._embedding_cache[cache_key] = embedding
-                        batch_embeddings.append(embedding)
+                    batch_embeddings.append(embedding)
             else:
                 try:
                     batch_embeddings = await self._call_openai_api_batch(batch)

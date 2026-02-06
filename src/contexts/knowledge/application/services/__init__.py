@@ -197,6 +197,13 @@ from .smart_tagging_service import (
     DEFAULT_MAX_TOKENS as DEFAULT_TAGGING_MAX_TOKENS,
 )
 
+from .embedding_cache_service import (
+    EmbeddingCacheService,
+    CacheKey,
+    CacheEntry,
+    CacheStats,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -353,4 +360,9 @@ __all__ = [
     "SmartTaggingError",
     "DEFAULT_TAGGING_TEMPERATURE",
     "DEFAULT_TAGGING_MAX_TOKENS",
+    # Embedding Cache Service
+    "EmbeddingCacheService",
+    "CacheKey",
+    "CacheEntry",
+    "CacheStats",
 ]
