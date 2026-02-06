@@ -50,7 +50,7 @@
         "Add unit tests covering rerank success, fallback path, and candidate/final top-k behavior using the mock reranker."
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "notes": "Reuse src/contexts/knowledge/application/services/rerank_service.py and adapters; do not re-implement reranking."
     },

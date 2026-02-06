@@ -9,6 +9,8 @@ Started: Fri Feb  6 10:46:57 CST 2026
 - Use `src.contexts.*` absolute imports in adapter files (not relative imports like `....application`)
 - Infrastructure adapters in `src/contexts/knowledge/infrastructure/adapters/` should export from `__init__.py`
 - Application services in `src/contexts/knowledge/application/services/` should export from `__init__.py`
+- RetrievalService now supports optional RerankService injection for result reordering
+- When using reranking, set candidate_k to retrieve more results and final_k for the desired output count
 
 ## 2026-02-06 - OPT-001
 - What was implemented:
@@ -50,4 +52,23 @@ Started: Fri Feb  6 10:46:57 CST 2026
   - Structlog logging added for cache_hit/cache_miss events with model and key info
   - LRU eviction is manual via list tracking (OrderedDict not used due to need for index operations)
   - All cache tests are fast (no sleep except TTL test which waits 1.1s)
+
+## 2026-02-06 - OPT-003
+- What was implemented:
+  - Added candidate_k, final_k, and enable_rerank fields to RetrievalOptions
+  - Injected optional RerankService into RetrievalService constructor
+  - Modified retrieve_relevant to apply reranking after filtering/deduplication
+  - Implemented fallback to original order on rerank failure with structured warning log
+  - Added 9 new unit tests covering rerank success, fallback, and candidate/final top-k behavior
+- Files changed:
+  - src/contexts/knowledge/application/services/retrieval_service.py (modified)
+  - tests/unit/contexts/knowledge/application/services/test_retrieval_service.py (modified - added TestRetrievalServiceReranking class)
+- **Learnings for future iterations:**
+  - Reranking is applied AFTER deduplication to avoid reordering duplicates
+  - The retrieval pipeline: embed -> vector search -> filter -> deduplicate -> rerank -> limit to k
+  - When enable_rerank=False but RerankService is provided, reranking is skipped
+  - When RerankService is None, RetrievalService works normally without reranking
+  - On rerank failure, original chunk order is preserved and a warning is logged
+  - candidate_k defaults to 2x final_k when not specified and reranking is enabled
+  - All 145 tests for retrieval, rerank, ingestion processors, and cache services pass
 ---

@@ -32,6 +32,7 @@ from ..services.knowledge_ingestion_service import RetrievedChunk
 
 if TYPE_CHECKING:
     from .citation_formatter import CitationFormatter, SourceReference
+    from .rerank_service import RerankService
 
 
 logger = structlog.get_logger()
@@ -147,16 +148,22 @@ class RetrievalOptions:
     Options for retrieval operations.
 
     Attributes:
-        k: Number of results to retrieve
+        k: Number of results to retrieve (alias for final_k when reranking is enabled)
+        candidate_k: Number of candidates to retrieve before reranking (None = 2x final_k)
+        final_k: Final number of results after reranking (None = use k)
         min_score: Minimum relevance score (0.0 - 1.0)
         deduplicate: Whether to deduplicate similar results
         deduplication_threshold: Similarity threshold for deduplication
+        enable_rerank: Whether to apply reranking after retrieval
     """
 
     k: int = 5
+    candidate_k: int | None = None
+    final_k: int | None = None
     min_score: float = DEFAULT_RELEVANCE_THRESHOLD
     deduplicate: bool = True
     deduplication_threshold: float = DEFAULT_DEDUPLICATION_SIMILARITY
+    enable_rerank: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,7 +215,8 @@ class RetrievalService:
     2. Search vector database
     3. Apply filters and thresholds
     4. Deduplicate similar results
-    5. Format for LLM consumption
+    5. Rerank results (if RerankService is provided)
+    6. Format for LLM consumption
 
     Constitution Compliance:
         - Article II (Hexagonal): Application service coordinating ports
@@ -219,6 +227,7 @@ class RetrievalService:
         >>> service = RetrievalService(
         ...     embedding_service=embedding_svc,
         ...     vector_store=vector_store,
+        ...     rerank_service=rerank_svc,  # Optional
         ... )
         >>> results = await service.retrieve_relevant(
         ...     query="brave warrior",
@@ -233,6 +242,7 @@ class RetrievalService:
         embedding_service: IEmbeddingService,
         vector_store: IVectorStore,
         default_collection: str = DEFAULT_COLLECTION,
+        rerank_service: RerankService | None = None,
     ):
         """
         Initialize the retrieval service.
@@ -241,10 +251,12 @@ class RetrievalService:
             embedding_service: Service for generating query embeddings
             vector_store: Vector storage backend for semantic search
             default_collection: Default collection name for queries
+            rerank_service: Optional reranking service for result reordering
         """
         self._embedding_service = embedding_service
         self._vector_store = vector_store
         self._default_collection = default_collection
+        self._rerank_service = rerank_service
 
     async def retrieve_relevant(
         self,
@@ -311,9 +323,22 @@ class RetrievalService:
         if filters:
             where_clause = filters.to_where_clause()
 
-        # Step 3: Search vector store (retrieve more than k for filtering/dedup)
-        # Retrieve 2x what we need to account for filtering
-        fetch_k = max(k * 2, 10)
+        # Step 3: Determine candidate and final k for reranking
+        # If reranking is enabled and available, retrieve more candidates
+        final_k = retrieval_options.final_k or k
+        candidate_k = retrieval_options.candidate_k or (final_k * 2 if retrieval_options.enable_rerank else k)
+
+        logger.debug(
+            "retrieval_k_calculation",
+            k=k,
+            candidate_k=candidate_k,
+            final_k=final_k,
+            enable_rerank=retrieval_options.enable_rerank,
+            has_reranker=self._rerank_service is not None,
+        )
+
+        # Step 4: Search vector store (retrieve candidate_k for potential reranking)
+        fetch_k = max(candidate_k, 10)
 
         try:
             query_results = await self._vector_store.query(
@@ -336,7 +361,7 @@ class RetrievalService:
             results_count=len(query_results),
         )
 
-        # Step 4: Convert to RetrievedChunk and apply score threshold
+        # Step 5: Convert to RetrievedChunk and apply score threshold
         chunks: list[RetrievedChunk] = []
         filtered_count = 0
 
@@ -363,7 +388,7 @@ class RetrievalService:
             )
             chunks.append(chunk)
 
-        # Step 5: Deduplicate similar chunks
+        # Step 6: Deduplicate similar chunks
         if retrieval_options.deduplicate:
             chunks_before_dedup = len(chunks)
             chunks = self._deduplicate_chunks(
@@ -374,8 +399,65 @@ class RetrievalService:
         else:
             deduplicated_count = 0
 
-        # Step 6: Limit to k results
-        chunks = chunks[:k]
+        # Step 7: Apply reranking if enabled and available
+        reranked = False
+        rerank_error = None
+
+        if (
+            retrieval_options.enable_rerank
+            and self._rerank_service is not None
+            and chunks
+        ):
+            logger.debug(
+                "retrieval_rerank_start",
+                query=query,
+                candidate_count=len(chunks),
+                final_k=final_k,
+            )
+
+            try:
+                rerank_result = await self._rerank_service.rerank(
+                    query=query,
+                    chunks=chunks,
+                    top_k=final_k,
+                )
+
+                if rerank_result.reranked:
+                    chunks = rerank_result.chunks
+                    reranked = True
+                    logger.info(
+                        "retrieval_rerank_complete",
+                        query=query,
+                        model=rerank_result.model,
+                        latency_ms=rerank_result.latency_ms,
+                        score_improvement=rerank_result.score_improvement,
+                    )
+                else:
+                    # Reranking was disabled or returned original order
+                    logger.debug(
+                        "retrieval_rerank_skipped",
+                        reason=rerank_result.error or "reranking not applied",
+                    )
+                    rerank_error = rerank_result.error
+
+            except Exception as e:
+                # On any error, fall back to original order with warning
+                rerank_error = str(e)
+                logger.warning(
+                    "retrieval_rerank_error",
+                    query=query,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                    fallback_to_original=True,
+                )
+                # Continue with original chunk order
+
+        # Step 8: Limit to final_k results (or k if no reranking)
+        if reranked:
+            # Reranking already applied top_k, but ensure we don't exceed
+            chunks = chunks[:final_k]
+        else:
+            chunks = chunks[:k]
 
         logger.info(
             "retrieval_complete",
@@ -384,6 +466,8 @@ class RetrievalService:
             filtered=filtered_count,
             deduplicated=deduplicated_count,
             final_count=len(chunks),
+            reranked=reranked,
+            rerank_error=rerank_error,
         )
 
         return RetrievalResult(

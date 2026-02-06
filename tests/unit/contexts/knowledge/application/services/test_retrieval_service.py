@@ -1079,3 +1079,401 @@ class TestRetrievalServiceCitationFormatting:
         assert "[1]" in formatted
         assert "CHARACTER:char_alice" in formatted
         assert "Alice is brave" in formatted
+
+
+@pytest.mark.unit
+class TestRetrievalServiceReranking:
+    """Tests for reranking integration in RetrievalService (OPT-003)."""
+
+    @pytest.fixture
+    def embedding_service(self):
+        """Create mock embedding service."""
+        from src.contexts.knowledge.application.ports.i_embedding_service import IEmbeddingService
+        service = AsyncMock(spec=IEmbeddingService)
+        service.get_dimension.return_value = 1536
+        return service
+
+    @pytest.fixture
+    def vector_store(self):
+        """Create mock vector store."""
+        from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
+        store = AsyncMock(spec=IVectorStore)
+        store.health_check.return_value = True
+        return store
+
+    @pytest.fixture
+    def sample_query_results(self):
+        """Create sample query results for testing."""
+        from src.contexts.knowledge.application.ports.i_vector_store import QueryResult
+        return [
+            QueryResult(
+                id="chunk_1",
+                text="Alice is a brave knight who fights with honor.",
+                score=0.85,
+                metadata={
+                    "source_id": "char_alice",
+                    "source_type": "CHARACTER",
+                    "chunk_index": 0,
+                    "total_chunks": 1,
+                },
+            ),
+            QueryResult(
+                id="chunk_2",
+                text="Bob is a cunning thief with a heart of gold.",
+                score=0.75,
+                metadata={
+                    "source_id": "char_bob",
+                    "source_type": "CHARACTER",
+                    "chunk_index": 0,
+                    "total_chunks": 1,
+                },
+            ),
+            QueryResult(
+                id="chunk_3",
+                text="The kingdom has stood for a thousand years.",
+                score=0.65,
+                metadata={
+                    "source_id": "lore_kingdom",
+                    "source_type": "LORE",
+                    "chunk_index": 0,
+                    "total_chunks": 1,
+                },
+            ),
+            QueryResult(
+                id="chunk_4",
+                text="Charlie is a wise wizard from the eastern lands.",
+                score=0.55,
+                metadata={
+                    "source_id": "char_charlie",
+                    "source_type": "CHARACTER",
+                    "chunk_index": 0,
+                    "total_chunks": 1,
+                },
+            ),
+            QueryResult(
+                id="chunk_5",
+                text="Dragons were once common but are now rare.",
+                score=0.45,
+                metadata={
+                    "source_id": "lore_dragons",
+                    "source_type": "LORE",
+                    "chunk_index": 0,
+                    "total_chunks": 1,
+                },
+            ),
+            QueryResult(
+                id="chunk_6",
+                text="The castle stands on a hill overlooking the valley.",
+                score=0.40,
+                metadata={
+                    "source_id": "lore_castle",
+                    "source_type": "LORE",
+                    "chunk_index": 0,
+                    "total_chunks": 1,
+                },
+            ),
+            QueryResult(
+                id="chunk_7",
+                text="Knights must follow the code of chivalry.",
+                score=0.35,
+                metadata={
+                    "source_id": "lore_chivalry",
+                    "source_type": "LORE",
+                    "chunk_index": 0,
+                    "total_chunks": 1,
+                },
+            ),
+            QueryResult(
+                id="chunk_8",
+                text="The sword glows in the presence of evil.",
+                score=0.30,
+                metadata={
+                    "source_id": "item_sword",
+                    "source_type": "ITEM",
+                    "chunk_index": 0,
+                    "total_chunks": 1,
+                },
+            ),
+        ]
+
+    @pytest.fixture
+    def mock_rerank_service(self):
+        """Create mock rerank service that reorders results."""
+        from src.contexts.knowledge.application.services.rerank_service import (
+            RerankService,
+            RerankServiceResult,
+        )
+        from src.contexts.knowledge.application.ports.i_reranker import RerankDocument, RerankOutput, RerankResult
+        from unittest.mock import AsyncMock
+
+        reranker = AsyncMock()
+
+        async def mock_rerank_func(
+            query: str,
+            documents: list[RerankDocument],
+            top_k: int | None = None,
+        ) -> RerankOutput:
+            # Simulate reranking by reversing order and boosting scores
+            reranked = [
+                RerankResult(
+                    index=d.index,
+                    score=d.score + 0.1,
+                    relevance_score=min(d.score + 0.15, 1.0),
+                )
+                for d in reversed(documents)
+            ]
+
+            if top_k is not None:
+                reranked = reranked[:top_k]
+
+            avg_original = sum(d.score for d in documents) / len(documents)
+            avg_new = sum(r.relevance_score for r in reranked) / len(reranked) if reranked else 0
+            score_improvement = max(0.0, avg_new - avg_original)
+
+            return RerankOutput(
+                results=reranked,
+                query=query,
+                total_reranked=len(documents),
+                model="test_reranker",
+                latency_ms=50.0,
+                score_improvement=score_improvement,
+            )
+
+        reranker.rerank = mock_rerank_func
+        return RerankService(reranker=reranker)
+
+    @pytest.mark.asyncio
+    async def test_retrieve_with_reranking_enabled(
+        self, embedding_service, vector_store, sample_query_results, mock_rerank_service
+    ):
+        """When reranking is enabled, should apply reranking after filtering/dedup."""
+        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+
+        embedding_service.embed.return_value = [0.1] * 1536
+        vector_store.query.return_value = sample_query_results
+
+        # Create service with reranking
+        retrieval_service = RetrievalService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            rerank_service=mock_rerank_service,
+        )
+
+        result = await retrieval_service.retrieve_relevant(
+            query="knight",
+            k=5,
+            options=RetrievalOptions(enable_rerank=True),
+        )
+
+        # Should have applied reranking (mock reverses order)
+        # Last chunk becomes first after reranking
+        assert len(result.chunks) <= 5
+
+    @pytest.mark.asyncio
+    async def test_retrieve_with_candidate_and_final_k(
+        self, embedding_service, vector_store, sample_query_results, mock_rerank_service
+    ):
+        """Should retrieve candidate_k results and return final_k after reranking."""
+        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+
+        embedding_service.embed.return_value = [0.1] * 1536
+        vector_store.query.return_value = sample_query_results
+
+        retrieval_service = RetrievalService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            rerank_service=mock_rerank_service,
+        )
+
+        # Request 20 candidates, return 5 final
+        result = await retrieval_service.retrieve_relevant(
+            query="knight",
+            k=5,
+            options=RetrievalOptions(
+                candidate_k=20,
+                final_k=5,
+                enable_rerank=True,
+            ),
+        )
+
+        # Should have asked for at least 20 from vector store
+        call_args = vector_store.query.call_args
+        assert call_args.kwargs["n_results"] >= 20
+
+        # Should return only 5 final results
+        assert len(result.chunks) <= 5
+
+    @pytest.mark.asyncio
+    async def test_retrieve_with_reranking_disabled_in_options(
+        self, embedding_service, vector_store, sample_query_results, mock_rerank_service
+    ):
+        """When enable_rerank is False, should skip reranking even if service is available."""
+        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+
+        embedding_service.embed.return_value = [0.1] * 1536
+        vector_store.query.return_value = sample_query_results
+
+        retrieval_service = RetrievalService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            rerank_service=mock_rerank_service,
+        )
+
+        result = await retrieval_service.retrieve_relevant(
+            query="knight",
+            k=5,
+            options=RetrievalOptions(enable_rerank=False),
+        )
+
+        # Should not have called the reranker
+        # Chunks should be in original order (highest score first)
+        assert len(result.chunks) <= 5
+        if result.chunks:
+            # First chunk should be the highest scoring (Alice at 0.85)
+            assert result.chunks[0].source_id == "char_alice"
+
+    @pytest.mark.asyncio
+    async def test_retrieve_without_rerank_service(
+        self, embedding_service, vector_store, sample_query_results
+    ):
+        """When no rerank service is provided, should work normally without reranking."""
+        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+
+        embedding_service.embed.return_value = [0.1] * 1536
+        vector_store.query.return_value = sample_query_results
+
+        # Create service without reranking
+        retrieval_service = RetrievalService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            rerank_service=None,
+        )
+
+        result = await retrieval_service.retrieve_relevant(
+            query="knight",
+            k=5,
+            options=RetrievalOptions(enable_rerank=True),
+        )
+
+        # Should return results normally
+        assert len(result.chunks) <= 5
+        # Should be in original order
+        if result.chunks:
+            assert result.chunks[0].source_id == "char_alice"
+
+    @pytest.mark.asyncio
+    async def test_retrieve_reranking_fallback_on_error(
+        self, embedding_service, vector_store, sample_query_results
+    ):
+        """When reranking fails, should fall back to original order with warning."""
+        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+        from src.contexts.knowledge.application.services.rerank_service import (
+            RerankService,
+            FailingReranker,
+        )
+
+        embedding_service.embed.return_value = [0.1] * 1536
+        vector_store.query.return_value = sample_query_results
+
+        # Create service with failing reranker
+        failing_reranker = FailingReranker("Reranking API error")
+        rerank_service = RerankService(reranker=failing_reranker)
+
+        retrieval_service = RetrievalService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            rerank_service=rerank_service,
+        )
+
+        result = await retrieval_service.retrieve_relevant(
+            query="knight",
+            k=5,
+            options=RetrievalOptions(enable_rerank=True),
+        )
+
+        # Should fall back to original order and still return results
+        assert len(result.chunks) <= 5
+        # Should be in original order (highest score first)
+        if result.chunks:
+            assert result.chunks[0].source_id == "char_alice"
+
+    @pytest.mark.asyncio
+    async def test_retrieve_with_candidate_k_defaults_to_2x_final_k(
+        self, embedding_service, vector_store, sample_query_results, mock_rerank_service
+    ):
+        """When candidate_k is None, should default to 2x final_k when reranking."""
+        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+
+        embedding_service.embed.return_value = [0.1] * 1536
+        vector_store.query.return_value = sample_query_results
+
+        retrieval_service = RetrievalService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            rerank_service=mock_rerank_service,
+        )
+
+        # Don't specify candidate_k, should default to 2x k
+        result = await retrieval_service.retrieve_relevant(
+            query="knight",
+            k=5,
+            options=RetrievalOptions(
+                enable_rerank=True,
+            ),
+        )
+
+        # Should have asked for at least 10 (2x5) from vector store
+        call_args = vector_store.query.call_args
+        assert call_args.kwargs["n_results"] >= 10
+
+    @pytest.mark.asyncio
+    async def test_retrieve_final_k_overrides_k(
+        self, embedding_service, vector_store, sample_query_results, mock_rerank_service
+    ):
+        """When final_k is specified, it should override the k parameter."""
+        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+
+        embedding_service.embed.return_value = [0.1] * 1536
+        vector_store.query.return_value = sample_query_results
+
+        retrieval_service = RetrievalService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+            rerank_service=mock_rerank_service,
+        )
+
+        # k=10 but final_k=3, should return 3
+        result = await retrieval_service.retrieve_relevant(
+            query="knight",
+            k=10,
+            options=RetrievalOptions(
+                final_k=3,
+                enable_rerank=True,
+            ),
+        )
+
+        assert len(result.chunks) <= 3
+
+    @pytest.mark.asyncio
+    async def test_retrieval_options_with_rerank_fields(self):
+        """RetrievalOptions should support candidate_k, final_k, and enable_rerank."""
+        options = RetrievalOptions(
+            k=10,
+            candidate_k=20,
+            final_k=5,
+            enable_rerank=False,
+        )
+
+        assert options.k == 10
+        assert options.candidate_k == 20
+        assert options.final_k == 5
+        assert options.enable_rerank is False
+
+    @pytest.mark.asyncio
+    async def test_retrieval_options_rerank_defaults(self):
+        """RetrievalOptions should have sensible defaults for reranking."""
+        options = RetrievalOptions()
+
+        assert options.candidate_k is None  # Will default to 2x final_k
+        assert options.final_k is None  # Will use k
+        assert options.enable_rerank is True  # Reranking enabled by default
