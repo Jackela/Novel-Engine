@@ -204,6 +204,16 @@ from .embedding_cache_service import (
     CacheStats,
 )
 
+from .context_window_manager import (
+    ContextWindowManager,
+    ContextWindowConfig,
+    ManagedContext,
+    ChatMessage as ContextWindowChatMessage,
+    PruningStrategy,
+    create_context_window_manager,
+    DEFAULT_CONTEXT_WINDOWS,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -365,4 +375,12 @@ __all__ = [
     "CacheKey",
     "CacheEntry",
     "CacheStats",
+    # Context Window Manager
+    "ContextWindowManager",
+    "ContextWindowConfig",
+    "ManagedContext",
+    "ContextWindowChatMessage",
+    "PruningStrategy",
+    "create_context_window_manager",
+    "DEFAULT_CONTEXT_WINDOWS",
 ]

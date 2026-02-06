@@ -1672,6 +1672,34 @@ class ChatMessage(BaseModel):
     content: str
 
 
+def get_context_window_manager(request: Request) -> "ContextWindowManager":
+    """
+    Get or create the context window manager from app state.
+
+    OPT-009: Context Window Manager integration
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        The context window manager instance
+    """
+    from src.contexts.knowledge.application.services.context_window_manager import (
+        create_context_window_manager,
+    )
+
+    manager = getattr(request.app.state, "context_window_manager", None)
+    if manager is None:
+        manager = create_context_window_manager(
+            model_name="gpt-4o",
+            enable_rag_optimization=True,
+        )
+        request.app.state.context_window_manager = manager
+        logger.info("Initialized ContextWindowManager")
+
+    return manager
+
+
 class ChatRequest(BaseModel):
     """Request for chat completion."""
     query: str  # User's question/prompt
@@ -1718,6 +1746,7 @@ async def chat_completion(
     request: Request,
     payload: ChatRequest,
     repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+    context_manager: "ContextWindowManager" = Depends(get_context_window_manager),
 ) -> StreamingResponse:
     """
     Chat completion with RAG context.
@@ -1757,7 +1786,7 @@ async def chat_completion(
                 if last_assistant_msg:
                     rag_query = f"{last_assistant_msg.content}\n\nUser: {payload.query}"
 
-            rag_context_text = ""
+            rag_chunks: list = []
             if rag_config.get("enabled", False):
                 try:
                     from src.contexts.knowledge.application.services.retrieval_service import (
@@ -1792,43 +1821,61 @@ async def chat_completion(
                         k=payload.max_chunks,
                         filters=None,
                     )
-
-                    if result.chunks:
-                        # Format context from retrieved chunks
-                        context_parts = []
-                        for i, chunk in enumerate(result.chunks, 1):
-                            context_parts.append(f"[Source {i}: {chunk.source_type}:{chunk.source_id}]")
-                            context_parts.append(chunk.content)
-
-                        rag_context_text = "\n".join(context_parts)
-                        system_prompt += f"\n\nUse the following context to answer the user's question:\n\n{rag_context_text}"
+                    rag_chunks = result.chunks
 
                 except Exception as e:
                     logger.warning(f"RAG retrieval failed, continuing without context: {e}")
 
-            # Format conversation history
-            # BRAIN-037A-03: Include session history in messages
-            messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
+            # OPT-009: Use ContextWindowManager to manage context and prevent overflow
+            from src.contexts.knowledge.application.services.context_window_manager import (
+                ChatMessage as ContextWindowChatMessage,
+            )
 
-            # Add chat history from session or request
-            for msg in chat_history:
-                messages.append({"role": msg.role, "content": msg.content})
+            # Convert chat history to ContextWindowChatMessage format
+            history_messages = [
+                ContextWindowChatMessage(role=msg.role, content=msg.content)
+                for msg in chat_history
+            ]
 
-            # Add current query
-            messages.append({"role": "user", "content": payload.query})
+            # Add RAG context to system prompt if chunks were retrieved
+            if rag_chunks:
+                context_parts = []
+                for i, chunk in enumerate(rag_chunks, 1):
+                    context_parts.append(f"[Source {i}: {chunk.source_type}:{chunk.source_id}]")
+                    context_parts.append(chunk.content)
+                rag_context_text = "\n".join(context_parts)
+                system_prompt += f"\n\nUse the following context to answer the user's question:\n\n{rag_context_text}"
+
+            # Manage context window (prune history, optimize RAG chunks if needed)
+            managed_context = await context_manager.manage_context(
+                system_prompt=system_prompt,
+                rag_chunks=rag_chunks,
+                chat_history=history_messages,
+                query=payload.query,
+            )
+
+            # Get formatted messages for LLM
+            messages = managed_context.to_api_messages()
+            # Add current query (already included in managed_context.chat_history)
 
             # For now, return a mock streaming response
             # In a full implementation, this would call an LLM service
             response_text = f"I received your question: \"{payload.query}\""
 
-            if rag_context_text:
-                response_text += f"\n\nI found {len(rag_context_text.split('[Source')) - 1} relevant chunks from the knowledge base."
+            if rag_chunks:
+                response_text += f"\n\nI found {len(rag_chunks)} relevant chunks from the knowledge base."
             else:
                 response_text += "\n\nNo relevant context was found in the knowledge base."
 
-            # BRAIN-037A-03: Indicate context awareness
+            # OPT-009: Indicate context management
             if chat_history:
-                response_text += f"\n\n(Context: You have sent {len(chat_history)} messages in this session.)"
+                response_text += f"\n\n(Context: You have sent {len(chat_history)} messages in this session. "
+                if managed_context.messages_pruned > 0:
+                    response_text += f"Pruned {managed_context.messages_pruned} old messages to fit context window. "
+                response_text += ")"
+
+            response_text += f"\n\n(Token usage: {managed_context.total_tokens}/{context_manager._config.model_context_window} "
+            response_text += f"(system: {managed_context.system_tokens}, RAG: {managed_context.rag_tokens}, history: {managed_context.history_tokens}))"
 
             response_text += "\n\n(Note: This is a mock response. Full LLM integration will be implemented in a future story.)"
 
