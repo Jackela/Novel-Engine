@@ -47,6 +47,143 @@ class LLMProvider(str, Enum):
         return self.value
 
 
+class PromptFormat(str, Enum):
+    """
+    Prompt format enumeration for different LLM families.
+
+    Why str enum:
+        String-compatible enum allows JSON serialization and direct comparison.
+
+    Formats:
+        CHAT_MESSAGES: Chat format with role-based messages (OpenAI, Gemini, Anthropic)
+        COMPLETION: Single prompt completion format (Llama-style via Ollama)
+        INSTRUCTION: Instruction-based format with explicit sections (Alpaca/DeepSeek style)
+        CODE_INSTRUCTION: Code-focused instruction format (DeepSeek-Coder)
+    """
+
+    CHAT_MESSAGES = "chat_messages"
+    COMPLETION = "completion"
+    INSTRUCTION = "instruction"
+    CODE_INSTRUCTION = "code_instruction"
+
+    def __str__(self) -> str:
+        """Return string value of the format."""
+        return self.value
+
+
+class PromptModelFamily(str, Enum):
+    """
+    Model family enumeration for prompt format selection.
+
+    Why str enum:
+        String-compatible enum allows JSON serialization and direct comparison.
+
+    Why "Prompt" prefix:
+        Distinguishes from token_counter.PromptModelFamily which is for tokenizer selection.
+        This enum is specifically for prompt format selection.
+
+    Families:
+        GPT: OpenAI GPT models
+        CLAUDE: Anthropic Claude models
+        GEMINI: Google Gemini models
+        LLAMA: Meta Llama models
+        MISTRAL: Mistral AI models
+        DEEPSEEK: DeepSeek models
+        DEEPSEEK_CODER: DeepSeek-Coder models
+        PHI: Microsoft Phi models
+        QWEN: Alibaba Qwen models
+        CODESTRAL: Code-focused Mistral models
+        UNKNOWN: Unknown model family
+    """
+
+    GPT = "gpt"
+    CLAUDE = "claude"
+    GEMINI = "gemini"
+    LLAMA = "llama"
+    MISTRAL = "mistral"
+    DEEPSEEK = "deepseek"
+    DEEPSEEK_CODER = "deepseek_coder"
+    PHI = "phi"
+    QWEN = "qwen"
+    CODESTRAL = "codestral"
+    UNKNOWN = "unknown"
+
+    def __str__(self) -> str:
+        """Return string value of the family."""
+        return self.value
+
+    @classmethod
+    def from_model_name(cls, model_name: str) -> "PromptModelFamily":
+        """
+        Detect model family from model name.
+
+        Args:
+            model_name: Model identifier string
+
+        Returns:
+            PromptModelFamily enum value
+        """
+        name_lower = model_name.lower()
+
+        # DeepSeek models
+        if "deepseek-coder" in name_lower or "deepseek_coder" in name_lower:
+            return cls.DEEPSEEK_CODER
+        if "deepseek" in name_lower:
+            return cls.DEEPSEEK
+
+        # Llama models
+        if "llama" in name_lower or "llama-" in name_lower:
+            return cls.LLAMA
+
+        # Mistral models
+        if "codestral" in name_lower:
+            return cls.CODESTRAL
+        if "mistral" in name_lower:
+            return cls.MISTRAL
+
+        # Phi models
+        if "phi" in name_lower:
+            return cls.PHI
+
+        # Qwen models
+        if "qwen" in name_lower:
+            return cls.QWEN
+
+        # GPT models
+        if "gpt" in name_lower:
+            return cls.GPT
+
+        # Claude models
+        if "claude" in name_lower:
+            return cls.CLAUDE
+
+        # Gemini models
+        if "gemini" in name_lower:
+            return cls.GEMINI
+
+        return cls.UNKNOWN
+
+    @property
+    def default_prompt_format(self) -> PromptFormat:
+        """
+        Get the default prompt format for this model family.
+
+        Returns:
+            PromptFormat to use for this family
+        """
+        match self:
+            case PromptModelFamily.DEEPSEEK_CODER:
+                return PromptFormat.CODE_INSTRUCTION
+            case PromptModelFamily.DEEPSEEK:
+                return PromptFormat.INSTRUCTION
+            case PromptModelFamily.LLAMA | PromptModelFamily.MISTRAL | PromptModelFamily.CODESTRAL:
+                return PromptFormat.INSTRUCTION
+            case PromptModelFamily.PHI | PromptModelFamily.QWEN:
+                return PromptFormat.INSTRUCTION
+            case _:
+                return PromptFormat.CHAT_MESSAGES
+
+
 class TaskType(str, Enum):
     """
     Task type enumeration for model routing.
@@ -96,6 +233,8 @@ class ModelDefinition:
         recommended_temperature: Recommended temperature for this model
         deprecated: Whether model is deprecated
         metadata: Additional model-specific metadata
+        model_family: Model family for prompt format selection (auto-detected if UNKNOWN)
+        prompt_format: Prompt format to use (auto-detected from family if CHAT_MESSAGES)
     """
 
     provider: LLMProvider
@@ -111,6 +250,26 @@ class ModelDefinition:
     recommended_temperature: float = 0.7
     deprecated: bool = False
     metadata: dict[str, Any] = field(default_factory=dict)
+    model_family: PromptModelFamily = PromptModelFamily.UNKNOWN
+    prompt_format: PromptFormat = PromptFormat.CHAT_MESSAGES
+
+    def __post_init__(self) -> None:
+        """Auto-detect model family and prompt format if not explicitly set."""
+        # Auto-detect model family if UNKNOWN
+        if self.model_family == PromptModelFamily.UNKNOWN:
+            detected_family = PromptModelFamily.from_model_name(self.model_name)
+            if detected_family != PromptModelFamily.UNKNOWN:
+                object.__setattr__(self, "model_family", detected_family)
+
+        # Auto-detect prompt format if CHAT_MESSAGES and family suggests otherwise
+        if (
+            self.prompt_format == PromptFormat.CHAT_MESSAGES
+            and self.model_family != PromptModelFamily.UNKNOWN
+            and self.model_family not in (PromptModelFamily.GPT, PromptModelFamily.CLAUDE, PromptModelFamily.GEMINI)
+        ):
+            detected_format = self.model_family.default_prompt_format
+            if detected_format != PromptFormat.CHAT_MESSAGES:
+                object.__setattr__(self, "prompt_format", detected_format)
 
     @property
     def qualified_name(self) -> str:
@@ -225,6 +384,8 @@ class ModelAlias:
 __all__ = [
     "LLMProvider",
     "TaskType",
+    "PromptFormat",
+    "PromptModelFamily",
     "ModelDefinition",
     "TaskModelConfig",
     "ModelAlias",

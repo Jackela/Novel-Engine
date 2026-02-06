@@ -214,6 +214,15 @@ from .context_window_manager import (
     DEFAULT_CONTEXT_WINDOWS,
 )
 
+from .prompt_formatter import (
+    PromptFormatter,
+    PromptRequest,
+    FormattedPrompt,
+    PromptFormat,
+    PromptModelFamily,
+    create_prompt_formatter,
+)
+
 __all__ = [
     # Knowledge Ingestion Service
     "KnowledgeIngestionService",
@@ -383,4 +392,11 @@ __all__ = [
     "PruningStrategy",
     "create_context_window_manager",
     "DEFAULT_CONTEXT_WINDOWS",
+    # Prompt Formatter
+    "PromptFormatter",
+    "PromptRequest",
+    "FormattedPrompt",
+    "PromptFormat",
+    "PromptModelFamily",
+    "create_prompt_formatter",
 ]
