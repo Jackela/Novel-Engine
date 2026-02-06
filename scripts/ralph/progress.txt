@@ -218,4 +218,24 @@ Started: Fri Feb  6 10:46:57 CST 2026
   - System prompt is always preserved - raises error if it exceeds window alone
   - Chat response now includes token usage breakdown in mock output
   - All 117 core tests pass (19 new + 98 existing)
+
+## 2026-02-06 - OPT-010
+- What was implemented:
+  - Ran mypy --strict audit on src/contexts/knowledge/application/services/
+  - Fixed unused type: ignore comment in token_counter.py
+  - Fixed RetrievedChunk import in query_aware_retrieval_service.py (was importing from wrong module)
+  - Identified remaining type errors for future cleanup:
+    - token_tracker.py: Complex typing issues with generic wrappers
+    - entity_extraction_service.py: Missing dict type parameters (dict[str, Any] needed)
+    - budget_alert_service.py: Unreachable code warnings in error handling
+    - model_router.py: Missing type annotations for some parameters
+    - Missing library stubs for tiktoken and rank_bm25 (external dependencies)
+- Files changed:
+  - src/contexts/knowledge/application/services/token_counter.py (modified - removed unused type: ignore)
+  - src/contexts/knowledge/application/services/query_aware_retrieval_service.py (modified - fixed import)
+- **Learnings for future iterations:**
+  - RetrievedChunk is exported from knowledge_ingestion_service, not retrieval_service
+  - Many mypy strict errors are pre-existing in older modules (token_tracker, budget_alert_service)
+  - Missing library stubs (tiktoken, rank_bm25) are external dependencies, not code issues
+  - Type audit should be done incrementally per module rather than all at once
 ---
