@@ -194,4 +194,28 @@ Started: Fri Feb  6 10:46:57 CST 2026
   - Tables need overflow-x-auto wrapper for proper scrolling on mobile
   - Assistant messages use Markdown component, user messages use PlainText component
   - Pre-existing type error in checkbox.tsx is unrelated to this work
+
+## 2026-02-06 - OPT-009
+- What was implemented:
+  - Created ContextWindowManager service to prevent context window overflow
+  - Implements priority order: System Prompt > RAG Chunks > Recent History (oldest pruned first)
+  - Integrated with ContextOptimizer for RAG chunk optimization
+  - Added DEFAULT_CONTEXT_WINDOWS mapping for common models (gpt-4o, claude-3, gemini, etc.)
+  - Integrated into /api/brain/chat endpoint for automatic context management
+  - Added 19 unit tests covering overflow scenarios, pruning behavior, and edge cases
+  - ManagedContext.to_api_messages() converts to LLM message format
+  - Raises ValueError if system prompt alone exceeds model window
+- Files changed:
+  - src/contexts/knowledge/application/services/context_window_manager.py (new - 450+ lines)
+  - src/contexts/knowledge/application/services/__init__.py (modified - exports)
+  - src/api/routers/brain_settings.py (modified - integrated ContextWindowManager)
+  - tests/unit/contexts/knowledge/application/services/test_context_window_manager.py (new - 19 tests)
+- **Learnings for future iterations:**
+  - ContextWindowManager uses dependency injection pattern for TokenCounter and ContextOptimizer
+  - Pruning strategy: oldest messages removed first to keep recent conversation context
+  - RAG chunks are optimized via ContextOptimizer before adding to prompt
+  - Token counting uses existing TokenCounter service (1 token ≈ 4 chars estimation)
+  - System prompt is always preserved - raises error if it exceeds window alone
+  - Chat response now includes token usage breakdown in mock output
+  - All 117 core tests pass (19 new + 98 existing)
 ---

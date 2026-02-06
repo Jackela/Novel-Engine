@@ -140,7 +140,7 @@
         "Add unit tests simulating overflow scenarios and verifying pruning order."
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "notes": "Use existing token_counter/context_optimizer modules; avoid new tokenizers."
     },
