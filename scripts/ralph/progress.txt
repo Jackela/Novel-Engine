@@ -18,6 +18,7 @@ Started: Fri Feb  6 10:46:57 CST 2026
 - SourceMetadata now includes KnowledgeMetadata with fields: world_version, confidentiality_level, last_accessed (UTC), source_version
 - KnowledgeMetadata value object has immutable update methods: with_access() and with_version()
 - KnowledgeMetadata.from_dict() handles invalid data gracefully with sensible defaults
+- Golden dataset evaluation uses DeterministicEmbeddingService (SHA256-based) for stable CI results - run with `python scripts/evaluation/run_golden_dataset.py`
 
 ## 2026-02-06 - OPT-001
 - What was implemented:
@@ -149,4 +150,28 @@ Started: Fri Feb  6 10:46:57 CST 2026
   - extra_metadata fields take precedence in to_vector_metadata() for backward compatibility
   - knowledge_metadata object parameter takes precedence over string params in SourceKnowledgeEntry.create()
   - All 60 tests pass (27 new + 33 updated)
+
+## 2026-02-06 - OPT-007
+- What was implemented:
+  - Created tests/evaluation/golden_dataset.json with 22 question -> expected fact pairs (fantasy-themed)
+  - Added scripts/evaluation/run_golden_dataset.py script (570 lines) for evaluating RAG accuracy
+  - Implemented DeterministicEmbeddingService using SHA256 hashing for stable CI results
+  - Created InMemoryVectorStore with cosine similarity search for testing
+  - Added scoring: exact match, substring match (75% word overlap), fuzzy match (SequenceMatcher)
+  - Added 27 unit/integration tests in tests/evaluation/test_golden_dataset.py
+  - Supports JSON report output and baseline threshold assertions
+- Files changed:
+  - tests/evaluation/golden_dataset.json (new - 22 questions, 11 documents)
+  - tests/evaluation/test_golden_dataset.py (new - 27 tests covering loading, matching, embeddings, vector store, and integration)
+  - tests/evaluation/__init__.py (new)
+  - scripts/evaluation/run_golden_dataset.py (new - evaluation harness with DeterministicEmbeddingService, InMemoryVectorStore)
+  - scripts/evaluation/__init__.py (new)
+- **Learnings for future iterations:**
+  - Deterministic embeddings use SHA256 hash of text to generate normalized float vectors
+  - For stable CI results, set min_score=0.0 on RetrievalOptions (deterministic embeddings have lower cosine similarity)
+  - Passing criteria: at least 25% of expected facts found (lenient for deterministic embeddings)
+  - Use `git add -f` to force-add files that are .gitignore'd but should be tracked
+  - E402 pycodestyle warnings for `sys.path.insert` are acceptable for utility scripts
+  - Current baseline: 77% pass rate (17/22 questions) with MockReranker
+  - tests/evaluation and scripts/evaluation directories were in .gitignore and needed force-add
 ---

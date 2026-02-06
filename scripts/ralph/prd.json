@@ -102,7 +102,7 @@
     {
       "id": "OPT-007",
       "title": "Test: Golden Dataset Evaluation Harness",
-      "description": "Automated QA to ensure RAG accuracy doesn’t regress.",
+      "description": "Automated QA to ensure RAG accuracy doesn't regress.",
       "acceptanceCriteria": [
         "Create tests/evaluation/golden_dataset.json with at least 20 question -> expected fact pairs.",
         "Add scripts/evaluation/run_golden_dataset.py to run retrieval + rerank and score exact/substring/fuzzy match (SequenceMatcher is OK).",
@@ -110,7 +110,7 @@
         "Use deterministic embeddings + an in-memory vector store fixture so results are stable in CI."
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "notes": "Keep the dataset small and curated; avoid flaky tests."
     },
