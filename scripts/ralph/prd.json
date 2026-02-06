@@ -65,7 +65,7 @@
         "Verify loading/empty/error/ready states still render correctly with 100+ messages."
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "notes": "Avoid deep nesting; keep layout within 3 levels."
     },

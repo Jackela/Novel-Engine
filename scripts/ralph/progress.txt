@@ -11,6 +11,10 @@ Started: Fri Feb  6 10:46:57 CST 2026
 - Application services in `src/contexts/knowledge/application/services/` should export from `__init__.py`
 - RetrievalService now supports optional RerankService injection for result reordering
 - When using reranking, set candidate_k to retrieve more results and final_k for the desired output count
+- Frontend: Use `frontend/src/lib/utils.ts` for shared cn utility (clsx + tailwind-merge)
+- Frontend: react-window's VariableSizeList is available for virtualizing long lists
+- Frontend: When virtualizing, pass data via itemData prop and use getItemSize for dynamic heights
+- Frontend: Auto-scroll with react-window uses scrollToItem(index, 'end') not scrollTop manipulation
 
 ## 2026-02-06 - OPT-001
 - What was implemented:
@@ -71,4 +75,24 @@ Started: Fri Feb  6 10:46:57 CST 2026
   - On rerank failure, original chunk order is preserved and a warning is logged
   - candidate_k defaults to 2x final_k when not specified and reranking is enabled
   - All 145 tests for retrieval, rerank, ingestion processors, and cache services pass
+
+## 2026-02-06 - OPT-004
+- What was implemented:
+  - Refactored ChatInterface.tsx to use react-window VariableSizeList for virtualization
+  - Created MessageRow component for individual message rendering
+  - Added estimateMessageHeight utility for dynamic sizing based on content length
+  - Implemented itemSizeCache to avoid recalculating heights on every render
+  - Preserved auto-scroll behavior using scrollToItem
+  - Maintained all UI states: loading/empty/error/ready
+  - Used shared cn utility and Tailwind-only styling (no custom CSS)
+- Files changed:
+  - frontend/src/components/ChatInterface.tsx (modified - 179 insertions, 42 deletions)
+- **Learnings for future iterations:**
+  - react-window's VariableSizeList requires a getItemSize function that can change based on content
+  - Must use itemData prop to pass additional data to row components
+  - outerElementType can be customized for consistent styling
+  - resetAfterIndex() must be called when item sizes change during streaming
+  - itemCount must be calculated before useEffects that depend on it
+  - Auto-scroll in virtual lists uses scrollToItem(index, 'end') instead of scrollTop manipulation
+  - Type errors: React.forwardRef props need to match HTMLAttributes exactly, _outerRef is private so use public API
 ---
