@@ -5,14 +5,18 @@
  *
  * Why: Provides a floating, collapsible chat interface for interacting
  * with the AI assistant. Positioned fixed bottom-right and collapses when not in use.
+ *
+ * OPT-004: Added virtualization using react-window VariableSizeList
+ * to handle 100+ messages efficiently with dynamic-height support.
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MessageSquare, X, Send, Minimize2, Maximize2 } from 'lucide-react';
+import { VariableSizeList as List } from 'react-window';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 import { brainSettingsApi, type ChatMessage, type ChatChunk } from '@/features/routing/api/brainSettingsApi';
 
 interface ChatInterfaceProps {
@@ -21,11 +25,91 @@ interface ChatInterfaceProps {
 }
 
 /**
+ * Estimate message height based on content length
+ * Used for initial virtual list sizing before actual measurement
+ */
+function estimateMessageHeight(content: string): number {
+  const lines = Math.ceil(content.length / 50); // Approx 50 chars per line
+  const minHeight = 44; // Base padding + single line
+  const lineHeight = 20; // Approx line height
+  return Math.min(minHeight + lines * lineHeight, 200); // Cap at 200px
+}
+
+/**
+ * MessageRow - Individual message component for virtualized list
+ */
+interface MessageRowProps {
+  index: number;
+  style: React.CSSProperties;
+  data: {
+    messages: ChatMessage[];
+    streamingContent: string;
+    isStreaming: boolean;
+  };
+}
+
+function MessageRow({ index, style, data }: MessageRowProps) {
+  const { messages, streamingContent, isStreaming } = data;
+
+  // Check if this is the streaming indicator row (last row when streaming)
+  const isStreamingRow = isStreaming && index === messages.length;
+
+  if (isStreamingRow) {
+    return (
+      <div style={style} className="px-4 py-1">
+        <div className="mr-auto max-w-[80%] rounded-lg bg-muted px-3 py-2">
+          <p className="text-sm whitespace-pre-wrap">
+            {streamingContent}
+            <span className="inline-block animate-pulse">▊</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const message = messages[index];
+  if (!message) return null;
+
+  return (
+    <div style={style} className="px-4 py-1">
+      <div
+        className={cn(
+          'max-w-[80%] rounded-lg px-3 py-2',
+          message.role === 'user'
+            ? 'ml-auto bg-primary text-primary-foreground'
+            : 'mr-auto bg-muted',
+        )}
+      >
+        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Custom outer element to maintain scroll styling with react-window
+ */
+const OuterElementType = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>((props, ref) => {
+  return (
+    <div
+      ref={ref}
+      className="h-full overflow-y-auto overflow-x-hidden"
+      {...props}
+    />
+  );
+});
+OuterElementType.displayName = 'OuterElementType';
+
+/**
  * ChatInterface provides a floating chat widget with:
  * - Fixed positioning (bottom-right)
  * - Collapsible when not in use
  * - Streaming message responses
  * - Auto-scroll to latest message
+ * - Virtualized message list for 100+ messages
  */
 export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,15 +119,72 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<List>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Cache for item sizes to avoid recalculation
+  const itemSizeCache = useRef<Map<number, number>>(new Map());
+
+  // Reset caches when messages change significantly
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (messages.length === 0) {
+      itemSizeCache.current.clear();
     }
-  }, [messages, streamingContent]);
+  }, [messages.length]);
+
+  /**
+   * Get item size for virtual list
+   * Uses cache to avoid recalculating heights
+   */
+  const getItemSize = useCallback((index: number) => {
+    // Check cache first
+    if (itemSizeCache.current.has(index)) {
+      return itemSizeCache.current.get(index)!;
+    }
+
+    // Streaming indicator row
+    if (isStreaming && index === messages.length) {
+      const height = estimateMessageHeight(streamingContent) + 16;
+      itemSizeCache.current.set(index, height);
+      return height;
+    }
+
+    const message = messages[index];
+    if (!message) {
+      return 60; // Default fallback
+    }
+
+    const height = estimateMessageHeight(message.content) + 16;
+    itemSizeCache.current.set(index, height);
+    return height;
+  }, [messages, isStreaming, streamingContent]);
+
+  /**
+   * Reset item size cache when streaming content changes
+   * This ensures the streaming row resizes properly
+   */
+  useEffect(() => {
+    if (isStreaming) {
+      itemSizeCache.current.delete(messages.length);
+      listRef.current?.resetAfterIndex(messages.length);
+    }
+  }, [streamingContent, isStreaming, messages.length]);
+
+  // Calculate total item count (messages + optional streaming indicator)
+  // Must be defined before useEffects that use it
+  const itemCount = messages.length + (isStreaming ? 1 : 0);
+
+  /**
+   * Auto-scroll to bottom when new messages arrive
+   * Always scrolls to latest message for better chat UX
+   */
+  useEffect(() => {
+    if (!listRef.current) return;
+
+    // Scroll to the last item
+    const lastIndex = Math.max(0, itemCount - 1);
+    listRef.current.scrollToItem(lastIndex, 'end');
+  }, [itemCount]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -64,6 +205,9 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
     setIsStreaming(true);
     setStreamingContent('');
 
+    // Clear size cache for new index
+    itemSizeCache.current.delete(messages.length);
+
     // Prepare messages for API
     const chatHistory = messages.map((msg) => ({
       role: msg.role as 'user' | 'assistant',
@@ -81,7 +225,10 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
           if (chunk.done) {
             // Final chunk - add complete assistant message
             const assistantMessage: ChatMessage = { role: 'assistant', content: streamingContent + chunk.delta };
-            setMessages((prev) => [...prev, assistantMessage]);
+            setMessages((prev) => {
+              itemSizeCache.current.delete(prev.length + 1);
+              return [...prev, assistantMessage];
+            });
             setStreamingContent('');
             setIsStreaming(false);
           } else {
@@ -117,6 +264,12 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
       }
     },
     [handleSend],
+  );
+
+  // Memoize list data to avoid unnecessary re-renders
+  const listData = useMemo(
+    () => ({ messages, streamingContent, isStreaming }),
+    [messages, streamingContent, isStreaming],
   );
 
   // Toggle button - always visible
@@ -177,38 +330,27 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
         {!isMinimized && (
           <>
             <CardContent className="flex-1 p-0">
-              <ScrollArea className="h-[380px] px-4">
-                <div ref={scrollRef} className="flex flex-col gap-3 py-4">
-                  {messages.length === 0 && !streamingContent && (
+              <div className="h-[380px]">
+                {messages.length === 0 && !isStreaming ? (
+                  <div className="flex h-full items-center justify-center px-4">
                     <p className="text-center text-sm text-muted-foreground">
                       Ask me anything about your story, characters, or world building.
                     </p>
-                  )}
-
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={cn(
-                        'max-w-[80%] rounded-lg px-3 py-2',
-                        message.role === 'user'
-                          ? 'ml-auto bg-primary text-primary-foreground'
-                          : 'mr-auto bg-muted',
-                      )}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    </div>
-                  ))}
-
-                  {streamingContent && (
-                    <div className="mr-auto max-w-[80%] rounded-lg bg-muted px-3 py-2">
-                      <p className="text-sm whitespace-pre-wrap">
-                        {streamingContent}
-                        <span className="inline-block animate-pulse">▊</span>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+                  </div>
+                ) : (
+                  <List
+                    ref={listRef}
+                    outerElementType={OuterElementType}
+                    itemCount={itemCount}
+                    itemSize={getItemSize}
+                    width="100%"
+                    height={380}
+                    itemData={listData}
+                  >
+                    {MessageRow}
+                  </List>
+                )}
+              </div>
             </CardContent>
 
             {/* Input area */}
@@ -238,11 +380,6 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
       </Card>
     </div>
   );
-}
-
-// Helper function for className merging (copied from lib/utils)
-function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(' ');
 }
 
 export default ChatInterface;
