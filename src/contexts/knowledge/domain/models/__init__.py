@@ -38,6 +38,7 @@ from .prompt_version import (
     PromptVersion,
     VersionDiff,
 )
+from .knowledge_metadata import ConfidentialityLevel, KnowledgeMetadata
 from .source_knowledge_entry import SourceKnowledgeEntry, SourceMetadata
 from .source_type import SourceType
 from .prompt_usage import (
@@ -84,7 +85,9 @@ __all__ = [
     "DEFAULT_OVERLAP",
     "MAX_CHUNK_SIZE",
     "MIN_CHUNK_SIZE",
+    "ConfidentialityLevel",
     "KnowledgeEntry",
+    "KnowledgeMetadata",
     "KnowledgeType",
     "LLMProvider",
     "ModelAlias",

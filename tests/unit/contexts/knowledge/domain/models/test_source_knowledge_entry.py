@@ -417,3 +417,218 @@ class TestSourceKnowledgeEntryBehavior:
         assert metadata["tags"] == ["hero"]
         assert metadata["chapter"] == 1
         assert "created_at" in metadata
+
+
+class TestSourceMetadataWithKnowledgeMetadata:
+    """Unit tests for SourceMetadata integration with KnowledgeMetadata (OPT-006)."""
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_source_metadata_has_default_knowledge_metadata(self):
+        """Test that SourceMetadata has default KnowledgeMetadata."""
+        from src.contexts.knowledge.domain.models.knowledge_metadata import (
+            KnowledgeMetadata,
+        )
+
+        metadata = SourceMetadata(word_count=100)
+
+        assert hasattr(metadata, "knowledge")
+        assert metadata.knowledge.world_version == "1.0.0"
+        assert metadata.knowledge.confidentiality_level.value == "public"
+        assert metadata.knowledge.last_accessed is None
+        assert metadata.knowledge.source_version == 1
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_source_metadata_with_custom_knowledge_metadata(self):
+        """Test SourceMetadata with custom KnowledgeMetadata."""
+        from src.contexts.knowledge.domain.models.knowledge_metadata import (
+            ConfidentialityLevel,
+            KnowledgeMetadata,
+        )
+
+        knowledge_meta = KnowledgeMetadata(
+            world_version="2.0.0",
+            confidentiality_level=ConfidentialityLevel.RESTRICTED,
+            source_version=3,
+        )
+
+        metadata = SourceMetadata(
+            word_count=100,
+            knowledge=knowledge_meta,
+        )
+
+        assert metadata.knowledge.world_version == "2.0.0"
+        assert metadata.knowledge.confidentiality_level == ConfidentialityLevel.RESTRICTED
+        assert metadata.knowledge.source_version == 3
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_to_vector_metadata_includes_knowledge_fields(self):
+        """Test to_vector_metadata includes KnowledgeMetadata fields."""
+        from src.contexts.knowledge.domain.models.knowledge_metadata import (
+            ConfidentialityLevel,
+            KnowledgeMetadata,
+        )
+
+        knowledge_meta = KnowledgeMetadata(
+            world_version="3.1.0",
+            confidentiality_level=ConfidentialityLevel.SENSITIVE,
+            source_version=2,
+        )
+
+        entry = SourceKnowledgeEntry.create(
+            content="Test content",
+            source_type=SourceType.CHARACTER,
+            source_id="char-1",
+            word_count=100,
+            knowledge_metadata=knowledge_meta,
+        )
+
+        metadata = entry.to_vector_metadata()
+
+        # KnowledgeMetadata fields should be present
+        assert metadata["world_version"] == "3.1.0"
+        assert metadata["confidentiality_level"] == "sensitive"
+        assert metadata["source_version"] == 2
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_to_vector_metadata_with_last_accessed(self):
+        """Test to_vector_metadata includes last_accessed when set."""
+        from src.contexts.knowledge.domain.models.knowledge_metadata import (
+            ConfidentialityLevel,
+            KnowledgeMetadata,
+        )
+        from datetime import timezone
+
+        now = datetime.datetime.now(timezone.utc)
+
+        knowledge_meta = KnowledgeMetadata(
+            world_version="1.0.0",
+            confidentiality_level=ConfidentialityLevel.PUBLIC,
+            last_accessed=now,
+        )
+
+        entry = SourceKnowledgeEntry.create(
+            content="Test content",
+            source_type=SourceType.CHARACTER,
+            source_id="char-1",
+            word_count=100,
+            knowledge_metadata=knowledge_meta,
+        )
+
+        metadata = entry.to_vector_metadata()
+
+        assert "last_accessed" in metadata
+        assert metadata["last_accessed"] == now.isoformat()
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_create_with_knowledge_metadata_params(self):
+        """Test SourceKnowledgeEntry.create with knowledge metadata params."""
+        from src.contexts.knowledge.domain.models.knowledge_metadata import (
+            ConfidentialityLevel,
+        )
+
+        entry = SourceKnowledgeEntry.create(
+            content="Test content",
+            source_type=SourceType.CHARACTER,
+            source_id="char-1",
+            word_count=100,
+            world_version="2.5.0",
+            confidentiality_level=ConfidentialityLevel.RESTRICTED,
+        )
+
+        assert entry.metadata.knowledge.world_version == "2.5.0"
+        assert entry.metadata.knowledge.confidentiality_level == ConfidentialityLevel.RESTRICTED
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_create_with_knowledge_metadata_string_confidentiality(self):
+        """Test create with confidentiality as string."""
+        entry = SourceKnowledgeEntry.create(
+            content="Test content",
+            source_type=SourceType.CHARACTER,
+            source_id="char-1",
+            word_count=100,
+            world_version="1.0.0",
+            confidentiality_level="sensitive",
+        )
+
+        assert entry.metadata.knowledge.confidentiality_level.value == "sensitive"
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_extra_metadata_preserves_backward_compatibility(self):
+        """Test that extra_metadata still works with KnowledgeMetadata."""
+        entry = SourceKnowledgeEntry.create(
+            content="Test content",
+            source_type=SourceType.CHARACTER,
+            source_id="char-1",
+            word_count=100,
+            extra_metadata={"legacy_field": "value", "chapter": 5},
+        )
+
+        # Extra fields should be preserved
+        assert entry.metadata.extra == {"legacy_field": "value", "chapter": 5}
+
+        # KnowledgeMetadata should have defaults
+        assert entry.metadata.knowledge.world_version == "1.0.0"
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_to_vector_metadata_extra_takes_precedence(self):
+        """Test that extra_metadata fields take precedence in to_vector_metadata."""
+        from src.contexts.knowledge.domain.models.knowledge_metadata import (
+            ConfidentialityLevel,
+            KnowledgeMetadata,
+        )
+
+        knowledge_meta = KnowledgeMetadata(
+            world_version="1.0.0",
+            confidentiality_level=ConfidentialityLevel.PUBLIC,
+        )
+
+        entry = SourceKnowledgeEntry.create(
+            content="Test content",
+            source_type=SourceType.CHARACTER,
+            source_id="char-1",
+            word_count=100,
+            extra_metadata={"world_version": "override_from_extra"},
+            knowledge_metadata=knowledge_meta,
+        )
+
+        metadata = entry.to_vector_metadata()
+
+        # Extra field should take precedence
+        assert metadata["world_version"] == "override_from_extra"
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_knowledge_metadata_object_takes_precedence_over_params(self):
+        """Test that knowledge_metadata object takes precedence over string params."""
+        from src.contexts.knowledge.domain.models.knowledge_metadata import (
+            ConfidentialityLevel,
+            KnowledgeMetadata,
+        )
+
+        knowledge_meta = KnowledgeMetadata(
+            world_version="3.0.0",
+            confidentiality_level=ConfidentialityLevel.SENSITIVE,
+        )
+
+        entry = SourceKnowledgeEntry.create(
+            content="Test content",
+            source_type=SourceType.CHARACTER,
+            source_id="char-1",
+            word_count=100,
+            knowledge_metadata=knowledge_meta,
+            # These should be ignored when knowledge_metadata is provided
+            world_version="1.0.0",
+            confidentiality_level=ConfidentialityLevel.PUBLIC,
+        )
+
+        # knowledge_metadata object should take precedence
+        assert entry.metadata.knowledge.world_version == "3.0.0"
+        assert entry.metadata.knowledge.confidentiality_level == ConfidentialityLevel.SENSITIVE

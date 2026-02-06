@@ -2822,6 +2822,55 @@ class RAGContextResponse(BaseModel):
     sources: List[str] = Field(default_factory=list, description="Source references")
 
 
+# === Knowledge Metadata Schemas ===
+# OPT-006: Structured Metadata Schema
+
+
+class ConfidentialityLevel(str, Enum):
+    """Confidentiality levels for knowledge entries."""
+
+    PUBLIC = "public"
+    INTERNAL = "internal"
+    RESTRICTED = "restricted"
+    SENSITIVE = "sensitive"
+
+
+class KnowledgeMetadataSchema(BaseModel):
+    """Structured metadata for knowledge entries (OPT-006)."""
+
+    world_version: str = Field(
+        "1.0.0",
+        description="Version of the world this knowledge belongs to"
+    )
+    confidentiality_level: ConfidentialityLevel = Field(
+        default=ConfidentialityLevel.PUBLIC,
+        description="Access control classification"
+    )
+    last_accessed: Optional[str] = Field(
+        None,
+        description="ISO 8601 timestamp of last access (UTC)"
+    )
+    source_version: int = Field(
+        1,
+        ge=1,
+        description="Version of the source content for tracking updates"
+    )
+
+    @field_validator("last_accessed", mode="before")
+    @classmethod
+    def validate_last_accessed(cls, v: Optional[str]) -> Optional[str]:
+        """Validate last_accessed is a valid ISO 8601 timestamp if provided."""
+        if v is not None:
+            try:
+                # Parse and re-format to ensure valid ISO format
+                from datetime import datetime
+                parsed = datetime.fromisoformat(v.replace("Z", "+00:00"))
+                return parsed.isoformat()
+            except ValueError:
+                raise ValueError("last_accessed must be a valid ISO 8601 timestamp")
+        return v
+
+
 # === Async Ingestion Job Schemas ===
 # OPT-005: Async Ingestion Job API
 
@@ -2843,7 +2892,10 @@ class StartIngestionJobRequest(BaseModel):
     source_type: str = Field(..., description="Type of source (CHARACTER, LORE, SCENE, etc.)")
     source_id: str = Field(..., description="Unique ID of the source entity")
     tags: Optional[List[str]] = Field(None, description="Optional tags for filtering")
-    extra_metadata: Optional[Dict[str, Any]] = Field(None, description="Optional additional metadata")
+    extra_metadata: Optional[Dict[str, Any]] = Field(None, description="Optional additional metadata (preserved for backward compatibility)")
+    # OPT-006: Structured metadata fields
+    world_version: Optional[str] = Field(None, description="World version (default: 1.0.0)")
+    confidentiality_level: Optional[ConfidentialityLevel] = Field(None, description="Access control level (default: PUBLIC)")
 
 
 class IngestionJobResponse(BaseModel):
@@ -2868,4 +2920,3 @@ class StartIngestionJobResponse(BaseModel):
     job_id: str = Field(..., description="Unique identifier for the job")
     status: IngestionJobStatus = Field(..., description="Initial job status")
     message: str = Field(..., description="Status message")
-

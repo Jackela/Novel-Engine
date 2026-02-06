@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
+from .knowledge_metadata import ConfidentialityLevel, KnowledgeMetadata
 from .source_type import SourceType
 
 
@@ -40,7 +41,8 @@ class SourceMetadata:
         chunk_index: Zero-based index if this is part of a sequence
         total_chunks: Total number of chunks in the sequence
         tags: Optional tags for filtering
-        extra: Additional metadata key-value pairs
+        extra: Additional metadata key-value pairs (preserved for backward compatibility)
+        knowledge: Structured system-level metadata (world_version, confidentiality, etc.)
     """
 
     word_count: int
@@ -48,6 +50,7 @@ class SourceMetadata:
     total_chunks: int = 1
     tags: list[str] = field(default_factory=list)
     extra: dict[str, Any] = field(default_factory=dict)
+    knowledge: KnowledgeMetadata = field(default_factory=lambda: KnowledgeMetadata.create_default())
 
 
 @dataclass
@@ -185,7 +188,7 @@ class SourceKnowledgeEntry:
         Why:
             Encapsulates the mapping between entity and vector metadata.
         """
-        return {
+        base_metadata = {
             "source_type": self.source_type.value,
             "source_id": self.source_id,
             "chunk_index": self.metadata.chunk_index,
@@ -193,8 +196,18 @@ class SourceKnowledgeEntry:
             "word_count": self.metadata.word_count,
             "tags": self.metadata.tags.copy(),
             "created_at": self.created_at.isoformat(),
-            **self.metadata.extra,
+            # Include structured knowledge metadata
+            "world_version": self.metadata.knowledge.world_version,
+            "confidentiality_level": self.metadata.knowledge.confidentiality_level.value,
+            "source_version": self.metadata.knowledge.source_version,
         }
+
+        # Add last_accessed if present
+        if self.metadata.knowledge.last_accessed:
+            base_metadata["last_accessed"] = self.metadata.knowledge.last_accessed.isoformat()
+
+        # Merge with extra fields (extra takes precedence for backward compatibility)
+        return {**base_metadata, **self.metadata.extra}
 
     @classmethod
     def create(
@@ -207,6 +220,9 @@ class SourceKnowledgeEntry:
         total_chunks: int = 1,
         tags: list[str] | None = None,
         extra_metadata: dict[str, Any] | None = None,
+        knowledge_metadata: KnowledgeMetadata | None = None,
+        world_version: str | None = None,
+        confidentiality_level: ConfidentialityLevel | str | None = None,
         id: str | None = None,
     ) -> SourceKnowledgeEntry:
         """
@@ -221,6 +237,9 @@ class SourceKnowledgeEntry:
             total_chunks: Total chunks in sequence (default 1)
             tags: Optional tags for filtering
             extra_metadata: Additional metadata key-value pairs
+            knowledge_metadata: Structured knowledge metadata (takes precedence over world_version/confidentiality_level)
+            world_version: World version for knowledge metadata (if knowledge_metadata not provided)
+            confidentiality_level: Confidentiality level for knowledge metadata (if knowledge_metadata not provided)
             id: Optional explicit ID (auto-generated if not provided)
 
         Returns:
@@ -230,12 +249,25 @@ class SourceKnowledgeEntry:
         if isinstance(source_type, str):
             source_type = SourceType.from_string(source_type)
 
+        # Build or use provided KnowledgeMetadata
+        if knowledge_metadata is None:
+            if isinstance(confidentiality_level, str):
+                try:
+                    confidentiality_level = ConfidentialityLevel(confidentiality_level)
+                except ValueError:
+                    confidentiality_level = ConfidentialityLevel.PUBLIC
+            knowledge_metadata = KnowledgeMetadata.create_default(
+                world_version=world_version or "1.0.0",
+                confidentiality_level=confidentiality_level or ConfidentialityLevel.PUBLIC,
+            )
+
         metadata = SourceMetadata(
             word_count=word_count,
             chunk_index=chunk_index,
             total_chunks=total_chunks,
             tags=tags or [],
             extra=extra_metadata or {},
+            knowledge=knowledge_metadata,
         )
 
         return cls(
