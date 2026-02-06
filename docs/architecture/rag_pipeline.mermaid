@@ -1,0 +1,137 @@
+```mermaid
+flowchart TD
+    %% RAG Pipeline Architecture Diagram
+    %% Novel Engine - Knowledge Context
+    %% Last Updated: 2026-02-06
+
+    subgraph Ingestion["Ingestion Phase"]
+        direction TB
+        Raw[("Raw Text Content")]
+        KIS[KnowledgeIngestionService]
+        TC[TextChunker]
+        Chunked[("Chunked Document")]
+    end
+
+    subgraph Embedding["Embedding Phase"]
+        direction TB
+        ECS[EmbeddingCacheService]
+        ESA[EmbeddingServiceAdapter]
+        Emb[("Embedded Chunks")]
+    end
+
+    subgraph Storage["Storage Phase"]
+        direction TB
+        CV[ChromaDBVectorStore]
+        VS[("Vector Store")]
+    end
+
+    subgraph Retrieval["Retrieval Phase"]
+        direction TB
+        Query[("User Query")]
+        RS[RetrievalService]
+        HR[HybridRetriever]
+        BMR[BM25Retriever]
+        Candidates[("Candidate Results")]
+    end
+
+    subgraph Reranking["Reranking Phase"]
+        direction TB
+        Rerank[RerankService]
+        Reranked[("Reranked Results")]
+    end
+
+    subgraph Generation["Generation Phase"]
+        direction TB
+        FC[format_context]
+        Context[("Formatted Context")]
+        LLM[("LLM Generation")]
+    end
+
+    %% Ingestion Flow
+    Raw --> KIS
+    KIS --> TC
+    TC --> Chunked
+    Chunked --> ECS
+    ECS --> ESA
+    ESA --> Emb
+    Emb --> CV
+    CV --> VS
+
+    %% Retrieval Flow
+    Query --> RS
+    RS --> HR
+    HR -.->|Vector Search| VS
+    HR --> BMR
+    BMR -.->|Keyword Search| VS
+    VS --> HR
+    HR --> Candidates
+
+    %% Reranking Flow
+    Candidates --> Rerank
+    Rerank -->|Reorder by Relevance| Reranked
+    Rerank -.->|Fallback: Original Order| Reranked
+
+    %% Generation Flow
+    Reranked --> FC
+    FC --> Context
+    Context --> LLM
+
+    %% Styling
+    classDef serviceClass fill:#3b82f6,stroke:#1d4ed8,color:#fff,stroke-width:2px
+    classDef storageClass fill:#10b981,stroke:#059669,color:#fff,stroke-width:2px
+    classDef dataClass fill:#6b7280,stroke:#374151,color:#fff,stroke-width:2px
+    classDef cacheClass fill:#f59e0b,stroke:#d97706,color:#fff,stroke-width:2px
+    classDef rerankClass fill:#8b5cf6,stroke:#6d28d9,color:#fff,stroke-width:2px
+    classDef genClass fill:#ec4899,stroke:#be185d,color:#fff,stroke-width:2px
+
+    class KIS,TC,RS,HR,BMR,FC serviceClass
+    class CV,VS storageClass
+    class Raw,Chunked,Emb,Query,Candidates,Reranked,Context,LLM dataClass
+    class ECS cacheClass
+    class Rerank rerankClass
+    class LLM genClass
+```
+
+<!-- Component Details:
+
+KnowledgeIngestionService (src/contexts/knowledge/application/services/knowledge_ingestion_service.py)
+- Orchestrates: Text → Chunk → Embed → Store
+- Methods: ingest(), batch_ingest(), delete(), update()
+
+TextChunker (src/contexts/knowledge/domain/services/text_chunker.py)
+- Strategies: FIXED, SENTENCE, PARAGRAPH, SEMANTIC
+- Splits text with overlap for context continuity
+
+EmbeddingCacheService (src/contexts/knowledge/application/services/embedding_cache_service.py)
+- LRU + TTL cache for embedding results
+- Designed for future Redis backing
+
+EmbeddingServiceAdapter (src/contexts/knowledge/infrastructure/adapters/embedding_generator_adapter.py)
+- OpenAI text-embedding-3-small with mock fallback
+- Batch processing support
+
+ChromaDBVectorStore (src/contexts/knowledge/infrastructure/adapters/chromadb_vector_store.py)
+- Persistent vector storage
+- Cosine similarity search
+
+RetrievalService (src/contexts/knowledge/application/services/retrieval_service.py)
+- Main retrieval orchestration
+- Filtering, deduplication, threshold support
+
+HybridRetriever (src/contexts/knowledge/application/services/hybrid_retriever.py)
+- Combines vector + BM25 via Reciprocal Rank Fusion
+- Configurable fusion weights
+
+BM25Retriever (src/contexts/knowledge/application/services/bm25_retriever.py)
+- Keyword-based search complementing vector search
+- Uses rank-bm25 library
+
+RerankService (src/contexts/knowledge/application/services/rerank_service.py)
+- Re-ranks by query relevance
+- Graceful fallback on failure
+- Supports Cohere, Local, Mock implementations
+
+format_context (RetrievalService method)
+- Formats retrieved chunks for LLM consumption
+- Handles citations and metadata
+-->

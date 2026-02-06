@@ -66,7 +66,9 @@ curl -X POST http://localhost:8000/api/world/generation \
 
 ### 架构文档
 
-详细架构说明请参阅 [`docs/architecture/world_engine.mermaid`](docs/architecture/world_engine.mermaid)。
+详细架构说明请参阅：
+- [`docs/architecture/world_engine.mermaid`](docs/architecture/world_engine.mermaid) - 世界生成系统
+- [`docs/architecture/rag_pipeline.mermaid`](docs/architecture/rag_pipeline.mermaid) - RAG 知识检索管道（摄入、检索、重排）
 
 ---
 
