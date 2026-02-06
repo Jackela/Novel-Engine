@@ -26,8 +26,8 @@ from .retrieval_service import (
     RetrievalFilter,
     RetrievalOptions,
     FormattedContext,
-    RetrievedChunk,
 )
+from .knowledge_ingestion_service import RetrievedChunk
 from .query_rewriter import (
     QueryRewriter,
     RewriteConfig,

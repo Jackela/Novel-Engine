@@ -246,7 +246,7 @@ class TokenCounter:
 
         return TokenCountResult(
             token_count=token_count,
-            method="tiktoken" if self._use_tiktoken else "estimation",  # type: ignore[arg-type]
+            method="tiktoken" if self._use_tiktoken else "estimation",
             provider=detected_provider,
             model_family=detected_family,
         )
