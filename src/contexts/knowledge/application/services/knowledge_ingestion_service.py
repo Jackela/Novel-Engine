@@ -28,6 +28,7 @@ from ...domain.models.chunking_strategy import ChunkingStrategy
 from ...domain.models.source_knowledge_entry import SourceKnowledgeEntry
 from ...domain.models.source_type import SourceType
 from ...domain.services.text_chunker import TextChunker, TextChunk
+from .ingestion_processor_factory import IngestionProcessorFactory
 
 
 logger = structlog.get_logger()
@@ -187,6 +188,7 @@ class KnowledgeIngestionService:
         self,
         embedding_service: IEmbeddingService,
         vector_store: IVectorStore,
+        processor_factory: IngestionProcessorFactory | None = None,
         default_chunking_strategy: ChunkingStrategy | None = None,
         default_collection: str = DEFAULT_COLLECTION,
     ):
@@ -196,11 +198,15 @@ class KnowledgeIngestionService:
         Args:
             embedding_service: Service for generating embeddings
             vector_store: Vector storage backend
-            default_chunking_strategy: Default chunking strategy (uses default if None)
+            processor_factory: Optional processor factory for source-type-specific handling.
+                If None, creates a default factory with all standard processors.
+            default_chunking_strategy: Default chunking strategy (uses default if None).
+                Used only when processor returns None or for backward compatibility.
             default_collection: Default collection name for storage
         """
         self._embedding_service = embedding_service
         self._vector_store = vector_store
+        self._processor_factory = processor_factory or IngestionProcessorFactory.get_default_factory()
         self._default_chunking_strategy = (
             default_chunking_strategy or ChunkingStrategy.default()
         )
@@ -219,15 +225,16 @@ class KnowledgeIngestionService:
         """
         Ingest a single knowledge entry into the RAG system.
 
-        Pipeline: Text -> Chunk -> Embed -> Store
+        Pipeline: Text -> Processor (chunking + metadata) -> Embed -> Store
 
         Args:
             content: Text content to ingest
             source_type: Type of source (CHARACTER, LORE, etc.)
             source_id: Unique ID of the source entity
-            chunking_strategy: Optional chunking strategy (uses default if None)
+            chunking_strategy: Optional chunking strategy override.
+                If provided, takes precedence over processor default.
             tags: Optional tags for filtering
-            extra_metadata: Optional additional metadata
+            extra_metadata: Optional additional metadata base for enrichment
             collection: Optional collection name (uses default if None)
 
         Returns:
@@ -258,15 +265,32 @@ class KnowledgeIngestionService:
         if isinstance(source_type, str):
             source_type = SourceType.from_string(source_type)
 
-        # Use provided strategy or default
-        strategy = chunking_strategy or self._default_chunking_strategy
         target_collection = collection or self._default_collection
+
+        # Get processor for source type and determine strategy
+        processor = self._processor_factory.get_processor(source_type)
+
+        # Use provided strategy override, or processor's default, or service default
+        if chunking_strategy:
+            strategy = chunking_strategy
+        else:
+            strategy = processor.get_chunking_strategy(self._default_chunking_strategy)
+
+        # Build base metadata for enrichment
+        base_metadata = {
+            "tags": tags or [],
+            **(extra_metadata or {}),
+        }
+
+        # Enrich metadata using processor
+        enriched_metadata = processor.enrich_metadata(base_metadata, content)
 
         # Step 1: Chunk the content
         logger.debug(
             "ingestion_chunking_start",
             source_id=source_id,
             source_type=source_type.value,
+            processor=type(processor).__name__,
             content_length=len(content),
         )
 
@@ -315,7 +339,7 @@ class KnowledgeIngestionService:
         entries = []
 
         for i, (chunk, embedding) in enumerate(zip(chunked_doc.chunks, embeddings)):
-            # Create SourceKnowledgeEntry
+            # Create SourceKnowledgeEntry with enriched metadata
             entry = SourceKnowledgeEntry.create(
                 content=chunk.content,
                 source_type=source_type,
@@ -323,8 +347,11 @@ class KnowledgeIngestionService:
                 word_count=chunk.word_count,
                 chunk_index=chunk.chunk_index,
                 total_chunks=chunked_doc.total_chunks,
-                tags=tags,
-                extra_metadata=extra_metadata,
+                tags=enriched_metadata.get("tags"),
+                extra_metadata={
+                    k: v for k, v in enriched_metadata.items()
+                    if k != "tags"  # tags handled separately
+                } or None,
             )
 
             # Set embedding ID
