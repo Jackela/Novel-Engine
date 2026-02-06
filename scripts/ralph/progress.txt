@@ -15,6 +15,9 @@ Started: Fri Feb  6 10:46:57 CST 2026
 - Frontend: react-window's VariableSizeList is available for virtualizing long lists
 - Frontend: When virtualizing, pass data via itemData prop and use getItemSize for dynamic heights
 - Frontend: Auto-scroll with react-window uses scrollToItem(index, 'end') not scrollTop manipulation
+- SourceMetadata now includes KnowledgeMetadata with fields: world_version, confidentiality_level, last_accessed (UTC), source_version
+- KnowledgeMetadata value object has immutable update methods: with_access() and with_version()
+- KnowledgeMetadata.from_dict() handles invalid data gracefully with sensible defaults
 
 ## 2026-02-06 - OPT-001
 - What was implemented:
@@ -116,4 +119,34 @@ Started: Fri Feb  6 10:46:57 CST 2026
   - Standard logging module doesn't support structlog keyword args (use f-strings for formatted messages)
   - IngestionJobStore uses asyncio.Lock for thread-safe job updates
   - All 38 ingestion-related tests pass (15 new + 23 existing)
+---
+
+## 2026-02-06 - OPT-006
+- What was implemented:
+  - Created KnowledgeMetadata value object with world_version, confidentiality_level, last_accessed (UTC), and source_version fields
+  - Added ConfidentialityLevel enum (PUBLIC, INTERNAL, RESTRICTED, SENSITIVE)
+  - Updated SourceMetadata to include KnowledgeMetadata with default values for backward compatibility
+  - Added Pydantic schemas (KnowledgeMetadataSchema, ConfidentialityLevel) to src/api/schemas.py
+  - Updated StartIngestionJobRequest to include optional world_version and confidentiality_level fields
+  - Updated SourceKnowledgeEntry.create() to accept knowledge_metadata params
+  - Updated to_vector_metadata() to include structured knowledge fields
+  - Created mock migration script for backfilling metadata (scripts/migrations/backfill_knowledge_metadata.py)
+  - Added 27 unit tests for KnowledgeMetadata (defaults, serialization, timezone handling)
+  - Added 8 integration tests for KnowledgeMetadata with SourceMetadata
+- Files changed:
+  - src/contexts/knowledge/domain/models/knowledge_metadata.py (new)
+  - src/contexts/knowledge/domain/models/__init__.py (modified - exports)
+  - src/contexts/knowledge/domain/models/source_knowledge_entry.py (modified - added knowledge field)
+  - src/api/schemas.py (modified - added KnowledgeMetadataSchema, ConfidentialityLevel, updated StartIngestionJobRequest)
+  - tests/unit/contexts/knowledge/domain/models/test_knowledge_metadata.py (new - 27 tests)
+  - tests/unit/contexts/knowledge/domain/models/test_source_knowledge_entry.py (modified - added 8 integration tests)
+  - scripts/migrations/backfill_knowledge_metadata.py (new)
+- **Learnings for future iterations:**
+  - KnowledgeMetadata is a frozen value object with immutable update methods (with_access, with_version)
+  - Timezone normalization: naive datetimes get UTC timezone, aware datetimes are converted to UTC
+  - from_dict() handles invalid data gracefully with defaults (PUBLIC confidentiality, version 1)
+  - to_dict() serializes None values correctly for last_accessed
+  - extra_metadata fields take precedence in to_vector_metadata() for backward compatibility
+  - knowledge_metadata object parameter takes precedence over string params in SourceKnowledgeEntry.create()
+  - All 60 tests pass (27 new + 33 updated)
 ---

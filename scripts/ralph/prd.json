@@ -95,7 +95,7 @@
         "Add unit tests ensuring defaults, serialization, and timezone handling are stable."
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "notes": "Preserve backward compatibility for existing extra metadata keys."
     },
