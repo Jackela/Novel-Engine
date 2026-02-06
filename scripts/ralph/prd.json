@@ -199,7 +199,7 @@
         "Ensure component names match current code (KnowledgeIngestionService, RetrievalService, RerankService)."
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "notes": "Keep the diagram minimal and accurate."
     },
