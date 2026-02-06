@@ -1,501 +1,237 @@
 {
-  "project": "Novel-Engine-Warzone-4-AI-Brain",
-  "branchName": "feat/code-citadel",
-  "description": "WARZONE 4: Building the RAG (Retrieval-Augmented Generation) engine and Prompt Engineering Lab. Enabling long-term memory for the AI system through ChromaDB vector storage, multi-LLM support, and knowledge graph capabilities.",
+  "project": "Novel-Engine-Op-Synapse",
+  "branchName": "refactor/brain-optimization",
+  "description": "OPERATION SYNAPSE: Refactoring the AI Brain for performance, accuracy, and maintainability before World Simulation.",
   "techContext": {
-    "stack": "FastAPI + ChromaDB + OpenAI/Anthropic/Gemini + React",
-    "testCommand": "pytest tests/ && npm run test:e2e",
-    "typecheckCommand": "mypy . && npm run type-check",
-    "conventions": "TDD/BDD approach: Write failing test first, implement minimum code, verify with E2E. Strict adherence to CONVENTIONS.md (Hexagonal Arch) and DESIGN_SYSTEM.md."
+    "stack": "FastAPI + ChromaDB + Redis (mocked) + React (shadcn/ui + Zustand)",
+    "testCommand": "pytest && npm --prefix frontend run test:e2e",
+    "typecheckCommand": "mypy --strict src/contexts/knowledge && npm --prefix frontend run type-check",
+    "conventions": "Strict Hexagonal Architecture, contract-first (schemas -> OpenAPI -> frontend types), structured logging via structlog, shadcn/ui + Tailwind-only styling, and required UI states (loading/empty/error/ready). Extract large classes into composable strategies."
   },
   "userStories": [
     {
-      "id": "BRAIN-035B-01",
-      "title": "Dashboard: Model Comparison Table",
-      "description": "Add cost comparison table for different models.",
+      "id": "OPT-001",
+      "title": "Backend: Ingestion Processor Abstraction",
+      "description": "Split KnowledgeIngestionService into composable processors without behavior changes.",
       "acceptanceCriteria": [
-        "Create model comparison table component",
-        "Display cost per 1M tokens for each model",
-        "Group by provider (OpenAI, Anthropic, Gemini, Ollama)",
-        "Typecheck passes"
+        "Create an application-layer processor interface (e.g., IIngestionProcessor) and a factory mapping SourceType -> processor with a GenericProcessor fallback.",
+        "Implement LoreProcessor, SceneProcessor, CharacterProcessor that only define chunking defaults + metadata enrichment (no embedding/store logic).",
+        "KnowledgeIngestionService delegates chunking + entry creation to the processor while keeping embedding + vector store logic intact.",
+        "Add unit tests verifying processor selection and no regressions in tests/unit/contexts/knowledge/application/services/test_knowledge_ingestion_service.py."
       ],
-      "priority": 60,
+      "priority": 1,
       "passes": true,
-      "notes": ""
+      "effort": "medium",
+      "notes": "Keep SRP: processor handles content-specific behavior, service orchestrates pipeline."
     },
     {
-      "id": "BRAIN-035B-02",
-      "title": "Dashboard: Date Range Filter",
-      "description": "Add date range filter for analytics charts.",
+      "id": "OPT-002",
+      "title": "Backend: Embedding Cache Layer",
+      "description": "Avoid repeat embedding calls with a cache wrapper prepared for Redis.",
       "acceptanceCriteria": [
-        "Add date range picker component to Usage tab",
-        "Filter applies to all charts and stats",
-        "Default to last 30 days",
-        "Typecheck passes"
+        "Create EmbeddingCacheService with LRU + TTL (reuse src/caching/exact_cache.py or a typed LRU) and sha256(text + model) keys.",
+        "Add CachedEmbeddingService adapter implementing IEmbeddingService that wraps a delegate and uses EmbeddingCacheService for embed/embed_batch.",
+        "Remove or disable EmbeddingServiceAdapter’s internal cache (or make it pluggable) to avoid double caching and TTL mismatch.",
+        "Add unit tests for cache hits, TTL expiration, batch caching, and structured logs for cache_hit/cache_miss."
       ],
-      "priority": 61,
-      "passes": true,
-      "dependencies": ["BRAIN-035B-01"],
-      "notes": ""
+      "priority": 2,
+      "passes": false,
+      "effort": "medium",
+      "notes": "Design cache API to allow a Redis-backed implementation later."
     },
     {
-      "id": "BRAIN-035B-03",
-      "title": "Dashboard: CSV Export",
-      "description": "Export usage report as CSV file.",
+      "id": "OPT-003",
+      "title": "AI: RAG Re-ranking Integration",
+      "description": "Wire the existing RerankService into the retrieval pipeline.",
       "acceptanceCriteria": [
-        "Add export button to Usage tab",
-        "Generate CSV with timestamp, model, tokens, cost columns",
-        "Respect date range filter",
-        "Typecheck passes"
+        "Inject RerankService into RetrievalService and apply reranking after filtering/deduplication.",
+        "Add RetrievalOptions fields for candidate_k (e.g., 20) and final_k (e.g., 5) to support retrieve->rerank->trim.",
+        "On rerank failure, fall back to original order and emit a structured warning log.",
+        "Add unit tests covering rerank success, fallback path, and candidate/final top-k behavior using the mock reranker."
       ],
-      "priority": 62,
-      "passes": true,
-      "dependencies": ["BRAIN-035B-02"],
-      "notes": ""
+      "priority": 3,
+      "passes": false,
+      "effort": "high",
+      "notes": "Reuse src/contexts/knowledge/application/services/rerank_service.py and adapters; do not re-implement reranking."
     },
     {
-      "id": "BRAIN-035B-04",
-      "title": "Dashboard: Real-time Usage Counter",
-      "description": "Show live token usage during generation.",
+      "id": "OPT-004",
+      "title": "Frontend: Chat Virtualization",
+      "description": "Keep chat smooth with long histories.",
       "acceptanceCriteria": [
-        "Add real-time counter in UI",
-        "Update via WebSocket or polling during generation",
-        "Display current session tokens and cost",
-        "Typecheck passes"
+        "Refactor frontend/src/components/ChatInterface.tsx to use virtualization (prefer react-window already in deps; add react-virtuoso only if dynamic heights are too complex).",
+        "Support dynamic-height messages and preserve auto-scroll + streaming updates.",
+        "Use shared cn utility (frontend/src/lib/utils.ts) and keep shadcn/ui + Tailwind-only styling; no custom CSS.",
+        "Verify loading/empty/error/ready states still render correctly with 100+ messages."
       ],
-      "priority": 63,
-      "passes": true,
-      "notes": ""
+      "priority": 4,
+      "passes": false,
+      "effort": "medium",
+      "notes": "Avoid deep nesting; keep layout within 3 levels."
     },
     {
-      "id": "BRAIN-036-01",
-      "title": "Context Inspector: Button Placement",
-      "description": "Add View AI Context button to scene editor.",
+      "id": "OPT-005",
+      "title": "Backend: Async Ingestion Job API",
+      "description": "Run ingestion in the background and expose status.",
       "acceptanceCriteria": [
-        "Add button in Director scene editor toolbar",
-        "Button only visible when RAG is enabled",
-        "Typecheck passes"
+        "Add POST /api/brain/ingestion to start ingestion via FastAPI BackgroundTasks and return 202 + job_id.",
+        "Add in-memory job store and GET /api/brain/ingestion/{job_id} to return status/progress/errors.",
+        "Reuse KnowledgeSyncEventHandler or KnowledgeIngestionService for the worker path without blocking the request thread.",
+        "Update src/api/schemas.py, regenerate docs/api/openapi.json, and sync frontend/src/types/schemas.ts; add unit tests for 202 + status transitions."
       ],
-      "priority": 64,
-      "passes": true,
-      "notes": ""
+      "priority": 5,
+      "passes": false,
+      "effort": "medium",
+      "notes": "Keep router thin; business logic in application services."
     },
     {
-      "id": "BRAIN-036-02",
-      "title": "Context Inspector: Panel Component",
-      "description": "Create context inspector panel UI.",
+      "id": "OPT-006",
+      "title": "Domain: Structured Metadata Schema",
+      "description": "Replace unstructured metadata dicts with a strict schema.",
       "acceptanceCriteria": [
-        "Create sliding panel component",
-        "Show retrieved chunks with source info",
-        "Display relevance scores",
-        "Show token count per chunk",
-        "Typecheck passes"
+        "Introduce KnowledgeMetadata value object (domain) + a Pydantic schema for API/migrations with fields: world_version, confidentiality_level, last_accessed (UTC), source_version.",
+        "Update SourceMetadata/SourceKnowledgeEntry to include structured metadata while preserving existing extra fields.",
+        "Create a mock migration script to backfill missing metadata fields for existing vector documents.",
+        "Add unit tests ensuring defaults, serialization, and timezone handling are stable."
       ],
-      "priority": 65,
-      "passes": true,
-      "dependencies": ["BRAIN-036-01"],
-      "notes": ""
+      "priority": 6,
+      "passes": false,
+      "effort": "low",
+      "notes": "Preserve backward compatibility for existing extra metadata keys."
     },
     {
-      "id": "BRAIN-036-03",
-      "title": "Context Inspector: Highlight Used Chunks",
-      "description": "Indicate which chunks were used in generation.",
+      "id": "OPT-007",
+      "title": "Test: Golden Dataset Evaluation Harness",
+      "description": "Automated QA to ensure RAG accuracy doesn’t regress.",
       "acceptanceCriteria": [
-        "Highlight chunks that contributed to response",
-        "Visual distinction between used and unused chunks",
-        "Typecheck passes"
+        "Create tests/evaluation/golden_dataset.json with at least 20 question -> expected fact pairs.",
+        "Add scripts/evaluation/run_golden_dataset.py to run retrieval + rerank and score exact/substring/fuzzy match (SequenceMatcher is OK).",
+        "Add tests/evaluation/test_golden_dataset.py that asserts a baseline score and prints a short report.",
+        "Use deterministic embeddings + an in-memory vector store fixture so results are stable in CI."
       ],
-      "priority": 66,
-      "passes": true,
-      "dependencies": ["BRAIN-036-02"],
-      "notes": ""
+      "priority": 7,
+      "passes": false,
+      "effort": "high",
+      "notes": "Keep the dataset small and curated; avoid flaky tests."
     },
     {
-      "id": "BRAIN-036-04",
-      "title": "Context Inspector: Manual Chunk Selection",
-      "description": "Allow manually selecting chunks for regeneration.",
+      "id": "OPT-008",
+      "title": "UX: Markdown + Code Highlighting in Chat",
+      "description": "Improve readability of AI responses.",
       "acceptanceCriteria": [
-        "Add checkboxes to chunk list",
-        "Regenerate button passes selected chunks to RAG",
-        "Typecheck passes"
+        "Add a Markdown renderer component using markdown-it with safe HTML settings (no raw HTML by default).",
+        "Enable code block highlighting (add highlight.js or prismjs if needed) and style using Tailwind classes only.",
+        "Render assistant messages with Markdown; user messages stay plain text.",
+        "Verify tables, lists, and code blocks render correctly in ChatInterface."
       ],
-      "priority": 67,
-      "passes": true,
-      "dependencies": ["BRAIN-036-03"],
-      "notes": ""
+      "priority": 8,
+      "passes": false,
+      "effort": "low",
+      "notes": "No custom CSS files; shadcn/ui where appropriate."
     },
     {
-      "id": "BRAIN-036-05",
-      "title": "Context Inspector: Context Window Display",
-      "description": "Show context window usage vs limit.",
+      "id": "OPT-009",
+      "title": "Backend: Context Window Manager",
+      "description": "Prevent context window overflow by pruning intelligently.",
       "acceptanceCriteria": [
-        "Display progress bar for context window usage",
-        "Show percentage and token count",
-        "Warning when approaching limit",
-        "Typecheck passes"
+        "Create ContextWindowManager that uses ContextOptimizer + TokenCounter to fit within model token limits.",
+        "Priority order: System Prompt > RAG Chunks > Recent History (oldest first pruned).",
+        "Integrate into /api/brain/chat prompt assembly (and optionally RAGIntegrationService) so prompts never exceed limits.",
+        "Add unit tests simulating overflow scenarios and verifying pruning order."
       ],
-      "priority": 68,
-      "passes": true,
-      "dependencies": ["BRAIN-036-02"],
-      "notes": ""
+      "priority": 9,
+      "passes": false,
+      "effort": "high",
+      "notes": "Use existing token_counter/context_optimizer modules; avoid new tokenizers."
     },
     {
-      "id": "BRAIN-037A-01",
-      "title": "Chat Backend: POST Endpoint",
-      "description": "Create /api/brain/chat endpoint.",
+      "id": "OPT-010",
+      "title": "Codebase: Mypy Strictness Audit (Knowledge)",
+      "description": "Eliminate implicit Any in knowledge context.",
       "acceptanceCriteria": [
-        "Create POST /api/brain/chat endpoint",
-        "Accept query parameter and optional chat history",
-        "Return streaming response",
-        "Test: Endpoint returns 200"
+        "Run mypy --strict on src/contexts/knowledge and fix all type errors.",
+        "Address Result<T,E> generics and Optional handling in application services.",
+        "Add or update mypy config as needed without relaxing strictness.",
+        "Document any unavoidable ignores with justification."
       ],
-      "priority": 69,
-      "passes": true,
-      "notes": ""
+      "priority": 10,
+      "passes": false,
+      "effort": "medium",
+      "notes": "No blanket ignores; keep scope tight to knowledge context."
     },
     {
-      "id": "BRAIN-037A-02",
-      "title": "Chat Backend: RAG Integration",
-      "description": "Wire up RAG for chat responses.",
+      "id": "OPT-011",
+      "title": "Frontend: Optimistic Updates for Smart Tags",
+      "description": "Make tagging feel instant with rollback on failure.",
       "acceptanceCriteria": [
-        "Call RetrievalService with user query",
-        "Inject retrieved context into LLM prompt",
-        "Test: Answer uses knowledge base content"
+        "Refactor SmartTagsEditor to use @tanstack/react-query hooks for fetch + mutations.",
+        "Implement onMutate optimistic updates with rollback on error and consistent toast messaging.",
+        "Ensure UI states (loading/empty/error/ready) are preserved during optimistic updates.",
+        "Add a unit/integration test for optimistic update behavior or cover via e2e smoke."
       ],
-      "priority": 70,
-      "passes": true,
-      "dependencies": ["BRAIN-037A-01"],
-      "notes": "RAG integration was implemented as part of BRAIN-037A-01"
+      "priority": 11,
+      "passes": false,
+      "effort": "medium",
+      "notes": "Remove direct fetch calls in the component; centralize in hooks."
     },
     {
-      "id": "BRAIN-037A-03",
-      "title": "Chat Backend: Conversational Context",
-      "description": "Support multi-turn chat with history.",
+      "id": "OPT-012",
+      "title": "Integration: Local Model Prompt Strategy",
+      "description": "Support DeepSeek/Llama prompt formats without OpenAI assumptions.",
       "acceptanceCriteria": [
-        "Store chat history per session",
-        "Include previous messages in RAG query",
-        "Test: Context maintained across turns"
+        "Add prompt templates optimized for DeepSeek-Coder and Llama-3 in the prompt repository/migration flow.",
+        "Extend ModelRouter or prompt selection logic to choose templates by model family/provider.",
+        "Add tests verifying rendered prompt format for non-OpenAI models.",
+        "If API config changes, update schemas/openapi/front-end types accordingly."
       ],
-      "priority": 71,
-      "passes": true,
-      "dependencies": ["BRAIN-037A-02"],
-      "notes": ""
+      "priority": 12,
+      "passes": false,
+      "effort": "medium",
+      "notes": "Keep prompt strategy selection in application layer; no UI coupling."
     },
     {
-      "id": "BRAIN-037A-04",
-      "title": "Chat Backend: Streaming",
-      "description": "Stream responses for better UX.",
+      "id": "OPT-013",
+      "title": "Docs: RAG Architecture Diagram",
+      "description": "Document the brain pipeline for onboarding and reviews.",
       "acceptanceCriteria": [
-        "Use SSE for streaming tokens",
-        "Test: Streaming works end-to-end"
+        "Create docs/architecture/rag_pipeline.mermaid showing Ingestion -> Chunking -> Embedding -> Retrieval -> Rerank -> Generation.",
+        "Link the diagram from docs/index.md and README.md.",
+        "Ensure component names match current code (KnowledgeIngestionService, RetrievalService, RerankService)."
       ],
-      "priority": 72,
-      "passes": true,
-      "dependencies": ["BRAIN-037A-03"],
-      "notes": "Streaming was already implemented as part of BRAIN-037A-01"
+      "priority": 13,
+      "passes": false,
+      "effort": "low",
+      "notes": "Keep the diagram minimal and accurate."
     },
     {
-      "id": "BRAIN-037B-01",
-      "title": "Chat UI: Floating Widget",
-      "description": "Create floating chat interface.",
+      "id": "OPT-014",
+      "title": "Security: API Key Storage Hardening",
+      "description": "Ensure API keys are never stored or exposed in plaintext.",
       "acceptanceCriteria": [
-        "Create ChatInterface component",
-        "Position fixed bottom-right",
-        "Collapsible when not in use",
-        "Typecheck passes"
+        "Require BRAIN_SETTINGS_ENCRYPTION_KEY (log a warning if unset) and remove random fallback behavior.",
+        "Audit brain_settings repository to guarantee encrypted-at-rest storage and masked responses only.",
+        "Add unit tests verifying encrypted storage, masked output, and no raw keys in logs.",
+        "Update README.md/SECURITY.md with configuration requirement and rotation guidance."
       ],
-      "priority": 73,
-      "passes": true,
-      "dependencies": ["BRAIN-037A-04"],
-      "notes": "Implemented floating widget with MessageSquare toggle button, collapsible Card panel, and minimize/expand functionality"
+      "priority": 14,
+      "passes": false,
+      "effort": "medium",
+      "notes": "No DB persistence required; focus on safety + tests."
     },
     {
-      "id": "BRAIN-037B-02",
-      "title": "Chat UI: Message Display",
-      "description": "Display chat messages and handle input.",
+      "id": "OPT-015",
+      "title": "E2E: Chat Stress + Resilience",
+      "description": "Break the chat and verify recovery.",
       "acceptanceCriteria": [
-        "Show user and AI messages in different styles",
-        "Auto-scroll to latest message",
-        "Input field with send button",
-        "Typecheck passes",
-        "Verify in browser"
+        "Create tests/e2e/chat-stress.spec.ts with rapid-fire message simulation (50+ messages).",
+        "Simulate network interruption during streaming and verify error state + recovery flow.",
+        "Ensure message order remains stable and UI remains responsive.",
+        "Tag test for e2e and include in npm --prefix frontend run test:e2e."
       ],
-      "priority": 74,
-      "passes": true,
-      "dependencies": ["BRAIN-037B-01"],
-      "notes": "Implemented as part of BRAIN-037B-01 - user messages (right-aligned, primary bg), AI messages (left-aligned, muted bg), auto-scroll via useEffect, input with Enter key support"
-    },
-    {
-      "id": "BRAIN-038-01",
-      "title": "Smart Tagging: Service Setup",
-      "description": "Create auto-tagging service.",
-      "acceptanceCriteria": [
-        "Create SmartTaggingService in knowledge context",
-        "Method: generate_tags(content, content_type) -> list[str]",
-        "Use LLM for tag generation",
-        "Test: Generate tags for sample content"
-      ],
-      "priority": 75,
-      "passes": true,
-      "notes": "Implemented SmartTaggingService with TagCategory enum, GeneratedTag, TaggingResult, TaggingConfig. Uses LLM port for tag generation. All 14 tests pass."
-    },
-    {
-      "id": "BRAIN-038-02",
-      "title": "Smart Tagging: Tag Categories",
-      "description": "Define tag categories for different content types.",
-      "acceptanceCriteria": [
-        "Support categories: genre, mood, themes, characters_present, locations",
-        "Category-specific tag generation prompts",
-        "Test: Generate tags for each category"
-      ],
-      "priority": 76,
-      "passes": true,
-      "dependencies": ["BRAIN-038-01"],
-      "notes": "Implemented as part of BRAIN-038-01 - TagCategory enum with all required categories, _get_category_descriptions() builds category-specific prompts"
-    },
-    {
-      "id": "BRAIN-038-03",
-      "title": "Smart Tagging: Auto-trigger",
-      "description": "Trigger tagging on content creation/update.",
-      "acceptanceCriteria": [
-        "Add event handlers for LoreCreated, LoreUpdated, SceneCreated, SceneUpdated",
-        "Handlers call SmartTaggingService",
-        "Store tags in entity metadata",
-        "Test: Create scene and verify tags generated"
-      ],
-      "priority": 77,
-      "passes": true,
-      "dependencies": ["BRAIN-038-02"],
-      "notes": "Implemented SmartTaggingEventHandler with async tag generation. Integrated with KnowledgeEventSubscriber for Lore/Scene events. Tags are stored in entity metadata via _generate_and_store_lore_tags and _generate_and_store_scene_tags. 15 tests pass."
-    },
-    {
-      "id": "BRAIN-038-04",
-      "title": "Smart Tagging: Metadata Storage",
-      "description": "Store tags in metadata for filtering.",
-      "acceptanceCriteria": [
-        "Add tags field to entity metadata",
-        "Support tag search/filter",
-        "Test: Filter by tag returns matching entities"
-      ],
-      "priority": 78,
-      "passes": true,
-      "dependencies": ["BRAIN-038-03"],
-      "notes": "Added `metadata` field to Scene and Character entities. Added smart tags methods (set_smart_tags, get_smart_tags, has_smart_tag) to LoreEntry, Scene, Character. Added metadata/smart tag search methods to ILoreEntryRepository and ICharacterRepository. 24 new tests pass."
-    },
-    {
-      "id": "BRAIN-038-05",
-      "title": "Smart Tagging: Manual Override",
-      "description": "Allow manual tag editing.",
-      "acceptanceCriteria": [
-        "Add UI for editing tags",
-        "Manual edits persist (not overwritten by auto-tagging)",
-        "Test: Manual tag persists after entity update"
-      ],
-      "priority": 79,
-      "passes": true,
-      "dependencies": ["BRAIN-038-04"],
-      "notes": "Implemented manual smart tags override functionality. Added manual_smart_tags tracking to LoreEntry, Scene, Character entities. Created SmartTagsEditor UI component. Added API endpoints for manual tag management. 15 tests pass."
-    },
-    {
-      "id": "BRAIN-039A-01",
-      "title": "Chunking: Strategy Interface",
-      "description": "Define chunking strategy interface.",
-      "acceptanceCriteria": [
-        "Create IChunkingStrategy port",
-        "Method: chunk(text, config) -> list[Chunk]",
-        "Define Chunk entity with text, index, metadata",
-        "Test: Interface implementation"
-      ],
-      "priority": 80,
-      "passes": true,
-      "notes": "Created IChunkingStrategy port interface with async chunk() method and supports_strategy_type(). Added Chunk domain entity with text, index, and metadata fields. All 20 tests pass."
-    },
-    {
-      "id": "BRAIN-039A-02",
-      "title": "Chunking: Fixed Strategy",
-      "description": "Implement fixed-size chunking.",
-      "acceptanceCriteria": [
-        "Create FixedChunkingStrategy",
-        "Config: chunk_size, overlap",
-        "Test: Chunk 2000 words with 500 size, 50 overlap"
-      ],
-      "priority": 81,
-      "passes": true,
-      "dependencies": ["BRAIN-039A-01"],
-      "notes": "Implemented FixedChunkingStrategy adapter with async chunk() method, configurable chunk_size and overlap. Metadata tracking includes word_count, start_char, end_char. 27 comprehensive tests pass."
-    },
-    {
-      "id": "BRAIN-039A-03",
-      "title": "Chunking: Sentence/Paragraph Strategies",
-      "description": "Implement sentence and paragraph chunking.",
-      "acceptanceCriteria": [
-        "Create SentenceChunkingStrategy",
-        "Create ParagraphChunkingStrategy",
-        "Test: Chunk by sentence boundaries"
-      ],
-      "priority": 82,
-      "passes": true,
-      "dependencies": ["BRAIN-039A-02"],
-      "notes": "Implemented SentenceChunkingStrategy and ParagraphChunkingStrategy adapters. Both implement IChunkingStrategy port with async chunk() method, configurable chunk_size/overlap, and fallback to fixed chunking when boundaries not found. 19 tests for Sentence, 12 for Paragraph. All 46 total tests pass."
-    },
-    {
-      "id": "BRAIN-039A-04",
-      "title": "Chunking: Semantic Strategy",
-      "description": "Implement semantic-aware chunking.",
-      "acceptanceCriteria": [
-        "Create SemanticChunkingStrategy using embeddings",
-        "Group semantically related sentences",
-        "Test: Semantic chunks are coherent"
-      ],
-      "priority": 83,
-      "passes": true,
-      "dependencies": ["BRAIN-039A-03"],
-      "notes": "Implemented SemanticChunkingStrategy with IEmbeddingService dependency. Uses cosine similarity to group sentences. Falls back to FixedChunkingStrategy when no sentence breaks found. All 20 tests pass."
-    },
-    {
-      "id": "BRAIN-039A-05",
-      "title": "Chunking: Auto-detection",
-      "description": "Auto-select best strategy by content type.",
-      "acceptanceCriteria": [
-        "Map content types to strategies: Scene->Semantic, Character->Paragraph",
-        "Auto-detect strategy based on content structure",
-        "Test: Correct strategy selected per content type"
-      ],
-      "priority": 84,
-      "passes": true,
-      "dependencies": ["BRAIN-039A-04"],
-      "notes": "Implemented AutoChunkingStrategy with ContentType enum (SCENE, CHARACTER, LORE, DIALOGUE, NARRATIVE, DOCUMENT, UNKNOWN). Content type to strategy mapping: Scene->Semantic, Character->Paragraph, Lore->Fixed, Dialogue->Sentence, Narrative->Semantic, Document->Paragraph. Auto-detection analyzes text structure (paragraph density, dialogue markers, sentence density). 25 tests pass."
-    },
-    {
-      "id": "BRAIN-039B-01",
-      "title": "Chunking: Narrative Flow",
-      "description": "Maintain narrative flow in chunks.",
-      "acceptanceCriteria": [
-        "Preserve sentence boundaries",
-        "Don't break in middle of dialogue",
-        "Test: Chunks maintain narrative coherence"
-      ],
-      "priority": 85,
-      "passes": true,
-      "dependencies": ["BRAIN-039A-05"],
-      "notes": "Implemented NarrativeFlowChunkingStrategy with NARRATIVE_FLOW strategy type. Preserves sentence boundaries (never breaks mid-sentence), respects dialogue boundaries (never breaks mid-dialogue exchange), groups related narrative beats together, maintains scene continuity through overlap. Tracks narrative composition in metadata (dialogue_units, paragraph_units, sentence_units, has_dialogue). 23 tests pass."
-    },
-    {
-      "id": "BRAIN-039B-02",
-      "title": "Chunking: Configurable Overlap",
-      "description": "Allow overlap size configuration.",
-      "acceptanceCriteria": [
-        "Add overlap parameter to chunking config",
-        "Default overlap: 10% of chunk_size",
-        "Test: Overlap creates expected context continuity"
-      ],
-      "priority": 86,
-      "passes": true,
-      "dependencies": ["BRAIN-039B-01"],
-      "notes": "Implemented configurable overlap with auto-calculation as 10% of chunk_size. Added _calculate_overlap_from_chunk_size() helper, is_auto_overlap and overlap_percentage properties. Updated all factory methods to use auto-overlap. 17 new tests pass, all 131 chunking tests pass."
-    },
-    {
-      "id": "BRAIN-039B-03",
-      "title": "Chunking: Coherence Verification",
-      "description": "Verify chunk semantic coherence.",
-      "acceptanceCriteria": [
-        "Add coherence score calculation",
-        "Warn if chunks have low coherence",
-        "Test: Coherence scoring works"
-      ],
-      "priority": 87,
-      "passes": true,
-      "dependencies": ["BRAIN-039B-02"],
-      "notes": "Implemented CoherenceScore value object with score, internal_coherence, boundary_quality, size_score, warnings tuple, and is_acceptable flag. Created ChunkCoherenceAnalyzer class with embedding-based and heuristic coherence calculation. Analyzes chunks for semantic drift, boundary quality, and size appropriateness. Customizable thresholds and weights. 27 new tests pass, all 158 chunking tests pass."
-    },
-    {
-      "id": "BRAIN-040A-01",
-      "title": "E2E: Test File Setup",
-      "description": "Create E2E test file structure.",
-      "acceptanceCriteria": [
-        "Create tests/e2e/brain-rag.spec.ts",
-        "Setup Playwright test configuration",
-        "Test: File runs without errors"
-      ],
-      "priority": 88,
-      "passes": true,
-      "dependencies": ["BRAIN-037B-02"],
-      "notes": "Created comprehensive E2E test file with 17 tests covering all BRAIN-040 A/B scenarios. Test file compiles without errors and is recognized by Playwright."
-    },
-    {
-      "id": "BRAIN-040A-02",
-      "title": "E2E: Lore Entry Creation",
-      "description": "Test: Create lore entry and wait for ingestion.",
-      "acceptanceCriteria": [
-        "Navigate to lore creation page",
-        "Fill form and submit",
-        "Wait for ingestion confirmation",
-        "Test: Lore entry appears in knowledge base"
-      ],
-      "priority": 89,
-      "passes": true,
-      "dependencies": ["BRAIN-040A-01"],
-      "notes": "Fixed E2E tests to use browser fetch instead of page.request API which doesn't go through mocks. Added page navigation for base URL. All 17 tests pass."
-    },
-    {
-      "id": "BRAIN-040A-03",
-      "title": "E2E: Chat Verification",
-      "description": "Test: Chat returns knowledge base content.",
-      "acceptanceCriteria": [
-        "Open chat interface",
-        "Ask question about created lore",
-        "Verify answer contains lore content",
-        "Test: Basic RAG retrieval verified"
-      ],
-      "priority": 90,
-      "passes": true,
-      "dependencies": ["BRAIN-040A-02"],
-      "notes": "Tests pass as part of BRAIN-040A-02 fixes. Chat interface test runs, API response test verifies RAG content, context retrieval test validates chunks."
-    },
-    {
-      "id": "BRAIN-040B-01",
-      "title": "E2E: Hybrid Search Test",
-      "description": "Test: Hybrid search with traits.",
-      "acceptanceCriteria": [
-        "Create character with specific trait",
-        "Search for trait using chat",
-        "Verify character found via hybrid search",
-        "Test: Hybrid search works"
-      ],
-      "priority": 91,
-      "passes": true,
-      "dependencies": ["BRAIN-040A-03"],
-      "notes": "Tests pass as part of BRAIN-040A-02 fixes. Character creation with traits works, trait-based search returns chunks."
-    },
-    {
-      "id": "BRAIN-040B-02",
-      "title": "E2E: Citations Test",
-      "description": "Test: Source citations are correct.",
-      "acceptanceCriteria": [
-        "Query that returns multiple sources",
-        "Verify citations are displayed",
-        "Click citation and verify source",
-        "Test: Citations accurate"
-      ],
-      "priority": 92,
-      "passes": true,
-      "dependencies": ["BRAIN-040B-01"],
-      "notes": "Tests pass as part of BRAIN-040A-02 fixes. Multiple sources returned, chunks have valid citation info (source_id, source_type), used chunks marked."
-    },
-    {
-      "id": "BRAIN-040B-03",
-      "title": "E2E: Multi-hop Test",
-      "description": "Test: Multi-hop relationship traversal.",
-      "acceptanceCriteria": [
-        "Create connected entities (A->B->C)",
-        "Ask question requiring traversal",
-        "Verify answer uses multi-hop reasoning",
-        "Test: Multi-hop retrieval works"
-      ],
-      "priority": 93,
-      "passes": true,
-      "dependencies": ["BRAIN-040B-02"],
-      "notes": "Tests pass as part of BRAIN-040A-02 fixes. Connected entity creation works, multi-hop query returns chunks."
+      "priority": 15,
+      "passes": false,
+      "effort": "high",
+      "notes": "Use Playwright route interception to simulate network faults."
     }
   ]
 }
