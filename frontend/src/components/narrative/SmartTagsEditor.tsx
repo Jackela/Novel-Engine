@@ -3,17 +3,27 @@
  *
  * BRAIN-038-05: Manual Tag Override
  * UI for editing smart tags on lore entries and scenes
+ *
+ * OPT-011: Refactored to use React Query with optimistic updates
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Plus, Tag as TagIcon, Lock } from 'lucide-react';
+import { X, Plus, Tag as TagIcon, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { smartTagsApi, type SmartTagsResponse } from '@/features/routing/api/smartTagsApi';
-import { toast } from 'sonner';
+import {
+  useLoreSmartTags,
+  useSceneSmartTags,
+  useAddLoreTag,
+  useAddSceneTag,
+  useRemoveLoreTag,
+  useRemoveSceneTag,
+  useClearLoreCategoryTags,
+  useClearSceneCategoryTags,
+} from '@/features/routing/api/smartTagsHooks';
 
 interface SmartTagsEditorProps {
   /** Type of entity being edited */
@@ -42,36 +52,39 @@ export function SmartTagsEditor({
   chapterId,
   className,
 }: SmartTagsEditorProps) {
-  const [smartTags, setSmartTags] = useState<SmartTagsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('genre');
   const [newTag, setNewTag] = useState('');
 
-  useEffect(() => {
-    loadSmartTags();
-  }, [entityType, entityId, storyId, chapterId]);
+  // React Query hooks for data fetching
+  const {
+    data: smartTags,
+    isLoading,
+    error,
+  } = entityType === 'lore'
+    ? useLoreSmartTags(entityId)
+    : useSceneSmartTags(storyId ?? '', chapterId ?? '', entityId);
 
-  async function loadSmartTags() {
-    try {
-      setLoading(true);
-      let response: SmartTagsResponse;
-      if (entityType === 'lore') {
-        response = await smartTagsApi.getLoreSmartTags(entityId);
-      } else if (entityType === 'scene' && storyId && chapterId) {
-        response = await smartTagsApi.getSceneSmartTags(storyId, chapterId, entityId);
-      } else {
-        throw new Error('Invalid entity type or missing required IDs');
-      }
-      setSmartTags(response);
-    } catch (error) {
-      console.error('Failed to load smart tags:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to load smart tags');
-    } finally {
-      setLoading(false);
-    }
-  }
+  // React Query hooks for mutations with optimistic updates
+  const addTagMutation =
+    entityType === 'lore'
+      ? useAddLoreTag(entityId)
+      : useAddSceneTag(storyId ?? '', chapterId ?? '', entityId);
 
-  async function addManualTag(category: string, tag: string) {
+  const removeTagMutation =
+    entityType === 'lore'
+      ? useRemoveLoreTag(entityId)
+      : useRemoveSceneTag(storyId ?? '', chapterId ?? '', entityId);
+
+  const clearCategoryMutation =
+    entityType === 'lore'
+      ? useClearLoreCategoryTags(entityId)
+      : useClearSceneCategoryTags(storyId ?? '', chapterId ?? '', entityId);
+
+  // Check if any mutation is pending
+  const isMutating =
+    addTagMutation.isPending || removeTagMutation.isPending || clearCategoryMutation.isPending;
+
+  function addManualTag(category: string, tag: string) {
     if (!tag.trim()) return;
 
     const normalizedTag = tag.trim().toLowerCase();
@@ -83,107 +96,16 @@ export function SmartTagsEditor({
       return;
     }
 
-    try {
-      let response: SmartTagsResponse;
-      const updatedTags = [...existingManual, normalizedTag];
-
-      if (entityType === 'lore') {
-        response = await smartTagsApi.updateLoreManualSmartTags(entityId, {
-          category,
-          tags: updatedTags,
-          replace: true,
-        });
-      } else if (entityType === 'scene' && storyId && chapterId) {
-        response = await smartTagsApi.updateSceneManualSmartTags(
-          storyId,
-          chapterId,
-          entityId,
-          {
-            category,
-            tags: updatedTags,
-            replace: true,
-          }
-        );
-      } else {
-        throw new Error('Invalid entity type');
-      }
-
-      setSmartTags(response);
-      setNewTag('');
-      toast.success(`Tag "${normalizedTag}" added to ${category}`);
-    } catch (error) {
-      console.error('Failed to add tag:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to add tag');
-    }
+    addTagMutation.mutate({ category, tag: normalizedTag });
+    setNewTag('');
   }
 
-  async function removeManualTag(category: string, tag: string) {
-    const existingManual = smartTags?.manual_smart_tags[category] || [];
-    const updatedTags = existingManual.filter((t) => t !== tag);
-
-    try {
-      let response: SmartTagsResponse;
-
-      if (entityType === 'lore') {
-        response = await smartTagsApi.updateLoreManualSmartTags(entityId, {
-          category,
-          tags: updatedTags,
-          replace: true,
-        });
-      } else if (entityType === 'scene' && storyId && chapterId) {
-        response = await smartTagsApi.updateSceneManualSmartTags(
-          storyId,
-          chapterId,
-          entityId,
-          {
-            category,
-            tags: updatedTags,
-            replace: true,
-          }
-        );
-      } else {
-        throw new Error('Invalid entity type');
-      }
-
-      setSmartTags(response);
-      toast.success(`Tag "${tag}" removed from ${category}`);
-    } catch (error) {
-      console.error('Failed to remove tag:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to remove tag');
-    }
+  function removeManualTag(category: string, tag: string) {
+    removeTagMutation.mutate({ category, tag });
   }
 
-  async function clearCategoryTags(category: string) {
-    try {
-      let response: SmartTagsResponse;
-
-      if (entityType === 'lore') {
-        response = await smartTagsApi.updateLoreManualSmartTags(entityId, {
-          category,
-          tags: [],
-          replace: true,
-        });
-      } else if (entityType === 'scene' && storyId && chapterId) {
-        response = await smartTagsApi.updateSceneManualSmartTags(
-          storyId,
-          chapterId,
-          entityId,
-          {
-            category,
-            tags: [],
-            replace: true,
-          }
-        );
-      } else {
-        throw new Error('Invalid entity type');
-      }
-
-      setSmartTags(response);
-      toast.success(`Cleared all manual tags from ${category}`);
-    } catch (error) {
-      console.error('Failed to clear tags:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to clear tags');
-    }
+  function clearCategoryTags(category: string) {
+    clearCategoryMutation.mutate(category);
   }
 
   const categoryInfo = TAG_CATEGORIES.find((c) => c.value === selectedCategory) ?? TAG_CATEGORIES[0]!;
@@ -193,18 +115,47 @@ export function SmartTagsEditor({
     (tag) => !manualTags.includes(tag)
   );
 
-  if (loading) {
+  // === Loading State ===
+  if (isLoading) {
     return (
       <div className={cn('flex items-center justify-center p-8', className)}>
-        <div className="text-muted-foreground">Loading smart tags...</div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading smart tags...</span>
+        </div>
       </div>
     );
   }
 
+  // === Error State ===
+  if (error) {
+    return (
+      <div className={cn('rounded-lg border border-destructive/50 bg-destructive/10 p-4', className)}>
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="h-4 w-4" />
+          <span className="text-sm">
+            {error instanceof Error ? error.message : 'Failed to load smart tags'}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // === Empty State (no data at all) ===
+  if (!smartTags) {
+    return (
+      <div className={cn('rounded-lg border border-dashed p-8 text-center', className)}>
+        <TagIcon className="mx-auto h-8 w-8 text-muted-foreground/50" />
+        <p className="mt-2 text-sm text-muted-foreground">No smart tags data available</p>
+      </div>
+    );
+  }
+
+  // === Ready State ===
   return (
-    <div className={cn('flex flex-col gap-4', className)}>
+    <div className={cn('flex flex-col gap-4', className)} aria-busy={isMutating}>
       {/* Category selector tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2" role="tablist">
         {TAG_CATEGORIES.map((cat) => (
           <button
             key={cat.value}
@@ -215,6 +166,9 @@ export function SmartTagsEditor({
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             )}
+            role="tab"
+            aria-selected={selectedCategory === cat.value}
+            aria-controls={`${cat.value}-panel`}
           >
             {cat.label}
           </button>
@@ -233,26 +187,40 @@ export function SmartTagsEditor({
               addManualTag(selectedCategory, newTag);
             }
           }}
+          disabled={addTagMutation.isPending}
           className="flex-1"
+          aria-describedby="add-tag-hint"
         />
+        <span id="add-tag-hint" className="sr-only">
+          Press Enter to add the tag
+        </span>
         <Button
           type="button"
           size="icon"
           onClick={() => newTag.trim() && addManualTag(selectedCategory, newTag)}
-          disabled={!newTag.trim()}
+          disabled={!newTag.trim() || addTagMutation.isPending}
+          aria-label={`Add tag to ${categoryInfo.label}`}
         >
-          <Plus className="h-4 w-4" />
+          {addTagMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
       {/* Tags display */}
       <ScrollArea className="h-64 rounded-md border">
-        <div className="p-4 space-y-4">
+        <div
+          className="p-4 space-y-4"
+          id={`${selectedCategory}-panel`}
+          role="tabpanel"
+        >
           {/* Manual tags section */}
           {manualTags.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Lock className="h-3 w-3" />
+                <Lock className="h-3 w-3" aria-hidden="true" />
                 Manual Tags (never overridden)
               </div>
               <div className="flex flex-wrap gap-2">
@@ -266,9 +234,16 @@ export function SmartTagsEditor({
                     <button
                       type="button"
                       onClick={() => removeManualTag(selectedCategory, tag)}
-                      className="ml-1 hover:bg-white/50 rounded-full p-0.5"
+                      disabled={removeTagMutation.isPending}
+                      className="ml-1 hover:bg-white/50 rounded-full p-0.5 disabled:opacity-50"
+                      aria-label={`Remove tag ${tag}`}
                     >
-                      <X className="h-3 w-3" />
+                      {removeTagMutation.isPending &&
+                      removeTagMutation.variables?.tag === tag ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <X className="h-3 w-3" />
+                      )}
                     </button>
                   </Badge>
                 ))}
@@ -280,7 +255,7 @@ export function SmartTagsEditor({
           {autoTags.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <TagIcon className="h-3 w-3" />
+                <TagIcon className="h-3 w-3" aria-hidden="true" />
                 Auto-Generated Tags
               </div>
               <div className="flex flex-wrap gap-2">
@@ -297,10 +272,10 @@ export function SmartTagsEditor({
             </div>
           )}
 
-          {/* Empty state */}
+          {/* Empty state (no tags for this category) */}
           {effectiveTags.length === 0 && (
             <div className="text-center text-muted-foreground py-8">
-              <TagIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <TagIcon className="h-8 w-8 mx-auto mb-2 opacity-50" aria-hidden="true" />
               <p>No tags for {categoryInfo.label.toLowerCase()} yet.</p>
               <p className="text-sm">Add a manual tag above to get started.</p>
             </div>
@@ -315,9 +290,17 @@ export function SmartTagsEditor({
           variant="outline"
           size="sm"
           onClick={() => clearCategoryTags(selectedCategory)}
+          disabled={clearCategoryMutation.isPending}
           className="w-full"
         >
-          Clear All Manual Tags from {categoryInfo.label}
+          {clearCategoryMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Clearing...
+            </>
+          ) : (
+            <>Clear All Manual Tags from {categoryInfo.label}</>
+          )}
         </Button>
       )}
     </div>

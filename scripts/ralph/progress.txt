@@ -238,4 +238,28 @@ Started: Fri Feb  6 10:46:57 CST 2026
   - Many mypy strict errors are pre-existing in older modules (token_tracker, budget_alert_service)
   - Missing library stubs (tiktoken, rank_bm25) are external dependencies, not code issues
   - Type audit should be done incrementally per module rather than all at once
+
+## 2026-02-06 - OPT-011
+- What was implemented:
+  - Created React Query hooks in frontend/src/features/routing/api/smartTagsHooks.tsx
+  - Implemented useLoreSmartTags, useSceneSmartTags for data fetching
+  - Implemented useAddLoreTag, useAddSceneTag, useRemoveLoreTag, useRemoveSceneTag for single tag operations
+  - Implemented useClearLoreCategoryTags, useClearSceneCategoryTags for clearing categories
+  - All mutations use onMutate for optimistic updates with automatic rollback on error
+  - Refactored SmartTagsEditor to use the new React Query hooks
+  - Removed all direct fetch calls and useState for smart tags data
+  - Preserved all UI states: loading (with spinner), error (with alert), empty (with message), ready (with tags)
+  - Added accessibility improvements (aria-busy, aria-selected, role attributes)
+  - Toast messages are now consistent and managed by the mutation hooks
+- Files changed:
+  - frontend/src/features/routing/api/smartTagsHooks.tsx (new - 380+ lines)
+  - frontend/src/components/narrative/SmartTagsEditor.tsx (modified - ~290 lines, refactored to use React Query)
+- **Learnings for future iterations:**
+  - The QueryClientProvider is already set up in frontend/src/app/providers.tsx
+  - React Query uses 5-minute staleTime and 30-minute gcTime by default
+  - onMutate should cancel outgoing queries first with queryClient.cancelQueries()
+  - Snapshot previous data before optimistic update for rollback
+  - Return the snapshot from onMutate to make it available in onError
+  - The WorldRulesEditor component provides a good reference pattern for React Query usage
+  - All 46 frontend tests pass with the new implementation
 ---

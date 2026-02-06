@@ -170,7 +170,7 @@
         "Add a unit/integration test for optimistic update behavior or cover via e2e smoke."
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "notes": "Remove direct fetch calls in the component; centralize in hooks."
     },
