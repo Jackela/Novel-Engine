@@ -131,6 +131,26 @@ Novel Engine 使用 Google Gemini API 进行 AI 叙事生成。首次使用前�
 
 > **注意**: 没有 API 密钥时，系统会使用降级模式运行（生成占位符内容）。配置 API 密钥后，生成质量将显著提升。
 
+### 🔒 API 密钥加密存储 (必需)
+
+如果要通过 API 存储和管理 API 密钥（OpenAI, Anthropic, Gemini），必须设置加密密钥：
+
+```bash
+# 生成加密密钥
+python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
+
+# 将生成的密钥添加到 .env 文件
+BRAIN_SETTINGS_ENCRYPTION_KEY=<生成的密钥>
+```
+
+**安全说明**:
+- 所有 API 密钥使用 Fernet 对称加密（AES-128-CBC + HMAC）加密存储
+- API 响应中只显示掩码后的密钥（前 8 位 + 后 4 位字符）
+- 日志中永远不会记录原始密钥
+- 如果未设置 `BRAIN_SETTINGS_ENCRYPTION_KEY`，将无法通过 API 存储密钥（返回 503 错误）
+
+详细安全指南请参阅 [SECURITY.md](SECURITY.md)。
+
 ### 🛡️ 开发环境硬化 (Fail Fast)
 
 Novel Engine 在开发环境中采用 **Fail Fast** 策略，确保配置错误能够立即暴露，而非被降级机制掩盖:

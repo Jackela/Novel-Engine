@@ -43,38 +43,99 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["brain-settings"])
 
-# Encryption key for API keys (in production, use environment variable)
-# For now, we generate a key per server restart (keys persist encrypted)
-_DEFAULT_ENCRYPTION_KEY = Fernet.generate_key()
-_fernet = Fernet(_DEFAULT_ENCRYPTION_KEY)
+# OPT-014: Security hardening - No random fallback key
+# Encryption key MUST be provided via BRAIN_SETTINGS_ENCRYPTION_KEY env var
+_ENCRYPTION_KEY_WARNING_SHOWN = False
 
 
 def get_encryption_key() -> bytes:
     """
     Get the encryption key for API keys.
 
-    Why: Dependency injection for testability.
+    OPT-014: Security hardening - Require BRAIN_SETTINGS_ENCRYPTION_KEY.
+    No random fallback is provided. If the key is not set, a warning is logged
+    once and operations will fail gracefully.
+
+    Why: Dependency injection for testability and security enforcement.
 
     Returns:
         The encryption key as bytes
+
+    Raises:
+        ValueError: If the key is not set or invalid
     """
     import os
 
+    global _ENCRYPTION_KEY_WARNING_SHOWN
+
     key = os.getenv("BRAIN_SETTINGS_ENCRYPTION_KEY")
-    if key:
-        return key.encode() if isinstance(key, str) else key
-    return _DEFAULT_ENCRYPTION_KEY
+    if not key:
+        if not _ENCRYPTION_KEY_WARNING_SHOWN:
+            logger.warning(
+                "SECURITY: BRAIN_SETTINGS_ENCRYPTION_KEY not set. "
+                "API keys will not be persisted securely. "
+                "Set this environment variable to a 32-byte URL-safe base64-encoded key. "
+                "Generate one with: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
+            )
+            _ENCRYPTION_KEY_WARNING_SHOWN = True
+        # Return a placeholder that will cause encryption to fail
+        raise ValueError(
+            "BRAIN_SETTINGS_ENCRYPTION_KEY not set. "
+            "Cannot securely store API keys. "
+            "Please set the BRAIN_SETTINGS_ENCRYPTION_KEY environment variable."
+        )
+
+    # Ensure key is bytes
+    key_bytes = key.encode() if isinstance(key, str) else key
+
+    # Validate key is a valid Fernet key (44 bytes base64-encoded)
+    try:
+        Fernet(key_bytes)
+    except Exception as e:
+        raise ValueError(
+            f"Invalid BRAIN_SETTINGS_ENCRYPTION_KEY: {e}. "
+            "Generate a valid key with: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
+        ) from e
+
+    return key_bytes
 
 
 def get_fernet() -> Fernet:
     """
     Get the Fernet encryptor for API keys.
 
+    OPT-014: Returns None if encryption is not configured,
+    allowing callers to fail gracefully with a clear error message.
+
     Returns:
-        Fernet encryptor instance
+        Fernet encryptor instance, or None if encryption key is not set
+
+    Why:
+        - Graceful degradation when encryption key is missing
+        - Clear error messages to users about security configuration
     """
-    key = get_encryption_key()
-    return Fernet(key)
+    import os
+
+    global _ENCRYPTION_KEY_WARNING_SHOWN
+
+    key = os.getenv("BRAIN_SETTINGS_ENCRYPTION_KEY")
+    if not key:
+        if not _ENCRYPTION_KEY_WARNING_SHOWN:
+            logger.warning(
+                "SECURITY: BRAIN_SETTINGS_ENCRYPTION_KEY not set. "
+                "API keys cannot be stored securely. "
+                "Set this environment variable to enable API key storage."
+            )
+            _ENCRYPTION_KEY_WARNING_SHOWN = True
+        return None
+
+    key_bytes = key.encode() if isinstance(key, str) else key
+
+    try:
+        return Fernet(key_bytes)
+    except Exception as e:
+        logger.error(f"Invalid BRAIN_SETTINGS_ENCRYPTION_KEY: {e}")
+        return None
 
 
 def get_brain_settings_repository(request: Request) -> "BrainSettingsRepository":
@@ -97,20 +158,53 @@ def get_brain_settings_repository(request: Request) -> "BrainSettingsRepository"
     return repository
 
 
-def _encrypt_api_key(key: str, fernet: Fernet) -> str:
-    """Encrypt an API key."""
+def _encrypt_api_key(key: str, fernet: Fernet | None) -> str:
+    """
+    Encrypt an API key.
+
+    OPT-014: Returns empty string if encryption is not available.
+
+    Args:
+        key: The API key to encrypt
+        fernet: Fernet encryptor instance (may be None)
+
+    Returns:
+        Encrypted key as string, or empty string if encryption failed
+    """
     if not key:
         return ""
-    return fernet.encrypt(key.encode()).decode()
+    if fernet is None:
+        logger.warning("Cannot encrypt API key: BRAIN_SETTINGS_ENCRYPTION_KEY not set")
+        return ""
+    try:
+        return fernet.encrypt(key.encode()).decode()
+    except Exception as e:
+        logger.error(f"Failed to encrypt API key: {e}")
+        return ""
 
 
-def _decrypt_api_key(encrypted: str, fernet: Fernet) -> str:
-    """Decrypt an API key."""
+def _decrypt_api_key(encrypted: str, fernet: Fernet | None) -> str:
+    """
+    Decrypt an API key.
+
+    OPT-014: Returns empty string if decryption fails or encryption not available.
+
+    Args:
+        encrypted: The encrypted API key
+        fernet: Fernet encryptor instance (may be None)
+
+    Returns:
+        Decrypted key as string, or empty string if decryption failed
+    """
     if not encrypted:
+        return ""
+    if fernet is None:
+        logger.warning("Cannot decrypt API key: BRAIN_SETTINGS_ENCRYPTION_KEY not set")
         return ""
     try:
         return fernet.decrypt(encrypted.encode()).decode()
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to decrypt API key: {e}")
         return ""
 
 
@@ -154,8 +248,18 @@ class InMemoryBrainSettingsRepository:
             "is_healthy": True,
         }
 
-    async def get_api_keys(self, fernet: Fernet) -> dict[str, str]:
-        """Get all API keys (decrypted)."""
+    async def get_api_keys(self, fernet: Fernet | None) -> dict[str, str]:
+        """
+        Get all API keys (decrypted).
+
+        OPT-014: Returns empty strings if decryption fails.
+
+        Args:
+            fernet: Fernet encryptor instance (may be None)
+
+        Returns:
+            Dictionary with decrypted API keys
+        """
         return {
             "openai": _decrypt_api_key(self._api_keys.get("openai", ""), fernet),
             "anthropic": _decrypt_api_key(self._api_keys.get("anthropic", ""), fernet),
@@ -163,11 +267,23 @@ class InMemoryBrainSettingsRepository:
         }
 
     async def set_api_key(
-        self, provider: str, key: str, fernet: Fernet
+        self, provider: str, key: str, fernet: Fernet | None
     ) -> None:
-        """Set an API key (encrypted)."""
+        """
+        Set an API key (encrypted).
+
+        OPT-014: If encryption fails, key is not stored.
+
+        Args:
+            provider: The API provider name
+            key: The API key to store
+            fernet: Fernet encryptor instance (may be None)
+        """
         if key:
-            self._api_keys[provider] = _encrypt_api_key(key, fernet)
+            encrypted = _encrypt_api_key(key, fernet)
+            # OPT-014: Only store if encryption succeeded (non-empty result)
+            if encrypted:
+                self._api_keys[provider] = encrypted
         elif provider in self._api_keys:
             del self._api_keys[provider]
 
@@ -207,10 +323,33 @@ BrainSettingsRepository = InMemoryBrainSettingsRepository
 # ==================== Query Endpoints ====================
 
 
+def _require_encryption(fernet: Fernet | None) -> None:
+    """
+    Raise HTTPException if encryption is not available.
+
+    OPT-014: Security hardening helper.
+
+    Args:
+        fernet: Fernet encryptor instance (may be None)
+
+    Raises:
+        HTTPException: 503 Service Unavailable if encryption key is not set
+    """
+    if fernet is None:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "API key storage is not available. "
+                "Please set BRAIN_SETTINGS_ENCRYPTION_KEY environment variable. "
+                "Generate a key with: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
+            ),
+        )
+
+
 @router.get("/brain/settings", response_model=BrainSettingsResponse)
 async def get_brain_settings(
     repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
-    fernet: Fernet = Depends(get_fernet),
+    fernet: Fernet | None = Depends(get_fernet),
 ) -> BrainSettingsResponse:
     """
     Get all brain settings.
@@ -254,7 +393,7 @@ async def get_brain_settings(
 @router.get("/brain/settings/api-keys", response_model=APIKeysResponse)
 async def get_api_keys(
     repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
-    fernet: Fernet = Depends(get_fernet),
+    fernet: Fernet | None = Depends(get_fernet),
 ) -> APIKeysResponse:
     """
     Get API keys (masked).
@@ -335,10 +474,12 @@ async def get_knowledge_base_status(
 async def update_api_keys(
     payload: APIKeysRequest,
     repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
-    fernet: Fernet = Depends(get_fernet),
+    fernet: Fernet | None = Depends(get_fernet),
 ) -> APIKeysResponse:
     """
     Update API keys.
+
+    OPT-014: Requires BRAIN_SETTINGS_ENCRYPTION_KEY to be set.
 
     Request Body:
         API keys to update (only provided keys are updated)
@@ -348,8 +489,13 @@ async def update_api_keys(
 
     Raises:
         400: If validation fails
+        503: If encryption key is not configured
         500: If update fails
     """
+    # OPT-014: Require encryption for storing API keys
+    if payload.openai_key is not None or payload.anthropic_key is not None or payload.gemini_key is not None:
+        _require_encryption(fernet)
+
     try:
         if payload.openai_key is not None:
             await repository.set_api_key("openai", payload.openai_key, fernet)
@@ -410,7 +556,7 @@ async def update_rag_config(
 @router.post("/brain/settings/test-connection", response_model=dict[str, str])
 async def test_connection(
     repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
-    fernet: Fernet = Depends(get_fernet),
+    fernet: Fernet | None = Depends(get_fernet),
 ) -> dict[str, str]:
     """
     Test API key connections.
