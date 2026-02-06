@@ -185,7 +185,7 @@
         "If API config changes, update schemas/openapi/front-end types accordingly."
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "notes": "Keep prompt strategy selection in application layer; no UI coupling."
     },
