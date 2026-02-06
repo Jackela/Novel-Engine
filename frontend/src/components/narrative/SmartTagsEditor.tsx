@@ -8,12 +8,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Plus, Tag as TagIcon, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { smartTagsApi, SmartTagsResponse } from '@/features/routing/api/smartTagsApi';
+import { smartTagsApi, type SmartTagsResponse } from '@/features/routing/api/smartTagsApi';
 import { toast } from 'sonner';
 
 interface SmartTagsEditorProps {
@@ -45,7 +44,7 @@ export function SmartTagsEditor({
 }: SmartTagsEditorProps) {
   const [smartTags, setSmartTags] = useState<SmartTagsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('genre');
+  const [selectedCategory, setSelectedCategory] = useState<string>('genre');
   const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
@@ -187,7 +186,7 @@ export function SmartTagsEditor({
     }
   }
 
-  const categoryInfo = TAG_CATEGORIES.find((c) => c.value === selectedCategory) || TAG_CATEGORIES[0];
+  const categoryInfo = TAG_CATEGORIES.find((c) => c.value === selectedCategory) ?? TAG_CATEGORIES[0]!;
   const effectiveTags = smartTags?.effective_tags[selectedCategory] || [];
   const manualTags = smartTags?.manual_smart_tags[selectedCategory] || [];
   const autoTags = (smartTags?.smart_tags[selectedCategory] || []).filter(

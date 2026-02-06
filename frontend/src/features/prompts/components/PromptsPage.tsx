@@ -176,7 +176,8 @@ export function PromptsPage() {
             description="Get started by creating your first prompt template"
             action={{
               label: 'Create Prompt',
-              onClick: () => navigate({ to: '/brain/prompts' }),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onClick: () => navigate({ to: '/brain/prompts/new' as any }),
             }}
           />
         ) : (
@@ -192,8 +193,10 @@ export function PromptsPage() {
               key={prompt.id}
               prompt={prompt}
               onDelete={() => handleDelete(prompt.id, prompt.name)}
-              onEdit={() => navigate({ to: `/brain/prompts/${prompt.id}` as '/brain/prompts/new' })}
-              onView={() => navigate({ to: `/brain/prompts/${prompt.id}` as '/brain/prompts/new' })}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onEdit={() => navigate({ to: `/brain/prompts/${prompt.id}` as any })}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onView={() => navigate({ to: `/brain/prompts/${prompt.id}` as any })}
             />
           ))}
         </div>
@@ -215,7 +218,8 @@ function PromptsHeader({ navigate }: PromptsHeaderProps) {
           Manage and version your AI prompt templates
         </p>
       </div>
-      <Button onClick={() => navigate({ to: '/brain/prompts/new' as '/brain/prompts/new' })}>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <Button onClick={() => navigate({ to: '/brain/prompts/new' as any })}>
         <Plus className="mr-2 h-4 w-4" />
         New Prompt
       </Button>
