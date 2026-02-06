@@ -31,11 +31,11 @@
       "acceptanceCriteria": [
         "Create EmbeddingCacheService with LRU + TTL (reuse src/caching/exact_cache.py or a typed LRU) and sha256(text + model) keys.",
         "Add CachedEmbeddingService adapter implementing IEmbeddingService that wraps a delegate and uses EmbeddingCacheService for embed/embed_batch.",
-        "Remove or disable EmbeddingServiceAdapter’s internal cache (or make it pluggable) to avoid double caching and TTL mismatch.",
+        "Remove or disable EmbeddingServiceAdapter's internal cache (or make it pluggable) to avoid double caching and TTL mismatch.",
         "Add unit tests for cache hits, TTL expiration, batch caching, and structured logs for cache_hit/cache_miss."
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "notes": "Design cache API to allow a Redis-backed implementation later."
     },
