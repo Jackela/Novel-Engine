@@ -84,3 +84,36 @@ Started: Fri Feb  6 19:52:52 CST 2026
 - Warning logs should use _ENCRYPTION_KEY_WARNING_SHOWN flag to avoid spamming
 
 ---
+
+## [2026-02-06] - OPT-015
+- Chat Stress + Resilience E2E Tests
+- Files changed:
+  - frontend/tests/e2e/chat-stress.spec.ts - NEW: Comprehensive E2E stress tests
+- Test suites:
+  - Rapid-fire message simulation (50+ messages)
+  - UI responsiveness during rapid messaging
+  - Message order preservation under load
+  - Network interruption recovery
+  - Failed request graceful handling
+  - Slow network response handling
+  - State resilience during navigation
+  - Long message handling
+  - Special characters and formatting
+- Test features:
+  - Mock chat API with configurable delays and failures
+  - Network interruption simulation via Playwright route interception
+  - Message order verification
+  - UI responsiveness checks
+  - Error state verification
+  - Recovery flow testing
+
+**Learnings for future iterations:**
+- ChatInterface component uses aria-label for accessibility, not data-testid
+- Use `.ChatInterface` class name as stable selector for E2E tests
+- Lucide icons can be targeted with `svg[data-lucide="icon-name"]`
+- Playwright route interception is powerful for simulating network failures
+- Mock SSE (Server-Sent Events) responses with `text/event-stream` content type
+- Tests should verify resilience by checking UI remains responsive after failures
+- For message order verification, check position of first and last messages in content
+
+---
