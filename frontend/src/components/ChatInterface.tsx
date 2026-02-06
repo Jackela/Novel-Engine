@@ -8,6 +8,10 @@
  *
  * OPT-004: Added virtualization using react-window VariableSizeList
  * to handle 100+ messages efficiently with dynamic-height support.
+ *
+ * OPT-008: Added Markdown rendering for assistant messages with syntax
+ * highlighting for code blocks using highlight.js. User messages remain
+ * plain text.
  */
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -16,6 +20,7 @@ import { VariableSizeList as List } from 'react-window';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Markdown, PlainText } from '@/components/ui/markdown';
 import { cn } from '@/lib/utils';
 import { brainSettingsApi, type ChatMessage, type ChatChunk } from '@/features/routing/api/brainSettingsApi';
 
@@ -58,10 +63,11 @@ function MessageRow({ index, style, data }: MessageRowProps) {
     return (
       <div style={style} className="px-4 py-1">
         <div className="mr-auto max-w-[80%] rounded-lg bg-muted px-3 py-2">
-          <p className="text-sm whitespace-pre-wrap">
-            {streamingContent}
-            <span className="inline-block animate-pulse">▊</span>
-          </p>
+          <PlainText
+            content={streamingContent + '▊'}
+            className="text-sm"
+          />
+          <span className="inline-block animate-pulse" />
         </div>
       </div>
     );
@@ -80,7 +86,11 @@ function MessageRow({ index, style, data }: MessageRowProps) {
             : 'mr-auto bg-muted',
         )}
       >
-        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+        {message.role === 'assistant' ? (
+          <Markdown content={message.content} />
+        ) : (
+          <PlainText content={message.content} />
+        )}
       </div>
     </div>
   );
