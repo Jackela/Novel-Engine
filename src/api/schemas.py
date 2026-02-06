@@ -2821,3 +2821,51 @@ class RAGContextResponse(BaseModel):
     chunk_count: int = Field(..., ge=0, description="Number of chunks retrieved")
     sources: List[str] = Field(default_factory=list, description="Source references")
 
+
+# === Async Ingestion Job Schemas ===
+# OPT-005: Async Ingestion Job API
+
+
+class IngestionJobStatus(str, Enum):
+    """Status of an async ingestion job."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class StartIngestionJobRequest(BaseModel):
+    """Request model for starting an async ingestion job."""
+
+    content: str = Field(..., description="Text content to ingest")
+    source_type: str = Field(..., description="Type of source (CHARACTER, LORE, SCENE, etc.)")
+    source_id: str = Field(..., description="Unique ID of the source entity")
+    tags: Optional[List[str]] = Field(None, description="Optional tags for filtering")
+    extra_metadata: Optional[Dict[str, Any]] = Field(None, description="Optional additional metadata")
+
+
+class IngestionJobResponse(BaseModel):
+    """Response model for ingestion job status."""
+
+    job_id: str = Field(..., description="Unique identifier for the job")
+    status: IngestionJobStatus = Field(..., description="Current job status")
+    progress: float = Field(..., ge=0, le=100, description="Progress percentage (0-100)")
+    source_id: str = Field(..., description="ID of the source being ingested")
+    source_type: str = Field(..., description="Type of source")
+    created_at: str = Field(..., description="ISO 8601 timestamp when job was created")
+    started_at: Optional[str] = Field(None, description="ISO 8601 timestamp when job started")
+    completed_at: Optional[str] = Field(None, description="ISO 8601 timestamp when job completed")
+    error: Optional[str] = Field(None, description="Error message if job failed")
+    chunk_count: Optional[int] = Field(None, description="Number of chunks created (when complete)")
+    entries_created: Optional[int] = Field(None, description="Number of entries created (when complete)")
+
+
+class StartIngestionJobResponse(BaseModel):
+    """Response model for starting an ingestion job."""
+
+    job_id: str = Field(..., description="Unique identifier for the job")
+    status: IngestionJobStatus = Field(..., description="Initial job status")
+    message: str = Field(..., description="Status message")
+

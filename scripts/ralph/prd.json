@@ -80,7 +80,7 @@
         "Update src/api/schemas.py, regenerate docs/api/openapi.json, and sync frontend/src/types/schemas.ts; add unit tests for 202 + status transitions."
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "notes": "Keep router thin; business logic in application services."
     },

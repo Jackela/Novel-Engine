@@ -95,4 +95,25 @@ Started: Fri Feb  6 10:46:57 CST 2026
   - itemCount must be calculated before useEffects that depend on it
   - Auto-scroll in virtual lists uses scrollToItem(index, 'end') instead of scrollTop manipulation
   - Type errors: React.forwardRef props need to match HTMLAttributes exactly, _outerRef is private so use public API
+
+## 2026-02-06 - OPT-005
+- What was implemented:
+  - Added async ingestion job API with POST /api/brain/ingestion endpoint (returns 202 + job_id)
+  - Created IngestionJobStore (in-memory) for job status tracking with IngestionJobStatus enum
+  - Added GET /api/brain/ingestion/{job_id} endpoint to poll job status/progress/errors
+  - Added GET /api/brain/ingestion endpoint to list all jobs (most recent first)
+  - Created background worker _run_ingestion_job that uses KnowledgeIngestionService
+  - Added schemas: IngestionJobStatus, StartIngestionJobRequest, IngestionJobResponse, StartIngestionJobResponse
+  - Added 15 unit tests covering job store, worker execution, and response conversion
+- Files changed:
+  - src/api/schemas.py (modified - added ingestion job schemas)
+  - src/api/routers/brain_settings.py (modified - added ~200 lines for async job API)
+  - tests/unit/api/routers/test_brain_ingestion_jobs.py (new - 15 tests)
+- **Learnings for future iterations:**
+  - Use FastAPI BackgroundTasks for non-blocking async operations
+  - Job status transitions: PENDING -> RUNNING -> COMPLETED/FAILED
+  - started_at is set when status becomes RUNNING; completed_at when COMPLETED/FAILED/CANCELLED
+  - Standard logging module doesn't support structlog keyword args (use f-strings for formatted messages)
+  - IngestionJobStore uses asyncio.Lock for thread-safe job updates
+  - All 38 ingestion-related tests pass (15 new + 23 existing)
 ---

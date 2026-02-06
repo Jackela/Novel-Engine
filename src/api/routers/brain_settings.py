@@ -14,22 +14,29 @@ Constitution Compliance:
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Optional
+from enum import Enum
+from typing import Any, List, Optional
 
 from cryptography.fernet import Fernet
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from src.api.schemas import (
     APIKeysRequest,
     APIKeysResponse,
     BrainSettingsResponse,
+    IngestionJobResponse,
+    IngestionJobStatus,
     KnowledgeBaseStatusResponse,
     RAGConfigRequest,
     RAGConfigResponse,
+    StartIngestionJobRequest,
+    StartIngestionJobResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -1101,7 +1108,418 @@ async def stream_realtime_usage(
     )
 
 
-__all__ = ["router", "RealtimeUsageBroadcaster", "get_usage_broadcaster"]
+# ==================== Async Ingestion Job API (OPT-005) ====================
+
+
+import asyncio
+import uuid
+from datetime import UTC, datetime
+from enum import Enum
+
+from fastapi import BackgroundTasks, HTTPException
+from src.api.schemas import (
+    IngestionJobStatus,
+    IngestionJobResponse,
+    StartIngestionJobRequest,
+    StartIngestionJobResponse,
+)
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    IngestionResult,
+    KnowledgeIngestionService,
+)
+
+
+class IngestionJob:
+    """
+    An async ingestion job.
+
+    Attributes:
+        job_id: Unique identifier for the job
+        status: Current job status
+        progress: Progress percentage (0-100)
+        source_id: ID of the source being ingested
+        source_type: Type of source
+        content: Content to ingest
+        tags: Optional tags
+        extra_metadata: Optional additional metadata
+        created_at: When the job was created
+        started_at: When the job started processing
+        completed_at: When the job completed
+        error: Error message if job failed
+        chunk_count: Number of chunks created
+        entries_created: Number of entries created
+    """
+
+    def __init__(
+        self,
+        job_id: str,
+        source_id: str,
+        source_type: str,
+        content: str,
+        tags: list[str] | None = None,
+        extra_metadata: dict[str, Any] | None = None,
+    ):
+        self.job_id = job_id
+        self.status = IngestionJobStatus.PENDING
+        self.progress = 0.0
+        self.source_id = source_id
+        self.source_type = source_type
+        self.content = content
+        self.tags = tags
+        self.extra_metadata = extra_metadata
+        self.created_at = datetime.now(UTC)
+        self.started_at: datetime | None = None
+        self.completed_at: datetime | None = None
+        self.error: str | None = None
+        self.chunk_count: int | None = None
+        self.entries_created: int | None = None
+
+    def to_response(self) -> IngestionJobResponse:
+        """Convert to API response model."""
+        return IngestionJobResponse(
+            job_id=self.job_id,
+            status=self.status,
+            progress=self.progress,
+            source_id=self.source_id,
+            source_type=self.source_type,
+            created_at=self.created_at.isoformat(),
+            started_at=self.started_at.isoformat() if self.started_at else None,
+            completed_at=self.completed_at.isoformat() if self.completed_at else None,
+            error=self.error,
+            chunk_count=self.chunk_count,
+            entries_created=self.entries_created,
+        )
+
+
+class IngestionJobStore:
+    """
+    In-memory store for async ingestion jobs.
+
+    Why:
+        - Track job status across async operations
+        - Allow clients to poll for status updates
+        - Simple implementation for now; can be replaced with Redis/DB later
+    """
+
+    def __init__(self) -> None:
+        self._jobs: dict[str, IngestionJob] = {}
+        self._lock = asyncio.Lock()
+
+    async def create_job(
+        self,
+        source_id: str,
+        source_type: str,
+        content: str,
+        tags: list[str] | None = None,
+        extra_metadata: dict[str, Any] | None = None,
+    ) -> IngestionJob:
+        """Create a new ingestion job."""
+        job_id = str(uuid.uuid4())
+        job = IngestionJob(
+            job_id=job_id,
+            source_id=source_id,
+            source_type=source_type,
+            content=content,
+            tags=tags,
+            extra_metadata=extra_metadata,
+        )
+
+        async with self._lock:
+            self._jobs[job_id] = job
+
+        logger.info(f"ingestion_job_created: job_id={job_id}, source_id={source_id}, source_type={source_type}")
+
+        return job
+
+    async def get_job(self, job_id: str) -> IngestionJob | None:
+        """Get a job by ID."""
+        async with self._lock:
+            return self._jobs.get(job_id)
+
+    async def update_job(
+        self,
+        job_id: str,
+        status: IngestionJobStatus | None = None,
+        progress: float | None = None,
+        error: str | None = None,
+        chunk_count: int | None = None,
+        entries_created: int | None = None,
+    ) -> IngestionJob | None:
+        """Update job status."""
+        async with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                return None
+
+            if status is not None:
+                job.status = status
+                if status == IngestionJobStatus.RUNNING and job.started_at is None:
+                    job.started_at = datetime.now(UTC)
+                elif status in (IngestionJobStatus.COMPLETED, IngestionJobStatus.FAILED, IngestionJobStatus.CANCELLED):
+                    if job.completed_at is None:
+                        job.completed_at = datetime.now(UTC)
+
+            if progress is not None:
+                job.progress = progress
+
+            if error is not None:
+                job.error = error
+
+            if chunk_count is not None:
+                job.chunk_count = chunk_count
+
+            if entries_created is not None:
+                job.entries_created = entries_created
+
+            return job
+
+    async def list_jobs(self, limit: int = 100) -> list[IngestionJob]:
+        """List all jobs, most recent first."""
+        async with self._lock:
+            jobs = list(self._jobs.values())
+            jobs.sort(key=lambda j: j.created_at, reverse=True)
+            return jobs[:limit]
+
+
+# Global job store instance
+_ingestion_job_store = IngestionJobStore()
+
+
+def get_ingestion_job_store(request: Request) -> IngestionJobStore:
+    """
+    Get the ingestion job store from app state.
+
+    Why: Dependency injection for testability.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        The ingestion job store instance
+    """
+    store = getattr(request.app.state, "ingestion_job_store", None)
+    if store is None:
+        store = IngestionJobStore()
+        request.app.state.ingestion_job_store = store
+        logger.info("Initialized IngestionJobStore")
+    return store
+
+
+def get_ingestion_service(request: Request) -> KnowledgeIngestionService:
+    """
+    Get or create the ingestion service from app state.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        The knowledge ingestion service instance
+    """
+    from src.contexts.knowledge.infrastructure.adapters.chromadb_vector_store import (
+        ChromaDBVectorStore,
+    )
+    from src.contexts.knowledge.infrastructure.adapters.embedding_generator_adapter import (
+        EmbeddingServiceAdapter,
+    )
+
+    service = getattr(request.app.state, "ingestion_service", None)
+    if service is None:
+        # Create dependencies
+        embedding_service = EmbeddingServiceAdapter(use_mock=True)
+        vector_store = ChromaDBVectorStore()
+
+        # Create service
+        service = KnowledgeIngestionService(
+            embedding_service=embedding_service,
+            vector_store=vector_store,
+        )
+        request.app.state.ingestion_service = service
+        logger.info("Initialized KnowledgeIngestionService for async jobs")
+
+    return service
+
+
+async def _run_ingestion_job(
+    job_id: str,
+    store: IngestionJobStore,
+    service: KnowledgeIngestionService,
+) -> None:
+    """
+    Background worker that executes an ingestion job.
+
+    Args:
+        job_id: ID of the job to execute
+        store: Job store for updates
+        service: Ingestion service for processing
+    """
+    job = await store.get_job(job_id)
+    if job is None:
+        logger.warning(f"ingestion_job_not_found: job_id={job_id}")
+        return
+
+    try:
+        # Update to running
+        await store.update_job(job_id, status=IngestionJobStatus.RUNNING, progress=10.0)
+
+        # Execute ingestion
+        result: IngestionResult = await service.ingest(
+            content=job.content,
+            source_type=job.source_type,
+            source_id=job.source_id,
+            tags=job.tags,
+            extra_metadata=job.extra_metadata,
+        )
+
+        # Update to completed
+        await store.update_job(
+            job_id,
+            status=IngestionJobStatus.COMPLETED,
+            progress=100.0,
+            chunk_count=result.chunk_count,
+            entries_created=result.entries_created,
+        )
+
+        logger.info(f"ingestion_job_completed: job_id={job_id}, source_id={job.source_id}, chunk_count={result.chunk_count}")
+
+    except Exception as e:
+        # Update to failed
+        error_msg = f"{type(e).__name__}: {e}"
+        await store.update_job(
+            job_id,
+            status=IngestionJobStatus.FAILED,
+            error=error_msg,
+        )
+
+        logger.error(f"ingestion_job_failed: job_id={job_id}, source_id={job.source_id}, error={error_msg}")
+
+
+@router.post(
+    "/brain/ingestion",
+    status_code=202,
+    response_model=StartIngestionJobResponse,
+)
+async def start_ingestion_job(
+    request: Request,
+    payload: StartIngestionJobRequest,
+    background_tasks: BackgroundTasks,
+    store: IngestionJobStore = Depends(get_ingestion_job_store),
+    service: KnowledgeIngestionService = Depends(get_ingestion_service),
+) -> StartIngestionJobResponse:
+    """
+    Start an async ingestion job.
+
+    OPT-005: Async Ingestion Job API
+
+    Args:
+        payload: Ingestion job request
+
+    Returns:
+        202 Accepted with job_id for tracking
+
+    Raises:
+        400: If validation fails
+        500: If job creation fails
+    """
+    try:
+        # Validate input
+        if not payload.content or not payload.content.strip():
+            raise HTTPException(status_code=400, detail="content cannot be empty")
+
+        if not payload.source_id or not payload.source_id.strip():
+            raise HTTPException(status_code=400, detail="source_id cannot be empty")
+
+        # Create job
+        job = await store.create_job(
+            source_id=payload.source_id,
+            source_type=payload.source_type,
+            content=payload.content,
+            tags=payload.tags,
+            extra_metadata=payload.extra_metadata,
+        )
+
+        # Queue background work
+        background_tasks.add_task(_run_ingestion_job, job.job_id, store, service)
+
+        return StartIngestionJobResponse(
+            job_id=job.job_id,
+            status=job.status,
+            message="Ingestion job started. Poll /api/brain/ingestion/{job_id} for status.",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to start ingestion job: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get(
+    "/brain/ingestion/{job_id}",
+    response_model=IngestionJobResponse,
+)
+async def get_ingestion_job_status(
+    job_id: str,
+    store: IngestionJobStore = Depends(get_ingestion_job_store),
+) -> IngestionJobResponse:
+    """
+    Get the status of an async ingestion job.
+
+    OPT-005: Async Ingestion Job API
+
+    Args:
+        job_id: ID of the job to query
+
+    Returns:
+        Current job status with progress and results
+
+    Raises:
+        404: If job not found
+        500: If retrieval fails
+    """
+    try:
+        job = await store.get_job(job_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+
+        return job.to_response()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get ingestion job status: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get(
+    "/brain/ingestion",
+    response_model=List[IngestionJobResponse],
+)
+async def list_ingestion_jobs(
+    request: Request,
+    limit: int = 100,
+) -> List[IngestionJobResponse]:
+    """
+    List all ingestion jobs, most recent first.
+
+    OPT-005: Async Ingestion Job API
+
+    Args:
+        limit: Maximum number of jobs to return (default: 100)
+
+    Returns:
+        List of job status responses
+    """
+    try:
+        store = get_ingestion_job_store(request)
+        jobs = await store.list_jobs(limit)
+        return [job.to_response() for job in jobs]
+
+    except Exception as e:
+        logger.error(f"Failed to list ingestion jobs: {e}")
+        return []
+
+
+__all__ = ["router", "RealtimeUsageBroadcaster", "get_usage_broadcaster", "IngestionJobStore", "get_ingestion_job_store"]
 
 
 # ==================== RAG Context Retrieval (BRAIN-036-02) ====================
@@ -1390,7 +1808,7 @@ async def chat_completion(
 
             # Format conversation history
             # BRAIN-037A-03: Include session history in messages
-            messages: list[dict] = [{"role": "system", "content": system_prompt}]
+            messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
 
             # Add chat history from session or request
             for msg in chat_history:
