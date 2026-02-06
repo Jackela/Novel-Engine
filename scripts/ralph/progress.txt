@@ -26,3 +26,29 @@ Started: Fri Feb  6 19:52:52 CST 2026
 - Model auto-detection in __post_init__ with frozen dataclass requires using object.__setattr__(self, "field", value)
 
 ---
+
+## [2026-02-06] - OPT-013
+- Created RAG Pipeline Architecture Diagram for onboarding and reviews
+- Files changed:
+  - docs/architecture/rag_pipeline.mermaid - NEW: Complete RAG pipeline visualization
+  - docs/index.md - Added link to RAG diagram in Architecture section
+  - README.md - Added link to RAG diagram with Chinese description
+  - README.en.md - Added link to RAG diagram with English description
+- Diagram covers the complete pipeline:
+  - Ingestion Phase: Raw Text -> KnowledgeIngestionService -> TextChunker -> Chunked Document
+  - Embedding Phase: EmbeddingCacheService -> EmbeddingServiceAdapter -> Embedded Chunks
+  - Storage Phase: ChromaDBVectorStore -> Vector Store
+  - Retrieval Phase: RetrievalService + HybridRetriever + BM25Retriever -> Candidate Results
+  - Reranking Phase: RerankService -> Reranked Results (with fallback)
+  - Generation Phase: format_context -> Formatted Context -> LLM Generation
+- Component details included as HTML comments for onboarding reference
+
+**Learnings for future iterations:**
+- Mermaid subgraph syntax requires `direction TB` (top-bottom) or `direction LR` for proper layout
+- Use different node shapes: `[Rectangle]` for services, `[("Rounded")]` for data stores/states
+- Styling uses `classDef` and `class` keywords for color coding different phases
+- The existing docs/architecture/ directory already has narrative_engine.mermaid and world_engine.mermaid as examples
+- README.md is Chinese, README.en.md is English - both need to be updated for documentation changes
+- docs/index.md uses the format "### [Architecture](./architecture/) ⭐" - add new items under existing sections
+
+---
