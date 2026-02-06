@@ -229,7 +229,7 @@
         "Tag test for e2e and include in npm --prefix frontend run test:e2e."
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "notes": "Use Playwright route interception to simulate network faults."
     }
