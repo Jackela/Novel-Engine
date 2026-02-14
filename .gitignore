@@ -306,13 +306,13 @@ secrets/
 vault/
 
 # ML and AI Models
-models/
+/models/
 *.model
 *.pkl
 *.h5
 *.onnx
-!contexts/knowledge/domain/models/
-!contexts/knowledge/domain/models/**
+!src/contexts/knowledge/domain/models/
+!src/contexts/knowledge/domain/models/**
 
 # Performance and Profiling
 *.prof
