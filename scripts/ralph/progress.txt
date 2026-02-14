@@ -24,6 +24,20 @@ Started: Fri Feb 14 2026
 
 ---
 
+## [2026-02-14 14:15] - RES-014, RES-015, RES-016
+- Created MemoryStore class in new file: src/contexts/character/infrastructure/persistence/memory_store.py
+- Created MemoryEntry dataclass with memory_id, content, metadata, timestamps
+- Implemented store(memory_id, content, metadata) -> None with upsert semantics
+- Implemented retrieve(memory_id) -> MemoryEntry | None (returns None if not found)
+- Implemented delete(memory_id) -> bool (returns True/False based on deletion)
+- Added utility methods: clear(), count(), list_all()
+- Files changed: src/contexts/character/infrastructure/persistence/memory_store.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - MemoryStore uses Dict[str, MemoryEntry] internally, similar to other in-memory repos
+  - MemoryEntry is a dataclass with timestamps - created_at preserved on updates
+  - The file was created from scratch since it didn't exist before
+---
+
 ## [2026-02-14 14:00] - RES-013
 - Verified search() method was already implemented in InMemoryLoreEntryRepository
 - Method performs case-insensitive substring match on title
