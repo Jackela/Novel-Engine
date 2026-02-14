@@ -269,7 +269,7 @@ jobs:
         
         # Health check
         for i in {1..5}; do
-          if curl -f http://localhost:8080/health; then
+          if curl -f http://localhost:8080/api/health; then
             echo "✅ Health check $i/5 passed"
           else
             echo "❌ Health check $i/5 failed"
@@ -302,7 +302,7 @@ jobs:
         echo "Testing response times..."
         for i in {1..10}; do
           start_time=$(date +%s%N)
-          curl -s http://localhost:8080/health > /dev/null
+          curl -s http://localhost:8080/api/health > /dev/null
           end_time=$(date +%s%N)
           duration=$((($end_time - $start_time) / 1000000))
           echo "Request $i: ${duration}ms"

@@ -71,7 +71,7 @@ jobs:
         run: |
           python -m uvicorn src.api.app:create_app --factory --host 127.0.0.1 --port 8000 &
           sleep 10
-          curl -f http://localhost:8000/health || exit 1
+          curl -f http://localhost:8000/api/health || exit 1
 
       - name: Run integration tests
         working-directory: frontend
