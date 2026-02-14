@@ -516,3 +516,6 @@ nul
 
 # Ralph agent archive directories
 scripts/ralph/archive/
+
+# Ralph worktree directories
+scripts/ralph-*
