@@ -100,6 +100,20 @@ class NarrativeResponse(BaseModel):
 # === Health/Meta Schemas ===
 
 
+class ErrorDetail(BaseModel):
+    """Standard error response schema.
+
+    Used for consistent error reporting across all API endpoints.
+    Example: {"code": "NOT_FOUND", "message": "Resource not found"}
+    """
+
+    code: str = Field(..., description="Error code identifying the type of error")
+    message: str = Field(..., description="Human-readable error message")
+    details: Optional[Dict[str, Any]] = Field(
+        None, description="Additional error context and metadata"
+    )
+
+
 class HealthResponse(BaseModel):
     message: str
     status: Optional[str] = None

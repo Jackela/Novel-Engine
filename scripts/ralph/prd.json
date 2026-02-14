@@ -20,7 +20,7 @@
       ],
       "verification": "grep -A5 'class ErrorDetail' src/api/schemas.py",
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/api/schemas.py"],
       "estimatedTime": "15 min"

@@ -19,7 +19,16 @@ Started: Fri Feb 14 2026
 
 ---
 
-## [2026-02-14] - Operation Synapse Complete
+## [2026-02-14 09:45] - RES-001
+- Added ErrorDetail schema to src/api/schemas.py in Health/Meta Schemas section
+- Schema includes: code (str), message (str), details (Optional[Dict[str, Any]])
+- Added docstring with example usage
+- Files changed: src/api/schemas.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Error schemas should go in Health/Meta Schemas section (after line 100)
+  - Use Dict[str, Any] for flexible metadata fields
+---
+
 - Committed all 584 files from OPERATION SYNAPSE refactoring sprint
 - Files included: formatting changes, line ending normalization, all OPT-001 through OPT-015 implementations
 - Created new PRD: OPERATION RESILIENCE with 15 stories for test fixes, backend stubs, API contracts, infrastructure
