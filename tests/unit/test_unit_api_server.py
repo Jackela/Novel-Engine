@@ -40,7 +40,7 @@ class TestAPIServerEndpoints:
     @pytest.mark.unit
     def test_root_endpoint_success(self):
         """测试根端点 - 成功情况"""
-        response = self.client.get("/")
+        response = self.client.get("/api/")
 
         assert response.status_code == 200
         data = response.json()
@@ -53,7 +53,7 @@ class TestAPIServerEndpoints:
     def test_health_endpoint_success(self, mock_config):
         """测试健康检查端点 - 成功情况"""
         with patch("src.api.routers.health.get_config", return_value=mock_config):
-            response = self.client.get("/health")
+            response = self.client.get("/api/health")
 
             assert response.status_code == 200
             data = response.json()
@@ -70,7 +70,7 @@ class TestAPIServerEndpoints:
         with patch("src.api.routers.health.get_config") as mock_get_config:
             mock_get_config.side_effect = Exception("Severe system error")
 
-            response = self.client.get("/health")
+            response = self.client.get("/api/health")
 
             assert response.status_code == 500
             data = response.json()
@@ -89,7 +89,7 @@ class TestAPIServerEndpoints:
             "src.api.routers.characters.get_characters_directory_path",
             return_value=str(chars_dir),
         ):
-            response = self.client.get("/characters")
+            response = self.client.get("/api/characters")
 
             assert response.status_code == 200
             data = response.json()
@@ -104,7 +104,7 @@ class TestAPIServerEndpoints:
             "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            response = self.client.get("/characters")
+            response = self.client.get("/api/characters")
 
             assert response.status_code == 200
             data = response.json()
@@ -124,7 +124,7 @@ class TestAPIServerEndpoints:
             "src.api.routers.characters.get_characters_directory_path",
             return_value=str(non_existent_dir),
         ):
-            response = self.client.get("/characters")
+            response = self.client.get("/api/characters")
 
             assert response.status_code == 200  # 应该创建目录并返回空列表
             data = response.json()
@@ -148,7 +148,7 @@ class TestAPIServerEndpoints:
                     "Factory error"
                 )
 
-                response = self.client.get("/characters/engineer")
+                response = self.client.get("/api/characters/engineer")
 
                 # 即使CharacterFactory失败，也应该返回基础信息
                 assert response.status_code == 200
@@ -165,12 +165,12 @@ class TestAPIServerEndpoints:
             "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            response = self.client.get("/characters/nonexistent")
+            response = self.client.get("/api/characters/nonexistent")
 
             assert response.status_code == 404
             data = response.json()
-            assert "error" in data
-            assert "detail" in data
+            assert "code" in data
+            assert data.get("code") == "NOT_FOUND"
 
     @pytest.mark.api
     @pytest.mark.slow
@@ -203,7 +203,7 @@ class TestAPIServerEndpoints:
                 mock_chronicler.return_value = mock_chronicler_instance
 
                 response = self.client.post(
-                    "/simulations", json=sample_simulation_request
+                    "/api/simulations", json=sample_simulation_request
                 )
 
                 assert response.status_code == 200
@@ -223,7 +223,7 @@ class TestAPIServerEndpoints:
         """测试模拟端点 - 无效请求（空角色列表）"""
         invalid_request = {"character_names": [], "turns": 3}
 
-        response = self.client.post("/simulations", json=invalid_request)
+        response = self.client.post("/api/simulations", json=invalid_request)
 
         assert response.status_code == 422  # Validation error
 
@@ -245,7 +245,7 @@ class TestAPIServerEndpoints:
             "turns": 3,
         }
 
-        response = self.client.post("/simulations", json=invalid_request)
+        response = self.client.post("/api/simulations", json=invalid_request)
 
         assert response.status_code == 422  # Validation error
 
@@ -269,23 +269,20 @@ class TestAPIServerEndpoints:
                 "turns": 3,
             }
 
-            response = self.client.post("/simulations", json=request_data)
+            response = self.client.post("/api/simulations", json=request_data)
 
             assert response.status_code == 404
             data = response.json()
-            assert "error" in data
+            assert "code" in data
             # 可能任一不存在的字符都会被检测到
-            assert (
-                "nonexistent_character" in data["detail"]
-                or "not found" in data["detail"].lower()
-            )
+            assert data.get("code") == "NOT_FOUND"
 
     @pytest.mark.api
     @pytest.mark.unit
     @pytest.mark.fast
     def test_campaigns_endpoint_success(self):
         """测试活动列表端点 - 成功情况"""
-        response = self.client.get("/campaigns")
+        response = self.client.get("/api/campaigns")
 
         assert response.status_code == 200
         data = response.json()
@@ -302,7 +299,7 @@ class TestAPIServerEndpoints:
             "participants": ["engineer", "pilot"],
         }
 
-        response = self.client.post("/campaigns", json=campaign_data)
+        response = self.client.post("/api/campaigns", json=campaign_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -320,7 +317,7 @@ class TestAPIServerEndpoints:
         with patch("src.api.routers.health.get_config") as mock_get_config:
             mock_get_config.side_effect = Exception("Severe system error")
 
-            response = self.client.get("/health")
+            response = self.client.get("/api/health")
 
             assert response.status_code == 500
             data = response.json()
@@ -339,7 +336,7 @@ class TestAPIServerEndpoints:
                 with patch("os.listdir") as mock_listdir:
                     mock_listdir.side_effect = PermissionError("Permission denied")
 
-                    response = self.client.get("/characters")
+                    response = self.client.get("/api/characters")
 
                     assert response.status_code == 500
                     data = response.json()
@@ -358,7 +355,7 @@ class TestAPIServerEndpoints:
                 with patch("os.listdir") as mock_listdir:
                     mock_listdir.side_effect = Exception("Unexpected file system error")
 
-                    response = self.client.get("/characters")
+                    response = self.client.get("/api/characters")
 
                     assert response.status_code == 500
                     data = response.json()
@@ -372,7 +369,7 @@ class TestAPIServerEndpoints:
         """测试模拟端点 - 空角色列表验证"""
         empty_request = {"character_names": [], "turns": 3}
 
-        response = self.client.post("/simulations", json=empty_request)
+        response = self.client.post("/api/simulations", json=empty_request)
 
         # This should trigger the validation error at line 288
         assert response.status_code == 422  # FastAPI validation error
@@ -404,7 +401,7 @@ class TestAPIServerEndpoints:
                     "turns": 3,
                 }
 
-                response = self.client.post("/simulations", json=request_data)
+                response = self.client.post("/api/simulations", json=request_data)
 
                 assert response.status_code == 400
                 data = response.json()
@@ -447,7 +444,7 @@ class TestAPIServerEndpoints:
                     "turns": 3,
                 }
 
-                response = self.client.post("/simulations", json=request_data)
+                response = self.client.post("/api/simulations", json=request_data)
 
                 # 应该仍然成功，但会记录错误并继续
                 assert response.status_code == 200
@@ -486,7 +483,7 @@ class TestAPIServerEndpoints:
                     "turns": 1,
                 }
 
-                response = self.client.post("/simulations", json=request_data)
+                response = self.client.post("/api/simulations", json=request_data)
 
                 # 应该成功并返回回退故事
                 assert response.status_code == 200
@@ -511,7 +508,7 @@ class TestAPIServerEndpoints:
                     "Unexpected character error"
                 )
 
-                response = self.client.get("/characters/engineer")
+                response = self.client.get("/api/characters/engineer")
 
                 # 应该返回降级的角色信息
                 assert response.status_code == 200
@@ -527,7 +524,7 @@ class TestAPIServerEndpoints:
             with patch("os.listdir") as mock_listdir:
                 mock_listdir.side_effect = Exception("File system error")
 
-                response = self.client.get("/campaigns")
+                response = self.client.get("/api/campaigns")
 
                 # 应该优雅处理错误并返回空列表
                 assert response.status_code == 200
@@ -548,7 +545,7 @@ class TestAPIServerEndpoints:
                 "participants": ["engineer"],
             }
 
-            response = self.client.post("/campaigns", json=campaign_data)
+            response = self.client.post("/api/campaigns", json=campaign_data)
 
             assert response.status_code == 500
             data = response.json()
@@ -574,15 +571,16 @@ class TestAPIServerErrorHandling:
 
         assert response.status_code == 404
         data = response.json()
-        assert "error" in data
-        assert "detail" in data
+        assert "code" in data
+        assert data.get("code") == "NOT_FOUND"
+        assert "message" in data
 
     @pytest.mark.api
     @pytest.mark.unit
     @pytest.mark.fast
     def test_405_method_not_allowed(self):
         """测试405方法不允许错误"""
-        response = self.client.put("/")  # 根端点不支持PUT
+        response = self.client.put("/api/")  # 根端点不支持PUT
 
         assert response.status_code == 405
 
@@ -594,7 +592,7 @@ class TestAPIServerErrorHandling:
         """测试422验证错误"""
         invalid_data = {"invalid_field": "invalid_value"}
 
-        response = self.client.post("/simulations", json=invalid_data)
+        response = self.client.post("/api/simulations", json=invalid_data)
 
         assert response.status_code == 422
 
@@ -614,7 +612,7 @@ class TestAPIServerSecurity:
     def test_cors_headers_present(self):
         """测试CORS头部设置"""
         # CORS头部在GET请求中也会出现
-        response = self.client.get("/")
+        response = self.client.get("/api/")
 
         # FastAPI的CORSMiddleware在实际请求中设置CORS头部
         # 检查响应成功即可，CORS在实际跨域请求中生效
@@ -622,7 +620,7 @@ class TestAPIServerSecurity:
 
         # 可以通过模拟跨域请求来测试CORS
         headers = {"Origin": "https://example.com"}
-        response_with_origin = self.client.get("/", headers=headers)
+        response_with_origin = self.client.get("/api/", headers=headers)
         assert response_with_origin.status_code == 200
 
     @pytest.mark.security
@@ -635,7 +633,7 @@ class TestAPIServerSecurity:
             "turns": 3,
         }
 
-        response = self.client.post("/simulations", json=malicious_input)
+        response = self.client.post("/api/simulations", json=malicious_input)
 
         # 应该返回404（字符不存在）而不是服务器错误
         assert response.status_code in [404, 422]
@@ -647,7 +645,7 @@ class TestAPIServerSecurity:
         """测试XSS防护"""
         xss_payload = "<script>alert('xss')</script>"
 
-        response = self.client.get(f"/characters/{xss_payload}")
+        response = self.client.get(f"/api/characters/{xss_payload}")
 
         # 应该安全处理，不返回脚本内容
         assert response.status_code == 404
@@ -661,7 +659,7 @@ class TestAPIServerSecurity:
         """测试路径遍历防护"""
         malicious_path = "../../../etc/passwd"
 
-        response = self.client.get(f"/characters/{malicious_path}")
+        response = self.client.get(f"/api/characters/{malicious_path}")
 
         assert response.status_code == 404
 
@@ -672,7 +670,7 @@ class TestAPIServerSecurity:
         """测试大载荷处理"""
         large_payload = {"character_names": ["test"] * 1000, "turns": 10}  # 大量角色名
 
-        response = self.client.post("/simulations", json=large_payload)
+        response = self.client.post("/api/simulations", json=large_payload)
 
         # 应该返回验证错误而不是服务器崩溃
         assert response.status_code == 422
@@ -695,7 +693,7 @@ class TestAPIServerPerformance:
         import time
 
         start_time = time.time()
-        response = self.client.get("/health")
+        response = self.client.get("/api/health")
         end_time = time.time()
 
         response_time = end_time - start_time
@@ -714,7 +712,7 @@ class TestAPIServerPerformance:
             return_value=str(characters_directory),
         ):
             start_time = time.time()
-            response = self.client.get("/characters")
+            response = self.client.get("/api/characters")
             end_time = time.time()
 
             response_time = end_time - start_time
@@ -731,7 +729,7 @@ class TestAPIServerPerformance:
         import time
 
         def make_health_request():
-            return self.client.get("/health")
+            return self.client.get("/api/health")
 
         start_time = time.time()
 

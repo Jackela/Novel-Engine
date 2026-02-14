@@ -60,6 +60,9 @@ class MockEventBusModule:
     EventPriority = MockEventPriority
 
 
+# Save original module if it exists
+_original_event_bus = sys.modules.get("src.events.event_bus")
+
 sys.modules["src.events.event_bus"] = MockEventBusModule()
 
 # Now import the actual modules we're testing
@@ -69,6 +72,12 @@ from src.contexts.world.domain.aggregates.world_state import (
     WorldStatus,
 )
 from src.contexts.world.domain.value_objects.coordinates import Coordinates
+
+# Restore original module to avoid polluting other tests
+if _original_event_bus is not None:
+    sys.modules["src.events.event_bus"] = _original_event_bus
+else:
+    del sys.modules["src.events.event_bus"]
 
 
 class TestWorldStateAggregate:

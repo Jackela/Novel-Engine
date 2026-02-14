@@ -21,6 +21,10 @@ event_bus_mock = MagicMock()
 event_mock = MagicMock()
 event_mock.return_value = Mock()
 event_bus_mock.Event = event_mock
+
+# Save original module if it exists
+_original_event_bus = sys.modules.get("src.events.event_bus")
+
 sys.modules["src.events.event_bus"] = event_bus_mock
 
 from src.contexts.character.domain.value_objects.character_goal import (
@@ -28,6 +32,12 @@ from src.contexts.character.domain.value_objects.character_goal import (
     GoalStatus,
     GoalUrgency,
 )
+
+# Restore original module to avoid polluting other tests
+if _original_event_bus is not None:
+    sys.modules["src.events.event_bus"] = _original_event_bus
+else:
+    del sys.modules["src.events.event_bus"]
 
 
 class TestCharacterGoalValueObject:

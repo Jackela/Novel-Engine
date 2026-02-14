@@ -9,7 +9,16 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
-pytestmark = pytest.mark.integration
+try:
+    from slowapi import Limiter
+    SLOWAPI_AVAILABLE = True
+except ImportError:
+    SLOWAPI_AVAILABLE = False
+
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(not SLOWAPI_AVAILABLE, reason="slowapi not installed")
+]
 
 
 def _load_production_app(monkeypatch) -> TestClient:
@@ -32,6 +41,7 @@ def client(monkeypatch):
     return _load_production_app(monkeypatch)
 
 
+@pytest.mark.integration
 def test_auth_rejects_query_credentials(client):
     response = client.post(
         "/auth/token?username=admin&password=admin-password",
@@ -41,6 +51,7 @@ def test_auth_rejects_query_credentials(client):
     assert "Credentials must be sent" in response.json()["detail"]
 
 
+@pytest.mark.integration
 def test_auth_accepts_body_credentials(client):
     response = client.post(
         "/auth/token",

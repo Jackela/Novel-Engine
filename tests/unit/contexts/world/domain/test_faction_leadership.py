@@ -56,6 +56,9 @@ class MockEventBusModule:
     EventPriority = MockEventPriority
 
 
+# Save original module if it exists
+_original_event_bus = sys.modules.get("src.events.event_bus")
+
 sys.modules["src.events.event_bus"] = MockEventBusModule()
 
 from src.contexts.world.domain.entities.faction import (
@@ -64,6 +67,12 @@ from src.contexts.world.domain.entities.faction import (
     FactionStatus,
     FactionType,
 )
+
+# Restore original module to avoid polluting other tests
+if _original_event_bus is not None:
+    sys.modules["src.events.event_bus"] = _original_event_bus
+else:
+    del sys.modules["src.events.event_bus"]
 
 
 def _create_test_faction(

@@ -12,6 +12,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+try:
+    from rank_bm25 import BM25Okapi
+    RANK_BM25_AVAILABLE = True
+except ImportError:
+    RANK_BM25_AVAILABLE = False
+
 from src.contexts.knowledge.application.services.bm25_retriever import (
     DEFAULT_B,
     DEFAULT_K1,
@@ -22,7 +28,10 @@ from src.contexts.knowledge.application.services.bm25_retriever import (
     tokenize,
 )
 
-pytestmark = pytest.mark.unit
+pytestmark = [
+    pytest.mark.unit,
+    pytest.mark.skipif(not RANK_BM25_AVAILABLE, reason="rank-bm25 not installed")
+]
 
 
 @pytest.mark.unit

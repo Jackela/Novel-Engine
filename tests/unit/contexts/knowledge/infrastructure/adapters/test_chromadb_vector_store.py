@@ -16,6 +16,12 @@ from typing import Any
 
 import pytest
 
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    CHROMADB_AVAILABLE = False
+
 from src.contexts.knowledge.application.ports.i_vector_store import (
     IVectorStore,
     QueryResult,
@@ -27,7 +33,8 @@ from src.contexts.knowledge.infrastructure.adapters.chromadb_vector_store import
     ChromaDBVectorStore,
 )
 
-pytestmark = pytest.mark.unit
+# Skip all tests if chromadb is not installed, and mark as unit tests
+pytestmark = [pytest.mark.unit, pytest.mark.skipif(not CHROMADB_AVAILABLE, reason="chromadb not installed")]
 
 
 @pytest.fixture

@@ -15,6 +15,12 @@ from typing import Any
 
 import pytest
 
+try:
+    import scipy
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+
 from src.contexts.knowledge.application.ports.i_graph_store import (
     CentralityResult,
     CliqueResult,
@@ -992,6 +998,7 @@ class TestNetworkXGraphStoreAdvancedQueries:
             assert len(clique) <= 3
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(not SCIPY_AVAILABLE, reason="scipy not installed for centrality calculations")
     async def test_get_centrality_all(self, graph_store: NetworkXGraphStore) -> None:
         """Calculate centrality for all entities."""
         entities = [
@@ -1037,6 +1044,7 @@ class TestNetworkXGraphStoreAdvancedQueries:
         assert pageranks == sorted(pageranks, reverse=True)
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(not SCIPY_AVAILABLE, reason="scipy not installed for centrality calculations")
     async def test_get_centrality_single_entity(
         self, graph_store: NetworkXGraphStore
     ) -> None:
@@ -1060,6 +1068,7 @@ class TestNetworkXGraphStoreAdvancedQueries:
         assert result[0].degree_centrality > 0
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(not SCIPY_AVAILABLE, reason="scipy not installed for centrality calculations")
     async def test_get_centrality_top_n(self, graph_store: NetworkXGraphStore) -> None:
         """Calculate centrality with top_n limit."""
         entities = [
