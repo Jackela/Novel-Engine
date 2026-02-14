@@ -1,258 +1,276 @@
 {
   "project": "Novel-Engine-Op-Resilience",
   "branchName": "refactor/brain-optimization",
-  "description": "OPERATION RESILIENCE: Fix skipped tests, complete backend stubs, resolve API contract issues, and improve infrastructure before production deployment.",
+  "description": "OPERATION RESILIENCE: Fix skipped tests, complete backend stubs, resolve API contract issues, and improve infrastructure.",
   "techContext": {
     "stack": "FastAPI + ChromaDB + Redis (mocked) + React (shadcn/ui + Zustand)",
     "testCommand": "pytest && npm --prefix frontend run test:e2e",
     "typecheckCommand": "mypy --strict src/contexts/knowledge && npm --prefix frontend run type-check",
-    "conventions": "Strict Hexagonal Architecture, contract-first (schemas -> OpenAPI -> frontend types), structured logging via structlog, shadcn/ui + Tailwind-only styling, and required UI states (loading/empty/error/ready). Extract large classes into composable strategies."
+    "conventions": "Strict Hexagonal Architecture, contract-first (schemas -> OpenAPI -> frontend types), structured logging via structlog, shadcn/ui + Tailwind-only styling, required UI states (loading/empty/error/ready)."
   },
   "userStories": [
     {
       "id": "RES-001",
-      "title": "Test: Fix Environment-Dependent Skipped Tests",
-      "description": "Enable and fix tests skipped due to missing environment variables or services.",
+      "title": "API: Fix /api/api/ Path Duplication",
+      "description": "Fix 20 endpoints with /api/api/ double prefix in OpenAPI spec.",
       "acceptanceCriteria": [
-        "Audit all tests marked with @pytest.mark.skip(reason contains 'env', 'CI', 'redis', 'database') across the codebase.",
-        "Create mock fixtures or test doubles for external services (Redis, Neo4j, ChromaDB) where appropriate.",
-        "Add environment variable guards with skipif conditions that check for actual availability.",
-        "Ensure at least 80% of previously skipped tests now run and pass in CI.",
-        "Document required environment setup in tests/conftest.py docstrings."
+        "Run: grep -c '/api/api/' docs/api/openapi.json → should be 0",
+        "Fix router prefixes in src/api/routers/*.py",
+        "Regenerate: python scripts/generate_openapi.py",
+        "Verify: curl http://localhost:8000/health returns 200 (not 404)",
+        "Update frontend/src/types/schemas.ts if paths changed"
       ],
+      "verification": "grep '/api/api/' docs/api/openapi.json; echo 'Exit code:' $?  # Should exit 1 (not found)",
       "priority": 1,
       "passes": false,
-      "effort": "high",
-      "notes": "Focus on knowledge context tests first as they are most critical for RAG."
+      "effort": "low",
+      "files": ["src/api/routers/*.py", "docs/api/openapi.json", "frontend/src/types/schemas.ts"]
     },
     {
       "id": "RES-002",
-      "title": "Test: Fix TDD Placeholder Tests",
-      "description": "Implement or remove tests that were skipped as TDD placeholders.",
+      "title": "API: Add Standard Error Response Schemas",
+      "description": "Create ErrorDetail, ValidationError schemas in src/api/schemas.py.",
       "acceptanceCriteria": [
-        "Identify all tests with skip markers containing 'TODO', 'TDD', 'placeholder', or 'not implemented'.",
-        "For each placeholder: either implement the test with proper assertions, or remove if the feature was abandoned.",
-        "Ensure implemented tests follow the AAA pattern (Arrange-Act-Assert) and have descriptive names.",
-        "No test file should have more than 10% placeholder skips after completion.",
-        "Update test count metrics in test_pyramid_monitor to reflect changes."
+        "Add ErrorDetail schema with fields: code, message, details (optional dict)",
+        "Add ValidationError schema extending ErrorDetail with field_errors",
+        "Register HTTPException handlers in src/api/app.py for 400, 404, 422, 500",
+        "All error responses use same envelope: {\"error\": ErrorDetail}",
+        "Add test: tests/api/test_error_schemas.py with 5 test cases"
       ],
+      "verification": "pytest tests/api/test_error_schemas.py -v",
       "priority": 2,
       "passes": false,
-      "effort": "high",
-      "notes": "Prioritize tests in src/contexts/ as they test core business logic."
+      "effort": "low",
+      "files": ["src/api/schemas.py", "src/api/app.py", "tests/api/test_error_schemas.py"],
+      "referencePattern": "See existing schemas in src/api/schemas.py for style"
     },
     {
       "id": "RES-003",
-      "title": "Test: Fix Dependency-Related Skipped Tests",
-      "description": "Resolve tests skipped due to missing optional dependencies.",
+      "title": "Frontend: Add Node.js Version Enforcement",
+      "description": "Add Node >= 18 requirement to package.json and CI.",
       "acceptanceCriteria": [
-        "Audit tests skipped due to missing imports (try/except ImportError patterns).",
-        "Add missing optional dependencies to requirements.txt or mark as truly optional in pyproject.toml extras.",
-        "Create integration test markers (e.g., @pytest.mark.integration_chromadb) for tests requiring specific services.",
-        "Document dependency requirements in test file docstrings.",
-        "Update CI workflow to run integration tests when services are available."
+        "Add to frontend/package.json: \"engines\": {\"node\": \">=18.0.0\"}",
+        "Create frontend/.nvmrc with content: \"20\"",
+        "Add preinstall script: 'node -v | grep -q v1[89]\\|v2[0-9] || exit 1'",
+        "Verify: npm install shows warning on Node 16 (if testable)"
       ],
+      "verification": "cat frontend/package.json | grep -A1 'engines' && cat frontend/.nvmrc",
       "priority": 3,
       "passes": false,
-      "effort": "medium",
-      "notes": "Common missing deps: neo4j, chromadb, tiktoken, rank_bm25"
+      "effort": "low",
+      "files": ["frontend/package.json", "frontend/.nvmrc"]
     },
     {
       "id": "RES-004",
-      "title": "Backend: Complete WorldStateManager Implementation",
-      "description": "Replace stub implementations in world_state_manager with working code.",
+      "title": "Infrastructure: Add Health Check Endpoints",
+      "description": "Create /health/live and /health/ready endpoints.",
       "acceptanceCriteria": [
-        "Identify all NotImplementError, pass, and TODO comments in src/contexts/world modules.",
-        "Implement world state persistence with proper serialization.",
-        "Add proper error handling with Result<T,E> pattern.",
-        "Create integration tests for state persistence and retrieval.",
-        "Document the world state schema and lifecycle in docstrings."
+        "Add GET /health/live returning {\"status\": \"ok\"} with 200",
+        "Add GET /health/ready checking ChromaDB connection",
+        "Both endpoints in src/api/routers/health.py (update existing)",
+        "Add test: tests/api/test_health_endpoints.py",
+        "Response time < 100ms for /health/live"
       ],
+      "verification": "pytest tests/api/test_health_endpoints.py -v && curl -s localhost:8000/health/live",
       "priority": 4,
       "passes": false,
-      "effort": "high",
-      "notes": "Coordinate with any Weaver UI that depends on world state."
+      "effort": "low",
+      "files": ["src/api/routers/health.py", "tests/api/test_health_endpoints.py"]
     },
     {
       "id": "RES-005",
-      "title": "Backend: Complete Memory Interface Implementation",
-      "description": "Implement memory layer interfaces currently marked as stubs.",
+      "title": "API: Sync Frontend-Backend Schemas",
+      "description": "Run schema sync audit and fix all mismatches.",
       "acceptanceCriteria": [
-        "Audit memory_interface, episodic_memory, semantic_memory modules for stub implementations.",
-        "Implement CRUD operations for character memories with proper storage.",
-        "Add memory decay/relevance scoring algorithms.",
-        "Create unit tests with mocked storage backends.",
-        "Ensure memory retrieval integrates with RAG pipeline."
+        "Run: python scripts/audit_schema_sync.py → 0 mismatches",
+        "If mismatches found, update frontend/src/types/schemas.ts",
+        "Add CI check in .github/workflows/ that runs audit_schema_sync.py",
+        "Document in CLAUDE.md: 'After API changes, run audit_schema_sync.py'"
       ],
+      "verification": "python scripts/audit_schema_sync.py; echo 'Exit:' $?",
       "priority": 5,
       "passes": false,
-      "effort": "high",
-      "notes": "Memory is critical for character consistency in narratives."
+      "effort": "low",
+      "files": ["frontend/src/types/schemas.ts", "scripts/audit_schema_sync.py"],
+      "blockedBy": ["RES-001"]
     },
     {
       "id": "RES-006",
-      "title": "Backend: Complete Narrative Stream Service",
-      "description": "Implement narrative_stream_service for real-time story updates.",
+      "title": "Test: Fix Skipped Knowledge Context Tests",
+      "description": "Fix skipped tests in tests/unit/contexts/knowledge/ (baseline: ~30 skipped).",
       "acceptanceCriteria": [
-        "Replace placeholder SSE implementation with proper Server-Sent Events.",
-        "Implement narrative event publishing and subscription.",
-        "Add connection management and reconnection handling.",
-        "Create integration tests for stream lifecycle.",
-        "Document API contract for frontend integration."
+        "Run: pytest tests/unit/contexts/knowledge/ --collect-only -q 2>/dev/null | grep -c skip",
+        "Target: Reduce skipped count by 50% (from ~30 to ~15 or fewer)",
+        "Common fixes: Add mock fixtures for ChromaDB, embedding services",
+        "Do NOT remove tests - either fix or add proper skipif with reason",
+        "Update conftest.py with any new fixtures needed"
       ],
+      "verification": "pytest tests/unit/contexts/knowledge/ -v --tb=no 2>&1 | tail -5",
       "priority": 6,
       "passes": false,
       "effort": "medium",
-      "notes": "Used by ChatInterface for real-time story generation."
+      "files": ["tests/unit/contexts/knowledge/", "tests/conftest.py"],
+      "baseline": {
+        "skippedTests": 30,
+        "targetReduction": "50%"
+      }
     },
     {
       "id": "RES-007",
-      "title": "API: Fix OpenAPI Path Duplication",
-      "description": "Resolve /api/api/ double-prefix issue in OpenAPI specification.",
+      "title": "Test: Fix Skipped World Context Tests",
+      "description": "Fix skipped tests in tests/unit/contexts/world/ (baseline: ~20 skipped).",
       "acceptanceCriteria": [
-        "Audit docs/api/openapi.json for paths containing /api/api/ prefix.",
-        "Fix FastAPI router configuration to use correct path prefixes.",
-        "Regenerate openapi.json with corrected paths.",
-        "Update frontend/src/types/schemas.ts to match corrected API.",
-        "Verify all API routes work correctly after fix.",
-        "Add CI check to prevent future path duplication."
+        "Run: pytest tests/unit/contexts/world/ --collect-only -q 2>/dev/null | grep -c skip",
+        "Target: Reduce skipped count by 50% (from ~20 to ~10 or fewer)",
+        "Focus on: test_world_state_aggregate.py, test_faction.py",
+        "Add fixtures for in-memory repositories"
       ],
+      "verification": "pytest tests/unit/contexts/world/ -v --tb=no 2>&1 | tail -5",
       "priority": 7,
       "passes": false,
-      "effort": "low",
-      "notes": "Currently 20 endpoints have /api/api/ duplication."
+      "effort": "medium",
+      "files": ["tests/unit/contexts/world/"]
     },
     {
       "id": "RES-008",
-      "title": "API: Add Missing Error Response Schemas",
-      "description": "Define and document all API error response schemas.",
+      "title": "Backend: Implement WorldStateAggregate.save()",
+      "description": "Replace NotImplementedError in WorldStateAggregate.save() method.",
       "acceptanceCriteria": [
-        "Create ErrorDetail, ValidationError, and NotFoundError schemas in src/api/schemas.py.",
-        "Add HTTPException handlers for common error codes (400, 401, 403, 404, 422, 500, 503).",
-        "Document all error responses in OpenAPI specification.",
-        "Ensure frontend has typed error handling for each schema.",
-        "Add request validation tests that verify error response shapes."
+        "File: src/contexts/world/domain/aggregates/world_state.py",
+        "Implement save() to serialize state to JSON file",
+        "Use Result[None, SaveError] return pattern",
+        "Add unit test: test_world_state_aggregate.py::test_save",
+        "Max 50 lines of code for implementation"
       ],
+      "verification": "pytest tests/unit/contexts/world/domain/test_world_state_aggregate.py::test_save -v",
       "priority": 8,
       "passes": false,
-      "effort": "medium",
-      "notes": "Essential for frontend error handling and user feedback."
+      "effort": "low",
+      "files": ["src/contexts/world/domain/aggregates/world_state.py", "tests/unit/contexts/world/domain/test_world_state_aggregate.py"],
+      "referencePattern": "See save() pattern in src/contexts/character/domain/aggregates/character.py"
     },
     {
       "id": "RES-009",
-      "title": "API: Validate Frontend-Backend Schema Alignment",
-      "description": "Ensure frontend schemas exactly match backend OpenAPI spec.",
+      "title": "Backend: Implement InMemoryLoreEntryRepository.search()",
+      "description": "Replace pass statement in search() method with actual search logic.",
       "acceptanceCriteria": [
-        "Run scripts/audit_schema_sync.py and fix all mismatches.",
-        "Create CI check that fails on schema drift.",
-        "Document schema sync process in CLAUDE.md.",
-        "Add pre-commit hook for schema validation.",
-        "Ensure all API changes include schema updates as part of the PR."
+        "File: src/contexts/world/infrastructure/persistence/in_memory_lore_entry_repository.py",
+        "Implement search(query: str) -> list[LoreEntry]",
+        "Use simple substring match (no fancy search needed)",
+        "Add unit test: test_lore_entry.py::test_repository_search",
+        "Return empty list if no matches (not exception)"
       ],
+      "verification": "pytest tests/unit/contexts/world/infrastructure/test_in_memory_lore_entry_repository.py -v -k search",
       "priority": 9,
       "passes": false,
-      "effort": "medium",
-      "notes": "Use openapi-typescript for frontend generation."
+      "effort": "low",
+      "files": ["src/contexts/world/infrastructure/persistence/in_memory_lore_entry_repository.py"]
     },
     {
       "id": "RES-010",
-      "title": "Infrastructure: Redis Integration Hardening",
-      "description": "Replace Redis mocks with configurable real/mocked implementation.",
+      "title": "Infrastructure: Add Structlog to Remaining Modules",
+      "description": "Replace print() and logging.* with structlog in src/core/ modules.",
       "acceptanceCriteria": [
-        "Create RedisConfig value object with connection pooling.",
-        "Implement graceful degradation when Redis is unavailable.",
-        "Add health check endpoint for Redis connectivity.",
-        "Create integration tests with real Redis (docker-compose).",
-        "Document Redis setup in README.md infrastructure section.",
-        "Add Redis connection metrics to monitoring dashboard."
+        "Run: grep -r 'print(' src/core/ | wc -l → should decrease by 80%",
+        "Run: grep -r 'logging\\.info\\|logging\\.debug\\|logging\\.warning' src/core/ | wc -l → 0",
+        "Use pattern: logger = structlog.get_logger(); logger.info('event_name', key=value)",
+        "Do NOT change tests/ directory",
+        "Max 5 files to update in this story"
       ],
+      "verification": "grep -c 'print(' src/core/*.py 2>/dev/null | grep -v ':0$' | wc -l",
       "priority": 10,
       "passes": false,
-      "effort": "high",
-      "notes": "Critical for caching and session management."
+      "effort": "medium",
+      "files": ["src/core/*.py"],
+      "baseline": {
+        "printStatements": "count before starting",
+        "targetReduction": "80%"
+      }
     },
     {
       "id": "RES-011",
-      "title": "Infrastructure: Structured Logging Standardization",
-      "description": "Ensure all modules use structlog consistently.",
+      "title": "Frontend: Fix Flaky Dashboard E2E Tests",
+      "description": "Fix tests in frontend/tests/e2e/dashboard-*.spec.ts with retry/timeout issues.",
       "acceptanceCriteria": [
-        "Audit all log statements across src/ for structlog usage.",
-        "Replace any print() or logging.info() with structlog.get_logger().",
-        "Add correlation IDs to all log entries for request tracing.",
-        "Create log level standards document (DEBUG vs INFO vs WARN vs ERROR).",
-        "Add log sampling for high-volume endpoints.",
-        "Ensure PII is never logged (add sensitive field filtering)."
+        "Files: frontend/tests/e2e/dashboard-core-uat.spec.ts, dashboard-extended-uat.spec.ts",
+        "Replace waitForTimeout with waitForSelector where possible",
+        "Add data-testid attributes to slow-loading elements",
+        "Each test should have max 30s timeout",
+        "Run 3x locally - all should pass"
       ],
+      "verification": "cd frontend && npm run test:e2e -- --grep 'dashboard' --retries=0 2>&1 | tail -10",
       "priority": 11,
       "passes": false,
       "effort": "medium",
-      "notes": "Essential for production debugging and observability."
+      "files": ["frontend/tests/e2e/dashboard-*.spec.ts", "frontend/src/features/dashboard/"]
     },
     {
       "id": "RES-012",
-      "title": "Infrastructure: Health Check Endpoints",
-      "description": "Implement comprehensive health check system.",
+      "title": "Test: Remove Abandoned TDD Placeholders",
+      "description": "Remove or implement TDD placeholder tests with no corresponding feature.",
       "acceptanceCriteria": [
-        "Create /health/live (liveness) and /health/ready (readiness) endpoints.",
-        "Check dependencies: ChromaDB, Redis, PostgreSQL (if configured).",
-        "Return detailed component status in /health/ready response.",
-        "Add timeout handling for dependency checks.",
-        "Document health check contracts for Kubernetes integration.",
-        "Create integration tests for health check scenarios."
+        "Find: grep -r '@pytest.mark.skip.*TDD\\|TODO.*test' tests/unit/",
+        "For each: check if feature exists in src/",
+        "If feature exists: implement test",
+        "If feature abandoned: remove test with comment in commit",
+        "Target: Reduce TDD skips by 30% (baseline ~40)"
       ],
+      "verification": "pytest tests/unit/ --collect-only -q 2>/dev/null | grep -i 'tdd\\|placeholder' | wc -l",
       "priority": 12,
       "passes": false,
-      "effort": "low",
-      "notes": "Required for production deployment and auto-scaling."
+      "effort": "medium",
+      "files": ["tests/unit/"]
     },
     {
       "id": "RES-013",
-      "title": "Frontend: Add Node.js Version Requirement",
-      "description": "Document and enforce Node.js version requirements.",
+      "title": "Backend: Implement MemoryStore CRUD",
+      "description": "Implement basic CRUD in src/contexts/character/infrastructure/persistence/memory_store.py.",
       "acceptanceCriteria": [
-        "Add engines field to frontend/package.json requiring Node >= 18.",
-        "Add .nvmrc file with recommended Node version.",
-        "Update CI workflow to check Node version.",
-        "Add pre-install script that warns on incompatible Node versions.",
-        "Document Node requirements in README.md and frontend/README.md."
+        "Implement: store(memory_id, content, metadata) -> None",
+        "Implement: retrieve(memory_id) -> MemoryEntry | None",
+        "Implement: delete(memory_id) -> bool",
+        "Use dict-based in-memory storage (no external DB)",
+        "Add test: test_memory_store.py with 5 test cases"
       ],
+      "verification": "pytest tests/unit/contexts/character/infrastructure/test_memory_store.py -v",
       "priority": 13,
       "passes": false,
-      "effort": "low",
-      "notes": "esbuild and other deps require Node 18+."
+      "effort": "medium",
+      "files": ["src/contexts/character/infrastructure/persistence/memory_store.py", "tests/unit/contexts/character/infrastructure/test_memory_store.py"]
     },
     {
       "id": "RES-014",
-      "title": "Frontend: E2E Test Stability Improvements",
-      "description": "Fix flaky E2E tests and improve reliability.",
+      "title": "Tech Debt: Audit Root-Level Compatibility Files",
+      "description": "Review src/character_factory.py, src/director_agent.py for deprecation status.",
       "acceptanceCriteria": [
-        "Identify all E2E tests with retry patterns or timeout issues.",
-        "Add proper wait conditions using Playwright's waitFor* methods.",
-        "Implement test isolation with proper cleanup between tests.",
-        "Add network idle checks before assertions.",
-        "Create E2E debugging guide in tests/e2e/README.md.",
-        "Reduce E2E test flake rate to < 5%."
+        "Check if files are imported anywhere (grep -r 'from src.character_factory' .)",
+        "If used: add deprecation warning with migration path",
+        "If unused: add to .gitignore candidate list (don't delete yet)",
+        "Update CLAUDE.md with migration guidance",
+        "Create tracking issue for removal in next version"
       ],
+      "verification": "grep -r 'from src.character_factory\\|from src.director_agent' src/ tests/ | wc -l",
       "priority": 14,
       "passes": false,
-      "effort": "medium",
-      "notes": "Focus on dashboard and chat tests first."
+      "effort": "low",
+      "files": ["src/character_factory.py", "src/director_agent.py", "src/director_agent_integrated.py"]
     },
     {
       "id": "RES-015",
-      "title": "Tech Debt: Remove Deprecated Code",
-      "description": "Clean up deprecated functions and modules.",
+      "title": "Docs: Update Architecture Diagrams",
+      "description": "Update docs/architecture/*.mermaid to reflect current code structure.",
       "acceptanceCriteria": [
-        "Search for @deprecated, DEPRECATED, deprecation_warning patterns.",
-        "Remove or replace deprecated code that has alternatives.",
-        "Update all import references to use current modules.",
-        "Add migration notes to CHANGELOG.md for any breaking changes.",
-        "Run full test suite to ensure no regressions."
+        "Verify rag_pipeline.mermaid matches current service names",
+        "Add memory_flow.mermaid for RES-013 implementation",
+        "All class names in diagrams exist in codebase",
+        "Regenerate PNG if Makefile target exists"
       ],
+      "verification": "grep -f <(ls src/contexts/knowledge/application/services/*.py | xargs -I{} basename {} .py) docs/architecture/rag_pipeline.mermaid | wc -l",
       "priority": 15,
       "passes": false,
-      "effort": "medium",
-      "notes": "Check root-level compatibility files (character_factory.py, director_agent.py)."
+      "effort": "low",
+      "files": ["docs/architecture/*.mermaid"],
+      "blockedBy": ["RES-013"]
     }
   ]
 }
