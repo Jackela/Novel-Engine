@@ -54,7 +54,7 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
         """Handle 404 Not Found errors with ErrorDetail schema.
 
         Returns a structured error response matching ErrorDetail schema.
-        Example: {"error": {"code": "NOT_FOUND", "message": "Resource not found"}}
+        Example: {"code": "NOT_FOUND", "message": "Resource not found"}
         """
         error_detail = ErrorDetail(
             code="NOT_FOUND",
@@ -63,7 +63,7 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
         )
         return JSONResponse(
             status_code=404,
-            content={"error": error_detail.model_dump(exclude_none=True)},
+            content=error_detail.model_dump(exclude_none=True),
         )
 
     @app.exception_handler(StarletteHTTPException)

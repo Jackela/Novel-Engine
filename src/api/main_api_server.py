@@ -758,38 +758,7 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.world import router as world_gen_router
     from src.api.routers.world_rules import router as world_rules_router
 
-    # Register all routers with and without /api prefix for backward compatibility
-    # Order matters: register without prefix first, then with prefix
-    app.include_router(auth_router)
-    app.include_router(cache_router)
-    app.include_router(campaigns_router)
-    app.include_router(characters_router)
-    app.include_router(events_router)
-    app.include_router(generation_router)
-    app.include_router(guest_router)
-    app.include_router(narratives_router)
-    app.include_router(scene_router)
-    app.include_router(health_router)
-    app.include_router(meta_router)
-    app.include_router(orchestration_router)
-    app.include_router(simulations_router)
-    app.include_router(world_gen_router)
-    app.include_router(structure_router)
-    app.include_router(narrative_generation_router)
-    app.include_router(relationships_router)
-    app.include_router(items_router)
-    app.include_router(character_inventory_router)
-    app.include_router(lore_router)
-    app.include_router(memories_router)
-    app.include_router(goals_router)
-    app.include_router(world_rules_router)
-    app.include_router(dialogue_router)
-    app.include_router(social_router)
-    app.include_router(factions_router)
-    app.include_router(prompts_router)
-    app.include_router(experiments_router)
-
-    # Register with /api prefix
+    # Register all routers with /api prefix only (no duplicate unprefixed routes)
     app.include_router(auth_router, prefix="/api")
     app.include_router(cache_router, prefix="/api")
     app.include_router(campaigns_router, prefix="/api")
