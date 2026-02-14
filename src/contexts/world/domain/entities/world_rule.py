@@ -278,7 +278,9 @@ class WorldRule(Entity):
         Returns:
             A one-line summary of the rule and its consequence.
         """
-        consequence_preview = self.consequence[:100] if self.consequence else "No consequence defined"
+        consequence_preview = (
+            self.consequence[:100] if self.consequence else "No consequence defined"
+        )
         if len(self.consequence) > 100:
             consequence_preview += "..."
         return f"{self.name}: {consequence_preview}"

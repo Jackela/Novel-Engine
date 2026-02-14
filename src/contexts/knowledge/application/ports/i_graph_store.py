@@ -292,7 +292,9 @@ class IGraphStore(ABC):
         """
 
     @abstractmethod
-    async def add_relationships(self, relationships: list[GraphRelationship]) -> GraphAddResult:
+    async def add_relationships(
+        self, relationships: list[GraphRelationship]
+    ) -> GraphAddResult:
         """
         Add multiple relationships to the graph in batch.
 

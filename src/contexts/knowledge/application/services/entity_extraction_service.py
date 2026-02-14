@@ -21,18 +21,18 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from ...application.ports.i_llm_client import ILLMClient, LLMRequest, LLMError
+from ...application.ports.i_llm_client import ILLMClient, LLMError, LLMRequest
 from ...domain.models.entity import (
+    DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD,
+    DEFAULT_MAX_ENTITIES,
+    PRONOUNS,
+    EntityMention,
     EntityType,
     ExtractedEntity,
-    EntityMention,
     ExtractionResult,
     ExtractionResultWithRelationships,
     Relationship,
     RelationshipType,
-    DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD,
-    DEFAULT_MAX_ENTITIES,
-    PRONOUNS,
 )
 
 if TYPE_CHECKING:
@@ -88,15 +88,15 @@ class ExtractionConfig:
         if self.max_relationships > 100:
             raise ValueError("max_relationships must not exceed 100")
         if not 0.0 <= self.relationship_strength_threshold <= 1.0:
-            raise ValueError("relationship_strength_threshold must be between 0.0 and 1.0")
+            raise ValueError(
+                "relationship_strength_threshold must be between 0.0 and 1.0"
+            )
         if not 0.0 <= self.temperature <= 2.0:
             raise ValueError("temperature must be between 0.0 and 2.0")
 
 
 class EntityExtractionError(Exception):
     """Base exception for entity extraction errors."""
-
-    pass
 
 
 class EntityExtractionService:
@@ -245,7 +245,7 @@ Respond with ONLY valid JSON matching the schema above."""
         """
         entities: list[ExtractedEntity] = []
 
-        for entity_data in entities_data[:self._config.max_entities]:
+        for entity_data in entities_data[: self._config.max_entities]:
             try:
                 entity_type_str = entity_data.get("type", "").lower()
                 # Handle various type name formats
@@ -548,14 +548,16 @@ Respond with ONLY valid JSON matching the schema above."""
             ]
 
             # Create adjusted result
-            chunk_results.append(ExtractionResult(
-                entities=tuple(adjusted_entities),
-                mentions=tuple(adjusted_mentions),
-                source_length=len(chunk),
-                timestamp=result.timestamp,
-                model_used=result.model_used,
-                tokens_used=result.tokens_used,
-            ))
+            chunk_results.append(
+                ExtractionResult(
+                    entities=tuple(adjusted_entities),
+                    mentions=tuple(adjusted_mentions),
+                    source_length=len(chunk),
+                    timestamp=result.timestamp,
+                    model_used=result.model_used,
+                    tokens_used=result.tokens_used,
+                )
+            )
 
             offset += len(chunk) - overlap if i < len(chunks) - 1 else len(chunk)
 
@@ -636,10 +638,7 @@ Respond with ONLY valid JSON matching the schema above."""
             Tuple of (system_prompt, user_prompt)
         """
         # Build list of known entities for context
-        entity_list = "\n".join(
-            f"- {e.name} ({e.entity_type.value})"
-            for e in entities
-        )
+        entity_list = "\n".join(f"- {e.name} ({e.entity_type.value})" for e in entities)
 
         # Build list of relationship types
         relationship_types = ", ".join([rt.value for rt in RelationshipType])
@@ -701,13 +700,16 @@ Respond with ONLY valid JSON matching the schema above."""
         relationships: list[Relationship] = []
         known_names = {e.name.lower() for e in known_entities}
 
-        for rel_data in relationships_data[:self._config.max_relationships]:
+        for rel_data in relationships_data[: self._config.max_relationships]:
             try:
                 source = rel_data.get("source", "").strip()
                 target = rel_data.get("target", "").strip()
 
                 # Skip if entities aren't recognized
-                if source.lower() not in known_names or target.lower() not in known_names:
+                if (
+                    source.lower() not in known_names
+                    or target.lower() not in known_names
+                ):
                     self._logger.warning(
                         "relationship_references_unknown_entity",
                         source=source,
@@ -743,7 +745,9 @@ Respond with ONLY valid JSON matching the schema above."""
                         "enemy": RelationshipType.ENEMY_OF,
                         "mentor": RelationshipType.MENTORED,
                     }
-                    relationship_type = type_mapping.get(type_str, RelationshipType.OTHER)
+                    relationship_type = type_mapping.get(
+                        type_str, RelationshipType.OTHER
+                    )
 
                 strength = float(rel_data.get("strength", 1.0))
                 # Filter by strength threshold
@@ -798,8 +802,7 @@ Respond with ONLY valid JSON matching the schema above."""
         # Enable relationship extraction for this call
         if isinstance(config, ExtractionConfig):
             extraction_config = dataclasses.replace(
-                effective_config,
-                extract_relationships=True
+                effective_config, extract_relationships=True
             )
         else:
             extraction_config = effective_config

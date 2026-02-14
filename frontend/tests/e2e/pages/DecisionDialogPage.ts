@@ -32,8 +32,6 @@ export class DecisionDialogPage {
 
   // Dialog container
   readonly dialog: Locator;
-  readonly dialogTitle: Locator;
-  readonly dialogDescription: Locator;
 
   // Header elements
   readonly turnChip: Locator;
@@ -70,8 +68,6 @@ export class DecisionDialogPage {
 
     // Dialog container
     this.dialog = page.locator('[data-testid="decision-dialog"]');
-    this.dialogTitle = page.locator('[id="decision-dialog-title"]');
-    this.dialogDescription = page.locator('[id="decision-dialog-description"]');
 
     // Header elements
     this.turnChip = page.locator('[data-testid="decision-turn-chip"]');
@@ -129,14 +125,32 @@ export class DecisionDialogPage {
    * Get the dialog title text
    */
   async getTitle(): Promise<string> {
-    return this.dialogTitle.textContent() || '';
+    const labelledBy = await this.dialog.getAttribute('aria-labelledby');
+    if (!labelledBy) {
+      return '';
+    }
+    const [firstId] = labelledBy.split(/\s+/).filter(Boolean);
+    if (!firstId) {
+      return '';
+    }
+    const text = await this.page.locator(`[id="${firstId}"]`).textContent();
+    return text?.trim() || '';
   }
 
   /**
    * Get the dialog description text
    */
   async getDescription(): Promise<string> {
-    return this.dialogDescription.textContent() || '';
+    const describedBy = await this.dialog.getAttribute('aria-describedby');
+    if (!describedBy) {
+      return '';
+    }
+    const [firstId] = describedBy.split(/\s+/).filter(Boolean);
+    if (!firstId) {
+      return '';
+    }
+    const text = await this.page.locator(`[id="${firstId}"]`).textContent();
+    return text?.trim() || '';
   }
 
   /**
@@ -302,8 +316,21 @@ export class DecisionDialogPage {
    * Verify dialog has proper accessibility attributes
    */
   async verifyAccessibility(): Promise<void> {
-    await expect(this.dialog).toHaveAttribute('aria-labelledby', 'decision-dialog-title');
-    await expect(this.dialog).toHaveAttribute('aria-describedby', 'decision-dialog-description');
+    const labelledBy = await this.dialog.getAttribute('aria-labelledby');
+    expect(labelledBy).not.toBeNull();
+    const labelIds = labelledBy?.split(/\s+/).filter(Boolean) ?? [];
+    expect(labelIds.length).toBeGreaterThan(0);
+    for (const id of labelIds) {
+      await expect(this.page.locator(`[id="${id}"]`)).toHaveCount(1);
+    }
+
+    const describedBy = await this.dialog.getAttribute('aria-describedby');
+    expect(describedBy).not.toBeNull();
+    const descIds = describedBy?.split(/\s+/).filter(Boolean) ?? [];
+    expect(descIds.length).toBeGreaterThan(0);
+    for (const id of descIds) {
+      await expect(this.page.locator(`[id="${id}"]`)).toHaveCount(1);
+    }
   }
 
   /**

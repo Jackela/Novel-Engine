@@ -19,6 +19,9 @@ from src.bridges.multi_agent_bridge import (
 )
 
 # Set up logging
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 

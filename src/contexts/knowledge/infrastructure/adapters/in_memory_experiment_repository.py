@@ -15,12 +15,12 @@ import logging
 from typing import Optional
 
 from src.contexts.knowledge.application.ports.i_experiment_repository import (
-    IExperimentRepository,
     ExperimentRepositoryError,
+    IExperimentRepository,
 )
 from src.contexts.knowledge.domain.models.prompt_experiment import (
-    PromptExperiment,
     ExperimentStatus,
+    PromptExperiment,
 )
 
 logger = logging.getLogger(__name__)
@@ -79,7 +79,9 @@ class InMemoryExperimentRepository(IExperimentRepository):
         try:
             return self._experiments.get(experiment_id)
         except Exception as e:
-            raise ExperimentRepositoryError(f"Failed to get experiment {experiment_id}: {e}") from e
+            raise ExperimentRepositoryError(
+                f"Failed to get experiment {experiment_id}: {e}"
+            ) from e
 
     async def list_all(
         self,
@@ -113,7 +115,8 @@ class InMemoryExperimentRepository(IExperimentRepository):
             # Filter by prompt ID (experiments where this prompt is either A or B)
             if prompt_id:
                 experiments = [
-                    e for e in experiments
+                    e
+                    for e in experiments
                     if e.prompt_a_id == prompt_id or e.prompt_b_id == prompt_id
                 ]
 
@@ -146,7 +149,9 @@ class InMemoryExperimentRepository(IExperimentRepository):
                 return True
             return False
         except Exception as e:
-            raise ExperimentRepositoryError(f"Failed to delete experiment {experiment_id}: {e}") from e
+            raise ExperimentRepositoryError(
+                f"Failed to delete experiment {experiment_id}: {e}"
+            ) from e
 
     async def get_by_status(
         self, status: str, limit: int = 100
@@ -171,11 +176,11 @@ class InMemoryExperimentRepository(IExperimentRepository):
             experiments.sort(key=lambda e: e.created_at, reverse=True)
             return experiments[:limit]
         except Exception as e:
-            raise ExperimentRepositoryError(f"Failed to get experiments by status: {e}") from e
+            raise ExperimentRepositoryError(
+                f"Failed to get experiments by status: {e}"
+            ) from e
 
-    async def get_active_for_prompt(
-        self, prompt_id: str
-    ) -> list[PromptExperiment]:
+    async def get_active_for_prompt(self, prompt_id: str) -> list[PromptExperiment]:
         """
         Get active experiments for a specific prompt.
 
@@ -197,7 +202,9 @@ class InMemoryExperimentRepository(IExperimentRepository):
                 and (e.prompt_a_id == prompt_id or e.prompt_b_id == prompt_id)
             ]
         except Exception as e:
-            raise ExperimentRepositoryError(f"Failed to get active experiments: {e}") from e
+            raise ExperimentRepositoryError(
+                f"Failed to get active experiments: {e}"
+            ) from e
 
     async def count(self) -> int:
         """

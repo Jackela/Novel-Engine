@@ -11,24 +11,28 @@ Constitution Compliance:
 
 import pytest
 
-from src.contexts.knowledge.application.ports.i_ingestion_processor import IIngestionProcessor
-from src.contexts.knowledge.application.services.ingestion_processors import (
-    GenericProcessor,
-    LoreProcessor,
-    CharacterProcessor,
-    SceneProcessor,
-    PlotlineProcessor,
-    ItemProcessor,
-    LocationProcessor,
+from src.contexts.knowledge.application.ports.i_ingestion_processor import (
+    IIngestionProcessor,
 )
 from src.contexts.knowledge.application.services.ingestion_processor_factory import (
     IngestionProcessorFactory,
 )
+from src.contexts.knowledge.application.services.ingestion_processors import (
+    CharacterProcessor,
+    GenericProcessor,
+    ItemProcessor,
+    LocationProcessor,
+    LoreProcessor,
+    PlotlineProcessor,
+    SceneProcessor,
+)
 from src.contexts.knowledge.domain.models.chunking_strategy import (
-    ChunkStrategyType,
     ChunkingStrategy,
+    ChunkStrategyType,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
+pytestmark = pytest.mark.unit
 
 
 class TestIngestionProcessorInterface:

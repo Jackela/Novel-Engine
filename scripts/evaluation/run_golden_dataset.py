@@ -40,19 +40,18 @@ from src.contexts.knowledge.application.ports.i_vector_store import (
     IVectorStore,
     QueryResult,
 )
-from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievalService,
-    RetrievalOptions,
-)
-from src.contexts.knowledge.application.services.rerank_service import (
-    RerankService,
-    MockReranker,
-)
-from src.contexts.knowledge.domain.models.source_type import SourceType
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
     RetrievedChunk,
 )
-
+from src.contexts.knowledge.application.services.rerank_service import (
+    MockReranker,
+    RerankService,
+)
+from src.contexts.knowledge.application.services.retrieval_service import (
+    RetrievalOptions,
+    RetrievalService,
+)
+from src.contexts.knowledge.domain.models.source_type import SourceType
 
 logger = structlog.get_logger()
 

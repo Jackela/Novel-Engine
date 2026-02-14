@@ -16,6 +16,8 @@ from src.contexts.narratives.domain.value_objects.narrative_context import (
     NarrativeContext,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestNarrativeContextCollectionsAndComparison:
     """Test suite for NarrativeContext behavior in collections and comparisons."""

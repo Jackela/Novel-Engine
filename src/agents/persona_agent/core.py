@@ -15,8 +15,8 @@ while maintaining clean separation from decision-making and memory systems.
 
 import logging
 import os
-from types import SimpleNamespace
 from datetime import datetime
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 
 # Import event bus for communication
@@ -525,4 +525,3 @@ class PersonaAgentCore:
         except Exception as e:
             logger.error(f"Error generating core metrics for {self.agent_id}: {e}")
             return {"agent_id": self.agent_id, "error": str(e)}
-

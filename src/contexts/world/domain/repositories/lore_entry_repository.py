@@ -11,10 +11,7 @@ search and tag-based filtering without coupling to other aggregates.
 """
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Dict, List, Optional
-
-if TYPE_CHECKING:
-    from typing import Any
+from typing import Any, Dict, List, Optional
 
 from ..entities.lore_entry import LoreCategory, LoreEntry
 

@@ -14,25 +14,25 @@ Warzone 4: AI Brain - BRAIN-009B
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import structlog
 
 from ...application.ports.i_embedding_service import IEmbeddingService
 from ...application.ports.i_vector_store import IVectorStore
-from .retrieval_service import (
-    RetrievalService,
-    RetrievalFilter,
-    RetrievalOptions,
-    FormattedContext,
-)
 from .knowledge_ingestion_service import RetrievedChunk
 from .query_rewriter import (
     QueryRewriter,
     RewriteConfig,
-    RewriteStrategy,
     RewriteResult,
+    RewriteStrategy,
+)
+from .retrieval_service import (
+    FormattedContext,
+    RetrievalFilter,
+    RetrievalOptions,
+    RetrievalService,
 )
 
 if TYPE_CHECKING:
@@ -177,7 +177,11 @@ class QueryAwareRetrievalService:
         logger.info(
             "query_aware_retrieval_service_initialized",
             rewriting_enabled=self._config.enable_rewriting,
-            rewrite_strategy=self._config.rewrite_strategy.value if self._config.enable_rewriting else None,
+            rewrite_strategy=(
+                self._config.rewrite_strategy.value
+                if self._config.enable_rewriting
+                else None
+            ),
             max_variants=self._config.max_variants,
         )
 
@@ -272,7 +276,9 @@ class QueryAwareRetrievalService:
             # Multiple queries - use semaphore for concurrency control
             semaphore = asyncio.Semaphore(config.max_concurrent)
 
-            async def retrieve_with_semaphore(q: str) -> tuple[str, list[RetrievedChunk]]:
+            async def retrieve_with_semaphore(
+                q: str,
+            ) -> tuple[str, list[RetrievedChunk]]:
                 async with semaphore:
                     result = await self._retrieval_service.retrieve_relevant(
                         query=q,

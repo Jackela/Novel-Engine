@@ -12,7 +12,12 @@ import time
 from datetime import datetime
 from typing import Any, Dict
 
+import pytest
+
 # Configure logging
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )

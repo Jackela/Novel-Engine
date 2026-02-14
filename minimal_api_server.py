@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI
 import uvicorn
+from fastapi import FastAPI
 
 app = FastAPI()
 
@@ -40,4 +40,6 @@ def test_gemini():
 
 
 if __name__ == "__main__":
-    uvicorn.run("minimal_api_server:app", host="127.0.0.1", port=8003, log_level="error")
+    uvicorn.run(
+        "minimal_api_server:app", host="127.0.0.1", port=8003, log_level="error"
+    )

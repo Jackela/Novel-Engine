@@ -80,19 +80,21 @@ def create_app(
     from src.api.routers.events import router as events_router
     from src.api.routers.generation import router as generation_router
     from src.api.routers.guest import router as guest_router
-    from src.api.routers.narratives import router as narratives_router
-    from src.api.routers.scene import router as scene_router
     from src.api.routers.health import router as health_router
-    from src.api.routers.meta import router as meta_router
-    from src.api.routers.orchestration import router as orchestration_router
-    from src.api.routers.simulations import router as simulations_router
-    from src.api.routers.world import router as world_gen_router
-    from src.api.routers.structure import router as structure_router
-    from src.api.routers.narrative_generation import router as narrative_generation_router
-    from src.api.routers.relationships import router as relationships_router
-    from src.api.routers.items import router as items_router
     from src.api.routers.items import character_inventory_router
+    from src.api.routers.items import router as items_router
     from src.api.routers.lore import router as lore_router
+    from src.api.routers.meta import router as meta_router
+    from src.api.routers.narrative_generation import (
+        router as narrative_generation_router,
+    )
+    from src.api.routers.narratives import router as narratives_router
+    from src.api.routers.orchestration import router as orchestration_router
+    from src.api.routers.relationships import router as relationships_router
+    from src.api.routers.scene import router as scene_router
+    from src.api.routers.simulations import router as simulations_router
+    from src.api.routers.structure import router as structure_router
+    from src.api.routers.world import router as world_gen_router
     from src.api.routers.world_rules import router as world_rules_router
 
     app.include_router(health_router)

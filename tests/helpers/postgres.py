@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """PostgreSQL test helper for hybrid integration tests."""
+
 from __future__ import annotations
 
 import os

@@ -339,9 +339,11 @@ def setup_fastapi_tracing(
             excluded = (
                 get_excluded_urls()
                 if excluded_urls is None
-                else ",".join(excluded_urls)
-                if isinstance(excluded_urls, list)
-                else excluded_urls
+                else (
+                    ",".join(excluded_urls)
+                    if isinstance(excluded_urls, list)
+                    else excluded_urls
+                )
             )
             FastAPIInstrumentor.instrument_app(
                 app,

@@ -36,8 +36,8 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import requests
@@ -265,7 +265,9 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         )
 
         if response.status_code == 401:
-            raise RuntimeError("Gemini API authentication failed - check GEMINI_API_KEY")
+            raise RuntimeError(
+                "Gemini API authentication failed - check GEMINI_API_KEY"
+            )
         elif response.status_code == 429:
             raise RuntimeError("Gemini API rate limit exceeded")
         elif response.status_code != 200:
@@ -507,7 +509,9 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
                     FactionType, item.get("faction_type"), FactionType.GUILD
                 ),
                 alignment=self._parse_enum(
-                    FactionAlignment, item.get("alignment"), FactionAlignment.TRUE_NEUTRAL
+                    FactionAlignment,
+                    item.get("alignment"),
+                    FactionAlignment.TRUE_NEUTRAL,
                 ),
                 status=self._parse_enum(
                     FactionStatus, item.get("status"), FactionStatus.ACTIVE
@@ -575,7 +579,9 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
                     EventType, item.get("event_type"), EventType.POLITICAL
                 ),
                 significance=self._parse_enum(
-                    EventSignificance, item.get("significance"), EventSignificance.MODERATE
+                    EventSignificance,
+                    item.get("significance"),
+                    EventSignificance.MODERATE,
                 ),
                 outcome=self._parse_enum(
                     EventOutcome, item.get("outcome"), EventOutcome.NEUTRAL
@@ -838,9 +844,11 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
 
             # Enrich system prompt with RAG if enabled and available
             if use_rag and self._rag_service is not None:
-                rag_query = self._extract_keywords_for_dialogue(character, context, mood)
-                system_prompt, chunks_retrieved, tokens_added = await self._enrich_with_rag(
-                    rag_query, base_system_prompt
+                rag_query = self._extract_keywords_for_dialogue(
+                    character, context, mood
+                )
+                system_prompt, chunks_retrieved, tokens_added = (
+                    await self._enrich_with_rag(rag_query, base_system_prompt)
                 )
                 log.info(
                     "rag_context_injected",
@@ -1208,8 +1216,8 @@ Return valid JSON only with the exact structure specified in the system prompt."
                 rag_query = self._extract_keywords_for_beats(
                     current_beats, scene_context, mood_target
                 )
-                system_prompt, chunks_retrieved, tokens_added = await self._enrich_with_rag(
-                    rag_query, base_system_prompt
+                system_prompt, chunks_retrieved, tokens_added = (
+                    await self._enrich_with_rag(rag_query, base_system_prompt)
                 )
                 log.info(
                     "rag_context_injected",
@@ -1281,7 +1289,9 @@ Return valid JSON only with the exact structure specified in the system prompt."
                 beat_type = beat.get("beat_type", "unknown")
                 content = beat.get("content", "")
                 mood = beat.get("mood_shift", 0)
-                beats_section += f"{i}. [{beat_type.upper()}] (mood: {mood:+d}) {content}\n"
+                beats_section += (
+                    f"{i}. [{beat_type.upper()}] (mood: {mood:+d}) {content}\n"
+                )
         else:
             beats_section = "No beats yet - this is the start of the scene."
 
@@ -1291,9 +1301,13 @@ Return valid JSON only with the exact structure specified in the system prompt."
         reaction_count = sum(1 for t in beat_types if t in ("reaction", "dialogue"))
 
         if action_count > reaction_count + 1:
-            balance_hint = "The scene is heavy on action - consider a reaction or dialogue."
+            balance_hint = (
+                "The scene is heavy on action - consider a reaction or dialogue."
+            )
         elif reaction_count > action_count + 1:
-            balance_hint = "The scene is heavy on reaction/dialogue - consider an action."
+            balance_hint = (
+                "The scene is heavy on reaction/dialogue - consider an action."
+            )
         else:
             balance_hint = "The action/reaction balance is good."
 
@@ -1301,7 +1315,11 @@ Return valid JSON only with the exact structure specified in the system prompt."
         if current_beats:
             mood_shifts = [b.get("mood_shift", 0) for b in current_beats]
             current_mood = sum(mood_shifts)
-            mood_trend = "upward" if current_mood > 0 else "downward" if current_mood < 0 else "neutral"
+            mood_trend = (
+                "upward"
+                if current_mood > 0
+                else "downward" if current_mood < 0 else "neutral"
+            )
         else:
             current_mood = 0
             mood_trend = "neutral"
@@ -1658,21 +1676,25 @@ class CharacterData:
             CharacterData with extracted fields.
         """
         psychology_dict = None
-        if hasattr(character, 'psychology') and character.psychology:
+        if hasattr(character, "psychology") and character.psychology:
             psychology_dict = character.psychology.to_dict()
 
         traits_list = None
-        if hasattr(character, 'profile') and character.profile:
-            if hasattr(character.profile, 'traits') and character.profile.traits:
+        if hasattr(character, "profile") and character.profile:
+            if hasattr(character.profile, "traits") and character.profile.traits:
                 traits_list = list(character.profile.traits)
-            elif hasattr(character.profile, 'personality_traits'):
+            elif hasattr(character.profile, "personality_traits"):
                 # Fallback to personality_traits if traits not set
                 pt = character.profile.personality_traits
-                if hasattr(pt, 'quirks') and pt.quirks:
+                if hasattr(pt, "quirks") and pt.quirks:
                     traits_list = list(pt.quirks)
 
         return cls(
-            name=character.profile.name if hasattr(character, 'profile') else str(character),
+            name=(
+                character.profile.name
+                if hasattr(character, "profile")
+                else str(character)
+            ),
             psychology=psychology_dict,
             traits=traits_list,
             speaking_style=None,  # Can be extended in future

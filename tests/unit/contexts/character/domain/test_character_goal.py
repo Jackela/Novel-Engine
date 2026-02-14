@@ -13,6 +13,9 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 # Mock problematic dependencies
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 event_bus_mock = MagicMock()
 event_mock = MagicMock()

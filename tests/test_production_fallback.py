@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 """验证生产环境仍然保留 Fallback 机制"""
+
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
+
+import pytest
+
+pytestmark = pytest.mark.integration
+
 
 def test_production_fallback():
     """测试生产环境 Fallback 行为"""
+
     print("=" * 60)
     print("生产环境 Fallback 验证")
     print("=" * 60)
 
     # 1. 备份 .env
-    env_path = Path(__file__).parent.parent / '.env'
-    env_backup = env_path.with_suffix('.env.backup_prod')
+    env_path = Path(__file__).parent.parent / ".env"
+    env_backup = env_path.with_suffix(".env.backup_prod")
 
     if env_path.exists():
         print(f"\n✓ 备份 .env → {env_backup}")
@@ -23,12 +30,12 @@ def test_production_fallback():
 
     try:
         # 2. 设置环境为 PRODUCTION
-        os.environ['NOVEL_ENGINE_ENV'] = 'production'
+        os.environ["NOVEL_ENGINE_ENV"] = "production"
         print("✓ 设置环境: NOVEL_ENGINE_ENV=production")
 
         # 3. 移除 API 密钥
-        if 'GEMINI_API_KEY' in os.environ:
-            del os.environ['GEMINI_API_KEY']
+        if "GEMINI_API_KEY" in os.environ:
+            del os.environ["GEMINI_API_KEY"]
         print("✓ 移除环境变量: GEMINI_API_KEY")
 
         # 4. 尝试运行 LLM 调用 (应该使用 Fallback 继续运行)
@@ -41,6 +48,7 @@ sys.path.insert(0, '.')
 from src.core.event_bus import EventBus
 from src.config.character_factory import CharacterFactory
 
+
 event_bus = EventBus()
 factory = CharacterFactory(event_bus)
 detective = factory.create_character('detective_kane')
@@ -51,10 +59,10 @@ print(f"Result: {result}")
 """
 
         result = subprocess.run(
-            [sys.executable, '-c', test_code],
+            [sys.executable, "-c", test_code],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         # 5. 验证结果
@@ -83,6 +91,7 @@ print(f"Result: {result}")
     except Exception as e:
         print(f"\n❌ 测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -91,6 +100,7 @@ print(f"Result: {result}")
         if env_backup and env_backup.exists():
             env_backup.rename(env_path)
             print("\n✓ 恢复 .env 文件")
+
 
 if __name__ == "__main__":
     success = test_production_fallback()
@@ -104,4 +114,3 @@ if __name__ == "__main__":
         print("❌ 生产环境 Fallback 验证失败")
         print("=" * 60)
         sys.exit(1)
-

@@ -166,7 +166,9 @@ def run_migration(
 
                 if not dry_run:
                     # Actually backfill the metadata
-                    new_metadata = doc.backfill_metadata(world_version, confidentiality_level)
+                    new_metadata = doc.backfill_metadata(
+                        world_version, confidentiality_level
+                    )
                     doc.metadata = new_metadata
                     stats["migrated"] += 1
                 else:
@@ -184,7 +186,9 @@ def run_migration(
     return stats
 
 
-def print_report(docs: list[MockVectorDocument], stats: dict[str, Any], verbose: bool = False) -> None:
+def print_report(
+    docs: list[MockVectorDocument], stats: dict[str, Any], verbose: bool = False
+) -> None:
     """Print migration report."""
     print("\n" + "=" * 60)
     print("Knowledge Metadata Backfill Report")
@@ -204,11 +208,15 @@ def print_report(docs: list[MockVectorDocument], stats: dict[str, Any], verbose:
             print(f"  [{status}] {doc.id}")
             print(f"    source_type: {doc.metadata.get('source_type', 'N/A')}")
             if doc.needs_migration():
-                print(f"    Missing: world_version, confidentiality_level, source_version")
+                print(
+                    f"    Missing: world_version, confidentiality_level, source_version"
+                )
             else:
                 print(f"    world_version: {doc.metadata.get('world_version', 'N/A')}")
-                print(f"    confidentiality: {doc.metadata.get('confidentiality_level', 'N/A')}")
-                print(f"    source_version: {doc.metadata.get('source_version', 'N/A')}")
+                print("    confidentiality: [redacted]")
+                print(
+                    f"    source_version: {doc.metadata.get('source_version', 'N/A')}"
+                )
 
 
 def main() -> int:
@@ -253,7 +261,7 @@ def main() -> int:
     try:
         confidentiality = ConfidentialityLevel(args.confidentiality_level)
     except ValueError:
-        print(f"Invalid confidentiality level: {args.confidentiality_level}", file=sys.stderr)
+        print("Invalid confidentiality level provided.", file=sys.stderr)
         return 1
 
     dry_run = not args.apply

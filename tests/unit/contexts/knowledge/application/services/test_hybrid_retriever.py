@@ -9,42 +9,45 @@ Warzone 4: AI Brain - BRAIN-008B
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, Mock, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 
+from src.contexts.knowledge.application.services.bm25_retriever import (
+    BM25Result,
+)
 from src.contexts.knowledge.application.services.hybrid_retriever import (
-    HybridRetriever,
+    DEFAULT_BM25_WEIGHT,
+    DEFAULT_RRF_ALPHA,
+    DEFAULT_RRF_K,
+    DEFAULT_VECTOR_WEIGHT,
+    FusionMetadata,
     HybridConfig,
     HybridResult,
-    FusionMetadata,
+    HybridRetriever,
+    _hybrid_score_fusion,
+    _linear_score_fusion,
     _normalize_scores,
     _reciprocal_rank_fusion,
-    _linear_score_fusion,
-    _hybrid_score_fusion,
-    DEFAULT_VECTOR_WEIGHT,
-    DEFAULT_BM25_WEIGHT,
-    DEFAULT_RRF_K,
-    DEFAULT_RRF_ALPHA,
+)
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    RetrievedChunk,
 )
 from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievalFilter,
     RetrievalOptions,
     RetrievalResult,
 )
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
-    RetrievedChunk,
-)
-from src.contexts.knowledge.application.services.bm25_retriever import (
-    BM25Result,
-)
 from src.contexts.knowledge.domain.models.source_type import SourceType
-
 
 # ============================================================================
 # Score Normalization Tests
 # ============================================================================
+
+
+pytestmark = pytest.mark.unit
+
 
 class TestNormalizeScores:
     """Tests for _normalize_scores utility function."""
@@ -82,6 +85,7 @@ class TestNormalizeScores:
 # ============================================================================
 # Reciprocal Rank Fusion Tests
 # ============================================================================
+
 
 class TestReciprocalRankFusion:
     """Tests for _reciprocal_rank_fusion function."""
@@ -148,6 +152,7 @@ class TestReciprocalRankFusion:
 # Linear Score Fusion Tests
 # ============================================================================
 
+
 class TestLinearScoreFusion:
     """Tests for _linear_score_fusion function."""
 
@@ -211,6 +216,7 @@ class TestLinearScoreFusion:
 # Hybrid Score Fusion Tests
 # ============================================================================
 
+
 class TestHybridScoreFusion:
     """Tests for _hybrid_score_fusion function."""
 
@@ -263,6 +269,7 @@ class TestHybridScoreFusion:
 # ============================================================================
 # HybridConfig Tests
 # ============================================================================
+
 
 class TestHybridConfig:
     """Tests for HybridConfig value object."""
@@ -319,6 +326,7 @@ class TestHybridConfig:
     def test_weights_warning_when_not_summing_to_one(self, caplog):
         """Warning logged when weights don't sum to 1.0."""
         import logging
+
         import structlog
 
         # This should trigger a warning
@@ -332,6 +340,7 @@ class TestHybridConfig:
 # ============================================================================
 # HybridRetriever Tests
 # ============================================================================
+
 
 class TestHybridRetriever:
     """Tests for HybridRetriever."""
@@ -441,7 +450,9 @@ class TestHybridRetriever:
             query="brave knight",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
         mock_bm25_retriever.search = Mock(return_value=sample_bm25_results)
 
         # Execute search
@@ -472,7 +483,9 @@ class TestHybridRetriever:
             query="brave knight",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
         mock_bm25_retriever.search = Mock(return_value=[])
 
         result = await retriever.search("brave knight", k=5)
@@ -495,7 +508,9 @@ class TestHybridRetriever:
             query="brave knight",
             total_retrieved=0,
         )
-        mock_retrieval_service.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
         mock_bm25_retriever.search = Mock(return_value=sample_bm25_results)
 
         result = await retriever.search("brave knight", k=5)
@@ -520,7 +535,9 @@ class TestHybridRetriever:
             query="brave knight",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
         mock_bm25_retriever.search = Mock(return_value=sample_bm25_results)
 
         await retriever.search("brave knight", filters=filters)
@@ -548,7 +565,9 @@ class TestHybridRetriever:
             query="brave knight",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
         mock_bm25_retriever.search = Mock(return_value=sample_bm25_results)
 
         custom_config = HybridConfig(
@@ -600,7 +619,9 @@ class TestHybridRetriever:
             query="brave knight",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
         mock_bm25_retriever.search = Mock(side_effect=Exception("BM25 failed"))
 
         # Should not raise, but return vector results
@@ -631,7 +652,9 @@ class TestHybridRetriever:
             query="brave knight",
             total_retrieved=1,
         )
-        mock_retrieval_service.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
 
         bm25_result = BM25Result(
             doc_id="doc1",
@@ -687,7 +710,9 @@ class TestHybridRetriever:
             query="character",
             total_retrieved=10,
         )
-        mock_retrieval_service.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
         mock_bm25_retriever.search = Mock(return_value=bm25_results)
 
         result = await retriever.search("character", k=5)
@@ -751,6 +776,7 @@ class TestHybridRetriever:
 # ============================================================================
 # Integration Tests
 # ============================================================================
+
 
 class TestHybridRetrieverIntegration:
     """Integration tests for hybrid retrieval."""
@@ -818,7 +844,9 @@ class TestHybridRetrieverIntegration:
             query="brave courageous",
             total_retrieved=2,
         )
-        mock_retrieval_service_int.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service_int.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
         mock_bm25_retriever_int.search = Mock(return_value=bm25_results)
 
         # Test with equal weights
@@ -877,7 +905,9 @@ class TestHybridRetrieverIntegration:
             query="brave",
             total_retrieved=1,
         )
-        mock_retrieval_service_int.retrieve_relevant = AsyncMock(return_value=mock_vector_result)
+        mock_retrieval_service_int.retrieve_relevant = AsyncMock(
+            return_value=mock_vector_result
+        )
         mock_bm25_retriever_int.search = Mock(return_value=bm25_results)
 
         # Pure RRF fusion (rrf_alpha=1.0)

@@ -15,21 +15,6 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from src.security.auth_system import User, UserRole, require_role
-from src.core.types.shared_types import CharacterId, KnowledgeEntryId, UserId
-
-logger = structlog.get_logger(__name__)
-
-# OpenTelemetry tracing (Article VII - Observability)
-try:
-    from opentelemetry import trace
-
-    OTEL_AVAILABLE = True
-    tracer = trace.get_tracer("novel_engine.knowledge_api")
-except ImportError:
-    OTEL_AVAILABLE = False
-    tracer = None
-
 from src.contexts.knowledge.application.ports.i_event_publisher import IEventPublisher
 from src.contexts.knowledge.application.ports.i_knowledge_repository import (
     IKnowledgeRepository,
@@ -46,10 +31,10 @@ from src.contexts.knowledge.application.use_cases.migrate_markdown_files import 
 from src.contexts.knowledge.application.use_cases.update_knowledge_entry import (
     UpdateKnowledgeEntryUseCase,
 )
-from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
 from src.contexts.knowledge.domain.models.access_level import AccessLevel
-from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 from src.contexts.knowledge.domain.models.agent_identity import AgentIdentity
+from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 from src.contexts.knowledge.infrastructure.adapters.markdown_migration_adapter import (
     MarkdownMigrationAdapter,
 )
@@ -59,6 +44,19 @@ from src.contexts.knowledge.infrastructure.events.kafka_event_publisher import (
 from src.contexts.knowledge.infrastructure.repositories.postgresql_knowledge_repository import (
     PostgreSQLKnowledgeRepository,
 )
+from src.core.types.shared_types import CharacterId, KnowledgeEntryId, UserId
+from src.security.auth_system import User, UserRole, require_role
+
+# OpenTelemetry tracing (Article VII - Observability)
+try:
+    from opentelemetry import trace
+except ImportError:
+    trace = None
+
+OTEL_AVAILABLE = trace is not None
+tracer = trace.get_tracer("novel_engine.knowledge_api") if trace else None
+
+logger = structlog.get_logger(__name__)
 
 # Request/Response Models
 
@@ -626,4 +624,3 @@ def create_knowledge_api() -> APIRouter:
         return report
 
     return router
-

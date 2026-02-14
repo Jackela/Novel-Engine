@@ -362,11 +362,15 @@ class WorldSetting(Entity):
         Returns:
             A string describing the world setting profile
         """
-        magic_desc = "high-magic" if self.is_high_magic() else (
-            "low-magic" if self.magic_level <= 3 else "moderate-magic"
+        magic_desc = (
+            "high-magic"
+            if self.is_high_magic()
+            else ("low-magic" if self.magic_level <= 3 else "moderate-magic")
         )
-        tech_desc = "high-tech" if self.is_high_tech() else (
-            "low-tech" if self.technology_level <= 3 else "moderate-tech"
+        tech_desc = (
+            "high-tech"
+            if self.is_high_tech()
+            else ("low-tech" if self.technology_level <= 3 else "moderate-tech")
         )
 
         themes_str = ", ".join(self.themes[:3]) if self.themes else "unspecified"

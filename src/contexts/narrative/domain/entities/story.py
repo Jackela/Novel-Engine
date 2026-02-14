@@ -157,7 +157,9 @@ class Story:
         provided_ids = set(chapter_ids)
 
         if existing_ids != provided_ids:
-            raise ValueError("Provided chapter IDs must match existing chapters exactly")
+            raise ValueError(
+                "Provided chapter IDs must match existing chapters exactly"
+            )
 
         # Create a mapping from ID to chapter
         id_to_chapter = {c.id: c for c in self._chapters}
@@ -219,7 +221,9 @@ class Story:
 
     def __str__(self) -> str:
         """Human-readable representation."""
-        return f"Story('{self.title}', {self.status.value}, {self.chapter_count} chapters)"
+        return (
+            f"Story('{self.title}', {self.status.value}, {self.chapter_count} chapters)"
+        )
 
     def __repr__(self) -> str:
         """Developer representation for debugging."""

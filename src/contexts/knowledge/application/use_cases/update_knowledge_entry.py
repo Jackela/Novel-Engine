@@ -12,12 +12,12 @@ Constitution Compliance:
 
 from src.core.types.shared_types import KnowledgeEntryId, UserId
 
-from ..ports.i_knowledge_repository import IKnowledgeRepository
-from ..ports.i_event_publisher import IEventPublisher
 from ...infrastructure.logging_config import (
     get_knowledge_logger,
     log_knowledge_entry_updated,
 )
+from ..ports.i_event_publisher import IEventPublisher
+from ..ports.i_knowledge_repository import IKnowledgeRepository
 
 
 class UpdateKnowledgeEntryUseCase:
@@ -106,12 +106,16 @@ class UpdateKnowledgeEntryUseCase:
             updated_by=updated_by,
             changes={
                 "content": {
-                    "old": old_content[:50] + "..."
-                    if len(old_content) > 50
-                    else old_content,
-                    "new": new_content[:50] + "..."
-                    if len(new_content) > 50
-                    else new_content,
+                    "old": (
+                        old_content[:50] + "..."
+                        if len(old_content) > 50
+                        else old_content
+                    ),
+                    "new": (
+                        new_content[:50] + "..."
+                        if len(new_content) > 50
+                        else new_content
+                    ),
                 }
             },
         )
@@ -138,4 +142,3 @@ class UpdateKnowledgeEntryUseCase:
             logger.warning(
                 "Failed to publish domain event", error=str(e), event_id=event.event_id
             )
-

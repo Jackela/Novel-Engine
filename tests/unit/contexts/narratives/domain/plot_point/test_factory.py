@@ -16,6 +16,8 @@ from src.contexts.narratives.domain.value_objects.plot_point import (
     PlotPointType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestPlotPointFactoryMethods:
     """Test suite for PlotPoint factory methods."""

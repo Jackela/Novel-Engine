@@ -4,6 +4,8 @@ import pytest
 
 from src.workspaces.filesystem import FilesystemCharacterStore, FilesystemWorkspaceStore
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.unit
 def test_workspace_manifest_created(tmp_path):

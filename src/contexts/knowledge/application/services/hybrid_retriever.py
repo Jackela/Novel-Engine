@@ -13,15 +13,13 @@ Warzone 4: AI Brain - BRAIN-008B
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
 import hashlib
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
 if TYPE_CHECKING:
-    from .retrieval_service import RetrievalService, RetrievalFilter, RetrievalOptions
-    from .bm25_retriever import BM25Retriever
     from .knowledge_ingestion_service import RetrievedChunk
 
 
@@ -74,13 +72,19 @@ class HybridConfig:
 
         # Validate ranges
         if not (0.0 <= self.vector_weight <= 1.0):
-            raise ValueError(f"vector_weight must be between 0.0 and 1.0, got {self.vector_weight}")
+            raise ValueError(
+                f"vector_weight must be between 0.0 and 1.0, got {self.vector_weight}"
+            )
         if not (0.0 <= self.bm25_weight <= 1.0):
-            raise ValueError(f"bm25_weight must be between 0.0 and 1.0, got {self.bm25_weight}")
+            raise ValueError(
+                f"bm25_weight must be between 0.0 and 1.0, got {self.bm25_weight}"
+            )
         if self.rrf_k <= 0:
             raise ValueError(f"rrf_k must be positive, got {self.rrf_k}")
         if not (0.0 <= self.rrf_alpha <= 1.0):
-            raise ValueError(f"rrf_alpha must be between 0.0 and 1.0, got {self.rrf_alpha}")
+            raise ValueError(
+                f"rrf_alpha must be between 0.0 and 1.0, got {self.rrf_alpha}"
+            )
 
 
 @dataclass
@@ -155,7 +159,7 @@ def _normalize_scores(scores: list[float]) -> list[float]:
 
 def _reciprocal_rank_fusion(
     vector_scores: dict[str, tuple[float, int]],  # doc_id -> (score, rank)
-    bm25_scores: dict[str, tuple[float, int]],    # doc_id -> (score, rank)
+    bm25_scores: dict[str, tuple[float, int]],  # doc_id -> (score, rank)
     k: float = DEFAULT_RRF_K,
 ) -> dict[str, float]:
     """
@@ -222,14 +226,8 @@ def _linear_score_fusion(
     all_vector_scores = list(vector_scores.values())
     all_bm25_scores = list(bm25_scores.values())
 
-    norm_vector = dict(zip(
-        vector_scores.keys(),
-        _normalize_scores(all_vector_scores)
-    ))
-    norm_bm25 = dict(zip(
-        bm25_scores.keys(),
-        _normalize_scores(all_bm25_scores)
-    ))
+    norm_vector = dict(zip(vector_scores.keys(), _normalize_scores(all_vector_scores)))
+    norm_bm25 = dict(zip(bm25_scores.keys(), _normalize_scores(all_bm25_scores)))
 
     # Combine scores
     fused_scores: dict[str, float] = {}
@@ -563,8 +561,8 @@ class HybridRetriever:
         Returns:
             List of RetrievedChunk objects
         """
-        from .knowledge_ingestion_service import RetrievedChunk
         from ...domain.models.source_type import SourceType
+        from .knowledge_ingestion_service import RetrievedChunk
 
         chunks: list[Any] = []
 
@@ -584,7 +582,7 @@ class HybridRetriever:
     def _fuse_results(
         self,
         vector_chunks: list[Any],  # list[RetrievedChunk]
-        bm25_chunks: list[Any],    # list[RetrievedChunk]
+        bm25_chunks: list[Any],  # list[RetrievedChunk]
         k: int,
         config: HybridConfig,
     ) -> list[Any]:  # list[RetrievedChunk]
@@ -629,7 +627,9 @@ class HybridRetriever:
             )
         else:
             # Linear fusion only
-            vector_only = {doc_id: score for doc_id, (score, _) in vector_scores.items()}
+            vector_only = {
+                doc_id: score for doc_id, (score, _) in vector_scores.items()
+            }
             bm25_only = {doc_id: score for doc_id, (score, _) in bm25_scores.items()}
             fused_scores = _linear_score_fusion(
                 vector_only,

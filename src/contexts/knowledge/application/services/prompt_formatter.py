@@ -13,15 +13,14 @@ Warzone 4: AI Brain - BRAIN-032
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
 from ...domain.models.model_registry import (
-    LLMProvider,
-    PromptModelFamily,
     PromptFormat,
+    PromptModelFamily,
 )
 
 if TYPE_CHECKING:
@@ -133,7 +132,9 @@ class PromptFormatter:
 
 ### Response:"""
 
-    def __init__(self, default_format: PromptFormat = PromptFormat.CHAT_MESSAGES) -> None:
+    def __init__(
+        self, default_format: PromptFormat = PromptFormat.CHAT_MESSAGES
+    ) -> None:
         """
         Initialize the prompt formatter.
 

@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import psutil
+import pytest
 
 # Import caching components
 from src.performance_optimizations.intelligent_caching_system import (
@@ -30,6 +31,9 @@ from src.performance_optimizations.intelligent_caching_system import (
 )
 
 # Set up logging
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

@@ -39,6 +39,24 @@ export const colors = {
   ring: 'hsl(var(--ring))',
 } as const;
 
+// Plotline palette tokens (DIR-049)
+export const plotlinePalette = [
+  { value: '#ef4444', label: 'Red', className: 'bg-red-500' },
+  { value: '#f97316', label: 'Orange', className: 'bg-orange-500' },
+  { value: '#eab308', label: 'Yellow', className: 'bg-yellow-500' },
+  { value: '#22c55e', label: 'Green', className: 'bg-green-500' },
+  { value: '#06b6d4', label: 'Cyan', className: 'bg-cyan-500' },
+  { value: '#3b82f6', label: 'Blue', className: 'bg-blue-500' },
+  { value: '#8b5cf6', label: 'Purple', className: 'bg-purple-500' },
+  { value: '#ec4899', label: 'Pink', className: 'bg-pink-500' },
+  { value: '#6b7280', label: 'Gray', className: 'bg-gray-500' },
+  { value: '#78716c', label: 'Stone', className: 'bg-stone-500' },
+] as const;
+
+export type PlotlineColor = (typeof plotlinePalette)[number]['value'];
+
+export const defaultPlotlineColor: PlotlineColor = plotlinePalette[5].value;
+
 // Spacing tokens (based on 4px grid)
 export const spacing = {
   0: '0',
@@ -106,6 +124,8 @@ export const zIndex = {
 // Export all tokens
 const tokens = {
   colors,
+  plotlinePalette,
+  defaultPlotlineColor,
   spacing,
   radius,
   fontSize,

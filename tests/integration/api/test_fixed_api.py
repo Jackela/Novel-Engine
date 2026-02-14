@@ -13,6 +13,8 @@ from datetime import datetime
 import pytest
 import requests
 
+pytestmark = pytest.mark.integration
+
 
 def create_minimal_api_server():
     """创建最小化的API服务器用于测试"""

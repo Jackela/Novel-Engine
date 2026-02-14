@@ -12,10 +12,10 @@ Constitution Compliance:
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.core.types.shared_types import KnowledgeEntryId, CharacterId
+from src.core.types.shared_types import CharacterId, KnowledgeEntryId
 
-from ...domain.models.knowledge_entry import KnowledgeEntry
 from ...domain.models.agent_identity import AgentIdentity
+from ...domain.models.knowledge_entry import KnowledgeEntry
 from ...domain.models.knowledge_type import KnowledgeType
 
 
@@ -170,4 +170,3 @@ class IKnowledgeRetriever(ABC):
             - FR-020: Semantic search with vector similarity
             - FR-021: Fallback available when embeddings not present
         """
-

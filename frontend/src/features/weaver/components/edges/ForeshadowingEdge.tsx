@@ -7,27 +7,23 @@
  * - Red: ABANDONED (setup dropped without payoff)
  */
 import { memo } from 'react';
-import {
-  EdgeLabelRenderer,
-  type EdgeProps,
-  getBezierPath,
-} from '@xyflow/react';
+import { EdgeLabelRenderer, type EdgeProps, getBezierPath } from '@xyflow/react';
 import type { ForeshadowingResponse } from '@/types/schemas';
 
 // Status color mapping
 const STATUS_COLORS = {
   planted: {
-    stroke: 'rgb(234, 179, 8)',    // gold-500
+    stroke: 'rgb(234, 179, 8)', // gold-500
     bg: 'rgba(234, 179, 8, 0.1)',
     label: 'bg-yellow-500/10 border-yellow-500 text-yellow-500',
   },
   paid_off: {
-    stroke: 'rgb(34, 197, 94)',    // green-500
+    stroke: 'rgb(34, 197, 94)', // green-500
     bg: 'rgba(34, 197, 94, 0.1)',
     label: 'bg-green-500/10 border-green-500 text-green-500',
   },
   abandoned: {
-    stroke: 'rgb(239, 68, 68)',    // red-500
+    stroke: 'rgb(239, 68, 68)', // red-500
     bg: 'rgba(239, 68, 68, 0.1)',
     label: 'bg-red-500/10 border-red-500 text-red-500',
   },
@@ -89,12 +85,10 @@ function ForeshadowingEdge({
         fill="none"
         stroke={colors.stroke}
         strokeWidth={selected ? 3 : 2}
-        strokeDasharray="5,5"  // Dashed line
-        className="opacity-80 hover:opacity-100 transition-opacity"
+        strokeDasharray="5,5" // Dashed line
+        className="opacity-80 transition-opacity hover:opacity-100"
         style={
-          selected
-            ? { filter: `drop-shadow(0 0 4px ${colors.stroke})` }
-            : undefined
+          selected ? { filter: `drop-shadow(0 0 4px ${colors.stroke})` } : undefined
         }
       />
 
@@ -109,26 +103,24 @@ function ForeshadowingEdge({
           className="group"
         >
           {/* Tooltip on hover */}
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
-            <div className={`${colors.label} border px-3 py-2 rounded-lg shadow-lg max-w-xs`}>
-              <p className="text-xs font-medium mb-1">Foreshadowing</p>
-              <p className="text-xs whitespace-pre-wrap">
-                {foreshadowing.description}
-              </p>
-              <p className="text-xs mt-1 opacity-70">
+          <div className="absolute bottom-full left-1/2 z-50 mb-2 hidden -translate-x-1/2 group-hover:block">
+            <div
+              className={`${colors.label} max-w-xs rounded-lg border px-3 py-2 shadow-lg`}
+            >
+              <p className="mb-1 text-xs font-medium">Foreshadowing</p>
+              <p className="whitespace-pre-wrap text-xs">{foreshadowing.description}</p>
+              <p className="mt-1 text-xs opacity-70">
                 Status: {status.replace('_', ' ').toUpperCase()}
               </p>
             </div>
             {/* Arrow */}
-            <div className="w-2 h-2 bg-current rotate-45 mx-auto -mt-1" />
+            <div className="mx-auto -mt-1 h-2 w-2 rotate-45 bg-current" />
           </div>
 
           {/* Visual indicator dot */}
           <div
-            className={`w-3 h-3 rounded-full border-2 transition-all ${
-              selected
-                ? 'scale-125'
-                : 'group-hover:scale-110'
+            className={`h-3 w-3 rounded-full border-2 transition-all ${
+              selected ? 'scale-125' : 'group-hover:scale-110'
             }`}
             style={{
               backgroundColor: colors.bg,

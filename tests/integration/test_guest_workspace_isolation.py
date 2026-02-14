@@ -10,6 +10,8 @@ from src.workspaces import (
     GuestSessionManager,
 )
 
+pytestmark = pytest.mark.integration
+
 
 def _character_ids(characters):
     return [entry["id"] if isinstance(entry, dict) else entry for entry in characters]

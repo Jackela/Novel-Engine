@@ -10,15 +10,17 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.contexts.knowledge.application.ports.i_llm_client import LLMError, LLMResponse
 from src.contexts.knowledge.application.services.smart_tagging_service import (
+    GeneratedTag,
+    SmartTaggingError,
     SmartTaggingService,
     TagCategory,
-    GeneratedTag,
-    TaggingResult,
     TaggingConfig,
-    SmartTaggingError,
+    TaggingResult,
 )
-from src.contexts.knowledge.application.ports.i_llm_client import LLMResponse, LLMError
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -31,31 +33,33 @@ def mock_llm_client():
 @pytest.fixture
 def sample_tagging_response():
     """Sample LLM response for tagging."""
-    return json.dumps({
-        "genre": ["sci-fi", "space-opera"],
-        "mood": ["tense", "mysterious"],
-        "themes": ["survival", "discovery"],
-        "characters_present": ["commander-shepard", "garrus"],
-        "locations": ["normandy", "citadel"]
-    })
+    return json.dumps(
+        {
+            "genre": ["sci-fi", "space-opera"],
+            "mood": ["tense", "mysterious"],
+            "themes": ["survival", "discovery"],
+            "characters_present": ["commander-shepard", "garrus"],
+            "locations": ["normandy", "citadel"],
+        }
+    )
 
 
 class TestSmartTaggingService:
     """Test suite for SmartTaggingService."""
 
     @pytest.mark.asyncio
-    async def test_generate_tags_basic(
-        self, mock_llm_client, sample_tagging_response
-    ):
+    async def test_generate_tags_basic(self, mock_llm_client, sample_tagging_response):
         """Test basic tag generation from sample content."""
         # Setup mock response
-        mock_llm_client.generate = AsyncMock(return_value=LLMResponse(
-            text=sample_tagging_response,
-            model="test-model",
-            input_tokens=100,
-            output_tokens=50,
-            raw_usage={},
-        ))
+        mock_llm_client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text=sample_tagging_response,
+                model="test-model",
+                input_tokens=100,
+                output_tokens=50,
+                raw_usage={},
+            )
+        )
 
         service = SmartTaggingService(llm_client=mock_llm_client)
 
@@ -105,13 +109,15 @@ class TestSmartTaggingService:
     @pytest.mark.asyncio
     async def test_generate_tags_invalid_json(self, mock_llm_client):
         """Test handling of invalid JSON response."""
-        mock_llm_client.generate = AsyncMock(return_value=LLMResponse(
-            text="This is not valid JSON",
-            model="test-model",
-            input_tokens=100,
-            output_tokens=10,
-            raw_usage={},
-        ))
+        mock_llm_client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text="This is not valid JSON",
+                model="test-model",
+                input_tokens=100,
+                output_tokens=10,
+                raw_usage={},
+            )
+        )
 
         service = SmartTaggingService(llm_client=mock_llm_client)
 
@@ -123,13 +129,15 @@ class TestSmartTaggingService:
         self, mock_llm_client, sample_tagging_response
     ):
         """Test parsing JSON from markdown code block."""
-        mock_llm_client.generate = AsyncMock(return_value=LLMResponse(
-            text=f"```json\n{sample_tagging_response}\n```",
-            model="test-model",
-            input_tokens=100,
-            output_tokens=50,
-            raw_usage={},
-        ))
+        mock_llm_client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text=f"```json\n{sample_tagging_response}\n```",
+                model="test-model",
+                input_tokens=100,
+                output_tokens=50,
+                raw_usage={},
+            )
+        )
 
         service = SmartTaggingService(llm_client=mock_llm_client)
 
@@ -141,13 +149,15 @@ class TestSmartTaggingService:
     @pytest.mark.asyncio
     async def test_generate_tags_custom_config(self, mock_llm_client):
         """Test tag generation with custom configuration."""
-        mock_llm_client.generate = AsyncMock(return_value=LLMResponse(
-            text='{"genre": ["fantasy"], "mood": ["dark"]}',
-            model="test-model",
-            input_tokens=100,
-            output_tokens=20,
-            raw_usage={},
-        ))
+        mock_llm_client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text='{"genre": ["fantasy"], "mood": ["dark"]}',
+                model="test-model",
+                input_tokens=100,
+                output_tokens=20,
+                raw_usage={},
+            )
+        )
 
         config = TaggingConfig(
             categories=[TagCategory.GENRE, TagCategory.MOOD],
@@ -157,7 +167,9 @@ class TestSmartTaggingService:
 
         service = SmartTaggingService(llm_client=mock_llm_client, config=config)
 
-        result = await service.generate_tags("The dragon scales gleamed in the darkness.")
+        result = await service.generate_tags(
+            "The dragon scales gleamed in the darkness."
+        )
 
         # Verify only configured categories are returned
         assert len(result.get_tags_by_category(TagCategory.GENRE)) > 0
@@ -168,13 +180,15 @@ class TestSmartTaggingService:
     @pytest.mark.asyncio
     async def test_generate_tags_content_truncation(self, mock_llm_client):
         """Test that long content is truncated for the prompt."""
-        mock_llm_client.generate = AsyncMock(return_value=LLMResponse(
-            text='{"genre": ["test"]}',
-            model="test-model",
-            input_tokens=100,
-            output_tokens=10,
-            raw_usage={},
-        ))
+        mock_llm_client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text='{"genre": ["test"]}',
+                model="test-model",
+                input_tokens=100,
+                output_tokens=10,
+                raw_usage={},
+            )
+        )
 
         service = SmartTaggingService(llm_client=mock_llm_client)
 
@@ -257,7 +271,9 @@ class TestSmartTaggingService:
     def test_tagging_config_validation(self):
         """Test TaggingConfig validation."""
         # Invalid max_tags_per_category
-        with pytest.raises(ValueError, match="max_tags_per_category must be at least 1"):
+        with pytest.raises(
+            ValueError, match="max_tags_per_category must be at least 1"
+        ):
             TaggingConfig(max_tags_per_category=0)
 
         # Invalid min_confidence
@@ -271,13 +287,15 @@ class TestSmartTaggingService:
     @pytest.mark.asyncio
     async def test_generate_tags_normalizes_values(self, mock_llm_client):
         """Test that tag values are normalized (lowercase, stripped)."""
-        mock_llm_client.generate = AsyncMock(return_value=LLMResponse(
-            text='{"genre": ["  Sci-Fi  ", "FANTASY"]}',
-            model="test-model",
-            input_tokens=100,
-            output_tokens=20,
-            raw_usage={},
-        ))
+        mock_llm_client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text='{"genre": ["  Sci-Fi  ", "FANTASY"]}',
+                model="test-model",
+                input_tokens=100,
+                output_tokens=20,
+                raw_usage={},
+            )
+        )
 
         service = SmartTaggingService(llm_client=mock_llm_client)
 

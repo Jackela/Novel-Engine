@@ -102,9 +102,7 @@ class PromptRouterService:
         """
         return await self._repository.list_all(tags=tags, limit=limit, offset=offset)
 
-    async def search_prompts(
-        self, query: str, limit: int = 20
-    ) -> list[PromptTemplate]:
+    async def search_prompts(self, query: str, limit: int = 20) -> list[PromptTemplate]:
         """
         Search prompts by name or description.
 
@@ -303,9 +301,7 @@ class PromptRouterService:
         current = await self.get_prompt_by_id(prompt_id)
 
         if current.version == target_version:
-            raise ValueError(
-                f"Cannot rollback: already at version {target_version}"
-            )
+            raise ValueError(f"Cannot rollback: already at version {target_version}")
 
         # Get version history to find target version
         versions = await self.get_version_history(prompt_id)
@@ -318,9 +314,7 @@ class PromptRouterService:
                 break
 
         if target is None:
-            raise PromptNotFoundError(
-                f"Version {target_version} not found in history"
-            )
+            raise PromptNotFoundError(f"Version {target_version} not found in history")
 
         # Create a new version based on the target version content
         # This preserves history by creating a new version (v4) that copies v2 content
@@ -380,7 +374,9 @@ class PromptRouterService:
             raise PromptNotFoundError(f"Version {version_b} not found")
 
         # Compute diffs
-        content_diff = self._compute_character_diff(template_a.content, template_b.content)
+        content_diff = self._compute_character_diff(
+            template_a.content, template_b.content
+        )
 
         # Check for variable changes
         variables_a = {var.name: var for var in template_a.variables}
@@ -421,20 +417,47 @@ class PromptRouterService:
 
         config_changes = []
         if config_a.provider != config_b.provider:
-            config_changes.append({"field": "provider", "old": config_a.provider, "new": config_b.provider})
+            config_changes.append(
+                {
+                    "field": "provider",
+                    "old": config_a.provider,
+                    "new": config_b.provider,
+                }
+            )
         if config_a.model_name != config_b.model_name:
-            config_changes.append({"field": "model_name", "old": config_a.model_name, "new": config_b.model_name})
+            config_changes.append(
+                {
+                    "field": "model_name",
+                    "old": config_a.model_name,
+                    "new": config_b.model_name,
+                }
+            )
         if config_a.temperature != config_b.temperature:
-            config_changes.append({"field": "temperature", "old": config_a.temperature, "new": config_b.temperature})
+            config_changes.append(
+                {
+                    "field": "temperature",
+                    "old": config_a.temperature,
+                    "new": config_b.temperature,
+                }
+            )
         if config_a.max_tokens != config_b.max_tokens:
-            config_changes.append({"field": "max_tokens", "old": config_a.max_tokens, "new": config_b.max_tokens})
+            config_changes.append(
+                {
+                    "field": "max_tokens",
+                    "old": config_a.max_tokens,
+                    "new": config_b.max_tokens,
+                }
+            )
 
         # Check metadata changes
         metadata_changes = {}
         if template_a.name != template_b.name:
             metadata_changes["name"] = {"old": template_a.name, "new": template_b.name}
         if template_a.description != template_b.description:
-            metadata_changes["description"] = {"old": template_a.description, "new": template_b.description}
+            metadata_changes["description"] = {
+                "old": template_a.description,
+                "new": template_b.description,
+            }
 
         tags_a = set(template_a.tags)
         tags_b = set(template_b.tags)
@@ -569,8 +592,16 @@ class PromptRouterService:
         config = template.model_config
         provider = provider_override or config.provider
         model_name = model_name_override or config.model_name
-        temperature = temperature_override if temperature_override is not None else config.temperature
-        max_tokens = max_tokens_override if max_tokens_override is not None else config.max_tokens
+        temperature = (
+            temperature_override
+            if temperature_override is not None
+            else config.temperature
+        )
+        max_tokens = (
+            max_tokens_override
+            if max_tokens_override is not None
+            else config.max_tokens
+        )
         top_p = top_p_override if top_p_override is not None else config.top_p
 
         # Start timing
@@ -592,7 +623,9 @@ class PromptRouterService:
         except Exception as e:
             success = False
             error_message = str(e)
-            logger.warning(f"LLM generation failed for prompt {prompt_id}: {error_message}")
+            logger.warning(
+                f"LLM generation failed for prompt {prompt_id}: {error_message}"
+            )
             raise
         finally:
             # Calculate latency
@@ -670,13 +703,21 @@ class PromptRouterService:
             RuntimeError: If API call fails or provider not supported
         """
         if provider == "gemini":
-            return await self._call_gemini(rendered, model_name, temperature, max_tokens)
+            return await self._call_gemini(
+                rendered, model_name, temperature, max_tokens
+            )
         elif provider == "openai":
-            return await self._call_openai(rendered, model_name, temperature, max_tokens, top_p)
+            return await self._call_openai(
+                rendered, model_name, temperature, max_tokens, top_p
+            )
         elif provider == "anthropic":
-            return await self._call_anthropic(rendered, model_name, temperature, max_tokens)
+            return await self._call_anthropic(
+                rendered, model_name, temperature, max_tokens
+            )
         elif provider == "ollama":
-            return await self._call_ollama(rendered, model_name, temperature, max_tokens)
+            return await self._call_ollama(
+                rendered, model_name, temperature, max_tokens
+            )
         else:
             raise RuntimeError(f"Unsupported LLM provider: {provider}")
 
@@ -725,14 +766,20 @@ class PromptRouterService:
             },
         }
 
-        response = requests.post(base_url, headers=headers, json=request_body, timeout=120)
+        response = requests.post(
+            base_url, headers=headers, json=request_body, timeout=120
+        )
 
         if response.status_code == 401:
-            raise RuntimeError("Gemini API authentication failed - check GEMINI_API_KEY")
+            raise RuntimeError(
+                "Gemini API authentication failed - check GEMINI_API_KEY"
+            )
         elif response.status_code == 429:
             raise RuntimeError("Gemini API rate limit exceeded")
         elif response.status_code != 200:
-            raise RuntimeError(f"Gemini API error {response.status_code}: {response.text}")
+            raise RuntimeError(
+                f"Gemini API error {response.status_code}: {response.text}"
+            )
 
         try:
             response_json = response.json()
@@ -788,14 +835,20 @@ class PromptRouterService:
             "top_p": top_p,
         }
 
-        response = requests.post(base_url, headers=headers, json=request_body, timeout=120)
+        response = requests.post(
+            base_url, headers=headers, json=request_body, timeout=120
+        )
 
         if response.status_code == 401:
-            raise RuntimeError("OpenAI API authentication failed - check OPENAI_API_KEY")
+            raise RuntimeError(
+                "OpenAI API authentication failed - check OPENAI_API_KEY"
+            )
         elif response.status_code == 429:
             raise RuntimeError("OpenAI API rate limit exceeded")
         elif response.status_code != 200:
-            raise RuntimeError(f"OpenAI API error {response.status_code}: {response.text}")
+            raise RuntimeError(
+                f"OpenAI API error {response.status_code}: {response.text}"
+            )
 
         try:
             response_json = response.json()
@@ -849,14 +902,20 @@ class PromptRouterService:
             "messages": [{"role": "user", "content": rendered}],
         }
 
-        response = requests.post(base_url, headers=headers, json=request_body, timeout=120)
+        response = requests.post(
+            base_url, headers=headers, json=request_body, timeout=120
+        )
 
         if response.status_code == 401:
-            raise RuntimeError("Anthropic API authentication failed - check ANTHROPIC_API_KEY")
+            raise RuntimeError(
+                "Anthropic API authentication failed - check ANTHROPIC_API_KEY"
+            )
         elif response.status_code == 429:
             raise RuntimeError("Anthropic API rate limit exceeded")
         elif response.status_code != 200:
-            raise RuntimeError(f"Anthropic API error {response.status_code}: {response.text}")
+            raise RuntimeError(
+                f"Anthropic API error {response.status_code}: {response.text}"
+            )
 
         try:
             response_json = response.json()
@@ -907,10 +966,14 @@ class PromptRouterService:
         try:
             response = requests.post(endpoint, json=request_body, timeout=120)
         except requests.exceptions.ConnectionError:
-            raise RuntimeError(f"Could not connect to Ollama at {base_url}. Make sure Ollama is running.")
+            raise RuntimeError(
+                f"Could not connect to Ollama at {base_url}. Make sure Ollama is running."
+            )
 
         if response.status_code != 200:
-            raise RuntimeError(f"Ollama API error {response.status_code}: {response.text}")
+            raise RuntimeError(
+                f"Ollama API error {response.status_code}: {response.text}"
+            )
 
         try:
             response_json = response.json()
@@ -1014,7 +1077,7 @@ class PromptRouterService:
             PromptNotFoundError: If prompt not found
             ValueError: If usage repository is not configured
         """
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta, timezone
 
         if self._usage_repository is None:
             raise ValueError("Usage repository is not configured for analytics")
@@ -1104,7 +1167,9 @@ class PromptRouterService:
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
-    def _calculate_rating_distribution(self, usages: list[PromptUsage]) -> dict[str, int]:
+    def _calculate_rating_distribution(
+        self, usages: list[PromptUsage]
+    ) -> dict[str, int]:
         """
         Calculate rating distribution from usage events.
 
@@ -1189,20 +1254,26 @@ class PromptRouterService:
             successful = sum(1 for u in period_usages if u.success)
             failed = total - successful
             total_tokens = sum(u.total_tokens for u in period_usages)
-            avg_latency = sum(u.latency_ms for u in period_usages) / total if total > 0 else 0
+            avg_latency = (
+                sum(u.latency_ms for u in period_usages) / total if total > 0 else 0
+            )
 
-            ratings = [u.user_rating for u in period_usages if u.user_rating is not None]
+            ratings = [
+                u.user_rating for u in period_usages if u.user_rating is not None
+            ]
             avg_rating = sum(ratings) / len(ratings) if ratings else 0
 
-            data_points.append({
-                "period": period_key,
-                "total_uses": total,
-                "successful_uses": successful,
-                "failed_uses": failed,
-                "total_tokens": total_tokens,
-                "avg_latency_ms": round(avg_latency, 2),
-                "avg_rating": round(avg_rating, 2),
-            })
+            data_points.append(
+                {
+                    "period": period_key,
+                    "total_uses": total,
+                    "successful_uses": successful,
+                    "failed_uses": failed,
+                    "total_tokens": total_tokens,
+                    "avg_latency_ms": round(avg_latency, 2),
+                    "avg_rating": round(avg_rating, 2),
+                }
+            )
 
         # Sort by period (most recent first)
         return sorted(data_points, key=lambda x: x["period"], reverse=True)[:limit]
@@ -1232,8 +1303,8 @@ class PromptRouterService:
             PromptNotFoundError: If prompt not found
             ValueError: If usage repository is not configured
         """
-        import io
         import csv
+        import io
         from datetime import datetime, timezone
 
         if self._usage_repository is None:
@@ -1276,43 +1347,47 @@ class PromptRouterService:
         writer = csv.writer(output)
 
         # Header
-        writer.writerow([
-            "Timestamp",
-            "Prompt ID",
-            "Prompt Name",
-            "Version",
-            "Input Tokens",
-            "Output Tokens",
-            "Total Tokens",
-            "Latency (ms)",
-            "Model Provider",
-            "Model Name",
-            "Success",
-            "Error Message",
-            "User Rating",
-            "Workspace ID",
-            "User ID",
-        ])
+        writer.writerow(
+            [
+                "Timestamp",
+                "Prompt ID",
+                "Prompt Name",
+                "Version",
+                "Input Tokens",
+                "Output Tokens",
+                "Total Tokens",
+                "Latency (ms)",
+                "Model Provider",
+                "Model Name",
+                "Success",
+                "Error Message",
+                "User Rating",
+                "Workspace ID",
+                "User ID",
+            ]
+        )
 
         # Rows
         for usage in sorted(usages, key=lambda u: u.timestamp, reverse=True):
-            writer.writerow([
-                usage.timestamp.isoformat(),
-                usage.prompt_id,
-                usage.prompt_name,
-                usage.prompt_version,
-                usage.input_tokens,
-                usage.output_tokens,
-                usage.total_tokens,
-                round(usage.latency_ms, 2),
-                usage.model_provider,
-                usage.model_name,
-                "Yes" if usage.success else "No",
-                usage.error_message or "",
-                usage.user_rating or "",
-                usage.workspace_id or "",
-                usage.user_id or "",
-            ])
+            writer.writerow(
+                [
+                    usage.timestamp.isoformat(),
+                    usage.prompt_id,
+                    usage.prompt_name,
+                    usage.prompt_version,
+                    usage.input_tokens,
+                    usage.output_tokens,
+                    usage.total_tokens,
+                    round(usage.latency_ms, 2),
+                    usage.model_provider,
+                    usage.model_name,
+                    "Yes" if usage.success else "No",
+                    usage.error_message or "",
+                    usage.user_rating or "",
+                    usage.workspace_id or "",
+                    usage.user_id or "",
+                ]
+            )
 
         return output.getvalue()
 

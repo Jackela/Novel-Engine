@@ -204,16 +204,8 @@ export function PacingGraph({
             <defs>
               {/* Gradient for tension area */}
               <linearGradient id="tensionGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="hsl(var(--primary))"
-                  stopOpacity={0.4}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="hsl(var(--primary))"
-                  stopOpacity={0}
-                />
+                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
               </linearGradient>
               {/* Gradient for energy area */}
               <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
@@ -349,7 +341,7 @@ export function PacingGraph({
                   </span>
                 </div>
                 <p className="mb-1 text-muted-foreground">{issue.description}</p>
-                <p className="text-xs text-muted-foreground italic">
+                <p className="text-xs italic text-muted-foreground">
                   {issue.suggestion}
                 </p>
               </li>

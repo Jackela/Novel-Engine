@@ -6,7 +6,6 @@ Test suite covering awareness states, alertness levels, attention focus,
 and all business logic methods in the Subjective Context domain layer.
 """
 
-
 import pytest
 
 from src.contexts.subjective.domain.value_objects.awareness import (
@@ -15,6 +14,8 @@ from src.contexts.subjective.domain.value_objects.awareness import (
     AwarenessModifier,
     AwarenessState,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestAwarenessStateCreation:

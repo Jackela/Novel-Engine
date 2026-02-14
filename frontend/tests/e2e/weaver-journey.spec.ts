@@ -13,6 +13,7 @@ import { test, expect } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { safeGoto } from './utils/navigation';
 
 const ACCESSIBILITY_IGNORED_RULES = ['color-contrast', 'list', 'scrollable-region-focusable'];
 
@@ -47,7 +48,7 @@ test.describe('Weaver Full Journey', () => {
       });
 
       await test.step('Navigate to Weaver page', async () => {
-        await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+        await safeGoto(page, '/weaver');
         await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible();
       });
 
@@ -60,7 +61,7 @@ test.describe('Weaver Full Journey', () => {
 
   test.describe('Node Creation and Management', () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
       await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible();
     });
 
@@ -155,7 +156,7 @@ test.describe('Weaver Full Journey', () => {
 
   test.describe('Node Status Transitions', () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
       await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible();
     });
 
@@ -212,7 +213,7 @@ test.describe('Weaver Full Journey', () => {
 
   test.describe('Accessibility', () => {
     test('@e2e Weaver page should have no accessibility violations', async ({ page }) => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
       await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible();
 
       const accessibilityScanResults = await new AxeBuilder({ page })
@@ -224,7 +225,7 @@ test.describe('Weaver Full Journey', () => {
     });
 
     test('@e2e Weaver canvas should support keyboard navigation', async ({ page }) => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
 
       const characterButton = page.getByRole('button', { name: 'Character' });
       await focusViaTab(page, characterButton);

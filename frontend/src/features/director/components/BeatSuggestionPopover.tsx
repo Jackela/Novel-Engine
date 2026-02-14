@@ -31,12 +31,36 @@ const BEAT_TYPE_CONFIG: Record<
   BeatType,
   { label: string; borderColor: string; bgColor: string }
 > = {
-  action: { label: 'Action', borderColor: 'border-blue-500', bgColor: 'bg-blue-50 dark:bg-blue-950' },
-  dialogue: { label: 'Dialogue', borderColor: 'border-emerald-500', bgColor: 'bg-emerald-50 dark:bg-emerald-950' },
-  reaction: { label: 'Reaction', borderColor: 'border-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-950' },
-  revelation: { label: 'Revelation', borderColor: 'border-purple-500', bgColor: 'bg-purple-50 dark:bg-purple-950' },
-  transition: { label: 'Transition', borderColor: 'border-gray-500', bgColor: 'bg-gray-50 dark:bg-gray-950' },
-  description: { label: 'Description', borderColor: 'border-cyan-500', bgColor: 'bg-cyan-50 dark:bg-cyan-950' },
+  action: {
+    label: 'Action',
+    borderColor: 'border-blue-500',
+    bgColor: 'bg-blue-50 dark:bg-blue-950',
+  },
+  dialogue: {
+    label: 'Dialogue',
+    borderColor: 'border-emerald-500',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-950',
+  },
+  reaction: {
+    label: 'Reaction',
+    borderColor: 'border-amber-500',
+    bgColor: 'bg-amber-50 dark:bg-amber-950',
+  },
+  revelation: {
+    label: 'Revelation',
+    borderColor: 'border-purple-500',
+    bgColor: 'bg-purple-50 dark:bg-purple-950',
+  },
+  transition: {
+    label: 'Transition',
+    borderColor: 'border-gray-500',
+    bgColor: 'bg-gray-50 dark:bg-gray-950',
+  },
+  description: {
+    label: 'Description',
+    borderColor: 'border-cyan-500',
+    bgColor: 'bg-cyan-50 dark:bg-cyan-950',
+  },
 };
 
 interface BeatSuggestionDialogProps {
@@ -166,7 +190,9 @@ export function BeatSuggestionDialog({
                 </div>
               ) : (
                 suggestBeats.data.suggestions.map((suggestion, index) => {
-                  const typeConfig = BEAT_TYPE_CONFIG[suggestion.beat_type as BeatType] || {
+                  const typeConfig = BEAT_TYPE_CONFIG[
+                    suggestion.beat_type as BeatType
+                  ] || {
                     label: suggestion.beat_type,
                     borderColor: 'border-gray-500',
                     bgColor: 'bg-gray-50 dark:bg-gray-950',
@@ -208,7 +234,7 @@ export function BeatSuggestionDialog({
 
                       {/* Rationale */}
                       {suggestion.rationale && (
-                        <p className="text-xs text-muted-foreground italic">
+                        <p className="text-xs italic text-muted-foreground">
                           "{suggestion.rationale}"
                         </p>
                       )}
@@ -220,27 +246,26 @@ export function BeatSuggestionDialog({
           </ScrollArea>
         )}
 
-        <DialogFooter className="flex-col sm:flex-col gap-2">
+        <DialogFooter className="flex-col gap-2 sm:flex-col">
           {/* Regenerate Button */}
           {suggestBeats.data && !suggestBeats.isPending && (
             <Button
               variant="outline"
               className="w-full gap-1.5"
-              onClick={() => suggestBeats.mutate({
-                sceneId,
-                currentBeats: currentBeatsForApi,
-                sceneContext,
-                moodTarget,
-              })}
+              onClick={() =>
+                suggestBeats.mutate({
+                  sceneId,
+                  currentBeats: currentBeatsForApi,
+                  sceneContext,
+                  moodTarget,
+                })
+              }
             >
               <Sparkles className="h-3.5 w-3.5" />
               Generate new suggestions
             </Button>
           )}
-          <Button
-            variant="ghost"
-            onClick={() => setIsOpen(false)}
-          >
+          <Button variant="ghost" onClick={() => setIsOpen(false)}>
             Close
           </Button>
         </DialogFooter>

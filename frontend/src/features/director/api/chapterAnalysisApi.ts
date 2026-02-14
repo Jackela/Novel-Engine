@@ -7,10 +7,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import {
-  ChapterHealthReportSchema,
-  type ChapterHealthReport,
-} from '@/types/schemas';
+import { ChapterHealthReportSchema, type ChapterHealthReport } from '@/types/schemas';
 
 /**
  * Query key factory for chapter analysis.

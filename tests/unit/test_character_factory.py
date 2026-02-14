@@ -10,6 +10,9 @@ from unittest.mock import Mock, patch
 import pytest
 
 # Import modules under test
+
+pytestmark = pytest.mark.unit
+
 try:
     from src.config.character_factory import CharacterFactory
     from src.core.event_bus import EventBus
@@ -352,4 +355,3 @@ def run_character_factory_tests():
 if __name__ == "__main__":
     # Direct execution runs all tests
     run_character_factory_tests()
-

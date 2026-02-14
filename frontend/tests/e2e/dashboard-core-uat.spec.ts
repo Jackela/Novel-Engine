@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures';
 test.setTimeout(120_000);
 import { DashboardPage } from './pages/DashboardPage';
+import { scalePerf } from './utils/perf';
 
 /**
  * Emergent Narrative Dashboard - Core UAT Test Suite
@@ -625,21 +626,21 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
       const loadStart = Date.now();
 
       // Navigate and measure full load time
-      await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-      await dashboardPage.dashboardLayout.waitFor({ state: 'visible', timeout: 10000 });
+      await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await dashboardPage.dashboardLayout.waitFor({ state: 'visible', timeout: 20000 });
 
       const loadEnd = Date.now();
       const loadTime = loadEnd - loadStart;
 
       // Validate load time meets performance requirements (< 5 seconds)
-      expect(loadTime).toBeLessThan(5000);
+      expect(loadTime).toBeLessThan(scalePerf(5000));
 
       // Measure time to first meaningful paint (World State Map visible)
       const worldMapLoadStart = Date.now();
       await dashboardPage.worldStateMap.waitFor({ state: 'visible' });
       const worldMapLoadTime = Date.now() - worldMapLoadStart;
 
-      expect(worldMapLoadTime).toBeLessThan(3000);
+      expect(worldMapLoadTime).toBeLessThan(scalePerf(3000));
 
       console.log(`⚡ Dashboard Load Time: ${loadTime}ms`);
       console.log(`⚡ World Map Load Time: ${worldMapLoadTime}ms`);

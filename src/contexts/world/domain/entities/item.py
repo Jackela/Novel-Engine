@@ -141,7 +141,10 @@ class Item(Entity):
             self.is_consumable = True
 
         # Weapons and armor should be equippable
-        if self.item_type in (ItemType.WEAPON, ItemType.ARMOR) and not self.is_equippable:
+        if (
+            self.item_type in (ItemType.WEAPON, ItemType.ARMOR)
+            and not self.is_equippable
+        ):
             # Auto-correct - equipment should be equippable
             self.is_equippable = True
 

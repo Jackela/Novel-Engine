@@ -17,6 +17,9 @@ from .shared_types import ActionPriority, ActionType
 # Direct import from the types.py file
 types_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "types.py")
 spec = importlib.util.spec_from_file_location("core_types", types_path)
+if spec is None or spec.loader is None:
+    raise ImportError(f"Failed to load core types from {types_path}")
+
 core_types = importlib.util.module_from_spec(spec)
 
 try:

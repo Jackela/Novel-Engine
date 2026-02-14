@@ -103,7 +103,9 @@ def get_prompt_service(
 
 
 def get_experiment_service(
-    experiment_repository: InMemoryExperimentRepository = Depends(get_experiment_repository),
+    experiment_repository: InMemoryExperimentRepository = Depends(
+        get_experiment_repository
+    ),
     prompt_repository: InMemoryPromptRepository = Depends(get_prompt_repository),
 ) -> ExperimentRouterService:
     """
@@ -197,10 +199,11 @@ async def experiments_health(
             "total_experiments": count,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-    except ExperimentRepositoryError as e:
+    except ExperimentRepositoryError:
+        logger.exception("Experiment repository health check failed")
         return {
             "status": "unhealthy",
-            "error": str(e),
+            "error": "repository_error",
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -326,7 +329,9 @@ async def delete_experiment(
     try:
         deleted = await service.delete_experiment(experiment_id)
         if not deleted:
-            raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Experiment '{experiment_id}' not found"
+            )
 
         return Response(status_code=204)
 
@@ -340,7 +345,9 @@ async def delete_experiment(
 # ==================== Action Endpoints ====================
 
 
-@router.post("/experiments/{experiment_id}/start", response_model=ExperimentSummaryResponse)
+@router.post(
+    "/experiments/{experiment_id}/start", response_model=ExperimentSummaryResponse
+)
 async def start_experiment(
     experiment_id: str,
     service: ExperimentRouterService = Depends(get_experiment_service),
@@ -370,7 +377,9 @@ async def start_experiment(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/experiments/{experiment_id}/pause", response_model=ExperimentSummaryResponse)
+@router.post(
+    "/experiments/{experiment_id}/pause", response_model=ExperimentSummaryResponse
+)
 async def pause_experiment(
     experiment_id: str,
     service: ExperimentRouterService = Depends(get_experiment_service),
@@ -400,7 +409,9 @@ async def pause_experiment(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/experiments/{experiment_id}/resume", response_model=ExperimentSummaryResponse)
+@router.post(
+    "/experiments/{experiment_id}/resume", response_model=ExperimentSummaryResponse
+)
 async def resume_experiment(
     experiment_id: str,
     service: ExperimentRouterService = Depends(get_experiment_service),
@@ -430,7 +441,9 @@ async def resume_experiment(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/experiments/{experiment_id}/complete", response_model=ExperimentSummaryResponse)
+@router.post(
+    "/experiments/{experiment_id}/complete", response_model=ExperimentSummaryResponse
+)
 async def complete_experiment(
     experiment_id: str,
     payload: ExperimentActionRequest = ExperimentActionRequest(),
@@ -459,7 +472,9 @@ async def complete_experiment(
             elif payload.winner == "B":
                 winner_id = experiment.prompt_b_id
 
-        experiment = await service.complete_experiment(experiment_id, winner_id=winner_id)
+        experiment = await service.complete_experiment(
+            experiment_id, winner_id=winner_id
+        )
         return service.to_summary(experiment)
 
     except ExperimentNotFoundError as e:
@@ -471,7 +486,9 @@ async def complete_experiment(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/experiments/{experiment_id}/record", response_model=ExperimentSummaryResponse)
+@router.post(
+    "/experiments/{experiment_id}/record", response_model=ExperimentSummaryResponse
+)
 async def record_result(
     experiment_id: str,
     payload: ExperimentRecordRequest,

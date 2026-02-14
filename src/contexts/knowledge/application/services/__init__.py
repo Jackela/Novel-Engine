@@ -4,26 +4,156 @@ Application Services Module
 Services in the knowledge context that orchestrate business logic.
 """
 
+from .bm25_retriever import (
+    DEFAULT_B,
+    DEFAULT_K1,
+    BM25IndexStats,
+    BM25Result,
+    BM25Retriever,
+    IndexedDocument,
+    tokenize,
+)
+from .budget_alert_service import (
+    AlertHandler,
+    BudgetAlertService,
+    BudgetAlertServiceConfig,
+    create_budget_alert_service,
+)
+from .citation_formatter import (
+    ChunkCitation,
+    CitationFormat,
+    CitationFormatter,
+    CitationFormatterConfig,
+    SourceReference,
+)
+from .context_optimizer import (
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_OVERHEAD_TOKENS,
+    DEFAULT_SYSTEM_PROMPT_TOKENS,
+    ChunkPriority,
+    CompressSummariesPackingStrategy,
+    ContextOptimizer,
+    DiversityPackingStrategy,
+    IPackingStrategy,
+    OptimizationConfig,
+    OptimizationResult,
+    OptimizedChunk,
+    PackingStrategy,
+    RelevancePackingStrategy,
+    RemoveRedundancyPackingStrategy,
+    create_context_optimizer,
+)
+from .context_window_manager import (
+    DEFAULT_CONTEXT_WINDOWS,
+)
+from .context_window_manager import ChatMessage as ContextWindowChatMessage
+from .context_window_manager import (
+    ContextWindowConfig,
+    ContextWindowManager,
+    ManagedContext,
+    PruningStrategy,
+    create_context_window_manager,
+)
+from .coreference_resolution_service import (
+    DEFAULT_COREF_MAX_TOKENS,
+    DEFAULT_COREF_TEMPERATURE,
+    DEFAULT_MAX_REFERENCES,
+    DEFAULT_WINDOW_SIZE,
+    CoreferenceConfig,
+    CoreferenceResolutionError,
+    CoreferenceResolutionService,
+    CoreferenceResult,
+    ResolvedReference,
+)
+from .embedding_cache_service import (
+    CacheEntry,
+    CacheKey,
+    CacheStats,
+    EmbeddingCacheService,
+)
+from .entity_extraction_service import DEFAULT_MAX_TOKENS as DEFAULT_ENTITY_MAX_TOKENS
+from .entity_extraction_service import DEFAULT_TEMPERATURE as DEFAULT_ENTITY_TEMPERATURE
+from .entity_extraction_service import (
+    EntityExtractionError,
+    EntityExtractionService,
+    ExtractionConfig,
+)
+from .graph_retrieval_service import (
+    GraphEnhancedChunk,
+    GraphEntityContext,
+    GraphExplanation,
+    GraphExplanationStep,
+    GraphRetrievalConfig,
+    GraphRetrievalResult,
+    GraphRetrievalService,
+)
+from .hybrid_retriever import (
+    DEFAULT_BM25_WEIGHT,
+    DEFAULT_RRF_ALPHA,
+    DEFAULT_RRF_K,
+    DEFAULT_VECTOR_WEIGHT,
+    FusionMetadata,
+    HybridConfig,
+    HybridResult,
+    HybridRetriever,
+)
 from .knowledge_ingestion_service import (
-    BatchIngestionResult,
     DEFAULT_COLLECTION,
+    BatchIngestionResult,
     IngestionProgress,
     IngestionResult,
     KnowledgeIngestionService,
     RetrievedChunk,
     SourceChunk,
 )
-
-from .retrieval_service import (
-    DEFAULT_DEDUPLICATION_SIMILARITY,
-    DEFAULT_RELEVANCE_THRESHOLD,
-    FormattedContext,
-    RetrievalFilter,
-    RetrievalOptions,
-    RetrievalResult,
-    RetrievalService,
+from .model_registry import (
+    ModelLookupResult,
+    ModelRegistry,
+    ModelRegistryConfig,
+    ModelRegistryConfigFile,
+    create_model_registry,
 )
-
+from .multi_hop_retriever import (
+    DEFAULT_HOP_K,
+    DEFAULT_MAX_HOPS,
+)
+from .multi_hop_retriever import DEFAULT_TEMPERATURE as DEFAULT_MULTIHOP_TEMPERATURE
+from .multi_hop_retriever import (
+    ExplainConfig,
+    HopConfig,
+    HopResult,
+    HopStatus,
+    MultiHopConfig,
+    MultiHopResult,
+    MultiHopRetriever,
+    QueryDecomposer,
+    ReasoningStep,
+)
+from .prompt_formatter import (
+    FormattedPrompt,
+    PromptFormat,
+    PromptFormatter,
+    PromptModelFamily,
+    PromptRequest,
+    create_prompt_formatter,
+)
+from .query_aware_retrieval_service import (
+    DEFAULT_MAX_CONCURRENT,
+    QueryAwareConfig,
+    QueryAwareMetrics,
+    QueryAwareRetrievalResult,
+    QueryAwareRetrievalService,
+)
+from .query_rewriter import (
+    DEFAULT_INCLUDE_ORIGINAL,
+    DEFAULT_MAX_VARIANTS,
+    DEFAULT_STRATEGY,
+    DEFAULT_TEMPERATURE,
+    QueryRewriter,
+    RewriteConfig,
+    RewriteResult,
+    RewriteStrategy,
+)
 from .rag_integration_service import (
     DEFAULT_CONTEXT_TOKEN_LIMIT,
     DEFAULT_ENABLED,
@@ -33,194 +163,47 @@ from .rag_integration_service import (
     RAGIntegrationService,
     RAGMetrics,
 )
-
-from .bm25_retriever import (
-    BM25Retriever,
-    BM25Result,
-    IndexedDocument,
-    BM25IndexStats,
-    tokenize,
-    DEFAULT_K1,
-    DEFAULT_B,
-)
-
-from .hybrid_retriever import (
-    HybridRetriever,
-    HybridConfig,
-    HybridResult,
-    FusionMetadata,
-    DEFAULT_VECTOR_WEIGHT,
-    DEFAULT_BM25_WEIGHT,
-    DEFAULT_RRF_K,
-    DEFAULT_RRF_ALPHA,
-)
-
-from .query_rewriter import (
-    QueryRewriter,
-    RewriteStrategy,
-    RewriteConfig,
-    RewriteResult,
-    DEFAULT_STRATEGY,
-    DEFAULT_TEMPERATURE,
-    DEFAULT_MAX_VARIANTS,
-    DEFAULT_INCLUDE_ORIGINAL,
-)
-
-from .query_aware_retrieval_service import (
-    QueryAwareRetrievalService,
-    QueryAwareConfig,
-    QueryAwareRetrievalResult,
-    QueryAwareMetrics,
-    DEFAULT_MAX_CONCURRENT,
-)
-
 from .rerank_service import (
-    RerankService,
-    RerankConfig,
-    RerankServiceResult,
-    MockReranker,
-    FailingReranker,
     DEFAULT_TOP_K,
+    FailingReranker,
+    MockReranker,
+    RerankConfig,
+    RerankService,
+    RerankServiceResult,
 )
-
-from .token_counter import (
-    TokenCounter,
-    LLMProvider,
-    ModelFamily,
-    TokenCountResult,
-    create_token_counter,
-    TIKTOKEN_AVAILABLE,
+from .retrieval_service import (
+    DEFAULT_DEDUPLICATION_SIMILARITY,
+    DEFAULT_RELEVANCE_THRESHOLD,
+    FormattedContext,
+    RetrievalFilter,
+    RetrievalOptions,
+    RetrievalResult,
+    RetrievalService,
 )
-
-from .context_optimizer import (
-    ContextOptimizer,
-    PackingStrategy,
-    OptimizationConfig,
-    OptimizationResult,
-    ChunkPriority,
-    OptimizedChunk,
-    IPackingStrategy,
-    RelevancePackingStrategy,
-    DiversityPackingStrategy,
-    RemoveRedundancyPackingStrategy,
-    CompressSummariesPackingStrategy,
-    create_context_optimizer,
-    DEFAULT_SYSTEM_PROMPT_TOKENS,
-    DEFAULT_OVERHEAD_TOKENS,
-    DEFAULT_MAX_TOKENS,
-)
-
-from .citation_formatter import (
-    CitationFormatter,
-    CitationFormatterConfig,
-    SourceReference,
-    ChunkCitation,
-    CitationFormat,
-)
-
-from .multi_hop_retriever import (
-    MultiHopRetriever,
-    QueryDecomposer,
-    MultiHopConfig,
-    HopConfig,
-    ExplainConfig,
-    MultiHopResult,
-    HopResult,
-    HopStatus,
-    ReasoningStep,
-    DEFAULT_MAX_HOPS,
-    DEFAULT_HOP_K,
-    DEFAULT_TEMPERATURE as DEFAULT_MULTIHOP_TEMPERATURE,
-)
-
-from .model_registry import (
-    ModelRegistry,
-    ModelRegistryConfig,
-    ModelLookupResult,
-    ModelRegistryConfigFile,
-    create_model_registry,
-)
-
-from .entity_extraction_service import (
-    EntityExtractionService,
-    ExtractionConfig,
-    EntityExtractionError,
-    DEFAULT_TEMPERATURE,
-    DEFAULT_MAX_TOKENS,
-)
-
-from .coreference_resolution_service import (
-    CoreferenceResolutionService,
-    CoreferenceConfig,
-    CoreferenceResult,
-    ResolvedReference,
-    CoreferenceResolutionError,
-    DEFAULT_COREF_TEMPERATURE,
-    DEFAULT_COREF_MAX_TOKENS,
-    DEFAULT_MAX_REFERENCES,
-    DEFAULT_WINDOW_SIZE,
-)
-
-from .graph_retrieval_service import (
-    GraphEntityContext,
-    GraphEnhancedChunk,
-    GraphRetrievalConfig,
-    GraphRetrievalResult,
-    GraphRetrievalService,
-    GraphExplanationStep,
-    GraphExplanation,
-)
-
-from .token_tracker import (
-    TokenTracker,
-    TrackingContext,
-    TokenTrackerConfig,
-    TokenAwareConfig,
-    create_token_tracker,
-)
-
-from .budget_alert_service import (
-    BudgetAlertService,
-    BudgetAlertServiceConfig,
-    AlertHandler,
-    create_budget_alert_service,
-)
-
+from .smart_tagging_service import DEFAULT_MAX_TOKENS as DEFAULT_TAGGING_MAX_TOKENS
+from .smart_tagging_service import DEFAULT_TEMPERATURE as DEFAULT_TAGGING_TEMPERATURE
 from .smart_tagging_service import (
+    GeneratedTag,
+    SmartTaggingError,
     SmartTaggingService,
     TagCategory,
-    GeneratedTag,
-    TaggingResult,
     TaggingConfig,
-    SmartTaggingError,
-    DEFAULT_TEMPERATURE as DEFAULT_TAGGING_TEMPERATURE,
-    DEFAULT_MAX_TOKENS as DEFAULT_TAGGING_MAX_TOKENS,
+    TaggingResult,
 )
-
-from .embedding_cache_service import (
-    EmbeddingCacheService,
-    CacheKey,
-    CacheEntry,
-    CacheStats,
+from .token_counter import (
+    TIKTOKEN_AVAILABLE,
+    LLMProvider,
+    ModelFamily,
+    TokenCounter,
+    TokenCountResult,
+    create_token_counter,
 )
-
-from .context_window_manager import (
-    ContextWindowManager,
-    ContextWindowConfig,
-    ManagedContext,
-    ChatMessage as ContextWindowChatMessage,
-    PruningStrategy,
-    create_context_window_manager,
-    DEFAULT_CONTEXT_WINDOWS,
-)
-
-from .prompt_formatter import (
-    PromptFormatter,
-    PromptRequest,
-    FormattedPrompt,
-    PromptFormat,
-    PromptModelFamily,
-    create_prompt_formatter,
+from .token_tracker import (
+    TokenAwareConfig,
+    TokenTracker,
+    TokenTrackerConfig,
+    TrackingContext,
+    create_token_tracker,
 )
 
 __all__ = [
@@ -339,8 +322,8 @@ __all__ = [
     "EntityExtractionService",
     "ExtractionConfig",
     "EntityExtractionError",
-    "DEFAULT_TEMPERATURE",
-    "DEFAULT_MAX_TOKENS",
+    "DEFAULT_ENTITY_TEMPERATURE",
+    "DEFAULT_ENTITY_MAX_TOKENS",
     # Co-reference Resolution
     "CoreferenceResolutionService",
     "CoreferenceConfig",

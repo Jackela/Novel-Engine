@@ -19,21 +19,23 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from src.api.routers.brain_settings import (
+    InMemoryBrainSettingsRepository,
     _decrypt_api_key,
     _encrypt_api_key,
     _mask_api_key,
     _require_encryption,
     get_encryption_key,
     get_fernet,
-    InMemoryBrainSettingsRepository,
 )
 from src.api.schemas import APIKeysRequest, APIKeysResponse
 
-
 # ==================== Encryption Tests ====================
 
 
 # ==================== Encryption Tests ====================
+
+
+pytestmark = pytest.mark.unit
 
 
 class TestEncryption:
@@ -236,21 +238,27 @@ class TestEncryptionKeyRequirement:
         with patch.dict("os.environ", {}, clear=False):
             # Remove the env var if it exists
             import os
+
             os.environ.pop("BRAIN_SETTINGS_ENCRYPTION_KEY", None)
 
-            with pytest.raises(ValueError, match="BRAIN_SETTINGS_ENCRYPTION_KEY not set"):
+            with pytest.raises(
+                ValueError, match="BRAIN_SETTINGS_ENCRYPTION_KEY not set"
+            ):
                 get_encryption_key()
 
     def test_get_encryption_key_invalid_key_raises(self):
         """Test get_encryption_key raises ValueError for invalid key."""
         with patch.dict("os.environ", {"BRAIN_SETTINGS_ENCRYPTION_KEY": "invalid-key"}):
-            with pytest.raises(ValueError, match="Invalid BRAIN_SETTINGS_ENCRYPTION_KEY"):
+            with pytest.raises(
+                ValueError, match="Invalid BRAIN_SETTINGS_ENCRYPTION_KEY"
+            ):
                 get_encryption_key()
 
     def test_get_fernet_returns_none_when_missing(self):
         """Test get_fernet returns None when key is not set."""
         with patch.dict("os.environ", {}, clear=False):
             import os
+
             os.environ.pop("BRAIN_SETTINGS_ENCRYPTION_KEY", None)
 
             result = get_fernet()
@@ -357,7 +365,10 @@ class TestBrainSettingsSecurityIntegration:
         await repository.set_api_key("openai", api_key, None)
 
         # Key should not be stored (empty string means encryption failed)
-        assert repository._api_keys.get("openai") is None or repository._api_keys.get("openai") == ""
+        assert (
+            repository._api_keys.get("openai") is None
+            or repository._api_keys.get("openai") == ""
+        )
 
         # Retrieval should return empty
         retrieved = await repository.get_api_keys(None)

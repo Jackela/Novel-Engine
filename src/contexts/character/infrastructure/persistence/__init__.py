@@ -35,6 +35,7 @@ except ImportError:
 def models_available() -> bool:
     return CharacterORM is not None
 
+
 __all__ = [
     "CharacterORM",
     "CharacterProfileORM",

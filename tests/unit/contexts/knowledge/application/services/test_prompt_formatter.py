@@ -7,13 +7,15 @@ Tests prompt format selection and rendering for different model families.
 import pytest
 
 from src.contexts.knowledge.application.services.prompt_formatter import (
-    PromptFormatter,
-    PromptRequest,
     FormattedPrompt,
     PromptFormat,
+    PromptFormatter,
     PromptModelFamily,
+    PromptRequest,
     create_prompt_formatter,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestPromptRequest:
@@ -247,12 +249,20 @@ class TestPromptFormatter:
         """Test getting format for model name."""
         formatter = PromptFormatter()
 
-        assert formatter.get_format_for_model("deepseek-coder-v2") == PromptFormat.CODE_INSTRUCTION
+        assert (
+            formatter.get_format_for_model("deepseek-coder-v2")
+            == PromptFormat.CODE_INSTRUCTION
+        )
         assert formatter.get_format_for_model("deepseek-r1") == PromptFormat.INSTRUCTION
         assert formatter.get_format_for_model("llama3.2") == PromptFormat.INSTRUCTION
         assert formatter.get_format_for_model("gpt-4o") == PromptFormat.CHAT_MESSAGES
-        assert formatter.get_format_for_model("claude-3-opus") == PromptFormat.CHAT_MESSAGES
-        assert formatter.get_format_for_model("gemini-2.0") == PromptFormat.CHAT_MESSAGES
+        assert (
+            formatter.get_format_for_model("claude-3-opus")
+            == PromptFormat.CHAT_MESSAGES
+        )
+        assert (
+            formatter.get_format_for_model("gemini-2.0") == PromptFormat.CHAT_MESSAGES
+        )
 
     def test_unknown_family_uses_default(self) -> None:
         """Test that unknown model family uses default format."""
@@ -353,32 +363,61 @@ class TestPromptModelFamily:
 
     def test_from_model_name_deepseek_coder(self) -> None:
         """Test detecting DeepSeek-Coder family."""
-        assert PromptModelFamily.from_model_name("deepseek-coder-v2:16b") == PromptModelFamily.DEEPSEEK_CODER
-        assert PromptModelFamily.from_model_name("deepseek_coder:33b") == PromptModelFamily.DEEPSEEK_CODER
-        assert PromptModelFamily.from_model_name("deepseek-coder") == PromptModelFamily.DEEPSEEK_CODER
+        assert (
+            PromptModelFamily.from_model_name("deepseek-coder-v2:16b")
+            == PromptModelFamily.DEEPSEEK_CODER
+        )
+        assert (
+            PromptModelFamily.from_model_name("deepseek_coder:33b")
+            == PromptModelFamily.DEEPSEEK_CODER
+        )
+        assert (
+            PromptModelFamily.from_model_name("deepseek-coder")
+            == PromptModelFamily.DEEPSEEK_CODER
+        )
 
     def test_from_model_name_deepseek(self) -> None:
         """Test detecting DeepSeek family."""
-        assert PromptModelFamily.from_model_name("deepseek-r1:32b") == PromptModelFamily.DEEPSEEK
-        assert PromptModelFamily.from_model_name("deepseek-r1") == PromptModelFamily.DEEPSEEK
-        assert PromptModelFamily.from_model_name("deepseek") == PromptModelFamily.DEEPSEEK
+        assert (
+            PromptModelFamily.from_model_name("deepseek-r1:32b")
+            == PromptModelFamily.DEEPSEEK
+        )
+        assert (
+            PromptModelFamily.from_model_name("deepseek-r1")
+            == PromptModelFamily.DEEPSEEK
+        )
+        assert (
+            PromptModelFamily.from_model_name("deepseek") == PromptModelFamily.DEEPSEEK
+        )
 
     def test_from_model_name_llama(self) -> None:
         """Test detecting Llama family."""
         assert PromptModelFamily.from_model_name("llama3.2") == PromptModelFamily.LLAMA
         assert PromptModelFamily.from_model_name("llama3") == PromptModelFamily.LLAMA
-        assert PromptModelFamily.from_model_name("llama2:13b") == PromptModelFamily.LLAMA
-        assert PromptModelFamily.from_model_name("llama-3-70b") == PromptModelFamily.LLAMA
+        assert (
+            PromptModelFamily.from_model_name("llama2:13b") == PromptModelFamily.LLAMA
+        )
+        assert (
+            PromptModelFamily.from_model_name("llama-3-70b") == PromptModelFamily.LLAMA
+        )
 
     def test_from_model_name_mistral(self) -> None:
         """Test detecting Mistral family."""
         assert PromptModelFamily.from_model_name("mistral") == PromptModelFamily.MISTRAL
-        assert PromptModelFamily.from_model_name("mistral-7b") == PromptModelFamily.MISTRAL
+        assert (
+            PromptModelFamily.from_model_name("mistral-7b") == PromptModelFamily.MISTRAL
+        )
 
     def test_from_model_name_codestral(self) -> None:
         """Test detecting Codestral family."""
-        assert PromptModelFamily.from_model_name("codestral") == PromptModelFamily.CODESTRAL
-        assert PromptModelFamily.from_model_name("codestral-latest") == PromptModelFamily.CODESTRAL
+        assert (
+            PromptModelFamily.from_model_name("codestral")
+            == PromptModelFamily.CODESTRAL
+        )
+        assert (
+            PromptModelFamily.from_model_name("codestral-latest")
+            == PromptModelFamily.CODESTRAL
+        )
 
     def test_from_model_name_phi(self) -> None:
         """Test detecting Phi family."""
@@ -395,35 +434,69 @@ class TestPromptModelFamily:
         """Test detecting GPT family."""
         assert PromptModelFamily.from_model_name("gpt-4o") == PromptModelFamily.GPT
         assert PromptModelFamily.from_model_name("gpt-4-turbo") == PromptModelFamily.GPT
-        assert PromptModelFamily.from_model_name("gpt-3.5-turbo") == PromptModelFamily.GPT
+        assert (
+            PromptModelFamily.from_model_name("gpt-3.5-turbo") == PromptModelFamily.GPT
+        )
 
     def test_from_model_name_claude(self) -> None:
         """Test detecting Claude family."""
-        assert PromptModelFamily.from_model_name("claude-3-opus-20240229") == PromptModelFamily.CLAUDE
-        assert PromptModelFamily.from_model_name("claude-3.5-sonnet") == PromptModelFamily.CLAUDE
+        assert (
+            PromptModelFamily.from_model_name("claude-3-opus-20240229")
+            == PromptModelFamily.CLAUDE
+        )
+        assert (
+            PromptModelFamily.from_model_name("claude-3.5-sonnet")
+            == PromptModelFamily.CLAUDE
+        )
 
     def test_from_model_name_gemini(self) -> None:
         """Test detecting Gemini family."""
-        assert PromptModelFamily.from_model_name("gemini-2.0-flash") == PromptModelFamily.GEMINI
-        assert PromptModelFamily.from_model_name("gemini-1.5-pro") == PromptModelFamily.GEMINI
+        assert (
+            PromptModelFamily.from_model_name("gemini-2.0-flash")
+            == PromptModelFamily.GEMINI
+        )
+        assert (
+            PromptModelFamily.from_model_name("gemini-1.5-pro")
+            == PromptModelFamily.GEMINI
+        )
 
     def test_from_model_name_unknown(self) -> None:
         """Test detecting unknown family."""
-        assert PromptModelFamily.from_model_name("unknown-model") == PromptModelFamily.UNKNOWN
-        assert PromptModelFamily.from_model_name("random-name") == PromptModelFamily.UNKNOWN
+        assert (
+            PromptModelFamily.from_model_name("unknown-model")
+            == PromptModelFamily.UNKNOWN
+        )
+        assert (
+            PromptModelFamily.from_model_name("random-name")
+            == PromptModelFamily.UNKNOWN
+        )
 
     def test_default_prompt_format(self) -> None:
         """Test default prompt format per family."""
-        assert PromptModelFamily.DEEPSEEK_CODER.default_prompt_format == PromptFormat.CODE_INSTRUCTION
-        assert PromptModelFamily.DEEPSEEK.default_prompt_format == PromptFormat.INSTRUCTION
+        assert (
+            PromptModelFamily.DEEPSEEK_CODER.default_prompt_format
+            == PromptFormat.CODE_INSTRUCTION
+        )
+        assert (
+            PromptModelFamily.DEEPSEEK.default_prompt_format == PromptFormat.INSTRUCTION
+        )
         assert PromptModelFamily.LLAMA.default_prompt_format == PromptFormat.INSTRUCTION
-        assert PromptModelFamily.MISTRAL.default_prompt_format == PromptFormat.INSTRUCTION
-        assert PromptModelFamily.CODESTRAL.default_prompt_format == PromptFormat.INSTRUCTION
+        assert (
+            PromptModelFamily.MISTRAL.default_prompt_format == PromptFormat.INSTRUCTION
+        )
+        assert (
+            PromptModelFamily.CODESTRAL.default_prompt_format
+            == PromptFormat.INSTRUCTION
+        )
         assert PromptModelFamily.PHI.default_prompt_format == PromptFormat.INSTRUCTION
         assert PromptModelFamily.QWEN.default_prompt_format == PromptFormat.INSTRUCTION
         assert PromptModelFamily.GPT.default_prompt_format == PromptFormat.CHAT_MESSAGES
-        assert PromptModelFamily.CLAUDE.default_prompt_format == PromptFormat.CHAT_MESSAGES
-        assert PromptModelFamily.GEMINI.default_prompt_format == PromptFormat.CHAT_MESSAGES
+        assert (
+            PromptModelFamily.CLAUDE.default_prompt_format == PromptFormat.CHAT_MESSAGES
+        )
+        assert (
+            PromptModelFamily.GEMINI.default_prompt_format == PromptFormat.CHAT_MESSAGES
+        )
 
 
 class TestCreatePromptFormatter:

@@ -7,8 +7,8 @@ Autonomous AI agent loop that works around Claude Code --print bugs on Windows.
 import json
 import subprocess
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 PRD_FILE = SCRIPT_DIR / "prd.json"
@@ -62,7 +62,10 @@ def run_claude_iteration() -> bool:
     # Instead of piping input, we write to a temp file and use --print with explicit exit
 
     import tempfile
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as tmp:
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".md", delete=False, encoding="utf-8"
+    ) as tmp:
         tmp.write(prompt_content)
         tmp_path = tmp.name
 
@@ -169,7 +172,14 @@ def main():
 
         # Reload PRD and check if story was completed
         prd_after = load_prd()
-        story_after = next((s for s in prd_after.get("userStories", []) if s["id"] == next_story["id"]), None)
+        story_after = next(
+            (
+                s
+                for s in prd_after.get("userStories", [])
+                if s["id"] == next_story["id"]
+            ),
+            None,
+        )
 
         if story_after and story_after.get("passes", False):
             log(f"✅ {next_story['id']} marked as complete!")
@@ -181,6 +191,7 @@ def main():
 
         log("⏳ Waiting 2 seconds before next iteration...")
         import time
+
         time.sleep(2)
 
     log("\n🏁 Ralph loop finished")

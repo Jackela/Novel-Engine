@@ -5,8 +5,11 @@ import pytest
 from src.api.schemas import SimulationRequest
 from src.services.api_service import ApiOrchestrationService
 
-
 # BDD-style test naming
+
+pytestmark = pytest.mark.unit
+
+
 class TestApiOrchestrationService:
     @pytest.fixture
     def service(self):

@@ -5,13 +5,14 @@ PlotPoint Enum Tests
 Split from test_plot_point_value_object.py for maintainability.
 """
 
-
 import pytest
 
 from src.contexts.narratives.domain.value_objects.plot_point import (
     PlotPointImportance,
     PlotPointType,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestPlotPointTypeEnum:

@@ -17,6 +17,7 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures';
 import { activateGuestSession } from './utils/auth';
+import { waitForRouteReady } from './utils/waitForReady';
 
 /**
  * Helper mock for Brain Settings API
@@ -430,20 +431,15 @@ test.describe('Brain RAG E2E Tests', () => {
    */
   test.describe('Lore Entry Creation', () => {
     test('@e2e should navigate to lore creation page', async ({ page }) => {
-      // Navigate to World Building page (which contains lore creation)
-      await page.goto('/world', { waitUntil: 'domcontentloaded' });
+      // Navigate to World Wiki page (lore is surfaced in the wiki)
+      await page.goto('/world/wiki', { waitUntil: 'domcontentloaded' });
 
-      // Wait for page to load
-      await expect(page.locator('body')).toBeVisible();
+      await waitForRouteReady(page, '[data-testid="wiki-dashboard"]', {
+        url: /\/world\/wiki/,
+      });
 
-      // Check for lore-related UI elements
-      // This may vary based on actual UI implementation
-      const loreSection = page.locator('[data-testid="lore-section"], [data-testid="world-building"], text="Lore"').first();
-
-      const isVisible = await loreSection.isVisible().catch(() => false);
-      if (isVisible) {
-        await expect(loreSection).toBeVisible();
-      }
+      await expect(page.getByTestId('wiki-search-input')).toBeVisible();
+      await expect(page.getByTestId('wiki-type-filter')).toBeVisible();
 
       console.log('✅ Navigated to lore creation page');
     });

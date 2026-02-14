@@ -65,7 +65,9 @@ def _get_faction_by_id(request: Request, faction_id: str) -> Optional[Dict[str, 
     return None
 
 
-def _update_faction_in_store(request: Request, faction_id: str, faction_data: Dict[str, Any]) -> bool:
+def _update_faction_in_store(
+    request: Request, faction_id: str, faction_data: Dict[str, Any]
+) -> bool:
     """Update a faction in the world store."""
     world_store = _get_faction_store(request)
 
@@ -79,9 +81,7 @@ def _update_faction_in_store(request: Request, faction_id: str, faction_data: Di
     return False
 
 
-def _get_character_name(
-    request: Request, workspace_id: str, character_id: str
-) -> str:
+def _get_character_name(request: Request, workspace_id: str, character_id: str) -> str:
     """Get character display name from workspace store."""
     store = getattr(request.app.state, "workspace_character_store", None)
     if not store:
@@ -115,10 +115,14 @@ def _get_characters_in_faction(
                 structured_data = record.get("structured_data", {}) or {}
                 char_faction_id = structured_data.get("faction_id")
                 if char_faction_id == faction_id:
-                    members.append({
-                        "character_id": char_id,
-                        "name": record.get("name") or record.get("character_name") or char_id,
-                    })
+                    members.append(
+                        {
+                            "character_id": char_id,
+                            "name": record.get("name")
+                            or record.get("character_name")
+                            or char_id,
+                        }
+                    )
     except (ValueError, FileNotFoundError):
         # Workspace or character lookup failed - return empty or partial list
         pass
@@ -233,7 +237,9 @@ async def join_faction(
     structured_data["faction_id"] = faction_id
 
     try:
-        store.update(workspace_id, payload.character_id, {"structured_data": structured_data})
+        store.update(
+            workspace_id, payload.character_id, {"structured_data": structured_data}
+        )
     except FileNotFoundError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
     except ValueError as err:
@@ -306,7 +312,9 @@ async def leave_faction(
     structured_data["faction_id"] = None
 
     try:
-        store.update(workspace_id, payload.character_id, {"structured_data": structured_data})
+        store.update(
+            workspace_id, payload.character_id, {"structured_data": structured_data}
+        )
     except FileNotFoundError as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
     except ValueError as err:

@@ -5,7 +5,7 @@
  * micro-units. This component enables drag-and-drop reordering, inline editing,
  * and CRUD operations for Director Mode pacing analysis.
  */
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -75,7 +75,11 @@ const BEAT_TYPE_CONFIG: Record<
   { label: string; borderColor: string; icon: typeof Zap }
 > = {
   action: { label: 'Action', borderColor: 'border-blue-500', icon: Zap },
-  dialogue: { label: 'Dialogue', borderColor: 'border-emerald-500', icon: MessageSquare },
+  dialogue: {
+    label: 'Dialogue',
+    borderColor: 'border-emerald-500',
+    icon: MessageSquare,
+  },
   reaction: { label: 'Reaction', borderColor: 'border-amber-500', icon: Zap },
   revelation: { label: 'Revelation', borderColor: 'border-purple-500', icon: Zap },
   transition: { label: 'Transition', borderColor: 'border-gray-500', icon: Zap },
@@ -96,7 +100,11 @@ interface BeatItemProps {
   isEditing: boolean;
   onEdit: () => void;
   onCancelEdit: () => void;
-  onSave: (updates: { content?: string; beat_type?: BeatType; mood_shift?: number }) => void;
+  onSave: (updates: {
+    content?: string;
+    beat_type?: BeatType;
+    mood_shift?: number;
+  }) => void;
   onDelete: () => void;
   isSaving: boolean;
 }
@@ -176,7 +184,7 @@ function SortableBeatItem({
         'group relative rounded-lg border-l-4 bg-card p-3 shadow-sm transition-all',
         typeConfig.borderColor,
         isDragging && 'opacity-50 shadow-lg',
-        !isEditing && 'hover:bg-accent/50 cursor-pointer'
+        !isEditing && 'cursor-pointer hover:bg-accent/50'
       )}
       onClick={!isEditing ? onEdit : undefined}
       onKeyDown={!isEditing ? (e) => e.key === 'Enter' && onEdit() : undefined}
@@ -212,7 +220,10 @@ function SortableBeatItem({
           ) : (
             <Badge
               variant="outline"
-              className={cn('text-xs', typeConfig.borderColor.replace('border-', 'text-'))}
+              className={cn(
+                'text-xs',
+                typeConfig.borderColor.replace('border-', 'text-')
+              )}
             >
               {typeConfig.label}
             </Badge>
@@ -264,7 +275,9 @@ function SortableBeatItem({
                   </DialogHeader>
                   <DialogFooter>
                     <Button variant="outline">Cancel</Button>
-                    <Button variant="destructive" onClick={onDelete}>Delete</Button>
+                    <Button variant="destructive" onClick={onDelete}>
+                      Delete
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -285,7 +298,12 @@ function SortableBeatItem({
               rows={3}
             />
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={onCancelEdit} disabled={isSaving}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onCancelEdit}
+                disabled={isSaving}
+              >
                 <X className="mr-1 h-3.5 w-3.5" />
                 Cancel
               </Button>
@@ -304,7 +322,9 @@ function SortableBeatItem({
           </div>
         ) : (
           <p className="text-sm text-foreground/90">
-            {beat.content || <span className="italic text-muted-foreground">Empty beat</span>}
+            {beat.content || (
+              <span className="italic text-muted-foreground">Empty beat</span>
+            )}
           </p>
         )}
       </div>
@@ -328,12 +348,17 @@ function BeatDragOverlay({ beat }: { beat: BeatResponse }) {
       <div className="ml-4">
         <Badge
           variant="outline"
-          className={cn('mb-2 text-xs', typeConfig.borderColor.replace('border-', 'text-'))}
+          className={cn(
+            'mb-2 text-xs',
+            typeConfig.borderColor.replace('border-', 'text-')
+          )}
         >
           {typeConfig.label}
         </Badge>
         <p className="line-clamp-2 text-sm">
-          {beat.content || <span className="italic text-muted-foreground">Empty beat</span>}
+          {beat.content || (
+            <span className="italic text-muted-foreground">Empty beat</span>
+          )}
         </p>
       </div>
     </div>
@@ -385,7 +410,7 @@ export function BeatList({ sceneId, sceneContext = '', className }: BeatListProp
     })
   );
 
-  const beats = beatData?.beats ?? [];
+  const beats = useMemo(() => beatData?.beats ?? [], [beatData?.beats]);
   const activeDragBeat = activeDragId ? beats.find((b) => b.id === activeDragId) : null;
 
   // Drag handlers
@@ -443,7 +468,10 @@ export function BeatList({ sceneId, sceneContext = '', className }: BeatListProp
   }, [createBeat, sceneId, newBeatContent, newBeatType]);
 
   const handleUpdateBeat = useCallback(
-    (beatId: string, updates: { content?: string; beat_type?: BeatType; mood_shift?: number }) => {
+    (
+      beatId: string,
+      updates: { content?: string; beat_type?: BeatType; mood_shift?: number }
+    ) => {
       // Only send non-undefined updates
       const filteredUpdates = Object.fromEntries(
         Object.entries(updates).filter(([, v]) => v !== undefined)
@@ -543,7 +571,10 @@ export function BeatList({ sceneId, sceneContext = '', className }: BeatListProp
       {isAddingBeat && (
         <div className="rounded-lg border border-dashed border-primary/50 bg-primary/5 p-3">
           <div className="mb-2 flex items-center gap-2">
-            <Select value={newBeatType} onValueChange={(v) => setNewBeatType(v as BeatType)}>
+            <Select
+              value={newBeatType}
+              onValueChange={(v) => setNewBeatType(v as BeatType)}
+            >
               <SelectTrigger className="h-8 w-32">
                 <SelectValue />
               </SelectTrigger>
@@ -596,7 +627,10 @@ export function BeatList({ sceneId, sceneContext = '', className }: BeatListProp
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={beats.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={beats.map((b) => b.id)}
+            strategy={verticalListSortingStrategy}
+          >
             <div className="space-y-2 pr-4">
               {beats.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">

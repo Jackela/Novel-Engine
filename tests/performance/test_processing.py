@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import psutil
+import pytest
 
 # Import async processing components
 from src.performance_optimizations.async_processing_improvements import (
@@ -34,6 +35,9 @@ from src.performance_optimizations.async_processing_improvements import (
 )
 
 # Set up logging
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

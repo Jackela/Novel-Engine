@@ -56,8 +56,12 @@ def print_world_graph(data: dict[str, Any]) -> None:
     # World Setting
     ws = data.get("world_setting", {})
     print(f"\n🌍 World Setting: {ws.get('name', 'Unknown')}")
-    print(f"   Genre: {ws.get('genre')} | Era: {ws.get('era')} | Tone: {ws.get('tone')}")
-    print(f"   Magic Level: {ws.get('magic_level')}/10 | Tech Level: {ws.get('technology_level')}/10")
+    print(
+        f"   Genre: {ws.get('genre')} | Era: {ws.get('era')} | Tone: {ws.get('tone')}"
+    )
+    print(
+        f"   Magic Level: {ws.get('magic_level')}/10 | Tech Level: {ws.get('technology_level')}/10"
+    )
     print(f"   Themes: {', '.join(ws.get('themes', []))}")
 
     # Factions
@@ -67,16 +71,24 @@ def print_world_graph(data: dict[str, Any]) -> None:
         allies = f.get("ally_count", 0)
         enemies = f.get("enemy_count", 0)
         print(f"   • {f.get('name')} [{f.get('faction_type')}]")
-        print(f"     Alignment: {f.get('alignment')} | Influence: {f.get('influence')}/10")
+        print(
+            f"     Alignment: {f.get('alignment')} | Influence: {f.get('influence')}/10"
+        )
         print(f"     Relations: {allies} allies, {enemies} enemies")
 
     # Locations
     locations = data.get("locations", [])
     print(f"\n📍 Locations ({len(locations)}):")
     for loc in locations:
-        controller = loc.get("controlling_faction_id", "None")[:8] if loc.get("controlling_faction_id") else "Neutral"
+        controller = (
+            loc.get("controlling_faction_id", "None")[:8]
+            if loc.get("controlling_faction_id")
+            else "Neutral"
+        )
         print(f"   • {loc.get('name')} [{loc.get('location_type')}]")
-        print(f"     Population: {loc.get('population'):,} | Danger: {loc.get('danger_level')}")
+        print(
+            f"     Population: {loc.get('population'):,} | Danger: {loc.get('danger_level')}"
+        )
         print(f"     Controller: {controller}...")
 
     # History Events
@@ -85,7 +97,9 @@ def print_world_graph(data: dict[str, Any]) -> None:
     for evt in events:
         participants = len(evt.get("participants", []))
         print(f"   • {evt.get('name')} [{evt.get('event_type')}]")
-        print(f"     Significance: {evt.get('significance')}/10 | Participants: {participants}")
+        print(
+            f"     Significance: {evt.get('significance')}/10 | Participants: {participants}"
+        )
 
     # Summary
     print("\n📝 Generation Summary:")
@@ -144,7 +158,13 @@ def verify_world_generation(base_url: str) -> VerificationResult:
         )
 
         if response.status_code != 200:
-            error_data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {"raw": response.text}
+            error_data = (
+                response.json()
+                if response.headers.get("content-type", "").startswith(
+                    "application/json"
+                )
+                else {"raw": response.text}
+            )
             return VerificationResult(
                 test_name="World Generation",
                 passed=False,
@@ -155,7 +175,13 @@ def verify_world_generation(base_url: str) -> VerificationResult:
         data = response.json()
 
         # Validate structure
-        required_keys = ["world_setting", "factions", "locations", "events", "generation_summary"]
+        required_keys = [
+            "world_setting",
+            "factions",
+            "locations",
+            "events",
+            "generation_summary",
+        ]
         missing_keys = [k for k in required_keys if k not in data]
         if missing_keys:
             return VerificationResult(
@@ -224,7 +250,13 @@ def verify_validation_error(base_url: str) -> VerificationResult:
                 test_name="Validation Error Format",
                 passed=False,
                 message=f"Expected 422, got {response.status_code}",
-                data=response.json() if response.headers.get("content-type", "").startswith("application/json") else None,
+                data=(
+                    response.json()
+                    if response.headers.get("content-type", "").startswith(
+                        "application/json"
+                    )
+                    else None
+                ),
             )
 
         data = response.json()

@@ -2,6 +2,8 @@ import pytest
 
 from src.core.character_decision_maker import DecisionMaker, ThreatLevel
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.unit
 def test_make_decision_returns_action_when_score_above_threshold():

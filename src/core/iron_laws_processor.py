@@ -971,6 +971,3 @@ class IronLawsProcessor:
         if hasattr(action, "model_copy"):
             return action.model_copy()
         return deepcopy(action)
-
-
-

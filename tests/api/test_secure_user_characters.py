@@ -3,6 +3,8 @@ from fastapi.testclient import TestClient
 
 from src.api.app import create_app
 
+pytestmark = pytest.mark.integration
+
 
 def build_client() -> TestClient:
     """Build a test client for the modular API app."""

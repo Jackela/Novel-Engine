@@ -12,14 +12,10 @@ Constitution Compliance:
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from structlog import get_logger
-
-from ...domain.models.token_usage import TokenUsage
-
 
 logger = get_logger()
 
@@ -123,7 +119,9 @@ class EmbeddingCacheService:
         self._access_order: List[str] = []  # Track LRU order
         self._stats = CacheStats()
 
-    def get(self, text: str, model: str = "text-embedding-ada-002") -> List[float] | None:
+    def get(
+        self, text: str, model: str = "text-embedding-ada-002"
+    ) -> List[float] | None:
         """
         Retrieve cached embedding for text.
 
@@ -281,8 +279,7 @@ class EmbeddingCacheService:
 
         # Invalidate by model prefix
         to_remove = [
-            key_str for key_str in self._cache.keys()
-            if key_str.startswith(f"{model}:")
+            key_str for key_str in self._cache.keys() if key_str.startswith(f"{model}:")
         ]
         for key_str in to_remove:
             del self._cache[key_str]

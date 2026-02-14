@@ -7,7 +7,10 @@
 import { useEffect } from 'react';
 import { Filter, X } from 'lucide-react';
 import { usePlotlines } from '@/features/director';
-import { useWeaverFilteredPlotlineId, useWeaverSetFilteredPlotlineId } from '../store/weaverStore';
+import {
+  useWeaverFilteredPlotlineId,
+  useWeaverSetFilteredPlotlineId,
+} from '../store/weaverStore';
 import {
   Select,
   SelectContent,
@@ -58,7 +61,9 @@ export function PlotlineFilter() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const selectedPlotline = plotlines?.plotlines.find((p) => p.id === filteredPlotlineId);
+  const selectedPlotline = plotlines?.plotlines.find(
+    (p) => p.id === filteredPlotlineId
+  );
 
   return (
     <div className="flex items-center gap-2">
@@ -69,7 +74,9 @@ export function PlotlineFilter() {
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select
                 value={filteredPlotlineId ?? 'all'}
-                onValueChange={(value) => setFilteredPlotlineId(value === 'all' ? null : value)}
+                onValueChange={(value) =>
+                  setFilteredPlotlineId(value === 'all' ? null : value)
+                }
                 data-testid="plotline-filter-select"
               >
                 <SelectTrigger className="w-[180px]" aria-label="Filter by plotline">
@@ -126,7 +133,7 @@ export function PlotlineFilter() {
 
       {selectedPlotline && (
         <div
-          className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium"
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"
           style={{
             backgroundColor: `${selectedPlotline.color}20`,
             color: selectedPlotline.color,

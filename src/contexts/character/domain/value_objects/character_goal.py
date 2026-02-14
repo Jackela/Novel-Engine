@@ -200,9 +200,7 @@ class CharacterGoal:
             A new CharacterGoal with status=COMPLETED and completed_at set
         """
         if self.status != GoalStatus.ACTIVE:
-            raise ValueError(
-                f"Cannot complete a goal with status {self.status.value}"
-            )
+            raise ValueError(f"Cannot complete a goal with status {self.status.value}")
 
         return CharacterGoal(
             goal_id=self.goal_id,
@@ -220,9 +218,7 @@ class CharacterGoal:
             A new CharacterGoal with status=FAILED and completed_at set
         """
         if self.status != GoalStatus.ACTIVE:
-            raise ValueError(
-                f"Cannot fail a goal with status {self.status.value}"
-            )
+            raise ValueError(f"Cannot fail a goal with status {self.status.value}")
 
         return CharacterGoal(
             goal_id=self.goal_id,
@@ -289,8 +285,12 @@ class CharacterGoal:
             GoalStatus.FAILED: "✗",
         }
         urgency_indicator = "!" * (
-            [GoalUrgency.LOW, GoalUrgency.MEDIUM, GoalUrgency.HIGH, GoalUrgency.CRITICAL]
-            .index(self.urgency)
+            [
+                GoalUrgency.LOW,
+                GoalUrgency.MEDIUM,
+                GoalUrgency.HIGH,
+                GoalUrgency.CRITICAL,
+            ].index(self.urgency)
             + 1
         )
 

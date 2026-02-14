@@ -10,7 +10,16 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Brain, CheckCircle2, FileText, Hash, Loader2, RefreshCw, X, AlertTriangle } from 'lucide-react';
+import {
+  Brain,
+  CheckCircle2,
+  FileText,
+  Hash,
+  Loader2,
+  RefreshCw,
+  X,
+  AlertTriangle,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +33,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { brainSettingsApi, type RetrievedChunkResponse, type RAGContextResponse } from '@/features/routing/api/brainSettingsApi';
+import {
+  brainSettingsApi,
+  type RetrievedChunkResponse,
+  type RAGContextResponse,
+} from '@/features/routing/api/brainSettingsApi';
 import { toast } from 'sonner';
 
 interface ContextInspectorProps {
@@ -64,7 +77,14 @@ const SOURCE_TYPE_COLORS: Record<string, string> = {
  * - Chunk content
  * - BRAIN-036-05: Context window usage display
  */
-export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWithChunks, contextTokenLimit = 4000 }: ContextInspectorProps) {
+export function ContextInspector({
+  open,
+  onClose,
+  query,
+  sceneId,
+  onRegenerateWithChunks,
+  contextTokenLimit = 4000,
+}: ContextInspectorProps) {
   const [context, setContext] = useState<RAGContextResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -133,11 +153,15 @@ export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWi
     // Call the parent callback if provided
     if (onRegenerateWithChunks) {
       onRegenerateWithChunks(selectedIds);
-      toast.success(`Regenerating with ${selectedIds.length} selected chunk${selectedIds.length > 1 ? 's' : ''}`);
+      toast.success(
+        `Regenerating with ${selectedIds.length} selected chunk${selectedIds.length > 1 ? 's' : ''}`
+      );
     } else {
       // For now, just log the selected chunks
       console.log('BRAIN-036-04: Selected chunks for regeneration:', selectedIds);
-      toast.info(`Selected ${selectedIds.length} chunk${selectedIds.length > 1 ? 's' : ''} for regeneration. Connect to scene generation to complete.`);
+      toast.info(
+        `Selected ${selectedIds.length} chunk${selectedIds.length > 1 ? 's' : ''} for regeneration. Connect to scene generation to complete.`
+      );
     }
   };
 
@@ -158,9 +182,9 @@ export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWi
 
   return (
     <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col gap-0 p-0">
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
         {/* Header */}
-        <SheetHeader className="border-b px-6 py-4 space-y-0">
+        <SheetHeader className="space-y-0 border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-primary" />
@@ -176,7 +200,7 @@ export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWi
               <>
                 {context.chunk_count} chunks retrieved · {context.total_tokens} tokens
                 {selectedChunkIds.size > 0 && (
-                  <span className="ml-2 text-primary font-medium">
+                  <span className="ml-2 font-medium text-primary">
                     ({selectedChunkIds.size} selected)
                   </span>
                 )}
@@ -212,36 +236,47 @@ export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWi
 
         {/* BRAIN-036-05: Context Window Display */}
         {contextWindowStatus && (
-          <div className="border-b px-6 py-3 bg-muted/30">
+          <div className="border-b bg-muted/30 px-6 py-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Context Window</span>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">
-                    {contextWindowStatus.usedTokens.toLocaleString()} / {contextWindowStatus.limit.toLocaleString()} tokens
+                    {contextWindowStatus.usedTokens.toLocaleString()} /{' '}
+                    {contextWindowStatus.limit.toLocaleString()} tokens
                   </span>
-                  <span className={`text-xs font-medium ${
-                    contextWindowStatus.isAtLimit
-                      ? 'text-destructive'
-                      : contextWindowStatus.isNearLimit
-                        ? 'text-orange-600 dark:text-orange-400'
-                        : 'text-muted-foreground'
-                  }`}>
+                  <span
+                    className={`text-xs font-medium ${
+                      contextWindowStatus.isAtLimit
+                        ? 'text-destructive'
+                        : contextWindowStatus.isNearLimit
+                          ? 'text-orange-600 dark:text-orange-400'
+                          : 'text-muted-foreground'
+                    }`}
+                  >
                     ({contextWindowStatus.percentage.toFixed(0)}%)
                   </span>
                 </div>
               </div>
               <Progress
                 value={contextWindowStatus.percentage}
-                className={contextWindowStatus.isAtLimit ? '[&>div]:bg-destructive' : contextWindowStatus.isNearLimit ? '[&>div]:bg-orange-500' : ''}
+                className={
+                  contextWindowStatus.isAtLimit
+                    ? '[&>div]:bg-destructive'
+                    : contextWindowStatus.isNearLimit
+                      ? '[&>div]:bg-orange-500'
+                      : ''
+                }
               />
               {/* BRAIN-036-05: Warning when approaching limit */}
               {contextWindowStatus.isNearLimit && (
-                <div className={`flex items-center gap-2 text-xs ${
-                  contextWindowStatus.isAtLimit
-                    ? 'text-destructive'
-                    : 'text-orange-600 dark:text-orange-400'
-                }`}>
+                <div
+                  className={`flex items-center gap-2 text-xs ${
+                    contextWindowStatus.isAtLimit
+                      ? 'text-destructive'
+                      : 'text-orange-600 dark:text-orange-400'
+                  }`}
+                >
                   <AlertTriangle className="h-3 w-3" />
                   <span>
                     {contextWindowStatus.isAtLimit
@@ -261,16 +296,18 @@ export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWi
               <div className="flex items-center justify-center py-12">
                 <div className="flex flex-col items-center gap-3">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Searching knowledge base...</p>
+                  <p className="text-sm text-muted-foreground">
+                    Searching knowledge base...
+                  </p>
                 </div>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="rounded-full bg-destructive/10 p-3 mb-3">
+                <div className="mb-3 rounded-full bg-destructive/10 p-3">
                   <FileText className="h-6 w-6 text-destructive" />
                 </div>
                 <p className="text-sm font-medium">Failed to load context</p>
-                <p className="text-xs text-muted-foreground mt-1">{error}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{error}</p>
               </div>
             ) : context && context.chunks.length > 0 ? (
               <div className="space-y-4">
@@ -286,11 +323,11 @@ export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWi
               </div>
             ) : context ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="rounded-full bg-muted p-3 mb-3">
+                <div className="mb-3 rounded-full bg-muted p-3">
                   <FileText className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <p className="text-sm font-medium">No context found</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="mt-1 text-xs text-muted-foreground">
                   The knowledge base has no relevant information for this query.
                 </p>
               </div>
@@ -300,22 +337,19 @@ export function ContextInspector({ open, onClose, query, sceneId, onRegenerateWi
 
         {/* Footer with sources and BRAIN-036-04: Regenerate action */}
         {context && (
-          <div className="border-t px-6 py-3 bg-muted/30 space-y-3">
+          <div className="space-y-3 border-t bg-muted/30 px-6 py-3">
             {/* BRAIN-036-04: Regenerate button */}
             {selectedChunkIds.size > 0 && (
-              <Button
-                onClick={handleRegenerate}
-                className="w-full"
-                size="sm"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Regenerate with {selectedChunkIds.size} Selected Chunk{selectedChunkIds.size > 1 ? 's' : ''}
+              <Button onClick={handleRegenerate} className="w-full" size="sm">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Regenerate with {selectedChunkIds.size} Selected Chunk
+                {selectedChunkIds.size > 1 ? 's' : ''}
               </Button>
             )}
             {/* Sources */}
             {context.sources.length > 0 && (
               <>
-                <p className="text-xs text-muted-foreground mb-2">Sources:</p>
+                <p className="mb-2 text-xs text-muted-foreground">Sources:</p>
                 <div className="flex flex-wrap gap-1">
                   {context.sources.map((source) => (
                     <Badge key={source} variant="outline" className="text-xs">
@@ -347,26 +381,38 @@ interface ChunkCardProps {
 }
 
 function ChunkCard({ chunk, index, selected, onToggleSelection }: ChunkCardProps) {
-  const scoreColor = chunk.score >= 0.8 ? 'text-green-600' : chunk.score >= 0.6 ? 'text-yellow-600' : 'text-orange-600';
+  const scoreColor =
+    chunk.score >= 0.8
+      ? 'text-green-600'
+      : chunk.score >= 0.6
+        ? 'text-yellow-600'
+        : 'text-orange-600';
 
   // BRAIN-036-03: Visual styling for used chunks
-  const usedBgClass = chunk.used ? 'bg-green-50/50 border-green-200 dark:bg-green-950/30 dark:border-green-800' : 'border-border';
+  const usedBgClass = chunk.used
+    ? 'bg-green-50/50 border-green-200 dark:bg-green-950/30 dark:border-green-800'
+    : 'border-border';
   // BRAIN-036-04: Additional styling for selected chunks
   const selectedBgClass = selected ? 'ring-2 ring-primary ring-offset-2' : '';
   const combinedBgClass = `${usedBgClass} ${selectedBgClass}`.trim();
 
   const usedBadge = chunk.used ? (
-    <div className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400" title="This chunk was used in the response">
+    <div
+      className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400"
+      title="This chunk was used in the response"
+    >
       <CheckCircle2 className="h-3 w-3" />
       <span>Used</span>
     </div>
   ) : null;
 
   return (
-    <div className={`border rounded-lg p-4 space-y-3 hover:bg-muted/50 transition-colors ${combinedBgClass}`}>
+    <div
+      className={`space-y-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 ${combinedBgClass}`}
+    >
       {/* Header with checkbox, source, and score */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           {/* BRAIN-036-04: Checkbox for manual selection */}
           <Checkbox
             checked={selected}
@@ -374,16 +420,21 @@ function ChunkCard({ chunk, index, selected, onToggleSelection }: ChunkCardProps
             className="cursor-pointer"
             aria-label={`Select chunk ${index + 1}`}
           />
-          <span className="text-xs font-mono text-muted-foreground">#{index + 1}</span>
+          <span className="font-mono text-xs text-muted-foreground">#{index + 1}</span>
           <Badge
-            className={SOURCE_TYPE_COLORS[chunk.source_type] || 'bg-gray-100 text-gray-800'}
+            className={
+              SOURCE_TYPE_COLORS[chunk.source_type] || 'bg-gray-100 text-gray-800'
+            }
           >
             {chunk.source_type}
           </Badge>
           <span className="text-sm font-medium">{chunk.source_id}</span>
           {usedBadge}
         </div>
-        <div className="flex items-center gap-1" title={`Relevance: ${(chunk.score * 100).toFixed(0)}%`}>
+        <div
+          className="flex items-center gap-1"
+          title={`Relevance: ${(chunk.score * 100).toFixed(0)}%`}
+        >
           <Hash className="h-3 w-3 text-muted-foreground" />
           <span className={`text-sm font-semibold ${scoreColor}`}>
             {chunk.score.toFixed(2)}
@@ -392,12 +443,10 @@ function ChunkCard({ chunk, index, selected, onToggleSelection }: ChunkCardProps
       </div>
 
       {/* Chunk content */}
-      <div className="text-sm leading-relaxed whitespace-pre-wrap">
-        {chunk.content}
-      </div>
+      <div className="whitespace-pre-wrap text-sm leading-relaxed">{chunk.content}</div>
 
       {/* Metadata footer */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+      <div className="flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
         <span>{chunk.token_count} tokens</span>
         <span className="font-mono">{chunk.chunk_id.slice(0, 8)}...</span>
       </div>

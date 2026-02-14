@@ -19,9 +19,11 @@ from src.contexts.knowledge.application.event_handlers.smart_tagging_event_handl
 from src.contexts.knowledge.application.services.smart_tagging_service import (
     GeneratedTag,
     TagCategory,
-    TaggingResult,
     TaggingConfig,
+    TaggingResult,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.unit
@@ -41,7 +43,9 @@ class TestSmartTaggingEventHandler:
                     GeneratedTag(category=TagCategory.GENRE, value="fantasy"),
                     GeneratedTag(category=TagCategory.MOOD, value="mysterious"),
                     GeneratedTag(category=TagCategory.THEMES, value="good-vs-evil"),
-                    GeneratedTag(category=TagCategory.CHARACTERS_PRESENT, value="gandalf"),
+                    GeneratedTag(
+                        category=TagCategory.CHARACTERS_PRESENT, value="gandalf"
+                    ),
                     GeneratedTag(category=TagCategory.LOCATIONS, value="shire"),
                 ],
             )
@@ -57,7 +61,9 @@ class TestSmartTaggingEventHandler:
         )
 
     @pytest.mark.asyncio
-    async def test_handler_initialization(self, handler: SmartTaggingEventHandler) -> None:
+    async def test_handler_initialization(
+        self, handler: SmartTaggingEventHandler
+    ) -> None:
         """Test handler initializes correctly."""
         assert handler.is_enabled() is True
         assert handler._tagging_service is not None
@@ -125,7 +131,11 @@ class TestSmartTaggingEventHandler:
         mock_tagging_service.generate_tags.assert_called_once()
         # Check that content_type was lore
         # The actual content is built by _build_lore_content and contains the title
-        assert handler._build_lore_content("The Ancient Sword", "A legendary weapon forged in the fires of Mount Doom", "artifact") == (
+        assert handler._build_lore_content(
+            "The Ancient Sword",
+            "A legendary weapon forged in the fires of Mount Doom",
+            "artifact",
+        ) == (
             "# The Ancient Sword\nCategory: artifact\n\nA legendary weapon forged in the fires of Mount Doom"
         )
 
@@ -323,7 +333,9 @@ class TestSmartTaggingEventHandler:
         # Custom category should be preserved
         assert merged["custom"] == ["tag"]
 
-    def test_merge_tags_removes_duplicates(self, handler: SmartTaggingEventHandler) -> None:
+    def test_merge_tags_removes_duplicates(
+        self, handler: SmartTaggingEventHandler
+    ) -> None:
         """Test that merging removes duplicate tags."""
         generated = {
             "genre": ["fantasy", "adventure"],
@@ -362,7 +374,9 @@ class TestSmartTaggingEventHandlerIntegration:
         )
 
         tagging_service = SmartTaggingService(llm_client=mock_llm)
-        handler = SmartTaggingEventHandler(tagging_service=tagging_service, enabled=True)
+        handler = SmartTaggingEventHandler(
+            tagging_service=tagging_service, enabled=True
+        )
 
         # Generate tags
         result = await handler.generate_tags_for_lore(

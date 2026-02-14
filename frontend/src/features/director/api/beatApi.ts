@@ -215,7 +215,10 @@ export function useReorderBeats() {
     // If mutation fails, roll back to previous value
     onError: (_, variables, context) => {
       if (context?.previousBeats) {
-        queryClient.setQueryData(beatKeys.list(variables.sceneId), context.previousBeats);
+        queryClient.setQueryData(
+          beatKeys.list(variables.sceneId),
+          context.previousBeats
+        );
       }
     },
     // Always refetch after error or success

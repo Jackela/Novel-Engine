@@ -11,8 +11,8 @@ from src.api.schemas import SimulationRequest
 
 # Import legacy components for backward compatibility until fully replaced
 from src.config.character_factory import CharacterFactory
-from src.core.system_orchestrator import SystemOrchestrator
 from src.core.event_bus import EventBus
+from src.core.system_orchestrator import SystemOrchestrator
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,11 @@ class ApiOrchestrationService:
 
         self._state["status"] = "paused"
         logger.info("Simulation paused")
-        return {"success": True, "status": "paused", "message": "Simulation paused successfully"}
+        return {
+            "success": True,
+            "status": "paused",
+            "message": "Simulation paused successfully",
+        }
 
     async def get_status(self) -> Dict[str, Any]:
         """Get current orchestration status."""
@@ -122,12 +126,20 @@ class ApiOrchestrationService:
                     agent = self.character_factory.create_character(name)
                     agents.append(agent)
                     await self._broadcast_sse(
-                        "character", f"Agent Created: {name}", f"Initialized {name}", "low"
+                        "character",
+                        f"Agent Created: {name}",
+                        f"Initialized {name}",
+                        "low",
                     )
                 except FileNotFoundError:
-                    logger.error(f"Character '{name}' not found in characters directory")
+                    logger.error(
+                        f"Character '{name}' not found in characters directory"
+                    )
                     await self._broadcast_sse(
-                        "system", f"Character Not Found: {name}", f"Skipping '{name}' - file not found", "high"
+                        "system",
+                        f"Character Not Found: {name}",
+                        f"Skipping '{name}' - file not found",
+                        "high",
                     )
                     continue
                 except Exception as e:
@@ -139,7 +151,9 @@ class ApiOrchestrationService:
 
             # Check if we have at least one agent
             if not agents:
-                raise ValueError("No valid agents could be created. Please check character names and character files.")
+                raise ValueError(
+                    "No valid agents could be created. Please check character names and character files."
+                )
 
             # 3. Setup Director
             log_path = f"logs/orchestration_{uuid.uuid4().hex[:8]}.md"
@@ -259,4 +273,3 @@ class ApiOrchestrationService:
             )
         else:
             logger.warning(f"No EventBus available to broadcast: {title}")
-

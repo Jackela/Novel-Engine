@@ -14,6 +14,8 @@ from src.contexts.narratives.domain.value_objects.narrative_context import (
     NarrativeContext,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestNarrativeContextStringRepresentation:
     """Test suite for NarrativeContext string representation methods."""

@@ -10,7 +10,7 @@ Constitution Compliance:
 
 import json
 from datetime import datetime, timezone
-from typing import Dict, Any
+from typing import Any, Dict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -165,19 +165,18 @@ class AuditLogWriter:
         - Article IV (SSOT): PostgreSQL audit log as authoritative source
         - Article VII (Observability): Complete audit trail
         """
-        from sqlalchemy import text
         from uuid import UUID
 
+        from sqlalchemy import text
+
         # INSERT audit record
-        insert_sql = text(
-            """
+        insert_sql = text("""
             INSERT INTO knowledge_audit_log (
                 timestamp, user_id, entry_id, change_type, snapshot
             ) VALUES (
                 :timestamp, :user_id, :entry_id, :change_type, :snapshot
             )
-        """
-        )
+        """)
 
         # Execute insert
         await self._session.execute(
@@ -192,4 +191,3 @@ class AuditLogWriter:
         )
 
         # Commit handled by session context manager
-

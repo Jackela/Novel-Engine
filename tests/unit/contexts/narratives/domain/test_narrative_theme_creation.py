@@ -17,6 +17,8 @@ from src.contexts.narratives.domain.value_objects.narrative_theme import (
     ThemeType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestNarrativeThemeCreation:
     """Test suite for NarrativeTheme creation and initialization."""

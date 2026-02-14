@@ -8,7 +8,7 @@ domain objects and database entities.
 """
 
 import logging
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import and_, func
@@ -19,6 +19,7 @@ from ...domain.aggregates.character import Character
 from ...domain.repositories.character_repository import (
     ConcurrencyException,
     ICharacterRepository,
+    NotSupportedException,
     RepositoryException,
 )
 from ...domain.value_objects.character_id import CharacterID
@@ -352,6 +353,57 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         except SQLAlchemyError as e:
             self.logger.error(f"Error counting characters by criteria: {e}")
             raise RepositoryException(f"Failed to count characters by criteria: {e}")
+
+    # ==================== Metadata/Smart Tag Operations ====================
+
+    async def find_by_smart_tag(
+        self,
+        category: str,
+        tag: str,
+        limit: int = 100,
+    ) -> List[Character]:
+        """
+        Reject smart-tag queries because this repository doesn't persist metadata.
+
+        Why: The SQLAlchemy schema currently omits the Character.metadata JSON field,
+        so any metadata/smart-tag lookup would be incomplete or misleading. Failing
+        loudly ensures callers choose a repository that supports these queries.
+        """
+        raise NotSupportedException(
+            "Smart-tag queries are not supported by SQLAlchemyCharacterRepository."
+        )
+
+    async def find_by_smart_tags(
+        self,
+        tags: Dict[str, List[str]],
+        match_all: bool = False,
+        limit: int = 100,
+    ) -> List[Character]:
+        """
+        Reject multi-tag queries because metadata is not stored in this backend.
+
+        Why: Without persisted metadata, matching tags would return partial results
+        at best. Raising NotSupportedException prevents silent data loss.
+        """
+        raise NotSupportedException(
+            "Smart-tag queries are not supported by SQLAlchemyCharacterRepository."
+        )
+
+    async def find_by_metadata(
+        self,
+        metadata_key: str,
+        metadata_value: Any = None,
+        limit: int = 100,
+    ) -> List[Character]:
+        """
+        Reject metadata queries because the SQL schema does not store metadata.
+
+        Why: Character.metadata is not mapped in the SQLAlchemy models, so this
+        repository cannot satisfy metadata lookups safely.
+        """
+        raise NotSupportedException(
+            "Metadata queries are not supported by SQLAlchemyCharacterRepository."
+        )
 
     async def get_statistics(self) -> Dict[str, Any]:
         """Get statistical information about characters in the repository."""

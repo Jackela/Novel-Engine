@@ -424,10 +424,14 @@ class IntelligentCache:
             import zlib
 
             decompressed = zlib.decompress(compressed_data)
-            return pickle.loads(decompressed)  # nosec B301 - trusted internal cache data
+            return pickle.loads(
+                decompressed
+            )  # nosec B301 - trusted internal cache data
         except Exception:
             # Fallback to raw pickle
-            return pickle.loads(compressed_data)  # nosec B301 - trusted internal cache data
+            return pickle.loads(
+                compressed_data
+            )  # nosec B301 - trusted internal cache data
 
     async def _save_to_disk(self, key: str, value: Any):
         """Save value to disk for L3 storage."""
@@ -435,7 +439,9 @@ class IntelligentCache:
             cache_dir = Path("cache_l3")
             cache_dir.mkdir(exist_ok=True)
 
-            filename = hashlib.md5(key.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+            filename = hashlib.md5(
+                key.encode(), usedforsecurity=False
+            ).hexdigest()  # nosec B324
             filepath = cache_dir / f"{filename}.cache"
 
             async with aiofiles.open(filepath, "wb") as f:
@@ -449,7 +455,9 @@ class IntelligentCache:
         """Load value from disk for L3 storage."""
         try:
             cache_dir = Path("cache_l3")
-            filename = hashlib.md5(key.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+            filename = hashlib.md5(
+                key.encode(), usedforsecurity=False
+            ).hexdigest()  # nosec B324
             filepath = cache_dir / f"{filename}.cache"
 
             if not filepath.exists():
@@ -467,7 +475,9 @@ class IntelligentCache:
         """Remove value from disk storage."""
         try:
             cache_dir = Path("cache_l3")
-            filename = hashlib.md5(key.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+            filename = hashlib.md5(
+                key.encode(), usedforsecurity=False
+            ).hexdigest()  # nosec B324
             filepath = cache_dir / f"{filename}.cache"
 
             if filepath.exists():
@@ -653,7 +663,9 @@ class LLMResponseCache(IntelligentCache):
 
         # Combine into cache key
         key_data = f"{agent_id}:{normalized_prompt}:{context_hash}"
-        return hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+        return hashlib.md5(
+            key_data.encode(), usedforsecurity=False
+        ).hexdigest()  # nosec B324
 
     def _normalize_prompt(self, prompt: str) -> str:
         """Normalize prompt text for better cache hits."""
@@ -685,7 +697,9 @@ class LLMResponseCache(IntelligentCache):
         # Create stable string representation
         context_str = json.dumps(sorted_items, sort_keys=True, default=str)
 
-        return hashlib.md5(context_str.encode(), usedforsecurity=False).hexdigest()[:8]  # nosec B324
+        return hashlib.md5(context_str.encode(), usedforsecurity=False).hexdigest()[
+            :8
+        ]  # nosec B324
 
     async def get_similar_response(
         self, key: str, similarity_threshold: float = 0.8

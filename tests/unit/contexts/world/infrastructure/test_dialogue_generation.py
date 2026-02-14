@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
     CharacterData,
     DialogueResult,
@@ -305,10 +307,11 @@ class TestDialogueGeneration:
     """Integration-style tests for dialogue generation with mocked API."""
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
-    def test_generate_dialogue_success(
+    async def test_generate_dialogue_success(
         self,
         mock_post: MagicMock,
         generator: LLMWorldGenerator,
@@ -328,7 +331,7 @@ class TestDialogueGeneration:
 
         # Set API key for test
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
-            result = generator.generate_dialogue(
+            result = await generator.generate_dialogue(
                 character=sample_character,
                 context="A shady merchant offers a deal",
                 mood="suspicious",
@@ -341,10 +344,11 @@ class TestDialogueGeneration:
         assert result.body_language is not None
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
-    def test_generate_dialogue_api_error_returns_error_result(
+    async def test_generate_dialogue_api_error_returns_error_result(
         self,
         mock_post: MagicMock,
         generator: LLMWorldGenerator,
@@ -357,7 +361,7 @@ class TestDialogueGeneration:
         mock_post.return_value = mock_response
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
-            result = generator.generate_dialogue(
+            result = await generator.generate_dialogue(
                 character=sample_character,
                 context="Test context",
             )
@@ -367,7 +371,8 @@ class TestDialogueGeneration:
         assert "500" in result.error
 
     @pytest.mark.unit
-    def test_generate_dialogue_missing_api_key_returns_error(
+    @pytest.mark.asyncio
+    async def test_generate_dialogue_missing_api_key_returns_error(
         self,
         sample_character: CharacterData,
     ) -> None:
@@ -375,7 +380,7 @@ class TestDialogueGeneration:
         with patch.dict("os.environ", {"GEMINI_API_KEY": ""}, clear=False):
             gen = LLMWorldGenerator()
             gen._api_key = ""  # Explicitly set to empty
-            result = gen.generate_dialogue(
+            result = await gen.generate_dialogue(
                 character=sample_character,
                 context="Test context",
             )

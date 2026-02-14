@@ -9,8 +9,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from src.contexts.narrative.domain.entities.scene import Scene, SceneStatus
 from src.contexts.narrative.domain.entities.beat import Beat
+from src.contexts.narrative.domain.entities.scene import Scene, SceneStatus
+
+pytestmark = pytest.mark.unit
 
 
 class TestSceneCreation:
@@ -605,9 +607,7 @@ class TestScenePacingLevels:
     @pytest.mark.fast
     def test_repr_includes_pacing_levels(self):
         """Test that repr includes tension and energy levels."""
-        scene = Scene(
-            title="Test", chapter_id=uuid4(), tension_level=7, energy_level=4
-        )
+        scene = Scene(title="Test", chapter_id=uuid4(), tension_level=7, energy_level=4)
 
         repr_str = repr(scene)
 
@@ -664,9 +664,8 @@ class TestScenePlotlineManagement:
         """Test that adding the same plotline twice doesn't duplicate it."""
         scene = Scene(title="Scene", chapter_id=uuid4())
         plotline_id = uuid4()
-        original_timestamp = scene.updated_at
-
         scene.add_plotline(plotline_id)
+        original_timestamp = scene.updated_at
         scene.add_plotline(plotline_id)  # Add same plotline again
 
         assert scene.plotline_ids.count(plotline_id) == 1
@@ -743,6 +742,7 @@ class TestScenePlotlineManagement:
         plotline_id = uuid4()
 
         import time
+
         time.sleep(0.01)  # Small delay to ensure timestamp changes
 
         scene.add_plotline(plotline_id)
@@ -821,6 +821,7 @@ class TestSceneMetadataSmartTags:
         original_timestamp = scene.updated_at
 
         import time
+
         time.sleep(0.01)
         scene.update_metadata("test", "value")
 
@@ -834,6 +835,7 @@ class TestSceneMetadataSmartTags:
         original_timestamp = scene.updated_at
 
         import time
+
         time.sleep(0.01)
         scene.set_smart_tags({"mood": ["tense"]})
 

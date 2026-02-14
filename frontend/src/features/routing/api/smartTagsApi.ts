@@ -32,7 +32,9 @@ export const smartTagsApi = {
    * Get smart tags for a lore entry
    */
   async getLoreSmartTags(entryId: string): Promise<SmartTagsResponse> {
-    const response = await fetch(`${API_BASE}/lore/${encodeURIComponent(entryId)}/smart-tags`);
+    const response = await fetch(
+      `${API_BASE}/lore/${encodeURIComponent(entryId)}/smart-tags`
+    );
     return handleResponse<SmartTagsResponse>(response);
   },
 
@@ -43,11 +45,14 @@ export const smartTagsApi = {
     entryId: string,
     request: ManualSmartTagsUpdateRequest
   ): Promise<SmartTagsResponse> {
-    const response = await fetch(`${API_BASE}/lore/${encodeURIComponent(entryId)}/smart-tags/manual`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    });
+    const response = await fetch(
+      `${API_BASE}/lore/${encodeURIComponent(entryId)}/smart-tags/manual`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+      }
+    );
     return handleResponse<SmartTagsResponse>(response);
   },
 
@@ -60,7 +65,9 @@ export const smartTagsApi = {
       { method: 'DELETE' }
     );
     if (!response.ok && response.status !== 204) {
-      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      const error = await response
+        .json()
+        .catch(() => ({ detail: response.statusText }));
       throw new Error(error.detail || 'Delete failed');
     }
   },
@@ -68,7 +75,11 @@ export const smartTagsApi = {
   /**
    * Get smart tags for a scene
    */
-  async getSceneSmartTags(storyId: string, chapterId: string, sceneId: string): Promise<SmartTagsResponse> {
+  async getSceneSmartTags(
+    storyId: string,
+    chapterId: string,
+    sceneId: string
+  ): Promise<SmartTagsResponse> {
     const response = await fetch(
       `${API_BASE}/structure/stories/${encodeURIComponent(storyId)}/chapters/${encodeURIComponent(chapterId)}/scenes/${encodeURIComponent(sceneId)}/smart-tags`
     );
@@ -109,7 +120,9 @@ export const smartTagsApi = {
       { method: 'DELETE' }
     );
     if (!response.ok && response.status !== 204) {
-      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      const error = await response
+        .json()
+        .catch(() => ({ detail: response.statusText }));
       throw new Error(error.detail || 'Delete failed');
     }
   },

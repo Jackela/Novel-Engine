@@ -27,6 +27,8 @@ from src.contexts.knowledge.infrastructure.adapters.chromadb_vector_store import
     ChromaDBVectorStore,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def temp_persist_dir(tmp_path: Path) -> str:
@@ -165,9 +167,7 @@ class TestChromaDBVectorStore:
         await vector_store.upsert(collection, sample_documents)
 
         # Query with same embedding
-        results = await vector_store.query(
-            collection, sample_embedding, n_results=3
-        )
+        results = await vector_store.query(collection, sample_embedding, n_results=3)
 
         assert len(results) > 0
         assert all(isinstance(r, QueryResult) for r in results)
@@ -379,9 +379,7 @@ class TestChromaDBVectorStore:
         await vector_store.upsert(collection, sample_documents)
 
         # Query with limit
-        results = await vector_store.query(
-            collection, sample_embedding, n_results=2
-        )
+        results = await vector_store.query(collection, sample_embedding, n_results=2)
 
         assert len(results) <= 2
 
@@ -418,9 +416,7 @@ class TestVectorDocument:
     @pytest.mark.fast
     def test_vector_document_is_immutable(self):
         """Test that VectorDocument is frozen (immutable)."""
-        doc = VectorDocument(
-            id="test", embedding=[0.1, 0.2], text="test text"
-        )
+        doc = VectorDocument(id="test", embedding=[0.1, 0.2], text="test text")
 
         # Attempting to modify should raise (frozen dataclass)
         with pytest.raises(Exception):  # FrozenInstanceError

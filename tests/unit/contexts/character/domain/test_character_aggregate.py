@@ -14,6 +14,9 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 # Mock the aioredis dependency to avoid import errors
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 
 # Mock the event_bus module to avoid aioredis dependency
@@ -1214,7 +1217,9 @@ class TestCharacterMetadataSmartTags:
         self, character_with_metadata
     ):
         """Test that get_metadata returns default for missing keys."""
-        assert character_with_metadata.get_metadata("nonexistent", "default") == "default"
+        assert (
+            character_with_metadata.get_metadata("nonexistent", "default") == "default"
+        )
         assert character_with_metadata.get_metadata("nonexistent") is None
 
     @pytest.mark.unit
@@ -1235,9 +1240,7 @@ class TestCharacterMetadataSmartTags:
         assert character_with_metadata.get_smart_tags() == {}
 
     @pytest.mark.unit
-    def test_smart_tags_stored_alongside_other_metadata(
-        self, character_with_metadata
-    ):
+    def test_smart_tags_stored_alongside_other_metadata(self, character_with_metadata):
         """Test that smart tags coexist with other metadata."""
         character_with_metadata.update_metadata("other_key", "other_value")
         character_with_metadata.set_smart_tags({"role": ["protagonist"]})

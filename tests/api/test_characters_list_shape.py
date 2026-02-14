@@ -1,7 +1,10 @@
 from datetime import datetime
 
 import api_server
+import pytest
 from fastapi.testclient import TestClient
+
+pytestmark = pytest.mark.integration
 
 
 def _parse_iso(value: str) -> datetime:

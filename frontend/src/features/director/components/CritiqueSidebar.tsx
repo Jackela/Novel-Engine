@@ -80,13 +80,7 @@ function getSeverityBadge(score: number): string {
 /**
  * CritiqueItem - A single feedback point within a category.
  */
-function CritiqueItem({
-  text,
-  type,
-}: {
-  text: string;
-  type: 'issue' | 'suggestion';
-}) {
+function CritiqueItem({ text, type }: { text: string; type: 'issue' | 'suggestion' }) {
   const isIssue = type === 'issue';
   return (
     <div className="flex gap-2 py-1">
@@ -118,7 +112,10 @@ function CategorySection({ category }: { category: CritiqueCategoryScore }) {
         </div>
         <div className="flex items-center gap-2">
           {getSeverityIcon(category.score)}
-          <Badge variant="outline" className={cn('text-xs', getSeverityBadge(category.score))}>
+          <Badge
+            variant="outline"
+            className={cn('text-xs', getSeverityBadge(category.score))}
+          >
             {category.score}/10
           </Badge>
         </div>
@@ -137,7 +134,11 @@ function CategorySection({ category }: { category: CritiqueCategoryScore }) {
         <div className="space-y-1">
           <p className="text-xs font-semibold text-muted-foreground">Suggestions:</p>
           {category.suggestions.map((suggestion, idx) => (
-            <CritiqueItem key={`suggestion-${idx}`} text={suggestion} type="suggestion" />
+            <CritiqueItem
+              key={`suggestion-${idx}`}
+              text={suggestion}
+              type="suggestion"
+            />
           ))}
         </div>
       )}
@@ -218,9 +219,7 @@ export function CritiqueSidebar({
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="mt-4 text-sm text-muted-foreground">
-                Analyzing scene...
-              </p>
+              <p className="mt-4 text-sm text-muted-foreground">Analyzing scene...</p>
             </div>
           )}
 
@@ -230,7 +229,9 @@ export function CritiqueSidebar({
                 Critique failed
               </p>
               <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                {typeof error === 'string' ? error : error?.message || 'An error occurred'}
+                {typeof error === 'string'
+                  ? error
+                  : error?.message || 'An error occurred'}
               </p>
             </div>
           )}
@@ -243,7 +244,10 @@ export function CritiqueSidebar({
                   <span className="text-sm font-medium">Overall Score</span>
                   <Badge
                     variant="outline"
-                    className={cn('text-lg font-bold', getSeverityBadge(critique.overall_score))}
+                    className={cn(
+                      'text-lg font-bold',
+                      getSeverityBadge(critique.overall_score)
+                    )}
                   >
                     {critique.overall_score}/10
                   </Badge>
@@ -260,7 +264,7 @@ export function CritiqueSidebar({
                   <ul className="space-y-1">
                     {critique.highlights.map((highlight, idx) => (
                       <li key={`highlight-${idx}`} className="flex gap-2 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
                         <span className="text-muted-foreground">{highlight}</span>
                       </li>
                     ))}

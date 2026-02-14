@@ -16,11 +16,8 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional, assert_never
 from uuid import uuid4
-
-if TYPE_CHECKING:
-    from .prompt_version import VersionDiff, PromptVersion
 
 
 def _utcnow() -> datetime:
@@ -101,17 +98,18 @@ class VariableDefinition:
                 case VariableType.INTEGER:
                     return isinstance(value, int) and not isinstance(value, bool)
                 case VariableType.FLOAT:
-                    return isinstance(value, (int, float)) and not isinstance(value, bool)
+                    return isinstance(value, (int, float)) and not isinstance(
+                        value, bool
+                    )
                 case VariableType.BOOLEAN:
                     return isinstance(value, bool)
                 case VariableType.LIST:
                     return isinstance(value, list)
                 case VariableType.DICT:
                     return isinstance(value, dict)
+            assert_never(self.type)
         except Exception:
             return False
-
-        return False
 
     def coerce_value(self, value: Any) -> Any:
         """
@@ -162,12 +160,11 @@ class VariableDefinition:
                                 result[k.strip()] = v.strip()
                         return result
                     return dict(value)
+            assert_never(self.type)
         except (ValueError, TypeError) as e:
             raise ValueError(
                 f"Failed to coerce value '{value}' to type {self.type.value} for variable '{self.name}': {e}"
             )
-
-        return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -271,12 +268,12 @@ class PromptTemplate:
     id: str
     name: str
     content: str
-    variables: tuple[VariableDefinition, ...]
+    variables: tuple[VariableDefinition, ...] | list[VariableDefinition]
     model_config: ModelConfig
-    extends: tuple[str, ...] = ()
+    extends: tuple[str, ...] | list[str] = ()
     version: int = 1
     parent_version_id: Optional[str] = None
-    tags: tuple[str, ...] = ()
+    tags: tuple[str, ...] | list[str] = ()
     description: str = ""
     created_at: datetime = field(default_factory=_utcnow)
     updated_at: datetime = field(default_factory=_utcnow)
@@ -301,14 +298,22 @@ class PromptTemplate:
 
         # Normalize timestamps to UTC
         if self.created_at.tzinfo is None:
-            object.__setattr__(self, "created_at", self.created_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.replace(tzinfo=timezone.utc)
+            )
         else:
-            object.__setattr__(self, "created_at", self.created_at.astimezone(timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.astimezone(timezone.utc)
+            )
 
         if self.updated_at.tzinfo is None:
-            object.__setattr__(self, "updated_at", self.updated_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "updated_at", self.updated_at.replace(tzinfo=timezone.utc)
+            )
         else:
-            object.__setattr__(self, "updated_at", self.updated_at.astimezone(timezone.utc))
+            object.__setattr__(
+                self, "updated_at", self.updated_at.astimezone(timezone.utc)
+            )
 
         # Ensure variables is a tuple (immutable)
         if isinstance(self.variables, list):
@@ -319,7 +324,7 @@ class PromptTemplate:
             object.__setattr__(self, "tags", tuple(self.tags))
 
         # Ensure extends is a tuple (immutable)
-        if isinstance(self.extends, list):  # type: ignore[unreachable]
+        if isinstance(self.extends, list):
             object.__setattr__(self, "extends", tuple(self.extends))
 
         # Check for self-reference in extends
@@ -366,7 +371,9 @@ class PromptTemplate:
         # Check for required variables not used in content (warning only)
         unused_required_vars = defined_vars - content_vars
         required_but_unused = [
-            v.name for v in self.variables if v.name in unused_required_vars and v.required
+            v.name
+            for v in self.variables
+            if v.name in unused_required_vars and v.required
         ]
         if required_but_unused:
             # This is a warning condition, not an error
@@ -527,7 +534,9 @@ class PromptTemplate:
             name=name if name is not None else self.name,
             content=content if content is not None else self.content,
             variables=variables if variables is not None else self.variables,
-            model_config=model_config if model_config is not None else self.model_config,
+            model_config=(
+                model_config if model_config is not None else self.model_config
+            ),
             extends=extends if extends is not None else self.extends,
             version=self.version + 1,
             parent_version_id=self.id,
@@ -629,12 +638,16 @@ class PromptTemplate:
             parent_version_id=data.get("parent_version_id"),
             tags=tags,
             description=data.get("description", ""),
-            created_at=datetime.fromisoformat(data["created_at"])
-            if "created_at" in data
-            else _utcnow(),
-            updated_at=datetime.fromisoformat(data["updated_at"])
-            if "updated_at" in data
-            else _utcnow(),
+            created_at=(
+                datetime.fromisoformat(data["created_at"])
+                if "created_at" in data
+                else _utcnow()
+            ),
+            updated_at=(
+                datetime.fromisoformat(data["updated_at"])
+                if "updated_at" in data
+                else _utcnow()
+            ),
         )
 
     @classmethod
@@ -642,7 +655,9 @@ class PromptTemplate:
         cls,
         name: str,
         content: str,
-        variables: list[VariableDefinition] | tuple[VariableDefinition, ...] | None = None,
+        variables: (
+            list[VariableDefinition] | tuple[VariableDefinition, ...] | None
+        ) = None,
         provider: str = "openai",
         model_name: str = "gpt-4",
         temperature: float = 0.7,
@@ -671,7 +686,9 @@ class PromptTemplate:
         """
         if variables is None:
             # Auto-detect variables from content
-            detected_vars = set(re.findall(r"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}", content))
+            detected_vars = set(
+                re.findall(r"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}", content)
+            )
             variables = tuple(
                 VariableDefinition(
                     name=var_name,
@@ -864,7 +881,7 @@ class PromptTemplate:
                     parent_vars.append(var_def)
 
         # Add child variables (they override parents)
-        return tuple(parent_vars) + self.variables
+        return tuple(parent_vars) + tuple(self.variables)
 
     def render_with_inheritance(
         self,
@@ -959,9 +976,11 @@ class PromptTemplate:
         return {
             "content_changed": content is not None and content != self.content,
             "variables_changed": variables is not None and variables != self.variables,
-            "model_config_changed": model_config is not None and model_config != self.model_config,
+            "model_config_changed": model_config is not None
+            and model_config != self.model_config,
             "name_changed": name is not None and name != self.name,
-            "description_changed": description is not None and description != self.description,
+            "description_changed": description is not None
+            and description != self.description,
             "tags_changed": tags is not None and tags != self.tags,
             "extends_changed": extends is not None and extends != self.extends,
         }

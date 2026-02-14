@@ -10,6 +10,7 @@ to interact with character operations.
 import logging
 from typing import Any, Dict, List, Optional
 
+from .....core.result import ConflictError, Err, Error, NotFoundError, Ok, Result
 from ...domain.aggregates.character import Character
 from ...domain.repositories.character_repository import ICharacterRepository
 from ...domain.value_objects.character_id import CharacterID
@@ -27,7 +28,6 @@ from ..commands.character_commands import (
     UpdateCharacterSkillCommand,
     UpdateCharacterStatsCommand,
 )
-from .....core.result import ConflictError, Error, NotFoundError, Ok, Result
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ class CharacterApplicationService:
             # Check if character name is already taken
             existing_characters = await self.repository.find_by_name(character_name)
             if existing_characters:
-                return Result.error(
+                return Err(
                     ConflictError(
                         message=f"Character name '{character_name}' is already taken",
                         details={"character_name": character_name},
@@ -124,7 +124,7 @@ class CharacterApplicationService:
 
         except Exception as e:
             self.logger.error(f"Error creating character: {e}")
-            return Result.error(
+            return Err(
                 Error(
                     code="CREATION_FAILED",
                     message=f"Failed to create character: {e}",
@@ -151,7 +151,7 @@ class CharacterApplicationService:
             character = await self.repository.get_by_id(char_id)
 
             if character is None:
-                return Result.error(
+                return Err(
                     NotFoundError(
                         message=f"Character with ID '{character_id}' not found",
                         details={"character_id": character_id},
@@ -162,7 +162,7 @@ class CharacterApplicationService:
 
         except ValueError as e:
             self.logger.error(f"Invalid character ID {character_id}: {e}")
-            return Result.error(
+            return Err(
                 Error(
                     code="INVALID_ID",
                     message=f"Invalid character ID format: {e}",
@@ -171,7 +171,7 @@ class CharacterApplicationService:
             )
         except Exception as e:
             self.logger.error(f"Error getting character {character_id}: {e}")
-            return Result.error(
+            return Err(
                 Error(
                     code="RETRIEVAL_FAILED",
                     message=f"Failed to retrieve character: {e}",

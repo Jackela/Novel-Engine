@@ -13,19 +13,19 @@ Constitution Compliance:
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from src.core.types.shared_types import KnowledgeEntryId, CharacterId, UserId
+from src.core.types.shared_types import CharacterId, KnowledgeEntryId, UserId
 
-from ..ports.i_knowledge_repository import IKnowledgeRepository
-from ..ports.i_event_publisher import IEventPublisher
-from ...domain.models.knowledge_entry import KnowledgeEntry
-from ...domain.models.knowledge_type import KnowledgeType
+from ...domain.events.knowledge_entry_created import KnowledgeEntryCreated
 from ...domain.models.access_control_rule import AccessControlRule
 from ...domain.models.access_level import AccessLevel
-from ...domain.events.knowledge_entry_created import KnowledgeEntryCreated
+from ...domain.models.knowledge_entry import KnowledgeEntry
+from ...domain.models.knowledge_type import KnowledgeType
 from ...infrastructure.logging_config import (
     get_knowledge_logger,
     log_knowledge_entry_created,
 )
+from ..ports.i_event_publisher import IEventPublisher
+from ..ports.i_knowledge_repository import IKnowledgeRepository
 
 
 class CreateKnowledgeEntryUseCase:
@@ -181,4 +181,3 @@ class CreateKnowledgeEntryUseCase:
             )
 
         return entry.id
-

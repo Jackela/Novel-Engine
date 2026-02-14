@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, AsyncIterator
 import httpx
 import structlog
 
-from ...application.ports.i_llm_client import LLMRequest, LLMResponse, LLMError
+from ...application.ports.i_llm_client import LLMError, LLMRequest, LLMResponse
 
 if TYPE_CHECKING:
     pass
@@ -115,9 +115,7 @@ class ClaudeLLMClient:
             "ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1/messages"
         )
 
-    async def generate_stream(
-        self, request: LLMRequest
-    ) -> AsyncIterator[str]:
+    async def generate_stream(self, request: LLMRequest) -> AsyncIterator[str]:
         """
         Generate streaming text using the Claude API.
 

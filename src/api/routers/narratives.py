@@ -3,6 +3,7 @@ Narratives Router - Streaming narrative generation endpoints.
 
 Provides SSE (Server-Sent Events) streaming for real-time narrative generation.
 """
+
 from __future__ import annotations
 
 import json
@@ -129,7 +130,11 @@ async def stream_narrative(request: NarrativeStreamRequest) -> StreamingResponse
         - type: "error" - Error occurred during generation
     """
     # Sanitize tone for logging (truncate and allow only safe characters)
-    safe_tone = (request.tone[:32].replace("\n", " ").replace("\r", " ") if request.tone else None)
+    safe_tone = (
+        request.tone[:32].replace("\n", " ").replace("\r", " ")
+        if request.tone
+        else None
+    )
     logger.info(
         "Starting narrative stream",
         extra={

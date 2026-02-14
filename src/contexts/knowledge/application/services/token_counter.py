@@ -27,7 +27,7 @@ except ImportError:
     TIKTOKEN_AVAILABLE = False
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    pass
 
 
 logger = structlog.get_logger()
@@ -504,9 +504,7 @@ class TokenCounter:
         encoding = self._get_tiktoken_encoding(family)
         return len(encoding.encode(text))
 
-    def _get_tiktoken_encoding(
-        self, family: ModelFamily
-    ) -> tiktoken.Encoding:
+    def _get_tiktoken_encoding(self, family: ModelFamily) -> tiktoken.Encoding:
         """Get or create tiktoken encoding for model family."""
         if family in self._tiktoken_cache:
             return self._tiktoken_cache[family]

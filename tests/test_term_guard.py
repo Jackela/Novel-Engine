@@ -23,6 +23,9 @@ import pytest
 import yaml
 
 # Import the Term Guard system
+
+pytestmark = pytest.mark.unit
+
 try:
     from scripts.term_guard import (
         CleaningReport,

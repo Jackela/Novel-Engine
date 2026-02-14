@@ -25,6 +25,8 @@ from src.memory.layered_memory import (
     MemoryQueryResult,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.asyncio
 class TestLayeredMemorySystem:

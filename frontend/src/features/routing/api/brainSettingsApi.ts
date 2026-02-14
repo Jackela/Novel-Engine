@@ -226,7 +226,7 @@ export interface ChatChunk {
  */
 function streamRealtimeUsage(
   onEvent: (event: RealtimeUsageEvent) => void,
-  onError?: (error: Error) => void,
+  onError?: (error: Error) => void
 ): EventSource {
   const eventSource = new EventSource('/api/brain/usage/stream');
 
@@ -354,7 +354,10 @@ export const brainSettingsApi = {
    * Get model pricing information
    * BRAIN-035B-01: Model Comparison Table
    */
-  async getModelPricing(includeDeprecated = false, provider?: string): Promise<ModelPricingResponse[]> {
+  async getModelPricing(
+    includeDeprecated = false,
+    provider?: string
+  ): Promise<ModelPricingResponse[]> {
     const params = new URLSearchParams();
     if (includeDeprecated) params.append('include_deprecated', 'true');
     if (provider) params.append('provider', provider);
@@ -373,7 +376,9 @@ export const brainSettingsApi = {
     const response = await fetch(url);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      const error = await response
+        .json()
+        .catch(() => ({ detail: response.statusText }));
       throw new Error(error.detail || error.message || 'Export failed');
     }
 
@@ -382,7 +387,9 @@ export const brainSettingsApi = {
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.download = response.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || `usage_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download =
+      response.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ||
+      `usage_export_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -399,7 +406,7 @@ export const brainSettingsApi = {
    */
   streamRealtimeUsage(
     onEvent: (event: RealtimeUsageEvent) => void,
-    onError?: (error: Error) => void,
+    onError?: (error: Error) => void
   ): EventSource {
     return streamRealtimeUsage(onEvent, onError);
   },
@@ -416,7 +423,7 @@ export const brainSettingsApi = {
   async getRAGContext(
     query: string,
     sceneId?: string,
-    maxChunks = 5,
+    maxChunks = 5
   ): Promise<RAGContextResponse> {
     const params = new URLSearchParams();
     params.append('query', query);
@@ -439,7 +446,7 @@ export const brainSettingsApi = {
   async chat(
     request: ChatRequest,
     onChunk: (chunk: ChatChunk) => void,
-    onError?: (error: Error) => void,
+    onError?: (error: Error) => void
   ): Promise<AbortController> {
     const controller = new AbortController();
 
@@ -452,7 +459,9 @@ export const brainSettingsApi = {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ detail: response.statusText }));
+        const error = await response
+          .json()
+          .catch(() => ({ detail: response.statusText }));
         throw new Error(error.detail || error.message || 'Chat request failed');
       }
 

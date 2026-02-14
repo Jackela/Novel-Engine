@@ -122,7 +122,10 @@ async function setScenePlotlines(
   input: SetScenePlotlinesRequest
 ): Promise<ScenePlotlinesResponse> {
   const payload = SetScenePlotlinesRequestSchema.parse(input);
-  const data = await api.put<unknown>(`/structure/scenes/${sceneId}/plotlines`, payload);
+  const data = await api.put<unknown>(
+    `/structure/scenes/${sceneId}/plotlines`,
+    payload
+  );
   return ScenePlotlinesResponseSchema.parse(data);
 }
 
@@ -184,8 +187,13 @@ export function useUpdatePlotline() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ plotlineId, updates }: { plotlineId: string; updates: PlotlineUpdateRequest }) =>
-      updatePlotline(plotlineId, updates),
+    mutationFn: ({
+      plotlineId,
+      updates,
+    }: {
+      plotlineId: string;
+      updates: PlotlineUpdateRequest;
+    }) => updatePlotline(plotlineId, updates),
     onSuccess: (data) => {
       // Update cache with new data
       queryClient.setQueryData(plotlineKeys.detail(data.id), data);
@@ -248,8 +256,13 @@ export function useSetScenePlotlines() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ sceneId, input }: { sceneId: string; input: SetScenePlotlinesRequest }) =>
-      setScenePlotlines(sceneId, input),
+    mutationFn: ({
+      sceneId,
+      input,
+    }: {
+      sceneId: string;
+      input: SetScenePlotlinesRequest;
+    }) => setScenePlotlines(sceneId, input),
     onSuccess: (data, variables) => {
       // Update scene plotlines cache
       queryClient.setQueryData(plotlineKeys.scene(variables.sceneId), data);

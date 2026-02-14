@@ -562,8 +562,7 @@ class PerformanceMonitor:
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -572,14 +571,12 @@ class PerformanceMonitor:
                     tags TEXT,
                     metric_type TEXT
                 )
-            """
-            )
+            """)
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_name_timestamp ON metrics(name, timestamp)"
             )
 
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS alerts (
                     id TEXT PRIMARY KEY,
                     metric_name TEXT NOT NULL,
@@ -591,8 +588,7 @@ class PerformanceMonitor:
                     timestamp REAL NOT NULL,
                     acknowledged BOOLEAN DEFAULT FALSE
                 )
-            """
-            )
+            """)
 
     def _setup_default_thresholds(self):
         """Setup default performance thresholds."""

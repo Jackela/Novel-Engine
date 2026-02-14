@@ -219,9 +219,7 @@ class PacingService:
 
         return issues
 
-    def _detect_monotony(
-        self, scenes: list[Scene], metric: str
-    ) -> list[PacingIssue]:
+    def _detect_monotony(self, scenes: list[Scene], metric: str) -> list[PacingIssue]:
         """Detect sequences with same pacing level for too long.
 
         Args:
@@ -249,10 +247,7 @@ class PacingService:
             else:
                 # Check if we had a monotonous streak
                 if consecutive_count >= self.MONOTONY_THRESHOLD:
-                    affected = [
-                        scenes[j].id
-                        for j in range(consecutive_start, i)
-                    ]
+                    affected = [scenes[j].id for j in range(consecutive_start, i)]
                     level = getattr(scenes[consecutive_start], f"{metric}_level")
                     issues.append(
                         PacingIssue(
@@ -297,9 +292,7 @@ class PacingService:
 
         return issues
 
-    def _detect_spikes(
-        self, scenes: list[Scene], metric: str
-    ) -> list[PacingIssue]:
+    def _detect_spikes(self, scenes: list[Scene], metric: str) -> list[PacingIssue]:
         """Detect abrupt pacing changes between adjacent scenes.
 
         Args:

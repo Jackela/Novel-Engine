@@ -12,6 +12,9 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 # Mock problematic dependencies
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 event_bus_mock = MagicMock()
 event_mock = MagicMock()
@@ -50,7 +53,12 @@ def _create_test_character(faction_id: str | None = None) -> Character:
         level=1,
         physical_traits=PhysicalTraits(),
         personality_traits=PersonalityTraits(
-            traits={"courage": 0.7, "intelligence": 0.5, "charisma": 0.5, "loyalty": 0.5}
+            traits={
+                "courage": 0.7,
+                "intelligence": 0.5,
+                "charisma": 0.5,
+                "loyalty": 0.5,
+            }
         ),
         background=Background(),
     )
@@ -165,6 +173,7 @@ class TestCharacterFactionMembership:
 
         # Small delay to ensure timestamp difference
         import time
+
         time.sleep(0.01)
 
         character.join_faction("test-faction")
@@ -253,6 +262,7 @@ class TestCharacterFactionMembership:
         old_updated_at = character.updated_at
 
         import time
+
         time.sleep(0.01)
 
         character.leave_faction()

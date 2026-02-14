@@ -22,6 +22,8 @@ from src.contexts.world.infrastructure.generators.character_profile_generator im
     generate_character_profile,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def sample_llm_response() -> Dict[str, Any]:
@@ -126,7 +128,9 @@ class TestMockCharacterProfileGenerator:
     """Tests for MockCharacterProfileGenerator."""
 
     @pytest.mark.unit
-    def test_generate_hero_profile(self, mock_generator: MockCharacterProfileGenerator) -> None:
+    def test_generate_hero_profile(
+        self, mock_generator: MockCharacterProfileGenerator
+    ) -> None:
         """Test generating a hero archetype profile."""
         result = mock_generator.generate_character_profile(
             name="Marcus Lightbringer",
@@ -142,7 +146,9 @@ class TestMockCharacterProfileGenerator:
         assert len(result.appearance) > 0
 
     @pytest.mark.unit
-    def test_generate_villain_profile(self, mock_generator: MockCharacterProfileGenerator) -> None:
+    def test_generate_villain_profile(
+        self, mock_generator: MockCharacterProfileGenerator
+    ) -> None:
         """Test generating a villain archetype profile."""
         result = mock_generator.generate_character_profile(
             name="Lord Malachar",
@@ -155,7 +161,9 @@ class TestMockCharacterProfileGenerator:
         assert "calculating" in result.traits
 
     @pytest.mark.unit
-    def test_generate_mentor_profile(self, mock_generator: MockCharacterProfileGenerator) -> None:
+    def test_generate_mentor_profile(
+        self, mock_generator: MockCharacterProfileGenerator
+    ) -> None:
         """Test generating a mentor archetype profile."""
         result = mock_generator.generate_character_profile(
             name="Elder Sage",
@@ -167,7 +175,9 @@ class TestMockCharacterProfileGenerator:
         assert "patient" in result.traits
 
     @pytest.mark.unit
-    def test_generate_rogue_profile(self, mock_generator: MockCharacterProfileGenerator) -> None:
+    def test_generate_rogue_profile(
+        self, mock_generator: MockCharacterProfileGenerator
+    ) -> None:
         """Test generating a rogue archetype profile."""
         result = mock_generator.generate_character_profile(
             name="Shadow Dancer",
@@ -178,7 +188,9 @@ class TestMockCharacterProfileGenerator:
         assert "cunning" in result.traits
 
     @pytest.mark.unit
-    def test_generate_warrior_profile(self, mock_generator: MockCharacterProfileGenerator) -> None:
+    def test_generate_warrior_profile(
+        self, mock_generator: MockCharacterProfileGenerator
+    ) -> None:
         """Test generating a warrior archetype profile."""
         result = mock_generator.generate_character_profile(
             name="Ironside",
@@ -190,7 +202,9 @@ class TestMockCharacterProfileGenerator:
         assert "loyal" in result.traits
 
     @pytest.mark.unit
-    def test_unknown_archetype_fallback(self, mock_generator: MockCharacterProfileGenerator) -> None:
+    def test_unknown_archetype_fallback(
+        self, mock_generator: MockCharacterProfileGenerator
+    ) -> None:
         """Test that unknown archetypes get default template."""
         result = mock_generator.generate_character_profile(
             name="Mystery Person",
@@ -202,7 +216,9 @@ class TestMockCharacterProfileGenerator:
         assert "enigmatic" in result.traits
 
     @pytest.mark.unit
-    def test_case_insensitive_archetype(self, mock_generator: MockCharacterProfileGenerator) -> None:
+    def test_case_insensitive_archetype(
+        self, mock_generator: MockCharacterProfileGenerator
+    ) -> None:
         """Test that archetype matching is case-insensitive."""
         result1 = mock_generator.generate_character_profile("Test", "HERO")
         result2 = mock_generator.generate_character_profile("Test", "hero")
@@ -329,7 +345,9 @@ class TestLLMCharacterProfileGeneratorIntegration:
     """Integration-style tests with mocked API."""
 
     @pytest.mark.unit
-    @patch("src.contexts.world.infrastructure.generators.character_profile_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.character_profile_generator.requests.post"
+    )
     def test_generate_success(
         self,
         mock_post: MagicMock,
@@ -360,7 +378,9 @@ class TestLLMCharacterProfileGeneratorIntegration:
         assert "cunning" in result.traits
 
     @pytest.mark.unit
-    @patch("src.contexts.world.infrastructure.generators.character_profile_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.character_profile_generator.requests.post"
+    )
     def test_generate_api_error_returns_error_result(
         self,
         mock_post: MagicMock,
@@ -397,7 +417,9 @@ class TestLLMCharacterProfileGeneratorIntegration:
         assert "GEMINI_API_KEY" in result.appearance
 
     @pytest.mark.unit
-    @patch("src.contexts.world.infrastructure.generators.character_profile_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.character_profile_generator.requests.post"
+    )
     def test_generate_rate_limit_error(
         self,
         mock_post: MagicMock,
@@ -504,7 +526,9 @@ class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
     @pytest.mark.unit
-    def test_empty_name_handling(self, mock_generator: MockCharacterProfileGenerator) -> None:
+    def test_empty_name_handling(
+        self, mock_generator: MockCharacterProfileGenerator
+    ) -> None:
         """Test handling of empty name."""
         result = mock_generator.generate_character_profile(
             name="",

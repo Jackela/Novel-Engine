@@ -48,10 +48,10 @@ from src.agents.persona_agent.core import PersonaAgentCore
 logger = logging.getLogger(__name__)
 
 try:
+    from src.agents.enhanced_decision_engine import EnhancedDecisionEngine
     from src.contexts.character.application.services.context_loader import (
         ContextLoaderService,
     )
-    from src.agents.enhanced_decision_engine import EnhancedDecisionEngine
 
     CONTEXT_LOADER_AVAILABLE = True
 except ImportError:
@@ -659,7 +659,9 @@ class PersonaAgent:
             decision_engine_type = "standard"
             if CONTEXT_LOADER_AVAILABLE:
                 try:
-                    from src.agents.enhanced_decision_engine import EnhancedDecisionEngine
+                    from src.agents.enhanced_decision_engine import (
+                        EnhancedDecisionEngine,
+                    )
 
                     if isinstance(self.decision_engine, EnhancedDecisionEngine):
                         decision_engine_type = "enhanced"
@@ -703,8 +705,3 @@ class PersonaAgent:
         except Exception as e:
             logger.error(f"Error getting context integration status: {e}")
             return {"error": str(e)}
-
-
-
-
-

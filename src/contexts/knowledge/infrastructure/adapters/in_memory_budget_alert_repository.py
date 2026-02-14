@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ...domain.models.budget_alert import (
-        BudgetAlertState,
         AlertTriggeredEvent,
+        BudgetAlertState,
     )
 
 
@@ -78,9 +78,11 @@ class InMemoryBudgetAlertRepository:
         results = list(self._alerts.values())
 
         if workspace_id is not None:
-            results = [a for a in results if a.config.workspace_id == workspace_id]
+            results = [
+                a for a in results if a.config.workspace_id in (workspace_id, None)
+            ]
         if user_id is not None:
-            results = [a for a in results if a.config.user_id == user_id]
+            results = [a for a in results if a.config.user_id in (user_id, None)]
         if enabled_only:
             results = [a for a in results if a.config.enabled]
 

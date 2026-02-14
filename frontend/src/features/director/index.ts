@@ -19,7 +19,13 @@ export { ChapterHealth } from './components/ChapterHealth';
 export { CritiqueSidebar } from './components/CritiqueSidebar';
 
 // API Hooks
-export { useBeats, useCreateBeat, useUpdateBeat, useDeleteBeat, useReorderBeats } from './api/beatApi';
+export {
+  useBeats,
+  useCreateBeat,
+  useUpdateBeat,
+  useDeleteBeat,
+  useReorderBeats,
+} from './api/beatApi';
 export { useSuggestBeats, beatSuggestionKeys } from './api/beatSuggestionApi';
 export { useChapterPacing, pacingKeys } from './api/pacingApi';
 export { useChapterHealth, chapterAnalysisKeys } from './api/chapterAnalysisApi';

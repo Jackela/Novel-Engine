@@ -32,6 +32,9 @@ from src.contexts.knowledge.application.ports.i_vector_store import (
     QueryResult,
     VectorStoreError,
 )
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    RetrievedChunk,
+)
 from src.contexts.knowledge.application.services.retrieval_service import (
     DEFAULT_DEDUPLICATION_SIMILARITY,
     DEFAULT_RELEVANCE_THRESHOLD,
@@ -42,9 +45,8 @@ from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievalService,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
-    RetrievedChunk,
-)
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.unit
@@ -516,9 +518,7 @@ class TestRetrievalService:
         assert call_args.kwargs["collection"] == "custom_collection"
 
     @pytest.mark.asyncio
-    async def test_format_context_empty(
-        self, retrieval_service
-    ):
+    async def test_format_context_empty(self, retrieval_service):
         """Empty result should produce empty context."""
         result = RetrievalResult(
             chunks=[],
@@ -534,9 +534,7 @@ class TestRetrievalService:
         assert context.chunk_count == 0
 
     @pytest.mark.asyncio
-    async def test_format_context_basic(
-        self, retrieval_service
-    ):
+    async def test_format_context_basic(self, retrieval_service):
         """Should format chunks into context string."""
         chunks = [
             RetrievedChunk(
@@ -573,9 +571,7 @@ class TestRetrievalService:
         assert len(context.sources) == 2
 
     @pytest.mark.asyncio
-    async def test_format_context_with_token_limit(
-        self, retrieval_service
-    ):
+    async def test_format_context_with_token_limit(self, retrieval_service):
         """Should respect token limit."""
         # Create chunks that would exceed token limit
         large_chunks = [
@@ -604,9 +600,7 @@ class TestRetrievalService:
         assert context.total_tokens <= 500
 
     @pytest.mark.asyncio
-    async def test_format_context_without_sources(
-        self, retrieval_service
-    ):
+    async def test_format_context_without_sources(self, retrieval_service):
         """Should not include sources when disabled."""
         chunks = [
             RetrievedChunk(
@@ -631,9 +625,7 @@ class TestRetrievalService:
         assert context.text != ""
 
     @pytest.mark.asyncio
-    async def test_format_context_simple(
-        self, retrieval_service
-    ):
+    async def test_format_context_simple(self, retrieval_service):
         """Simple format should return just text."""
         chunks = [
             RetrievedChunk(
@@ -659,15 +651,13 @@ class TestRetrievalService:
 
         # Similar content
         sim2 = retrieval_service._content_similarity(
-            "Sir Aldric is a brave knight",
-            "Sir Aldric is a brave warrior"
+            "Sir Aldric is a brave knight", "Sir Aldric is a brave warrior"
         )
         assert sim2 > 0.8  # High similarity
 
         # Different content
         sim3 = retrieval_service._content_similarity(
-            "The quick brown fox",
-            "Lorem ipsum dolor sit amet"
+            "The quick brown fox", "Lorem ipsum dolor sit amet"
         )
         assert sim3 < 0.3  # Low similarity
 
@@ -677,8 +667,7 @@ class TestRetrievalService:
 
         # Normalizes whitespace
         sim5 = retrieval_service._content_similarity(
-            "test   content   here",
-            "test content here"
+            "test   content   here", "test content here"
         )
         assert sim5 == 1.0
 
@@ -780,9 +769,12 @@ class TestRetrievalServiceGetSources:
     @pytest.fixture
     def retrieval_service(self):
         """Create retrieval service without mocks for get_sources tests."""
-        from src.contexts.knowledge.application.ports.i_embedding_service import IEmbeddingService
-        from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
         from unittest.mock import AsyncMock
+
+        from src.contexts.knowledge.application.ports.i_embedding_service import (
+            IEmbeddingService,
+        )
+        from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
 
         embedding_service = AsyncMock(spec=IEmbeddingService)
         vector_store = AsyncMock(spec=IVectorStore)
@@ -854,7 +846,9 @@ class TestRetrievalServiceGetSources:
 
         alice = next(s for s in sources if s["source_id"] == "char_alice")
         assert alice["chunk_count"] == 2
-        assert alice["relevance_score"] == pytest.approx(0.875, 0.01)  # Average of 0.9 and 0.85
+        assert alice["relevance_score"] == pytest.approx(
+            0.875, 0.01
+        )  # Average of 0.9 and 0.85
 
     def test_get_sources_with_custom_names(self, retrieval_service):
         """Should use provided display names."""
@@ -990,9 +984,12 @@ class TestRetrievalServiceCitationFormatting:
     @pytest.fixture
     def retrieval_service(self):
         """Create retrieval service without mocks for citation tests."""
-        from src.contexts.knowledge.application.ports.i_embedding_service import IEmbeddingService
-        from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
         from unittest.mock import AsyncMock
+
+        from src.contexts.knowledge.application.ports.i_embedding_service import (
+            IEmbeddingService,
+        )
+        from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
 
         embedding_service = AsyncMock(spec=IEmbeddingService)
         vector_store = AsyncMock(spec=IVectorStore)
@@ -1088,7 +1085,10 @@ class TestRetrievalServiceReranking:
     @pytest.fixture
     def embedding_service(self):
         """Create mock embedding service."""
-        from src.contexts.knowledge.application.ports.i_embedding_service import IEmbeddingService
+        from src.contexts.knowledge.application.ports.i_embedding_service import (
+            IEmbeddingService,
+        )
+
         service = AsyncMock(spec=IEmbeddingService)
         service.get_dimension.return_value = 1536
         return service
@@ -1097,6 +1097,7 @@ class TestRetrievalServiceReranking:
     def vector_store(self):
         """Create mock vector store."""
         from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
+
         store = AsyncMock(spec=IVectorStore)
         store.health_check.return_value = True
         return store
@@ -1105,6 +1106,7 @@ class TestRetrievalServiceReranking:
     def sample_query_results(self):
         """Create sample query results for testing."""
         from src.contexts.knowledge.application.ports.i_vector_store import QueryResult
+
         return [
             QueryResult(
                 id="chunk_1",
@@ -1199,12 +1201,17 @@ class TestRetrievalServiceReranking:
     @pytest.fixture
     def mock_rerank_service(self):
         """Create mock rerank service that reorders results."""
+        from unittest.mock import AsyncMock
+
+        from src.contexts.knowledge.application.ports.i_reranker import (
+            RerankDocument,
+            RerankOutput,
+            RerankResult,
+        )
         from src.contexts.knowledge.application.services.rerank_service import (
             RerankService,
             RerankServiceResult,
         )
-        from src.contexts.knowledge.application.ports.i_reranker import RerankDocument, RerankOutput, RerankResult
-        from unittest.mock import AsyncMock
 
         reranker = AsyncMock()
 
@@ -1227,7 +1234,11 @@ class TestRetrievalServiceReranking:
                 reranked = reranked[:top_k]
 
             avg_original = sum(d.score for d in documents) / len(documents)
-            avg_new = sum(r.relevance_score for r in reranked) / len(reranked) if reranked else 0
+            avg_new = (
+                sum(r.relevance_score for r in reranked) / len(reranked)
+                if reranked
+                else 0
+            )
             score_improvement = max(0.0, avg_new - avg_original)
 
             return RerankOutput(
@@ -1247,7 +1258,9 @@ class TestRetrievalServiceReranking:
         self, embedding_service, vector_store, sample_query_results, mock_rerank_service
     ):
         """When reranking is enabled, should apply reranking after filtering/dedup."""
-        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+        from src.contexts.knowledge.application.services.retrieval_service import (
+            RetrievalService,
+        )
 
         embedding_service.embed.return_value = [0.1] * 1536
         vector_store.query.return_value = sample_query_results
@@ -1274,7 +1287,9 @@ class TestRetrievalServiceReranking:
         self, embedding_service, vector_store, sample_query_results, mock_rerank_service
     ):
         """Should retrieve candidate_k results and return final_k after reranking."""
-        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+        from src.contexts.knowledge.application.services.retrieval_service import (
+            RetrievalService,
+        )
 
         embedding_service.embed.return_value = [0.1] * 1536
         vector_store.query.return_value = sample_query_results
@@ -1308,7 +1323,9 @@ class TestRetrievalServiceReranking:
         self, embedding_service, vector_store, sample_query_results, mock_rerank_service
     ):
         """When enable_rerank is False, should skip reranking even if service is available."""
-        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+        from src.contexts.knowledge.application.services.retrieval_service import (
+            RetrievalService,
+        )
 
         embedding_service.embed.return_value = [0.1] * 1536
         vector_store.query.return_value = sample_query_results
@@ -1337,7 +1354,9 @@ class TestRetrievalServiceReranking:
         self, embedding_service, vector_store, sample_query_results
     ):
         """When no rerank service is provided, should work normally without reranking."""
-        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+        from src.contexts.knowledge.application.services.retrieval_service import (
+            RetrievalService,
+        )
 
         embedding_service.embed.return_value = [0.1] * 1536
         vector_store.query.return_value = sample_query_results
@@ -1366,10 +1385,12 @@ class TestRetrievalServiceReranking:
         self, embedding_service, vector_store, sample_query_results
     ):
         """When reranking fails, should fall back to original order with warning."""
-        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
         from src.contexts.knowledge.application.services.rerank_service import (
-            RerankService,
             FailingReranker,
+            RerankService,
+        )
+        from src.contexts.knowledge.application.services.retrieval_service import (
+            RetrievalService,
         )
 
         embedding_service.embed.return_value = [0.1] * 1536
@@ -1402,7 +1423,9 @@ class TestRetrievalServiceReranking:
         self, embedding_service, vector_store, sample_query_results, mock_rerank_service
     ):
         """When candidate_k is None, should default to 2x final_k when reranking."""
-        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+        from src.contexts.knowledge.application.services.retrieval_service import (
+            RetrievalService,
+        )
 
         embedding_service.embed.return_value = [0.1] * 1536
         vector_store.query.return_value = sample_query_results
@@ -1431,7 +1454,9 @@ class TestRetrievalServiceReranking:
         self, embedding_service, vector_store, sample_query_results, mock_rerank_service
     ):
         """When final_k is specified, it should override the k parameter."""
-        from src.contexts.knowledge.application.services.retrieval_service import RetrievalService
+        from src.contexts.knowledge.application.services.retrieval_service import (
+            RetrievalService,
+        )
 
         embedding_service.embed.return_value = [0.1] * 1536
         vector_store.query.return_value = sample_query_results

@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 import httpx
 import structlog
 
-from ...application.ports.i_llm_client import LLMRequest, LLMResponse, LLMError
+from ...application.ports.i_llm_client import LLMError, LLMRequest, LLMResponse
 
 if TYPE_CHECKING:
     pass
@@ -305,10 +305,12 @@ class GeminiLLMClient:
                 contents.append(msg.to_dict())
 
         # Add current user message
-        contents.append({
-            "role": "user",
-            "parts": [{"text": request.user_prompt}],
-        })
+        contents.append(
+            {
+                "role": "user",
+                "parts": [{"text": request.user_prompt}],
+            }
+        )
 
         return contents
 

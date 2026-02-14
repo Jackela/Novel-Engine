@@ -33,14 +33,16 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
     KnowledgeIngestionService,
 )
 from src.contexts.knowledge.domain.models.chunking_strategy import (
-    ChunkStrategyType,
     ChunkingStrategy,
+    ChunkStrategyType,
 )
 from src.contexts.knowledge.domain.models.source_knowledge_entry import (
     SourceKnowledgeEntry,
     SourceMetadata,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -56,8 +58,10 @@ def mock_embedding_service():
     # Return deterministic 1536-dimension embeddings
     def make_embedding(text: str) -> list[float]:
         import hashlib
+
         seed = int(hashlib.sha256(text.encode()).hexdigest()[:8], 16)
         import random
+
         random.seed(seed)
         embedding = [random.gauss(0, 1) for _ in range(1536)]
         # Normalize
@@ -85,7 +89,9 @@ def mock_vector_store():
     # Track stored documents
     stored_docs: dict[str, list[VectorDocument]] = {}
 
-    async def mock_upsert(collection: str, documents: list[VectorDocument]) -> UpsertResult:
+    async def mock_upsert(
+        collection: str, documents: list[VectorDocument]
+    ) -> UpsertResult:
         if collection not in stored_docs:
             stored_docs[collection] = []
         stored_docs[collection].extend(documents)
@@ -119,7 +125,9 @@ def mock_vector_store():
 
         if ids:
             initial_count = len(stored_docs[collection])
-            stored_docs[collection] = [d for d in stored_docs[collection] if d.id not in ids]
+            stored_docs[collection] = [
+                d for d in stored_docs[collection] if d.id not in ids
+            ]
             return initial_count - len(stored_docs[collection])
 
         if where:

@@ -144,7 +144,11 @@ def _get_mock_profile(name: str, archetype: str) -> CharacterProfileResult:
                 "Rose from humble origins after witnessing injustice firsthand. "
                 "Trained under a renowned mentor before embarking on their quest."
             ),
-            "motivations": ["protect the innocent", "right past wrongs", "find redemption"],
+            "motivations": [
+                "protect the innocent",
+                "right past wrongs",
+                "find redemption",
+            ],
             "quirks": ["always helps those in need", "never breaks a promise"],
         },
         "villain": {
@@ -159,8 +163,15 @@ def _get_mock_profile(name: str, archetype: str) -> CharacterProfileResult:
                 "Once a respected figure, twisted by betrayal and loss. "
                 "Now seeks to reshape the world according to their vision."
             ),
-            "motivations": ["absolute power", "revenge on betrayers", "create order through fear"],
-            "quirks": ["speaks in measured tones", "collects trophies from fallen foes"],
+            "motivations": [
+                "absolute power",
+                "revenge on betrayers",
+                "create order through fear",
+            ],
+            "quirks": [
+                "speaks in measured tones",
+                "collects trophies from fallen foes",
+            ],
         },
         "mentor": {
             "aliases": ["The Sage", "Keeper of Ancient Ways"],
@@ -174,7 +185,11 @@ def _get_mock_profile(name: str, archetype: str) -> CharacterProfileResult:
                 "Has walked many paths and learned from countless trials. "
                 "Now seeks to pass on wisdom to the next generation."
             ),
-            "motivations": ["guide the worthy", "preserve ancient knowledge", "prevent past mistakes"],
+            "motivations": [
+                "guide the worthy",
+                "preserve ancient knowledge",
+                "prevent past mistakes",
+            ],
             "quirks": ["speaks in riddles", "appears when least expected"],
         },
         "rogue": {
@@ -313,7 +328,7 @@ class LLMCharacterProfileGenerator:
         Returns:
             CharacterProfileResult containing the generated profile data.
         """
-        log = logger.bind(name=name, archetype=archetype)
+        log = logger.bind(character_name=name, archetype=archetype)
         log.info("Starting character profile generation")
 
         system_prompt = self._load_system_prompt()
@@ -431,7 +446,9 @@ Return valid JSON only with the exact structure specified."""
         )
 
         if response.status_code == 401:
-            raise RuntimeError("Gemini API authentication failed - check GEMINI_API_KEY")
+            raise RuntimeError(
+                "Gemini API authentication failed - check GEMINI_API_KEY"
+            )
         elif response.status_code == 429:
             raise RuntimeError("Gemini API rate limit exceeded")
         elif response.status_code != 200:
@@ -571,7 +588,11 @@ class CharacterProfileGenerator:
             force_mock: If True, always use mock generator regardless of env.
         """
         self._generator: CharacterProfileGeneratorPort
-        use_mock = force_mock or os.getenv("MOCK_LLM", "").lower() in ("true", "1", "yes")
+        use_mock = force_mock or os.getenv("MOCK_LLM", "").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
 
         if use_mock:
             self._generator = MockCharacterProfileGenerator()

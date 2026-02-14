@@ -14,17 +14,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.contexts.knowledge.application.ports.i_llm_client import (
+    LLMError,
     LLMRequest,
     LLMResponse,
-    LLMError,
 )
 from src.contexts.knowledge.infrastructure.adapters.claude_llm_client import (
-    ClaudeLLMClient,
+    CLAUDE_MODELS,
+    DEFAULT_MAX_TOKENS,
     DEFAULT_MODEL,
     DEFAULT_TEMPERATURE,
-    DEFAULT_MAX_TOKENS,
-    CLAUDE_MODELS,
+    ClaudeLLMClient,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -604,7 +606,9 @@ class TestGenerateStream:
             assert chunks == ["Response"]
 
     @pytest.mark.asyncio
-    async def test_generate_stream_401_error(self, claude_client: ClaudeLLMClient) -> None:
+    async def test_generate_stream_401_error(
+        self, claude_client: ClaudeLLMClient
+    ) -> None:
         """Test streaming with 401 authentication error."""
         request = LLMRequest(system_prompt="", user_prompt="Test")
 
@@ -634,7 +638,9 @@ class TestGenerateStream:
                     chunks.append(chunk)
 
     @pytest.mark.asyncio
-    async def test_generate_stream_network_error(self, claude_client: ClaudeLLMClient) -> None:
+    async def test_generate_stream_network_error(
+        self, claude_client: ClaudeLLMClient
+    ) -> None:
         """Test streaming with network error."""
         request = LLMRequest(system_prompt="", user_prompt="Test")
 
@@ -669,7 +675,7 @@ class TestGenerateStream:
 
         stream_events = [
             'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Valid"}}',
-            'data: {invalid json here',  # Malformed JSON - should be skipped
+            "data: {invalid json here",  # Malformed JSON - should be skipped
             'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" text"}}',
         ]
 
@@ -726,5 +732,6 @@ class TestClaudeLLMClientIntegration:
 
         # Verify generate method has correct signature
         import inspect
+
         sig = inspect.signature(claude_client.generate)
-        assert 'request' in sig.parameters
+        assert "request" in sig.parameters

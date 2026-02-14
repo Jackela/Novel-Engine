@@ -9,7 +9,7 @@ setup. The repository interface ensures we can swap to PostgreSQL later
 without changing domain or application code.
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 from src.contexts.world.domain.entities.lore_entry import LoreCategory, LoreEntry
 from src.contexts.world.domain.repositories.lore_entry_repository import (
@@ -223,6 +223,135 @@ class InMemoryLoreEntryRepository(ILoreEntryRepository):
             for entry_id in (matching_ids or set())
             if entry_id in self._entries
         ]
+        entries.sort(key=lambda e: e.updated_at, reverse=True)
+        return entries[:limit]
+
+    async def find_by_smart_tag(
+        self,
+        category: str,
+        tag: str,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[LoreEntry]:
+        """Find entries matching a smart tag category/value.
+
+        Why:
+            Supports metadata-driven filtering for AI-generated and manual tags
+            without requiring a backing database.
+
+        Args:
+            category: Smart tag category to match.
+            tag: Tag value to match (case-insensitive).
+            limit: Maximum results.
+            offset: Results to skip.
+
+        Returns:
+            List of matching LoreEntry instances.
+        """
+        category_normalized = category.strip().lower()
+        tag_normalized = tag.strip().lower()
+
+        entries: List[LoreEntry] = []
+        for entry in self._entries.values():
+            effective_tags = entry.get_effective_smart_tags()
+            for category_name, category_tags in effective_tags.items():
+                if category_name.lower() != category_normalized:
+                    continue
+                if tag_normalized in [t.lower() for t in category_tags]:
+                    entries.append(entry)
+                    break
+
+        entries.sort(key=lambda e: e.updated_at, reverse=True)
+        return entries[offset : offset + limit]
+
+    async def find_by_smart_tags(
+        self,
+        tags: Dict[str, List[str]],
+        match_all: bool = False,
+        limit: int = 100,
+    ) -> List[LoreEntry]:
+        """Find entries matching multiple smart tag filters.
+
+        Why:
+            Enables compound smart-tag queries for dashboard filtering without
+            requiring a persistent search index in development.
+
+        Args:
+            tags: Dictionary mapping categories to tag lists.
+            match_all: If True, entry must match ALL tags. If False, ANY tag.
+            limit: Maximum results.
+
+        Returns:
+            List of matching LoreEntry instances.
+        """
+        if not tags:
+            return []
+
+        normalized_tags = {
+            category.strip().lower(): [t.strip().lower() for t in values if t.strip()]
+            for category, values in tags.items()
+        }
+
+        entries: List[LoreEntry] = []
+        for entry in self._entries.values():
+            effective_tags = entry.get_effective_smart_tags()
+            effective_normalized = {
+                category.lower(): [t.lower() for t in values]
+                for category, values in effective_tags.items()
+            }
+
+            if match_all:
+                matches = True
+                for category, required_tags in normalized_tags.items():
+                    if not required_tags:
+                        continue
+                    available = effective_normalized.get(category, [])
+                    if any(tag not in available for tag in required_tags):
+                        matches = False
+                        break
+                if matches:
+                    entries.append(entry)
+            else:
+                matched_any = False
+                for category, required_tags in normalized_tags.items():
+                    available = effective_normalized.get(category, [])
+                    if any(tag in available for tag in required_tags):
+                        matched_any = True
+                        break
+                if matched_any:
+                    entries.append(entry)
+
+        entries.sort(key=lambda e: e.updated_at, reverse=True)
+        return entries[:limit]
+
+    async def find_by_metadata(
+        self,
+        metadata_key: str,
+        metadata_value: Any = None,
+        limit: int = 100,
+    ) -> List[LoreEntry]:
+        """Find entries by metadata key/value.
+
+        Why:
+            Allows lightweight querying over flexible metadata fields without
+            relying on external storage for local development.
+
+        Args:
+            metadata_key: Metadata key to match.
+            metadata_value: Optional value to match; None matches any value.
+            limit: Maximum results.
+
+        Returns:
+            List of matching LoreEntry instances.
+        """
+        key = metadata_key.strip()
+        entries: List[LoreEntry] = []
+        for entry in self._entries.values():
+            if key not in entry.metadata:
+                continue
+            if metadata_value is None or entry.metadata.get(key) == metadata_value:
+                entries.append(entry)
+
         entries.sort(key=lambda e: e.updated_at, reverse=True)
         return entries[:limit]
 

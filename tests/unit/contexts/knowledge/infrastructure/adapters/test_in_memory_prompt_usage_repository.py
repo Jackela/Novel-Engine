@@ -5,7 +5,7 @@ Warzone 4: AI Brain - BRAIN-022A
 Tests for the in-memory implementation of IPromptUsageRepository.
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -16,6 +16,8 @@ from src.contexts.knowledge.domain.models.prompt_usage import (
 from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_usage_repository import (
     InMemoryPromptUsageRepository,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestInMemoryPromptUsageRepository:
@@ -190,7 +192,8 @@ class TestInMemoryPromptUsageRepository:
                     prompt_name="Test",
                     prompt_version=1,
                     latency_ms=1000.0 + i * 100,
-                    timestamp=now - timedelta(seconds=(5 - i) * 10),  # Different timestamps
+                    timestamp=now
+                    - timedelta(seconds=(5 - i) * 10),  # Different timestamps
                 )
             )
 

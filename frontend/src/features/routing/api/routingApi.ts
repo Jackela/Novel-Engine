@@ -81,7 +81,9 @@ export const routingApi = {
    * Get routing configuration for a workspace (or global if not specified)
    */
   async getConfig(workspaceId?: string): Promise<RoutingConfigResponse> {
-    const params = workspaceId ? `?workspace_id=${encodeURIComponent(workspaceId)}` : '';
+    const params = workspaceId
+      ? `?workspace_id=${encodeURIComponent(workspaceId)}`
+      : '';
     const response = await fetch(`${API_BASE}/config${params}`);
     return handleResponse<RoutingConfigResponse>(response);
   },
@@ -109,7 +111,9 @@ export const routingApi = {
     workspaceId: string | undefined,
     updates: RoutingConfigUpdateRequest
   ): Promise<RoutingConfigResponse> {
-    const params = workspaceId ? `?workspace_id=${encodeURIComponent(workspaceId)}` : '';
+    const params = workspaceId
+      ? `?workspace_id=${encodeURIComponent(workspaceId)}`
+      : '';
     const response = await fetch(`${API_BASE}/config${params}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -134,11 +138,16 @@ export const routingApi = {
    * Delete routing configuration for a workspace
    */
   async deleteConfig(workspaceId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/config?workspace_id=${encodeURIComponent(workspaceId)}`, {
-      method: 'DELETE',
-    });
+    const response = await fetch(
+      `${API_BASE}/config?workspace_id=${encodeURIComponent(workspaceId)}`,
+      {
+        method: 'DELETE',
+      }
+    );
     if (!response.ok && response.status !== 204) {
-      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      const error = await response
+        .json()
+        .catch(() => ({ detail: response.statusText }));
       throw new Error(error.detail || 'Delete failed');
     }
   },
@@ -155,17 +164,24 @@ export const routingApi = {
    * Get circuit breaker state for a model
    */
   async getCircuitBreakerState(modelKey: string): Promise<Record<string, unknown>> {
-    const response = await fetch(`${API_BASE}/circuit-breaker/${encodeURIComponent(modelKey)}`);
+    const response = await fetch(
+      `${API_BASE}/circuit-breaker/${encodeURIComponent(modelKey)}`
+    );
     return handleResponse<Record<string, unknown>>(response);
   },
 
   /**
    * Reset circuit breaker for a model
    */
-  async resetCircuitBreaker(modelKey: string): Promise<{ status: string; model_key: string }> {
-    const response = await fetch(`${API_BASE}/circuit-breaker/${encodeURIComponent(modelKey)}/reset`, {
-      method: 'POST',
-    });
+  async resetCircuitBreaker(
+    modelKey: string
+  ): Promise<{ status: string; model_key: string }> {
+    const response = await fetch(
+      `${API_BASE}/circuit-breaker/${encodeURIComponent(modelKey)}/reset`,
+      {
+        method: 'POST',
+      }
+    );
     return handleResponse<{ status: string; model_key: string }>(response);
   },
 };

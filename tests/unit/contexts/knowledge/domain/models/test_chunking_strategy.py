@@ -14,15 +14,16 @@ Constitution Compliance:
 import pytest
 
 from src.contexts.knowledge.domain.models.chunking_strategy import (
-    ChunkStrategyType,
-    ChunkingStrategy,
-    ChunkingStrategies,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_OVERLAP,
     MAX_CHUNK_SIZE,
     MIN_CHUNK_SIZE,
+    ChunkingStrategies,
+    ChunkingStrategy,
+    ChunkStrategyType,
 )
 
+pytestmark = pytest.mark.unit
 
 class TestChunkingStrategy:
     """Unit tests for ChunkingStrategy value object."""

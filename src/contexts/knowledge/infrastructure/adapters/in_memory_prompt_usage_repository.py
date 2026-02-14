@@ -184,7 +184,9 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
             try:
                 return self._usages.get(usage_id)
             except Exception as e:
-                raise PromptUsageRepositoryError(f"Failed to get usage by id: {e}") from e
+                raise PromptUsageRepositoryError(
+                    f"Failed to get usage by id: {e}"
+                ) from e
 
     async def list_by_prompt(
         self,
@@ -226,7 +228,9 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
                 return usages[start:end]
 
             except Exception as e:
-                raise PromptUsageRepositoryError(f"Failed to list by prompt: {e}") from e
+                raise PromptUsageRepositoryError(
+                    f"Failed to list by prompt: {e}"
+                ) from e
 
     async def list_by_workspace(
         self,
@@ -268,7 +272,9 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
                 return usages[start:end]
 
             except Exception as e:
-                raise PromptUsageRepositoryError(f"Failed to list by workspace: {e}") from e
+                raise PromptUsageRepositoryError(
+                    f"Failed to list by workspace: {e}"
+                ) from e
 
     async def list_by_user(
         self,
@@ -341,10 +347,7 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
                 usages = list(self._usages.values())
 
                 # Filter by date range
-                usages = [
-                    u for u in usages
-                    if start_date <= u.timestamp <= end_date
-                ]
+                usages = [u for u in usages if start_date <= u.timestamp <= end_date]
 
                 # Filter by workspace
                 if workspace_id is not None:
@@ -359,7 +362,9 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
                 return usages[start:end]
 
             except Exception as e:
-                raise PromptUsageRepositoryError(f"Failed to list by date range: {e}") from e
+                raise PromptUsageRepositoryError(
+                    f"Failed to list by date range: {e}"
+                ) from e
 
     async def delete_old_usages(
         self, cutoff_date: datetime, workspace_id: Optional[str] = None
@@ -394,7 +399,9 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
                 return len(to_delete)
 
             except Exception as e:
-                raise PromptUsageRepositoryError(f"Failed to delete old usages: {e}") from e
+                raise PromptUsageRepositoryError(
+                    f"Failed to delete old usages: {e}"
+                ) from e
 
     async def count(
         self,
@@ -422,7 +429,8 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
                     return sum(
                         1
                         for uid in usage_ids
-                        if uid in self._usages and self._usages[uid].workspace_id == workspace_id
+                        if uid in self._usages
+                        and self._usages[uid].workspace_id == workspace_id
                     )
                 elif prompt_id is not None:
                     # Filter by prompt only
@@ -510,7 +518,9 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
         if usage.workspace_id is not None:
             if usage.workspace_id in self._workspace_index:
                 self._workspace_index[usage.workspace_id] = [
-                    uid for uid in self._workspace_index[usage.workspace_id] if uid != usage.id
+                    uid
+                    for uid in self._workspace_index[usage.workspace_id]
+                    if uid != usage.id
                 ]
 
         # Remove from user index

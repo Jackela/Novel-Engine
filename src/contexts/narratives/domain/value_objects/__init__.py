@@ -16,13 +16,13 @@ Key Value Objects:
 from .causal_node import CausalNode, CausalRelationType, CausalStrength
 from .narrative_context import NarrativeContext
 from .narrative_id import NarrativeId
-from .narrative_theme import NarrativeTheme, ThemeIntensity, ThemeType
 from .narrative_models import (
     NarrativeGuidance,
     PacingAdjustment,
     StoryArcPhase,
     StoryArcState,
 )
+from .narrative_theme import NarrativeTheme, ThemeIntensity, ThemeType
 from .plot_point import PlotPoint, PlotPointImportance, PlotPointType
 from .story_pacing import PacingIntensity, PacingType, StoryPacing
 

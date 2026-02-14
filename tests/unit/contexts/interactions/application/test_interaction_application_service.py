@@ -24,7 +24,9 @@ from src.contexts.interactions.domain.aggregates.negotiation_session import (
 from src.contexts.interactions.domain.repositories.negotiation_session_repository import (
     NegotiationSessionRepository,
 )
-from src.contexts.interactions.domain.services.negotiation_service import NegotiationService
+from src.contexts.interactions.domain.services.negotiation_service import (
+    NegotiationService,
+)
 from src.contexts.interactions.domain.value_objects.interaction_id import InteractionId
 from src.contexts.interactions.domain.value_objects.negotiation_party import (
     NegotiationParty,
@@ -38,6 +40,8 @@ from src.contexts.interactions.domain.value_objects.proposal_response import (
     ProposalResponse,
 )
 from src.contexts.interactions.domain.value_objects.proposal_terms import ProposalTerms
+
+pytestmark = pytest.mark.unit
 
 
 class TestInteractionApplicationServiceInitialization:

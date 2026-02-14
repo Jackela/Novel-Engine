@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.contexts.world.application.ports.world_generator_port import (
     WorldGenerationInput,
     WorldGenerationResult,
@@ -237,7 +239,9 @@ class TestWorldGenerationInput:
     @pytest.mark.unit
     def test_invalid_technology_level_raises(self) -> None:
         """Test that invalid technology level raises ValueError."""
-        with pytest.raises(ValueError, match="technology_level must be between 0 and 10"):
+        with pytest.raises(
+            ValueError, match="technology_level must be between 0 and 10"
+        ):
             WorldGenerationInput(technology_level=-1)
 
     @pytest.mark.unit
@@ -481,7 +485,9 @@ class TestLLMWorldGeneratorIntegration:
     """Integration-style tests with mocked API."""
 
     @pytest.mark.unit
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     def test_generate_success(
         self,
         mock_post: MagicMock,
@@ -510,7 +516,9 @@ class TestLLMWorldGeneratorIntegration:
         assert len(result.events) == 2
 
     @pytest.mark.unit
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     def test_generate_api_error_returns_error_result(
         self,
         mock_post: MagicMock,
@@ -613,7 +621,11 @@ def current_beats_fixture() -> list:
     """Sample current beats for testing."""
     return [
         {"beat_type": "action", "content": "She drew her sword.", "mood_shift": 0},
-        {"beat_type": "dialogue", "content": "'Stay back!' she warned.", "mood_shift": -1},
+        {
+            "beat_type": "dialogue",
+            "content": "'Stay back!' she warned.",
+            "mood_shift": -1,
+        },
     ]
 
 
@@ -740,8 +752,16 @@ class TestBeatSuggestionParsing:
         """Test that mood_shift values are clamped to valid range."""
         response = {
             "suggestions": [
-                {"beat_type": "action", "content": "Extreme positive", "mood_shift": 10},
-                {"beat_type": "reaction", "content": "Extreme negative", "mood_shift": -10},
+                {
+                    "beat_type": "action",
+                    "content": "Extreme positive",
+                    "mood_shift": 10,
+                },
+                {
+                    "beat_type": "reaction",
+                    "content": "Extreme negative",
+                    "mood_shift": -10,
+                },
             ]
         }
         json_content = json.dumps(response)
@@ -852,7 +872,9 @@ class TestBeatSuggestionIntegration:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     async def test_suggest_next_beats_success(
         self,
         mock_post: MagicMock,
@@ -865,7 +887,11 @@ class TestBeatSuggestionIntegration:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "candidates": [
-                {"content": {"parts": [{"text": json.dumps(sample_beat_suggestion_response)}]}}
+                {
+                    "content": {
+                        "parts": [{"text": json.dumps(sample_beat_suggestion_response)}]
+                    }
+                }
             ]
         }
         mock_post.return_value = mock_response
@@ -884,7 +910,9 @@ class TestBeatSuggestionIntegration:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     async def test_suggest_next_beats_api_error(
         self,
         mock_post: MagicMock,
@@ -995,6 +1023,8 @@ def scene_text_fixture() -> str:
 "Me," Sarah said angrily. "You're late."
 
 "I know," John said sadly. "I'm sorry."""
+
+
 class TestCritiqueCategoryScore:
     """Tests for CritiqueCategoryScore dataclass."""
 
@@ -1120,14 +1150,18 @@ class TestCritiqueParsing:
         assert not result.is_error()
 
         # Check pacing category
-        pacing = next((c for c in result.category_scores if c.category == "pacing"), None)
+        pacing = next(
+            (c for c in result.category_scores if c.category == "pacing"), None
+        )
         assert pacing is not None
         assert pacing.score == 8
         assert len(pacing.issues) == 1
         assert len(pacing.suggestions) == 2
 
         # Check showing category
-        showing = next((c for c in result.category_scores if c.category == "showing"), None)
+        showing = next(
+            (c for c in result.category_scores if c.category == "showing"), None
+        )
         assert showing is not None
         assert showing.score == 5
         assert "he felt angry" in str(showing.issues)
@@ -1147,13 +1181,23 @@ class TestCritiqueParsing:
     ) -> None:
         """Test that overall_score is clamped to valid range (1-10)."""
         # Test too high
-        response = {"overall_score": 15, "category_scores": [], "highlights": [], "summary": ""}
+        response = {
+            "overall_score": 15,
+            "category_scores": [],
+            "highlights": [],
+            "summary": "",
+        }
         json_content = json.dumps(response)
         result = generator._parse_critique_response(json_content)
         assert result.overall_score == 10
 
         # Test too low
-        response = {"overall_score": -5, "category_scores": [], "highlights": [], "summary": ""}
+        response = {
+            "overall_score": -5,
+            "category_scores": [],
+            "highlights": [],
+            "summary": "",
+        }
         json_content = json.dumps(response)
         result = generator._parse_critique_response(json_content)
         assert result.overall_score == 1
@@ -1175,7 +1219,9 @@ class TestCritiqueParsing:
         json_content = json.dumps(response)
         result = generator._parse_critique_response(json_content)
 
-        pacing = next((c for c in result.category_scores if c.category == "pacing"), None)
+        pacing = next(
+            (c for c in result.category_scores if c.category == "pacing"), None
+        )
         voice = next((c for c in result.category_scores if c.category == "voice"), None)
 
         assert pacing is not None
@@ -1192,7 +1238,12 @@ class TestCritiqueParsing:
             "overall_score": 5,
             "category_scores": [
                 {"category": "pacing", "score": 7, "issues": [], "suggestions": []},
-                {"category": "invalid_category", "score": 5, "issues": [], "suggestions": []},
+                {
+                    "category": "invalid_category",
+                    "score": 5,
+                    "issues": [],
+                    "suggestions": [],
+                },
                 {"category": "voice", "score": 6, "issues": [], "suggestions": []},
             ],
             "highlights": [],
@@ -1233,9 +1284,7 @@ class TestCritiqueParsing:
         assert result.summary == "Test summary"
 
     @pytest.mark.unit
-    def test_parse_critique_ensures_lists(
-        self, generator: LLMWorldGenerator
-    ) -> None:
+    def test_parse_critique_ensures_lists(self, generator: LLMWorldGenerator) -> None:
         """Test that issues and suggestions are always lists."""
         response = {
             "overall_score": 5,
@@ -1321,7 +1370,9 @@ class TestCritiqueIntegration:
     """Integration-style tests for scene critique with mocked API."""
 
     @pytest.mark.unit
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     def test_critique_scene_success(
         self,
         mock_post: MagicMock,
@@ -1334,7 +1385,11 @@ class TestCritiqueIntegration:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "candidates": [
-                {"content": {"parts": [{"text": json.dumps(sample_scene_critique_response)}]}}
+                {
+                    "content": {
+                        "parts": [{"text": json.dumps(sample_scene_critique_response)}]
+                    }
+                }
             ]
         }
         mock_post.return_value = mock_response
@@ -1350,7 +1405,9 @@ class TestCritiqueIntegration:
         assert len(result.highlights) == 3
 
     @pytest.mark.unit
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     def test_critique_scene_api_error(
         self,
         mock_post: MagicMock,
@@ -1429,7 +1486,9 @@ class TestRAGIntegration:
         assert "stranger" in keywords
 
     @pytest.mark.unit
-    def test_extract_keywords_for_dialogue_minimal(self, generator: LLMWorldGenerator) -> None:
+    def test_extract_keywords_for_dialogue_minimal(
+        self, generator: LLMWorldGenerator
+    ) -> None:
         """Test keyword extraction with minimal character data."""
         from src.contexts.world.infrastructure.generators.llm_world_generator import (
             CharacterData,
@@ -1466,7 +1525,9 @@ class TestRAGIntegration:
         assert "action" in keywords
 
     @pytest.mark.unit
-    def test_extract_keywords_for_beats_empty(self, generator: LLMWorldGenerator) -> None:
+    def test_extract_keywords_for_beats_empty(
+        self, generator: LLMWorldGenerator
+    ) -> None:
         """Test keyword extraction with no existing beats."""
         keywords = generator._extract_keywords_for_beats(
             current_beats=[],
@@ -1478,7 +1539,9 @@ class TestRAGIntegration:
         assert "scene" in keywords
 
     @pytest.mark.unit
-    def test_extract_keywords_for_beats_positive_mood(self, generator: LLMWorldGenerator) -> None:
+    def test_extract_keywords_for_beats_positive_mood(
+        self, generator: LLMWorldGenerator
+    ) -> None:
         """Test keyword extraction with positive mood target."""
         keywords = generator._extract_keywords_for_beats(
             current_beats=[],
@@ -1489,7 +1552,9 @@ class TestRAGIntegration:
         assert "uplifting" in keywords or "positive" in keywords
 
     @pytest.mark.unit
-    async def test_enrich_with_rag_no_service(self, generator: LLMWorldGenerator) -> None:
+    async def test_enrich_with_rag_no_service(
+        self, generator: LLMWorldGenerator
+    ) -> None:
         """Test enrichment when no RAG service is available."""
         base_prompt = "Generate dialogue for Alice."
 
@@ -1503,7 +1568,9 @@ class TestRAGIntegration:
         assert tokens == 0
 
     @pytest.mark.unit
-    async def test_enrich_with_rag_service_error(self, generator: LLMWorldGenerator) -> None:
+    async def test_enrich_with_rag_service_error(
+        self, generator: LLMWorldGenerator
+    ) -> None:
         """Test enrichment when RAG service raises an error."""
         from unittest.mock import AsyncMock, MagicMock
 
@@ -1530,7 +1597,9 @@ class TestRAGIntegration:
 
         rag_mock = MagicMock()
         enriched_result = MagicMock()
-        enriched_result.prompt = "Relevant Context:\n[Alice is brave]\n\n---\n\nGenerate dialogue for Alice."
+        enriched_result.prompt = (
+            "Relevant Context:\n[Alice is brave]\n\n---\n\nGenerate dialogue for Alice."
+        )
         enriched_result.chunks_retrieved = 2
         enriched_result.tokens_added = 50
 
@@ -1640,11 +1709,14 @@ Generate dialogue for Alice."""
     async def test_enrich_with_rag_logs_chunks_and_tokens(self) -> None:
         """Test that RAG enrichment logs chunks retrieved and tokens added."""
         from unittest.mock import AsyncMock, MagicMock
+
         import structlog
 
         rag_mock = MagicMock()
         enriched_result = MagicMock()
-        enriched_result.prompt = "Relevant Context:\n[Context here]\n\n---\n\nOriginal prompt"
+        enriched_result.prompt = (
+            "Relevant Context:\n[Context here]\n\n---\n\nOriginal prompt"
+        )
         enriched_result.chunks_retrieved = 3
         enriched_result.tokens_added = 150
 
@@ -1673,6 +1745,7 @@ Generate dialogue for Alice."""
     async def test_generate_dialogue_use_rag_toggle(self) -> None:
         """Test that use_rag parameter controls RAG enrichment."""
         from unittest.mock import AsyncMock, MagicMock, patch
+
         from src.contexts.world.infrastructure.generators.llm_world_generator import (
             CharacterData,
         )
@@ -1689,7 +1762,11 @@ Generate dialogue for Alice."""
         gen._api_key = "test-key"
 
         # Mock the Gemini API call
-        with patch.object(gen, "_call_gemini", return_value='{"dialogue": "Test response", "tone": "neutral"}'):
+        with patch.object(
+            gen,
+            "_call_gemini",
+            return_value='{"dialogue": "Test response", "tone": "neutral"}',
+        ):
             character = CharacterData(name="Alice", traits=["brave"])
 
             # Test with use_rag=True (default)
@@ -1730,7 +1807,11 @@ Generate dialogue for Alice."""
         gen._api_key = "test-key"
 
         # Mock the Gemini API call
-        with patch.object(gen, "_call_gemini", return_value='{"suggestions": [{"beat_type": "action", "content": "Test"}]}'):
+        with patch.object(
+            gen,
+            "_call_gemini",
+            return_value='{"suggestions": [{"beat_type": "action", "content": "Test"}]}',
+        ):
             # Test with use_rag=True (default)
             await gen.suggest_next_beats(
                 current_beats=[],
@@ -1787,6 +1868,7 @@ Generate dialogue for Alice."""
         'Relevant Context:' section, not the user prompt.
         """
         from unittest.mock import AsyncMock, MagicMock, patch
+
         from src.contexts.world.infrastructure.generators.llm_world_generator import (
             CharacterData,
         )
@@ -1839,10 +1921,12 @@ Original system prompt"""
         BRAIN-007C: Log number of chunks retrieved and tokens added.
         """
         from unittest.mock import AsyncMock, MagicMock, patch
+
+        import structlog
+
         from src.contexts.world.infrastructure.generators.llm_world_generator import (
             CharacterData,
         )
-        import structlog
 
         # Create a mock RAG service
         rag_mock = MagicMock()
@@ -1856,7 +1940,9 @@ Original system prompt"""
         gen = LLMWorldGenerator(rag_service=rag_mock)
         gen._api_key = "test-key"
 
-        with patch.object(gen, "_call_gemini", return_value='{"dialogue": "Test", "tone": "neutral"}'):
+        with patch.object(
+            gen, "_call_gemini", return_value='{"dialogue": "Test", "tone": "neutral"}'
+        ):
             with structlog.testing.capture_logs() as logs:
                 character = CharacterData(name="Alice", traits=["brave"])
 
@@ -1867,8 +1953,9 @@ Original system prompt"""
                 )
 
                 # Verify info-level log with chunks_retrieved and tokens_added
-                rag_logs = [log for log in logs if log.get("event") == "rag_context_injected"]
+                rag_logs = [
+                    log for log in logs if log.get("event") == "rag_context_injected"
+                ]
                 assert len(rag_logs) > 0
                 assert rag_logs[0].get("chunks_retrieved") == 3
                 assert rag_logs[0].get("tokens_added") == 120
-

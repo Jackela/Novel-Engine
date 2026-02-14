@@ -9,16 +9,17 @@ Constitution Compliance:
 - Article VII (Observability): OpenTelemetry tracing instrumentation
 """
 
-from typing import List
 from datetime import datetime, timezone
+from typing import List
 
 from opentelemetry import trace
 
 from src.core.types.shared_types import CharacterId
+
 from ...application.ports.i_context_assembler import IContextAssembler
 from ...application.use_cases.retrieve_agent_context import RetrieveAgentContextUseCase
-from ...domain.models.agent_identity import AgentIdentity
 from ...domain.models.agent_context import AgentContext
+from ...domain.models.agent_identity import AgentIdentity
 from ...domain.models.knowledge_entry import KnowledgeEntry
 
 # Get tracer for knowledge context operations
@@ -151,4 +152,3 @@ class SubjectiveBriefPhaseAdapter(IContextAssembler):
                 span.set_attribute("error.message", str(e))
                 span.record_exception(e)
                 raise
-

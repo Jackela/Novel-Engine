@@ -5,7 +5,12 @@
  * Provides React Query hooks for smart tags with optimistic updates
  */
 
-import { useQuery, useMutation, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { smartTagsApi, type SmartTagsResponse } from './smartTagsApi';
 
@@ -23,7 +28,9 @@ export const smartTagsQueryKeys = {
 /**
  * Fetch smart tags for a lore entry
  */
-export function useLoreSmartTags(entryId: string): UseQueryResult<SmartTagsResponse, Error> {
+export function useLoreSmartTags(
+  entryId: string
+): UseQueryResult<SmartTagsResponse, Error> {
   return useQuery({
     queryKey: smartTagsQueryKeys.lore(entryId),
     queryFn: () => smartTagsApi.getLoreSmartTags(entryId),

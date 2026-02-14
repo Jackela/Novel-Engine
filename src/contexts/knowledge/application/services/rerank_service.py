@@ -13,21 +13,20 @@ Warzone 4: AI Brain - BRAIN-010A, BRAIN-010B
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
 from typing import Any
 
 import structlog
 
 from ...application.ports.i_reranker import (
     IReranker,
+    RerankDocument,
     RerankerError,
     RerankOutput,
-    RerankResult as PortRerankResult,
-    RerankDocument,
 )
+from ...application.ports.i_reranker import RerankResult as PortRerankResult
 from ..services.knowledge_ingestion_service import RetrievedChunk
-
 
 logger = structlog.get_logger()
 
@@ -195,9 +194,6 @@ class RerankService:
             )
             for i, chunk in enumerate(chunks)
         ]
-
-        # Calculate average original score for improvement tracking
-        avg_original_score = sum(d.score for d in input_documents) / len(input_documents) if input_documents else 0.0
 
         # Attempt reranking
         start_time = time.perf_counter()
@@ -401,7 +397,9 @@ class MockReranker:
         await asyncio.sleep(self._latency_ms / 1000.0)
 
         # Calculate average original score
-        avg_original_score = sum(d.score for d in documents) / len(documents) if documents else 0.0
+        avg_original_score = (
+            sum(d.score for d in documents) / len(documents) if documents else 0.0
+        )
 
         # Score each document based on keyword matches in content
         query_lower = query.lower()
@@ -432,7 +430,11 @@ class MockReranker:
             scored_results = scored_results[:top_k]
 
         # Calculate score improvement
-        avg_new_score = sum(r.relevance_score for r in scored_results) / len(scored_results) if scored_results else 0.0
+        avg_new_score = (
+            sum(r.relevance_score for r in scored_results) / len(scored_results)
+            if scored_results
+            else 0.0
+        )
         score_improvement = max(0.0, avg_new_score - avg_original_score)
 
         return RerankOutput(

@@ -27,4 +27,5 @@ except ImportError:
 def repository_available() -> bool:
     return SQLAlchemyCharacterRepository is not None
 
+
 __all__ = ["SQLAlchemyCharacterRepository", "repository_available"]

@@ -1,11 +1,14 @@
 import { test, expect } from './fixtures';
 import { checkA11y } from './utils/a11y';
+import { safeGoto } from './utils/navigation';
 
 test.describe('Weaver Workflow', () => {
   test('@weaver-smoke can add, drag, and connect nodes', async ({ page }) => {
-    await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+    await safeGoto(page, '/weaver');
 
-    await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible({
+      timeout: 30_000,
+    });
     await checkA11y(page);
     const canvas = page.locator('[data-testid="weaver-canvas"]');
     await expect(canvas).toBeAttached();

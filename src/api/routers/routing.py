@@ -29,8 +29,8 @@ from src.contexts.knowledge.application.ports.i_routing_config_repository import
     RoutingConfigNotFoundError,
     RoutingConfigRepositoryError,
 )
-from src.contexts.knowledge.application.services.model_router import ModelRouter
 from src.contexts.knowledge.application.services.model_registry import ModelRegistry
+from src.contexts.knowledge.application.services.model_router import ModelRouter
 from src.contexts.knowledge.domain.models.routing_config import (
     CircuitBreakerRule,
     LLMProvider,
@@ -112,7 +112,9 @@ def _parse_task_rule(schema: TaskRoutingRuleSchema) -> TaskRoutingRule:
     )
 
 
-def _parse_constraints(schema: Optional[RoutingConstraintsSchema]) -> Optional[RoutingConstraints]:
+def _parse_constraints(
+    schema: Optional[RoutingConstraintsSchema],
+) -> Optional[RoutingConstraints]:
     """Parse API schema to domain RoutingConstraints."""
     if schema is None:
         return None
@@ -157,8 +159,12 @@ def _domain_to_response(config: WorkspaceRoutingConfig) -> RoutingConfigResponse
             RoutingConstraintsSchema(
                 max_cost_per_1m_tokens=config.constraints.max_cost_per_1m_tokens,
                 max_latency_ms=config.constraints.max_latency_ms,
-                preferred_providers=[p.value for p in config.constraints.preferred_providers],
-                blocked_providers=[p.value for p in config.constraints.blocked_providers],
+                preferred_providers=[
+                    p.value for p in config.constraints.preferred_providers
+                ],
+                blocked_providers=[
+                    p.value for p in config.constraints.blocked_providers
+                ],
                 require_capabilities=list(config.constraints.require_capabilities),
             )
             if config.constraints
@@ -345,7 +351,9 @@ async def update_routing_config(
 
         circuit_breaker_rules = None
         if payload.circuit_breaker_rules is not None:
-            circuit_breaker_rules = tuple(_parse_circuit_breaker_rule(r) for r in payload.circuit_breaker_rules)
+            circuit_breaker_rules = tuple(
+                _parse_circuit_breaker_rule(r) for r in payload.circuit_breaker_rules
+            )
 
         # Create updated config
         updated = existing.create_updated(
@@ -415,7 +423,10 @@ async def delete_routing_config(
     try:
         deleted = await repository.delete_config(workspace_id)
         if not deleted:
-            raise HTTPException(status_code=404, detail=f"Configuration for workspace '{workspace_id}' not found")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Configuration for workspace '{workspace_id}' not found",
+            )
 
         return Response(status_code=204)
 
@@ -426,7 +437,9 @@ async def delete_routing_config(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/routing/circuit-breaker/{model_key}/reset", response_model=dict[str, str])
+@router.post(
+    "/routing/circuit-breaker/{model_key}/reset", response_model=dict[str, str]
+)
 async def reset_circuit_breaker(
     model_key: str,
     router: ModelRouter = Depends(get_model_router),
@@ -447,7 +460,9 @@ async def reset_circuit_breaker(
     try:
         success = router.reset_circuit_breaker(model_key)
         if not success:
-            raise HTTPException(status_code=404, detail=f"Circuit breaker for '{model_key}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Circuit breaker for '{model_key}' not found"
+            )
 
         return {"status": "reset", "model_key": model_key}
 
@@ -479,7 +494,9 @@ async def get_circuit_breaker_state(
     try:
         state = router.get_circuit_breaker_state(model_key)
         if state is None:
-            raise HTTPException(status_code=404, detail=f"Circuit breaker for '{model_key}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Circuit breaker for '{model_key}' not found"
+            )
 
         return state
 

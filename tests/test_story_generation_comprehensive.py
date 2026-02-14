@@ -23,8 +23,9 @@ import tempfile
 
 import pytest
 
+pytestmark = [pytest.mark.integration]
+
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
-pytestmark = [pytest.mark.story, pytest.mark.narrative, pytest.mark.integration]
 if not FULL_INTEGRATION:
     pytestmark.append(
         pytest.mark.skip(
@@ -863,16 +864,14 @@ class TestPerformanceAndScalability:
         # Create large log with many turns
         large_log_parts = []
         for turn in range(1, 11):  # 10 turns
-            large_log_parts.append(
-                f"""
+            large_log_parts.append(f"""
             Turn {turn} - 2024-01-01 {12 + turn // 6}:{turn % 60:02d}:00
             [Agent Registration] pilot registered
             [Agent Registration] scientist registered
             [Action] pilot: Action in turn {turn}
             [Action] scientist: Research in turn {turn}
             [Turn End] Turn {turn} completed
-            """
-            )
+            """)
 
         large_log = "\n".join(large_log_parts)
 

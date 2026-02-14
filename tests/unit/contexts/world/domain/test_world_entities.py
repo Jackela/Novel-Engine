@@ -17,6 +17,9 @@ from uuid import uuid4
 import pytest
 
 # Mock problematic dependencies
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 
 
@@ -56,18 +59,17 @@ class MockEventBusModule:
 
 sys.modules["src.events.event_bus"] = MockEventBusModule()
 
-# Now import the actual modules we're testing
-from src.contexts.world.domain.entities.world_setting import (  # noqa: E402
-    Era,
-    Genre,
-    ToneType,
-    WorldSetting,
-)
 from src.contexts.world.domain.entities.faction import (  # noqa: E402
     Faction,
     FactionAlignment,
     FactionRelation,
     FactionType,
+)
+from src.contexts.world.domain.entities.history_event import (  # noqa: E402
+    EventOutcome,
+    EventSignificance,
+    EventType,
+    HistoryEvent,
 )
 from src.contexts.world.domain.entities.location import (  # noqa: E402
     ClimateType,
@@ -75,11 +77,13 @@ from src.contexts.world.domain.entities.location import (  # noqa: E402
     LocationStatus,
     LocationType,
 )
-from src.contexts.world.domain.entities.history_event import (  # noqa: E402
-    EventOutcome,
-    EventSignificance,
-    EventType,
-    HistoryEvent,
+
+# Now import the actual modules we're testing
+from src.contexts.world.domain.entities.world_setting import (  # noqa: E402
+    Era,
+    Genre,
+    ToneType,
+    WorldSetting,
 )
 
 

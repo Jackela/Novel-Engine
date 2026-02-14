@@ -11,6 +11,8 @@ import pytest
 
 from src.contexts.narrative.domain.entities.chapter import Chapter, ChapterStatus
 
+pytestmark = pytest.mark.unit
+
 
 class TestChapterCreation:
     """Test suite for Chapter instantiation and basic functionality."""

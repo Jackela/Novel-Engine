@@ -2,6 +2,8 @@ import pytest
 from api_server import app
 from fastapi.testclient import TestClient
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture(scope="module")
 def client():

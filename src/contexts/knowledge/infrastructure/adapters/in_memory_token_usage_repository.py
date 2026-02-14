@@ -17,8 +17,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from decimal import Decimal
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import structlog
 
@@ -125,7 +124,9 @@ class InMemoryTokenUsageRepository(ITokenUsageRepository):
                 )
 
         except Exception as e:
-            logger.error("token_usage_batch_save_failed", count=len(usages), error=str(e))
+            logger.error(
+                "token_usage_batch_save_failed", count=len(usages), error=str(e)
+            )
             raise RepositoryError(f"Failed to save token usage batch: {e}") from e
 
     async def get_by_id(self, usage_id: str) -> TokenUsage | None:

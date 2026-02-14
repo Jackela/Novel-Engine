@@ -8,8 +8,9 @@ Warzone 4: AI Brain - BRAIN-010B
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.contexts.knowledge.application.ports.i_reranker import (
     RerankDocument,
@@ -17,15 +18,18 @@ from src.contexts.knowledge.application.ports.i_reranker import (
     RerankOutput,
 )
 from src.contexts.knowledge.infrastructure.adapters.reranker_adapters import (
+    DEFAULT_COHERE_MODEL,
+    DEFAULT_LOCAL_MODEL,
     CohereReranker,
     LocalReranker,
     NoOpReranker,
-    DEFAULT_COHERE_MODEL,
-    DEFAULT_LOCAL_MODEL,
 )
 
-
 # ===== NoOpReranker Tests =====
+
+
+pytestmark = pytest.mark.unit
+
 
 class TestNoOpReranker:
     """Tests for NoOpReranker."""
@@ -100,6 +104,7 @@ class TestNoOpReranker:
 
 
 # ===== CohereReranker Tests =====
+
 
 class TestCohereReranker:
     """Tests for CohereReranker."""
@@ -228,8 +233,13 @@ class TestCohereReranker:
 
             # Mock _make_request to raise RerankerError with auth message
             async def mock_request(request_body):
-                from src.contexts.knowledge.application.ports.i_reranker import RerankerError
-                raise RerankerError("Cohere API authentication failed - check COHERE_API_KEY")
+                from src.contexts.knowledge.application.ports.i_reranker import (
+                    RerankerError,
+                )
+
+                raise RerankerError(
+                    "Cohere API authentication failed - check COHERE_API_KEY"
+                )
 
             with patch.object(reranker, "_make_request", new=mock_request):
                 with pytest.raises(RerankerError, match="authentication failed"):
@@ -245,7 +255,10 @@ class TestCohereReranker:
 
             # Mock _make_request to raise RerankerError with rate limit message
             async def mock_request(request_body):
-                from src.contexts.knowledge.application.ports.i_reranker import RerankerError
+                from src.contexts.knowledge.application.ports.i_reranker import (
+                    RerankerError,
+                )
+
                 raise RerankerError("Cohere API rate limit exceeded")
 
             with patch.object(reranker, "_make_request", new=mock_request):
@@ -276,7 +289,12 @@ class TestCohereReranker:
         with patch.dict("os.environ", {"COHERE_API_KEY": "test-key"}):
             reranker = CohereReranker()
 
-            request_body = {"query": "test", "documents": ["doc1"], "top_n": 5, "model": reranker._model}
+            request_body = {
+                "query": "test",
+                "documents": ["doc1"],
+                "top_n": 5,
+                "model": reranker._model,
+            }
 
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -295,6 +313,7 @@ class TestCohereReranker:
 
 
 # ===== LocalReranker Tests =====
+
 
 class TestLocalReranker:
     """Tests for LocalReranker."""
@@ -318,7 +337,10 @@ class TestLocalReranker:
 
     def test_init_with_env_vars(self):
         """Test that LocalReranker reads from environment."""
-        with patch.dict("os.environ", {"LOCAL_RERANK_MODEL": "env-model", "LOCAL_RERANK_DEVICE": "cuda"}):
+        with patch.dict(
+            "os.environ",
+            {"LOCAL_RERANK_MODEL": "env-model", "LOCAL_RERANK_DEVICE": "cuda"},
+        ):
             reranker = LocalReranker()
             assert reranker._model_name == "env-model"
             assert reranker._device == "cuda"
@@ -331,11 +353,14 @@ class TestLocalReranker:
         with patch.dict("sys.modules", {"sentence_transformers": None}):
             # Force import to fail by removing the module from cache
             import sys
+
             sys.modules.pop("sentence_transformers", None)
 
             documents = [RerankDocument(index=0, content="test", score=0.5)]
 
-            with pytest.raises(RerankerError, match="sentence-transformers package is required"):
+            with pytest.raises(
+                RerankerError, match="sentence-transformers package is required"
+            ):
                 await reranker.rerank("test", documents)
 
     @pytest.mark.asyncio
@@ -380,12 +405,16 @@ class TestLocalReranker:
 
 # ===== Reranker Creation Factory Tests =====
 
+
 class TestCreateReranker:
     """Tests for the create_reranker factory function."""
 
     def test_create_local_reranker(self):
         """Test creating a local reranker via factory."""
-        from src.contexts.knowledge.application.services.rerank_service import create_reranker, RerankerType
+        from src.contexts.knowledge.application.services.rerank_service import (
+            RerankerType,
+            create_reranker,
+        )
 
         reranker = create_reranker(RerankerType.LOCAL)
         assert reranker is not None
@@ -393,7 +422,10 @@ class TestCreateReranker:
 
     def test_create_noop_reranker(self):
         """Test creating a no-op reranker via factory."""
-        from src.contexts.knowledge.application.services.rerank_service import create_reranker, RerankerType
+        from src.contexts.knowledge.application.services.rerank_service import (
+            RerankerType,
+            create_reranker,
+        )
 
         reranker = create_reranker(RerankerType.NOOP)
         assert reranker is not None
@@ -401,7 +433,10 @@ class TestCreateReranker:
 
     def test_create_mock_reranker(self):
         """Test creating a mock reranker via factory."""
-        from src.contexts.knowledge.application.services.rerank_service import create_reranker, RerankerType
+        from src.contexts.knowledge.application.services.rerank_service import (
+            RerankerType,
+            create_reranker,
+        )
 
         reranker = create_reranker(RerankerType.MOCK, latency_ms=100.0)
         assert reranker is not None
@@ -409,7 +444,10 @@ class TestCreateReranker:
 
     def test_create_cohere_reranker(self):
         """Test creating a Cohere reranker via factory."""
-        from src.contexts.knowledge.application.services.rerank_service import create_reranker, RerankerType
+        from src.contexts.knowledge.application.services.rerank_service import (
+            RerankerType,
+            create_reranker,
+        )
 
         with patch.dict("os.environ", {"COHERE_API_KEY": "test-key"}):
             reranker = create_reranker(RerankerType.COHERE)
@@ -418,14 +456,18 @@ class TestCreateReranker:
 
     def test_create_invalid_type(self):
         """Test that factory raises ValueError for invalid type."""
-        from src.contexts.knowledge.application.services.rerank_service import create_reranker
+        from src.contexts.knowledge.application.services.rerank_service import (
+            create_reranker,
+        )
 
         with pytest.raises(ValueError, match="Invalid reranker type"):
             create_reranker("invalid_type")
 
     def test_reranker_type_all_types(self):
         """Test that all_types returns expected types."""
-        from src.contexts.knowledge.application.services.rerank_service import RerankerType
+        from src.contexts.knowledge.application.services.rerank_service import (
+            RerankerType,
+        )
 
         types = RerankerType.all_types()
         assert RerankerType.COHERE in types
@@ -435,7 +477,9 @@ class TestCreateReranker:
 
     def test_reranker_type_is_valid(self):
         """Test that is_valid correctly identifies valid types."""
-        from src.contexts.knowledge.application.services.rerank_service import RerankerType
+        from src.contexts.knowledge.application.services.rerank_service import (
+            RerankerType,
+        )
 
         assert RerankerType.is_valid(RerankerType.COHERE) is True
         assert RerankerType.is_valid(RerankerType.LOCAL) is True

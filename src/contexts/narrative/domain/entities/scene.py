@@ -483,8 +483,7 @@ class Scene:
             tag_normalized = tag.strip().lower()
             if tag_normalized in [t.lower() for t in manual_tags[category]]:
                 manual_tags[category] = [
-                    t for t in manual_tags[category]
-                    if t.lower() != tag_normalized
+                    t for t in manual_tags[category] if t.lower() != tag_normalized
                 ]
                 self.metadata["manual_smart_tags"] = manual_tags
                 self._touch()

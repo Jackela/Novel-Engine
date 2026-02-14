@@ -326,7 +326,7 @@ def test_requirements_compliance():
 
         print("✅ Checking required OpenTelemetry packages:")
 
-        from importlib.metadata import version, PackageNotFoundError
+        from importlib.metadata import PackageNotFoundError, version
 
         for package in required_packages:
             try:

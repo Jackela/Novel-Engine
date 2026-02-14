@@ -15,15 +15,17 @@ Constitution Compliance:
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, List, Optional
+from typing import TYPE_CHECKING, Any, AsyncIterator, List, Optional
 
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
 from src.api.schemas import (
@@ -35,9 +37,20 @@ from src.api.schemas import (
     KnowledgeBaseStatusResponse,
     RAGConfigRequest,
     RAGConfigResponse,
+    RAGContextResponse,
+    RetrievedChunkResponse,
     StartIngestionJobRequest,
     StartIngestionJobResponse,
 )
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    IngestionResult,
+    KnowledgeIngestionService,
+)
+
+if TYPE_CHECKING:
+    from src.contexts.knowledge.application.services.context_window_manager import (
+        ContextWindowManager,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -266,9 +279,7 @@ class InMemoryBrainSettingsRepository:
             "gemini": _decrypt_api_key(self._api_keys.get("gemini", ""), fernet),
         }
 
-    async def set_api_key(
-        self, provider: str, key: str, fernet: Fernet | None
-    ) -> None:
+    async def set_api_key(self, provider: str, key: str, fernet: Fernet | None) -> None:
         """
         Set an API key (encrypted).
 
@@ -348,7 +359,9 @@ def _require_encryption(fernet: Fernet | None) -> None:
 
 @router.get("/brain/settings", response_model=BrainSettingsResponse)
 async def get_brain_settings(
-    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+    repository: InMemoryBrainSettingsRepository = Depends(
+        get_brain_settings_repository
+    ),
     fernet: Fernet | None = Depends(get_fernet),
 ) -> BrainSettingsResponse:
     """
@@ -392,7 +405,9 @@ async def get_brain_settings(
 
 @router.get("/brain/settings/api-keys", response_model=APIKeysResponse)
 async def get_api_keys(
-    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+    repository: InMemoryBrainSettingsRepository = Depends(
+        get_brain_settings_repository
+    ),
     fernet: Fernet | None = Depends(get_fernet),
 ) -> APIKeysResponse:
     """
@@ -425,7 +440,9 @@ async def get_api_keys(
 
 @router.get("/brain/settings/rag-config", response_model=RAGConfigResponse)
 async def get_rag_config(
-    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+    repository: InMemoryBrainSettingsRepository = Depends(
+        get_brain_settings_repository
+    ),
 ) -> RAGConfigResponse:
     """
     Get RAG configuration.
@@ -445,9 +462,13 @@ async def get_rag_config(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/brain/settings/knowledge-base", response_model=KnowledgeBaseStatusResponse)
+@router.get(
+    "/brain/settings/knowledge-base", response_model=KnowledgeBaseStatusResponse
+)
 async def get_knowledge_base_status(
-    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+    repository: InMemoryBrainSettingsRepository = Depends(
+        get_brain_settings_repository
+    ),
 ) -> KnowledgeBaseStatusResponse:
     """
     Get knowledge base status.
@@ -473,7 +494,9 @@ async def get_knowledge_base_status(
 @router.put("/brain/settings/api-keys", response_model=APIKeysResponse)
 async def update_api_keys(
     payload: APIKeysRequest,
-    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+    repository: InMemoryBrainSettingsRepository = Depends(
+        get_brain_settings_repository
+    ),
     fernet: Fernet | None = Depends(get_fernet),
 ) -> APIKeysResponse:
     """
@@ -493,7 +516,11 @@ async def update_api_keys(
         500: If update fails
     """
     # OPT-014: Require encryption for storing API keys
-    if payload.openai_key is not None or payload.anthropic_key is not None or payload.gemini_key is not None:
+    if (
+        payload.openai_key is not None
+        or payload.anthropic_key is not None
+        or payload.gemini_key is not None
+    ):
         _require_encryption(fernet)
 
     try:
@@ -528,7 +555,9 @@ async def update_api_keys(
 @router.put("/brain/settings/rag-config", response_model=RAGConfigResponse)
 async def update_rag_config(
     payload: RAGConfigRequest,
-    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+    repository: InMemoryBrainSettingsRepository = Depends(
+        get_brain_settings_repository
+    ),
 ) -> RAGConfigResponse:
     """
     Update RAG configuration.
@@ -555,7 +584,9 @@ async def update_rag_config(
 
 @router.post("/brain/settings/test-connection", response_model=dict[str, str])
 async def test_connection(
-    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+    repository: InMemoryBrainSettingsRepository = Depends(
+        get_brain_settings_repository
+    ),
     fernet: Fernet | None = Depends(get_fernet),
 ) -> dict[str, str]:
     """
@@ -573,9 +604,15 @@ async def test_connection(
         results = {}
         # For now, just check if keys are present
         # In production, make actual API calls to verify
-        results["openai"] = "configured" if api_keys_dict["openai"] else "not_configured"
-        results["anthropic"] = "configured" if api_keys_dict["anthropic"] else "not_configured"
-        results["gemini"] = "configured" if api_keys_dict["gemini"] else "not_configured"
+        results["openai"] = (
+            "configured" if api_keys_dict["openai"] else "not_configured"
+        )
+        results["anthropic"] = (
+            "configured" if api_keys_dict["anthropic"] else "not_configured"
+        )
+        results["gemini"] = (
+            "configured" if api_keys_dict["gemini"] else "not_configured"
+        )
 
         return results
 
@@ -634,9 +671,17 @@ class InMemoryTokenUsageRepository:
         filtered = self._usages
 
         if start_time:
-            filtered = [u for u in filtered if datetime.fromisoformat(u["timestamp"]) >= start_time]
+            filtered = [
+                u
+                for u in filtered
+                if datetime.fromisoformat(u["timestamp"]) >= start_time
+            ]
         if end_time:
-            filtered = [u for u in filtered if datetime.fromisoformat(u["timestamp"]) <= end_time]
+            filtered = [
+                u
+                for u in filtered
+                if datetime.fromisoformat(u["timestamp"]) <= end_time
+            ]
         if provider:
             filtered = [u for u in filtered if u["provider"] == provider]
 
@@ -719,8 +764,12 @@ class InMemoryTokenUsageRepository:
                         "cost": 0.0,
                         "requests": 0,
                     }
-                daily_stats[date_str]["providers"][provider]["tokens"] += usage["total_tokens"]
-                daily_stats[date_str]["providers"][provider]["cost"] += float(usage.get("total_cost", 0))
+                daily_stats[date_str]["providers"][provider]["tokens"] += usage[
+                    "total_tokens"
+                ]
+                daily_stats[date_str]["providers"][provider]["cost"] += float(
+                    usage.get("total_cost", 0)
+                )
                 daily_stats[date_str]["providers"][provider]["requests"] += 1
 
         return list(daily_stats.values())
@@ -730,7 +779,9 @@ class InMemoryTokenUsageRepository:
         model_stats: dict[str, dict] = {}
 
         for usage in self._usages:
-            model = usage.get("model_identifier", f"{usage['provider']}:{usage['model_name']}")
+            model = usage.get(
+                "model_identifier", f"{usage['provider']}:{usage['model_name']}"
+            )
             if model not in model_stats:
                 model_stats[model] = {
                     "provider": usage["provider"],
@@ -761,7 +812,10 @@ def _seed_mock_data(repository: InMemoryTokenUsageRepository) -> None:
 
     pricing = {
         "openai": {"gpt-4o": (5.0, 15.0), "gpt-4o-mini": (0.15, 0.6)},
-        "anthropic": {"claude-3-5-sonnet-20241022": (3.0, 15.0), "claude-3-5-haiku-20241022": (0.8, 4.0)},
+        "anthropic": {
+            "claude-3-5-sonnet-20241022": (3.0, 15.0),
+            "claude-3-5-haiku-20241022": (0.8, 4.0),
+        },
         "gemini": {"gemini-2.0-flash": (0.075, 0.3), "gemini-2.5-pro": (1.25, 10.0)},
     }
 
@@ -798,9 +852,15 @@ def _seed_mock_data(repository: InMemoryTokenUsageRepository) -> None:
                     "input_tokens": input_tokens,
                     "output_tokens": output_tokens,
                     "total_tokens": total_tokens,
-                    "input_cost": str(Decimal(str(input_cost)).quantize(Decimal("0.000001"))),
-                    "output_cost": str(Decimal(str(output_cost)).quantize(Decimal("0.000001"))),
-                    "total_cost": str(Decimal(str(total_cost)).quantize(Decimal("0.000001"))),
+                    "input_cost": str(
+                        Decimal(str(input_cost)).quantize(Decimal("0.000001"))
+                    ),
+                    "output_cost": str(
+                        Decimal(str(output_cost)).quantize(Decimal("0.000001"))
+                    ),
+                    "total_cost": str(
+                        Decimal(str(total_cost)).quantize(Decimal("0.000001"))
+                    ),
                     "latency_ms": 500 + (_ * 50) % 2000,
                     "success": True,
                     "workspace_id": None,
@@ -974,9 +1034,6 @@ async def get_model_pricing(
 # ==================== CSV Export (BRAIN-035B-03) ====================
 
 
-from fastapi.responses import Response
-
-
 @router.get("/brain/usage/export")
 async def export_usage_csv(
     days: int = Query(30, ge=1, le=365, description="Number of days to export"),
@@ -1008,35 +1065,39 @@ async def export_usage_csv(
         writer = csv.writer(output)
 
         # Write header
-        writer.writerow([
-            "Timestamp",
-            "Provider",
-            "Model",
-            "Input Tokens",
-            "Output Tokens",
-            "Total Tokens",
-            "Input Cost",
-            "Output Cost",
-            "Total Cost",
-            "Latency (ms)",
-            "Success"
-        ])
+        writer.writerow(
+            [
+                "Timestamp",
+                "Provider",
+                "Model",
+                "Input Tokens",
+                "Output Tokens",
+                "Total Tokens",
+                "Input Cost",
+                "Output Cost",
+                "Total Cost",
+                "Latency (ms)",
+                "Success",
+            ]
+        )
 
         # Write data rows
         for usage in usages:
-            writer.writerow([
-                usage["timestamp"],
-                usage["provider"],
-                usage["model_name"],
-                usage["input_tokens"],
-                usage["output_tokens"],
-                usage["total_tokens"],
-                usage.get("input_cost", "0"),
-                usage.get("output_cost", "0"),
-                usage.get("total_cost", "0"),
-                usage.get("latency_ms", 0),
-                usage.get("success", True),
-            ])
+            writer.writerow(
+                [
+                    usage["timestamp"],
+                    usage["provider"],
+                    usage["model_name"],
+                    usage["input_tokens"],
+                    usage["output_tokens"],
+                    usage["total_tokens"],
+                    usage.get("input_cost", "0"),
+                    usage.get("output_cost", "0"),
+                    usage.get("total_cost", "0"),
+                    usage.get("latency_ms", 0),
+                    usage.get("success", True),
+                ]
+            )
 
         # Create response with CSV file
         csv_content = output.getvalue()
@@ -1045,9 +1106,7 @@ async def export_usage_csv(
         return Response(
             content=csv_content,
             media_type="text/csv",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"'
-            }
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
     except Exception as e:
@@ -1056,12 +1115,6 @@ async def export_usage_csv(
 
 
 # ==================== Real-time Usage Streaming (BRAIN-035B-04) ====================
-
-
-import asyncio
-import json
-from datetime import UTC, datetime
-from typing import AsyncIterator
 
 
 class RealtimeUsageBroadcaster:
@@ -1103,13 +1156,15 @@ class RealtimeUsageBroadcaster:
                 "is_complete": False,
             }
             # Broadcast session start
-            await self._broadcast_to_all({
-                "type": "session_start",
-                "session_id": session_id,
-                "provider": provider,
-                "model_name": model_name,
-                "timestamp": datetime.now(UTC).isoformat(),
-            })
+            await self._broadcast_to_all(
+                {
+                    "type": "session_start",
+                    "session_id": session_id,
+                    "provider": provider,
+                    "model_name": model_name,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+            )
 
     async def update_session(
         self,
@@ -1130,15 +1185,17 @@ class RealtimeUsageBroadcaster:
             session["cost"] = cost
 
             # Broadcast update
-            await self._broadcast_to_all({
-                "type": "token_update",
-                "session_id": session_id,
-                "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-                "total_tokens": input_tokens + output_tokens,
-                "cost": cost,
-                "timestamp": datetime.now(UTC).isoformat(),
-            })
+            await self._broadcast_to_all(
+                {
+                    "type": "token_update",
+                    "session_id": session_id,
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "total_tokens": input_tokens + output_tokens,
+                    "cost": cost,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+            )
 
     async def complete_session(self, session_id: str) -> None:
         """Mark a session as complete."""
@@ -1150,12 +1207,14 @@ class RealtimeUsageBroadcaster:
             session = self._active_sessions[session_id]
 
             # Broadcast completion
-            await self._broadcast_to_all({
-                "type": "session_complete",
-                "session_id": session_id,
-                **session,
-                "timestamp": datetime.now(UTC).isoformat(),
-            })
+            await self._broadcast_to_all(
+                {
+                    "type": "session_complete",
+                    "session_id": session_id,
+                    **session,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+            )
 
             # Remove session after a delay
             asyncio.create_task(self._cleanup_session(session_id))
@@ -1183,12 +1242,14 @@ class RealtimeUsageBroadcaster:
 
             # Send current state
             for session_id, session in self._active_sessions.items():
-                await queue.put({
-                    "type": "session_state",
-                    "session_id": session_id,
-                    **session,
-                    "timestamp": datetime.now(UTC).isoformat(),
-                })
+                await queue.put(
+                    {
+                        "type": "session_state",
+                        "session_id": session_id,
+                        **session,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
 
         try:
             while True:
@@ -1232,6 +1293,7 @@ async def stream_realtime_usage(
         };
         ```
     """
+
     async def _sse_generator() -> AsyncIterator[str]:
         """Generate SSE events for real-time usage."""
         try:
@@ -1239,9 +1301,13 @@ async def stream_realtime_usage(
                 yield f"data: {json.dumps(event)}\n\n"
         except asyncio.CancelledError:
             logger.debug("SSE stream cancelled")
-        except Exception as e:
-            logger.error(f"SSE stream error: {e}")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        except Exception:
+            logger.exception("SSE stream error")
+            yield (
+                "data: "
+                + json.dumps({"type": "error", "message": "Internal server error"})
+                + "\n\n"
+            )
 
     return StreamingResponse(
         _sse_generator(),
@@ -1255,24 +1321,6 @@ async def stream_realtime_usage(
 
 
 # ==================== Async Ingestion Job API (OPT-005) ====================
-
-
-import asyncio
-import uuid
-from datetime import UTC, datetime
-from enum import Enum
-
-from fastapi import BackgroundTasks, HTTPException
-from src.api.schemas import (
-    IngestionJobStatus,
-    IngestionJobResponse,
-    StartIngestionJobRequest,
-    StartIngestionJobResponse,
-)
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
-    IngestionResult,
-    KnowledgeIngestionService,
-)
 
 
 class IngestionJob:
@@ -1373,7 +1421,9 @@ class IngestionJobStore:
         async with self._lock:
             self._jobs[job_id] = job
 
-        logger.info(f"ingestion_job_created: job_id={job_id}, source_id={source_id}, source_type={source_type}")
+        logger.info(
+            f"ingestion_job_created: job_id={job_id}, source_id={source_id}, source_type={source_type}"
+        )
 
         return job
 
@@ -1401,7 +1451,11 @@ class IngestionJobStore:
                 job.status = status
                 if status == IngestionJobStatus.RUNNING and job.started_at is None:
                     job.started_at = datetime.now(UTC)
-                elif status in (IngestionJobStatus.COMPLETED, IngestionJobStatus.FAILED, IngestionJobStatus.CANCELLED):
+                elif status in (
+                    IngestionJobStatus.COMPLETED,
+                    IngestionJobStatus.FAILED,
+                    IngestionJobStatus.CANCELLED,
+                ):
                     if job.completed_at is None:
                         job.completed_at = datetime.now(UTC)
 
@@ -1525,7 +1579,9 @@ async def _run_ingestion_job(
             entries_created=result.entries_created,
         )
 
-        logger.info(f"ingestion_job_completed: job_id={job_id}, source_id={job.source_id}, chunk_count={result.chunk_count}")
+        logger.info(
+            f"ingestion_job_completed: job_id={job_id}, source_id={job.source_id}, chunk_count={result.chunk_count}"
+        )
 
     except Exception as e:
         # Update to failed
@@ -1536,7 +1592,9 @@ async def _run_ingestion_job(
             error=error_msg,
         )
 
-        logger.error(f"ingestion_job_failed: job_id={job_id}, source_id={job.source_id}, error={error_msg}")
+        logger.error(
+            f"ingestion_job_failed: job_id={job_id}, source_id={job.source_id}, error={error_msg}"
+        )
 
 
 @router.post(
@@ -1665,14 +1723,16 @@ async def list_ingestion_jobs(
         return []
 
 
-__all__ = ["router", "RealtimeUsageBroadcaster", "get_usage_broadcaster", "IngestionJobStore", "get_ingestion_job_store"]
+__all__ = [
+    "router",
+    "RealtimeUsageBroadcaster",
+    "get_usage_broadcaster",
+    "IngestionJobStore",
+    "get_ingestion_job_store",
+]
 
 
 # ==================== RAG Context Retrieval (BRAIN-036-02) ====================
-
-
-from fastapi.responses import StreamingResponse
-from src.api.schemas import RAGContextResponse, RetrievedChunkResponse
 
 
 @router.get("/brain/context", response_model=RAGContextResponse)
@@ -1681,8 +1741,12 @@ async def get_rag_context(
     query: str = Query(..., description="Query to retrieve context for"),
     scene_id: str | None = Query(None, description="Scene ID to get context for"),
     max_chunks: int = Query(5, ge=1, le=20, description="Maximum chunks to retrieve"),
-    used_threshold: float = Query(0.7, ge=0, le=1, description="Score threshold to mark chunk as used"),
-    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
+    used_threshold: float = Query(
+        0.7, ge=0, le=1, description="Score threshold to mark chunk as used"
+    ),
+    repository: InMemoryBrainSettingsRepository = Depends(
+        get_brain_settings_repository
+    ),
 ) -> RAGContextResponse:
     """
     Get RAG context for a query or scene.
@@ -1731,7 +1795,9 @@ async def get_rag_context(
         # Get or create singleton instances from app state
         embedding_service = getattr(request.app.state, "embedding_service", None)
         if embedding_service is None:
-            embedding_service = EmbeddingServiceAdapter(use_mock=True)  # Use mock for now
+            embedding_service = EmbeddingServiceAdapter(
+                use_mock=True
+            )  # Use mock for now
             request.app.state.embedding_service = embedding_service
 
         vector_store = getattr(request.app.state, "vector_store", None)
@@ -1780,9 +1846,7 @@ async def get_rag_context(
 
         # Extract source references
         sources = retrieval_service.get_sources(result.chunks)
-        source_refs = [
-            f"{s['source_type']}:{s['source_id']}" for s in sources
-        ]
+        source_refs = [f"{s['source_type']}:{s['source_id']}" for s in sources]
 
         return RAGContextResponse(
             query=query,
@@ -1807,18 +1871,14 @@ async def get_rag_context(
 # ==================== Chat Endpoint (BRAIN-037A-01) ====================
 
 
-import json
-import asyncio
-from typing import AsyncIterator
-
-
 class ChatMessage(BaseModel):
     """A single chat message."""
+
     role: str  # "user" or "assistant"
     content: str
 
 
-def get_context_window_manager(request: Request) -> "ContextWindowManager":
+def get_context_window_manager(request: Request) -> ContextWindowManager:
     """
     Get or create the context window manager from app state.
 
@@ -1848,11 +1908,14 @@ def get_context_window_manager(request: Request) -> "ContextWindowManager":
 
 class ChatRequest(BaseModel):
     """Request for chat completion."""
+
     query: str  # User's question/prompt
     chat_history: list[ChatMessage] | None = None  # Optional conversation history
     scene_id: str | None = None  # Optional scene ID for context
     max_chunks: int = 5  # Maximum chunks to retrieve for RAG
-    session_id: str | None = None  # BRAIN-037A-03: Optional session ID for conversation tracking
+    session_id: str | None = (
+        None  # BRAIN-037A-03: Optional session ID for conversation tracking
+    )
 
 
 # BRAIN-037A-03: In-memory session storage for chat history
@@ -1883,6 +1946,7 @@ _chat_session_store = ChatSessionStore()
 
 class ChatChunk(BaseModel):
     """A single chunk of streaming response."""
+
     delta: str  # Text content added
     done: bool = False  # Whether this is the final chunk
 
@@ -1891,8 +1955,10 @@ class ChatChunk(BaseModel):
 async def chat_completion(
     request: Request,
     payload: ChatRequest,
-    repository: InMemoryBrainSettingsRepository = Depends(get_brain_settings_repository),
-    context_manager: "ContextWindowManager" = Depends(get_context_window_manager),
+    repository: InMemoryBrainSettingsRepository = Depends(
+        get_brain_settings_repository
+    ),
+    context_manager: ContextWindowManager = Depends(get_context_window_manager),
 ) -> StreamingResponse:
     """
     Chat completion with RAG context.
@@ -1906,6 +1972,7 @@ async def chat_completion(
     Returns:
         StreamingResponse with SSE-formatted chat chunks
     """
+
     async def _stream_chat() -> AsyncIterator[str]:
         """Stream chat response with RAG context."""
         try:
@@ -1928,7 +1995,9 @@ async def chat_completion(
             rag_query = payload.query
             if chat_history and len(chat_history) > 0:
                 # Include last assistant response for context
-                last_assistant_msg = next((m for m in reversed(chat_history) if m.role == "assistant"), None)
+                last_assistant_msg = next(
+                    (m for m in reversed(chat_history) if m.role == "assistant"), None
+                )
                 if last_assistant_msg:
                     rag_query = f"{last_assistant_msg.content}\n\nUser: {payload.query}"
 
@@ -1946,7 +2015,9 @@ async def chat_completion(
                     )
 
                     # Get or create singleton instances
-                    embedding_service = getattr(request.app.state, "embedding_service", None)
+                    embedding_service = getattr(
+                        request.app.state, "embedding_service", None
+                    )
                     if embedding_service is None:
                         embedding_service = EmbeddingServiceAdapter(use_mock=True)
                         request.app.state.embedding_service = embedding_service
@@ -1970,7 +2041,9 @@ async def chat_completion(
                     rag_chunks = result.chunks
 
                 except Exception as e:
-                    logger.warning(f"RAG retrieval failed, continuing without context: {e}")
+                    logger.warning(
+                        f"RAG retrieval failed, continuing without context: {e}"
+                    )
 
             # OPT-009: Use ContextWindowManager to manage context and prevent overflow
             from src.contexts.knowledge.application.services.context_window_manager import (
@@ -1987,7 +2060,9 @@ async def chat_completion(
             if rag_chunks:
                 context_parts = []
                 for i, chunk in enumerate(rag_chunks, 1):
-                    context_parts.append(f"[Source {i}: {chunk.source_type}:{chunk.source_id}]")
+                    context_parts.append(
+                        f"[Source {i}: {chunk.source_type}:{chunk.source_id}]"
+                    )
                     context_parts.append(chunk.content)
                 rag_context_text = "\n".join(context_parts)
                 system_prompt += f"\n\nUse the following context to answer the user's question:\n\n{rag_context_text}"
@@ -2006,12 +2081,14 @@ async def chat_completion(
 
             # For now, return a mock streaming response
             # In a full implementation, this would call an LLM service
-            response_text = f"I received your question: \"{payload.query}\""
+            response_text = f'I received your question: "{payload.query}"'
 
             if rag_chunks:
                 response_text += f"\n\nI found {len(rag_chunks)} relevant chunks from the knowledge base."
             else:
-                response_text += "\n\nNo relevant context was found in the knowledge base."
+                response_text += (
+                    "\n\nNo relevant context was found in the knowledge base."
+                )
 
             # OPT-009: Indicate context management
             if chat_history:

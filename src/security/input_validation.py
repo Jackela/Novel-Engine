@@ -16,12 +16,12 @@ System保佑此验证系统 (May the System bless this validation system)
 
 import html
 import json
-import structlog
 import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Pattern
 
+import structlog
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 

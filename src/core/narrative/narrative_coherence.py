@@ -548,4 +548,3 @@ class NarrativeCoherenceEngine:
                 tid: len(thread["events"]) for tid, thread in self.plot_threads.items()
             },
         }
-

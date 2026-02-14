@@ -9,6 +9,10 @@ from __future__ import annotations
 
 import pytest
 
+from src.contexts.knowledge.application.ports.i_prompt_repository import (
+    PromptNotFoundError,
+    PromptValidationError,
+)
 from src.contexts.knowledge.domain.models.prompt_template import (
     ModelConfig,
     PromptTemplate,
@@ -18,10 +22,8 @@ from src.contexts.knowledge.domain.models.prompt_template import (
 from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_repository import (
     InMemoryPromptRepository,
 )
-from src.contexts.knowledge.application.ports.i_prompt_repository import (
-    PromptNotFoundError,
-    PromptValidationError,
-)
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -283,9 +285,7 @@ class TestInMemoryPromptRepositoryListAll:
         t2 = PromptTemplate.create(
             name="t2", content="C2", tags=["dialogue", "generation"]
         )
-        t3 = PromptTemplate.create(
-            name="t3", content="C3", tags=["world"]
-        )
+        t3 = PromptTemplate.create(name="t3", content="C3", tags=["world"])
 
         await repository.save(t1)
         await repository.save(t2)
@@ -398,11 +398,11 @@ class TestInMemoryPromptRepositoryGetByTag:
     """Tests for InMemoryPromptRepository.get_by_tag()."""
 
     @pytest.mark.asyncio
-    async def test_get_by_tag_found(
-        self, repository: InMemoryPromptRepository
-    ) -> None:
+    async def test_get_by_tag_found(self, repository: InMemoryPromptRepository) -> None:
         """Test retrieving templates by tag."""
-        t1 = PromptTemplate.create(name="t1", content="C1", tags=["world", "generation"])
+        t1 = PromptTemplate.create(
+            name="t1", content="C1", tags=["world", "generation"]
+        )
         t2 = PromptTemplate.create(name="t2", content="C2", tags=["dialogue"])
         t3 = PromptTemplate.create(name="t3", content="C3", tags=["world"])
 
@@ -426,12 +426,12 @@ class TestInMemoryPromptRepositoryGetByTag:
         assert results == []
 
     @pytest.mark.asyncio
-    async def test_get_by_tag_limit(
-        self, repository: InMemoryPromptRepository
-    ) -> None:
+    async def test_get_by_tag_limit(self, repository: InMemoryPromptRepository) -> None:
         """Test limit parameter for get_by_tag."""
         for i in range(5):
-            template = PromptTemplate.create(name=f"t{i}", content=f"C{i}", tags=["common"])
+            template = PromptTemplate.create(
+                name=f"t{i}", content=f"C{i}", tags=["common"]
+            )
             await repository.save(template)
 
         results = await repository.get_by_tag("common", limit=3)
@@ -484,9 +484,7 @@ class TestInMemoryPromptRepositorySearch:
     """Tests for InMemoryPromptRepository.search()."""
 
     @pytest.mark.asyncio
-    async def test_search_by_name(
-        self, repository: InMemoryPromptRepository
-    ) -> None:
+    async def test_search_by_name(self, repository: InMemoryPromptRepository) -> None:
         """Test searching by name."""
         t1 = PromptTemplate.create(
             name="character_generator", content="C1", description="Generate characters"
@@ -544,9 +542,7 @@ class TestInMemoryPromptRepositorySearch:
         assert len(results) == 1
 
     @pytest.mark.asyncio
-    async def test_search_limit(
-        self, repository: InMemoryPromptRepository
-    ) -> None:
+    async def test_search_limit(self, repository: InMemoryPromptRepository) -> None:
         """Test search limit parameter."""
         for i in range(5):
             template = PromptTemplate.create(name=f"prompt_{i}", content=f"C{i}")

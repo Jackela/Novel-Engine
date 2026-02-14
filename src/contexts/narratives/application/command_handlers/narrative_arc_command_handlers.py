@@ -34,7 +34,6 @@ from ...domain.value_objects.story_pacing import (
     PacingType,
     StoryPacing,
 )
-from ..ports.narrative_arc_repository_port import INarrativeArcRepository
 from ..commands.narrative_arc_commands import (
     ActivateContextCommand,
     AddCharacterToArcCommand,
@@ -56,6 +55,7 @@ from ..commands.narrative_arc_commands import (
     UpdateNarrativeArcCommand,
     UpdatePlotPointCommand,
 )
+from ..ports.narrative_arc_repository_port import INarrativeArcRepository
 
 logger = logging.getLogger(__name__)
 

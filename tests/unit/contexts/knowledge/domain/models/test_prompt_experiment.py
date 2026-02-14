@@ -21,6 +21,7 @@ from src.contexts.knowledge.domain.models.prompt_experiment import (
     PromptExperiment,
 )
 
+pytestmark = pytest.mark.unit
 
 class TestExperimentMetrics:
     """Tests for ExperimentMetrics value object."""

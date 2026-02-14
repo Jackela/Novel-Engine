@@ -20,6 +20,8 @@ from src.contexts.narrative.application.services.chapter_analysis_service import
 from src.contexts.narrative.domain.entities.beat import Beat, BeatType
 from src.contexts.narrative.domain.entities.scene import Scene, SceneStatus, StoryPhase
 
+pytestmark = pytest.mark.unit
+
 
 class TestPhaseDistribution:
     """Test suite for PhaseDistribution dataclass."""
@@ -190,7 +192,9 @@ class TestChapterAnalysisService:
         """Test analysis of a well-structured chapter."""
         scenes = [
             sample_scene("Opening", 0, StoryPhase.SETUP, tension=3, energy=4),
-            sample_scene("Inciting", 1, StoryPhase.INCITING_INCIDENT, tension=5, energy=6),
+            sample_scene(
+                "Inciting", 1, StoryPhase.INCITING_INCIDENT, tension=5, energy=6
+            ),
             sample_scene("Rise 1", 2, StoryPhase.RISING_ACTION, tension=6, energy=6),
             sample_scene("Rise 2", 3, StoryPhase.RISING_ACTION, tension=7, energy=7),
             sample_scene("Climax", 4, StoryPhase.CLIMAX, tension=9, energy=8),
@@ -295,9 +299,7 @@ class TestChapterAnalysisService:
 
         report = service.analyze_chapter_structure(uuid4(), scenes)
 
-        climax_warnings = [
-            w for w in report.warnings if w.title == "Missing Climax"
-        ]
+        climax_warnings = [w for w in report.warnings if w.title == "Missing Climax"]
         assert len(climax_warnings) == 1
         assert climax_warnings[0].severity == "high"
         assert climax_warnings[0].category == WarningCategory.STRUCTURE
@@ -355,9 +357,7 @@ class TestChapterAnalysisService:
 
         report = service.analyze_chapter_structure(uuid4(), scenes)
 
-        flat_warnings = [
-            w for w in report.warnings if w.title == "Flat Tension Arc"
-        ]
+        flat_warnings = [w for w in report.warnings if w.title == "Flat Tension Arc"]
         assert len(flat_warnings) == 1
         assert flat_warnings[0].category == WarningCategory.ARC
 
@@ -367,7 +367,9 @@ class TestChapterAnalysisService:
         """Test warning for scenes with fewer than 3 beats."""
         scenes = [
             sample_scene("S1", 0, StoryPhase.SETUP, beat_count=5),
-            sample_scene("S2", 1, StoryPhase.RISING_ACTION, beat_count=2),  # Underdeveloped
+            sample_scene(
+                "S2", 1, StoryPhase.RISING_ACTION, beat_count=2
+            ),  # Underdeveloped
             sample_scene("S3", 2, StoryPhase.CLIMAX, beat_count=1),  # Underdeveloped
         ]
 
@@ -522,7 +524,9 @@ class TestChapterAnalysisService:
             sample_scene("S2", 1, StoryPhase.RISING_ACTION, tension=4),
             sample_scene("S3", 2, StoryPhase.RISING_ACTION, tension=5),
             sample_scene("S4", 3, StoryPhase.RISING_ACTION, tension=6),
-            sample_scene("S5", 4, StoryPhase.CLIMAX, tension=9),  # Peak at 80% (5/5 scenes, position 4 >= 3)
+            sample_scene(
+                "S5", 4, StoryPhase.CLIMAX, tension=9
+            ),  # Peak at 80% (5/5 scenes, position 4 >= 3)
         ]
 
         report = service.analyze_chapter_structure(uuid4(), scenes)

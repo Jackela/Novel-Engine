@@ -179,4 +179,3 @@ class RetrieveAgentContextUseCase:
                 duration_seconds=duration_seconds,
             )
             raise
-

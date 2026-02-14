@@ -162,7 +162,9 @@ class InMemoryPromptRepository(IPromptRepository):
                 return matching[0]
 
             except Exception as e:
-                raise PromptRepositoryError(f"Failed to get template by name: {e}") from e
+                raise PromptRepositoryError(
+                    f"Failed to get template by name: {e}"
+                ) from e
 
     async def list_all(
         self,
@@ -187,18 +189,12 @@ class InMemoryPromptRepository(IPromptRepository):
         async with self._lock:
             try:
                 results = [
-                    t
-                    for t in self._templates.values()
-                    if t.id not in self._deleted_ids
+                    t for t in self._templates.values() if t.id not in self._deleted_ids
                 ]
 
                 # Filter by tags if specified
                 if tags:
-                    results = [
-                        t
-                        for t in results
-                        if all(tag in t.tags for tag in tags)
-                    ]
+                    results = [t for t in results if all(tag in t.tags for tag in tags)]
 
                 # Apply pagination
                 start = offset
@@ -223,7 +219,10 @@ class InMemoryPromptRepository(IPromptRepository):
         """
         async with self._lock:
             try:
-                if template_id in self._templates and template_id not in self._deleted_ids:
+                if (
+                    template_id in self._templates
+                    and template_id not in self._deleted_ids
+                ):
                     self._deleted_ids.add(template_id)
                     # Remove from name index
                     template = self._templates[template_id]
@@ -245,9 +244,7 @@ class InMemoryPromptRepository(IPromptRepository):
             except Exception as e:
                 raise PromptRepositoryError(f"Failed to delete template: {e}") from e
 
-    async def get_version_history(
-        self, template_id: str
-    ) -> list[PromptTemplate]:
+    async def get_version_history(self, template_id: str) -> list[PromptTemplate]:
         """
         Get all versions of a prompt template.
 
@@ -279,11 +276,11 @@ class InMemoryPromptRepository(IPromptRepository):
                 return versions
 
             except Exception as e:
-                raise PromptRepositoryError(f"Failed to get version history: {e}") from e
+                raise PromptRepositoryError(
+                    f"Failed to get version history: {e}"
+                ) from e
 
-    async def get_by_tag(
-        self, tag: str, limit: int = 50
-    ) -> list[PromptTemplate]:
+    async def get_by_tag(self, tag: str, limit: int = 50) -> list[PromptTemplate]:
         """
         List prompt templates by tag.
 
@@ -307,7 +304,9 @@ class InMemoryPromptRepository(IPromptRepository):
                 return results[:limit]
 
             except Exception as e:
-                raise PromptRepositoryError(f"Failed to get templates by tag: {e}") from e
+                raise PromptRepositoryError(
+                    f"Failed to get templates by tag: {e}"
+                ) from e
 
     async def count(self) -> int:
         """
@@ -327,9 +326,7 @@ class InMemoryPromptRepository(IPromptRepository):
             except Exception as e:
                 raise PromptRepositoryError(f"Failed to count templates: {e}") from e
 
-    async def search(
-        self, query: str, limit: int = 20
-    ) -> list[PromptTemplate]:
+    async def search(self, query: str, limit: int = 20) -> list[PromptTemplate]:
         """
         Search prompt templates by name or description.
 

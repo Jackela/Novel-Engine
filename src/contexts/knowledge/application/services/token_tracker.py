@@ -31,23 +31,18 @@ from collections.abc import Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Optional, TypeVar
+from typing import Any, Optional, TypeVar
 
 import structlog
 
 from ...application.ports.i_token_usage_repository import ITokenUsageRepository
-from ...domain.models.model_registry import LLMProvider, ModelDefinition
-from ...domain.models.token_usage import TokenUsage
-from ..services.model_registry import ModelRegistry
-from ..services.token_counter import TokenCounter
-
-if TYPE_CHECKING:
-    from ..ports.i_llm_client import LLMRequest
+from ...domain.models.model_registry import LLMProvider
+from ...domain.models.token_usage import TokenUsage, TokenUsageStats
 
 # Need LLMResponse at runtime for decorator isinstance checks
 from ..ports.i_llm_client import LLMResponse  # noqa: E402
-
+from ..services.model_registry import ModelRegistry
+from ..services.token_counter import TokenCounter
 
 logger = structlog.get_logger()
 
@@ -309,7 +304,22 @@ class TokenTracker:
 
     def _start_flush_task(self) -> None:
         """Start background task to periodically flush pending records."""
-        loop = asyncio.get_event_loop()
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError as exc:
+            logger.warning(
+                "token_tracker_flush_not_started",
+                reason="no_event_loop",
+                error=str(exc),
+            )
+            return
+
+        if loop.is_closed():
+            logger.warning(
+                "token_tracker_flush_not_started",
+                reason="event_loop_closed",
+            )
+            return
 
         async def flush_loop() -> None:
             while True:
@@ -362,7 +372,9 @@ class TokenTracker:
             try:
                 await self._repository.save(usage)
             except Exception as e:
-                logger.warning("token_tracker_record_failed", usage_id=usage.id, error=str(e))
+                logger.warning(
+                    "token_tracker_record_failed", usage_id=usage.id, error=str(e)
+                )
 
     async def shutdown(self) -> None:
         """
@@ -504,19 +516,31 @@ class TokenTracker:
 
                     if hasattr(result, "tokens_used") and result.tokens_used:
                         # LLMResponse has combined tokens
-                        input_tokens = getattr(result, "input_tokens", 0) or result.tokens_used // 2
-                        output_tokens = getattr(result, "output_tokens", 0) or result.tokens_used - input_tokens
+                        input_tokens = (
+                            getattr(result, "input_tokens", 0)
+                            or result.tokens_used // 2
+                        )
+                        output_tokens = (
+                            getattr(result, "output_tokens", 0)
+                            or result.tokens_used - input_tokens
+                        )
                     elif hasattr(result, "usage"):
                         usage = result.usage
                         if isinstance(usage, dict):
-                            input_tokens = usage.get("prompt_tokens", 0) or usage.get("input_tokens", 0)
-                            output_tokens = usage.get("completion_tokens", 0) or usage.get("output_tokens", 0)
+                            input_tokens = usage.get("prompt_tokens", 0) or usage.get(
+                                "input_tokens", 0
+                            )
+                            output_tokens = usage.get(
+                                "completion_tokens", 0
+                            ) or usage.get("output_tokens", 0)
 
                     # Get model pricing
                     cost_per_1m_input = 0.0
                     cost_per_1m_output = 0.0
                     if actual_model_ref:
-                        lookup_result = self._model_registry.resolve_model(actual_model_ref)
+                        lookup_result = self._model_registry.resolve_model(
+                            actual_model_ref
+                        )
                         model_def = lookup_result.model_definition
                         if model_def:
                             cost_per_1m_input = model_def.cost_per_1m_input_tokens
@@ -533,7 +557,11 @@ class TokenTracker:
                             model_name_str = lookup_result.model_name
                         else:
                             provider_str = "unknown"
-                            model_name_str = result_model if isinstance(result_model, str) else str(result_model)
+                            model_name_str = (
+                                result_model
+                                if isinstance(result_model, str)
+                                else str(result_model)
+                            )
 
                         usage = TokenUsage.create(
                             provider=provider_str,
@@ -559,11 +587,17 @@ class TokenTracker:
 
                     # Record failure
                     if actual_model_ref and self._config.track_individual_calls:
-                        lookup_result = self._model_registry.resolve_model(actual_model_ref)
+                        lookup_result = self._model_registry.resolve_model(
+                            actual_model_ref
+                        )
                         model_def = lookup_result.model_definition
 
-                        cost_per_1m_input = model_def.cost_per_1m_input_tokens if model_def else 0.0
-                        cost_per_1m_output = model_def.cost_per_1m_output_tokens if model_def else 0.0
+                        cost_per_1m_input = (
+                            model_def.cost_per_1m_input_tokens if model_def else 0.0
+                        )
+                        cost_per_1m_output = (
+                            model_def.cost_per_1m_output_tokens if model_def else 0.0
+                        )
 
                         usage = TokenUsage.create(
                             provider=lookup_result.provider.value,

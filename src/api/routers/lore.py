@@ -150,7 +150,9 @@ async def list_lore_entries(
         entries = await repo.find_by_tag(tag, limit=limit, offset=offset)
     elif category:
         parsed_category = _parse_category(category)
-        entries = await repo.find_by_category(parsed_category, limit=limit, offset=offset)
+        entries = await repo.find_by_category(
+            parsed_category, limit=limit, offset=offset
+        )
     else:
         entries = await repo.get_all(limit=limit, offset=offset)
 
@@ -379,7 +381,9 @@ async def update_lore_manual_smart_tags(
     )
 
 
-@router.delete("/{entry_id}/smart-tags/manual/{category}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{entry_id}/smart-tags/manual/{category}", status_code=status.HTTP_204_NO_CONTENT
+)
 async def delete_lore_manual_smart_tags(
     entry_id: str,
     category: str,

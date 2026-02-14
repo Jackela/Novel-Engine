@@ -21,8 +21,6 @@ from ...domain.models.prompt_experiment import PromptExperiment
 class ExperimentRepositoryError(Exception):
     """Base exception for experiment repository errors."""
 
-    pass
-
 
 class ExperimentNotFoundError(ExperimentRepositoryError):
     """Raised when an experiment is not found."""
@@ -72,7 +70,6 @@ class IExperimentRepository(ABC):
         Raises:
             ExperimentRepositoryError: If persistence operation fails
         """
-        pass
 
     @abstractmethod
     async def get_by_id(self, experiment_id: str) -> Optional[PromptExperiment]:
@@ -88,7 +85,6 @@ class IExperimentRepository(ABC):
         Raises:
             ExperimentRepositoryError: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
     async def list_all(
@@ -113,7 +109,6 @@ class IExperimentRepository(ABC):
         Raises:
             ExperimentRepositoryError: If listing operation fails
         """
-        pass
 
     @abstractmethod
     async def delete(self, experiment_id: str) -> bool:
@@ -129,7 +124,6 @@ class IExperimentRepository(ABC):
         Raises:
             ExperimentRepositoryError: If deletion fails
         """
-        pass
 
     @abstractmethod
     async def get_by_status(
@@ -148,12 +142,9 @@ class IExperimentRepository(ABC):
         Raises:
             ExperimentRepositoryError: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
-    async def get_active_for_prompt(
-        self, prompt_id: str
-    ) -> list[PromptExperiment]:
+    async def get_active_for_prompt(self, prompt_id: str) -> list[PromptExperiment]:
         """
         Get active experiments for a specific prompt.
 
@@ -166,7 +157,6 @@ class IExperimentRepository(ABC):
         Raises:
             ExperimentRepositoryError: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
     async def count(self) -> int:
@@ -179,7 +169,6 @@ class IExperimentRepository(ABC):
         Raises:
             ExperimentRepositoryError: If count operation fails
         """
-        pass
 
 
 __all__ = [

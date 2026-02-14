@@ -9,11 +9,12 @@
 
 import { test, expect } from './fixtures';
 import { activateGuestSession } from './utils/auth';
+import { safeGoto } from './utils/navigation';
 
 test.describe('Route Smoke Tests', () => {
   test.describe('@smoke Public Routes', () => {
     test('@smoke landing page (/) should load without 404', async ({ page }) => {
-      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/');
 
       // Should not contain 404 text
       const content = await page.textContent('body');
@@ -25,7 +26,7 @@ test.describe('Route Smoke Tests', () => {
     });
 
     test('@smoke login page (/login) should load without 404', async ({ page }) => {
-      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/login');
 
       const content = await page.textContent('body');
       expect(content).not.toContain('404');
@@ -33,7 +34,7 @@ test.describe('Route Smoke Tests', () => {
     });
 
     test('@smoke weaver page (/weaver) should load without 404', async ({ page }) => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
 
       const content = await page.textContent('body');
       expect(content).not.toContain('404');
@@ -50,7 +51,7 @@ test.describe('Route Smoke Tests', () => {
     });
 
     test('@smoke dashboard (/dashboard) should load without 404', async ({ page }) => {
-      await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/dashboard');
 
       const content = await page.textContent('body');
       expect(content).not.toContain('404');
@@ -61,7 +62,7 @@ test.describe('Route Smoke Tests', () => {
     });
 
     test('@smoke characters page (/characters) should load without 404', async ({ page }) => {
-      await page.goto('/characters', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/characters');
 
       const content = await page.textContent('body');
       expect(content).not.toContain('404');
@@ -69,7 +70,7 @@ test.describe('Route Smoke Tests', () => {
     });
 
     test('@smoke campaigns page (/campaigns) should load without 404', async ({ page }) => {
-      await page.goto('/campaigns', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/campaigns');
 
       const content = await page.textContent('body');
       expect(content).not.toContain('404');
@@ -77,7 +78,7 @@ test.describe('Route Smoke Tests', () => {
     });
 
     test('@smoke stories page (/stories) should load without 404', async ({ page }) => {
-      await page.goto('/stories', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/stories');
 
       const content = await page.textContent('body');
       expect(content).not.toContain('404');
@@ -90,7 +91,7 @@ test.describe('Route Smoke Tests', () => {
     test('@smoke story editor page (/stories/editor) should load without 404', async ({
       page,
     }) => {
-      await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/stories/editor');
 
       const content = await page.textContent('body');
       expect(content).not.toContain('404');
@@ -104,7 +105,7 @@ test.describe('Route Smoke Tests', () => {
     });
 
     test('@smoke sidebar navigation links should all be functional', async ({ page }) => {
-      await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/dashboard');
 
       // Wait for sidebar to be visible
       const sidebar = page.locator('[data-testid="sidebar-navigation"]');

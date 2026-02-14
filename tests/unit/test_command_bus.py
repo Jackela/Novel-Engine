@@ -2,6 +2,8 @@ import pytest
 from apps.api.infrastructure.command_bus import CommandBus, CommandHandler
 from pydantic import BaseModel
 
+pytestmark = pytest.mark.unit
+
 
 class MockCommand(BaseModel):
     data: str

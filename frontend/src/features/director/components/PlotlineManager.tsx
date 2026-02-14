@@ -40,6 +40,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { defaultPlotlineColor, plotlinePalette } from '@/styles/tokens';
 
 import {
   usePlotlines,
@@ -47,35 +48,26 @@ import {
   useUpdatePlotline,
   useDeletePlotline,
 } from '../api/plotlineApi';
-import type {
-  PlotlineResponse,
-  PlotlineStatus,
-} from '@/types/schemas';
+import type { PlotlineResponse, PlotlineStatus } from '@/types/schemas';
 
 /**
  * Predefined color palette for plotlines.
  * Why: Ensures visual consistency and accessibility. Colors are distinct
  * and work well in both light and dark themes.
  */
-const PLOTLINE_COLORS = [
-  { value: '#ef4444', label: 'Red', class: 'bg-red-500' },
-  { value: '#f97316', label: 'Orange', class: 'bg-orange-500' },
-  { value: '#eab308', label: 'Yellow', class: 'bg-yellow-500' },
-  { value: '#22c55e', label: 'Green', class: 'bg-green-500' },
-  { value: '#06b6d4', label: 'Cyan', class: 'bg-cyan-500' },
-  { value: '#3b82f6', label: 'Blue', class: 'bg-blue-500' },
-  { value: '#8b5cf6', label: 'Purple', class: 'bg-purple-500' },
-  { value: '#ec4899', label: 'Pink', class: 'bg-pink-500' },
-  { value: '#6b7280', label: 'Gray', class: 'bg-gray-500' },
-  { value: '#78716c', label: 'Stone', class: 'bg-stone-500' },
-];
+const PLOTLINE_COLORS = plotlinePalette;
 
 /**
  * Plotline status configuration.
  */
 const STATUS_CONFIG: Record<
   PlotlineStatus,
-  { label: string; icon: typeof FolderOpen; className: string; badgeVariant: 'default' | 'secondary' | 'outline' }
+  {
+    label: string;
+    icon: typeof FolderOpen;
+    className: string;
+    badgeVariant: 'default' | 'secondary' | 'outline';
+  }
 > = {
   active: {
     label: 'Active',
@@ -159,7 +151,7 @@ function PlotlineItem({
       className={cn(
         'group relative rounded-lg border bg-card p-4 transition-all',
         isAbandoned && 'opacity-50',
-        !isEditing && 'hover:bg-accent/50 cursor-pointer'
+        !isEditing && 'cursor-pointer hover:bg-accent/50'
       )}
       onClick={!isEditing ? onEdit : undefined}
       onKeyDown={!isEditing ? (e) => e.key === 'Enter' && onEdit() : undefined}
@@ -168,7 +160,7 @@ function PlotlineItem({
     >
       {/* Color indicator bar */}
       <div
-        className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full"
+        className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full"
         style={{ backgroundColor: plotline.color }}
       />
 
@@ -195,7 +187,7 @@ function PlotlineItem({
                       <SelectItem key={color.value} value={color.value}>
                         <span className="flex items-center gap-2">
                           <div
-                            className={cn('h-3 w-3 rounded-full', color.class)}
+                            className={cn('h-3 w-3 rounded-full', color.className)}
                             style={{ backgroundColor: color.value }}
                           />
                           {color.label}
@@ -206,7 +198,10 @@ function PlotlineItem({
                 </Select>
 
                 {/* Status picker */}
-                <Select value={editStatus} onValueChange={(v) => setEditStatus(v as PlotlineStatus)}>
+                <Select
+                  value={editStatus}
+                  onValueChange={(v) => setEditStatus(v as PlotlineStatus)}
+                >
                   <SelectTrigger className="h-8 w-32">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -222,8 +217,11 @@ function PlotlineItem({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-sm">{plotline.name}</h4>
-              <Badge variant={statusConfig.badgeVariant} className={cn('text-xs', statusConfig.className)}>
+              <h4 className="text-sm font-semibold">{plotline.name}</h4>
+              <Badge
+                variant={statusConfig.badgeVariant}
+                className={cn('text-xs', statusConfig.className)}
+              >
                 <StatusIcon className="mr-1 h-3 w-3" />
                 {statusConfig.label}
               </Badge>
@@ -249,8 +247,8 @@ function PlotlineItem({
                 <DialogHeader>
                   <DialogTitle>Delete Plotline</DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to delete this plotline? This will remove it from all scenes.
-                    This action cannot be undone.
+                    Are you sure you want to delete this plotline? This will remove it
+                    from all scenes. This action cannot be undone.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -325,7 +323,12 @@ function PlotlineItem({
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={onCancelEdit} disabled={isSaving}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onCancelEdit}
+                disabled={isSaving}
+              >
                 <X className="mr-1 h-3.5 w-3.5" />
                 Cancel
               </Button>
@@ -349,7 +352,9 @@ function PlotlineItem({
           </p>
           <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <Hash className="h-3 w-3" />
-            <span>{sceneCount} scene{sceneCount !== 1 ? 's' : ''}</span>
+            <span>
+              {sceneCount} scene{sceneCount !== 1 ? 's' : ''}
+            </span>
           </div>
         </div>
       )}
@@ -372,7 +377,11 @@ interface PlotlineManagerProps {
  * Why: Provides a centralized panel for managing all plotlines in the story.
  * Shows scene counts per plotline and enables quick CRUD operations.
  */
-export function PlotlineManager({ sceneId, onSelectPlotline, className }: PlotlineManagerProps) {
+export function PlotlineManager({
+  sceneId,
+  onSelectPlotline,
+  className,
+}: PlotlineManagerProps) {
   const { data: plotlines, isLoading: isLoadingPlotlines } = usePlotlines();
 
   const createMutation = useCreatePlotline();
@@ -383,7 +392,7 @@ export function PlotlineManager({ sceneId, onSelectPlotline, className }: Plotli
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newPlotline, setNewPlotline] = useState({
     name: '',
-    color: '#3b82f6', // Default blue
+    color: defaultPlotlineColor,
     description: '',
   });
 
@@ -407,7 +416,7 @@ export function PlotlineManager({ sceneId, onSelectPlotline, className }: Plotli
         status: 'active',
       });
       setIsCreateDialogOpen(false);
-      setNewPlotline({ name: '', color: '#3b82f6', description: '' });
+      setNewPlotline({ name: '', color: defaultPlotlineColor, description: '' });
     } catch (error) {
       console.error('Failed to create plotline:', error);
     }
@@ -518,22 +527,32 @@ export function PlotlineManager({ sceneId, onSelectPlotline, className }: Plotli
                 <Input
                   id="plotline-name"
                   value={newPlotline.name}
-                  onChange={(e) => setNewPlotline({ ...newPlotline, name: e.target.value })}
+                  onChange={(e) =>
+                    setNewPlotline({ ...newPlotline, name: e.target.value })
+                  }
                   placeholder="e.g., Main Plot, Romance Arc, Mystery..."
                   autoFocus
                 />
               </div>
               <div className="space-y-2">
                 <span className="text-sm font-medium">Color</span>
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Color selection">
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="group"
+                  aria-label="Color selection"
+                >
                   {PLOTLINE_COLORS.map((color) => (
                     <button
                       key={color.value}
                       type="button"
-                      onClick={() => setNewPlotline({ ...newPlotline, color: color.value })}
+                      onClick={() =>
+                        setNewPlotline({ ...newPlotline, color: color.value })
+                      }
                       className={cn(
                         'h-8 w-8 rounded-full border-2 transition-all',
-                        newPlotline.color === color.value ? 'border-foreground scale-110' : 'border-transparent'
+                        newPlotline.color === color.value
+                          ? 'scale-110 border-foreground'
+                          : 'border-transparent'
                       )}
                       style={{ backgroundColor: color.value }}
                       title={color.label}
@@ -550,7 +569,9 @@ export function PlotlineManager({ sceneId, onSelectPlotline, className }: Plotli
                 <Textarea
                   id="plotline-description"
                   value={newPlotline.description}
-                  onChange={(e) => setNewPlotline({ ...newPlotline, description: e.target.value })}
+                  onChange={(e) =>
+                    setNewPlotline({ ...newPlotline, description: e.target.value })
+                  }
                   placeholder="Briefly describe this narrative thread..."
                   rows={3}
                 />
@@ -560,7 +581,10 @@ export function PlotlineManager({ sceneId, onSelectPlotline, className }: Plotli
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreatePlotline} disabled={!newPlotline.name.trim() || createMutation.isPending}>
+              <Button
+                onClick={handleCreatePlotline}
+                disabled={!newPlotline.name.trim() || createMutation.isPending}
+              >
                 {createMutation.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (

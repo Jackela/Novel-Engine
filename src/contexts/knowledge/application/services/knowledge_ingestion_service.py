@@ -27,9 +27,8 @@ from ...application.ports.i_vector_store import (
 from ...domain.models.chunking_strategy import ChunkingStrategy
 from ...domain.models.source_knowledge_entry import SourceKnowledgeEntry
 from ...domain.models.source_type import SourceType
-from ...domain.services.text_chunker import TextChunker, TextChunk
+from ...domain.services.text_chunker import TextChunk, TextChunker
 from .ingestion_processor_factory import IngestionProcessorFactory
-
 
 logger = structlog.get_logger()
 
@@ -206,7 +205,9 @@ class KnowledgeIngestionService:
         """
         self._embedding_service = embedding_service
         self._vector_store = vector_store
-        self._processor_factory = processor_factory or IngestionProcessorFactory.get_default_factory()
+        self._processor_factory = (
+            processor_factory or IngestionProcessorFactory.get_default_factory()
+        )
         self._default_chunking_strategy = (
             default_chunking_strategy or ChunkingStrategy.default()
         )
@@ -349,9 +350,11 @@ class KnowledgeIngestionService:
                 total_chunks=chunked_doc.total_chunks,
                 tags=enriched_metadata.get("tags"),
                 extra_metadata={
-                    k: v for k, v in enriched_metadata.items()
+                    k: v
+                    for k, v in enriched_metadata.items()
                     if k != "tags"  # tags handled separately
-                } or None,
+                }
+                or None,
             )
 
             # Set embedding ID
@@ -684,7 +687,9 @@ class KnowledgeIngestionService:
         # and filter by source_id
         import random
 
-        dummy_embedding = [random.gauss(0, 1) for _ in range(self._embedding_service.get_dimension())]
+        dummy_embedding = [
+            random.gauss(0, 1) for _ in range(self._embedding_service.get_dimension())
+        ]
 
         try:
             query_results = await self._vector_store.query(
@@ -703,9 +708,15 @@ class KnowledgeIngestionService:
             retrieved.append(
                 RetrievedChunk(
                     chunk_id=qr.id,
-                    source_id=qr.metadata.get("source_id", source_id) if qr.metadata else source_id,
+                    source_id=(
+                        qr.metadata.get("source_id", source_id)
+                        if qr.metadata
+                        else source_id
+                    ),
                     source_type=SourceType(
-                        qr.metadata.get("source_type", "LORE") if qr.metadata else "LORE"
+                        qr.metadata.get("source_type", "LORE")
+                        if qr.metadata
+                        else "LORE"
                     ),
                     content=qr.text,
                     score=qr.score,

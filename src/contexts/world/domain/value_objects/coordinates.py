@@ -362,7 +362,9 @@ class Coordinates:
             precision=min(self.precision, other.precision),
         )
 
-    def __mul__(self, scalar: Union[int, float]) -> "Coordinates | type[NotImplemented]":
+    def __mul__(
+        self, scalar: Union[int, float]
+    ) -> "Coordinates | type[NotImplemented]":
         """
         Multiply coordinates by a scalar value.
 

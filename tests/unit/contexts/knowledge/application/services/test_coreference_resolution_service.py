@@ -9,34 +9,37 @@ and references to their canonical entity names (he -> Alice).
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock
 
-from src.contexts.knowledge.application.services.coreference_resolution_service import (
-    CoreferenceResolutionService,
-    CoreferenceConfig,
-    CoreferenceResult,
-    ResolvedReference,
-    CoreferenceResolutionError,
-    DEFAULT_COREF_TEMPERATURE,
-    DEFAULT_COREF_MAX_TOKENS,
-    DEFAULT_MAX_REFERENCES,
-    DEFAULT_WINDOW_SIZE,
-)
+import pytest
+
 from src.contexts.knowledge.application.ports.i_llm_client import (
     ILLMClient,
+    LLMError,
     LLMRequest,
     LLMResponse,
-    LLMError,
+)
+from src.contexts.knowledge.application.services.coreference_resolution_service import (
+    DEFAULT_COREF_MAX_TOKENS,
+    DEFAULT_COREF_TEMPERATURE,
+    DEFAULT_MAX_REFERENCES,
+    DEFAULT_WINDOW_SIZE,
+    CoreferenceConfig,
+    CoreferenceResolutionError,
+    CoreferenceResolutionService,
+    CoreferenceResult,
+    ResolvedReference,
 )
 from src.contexts.knowledge.domain.models.entity import (
+    EntityMention,
     EntityType,
     ExtractedEntity,
-    EntityMention,
 )
 
-
 # Sample LLM response for co-reference resolution
+
+pytestmark = pytest.mark.unit
+
 SAMPLE_COREF_JSON = """{
   "entity_name": "Alice",
   "confidence": 0.95,
@@ -364,16 +367,22 @@ class TestCoreferenceResolutionService:
         """Test heuristic resolution of 'she' pronoun."""
         # Create candidates with a feminine-sounding name
         candidates = [
-            (ExtractedEntity(
-                name="Alice",
-                entity_type=EntityType.CHARACTER,
-                first_appearance=0,
-            ), 30),
-            (ExtractedEntity(
-                name="Bob",
-                entity_type=EntityType.CHARACTER,
-                first_appearance=0,
-            ), 100),
+            (
+                ExtractedEntity(
+                    name="Alice",
+                    entity_type=EntityType.CHARACTER,
+                    first_appearance=0,
+                ),
+                30,
+            ),
+            (
+                ExtractedEntity(
+                    name="Bob",
+                    entity_type=EntityType.CHARACTER,
+                    first_appearance=0,
+                ),
+                100,
+            ),
         ]
 
         entity_name, confidence = coreference_service._resolve_pronoun_heuristic(
@@ -388,11 +397,14 @@ class TestCoreferenceResolutionService:
     def test_resolve_pronoun_heuristic_he(self, coreference_service):
         """Test heuristic resolution of 'he' pronoun."""
         candidates = [
-            (ExtractedEntity(
-                name="Bob",
-                entity_type=EntityType.CHARACTER,
-                first_appearance=0,
-            ), 50),
+            (
+                ExtractedEntity(
+                    name="Bob",
+                    entity_type=EntityType.CHARACTER,
+                    first_appearance=0,
+                ),
+                50,
+            ),
         ]
 
         entity_name, confidence = coreference_service._resolve_pronoun_heuristic(
@@ -502,9 +514,7 @@ class TestCoreferenceResolutionService:
             )
 
     @pytest.mark.asyncio
-    async def test_resolve_with_text_empty(
-        self, coreference_service
-    ):
+    async def test_resolve_with_text_empty(self, coreference_service):
         """Test resolution with empty entities and mentions."""
         result = await coreference_service.resolve_with_text(
             text="Empty text.",

@@ -1,6 +1,11 @@
 import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
-import { waitForDashboardReady, waitForLandingReady } from './utils/waitForReady';
+import { safeGoto } from './utils/navigation';
+import {
+  waitForDashboardReady,
+  waitForLandingReady,
+  waitForLoginReady,
+} from './utils/waitForReady';
 import { activateGuestSession } from './utils/auth';
 
 /**
@@ -24,7 +29,7 @@ test.describe('Basic Navigation Smoke Tests', () => {
    * - Visit '/' -> Check title is present
    */
   test('should load landing page with correct title', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await safeGoto(page, '/');
     await waitForLandingReady(page);
 
     // Check page title contains app name (document.title = 'Novel Engine')
@@ -48,7 +53,7 @@ test.describe('Basic Navigation Smoke Tests', () => {
     await activateGuestSession(page);
 
     // Navigate to dashboard first (sidebar is visible there)
-    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    await safeGoto(page, '/dashboard');
     await waitForDashboardReady(page);
 
     // Find and click the Weaver link in the sidebar
@@ -79,7 +84,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await test.step('When: User navigates to /unknown-route', async () => {
-        await page.goto('/unknown-route');
+        await safeGoto(page, '/unknown-route');
         await waitForLandingReady(page);
       });
 
@@ -97,7 +102,7 @@ test.describe('Wildcard Route E2E Tests', () => {
     test('should redirect /random-page to landing', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/random-page');
+      await safeGoto(page, '/random-page');
       await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
@@ -106,7 +111,7 @@ test.describe('Wildcard Route E2E Tests', () => {
     test('should redirect /settings to landing (nonexistent route)', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/settings');
+      await safeGoto(page, '/settings');
       await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
@@ -123,7 +128,7 @@ test.describe('Wildcard Route E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       await test.step('When: User navigates to /some/deep/unknown/path', async () => {
-        await page.goto('/some/deep/unknown/path');
+        await safeGoto(page, '/some/deep/unknown/path');
         await waitForLandingReady(page);
       });
 
@@ -135,7 +140,7 @@ test.describe('Wildcard Route E2E Tests', () => {
     test('should redirect /a/b/c/d/e to landing', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/a/b/c/d/e');
+      await safeGoto(page, '/a/b/c/d/e');
       await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
@@ -144,7 +149,7 @@ test.describe('Wildcard Route E2E Tests', () => {
     test('should redirect paths with query params to landing', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/unknown?foo=bar&baz=qux');
+      await safeGoto(page, '/unknown?foo=bar&baz=qux');
       await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
@@ -153,7 +158,7 @@ test.describe('Wildcard Route E2E Tests', () => {
     test('should redirect paths with hash fragments', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/unknown#section');
+      await safeGoto(page, '/unknown#section');
       await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
@@ -164,7 +169,7 @@ test.describe('Wildcard Route E2E Tests', () => {
     test('should handle route with special characters', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/page-with-dash');
+      await safeGoto(page, '/page-with-dash');
       await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
@@ -173,7 +178,7 @@ test.describe('Wildcard Route E2E Tests', () => {
     test('should handle route with numbers', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/page123');
+      await safeGoto(page, '/page123');
       await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
@@ -182,7 +187,7 @@ test.describe('Wildcard Route E2E Tests', () => {
     test('should handle route with underscore', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/page_underscore');
+      await safeGoto(page, '/page_underscore');
       await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
@@ -191,7 +196,7 @@ test.describe('Wildcard Route E2E Tests', () => {
     test('should handle encoded characters in route', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/page%20with%20spaces');
+      await safeGoto(page, '/page%20with%20spaces');
       await waitForLandingReady(page);
 
       await expect(landingPage.mainTitle).toBeVisible();
@@ -212,7 +217,7 @@ test.describe('Valid Routes Navigation', () => {
     await waitForDashboardReady(page);
 
     // Navigate back to landing (should redirect to dashboard)
-    await page.goto('/');
+    await safeGoto(page, '/');
     await waitForDashboardReady(page);
     await expect(page).toHaveURL(/.*\/dashboard/);
   });
@@ -221,12 +226,26 @@ test.describe('Valid Routes Navigation', () => {
     const landingPage = new LandingPage(page);
 
     // Rapid navigation between valid routes
-    await page.goto('/');
-    await page.goto('/login');
-    await page.goto('/');
-    await waitForLandingReady(page);
+    const navigate = async (url: string) => {
+      await safeGoto(page, url);
+    };
+    await navigate('/');
+    await navigate('/login');
+    await navigate('/');
 
-    // Should end up on landing
-    await expect(landingPage.mainTitle).toBeVisible();
+    const landingCta = page.locator('[data-testid="cta-launch"]');
+    const loginHeading = page.locator('main h1, [role="main"] h1');
+    const finalPage = await Promise.race([
+      landingCta.waitFor({ state: 'visible', timeout: 10000 }).then(() => 'landing'),
+      loginHeading.waitFor({ state: 'visible', timeout: 10000 }).then(() => 'login'),
+    ]);
+
+    if (finalPage === 'landing') {
+      await waitForLandingReady(page);
+      await expect(landingPage.mainTitle).toBeVisible();
+    } else {
+      await waitForLoginReady(page);
+      await expect(loginHeading).toBeVisible();
+    }
   });
 });

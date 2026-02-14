@@ -80,8 +80,6 @@ class RerankOutput:
 class RerankerError(Exception):
     """Base exception for reranker-related errors."""
 
-    pass
-
 
 class IReranker(Protocol):
     """

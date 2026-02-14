@@ -24,13 +24,15 @@ from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_repository 
     InMemoryPromptRepository,
 )
 from src.contexts.knowledge.infrastructure.migrations.migrate_yaml_prompts import (
-    YAMLPromptMigrator,
-    PromptSource,
-    MigrationResult,
-    PromptMigrationError,
     _INCLUDE_PATTERN,
     _VARIABLE_PATTERN,
+    MigrationResult,
+    PromptMigrationError,
+    PromptSource,
+    YAMLPromptMigrator,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestIncludePattern:
@@ -149,8 +151,7 @@ def temp_project_dir() -> tempfile.TemporaryDirectory:
 @pytest.fixture
 def sample_yaml_content() -> dict[str, str]:
     """Sample YAML content for testing."""
-    return {
-        "system_prompt": """You are a creative writing assistant.
+    return {"system_prompt": """You are a creative writing assistant.
 
 Generate content based on the {{input_type}} provided.
 
@@ -159,8 +160,7 @@ Follow these guidelines:
 - Stay in character
 - Use {{tone}} consistently
 
-Output must be valid JSON."""
-    }
+Output must be valid JSON."""}
 
 
 @pytest.fixture
@@ -176,13 +176,17 @@ class TestYAMLPromptMigratorDiscover:
 
     @pytest.mark.asyncio
     async def test_discover_prompts_finds_yaml_files(
-        self, migrator: YAMLPromptMigrator, temp_project_dir: tempfile.TemporaryDirectory
+        self,
+        migrator: YAMLPromptMigrator,
+        temp_project_dir: tempfile.TemporaryDirectory,
     ) -> None:
         """Test that discover_prompts finds all YAML files."""
         base_path = Path(temp_project_dir.name)
 
         # Create test YAML files
-        world_prompts = base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        world_prompts = (
+            base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        )
         (world_prompts / "world_gen.yaml").write_text(
             yaml.dump({"system_prompt": "Generate a world"}), encoding="utf-8"
         )
@@ -190,7 +194,9 @@ class TestYAMLPromptMigratorDiscover:
             yaml.dump({"system_prompt": "Generate dialogue"}), encoding="utf-8"
         )
 
-        char_prompts = base_path / "src" / "contexts" / "character" / "infrastructure" / "prompts"
+        char_prompts = (
+            base_path / "src" / "contexts" / "character" / "infrastructure" / "prompts"
+        )
         (char_prompts / "character_gen.yaml").write_text(
             yaml.dump({"system_prompt": "Generate a character"}), encoding="utf-8"
         )
@@ -204,17 +210,23 @@ class TestYAMLPromptMigratorDiscover:
 
     @pytest.mark.asyncio
     async def test_discover_prompts_handles_invalid_yaml(
-        self, migrator: YAMLPromptMigrator, temp_project_dir: tempfile.TemporaryDirectory
+        self,
+        migrator: YAMLPromptMigrator,
+        temp_project_dir: tempfile.TemporaryDirectory,
     ) -> None:
         """Test that discover_prompts handles invalid YAML gracefully."""
         base_path = Path(temp_project_dir.name)
 
         # Create valid and invalid YAML files
-        world_prompts = base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        world_prompts = (
+            base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        )
         (world_prompts / "valid.yaml").write_text(
             yaml.dump({"system_prompt": "Valid prompt"}), encoding="utf-8"
         )
-        (world_prompts / "invalid.yaml").write_text("{ invalid yaml content", encoding="utf-8")
+        (world_prompts / "invalid.yaml").write_text(
+            "{ invalid yaml content", encoding="utf-8"
+        )
 
         # Should not raise, just skip invalid
         sources = migrator.discover_prompts()
@@ -226,9 +238,7 @@ class TestYAMLPromptMigratorResolveIncludes:
     """Tests for YAMLPromptMigrator.resolve_includes()."""
 
     @pytest.mark.asyncio
-    async def test_resolve_includes_basic(
-        self, migrator: YAMLPromptMigrator
-    ) -> None:
+    async def test_resolve_includes_basic(self, migrator: YAMLPromptMigrator) -> None:
         """Test basic include resolution."""
         sources = [
             PromptSource(
@@ -246,9 +256,7 @@ class TestYAMLPromptMigratorResolveIncludes:
         assert "{{> base_prompt}}" not in resolved
 
     @pytest.mark.asyncio
-    async def test_resolve_includes_nested(
-        self, migrator: YAMLPromptMigrator
-    ) -> None:
+    async def test_resolve_includes_nested(self, migrator: YAMLPromptMigrator) -> None:
         """Test nested include resolution."""
         sources = [
             PromptSource(
@@ -363,9 +371,7 @@ class TestYAMLPromptMigratorExtractVariables:
 
         assert all(v.type == VariableType.STRING for v in variables)
 
-    def test_extract_variables_deduplicates(
-        self, migrator: YAMLPromptMigrator
-    ) -> None:
+    def test_extract_variables_deduplicates(self, migrator: YAMLPromptMigrator) -> None:
         """Test that duplicate variables are deduplicated."""
         content = "{{name}} said {{name}} again"
         variables = migrator.extract_variables(content)
@@ -512,7 +518,9 @@ class TestYAMLPromptMigratorMigrate:
         base_path = Path(temp_project_dir.name)
 
         # Create test files
-        world_prompts = base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        world_prompts = (
+            base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        )
         world_prompts.mkdir(parents=True, exist_ok=True)
         (world_prompts / "test_prompt.yaml").write_text(
             yaml.dump({"system_prompt": "Generate {{type}} content"}), encoding="utf-8"
@@ -536,7 +544,9 @@ class TestYAMLPromptMigratorMigrate:
         base_path = Path(temp_project_dir.name)
 
         # Create test file
-        world_prompts = base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        world_prompts = (
+            base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        )
         world_prompts.mkdir(parents=True, exist_ok=True)
         (world_prompts / "test_prompt.yaml").write_text(
             yaml.dump({"system_prompt": "Content"}), encoding="utf-8"
@@ -561,7 +571,9 @@ class TestYAMLPromptMigratorMigrate:
         base_path = Path(temp_project_dir.name)
 
         # Create test file
-        world_prompts = base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        world_prompts = (
+            base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        )
         world_prompts.mkdir(parents=True, exist_ok=True)
         (world_prompts / "test_prompt.yaml").write_text(
             yaml.dump({"system_prompt": "Content"}), encoding="utf-8"
@@ -585,7 +597,9 @@ class TestYAMLPromptMigratorMigrate:
         base_path = Path(temp_project_dir.name)
 
         # Create valid and invalid files
-        world_prompts = base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        world_prompts = (
+            base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        )
         world_prompts.mkdir(parents=True, exist_ok=True)
         (world_prompts / "valid.yaml").write_text(
             yaml.dump({"system_prompt": "Valid content"}), encoding="utf-8"
@@ -610,21 +624,23 @@ class TestYAMLPromptMigratorMigrate:
         base_path = Path(temp_project_dir.name)
 
         # Set up actual prompt files like in the real project
-        world_prompts = base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        world_prompts = (
+            base_path / "src" / "contexts" / "world" / "infrastructure" / "prompts"
+        )
         world_prompts.mkdir(parents=True, exist_ok=True)
 
         # Create a base prompt to be included
         (world_prompts / "base_prompt.yaml").write_text(
-            yaml.dump({"system_prompt": "You are a creative assistant."}), encoding="utf-8"
+            yaml.dump({"system_prompt": "You are a creative assistant."}),
+            encoding="utf-8",
         )
 
         # Create a prompt that includes the base
         (world_prompts / "dialogue_gen.yaml").write_text(
-            yaml.dump({
-                "system_prompt": """{{> base_prompt }}
+            yaml.dump({"system_prompt": """{{> base_prompt }}
 
-Generate dialogue for {{character_name}} with {{mood}} tone."""
-            }), encoding="utf-8"
+Generate dialogue for {{character_name}} with {{mood}} tone."""}),
+            encoding="utf-8",
         )
 
         # Run migration

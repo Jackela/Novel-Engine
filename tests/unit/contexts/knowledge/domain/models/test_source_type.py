@@ -15,6 +15,7 @@ import pytest
 
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
+pytestmark = pytest.mark.unit
 
 class TestSourceType:
     """Unit tests for SourceType enum."""

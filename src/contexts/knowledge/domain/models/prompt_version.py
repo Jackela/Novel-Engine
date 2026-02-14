@@ -108,7 +108,7 @@ class PromptVersion:
     diff: Optional[VersionDiff] = None
     created_at: datetime = field(default_factory=_utcnow)
     created_by: Optional[str] = None
-    tags: tuple[str, ...] = ()
+    tags: tuple[str, ...] | list[str] = ()
 
     def __post_init__(self) -> None:
         """Validate version invariants."""
@@ -127,7 +127,7 @@ class PromptVersion:
             raise ValueError("PromptVersion.template_snapshot_id cannot be empty")
 
         # Ensure tags is a tuple (immutable)
-        if isinstance(self.tags, list):  # type: ignore[unreachable]
+        if isinstance(self.tags, list):
             object.__setattr__(self, "tags", tuple(self.tags))
 
         # No self-reference in parent

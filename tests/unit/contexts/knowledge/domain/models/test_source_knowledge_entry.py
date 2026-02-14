@@ -21,6 +21,7 @@ from src.contexts.knowledge.domain.models.source_knowledge_entry import (
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
+pytestmark = pytest.mark.unit
 
 class TestSourceMetadata:
     """Unit tests for SourceMetadata value object."""
@@ -496,11 +497,12 @@ class TestSourceMetadataWithKnowledgeMetadata:
     @pytest.mark.fast
     def test_to_vector_metadata_with_last_accessed(self):
         """Test to_vector_metadata includes last_accessed when set."""
+        from datetime import timezone
+
         from src.contexts.knowledge.domain.models.knowledge_metadata import (
             ConfidentialityLevel,
             KnowledgeMetadata,
         )
-        from datetime import timezone
 
         now = datetime.datetime.now(timezone.utc)
 

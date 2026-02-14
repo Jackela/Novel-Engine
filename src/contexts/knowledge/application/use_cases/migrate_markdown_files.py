@@ -9,7 +9,7 @@ Constitution Compliance:
 - Article V (SOLID): Single Responsibility - migration orchestration
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class MigrateMarkdownFilesUseCase:

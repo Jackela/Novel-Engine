@@ -17,7 +17,7 @@ def extract_pydantic_schemas(file_path: Path) -> Dict[str, Dict]:
     schemas = {}
 
     # Pattern to match class definitions
-    class_pattern = re.compile(r'^class (\w+)\(BaseModel\):', re.MULTILINE)
+    class_pattern = re.compile(r"^class (\w+)\(BaseModel\):", re.MULTILINE)
 
     for match in class_pattern.finditer(content):
         class_name = match.group(1)
@@ -31,7 +31,9 @@ def extract_pydantic_schemas(file_path: Path) -> Dict[str, Dict]:
 
         # Extract fields from the class body
         fields = {}
-        field_pattern = re.compile(r'^\s{4}(\w+):\s*(.+?)(?:\s*=\s*Field\((.*?)\))?$', re.MULTILINE)
+        field_pattern = re.compile(
+            r"^\s{4}(\w+):\s*(.+?)(?:\s*=\s*Field\((.*?)\))?$", re.MULTILINE
+        )
 
         for field_match in field_pattern.finditer(class_body):
             field_name = field_match.group(1)
@@ -44,12 +46,12 @@ def extract_pydantic_schemas(file_path: Path) -> Dict[str, Dict]:
             description = None
 
             if "min_length" in field_args or "ge=" in field_args:
-                min_match = re.search(r'(?:min_length|ge)\s*=\s*(\d+)', field_args)
+                min_match = re.search(r"(?:min_length|ge)\s*=\s*(\d+)", field_args)
                 if min_match:
                     min_val = int(min_match.group(1))
 
             if "max_length" in field_args or "le=" in field_args:
-                max_match = re.search(r'(?:max_length|le)\s*=\s*(\d+)', field_args)
+                max_match = re.search(r"(?:max_length|le)\s*=\s*(\d+)", field_args)
                 if max_match:
                     max_val = int(max_match.group(1))
 
@@ -76,27 +78,31 @@ def extract_zod_schemas(file_path: Path) -> Dict[str, Dict]:
     schemas = {}
 
     # Pattern to match Zod schema exports
-    schema_pattern = re.compile(r'export\s+const\s+(\w+Schema)\s*=\s*z\.object\(\{', re.MULTILINE)
+    schema_pattern = re.compile(
+        r"export\s+const\s+(\w+Schema)\s*=\s*z\.object\(\{", re.MULTILINE
+    )
 
     for match in schema_pattern.finditer(content):
-        schema_name = match.group(1).replace('Schema', '')
+        schema_name = match.group(1).replace("Schema", "")
         start_pos = match.end()
 
         # Find matching closing brace (rough approximation)
         brace_count = 1
         end_pos = start_pos
         while end_pos < len(content) and brace_count > 0:
-            if content[end_pos] == '{':
+            if content[end_pos] == "{":
                 brace_count += 1
-            elif content[end_pos] == '}':
+            elif content[end_pos] == "}":
                 brace_count -= 1
             end_pos += 1
 
-        schema_body = content[start_pos:end_pos - 1]
+        schema_body = content[start_pos : end_pos - 1]
 
         # Extract fields from the schema body
         fields = {}
-        field_pattern = re.compile(r'(\w+):\s*z\.\w+\((.*?)\)(?:\.\s*\w+\((.*?)\))*', re.MULTILINE)
+        field_pattern = re.compile(
+            r"(\w+):\s*z\.\w+\((.*?)\)(?:\.\s*\w+\((.*?)\))*", re.MULTILINE
+        )
 
         for field_match in field_pattern.finditer(schema_body):
             field_name = field_match.group(1)
@@ -107,11 +113,11 @@ def extract_zod_schemas(file_path: Path) -> Dict[str, Dict]:
             max_val = None
 
             # Match min(), max(), min_length(), max_length()
-            min_match = re.search(r'\.(?:min|min_length)\((\d+)\)', zod_args)
+            min_match = re.search(r"\.(?:min|min_length)\((\d+)\)", zod_args)
             if min_match:
                 min_val = int(min_match.group(1))
 
-            max_match = re.search(r'\.(?:max|max_length)\((\d+)\)', zod_args)
+            max_match = re.search(r"\.(?:max|max_length)\((\d+)\)", zod_args)
             if max_match:
                 max_val = int(max_match.group(1))
 
@@ -153,22 +159,26 @@ def compare_schemas(pydantic_schemas: Dict, zod_schemas: Dict) -> List[Dict]:
 
     missing_in_zod = pydantic_names - zod_names
     for name in sorted(missing_in_zod):
-        discrepancies.append({
-            "severity": "HIGH",
-            "schema": name,
-            "issue": "Missing in frontend",
-            "details": f"Schema exists in backend but not in frontend",
-        })
+        discrepancies.append(
+            {
+                "severity": "HIGH",
+                "schema": name,
+                "issue": "Missing in frontend",
+                "details": f"Schema exists in backend but not in frontend",
+            }
+        )
 
     # Check for schemas in Zod but not in Pydantic
     missing_in_pydantic = zod_names - pydantic_names
     for name in sorted(missing_in_pydantic):
-        discrepancies.append({
-            "severity": "MEDIUM",
-            "schema": name,
-            "issue": "Missing in backend",
-            "details": f"Schema exists in frontend but not in backend",
-        })
+        discrepancies.append(
+            {
+                "severity": "MEDIUM",
+                "schema": name,
+                "issue": "Missing in backend",
+                "details": f"Schema exists in frontend but not in backend",
+            }
+        )
 
     # Compare field-level constraints for common schemas
     common_names = pydantic_names & zod_names
@@ -182,21 +192,25 @@ def compare_schemas(pydantic_schemas: Dict, zod_schemas: Dict) -> List[Dict]:
 
         missing_in_zod_fields = pydantic_field_names - zod_field_names
         for field in sorted(missing_in_zod_fields):
-            discrepancies.append({
-                "severity": "HIGH",
-                "schema": name,
-                "issue": "Field missing in frontend",
-                "details": f"Field '{field}' exists in backend but not in frontend",
-            })
+            discrepancies.append(
+                {
+                    "severity": "HIGH",
+                    "schema": name,
+                    "issue": "Field missing in frontend",
+                    "details": f"Field '{field}' exists in backend but not in frontend",
+                }
+            )
 
         missing_in_pydantic_fields = zod_field_names - pydantic_field_names
         for field in sorted(missing_in_pydantic_fields):
-            discrepancies.append({
-                "severity": "MEDIUM",
-                "schema": name,
-                "issue": "Field missing in backend",
-                "details": f"Field '{field}' exists in frontend but not in backend",
-            })
+            discrepancies.append(
+                {
+                    "severity": "MEDIUM",
+                    "schema": name,
+                    "issue": "Field missing in backend",
+                    "details": f"Field '{field}' exists in frontend but not in backend",
+                }
+            )
 
         # Check constraint mismatches for common fields
         common_fields = pydantic_field_names & zod_field_names
@@ -205,24 +219,34 @@ def compare_schemas(pydantic_schemas: Dict, zod_schemas: Dict) -> List[Dict]:
             zod_field = zod_fields[field]
 
             # Check min constraints
-            if pydantic_field.get("min") is not None and zod_field.get("min") is not None:
+            if (
+                pydantic_field.get("min") is not None
+                and zod_field.get("min") is not None
+            ):
                 if pydantic_field["min"] != zod_field["min"]:
-                    discrepancies.append({
-                        "severity": "CRITICAL",
-                        "schema": name,
-                        "issue": "Min constraint mismatch",
-                        "details": f"Field '{field}': backend min={pydantic_field['min']}, frontend min={zod_field['min']}",
-                    })
+                    discrepancies.append(
+                        {
+                            "severity": "CRITICAL",
+                            "schema": name,
+                            "issue": "Min constraint mismatch",
+                            "details": f"Field '{field}': backend min={pydantic_field['min']}, frontend min={zod_field['min']}",
+                        }
+                    )
 
             # Check max constraints
-            if pydantic_field.get("max") is not None and zod_field.get("max") is not None:
+            if (
+                pydantic_field.get("max") is not None
+                and zod_field.get("max") is not None
+            ):
                 if pydantic_field["max"] != zod_field["max"]:
-                    discrepancies.append({
-                        "severity": "CRITICAL",
-                        "schema": name,
-                        "issue": "Max constraint mismatch",
-                        "details": f"Field '{field}': backend max={pydantic_field['max']}, frontend max={zod_field['max']}",
-                    })
+                    discrepancies.append(
+                        {
+                            "severity": "CRITICAL",
+                            "schema": name,
+                            "issue": "Max constraint mismatch",
+                            "details": f"Field '{field}': backend max={pydantic_field['max']}, frontend max={zod_field['max']}",
+                        }
+                    )
 
             # Check type mismatches
             if pydantic_field.get("type") and zod_field.get("type"):
@@ -245,15 +269,19 @@ def compare_schemas(pydantic_schemas: Dict, zod_schemas: Dict) -> List[Dict]:
                         break
 
                 if pydantic_type != zod_type and not (
-                    "optional" in pydantic_type or "nullable" in pydantic_type or
-                    "union" in pydantic_type or "optional" in str(zod_field)
+                    "optional" in pydantic_type
+                    or "nullable" in pydantic_type
+                    or "union" in pydantic_type
+                    or "optional" in str(zod_field)
                 ):
-                    discrepancies.append({
-                        "severity": "CRITICAL",
-                        "schema": name,
-                        "issue": "Type mismatch",
-                        "details": f"Field '{field}': backend type={pydantic_field['type']}, frontend type={zod_field['type']}",
-                    })
+                    discrepancies.append(
+                        {
+                            "severity": "CRITICAL",
+                            "schema": name,
+                            "issue": "Type mismatch",
+                            "details": f"Field '{field}': backend type={pydantic_field['type']}, frontend type={zod_field['type']}",
+                        }
+                    )
 
     return discrepancies
 
@@ -344,7 +372,9 @@ def main():
         print(f"\n❌ Found {critical_count} CRITICAL issues that must be fixed!")
         return 1
     elif discrepancies:
-        print(f"\n⚠️  Found {len(discrepancies)} non-critical issues that should be reviewed.")
+        print(
+            f"\n⚠️  Found {len(discrepancies)} non-critical issues that should be reviewed."
+        )
         return 0
     else:
         print("\n✅ All schemas are synchronized!")

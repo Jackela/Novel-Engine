@@ -22,11 +22,11 @@ from src.contexts.knowledge.application.services.model_router import (
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitState,
+    ModelRouter,
     RoutingConfig,
     RoutingDecision,
     RoutingReason,
     create_model_router,
-    ModelRouter,
 )
 from src.contexts.knowledge.domain.models.model_registry import (
     LLMProvider,
@@ -34,6 +34,8 @@ from src.contexts.knowledge.domain.models.model_registry import (
     TaskModelConfig,
     TaskType,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -225,20 +227,20 @@ class TestModelRouter:
         assert router._registry is model_registry
         assert router.get_routing_stats()["total_decisions"] == 0
 
-    def test_select_model_by_task_default(
-        self, model_router: ModelRouter
-    ) -> None:
+    def test_select_model_by_task_default(self, model_router: ModelRouter) -> None:
         """Test selecting model by task type uses default config."""
         decision = model_router.select_model(TaskType.CREATIVE)
 
         assert decision.task_type == TaskType.CREATIVE
-        assert decision.selected_provider in [LLMProvider.GEMINI, LLMProvider.ANTHROPIC, LLMProvider.OPENAI]
+        assert decision.selected_provider in [
+            LLMProvider.GEMINI,
+            LLMProvider.ANTHROPIC,
+            LLMProvider.OPENAI,
+        ]
         assert decision.reason == RoutingReason.TASK_DEFAULT
         assert not decision.fallback_used
 
-    def test_select_model_by_task_logical(
-        self, model_router: ModelRouter
-    ) -> None:
+    def test_select_model_by_task_logical(self, model_router: ModelRouter) -> None:
         """Test selecting model for LOGICAL task."""
         decision = model_router.select_model(TaskType.LOGICAL)
 
@@ -247,18 +249,14 @@ class TestModelRouter:
         assert decision.selected_provider == LLMProvider.OPENAI
         assert decision.reason == RoutingReason.TASK_DEFAULT
 
-    def test_select_model_by_task_fast(
-        self, model_router: ModelRouter
-    ) -> None:
+    def test_select_model_by_task_fast(self, model_router: ModelRouter) -> None:
         """Test selecting model for FAST task."""
         decision = model_router.select_model(TaskType.FAST)
 
         assert decision.task_type == TaskType.FAST
         assert decision.selected_provider == LLMProvider.GEMINI  # Fast models
 
-    def test_select_model_by_task_cheap(
-        self, model_router: ModelRouter
-    ) -> None:
+    def test_select_model_by_task_cheap(self, model_router: ModelRouter) -> None:
         """Test selecting model for CHEAP task."""
         decision = model_router.select_model(TaskType.CHEAP)
 
@@ -269,11 +267,12 @@ class TestModelRouter:
         )
         if model:
             # Gemini Flash is cheap, or Ollama which is free
-            assert decision.selected_provider in [LLMProvider.GEMINI, LLMProvider.OLLAMA]
+            assert decision.selected_provider in [
+                LLMProvider.GEMINI,
+                LLMProvider.OLLAMA,
+            ]
 
-    def test_select_model_with_cost_constraint(
-        self, model_router: ModelRouter
-    ) -> None:
+    def test_select_model_with_cost_constraint(self, model_router: ModelRouter) -> None:
         """Test selecting model with cost budget constraint."""
         config = RoutingConfig(max_cost_per_1m_tokens=1.0)
         decision = model_router.select_model(TaskType.LOGICAL, config)
@@ -303,11 +302,11 @@ class TestModelRouter:
         assert decision.selected_provider == LLMProvider.OPENAI
         assert "gpt-4" in decision.selected_model
 
-    def test_select_model_by_qualified_name(
-        self, model_router: ModelRouter
-    ) -> None:
+    def test_select_model_by_qualified_name(self, model_router: ModelRouter) -> None:
         """Test selecting model with qualified name."""
-        decision = model_router.select_model_by_name("anthropic:claude-3-5-sonnet-20241022")
+        decision = model_router.select_model_by_name(
+            "anthropic:claude-3-5-sonnet-20241022"
+        )
 
         assert decision.reason == RoutingReason.MANUAL_OVERRIDE
         assert decision.selected_provider == LLMProvider.ANTHROPIC
@@ -318,8 +317,7 @@ class TestModelRouter:
     ) -> None:
         """Test selecting invalid model name falls back to task-based routing."""
         decision = model_router.select_model_by_name(
-            "invalid:model",
-            task_type=TaskType.CHEAP
+            "invalid:model", task_type=TaskType.CHEAP
         )
 
         # Should fall back to task-based selection
@@ -359,9 +357,7 @@ class TestModelRouter:
         assert all("provider" in d for d in recent)
         assert all("model" in d for d in recent)
 
-    def test_list_recent_decisions_with_limit(
-        self, model_router: ModelRouter
-    ) -> None:
+    def test_list_recent_decisions_with_limit(self, model_router: ModelRouter) -> None:
         """Test listing decisions respects limit parameter."""
         for _ in range(5):
             model_router.select_model(TaskType.FAST)
@@ -374,9 +370,7 @@ class TestModelRouter:
 class TestModelRouterCircuitBreaker:
     """Tests for ModelRouter circuit breaker integration."""
 
-    def test_circuit_breaker_created_for_model(
-        self, model_router: ModelRouter
-    ) -> None:
+    def test_circuit_breaker_created_for_model(self, model_router: ModelRouter) -> None:
         """Test that circuit breaker is created when model is used."""
         # Select a model - this should create a circuit breaker
         decision = model_router.select_model(TaskType.CREATIVE)
@@ -468,9 +462,7 @@ class TestModelRouterCircuitBreaker:
         new_breaker = model_router._circuit_breakers[model_key]
         assert not new_breaker.is_open()
 
-    def test_reset_nonexistent_circuit_breaker(
-        self, model_router: ModelRouter
-    ) -> None:
+    def test_reset_nonexistent_circuit_breaker(self, model_router: ModelRouter) -> None:
         """Test resetting a circuit breaker that doesn't exist."""
         result = model_router.reset_circuit_breaker("nonexistent:model")
         assert result is False

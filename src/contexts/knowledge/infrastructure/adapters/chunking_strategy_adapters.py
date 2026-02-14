@@ -21,10 +21,13 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from ...application.ports.i_chunking_strategy import Chunk, ChunkingError, IChunkingStrategy
+from ...application.ports.i_chunking_strategy import (
+    Chunk,
+    ChunkingError,
+)
 from ...domain.models.chunking_strategy import (
-    ChunkStrategyType,
     ChunkingStrategy,
+    ChunkStrategyType,
 )
 
 if TYPE_CHECKING:
@@ -41,10 +44,10 @@ MAX_COHERENCE_THRESHOLD = 1.0
 _WORD_PATTERN = re.compile(r"\S+")
 
 # Sentence end pattern: . ! ? followed by whitespace
-_SENTENCE_END = re.compile(r'[.!?]+\s+', re.MULTILINE)
+_SENTENCE_END = re.compile(r"[.!?]+\s+", re.MULTILINE)
 
 # Paragraph delimiter: two or more newlines
-_PARAGRAPH_DELIM = re.compile(r'\n\n+', re.MULTILINE)
+_PARAGRAPH_DELIM = re.compile(r"\n\n+", re.MULTILINE)
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,9 +90,16 @@ class CoherenceScore:
         """Validate and normalize the coherence score."""
         # Clamp scores to valid range
         score = max(MIN_COHERENCE_THRESHOLD, min(MAX_COHERENCE_THRESHOLD, self.score))
-        internal = max(MIN_COHERENCE_THRESHOLD, min(MAX_COHERENCE_THRESHOLD, self.internal_coherence))
-        boundary = max(MIN_COHERENCE_THRESHOLD, min(MAX_COHERENCE_THRESHOLD, self.boundary_quality))
-        size = max(MIN_COHERENCE_THRESHOLD, min(MAX_COHERENCE_THRESHOLD, self.size_score))
+        internal = max(
+            MIN_COHERENCE_THRESHOLD,
+            min(MAX_COHERENCE_THRESHOLD, self.internal_coherence),
+        )
+        boundary = max(
+            MIN_COHERENCE_THRESHOLD, min(MAX_COHERENCE_THRESHOLD, self.boundary_quality)
+        )
+        size = max(
+            MIN_COHERENCE_THRESHOLD, min(MAX_COHERENCE_THRESHOLD, self.size_score)
+        )
 
         object.__setattr__(self, "score", score)
         object.__setattr__(self, "internal_coherence", internal)
@@ -239,9 +249,9 @@ class ChunkCoherenceAnalyzer:
 
         # Calculate overall score as weighted average
         overall = (
-            internal_coherence * self._internal_weight +
-            boundary_quality * self._boundary_weight +
-            size_score * self._size_weight
+            internal_coherence * self._internal_weight
+            + boundary_quality * self._boundary_weight
+            + size_score * self._size_weight
         )
 
         # Determine if acceptable
@@ -374,7 +384,7 @@ class ChunkCoherenceAnalyzer:
 
         # Check if chunk ends with sentence-ending punctuation
         stripped = text.rstrip()
-        if stripped and stripped[-1] in '.!?':
+        if stripped and stripped[-1] in ".!?":
             score += 0.2  # Bonus for ending at sentence boundary
         elif stripped and stripped[-1] == '"':
             # Check if it's a closed quote (sentence end)
@@ -409,7 +419,9 @@ class ChunkCoherenceAnalyzer:
         Returns:
             Size score from 0.0 to 1.0
         """
-        word_count = chunk.metadata.get("word_count", len(_WORD_PATTERN.findall(chunk.text)))
+        word_count = chunk.metadata.get(
+            "word_count", len(_WORD_PATTERN.findall(chunk.text))
+        )
         target = config.chunk_size
         min_size = config.min_chunk_size
 
@@ -562,8 +574,6 @@ class FixedChunkingStrategy:
             chunks = []
             chunk_index = 0
             i = 0
-            start_char_pos = 0
-            total_char_pos = 0
 
             while i < len(words):
                 # Determine end of this chunk
@@ -575,7 +585,9 @@ class FixedChunkingStrategy:
 
                 # Find character positions for metadata
                 chunk_start = self._find_char_position(text, words, i)
-                chunk_end = self._find_char_position(text, words, end_idx - 1) + len(words[end_idx - 1])
+                chunk_end = self._find_char_position(text, words, end_idx - 1) + len(
+                    words[end_idx - 1]
+                )
 
                 # Create metadata
                 metadata: dict[str, Any] = {
@@ -611,7 +623,9 @@ class FixedChunkingStrategy:
             raise
         except Exception as e:
             log.error("fixed_chunking_error", error=str(e), error_type=type(e).__name__)
-            raise ChunkingError(f"Fixed chunking failed: {e}", code="FIXED_CHUNKING_ERROR") from e
+            raise ChunkingError(
+                f"Fixed chunking failed: {e}", code="FIXED_CHUNKING_ERROR"
+            ) from e
 
     def supports_strategy_type(self, strategy_type: str) -> bool:
         """
@@ -652,7 +666,7 @@ class FixedChunkingStrategy:
             words_found += 1
 
         # Fallback: search from estimated position
-        estimated_pos = (word_index * 5)  # Rough estimate
+        estimated_pos = word_index * 5  # Rough estimate
         search_start = max(0, estimated_pos - 50)
         found_pos = text.find(target_word, search_start)
         return max(0, found_pos)
@@ -778,14 +792,16 @@ class SentenceChunkingStrategy:
                         chunk_end = current_sentences[-1][1]
                         chunk_content = text[chunk_start:chunk_end].strip()
 
-                        chunks.append(self._create_chunk(
-                            chunk_content,
-                            chunk_index,
-                            chunk_start,
-                            chunk_end,
-                            current_word_count,
-                            strategy_config,
-                        ))
+                        chunks.append(
+                            self._create_chunk(
+                                chunk_content,
+                                chunk_index,
+                                chunk_start,
+                                chunk_end,
+                                current_word_count,
+                                strategy_config,
+                            )
+                        )
                         chunk_index += 1
 
                     # Keep overlap sentences for next chunk
@@ -812,14 +828,16 @@ class SentenceChunkingStrategy:
                 chunk_end = current_sentences[-1][1]
                 chunk_content = text[chunk_start:chunk_end].strip()
 
-                chunks.append(self._create_chunk(
-                    chunk_content,
-                    chunk_index,
-                    chunk_start,
-                    chunk_end,
-                    current_word_count,
-                    strategy_config,
-                ))
+                chunks.append(
+                    self._create_chunk(
+                        chunk_content,
+                        chunk_index,
+                        chunk_start,
+                        chunk_end,
+                        current_word_count,
+                        strategy_config,
+                    )
+                )
 
             if not chunks:
                 # Fallback if something went wrong
@@ -836,8 +854,12 @@ class SentenceChunkingStrategy:
         except ValueError:
             raise
         except Exception as e:
-            log.error("sentence_chunking_error", error=str(e), error_type=type(e).__name__)
-            raise ChunkingError(f"Sentence chunking failed: {e}", code="SENTENCE_CHUNKING_ERROR") from e
+            log.error(
+                "sentence_chunking_error", error=str(e), error_type=type(e).__name__
+            )
+            raise ChunkingError(
+                f"Sentence chunking failed: {e}", code="SENTENCE_CHUNKING_ERROR"
+            ) from e
 
     def supports_strategy_type(self, strategy_type: str) -> bool:
         """Check if this implementation supports the 'sentence' strategy type."""
@@ -999,14 +1021,16 @@ class ParagraphChunkingStrategy:
                         chunk_end = current_paragraphs[-1][1]
                         chunk_content = text[chunk_start:chunk_end].strip()
 
-                        chunks.append(self._create_chunk(
-                            chunk_content,
-                            chunk_index,
-                            chunk_start,
-                            chunk_end,
-                            current_word_count,
-                            strategy_config,
-                        ))
+                        chunks.append(
+                            self._create_chunk(
+                                chunk_content,
+                                chunk_index,
+                                chunk_start,
+                                chunk_end,
+                                current_word_count,
+                                strategy_config,
+                            )
+                        )
                         chunk_index += 1
 
                     # Keep overlap paragraphs
@@ -1032,14 +1056,16 @@ class ParagraphChunkingStrategy:
                 chunk_end = current_paragraphs[-1][1]
                 chunk_content = text[chunk_start:chunk_end].strip()
 
-                chunks.append(self._create_chunk(
-                    chunk_content,
-                    chunk_index,
-                    chunk_start,
-                    chunk_end,
-                    current_word_count,
-                    strategy_config,
-                ))
+                chunks.append(
+                    self._create_chunk(
+                        chunk_content,
+                        chunk_index,
+                        chunk_start,
+                        chunk_end,
+                        current_word_count,
+                        strategy_config,
+                    )
+                )
 
             if not chunks:
                 # Fallback if something went wrong
@@ -1056,8 +1082,12 @@ class ParagraphChunkingStrategy:
         except ValueError:
             raise
         except Exception as e:
-            log.error("paragraph_chunking_error", error=str(e), error_type=type(e).__name__)
-            raise ChunkingError(f"Paragraph chunking failed: {e}", code="PARAGRAPH_CHUNKING_ERROR") from e
+            log.error(
+                "paragraph_chunking_error", error=str(e), error_type=type(e).__name__
+            )
+            raise ChunkingError(
+                f"Paragraph chunking failed: {e}", code="PARAGRAPH_CHUNKING_ERROR"
+            ) from e
 
     def supports_strategy_type(self, strategy_type: str) -> bool:
         """Check if this implementation supports the 'paragraph' strategy type."""
@@ -1243,8 +1273,12 @@ class SemanticChunkingStrategy:
         except ValueError:
             raise
         except Exception as e:
-            log.error("semantic_chunking_error", error=str(e), error_type=type(e).__name__)
-            raise ChunkingError(f"Semantic chunking failed: {e}", code="SEMANTIC_CHUNKING_ERROR") from e
+            log.error(
+                "semantic_chunking_error", error=str(e), error_type=type(e).__name__
+            )
+            raise ChunkingError(
+                f"Semantic chunking failed: {e}", code="SEMANTIC_CHUNKING_ERROR"
+            ) from e
 
     def supports_strategy_type(self, strategy_type: str) -> bool:
         """Check if this implementation supports the 'semantic' strategy type."""
@@ -1324,9 +1358,9 @@ class SemanticChunkingStrategy:
 
             # Decide whether to start a new group
             should_start_new = (
-                similarity < similarity_threshold or
-                len(current_group) >= max_sentences or
-                group_words >= config.chunk_size
+                similarity < similarity_threshold
+                or len(current_group) >= max_sentences
+                or group_words >= config.chunk_size
             )
 
             if should_start_new and current_group:
@@ -1524,23 +1558,115 @@ class NarrativeFlowChunkingStrategy:
 
     # Common dialogue tag verbs for detecting dialogue boundaries
     _DIALOGUE_TAGS = {
-        "said", "asked", "replied", "whispered", "shouted", "murmured", "exclaimed",
-        "cried", "called", "responded", "answered", "declared", "stated", "added",
-        "continued", "interrupted", "objected", "agreed", "nodded", "smiled", "laughed",
-        "grinned", "chuckled", "sighed", "groaned", "gasped", "screamed", "yelled",
-        "bellowed", "roared", "hissed", "snapped", "barked", "growled", "muttered",
-        "mumbled", "grumbled", "assented", "countered", "retorted", "protested",
-        "insisted", "demanded", "commanded", "ordered", "requested", "begged",
-        "pleaded", "implored", "prayed", "cursed", "thanked", "apologized", "greeted",
-        "welcomed", "bid", "wished", "hoped", "wondered", "thought", "reflected",
-        "remembered", "recalled", "realized", "understood", "decided", "resolved",
-        "promised", "vowed", "pledged", "consented", "refused", "denied", "admitted",
-        "confessed", "acknowledged", "recognized", "identified", "discovered", "found",
-        "learned", "heard", "saw", "watched", "observed", "noticed", "remarked",
-        "commented", "noted", "explained", "described", "related", "recounted", "told",
-        "narrated", "spoke", "addressed", "conversed", "chatted", "discussed",
-        "debated", "argued", "quarreled", "disputed", "contested", "challenged",
-        "questioned", "queried", "inquired",
+        "said",
+        "asked",
+        "replied",
+        "whispered",
+        "shouted",
+        "murmured",
+        "exclaimed",
+        "cried",
+        "called",
+        "responded",
+        "answered",
+        "declared",
+        "stated",
+        "added",
+        "continued",
+        "interrupted",
+        "objected",
+        "agreed",
+        "nodded",
+        "smiled",
+        "laughed",
+        "grinned",
+        "chuckled",
+        "sighed",
+        "groaned",
+        "gasped",
+        "screamed",
+        "yelled",
+        "bellowed",
+        "roared",
+        "hissed",
+        "snapped",
+        "barked",
+        "growled",
+        "muttered",
+        "mumbled",
+        "grumbled",
+        "assented",
+        "countered",
+        "retorted",
+        "protested",
+        "insisted",
+        "demanded",
+        "commanded",
+        "ordered",
+        "requested",
+        "begged",
+        "pleaded",
+        "implored",
+        "prayed",
+        "cursed",
+        "thanked",
+        "apologized",
+        "greeted",
+        "welcomed",
+        "bid",
+        "wished",
+        "hoped",
+        "wondered",
+        "thought",
+        "reflected",
+        "remembered",
+        "recalled",
+        "realized",
+        "understood",
+        "decided",
+        "resolved",
+        "promised",
+        "vowed",
+        "pledged",
+        "consented",
+        "refused",
+        "denied",
+        "admitted",
+        "confessed",
+        "acknowledged",
+        "recognized",
+        "identified",
+        "discovered",
+        "found",
+        "learned",
+        "heard",
+        "saw",
+        "watched",
+        "observed",
+        "noticed",
+        "remarked",
+        "commented",
+        "noted",
+        "explained",
+        "described",
+        "related",
+        "recounted",
+        "told",
+        "narrated",
+        "spoke",
+        "addressed",
+        "conversed",
+        "chatted",
+        "discussed",
+        "debated",
+        "argued",
+        "quarreled",
+        "disputed",
+        "contested",
+        "challenged",
+        "questioned",
+        "queried",
+        "inquired",
     }
 
     def __init__(
@@ -1635,14 +1761,23 @@ class NarrativeFlowChunkingStrategy:
         except ValueError:
             raise
         except Exception as e:
-            log.error("narrative_flow_chunking_error", error=str(e), error_type=type(e).__name__)
-            raise ChunkingError(f"Narrative flow chunking failed: {e}", code="NARRATIVE_FLOW_CHUNKING_ERROR") from e
+            log.error(
+                "narrative_flow_chunking_error",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
+            raise ChunkingError(
+                f"Narrative flow chunking failed: {e}",
+                code="NARRATIVE_FLOW_CHUNKING_ERROR",
+            ) from e
 
     def supports_strategy_type(self, strategy_type: str) -> bool:
         """Check if this implementation supports the 'narrative_flow' strategy type."""
         return strategy_type.lower() == ChunkStrategyType.NARRATIVE_FLOW.value
 
-    def _identify_narrative_boundaries(self, text: str) -> list[tuple[int, int, str, dict[str, Any]]]:
+    def _identify_narrative_boundaries(
+        self, text: str
+    ) -> list[tuple[int, int, str, dict[str, Any]]]:
         """
         Identify narrative boundaries in text.
 
@@ -1685,12 +1820,19 @@ class NarrativeFlowChunkingStrategy:
                     para_text = text[current_pos:para_end].strip()
                     if para_text:
                         word_count = len(_WORD_PATTERN.findall(para_text))
-                        units.append((
-                            current_pos,
-                            para_end,
-                            "paragraph",
-                            {"word_count": word_count, "ends_with_period": para_text.rstrip().endswith((".", "!", "?", '"', "'"))},
-                        ))
+                        units.append(
+                            (
+                                current_pos,
+                                para_end,
+                                "paragraph",
+                                {
+                                    "word_count": word_count,
+                                    "ends_with_period": para_text.rstrip().endswith(
+                                        (".", "!", "?", '"', "'")
+                                    ),
+                                },
+                            )
+                        )
                     current_pos = para_match.end()
                     continue
 
@@ -1701,29 +1843,35 @@ class NarrativeFlowChunkingStrategy:
                 sent_text = text[current_pos:sent_end].strip()
                 if sent_text:
                     word_count = len(_WORD_PATTERN.findall(sent_text))
-                    units.append((
-                        current_pos,
-                        sent_end,
-                        "sentence",
-                        {"word_count": word_count},
-                    ))
+                    units.append(
+                        (
+                            current_pos,
+                            sent_end,
+                            "sentence",
+                            {"word_count": word_count},
+                        )
+                    )
                 current_pos = sent_end
             else:
                 # No more sentence boundaries - take remaining text
                 remaining = text[current_pos:].strip()
                 if remaining:
                     word_count = len(_WORD_PATTERN.findall(remaining))
-                    units.append((
-                        current_pos,
-                        text_len,
-                        "sentence",
-                        {"word_count": word_count},
-                    ))
+                    units.append(
+                        (
+                            current_pos,
+                            text_len,
+                            "sentence",
+                            {"word_count": word_count},
+                        )
+                    )
                 break
 
         return units
 
-    def _extract_dialogue_unit(self, text: str, start_pos: int) -> tuple[int, int, str, dict[str, Any]] | None:
+    def _extract_dialogue_unit(
+        self, text: str, start_pos: int
+    ) -> tuple[int, int, str, dict[str, Any]] | None:
         """
         Extract a complete dialogue unit starting at position.
 
@@ -1746,7 +1894,7 @@ class NarrativeFlowChunkingStrategy:
         # Find closing quote
         closing_pos = start_pos + 1
         while closing_pos < len(text):
-            if text[closing_pos] == quote_char and text[closing_pos - 1] != '\\':
+            if text[closing_pos] == quote_char and text[closing_pos - 1] != "\\":
                 break
             closing_pos += 1
 
@@ -1758,11 +1906,11 @@ class NarrativeFlowChunkingStrategy:
         tag_end = after_quote
 
         # Look for dialogue tag pattern
-        while tag_end < len(text) and text[tag_end] not in '.!?':
+        while tag_end < len(text) and text[tag_end] not in ".!?":
             tag_end += 1
 
         # Include end punctuation
-        if tag_end < len(text) and text[tag_end] in '.!?':
+        if tag_end < len(text) and text[tag_end] in ".!?":
             tag_end += 1
 
         # Check if next sentence is also dialogue (same exchange)
@@ -1776,12 +1924,18 @@ class NarrativeFlowChunkingStrategy:
             next_dialogue = self._extract_dialogue_unit(text, next_start)
             if next_dialogue:
                 # Merge both dialogues
-                word_count = len(_WORD_PATTERN.findall(text[start_pos:next_dialogue[1]]))
+                word_count = len(
+                    _WORD_PATTERN.findall(text[start_pos : next_dialogue[1]])
+                )
                 return (
                     start_pos,
                     next_dialogue[1],
                     "dialogue_exchange",
-                    {"word_count": word_count, "quote_char": quote_char, "exchange_length": 2},
+                    {
+                        "word_count": word_count,
+                        "quote_char": quote_char,
+                        "exchange_length": 2,
+                    },
                 )
 
         word_count = len(_WORD_PATTERN.findall(text[start_pos:tag_end]))
@@ -1839,15 +1993,17 @@ class NarrativeFlowChunkingStrategy:
                         chunk_end = current_units[-1][1]
                         chunk_content = text[chunk_start:chunk_end].strip()
 
-                        chunks.append(self._create_chunk(
-                            chunk_content,
-                            chunk_index,
-                            chunk_start,
-                            chunk_end,
-                            current_word_count,
-                            config,
-                            self._get_narrative_metadata(current_units),
-                        ))
+                        chunks.append(
+                            self._create_chunk(
+                                chunk_content,
+                                chunk_index,
+                                chunk_start,
+                                chunk_end,
+                                current_word_count,
+                                config,
+                                self._get_narrative_metadata(current_units),
+                            )
+                        )
                         chunk_index += 1
 
                         # Keep overlap units for next chunk
@@ -1856,7 +2012,9 @@ class NarrativeFlowChunkingStrategy:
                             config.overlap,
                         )
                         current_units = overlap_to_keep
-                        current_word_count = sum(u[3].get("word_count", 0) for u in overlap_to_keep)
+                        current_word_count = sum(
+                            u[3].get("word_count", 0) for u in overlap_to_keep
+                        )
 
             current_units.append((start, end, unit_type, metadata))
             current_word_count += unit_word_count
@@ -1868,15 +2026,17 @@ class NarrativeFlowChunkingStrategy:
             chunk_content = text[chunk_start:chunk_end].strip()
 
             if chunk_content and current_word_count >= config.min_chunk_size:
-                chunks.append(self._create_chunk(
-                    chunk_content,
-                    chunk_index,
-                    chunk_start,
-                    chunk_end,
-                    current_word_count,
-                    config,
-                    self._get_narrative_metadata(current_units),
-                ))
+                chunks.append(
+                    self._create_chunk(
+                        chunk_content,
+                        chunk_index,
+                        chunk_start,
+                        chunk_end,
+                        current_word_count,
+                        config,
+                        self._get_narrative_metadata(current_units),
+                    )
+                )
 
         return chunks
 
@@ -1963,7 +2123,9 @@ class NarrativeFlowChunkingStrategy:
             metadata.update(narrative_metadata)
         return Chunk(text=content, index=index, metadata=metadata)
 
-    async def _fallback_sentence(self, text: str, config: ChunkingStrategy) -> list[Chunk]:
+    async def _fallback_sentence(
+        self, text: str, config: ChunkingStrategy
+    ) -> list[Chunk]:
         """Fallback to sentence chunking if narrative flow chunking fails."""
         sentence_strategy = SentenceChunkingStrategy(
             default_config=ChunkingStrategy(
@@ -2157,7 +2319,9 @@ class AutoChunkingStrategy:
             raise
         except Exception as e:
             log.error("auto_chunking_error", error=str(e), error_type=type(e).__name__)
-            raise ChunkingError(f"Auto chunking failed: {e}", code="AUTO_CHUNKING_ERROR") from e
+            raise ChunkingError(
+                f"Auto chunking failed: {e}", code="AUTO_CHUNKING_ERROR"
+            ) from e
 
     def supports_strategy_type(self, strategy_type: str) -> bool:
         """Check if this implementation supports the 'auto' strategy type."""
@@ -2204,7 +2368,10 @@ class AutoChunkingStrategy:
             strategy = self.CONTENT_TYPE_STRATEGY_MAP.get(content_type)
             if strategy:
                 # If semantic is selected but no embedding service, fall back to paragraph
-                if strategy == ChunkStrategyType.SEMANTIC and self._embedding_service is None:
+                if (
+                    strategy == ChunkStrategyType.SEMANTIC
+                    and self._embedding_service is None
+                ):
                     return ChunkStrategyType.PARAGRAPH
                 return strategy
 
@@ -2314,7 +2481,9 @@ class AutoChunkingStrategy:
             return await delegate.chunk(text, target_config)  # type: ignore[no-any-return]
 
         # Should never reach here
-        raise ChunkingError(f"Unknown strategy type: {strategy_type}", code="UNKNOWN_STRATEGY")
+        raise ChunkingError(
+            f"Unknown strategy type: {strategy_type}", code="UNKNOWN_STRATEGY"
+        )
 
     def _get_fixed_strategy(self) -> Any:
         """Get or create fixed chunking delegate."""

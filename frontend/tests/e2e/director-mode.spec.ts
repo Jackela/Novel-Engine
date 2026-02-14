@@ -1,11 +1,13 @@
 import { test, expect } from './fixtures';
 import { checkA11y } from './utils/a11y';
+import { safeGoto } from './utils/navigation';
 
 test.describe('Director Mode Workflow', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to a story editor page with Director Mode features
     // This test assumes a story exists or will create one via the UI
-    await page.goto('/stories', { waitUntil: 'domcontentloaded' });
+    await safeGoto(page, '/stories', { timeout: 45000 });
+    await expect(page.locator('body')).toBeAttached();
   });
 
   test('@director-mode Create Plotline and verify in UI', async ({ page }) => {
@@ -178,7 +180,7 @@ test.describe('Director Mode Workflow', () => {
     await checkA11y(page);
 
     // 1. Navigate to a story/chapter
-    await page.goto('/stories', { waitUntil: 'domcontentloaded' });
+    await safeGoto(page, '/stories', { timeout: 45000 });
     await expect(page.locator('body')).toBeAttached();
 
     // 2. Verify Director Mode features are accessible

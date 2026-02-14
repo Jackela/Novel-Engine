@@ -178,7 +178,9 @@ class SocialGraphService:
         num_characters = len(character_metrics)
         total_relationships = len(relationships)
         # Maximum possible edges in undirected graph: n*(n-1)/2
-        max_possible = (num_characters * (num_characters - 1)) / 2 if num_characters > 1 else 0
+        max_possible = (
+            (num_characters * (num_characters - 1)) / 2 if num_characters > 1 else 0
+        )
         density = total_relationships / max_possible if max_possible > 0 else 0.0
 
         return SocialAnalysisResult(
@@ -188,10 +190,14 @@ class SocialGraphService:
             most_loved=most_loved,
             total_relationships=total_relationships,
             total_characters=num_characters,
-            network_density=min(density, 1.0),  # Cap at 1.0 for directed edge overcounting
+            network_density=min(
+                density, 1.0
+            ),  # Cap at 1.0 for directed edge overcounting
         )
 
-    async def get_character_centrality(self, character_id: str) -> Optional[CharacterCentrality]:
+    async def get_character_centrality(
+        self, character_id: str
+    ) -> Optional[CharacterCentrality]:
         """Get centrality metrics for a specific character.
 
         Args:

@@ -10,21 +10,24 @@ from __future__ import annotations
 
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
+from urllib.parse import urlparse
 
 import pytest
 
 from src.contexts.knowledge.application.ports.i_llm_client import (
+    LLMError,
     LLMRequest,
     LLMResponse,
-    LLMError,
 )
 from src.contexts.knowledge.infrastructure.adapters.openai_llm_client import (
-    OpenAILLMClient,
+    DEFAULT_MAX_TOKENS,
     DEFAULT_MODEL,
     DEFAULT_TEMPERATURE,
-    DEFAULT_MAX_TOKENS,
     OPENAI_MODELS,
+    OpenAILLMClient,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -95,7 +98,7 @@ class TestOpenAILLMClientInit:
         assert client._api_key == mock_api_key
         assert client._model == DEFAULT_MODEL
         assert client._timeout == 60
-        assert "api.openai.com" in client._base_url
+        assert urlparse(client._base_url).hostname == "api.openai.com"
 
     def test_init_with_custom_model(self, mock_api_key: str) -> None:
         """Test initialization with custom model."""
@@ -515,7 +518,7 @@ class TestGenerateStream:
             'data: {"choices":[{"delta":{"role":"assistant"}}],"index":0}',
             'data: {"choices":[{"delta":{"content":"Hello"}}],"index":0}',
             'data: {"choices":[{"delta":{"content":" world"}}],"index":0}',
-            'data: [DONE]',
+            "data: [DONE]",
         ]
 
         mock_response = MagicMock()
@@ -588,7 +591,9 @@ class TestGenerateStream:
             assert chunks == ["Response"]
 
     @pytest.mark.asyncio
-    async def test_generate_stream_401_error(self, openai_client: OpenAILLMClient) -> None:
+    async def test_generate_stream_401_error(
+        self, openai_client: OpenAILLMClient
+    ) -> None:
         """Test streaming with 401 authentication error."""
         request = LLMRequest(system_prompt="", user_prompt="Test")
 
@@ -618,7 +623,9 @@ class TestGenerateStream:
                     chunks.append(chunk)
 
     @pytest.mark.asyncio
-    async def test_generate_stream_network_error(self, openai_client: OpenAILLMClient) -> None:
+    async def test_generate_stream_network_error(
+        self, openai_client: OpenAILLMClient
+    ) -> None:
         """Test streaming with network error."""
         request = LLMRequest(system_prompt="", user_prompt="Test")
 
@@ -653,7 +660,7 @@ class TestGenerateStream:
 
         stream_events = [
             'data: {"choices":[{"delta":{"content":"Valid"}}],"index":0}',
-            'data: {invalid json here',  # Malformed JSON - should be skipped
+            "data: {invalid json here",  # Malformed JSON - should be skipped
             'data: {"choices":[{"delta":{"content":" text"}}],"index":0}',
         ]
 
@@ -709,5 +716,6 @@ class TestOpenAILLMClientIntegration:
 
         # Verify generate method has correct signature
         import inspect
+
         sig = inspect.signature(openai_client.generate)
-        assert 'request' in sig.parameters
+        assert "request" in sig.parameters

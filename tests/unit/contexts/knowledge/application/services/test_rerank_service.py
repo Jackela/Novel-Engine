@@ -6,26 +6,31 @@ Warzone 4: AI Brain - BRAIN-010A, BRAIN-010B
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from src.contexts.knowledge.application.services.rerank_service import (
-    RerankService,
-    RerankConfig,
-    RerankServiceResult,
-    MockReranker,
-    FailingReranker,
-    DEFAULT_TOP_K,
-)
+import pytest
+
 from src.contexts.knowledge.application.ports.i_reranker import (
     IReranker,
+    RerankDocument,
     RerankerError,
     RerankOutput,
     RerankResult,
-    RerankDocument,
 )
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    RetrievedChunk,
+)
+from src.contexts.knowledge.application.services.rerank_service import (
+    DEFAULT_TOP_K,
+    FailingReranker,
+    MockReranker,
+    RerankConfig,
+    RerankService,
+    RerankServiceResult,
+)
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -264,9 +269,7 @@ class TestRerankService:
         assert len(result.chunks) == 2
 
     @pytest.mark.asyncio
-    async def test_rerank_fallback_on_error(
-        self, sample_chunks: list[RetrievedChunk]
-    ):
+    async def test_rerank_fallback_on_error(self, sample_chunks: list[RetrievedChunk]):
         """Test that fallback returns original order on error."""
         failing_reranker = FailingReranker("API error")
         service = RerankService(

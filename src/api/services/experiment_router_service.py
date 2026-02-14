@@ -16,17 +16,17 @@ import math
 from typing import Any, Optional
 
 from src.contexts.knowledge.application.ports.i_experiment_repository import (
-    IExperimentRepository,
     ExperimentNotFoundError,
+    IExperimentRepository,
 )
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
     IPromptRepository,
     PromptNotFoundError,
 )
 from src.contexts.knowledge.domain.models.prompt_experiment import (
-    PromptExperiment,
-    ExperimentStatus,
     ExperimentMetric,
+    ExperimentStatus,
+    PromptExperiment,
 )
 
 logger = logging.getLogger(__name__)
@@ -506,9 +506,7 @@ class ExperimentRouterService:
         # Sanitize infinity values for JSON serialization
         return _sanitize_dict_for_json(results)
 
-    def _calculate_significance(
-        self, experiment: PromptExperiment
-    ) -> dict[str, Any]:
+    def _calculate_significance(self, experiment: PromptExperiment) -> dict[str, Any]:
         """
         Calculate statistical significance for experiment results.
 
@@ -525,8 +523,7 @@ class ExperimentRouterService:
 
         # Check minimum sample size
         meets_min_sample = (
-            n1 >= experiment.min_sample_size
-            and n2 >= experiment.min_sample_size
+            n1 >= experiment.min_sample_size and n2 >= experiment.min_sample_size
         )
 
         # Calculate two-proportion z-test
@@ -566,7 +563,9 @@ class ExperimentRouterService:
             },
             "confidence_level": f"{experiment.confidence_threshold * 100:.0f}%",
             "can_declare_winner": can_declare_winner,
-            "recommendation": self._get_recommendation(experiment, z_test, meets_min_sample),
+            "recommendation": self._get_recommendation(
+                experiment, z_test, meets_min_sample
+            ),
         }
 
     def _get_recommendation(
@@ -630,12 +629,24 @@ class ExperimentRouterService:
             "prompt_a_id": experiment.prompt_a_id,
             "prompt_b_id": experiment.prompt_b_id,
             "traffic_split": experiment.traffic_split,
-            "winner": "A" if experiment.winner == experiment.prompt_a_id else "B"
-            if experiment.winner == experiment.prompt_b_id else experiment.winner,
-            "total_runs": experiment.metrics_a.total_runs + experiment.metrics_b.total_runs,
+            "winner": (
+                "A"
+                if experiment.winner == experiment.prompt_a_id
+                else (
+                    "B"
+                    if experiment.winner == experiment.prompt_b_id
+                    else experiment.winner
+                )
+            ),
+            "total_runs": experiment.metrics_a.total_runs
+            + experiment.metrics_b.total_runs,
             "created_at": experiment.created_at.isoformat(),
-            "started_at": experiment.started_at.isoformat() if experiment.started_at else None,
-            "ended_at": experiment.ended_at.isoformat() if experiment.ended_at else None,
+            "started_at": (
+                experiment.started_at.isoformat() if experiment.started_at else None
+            ),
+            "ended_at": (
+                experiment.ended_at.isoformat() if experiment.ended_at else None
+            ),
         }
 
 

@@ -110,14 +110,14 @@ async def get_character_memories(
     # Apply filters
     if tag:
         memories_data = [
-            m for m in memories_data
+            m
+            for m in memories_data
             if tag.lower() in [t.lower() for t in m.get("tags", [])]
         ]
 
     if min_importance is not None:
         memories_data = [
-            m for m in memories_data
-            if m.get("importance", 0) >= min_importance
+            m for m in memories_data if m.get("importance", 0) >= min_importance
         ]
 
     # Convert to schema

@@ -17,12 +17,12 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import structlog
 
-from ...application.ports.i_llm_client import ILLMClient, LLMRequest, LLMError
+from ...application.ports.i_llm_client import ILLMClient, LLMError, LLMRequest
 from ..services.knowledge_ingestion_service import RetrievedChunk
 
 if TYPE_CHECKING:
@@ -194,7 +194,6 @@ class HopResult:
         """Get number of chunks retrieved in this hop."""
         return len(self.chunks)
 
-
     @property
     def succeeded(self) -> bool:
         """Check if hop completed successfully."""
@@ -255,7 +254,7 @@ class MultiHopResult:
             Original Query: Who killed the king?
               Step 0: Query='Who killed the king?' (original) -> 3 chunks...
               Step 1: Query='What was their motive?' (followup) -> 2 chunks...
-            """
+        """
         lines = [
             "Multi-Hop Retrieval Explanation:",
             f"Original Query: {self.original_query}",
@@ -404,10 +403,19 @@ class QueryDecomposer:
         """
         # Simple heuristic: multi-part queries or specific patterns
         complex_patterns = [
-            " and ", " but ", " or ",  # Conjunctions
-            " who ", " what ", " where ", " when ", " why ", " how ",  # W-words (multiple)
-            " then ", " after ",  # Sequential
-            " because ", " since ",  # Causal
+            " and ",
+            " but ",
+            " or ",  # Conjunctions
+            " who ",
+            " what ",
+            " where ",
+            " when ",
+            " why ",
+            " how ",  # W-words (multiple)
+            " then ",
+            " after ",  # Sequential
+            " because ",
+            " since ",  # Causal
         ]
 
         query_lower = query.lower()
@@ -499,7 +507,7 @@ Return ONLY a valid JSON array of strings, like this:
             # Remove common prefixes
             for prefix in ['"-', "* ", "• ", "- ", "1. ", "2. ", "3. "]:
                 if line.startswith(prefix):
-                    line = line[len(prefix):].strip('"').strip()
+                    line = line[len(prefix) :].strip('"').strip()
                     break
             if line and len(line) > 2:
                 result.append(line)
@@ -662,7 +670,7 @@ class MultiHopRetriever:
 
         previous_hop_chunks: list[RetrievedChunk] = []
 
-        for hop_num, sub_query in enumerate(sub_queries[:multi_hop_config.max_hops]):
+        for hop_num, sub_query in enumerate(sub_queries[: multi_hop_config.max_hops]):
             hop_start = time.time()
 
             # Determine query type
@@ -695,8 +703,7 @@ class MultiHopRetriever:
 
                 # Deduplicate chunks
                 unique_chunks = [
-                    c for c in hop_result.chunks
-                    if c.chunk_id not in seen_chunk_ids
+                    c for c in hop_result.chunks if c.chunk_id not in seen_chunk_ids
                 ]
                 for c in unique_chunks:
                     seen_chunk_ids.add(c.chunk_id)
@@ -715,7 +722,11 @@ class MultiHopRetriever:
                     chunks_found=len(unique_chunks),
                     top_sources=tuple(top_sources),
                     latency_ms=hop_latency,
-                    context_summary=context_from_previous[:100] + "..." if context_from_previous and len(context_from_previous) > 100 else context_from_previous,
+                    context_summary=(
+                        context_from_previous[:100] + "..."
+                        if context_from_previous and len(context_from_previous) > 100
+                        else context_from_previous
+                    ),
                 )
                 reasoning_steps.append(reasoning_step)
 
@@ -1046,7 +1057,7 @@ class MultiHopRetriever:
             return []
 
         sources: set[str] = set()
-        for chunk in chunks[:limit * 2]:  # Check more chunks to find unique sources
+        for chunk in chunks[: limit * 2]:  # Check more chunks to find unique sources
             if chunk.source_id:
                 source_key = f"{chunk.source_type}:{chunk.source_id}"
                 sources.add(source_key)

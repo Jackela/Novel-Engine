@@ -72,7 +72,9 @@ class FastTestPyramidMonitor:
                 content = f.read()
 
             # Find test functions
-            test_pattern = re.compile(r"^    def (test_\w+)", re.MULTILINE)
+            test_pattern = re.compile(
+                r"^(?P<indent>\s*)def (?P<name>test_\w+)", re.MULTILINE
+            )
             class_pattern = re.compile(r"^class (Test\w+)", re.MULTILINE)
 
             lines = content.split("\n")
@@ -82,7 +84,9 @@ class FastTestPyramidMonitor:
             for line in lines:
                 # Match: pytestmark = pytest.mark.unit (or [pytest.mark.unit, ...])
                 if "pytestmark" in line and "pytest.mark." in line:
-                    marker_match = re.search(r"pytest\.mark\.(unit|integration|e2e)", line)
+                    marker_match = re.search(
+                        r"pytest\.mark\.(unit|integration|e2e)", line
+                    )
                     if marker_match:
                         module_markers.add(marker_match.group(1))
                 # Stop looking after class definitions start
@@ -122,14 +126,20 @@ class FastTestPyramidMonitor:
                 # Check for test function
                 test_match = test_pattern.match(line)
                 if test_match:
-                    test_name = test_match.group(1)
+                    indent = test_match.group("indent")
+                    test_name = test_match.group("name")
+                    if len(indent) == 0:
+                        current_class = None
+                        class_markers = set()
                     test_id = f"{file_path.relative_to(self.project_root)}::{current_class or ''}{test_name}"
 
                     # Add to all tests
                     self.all_tests.add(test_id)
 
                     # Combine module, class and function markers
-                    effective_markers = module_markers | class_markers | function_markers
+                    effective_markers = module_markers | function_markers
+                    if current_class:
+                        effective_markers = effective_markers | class_markers
 
                     # Add to marker sets
                     if effective_markers:

@@ -112,7 +112,6 @@ class AgentLifecycleManager:
         # Performance metrics
         self.total_validations = 0
 
-
         logger.info(
             f"AgentLifecycleManager initialized "
             f"(Iron Laws: {'enabled' if self.validation_enabled else 'disabled'})"
@@ -652,7 +651,7 @@ class AgentLifecycleManager:
             character_id=getattr(proposed_action, "character_id", "unknown"),
             action_type=getattr(proposed_action, "action_type", "unknown"),
             target=getattr(proposed_action, "target", None),
-            parameters=parameters if parameters is not None else {},           
+            parameters=parameters if parameters is not None else {},
             validation_result=validation_result,
             validation_details={},
             repairs_applied=[],
@@ -794,6 +793,3 @@ class AgentLifecycleManager:
         except Exception as e:
             logger.error(f"Error generating violation summary: {str(e)}")
             return {"error": str(e)}
-
-
-

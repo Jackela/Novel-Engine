@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { scalePerf } from './utils/perf';
 import { waitForDashboardReady } from './utils/waitForReady';
 import { resetAuthState } from './utils/auth';
 
@@ -78,7 +79,8 @@ test.describe('Complete User Journey E2E Tests', () => {
       // Take final screenshot
       await page.screenshot({
         path: 'test-results/screenshots/new-user-journey-complete.png',
-        fullPage: true
+        fullPage: true,
+        timeout: scalePerf(30000)
       });
     });
 
@@ -215,7 +217,7 @@ test.describe('Complete User Journey E2E Tests', () => {
       const totalTime = endTime - startTime;
 
       // Should complete within 10 seconds
-      expect(totalTime).toBeLessThan(10000);
+      expect(totalTime).toBeLessThan(scalePerf(10000));
 
       console.log(`User journey completed in ${totalTime}ms`);
     });

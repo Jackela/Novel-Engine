@@ -15,12 +15,13 @@ from typing import List, Optional
 
 from structlog import get_logger
 
-from src.contexts.knowledge.application.ports.i_embedding_service import IEmbeddingService
-from src.contexts.knowledge.application.services.embedding_cache_service import (
-    EmbeddingCacheService,
-    CacheStats,
+from src.contexts.knowledge.application.ports.i_embedding_service import (
+    IEmbeddingService,
 )
-
+from src.contexts.knowledge.application.services.embedding_cache_service import (
+    CacheStats,
+    EmbeddingCacheService,
+)
 
 logger = get_logger()
 
@@ -145,9 +146,7 @@ class CachedEmbeddingService(IEmbeddingService):
         # Fetch misses from delegate
         miss_embeddings: List[List[float]] = []
         if miss_texts:
-            miss_embeddings = await self._delegate.embed_batch(
-                miss_texts, batch_size
-            )
+            miss_embeddings = await self._delegate.embed_batch(miss_texts, batch_size)
 
             # Cache the results
             self._cache.put_batch(

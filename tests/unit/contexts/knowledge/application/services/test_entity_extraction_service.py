@@ -9,37 +9,40 @@ named entities from narrative text (Characters, Locations, Items, Events, Organi
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock
 
-from src.contexts.knowledge.application.services.entity_extraction_service import (
-    EntityExtractionService,
-    ExtractionConfig,
-    EntityExtractionError,
-    DEFAULT_TEMPERATURE,
-    DEFAULT_MAX_TOKENS,
-)
+import pytest
+
 from src.contexts.knowledge.application.ports.i_llm_client import (
     ILLMClient,
+    LLMError,
     LLMRequest,
     LLMResponse,
-    LLMError,
+)
+from src.contexts.knowledge.application.services.entity_extraction_service import (
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_TEMPERATURE,
+    EntityExtractionError,
+    EntityExtractionService,
+    ExtractionConfig,
 )
 from src.contexts.knowledge.domain.models.entity import (
+    DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD,
+    DEFAULT_MAX_ENTITIES,
+    PRONOUNS,
+    EntityMention,
     EntityType,
     ExtractedEntity,
-    EntityMention,
     ExtractionResult,
     ExtractionResultWithRelationships,
     Relationship,
     RelationshipType,
-    DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD,
-    DEFAULT_MAX_ENTITIES,
-    PRONOUNS,
 )
 
-
 # Sample LLM response for entity extraction
+
+pytestmark = pytest.mark.unit
+
 SAMPLE_EXTRACTION_JSON = """{
   "entities": [
     {
@@ -159,7 +162,7 @@ def markdown_json_llm_client():
 
     async def mock_generate(request: LLMRequest) -> LLMResponse:
         return LLMResponse(
-            text=f'Here is the extracted data:\n```json\n{SAMPLE_EXTRACTION_JSON}\n```',
+            text=f"Here is the extracted data:\n```json\n{SAMPLE_EXTRACTION_JSON}\n```",
             model="test-model",
         )
 
@@ -484,7 +487,9 @@ class TestEntityExtractionService:
         locations = result.get_entities_by_type(EntityType.LOCATION)
 
         assert len(locations) >= 1
-        assert any("tavern" in e.name.lower() or "tavern" in e.aliases for e in locations)
+        assert any(
+            "tavern" in e.name.lower() or "tavern" in e.aliases for e in locations
+        )
 
     @pytest.mark.asyncio
     async def test_extract_items(self, entity_extraction_service):
@@ -604,9 +609,7 @@ class TestEntityExtractionService:
         result = await entity_extraction_service.extract(text)
 
         # Find the tavern entity and check aliases
-        tavern = next(
-            (e for e in result.entities if "tavern" in e.name.lower()), None
-        )
+        tavern = next((e for e in result.entities if "tavern" in e.name.lower()), None)
         assert tavern is not None
         assert tavern.has_alias("the tavern") or tavern.has_alias("the inn")
 
@@ -1052,9 +1055,7 @@ class TestExtractionResultWithRelationships:
         assert len(alice_bob_rels) == 2
 
         # Find specific type
-        killed_rel = result.find_relationship(
-            "Alice", "Bob", RelationshipType.KILLED
-        )
+        killed_rel = result.find_relationship("Alice", "Bob", RelationshipType.KILLED)
         assert len(killed_rel) == 1
 
         # Find non-existent relationships
@@ -1095,9 +1096,7 @@ class TestRelationshipExtraction:
             assert rel.strength >= 0.95
 
     @pytest.mark.asyncio
-    async def test_extract_with_relationships_max_limit(
-        self, relationship_llm_client
-    ):
+    async def test_extract_with_relationships_max_limit(self, relationship_llm_client):
         """Test that max_relationships limit is respected."""
         service = EntityExtractionService(
             llm_client=relationship_llm_client,
@@ -1122,7 +1121,7 @@ class TestRelationshipExtraction:
                     text='{"relationships": ['
                     '{"source": "Alice", "target": "UnknownPerson", '
                     '"type": "knows", "strength": 1.0}'
-                    ']}',
+                    "]}",
                     model="test-model",
                     tokens_used=50,
                 )
@@ -1232,9 +1231,7 @@ class TestRelationshipExtractionIntegration:
     """Integration tests for relationship extraction."""
 
     @pytest.mark.asyncio
-    async def test_full_relationship_extraction_pipeline(
-        self, relationship_llm_client
-    ):
+    async def test_full_relationship_extraction_pipeline(self, relationship_llm_client):
         """Test the complete relationship extraction pipeline."""
         service = EntityExtractionService(llm_client=relationship_llm_client)
         text = """
@@ -1286,8 +1283,16 @@ class TestBidirectionalRelationshipNormalization:
 
         # Should add Bob -> Alice relationship
         assert normalized.relationship_count == 2
-        alice_to_bob = [r for r in normalized.relationships if r.source == "Alice" and r.target == "Bob"]
-        bob_to_alice = [r for r in normalized.relationships if r.source == "Bob" and r.target == "Alice"]
+        alice_to_bob = [
+            r
+            for r in normalized.relationships
+            if r.source == "Alice" and r.target == "Bob"
+        ]
+        bob_to_alice = [
+            r
+            for r in normalized.relationships
+            if r.source == "Bob" and r.target == "Alice"
+        ]
         assert len(alice_to_bob) == 1
         assert len(bob_to_alice) == 1
         assert bob_to_alice[0].relationship_type == RelationshipType.KNOWS
@@ -1311,7 +1316,11 @@ class TestBidirectionalRelationshipNormalization:
         normalized = result.normalize_bidirectional()
 
         assert normalized.relationship_count == 2
-        b_to_a = [r for r in normalized.relationships if r.source == "Kingdom B" and r.target == "Kingdom A"]
+        b_to_a = [
+            r
+            for r in normalized.relationships
+            if r.source == "Kingdom B" and r.target == "Kingdom A"
+        ]
         assert len(b_to_a) == 1
         assert b_to_a[0].relationship_type == RelationshipType.ALLIED_WITH
 
@@ -1337,7 +1346,11 @@ class TestBidirectionalRelationshipNormalization:
 
         # Should add inverse with CHILD_OF type
         assert normalized.relationship_count == 2
-        child_of_rel = [r for r in normalized.relationships if r.source == "Mordred" and r.target == "Arthur"]
+        child_of_rel = [
+            r
+            for r in normalized.relationships
+            if r.source == "Mordred" and r.target == "Arthur"
+        ]
         assert len(child_of_rel) == 1
         assert child_of_rel[0].relationship_type == RelationshipType.CHILD_OF
 
@@ -1388,7 +1401,11 @@ class TestBidirectionalRelationshipNormalization:
 
         # Should add Mordred -> Arthur with CHILD_OF type
         assert normalized.relationship_count == 2
-        child_of_rel = [r for r in normalized.relationships if r.source == "Mordred" and r.target == "Arthur"]
+        child_of_rel = [
+            r
+            for r in normalized.relationships
+            if r.source == "Mordred" and r.target == "Arthur"
+        ]
         assert len(child_of_rel) == 1
         assert child_of_rel[0].relationship_type == RelationshipType.CHILD_OF
 
@@ -1407,7 +1424,9 @@ class TestBidirectionalRelationshipNormalization:
 
     def test_is_naturally_bidirectional(self):
         """Test is_naturally_bidirectional function."""
-        from src.contexts.knowledge.domain.models.entity import is_naturally_bidirectional
+        from src.contexts.knowledge.domain.models.entity import (
+            is_naturally_bidirectional,
+        )
 
         assert is_naturally_bidirectional(RelationshipType.KNOWS) is True
         assert is_naturally_bidirectional(RelationshipType.ALLIED_WITH) is True

@@ -32,6 +32,8 @@ from src.contexts.knowledge.domain.models.model_registry import (
     TaskType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestLLMProvider:
     """Tests for LLMProvider enum."""
@@ -275,7 +277,9 @@ class TestModelRegistry:
                 def get_model_for_task(self, task_type: TaskType) -> TaskModelConfig:
                     config = self._task_configs.get(task_type)
                     if config is None:
-                        raise ValueError(f"No model configuration for task type: {task_type}")
+                        raise ValueError(
+                            f"No model configuration for task type: {task_type}"
+                        )
                     return config
 
             mock = MockRegistry()
@@ -471,7 +475,12 @@ class TestModelRegistryConfigFile:
 
     def test_config_with_aliases(self) -> None:
         """Test configuration with aliases."""
-        data = {"aliases": {"gpt4": "openai:gpt-4o", "claude": "anthropic:claude-3-opus-20240229"}}
+        data = {
+            "aliases": {
+                "gpt4": "openai:gpt-4o",
+                "claude": "anthropic:claude-3-opus-20240229",
+            }
+        }
         config = ModelRegistryConfigFile(**data)
 
         assert len(config.aliases) == 2
@@ -557,7 +566,10 @@ class TestModelRegistryFileLoading:
 class TestModelRegistryEnvLoading:
     """Tests for loading aliases from environment variables."""
 
-    @patch.dict("os.environ", {"MODEL_ALIASES": "gpt4=openai:gpt-4o;claude=anthropic:claude-3-opus-20240229"})
+    @patch.dict(
+        "os.environ",
+        {"MODEL_ALIASES": "gpt4=openai:gpt-4o;claude=anthropic:claude-3-opus-20240229"},
+    )
     def test_load_aliases_from_env(self) -> None:
         """Test loading aliases from MODEL_ALIASES env var."""
         registry = ModelRegistry()
@@ -610,9 +622,7 @@ class TestModelRegistryFactory:
             cost_per_1m_output_tokens=1.0,
         )
 
-        config = ModelRegistryConfig(
-            custom_models={LLMProvider.OPENAI: [custom_model]}
-        )
+        config = ModelRegistryConfig(custom_models={LLMProvider.OPENAI: [custom_model]})
         registry = create_model_registry(config)
 
         model = registry.get_model(LLMProvider.OPENAI, "factory-test")

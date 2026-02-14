@@ -193,8 +193,7 @@ class SecurityDashboard:
         """Initialize dashboard-specific database tables"""
         async with aiosqlite.connect(self.database_path) as conn:
             # Security incidents table
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS security_incidents (
                     id TEXT PRIMARY KEY,
                     title TEXT NOT NULL,
@@ -209,12 +208,10 @@ class SecurityDashboard:
                     resolution_notes TEXT,
                     resolved_at TIMESTAMP
                 )
-            """
-            )
+            """)
 
             # Security metrics snapshots
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS security_metrics_snapshots (
                     id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -222,12 +219,10 @@ class SecurityDashboard:
                     report_type TEXT NOT NULL, -- 'hourly', 'daily', 'weekly'
                     compliance_data TEXT -- JSON object
                 )
-            """
-            )
+            """)
 
             # Compliance reports
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS compliance_reports (
                     id TEXT PRIMARY KEY,
                     framework TEXT NOT NULL,
@@ -239,8 +234,7 @@ class SecurityDashboard:
                     recommendations TEXT NOT NULL, -- JSON array
                     generated_by TEXT NOT NULL
                 )
-            """
-            )
+            """)
 
             await conn.commit()
             logger.info("📊 Security Dashboard database schema initialized")

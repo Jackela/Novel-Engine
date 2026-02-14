@@ -14,6 +14,8 @@ from unittest.mock import Mock
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from src.agents.persona_core import AgentIdentity, PersonaCore
@@ -68,16 +70,14 @@ class TestPersonaCore:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create character sheet
             character_sheet = Path(temp_dir) / "character_sheet.md"
-            character_sheet.write_text(
-                """
+            character_sheet.write_text("""
 # Test Character
 
 ## Basic Information
 - **Name**: Test Character
 - **Faction**: Test Faction
 - **Role**: Test Role
-"""
-            )
+""")
             yield temp_dir
 
     @pytest.fixture

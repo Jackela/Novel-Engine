@@ -36,6 +36,9 @@ from src.contexts.character.domain.value_objects.character_stats import CoreAbil
 # Core platform imports
 
 # Character ORM import with fallback
+
+pytestmark = pytest.mark.integration
+
 try:
     from src.contexts.character.infrastructure.persistence.character_models import (
         CharacterORM,

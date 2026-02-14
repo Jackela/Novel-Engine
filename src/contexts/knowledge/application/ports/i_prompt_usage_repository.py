@@ -22,8 +22,6 @@ from ...domain.models.prompt_usage import PromptUsage, PromptUsageStats
 class PromptUsageRepositoryError(Exception):
     """Base exception for prompt usage repository errors."""
 
-    pass
-
 
 class IPromptUsageRepository(ABC):
     """
@@ -67,7 +65,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If record operation fails
         """
-        pass
 
     @abstractmethod
     async def record_batch(self, usages: list[PromptUsage]) -> list[str]:
@@ -83,7 +80,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If batch record operation fails
         """
-        pass
 
     @abstractmethod
     async def get_stats(
@@ -108,7 +104,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If stats retrieval fails
         """
-        pass
 
     @abstractmethod
     async def get_usage_by_id(self, usage_id: str) -> Optional[PromptUsage]:
@@ -124,7 +119,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
     async def list_by_prompt(
@@ -149,7 +143,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If listing operation fails
         """
-        pass
 
     @abstractmethod
     async def list_by_workspace(
@@ -174,7 +167,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If listing operation fails
         """
-        pass
 
     @abstractmethod
     async def list_by_user(
@@ -199,7 +191,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If listing operation fails
         """
-        pass
 
     @abstractmethod
     async def list_by_date_range(
@@ -226,7 +217,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If listing operation fails
         """
-        pass
 
     @abstractmethod
     async def delete_old_usages(
@@ -245,7 +235,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If deletion fails
         """
-        pass
 
     @abstractmethod
     async def count(
@@ -266,7 +255,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If count operation fails
         """
-        pass
 
     @abstractmethod
     async def update_rating(self, usage_id: str, rating: float) -> bool:
@@ -283,7 +271,6 @@ class IPromptUsageRepository(ABC):
         Raises:
             PromptUsageRepositoryError: If update operation fails
         """
-        pass
 
 
 __all__ = [

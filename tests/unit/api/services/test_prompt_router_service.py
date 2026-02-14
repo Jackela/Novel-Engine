@@ -7,9 +7,11 @@ Unit tests for the prompt router service layer.
 
 from __future__ import annotations
 
-import pytest
 from datetime import datetime, timezone
 
+import pytest
+
+from src.api.services.prompt_router_service import PromptRouterService
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
     PromptNotFoundError,
     PromptRepositoryError,
@@ -21,7 +23,8 @@ from src.contexts.knowledge.domain.models.prompt_template import (
     VariableDefinition,
     VariableType,
 )
-from src.api.services.prompt_router_service import PromptRouterService
+
+pytestmark = pytest.mark.unit
 
 
 class MockPromptRepository:
@@ -55,9 +58,7 @@ class MockPromptRepository:
         limit: int = 100,
         offset: int = 0,
     ) -> list[PromptTemplate]:
-        results = [
-            t for t in self._templates.values() if t.id not in self._deleted_ids
-        ]
+        results = [t for t in self._templates.values() if t.id not in self._deleted_ids]
         if tags:
             results = [t for t in results if all(tag in t.tags for tag in tags)]
         return results[offset : offset + limit]
@@ -88,9 +89,7 @@ class MockPromptRepository:
         return results[:limit]
 
     async def count(self) -> int:
-        return sum(
-            1 for t in self._templates.values() if t.id not in self._deleted_ids
-        )
+        return sum(1 for t in self._templates.values() if t.id not in self._deleted_ids)
 
     async def search(self, query: str, limit: int = 20) -> list[PromptTemplate]:
         query_lower = query.lower()
@@ -114,12 +113,8 @@ def mock_repo() -> MockPromptRepository:
         description="A test prompt",
         tags=("test", "greeting"),
         variables=(
-            VariableDefinition(
-                name="name", type=VariableType.STRING, required=True
-            ),
-            VariableDefinition(
-                name="age", type=VariableType.INTEGER, required=True
-            ),
+            VariableDefinition(name="name", type=VariableType.STRING, required=True),
+            VariableDefinition(name="age", type=VariableType.INTEGER, required=True),
         ),
         model_config=ModelConfig(provider="openai", model_name="gpt-4"),
     )
@@ -130,12 +125,8 @@ def mock_repo() -> MockPromptRepository:
         description="Generate stories based on genre and topic",
         tags=("creative", "story", "model:gpt-4"),
         variables=(
-            VariableDefinition(
-                name="genre", type=VariableType.STRING, required=True
-            ),
-            VariableDefinition(
-                name="topic", type=VariableType.STRING, required=True
-            ),
+            VariableDefinition(name="genre", type=VariableType.STRING, required=True),
+            VariableDefinition(name="topic", type=VariableType.STRING, required=True),
         ),
         model_config=ModelConfig(provider="openai", model_name="gpt-4"),
     )
@@ -162,9 +153,7 @@ class TestPromptRouterService:
         assert prompts[1].name == "Story Generator"
 
     @pytest.mark.asyncio
-    async def test_list_prompts_with_tags(
-        self, service: PromptRouterService
-    ) -> None:
+    async def test_list_prompts_with_tags(self, service: PromptRouterService) -> None:
         """Test listing prompts filtered by tags."""
         prompts = await service.list_prompts(tags=["test"])
         assert len(prompts) == 1
@@ -182,9 +171,7 @@ class TestPromptRouterService:
         assert len(prompts) == 1
 
     @pytest.mark.asyncio
-    async def test_search_prompts(
-        self, service: PromptRouterService
-    ) -> None:
+    async def test_search_prompts(self, service: PromptRouterService) -> None:
         """Test searching prompts."""
         prompts = await service.search_prompts("story")
         assert len(prompts) == 1
@@ -200,24 +187,22 @@ class TestPromptRouterService:
         assert prompts[0].name == "Story Generator"
 
     @pytest.mark.asyncio
-    async def test_get_prompt_by_id(
-        self, service: PromptRouterService
-    ) -> None:
+    async def test_get_prompt_by_id(self, service: PromptRouterService) -> None:
         """Test getting a prompt by ID."""
         template = await service.get_prompt_by_id("test-1")
         assert template.name == "Test Prompt 1"
         assert len(template.variables) == 2
 
     @pytest.mark.asyncio
-    async def test_get_prompt_by_id_not_found(self, service: PromptRouterService) -> None:
+    async def test_get_prompt_by_id_not_found(
+        self, service: PromptRouterService
+    ) -> None:
         """Test getting a non-existent prompt raises error."""
         with pytest.raises(PromptNotFoundError):
             await service.get_prompt_by_id("nonexistent")
 
     @pytest.mark.asyncio
-    async def test_get_prompt_by_name(
-        self, service: PromptRouterService
-    ) -> None:
+    async def test_get_prompt_by_name(self, service: PromptRouterService) -> None:
         """Test getting a prompt by name."""
         template = await service.get_prompt_by_name("Test Prompt 1")
         assert template.id == "test-1"
@@ -237,9 +222,7 @@ class TestPromptRouterService:
         assert await service.count_prompts() == 3
 
     @pytest.mark.asyncio
-    async def test_delete_prompt(
-        self, service: PromptRouterService
-    ) -> None:
+    async def test_delete_prompt(self, service: PromptRouterService) -> None:
         """Test deleting a prompt."""
         deleted = await service.delete_prompt("test-1")
         assert deleted is True
@@ -252,9 +235,7 @@ class TestPromptRouterService:
         assert deleted is False
 
     @pytest.mark.asyncio
-    async def test_count_prompts(
-        self, service: PromptRouterService
-    ) -> None:
+    async def test_count_prompts(self, service: PromptRouterService) -> None:
         """Test counting prompts."""
         count = await service.count_prompts()
         assert count == 2
@@ -275,9 +256,7 @@ class TestPromptRouterService:
         assert history[1].version == 2
 
     @pytest.mark.asyncio
-    async def test_get_all_tags(
-        self, service: PromptRouterService
-    ) -> None:
+    async def test_get_all_tags(self, service: PromptRouterService) -> None:
         """Test getting all tags."""
         tags = await service.get_all_tags()
         assert "test" in tags["all"]
@@ -287,9 +266,7 @@ class TestPromptRouterService:
         assert "gpt-4" in tags["model"]
 
     @pytest.mark.asyncio
-    async def test_render_prompt(
-        self, service: PromptRouterService
-    ) -> None:
+    async def test_render_prompt(self, service: PromptRouterService) -> None:
         """Test rendering a prompt."""
         result = await service.render_prompt(
             prompt_id="test-1",
@@ -374,7 +351,9 @@ class TestPromptRouterServiceRollback:
     """Tests for prompt rollback functionality."""
 
     @pytest.fixture
-    async def service_with_versions(self, service: PromptRouterService) -> PromptRouterService:
+    async def service_with_versions(
+        self, service: PromptRouterService
+    ) -> PromptRouterService:
         """Create a service with multiple prompt versions."""
         # Create initial version
         v1 = PromptTemplate.create(
@@ -482,7 +461,9 @@ class TestPromptRouterServiceCompare:
     """Tests for prompt version comparison functionality."""
 
     @pytest.fixture
-    async def service_with_versions(self, service: PromptRouterService) -> PromptRouterService:
+    async def service_with_versions(
+        self, service: PromptRouterService
+    ) -> PromptRouterService:
         """Create a service with multiple prompt versions to compare."""
         # Create initial version
         v1 = PromptTemplate.create(
@@ -566,9 +547,7 @@ class TestPromptRouterServiceCompare:
             )
 
     @pytest.mark.asyncio
-    async def test_compute_character_diff(
-        self, service: PromptRouterService
-    ) -> None:
+    async def test_compute_character_diff(self, service: PromptRouterService) -> None:
         """Test character diff computation."""
         text_a = "Line 1\nLine 2\nLine 3\n"
         text_b = "Line 1\nLine 2 modified\nLine 3\nLine 4\n"

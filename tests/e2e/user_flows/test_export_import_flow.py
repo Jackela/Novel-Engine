@@ -24,6 +24,8 @@ import time
 
 import pytest
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.mark.e2e
 class TestExportImportFlow:
@@ -131,7 +133,7 @@ class TestExportImportFlow:
         start_time = time.time()
         import_response = client.post("/api/import/all", json=modified_data)
 
-        performance_tracker.record("data_import", time.time() - start_time)     
+        performance_tracker.record("data_import", time.time() - start_time)
 
         # Step 6: Verify imported data
         if import_response.status_code in [200, 201]:

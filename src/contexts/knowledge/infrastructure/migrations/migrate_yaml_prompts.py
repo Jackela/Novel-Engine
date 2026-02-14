@@ -23,14 +23,13 @@ from typing import Any
 
 import yaml
 
+from ...application.ports.i_prompt_repository import IPromptRepository
 from ...domain.models.prompt_template import (
     ModelConfig,
     PromptTemplate,
     VariableDefinition,
     VariableType,
 )
-from ...application.ports.i_prompt_repository import IPromptRepository
-
 
 # Pattern for {{> other_prompt}} include syntax
 _INCLUDE_PATTERN = re.compile(r"\{\{>\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}")
@@ -79,8 +78,6 @@ class MigrationResult:
 
 class PromptMigrationError(Exception):
     """Base exception for prompt migration errors."""
-
-    pass
 
 
 class YAMLPromptMigrator:
@@ -315,7 +312,9 @@ class YAMLPromptMigrator:
         )
 
         # Create description from context and name
-        description = f"{source.context.title()} prompt for {source.name.replace('_', ' ')}"
+        description = (
+            f"{source.context.title()} prompt for {source.name.replace('_', ' ')}"
+        )
 
         # Create the PromptTemplate
         # Note: PromptTemplate.create() doesn't accept model_config directly,

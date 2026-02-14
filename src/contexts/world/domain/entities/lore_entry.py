@@ -312,9 +312,7 @@ class LoreEntry(Entity):
 
     # ==================== Manual Smart Tags Override ====================
 
-    def set_manual_smart_tags(
-        self, category: str, tags: List[str]
-    ) -> None:
+    def set_manual_smart_tags(self, category: str, tags: List[str]) -> None:
         """Set manual tags for a specific category.
 
         These tags are marked as manual-only and will never be overridden
@@ -367,8 +365,7 @@ class LoreEntry(Entity):
             tag_normalized = tag.strip().lower()
             if tag_normalized in [t.lower() for t in manual_tags[category]]:
                 manual_tags[category] = [
-                    t for t in manual_tags[category]
-                    if t.lower() != tag_normalized
+                    t for t in manual_tags[category] if t.lower() != tag_normalized
                 ]
                 self.metadata["manual_smart_tags"] = manual_tags
                 self.touch()

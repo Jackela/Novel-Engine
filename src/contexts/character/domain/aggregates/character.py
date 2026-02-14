@@ -17,13 +17,16 @@ from ..events.character_events import (
     CharacterStatsChanged,
     CharacterUpdated,
 )
+from ..value_objects.character_goal import CharacterGoal, GoalUrgency
 from ..value_objects.character_id import CharacterID
+from ..value_objects.character_memory import CharacterMemory
 from ..value_objects.character_profile import (
     CharacterClass,
     CharacterProfile,
     CharacterRace,
     Gender,
 )
+from ..value_objects.character_psychology import CharacterPsychology
 from ..value_objects.character_stats import (
     AbilityScore,
     CharacterStats,
@@ -31,9 +34,6 @@ from ..value_objects.character_stats import (
     CoreAbilities,
     VitalStats,
 )
-from ..value_objects.character_goal import CharacterGoal, GoalUrgency
-from ..value_objects.character_memory import CharacterMemory
-from ..value_objects.character_psychology import CharacterPsychology
 from ..value_objects.skills import SkillCategory, Skills
 
 
@@ -363,9 +363,7 @@ class Character:
             TypeError: If memory is not a CharacterMemory instance
         """
         if not isinstance(memory, CharacterMemory):
-            raise TypeError(
-                f"Expected CharacterMemory, got {type(memory).__name__}"
-            )
+            raise TypeError(f"Expected CharacterMemory, got {type(memory).__name__}")
 
         self.memories.append(memory)
         self.updated_at = datetime.now()
@@ -422,9 +420,7 @@ class Character:
         Returns:
             List of most recent memories, sorted by timestamp descending
         """
-        sorted_memories = sorted(
-            self.memories, key=lambda m: m.timestamp, reverse=True
-        )
+        sorted_memories = sorted(self.memories, key=lambda m: m.timestamp, reverse=True)
         return sorted_memories[:count]
 
     # ==================== Goal Operations ====================
@@ -444,9 +440,7 @@ class Character:
             ValueError: If a goal with the same ID already exists
         """
         if not isinstance(goal, CharacterGoal):
-            raise TypeError(
-                f"Expected CharacterGoal, got {type(goal).__name__}"
-            )
+            raise TypeError(f"Expected CharacterGoal, got {type(goal).__name__}")
 
         # Check for duplicate goal_id
         if any(g.goal_id == goal.goal_id for g in self.goals):
@@ -537,10 +531,7 @@ class Character:
         completed_goal = goal.complete()
 
         # Replace the goal in the list
-        self.goals = [
-            completed_goal if g.goal_id == goal_id else g
-            for g in self.goals
-        ]
+        self.goals = [completed_goal if g.goal_id == goal_id else g for g in self.goals]
 
         self.updated_at = datetime.now()
         self.version += 1
@@ -576,10 +567,7 @@ class Character:
         failed_goal = goal.fail()
 
         # Replace the goal in the list
-        self.goals = [
-            failed_goal if g.goal_id == goal_id else g
-            for g in self.goals
-        ]
+        self.goals = [failed_goal if g.goal_id == goal_id else g for g in self.goals]
 
         self.updated_at = datetime.now()
         self.version += 1
@@ -618,10 +606,7 @@ class Character:
         updated_goal = goal.update_urgency(new_urgency)
 
         # Replace the goal in the list
-        self.goals = [
-            updated_goal if g.goal_id == goal_id else g
-            for g in self.goals
-        ]
+        self.goals = [updated_goal if g.goal_id == goal_id else g for g in self.goals]
 
         self.updated_at = datetime.now()
         self.version += 1
@@ -1071,9 +1056,7 @@ class Character:
 
     # ==================== Manual Smart Tags Override ====================
 
-    def set_manual_smart_tags(
-        self, category: str, tags: List[str]
-    ) -> None:
+    def set_manual_smart_tags(self, category: str, tags: List[str]) -> None:
         """Set manual tags for a specific category.
 
         These tags are marked as manual-only and will never be overridden
@@ -1138,8 +1121,7 @@ class Character:
             tag_normalized = tag.strip().lower()
             if tag_normalized in [t.lower() for t in manual_tags[category]]:
                 manual_tags[category] = [
-                    t for t in manual_tags[category]
-                    if t.lower() != tag_normalized
+                    t for t in manual_tags[category] if t.lower() != tag_normalized
                 ]
                 self.metadata["manual_smart_tags"] = manual_tags
                 self.updated_at = datetime.now()

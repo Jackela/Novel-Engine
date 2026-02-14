@@ -35,6 +35,8 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
     IngestionResult,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def mock_ingestion_service():

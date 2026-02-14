@@ -15,24 +15,26 @@ from src.contexts.knowledge.application.ports.i_chunking_strategy import (
     ChunkingError,
 )
 from src.contexts.knowledge.domain.models.chunking_strategy import (
-    ChunkStrategyType,
     ChunkingStrategy,
+    ChunkStrategyType,
 )
 from src.contexts.knowledge.infrastructure.adapters.chunking_strategy_adapters import (
+    DEFAULT_COHERENCE_THRESHOLD,
+    AutoChunkingStrategy,
+    ChunkCoherenceAnalyzer,
+    CoherenceScore,
+    ContentType,
     FixedChunkingStrategy,
-    SentenceChunkingStrategy,
+    NarrativeFlowChunkingStrategy,
     ParagraphChunkingStrategy,
     SemanticChunkingStrategy,
-    NarrativeFlowChunkingStrategy,
-    AutoChunkingStrategy,
-    ContentType,
-    CoherenceScore,
-    ChunkCoherenceAnalyzer,
-    DEFAULT_COHERENCE_THRESHOLD,
+    SentenceChunkingStrategy,
 )
 
-
 # Word pattern for counting (same as in adapters)
+
+pytestmark = pytest.mark.unit
+
 _WORD_PATTERN = re.compile(r"\S+")
 
 
@@ -52,7 +54,9 @@ class TestFixedChunkingStrategy:
         return " ".join(words)
 
     @pytest.mark.asyncio
-    async def test_chunk_basic(self, strategy: FixedChunkingStrategy, sample_text: str) -> None:
+    async def test_chunk_basic(
+        self, strategy: FixedChunkingStrategy, sample_text: str
+    ) -> None:
         """Test basic chunking with 500 size and 50 overlap."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.FIXED,
@@ -71,7 +75,9 @@ class TestFixedChunkingStrategy:
         assert len(chunks) == 5
 
     @pytest.mark.asyncio
-    async def test_chunk_indices(self, strategy: FixedChunkingStrategy, sample_text: str) -> None:
+    async def test_chunk_indices(
+        self, strategy: FixedChunkingStrategy, sample_text: str
+    ) -> None:
         """Test that chunks have correct sequential indices."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.FIXED,
@@ -133,7 +139,9 @@ class TestFixedChunkingStrategy:
         assert second_chunk_words[0] == first_chunk_words[-20]
 
     @pytest.mark.asyncio
-    async def test_empty_text_raises_error(self, strategy: FixedChunkingStrategy) -> None:
+    async def test_empty_text_raises_error(
+        self, strategy: FixedChunkingStrategy
+    ) -> None:
         """Test that empty text raises ValueError."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.FIXED,
@@ -167,7 +175,9 @@ class TestFixedChunkingStrategy:
         assert chunks[0].metadata["word_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_text_smaller_than_chunk_size(self, strategy: FixedChunkingStrategy) -> None:
+    async def test_text_smaller_than_chunk_size(
+        self, strategy: FixedChunkingStrategy
+    ) -> None:
         """Test text that's smaller than one chunk."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.FIXED,
@@ -237,7 +247,9 @@ class TestFixedChunkingStrategy:
         assert chunks[0].metadata["overlap"] == 50
 
     @pytest.mark.asyncio
-    async def test_supports_strategy_type(self, strategy: FixedChunkingStrategy) -> None:
+    async def test_supports_strategy_type(
+        self, strategy: FixedChunkingStrategy
+    ) -> None:
         """Test supports_strategy_type method."""
         assert strategy.supports_strategy_type("fixed") is True
         assert strategy.supports_strategy_type("FIXED") is True
@@ -315,7 +327,9 @@ class TestFixedChunkingStrategy:
         assert chunks[0].metadata["overlap"] == 30
 
     @pytest.mark.asyncio
-    async def test_chunk_with_punctuation(self, strategy: FixedChunkingStrategy) -> None:
+    async def test_chunk_with_punctuation(
+        self, strategy: FixedChunkingStrategy
+    ) -> None:
         """Test chunking text with punctuation."""
         config = ChunkingStrategy.default()
 
@@ -352,6 +366,7 @@ class TestFixedChunkingStrategy:
     ) -> None:
         """Test warning when strategy type doesn't match FIXED."""
         import logging
+
         import structlog
 
         # Configure structlog to also output to standard logging for caplog
@@ -387,7 +402,9 @@ class TestFixedChunkingStrategy:
         assert any("mismatch" in record.message.lower() for record in caplog.records)
 
     @pytest.mark.asyncio
-    async def test_metadata_start_end_char(self, strategy: FixedChunkingStrategy) -> None:
+    async def test_metadata_start_end_char(
+        self, strategy: FixedChunkingStrategy
+    ) -> None:
         """Test that start_char and end_char in metadata are reasonable."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.FIXED,
@@ -400,7 +417,9 @@ class TestFixedChunkingStrategy:
 
         # Start positions should be increasing
         for i in range(1, len(chunks)):
-            assert chunks[i].metadata["start_char"] >= chunks[i - 1].metadata["start_char"]
+            assert (
+                chunks[i].metadata["start_char"] >= chunks[i - 1].metadata["start_char"]
+            )
             assert chunks[i].metadata["end_char"] >= chunks[i - 1].metadata["end_char"]
 
         # End should be after start for each chunk
@@ -511,7 +530,9 @@ class TestSentenceChunkingStrategy:
         )
 
     @pytest.mark.asyncio
-    async def test_chunk_by_sentence_boundaries(self, strategy: SentenceChunkingStrategy, sentence_text: str) -> None:
+    async def test_chunk_by_sentence_boundaries(
+        self, strategy: SentenceChunkingStrategy, sentence_text: str
+    ) -> None:
         """Test basic sentence-aware chunking."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.SENTENCE,
@@ -528,7 +549,9 @@ class TestSentenceChunkingStrategy:
         assert any(chunks[0].text.rstrip().endswith((".", "!", "?")) for _ in [True])
 
     @pytest.mark.asyncio
-    async def test_preserves_sentence_integrity(self, strategy: SentenceChunkingStrategy) -> None:
+    async def test_preserves_sentence_integrity(
+        self, strategy: SentenceChunkingStrategy
+    ) -> None:
         """Test that sentences are not broken in the middle."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.SENTENCE,
@@ -551,7 +574,9 @@ class TestSentenceChunkingStrategy:
                 pass
 
     @pytest.mark.asyncio
-    async def test_metadata_strategy_field(self, strategy: SentenceChunkingStrategy, sentence_text: str) -> None:
+    async def test_metadata_strategy_field(
+        self, strategy: SentenceChunkingStrategy, sentence_text: str
+    ) -> None:
         """Test that chunks have correct strategy in metadata."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.SENTENCE,
@@ -566,7 +591,9 @@ class TestSentenceChunkingStrategy:
             assert chunk.metadata["strategy"] in ("sentence", "sentence_fixed_fallback")
 
     @pytest.mark.asyncio
-    async def test_empty_text_raises_error(self, strategy: SentenceChunkingStrategy) -> None:
+    async def test_empty_text_raises_error(
+        self, strategy: SentenceChunkingStrategy
+    ) -> None:
         """Test that empty text raises ValueError."""
         config = ChunkingStrategy.default()
 
@@ -574,7 +601,9 @@ class TestSentenceChunkingStrategy:
             await strategy.chunk("", config)
 
     @pytest.mark.asyncio
-    async def test_supports_strategy_type(self, strategy: SentenceChunkingStrategy) -> None:
+    async def test_supports_strategy_type(
+        self, strategy: SentenceChunkingStrategy
+    ) -> None:
         """Test supports_strategy_type method."""
         assert strategy.supports_strategy_type("sentence") is True
         assert strategy.supports_strategy_type("SENTENCE") is True
@@ -583,7 +612,9 @@ class TestSentenceChunkingStrategy:
         assert strategy.supports_strategy_type("paragraph") is False
 
     @pytest.mark.asyncio
-    async def test_chunk_indices(self, strategy: SentenceChunkingStrategy, sentence_text: str) -> None:
+    async def test_chunk_indices(
+        self, strategy: SentenceChunkingStrategy, sentence_text: str
+    ) -> None:
         """Test that chunks have correct sequential indices."""
         config = ChunkingStrategy.default()
 
@@ -593,7 +624,9 @@ class TestSentenceChunkingStrategy:
             assert chunk.index == i
 
     @pytest.mark.asyncio
-    async def test_text_with_exclamation_and_question(self, strategy: SentenceChunkingStrategy) -> None:
+    async def test_text_with_exclamation_and_question(
+        self, strategy: SentenceChunkingStrategy
+    ) -> None:
         """Test sentence detection with different punctuation."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.SENTENCE,
@@ -610,7 +643,9 @@ class TestSentenceChunkingStrategy:
         assert len(chunks) >= 1
 
     @pytest.mark.asyncio
-    async def test_fallback_to_fixed_no_sentence_breaks(self, strategy: SentenceChunkingStrategy) -> None:
+    async def test_fallback_to_fixed_no_sentence_breaks(
+        self, strategy: SentenceChunkingStrategy
+    ) -> None:
         """Test fallback to fixed chunking when no sentence breaks found."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.SENTENCE,
@@ -630,7 +665,9 @@ class TestSentenceChunkingStrategy:
         assert chunks[0].metadata["strategy"] in ("sentence", "sentence_fixed_fallback")
 
     @pytest.mark.asyncio
-    async def test_overlap_preserves_sentences(self, strategy: SentenceChunkingStrategy) -> None:
+    async def test_overlap_preserves_sentences(
+        self, strategy: SentenceChunkingStrategy
+    ) -> None:
         """Test that overlap preserves complete sentences."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.SENTENCE,
@@ -677,7 +714,9 @@ class TestParagraphChunkingStrategy:
         )
 
     @pytest.mark.asyncio
-    async def test_chunk_by_paragraph_boundaries(self, strategy: ParagraphChunkingStrategy, paragraph_text: str) -> None:
+    async def test_chunk_by_paragraph_boundaries(
+        self, strategy: ParagraphChunkingStrategy, paragraph_text: str
+    ) -> None:
         """Test basic paragraph-aware chunking."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.PARAGRAPH,
@@ -692,7 +731,9 @@ class TestParagraphChunkingStrategy:
         assert len(chunks) >= 1
 
     @pytest.mark.asyncio
-    async def test_preserves_paragraph_integrity(self, strategy: ParagraphChunkingStrategy) -> None:
+    async def test_preserves_paragraph_integrity(
+        self, strategy: ParagraphChunkingStrategy
+    ) -> None:
         """Test that paragraphs are not broken in the middle."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.PARAGRAPH,
@@ -715,7 +756,9 @@ class TestParagraphChunkingStrategy:
             pass  # Integrity is maintained by the algorithm
 
     @pytest.mark.asyncio
-    async def test_metadata_strategy_field(self, strategy: ParagraphChunkingStrategy, paragraph_text: str) -> None:
+    async def test_metadata_strategy_field(
+        self, strategy: ParagraphChunkingStrategy, paragraph_text: str
+    ) -> None:
         """Test that chunks have correct strategy in metadata."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.PARAGRAPH,
@@ -727,10 +770,15 @@ class TestParagraphChunkingStrategy:
         chunks = await strategy.chunk(paragraph_text, config)
 
         for chunk in chunks:
-            assert chunk.metadata["strategy"] in ("paragraph", "paragraph_fixed_fallback")
+            assert chunk.metadata["strategy"] in (
+                "paragraph",
+                "paragraph_fixed_fallback",
+            )
 
     @pytest.mark.asyncio
-    async def test_empty_text_raises_error(self, strategy: ParagraphChunkingStrategy) -> None:
+    async def test_empty_text_raises_error(
+        self, strategy: ParagraphChunkingStrategy
+    ) -> None:
         """Test that empty text raises ValueError."""
         config = ChunkingStrategy.default()
 
@@ -738,7 +786,9 @@ class TestParagraphChunkingStrategy:
             await strategy.chunk("", config)
 
     @pytest.mark.asyncio
-    async def test_supports_strategy_type(self, strategy: ParagraphChunkingStrategy) -> None:
+    async def test_supports_strategy_type(
+        self, strategy: ParagraphChunkingStrategy
+    ) -> None:
         """Test supports_strategy_type method."""
         assert strategy.supports_strategy_type("paragraph") is True
         assert strategy.supports_strategy_type("PARAGRAPH") is True
@@ -747,7 +797,9 @@ class TestParagraphChunkingStrategy:
         assert strategy.supports_strategy_type("sentence") is False
 
     @pytest.mark.asyncio
-    async def test_chunk_indices(self, strategy: ParagraphChunkingStrategy, paragraph_text: str) -> None:
+    async def test_chunk_indices(
+        self, strategy: ParagraphChunkingStrategy, paragraph_text: str
+    ) -> None:
         """Test that chunks have correct sequential indices."""
         config = ChunkingStrategy.default()
 
@@ -773,7 +825,9 @@ class TestParagraphChunkingStrategy:
         assert len(chunks) == 1
 
     @pytest.mark.asyncio
-    async def test_fallback_to_fixed_no_paragraph_breaks(self, strategy: ParagraphChunkingStrategy) -> None:
+    async def test_fallback_to_fixed_no_paragraph_breaks(
+        self, strategy: ParagraphChunkingStrategy
+    ) -> None:
         """Test fallback to fixed chunking when no paragraph breaks found."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.PARAGRAPH,
@@ -789,10 +843,15 @@ class TestParagraphChunkingStrategy:
         # Should still chunk, either using paragraph or fallback
         assert len(chunks) > 0
         # Either paragraph worked or we got fallback
-        assert chunks[0].metadata["strategy"] in ("paragraph", "paragraph_fixed_fallback")
+        assert chunks[0].metadata["strategy"] in (
+            "paragraph",
+            "paragraph_fixed_fallback",
+        )
 
     @pytest.mark.asyncio
-    async def test_various_paragraph_delimiters(self, strategy: ParagraphChunkingStrategy) -> None:
+    async def test_various_paragraph_delimiters(
+        self, strategy: ParagraphChunkingStrategy
+    ) -> None:
         """Test handling of various paragraph delimiters."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.PARAGRAPH,
@@ -810,7 +869,9 @@ class TestParagraphChunkingStrategy:
         assert len(chunks) >= 1
 
     @pytest.mark.asyncio
-    async def test_overlap_with_paragraphs(self, strategy: ParagraphChunkingStrategy) -> None:
+    async def test_overlap_with_paragraphs(
+        self, strategy: ParagraphChunkingStrategy
+    ) -> None:
         """Test that overlap works correctly with paragraphs."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.PARAGRAPH,
@@ -827,7 +888,9 @@ class TestParagraphChunkingStrategy:
             # Verify chunks exist and have proper word counts
             for chunk in chunks:
                 assert chunk.metadata["word_count"] > 0
-                assert chunk.metadata["word_count"] <= config.chunk_size + config.overlap
+                assert (
+                    chunk.metadata["word_count"] <= config.chunk_size + config.overlap
+                )
 
 
 class MockEmbeddingService:
@@ -851,7 +914,9 @@ class MockEmbeddingService:
         """Generate mock embedding for a single text."""
         return self._generate_embedding(text)
 
-    async def embed_batch(self, texts: list[str], batch_size: int = 100) -> list[list[float]]:
+    async def embed_batch(
+        self, texts: list[str], batch_size: int = 100
+    ) -> list[list[float]]:
         """Generate mock embeddings for multiple texts."""
         return [self._generate_embedding(t) for t in texts]
 
@@ -902,6 +967,7 @@ class MockEmbeddingService:
 
         # Generate embedding with group-based similarity
         import random
+
         random.seed(seed + int(group_offset * 1000))
 
         dimension = self.get_dimension()
@@ -931,7 +997,9 @@ class TestSemanticChunkingStrategy:
         return MockEmbeddingService()
 
     @pytest.fixture
-    def strategy(self, embedding_service: MockEmbeddingService) -> SemanticChunkingStrategy:
+    def strategy(
+        self, embedding_service: MockEmbeddingService
+    ) -> SemanticChunkingStrategy:
         """Create a SemanticChunkingStrategy instance."""
         return SemanticChunkingStrategy(embedding_service=embedding_service)
 
@@ -984,7 +1052,9 @@ class TestSemanticChunkingStrategy:
             assert "sentence_count" in chunk.metadata
 
     @pytest.mark.asyncio
-    async def test_empty_text_raises_error(self, strategy: SemanticChunkingStrategy) -> None:
+    async def test_empty_text_raises_error(
+        self, strategy: SemanticChunkingStrategy
+    ) -> None:
         """Test that empty text raises ValueError."""
         config = ChunkingStrategy.default()
 
@@ -992,7 +1062,9 @@ class TestSemanticChunkingStrategy:
             await strategy.chunk("", config)
 
     @pytest.mark.asyncio
-    async def test_supports_strategy_type(self, strategy: SemanticChunkingStrategy) -> None:
+    async def test_supports_strategy_type(
+        self, strategy: SemanticChunkingStrategy
+    ) -> None:
         """Test supports_strategy_type method."""
         assert strategy.supports_strategy_type("semantic") is True
         assert strategy.supports_strategy_type("SEMANTIC") is True
@@ -1014,7 +1086,9 @@ class TestSemanticChunkingStrategy:
             assert chunk.index == i
 
     @pytest.mark.asyncio
-    async def test_cosine_similarity_calculation(self, strategy: SemanticChunkingStrategy) -> None:
+    async def test_cosine_similarity_calculation(
+        self, strategy: SemanticChunkingStrategy
+    ) -> None:
         """Test cosine similarity calculation."""
         # Identical vectors should have similarity 1.0
         vec1 = [0.5, 0.5, 0.5, 0.5]
@@ -1032,7 +1106,9 @@ class TestSemanticChunkingStrategy:
         assert strategy._cosine_similarity(vec5, vec6) == pytest.approx(-1.0)
 
     @pytest.mark.asyncio
-    async def test_split_into_sentences(self, strategy: SemanticChunkingStrategy) -> None:
+    async def test_split_into_sentences(
+        self, strategy: SemanticChunkingStrategy
+    ) -> None:
         """Test sentence splitting with position tracking."""
         text = "First sentence. Second sentence! Third question?"
 
@@ -1077,7 +1153,9 @@ class TestSemanticChunkingStrategy:
         assert len(groups) >= 2
 
     @pytest.mark.asyncio
-    async def test_single_sentence_text(self, strategy: SemanticChunkingStrategy) -> None:
+    async def test_single_sentence_text(
+        self, strategy: SemanticChunkingStrategy
+    ) -> None:
         """Test chunking text with a single sentence."""
         config = ChunkingStrategy.default()
 
@@ -1142,7 +1220,9 @@ class TestSemanticChunkingStrategy:
             assert len(overlap) >= 0
 
     @pytest.mark.asyncio
-    async def test_custom_default_config(self, embedding_service: MockEmbeddingService) -> None:
+    async def test_custom_default_config(
+        self, embedding_service: MockEmbeddingService
+    ) -> None:
         """Test creating strategy with custom default config."""
         custom_default = ChunkingStrategy(
             strategy=ChunkStrategyType.SEMANTIC,
@@ -1162,7 +1242,9 @@ class TestSemanticChunkingStrategy:
 
     @pytest.mark.asyncio
     async def test_very_long_text(
-        self, strategy: SemanticChunkingStrategy, embedding_service: MockEmbeddingService
+        self,
+        strategy: SemanticChunkingStrategy,
+        embedding_service: MockEmbeddingService,
     ) -> None:
         """Test chunking a long text with many semantic shifts."""
         config = ChunkingStrategy(
@@ -1173,15 +1255,25 @@ class TestSemanticChunkingStrategy:
 
         # Create long text with alternating topics
         topics = [
-            "battle", "peace", "magic", "journey", "battle",
-            "love", "magic", "peace", "journey", "battle"
+            "battle",
+            "peace",
+            "magic",
+            "journey",
+            "battle",
+            "love",
+            "magic",
+            "peace",
+            "journey",
+            "battle",
         ]
         sentences = []
         for topic in topics:
-            sentences.extend([
-                f"The {topic} continued throughout the day.",
-                f"Everyone witnessed the {topic}.",
-            ])
+            sentences.extend(
+                [
+                    f"The {topic} continued throughout the day.",
+                    f"Everyone witnessed the {topic}.",
+                ]
+            )
 
         text = " ".join(sentences)
 
@@ -1195,7 +1287,9 @@ class TestSemanticChunkingStrategy:
             assert "sentence_count" in chunk.metadata
 
     @pytest.mark.asyncio
-    async def test_get_overlap_sentences(self, strategy: SemanticChunkingStrategy) -> None:
+    async def test_get_overlap_sentences(
+        self, strategy: SemanticChunkingStrategy
+    ) -> None:
         """Test getting sentences for overlap."""
         sentences = [
             (0, 10, "First sentence here."),
@@ -1257,7 +1351,10 @@ class TestSemanticChunkingStrategy:
         for chunk in chunks:
             assert "sentence_count" in chunk.metadata
             assert chunk.metadata["sentence_count"] >= 1
-            assert chunk.metadata["sentence_count"] <= strategy.DEFAULT_MAX_SENTENCES_PER_CHUNK + 1
+            assert (
+                chunk.metadata["sentence_count"]
+                <= strategy.DEFAULT_MAX_SENTENCES_PER_CHUNK + 1
+            )
 
     @pytest.mark.asyncio
     async def test_all_chunks_within_size_limit(
@@ -1279,7 +1376,12 @@ class TestSemanticChunkingStrategy:
             assert word_count > 0
             # Chunks can exceed chunk_size due to overlap and sentence grouping
             # but shouldn't be excessively large
-            assert word_count <= config.chunk_size + config.overlap + strategy.DEFAULT_MAX_SENTENCES_PER_CHUNK * 10
+            assert (
+                word_count
+                <= config.chunk_size
+                + config.overlap
+                + strategy.DEFAULT_MAX_SENTENCES_PER_CHUNK * 10
+            )
 
     @pytest.mark.asyncio
     async def test_embedding_service_required(self) -> None:
@@ -1370,7 +1472,9 @@ class TestAutoChunkingStrategy:
         )
 
     @pytest.mark.asyncio
-    async def test_auto_chunking_basic(self, strategy: AutoChunkingStrategy, scene_text: str) -> None:
+    async def test_auto_chunking_basic(
+        self, strategy: AutoChunkingStrategy, scene_text: str
+    ) -> None:
         """Test basic auto chunking."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.AUTO,
@@ -1398,7 +1502,9 @@ class TestAutoChunkingStrategy:
         assert strategy.supports_strategy_type("semantic") is False
 
     @pytest.mark.asyncio
-    async def test_empty_text_raises_error(self, strategy: AutoChunkingStrategy) -> None:
+    async def test_empty_text_raises_error(
+        self, strategy: AutoChunkingStrategy
+    ) -> None:
         """Test that empty text raises ValueError."""
         config = ChunkingStrategy.default()
 
@@ -1423,7 +1529,12 @@ class TestAutoChunkingStrategy:
         # Verify paragraph was used (not fixed fallback)
         for chunk in chunks:
             original = chunk.metadata.get("original_strategy", "")
-            assert original in ("paragraph", "sentence", "fixed", "semantic_fixed_fallback")
+            assert original in (
+                "paragraph",
+                "sentence",
+                "fixed",
+                "semantic_fixed_fallback",
+            )
 
     @pytest.mark.asyncio
     async def test_detect_dialogue_structure(
@@ -1461,7 +1572,13 @@ class TestAutoChunkingStrategy:
         # Check metadata shows semantic was used
         for chunk in chunks:
             original = chunk.metadata.get("original_strategy", "")
-            assert original in ("semantic", "sentence", "paragraph", "fixed", "semantic_fixed_fallback")
+            assert original in (
+                "semantic",
+                "sentence",
+                "paragraph",
+                "fixed",
+                "semantic_fixed_fallback",
+            )
 
     @pytest.mark.asyncio
     async def test_chunk_indices(
@@ -1541,7 +1658,9 @@ class TestAutoChunkingStrategy:
     ) -> None:
         """Test paragraph density detection heuristic."""
         # Text with high paragraph density (many \n\n)
-        text = "\n\n".join([f"Paragraph {i} with some content here." for i in range(10)])
+        text = "\n\n".join(
+            [f"Paragraph {i} with some content here." for i in range(10)]
+        )
 
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.AUTO,
@@ -1624,7 +1743,9 @@ class TestAutoChunkingStrategy:
         assert ContentType.UNKNOWN.value == "unknown"
 
     @pytest.mark.asyncio
-    async def test_custom_default_config(self, embedding_service: MockEmbeddingService) -> None:
+    async def test_custom_default_config(
+        self, embedding_service: MockEmbeddingService
+    ) -> None:
         """Test creating strategy with custom default config."""
         custom_default = ChunkingStrategy(
             strategy=ChunkStrategyType.AUTO,
@@ -1643,7 +1764,9 @@ class TestAutoChunkingStrategy:
         assert chunks[0].metadata["overlap"] == 30
 
     @pytest.mark.asyncio
-    async def test_zero_overlap(self, strategy_no_embedding: AutoChunkingStrategy) -> None:
+    async def test_zero_overlap(
+        self, strategy_no_embedding: AutoChunkingStrategy
+    ) -> None:
         """Test auto chunking with zero overlap."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.AUTO,
@@ -1681,14 +1804,12 @@ class TestAutoChunkingStrategy:
             assert len(original) > 0
 
     @pytest.mark.asyncio
-    async def test_mixed_structure_text(
-        self, strategy: AutoChunkingStrategy
-    ) -> None:
+    async def test_mixed_structure_text(self, strategy: AutoChunkingStrategy) -> None:
         """Test auto chunking with mixed structure text."""
         # Text with paragraphs, dialogue, and narrative
         text = (
             "Chapter 1\n\n"
-            "The hero began their journey. \"I will succeed,\" they declared.\n\n"
+            'The hero began their journey. "I will succeed," they declared.\n\n'
             "The path was treacherous. Mountains loomed in the distance.\n\n"
             '"What lies ahead?" asked the companion. "Only the way forward," was the reply.'
         )
@@ -1749,6 +1870,7 @@ class TestAutoChunkingStrategy:
     ) -> None:
         """Test warning when strategy type doesn't match AUTO."""
         import logging
+
         import structlog
 
         # Configure structlog for caplog
@@ -1829,10 +1951,10 @@ class TestNarrativeFlowChunkingStrategy:
             '"Hello," she said. "How are you today?"\n'
             '"I am well," he replied. "And you?"\n'
             '"Very well, thank you." She smiled warmly.\n'
-            'The conversation continued pleasantly.\n'
+            "The conversation continued pleasantly.\n"
             '"What brings you here?" asked the man.\n'
             '"Business," she answered. "Important business."\n'
-            'He nodded understandingly.'
+            "He nodded understandingly."
         )
 
     @pytest.fixture
@@ -1842,15 +1964,17 @@ class TestNarrativeFlowChunkingStrategy:
             "The warrior stood at the edge of the cliff. His armor gleamed in the "
             "morning sun. Below him, the army gathered like ants on the forest floor.\n\n"
             '"We ride at dawn," he declared to his captains.\n'
-            'The captains nodded solemnly. Each man knew his duty.\n\n'
+            "The captains nodded solemnly. Each man knew his duty.\n\n"
             '"For the king!" shouted the first captain.\n'
             '"For glory!" cried the second.\n'
             '"For victory!" roared the third.\n\n'
-            'The speech stirred their hearts. They were ready for battle.'
+            "The speech stirred their hearts. They were ready for battle."
         )
 
     @pytest.mark.asyncio
-    async def test_preserves_sentence_boundaries(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+    async def test_preserves_sentence_boundaries(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
         """Test that sentence boundaries are preserved."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.NARRATIVE_FLOW,
@@ -1870,10 +1994,14 @@ class TestNarrativeFlowChunkingStrategy:
         for chunk in chunks:
             chunk_text = chunk.text.strip()
             # Chunks should end at sentence boundaries
-            assert chunk_text.endswith((".", "!", "?", '"', "'")) or len(chunk_text) < 60
+            assert (
+                chunk_text.endswith((".", "!", "?", '"', "'")) or len(chunk_text) < 60
+            )
 
     @pytest.mark.asyncio
-    async def test_preserves_dialogue_boundaries(self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str) -> None:
+    async def test_preserves_dialogue_boundaries(
+        self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str
+    ) -> None:
         """Test that dialogue exchanges are preserved together."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.NARRATIVE_FLOW,
@@ -1888,10 +2016,14 @@ class TestNarrativeFlowChunkingStrategy:
             # Count quote pairs in chunk
             quote_count = chunk.text.count('"')
             # Should be even (complete quotes)
-            assert quote_count % 2 == 0, f"Chunk has incomplete dialogue: {chunk.text[:50]}..."
+            assert (
+                quote_count % 2 == 0
+            ), f"Chunk has incomplete dialogue: {chunk.text[:50]}..."
 
     @pytest.mark.asyncio
-    async def test_does_not_break_mid_dialogue(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+    async def test_does_not_break_mid_dialogue(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
         """Test that chunks don't break in the middle of dialogue."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.NARRATIVE_FLOW,
@@ -1928,14 +2060,19 @@ class TestNarrativeFlowChunkingStrategy:
 
         # Each chunk should have narrative metadata
         for chunk in chunks:
-            assert chunk.metadata["strategy"] in ("narrative_flow", "narrative_flow_sentence_fallback")
+            assert chunk.metadata["strategy"] in (
+                "narrative_flow",
+                "narrative_flow_sentence_fallback",
+            )
             # Check for narrative metadata
             if chunk.metadata["strategy"] == "narrative_flow":
                 assert "total_units" in chunk.metadata
                 assert "sentence_units" in chunk.metadata
 
     @pytest.mark.asyncio
-    async def test_empty_text_raises_error(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+    async def test_empty_text_raises_error(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
         """Test that empty text raises ValueError."""
         config = ChunkingStrategy.default()
 
@@ -1943,7 +2080,9 @@ class TestNarrativeFlowChunkingStrategy:
             await strategy.chunk("", config)
 
     @pytest.mark.asyncio
-    async def test_supports_strategy_type(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+    async def test_supports_strategy_type(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
         """Test supports_strategy_type method."""
         assert strategy.supports_strategy_type("narrative_flow") is True
         assert strategy.supports_strategy_type("NARRATIVE_FLOW") is True
@@ -1953,7 +2092,9 @@ class TestNarrativeFlowChunkingStrategy:
         assert strategy.supports_strategy_type("sentence") is False
 
     @pytest.mark.asyncio
-    async def test_chunk_indices(self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str) -> None:
+    async def test_chunk_indices(
+        self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str
+    ) -> None:
         """Test that chunks have correct sequential indices."""
         config = ChunkingStrategy.default()
 
@@ -1963,7 +2104,9 @@ class TestNarrativeFlowChunkingStrategy:
             assert chunk.index == i
 
     @pytest.mark.asyncio
-    async def test_metadata_strategy_field(self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str) -> None:
+    async def test_metadata_strategy_field(
+        self, strategy: NarrativeFlowChunkingStrategy, dialogue_text: str
+    ) -> None:
         """Test that chunks have correct strategy in metadata."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.NARRATIVE_FLOW,
@@ -1975,7 +2118,10 @@ class TestNarrativeFlowChunkingStrategy:
         chunks = await strategy.chunk(dialogue_text, config)
 
         for chunk in chunks:
-            assert chunk.metadata["strategy"] in ("narrative_flow", "narrative_flow_sentence_fallback")
+            assert chunk.metadata["strategy"] in (
+                "narrative_flow",
+                "narrative_flow_sentence_fallback",
+            )
 
     @pytest.mark.asyncio
     async def test_metadata_narrative_composition(
@@ -2000,7 +2146,9 @@ class TestNarrativeFlowChunkingStrategy:
                 assert isinstance(chunk.metadata["has_dialogue"], bool)
 
     @pytest.mark.asyncio
-    async def test_single_sentence_text(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+    async def test_single_sentence_text(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
         """Test chunking text with a single sentence."""
         config = ChunkingStrategy.default()
 
@@ -2027,7 +2175,9 @@ class TestNarrativeFlowChunkingStrategy:
         assert len(chunks) == 1
 
     @pytest.mark.asyncio
-    async def test_zero_overlap(self, strategy: NarrativeFlowChunkingStrategy, narrative_text: str) -> None:
+    async def test_zero_overlap(
+        self, strategy: NarrativeFlowChunkingStrategy, narrative_text: str
+    ) -> None:
         """Test narrative flow chunking with zero overlap."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.NARRATIVE_FLOW,
@@ -2042,7 +2192,9 @@ class TestNarrativeFlowChunkingStrategy:
         assert len(chunks) >= 1
 
     @pytest.mark.asyncio
-    async def test_preserve_dialogue_flag(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+    async def test_preserve_dialogue_flag(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
         """Test the preserve_dialogue flag."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.NARRATIVE_FLOW,
@@ -2065,7 +2217,9 @@ class TestNarrativeFlowChunkingStrategy:
         assert len(chunks) >= 1
 
     @pytest.mark.asyncio
-    async def test_preserve_paragraphs_flag(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+    async def test_preserve_paragraphs_flag(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
         """Test the preserve_paragraphs flag."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.NARRATIVE_FLOW,
@@ -2120,7 +2274,7 @@ class TestNarrativeFlowChunkingStrategy:
         text = (
             '"Hello," she said. "How are you?"\n'
             '"I am well," he replied.\n'
-            'The conversation continued pleasantly.\n'
+            "The conversation continued pleasantly.\n"
             '"What brings you here?" asked the man.\n'
             '"Business," she answered.'
         )
@@ -2163,7 +2317,9 @@ class TestNarrativeFlowChunkingStrategy:
         )
 
         # Create a long dialogue exchange
-        dialogue_lines = [f'"Statement number {i}," said speaker {i % 2 + 1}.' for i in range(20)]
+        dialogue_lines = [
+            f'"Statement number {i}," said speaker {i % 2 + 1}.' for i in range(20)
+        ]
         text = " ".join(dialogue_lines)
 
         chunks = await strategy.chunk(text, config)
@@ -2200,6 +2356,7 @@ class TestNarrativeFlowChunkingStrategy:
     ) -> None:
         """Test warning when strategy type doesn't match NARRATIVE_FLOW."""
         import logging
+
         import structlog
 
         # Configure structlog for caplog
@@ -2253,7 +2410,9 @@ class TestNarrativeFlowChunkingStrategy:
             assert metadata_word_count == actual_word_count
 
     @pytest.mark.asyncio
-    async def test_dialogue_with_single_quotes(self, strategy: NarrativeFlowChunkingStrategy) -> None:
+    async def test_dialogue_with_single_quotes(
+        self, strategy: NarrativeFlowChunkingStrategy
+    ) -> None:
         """Test handling of dialogue with single quotes."""
         config = ChunkingStrategy(
             strategy=ChunkStrategyType.NARRATIVE_FLOW,
@@ -2288,7 +2447,7 @@ class TestNarrativeFlowChunkingStrategy:
         text = (
             'The hero approached. "Greetings," he said.\n\n'
             'The villain laughed. "You cannot stop me."\n\n'
-            'They drew their swords. The battle began.'
+            "They drew their swords. The battle began."
         )
 
         chunks = await strategy.chunk(text, config)
@@ -2555,7 +2714,7 @@ class TestConfigurableOverlap:
         strategy = FixedChunkingStrategy()
 
         test_cases = [
-            (60, 6),    # 10% of 60 (must be > min_chunk_size of 50)
+            (60, 6),  # 10% of 60 (must be > min_chunk_size of 50)
             (100, 10),  # 10% of 100
             (200, 20),  # 10% of 200
             (400, 40),  # 10% of 400
@@ -2747,7 +2906,8 @@ class TestChunkCoherenceAnalyzer:
 
     @pytest.mark.asyncio
     async def test_analyze_multiple_chunks(
-        self, analyzer: ChunkCoherenceAnalyzer,
+        self,
+        analyzer: ChunkCoherenceAnalyzer,
         sample_chunks: list[Chunk],
         config: ChunkingStrategy,
     ) -> None:
@@ -3002,7 +3162,8 @@ class TestChunkCoherenceAnalyzer:
         assert abs(sim - (-1.0)) < 0.001
 
     @pytest.mark.asyncio
-    async def test_different_length_vectors(self, analyzer: ChunkCoherenceAnalyzer
+    async def test_different_length_vectors(
+        self, analyzer: ChunkCoherenceAnalyzer
     ) -> None:
         """Test cosine similarity with different length vectors."""
         vec1 = [0.5, 0.5, 0.5]
@@ -3012,7 +3173,8 @@ class TestChunkCoherenceAnalyzer:
         assert sim == 0.0
 
     @pytest.mark.asyncio
-    async def test_empty_chunks(self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
+    async def test_empty_chunks(
+        self, analyzer: ChunkCoherenceAnalyzer, config: ChunkingStrategy
     ) -> None:
         """Test analyzing chunks with very minimal content."""
         chunk = Chunk(
@@ -3037,7 +3199,9 @@ class TestChunkCoherenceAnalyzerWithEmbeddings:
         return MockEmbeddingService()
 
     @pytest.fixture
-    def analyzer(self, embedding_service: MockEmbeddingService) -> ChunkCoherenceAnalyzer:
+    def analyzer(
+        self, embedding_service: MockEmbeddingService
+    ) -> ChunkCoherenceAnalyzer:
         """Create analyzer with embedding service."""
         return ChunkCoherenceAnalyzer(embedding_service=embedding_service)
 
@@ -3097,4 +3261,3 @@ class TestChunkCoherenceAnalyzerWithEmbeddings:
         # Should still produce valid result
         assert isinstance(result, CoherenceScore)
         assert 0.0 <= result.score <= 1.0
-

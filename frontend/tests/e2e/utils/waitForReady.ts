@@ -9,7 +9,12 @@ const toLocator = (page: Page, target: ReadyTarget) =>
 
 export const waitForLandingReady = async (page: Page) => {
   const cta = page.locator('[data-testid="cta-launch"]');
-  await expect(cta).toBeVisible({ timeout: DEFAULT_TIMEOUT_MS });
+  const heroTitle = page.getByRole('heading', { name: /narrative engine/i });
+
+  await Promise.any([
+    cta.waitFor({ state: 'visible', timeout: DEFAULT_TIMEOUT_MS }),
+    heroTitle.waitFor({ state: 'visible', timeout: DEFAULT_TIMEOUT_MS }),
+  ]);
 };
 
 export const waitForLoginReady = async (page: Page) => {

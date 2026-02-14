@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import uuid4
 
-from src.core.types.shared_types import KnowledgeEntryId, CharacterId, UserId
+from src.core.types.shared_types import CharacterId, KnowledgeEntryId, UserId
 
 from ..models.knowledge_type import KnowledgeType
 
@@ -53,4 +53,3 @@ class KnowledgeEntryCreated:
     created_by: UserId
     timestamp: datetime
     event_id: str = field(default_factory=lambda: str(uuid4()))
-

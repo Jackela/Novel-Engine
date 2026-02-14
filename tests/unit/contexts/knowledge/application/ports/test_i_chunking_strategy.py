@@ -7,6 +7,8 @@ Tests the chunking strategy port and Chunk entity.
 
 from __future__ import annotations
 
+import pytest
+
 from src.contexts.knowledge.application.ports.i_chunking_strategy import (
     Chunk,
     ChunkingError,
@@ -16,6 +18,8 @@ from src.contexts.knowledge.domain.models.chunking_strategy import (
     ChunkingStrategy,
     ChunkStrategyType,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestChunk:
@@ -146,6 +150,7 @@ class TestIChunkingStrategyProtocol:
 
     def test_valid_implementation(self):
         """Test that a valid implementation conforms to the protocol."""
+
         # A valid implementation must have the chunk method
         class ValidChunkingStrategy:
             async def chunk(
@@ -167,6 +172,7 @@ class TestIChunkingStrategyProtocol:
 
     def test_invalid_implementation_missing_chunk(self):
         """Test that class without chunk method is not compatible."""
+
         class InvalidStrategy:
             def supports_strategy_type(self, strategy_type: str) -> bool:
                 return False
@@ -176,6 +182,7 @@ class TestIChunkingStrategyProtocol:
 
     def test_invalid_implementation_missing_supports(self):
         """Test that class without supports_strategy_type is not compatible."""
+
         class InvalidStrategy:
             async def chunk(
                 self,
@@ -189,6 +196,7 @@ class TestIChunkingStrategyProtocol:
 
     def test_chunk_method_signature_allows_none_config(self):
         """Test that chunk method accepts None for config."""
+
         class FlexibleStrategy:
             async def chunk(
                 self,
@@ -209,6 +217,7 @@ class TestIChunkingStrategyProtocol:
 
     def test_supports_strategy_type_checks_fixed(self):
         """Test supports_strategy_type for 'fixed' strategy."""
+
         class FixedOnlyStrategy:
             async def chunk(
                 self,
@@ -226,6 +235,7 @@ class TestIChunkingStrategyProtocol:
 
     def test_supports_strategy_type_case_sensitive(self):
         """Test supports_strategy_type is case-sensitive."""
+
         class CaseSensitiveStrategy:
             async def chunk(
                 self,

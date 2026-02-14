@@ -12,7 +12,11 @@ import os
 
 import pytest
 
-from src.contexts.knowledge.infrastructure.config.feature_flags import KnowledgeFeatureFlags
+from src.contexts.knowledge.infrastructure.config.feature_flags import (
+    KnowledgeFeatureFlags,
+)
+
+pytestmark = pytest.mark.unit
 
 
 class TestKnowledgeFeatureFlags:

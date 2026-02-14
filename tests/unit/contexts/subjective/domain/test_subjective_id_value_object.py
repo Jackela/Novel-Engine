@@ -12,6 +12,8 @@ import pytest
 
 from src.contexts.subjective.domain.value_objects.subjective_id import SubjectiveId
 
+pytestmark = pytest.mark.unit
+
 
 class TestSubjectiveIdCreation:
     """Test suite for SubjectiveId creation and basic functionality."""

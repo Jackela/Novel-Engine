@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -66,8 +67,6 @@ async def chromadb_health_check() -> dict[str, Any]:
     Warzone 4: AI Brain - BRAIN-001
     Returns the status of the ChromaDB vector database connection.
     """
-    from typing import Any
-
     try:
         from src.contexts.knowledge.infrastructure.adapters.chromadb_vector_store import (
             ChromaDBVectorStore,
@@ -85,7 +84,11 @@ async def chromadb_health_check() -> dict[str, Any]:
 
         return {
             "status": "healthy" if is_healthy else "unhealthy",
-            "message": "ChromaDB vector store is operational" if is_healthy else "ChromaDB connection failed",
+            "message": (
+                "ChromaDB vector store is operational"
+                if is_healthy
+                else "ChromaDB connection failed"
+            ),
             "details": {
                 "persist_dir": str(persist_dir.absolute()),
                 "collection_count": collection_count,
@@ -103,10 +106,10 @@ async def chromadb_health_check() -> dict[str, Any]:
             },
             "timestamp": datetime.now(UTC).isoformat(),
         }
-    except Exception as exc:
-        logger.error("ChromaDB health check error: %s", exc)
+    except Exception:
+        logger.exception("ChromaDB health check error")
         return {
             "status": "error",
-            "message": f"ChromaDB health check failed: {exc}",
+            "message": "ChromaDB health check failed",
             "timestamp": datetime.now(UTC).isoformat(),
         }

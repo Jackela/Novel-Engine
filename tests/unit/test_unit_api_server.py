@@ -10,6 +10,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 # 导入被测试的模块
+
+pytestmark = pytest.mark.unit
+
 try:
     from api_server import app
 

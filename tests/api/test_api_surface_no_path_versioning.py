@@ -4,6 +4,8 @@ from fastapi.testclient import TestClient
 from src.api.app import create_app as create_modular_app
 from src.api.main_api_server import create_app
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.mark.integration
 def test_main_api_does_not_serve_versioned_paths():

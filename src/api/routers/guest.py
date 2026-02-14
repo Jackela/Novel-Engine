@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+from http import cookies
 
 from fastapi import (
     APIRouter,
@@ -43,11 +44,9 @@ async def create_or_resume_guest_session(
         return GuestSessionResponse(workspace_id=workspace_id, created=False)
 
     workspace = store.create()
-    safe_cookie = _assert_safe_cookie_value(
-        manager.encode(_validate_workspace_id(workspace.id))
+    safe_cookie = cookies._quote(
+        _assert_safe_cookie_value(manager.encode(_validate_workspace_id(workspace.id)))
     )
-    # Cookie value is validated via _assert_safe_cookie_value.
-    # codeql[py/cookie-injection]
     response.set_cookie(
         manager.cookie_name,
         safe_cookie,
@@ -97,9 +96,9 @@ async def import_workspace_zip(
         raise HTTPException(status_code=500, detail="Import failed") from err
 
     safe_workspace_id = _validate_workspace_id(workspace.id)
-    safe_cookie = _assert_safe_cookie_value(manager.encode(safe_workspace_id))
-    # Cookie value is validated via _assert_safe_cookie_value.
-    # codeql[py/cookie-injection]
+    safe_cookie = cookies._quote(
+        _assert_safe_cookie_value(manager.encode(safe_workspace_id))
+    )
     response.set_cookie(
         manager.cookie_name,
         safe_cookie,

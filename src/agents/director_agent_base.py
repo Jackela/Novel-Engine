@@ -17,10 +17,9 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from src.core.event_bus import EventBus
-
 # Import agent and shared types
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.event_bus import EventBus
 
 # Try to import configuration loader
 try:
@@ -436,6 +435,3 @@ class DirectorAgentBase:
             )
         except Exception:
             return False
-
-
-

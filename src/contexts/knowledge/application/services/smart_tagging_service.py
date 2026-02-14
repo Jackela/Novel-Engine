@@ -21,7 +21,11 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from ...application.ports.i_llm_client import ILLMClient, LLMRequest, LLMResponse, LLMError
+from ...application.ports.i_llm_client import (
+    ILLMClient,
+    LLMError,
+    LLMRequest,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -152,8 +156,6 @@ class TaggingConfig:
 class SmartTaggingError(Exception):
     """Base exception for smart tagging errors."""
 
-    pass
-
 
 class SmartTaggingService:
     """
@@ -189,9 +191,7 @@ class SmartTaggingService:
         self._config = config or TaggingConfig()
         self._logger = logger.bind(service="smart_tagging")
 
-    def _build_tagging_prompt(
-        self, content: str, content_type: str
-    ) -> tuple[str, str]:
+    def _build_tagging_prompt(self, content: str, content_type: str) -> tuple[str, str]:
         """
         Build the system and user prompts for tag generation.
 
@@ -234,12 +234,6 @@ Rules:
         if len(content) > max_content_length:
             truncated_content += "\n[Content truncated...]"
 
-        user_prompt = f"""Analyze this {content_type} and generate relevant tags:
-
-{truncated_content}
-
-Respond with ONLY valid JSON matching the schema above."""
-
         return system_prompt, truncated_content
 
     def _get_category_descriptions(self) -> str:
@@ -258,9 +252,7 @@ Respond with ONLY valid JSON matching the schema above."""
         }
 
         enabled = "\n".join(
-            descriptions[cat]
-            for cat in self._config.categories
-            if cat in descriptions
+            descriptions[cat] for cat in self._config.categories if cat in descriptions
         )
         return enabled
 
@@ -339,7 +331,9 @@ Respond with ONLY valid JSON matching the schema above."""
             content_length=len(content),
         )
 
-        system_prompt, truncated_content = self._build_tagging_prompt(content, content_type)
+        system_prompt, truncated_content = self._build_tagging_prompt(
+            content, content_type
+        )
         user_prompt = f"""Analyze this {content_type} and generate relevant tags:
 
 {truncated_content}

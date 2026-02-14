@@ -7,14 +7,20 @@ Unit tests for the prompt analytics functionality.
 
 from __future__ import annotations
 
-import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
+import pytest
+
+from src.api.services.prompt_router_service import PromptRouterService
 from src.contexts.knowledge.domain.models.prompt_template import (
     PromptTemplate,
 )
-from src.contexts.knowledge.domain.models.prompt_usage import PromptUsage, PromptUsageStats
-from src.api.services.prompt_router_service import PromptRouterService
+from src.contexts.knowledge.domain.models.prompt_usage import (
+    PromptUsage,
+    PromptUsageStats,
+)
+
+pytestmark = pytest.mark.unit
 
 
 class MockPromptRepository:
@@ -48,16 +54,14 @@ class MockPromptRepository:
         limit: int = 100,
         offset: int = 0,
     ) -> list[PromptTemplate]:
-        results = [
-            t for t in self._templates.values() if t.id not in self._deleted_ids
-        ]
+        results = [t for t in self._templates.values() if t.id not in self._deleted_ids]
 
         if tags:
             for t in self._templates.values():
                 if t.id not in self._deleted_ids and all(tag in t.tags for tag in tags):
                     results.append(t)
 
-        return results[offset:offset + limit]
+        return results[offset : offset + limit]
 
     async def delete(self, template_id: str) -> bool:
         if template_id in self._templates and template_id not in self._deleted_ids:
@@ -66,14 +70,19 @@ class MockPromptRepository:
         return False
 
     async def count(self) -> int:
-        return len([t for t in self._templates.values() if t.id not in self._deleted_ids])
+        return len(
+            [t for t in self._templates.values() if t.id not in self._deleted_ids]
+        )
 
     async def search(self, query: str, limit: int = 20) -> list[PromptTemplate]:
         query_lower = query.lower()
         results = []
         for t in self._templates.values():
             if t.id not in self._deleted_ids:
-                if query_lower in t.name.lower() or query_lower in (t.description or "").lower():
+                if (
+                    query_lower in t.name.lower()
+                    or query_lower in (t.description or "").lower()
+                ):
                     results.append(t)
                     if len(results) >= limit:
                         break
@@ -81,7 +90,8 @@ class MockPromptRepository:
 
     async def get_version_history(self, prompt_id: str) -> list[PromptTemplate]:
         return [
-            t for t in self._templates.values()
+            t
+            for t in self._templates.values()
             if (t.id == prompt_id or t.parent_version_id == prompt_id)
             and t.id not in self._deleted_ids
         ]
@@ -113,10 +123,7 @@ class MockPromptUsageRepository:
         from src.contexts.knowledge.domain.models.prompt_usage import PromptUsageStats
 
         # Filter usages by prompt_id
-        filtered = [
-            u for u in self._usages
-            if u.prompt_id == prompt_id
-        ]
+        filtered = [u for u in self._usages if u.prompt_id == prompt_id]
 
         # Apply workspace filter
         if workspace_id:
@@ -138,10 +145,7 @@ class MockPromptUsageRepository:
         workspace_id: str | None = None,
     ):
         # Filter usages by prompt_id
-        filtered = [
-            u for u in self._usages
-            if u.prompt_id == prompt_id
-        ]
+        filtered = [u for u in self._usages if u.prompt_id == prompt_id]
 
         # Apply workspace filter
         if workspace_id:
@@ -150,7 +154,7 @@ class MockPromptUsageRepository:
         # Sort by timestamp descending
         filtered = sorted(filtered, key=lambda u: u.timestamp, reverse=True)
 
-        return filtered[offset:offset + limit]
+        return filtered[offset : offset + limit]
 
 
 class TestPromptRouterServiceAnalytics:

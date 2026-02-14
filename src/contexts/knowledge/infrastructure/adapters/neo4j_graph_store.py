@@ -21,8 +21,8 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from src.contexts.knowledge.application.ports.i_graph_store import (
-    CliqueResult,
     CentralityResult,
+    CliqueResult,
     GraphAddResult,
     GraphEntity,
     GraphExportResult,
@@ -232,7 +232,9 @@ class Neo4jGraphStore(IGraphStore):
         MATCH (n:Entity {normalized_name: $normalized_name})
         RETURN count(n) as count
         """
-        result = self._execute_query_single(check_query, {"normalized_name": normalized_name})
+        result = self._execute_query_single(
+            check_query, {"normalized_name": normalized_name}
+        )
 
         if result and result["count"] > 0:
             logger.debug(f"Entity already exists: {entity.name}")
@@ -309,12 +311,17 @@ class Neo4jGraphStore(IGraphStore):
         rel_type_str = self._relationship_type_to_str(relationship.relationship_type)
 
         # Auto-create placeholder entities if they don't exist
-        for norm_name, display_name in [(source_norm, relationship.source), (target_norm, relationship.target)]:
+        for norm_name, display_name in [
+            (source_norm, relationship.source),
+            (target_norm, relationship.target),
+        ]:
             check_query = """
             MATCH (n:Entity {normalized_name: $normalized_name})
             RETURN count(n) as count
             """
-            result = self._execute_query_single(check_query, {"normalized_name": norm_name})
+            result = self._execute_query_single(
+                check_query, {"normalized_name": norm_name}
+            )
 
             if not result or result["count"] == 0:
                 create_placeholder = """
@@ -322,7 +329,7 @@ class Neo4jGraphStore(IGraphStore):
                 """
                 self._execute_query(
                     create_placeholder,
-                    {"normalized_name": norm_name, "name": display_name}
+                    {"normalized_name": norm_name, "name": display_name},
                 )
 
         # Check if relationship already exists
@@ -334,11 +341,17 @@ class Neo4jGraphStore(IGraphStore):
         """
         result = self._execute_query_single(
             check_rel_query,
-            {"source_norm": source_norm, "target_norm": target_norm, "rel_type": rel_type_str}
+            {
+                "source_norm": source_norm,
+                "target_norm": target_norm,
+                "rel_type": rel_type_str,
+            },
         )
 
         if result and result["count"] > 0:
-            logger.debug(f"Relationship already exists: {relationship.source} -> {relationship.target}")
+            logger.debug(
+                f"Relationship already exists: {relationship.source} -> {relationship.target}"
+            )
             return False
 
         try:
@@ -366,9 +379,11 @@ class Neo4jGraphStore(IGraphStore):
                     "source_norm": source_norm,
                     "target_norm": target_norm,
                     "properties": properties,
-                }
+                },
             )
-            logger.debug(f"Added relationship: {relationship.source} -> {relationship.target}")
+            logger.debug(
+                f"Added relationship: {relationship.source} -> {relationship.target}"
+            )
             return True
 
         except Exception as e:
@@ -382,7 +397,9 @@ class Neo4jGraphStore(IGraphStore):
                 },
             ) from e
 
-    async def add_relationships(self, relationships: list[GraphRelationship]) -> GraphAddResult:
+    async def add_relationships(
+        self, relationships: list[GraphRelationship]
+    ) -> GraphAddResult:
         """
         Add multiple relationships to the graph in batch.
 
@@ -435,7 +452,13 @@ class Neo4jGraphStore(IGraphStore):
             entity_type = self._str_to_entity_type(entity_type_str)
 
             # Extract metadata (exclude known fields)
-            known_fields = {"normalized_name", "name", "entity_type", "aliases", "description"}
+            known_fields = {
+                "normalized_name",
+                "name",
+                "entity_type",
+                "aliases",
+                "description",
+            }
             metadata = {k: v for k, v in node.items() if k not in known_fields}
 
             return GraphEntity(
@@ -473,10 +496,15 @@ class Neo4jGraphStore(IGraphStore):
 
         # Build relationship type filter
         rel_filter = ""
-        params: dict[str, Any] = {"normalized_name": normalized_name, "max_depth": max_depth}
+        params: dict[str, Any] = {
+            "normalized_name": normalized_name,
+            "max_depth": max_depth,
+        }
 
         if relationship_types:
-            rel_types = [self._relationship_type_to_str(rt) for rt in relationship_types]
+            rel_types = [
+                self._relationship_type_to_str(rt) for rt in relationship_types
+            ]
             params["rel_types"] = rel_types
             rel_filter = "AND r.relationship_type IN $rel_types"
 
@@ -589,7 +617,10 @@ class Neo4jGraphStore(IGraphStore):
 
         # Build path length constraint
         length_constraint = ""
-        params: dict[str, Any] = {"source_norm": source_norm, "target_norm": target_norm}
+        params: dict[str, Any] = {
+            "source_norm": source_norm,
+            "target_norm": target_norm,
+        }
 
         if max_length is not None:
             params["max_length"] = max_length
@@ -759,7 +790,9 @@ class Neo4jGraphStore(IGraphStore):
         """
 
         try:
-            result = self._execute_query(query, {"source_norm": source_norm, "target_norm": target_norm})
+            result = self._execute_query(
+                query, {"source_norm": source_norm, "target_norm": target_norm}
+            )
 
             relationships: list[GraphRelationship] = []
             for record in result:
@@ -803,7 +836,9 @@ class Neo4jGraphStore(IGraphStore):
         """
 
         try:
-            result = self._execute_query_single(query, {"normalized_name": normalized_name})
+            result = self._execute_query_single(
+                query, {"normalized_name": normalized_name}
+            )
 
             if result and result["count"] > 0:
                 logger.debug(f"Removed entity: {name}")
@@ -848,11 +883,17 @@ class Neo4jGraphStore(IGraphStore):
         try:
             result = self._execute_query_single(
                 query,
-                {"source_norm": source_norm, "target_norm": target_norm, "rel_type": rel_type_str}
+                {
+                    "source_norm": source_norm,
+                    "target_norm": target_norm,
+                    "rel_type": rel_type_str,
+                },
             )
 
             if result and result["count"] > 0:
-                logger.debug(f"Removed relationship: {source} -> {target} ({relationship_type})")
+                logger.debug(
+                    f"Removed relationship: {source} -> {target} ({relationship_type})"
+                )
                 return True
 
             return False
@@ -924,7 +965,9 @@ class Neo4jGraphStore(IGraphStore):
                 MATCH (n:Entity {entity_type: $entity_type})
                 RETURN count(n) as count
                 """
-                count_result = self._execute_query_single(count_query, {"entity_type": et})
+                count_result = self._execute_query_single(
+                    count_query, {"entity_type": et}
+                )
                 if count_result:
                     entity_type_counts[et] = count_result["count"]
 
@@ -985,7 +1028,9 @@ class Neo4jGraphStore(IGraphStore):
         """
 
         try:
-            result = self._execute_query_single(query, {"normalized_name": normalized_name})
+            result = self._execute_query_single(
+                query, {"normalized_name": normalized_name}
+            )
             return result is not None and result["count"] > 0
         except Exception:
             return False
@@ -1030,7 +1075,13 @@ class Neo4jGraphStore(IGraphStore):
                 entity = self._str_to_entity_type(entity_type_str)
 
                 # Extract metadata
-                known_fields = {"normalized_name", "name", "entity_type", "aliases", "description"}
+                known_fields = {
+                    "normalized_name",
+                    "name",
+                    "entity_type",
+                    "aliases",
+                    "description",
+                }
                 metadata = {k: v for k, v in node.items() if k not in known_fields}
 
                 entities.append(
@@ -1115,8 +1166,10 @@ class Neo4jGraphStore(IGraphStore):
 
             # Filter by size
             filtered_cliques = [
-                clique for clique in all_cliques
-                if len(clique) >= min_size and (max_size is None or len(clique) <= max_size)
+                clique
+                for clique in all_cliques
+                if len(clique) >= min_size
+                and (max_size is None or len(clique) <= max_size)
             ]
 
             # Convert to display names
@@ -1125,7 +1178,9 @@ class Neo4jGraphStore(IGraphStore):
                 display_names = []
                 for node in clique:
                     if node in graph.nodes:
-                        display_names.append(graph.nodes[node].get("display_name", node))
+                        display_names.append(
+                            graph.nodes[node].get("display_name", node)
+                        )
                     else:
                         display_names.append(node)
                 cliques_with_display_names.append(tuple(display_names))
@@ -1212,13 +1267,21 @@ class Neo4jGraphStore(IGraphStore):
                 # Return only specified entity
                 normalized_name = self._normalize_name(entity_name)
                 if normalized_name in graph.nodes:
-                    display_name = graph.nodes[normalized_name].get("display_name", entity_name)
+                    display_name = graph.nodes[normalized_name].get(
+                        "display_name", entity_name
+                    )
                     results.append(
                         CentralityResult(
                             entity_name=display_name,
-                            degree_centrality=degree_centralities.get(normalized_name, 0.0),
-                            betweenness_centrality=betweenness_centralities.get(normalized_name, 0.0),
-                            closeness_centrality=closeness_centralities.get(normalized_name, 0.0),
+                            degree_centrality=degree_centralities.get(
+                                normalized_name, 0.0
+                            ),
+                            betweenness_centrality=betweenness_centralities.get(
+                                normalized_name, 0.0
+                            ),
+                            closeness_centrality=closeness_centralities.get(
+                                normalized_name, 0.0
+                            ),
                             pagerank=pagerank_scores.get(normalized_name, 0.0),
                         )
                     )
@@ -1230,7 +1293,9 @@ class Neo4jGraphStore(IGraphStore):
                         CentralityResult(
                             entity_name=display_name,
                             degree_centrality=degree_centralities.get(node, 0.0),
-                            betweenness_centrality=betweenness_centralities.get(node, 0.0),
+                            betweenness_centrality=betweenness_centralities.get(
+                                node, 0.0
+                            ),
                             closeness_centrality=closeness_centralities.get(node, 0.0),
                             pagerank=pagerank_scores.get(node, 0.0),
                         )
@@ -1324,7 +1389,9 @@ class Neo4jGraphStore(IGraphStore):
                         GraphRelationship(
                             source=rel.get("source", source),
                             target=rel.get("target", target_name),
-                            relationship_type=self._str_to_relationship_type(rel_type_str),
+                            relationship_type=self._str_to_relationship_type(
+                                rel_type_str
+                            ),
                             context=rel.get("context", ""),
                             strength=rel.get("strength", 1.0),
                         )
@@ -1406,7 +1473,13 @@ class Neo4jGraphStore(IGraphStore):
                     node_attrs["description"] = node.get("description", "")
                     # Add remaining metadata
                     for key, value in node.items():
-                        if key not in {"normalized_name", "name", "entity_type", "aliases", "description"}:
+                        if key not in {
+                            "normalized_name",
+                            "name",
+                            "entity_type",
+                            "aliases",
+                            "description",
+                        }:
                             node_attrs[key] = value
 
                 graph.add_node(normalized_name, **node_attrs)
@@ -1427,7 +1500,13 @@ class Neo4jGraphStore(IGraphStore):
                     edge_attrs["strength"] = rel.get("strength", 1.0)
                     # Add remaining metadata
                     for key, value in rel.items():
-                        if key not in {"relationship_type", "source", "target", "context", "strength"}:
+                        if key not in {
+                            "relationship_type",
+                            "source",
+                            "target",
+                            "context",
+                            "strength",
+                        }:
                             edge_attrs[key] = value
 
                 graph.add_edge(source, target, **edge_attrs)
@@ -1440,7 +1519,9 @@ class Neo4jGraphStore(IGraphStore):
             # Get file size
             file_size = os.path.getsize(output_path)
 
-            logger.info(f"Exported Neo4j graph to GraphML: {output_path} ({graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges)")
+            logger.info(
+                f"Exported Neo4j graph to GraphML: {output_path} ({graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges)"
+            )
 
             return GraphExportResult(
                 format="graphml",
@@ -1510,7 +1591,13 @@ class Neo4jGraphStore(IGraphStore):
 
                 # Add remaining metadata
                 for key, value in node.items():
-                    if key not in {"normalized_name", "name", "entity_type", "aliases", "description"}:
+                    if key not in {
+                        "normalized_name",
+                        "name",
+                        "entity_type",
+                        "aliases",
+                        "description",
+                    }:
                         node_dict[key] = value
 
                 nodes_data.append(node_dict)
@@ -1533,7 +1620,15 @@ class Neo4jGraphStore(IGraphStore):
 
                 # Add remaining metadata
                 for key, value in rel.items():
-                    if key not in {"source", "target", "source_name", "target_name", "relationship_type", "context", "strength"}:
+                    if key not in {
+                        "source",
+                        "target",
+                        "source_name",
+                        "target_name",
+                        "relationship_type",
+                        "context",
+                        "strength",
+                    }:
                         edge_dict[key] = value
 
                 edges_data.append(edge_dict)
@@ -1551,7 +1646,9 @@ class Neo4jGraphStore(IGraphStore):
                 },
             }
 
-            json_string = json.dumps(export_data, indent=2 if pretty else None, ensure_ascii=False)
+            json_string = json.dumps(
+                export_data, indent=2 if pretty else None, ensure_ascii=False
+            )
             data_size = len(json_string.encode("utf-8"))
 
             if output_path:
@@ -1587,6 +1684,7 @@ class Neo4jGraphStore(IGraphStore):
     def _get_timestamp() -> str:
         """Get current timestamp in ISO format."""
         from datetime import datetime, timezone
+
         return datetime.now(timezone.utc).isoformat()
 
 

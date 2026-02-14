@@ -11,22 +11,24 @@ from __future__ import annotations
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 import httpx
+import pytest
 
 from src.contexts.knowledge.application.ports.i_llm_client import (
+    LLMError,
     LLMRequest,
     LLMResponse,
-    LLMError,
 )
 from src.contexts.knowledge.infrastructure.adapters.gemini_llm_client import (
-    GeminiLLMClient,
-    ChatMessage,
+    DEFAULT_MAX_TOKENS,
     DEFAULT_MODEL,
     DEFAULT_TEMPERATURE,
-    DEFAULT_MAX_TOKENS,
     GEMINI_MODELS,
+    ChatMessage,
+    GeminiLLMClient,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -68,9 +70,7 @@ def sample_gemini_response_no_usage() -> dict:
     return {
         "candidates": [
             {
-                "content": {
-                    "parts": [{"text": "Response without usage tracking."}]
-                },
+                "content": {"parts": [{"text": "Response without usage tracking."}]},
                 "finishReason": "STOP",
                 "index": 0,
             }
@@ -135,7 +135,9 @@ class TestGeminiLLMClientInit:
             api_key=mock_api_key,
             base_url="https://custom.api.com/v1/models/test:generateContent",
         )
-        assert client._base_url == "https://custom.api.com/v1/models/test:generateContent"
+        assert (
+            client._base_url == "https://custom.api.com/v1/models/test:generateContent"
+        )
 
     def test_init_without_api_key_raises_error(self) -> None:
         """Test that initialization fails without API key."""
@@ -547,5 +549,6 @@ class TestGeminiLLMClientIntegration:
 
         # Verify generate method has correct signature
         import inspect
+
         sig = inspect.signature(gemini_client.generate)
-        assert 'request' in sig.parameters
+        assert "request" in sig.parameters

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Final, Optional
+from typing import Final
 
 # Default overlap percentage (10% of chunk_size)
 DEFAULT_OVERLAP_PERCENTAGE: Final[float] = 0.1

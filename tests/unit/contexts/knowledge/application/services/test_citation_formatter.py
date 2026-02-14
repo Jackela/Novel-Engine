@@ -8,14 +8,18 @@ Tests for citation formatting and source attribution.
 import pytest
 
 from src.contexts.knowledge.application.services.citation_formatter import (
+    ChunkCitation,
+    CitationFormat,
     CitationFormatter,
     CitationFormatterConfig,
     SourceReference,
-    ChunkCitation,
-    CitationFormat,
 )
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    RetrievedChunk,
+)
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -98,7 +102,9 @@ class TestCitationFormatter:
 
     def test_format_chunks_with_alphabetic_style(self, sample_chunks):
         """Test formatting chunks with alphabetic citation style."""
-        formatter = CitationFormatter(CitationFormatterConfig(format_style="alphabetic"))
+        formatter = CitationFormatter(
+            CitationFormatterConfig(format_style="alphabetic")
+        )
 
         result = formatter.format_chunks(sample_chunks)
 
@@ -107,13 +113,17 @@ class TestCitationFormatter:
 
     def test_format_chunks_with_source_type_style(self, sample_chunks):
         """Test formatting chunks with source type citation style."""
-        formatter = CitationFormatter(CitationFormatterConfig(format_style="source_type"))
+        formatter = CitationFormatter(
+            CitationFormatterConfig(format_style="source_type")
+        )
 
         result = formatter.format_chunks(sample_chunks)
 
         # Citation IDs should contain source type prefixes
-        assert any("C:" in ref.citation_id or "char_alice" in ref.citation_id
-                   for ref in result.references_dict.values())
+        assert any(
+            "C:" in ref.citation_id or "char_alice" in ref.citation_id
+            for ref in result.references_dict.values()
+        )
 
     def test_format_chunks_empty_list(self):
         """Test formatting empty chunk list."""
@@ -137,9 +147,8 @@ class TestCitationFormatter:
 
         # Check custom names are used
         alice_ref = next(
-            (r for r in result.references_dict.values()
-             if r.source_id == "char_alice"),
-            None
+            (r for r in result.references_dict.values() if r.source_id == "char_alice"),
+            None,
         )
         assert alice_ref is not None
         assert "Alice, Warrior of Light" in alice_ref.display_name
@@ -165,7 +174,9 @@ class TestCitationFormatter:
 
         # Should be sorted by relevance (highest first)
         assert sources[0].source_id == "char_alice"
-        assert sources[0].relevance_score == pytest.approx(0.9, 0.1)  # Average of 0.92 and 0.88
+        assert sources[0].relevance_score == pytest.approx(
+            0.9, 0.1
+        )  # Average of 0.92 and 0.88
 
     def test_get_sources_includes_chunk_count(self, sample_chunks):
         """Test that sources include chunk count."""
@@ -188,7 +199,9 @@ class TestCitationFormatter:
 
     def test_format_citation_marker_source_type(self, sample_chunks):
         """Test formatting single citation marker in source type style."""
-        formatter = CitationFormatter(CitationFormatterConfig(format_style="source_type"))
+        formatter = CitationFormatter(
+            CitationFormatterConfig(format_style="source_type")
+        )
 
         marker = formatter.format_citation_marker(sample_chunks[0], "")
         assert "C:" in marker or "char_alice" in marker
@@ -197,8 +210,7 @@ class TestCitationFormatter:
         """Test including chunk index in citation markers."""
         formatter = CitationFormatter(
             CitationFormatterConfig(
-                format_style="source_type",
-                include_chunk_index=True
+                format_style="source_type", include_chunk_index=True
             )
         )
 
@@ -208,9 +220,7 @@ class TestCitationFormatter:
 
     def test_include_relevance_in_markers(self, sample_chunks):
         """Test including relevance scores in markers."""
-        formatter = CitationFormatter(
-            CitationFormatterConfig(include_relevance=True)
-        )
+        formatter = CitationFormatter(CitationFormatterConfig(include_relevance=True))
 
         result = formatter.format_chunks(sample_chunks)
 
@@ -226,7 +236,9 @@ class TestCitationFormatter:
 
         # Should have all references but only 2 in formatted list
         assert len(result.references_dict) == 3
-        assert "... and 1 more" in result.sources_list or "... and" in result.sources_list
+        assert (
+            "... and 1 more" in result.sources_list or "... and" in result.sources_list
+        )
 
     def test_sources_list_format(self, sample_chunks):
         """Test the format of the sources list."""
@@ -319,12 +331,14 @@ class TestCitationFormat:
         format_obj = CitationFormat(
             inline_markers=["[1]", "[2]"],
             sources_list="Sources:\n  [1] Character:alice",
-            references_dict={"1": SourceReference(
-                source_type=SourceType.CHARACTER,
-                source_id="alice",
-                citation_id="1",
-                display_name="Alice",
-            )},
+            references_dict={
+                "1": SourceReference(
+                    source_type=SourceType.CHARACTER,
+                    source_id="alice",
+                    citation_id="1",
+                    display_name="Alice",
+                )
+            },
         )
 
         assert len(format_obj.inline_markers) == 2

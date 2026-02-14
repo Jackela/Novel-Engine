@@ -19,6 +19,9 @@ from uuid import uuid4
 import pytest
 
 # Mock the aioredis dependency to avoid import errors
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 
 
@@ -66,8 +69,6 @@ from src.contexts.world.domain.aggregates.world_state import (
     WorldStatus,
 )
 from src.contexts.world.domain.value_objects.coordinates import Coordinates
-
-pytestmark = pytest.mark.unit
 
 
 class TestWorldStateAggregate:

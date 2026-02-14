@@ -58,7 +58,9 @@ export function usePromptsSearch(query: string, limit: number = 20) {
       if (!query.trim()) {
         return { prompts: [], total: 0, limit, offset: 0 };
       }
-      const data = await api.get<unknown>(`/prompts/search?query=${encodeURIComponent(query)}&limit=${limit}`);
+      const data = await api.get<unknown>(
+        `/prompts/search?query=${encodeURIComponent(query)}&limit=${limit}`
+      );
       const parsed = PromptListResponseSchema.parse(data);
       return parsed;
     },
@@ -124,8 +126,12 @@ export function useUpdatePrompt() {
       api.put<PromptDetailResponse>(`/prompts/${id}`, input),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: PROMPTS_KEY });
-      queryClient.invalidateQueries({ queryKey: [...PROMPTS_KEY, 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: [...PROMPTS_KEY, 'versions', variables.id] });
+      queryClient.invalidateQueries({
+        queryKey: [...PROMPTS_KEY, 'detail', variables.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...PROMPTS_KEY, 'versions', variables.id],
+      });
     },
   });
 }
@@ -145,7 +151,11 @@ export function useDeletePrompt() {
 // Render prompt with variables
 export function useRenderPrompt() {
   return useMutation({
-    mutationFn: ({ id, variables, strict = true }: {
+    mutationFn: ({
+      id,
+      variables,
+      strict = true,
+    }: {
       id: string;
       variables?: Array<{ name: string; value: unknown }>;
       strict?: boolean;
@@ -163,7 +173,11 @@ export function useRenderPrompt() {
 // BRAIN-020B: Frontend: Prompt Playground - Integration
 export function useGeneratePrompt() {
   return useMutation({
-    mutationFn: ({ id, config, variables }: {
+    mutationFn: ({
+      id,
+      config,
+      variables,
+    }: {
       id: string;
       variables?: Array<{ name: string; value: unknown }>;
       config?: {
@@ -202,8 +216,12 @@ export function useRollbackPrompt() {
       api.post<PromptDetailResponse>(`/prompts/${id}/rollback/${version}`, {}),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: PROMPTS_KEY });
-      queryClient.invalidateQueries({ queryKey: [...PROMPTS_KEY, 'detail', variables.id] });
-      queryClient.invalidateQueries({ queryKey: [...PROMPTS_KEY, 'versions', variables.id] });
+      queryClient.invalidateQueries({
+        queryKey: [...PROMPTS_KEY, 'detail', variables.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...PROMPTS_KEY, 'versions', variables.id],
+      });
     },
   });
 }
@@ -219,7 +237,9 @@ export function usePromptCompareAuto(id: string, versionA: number, versionB: num
         version_a: String(versionA),
         version_b: String(versionB),
       });
-      const data = await api.get<unknown>(`/prompts/${id}/compare?${params.toString()}`);
+      const data = await api.get<unknown>(
+        `/prompts/${id}/compare?${params.toString()}`
+      );
       return PromptCompareResponseSchema.parse(data);
     },
     enabled: !!id && versionA > 0 && versionB > 0,

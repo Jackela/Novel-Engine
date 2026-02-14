@@ -45,9 +45,7 @@ export function foreshadowingToEdge(foreshadowing: ForeshadowingResponse): Edge 
  * Convert multiple foreshadowings to edges
  * Filters out null results from foreshadowings without payoffs
  */
-export function foreshadowingsToEdges(
-  foreshadowings: ForeshadowingResponse[]
-): Edge[] {
+export function foreshadowingsToEdges(foreshadowings: ForeshadowingResponse[]): Edge[] {
   return foreshadowings
     .map(foreshadowingToEdge)
     .filter((edge): edge is Edge => edge !== null);
@@ -58,11 +56,14 @@ export function foreshadowingsToEdges(
  *
  * This helps position edges correctly when scene nodes move
  */
-export function getSceneNodePositions(sceneIds: string[], nodes: { id: string; position: { x: number; y: number } }[]): Map<string, { x: number; y: number }> {
+export function getSceneNodePositions(
+  sceneIds: string[],
+  nodes: { id: string; position: { x: number; y: number } }[]
+): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
 
-  sceneIds.forEach(sceneId => {
-    const node = nodes.find(n => n.id === sceneId);
+  sceneIds.forEach((sceneId) => {
+    const node = nodes.find((n) => n.id === sceneId);
     if (node) {
       positions.set(sceneId, node.position);
     }

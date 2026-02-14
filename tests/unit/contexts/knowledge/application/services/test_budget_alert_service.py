@@ -6,27 +6,27 @@ Tests for BudgetAlertService budget monitoring and alerting.
 """
 
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from src.contexts.knowledge.application.services.budget_alert_service import (
+    AlertHandler,
     BudgetAlertService,
     BudgetAlertServiceConfig,
-    AlertHandler,
     create_budget_alert_service,
 )
 from src.contexts.knowledge.domain.models.budget_alert import (
-    AlertThresholdType,
     AlertComparisonOperator,
-    AlertSeverity,
+    AlertEvaluationResult,
     AlertFrequency,
+    AlertSeverity,
+    AlertThresholdType,
     AlertTriggeredEvent,
     BudgetAlertConfig,
     BudgetAlertState,
-    AlertEvaluationResult,
 )
 from src.contexts.knowledge.domain.models.token_usage import (
     TokenUsage,
@@ -38,6 +38,8 @@ from src.contexts.knowledge.infrastructure.adapters.in_memory_budget_alert_repos
 from src.contexts.knowledge.infrastructure.adapters.in_memory_token_usage_repository import (
     InMemoryTokenUsageRepository,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -197,6 +199,7 @@ class TestBudgetAlertState:
 
         # Wait for cooldown
         import time
+
         time.sleep(1.1)
 
         # Now should notify again

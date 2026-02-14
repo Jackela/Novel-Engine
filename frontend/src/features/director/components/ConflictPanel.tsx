@@ -91,7 +91,11 @@ const CONFLICT_TYPE_CONFIG: Record<
  */
 const STAKES_CONFIG: Record<
   ConflictStakes,
-  { label: string; className: string; badgeVariant: 'default' | 'secondary' | 'destructive' | 'outline' }
+  {
+    label: string;
+    className: string;
+    badgeVariant: 'default' | 'secondary' | 'destructive' | 'outline';
+  }
 > = {
   low: {
     label: 'Low',
@@ -199,7 +203,7 @@ function ConflictItem({
         'group relative rounded-lg border bg-card p-3 transition-all',
         isCritical && !isResolved && 'border-red-500/50 bg-red-500/5',
         isResolved && 'opacity-60',
-        !isEditing && 'hover:bg-accent/50 cursor-pointer'
+        !isEditing && 'cursor-pointer hover:bg-accent/50'
       )}
       onClick={!isEditing ? onEdit : undefined}
       onKeyDown={!isEditing ? (e) => e.key === 'Enter' && onEdit() : undefined}
@@ -217,7 +221,10 @@ function ConflictItem({
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {isEditing ? (
-            <Select value={editType} onValueChange={(v) => setEditType(v as ConflictType)}>
+            <Select
+              value={editType}
+              onValueChange={(v) => setEditType(v as ConflictType)}
+            >
               <SelectTrigger className="h-7 w-36">
                 <SelectValue />
               </SelectTrigger>
@@ -242,7 +249,10 @@ function ConflictItem({
           )}
 
           {isEditing ? (
-            <Select value={editStakes} onValueChange={(v) => setEditStakes(v as ConflictStakes)}>
+            <Select
+              value={editStakes}
+              onValueChange={(v) => setEditStakes(v as ConflictStakes)}
+            >
               <SelectTrigger className="h-7 w-28">
                 <SelectValue />
               </SelectTrigger>
@@ -263,7 +273,10 @@ function ConflictItem({
 
         <div className="flex items-center gap-1">
           {/* Resolution status badge */}
-          <Badge variant="outline" className={cn('text-xs', resolutionConfig.className)}>
+          <Badge
+            variant="outline"
+            className={cn('text-xs', resolutionConfig.className)}
+          >
             <ResolutionIcon className="mr-1 h-3 w-3" />
             {resolutionConfig.label}
           </Badge>
@@ -285,7 +298,8 @@ function ConflictItem({
                 <DialogHeader>
                   <DialogTitle>Delete Conflict</DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to delete this conflict? This action cannot be undone.
+                    Are you sure you want to delete this conflict? This action cannot be
+                    undone.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -361,7 +375,12 @@ function ConflictItem({
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={onCancelEdit} disabled={isSaving}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onCancelEdit}
+                disabled={isSaving}
+              >
                 <X className="mr-1 h-3.5 w-3.5" />
                 Cancel
               </Button>
@@ -481,7 +500,13 @@ export function ConflictPanel({ sceneId, className }: ConflictPanelProps) {
         },
       }
     );
-  }, [createConflict, sceneId, newConflictType, newConflictStakes, newConflictDescription]);
+  }, [
+    createConflict,
+    sceneId,
+    newConflictType,
+    newConflictStakes,
+    newConflictDescription,
+  ]);
 
   const handleUpdateConflict = useCallback(
     (conflictId: string, updates: Partial<ConflictResponse>) => {
@@ -633,7 +658,11 @@ export function ConflictPanel({ sceneId, className }: ConflictPanelProps) {
             >
               Cancel
             </Button>
-            <Button size="sm" onClick={handleAddConflict} disabled={createConflict.isPending}>
+            <Button
+              size="sm"
+              onClick={handleAddConflict}
+              disabled={createConflict.isPending}
+            >
               {createConflict.isPending ? (
                 <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
               ) : (

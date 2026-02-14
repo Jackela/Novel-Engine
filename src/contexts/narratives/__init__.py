@@ -43,14 +43,14 @@ from .domain.value_objects.causal_node import (
     CausalRelationType,
     CausalStrength,
 )
+from .domain.value_objects.narrative_context import NarrativeContext
+from .domain.value_objects.narrative_id import NarrativeId
 from .domain.value_objects.narrative_models import (
     NarrativeGuidance,
     PacingAdjustment,
     StoryArcPhase,
     StoryArcState,
 )
-from .domain.value_objects.narrative_context import NarrativeContext
-from .domain.value_objects.narrative_id import NarrativeId
 from .domain.value_objects.narrative_theme import (
     NarrativeTheme,
     ThemeIntensity,

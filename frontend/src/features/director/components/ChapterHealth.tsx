@@ -42,13 +42,14 @@ import type { HealthWarning, HealthScore } from '@/types/schemas';
  * Health score icon component.
  */
 function HealthScoreIcon({ score }: { score: HealthScore }) {
-  const config: Record<HealthScore, { Icon: typeof CheckCircle2; className: string }> = {
-    excellent: { Icon: CheckCircle2, className: 'text-green-500' },
-    good: { Icon: CheckCircle2, className: 'text-emerald-500' },
-    fair: { Icon: AlertCircle, className: 'text-yellow-500' },
-    poor: { Icon: AlertTriangle, className: 'text-orange-500' },
-    critical: { Icon: XCircle, className: 'text-destructive' },
-  };
+  const config: Record<HealthScore, { Icon: typeof CheckCircle2; className: string }> =
+    {
+      excellent: { Icon: CheckCircle2, className: 'text-green-500' },
+      good: { Icon: CheckCircle2, className: 'text-emerald-500' },
+      fair: { Icon: AlertCircle, className: 'text-yellow-500' },
+      poor: { Icon: AlertTriangle, className: 'text-orange-500' },
+      critical: { Icon: XCircle, className: 'text-destructive' },
+    };
 
   const { Icon, className } = config[score];
   return <Icon className={cn('h-5 w-5', className)} />;
@@ -69,10 +70,7 @@ function HealthScoreBadge({ score }: { score: HealthScore }) {
   return (
     <Badge
       variant="outline"
-      className={cn(
-        'text-xs font-medium uppercase',
-        colors[score]
-      )}
+      className={cn('text-xs font-medium uppercase', colors[score])}
     >
       {score}
     </Badge>
@@ -100,10 +98,7 @@ function WarningSeverityBadge({ severity }: { severity: HealthWarning['severity'
   return (
     <Badge
       variant="outline"
-      className={cn(
-        'shrink-0 text-xs font-medium uppercase',
-        colors[severity]
-      )}
+      className={cn('shrink-0 text-xs font-medium uppercase', colors[severity])}
     >
       <span className="mr-1">{icons[severity]}</span>
       {severity}
@@ -119,11 +114,11 @@ function WarningSeverityBadge({ severity }: { severity: HealthWarning['severity'
  * consistent with the app's color theme.
  */
 const PHASE_COLORS = {
-  setup: 'hsl(var(--primary))',           // blue - setup phase
-  inciting_incident: 'hsl(38 92% 50%)',    // amber - inciting incident
-  rising_action: 'hsl(262 83% 58%)',      // purple - rising action
-  climax: 'hsl(var(--destructive))',      // red - climax
-  resolution: 'hsl(142 71% 45%)',         // green - resolution
+  setup: 'hsl(var(--primary))', // blue - setup phase
+  inciting_incident: 'hsl(38 92% 50%)', // amber - inciting incident
+  rising_action: 'hsl(262 83% 58%)', // purple - rising action
+  climax: 'hsl(var(--destructive))', // red - climax
+  resolution: 'hsl(142 71% 45%)', // green - resolution
 };
 
 /**
@@ -167,7 +162,7 @@ function WarningItem({ warning, index, defaultOpen = false }: WarningItemProps) 
           <div className="space-y-2 text-sm">
             <p className="text-muted-foreground">{warning.description}</p>
             <div className="rounded-md bg-muted p-2">
-              <p className="font-medium text-xs uppercase text-muted-foreground">
+              <p className="text-xs font-medium uppercase text-muted-foreground">
                 Recommendation
               </p>
               <p className="mt-1">{warning.recommendation}</p>
@@ -235,14 +230,17 @@ export function ChapterHealth({
   const warningsByCategory = useMemo(() => {
     if (!data?.warnings) return {};
 
-    return data.warnings.reduce((acc, warning) => {
-      const category = warning.category;
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category]!.push(warning);
-      return acc;
-    }, {} as Record<string, HealthWarning[]>);
+    return data.warnings.reduce(
+      (acc, warning) => {
+        const category = warning.category;
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category]!.push(warning);
+        return acc;
+      },
+      {} as Record<string, HealthWarning[]>
+    );
   }, [data?.warnings]);
 
   // Loading state
@@ -313,7 +311,8 @@ export function ChapterHealth({
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">Word Count Estimate</span>
             <span className="text-muted-foreground">
-              {data.word_count.total_words.toLocaleString()} / {targetWordCount.toLocaleString()}
+              {data.word_count.total_words.toLocaleString()} /{' '}
+              {targetWordCount.toLocaleString()}
             </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
@@ -324,8 +323,8 @@ export function ChapterHealth({
           </div>
           <p className="text-xs text-muted-foreground">
             Range: {data.word_count.min_words.toLocaleString()} -{' '}
-            {data.word_count.max_words.toLocaleString()} words
-            ({data.word_count.per_scene_average.toFixed(0)} avg/scene)
+            {data.word_count.max_words.toLocaleString()} words (
+            {data.word_count.per_scene_average.toFixed(0)} avg/scene)
           </p>
         </div>
 
@@ -341,7 +340,9 @@ export function ChapterHealth({
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+                    }
                     outerRadius={60}
                     fill="hsl(var(--primary))"
                     dataKey="value"
@@ -418,10 +419,7 @@ export function ChapterHealth({
             <CollapsibleContent className="mt-2 space-y-2">
               <ul className="space-y-2 text-sm">
                 {data.recommendations.map((recommendation, index) => (
-                  <li
-                    key={index}
-                    className="flex gap-2 rounded-md border bg-card p-3"
-                  >
+                  <li key={index} className="flex gap-2 rounded-md border bg-card p-3">
                     <span className="text-primary">•</span>
                     <span className="text-muted-foreground">{recommendation}</span>
                   </li>

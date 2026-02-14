@@ -8,12 +8,15 @@ import pytest
 import yaml
 
 # HACK: Force project root onto path to fix persistent import issue
+
+pytestmark = pytest.mark.integration
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.core.types.shared_types import CharacterAction
+from src.agents.persona_agent.agent import PersonaAgent
 from src.agents.persona_agent.protocols import ThreatLevel
 from src.core.event_bus import EventBus
-from src.agents.persona_agent.agent import PersonaAgent
+from src.core.types.shared_types import CharacterAction
 
 
 class TestLLMIntegration(unittest.TestCase):
@@ -24,8 +27,7 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Create dummy character files
         with open(os.path.join(self.test_dir, "character_sheet.md"), "w") as f:
-            f.write(
-                """
+            f.write("""
 # Character Sheet: Test Character
 
 ## Core Identity
@@ -41,8 +43,7 @@ class TestLLMIntegration(unittest.TestCase):
 **Decision-Making Weights**:
 **self_preservation**: 0.3
 **faction_loyalty**: 0.9
-"""
-            )
+""")
         with open(os.path.join(self.test_dir, "personality.yaml"), "w") as f:
             yaml.dump({"personality_traits": {"aggressive": 0.8, "cautious": 0.2}}, f)
 
@@ -70,7 +71,8 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Act
         with patch(
-            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value="fake_key"
+            "src.agents.persona_agent.agent._validate_gemini_api_key",
+            return_value="fake_key",
         ):
             action = self.agent._llm_enhanced_decision_making(
                 world_state, situation_assessment, available_actions
@@ -148,7 +150,8 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Act
         with patch(
-            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value="fake_key"
+            "src.agents.persona_agent.agent._validate_gemini_api_key",
+            return_value="fake_key",
         ):
             with patch(
                 "src.agents.persona_agent.agent._generate_fallback_response"
@@ -184,7 +187,8 @@ class TestLLMIntegration(unittest.TestCase):
 
         # Act
         with patch(
-            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value="fake_key"
+            "src.agents.persona_agent.agent._validate_gemini_api_key",
+            return_value="fake_key",
         ):
             action = self.agent._llm_enhanced_decision_making(
                 world_state, situation_assessment, available_actions
@@ -197,6 +201,3 @@ class TestLLMIntegration(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
-

@@ -13,6 +13,9 @@ from unittest.mock import MagicMock
 import pytest
 
 # Mock problematic dependencies
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 
 # Import the value objects we're testing

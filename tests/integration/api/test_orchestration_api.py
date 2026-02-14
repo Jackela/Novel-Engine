@@ -5,8 +5,9 @@ Orchestration API Integration Tests
 Tests the Orchestration API endpoints with full request/response validation.
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from src.api.schemas import (
     OrchestrationStartRequest,
@@ -16,6 +17,8 @@ from src.api.schemas import (
     OrchestrationStep,
     OrchestrationStopResponse,
 )
+
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture

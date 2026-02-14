@@ -44,11 +44,24 @@ import {
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -125,9 +138,7 @@ function useRealtimeUsage(): UseRealtimeUsageResult {
         } else if (event.type === 'session_complete') {
           setActiveSessions((prev) =>
             prev.map((s) =>
-              s.session_id === event.session_id
-                ? { ...s, is_complete: true }
-                : s
+              s.session_id === event.session_id ? { ...s, is_complete: true } : s
             )
           );
           // Remove completed sessions after a delay
@@ -188,11 +199,12 @@ function useRealtimeUsage(): UseRealtimeUsageResult {
   const totalCost = activeSessions.reduce((sum, s) => sum + s.cost, 0);
 
   // Get the most recently updated active session
-  const currentSession = activeSessions.length > 0
-    ? activeSessions.reduce((latest, s) =>
-        !latest || s.total_tokens > latest.total_tokens ? s : latest
-      )
-    : null;
+  const currentSession =
+    activeSessions.length > 0
+      ? activeSessions.reduce((latest, s) =>
+          !latest || s.total_tokens > latest.total_tokens ? s : latest
+        )
+      : null;
 
   return {
     activeSessions,
@@ -213,11 +225,13 @@ function RealtimeUsageCounter() {
   }
 
   return (
-    <Card className={isConnected && activeSessions.length > 0 ? 'border-primary/50' : ''}>
+    <Card
+      className={isConnected && activeSessions.length > 0 ? 'border-primary/50' : ''}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
               {activeSessions.length > 0 ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -235,8 +249,12 @@ function RealtimeUsageCounter() {
                   : 'Connecting...'}
             </CardDescription>
           </div>
-          <div className={`flex items-center gap-1.5 text-xs ${isConnected ? 'text-green-500' : 'text-muted-foreground'}`}>
-            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground'}`} />
+          <div
+            className={`flex items-center gap-1.5 text-xs ${isConnected ? 'text-green-500' : 'text-muted-foreground'}`}
+          >
+            <div
+              className={`h-2 w-2 rounded-full ${isConnected ? 'animate-pulse bg-green-500' : 'bg-muted-foreground'}`}
+            />
             {isConnected ? 'Live' : 'Offline'}
           </div>
         </div>
@@ -245,26 +263,36 @@ function RealtimeUsageCounter() {
         <CardContent className="space-y-4">
           {/* Current session summary */}
           {currentSession && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div>
                 <p className="text-xs text-muted-foreground">Tokens</p>
-                <p className="text-xl font-semibold">{currentSession.total_tokens.toLocaleString()}</p>
+                <p className="text-xl font-semibold">
+                  {currentSession.total_tokens.toLocaleString()}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   {currentSession.input_tokens} in / {currentSession.output_tokens} out
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Cost</p>
-                <p className="text-xl font-semibold text-green-600">${currentSession.cost.toFixed(4)}</p>
+                <p className="text-xl font-semibold text-green-600">
+                  ${currentSession.cost.toFixed(4)}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Model</p>
-                <p className="text-sm font-medium capitalize">{currentSession.provider}</p>
-                <p className="text-xs text-muted-foreground">{currentSession.model_name}</p>
+                <p className="text-sm font-medium capitalize">
+                  {currentSession.provider}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {currentSession.model_name}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Status</p>
-                <p className={`text-sm font-medium ${currentSession.is_complete ? 'text-green-500' : 'text-primary'}`}>
+                <p
+                  className={`text-sm font-medium ${currentSession.is_complete ? 'text-green-500' : 'text-primary'}`}
+                >
                   {currentSession.is_complete ? 'Complete' : 'Generating...'}
                 </p>
               </div>
@@ -273,19 +301,30 @@ function RealtimeUsageCounter() {
 
           {/* All active sessions list */}
           {activeSessions.length > 1 && (
-            <div className="space-y-2 pt-2 border-t">
+            <div className="space-y-2 border-t pt-2">
               <p className="text-xs text-muted-foreground">All Active Sessions</p>
               {activeSessions.map((session) => (
-                <div key={session.session_id} className="flex items-center justify-between p-2 rounded bg-muted/50">
+                <div
+                  key={session.session_id}
+                  className="flex items-center justify-between rounded bg-muted/50 p-2"
+                >
                   <div className="flex items-center gap-3">
-                    <div className={`h-2 w-2 rounded-full ${session.is_complete ? 'bg-green-500' : 'bg-primary animate-pulse'}`} />
+                    <div
+                      className={`h-2 w-2 rounded-full ${session.is_complete ? 'bg-green-500' : 'animate-pulse bg-primary'}`}
+                    />
                     <div>
-                      <p className="text-sm font-medium capitalize">{session.provider}</p>
-                      <p className="text-xs text-muted-foreground">{session.model_name}</p>
+                      <p className="text-sm font-medium capitalize">
+                        {session.provider}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {session.model_name}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium">{session.total_tokens.toLocaleString()} tokens</p>
+                    <p className="text-sm font-medium">
+                      {session.total_tokens.toLocaleString()} tokens
+                    </p>
                     <p className="text-xs text-green-600">${session.cost.toFixed(4)}</p>
                   </div>
                 </div>
@@ -374,7 +413,11 @@ const PROVIDER_LABELS: Record<Provider, string> = {
 
 const PROVIDER_MODELS: Record<Provider, string[]> = {
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-  anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'],
+  anthropic: [
+    'claude-3-5-sonnet-20241022',
+    'claude-3-5-haiku-20241022',
+    'claude-3-opus-20240229',
+  ],
   gemini: ['gemini-2.0-flash', 'gemini-2.5-pro', 'gemini-1.5-flash'],
   ollama: ['llama3.2', 'mistral', 'phi3'],
   mock: ['mock-model'],
@@ -382,7 +425,15 @@ const PROVIDER_MODELS: Record<Provider, string[]> = {
 
 export function BrainSettingsPage() {
   // Simple toast notification helper (replace with useToast if available)
-  const toast = ({ title, description, variant = 'default' }: { title: string; description?: string; variant?: 'default' }) => {
+  const toast = ({
+    title,
+    description,
+    variant = 'default',
+  }: {
+    title: string;
+    description?: string;
+    variant?: 'default';
+  }) => {
     console.log(`[${variant.toUpperCase()}] ${title}: ${description}`);
   };
 
@@ -448,35 +499,23 @@ export function BrainSettingsPage() {
   const effectiveDays = getDaysFromDateRange();
 
   // BRAIN-035A: Fetch usage analytics data
-  const {
-    data: usageSummary,
-    isLoading: usageSummaryLoading,
-  } = useQuery({
+  const { data: usageSummary, isLoading: usageSummaryLoading } = useQuery({
     queryKey: ['usage-summary', effectiveDays],
     queryFn: () => brainSettingsApi.getUsageSummary(effectiveDays),
   });
 
-  const {
-    data: dailyUsage,
-    isLoading: dailyUsageLoading,
-  } = useQuery({
+  const { data: dailyUsage, isLoading: dailyUsageLoading } = useQuery({
     queryKey: ['daily-usage', effectiveDays],
     queryFn: () => brainSettingsApi.getDailyUsage(effectiveDays),
   });
 
-  const {
-    data: usageByModel,
-    isLoading: usageByModelLoading,
-  } = useQuery({
+  const { data: usageByModel, isLoading: usageByModelLoading } = useQuery({
     queryKey: ['usage-by-model'],
     queryFn: () => brainSettingsApi.getUsageByModel(),
   });
 
   // BRAIN-035B-01: Fetch model pricing data
-  const {
-    data: modelPricing,
-    isLoading: modelPricingLoading,
-  } = useQuery({
+  const { data: modelPricing, isLoading: modelPricingLoading } = useQuery({
     queryKey: ['model-pricing'],
     queryFn: () => brainSettingsApi.getModelPricing(),
   });
@@ -576,7 +615,13 @@ export function BrainSettingsPage() {
     }
   };
 
-  const TaskRuleCard = ({ rule, taskType }: { rule: TaskRule | undefined; taskType: TaskType }) => {
+  const TaskRuleCard = ({
+    rule,
+    taskType,
+  }: {
+    rule: TaskRule | undefined;
+    taskType: TaskType;
+  }) => {
     const [localProvider, setLocalProvider] = useState<Provider>(
       (rule?.provider as Provider) || 'gemini'
     );
@@ -588,18 +633,19 @@ export function BrainSettingsPage() {
     const availableModels = PROVIDER_MODELS[localProvider];
 
     const handleSave = () => {
-      const updatedRules = config?.task_rules.map((r) =>
-        r.task_type === taskType
-          ? {
-              ...r,
-              provider: localProvider,
-              model_name: localModel,
-              temperature: localTemp,
-              max_tokens: localMaxTokens,
-              enabled: localEnabled,
-            }
-          : r
-      ) || [];
+      const updatedRules =
+        config?.task_rules.map((r) =>
+          r.task_type === taskType
+            ? {
+                ...r,
+                provider: localProvider,
+                model_name: localModel,
+                temperature: localTemp,
+                max_tokens: localMaxTokens,
+                enabled: localEnabled,
+              }
+            : r
+        ) || [];
 
       const newRule: TaskRule = {
         task_type: taskType,
@@ -627,7 +673,9 @@ export function BrainSettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg">{TASK_LABELS[taskType]}</CardTitle>
-              <CardDescription className="text-xs">{TASK_DESCRIPTIONS[taskType]}</CardDescription>
+              <CardDescription className="text-xs">
+                {TASK_DESCRIPTIONS[taskType]}
+              </CardDescription>
             </div>
             <Switch checked={localEnabled} onCheckedChange={setLocalEnabled} />
           </div>
@@ -690,7 +738,9 @@ export function BrainSettingsPage() {
                 max="2"
                 placeholder="Default"
                 value={localTemp ?? ''}
-                onChange={(e) => setLocalTemp(e.target.value ? parseFloat(e.target.value) : null)}
+                onChange={(e) =>
+                  setLocalTemp(e.target.value ? parseFloat(e.target.value) : null)
+                }
                 disabled={!localEnabled}
               />
             </div>
@@ -703,7 +753,11 @@ export function BrainSettingsPage() {
                 min="1"
                 placeholder="Default"
                 value={localMaxTokens ?? ''}
-                onChange={(e) => setLocalMaxTokens(e.target.value ? parseInt(e.target.value, 10) : null)}
+                onChange={(e) =>
+                  setLocalMaxTokens(
+                    e.target.value ? parseInt(e.target.value, 10) : null
+                  )
+                }
                 disabled={!localEnabled}
               />
             </div>
@@ -721,14 +775,14 @@ export function BrainSettingsPage() {
 
   if (configLoading) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <div className="h-10 w-48 bg-muted animate-pulse rounded" />
-          <div className="mt-2 h-5 w-96 bg-muted animate-pulse rounded" />
+          <div className="h-10 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-5 w-96 animate-pulse rounded bg-muted" />
         </div>
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="h-64 bg-muted animate-pulse rounded" />
-          <div className="h-64 bg-muted animate-pulse rounded" />
+          <div className="h-64 animate-pulse rounded bg-muted" />
+          <div className="h-64 animate-pulse rounded bg-muted" />
         </div>
       </div>
     );
@@ -736,10 +790,12 @@ export function BrainSettingsPage() {
 
   if (configError) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto px-4 py-8">
         <Card className="border-destructive">
           <CardHeader>
-            <CardTitle className="text-destructive">Failed to load configuration</CardTitle>
+            <CardTitle className="text-destructive">
+              Failed to load configuration
+            </CardTitle>
             <CardDescription>
               {configError instanceof Error ? configError.message : 'Unknown error'}
             </CardDescription>
@@ -753,20 +809,20 @@ export function BrainSettingsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="flex items-center justify-between mb-8">
+    <div className="container mx-auto max-w-6xl px-4 py-8">
+      <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Settings2 className="w-8 h-8" />
+          <h1 className="flex items-center gap-2 text-3xl font-bold">
+            <Settings2 className="h-8 w-8" />
             Brain Settings
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="mt-2 text-muted-foreground">
             Configure AI model routing, circuit breakers, and fallback preferences
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => refetchConfig()} size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
         </div>
@@ -796,7 +852,9 @@ export function BrainSettingsPage() {
                 <Switch
                   id="enable-fallback"
                   checked={config?.enable_fallback ?? true}
-                  onCheckedChange={(checked) => handleSaveConfig({ enable_fallback: checked })}
+                  onCheckedChange={(checked) =>
+                    handleSaveConfig({ enable_fallback: checked })
+                  }
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -804,7 +862,9 @@ export function BrainSettingsPage() {
                 <Switch
                   id="enable-circuit"
                   checked={config?.enable_circuit_breaker ?? true}
-                  onCheckedChange={(checked) => handleSaveConfig({ enable_circuit_breaker: checked })}
+                  onCheckedChange={(checked) =>
+                    handleSaveConfig({ enable_circuit_breaker: checked })
+                  }
                 />
               </div>
             </CardContent>
@@ -812,14 +872,19 @@ export function BrainSettingsPage() {
 
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Task-Based Routing</h2>
-            <p className="text-muted-foreground text-sm">
-              Configure which model to use for each type of task. Higher priority rules take precedence.
+            <p className="text-sm text-muted-foreground">
+              Configure which model to use for each type of task. Higher priority rules
+              take precedence.
             </p>
             <div className="grid gap-4 md:grid-cols-2">
-              {(['creative', 'logical', 'fast', 'cheap'] as TaskType[]).map((taskType) => {
-                const rule = config?.task_rules.find((r) => r.task_type === taskType);
-                return <TaskRuleCard key={taskType} rule={rule} taskType={taskType} />;
-              })}
+              {(['creative', 'logical', 'fast', 'cheap'] as TaskType[]).map(
+                (taskType) => {
+                  const rule = config?.task_rules.find((r) => r.task_type === taskType);
+                  return (
+                    <TaskRuleCard key={taskType} rule={rule} taskType={taskType} />
+                  );
+                }
+              )}
             </div>
           </div>
         </TabsContent>
@@ -830,7 +895,8 @@ export function BrainSettingsPage() {
             <CardHeader>
               <CardTitle>Routing Constraints</CardTitle>
               <CardDescription>
-                Limit which models can be selected based on cost, latency, and other factors
+                Limit which models can be selected based on cost, latency, and other
+                factors
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -847,7 +913,9 @@ export function BrainSettingsPage() {
                     handleSaveConfig({
                       constraints: {
                         ...config?.constraints,
-                        max_cost_per_1m_tokens: e.target.value ? parseFloat(e.target.value) : null,
+                        max_cost_per_1m_tokens: e.target.value
+                          ? parseFloat(e.target.value)
+                          : null,
                       } as RoutingConstraints,
                     })
                   }
@@ -866,7 +934,9 @@ export function BrainSettingsPage() {
                     handleSaveConfig({
                       constraints: {
                         ...config?.constraints,
-                        max_latency_ms: e.target.value ? parseInt(e.target.value, 10) : null,
+                        max_latency_ms: e.target.value
+                          ? parseInt(e.target.value, 10)
+                          : null,
                       } as RoutingConstraints,
                     })
                   }
@@ -878,19 +948,26 @@ export function BrainSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Provider Preferences</CardTitle>
-              <CardDescription>Order providers by preference for routing decisions</CardDescription>
+              <CardDescription>
+                Order providers by preference for routing decisions
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {Object.entries(PROVIDER_LABELS).map(([value, label]) => {
-                  const isBlocked = config?.constraints?.blocked_providers?.includes(value);
+                  const isBlocked =
+                    config?.constraints?.blocked_providers?.includes(value);
                   return (
-                    <div key={value} className="flex items-center justify-between p-2 border rounded">
+                    <div
+                      key={value}
+                      className="flex items-center justify-between rounded border p-2"
+                    >
                       <span>{label}</span>
                       <Switch
                         checked={!isBlocked}
                         onCheckedChange={(checked) => {
-                          const currentBlocked = config?.constraints?.blocked_providers || [];
+                          const currentBlocked =
+                            config?.constraints?.blocked_providers || [];
                           const newBlocked = checked
                             ? currentBlocked.filter((p) => p !== value)
                             : [...currentBlocked, value];
@@ -916,18 +993,19 @@ export function BrainSettingsPage() {
             <CardHeader>
               <CardTitle>Circuit Breaker Status</CardTitle>
               <CardDescription>
-                Circuit breakers prevent cascading failures by temporarily disabling failing models
+                Circuit breakers prevent cascading failures by temporarily disabling
+                failing models
               </CardDescription>
             </CardHeader>
             <CardContent>
               {statsLoading ? (
-                <div className="h-32 bg-muted animate-pulse rounded" />
+                <div className="h-32 animate-pulse rounded bg-muted" />
               ) : stats?.open_circuits && stats.open_circuits.length > 0 ? (
                 <div className="space-y-2">
                   {stats.open_circuits.map((circuit) => (
                     <div
                       key={circuit.model}
-                      className="flex items-center justify-between p-3 border border-destructive rounded destructive/10"
+                      className="destructive/10 flex items-center justify-between rounded border border-destructive p-3"
                     >
                       <div>
                         <div className="font-medium">{circuit.model}</div>
@@ -946,7 +1024,9 @@ export function BrainSettingsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-sm">No open circuits. All models are healthy.</p>
+                <p className="text-sm text-muted-foreground">
+                  No open circuits. All models are healthy.
+                </p>
               )}
             </CardContent>
           </Card>
@@ -954,12 +1034,14 @@ export function BrainSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Circuit Breaker Configuration</CardTitle>
-              <CardDescription>Configure thresholds and timeouts for specific models</CardDescription>
+              <CardDescription>
+                Configure thresholds and timeouts for specific models
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Circuit breaker rules can be configured per model. Default: 5 failures triggers timeout,
-                60 seconds before retry.
+              <p className="text-sm text-muted-foreground">
+                Circuit breaker rules can be configured per model. Default: 5 failures
+                triggers timeout, 60 seconds before retry.
               </p>
             </CardContent>
           </Card>
@@ -972,7 +1054,9 @@ export function BrainSettingsPage() {
               <CardHeader className="pb-2">
                 <CardDescription>Total Decisions</CardDescription>
                 <CardTitle className="text-2xl">
-                  {statsLoading ? '...' : stats?.total_decisions.toLocaleString() ?? 0}
+                  {statsLoading
+                    ? '...'
+                    : (stats?.total_decisions.toLocaleString() ?? 0)}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -980,7 +1064,9 @@ export function BrainSettingsPage() {
               <CardHeader className="pb-2">
                 <CardDescription>Fallback Rate</CardDescription>
                 <CardTitle className="text-2xl">
-                  {statsLoading ? '...' : `${((stats?.fallback_rate ?? 0) * 100).toFixed(1)}%`}
+                  {statsLoading
+                    ? '...'
+                    : `${((stats?.fallback_rate ?? 0) * 100).toFixed(1)}%`}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -996,7 +1082,7 @@ export function BrainSettingsPage() {
               <CardHeader className="pb-2">
                 <CardDescription>Active Circuits</CardDescription>
                 <CardTitle className="text-2xl">
-                  {statsLoading ? '...' : stats?.open_circuits.length ?? 0}
+                  {statsLoading ? '...' : (stats?.open_circuits.length ?? 0)}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -1005,27 +1091,33 @@ export function BrainSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Provider Usage</CardTitle>
-              <CardDescription>Number of requests routed to each provider</CardDescription>
+              <CardDescription>
+                Number of requests routed to each provider
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {statsLoading ? (
-                <div className="h-32 bg-muted animate-pulse rounded" />
+                <div className="h-32 animate-pulse rounded bg-muted" />
               ) : (
                 <div className="space-y-2">
-                  {Object.entries(stats?.provider_counts || {}).map(([provider, count]) => (
-                    <div key={provider} className="flex items-center gap-2">
-                      <span className="w-24 text-sm">{PROVIDER_LABELS[provider as Provider] || provider}</span>
-                      <div className="flex-1 bg-muted rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full"
-                          style={{
-                            width: `${(count / (stats?.total_decisions || 1)) * 100}%`,
-                          }}
-                        />
+                  {Object.entries(stats?.provider_counts || {}).map(
+                    ([provider, count]) => (
+                      <div key={provider} className="flex items-center gap-2">
+                        <span className="w-24 text-sm">
+                          {PROVIDER_LABELS[provider as Provider] || provider}
+                        </span>
+                        <div className="h-2 flex-1 rounded-full bg-muted">
+                          <div
+                            className="h-2 rounded-full bg-primary"
+                            style={{
+                              width: `${(count / (stats?.total_decisions || 1)) * 100}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="w-12 text-right text-sm">{count}</span>
                       </div>
-                      <span className="w-12 text-sm text-right">{count}</span>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               )}
             </CardContent>
@@ -1038,12 +1130,17 @@ export function BrainSettingsPage() {
             </CardHeader>
             <CardContent>
               {statsLoading ? (
-                <div className="h-32 bg-muted animate-pulse rounded" />
+                <div className="h-32 animate-pulse rounded bg-muted" />
               ) : (
                 <div className="space-y-2">
                   {Object.entries(stats?.reason_counts || {}).map(([reason, count]) => (
-                    <div key={reason} className="flex items-center justify-between p-2 border rounded">
-                      <span className="capitalize text-sm">{reason.replace(/_/g, ' ')}</span>
+                    <div
+                      key={reason}
+                      className="flex items-center justify-between rounded border p-2"
+                    >
+                      <span className="text-sm capitalize">
+                        {reason.replace(/_/g, ' ')}
+                      </span>
                       <span className="font-medium">{count}</span>
                     </div>
                   ))}
@@ -1063,7 +1160,7 @@ export function BrainSettingsPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Total Tokens</CardDescription>
-                <CardTitle className="text-2xl flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-2xl">
                   {usageSummaryLoading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
@@ -1083,13 +1180,13 @@ export function BrainSettingsPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Total Cost</CardDescription>
-                <CardTitle className="text-2xl flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-2xl">
                   {usageSummaryLoading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <>
-                      <DollarSign className="h-5 w-5 text-green-500" />
-                      ${(usageSummary?.total_cost ?? 0).toFixed(4)}
+                      <DollarSign className="h-5 w-5 text-green-500" />$
+                      {(usageSummary?.total_cost ?? 0).toFixed(4)}
                     </>
                   )}
                 </CardTitle>
@@ -1113,7 +1210,9 @@ export function BrainSettingsPage() {
               </CardHeader>
               <CardContent className="pt-2">
                 <p className="text-xs text-muted-foreground">
-                  {usageSummary?.period_end ? `Avg ${((usageSummary?.total_tokens ?? 0) / (usageSummary?.total_requests || 1) || 0).toFixed(0)} tokens/request` : '-'}
+                  {usageSummary?.period_end
+                    ? `Avg ${((usageSummary?.total_tokens ?? 0) / (usageSummary?.total_requests || 1) || 0).toFixed(0)} tokens/request`
+                    : '-'}
                 </p>
               </CardContent>
             </Card>
@@ -1199,7 +1298,8 @@ export function BrainSettingsPage() {
                             const start = new Date(customStartDate);
                             const end = new Date(customEndDate);
                             const diffTime = Math.abs(end.getTime() - start.getTime());
-                            const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                            const days =
+                              Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                             setUsageDays(days);
                           }
                         }}
@@ -1224,7 +1324,7 @@ export function BrainSettingsPage() {
             </CardHeader>
             <CardContent>
               {dailyUsageLoading ? (
-                <div className="h-64 flex items-center justify-center">
+                <div className="flex h-64 items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : dailyUsage && dailyUsage.length > 0 ? (
@@ -1233,16 +1333,31 @@ export function BrainSettingsPage() {
                     <AreaChart data={dailyUsage}>
                       <defs>
                         <linearGradient id="tokensGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                          <stop
+                            offset="5%"
+                            stopColor="hsl(var(--primary))"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="hsl(var(--primary))"
+                            stopOpacity={0}
+                          />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="hsl(var(--border))"
+                        vertical={false}
+                      />
                       <XAxis
                         dataKey="date"
                         tickFormatter={(value) => {
                           const date = new Date(value);
-                          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                          return date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          });
                         }}
                         tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                         tickLine={{ stroke: 'hsl(var(--border))' }}
@@ -1266,13 +1381,22 @@ export function BrainSettingsPage() {
                                 })}
                               </p>
                               <p className="text-sm">
-                                Tokens: <span className="font-medium">{data.total_tokens.toLocaleString()}</span>
+                                Tokens:{' '}
+                                <span className="font-medium">
+                                  {data.total_tokens.toLocaleString()}
+                                </span>
                               </p>
                               <p className="text-sm">
-                                Cost: <span className="font-medium">${data.total_cost.toFixed(4)}</span>
+                                Cost:{' '}
+                                <span className="font-medium">
+                                  ${data.total_cost.toFixed(4)}
+                                </span>
                               </p>
                               <p className="text-sm">
-                                Requests: <span className="font-medium">{data.total_requests}</span>
+                                Requests:{' '}
+                                <span className="font-medium">
+                                  {data.total_requests}
+                                </span>
                               </p>
                             </div>
                           );
@@ -1289,7 +1413,7 @@ export function BrainSettingsPage() {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                <div className="flex h-64 items-center justify-center text-muted-foreground">
                   No usage data available
                 </div>
               )}
@@ -1304,14 +1428,18 @@ export function BrainSettingsPage() {
             </CardHeader>
             <CardContent>
               {usageByModelLoading ? (
-                <div className="h-64 flex items-center justify-center">
+                <div className="flex h-64 items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : usageByModel && usageByModel.length > 0 ? (
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={usageByModel}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="hsl(var(--border))"
+                        vertical={false}
+                      />
                       <XAxis
                         dataKey="model_identifier"
                         angle={-45}
@@ -1332,15 +1460,26 @@ export function BrainSettingsPage() {
                           const data = payload[0].payload as ModelUsageResponse;
                           return (
                             <div className="rounded-md border bg-popover px-3 py-2 shadow-md">
-                              <p className="mb-1 font-medium">{data.model_identifier}</p>
-                              <p className="text-sm">
-                                Cost: <span className="font-medium">${data.total_cost.toFixed(4)}</span>
+                              <p className="mb-1 font-medium">
+                                {data.model_identifier}
                               </p>
                               <p className="text-sm">
-                                Tokens: <span className="font-medium">{data.total_tokens.toLocaleString()}</span>
+                                Cost:{' '}
+                                <span className="font-medium">
+                                  ${data.total_cost.toFixed(4)}
+                                </span>
                               </p>
                               <p className="text-sm">
-                                Requests: <span className="font-medium">{data.total_requests}</span>
+                                Tokens:{' '}
+                                <span className="font-medium">
+                                  {data.total_tokens.toLocaleString()}
+                                </span>
+                              </p>
+                              <p className="text-sm">
+                                Requests:{' '}
+                                <span className="font-medium">
+                                  {data.total_requests}
+                                </span>
                               </p>
                             </div>
                           );
@@ -1355,7 +1494,7 @@ export function BrainSettingsPage() {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                <div className="flex h-64 items-center justify-center text-muted-foreground">
                   No usage data available
                 </div>
               )}
@@ -1370,34 +1509,46 @@ export function BrainSettingsPage() {
             </CardHeader>
             <CardContent>
               {usageByModelLoading ? (
-                <div className="h-48 flex items-center justify-center">
+                <div className="flex h-48 items-center justify-center">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : usageByModel && usageByModel.length > 0 ? (
                 <div className="space-y-3">
                   {Object.entries(
-                    usageByModel.reduce((acc, item) => {
-                      const provider = item.provider;
-                      if (!acc[provider]) {
-                        acc[provider] = { cost: 0, tokens: 0, requests: 0 };
-                      }
-                      acc[provider].cost += item.total_cost;
-                      acc[provider].tokens += item.total_tokens;
-                      acc[provider].requests += item.total_requests;
-                      return acc;
-                    }, {} as Record<string, { cost: number; tokens: number; requests: number }>)
+                    usageByModel.reduce(
+                      (acc, item) => {
+                        const provider = item.provider;
+                        if (!acc[provider]) {
+                          acc[provider] = { cost: 0, tokens: 0, requests: 0 };
+                        }
+                        acc[provider].cost += item.total_cost;
+                        acc[provider].tokens += item.total_tokens;
+                        acc[provider].requests += item.total_requests;
+                        return acc;
+                      },
+                      {} as Record<
+                        string,
+                        { cost: number; tokens: number; requests: number }
+                      >
+                    )
                   ).map(([provider, stats]) => {
-                    const totalCost = usageByModel.reduce((sum, item) => sum + item.total_cost, 0);
-                    const percentage = totalCost > 0 ? (stats.cost / totalCost) * 100 : 0;
+                    const totalCost = usageByModel.reduce(
+                      (sum, item) => sum + item.total_cost,
+                      0
+                    );
+                    const percentage =
+                      totalCost > 0 ? (stats.cost / totalCost) * 100 : 0;
                     return (
                       <div key={provider} className="space-y-1">
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium capitalize">{provider}</span>
-                          <span className="text-muted-foreground">${stats.cost.toFixed(4)} ({percentage.toFixed(1)}%)</span>
+                          <span className="text-muted-foreground">
+                            ${stats.cost.toFixed(4)} ({percentage.toFixed(1)}%)
+                          </span>
                         </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-2 overflow-hidden rounded-full bg-muted">
                           <div
-                            className="h-full bg-primary rounded-full"
+                            className="h-full rounded-full bg-primary"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
@@ -1406,7 +1557,7 @@ export function BrainSettingsPage() {
                   })}
                 </div>
               ) : (
-                <div className="h-48 flex items-center justify-center text-muted-foreground">
+                <div className="flex h-48 items-center justify-center text-muted-foreground">
                   No usage data available
                 </div>
               )}
@@ -1423,21 +1574,24 @@ export function BrainSettingsPage() {
             </CardHeader>
             <CardContent>
               {modelPricingLoading ? (
-                <div className="h-48 flex items-center justify-center">
+                <div className="flex h-48 items-center justify-center">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : modelPricing && modelPricing.length > 0 ? (
                 <div className="space-y-6">
                   {(() => {
                     // Group models by provider
-                    const grouped = modelPricing.reduce((acc, model) => {
-                      const provider = model.provider ?? 'unknown';
-                      if (!acc[provider]) {
-                        acc[provider] = [];
-                      }
-                      acc[provider].push(model);
-                      return acc;
-                    }, {} as Record<string, ModelPricingResponse[]>);
+                    const grouped = modelPricing.reduce(
+                      (acc, model) => {
+                        const provider = model.provider ?? 'unknown';
+                        if (!acc[provider]) {
+                          acc[provider] = [];
+                        }
+                        acc[provider].push(model);
+                        return acc;
+                      },
+                      {} as Record<string, ModelPricingResponse[]>
+                    );
 
                     const providerLabels: Record<string, string> = {
                       openai: 'OpenAI',
@@ -1449,16 +1603,18 @@ export function BrainSettingsPage() {
 
                     return Object.entries(grouped).map(([provider, models]) => (
                       <div key={provider} className="space-y-3">
-                        <h3 className="text-lg font-semibold capitalize flex items-center gap-2">
+                        <h3 className="flex items-center gap-2 text-lg font-semibold capitalize">
                           {providerLabels[provider] || provider}
                         </h3>
-                        <div className="overflow-x-auto border rounded-lg">
+                        <div className="overflow-x-auto rounded-lg border">
                           <Table>
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Model</TableHead>
                                 <TableHead className="text-right">Input / 1M</TableHead>
-                                <TableHead className="text-right">Output / 1M</TableHead>
+                                <TableHead className="text-right">
+                                  Output / 1M
+                                </TableHead>
                                 <TableHead className="text-right">Context</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1467,8 +1623,12 @@ export function BrainSettingsPage() {
                                 <TableRow key={`${model.provider}-${model.model_name}`}>
                                   <TableCell>
                                     <div>
-                                      <div className="font-medium">{model.display_name}</div>
-                                      <div className="text-xs text-muted-foreground">{model.model_name}</div>
+                                      <div className="font-medium">
+                                        {model.display_name}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {model.model_name}
+                                      </div>
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-right">
@@ -1490,7 +1650,7 @@ export function BrainSettingsPage() {
                   })()}
                 </div>
               ) : (
-                <div className="h-48 flex items-center justify-center text-muted-foreground">
+                <div className="flex h-48 items-center justify-center text-muted-foreground">
                   No model pricing data available
                 </div>
               )}
@@ -1503,51 +1663,60 @@ export function BrainSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Key className="w-5 h-5" />
+                <Key className="h-5 w-5" />
                 API Keys
               </CardTitle>
               <CardDescription>
-                Configure API keys for LLM providers. Keys are encrypted and stored securely.
+                Configure API keys for LLM providers. Keys are encrypted and stored
+                securely.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Knowledge Base Status */}
-              <div className="border rounded-lg p-4 bg-muted/50">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Database className="w-4 h-4" />
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                  <Database className="h-4 w-4" />
                   Knowledge Base Status
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
                   <div>
                     <div className="text-2xl font-bold">
-                      {brainSettingsLoading ? '...' : brainSettings?.knowledge_base.total_entries ?? 0}
+                      {brainSettingsLoading
+                        ? '...'
+                        : (brainSettings?.knowledge_base.total_entries ?? 0)}
                     </div>
                     <div className="text-xs text-muted-foreground">Total Entries</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {brainSettingsLoading ? '...' : brainSettings?.knowledge_base.characters_count ?? 0}
+                      {brainSettingsLoading
+                        ? '...'
+                        : (brainSettings?.knowledge_base.characters_count ?? 0)}
                     </div>
                     <div className="text-xs text-muted-foreground">Characters</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {brainSettingsLoading ? '...' : brainSettings?.knowledge_base.lore_count ?? 0}
+                      {brainSettingsLoading
+                        ? '...'
+                        : (brainSettings?.knowledge_base.lore_count ?? 0)}
                     </div>
                     <div className="text-xs text-muted-foreground">Lore</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {brainSettingsLoading ? '...' : brainSettings?.knowledge_base.scenes_count ?? 0}
+                      {brainSettingsLoading
+                        ? '...'
+                        : (brainSettings?.knowledge_base.scenes_count ?? 0)}
                     </div>
                     <div className="text-xs text-muted-foreground">Scenes</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
                       {brainSettings?.knowledge_base.is_healthy ? (
-                        <CheckCircle2 className="w-6 h-6 text-green-500" />
+                        <CheckCircle2 className="h-6 w-6 text-green-500" />
                       ) : (
-                        <XCircle className="w-6 h-6 text-red-500" />
+                        <XCircle className="h-6 w-6 text-red-500" />
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground">Health</div>
@@ -1560,7 +1729,7 @@ export function BrainSettingsPage() {
                 <Label htmlFor="openai-key" className="flex items-center gap-2">
                   <span>OpenAI API Key</span>
                   {brainSettings?.api_keys.has_openai && (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
                   )}
                 </Label>
                 <div className="flex gap-2">
@@ -1568,19 +1737,31 @@ export function BrainSettingsPage() {
                     <Input
                       id="openai-key"
                       type={visibleKeys.openai ? 'text' : 'password'}
-                      placeholder={brainSettings?.api_keys.has_openai ? brainSettings.api_keys.openai_key : 'sk-...'}
+                      placeholder={
+                        brainSettings?.api_keys.has_openai
+                          ? brainSettings.api_keys.openai_key
+                          : 'sk-...'
+                      }
                       value={localKeys.openai || ''}
-                      onChange={(e) => setLocalKeys({ ...localKeys, openai: e.target.value || '' })}
+                      onChange={(e) =>
+                        setLocalKeys({ ...localKeys, openai: e.target.value || '' })
+                      }
                       className="pr-20"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
-                      onClick={() => setVisibleKeys({ ...visibleKeys, openai: !visibleKeys.openai })}
+                      className="absolute right-1 top-1/2 h-7 -translate-y-1/2 px-2"
+                      onClick={() =>
+                        setVisibleKeys({ ...visibleKeys, openai: !visibleKeys.openai })
+                      }
                     >
-                      {visibleKeys.openai ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {visibleKeys.openai ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                   <Button
@@ -1598,7 +1779,7 @@ export function BrainSettingsPage() {
                 <Label htmlFor="anthropic-key" className="flex items-center gap-2">
                   <span>Anthropic API Key</span>
                   {brainSettings?.api_keys.has_anthropic && (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
                   )}
                 </Label>
                 <div className="flex gap-2">
@@ -1606,24 +1787,41 @@ export function BrainSettingsPage() {
                     <Input
                       id="anthropic-key"
                       type={visibleKeys.anthropic ? 'text' : 'password'}
-                      placeholder={brainSettings?.api_keys.has_anthropic ? brainSettings.api_keys.anthropic_key : 'sk-ant-...'}
+                      placeholder={
+                        brainSettings?.api_keys.has_anthropic
+                          ? brainSettings.api_keys.anthropic_key
+                          : 'sk-ant-...'
+                      }
                       value={localKeys.anthropic || ''}
-                      onChange={(e) => setLocalKeys({ ...localKeys, anthropic: e.target.value || '' })}
+                      onChange={(e) =>
+                        setLocalKeys({ ...localKeys, anthropic: e.target.value || '' })
+                      }
                       className="pr-20"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
-                      onClick={() => setVisibleKeys({ ...visibleKeys, anthropic: !visibleKeys.anthropic })}
+                      className="absolute right-1 top-1/2 h-7 -translate-y-1/2 px-2"
+                      onClick={() =>
+                        setVisibleKeys({
+                          ...visibleKeys,
+                          anthropic: !visibleKeys.anthropic,
+                        })
+                      }
                     >
-                      {visibleKeys.anthropic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {visibleKeys.anthropic ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                   <Button
                     size="sm"
-                    onClick={() => handleSaveAPIKey('anthropic', localKeys.anthropic || '')}
+                    onClick={() =>
+                      handleSaveAPIKey('anthropic', localKeys.anthropic || '')
+                    }
                     disabled={!localKeys.anthropic || isSaving}
                   >
                     Save
@@ -1636,7 +1834,7 @@ export function BrainSettingsPage() {
                 <Label htmlFor="gemini-key" className="flex items-center gap-2">
                   <span>Google Gemini API Key</span>
                   {brainSettings?.api_keys.has_gemini && (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
                   )}
                 </Label>
                 <div className="flex gap-2">
@@ -1644,19 +1842,31 @@ export function BrainSettingsPage() {
                     <Input
                       id="gemini-key"
                       type={visibleKeys.gemini ? 'text' : 'password'}
-                      placeholder={brainSettings?.api_keys.has_gemini ? brainSettings.api_keys.gemini_key : 'AIza-...'}
+                      placeholder={
+                        brainSettings?.api_keys.has_gemini
+                          ? brainSettings.api_keys.gemini_key
+                          : 'AIza-...'
+                      }
                       value={localKeys.gemini || ''}
-                      onChange={(e) => setLocalKeys({ ...localKeys, gemini: e.target.value || '' })}
+                      onChange={(e) =>
+                        setLocalKeys({ ...localKeys, gemini: e.target.value || '' })
+                      }
                       className="pr-20"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
-                      onClick={() => setVisibleKeys({ ...visibleKeys, gemini: !visibleKeys.gemini })}
+                      className="absolute right-1 top-1/2 h-7 -translate-y-1/2 px-2"
+                      onClick={() =>
+                        setVisibleKeys({ ...visibleKeys, gemini: !visibleKeys.gemini })
+                      }
                     >
-                      {visibleKeys.gemini ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {visibleKeys.gemini ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                   <Button
@@ -1689,7 +1899,8 @@ export function BrainSettingsPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  For local models using Ollama. Leave default unless running Ollama on a different host.
+                  For local models using Ollama. Leave default unless running Ollama on
+                  a different host.
                 </p>
               </div>
             </CardContent>
@@ -1701,18 +1912,21 @@ export function BrainSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="w-5 h-5" />
+                <Database className="h-5 w-5" />
                 RAG Configuration
               </CardTitle>
               <CardDescription>
-                Configure retrieval-augmented generation settings for knowledge base queries.
+                Configure retrieval-augmented generation settings for knowledge base
+                queries.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Enable RAG */}
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between rounded-lg border p-4">
                 <div>
-                  <Label htmlFor="rag-enabled" className="text-base">Enable RAG</Label>
+                  <Label htmlFor="rag-enabled" className="text-base">
+                    Enable RAG
+                  </Label>
                   <p className="text-sm text-muted-foreground">
                     Use knowledge base context when generating responses
                   </p>
@@ -1720,7 +1934,9 @@ export function BrainSettingsPage() {
                 <Switch
                   id="rag-enabled"
                   checked={brainSettings?.rag_config.enabled ?? true}
-                  onCheckedChange={(checked) => handleSaveRAGConfig({ enabled: checked })}
+                  onCheckedChange={(checked) =>
+                    handleSaveRAGConfig({ enabled: checked })
+                  }
                 />
               </div>
 
@@ -1736,7 +1952,11 @@ export function BrainSettingsPage() {
                       min={100}
                       max={10000}
                       value={brainSettings?.rag_config.chunk_size ?? 500}
-                      onChange={(e) => handleSaveRAGConfig({ chunk_size: parseInt(e.target.value, 10) })}
+                      onChange={(e) =>
+                        handleSaveRAGConfig({
+                          chunk_size: parseInt(e.target.value, 10),
+                        })
+                      }
                     />
                     <p className="text-xs text-muted-foreground">Default: 500 tokens</p>
                   </div>
@@ -1748,7 +1968,11 @@ export function BrainSettingsPage() {
                       min={0}
                       max={1000}
                       value={brainSettings?.rag_config.chunk_overlap ?? 50}
-                      onChange={(e) => handleSaveRAGConfig({ chunk_overlap: parseInt(e.target.value, 10) })}
+                      onChange={(e) =>
+                        handleSaveRAGConfig({
+                          chunk_overlap: parseInt(e.target.value, 10),
+                        })
+                      }
                     />
                     <p className="text-xs text-muted-foreground">Default: 50 tokens</p>
                   </div>
@@ -1767,9 +1991,15 @@ export function BrainSettingsPage() {
                       min={1}
                       max={50}
                       value={brainSettings?.rag_config.max_chunks ?? 5}
-                      onChange={(e) => handleSaveRAGConfig({ max_chunks: parseInt(e.target.value, 10) })}
+                      onChange={(e) =>
+                        handleSaveRAGConfig({
+                          max_chunks: parseInt(e.target.value, 10),
+                        })
+                      }
                     />
-                    <p className="text-xs text-muted-foreground">Maximum chunks to retrieve</p>
+                    <p className="text-xs text-muted-foreground">
+                      Maximum chunks to retrieve
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="score-threshold">Score Threshold</Label>
@@ -1780,9 +2010,15 @@ export function BrainSettingsPage() {
                       max={1}
                       step={0.1}
                       value={brainSettings?.rag_config.score_threshold ?? 0}
-                      onChange={(e) => handleSaveRAGConfig({ score_threshold: parseFloat(e.target.value) })}
+                      onChange={(e) =>
+                        handleSaveRAGConfig({
+                          score_threshold: parseFloat(e.target.value),
+                        })
+                      }
                     />
-                    <p className="text-xs text-muted-foreground">Minimum relevance score (0-1)</p>
+                    <p className="text-xs text-muted-foreground">
+                      Minimum relevance score (0-1)
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1799,10 +2035,23 @@ export function BrainSettingsPage() {
                     step={0.1}
                     className="flex-1"
                     value={brainSettings?.rag_config.hybrid_search_weight ?? 0.7}
-                    onChange={(e) => handleSaveRAGConfig({ hybrid_search_weight: parseFloat(e.target.value) })}
+                    onChange={(e) =>
+                      handleSaveRAGConfig({
+                        hybrid_search_weight: parseFloat(e.target.value),
+                      })
+                    }
                   />
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    Vector: {Math.round((brainSettings?.rag_config.hybrid_search_weight ?? 0.7) * 100)}% / BM25: {Math.round((1 - (brainSettings?.rag_config.hybrid_search_weight ?? 0.7)) * 100)}%
+                  <span className="whitespace-nowrap text-sm text-muted-foreground">
+                    Vector:{' '}
+                    {Math.round(
+                      (brainSettings?.rag_config.hybrid_search_weight ?? 0.7) * 100
+                    )}
+                    % / BM25:{' '}
+                    {Math.round(
+                      (1 - (brainSettings?.rag_config.hybrid_search_weight ?? 0.7)) *
+                        100
+                    )}
+                    %
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -1819,7 +2068,11 @@ export function BrainSettingsPage() {
                   min={100}
                   max={100000}
                   value={brainSettings?.rag_config.context_token_limit ?? 4000}
-                  onChange={(e) => handleSaveRAGConfig({ context_token_limit: parseInt(e.target.value, 10) })}
+                  onChange={(e) =>
+                    handleSaveRAGConfig({
+                      context_token_limit: parseInt(e.target.value, 10),
+                    })
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
                   Maximum tokens for retrieved context (default: 4000)
@@ -1827,9 +2080,11 @@ export function BrainSettingsPage() {
               </div>
 
               {/* Include Sources */}
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between rounded-lg border p-4">
                 <div>
-                  <Label htmlFor="include-sources" className="text-base">Include Source Citations</Label>
+                  <Label htmlFor="include-sources" className="text-base">
+                    Include Source Citations
+                  </Label>
                   <p className="text-sm text-muted-foreground">
                     Add source references to retrieved context
                   </p>
@@ -1837,7 +2092,9 @@ export function BrainSettingsPage() {
                 <Switch
                   id="include-sources"
                   checked={brainSettings?.rag_config.include_sources ?? true}
-                  onCheckedChange={(checked) => handleSaveRAGConfig({ include_sources: checked })}
+                  onCheckedChange={(checked) =>
+                    handleSaveRAGConfig({ include_sources: checked })
+                  }
                 />
               </div>
             </CardContent>

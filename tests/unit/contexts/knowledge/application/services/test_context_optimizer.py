@@ -11,24 +11,28 @@ from __future__ import annotations
 import pytest
 
 from src.contexts.knowledge.application.services.context_optimizer import (
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_OVERHEAD_TOKENS,
+    DEFAULT_SYSTEM_PROMPT_TOKENS,
+    ChunkPriority,
+    CompressSummariesPackingStrategy,
     ContextOptimizer,
-    PackingStrategy,
+    DiversityPackingStrategy,
+    IPackingStrategy,
     OptimizationConfig,
     OptimizationResult,
-    ChunkPriority,
     OptimizedChunk,
-    IPackingStrategy,
+    PackingStrategy,
     RelevancePackingStrategy,
-    DiversityPackingStrategy,
     RemoveRedundancyPackingStrategy,
-    CompressSummariesPackingStrategy,
     create_context_optimizer,
-    DEFAULT_SYSTEM_PROMPT_TOKENS,
-    DEFAULT_OVERHEAD_TOKENS,
-    DEFAULT_MAX_TOKENS,
 )
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    RetrievedChunk,
+)
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
+pytestmark = pytest.mark.unit
 
 
 class TestPackingStrategy:
@@ -117,7 +121,10 @@ class TestRelevancePackingStrategy:
     async def test_pack_by_relevance(self, sample_chunks):
         """Test packing chunks by relevance score."""
         strategy = RelevancePackingStrategy()
-        from src.contexts.knowledge.application.services.token_counter import TokenCounter
+        from src.contexts.knowledge.application.services.token_counter import (
+            TokenCounter,
+        )
+
         token_counter = TokenCounter()
 
         config = OptimizationConfig(
@@ -136,7 +143,10 @@ class TestRelevancePackingStrategy:
     async def test_pack_respects_relevance_threshold(self, sample_chunks):
         """Test that low-relevance chunks are filtered out."""
         strategy = RelevancePackingStrategy()
-        from src.contexts.knowledge.application.services.token_counter import TokenCounter
+        from src.contexts.knowledge.application.services.token_counter import (
+            TokenCounter,
+        )
+
         token_counter = TokenCounter()
 
         config = OptimizationConfig(
@@ -164,7 +174,11 @@ class TestDiversityPackingStrategy:
                     RetrievedChunk(
                         chunk_id=f"{source}_{i}",
                         source_id=source,
-                        source_type=SourceType.CHARACTER if "char" in source else SourceType.LORE,
+                        source_type=(
+                            SourceType.CHARACTER
+                            if "char" in source
+                            else SourceType.LORE
+                        ),
                         content=f"Content from {source}, part {i}. " * 10,
                         score=0.8 - (i * 0.1),
                         metadata={"source": source},
@@ -176,7 +190,10 @@ class TestDiversityPackingStrategy:
     async def test_pack_maximizes_diversity(self, diverse_chunks):
         """Test that strategy maximizes source diversity."""
         strategy = DiversityPackingStrategy()
-        from src.contexts.knowledge.application.services.token_counter import TokenCounter
+        from src.contexts.knowledge.application.services.token_counter import (
+            TokenCounter,
+        )
+
         token_counter = TokenCounter()
 
         config = OptimizationConfig(max_tokens=500)
@@ -192,7 +209,10 @@ class TestDiversityPackingStrategy:
     async def test_pack_respects_token_budget(self, diverse_chunks):
         """Test that strategy respects token budget."""
         strategy = DiversityPackingStrategy()
-        from src.contexts.knowledge.application.services.token_counter import TokenCounter
+        from src.contexts.knowledge.application.services.token_counter import (
+            TokenCounter,
+        )
+
         token_counter = TokenCounter()
 
         config = OptimizationConfig(max_tokens=100)  # Small budget
@@ -230,7 +250,8 @@ class TestRemoveRedundancyPackingStrategy:
                 chunk_id="chunk_3",
                 source_id="lore_3",
                 source_type=SourceType.LORE,
-                content="The kingdom of Eldoria was founded during the dark age. " * 3,  # Similar
+                content="The kingdom of Eldoria was founded during the dark age. "
+                * 3,  # Similar
                 score=0.7,
                 metadata={},
             ),
@@ -248,7 +269,10 @@ class TestRemoveRedundancyPackingStrategy:
     async def test_removes_exact_duplicates(self, redundant_chunks):
         """Test that exact duplicates are removed."""
         strategy = RemoveRedundancyPackingStrategy()
-        from src.contexts.knowledge.application.services.token_counter import TokenCounter
+        from src.contexts.knowledge.application.services.token_counter import (
+            TokenCounter,
+        )
+
         token_counter = TokenCounter()
 
         config = OptimizationConfig(
@@ -267,7 +291,10 @@ class TestRemoveRedundancyPackingStrategy:
     async def test_removes_similar_content(self, redundant_chunks):
         """Test that similar content is removed."""
         strategy = RemoveRedundancyPackingStrategy()
-        from src.contexts.knowledge.application.services.token_counter import TokenCounter
+        from src.contexts.knowledge.application.services.token_counter import (
+            TokenCounter,
+        )
+
         token_counter = TokenCounter()
 
         config = OptimizationConfig(
@@ -284,7 +311,10 @@ class TestRemoveRedundancyPackingStrategy:
     async def test_keeps_higher_scoring_duplicates(self, redundant_chunks):
         """Test that higher-scoring chunks are kept when duplicates exist."""
         strategy = RemoveRedundancyPackingStrategy()
-        from src.contexts.knowledge.application.services.token_counter import TokenCounter
+        from src.contexts.knowledge.application.services.token_counter import (
+            TokenCounter,
+        )
+
         token_counter = TokenCounter()
 
         config = OptimizationConfig(max_tokens=1000)
@@ -293,7 +323,10 @@ class TestRemoveRedundancyPackingStrategy:
 
         # chunk_1 has higher score than chunk_2 (duplicate)
         chunk_ids = {c.chunk_id for c in result.chunks}
-        assert "chunk_1" in chunk_ids or len(redundant_chunks) == len(result.chunks) + result.removed_redundant
+        assert (
+            "chunk_1" in chunk_ids
+            or len(redundant_chunks) == len(result.chunks) + result.removed_redundant
+        )
 
 
 class TestCompressSummariesPackingStrategy:
@@ -307,7 +340,8 @@ class TestCompressSummariesPackingStrategy:
                 chunk_id=f"chunk_{i}",
                 source_id=f"source_{i}",
                 source_type=SourceType.LORE,
-                content=f"This is a detailed content for chunk {i}. " * 20,  # Long content
+                content=f"This is a detailed content for chunk {i}. "
+                * 20,  # Long content
                 score=0.95 - (i * 0.15),
                 metadata={"chunk_index": i},
             )
@@ -318,7 +352,10 @@ class TestCompressSummariesPackingStrategy:
     async def test_compresses_low_relevance(self, mixed_relevance_chunks):
         """Test that low-relevance chunks are compressed."""
         strategy = CompressSummariesPackingStrategy()
-        from src.contexts.knowledge.application.services.token_counter import TokenCounter
+        from src.contexts.knowledge.application.services.token_counter import (
+            TokenCounter,
+        )
+
         token_counter = TokenCounter()
 
         config = OptimizationConfig(
@@ -336,7 +373,10 @@ class TestCompressSummariesPackingStrategy:
     async def test_summary_is_shorter(self, mixed_relevance_chunks):
         """Test that summaries are shorter than original content."""
         strategy = CompressSummariesPackingStrategy()
-        from src.contexts.knowledge.application.services.token_counter import TokenCounter
+        from src.contexts.knowledge.application.services.token_counter import (
+            TokenCounter,
+        )
+
         token_counter = TokenCounter()
 
         config = OptimizationConfig(
@@ -350,7 +390,9 @@ class TestCompressSummariesPackingStrategy:
         for chunk in result.chunks:
             if chunk.metadata.get("summarized"):
                 # Summary should be shorter than original (rough check)
-                original_chunks = [c for c in mixed_relevance_chunks if c.chunk_id == chunk.chunk_id]
+                original_chunks = [
+                    c for c in mixed_relevance_chunks if c.chunk_id == chunk.chunk_id
+                ]
                 if original_chunks:
                     assert len(chunk.content) < len(original_chunks[0].content)
 
@@ -523,7 +565,9 @@ class TestCreateContextOptimizer:
 
     def test_factory_with_provider(self):
         """Test factory with provider parameter."""
-        from src.contexts.knowledge.application.services.token_counter import LLMProvider
+        from src.contexts.knowledge.application.services.token_counter import (
+            LLMProvider,
+        )
 
         optimizer = create_context_optimizer(
             provider=LLMProvider.ANTHROPIC,

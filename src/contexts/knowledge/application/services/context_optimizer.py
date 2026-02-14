@@ -13,17 +13,17 @@ Warzone 4: AI Brain - BRAIN-011B
 
 from __future__ import annotations
 
+import hashlib
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from enum import Enum
 from typing import TYPE_CHECKING
-from abc import ABC, abstractmethod
-from difflib import SequenceMatcher
-import hashlib
 
 import structlog
 
-from .token_counter import TokenCounter, LLMProvider
 from ..services.knowledge_ingestion_service import RetrievedChunk
+from .token_counter import LLMProvider, TokenCounter
 
 if TYPE_CHECKING:
     pass
@@ -166,7 +166,6 @@ class IPackingStrategy(ABC):
         Returns:
             OptimizationResult with packed chunks
         """
-        pass
 
 
 class RelevancePackingStrategy(IPackingStrategy):
@@ -185,10 +184,7 @@ class RelevancePackingStrategy(IPackingStrategy):
     ) -> OptimizationResult:
         """Pack by relevance score descending."""
         # Filter by threshold and sort by relevance
-        filtered = [
-            c for c in chunks
-            if c.score >= config.relevance_threshold
-        ]
+        filtered = [c for c in chunks if c.score >= config.relevance_threshold]
         sorted_chunks = sorted(filtered, key=lambda c: c.score, reverse=True)
 
         # Pack until budget exhausted
@@ -235,10 +231,7 @@ class DiversityPackingStrategy(IPackingStrategy):
     ) -> OptimizationResult:
         """Pack by source diversity."""
         # Filter by threshold
-        filtered = [
-            c for c in chunks
-            if c.score >= config.relevance_threshold
-        ]
+        filtered = [c for c in chunks if c.score >= config.relevance_threshold]
 
         # Group by source
         sources: dict[str, list[RetrievedChunk]] = {}
@@ -309,10 +302,7 @@ class RemoveRedundancyPackingStrategy(IPackingStrategy):
     ) -> OptimizationResult:
         """Pack with redundancy removal."""
         # Filter by threshold and sort by relevance
-        filtered = [
-            c for c in chunks
-            if c.score >= config.relevance_threshold
-        ]
+        filtered = [c for c in chunks if c.score >= config.relevance_threshold]
         sorted_chunks = sorted(filtered, key=lambda c: c.score, reverse=True)
 
         # Remove redundant chunks
@@ -388,10 +378,7 @@ class CompressSummariesPackingStrategy(IPackingStrategy):
     ) -> OptimizationResult:
         """Pack with compression for low-relevance chunks."""
         # Filter by threshold
-        filtered = [
-            c for c in chunks
-            if c.score >= config.relevance_threshold
-        ]
+        filtered = [c for c in chunks if c.score >= config.relevance_threshold]
 
         # Sort by relevance
         sorted_chunks = sorted(filtered, key=lambda c: c.score, reverse=True)
@@ -619,8 +606,7 @@ class ContextOptimizer:
             List of token counts in same order
         """
         return [
-            self._token_counter.count(chunk.content).token_count
-            for chunk in chunks
+            self._token_counter.count(chunk.content).token_count for chunk in chunks
         ]
 
     def _resolve_config(

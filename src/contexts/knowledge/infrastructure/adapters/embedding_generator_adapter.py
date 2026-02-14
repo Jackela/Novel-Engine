@@ -84,14 +84,15 @@ class EmbeddingServiceAdapter(IEmbeddingService):
 
         # Internal cache (simple dict, no TTL/LRU)
         # Can be disabled in favor of CachedEmbeddingService
-        self._embedding_cache: dict[str, list[float]] = {} if enable_internal_cache else {}
+        self._embedding_cache: dict[str, list[float]] = (
+            {} if enable_internal_cache else {}
+        )
         self._cache_enabled = enable_internal_cache
 
         # Validate model
         if model not in self.DIMENSIONS:
             raise ValueError(
-                f"Unknown model: {model}. "
-                f"Supported: {list(self.DIMENSIONS.keys())}"
+                f"Unknown model: {model}. " f"Supported: {list(self.DIMENSIONS.keys())}"
             )
 
     async def embed(self, text: str) -> List[float]:
@@ -114,7 +115,9 @@ class EmbeddingServiceAdapter(IEmbeddingService):
             1536
         """
         if not text or not text.strip():
-            raise EmbeddingError("Cannot generate embedding for empty text", "EMPTY_TEXT")
+            raise EmbeddingError(
+                "Cannot generate embedding for empty text", "EMPTY_TEXT"
+            )
 
         # Check internal cache first (if enabled)
         if self._cache_enabled:
@@ -144,7 +147,9 @@ class EmbeddingServiceAdapter(IEmbeddingService):
                     cache_key = self._get_cache_key(text)
                     self._embedding_cache[cache_key] = embedding
                 return embedding
-            raise EmbeddingError(f"Failed to generate embedding: {e}", "EMBEDDING_FAILED")
+            raise EmbeddingError(
+                f"Failed to generate embedding: {e}", "EMBEDDING_FAILED"
+            )
 
     async def embed_batch(
         self, texts: List[str], batch_size: int = 100

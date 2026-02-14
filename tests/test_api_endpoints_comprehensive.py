@@ -21,8 +21,9 @@ import time
 
 import pytest
 
+pytestmark = [pytest.mark.integration]
+
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
-pytestmark = [pytest.mark.api, pytest.mark.integration]
 if not FULL_INTEGRATION:
     pytestmark.append(
         pytest.mark.skip(

@@ -594,7 +594,11 @@ class SystemErrorHandler:
         error_signature = (
             f"{type(error).__name__}_{str(error)}_{context.get('operation', 'unknown')}"
         )
-        error_hash = hashlib.md5(error_signature.encode(), usedforsecurity=False).hexdigest()[:12]  # nosec B324
+        error_hash = hashlib.md5(
+            error_signature.encode(), usedforsecurity=False
+        ).hexdigest()[
+            :12
+        ]  # nosec B324
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"err_{timestamp}_{error_hash}"
 

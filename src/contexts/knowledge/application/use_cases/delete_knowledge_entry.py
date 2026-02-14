@@ -14,13 +14,13 @@ from datetime import datetime, timezone
 
 from src.core.types.shared_types import KnowledgeEntryId, UserId
 
-from ..ports.i_knowledge_repository import IKnowledgeRepository
-from ..ports.i_event_publisher import IEventPublisher
 from ...domain.events.knowledge_entry_deleted import KnowledgeEntryDeleted
 from ...infrastructure.logging_config import (
     get_knowledge_logger,
     log_knowledge_entry_deleted,
 )
+from ..ports.i_event_publisher import IEventPublisher
+from ..ports.i_knowledge_repository import IKnowledgeRepository
 
 
 class DeleteKnowledgeEntryUseCase:
@@ -140,4 +140,3 @@ class DeleteKnowledgeEntryUseCase:
             logger.warning(
                 "Failed to publish domain event", error=str(e), event_id=event.event_id
             )
-

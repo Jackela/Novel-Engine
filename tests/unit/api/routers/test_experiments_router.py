@@ -15,10 +15,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.routers.experiments import (
-    router as experiments_router,
     get_experiment_repository,
     get_prompt_repository,
 )
+from src.api.routers.experiments import router as experiments_router
 from src.api.schemas import (
     ExperimentCreateRequest,
     ExperimentListResponse,
@@ -26,9 +26,9 @@ from src.api.schemas import (
     ExperimentSummaryResponse,
 )
 from src.contexts.knowledge.domain.models.prompt_experiment import (
-    PromptExperiment,
     ExperimentMetric,
     ExperimentStatus,
+    PromptExperiment,
 )
 from src.contexts.knowledge.domain.models.prompt_template import (
     ModelConfig,
@@ -42,6 +42,8 @@ from src.contexts.knowledge.infrastructure.adapters.in_memory_experiment_reposit
 from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_repository import (
     InMemoryPromptRepository,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -158,9 +160,7 @@ def app_with_repos(
     # Override the dependencies
     app.dependency_overrides[get_prompt_repository] = get_prompt_repo_mock
 
-    app.dependency_overrides[
-        get_experiment_repository
-    ] = get_experiment_repo_mock
+    app.dependency_overrides[get_experiment_repository] = get_experiment_repo_mock
 
     app.include_router(experiments_router, prefix="/api")
 
@@ -191,7 +191,8 @@ class TestExperimentsRouterList:
     """Tests for listing experiments."""
 
     def test_list_experiments_empty(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test listing experiments when none exist."""
         # Clear the repository first
@@ -203,7 +204,8 @@ class TestExperimentsRouterList:
         assert len(data["experiments"]) >= 1
 
     def test_list_experiments_with_data(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test listing experiments returns existing experiments."""
         response = client_with_repos.get("/api/experiments")
@@ -215,7 +217,8 @@ class TestExperimentsRouterList:
         assert data["total"] >= 1
 
     def test_list_experiments_with_status_filter(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test filtering experiments by status."""
         # Filter for draft experiments
@@ -234,7 +237,8 @@ class TestExperimentsRouterList:
         assert len(data["experiments"]) == 0
 
     def test_list_experiments_with_prompt_filter(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test filtering experiments by prompt ID."""
         # Filter by prompt-a
@@ -252,7 +256,8 @@ class TestExperimentsRouterList:
         assert len(data["experiments"]) == 0
 
     def test_list_experiments_with_pagination(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test pagination parameters."""
         response = client_with_repos.get("/api/experiments?limit=10&offset=0")
@@ -267,7 +272,8 @@ class TestExperimentsRouterCreate:
     """Tests for creating experiments."""
 
     def test_create_experiment_success(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test creating an experiment successfully."""
         payload = {
@@ -291,7 +297,8 @@ class TestExperimentsRouterCreate:
         assert "id" in data
 
     def test_create_experiment_with_invalid_prompt_a(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test creating an experiment with invalid prompt A returns 404."""
         payload = {
@@ -306,7 +313,8 @@ class TestExperimentsRouterCreate:
         assert response.status_code == 404
 
     def test_create_experiment_with_invalid_prompt_b(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test creating an experiment with invalid prompt B returns 404."""
         payload = {
@@ -321,7 +329,8 @@ class TestExperimentsRouterCreate:
         assert response.status_code == 404
 
     def test_create_experiment_with_invalid_metric(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test creating an experiment with invalid metric returns 400."""
         payload = {
@@ -336,7 +345,8 @@ class TestExperimentsRouterCreate:
         assert response.status_code == 422  # Validation error
 
     def test_create_experiment_with_invalid_traffic_split(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test creating an experiment with invalid traffic split returns 422."""
         payload = {
@@ -356,7 +366,8 @@ class TestExperimentsRouterGet:
     """Tests for getting a specific experiment."""
 
     def test_get_experiment_success(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test getting an experiment by ID."""
         # First, list to get an ID
@@ -381,7 +392,8 @@ class TestExperimentsRouterResults:
     """Tests for getting experiment results."""
 
     def test_get_experiment_results(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test getting experiment results."""
         # First, list to get an ID
@@ -398,7 +410,8 @@ class TestExperimentsRouterResults:
         assert "statistical_significance" in data
 
     def test_get_results_includes_confidence_intervals(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test that results include confidence intervals."""
         # First, list to get an ID
@@ -414,7 +427,8 @@ class TestExperimentsRouterResults:
         assert "upper" in data["variant_a"]["confidence_interval"]
 
     def test_get_results_includes_significance_analysis(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test that results include statistical significance analysis."""
         # First, list to get an ID
@@ -436,7 +450,8 @@ class TestExperimentsRouterActions:
     """Tests for experiment actions (start, pause, resume, complete)."""
 
     def test_start_experiment(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test starting an experiment."""
         # First, list to get an ID
@@ -451,7 +466,8 @@ class TestExperimentsRouterActions:
         assert "started_at" in data
 
     def test_pause_experiment(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test pausing a running experiment."""
         # First, start the experiment
@@ -467,7 +483,8 @@ class TestExperimentsRouterActions:
         assert data["status"] == "paused"
 
     def test_resume_experiment(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test resuming a paused experiment."""
         # First, start and pause the experiment
@@ -484,7 +501,8 @@ class TestExperimentsRouterActions:
         assert data["status"] == "running"
 
     def test_complete_experiment(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test completing an experiment."""
         # First, start the experiment
@@ -501,7 +519,8 @@ class TestExperimentsRouterActions:
         assert "ended_at" in data
 
     def test_complete_experiment_with_winner(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test completing an experiment with a specified winner."""
         # First, start the experiment
@@ -521,7 +540,8 @@ class TestExperimentsRouterActions:
         assert data["winner"] == "A"
 
     def test_start_nonexistent_experiment(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test starting a non-existent experiment returns 404."""
         response = client_with_repos.post("/api/experiments/nonexistent/start")
@@ -533,7 +553,8 @@ class TestExperimentsRouterRecord:
     """Tests for recording experiment results."""
 
     def test_record_success(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test recording a successful result."""
         # First, list to get an ID
@@ -562,7 +583,8 @@ class TestExperimentsRouterRecord:
         assert data["total_runs"] == 1
 
     def test_record_failure(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test recording a failed result."""
         # First, list to get an ID
@@ -588,7 +610,8 @@ class TestExperimentsRouterRecord:
         assert response.status_code == 200
 
     def test_record_result_with_invalid_variant(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test recording a result with invalid variant ID returns 400."""
         # First, list to get an ID
@@ -612,7 +635,8 @@ class TestExperimentsRouterDelete:
     """Tests for deleting experiments."""
 
     def test_delete_experiment(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test deleting an experiment."""
         # First, create a new experiment to delete
@@ -636,7 +660,8 @@ class TestExperimentsRouterDelete:
         assert get_response.status_code == 404
 
     def test_delete_nonexistent_experiment(
-        self, client_with_repos: TestClient,
+        self,
+        client_with_repos: TestClient,
     ) -> None:
         """Test deleting a non-existent experiment returns 404."""
         response = client_with_repos.delete("/api/experiments/nonexistent-id")

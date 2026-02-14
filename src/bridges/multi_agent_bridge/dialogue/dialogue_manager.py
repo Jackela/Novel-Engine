@@ -197,9 +197,7 @@ class DialogueManager:
                 del self._active_dialogues[dialogue.dialogue_id]
                 self._stats["successful_dialogues"] += 1
 
-                quality = self._calculate_dialogue_quality(
-                    dialogue_result, llm_result
-                )
+                quality = self._calculate_dialogue_quality(dialogue_result, llm_result)
                 self._update_quality_stats(quality)
 
                 return dialogue_result

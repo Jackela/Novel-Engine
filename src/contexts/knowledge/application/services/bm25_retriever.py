@@ -14,17 +14,12 @@ Warzone 4: AI Brain - BRAIN-008A
 
 from __future__ import annotations
 
-from collections import Counter
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
-import re
+from typing import Any
 
 import structlog
-
-if TYPE_CHECKING:
-    from rank_bm25 import BM25 as RankBM25
-
 
 logger = structlog.get_logger()
 
@@ -124,7 +119,7 @@ def tokenize(text: str) -> list[str]:
     """
     # Convert to lowercase and find all words
     # Word pattern: sequences of alphanumeric characters
-    words = re.findall(r'\b\w+\b', text.lower())
+    words = re.findall(r"\b\w+\b", text.lower())
     return words
 
 
@@ -227,8 +222,7 @@ class BM25Retriever:
                 message="rank-bm25 library not installed. Install with: pip install rank-bm25",
             )
             raise ImportError(
-                "rank-bm25 library not found. "
-                "Install with: pip install rank-bm25"
+                "rank-bm25 library not found. " "Install with: pip install rank-bm25"
             )
 
         # Get or create index for collection
@@ -248,7 +242,7 @@ class BM25Retriever:
             # Check if document already exists in corpus
             existing_idx = next(
                 (i for i, d in enumerate(index_data["documents"]) if d == doc.doc_id),
-                None
+                None,
             )
 
             if existing_idx is not None:
@@ -474,12 +468,6 @@ class BM25Retriever:
         index_data["bm25"] = None
 
         # Remove documents from lookup
-        for doc_id in list(self._documents.keys()):
-            doc = self._documents.get(doc_id)
-            # Note: We can't determine collection from doc_id alone
-            # In production, you'd want to track collection membership
-            # For now, we clear all documents (simplest approach)
-
         self._documents.clear()
 
         logger.info(

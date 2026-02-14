@@ -1032,9 +1032,7 @@ class ModelRegistry:
         result = self.resolve_model(model_ref)
         return result.provider
 
-    def is_model_available(
-        self, provider: LLMProvider, model_name: str
-    ) -> bool:
+    def is_model_available(self, provider: LLMProvider, model_name: str) -> bool:
         """
         Check if a model is available in the registry.
 
@@ -1066,7 +1064,9 @@ class ModelRegistry:
             "total_aliases": len(self._aliases),
             "total_task_configs": len(self._task_configs),
             "models_by_provider": models_by_provider,
-            "deprecated_models": len([m for m in self._models.values() if m.deprecated]),
+            "deprecated_models": len(
+                [m for m in self._models.values() if m.deprecated]
+            ),
         }
 
 

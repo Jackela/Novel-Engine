@@ -294,7 +294,9 @@ class S3StorageManager:
 
     def _generate_cache_key(self, s3_key: str) -> str:
         """Generate cache key for local storage."""
-        return hashlib.md5(s3_key.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+        return hashlib.md5(
+            s3_key.encode(), usedforsecurity=False
+        ).hexdigest()  # nosec B324
 
     async def _get_from_cache(self, s3_key: str) -> Optional[bytes]:
         """Get object from local cache."""

@@ -6,9 +6,11 @@ correct request passthrough and response handling.
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import Mock
 
+import pytest
+
+from src.api.schemas import CharacterGenerationResponse
 from src.contexts.story.application.ports.scene_generator_port import (
     SceneGenerationInput,
     SceneGenerationResult,
@@ -18,7 +20,8 @@ from src.contexts.story.application.services.scene_service import (
     SceneGenerationService,
     generate_scene,
 )
-from src.api.schemas import CharacterGenerationResponse
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture

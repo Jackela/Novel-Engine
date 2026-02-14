@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ...domain.models.budget_alert import (
-        BudgetAlertState,
         AlertTriggeredEvent,
+        BudgetAlertState,
     )
 
 
@@ -130,8 +130,6 @@ class IBudgetAlertRepository(ABC):
 
 class RepositoryError(Exception):
     """Base exception for repository errors."""
-
-    pass
 
 
 __all__ = [

@@ -61,24 +61,21 @@ export function PromptsPage() {
     filters.model = selectedModel;
   }
 
-  const {
-    data: promptsData,
-    isLoading,
-    error,
-  } = usePrompts(filters);
+  const { data: promptsData, isLoading, error } = usePrompts(filters);
 
   const { data: tagsData } = usePromptTags();
   const deleteMutation = useDeletePrompt();
 
   // Filter prompts based on search query (client-side for name/description search)
-  const filteredPrompts = promptsData?.prompts.filter((prompt) => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      prompt.name.toLowerCase().includes(query) ||
-      prompt.description.toLowerCase().includes(query)
-    );
-  }) ?? [];
+  const filteredPrompts =
+    promptsData?.prompts.filter((prompt) => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        prompt.name.toLowerCase().includes(query) ||
+        prompt.description.toLowerCase().includes(query)
+      );
+    }) ?? [];
 
   // Extract unique model names from prompts
   const modelOptions = [
@@ -91,9 +88,7 @@ export function PromptsPage() {
   ];
 
   // Extract all unique tags
-  const allTags = tagsData
-    ? Object.values(tagsData).flat()
-    : [];
+  const allTags = tagsData ? Object.values(tagsData).flat() : [];
 
   const handleDelete = async (id: string, name: string) => {
     if (window.confirm(`Are you sure you want to delete prompt "${name}"?`)) {
@@ -120,7 +115,7 @@ export function PromptsPage() {
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* Search */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative max-w-md flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search prompts by name or description..."
@@ -236,10 +231,10 @@ interface PromptCardProps {
 
 function PromptCard({ prompt, onDelete, onEdit, onView }: PromptCardProps) {
   return (
-    <Card className="group hover:shadow-md transition-shadow">
+    <Card className="group transition-shadow hover:shadow-md">
       <CardHeader className="space-y-2">
         <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <CardTitle className="truncate text-lg">{prompt.name}</CardTitle>
             {prompt.description && (
               <CardDescription className="line-clamp-2">
@@ -276,7 +271,7 @@ function PromptCard({ prompt, onDelete, onEdit, onView }: PromptCardProps) {
             {prompt.model_name && (
               <div className="flex items-center gap-1">
                 <Layers className="h-3 w-3" />
-                <span className="truncate max-w-[100px]">{prompt.model_name}</span>
+                <span className="max-w-[100px] truncate">{prompt.model_name}</span>
               </div>
             )}
             {prompt.variable_count > 0 && (
@@ -293,21 +288,11 @@ function PromptCard({ prompt, onDelete, onEdit, onView }: PromptCardProps) {
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1"
-              onClick={onView}
-            >
+            <Button variant="ghost" size="sm" className="flex-1" onClick={onView}>
               <Eye className="mr-2 h-4 w-4" />
               View
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1"
-              onClick={onEdit}
-            >
+            <Button variant="ghost" size="sm" className="flex-1" onClick={onEdit}>
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </Button>
@@ -332,14 +317,14 @@ function LoadingState() {
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <Card key={i} className="animate-pulse">
           <CardHeader className="space-y-2">
-            <div className="h-5 bg-muted rounded w-3/4" />
-            <div className="h-4 bg-muted rounded w-full" />
-            <div className="h-4 bg-muted rounded w-1/2" />
+            <div className="h-5 w-3/4 rounded bg-muted" />
+            <div className="h-4 w-full rounded bg-muted" />
+            <div className="h-4 w-1/2 rounded bg-muted" />
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="h-8 bg-muted rounded" />
-              <div className="h-8 bg-muted rounded w-2/3" />
+              <div className="h-8 rounded bg-muted" />
+              <div className="h-8 w-2/3 rounded bg-muted" />
             </div>
           </CardContent>
         </Card>

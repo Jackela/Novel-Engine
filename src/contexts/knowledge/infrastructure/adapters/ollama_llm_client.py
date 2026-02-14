@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, AsyncIterator
 import httpx
 import structlog
 
-from ...application.ports.i_llm_client import LLMRequest, LLMResponse, LLMError
+from ...application.ports.i_llm_client import LLMError, LLMRequest, LLMResponse
 
 if TYPE_CHECKING:
     pass
@@ -116,9 +116,7 @@ class OllamaLLMClient:
         self._timeout = timeout
 
         # Ollama base URL - required
-        self._base_url = base_url or os.getenv(
-            "OLLAMA_BASE_URL", DEFAULT_BASE_URL
-        )
+        self._base_url = base_url or os.getenv("OLLAMA_BASE_URL", DEFAULT_BASE_URL)
 
         # Normalize base URL (remove trailing slash)
         if self._base_url:
@@ -174,7 +172,9 @@ class OllamaLLMClient:
 
             if usage:
                 input_tokens = usage.get("prompt_tokens", 0)
-                output_tokens = usage.get("completion_tokens", 0) or usage.get("eval_count", 0)
+                output_tokens = usage.get("completion_tokens", 0) or usage.get(
+                    "eval_count", 0
+                )
                 tokens_used = (input_tokens + output_tokens) or None
 
             return LLMResponse(
@@ -201,9 +201,7 @@ class OllamaLLMClient:
             log.error("ollama_response_parse_failed", error=str(e))
             raise LLMError(f"Failed to parse Ollama response: {e}") from e
 
-    async def generate_stream(
-        self, request: LLMRequest
-    ) -> AsyncIterator[str]:
+    async def generate_stream(self, request: LLMRequest) -> AsyncIterator[str]:
         """
         Generate streaming text using the Ollama API.
 
@@ -321,15 +319,23 @@ class OllamaLLMClient:
                     "status": "connected",
                     "base_url": self._base_url,
                     "model_count": len(models),
-                    "available_models": [m.get("name", m.get("model", "")) for m in models],
+                    "available_models": [
+                        m.get("name", m.get("model", "")) for m in models
+                    ],
                 }
 
         except httpx.HTTPStatusError as e:
-            log.error("ollama_connection_http_error", status_code=e.response.status_code)
+            log.error(
+                "ollama_connection_http_error", status_code=e.response.status_code
+            )
             if e.response.status_code == 404:
-                raise LLMError("Ollama API not found - check if Ollama is running") from e
+                raise LLMError(
+                    "Ollama API not found - check if Ollama is running"
+                ) from e
             else:
-                raise LLMError(f"Ollama connection error {e.response.status_code}") from e
+                raise LLMError(
+                    f"Ollama connection error {e.response.status_code}"
+                ) from e
         except httpx.RequestError as e:
             log.error("ollama_connection_failed", error=str(e))
             raise LLMError(f"Cannot connect to Ollama at {self._base_url}: {e}") from e

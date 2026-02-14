@@ -12,6 +12,18 @@ echo "=== CodeQL Local Security Scan ==="
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "Project: ${project_root}"
 
+# Clean generated frontend artifacts that should not be scanned.
+generated_paths=(
+  "${project_root}/frontend/playwright-report"
+  "${project_root}/frontend/reports"
+  "${project_root}/frontend/dist"
+)
+for path in "${generated_paths[@]}"; do
+  if [[ -d "$path" ]]; then
+    rm -rf "$path"
+  fi
+done
+
 if ! command -v codeql >/dev/null 2>&1; then
   if [[ "$REQUIRE_CODEQL" == "1" ]]; then
     echo ""

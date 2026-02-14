@@ -61,9 +61,7 @@ class HttpCacheService:
         payload = f"{identifier}:{updated.isoformat()}"
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
-    def build_collection_etag(
-        self, summaries: List[CharacterSummary]
-    ) -> str:
+    def build_collection_etag(self, summaries: List[CharacterSummary]) -> str:
         """
         Build an ETag for a collection of entities.
 

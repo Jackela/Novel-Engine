@@ -31,8 +31,6 @@ from typing import Any, Dict, List, Optional, Union
 
 from src.agents.director_agent_integrated import DirectorAgent
 
-
-
 # Import existing Novel Engine components
 from src.core.event_bus import EventBus
 
@@ -2340,4 +2338,3 @@ def create_performance_optimized_config(
         batch_priority_threshold=0.6,  # Lower threshold for more priority processing
         cost_alert_threshold=0.85,  # Higher threshold for cost alerts
     )
-

@@ -146,9 +146,9 @@ class PlotPointRemoved(NarrativeEvent):
 
     plot_point_id: str = ""
     removal_reason: str = ""
-    sequence_adjustments: Dict[
-        str, int
-    ] = None  # Other plot points that need resequencing
+    sequence_adjustments: Dict[str, int] = (
+        None  # Other plot points that need resequencing
+    )
 
     def __post_init__(self):
         """Initialize default values for mutable fields."""

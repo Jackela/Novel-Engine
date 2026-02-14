@@ -283,6 +283,7 @@ desktop.ini
 # Testing and Coverage
 test-results/
 playwright-report/
+frontend/reports/
 junit-results.xml
 coverage/
 .nyc_output/
@@ -512,3 +513,6 @@ undefined:*/
 /.trunk
 .worktrees/
 nul
+
+# Ralph agent archive directories
+scripts/ralph/archive/

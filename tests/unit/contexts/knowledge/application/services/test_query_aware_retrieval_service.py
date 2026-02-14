@@ -9,33 +9,38 @@ with RetrievalService to execute retrieval for all query variants and merge resu
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from src.contexts.knowledge.application.ports.i_embedding_service import (
+    IEmbeddingService,
+)
+from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
 from src.contexts.knowledge.application.services.query_aware_retrieval_service import (
-    QueryAwareRetrievalService,
-    QueryAwareConfig,
-    QueryAwareRetrievalResult,
-    QueryAwareMetrics,
     DEFAULT_MAX_CONCURRENT,
+    QueryAwareConfig,
+    QueryAwareMetrics,
+    QueryAwareRetrievalResult,
+    QueryAwareRetrievalService,
 )
 from src.contexts.knowledge.application.services.query_rewriter import (
     QueryRewriter,
-    RewriteStrategy,
     RewriteConfig,
     RewriteResult,
+    RewriteStrategy,
 )
 from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievedChunk,
     RetrievalFilter,
     RetrievalOptions,
+    RetrievedChunk,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
-from src.contexts.knowledge.application.ports.i_embedding_service import IEmbeddingService
-from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
 from src.contexts.knowledge.infrastructure.adapters.gemini_llm_client import (
     MockLLMClient,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -46,6 +51,7 @@ def mock_embedding_service():
     async def mock_embed(text: str) -> list[float]:
         # Return deterministic mock embedding
         import hashlib
+
         hash_val = int(hashlib.md5(text.encode()).hexdigest()[:8], 16)
         return [(hash_val + i) % 100 / 100.0 for i in range(1536)]
 
@@ -67,7 +73,9 @@ def mock_query_rewriter():
     """Create a mock query rewriter."""
     rewriter = AsyncMock(spec=QueryRewriter)
 
-    async def mock_rewrite(query: str, config: RewriteConfig | None = None) -> RewriteResult:
+    async def mock_rewrite(
+        query: str, config: RewriteConfig | None = None
+    ) -> RewriteResult:
         return RewriteResult(
             original_query=query,
             variants=[query, f"{query} variant 1", f"{query} variant 2"],
@@ -227,14 +235,16 @@ class TestQueryAwareRetrievalService:
             metadata={},
         )
 
-        mock_vector_store.query = AsyncMock(return_value=[
-            MagicMock(
-                id="1",
-                text="A brave warrior",
-                score=0.9,
-                metadata={"source_id": "char1", "source_type": "CHARACTER"},
-            )
-        ])
+        mock_vector_store.query = AsyncMock(
+            return_value=[
+                MagicMock(
+                    id="1",
+                    text="A brave warrior",
+                    score=0.9,
+                    metadata={"source_id": "char1", "source_type": "CHARACTER"},
+                )
+            ]
+        )
 
         service = QueryAwareRetrievalService(
             embedding_service=mock_embedding_service,
@@ -534,9 +544,7 @@ class TestClarificationStrategy:
         assert questions[0] == "Question 1?"
 
         # Test markdown format
-        questions = rewriter._parse_clarifications(
-            '```json\n["Q1?", "Q2?"]\n```'
-        )
+        questions = rewriter._parse_clarifications('```json\n["Q1?", "Q2?"]\n```')
         assert len(questions) == 2
 
         # Test fallback extraction (questions ending with ?)
@@ -608,7 +616,9 @@ class TestTokenTracking:
         result2 = await rewriter.rewrite("test query")
         assert result2.cached is True
         assert result2.tokens_used == 0  # No tokens used on cache hit
-        assert result2.tokens_saved == tokens_used_first  # Tokens saved equal to first call
+        assert (
+            result2.tokens_saved == tokens_used_first
+        )  # Tokens saved equal to first call
 
     def test_estimate_tokens(self):
         """Test token estimation."""
@@ -631,12 +641,13 @@ class TestTokenTracking:
 
     def test_cache_stats_includes_tokens(self):
         """Test cache stats include token tracking."""
+        from unittest.mock import AsyncMock
+
         from src.contexts.knowledge.application.ports.i_llm_client import (
             ILLMClient,
             LLMRequest,
             LLMResponse,
         )
-        from unittest.mock import AsyncMock
 
         client = AsyncMock(spec=ILLMClient)
 

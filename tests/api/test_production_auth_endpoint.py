@@ -9,11 +9,13 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
+pytestmark = pytest.mark.integration
+
 
 def _load_production_app(monkeypatch) -> TestClient:
     monkeypatch.setenv("ENVIRONMENT", "development")
-    monkeypatch.setenv("SECRET_KEY", "test-secret")
-    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret")
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-32-bytes-minimum-0001")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret-key-32-bytes-minimum-0001")
     monkeypatch.setenv("ADMIN_PASSWORD", "admin-password")
     monkeypatch.setenv("ADMIN_USERNAME", "admin")
 

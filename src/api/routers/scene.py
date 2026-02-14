@@ -18,6 +18,8 @@ from src.contexts.story.application.ports.scene_generator_port import (
 )
 from src.contexts.story.application.services.scene_service import (
     DeterministicSceneGenerator,
+)
+from src.contexts.story.application.services.scene_service import (
     generate_scene as generate_scene_service,
 )
 

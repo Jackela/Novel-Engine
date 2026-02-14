@@ -19,6 +19,8 @@ from src.contexts.narratives.domain.value_objects.story_pacing import (
     StoryPacing,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestPacingTypeEnum:
     """Test suite for PacingType enum."""

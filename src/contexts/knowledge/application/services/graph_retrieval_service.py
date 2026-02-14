@@ -15,8 +15,8 @@ Warzone 4: AI Brain - BRAIN-032A, BRAIN-032B
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, TYPE_CHECKING
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
@@ -259,13 +259,14 @@ class GraphRetrievalService:
                         entity_name=chunk.chunk_id,
                         related_entities=tuple(entity_names),
                         relevance_score=1.0,
-                        metadata={"chunk_content_preview": chunk.content[:100]}),
+                        metadata={"chunk_content_preview": chunk.content[:100]},
+                    ),
                 )
 
             # Fetch graph context for each entity
             entity_contexts: list[GraphEntityContext] = []
 
-            for entity_name in entity_names[:self._config.max_entities_per_chunk]:
+            for entity_name in entity_names[: self._config.max_entities_per_chunk]:
                 # Get entity from graph
                 entity = await self._get_entity_cached(entity_name)
                 if entity is None:
@@ -278,7 +279,8 @@ class GraphRetrievalService:
                                 description=f"Entity '{entity_name}' not found in graph",
                                 entity_name=entity_name,
                                 relevance_score=0.0,
-                                metadata={"found": False}),
+                                metadata={"found": False},
+                            ),
                         )
                     continue
 
@@ -293,7 +295,11 @@ class GraphRetrievalService:
                             description=f"Found entity '{entity_name}' in graph (type: {entity.entity_type.value})",
                             entity_name=entity_name,
                             relevance_score=1.0,
-                            metadata={"found": True, "entity_type": entity.entity_type.value}),
+                            metadata={
+                                "found": True,
+                                "entity_type": entity.entity_type.value,
+                            },
+                        ),
                     )
 
                 # Get neighbors (connected entities)
@@ -309,8 +315,12 @@ class GraphRetrievalService:
                 if self._config.explain_mode and neighbors:
                     step_counter += 1
                     neighbor_names = tuple(n.entity.name for n in neighbors)
-                    rel_types = tuple(str(n.relationship.relationship_type) for n in neighbors)
-                    max_depth_reached = max(max_depth_reached, self._config.entity_expansion_depth)
+                    rel_types = tuple(
+                        str(n.relationship.relationship_type) for n in neighbors
+                    )
+                    max_depth_reached = max(
+                        max_depth_reached, self._config.entity_expansion_depth
+                    )
 
                     explanation_steps.append(
                         GraphExplanationStep(
@@ -320,11 +330,15 @@ class GraphRetrievalService:
                             entity_name=entity_name,
                             related_entities=neighbor_names,
                             relationships_traversed=rel_types,
-                            relevance_score=sum(n.relationship.strength or 1.0 for n in neighbors) / len(neighbors),
+                            relevance_score=sum(
+                                n.relationship.strength or 1.0 for n in neighbors
+                            )
+                            / len(neighbors),
                             metadata={
                                 "depth": self._config.entity_expansion_depth,
                                 "neighbor_count": len(neighbors),
-                            }),
+                            },
+                        ),
                     )
 
                 # Build connected entities list
@@ -335,11 +349,13 @@ class GraphRetrievalService:
                     connected_entities.append(neighbor.entity)
 
                     # Track unique relationships
-                    all_relationships.add((
-                        entity_name,
-                        neighbor.entity.name,
-                        str(neighbor.relationship.relationship_type),
-                    ))
+                    all_relationships.add(
+                        (
+                            entity_name,
+                            neighbor.entity.name,
+                            str(neighbor.relationship.relationship_type),
+                        )
+                    )
 
                 entity_contexts.append(
                     GraphEntityContext(
@@ -351,14 +367,18 @@ class GraphRetrievalService:
                 )
 
             # Build entity descriptions
-            entity_descriptions = self._build_entity_descriptions(tuple(entity_contexts))
+            entity_descriptions = self._build_entity_descriptions(
+                tuple(entity_contexts)
+            )
 
             # Create enhanced chunk
             enhanced_chunks.append(
                 GraphEnhancedChunk(
                     original_chunk=chunk,
                     entity_contexts=tuple(entity_contexts),
-                    relationship_count=sum(len(ec.relationships) for ec in entity_contexts),
+                    relationship_count=sum(
+                        len(ec.relationships) for ec in entity_contexts
+                    ),
                     entity_descriptions=entity_descriptions,
                 )
             )
@@ -366,7 +386,9 @@ class GraphRetrievalService:
         # Build explanation if enabled
         explanation: GraphExplanation | None = None
         if self._config.explain_mode:
-            summary = self._build_explanation_summary(explanation_steps, len(all_entities), len(all_relationships))
+            summary = self._build_explanation_summary(
+                explanation_steps, len(all_entities), len(all_relationships)
+            )
             explanation = GraphExplanation(
                 query=f"enriched_{len(chunks)}_chunks",
                 steps=tuple(explanation_steps),
@@ -467,7 +489,11 @@ class GraphRetrievalService:
 
                 if neighbor_name not in visited:
                     # Apply relationship type filter
-                    if relationship_type is None or str(neighbor.relationship.relationship_type) == relationship_type:
+                    if (
+                        relationship_type is None
+                        or str(neighbor.relationship.relationship_type)
+                        == relationship_type
+                    ):
                         results.append((neighbor.entity, depth + 1))
                         queue.append((neighbor_name, depth + 1))
 
@@ -611,7 +637,9 @@ class GraphRetrievalService:
         lines.append(f"Total Steps: {len(steps)}")
         lines.append(f"Entities Found: {entities_found}")
         lines.append(f"Relationships Found: {relationships_found}")
-        lines.append(f"Traversal Depth: {max(s.metadata.get('depth', 0) for s in steps)}")
+        lines.append(
+            f"Traversal Depth: {max(s.metadata.get('depth', 0) for s in steps)}"
+        )
         lines.append("")
 
         # Summary by step type
@@ -672,7 +700,7 @@ class GraphRetrievalService:
             potential_names.add(match.group(1))
 
         # Find title case names (consecutive capitalized words)
-        title_pattern = re.compile(r'\b[A-Z][a-z]+(?: [A-Z][a-z]+)+\b')
+        title_pattern = re.compile(r"\b[A-Z][a-z]+(?: [A-Z][a-z]+)+\b")
         for match in title_pattern.finditer(text):
             potential_names.add(match.group(0))
 
@@ -697,7 +725,9 @@ class GraphRetrievalService:
 
         return await self._graph_store.get_neighbors(entity_name, max_depth=max_depth)
 
-    async def _get_relationships_cached(self, entity_name: str) -> list[GraphRelationship]:
+    async def _get_relationships_cached(
+        self, entity_name: str
+    ) -> list[GraphRelationship]:
         """Get relationships with caching."""
         if self._config.cache_enabled:
             self._cache_misses += 1

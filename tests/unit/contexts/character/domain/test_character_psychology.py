@@ -12,6 +12,8 @@ from src.contexts.character.domain.value_objects.character_psychology import (
     CharacterPsychology,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.unit
 class TestCharacterPsychologyCreation:

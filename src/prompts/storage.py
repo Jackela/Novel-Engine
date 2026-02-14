@@ -118,8 +118,7 @@ class PromptStorage:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS user_prompts (
                     id VARCHAR(36) PRIMARY KEY,
                     user_id VARCHAR(36) NOT NULL,
@@ -133,20 +132,15 @@ class PromptStorage:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
-            await db.execute(
-                """
+            """)
+            await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_user_prompts_user_id
                 ON user_prompts(user_id)
-            """
-            )
-            await db.execute(
-                """
+            """)
+            await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_user_prompts_genre
                 ON user_prompts(genre)
-            """
-            )
+            """)
             await db.commit()
 
         self._initialized = True

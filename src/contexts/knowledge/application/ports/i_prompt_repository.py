@@ -21,8 +21,6 @@ from ...domain.models.prompt_template import PromptTemplate
 class PromptRepositoryError(Exception):
     """Base exception for prompt repository errors."""
 
-    pass
-
 
 class PromptNotFoundError(PromptRepositoryError):
     """Raised when a prompt template is not found."""
@@ -82,7 +80,6 @@ class IPromptRepository(ABC):
             PromptValidationError: If template validation fails
             PromptRepositoryError: If persistence operation fails
         """
-        pass
 
     @abstractmethod
     async def get_by_id(self, template_id: str) -> Optional[PromptTemplate]:
@@ -98,7 +95,6 @@ class IPromptRepository(ABC):
         Raises:
             PromptRepositoryError: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
     async def get_by_name(
@@ -117,7 +113,6 @@ class IPromptRepository(ABC):
         Raises:
             PromptRepositoryError: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
     async def list_all(
@@ -140,7 +135,6 @@ class IPromptRepository(ABC):
         Raises:
             PromptRepositoryError: If listing operation fails
         """
-        pass
 
     @abstractmethod
     async def delete(self, template_id: str) -> bool:
@@ -156,12 +150,9 @@ class IPromptRepository(ABC):
         Raises:
             PromptRepositoryError: If deletion fails
         """
-        pass
 
     @abstractmethod
-    async def get_version_history(
-        self, template_id: str
-    ) -> list[PromptTemplate]:
+    async def get_version_history(self, template_id: str) -> list[PromptTemplate]:
         """
         Get all versions of a prompt template.
 
@@ -177,12 +168,9 @@ class IPromptRepository(ABC):
         Raises:
             PromptRepositoryError: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
-    async def get_by_tag(
-        self, tag: str, limit: int = 50
-    ) -> list[PromptTemplate]:
+    async def get_by_tag(self, tag: str, limit: int = 50) -> list[PromptTemplate]:
         """
         List prompt templates by tag.
 
@@ -196,7 +184,6 @@ class IPromptRepository(ABC):
         Raises:
             PromptRepositoryError: If retrieval operation fails
         """
-        pass
 
     @abstractmethod
     async def count(self) -> int:
@@ -209,12 +196,9 @@ class IPromptRepository(ABC):
         Raises:
             PromptRepositoryError: If count operation fails
         """
-        pass
 
     @abstractmethod
-    async def search(
-        self, query: str, limit: int = 20
-    ) -> list[PromptTemplate]:
+    async def search(self, query: str, limit: int = 20) -> list[PromptTemplate]:
         """
         Search prompt templates by name or description.
 
@@ -228,7 +212,6 @@ class IPromptRepository(ABC):
         Raises:
             PromptRepositoryError: If search operation fails
         """
-        pass
 
 
 __all__ = [

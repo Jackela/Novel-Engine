@@ -272,7 +272,9 @@ class RedisConnectionPool:
             if strategy == RedisStorageStrategy.JSON:
                 return json.loads(value)
             elif strategy == RedisStorageStrategy.PICKLE:
-                return pickle.loads(bytes.fromhex(value))  # nosec B301 - trusted Redis cache data
+                return pickle.loads(
+                    bytes.fromhex(value)
+                )  # nosec B301 - trusted Redis cache data
             elif strategy == RedisStorageStrategy.PLAIN:
                 return value
             else:

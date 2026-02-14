@@ -5,6 +5,8 @@ import pytest
 from src.core.character_llm_integration import LLMIntegration
 from src.core.types.shared_types import ActionPriority
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.unit
 def test_enhanced_decision_making_parses_llm_response():
@@ -63,9 +65,7 @@ def test_priority_detection_rules():
     integration = LLMIntegration(agent_id="agent_3")
 
     assert (
-        integration._determine_llm_action_priority(
-            "attack", "urgent need to respond"
-        )
+        integration._determine_llm_action_priority("attack", "urgent need to respond")
         == ActionPriority.CRITICAL
     )
     assert (
@@ -75,14 +75,10 @@ def test_priority_detection_rules():
         == ActionPriority.HIGH
     )
     assert (
-        integration._determine_llm_action_priority(
-            "communicate", "share the update"
-        )
+        integration._determine_llm_action_priority("communicate", "share the update")
         == ActionPriority.MEDIUM
     )
     assert (
-        integration._determine_llm_action_priority(
-            "observe", "gather details"
-        )
+        integration._determine_llm_action_priority("observe", "gather details")
         == ActionPriority.LOW
     )

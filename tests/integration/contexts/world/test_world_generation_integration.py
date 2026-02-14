@@ -25,6 +25,8 @@ from src.contexts.world.infrastructure.generators.llm_world_generator import (
     LLMWorldGenerator,
 )
 
+pytestmark = pytest.mark.integration
+
 
 def create_realistic_llm_response() -> Dict[str, Any]:
     """Create a realistic LLM response that mimics actual Gemini output."""
@@ -36,9 +38,13 @@ def create_realistic_llm_response() -> Dict[str, Any]:
             "world_rules": [
                 "Magic flows through ley lines visible as faint crystalline veins",
                 "Only those born during celestial events can channel raw magic",
-                "The old gods slumber but can be awakened"
+                "The old gods slumber but can be awakened",
             ],
-            "cultural_influences": ["Medieval Europe", "Byzantine Empire", "Celtic mythology"]
+            "cultural_influences": [
+                "Medieval Europe",
+                "Byzantine Empire",
+                "Celtic mythology",
+            ],
         },
         "locations": [
             {
@@ -49,7 +55,11 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "climate": "temperate",
                 "status": "contested",
                 "population": 85000,
-                "notable_features": ["The Split Palace", "Ley Line Chasm", "Bridge of Chains"],
+                "notable_features": [
+                    "The Split Palace",
+                    "Ley Line Chasm",
+                    "Bridge of Chains",
+                ],
                 "resources": ["magical crystals", "iron", "scholars"],
                 "dangers": ["unstable magic zones", "political assassination"],
                 "accessibility": 70,
@@ -57,7 +67,7 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "magic_concentration": 95,
                 "parent_location_id": None,
                 "child_location_ids": ["temp_location_2"],
-                "connections": ["temp_location_3", "temp_location_4"]
+                "connections": ["temp_location_3", "temp_location_4"],
             },
             {
                 "temp_id": "temp_location_2",
@@ -75,7 +85,7 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "magic_concentration": 20,
                 "parent_location_id": "temp_location_1",
                 "child_location_ids": [],
-                "connections": []
+                "connections": [],
             },
             {
                 "temp_id": "temp_location_3",
@@ -93,7 +103,7 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "magic_concentration": 75,
                 "parent_location_id": None,
                 "child_location_ids": [],
-                "connections": ["temp_location_1"]
+                "connections": ["temp_location_1"],
             },
             {
                 "temp_id": "temp_location_4",
@@ -111,7 +121,7 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "magic_concentration": 30,
                 "parent_location_id": None,
                 "child_location_ids": [],
-                "connections": ["temp_location_1"]
+                "connections": ["temp_location_1"],
             },
             {
                 "temp_id": "temp_location_5",
@@ -129,8 +139,8 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "magic_concentration": 100,
                 "parent_location_id": None,
                 "child_location_ids": [],
-                "connections": []
-            }
+                "connections": [],
+            },
         ],
         "factions": [
             {
@@ -143,14 +153,18 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "leader_name": "Prince Aldric the Exile",
                 "founding_date": "Year 1 After Sundering",
                 "values": ["unity", "legitimacy", "tradition"],
-                "goals": ["Reunify the realms", "Crown Prince Aldric", "Rebuild Valdris"],
+                "goals": [
+                    "Reunify the realms",
+                    "Crown Prince Aldric",
+                    "Rebuild Valdris",
+                ],
                 "resources": ["veteran soldiers", "noble supporters", "ancient claims"],
                 "influence": 60,
                 "military_strength": 70,
                 "economic_power": 45,
                 "member_count": 15000,
                 "headquarters_id": "temp_location_1",
-                "territories": ["temp_location_1"]
+                "territories": ["temp_location_1"],
             },
             {
                 "temp_id": "temp_faction_2",
@@ -162,14 +176,18 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "leader_name": "High Merchant Cassandra Vex",
                 "founding_date": "Year 5 After Sundering",
                 "values": ["profit", "neutrality", "opportunity"],
-                "goals": ["Maintain division", "Control trade routes", "Acquire ley crystals"],
+                "goals": [
+                    "Maintain division",
+                    "Control trade routes",
+                    "Acquire ley crystals",
+                ],
                 "resources": ["vast wealth", "trade fleets", "mercenaries"],
                 "influence": 75,
                 "military_strength": 40,
                 "economic_power": 95,
                 "member_count": 500,
                 "headquarters_id": "temp_location_4",
-                "territories": ["temp_location_4"]
+                "territories": ["temp_location_4"],
             },
             {
                 "temp_id": "temp_faction_3",
@@ -181,15 +199,19 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "leader_name": "Archmagus Serina",
                 "founding_date": "Year 12 After Sundering",
                 "values": ["knowledge", "balance", "protection"],
-                "goals": ["Understand the Sundering", "Prevent magical catastrophe", "Train new mages"],
+                "goals": [
+                    "Understand the Sundering",
+                    "Prevent magical catastrophe",
+                    "Train new mages",
+                ],
                 "resources": ["magical knowledge", "ley line access", "ancient texts"],
                 "influence": 50,
                 "military_strength": 60,
                 "economic_power": 30,
                 "member_count": 200,
                 "headquarters_id": "temp_location_3",
-                "territories": ["temp_location_3", "temp_location_5"]
-            }
+                "territories": ["temp_location_3", "temp_location_5"],
+            },
         ],
         "events": [
             {
@@ -205,12 +227,16 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "faction_ids": [],
                 "key_figures": ["Emperor Valen the Ambitious", "Archmage Thorn"],
                 "causes": ["Imperial overreach", "Lust for absolute power"],
-                "consequences": ["Empire shattered", "Ley lines exposed", "Millions dead"],
+                "consequences": [
+                    "Empire shattered",
+                    "Ley lines exposed",
+                    "Millions dead",
+                ],
                 "preceding_event_ids": [],
                 "following_event_ids": ["temp_event_2", "temp_event_3"],
                 "related_event_ids": [],
                 "is_secret": False,
-                "narrative_importance": 100
+                "narrative_importance": 100,
             },
             {
                 "temp_id": "temp_event_2",
@@ -230,7 +256,7 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "following_event_ids": [],
                 "related_event_ids": [],
                 "is_secret": False,
-                "narrative_importance": 80
+                "narrative_importance": 80,
             },
             {
                 "temp_id": "temp_event_3",
@@ -250,9 +276,9 @@ def create_realistic_llm_response() -> Dict[str, Any]:
                 "following_event_ids": [],
                 "related_event_ids": [],
                 "is_secret": False,
-                "narrative_importance": 70
-            }
-        ]
+                "narrative_importance": 70,
+            },
+        ],
     }
 
 
@@ -278,7 +304,9 @@ class TestWorldGenerationIntegration:
     """Integration tests for complete world generation flow."""
 
     @pytest.mark.integration
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     def test_generate_fantasy_world_parses_to_valid_entities(
         self,
         mock_post: MagicMock,
@@ -318,7 +346,11 @@ class TestWorldGenerationIntegration:
         # Verify locations
         assert len(result.locations) == 5
         capital = next(
-            (loc for loc in result.locations if loc.location_type == LocationType.CAPITAL),
+            (
+                loc
+                for loc in result.locations
+                if loc.location_type == LocationType.CAPITAL
+            ),
             None,
         )
         assert capital is not None
@@ -344,7 +376,11 @@ class TestWorldGenerationIntegration:
         # Verify events
         assert len(result.events) == 3
         sundering = next(
-            (e for e in result.events if e.significance == EventSignificance.WORLD_CHANGING),
+            (
+                e
+                for e in result.events
+                if e.significance == EventSignificance.WORLD_CHANGING
+            ),
             None,
         )
         assert sundering is not None
@@ -352,15 +388,15 @@ class TestWorldGenerationIntegration:
         assert sundering.narrative_importance == 100
 
         # Verify event causality chain
-        flight = next(
-            (e for e in result.events if "Flight" in e.name), None
-        )
+        flight = next((e for e in result.events if "Flight" in e.name), None)
         assert flight is not None
         assert sundering.id in flight.preceding_event_ids
         assert flight.id in sundering.following_event_ids
 
     @pytest.mark.integration
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     def test_generate_with_markdown_wrapped_json(
         self,
         mock_post: MagicMock,
@@ -392,7 +428,9 @@ I hope this world meets your needs!"""
         assert len(result.factions) == 3
 
     @pytest.mark.integration
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     def test_generate_handles_partial_data_gracefully(
         self,
         mock_post: MagicMock,
@@ -435,7 +473,9 @@ I hope this world meets your needs!"""
         assert result.locations[0].location_type == LocationType.REGION  # Default
 
     @pytest.mark.integration
-    @patch("src.contexts.world.infrastructure.generators.llm_world_generator.requests.post")
+    @patch(
+        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
+    )
     def test_cross_references_resolve_correctly(
         self,
         mock_post: MagicMock,

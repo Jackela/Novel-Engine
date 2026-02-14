@@ -19,11 +19,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from src.core.types.shared_types import CharacterAction
-from src.core.event_bus import EventBus
-
 # Import agent and shared types
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.event_bus import EventBus
+from src.core.types.shared_types import CharacterAction
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -514,7 +513,3 @@ class TurnOrchestrator:
             "history_size": len(self.turn_history),
             "max_history_size": self.max_turn_history,
         }
-
-
-
-

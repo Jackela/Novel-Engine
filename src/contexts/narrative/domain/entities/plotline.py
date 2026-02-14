@@ -78,12 +78,16 @@ class Plotline:
         # Validate hex color format (supports #RGB, #RRGGBB, #RRGGBBAA)
         color = self.color.strip()
         if not color.startswith("#"):
-            raise ValueError(f"Plotline color must be a hex color code starting with '#', got: {color}")
+            raise ValueError(
+                f"Plotline color must be a hex color code starting with '#', got: {color}"
+            )
 
         # Remove # and validate length
         hex_part = color[1:]
         if len(hex_part) not in (3, 6, 8):
-            raise ValueError(f"Plotline color must be 3, 6, or 8 hex characters, got: {color}")
+            raise ValueError(
+                f"Plotline color must be 3, 6, or 8 hex characters, got: {color}"
+            )
 
         # Validate all characters are hex digits
         try:
@@ -130,11 +134,15 @@ class Plotline:
         # Validate hex color format
         color = new_color.strip()
         if not color.startswith("#"):
-            raise ValueError(f"Plotline color must be a hex color code starting with '#', got: {color}")
+            raise ValueError(
+                f"Plotline color must be a hex color code starting with '#', got: {color}"
+            )
 
         hex_part = color[1:]
         if len(hex_part) not in (3, 6, 8):
-            raise ValueError(f"Plotline color must be 3, 6, or 8 hex characters, got: {color}")
+            raise ValueError(
+                f"Plotline color must be 3, 6, or 8 hex characters, got: {color}"
+            )
 
         try:
             int(hex_part, 16)
@@ -202,10 +210,7 @@ class Plotline:
 
     def __str__(self) -> str:
         """Human-readable representation."""
-        return (
-            f"Plotline('{self.name}', color={self.color}, "
-            f"{self.status.value})"
-        )
+        return f"Plotline('{self.name}', color={self.color}, " f"{self.status.value})"
 
     def __repr__(self) -> str:
         """Developer representation for debugging."""

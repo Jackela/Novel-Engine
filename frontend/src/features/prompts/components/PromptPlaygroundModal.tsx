@@ -33,15 +33,7 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import {
-  Loader2,
-  Play,
-  Settings,
-  FileText,
-  Sparkles,
-  Copy,
-  Check,
-} from 'lucide-react';
+import { Loader2, Play, Settings, FileText, Sparkles, Copy, Check } from 'lucide-react';
 import { useRenderPrompt, useGeneratePrompt } from '../api/promptApi';
 import type {
   PromptVariableDefinition,
@@ -71,7 +63,11 @@ const PROVIDER_OPTIONS = [
 // Model suggestions per provider
 const MODEL_SUGGESTIONS: Record<string, string[]> = {
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-  anthropic: ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+  anthropic: [
+    'claude-3-opus-20240229',
+    'claude-3-sonnet-20240229',
+    'claude-3-haiku-20240307',
+  ],
   gemini: ['gemini-pro', 'gemini-ultra'],
   ollama: ['llama3', 'mistral', 'phi3'],
 };
@@ -227,7 +223,9 @@ export function PromptPlaygroundModal({
       setRenderedPrompt(result.rendered);
       setLlmOutput(result.output);
 
-      toast.success(`Generated ${result.total_tokens} tokens in ${result.latency_ms.toFixed(0)}ms`);
+      toast.success(
+        `Generated ${result.total_tokens} tokens in ${result.latency_ms.toFixed(0)}ms`
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate prompt');
       // Still render the prompt on error so user can see what they're working with
@@ -265,8 +263,8 @@ export function PromptPlaygroundModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl h-[85vh] p-0 gap-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+      <DialogContent className="h-[85vh] max-w-6xl gap-0 p-0">
+        <DialogHeader className="border-b px-6 pb-4 pt-6">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-xl">Prompt Playground</DialogTitle>
@@ -274,11 +272,7 @@ export function PromptPlaygroundModal({
                 Test your prompt with variables and see the rendered output
               </DialogDescription>
             </div>
-            <Button
-              onClick={handleRun}
-              disabled={isRunning}
-              className="gap-2"
-            >
+            <Button onClick={handleRun} disabled={isRunning} className="gap-2">
               {isRunning ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -289,14 +283,14 @@ export function PromptPlaygroundModal({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex flex-1 overflow-hidden">
           {/* Left Panel - Variables and Config */}
-          <div className="w-[400px] border-r flex flex-col overflow-hidden">
+          <div className="flex w-[400px] flex-col overflow-hidden border-r">
             <ScrollArea className="flex-1 px-6 py-4">
               {/* Variables Section */}
               {hasVariables && (
                 <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="mb-4 flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <h3 className="font-semibold">Variables</h3>
                   </div>
@@ -315,8 +309,8 @@ export function PromptPlaygroundModal({
               )}
 
               {!hasVariables && (
-                <div className="mb-6 p-4 border rounded-md bg-muted/50">
-                  <p className="text-sm text-muted-foreground text-center">
+                <div className="mb-6 rounded-md border bg-muted/50 p-4">
+                  <p className="text-center text-sm text-muted-foreground">
                     This prompt has no variables defined.
                   </p>
                 </div>
@@ -326,7 +320,7 @@ export function PromptPlaygroundModal({
 
               {/* Model Config Section */}
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Settings className="h-4 w-4 text-muted-foreground" />
                     <h3 className="font-semibold">Model Configuration</h3>
@@ -392,11 +386,15 @@ export function PromptPlaygroundModal({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm">Temperature</Label>
-                      <span className="text-xs text-muted-foreground">{config.temperature.toFixed(2)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {config.temperature.toFixed(2)}
+                      </span>
                     </div>
                     <Slider
                       value={[config.temperature]}
-                      onValueChange={([value]) => updateConfig('temperature', value ?? 0.7)}
+                      onValueChange={([value]) =>
+                        updateConfig('temperature', value ?? 0.7)
+                      }
                       min={0}
                       max={2}
                       step={0.1}
@@ -408,11 +406,15 @@ export function PromptPlaygroundModal({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm">Max Tokens</Label>
-                      <span className="text-xs text-muted-foreground">{config.max_tokens}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {config.max_tokens}
+                      </span>
                     </div>
                     <Slider
                       value={[config.max_tokens]}
-                      onValueChange={([value]) => updateConfig('max_tokens', value ?? 1000)}
+                      onValueChange={([value]) =>
+                        updateConfig('max_tokens', value ?? 1000)
+                      }
                       min={100}
                       max={8000}
                       step={100}
@@ -429,11 +431,15 @@ export function PromptPlaygroundModal({
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <Label className="text-sm">Top P</Label>
-                          <span className="text-xs text-muted-foreground">{config.top_p.toFixed(2)}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {config.top_p.toFixed(2)}
+                          </span>
                         </div>
                         <Slider
                           value={[config.top_p]}
-                          onValueChange={([value]) => updateConfig('top_p', value ?? 1.0)}
+                          onValueChange={([value]) =>
+                            updateConfig('top_p', value ?? 1.0)
+                          }
                           min={0}
                           max={1}
                           step={0.05}
@@ -445,11 +451,15 @@ export function PromptPlaygroundModal({
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <Label className="text-sm">Frequency Penalty</Label>
-                          <span className="text-xs text-muted-foreground">{config.frequency_penalty.toFixed(2)}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {config.frequency_penalty.toFixed(2)}
+                          </span>
                         </div>
                         <Slider
                           value={[config.frequency_penalty]}
-                          onValueChange={([value]) => updateConfig('frequency_penalty', value ?? 0.0)}
+                          onValueChange={([value]) =>
+                            updateConfig('frequency_penalty', value ?? 0.0)
+                          }
                           min={-2}
                           max={2}
                           step={0.1}
@@ -461,11 +471,15 @@ export function PromptPlaygroundModal({
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <Label className="text-sm">Presence Penalty</Label>
-                          <span className="text-xs text-muted-foreground">{config.presence_penalty.toFixed(2)}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {config.presence_penalty.toFixed(2)}
+                          </span>
                         </div>
                         <Slider
                           value={[config.presence_penalty]}
-                          onValueChange={([value]) => updateConfig('presence_penalty', value ?? 0.0)}
+                          onValueChange={([value]) =>
+                            updateConfig('presence_penalty', value ?? 0.0)
+                          }
                           min={-2}
                           max={2}
                           step={0.1}
@@ -480,29 +494,31 @@ export function PromptPlaygroundModal({
           </div>
 
           {/* Right Panel - Split View */}
-          <div className="flex-1 flex">
+          <div className="flex flex-1">
             {/* Rendered Prompt */}
-            <div className="flex-1 border-r flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
+            <div className="flex flex-1 flex-col overflow-hidden border-r">
+              <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="font-medium text-sm">Rendered Prompt</h4>
+                  <h4 className="text-sm font-medium">Rendered Prompt</h4>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => copyToClipboard(renderedPrompt || prompt.content, 'prompt')}
+                  onClick={() =>
+                    copyToClipboard(renderedPrompt || prompt.content, 'prompt')
+                  }
                   disabled={!renderedPrompt && !prompt.content}
                   className="h-7 text-xs"
                 >
                   {copiedPrompt ? (
                     <>
-                      <Check className="h-3 w-3 mr-1" />
+                      <Check className="mr-1 h-3 w-3" />
                       Copied
                     </>
                   ) : (
                     <>
-                      <Copy className="h-3 w-3 mr-1" />
+                      <Copy className="mr-1 h-3 w-3" />
                       Copy
                     </>
                   )}
@@ -510,11 +526,11 @@ export function PromptPlaygroundModal({
               </div>
               <ScrollArea className="flex-1 p-4">
                 {renderedPrompt ? (
-                  <pre className="whitespace-pre-wrap break-words text-sm font-mono">
+                  <pre className="whitespace-pre-wrap break-words font-mono text-sm">
                     {renderedPrompt}
                   </pre>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                     Click "Run Prompt" to see the rendered output
                   </div>
                 )}
@@ -522,11 +538,11 @@ export function PromptPlaygroundModal({
             </div>
 
             {/* LLM Output */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="font-medium text-sm">LLM Output</h4>
+                  <h4 className="text-sm font-medium">LLM Output</h4>
                 </div>
                 <Button
                   variant="ghost"
@@ -537,12 +553,12 @@ export function PromptPlaygroundModal({
                 >
                   {copiedOutput ? (
                     <>
-                      <Check className="h-3 w-3 mr-1" />
+                      <Check className="mr-1 h-3 w-3" />
                       Copied
                     </>
                   ) : (
                     <>
-                      <Copy className="h-3 w-3 mr-1" />
+                      <Copy className="mr-1 h-3 w-3" />
                       Copy
                     </>
                   )}
@@ -554,7 +570,7 @@ export function PromptPlaygroundModal({
                     {llmOutput}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                     LLM output will appear here after running the prompt
                   </div>
                 )}
@@ -564,7 +580,7 @@ export function PromptPlaygroundModal({
         </div>
 
         {/* Footer with stats */}
-        <div className="px-6 py-3 border-t bg-muted/30">
+        <div className="border-t bg-muted/30 px-6 py-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-4">
               <span>{prompt.name}</span>
@@ -575,12 +591,12 @@ export function PromptPlaygroundModal({
                   <Separator orientation="vertical" className="h-4" />
                   <div className="flex gap-1">
                     {prompt.tags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs py-0">
+                      <Badge key={tag} variant="outline" className="py-0 text-xs">
                         {tag}
                       </Badge>
                     ))}
                     {prompt.tags.length > 3 && (
-                      <Badge variant="outline" className="text-xs py-0">
+                      <Badge variant="outline" className="py-0 text-xs">
                         +{prompt.tags.length - 3}
                       </Badge>
                     )}
@@ -591,7 +607,8 @@ export function PromptPlaygroundModal({
             <div>
               {renderedPrompt && llmOutput && (
                 <span>
-                  ~{Math.ceil(renderedPrompt.length / 4)} in, ~{Math.ceil(llmOutput.length / 4)} out
+                  ~{Math.ceil(renderedPrompt.length / 4)} in, ~
+                  {Math.ceil(llmOutput.length / 4)} out
                 </span>
               )}
               {renderedPrompt && !llmOutput && (
@@ -669,9 +686,13 @@ function VariableInput({ variable, value, onChange }: VariableInputProps) {
       case 'dict':
         return (
           <Textarea
-            value={typeof value === 'string' ? value : JSON.stringify(value ?? '', null, 2)}
+            value={
+              typeof value === 'string' ? value : JSON.stringify(value ?? '', null, 2)
+            }
             onChange={(e) => handleInputChange(e.target.value)}
-            placeholder={variable.type === 'list' ? '["item1", "item2"]' : '{"key": "value"}'}
+            placeholder={
+              variable.type === 'list' ? '["item1", "item2"]' : '{"key": "value"}'
+            }
             className="font-mono text-xs"
             rows={3}
           />
@@ -694,10 +715,11 @@ function VariableInput({ variable, value, onChange }: VariableInputProps) {
       <div className="flex items-center justify-between">
         <Label className="text-sm">
           {variable.name}
-          {variable.required && <span className="text-destructive ml-1">*</span>}
+          {variable.required && <span className="ml-1 text-destructive">*</span>}
         </Label>
-        <Badge variant="outline" className="text-xs py-0">
-          {VARIABLE_TYPES.find((t) => t.value === variable.type)?.label || variable.type}
+        <Badge variant="outline" className="py-0 text-xs">
+          {VARIABLE_TYPES.find((t) => t.value === variable.type)?.label ||
+            variable.type}
         </Badge>
       </div>
       {renderInput()}

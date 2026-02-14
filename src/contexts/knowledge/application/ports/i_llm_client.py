@@ -63,8 +63,6 @@ class LLMResponse:
 class LLMError(Exception):
     """Base exception for LLM-related errors."""
 
-    pass
-
 
 class ILLMClient(Protocol):
     """

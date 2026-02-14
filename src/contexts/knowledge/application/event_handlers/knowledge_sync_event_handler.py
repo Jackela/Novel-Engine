@@ -18,7 +18,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
 import structlog
 
@@ -26,9 +25,7 @@ from ...application.services.knowledge_ingestion_service import (
     IngestionResult,
     KnowledgeIngestionService,
 )
-from ...domain.models.source_knowledge_entry import SourceKnowledgeEntry
 from ...domain.models.source_type import SourceType
-
 
 logger = structlog.get_logger()
 
@@ -72,7 +69,9 @@ class IngestionTask:
         """Check if this task can be retried."""
         return self.retry_count < self.max_retries
 
-    def increment_retry(self, strategy: RetryStrategy = RetryStrategy.EXPONENTIAL) -> None:
+    def increment_retry(
+        self, strategy: RetryStrategy = RetryStrategy.EXPONENTIAL
+    ) -> None:
         """Increment retry count and update delay based on strategy."""
         self.retry_count += 1
 
@@ -124,7 +123,9 @@ class KnowledgeSyncEventHandler:
         self._retry_strategy = retry_strategy
 
         # Async queue for pending tasks
-        self._queue: asyncio.Queue[IngestionTask] = asyncio.Queue(maxsize=max_queue_size)
+        self._queue: asyncio.Queue[IngestionTask] = asyncio.Queue(
+            maxsize=max_queue_size
+        )
 
         # Dead letter queue for failed tasks
         self._dead_letter_queue: list[IngestionTask] = []
@@ -449,6 +450,7 @@ class KnowledgeSyncEventHandler:
 
 
 # Helper functions for specific event types
+
 
 def _character_to_content(
     character_id: str,

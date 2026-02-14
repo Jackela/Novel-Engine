@@ -16,13 +16,13 @@ import pytest_asyncio
 from httpx import AsyncClient
 
 # NOTE: These imports will fail until API is implemented
+
+pytestmark = pytest.mark.integration
+
 try:
     from backend.api.main import app  # FastAPI application
 except ImportError:
     app = None
-
-
-pytestmark = [pytest.mark.knowledge, pytest.mark.api, pytest.mark.requires_services]
 
 
 @pytest_asyncio.fixture

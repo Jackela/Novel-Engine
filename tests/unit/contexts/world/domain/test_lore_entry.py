@@ -430,10 +430,12 @@ class TestLoreEntrySmartTags:
     def test_has_smart_tag(self):
         """Test checking for specific smart tag."""
         entry = LoreEntry(title="Test")
-        entry.set_smart_tags({
-            "genre": ["fantasy", "dark"],
-            "mood": ["serious"],
-        })
+        entry.set_smart_tags(
+            {
+                "genre": ["fantasy", "dark"],
+                "mood": ["serious"],
+            }
+        )
 
         assert entry.has_smart_tag("genre", "fantasy") is True
         assert entry.has_smart_tag("genre", "FANTASY") is True  # Case-insensitive
@@ -458,10 +460,12 @@ class TestLoreEntrySmartTags:
             title="Test",
             tags=["manual1", "manual2"],
         )
-        entry.set_smart_tags({
-            "genre": ["smart1"],
-            "mood": ["smart2", "manual1"],  # Duplicate to test deduplication
-        })
+        entry.set_smart_tags(
+            {
+                "genre": ["smart1"],
+                "mood": ["smart2", "manual1"],  # Duplicate to test deduplication
+            }
+        )
 
         all_tags = entry.get_all_tags_combined()
 

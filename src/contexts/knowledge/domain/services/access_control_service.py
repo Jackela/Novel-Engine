@@ -10,8 +10,8 @@ Constitution Compliance:
 
 from typing import List
 
-from ..models.knowledge_entry import KnowledgeEntry
 from ..models.agent_identity import AgentIdentity
+from ..models.knowledge_entry import KnowledgeEntry
 
 
 class AccessControlService:

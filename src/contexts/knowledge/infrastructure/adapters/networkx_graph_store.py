@@ -20,8 +20,8 @@ from typing import TYPE_CHECKING, Any
 import networkx as nx
 
 from src.contexts.knowledge.application.ports.i_graph_store import (
-    CliqueResult,
     CentralityResult,
+    CliqueResult,
     GraphAddResult,
     GraphEntity,
     GraphExportResult,
@@ -185,15 +185,21 @@ class NetworkXGraphStore(IGraphStore):
 
         # Auto-create placeholder entities if they don't exist
         if not self._graph.has_node(source_norm):
-            self._graph.add_node(source_norm, name=relationship.source, entity_type="unknown")
+            self._graph.add_node(
+                source_norm, name=relationship.source, entity_type="unknown"
+            )
         if not self._graph.has_node(target_norm):
-            self._graph.add_node(target_norm, name=relationship.target, entity_type="unknown")
+            self._graph.add_node(
+                target_norm, name=relationship.target, entity_type="unknown"
+            )
 
         # Check if this exact relationship already exists
         rel_type_str = self._relationship_type_to_str(relationship.relationship_type)
         edge_key = (source_norm, target_norm, rel_type_str)
         if self._graph.has_edge(*edge_key[:2], key=edge_key[2]):
-            logger.debug(f"Relationship already exists: {relationship.source} -> {relationship.target} ({relationship.relationship_type})")
+            logger.debug(
+                f"Relationship already exists: {relationship.source} -> {relationship.target} ({relationship.relationship_type})"
+            )
             return False
 
         try:
@@ -208,7 +214,9 @@ class NetworkXGraphStore(IGraphStore):
                 strength=relationship.strength,
                 **relationship.metadata,
             )
-            logger.debug(f"Added relationship: {relationship.source} -> {relationship.target} ({relationship.relationship_type})")
+            logger.debug(
+                f"Added relationship: {relationship.source} -> {relationship.target} ({relationship.relationship_type})"
+            )
             return True
         except Exception as e:
             raise GraphStoreError(
@@ -222,7 +230,9 @@ class NetworkXGraphStore(IGraphStore):
                 },
             ) from e
 
-    async def add_relationships(self, relationships: list[GraphRelationship]) -> GraphAddResult:
+    async def add_relationships(
+        self, relationships: list[GraphRelationship]
+    ) -> GraphAddResult:
         """
         Add multiple relationships to the graph in batch.
 
@@ -273,8 +283,11 @@ class NetworkXGraphStore(IGraphStore):
                 entity_type=entity_type,
                 aliases=tuple(node_data.get("aliases", [])),
                 description=node_data.get("description", ""),
-                metadata={k: v for k, v in node_data.items()
-                         if k not in {"name", "entity_type", "aliases", "description"}},
+                metadata={
+                    k: v
+                    for k, v in node_data.items()
+                    if k not in {"name", "entity_type", "aliases", "description"}
+                },
             )
         except Exception as e:
             raise GraphStoreError(
@@ -314,13 +327,18 @@ class NetworkXGraphStore(IGraphStore):
 
         # Filter for specific relationship types if provided
         rel_type_filter: set[str] | None = (
-            {self._relationship_type_to_str(rt) for rt in relationship_types} if relationship_types else None
+            {self._relationship_type_to_str(rt) for rt in relationship_types}
+            if relationship_types
+            else None
         )
 
         # BFS to find neighbors at each depth
         # Queue stores: (node_name, distance, incoming_edge_data)
         from collections import deque
-        queue: deque[tuple[str, int, dict[str, Any] | None]] = deque([(normalized_name, 0, None)])
+
+        queue: deque[tuple[str, int, dict[str, Any] | None]] = deque(
+            [(normalized_name, 0, None)]
+        )
 
         while queue:
             current_node, distance, incoming_edge = queue.popleft()
@@ -332,7 +350,9 @@ class NetworkXGraphStore(IGraphStore):
             if not self._graph.has_node(current_node):
                 continue
 
-            for _, target, key, edge_data in self._graph.out_edges(current_node, keys=True, data=True):
+            for _, target, key, edge_data in self._graph.out_edges(
+                current_node, keys=True, data=True
+            ):
                 if target in visited:
                     continue
 
@@ -353,13 +373,25 @@ class NetworkXGraphStore(IGraphStore):
                 # Build relationship object from the edge data
                 rel_type_str = edge_data.get("relationship_type", "other")
                 relationship = GraphRelationship(
-                    source=edge_data.get("source", entity_name if distance == 0 else ""),
+                    source=edge_data.get(
+                        "source", entity_name if distance == 0 else ""
+                    ),
                     target=edge_data.get("target", entity.name),
                     relationship_type=self._str_to_relationship_type(rel_type_str),
                     context=edge_data.get("context", ""),
                     strength=edge_data.get("strength", 1.0),
-                    metadata={k: v for k, v in edge_data.items()
-                             if k not in {"source", "target", "relationship_type", "context", "strength"}},
+                    metadata={
+                        k: v
+                        for k, v in edge_data.items()
+                        if k
+                        not in {
+                            "source",
+                            "target",
+                            "relationship_type",
+                            "context",
+                            "strength",
+                        }
+                    },
                 )
 
                 neighbors.append(
@@ -428,7 +460,9 @@ class NetworkXGraphStore(IGraphStore):
 
             if max_length is None:
                 try:
-                    path_nodes = nx.bidirectional_shortest_path(self._graph, source_norm, target_norm)
+                    path_nodes = nx.bidirectional_shortest_path(
+                        self._graph, source_norm, target_norm
+                    )
                 except nx.NetworkXNoPath:
                     return None
             else:
@@ -467,7 +501,9 @@ class NetworkXGraphStore(IGraphStore):
                 rel_type_str = edge_data.get("relationship_type", "other")
                 relationships.append(
                     GraphRelationship(
-                        source=edge_data.get("source", from_entity.get("name", from_node)),
+                        source=edge_data.get(
+                            "source", from_entity.get("name", from_node)
+                        ),
                         target=edge_data.get("target", to_entity.get("name", to_node)),
                         relationship_type=self._str_to_relationship_type(rel_type_str),
                         context=edge_data.get("context", ""),
@@ -545,7 +581,11 @@ class NetworkXGraphStore(IGraphStore):
             return []
 
         relationships: list[GraphRelationship] = []
-        rel_type_filter = self._relationship_type_to_str(relationship_type) if relationship_type else None
+        rel_type_filter = (
+            self._relationship_type_to_str(relationship_type)
+            if relationship_type
+            else None
+        )
 
         # Get outgoing edges
         if self._graph.has_node(normalized_name):
@@ -558,12 +598,26 @@ class NetworkXGraphStore(IGraphStore):
                     relationships.append(
                         GraphRelationship(
                             source=edge_data.get("source", entity_name),
-                            target=edge_data.get("target", target_data.get("name", target)),
-                            relationship_type=self._str_to_relationship_type(rel_type_str),
+                            target=edge_data.get(
+                                "target", target_data.get("name", target)
+                            ),
+                            relationship_type=self._str_to_relationship_type(
+                                rel_type_str
+                            ),
                             context=edge_data.get("context", ""),
                             strength=edge_data.get("strength", 1.0),
-                            metadata={k: v for k, v in edge_data.items()
-                                     if k not in {"source", "target", "relationship_type", "context", "strength"}},
+                            metadata={
+                                k: v
+                                for k, v in edge_data.items()
+                                if k
+                                not in {
+                                    "source",
+                                    "target",
+                                    "relationship_type",
+                                    "context",
+                                    "strength",
+                                }
+                            },
                         )
                     )
 
@@ -605,8 +659,18 @@ class NetworkXGraphStore(IGraphStore):
                     relationship_type=self._str_to_relationship_type(rel_type_str),
                     context=edge_data.get("context", ""),
                     strength=edge_data.get("strength", 1.0),
-                    metadata={k: v for k, v in edge_data.items()
-                             if k not in {"source", "target", "relationship_type", "context", "strength"}},
+                    metadata={
+                        k: v
+                        for k, v in edge_data.items()
+                        if k
+                        not in {
+                            "source",
+                            "target",
+                            "relationship_type",
+                            "context",
+                            "strength",
+                        }
+                    },
                 )
             )
 
@@ -664,7 +728,9 @@ class NetworkXGraphStore(IGraphStore):
 
         try:
             self._graph.remove_edge(source_norm, target_norm, key=rel_type_str)
-            logger.debug(f"Removed relationship: {source} -> {target} ({relationship_type})")
+            logger.debug(
+                f"Removed relationship: {source} -> {target} ({relationship_type})"
+            )
             return True
         except Exception as e:
             raise GraphStoreError(
@@ -703,7 +769,9 @@ class NetworkXGraphStore(IGraphStore):
         # Count relationships by type
         for _, _, edge_data in self._graph.edges(data=True):
             rel_type = edge_data.get("relationship_type", "other")
-            relationship_type_counts[rel_type] = relationship_type_counts.get(rel_type, 0) + 1
+            relationship_type_counts[rel_type] = (
+                relationship_type_counts.get(rel_type, 0) + 1
+            )
 
         return GraphStats(
             node_count=self._graph.number_of_nodes(),
@@ -768,8 +836,11 @@ class NetworkXGraphStore(IGraphStore):
                 entity_type=self._str_to_entity_type(entity_type_str),
                 aliases=tuple(node_data.get("aliases", [])),
                 description=node_data.get("description", ""),
-                metadata={k: v for k, v in node_data.items()
-                         if k not in {"name", "entity_type", "aliases", "description"}},
+                metadata={
+                    k: v
+                    for k, v in node_data.items()
+                    if k not in {"name", "entity_type", "aliases", "description"}
+                },
             )
             entities.append(entity)
 
@@ -804,7 +875,8 @@ class NetworkXGraphStore(IGraphStore):
         if entity_type is not None:
             entity_type_str = self._entity_type_to_str(entity_type)
             nodes_to_keep = [
-                n for n, d in self._graph.nodes(data=True)
+                n
+                for n, d in self._graph.nodes(data=True)
                 if d.get("entity_type") == entity_type_str
             ]
             working_graph = self._graph.subgraph(nodes_to_keep).copy()
@@ -817,7 +889,8 @@ class NetworkXGraphStore(IGraphStore):
 
         # Filter by size
         filtered_cliques = [
-            clique for clique in all_cliques
+            clique
+            for clique in all_cliques
             if len(clique) >= min_size and (max_size is None or len(clique) <= max_size)
         ]
 
@@ -974,9 +1047,15 @@ class NetworkXGraphStore(IGraphStore):
                         rel_type_str = edge_data.get("relationship_type", "other")
                         relationships.append(
                             GraphRelationship(
-                                source=edge_data.get("source", from_entity.get("name", from_node)),
-                                target=edge_data.get("target", to_entity.get("name", to_node)),
-                                relationship_type=self._str_to_relationship_type(rel_type_str),
+                                source=edge_data.get(
+                                    "source", from_entity.get("name", from_node)
+                                ),
+                                target=edge_data.get(
+                                    "target", to_entity.get("name", to_node)
+                                ),
+                                relationship_type=self._str_to_relationship_type(
+                                    rel_type_str
+                                ),
                                 context=edge_data.get("context", ""),
                                 strength=edge_data.get("strength", 1.0),
                             )
@@ -1075,7 +1154,9 @@ class NetworkXGraphStore(IGraphStore):
             # Get file size
             file_size = os.path.getsize(output_path)
 
-            logger.info(f"Exported graph to GraphML: {output_path} ({export_graph.number_of_nodes()} nodes, {export_graph.number_of_edges()} edges)")
+            logger.info(
+                f"Exported graph to GraphML: {output_path} ({export_graph.number_of_nodes()} nodes, {export_graph.number_of_edges()} edges)"
+            )
 
             return GraphExportResult(
                 format="graphml",
@@ -1132,7 +1213,13 @@ class NetworkXGraphStore(IGraphStore):
 
                 # Add remaining metadata
                 for key, value in node_data.items():
-                    if key not in {"id", "name", "entity_type", "aliases", "description"}:
+                    if key not in {
+                        "id",
+                        "name",
+                        "entity_type",
+                        "aliases",
+                        "description",
+                    }:
                         node_dict[key] = value
 
                 nodes_data.append(node_dict)
@@ -1156,7 +1243,15 @@ class NetworkXGraphStore(IGraphStore):
 
                 # Add remaining metadata
                 for key, value in edge_data.items():
-                    if key not in {"source", "target", "source_name", "target_name", "relationship_type", "context", "strength"}:
+                    if key not in {
+                        "source",
+                        "target",
+                        "source_name",
+                        "target_name",
+                        "relationship_type",
+                        "context",
+                        "strength",
+                    }:
                         edge_dict[key] = value
 
                 edges_data.append(edge_dict)
@@ -1174,7 +1269,9 @@ class NetworkXGraphStore(IGraphStore):
             }
 
             # Serialize to JSON
-            json_string = json.dumps(export_data, indent=2 if pretty else None, ensure_ascii=False)
+            json_string = json.dumps(
+                export_data, indent=2 if pretty else None, ensure_ascii=False
+            )
             data_size = len(json_string.encode("utf-8"))
 
             # Write to file if path provided
@@ -1182,7 +1279,9 @@ class NetworkXGraphStore(IGraphStore):
                 output_file = Path(output_path)
                 output_file.parent.mkdir(parents=True, exist_ok=True)
                 output_file.write_text(json_string, encoding="utf-8")
-                logger.info(f"Exported graph to JSON: {output_path} ({len(nodes_data)} nodes, {len(edges_data)} edges)")
+                logger.info(
+                    f"Exported graph to JSON: {output_path} ({len(nodes_data)} nodes, {len(edges_data)} edges)"
+                )
 
                 return GraphExportResult(
                     format="json",
@@ -1211,6 +1310,7 @@ class NetworkXGraphStore(IGraphStore):
     def _get_timestamp() -> str:
         """Get current timestamp in ISO format."""
         from datetime import datetime, timezone
+
         return datetime.now(timezone.utc).isoformat()
 
 

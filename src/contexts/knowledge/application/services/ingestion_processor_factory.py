@@ -16,13 +16,13 @@ from typing import Dict
 from ...application.ports.i_ingestion_processor import IIngestionProcessor
 from ...domain.models.source_type import SourceType
 from .ingestion_processors import (
-    GenericProcessor,
-    LoreProcessor,
     CharacterProcessor,
-    SceneProcessor,
-    PlotlineProcessor,
+    GenericProcessor,
     ItemProcessor,
     LocationProcessor,
+    LoreProcessor,
+    PlotlineProcessor,
+    SceneProcessor,
 )
 
 
@@ -181,10 +181,7 @@ class IngestionProcessorFactory:
             >>> factory.has_processor(SourceType.CUSTOM)  # Assuming CUSTOM doesn't exist
             False
         """
-        return (
-            source_type in self._processors
-            or source_type in self._processor_classes
-        )
+        return source_type in self._processors or source_type in self._processor_classes
 
     def set_fallback_processor(self, processor: IIngestionProcessor) -> None:
         """

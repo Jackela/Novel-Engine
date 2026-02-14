@@ -14,6 +14,8 @@ from fastapi.testclient import TestClient
 from src.api.app import create_app
 from src.api.services.paths import get_characters_directory_path
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.mark.integration
 def test_character_detail_endpoint_returns_shape():

@@ -29,6 +29,8 @@ import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import ASGITransport
 
+pytestmark = pytest.mark.integration
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.api.main_api_server import create_app

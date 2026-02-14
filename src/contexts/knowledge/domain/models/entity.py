@@ -433,11 +433,6 @@ class ExtractionResultWithRelationships(ExtractionResult):
                     rel.source.lower(),
                     rel.relationship_type,
                 )
-                symmetric_key = (
-                    rel.source.lower(),
-                    rel.target.lower(),
-                    rel.relationship_type,
-                )
 
                 # For symmetric types, check both directions
                 # For non-symmetric with bidirectional=True, check for inverse type

@@ -13,25 +13,23 @@ Warzone 4: AI Brain - BRAIN-006
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, TYPE_CHECKING
-from difflib import SequenceMatcher
 import hashlib
+from dataclasses import dataclass, field
+from datetime import datetime
+from difflib import SequenceMatcher
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from ...application.ports.i_embedding_service import IEmbeddingService, EmbeddingError
+from ...application.ports.i_embedding_service import EmbeddingError, IEmbeddingService
 from ...application.ports.i_vector_store import (
     IVectorStore,
-    QueryResult,
     VectorStoreError,
 )
 from ...domain.models.source_type import SourceType
 from ..services.knowledge_ingestion_service import RetrievedChunk
 
 if TYPE_CHECKING:
-    from .citation_formatter import CitationFormatter, SourceReference
     from .rerank_service import RerankService
 
 
@@ -81,16 +79,12 @@ class RetrievalFilter:
 
         if self.source_types:
             # ChromaDB supports $in for OR queries
-            where["source_type"] = {
-                "$in": [st.value for st in self.source_types]
-            }
+            where["source_type"] = {"$in": [st.value for st in self.source_types]}
 
         if self.tags:
             # For tags, we need to check if any tag matches
             # This is stored as a list in metadata
-            where["tags"] = {
-                "$in": self.tags
-            }
+            where["tags"] = {"$in": self.tags}
 
         if self.custom_metadata:
             where.update(self.custom_metadata)
@@ -326,7 +320,9 @@ class RetrievalService:
         # Step 3: Determine candidate and final k for reranking
         # If reranking is enabled and available, retrieve more candidates
         final_k = retrieval_options.final_k or k
-        candidate_k = retrieval_options.candidate_k or (final_k * 2 if retrieval_options.enable_rerank else k)
+        candidate_k = retrieval_options.candidate_k or (
+            final_k * 2 if retrieval_options.enable_rerank else k
+        )
 
         logger.debug(
             "retrieval_k_calculation",
@@ -378,7 +374,11 @@ class RetrievalService:
 
             chunk = RetrievedChunk(
                 chunk_id=qr.id,
-                source_id=qr.metadata.get("source_id", "unknown") if qr.metadata else "unknown",
+                source_id=(
+                    qr.metadata.get("source_id", "unknown")
+                    if qr.metadata
+                    else "unknown"
+                ),
                 source_type=SourceType(
                     qr.metadata.get("source_type", "LORE") if qr.metadata else "LORE"
                 ),
@@ -526,7 +526,9 @@ class RetrievalService:
 
             # Check token budget
             if char_budget is not None:
-                current_length = sum(len(s) for s in sections) + len(section_with_newline)
+                current_length = sum(len(s) for s in sections) + len(
+                    section_with_newline
+                )
                 if current_length > char_budget:
                     # Would exceed budget, stop here
                     logger.debug(
@@ -633,14 +635,18 @@ class RetrievalService:
         # Group chunks by source
         from collections import defaultdict
 
-        source_groups: dict[tuple[SourceType, str], list[RetrievedChunk]] = defaultdict(list)
+        source_groups: dict[tuple[SourceType, str], list[RetrievedChunk]] = defaultdict(
+            list
+        )
         for chunk in chunks:
             key = (chunk.source_type, chunk.source_id)
             source_groups[key].append(chunk)
 
         # Build source list
         sources: list[dict[str, Any]] = []
-        for idx, ((source_type, source_id), group_chunks) in enumerate(source_groups.items(), 1):
+        for idx, ((source_type, source_id), group_chunks) in enumerate(
+            source_groups.items(), 1
+        ):
             avg_score = sum(c.score for c in group_chunks) / len(group_chunks)
 
             # Get display name
@@ -655,14 +661,16 @@ class RetrievalService:
             prefix = self._get_source_type_prefix(source_type)
             citation_id = f"{prefix}{idx}"
 
-            sources.append({
-                "source_type": source_type.value,
-                "source_id": source_id,
-                "display_name": display_name,
-                "chunk_count": len(group_chunks),
-                "relevance_score": round(avg_score, 3),
-                "citation_id": citation_id,
-            })
+            sources.append(
+                {
+                    "source_type": source_type.value,
+                    "source_id": source_id,
+                    "display_name": display_name,
+                    "chunk_count": len(group_chunks),
+                    "relevance_score": round(avg_score, 3),
+                    "citation_id": citation_id,
+                }
+            )
 
         # Sort by relevance score
         sources.sort(key=lambda s: s["relevance_score"], reverse=True)
@@ -703,9 +711,6 @@ class RetrievalService:
         source_type = chunk.source_type.value
         chunk_index = chunk.metadata.get("chunk_index", "?")
         total_chunks = chunk.metadata.get("total_chunks", "?")
-
-        # Get source type prefix for citation
-        prefix = self._get_source_type_prefix(chunk.source_type)
 
         header = f"[{index}] {source_type}:{chunk.source_id} (part {chunk_index}/{total_chunks})"
 

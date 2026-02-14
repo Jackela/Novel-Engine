@@ -119,7 +119,9 @@ class RetryConfigHelper:
     """Helper for calculating retry behavior from RetryConfig."""
 
     @staticmethod
-    def calculate_delay(config: RetryConfig, attempt: int, reason: RetryReason) -> float:
+    def calculate_delay(
+        config: RetryConfig, attempt: int, reason: RetryReason
+    ) -> float:
         """Calculate delay for retry attempt using exponential backoff with jitter."""
         if config.reason_specific_delays:
             base_delay = config.reason_specific_delays.get(

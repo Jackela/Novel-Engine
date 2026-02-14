@@ -29,6 +29,9 @@ from unittest.mock import Mock, patch
 import pytest
 
 # Import system components
+
+pytestmark = pytest.mark.unit
+
 try:
     from src.agents.director_agent_integrated import DirectorAgent
     from src.agents.persona_agent.agent import PersonaAgent
@@ -1016,6 +1019,3 @@ class TestIronLawsEdgeCases:
 if __name__ == "__main__":
     # Run the test suite
     pytest.main([__file__, "-v"])
-
-
-

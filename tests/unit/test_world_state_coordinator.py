@@ -4,6 +4,8 @@ import pytest
 
 from src.core.world_state_coordinator import WorldStateCoordinator
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.unit
 def test_world_state_defaults_and_feedback_generation(tmp_path):
@@ -30,7 +32,9 @@ def test_world_state_defaults_and_feedback_generation(tmp_path):
 @pytest.mark.unit
 def test_missing_world_state_file_creates_default(tmp_path):
     state_path = tmp_path / "world_state.json"
-    _unused_coordinator = WorldStateCoordinator(str(state_path))  # noqa: F841 - side effect creates file
+    _unused_coordinator = WorldStateCoordinator(
+        str(state_path)
+    )  # noqa: F841 - side effect creates file
 
     assert state_path.exists()
     saved = json.loads(state_path.read_text(encoding="utf-8"))

@@ -11,7 +11,13 @@
  * - Beat summary statistics
  */
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { PacingGraph } from './PacingGraph';
 
 interface ChapterDashboardProps {
@@ -52,12 +58,8 @@ export function ChapterDashboard({
     <div className={cn('space-y-6', className)}>
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold">
-          {chapterTitle || 'Chapter Dashboard'}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Director Mode - Pacing Analysis
-        </p>
+        <h2 className="text-xl font-semibold">{chapterTitle || 'Chapter Dashboard'}</h2>
+        <p className="text-sm text-muted-foreground">Director Mode - Pacing Analysis</p>
       </div>
 
       {/* Pacing Graph Card */}
@@ -65,8 +67,8 @@ export function ChapterDashboard({
         <CardHeader>
           <CardTitle className="text-lg">Pacing Overview</CardTitle>
           <CardDescription>
-            Visualize tension and energy flow across scenes in this chapter.
-            Hover over points to see scene details.
+            Visualize tension and energy flow across scenes in this chapter. Hover over
+            points to see scene details.
           </CardDescription>
         </CardHeader>
         <CardContent>

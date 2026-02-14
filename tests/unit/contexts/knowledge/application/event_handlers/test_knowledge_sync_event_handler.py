@@ -28,6 +28,8 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.unit
 class TestIngestionTask:
@@ -221,11 +223,13 @@ class TestKnowledgeSyncEventHandler:
     def mock_ingestion_service(self) -> Mock:
         """Create a mock ingestion service."""
         service = Mock()
-        service.ingest = AsyncMock(return_value=IngestionResult(
-            success=True,
-            source_id="char_001",
-            chunk_count=1,
-        ))
+        service.ingest = AsyncMock(
+            return_value=IngestionResult(
+                success=True,
+                source_id="char_001",
+                chunk_count=1,
+            )
+        )
         return service
 
     @pytest.fixture
@@ -238,7 +242,9 @@ class TestKnowledgeSyncEventHandler:
         )
 
     @pytest.mark.asyncio
-    async def test_handler_initialization(self, handler: KnowledgeSyncEventHandler) -> None:
+    async def test_handler_initialization(
+        self, handler: KnowledgeSyncEventHandler
+    ) -> None:
         """Test handler initializes correctly."""
         assert handler._max_queue_size == 10
         assert handler._max_retries == 2

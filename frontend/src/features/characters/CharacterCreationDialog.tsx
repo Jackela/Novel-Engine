@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -114,6 +115,11 @@ export default function CharacterCreationDialog({
           <DialogTitle>
             {isEdit ? 'Edit Character' : 'Create New Character'}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {isEdit
+              ? 'Update the character profile fields.'
+              : 'Fill out the form to create a new character.'}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

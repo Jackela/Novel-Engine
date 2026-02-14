@@ -190,8 +190,7 @@ class SecurityEventMonitor:
     async def initialize(self):
         """Initialize the security event database"""
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS security_events (
                     event_id TEXT PRIMARY KEY,
                     event_type TEXT NOT NULL,
@@ -203,20 +202,15 @@ class SecurityEventMonitor:
                     timestamp TEXT NOT NULL,
                     metadata TEXT
                 )
-            """
-            )
-            await db.execute(
-                """
+            """)
+            await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_events_timestamp 
                 ON security_events(timestamp)
-            """
-            )
-            await db.execute(
-                """
+            """)
+            await db.execute("""
                 CREATE INDEX IF NOT EXISTS idx_events_severity 
                 ON security_events(severity)
-            """
-            )
+            """)
             await db.commit()
 
     async def log_event(self, event: SecurityEvent):

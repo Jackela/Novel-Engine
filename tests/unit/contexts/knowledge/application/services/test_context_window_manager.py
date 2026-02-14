@@ -6,32 +6,35 @@ OPT-009: Context Window Manager tests
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from src.contexts.knowledge.application.services.context_window_manager import (
-    ContextWindowManager,
-    ContextWindowConfig,
-    ManagedContext,
-    ChatMessage,
-    PruningStrategy,
-    create_context_window_manager,
-    DEFAULT_CONTEXT_WINDOWS,
-)
-from src.contexts.knowledge.application.services.token_counter import (
-    TokenCounter,
-    TokenCountResult,
-    LLMProvider,
-)
+import pytest
+
 from src.contexts.knowledge.application.services.context_optimizer import (
     ContextOptimizer,
     OptimizationResult,
     PackingStrategy,
 )
+from src.contexts.knowledge.application.services.context_window_manager import (
+    DEFAULT_CONTEXT_WINDOWS,
+    ChatMessage,
+    ContextWindowConfig,
+    ContextWindowManager,
+    ManagedContext,
+    PruningStrategy,
+    create_context_window_manager,
+)
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
     RetrievedChunk,
     SourceType,
 )
+from src.contexts.knowledge.application.services.token_counter import (
+    LLMProvider,
+    TokenCounter,
+    TokenCountResult,
+)
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -105,9 +108,14 @@ def sample_chunks():
 def sample_history():
     """Create sample chat history for testing."""
     return [
-        ChatMessage(role="user", content=f"This is message {i} from the user. " * 5)
-        if i % 2 == 0
-        else ChatMessage(role="assistant", content=f"This is message {i} from the assistant. " * 5)
+        (
+            ChatMessage(role="user", content=f"This is message {i} from the user. " * 5)
+            if i % 2 == 0
+            else ChatMessage(
+                role="assistant",
+                content=f"This is message {i} from the assistant. " * 5,
+            )
+        )
         for i in range(10)
     ]
 
@@ -145,7 +153,9 @@ class TestContextWindowManager:
         assert manager._config.reserve_for_response == 500
 
     @pytest.mark.asyncio
-    async def test_manage_context_basic(self, mock_token_counter, mock_context_optimizer, sample_chunks, sample_history):
+    async def test_manage_context_basic(
+        self, mock_token_counter, mock_context_optimizer, sample_chunks, sample_history
+    ):
         """Test basic context management."""
         manager = ContextWindowManager(
             token_counter=mock_token_counter,
@@ -168,7 +178,9 @@ class TestContextWindowManager:
         assert result.total_tokens > 0
 
     @pytest.mark.asyncio
-    async def test_manage_context_empty_inputs(self, mock_token_counter, mock_context_optimizer):
+    async def test_manage_context_empty_inputs(
+        self, mock_token_counter, mock_context_optimizer
+    ):
         """Test context management with empty inputs."""
         manager = ContextWindowManager(
             token_counter=mock_token_counter,
@@ -188,7 +200,9 @@ class TestContextWindowManager:
         assert result.fits_window
 
     @pytest.mark.asyncio
-    async def test_pruning_oldest_first(self, mock_token_counter, mock_context_optimizer):
+    async def test_pruning_oldest_first(
+        self, mock_token_counter, mock_context_optimizer
+    ):
         """Test that oldest messages are pruned first."""
         config = ContextWindowConfig(
             model_context_window=1000,  # Small window to force pruning
@@ -222,7 +236,9 @@ class TestContextWindowManager:
         assert len(result.chat_history) < len(large_history)
 
     @pytest.mark.asyncio
-    async def test_system_prompt_preserved(self, mock_token_counter, mock_context_optimizer):
+    async def test_system_prompt_preserved(
+        self, mock_token_counter, mock_context_optimizer
+    ):
         """Test that system prompt is always preserved."""
         manager = ContextWindowManager(
             token_counter=mock_token_counter,
@@ -241,7 +257,9 @@ class TestContextWindowManager:
         assert result.system_prompt == system_prompt
 
     @pytest.mark.asyncio
-    async def test_rag_chunks_optimized(self, mock_token_counter, mock_context_optimizer, sample_chunks):
+    async def test_rag_chunks_optimized(
+        self, mock_token_counter, mock_context_optimizer, sample_chunks
+    ):
         """Test that RAG chunks are optimized when enabled."""
         config = ContextWindowConfig(
             enable_rag_optimization=True,
@@ -265,7 +283,9 @@ class TestContextWindowManager:
         assert len(result.rag_chunks) <= len(sample_chunks)
 
     @pytest.mark.asyncio
-    async def test_rag_chunks_not_optimized_when_disabled(self, mock_token_counter, sample_chunks):
+    async def test_rag_chunks_not_optimized_when_disabled(
+        self, mock_token_counter, sample_chunks
+    ):
         """Test that RAG chunks are not optimized when disabled."""
         config = ContextWindowConfig(
             enable_rag_optimization=False,
@@ -287,7 +307,9 @@ class TestContextWindowManager:
         assert len(result.rag_chunks) <= len(sample_chunks)
 
     @pytest.mark.asyncio
-    async def test_priority_order_preserved(self, mock_token_counter, mock_context_optimizer):
+    async def test_priority_order_preserved(
+        self, mock_token_counter, mock_context_optimizer
+    ):
         """Test priority: System > RAG > Recent History."""
         config = ContextWindowConfig(
             model_context_window=500,  # Very small window
@@ -312,10 +334,7 @@ class TestContextWindowManager:
             for i in range(10)
         ]
 
-        large_history = [
-            ChatMessage(role="user", content="y" * 50)
-            for i in range(20)
-        ]
+        large_history = [ChatMessage(role="user", content="y" * 50) for i in range(20)]
 
         result = await manager.manage_context(
             system_prompt="System prompt here.",
@@ -330,7 +349,9 @@ class TestContextWindowManager:
         assert result.fits_window or result.total_tokens <= config.model_context_window
 
     @pytest.mark.asyncio
-    async def test_system_prompt_too_large_raises(self, mock_token_counter, mock_context_optimizer):
+    async def test_system_prompt_too_large_raises(
+        self, mock_token_counter, mock_context_optimizer
+    ):
         """Test that ValueError is raised if system prompt exceeds window."""
         config = ContextWindowConfig(
             model_context_window=100,
@@ -345,7 +366,9 @@ class TestContextWindowManager:
         # System prompt that exceeds window
         large_prompt = "x" * 1000
 
-        with pytest.raises(ValueError, match="System prompt.*exceeds model context window"):
+        with pytest.raises(
+            ValueError, match="System prompt.*exceeds model context window"
+        ):
             await manager.manage_context(
                 system_prompt=large_prompt,
                 rag_chunks=[],

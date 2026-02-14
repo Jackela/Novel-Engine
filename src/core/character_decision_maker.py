@@ -500,4 +500,3 @@ class DecisionMaker:
             return ActionPriority.MEDIUM
         else:
             return ActionPriority.LOW
-

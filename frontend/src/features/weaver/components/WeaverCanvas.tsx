@@ -2,7 +2,14 @@
  * WeaverCanvas - Main React Flow canvas for story weaving
  */
 import { useMemo } from 'react';
-import { ReactFlow, Background, Controls, MiniMap, type Node, type Edge } from '@xyflow/react';
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  type Node,
+  type Edge,
+} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { nodeTypes, type CharacterNodeData } from './nodes';
@@ -102,8 +109,12 @@ function applyPlotlineFilterToEdges(
     const sourceNode = nodes.find((n) => n.id === edge.source);
     const targetNode = nodes.find((n) => n.id === edge.target);
 
-    const sourceMatches = sourceNode ? sceneMatchesPlotline(sourceNode, filteredPlotlineId) : true;
-    const targetMatches = targetNode ? sceneMatchesPlotline(targetNode, filteredPlotlineId) : true;
+    const sourceMatches = sourceNode
+      ? sceneMatchesPlotline(sourceNode, filteredPlotlineId)
+      : true;
+    const targetMatches = targetNode
+      ? sceneMatchesPlotline(targetNode, filteredPlotlineId)
+      : true;
 
     // Dim the edge if either endpoint doesn't match the filter
     const shouldDim = !sourceMatches || !targetMatches;
@@ -128,7 +139,10 @@ export function WeaverCanvas() {
 
   // Fetch foreshadowings for visual connections (DIR-053)
   const { data: foreshadowingsData } = useForeshadowings();
-  const foreshadowings = foreshadowingsData?.foreshadowings || [];
+  const foreshadowings = useMemo(
+    () => foreshadowingsData?.foreshadowings ?? [],
+    [foreshadowingsData?.foreshadowings]
+  );
 
   // Apply plotline filtering to nodes and edges
   const filteredNodes = useMemo(

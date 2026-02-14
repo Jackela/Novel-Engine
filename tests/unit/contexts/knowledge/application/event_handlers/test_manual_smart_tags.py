@@ -7,25 +7,27 @@ Tests that manual tags persist and are not overridden by auto-tagging.
 
 import pytest
 
-from src.contexts.world.domain.entities.lore_entry import LoreEntry, LoreCategory
-from src.contexts.narrative.domain.entities.scene import Scene, StoryPhase
 from src.contexts.character.domain.aggregates.character import Character
 from src.contexts.character.domain.value_objects.character_id import CharacterID
 from src.contexts.character.domain.value_objects.character_profile import (
-    CharacterProfile,
-    Gender,
-    CharacterRace,
-    CharacterClass,
-    PhysicalTraits,
-    PersonalityTraits,
     Background,
+    CharacterClass,
+    CharacterProfile,
+    CharacterRace,
+    Gender,
+    PersonalityTraits,
+    PhysicalTraits,
 )
 from src.contexts.character.domain.value_objects.character_stats import (
     CharacterStats,
+    CombatStats,
     CoreAbilities,
     VitalStats,
-    CombatStats,
 )
+from src.contexts.narrative.domain.entities.scene import Scene, StoryPhase
+from src.contexts.world.domain.entities.lore_entry import LoreCategory, LoreEntry
+
+pytestmark = pytest.mark.unit
 
 
 class TestLoreEntryManualSmartTags:
@@ -59,7 +61,10 @@ class TestLoreEntryManualSmartTags:
         result = entry.remove_manual_smart_tag("genre", "epic")
 
         assert result is True
-        assert entry.get_manual_smart_tags_for_category("genre") == ["fantasy", "adventure"]
+        assert entry.get_manual_smart_tags_for_category("genre") == [
+            "fantasy",
+            "adventure",
+        ]
 
     def test_remove_nonexistent_manual_tag(self):
         """Test removing a tag that doesn't exist."""
@@ -138,7 +143,9 @@ class TestLoreEntryManualSmartTags:
 
         entry.set_manual_smart_tags("genre", ["  Fantasy  ", "EPIC", "adventure "])
 
-        assert entry.get_manual_smart_tags() == {"genre": ["fantasy", "epic", "adventure"]}
+        assert entry.get_manual_smart_tags() == {
+            "genre": ["fantasy", "epic", "adventure"]
+        }
 
 
 class TestSceneManualSmartTags:

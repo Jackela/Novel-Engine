@@ -34,11 +34,13 @@ export const PartialCombatStatsSchema = z.object({
  */
 export const StructuredCharacterDataSchema = z.object({
   combat_stats: PartialCombatStatsSchema.optional(),
-  equipment: z.object({
-    primary_weapon: z.string().optional(),
-    armor: z.string().optional(),
-    special_gear: z.array(z.string()).optional(),
-  }).optional(),
+  equipment: z
+    .object({
+      primary_weapon: z.string().optional(),
+      armor: z.string().optional(),
+      special_gear: z.array(z.string()).optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -642,11 +644,11 @@ export const ChapterListResponseSchema = z.object({
  * Classifications for narrative structure phases.
  */
 export const StoryPhaseEnum = z.enum([
-  'setup',              // Introduction, status quo
-  'inciting_incident',  // Event that launches the plot
-  'rising_action',      // Building tension and complications
-  'climax',             // Peak of dramatic tension
-  'resolution',         // Aftermath and new status quo
+  'setup', // Introduction, status quo
+  'inciting_incident', // Event that launches the plot
+  'rising_action', // Building tension and complications
+  'climax', // Peak of dramatic tension
+  'resolution', // Aftermath and new status quo
 ]);
 
 /**
@@ -998,9 +1000,9 @@ export type ConflictUpdateRequest = z.infer<typeof ConflictUpdateRequestSchema>;
  * Tracks the lifecycle state of a narrative thread.
  */
 export const PlotlineStatusEnum = z.enum([
-  'active',     // Currently unfolding in the story
-  'resolved',   // Concluded and tied up
-  'abandoned',  // Dropped or no longer relevant
+  'active', // Currently unfolding in the story
+  'resolved', // Concluded and tied up
+  'abandoned', // Dropped or no longer relevant
 ]);
 
 /**
@@ -1033,7 +1035,9 @@ export const PlotlineListResponseSchema = z.object({
  */
 export const PlotlineCreateRequestSchema = z.object({
   name: z.string().min(1).max(200),
-  color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/, 'Color must be a valid hex code (e.g., #ff5733)'),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{3,8}$/, 'Color must be a valid hex code (e.g., #ff5733)'),
   description: z.string().max(2000).default(''),
   status: PlotlineStatusEnum.default('active'),
 });
@@ -1043,7 +1047,10 @@ export const PlotlineCreateRequestSchema = z.object({
  */
 export const PlotlineUpdateRequestSchema = z.object({
   name: z.string().min(1).max(200).optional(),
-  color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/, 'Color must be a valid hex code').optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{3,8}$/, 'Color must be a valid hex code')
+    .optional(),
   description: z.string().max(2000).optional(),
   status: PlotlineStatusEnum.optional(),
 });
@@ -1089,8 +1096,12 @@ export type PlotlineResponse = z.infer<typeof PlotlineResponseSchema>;
 export type PlotlineListResponse = z.infer<typeof PlotlineListResponseSchema>;
 export type PlotlineCreateRequest = z.infer<typeof PlotlineCreateRequestSchema>;
 export type PlotlineUpdateRequest = z.infer<typeof PlotlineUpdateRequestSchema>;
-export type LinkSceneToPlotlineRequest = z.infer<typeof LinkSceneToPlotlineRequestSchema>;
-export type UnlinkSceneFromPlotlineRequest = z.infer<typeof UnlinkSceneFromPlotlineRequestSchema>;
+export type LinkSceneToPlotlineRequest = z.infer<
+  typeof LinkSceneToPlotlineRequestSchema
+>;
+export type UnlinkSceneFromPlotlineRequest = z.infer<
+  typeof UnlinkSceneFromPlotlineRequestSchema
+>;
 export type SetScenePlotlinesRequest = z.infer<typeof SetScenePlotlinesRequestSchema>;
 export type ScenePlotlinesResponse = z.infer<typeof ScenePlotlinesResponseSchema>;
 
@@ -1101,9 +1112,9 @@ export type ScenePlotlinesResponse = z.infer<typeof ScenePlotlinesResponseSchema
  * Tracks the progression from setup to payoff.
  */
 export const ForeshadowingStatusEnum = z.enum([
-  'planted',    // Setup has been introduced
-  'paid_off',   // Payoff has been delivered
-  'abandoned',  // Setup was dropped without payoff
+  'planted', // Setup has been introduced
+  'paid_off', // Payoff has been delivered
+  'abandoned', // Setup was dropped without payoff
 ]);
 
 /**
@@ -1161,8 +1172,12 @@ export const LinkPayoffRequestSchema = z.object({
 export type ForeshadowingStatus = z.infer<typeof ForeshadowingStatusEnum>;
 export type ForeshadowingResponse = z.infer<typeof ForeshadowingResponseSchema>;
 export type ForeshadowingListResponse = z.infer<typeof ForeshadowingListResponseSchema>;
-export type ForeshadowingCreateRequest = z.infer<typeof ForeshadowingCreateRequestSchema>;
-export type ForeshadowingUpdateRequest = z.infer<typeof ForeshadowingUpdateRequestSchema>;
+export type ForeshadowingCreateRequest = z.infer<
+  typeof ForeshadowingCreateRequestSchema
+>;
+export type ForeshadowingUpdateRequest = z.infer<
+  typeof ForeshadowingUpdateRequestSchema
+>;
 export type LinkPayoffRequest = z.infer<typeof LinkPayoffRequestSchema>;
 
 // ============ Chapter Analysis Schemas (DIR-055/DIR-056) ============
@@ -1187,11 +1202,11 @@ export const HealthScoreEnum = z.enum([
  * Warning category enum for structural issues.
  */
 export const WarningCategoryEnum = z.enum([
-  'pacing',     // Tension/energy issues
-  'structure',  // Phase distribution issues
-  'conflict',   // Missing or unresolved conflicts
-  'balance',    // Word count and beat count issues
-  'arc',        // Tension arc shape issues
+  'pacing', // Tension/energy issues
+  'structure', // Phase distribution issues
+  'conflict', // Missing or unresolved conflicts
+  'balance', // Word count and beat count issues
+  'arc', // Tension arc shape issues
 ]);
 
 /**
@@ -1890,10 +1905,12 @@ const PromptConfigChangeSchema = z.object({
 const PromptMetadataChangeSchema = z.object({
   name: z.object({ old: z.string(), new: z.string() }).optional(),
   description: z.object({ old: z.string(), new: z.string() }).optional(),
-  tags: z.object({
-    added: z.array(z.string()),
-    removed: z.array(z.string()),
-  }).optional(),
+  tags: z
+    .object({
+      added: z.array(z.string()),
+      removed: z.array(z.string()),
+    })
+    .optional(),
 });
 
 // Version info schema

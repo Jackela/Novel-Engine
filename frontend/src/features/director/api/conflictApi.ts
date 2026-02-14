@@ -41,8 +41,13 @@ async function listConflicts(sceneId: string): Promise<ConflictListResponse> {
 /**
  * Get a single conflict by ID.
  */
-async function getConflict(sceneId: string, conflictId: string): Promise<ConflictResponse> {
-  const data = await api.get<unknown>(`/structure/scenes/${sceneId}/conflicts/${conflictId}`);
+async function getConflict(
+  sceneId: string,
+  conflictId: string
+): Promise<ConflictResponse> {
+  const data = await api.get<unknown>(
+    `/structure/scenes/${sceneId}/conflicts/${conflictId}`
+  );
   return ConflictResponseSchema.parse(data);
 }
 
@@ -54,7 +59,10 @@ async function createConflict(
   input: ConflictCreateRequest
 ): Promise<ConflictResponse> {
   const payload = ConflictCreateRequestSchema.parse(input);
-  const data = await api.post<unknown>(`/structure/scenes/${sceneId}/conflicts`, payload);
+  const data = await api.post<unknown>(
+    `/structure/scenes/${sceneId}/conflicts`,
+    payload
+  );
   return ConflictResponseSchema.parse(data);
 }
 
@@ -96,7 +104,10 @@ export function useConflicts(sceneId: string | undefined) {
 /**
  * Hook to fetch a single conflict.
  */
-export function useConflict(sceneId: string | undefined, conflictId: string | undefined) {
+export function useConflict(
+  sceneId: string | undefined,
+  conflictId: string | undefined
+) {
   return useQuery({
     queryKey: conflictKeys.detail(sceneId ?? '', conflictId ?? ''),
     queryFn: () => getConflict(sceneId!, conflictId!),
@@ -113,8 +124,13 @@ export function useCreateConflict() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ sceneId, input }: { sceneId: string; input: ConflictCreateRequest }) =>
-      createConflict(sceneId, input),
+    mutationFn: ({
+      sceneId,
+      input,
+    }: {
+      sceneId: string;
+      input: ConflictCreateRequest;
+    }) => createConflict(sceneId, input),
     onSuccess: (data) => {
       // Invalidate conflicts list for the scene
       queryClient.invalidateQueries({ queryKey: conflictKeys.list(data.scene_id) });

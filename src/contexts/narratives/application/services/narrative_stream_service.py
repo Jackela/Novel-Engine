@@ -5,6 +5,7 @@ Provides streaming narrative generation with SSE support.
 Follows the Hexagonal Architecture pattern - pure business logic,
 no framework dependencies.
 """
+
 from __future__ import annotations
 
 import os
@@ -46,7 +47,9 @@ class NarrativeStreamResult:
 class NarrativeGeneratorPort(Protocol):
     """Port for narrative generation adapters."""
 
-    def generate_stream(self, request: NarrativeStreamInput) -> Iterator[NarrativeChunk]:
+    def generate_stream(
+        self, request: NarrativeStreamInput
+    ) -> Iterator[NarrativeChunk]:
         """
         Generate narrative content as a stream of chunks.
 
@@ -125,7 +128,9 @@ class DeterministicNarrativeGenerator:
         ),
     ]
 
-    def generate_stream(self, request: NarrativeStreamInput) -> Iterator[NarrativeChunk]:
+    def generate_stream(
+        self, request: NarrativeStreamInput
+    ) -> Iterator[NarrativeChunk]:
         """
         Generate narrative chunks from deterministic templates.
 
@@ -162,19 +167,21 @@ class DeterministicNarrativeGenerator:
                     "Tension crackled in the air as adversaries faced one another. "
                 )
             else:
-                chunks.append(
-                    "The story unfolded in ways none could have predicted. "
-                )
+                chunks.append("The story unfolded in ways none could have predicted. ")
 
         # Apply tone modifier
         if request.tone:
             tone_lower = request.tone.lower()
             if tone_lower == "dark":
-                chunks.append("Darkness gathered at the edges, a reminder of what was at stake.")
+                chunks.append(
+                    "Darkness gathered at the edges, a reminder of what was at stake."
+                )
             elif tone_lower == "hopeful":
                 chunks.append("Yet hope persisted, a fragile flame against the night.")
             elif tone_lower == "mysterious":
-                chunks.append("Questions multiplied, each answer spawning a dozen more.")
+                chunks.append(
+                    "Questions multiplied, each answer spawning a dozen more."
+                )
 
         # Yield chunks with sequence numbers
         for seq, chunk in enumerate(chunks):

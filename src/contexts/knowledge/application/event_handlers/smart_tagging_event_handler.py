@@ -14,19 +14,17 @@ Warzone 4: AI Brain - BRAIN-038-03
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import structlog
 
 from ..services.smart_tagging_service import (
-    GeneratedTag,
     SmartTaggingService,
-    TagCategory,
     TaggingResult,
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    pass
 
 
 logger = structlog.get_logger()
@@ -356,7 +354,9 @@ class SmartTaggingEventHandler:
         for category in all_categories:
             gen = set(generated_tags.get(category, []))
             exi = set(existing_tags.get(category, []))
-            manual = set(manual_only_tags.get(category, [])) if manual_only_tags else set()
+            manual = (
+                set(manual_only_tags.get(category, [])) if manual_only_tags else set()
+            )
 
             # Union of all sets: generated + existing + manual-only
             # Manual-only tags are always preserved even if not in generated

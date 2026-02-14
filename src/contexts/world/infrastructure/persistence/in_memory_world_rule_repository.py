@@ -133,11 +133,7 @@ class InMemoryWorldRuleRepository(IWorldRuleRepository):
         """
         category_lower = category.lower().strip()
         rule_ids = self._category_index.get(category_lower, set())
-        rules = [
-            self._rules[rule_id]
-            for rule_id in rule_ids
-            if rule_id in self._rules
-        ]
+        rules = [self._rules[rule_id] for rule_id in rule_ids if rule_id in self._rules]
         # Sort by severity descending, then by name
         rules.sort(key=lambda r: (-r.severity, r.name.lower()))
         return rules[offset : offset + limit]

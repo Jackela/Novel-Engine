@@ -38,11 +38,31 @@ interface SmartTagsEditorProps {
 }
 
 const TAG_CATEGORIES = [
-  { value: 'genre', label: 'Genre', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { value: 'mood', label: 'Mood', color: 'bg-purple-100 text-purple-800 border-purple-200' },
-  { value: 'themes', label: 'Themes', color: 'bg-green-100 text-green-800 border-green-200' },
-  { value: 'characters_present', label: 'Characters', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  { value: 'locations', label: 'Locations', color: 'bg-teal-100 text-teal-800 border-teal-200' },
+  {
+    value: 'genre',
+    label: 'Genre',
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+  },
+  {
+    value: 'mood',
+    label: 'Mood',
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+  },
+  {
+    value: 'themes',
+    label: 'Themes',
+    color: 'bg-green-100 text-green-800 border-green-200',
+  },
+  {
+    value: 'characters_present',
+    label: 'Characters',
+    color: 'bg-orange-100 text-orange-800 border-orange-200',
+  },
+  {
+    value: 'locations',
+    label: 'Locations',
+    color: 'bg-teal-100 text-teal-800 border-teal-200',
+  },
 ];
 
 export function SmartTagsEditor({
@@ -82,7 +102,9 @@ export function SmartTagsEditor({
 
   // Check if any mutation is pending
   const isMutating =
-    addTagMutation.isPending || removeTagMutation.isPending || clearCategoryMutation.isPending;
+    addTagMutation.isPending ||
+    removeTagMutation.isPending ||
+    clearCategoryMutation.isPending;
 
   function addManualTag(category: string, tag: string) {
     if (!tag.trim()) return;
@@ -91,7 +113,10 @@ export function SmartTagsEditor({
     const existingManual = smartTags?.manual_smart_tags[category] || [];
     const existingAuto = smartTags?.smart_tags[category] || [];
 
-    if (existingManual.includes(normalizedTag) || existingAuto.includes(normalizedTag)) {
+    if (
+      existingManual.includes(normalizedTag) ||
+      existingAuto.includes(normalizedTag)
+    ) {
       setNewTag('');
       return;
     }
@@ -108,7 +133,8 @@ export function SmartTagsEditor({
     clearCategoryMutation.mutate(category);
   }
 
-  const categoryInfo = TAG_CATEGORIES.find((c) => c.value === selectedCategory) ?? TAG_CATEGORIES[0]!;
+  const categoryInfo =
+    TAG_CATEGORIES.find((c) => c.value === selectedCategory) ?? TAG_CATEGORIES[0]!;
   const effectiveTags = smartTags?.effective_tags[selectedCategory] || [];
   const manualTags = smartTags?.manual_smart_tags[selectedCategory] || [];
   const autoTags = (smartTags?.smart_tags[selectedCategory] || []).filter(
@@ -130,7 +156,12 @@ export function SmartTagsEditor({
   // === Error State ===
   if (error) {
     return (
-      <div className={cn('rounded-lg border border-destructive/50 bg-destructive/10 p-4', className)}>
+      <div
+        className={cn(
+          'rounded-lg border border-destructive/50 bg-destructive/10 p-4',
+          className
+        )}
+      >
         <div className="flex items-center gap-2 text-destructive">
           <AlertCircle className="h-4 w-4" />
           <span className="text-sm">
@@ -146,7 +177,9 @@ export function SmartTagsEditor({
     return (
       <div className={cn('rounded-lg border border-dashed p-8 text-center', className)}>
         <TagIcon className="mx-auto h-8 w-8 text-muted-foreground/50" />
-        <p className="mt-2 text-sm text-muted-foreground">No smart tags data available</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          No smart tags data available
+        </p>
       </div>
     );
   }
@@ -161,7 +194,7 @@ export function SmartTagsEditor({
             key={cat.value}
             onClick={() => setSelectedCategory(cat.value)}
             className={cn(
-              'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+              'rounded-md px-4 py-2 text-sm font-medium transition-colors',
               selectedCategory === cat.value
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -211,11 +244,7 @@ export function SmartTagsEditor({
 
       {/* Tags display */}
       <ScrollArea className="h-64 rounded-md border">
-        <div
-          className="p-4 space-y-4"
-          id={`${selectedCategory}-panel`}
-          role="tabpanel"
-        >
+        <div className="space-y-4 p-4" id={`${selectedCategory}-panel`} role="tabpanel">
           {/* Manual tags section */}
           {manualTags.length > 0 && (
             <div className="space-y-2">
@@ -235,7 +264,7 @@ export function SmartTagsEditor({
                       type="button"
                       onClick={() => removeManualTag(selectedCategory, tag)}
                       disabled={removeTagMutation.isPending}
-                      className="ml-1 hover:bg-white/50 rounded-full p-0.5 disabled:opacity-50"
+                      className="ml-1 rounded-full p-0.5 hover:bg-white/50 disabled:opacity-50"
                       aria-label={`Remove tag ${tag}`}
                     >
                       {removeTagMutation.isPending &&
@@ -260,11 +289,7 @@ export function SmartTagsEditor({
               </div>
               <div className="flex flex-wrap gap-2">
                 {autoTags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="outline"
-                    className="px-3 py-1 opacity-70"
-                  >
+                  <Badge key={tag} variant="outline" className="px-3 py-1 opacity-70">
                     {tag}
                   </Badge>
                 ))}
@@ -274,8 +299,8 @@ export function SmartTagsEditor({
 
           {/* Empty state (no tags for this category) */}
           {effectiveTags.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
-              <TagIcon className="h-8 w-8 mx-auto mb-2 opacity-50" aria-hidden="true" />
+            <div className="py-8 text-center text-muted-foreground">
+              <TagIcon className="mx-auto mb-2 h-8 w-8 opacity-50" aria-hidden="true" />
               <p>No tags for {categoryInfo.label.toLowerCase()} yet.</p>
               <p className="text-sm">Add a manual tag above to get started.</p>
             </div>

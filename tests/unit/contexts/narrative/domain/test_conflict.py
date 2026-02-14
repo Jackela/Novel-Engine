@@ -10,10 +10,12 @@ import pytest
 
 from src.contexts.narrative.domain.entities.conflict import (
     Conflict,
-    ConflictType,
     ConflictStakes,
+    ConflictType,
     ResolutionStatus,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestConflictCreation:

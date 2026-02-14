@@ -12,7 +12,6 @@ from uuid import UUID
 
 from ...domain.services.causal_graph_service import CausalGraphService
 from ...domain.services.narrative_flow_service import NarrativeFlowService
-from ..ports.narrative_arc_repository_port import INarrativeArcRepository
 from ..command_handlers.narrative_arc_command_handlers import NarrativeArcCommandHandler
 from ..commands.narrative_arc_commands import (
     ActivateContextCommand,
@@ -32,6 +31,7 @@ from ..commands.narrative_arc_commands import (
     UpdateNarrativeArcCommand,
     UpdatePlotPointCommand,
 )
+from ..ports.narrative_arc_repository_port import INarrativeArcRepository
 from ..queries.narrative_arc_queries import (
     GetArcMetricsQuery,
     GetArcSummaryQuery,

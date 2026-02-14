@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, JsonValue, field_validator
 
-
 # === Orchestration Schemas (aligned with frontend/src/types/schemas.ts) ===
 
 
@@ -12,20 +11,33 @@ class OrchestrationStep(BaseModel):
 
     id: str = Field(..., description="Unique identifier for this step")
     name: str = Field(..., description="Human-readable name of the step")
-    status: str = Field(..., description="Current status: pending, running, completed, failed")
+    status: str = Field(
+        ..., description="Current status: pending, running, completed, failed"
+    )
     progress: float = Field(ge=0, le=100, description="Completion percentage (0-100)")
 
 
 class OrchestrationStatusData(BaseModel):
     """Orchestration status data structure."""
 
-    status: str = Field(..., description="Overall orchestration status: idle, running, paused, completed")
+    status: str = Field(
+        ...,
+        description="Overall orchestration status: idle, running, paused, completed",
+    )
     current_turn: int = Field(0, description="Current turn number being processed")
     total_turns: int = Field(0, description="Total number of turns to process")
-    queue_length: int = Field(0, description="Number of pending operations in the queue")
-    average_processing_time: float = Field(0.0, description="Average time per turn in seconds")
-    steps: List[OrchestrationStep] = Field(default_factory=list, description="Detailed step breakdown")
-    last_updated: Optional[str] = Field(None, description="ISO 8601 timestamp of last status update")
+    queue_length: int = Field(
+        0, description="Number of pending operations in the queue"
+    )
+    average_processing_time: float = Field(
+        0.0, description="Average time per turn in seconds"
+    )
+    steps: List[OrchestrationStep] = Field(
+        default_factory=list, description="Detailed step breakdown"
+    )
+    last_updated: Optional[str] = Field(
+        None, description="ISO 8601 timestamp of last status update"
+    )
 
 
 class OrchestrationStatusResponse(BaseModel):
@@ -43,13 +55,10 @@ class OrchestrationStartRequest(BaseModel):
         None,
         min_length=2,
         max_length=6,
-        description="List of character names to include (2-6 characters)"
+        description="List of character names to include (2-6 characters)",
     )
     total_turns: Optional[int] = Field(
-        3,
-        ge=1,
-        le=10,
-        description="Number of narrative turns to generate (1-10)"
+        3, ge=1, le=10, description="Number of narrative turns to generate (1-10)"
     )
     setting: Optional[str] = Field(None, description="World setting name or ID")
     scenario: Optional[str] = Field(None, description="Initial scenario description")
@@ -205,7 +214,9 @@ class DialogueGenerationRequest(BaseModel):
     authentic dialogue that sounds like the character would naturally speak.
     """
 
-    character_id: str = Field(..., description="ID of the character to generate dialogue for")
+    character_id: str = Field(
+        ..., description="ID of the character to generate dialogue for"
+    )
     context: str = Field(
         ...,
         min_length=1,
@@ -219,7 +230,8 @@ class DialogueGenerationRequest(BaseModel):
     )
     # Optional override fields for when character data isn't in the system
     psychology_override: Optional[CharacterPsychologySchema] = Field(
-        None, description="Optional psychology override if not using stored character data"
+        None,
+        description="Optional psychology override if not using stored character data",
     )
     traits_override: Optional[List[str]] = Field(
         None, description="Optional traits override"
@@ -264,9 +276,7 @@ class CharacterMemorySchema(BaseModel):
     content: str = Field(
         ..., min_length=1, description="The memory content (what happened)"
     )
-    importance: int = Field(
-        ..., ge=1, le=10, description="Importance score (1-10)"
-    )
+    importance: int = Field(..., ge=1, le=10, description="Importance score (1-10)")
     tags: List[str] = Field(
         default_factory=list, description="Categorization tags for retrieval"
     )
@@ -285,9 +295,7 @@ class CharacterMemoryCreateRequest(BaseModel):
     content: str = Field(
         ..., min_length=1, description="The memory content (what happened)"
     )
-    importance: int = Field(
-        ..., ge=1, le=10, description="Importance score (1-10)"
-    )
+    importance: int = Field(..., ge=1, le=10, description="Importance score (1-10)")
     tags: List[str] = Field(
         default_factory=list, description="Categorization tags for retrieval"
     )
@@ -299,9 +307,7 @@ class CharacterMemoryUpdateRequest(BaseModel):
     importance: Optional[int] = Field(
         None, ge=1, le=10, description="Updated importance score"
     )
-    tags: Optional[List[str]] = Field(
-        None, description="Updated tags"
-    )
+    tags: Optional[List[str]] = Field(None, description="Updated tags")
 
 
 class CharacterMemoriesResponse(BaseModel):
@@ -338,9 +344,7 @@ class CharacterGoalSchema(BaseModel):
     description: str = Field(
         ..., min_length=1, description="What the character wants to achieve"
     )
-    status: str = Field(
-        ..., description="Goal status: ACTIVE, COMPLETED, or FAILED"
-    )
+    status: str = Field(..., description="Goal status: ACTIVE, COMPLETED, or FAILED")
     urgency: str = Field(
         ..., description="Urgency level: LOW, MEDIUM, HIGH, or CRITICAL"
     )
@@ -517,12 +521,19 @@ class CharacterProfileGenerationRequest(BaseModel):
     appearance, backstory, etc. using LLM or mock generator.
     """
 
-    name: str = Field(..., min_length=1, max_length=100, description="Character's primary name")
+    name: str = Field(
+        ..., min_length=1, max_length=100, description="Character's primary name"
+    )
     archetype: str = Field(
-        ..., min_length=1, max_length=50, description="Character archetype (e.g., Hero, Villain, Mentor)"
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Character archetype (e.g., Hero, Villain, Mentor)",
     )
     context: Optional[str] = Field(
-        None, max_length=500, description="Additional context about the character's world or background"
+        None,
+        max_length=500,
+        description="Additional context about the character's world or background",
     )
 
 
@@ -893,7 +904,9 @@ class SceneResponse(BaseModel):
     status: str = Field(..., description="Workflow status")
     story_phase: str = Field(default="setup", description="Story structure phase")
     beat_count: int = Field(default=0, description="Number of beats")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Flexible metadata including smart tags")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Flexible metadata including smart tags"
+    )
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 last update timestamp")
 
@@ -915,7 +928,9 @@ class BeatCreateRequest(BaseModel):
     represents a single action, dialogue, or reaction moment.
     """
 
-    content: str = Field(default="", max_length=10000, description="Beat narrative text")
+    content: str = Field(
+        default="", max_length=10000, description="Beat narrative text"
+    )
     beat_type: str = Field(
         default="action",
         description="Beat type: 'action', 'dialogue', 'reaction', 'revelation', 'transition', 'description'",
@@ -1000,7 +1015,9 @@ class BeatSuggestion(BaseModel):
     beat_type: str = Field(..., description="Suggested beat type")
     content: str = Field(..., description="Suggested narrative text (1-3 sentences)")
     mood_shift: int = Field(default=0, ge=-5, le=5, description="Emotional impact")
-    rationale: Optional[str] = Field(None, description="AI's explanation for this suggestion")
+    rationale: Optional[str] = Field(
+        None, description="AI's explanation for this suggestion"
+    )
 
 
 class BeatSuggestionResponse(BaseModel):
@@ -1012,7 +1029,10 @@ class BeatSuggestionResponse(BaseModel):
 
     scene_id: str = Field(..., description="Scene UUID")
     suggestions: List[BeatSuggestion] = Field(
-        default_factory=list, min_length=0, max_length=3, description="3 suggested beats"
+        default_factory=list,
+        min_length=0,
+        max_length=3,
+        description="3 suggested beats",
     )
     error: Optional[str] = Field(None, description="Error message if generation failed")
 
@@ -1038,7 +1058,9 @@ class ScenePacingMetricsResponse(BaseModel):
 class PacingIssueResponse(BaseModel):
     """A detected pacing problem in the chapter."""
 
-    issue_type: str = Field(..., description="Category: monotonous_tension, tension_spike, etc.")
+    issue_type: str = Field(
+        ..., description="Category: monotonous_tension, tension_spike, etc."
+    )
     description: str = Field(..., description="Human-readable description")
     affected_scenes: List[str] = Field(..., description="Scene UUIDs involved")
     severity: str = Field(..., description="low, medium, or high")
@@ -1064,8 +1086,12 @@ class ChapterPacingResponse(BaseModel):
     )
     average_tension: float = Field(..., ge=0, le=10, description="Mean tension")
     average_energy: float = Field(..., ge=0, le=10, description="Mean energy")
-    tension_range: List[int] = Field(..., min_length=2, max_length=2, description="[min, max] tension")
-    energy_range: List[int] = Field(..., min_length=2, max_length=2, description="[min, max] energy")
+    tension_range: List[int] = Field(
+        ..., min_length=2, max_length=2, description="[min, max] tension"
+    )
+    energy_range: List[int] = Field(
+        ..., min_length=2, max_length=2, description="[min, max] energy"
+    )
 
 
 # === Conflict Schemas (DIR-045) ===
@@ -1106,9 +1132,7 @@ class ConflictUpdateRequest(BaseModel):
         default=None,
         description="Stakes level: 'low', 'medium', 'high', 'critical'",
     )
-    description: Optional[str] = Field(
-        default=None, min_length=1, max_length=2000
-    )
+    description: Optional[str] = Field(default=None, min_length=1, max_length=2000)
     resolution_status: Optional[str] = Field(
         default=None,
         description="Resolution status: 'unresolved', 'escalating', 'resolved'",
@@ -1146,8 +1170,14 @@ class PlotlineCreateRequest(BaseModel):
     """
 
     name: str = Field(..., min_length=1, max_length=200, description="Plotline name")
-    color: str = Field(..., pattern=r"^#[0-9a-fA-F]{3,6}$", description="Hex color code (e.g., #ff5733)")
-    description: str = Field(default="", max_length=2000, description="Plotline description")
+    color: str = Field(
+        ...,
+        pattern=r"^#[0-9a-fA-F]{3,6}$",
+        description="Hex color code (e.g., #ff5733)",
+    )
+    description: str = Field(
+        default="", max_length=2000, description="Plotline description"
+    )
     status: str = Field(
         default="active",
         description="Plotline status: 'active', 'resolved', 'abandoned'",
@@ -1174,7 +1204,9 @@ class PlotlineResponse(BaseModel):
     color: str = Field(..., description="Hex color code")
     description: str = Field(..., description="Plotline description")
     status: str = Field(..., description="Current status")
-    scene_count: int = Field(default=0, description="Number of scenes linked to this plotline")
+    scene_count: int = Field(
+        default=0, description="Number of scenes linked to this plotline"
+    )
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 last update timestamp")
 
@@ -1210,7 +1242,9 @@ class ScenePlotlinesResponse(BaseModel):
     """Response model for listing a scene's plotlines."""
 
     scene_id: str = Field(..., description="Scene UUID")
-    plotline_ids: List[str] = Field(default_factory=list, description="Associated plotline UUIDs")
+    plotline_ids: List[str] = Field(
+        default_factory=list, description="Associated plotline UUIDs"
+    )
 
 
 # ============ Foreshadowing Schemas (DIR-052) ============
@@ -1243,8 +1277,12 @@ class PhaseDistributionResponse(BaseModel):
     """Distribution of scenes across story phases."""
 
     setup: int = Field(..., description="Number of scenes in SETUP phase")
-    inciting_incident: int = Field(..., description="Number of scenes in INCITING_INCIDENT phase")
-    rising_action: int = Field(..., description="Number of scenes in RISING_ACTION phase")
+    inciting_incident: int = Field(
+        ..., description="Number of scenes in INCITING_INCIDENT phase"
+    )
+    rising_action: int = Field(
+        ..., description="Number of scenes in RISING_ACTION phase"
+    )
     climax: int = Field(..., description="Number of scenes in CLIMAX phase")
     resolution: int = Field(..., description="Number of scenes in RESOLUTION phase")
 
@@ -1264,9 +1302,15 @@ class HealthWarningResponse(BaseModel):
     category: str = Field(..., description="The type of issue")
     title: str = Field(..., description="Short, human-readable title")
     description: str = Field(..., description="Detailed explanation of the issue")
-    severity: str = Field(..., description="Issue severity (low, medium, high, critical)")
-    affected_scenes: List[str] = Field(default_factory=list, description="Scene UUIDs involved")
-    recommendation: str = Field(..., description="Actionable suggestion for fixing the issue")
+    severity: str = Field(
+        ..., description="Issue severity (low, medium, high, critical)"
+    )
+    affected_scenes: List[str] = Field(
+        default_factory=list, description="Scene UUIDs involved"
+    )
+    recommendation: str = Field(
+        ..., description="Actionable suggestion for fixing the issue"
+    )
 
 
 class TensionArcShapeResponse(BaseModel):
@@ -1276,7 +1320,9 @@ class TensionArcShapeResponse(BaseModel):
     starts_at: int = Field(..., description="Opening tension level")
     peaks_at: int = Field(..., description="Maximum tension level")
     ends_at: int = Field(..., description="Closing tension level")
-    has_clear_climax: bool = Field(..., description="Whether there's a distinct tension peak")
+    has_clear_climax: bool = Field(
+        ..., description="Whether there's a distinct tension peak"
+    )
     is_monotonic: bool = Field(..., description="Whether tension stays flat throughout")
 
 
@@ -1285,13 +1331,23 @@ class ChapterHealthReportResponse(BaseModel):
 
     chapter_id: str = Field(..., description="Chapter UUID")
     health_score: str = Field(..., description="Overall health classification")
-    phase_distribution: PhaseDistributionResponse = Field(..., description="Scene counts per story phase")
-    word_count: WordCountEstimateResponse = Field(..., description="Estimated word count metrics")
+    phase_distribution: PhaseDistributionResponse = Field(
+        ..., description="Scene counts per story phase"
+    )
+    word_count: WordCountEstimateResponse = Field(
+        ..., description="Estimated word count metrics"
+    )
     total_scenes: int = Field(..., description="Number of scenes in the chapter")
     total_beats: int = Field(..., description="Total number of beats across all scenes")
-    tension_arc: TensionArcShapeResponse = Field(..., description="Analysis of tension arc shape")
-    warnings: List[HealthWarningResponse] = Field(default_factory=list, description="Detected structural issues")
-    recommendations: List[str] = Field(default_factory=list, description="Improvement suggestions")
+    tension_arc: TensionArcShapeResponse = Field(
+        ..., description="Analysis of tension arc shape"
+    )
+    warnings: List[HealthWarningResponse] = Field(
+        default_factory=list, description="Detected structural issues"
+    )
+    recommendations: List[str] = Field(
+        default_factory=list, description="Improvement suggestions"
+    )
 
 
 # ============ Scene Critique Schemas (DIR-057/DIR-058) ============
@@ -1300,10 +1356,18 @@ class ChapterHealthReportResponse(BaseModel):
 class CritiqueCategoryScoreResponse(BaseModel):
     """Category-specific critique score with issues and suggestions."""
 
-    category: str = Field(..., description="Quality dimension: pacing, voice, showing, dialogue")
-    score: int = Field(..., ge=1, le=10, description="Score from 1-10 for this category")
-    issues: List[str] = Field(default_factory=list, description="Specific problems identified")
-    suggestions: List[str] = Field(default_factory=list, description="Actionable improvements")
+    category: str = Field(
+        ..., description="Quality dimension: pacing, voice, showing, dialogue"
+    )
+    score: int = Field(
+        ..., ge=1, le=10, description="Score from 1-10 for this category"
+    )
+    issues: List[str] = Field(
+        default_factory=list, description="Specific problems identified"
+    )
+    suggestions: List[str] = Field(
+        default_factory=list, description="Actionable improvements"
+    )
 
 
 class CritiqueSceneRequest(BaseModel):
@@ -1331,11 +1395,15 @@ class CritiqueSceneResponse(BaseModel):
     category-specific evaluations, highlights, and actionable suggestions.
     """
 
-    overall_score: int = Field(..., ge=1, le=10, description="Overall quality score (1-10)")
+    overall_score: int = Field(
+        ..., ge=1, le=10, description="Overall quality score (1-10)"
+    )
     category_scores: List[CritiqueCategoryScoreResponse] = Field(
         default_factory=list, description="Evaluations by category"
     )
-    highlights: List[str] = Field(default_factory=list, description="What works well in the scene")
+    highlights: List[str] = Field(
+        default_factory=list, description="What works well in the scene"
+    )
     summary: str = Field(..., description="Brief 2-3 sentence assessment")
     error: Optional[str] = Field(None, description="Error message if critique failed")
 
@@ -1351,7 +1419,9 @@ class ForeshadowingCreateRequest(BaseModel):
     """
 
     setup_scene_id: str = Field(..., description="Scene UUID where setup occurs")
-    description: str = Field(..., min_length=1, max_length=2000, description="Description of the setup")
+    description: str = Field(
+        ..., min_length=1, max_length=2000, description="Description of the setup"
+    )
     status: str = Field(
         default="planted",
         description="Status: 'planted', 'paid_off', 'abandoned'",
@@ -1361,7 +1431,9 @@ class ForeshadowingCreateRequest(BaseModel):
 class ForeshadowingUpdateRequest(BaseModel):
     """Request model for updating a foreshadowing."""
 
-    description: str = Field(default="", max_length=2000, description="Updated description")
+    description: str = Field(
+        default="", max_length=2000, description="Updated description"
+    )
     status: str = Field(default="", description="Updated status")
     payoff_scene_id: Optional[str] = Field(
         default=None, description="Scene UUID where payoff occurs (for paid_off status)"
@@ -1382,7 +1454,9 @@ class ForeshadowingResponse(BaseModel):
 
     id: str = Field(..., description="Foreshadowing UUID")
     setup_scene_id: str = Field(..., description="Setup scene UUID")
-    payoff_scene_id: Optional[str] = Field(None, description="Payoff scene UUID (if paid off)")
+    payoff_scene_id: Optional[str] = Field(
+        None, description="Payoff scene UUID (if paid off)"
+    )
     description: str = Field(..., description="Foreshadowing description")
     status: str = Field(..., description="Current status")
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
@@ -1451,7 +1525,9 @@ class RelationshipUpdateRequest(BaseModel):
     strength: Optional[int] = Field(default=None, ge=0, le=100)
     is_active: Optional[bool] = Field(default=None)
     trust: Optional[int] = Field(default=None, ge=0, le=100, description="Trust level")
-    romance: Optional[int] = Field(default=None, ge=0, le=100, description="Romance level")
+    romance: Optional[int] = Field(
+        default=None, ge=0, le=100, description="Romance level"
+    )
 
 
 class InteractionLogSchema(BaseModel):
@@ -1459,7 +1535,9 @@ class InteractionLogSchema(BaseModel):
 
     interaction_id: str = Field(..., description="Unique ID for this interaction")
     summary: str = Field(..., description="Description of the interaction")
-    trust_change: int = Field(..., ge=-100, le=100, description="Trust change (-100 to +100)")
+    trust_change: int = Field(
+        ..., ge=-100, le=100, description="Trust change (-100 to +100)"
+    )
     romance_change: int = Field(
         ..., ge=-100, le=100, description="Romance change (-100 to +100)"
     )
@@ -1469,9 +1547,13 @@ class InteractionLogSchema(BaseModel):
 class LogInteractionRequest(BaseModel):
     """Request model for logging an interaction."""
 
-    summary: str = Field(..., min_length=1, max_length=500, description="Interaction description")
+    summary: str = Field(
+        ..., min_length=1, max_length=500, description="Interaction description"
+    )
     trust_change: int = Field(default=0, ge=-100, le=100, description="Trust change")
-    romance_change: int = Field(default=0, ge=-100, le=100, description="Romance change")
+    romance_change: int = Field(
+        default=0, ge=-100, le=100, description="Romance change"
+    )
 
 
 class RelationshipHistoryGenerationResponse(BaseModel):
@@ -1481,10 +1563,18 @@ class RelationshipHistoryGenerationResponse(BaseModel):
     relationship dynamics based on trust/romance levels.
     """
 
-    backstory: str = Field(..., description="2-4 paragraph narrative explaining relationship history")
-    first_meeting: Optional[str] = Field(None, description="How the characters first met")
-    defining_moment: Optional[str] = Field(None, description="Pivotal event shaping current dynamic")
-    current_status: Optional[str] = Field(None, description="Summary of where they currently stand")
+    backstory: str = Field(
+        ..., description="2-4 paragraph narrative explaining relationship history"
+    )
+    first_meeting: Optional[str] = Field(
+        None, description="How the characters first met"
+    )
+    defining_moment: Optional[str] = Field(
+        None, description="Pivotal event shaping current dynamic"
+    )
+    current_status: Optional[str] = Field(
+        None, description="Summary of where they currently stand"
+    )
     error: Optional[str] = Field(None, description="Error message if generation failed")
 
 
@@ -1528,12 +1618,24 @@ class CharacterCentralitySchema(BaseModel):
     """
 
     character_id: str = Field(..., description="Character UUID")
-    relationship_count: int = Field(default=0, ge=0, description="Total relationships (degree centrality)")
-    positive_count: int = Field(default=0, ge=0, description="Positive relationships (ally, family, romantic)")
-    negative_count: int = Field(default=0, ge=0, description="Negative relationships (enemy, rival)")
-    average_trust: float = Field(default=0.0, ge=0, le=100, description="Average trust across relationships")
-    average_romance: float = Field(default=0.0, ge=0, le=100, description="Average romance across relationships")
-    centrality_score: float = Field(default=0.0, ge=0, le=100, description="Normalized centrality (0-100)")
+    relationship_count: int = Field(
+        default=0, ge=0, description="Total relationships (degree centrality)"
+    )
+    positive_count: int = Field(
+        default=0, ge=0, description="Positive relationships (ally, family, romantic)"
+    )
+    negative_count: int = Field(
+        default=0, ge=0, description="Negative relationships (enemy, rival)"
+    )
+    average_trust: float = Field(
+        default=0.0, ge=0, le=100, description="Average trust across relationships"
+    )
+    average_romance: float = Field(
+        default=0.0, ge=0, le=100, description="Average romance across relationships"
+    )
+    centrality_score: float = Field(
+        default=0.0, ge=0, le=100, description="Normalized centrality (0-100)"
+    )
 
 
 class SocialAnalysisResponse(BaseModel):
@@ -1547,11 +1649,21 @@ class SocialAnalysisResponse(BaseModel):
         default_factory=dict,
         description="Mapping of character_id to their centrality metrics",
     )
-    most_connected: Optional[str] = Field(None, description="Character ID with most relationships")
-    most_hated: Optional[str] = Field(None, description="Character ID with most negative relationships")
-    most_loved: Optional[str] = Field(None, description="Character ID with highest trust/romance average")
-    total_relationships: int = Field(default=0, ge=0, description="Total character-to-character relationships")
-    total_characters: int = Field(default=0, ge=0, description="Unique characters in the social graph")
+    most_connected: Optional[str] = Field(
+        None, description="Character ID with most relationships"
+    )
+    most_hated: Optional[str] = Field(
+        None, description="Character ID with most negative relationships"
+    )
+    most_loved: Optional[str] = Field(
+        None, description="Character ID with highest trust/romance average"
+    )
+    total_relationships: int = Field(
+        default=0, ge=0, description="Total character-to-character relationships"
+    )
+    total_characters: int = Field(
+        default=0, ge=0, description="Unique characters in the social graph"
+    )
     network_density: float = Field(
         default=0.0,
         ge=0.0,
@@ -1578,7 +1690,9 @@ class ItemCreateRequest(BaseModel):
     value: Optional[int] = Field(default=None, ge=0, description="Monetary value")
     is_equippable: bool = Field(default=False)
     is_consumable: bool = Field(default=False)
-    effects: List[str] = Field(default_factory=list, description="List of effect descriptions")
+    effects: List[str] = Field(
+        default_factory=list, description="List of effect descriptions"
+    )
     lore: str = Field(default="", max_length=5000, description="Extended backstory")
 
 
@@ -1669,7 +1783,9 @@ class LoreEntryResponse(BaseModel):
     category: str
     summary: str
     related_entry_ids: List[str] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Flexible metadata including smart tags")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Flexible metadata including smart tags"
+    )
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 last update timestamp")
 
@@ -1681,27 +1797,27 @@ class SmartTagsResponse(BaseModel):
     """Response model for smart tags."""
 
     smart_tags: Dict[str, List[str]] = Field(
-        default_factory=dict,
-        description="Auto-generated smart tags by category"
+        default_factory=dict, description="Auto-generated smart tags by category"
     )
     manual_smart_tags: Dict[str, List[str]] = Field(
         default_factory=dict,
-        description="Manual-only smart tags by category (never overridden)"
+        description="Manual-only smart tags by category (never overridden)",
     )
     effective_tags: Dict[str, List[str]] = Field(
-        default_factory=dict,
-        description="Combined tags (auto + manual) by category"
+        default_factory=dict, description="Combined tags (auto + manual) by category"
     )
 
 
 class ManualSmartTagsUpdateRequest(BaseModel):
     """Request model for updating manual smart tags."""
 
-    category: str = Field(..., description="Tag category (e.g., 'genre', 'mood', 'themes')")
+    category: str = Field(
+        ..., description="Tag category (e.g., 'genre', 'mood', 'themes')"
+    )
     tags: List[str] = Field(..., description="List of manual tags for this category")
     replace: bool = Field(
         default=False,
-        description="If True, replace existing tags. If False, append to existing."
+        description="If True, replace existing tags. If False, append to existing.",
     )
 
 
@@ -1727,13 +1843,27 @@ class WorldRuleCreateRequest(BaseModel):
     """Request model for creating a world rule."""
 
     name: str = Field(..., min_length=1, max_length=200, description="Rule name")
-    description: str = Field(default="", max_length=5000, description="Rule description")
-    consequence: str = Field(default="", max_length=2000, description="What happens when rule is invoked/violated")
-    exceptions: List[str] = Field(
-        default_factory=list, max_length=20, description="Cases where rule doesn't apply"
+    description: str = Field(
+        default="", max_length=5000, description="Rule description"
     )
-    category: str = Field(default="", max_length=50, description="Rule category (magic, physics, social, etc.)")
-    severity: int = Field(default=50, ge=0, le=100, description="How strictly enforced (0-100)")
+    consequence: str = Field(
+        default="",
+        max_length=2000,
+        description="What happens when rule is invoked/violated",
+    )
+    exceptions: List[str] = Field(
+        default_factory=list,
+        max_length=20,
+        description="Cases where rule doesn't apply",
+    )
+    category: str = Field(
+        default="",
+        max_length=50,
+        description="Rule category (magic, physics, social, etc.)",
+    )
+    severity: int = Field(
+        default=50, ge=0, le=100, description="How strictly enforced (0-100)"
+    )
 
 
 class WorldRuleUpdateRequest(BaseModel):
@@ -1827,7 +1957,9 @@ class FactionMemberSchema(BaseModel):
 
     character_id: str = Field(..., description="Character UUID")
     name: str = Field(default="", description="Character display name")
-    is_leader: bool = Field(default=False, description="Whether this member is the faction leader")
+    is_leader: bool = Field(
+        default=False, description="Whether this member is the faction leader"
+    )
 
 
 class FactionDetailResponse(BaseModel):
@@ -1843,7 +1975,9 @@ class FactionDetailResponse(BaseModel):
     leader_name: Optional[str] = Field(None, description="Display name of the leader")
     influence: int = Field(default=50, ge=0, le=100, description="Faction influence")
     member_count: int = Field(default=0, ge=0, description="Number of members")
-    members: List[FactionMemberSchema] = Field(default_factory=list, description="List of faction members")
+    members: List[FactionMemberSchema] = Field(
+        default_factory=list, description="List of faction members"
+    )
 
 
 # === Prompt Management Schemas (BRAIN-015) ===
@@ -1852,11 +1986,24 @@ class FactionDetailResponse(BaseModel):
 class PromptVariableDefinition(BaseModel):
     """Schema for a prompt variable definition."""
 
-    name: str = Field(..., min_length=1, max_length=100, description="Variable name (must match {{var}} in template)")
-    type: str = Field(..., description="Variable type: string, integer, float, boolean, list, dict")
-    default_value: Optional[JsonValue] = Field(None, description="Default value if not provided")
-    description: str = Field(default="", max_length=500, description="Human-readable description")
-    required: bool = Field(default=True, description="Whether this variable must be provided")
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Variable name (must match {{var}} in template)",
+    )
+    type: str = Field(
+        ..., description="Variable type: string, integer, float, boolean, list, dict"
+    )
+    default_value: Optional[JsonValue] = Field(
+        None, description="Default value if not provided"
+    )
+    description: str = Field(
+        default="", max_length=500, description="Human-readable description"
+    )
+    required: bool = Field(
+        default=True, description="Whether this variable must be provided"
+    )
 
 
 class PromptVariableValue(BaseModel):
@@ -1886,11 +2033,19 @@ class PromptModelConfig(BaseModel):
 
     provider: str = Field(default="openai", description="LLM provider")
     model_name: str = Field(default="gpt-4", description="Model name")
-    temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Sampling temperature")
-    max_tokens: int = Field(default=1000, ge=1, description="Maximum tokens to generate")
+    temperature: float = Field(
+        default=0.7, ge=0.0, le=2.0, description="Sampling temperature"
+    )
+    max_tokens: int = Field(
+        default=1000, ge=1, description="Maximum tokens to generate"
+    )
     top_p: float = Field(default=1.0, ge=0.0, le=1.0, description="Nucleus sampling")
-    frequency_penalty: float = Field(default=0.0, ge=-2.0, le=2.0, description="Frequency penalty")
-    presence_penalty: float = Field(default=0.0, ge=-2.0, le=2.0, description="Presence penalty")
+    frequency_penalty: float = Field(
+        default=0.0, ge=-2.0, le=2.0, description="Frequency penalty"
+    )
+    presence_penalty: float = Field(
+        default=0.0, ge=-2.0, le=2.0, description="Presence penalty"
+    )
 
 
 class PromptDetailResponse(BaseModel):
@@ -1899,13 +2054,22 @@ class PromptDetailResponse(BaseModel):
     id: str = Field(..., description="Prompt template UUID")
     name: str = Field(..., description="Prompt name")
     description: str = Field(default="", description="Prompt description")
-    content: str = Field(..., description="Template content with {{variable}} placeholders")
+    content: str = Field(
+        ..., description="Template content with {{variable}} placeholders"
+    )
     tags: List[str] = Field(default_factory=list, description="Tags for categorization")
-    extends: List[str] = Field(default_factory=list, description="Parent template IDs/names this template extends")
+    extends: List[str] = Field(
+        default_factory=list,
+        description="Parent template IDs/names this template extends",
+    )
     version: int = Field(default=1, description="Version number")
     parent_version_id: Optional[str] = Field(None, description="Parent version ID")
-    llm_config: PromptModelConfig = Field(..., description="Model configuration", alias="model_config")
-    variables: List[PromptVariableDefinition] = Field(default_factory=list, description="Variable definitions")
+    llm_config: PromptModelConfig = Field(
+        ..., description="Model configuration", alias="model_config"
+    )
+    variables: List[PromptVariableDefinition] = Field(
+        default_factory=list, description="Variable definitions"
+    )
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 last update timestamp")
 
@@ -1915,7 +2079,9 @@ class PromptDetailResponse(BaseModel):
 class PromptListResponse(BaseModel):
     """Response model for listing prompts."""
 
-    prompts: List[PromptSummary] = Field(default_factory=list, description="List of prompt summaries")
+    prompts: List[PromptSummary] = Field(
+        default_factory=list, description="List of prompt summaries"
+    )
     total: int = Field(default=0, description="Total count of prompts")
     limit: int = Field(default=100, description="Page size limit")
     offset: int = Field(default=0, description="Pagination offset")
@@ -1925,55 +2091,109 @@ class PromptCreateRequest(BaseModel):
     """Request model for creating a new prompt template."""
 
     name: str = Field(..., min_length=1, max_length=200, description="Prompt name")
-    content: str = Field(..., min_length=1, description="Template content with {{variable}} placeholders")
-    description: str = Field(default="", max_length=1000, description="Prompt description")
-    tags: List[str] = Field(default_factory=list, max_length=20, description="Tags for categorization")
-    extends: List[str] = Field(default_factory=list, max_length=10, description="Parent template IDs/names to extend")
-    variables: List[PromptVariableDefinition] = Field(default_factory=list, description="Variable definitions")
+    content: str = Field(
+        ..., min_length=1, description="Template content with {{variable}} placeholders"
+    )
+    description: str = Field(
+        default="", max_length=1000, description="Prompt description"
+    )
+    tags: List[str] = Field(
+        default_factory=list, max_length=20, description="Tags for categorization"
+    )
+    extends: List[str] = Field(
+        default_factory=list,
+        max_length=10,
+        description="Parent template IDs/names to extend",
+    )
+    variables: List[PromptVariableDefinition] = Field(
+        default_factory=list, description="Variable definitions"
+    )
     model_provider: str = Field(default="openai", description="LLM provider")
     model_name: str = Field(default="gpt-4", description="Model name")
-    temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0, description="Sampling temperature")
-    max_tokens: Optional[int] = Field(default=None, ge=1, description="Maximum tokens to generate")
-    top_p: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Nucleus sampling")
-    frequency_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0, description="Frequency penalty")
-    presence_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0, description="Presence penalty")
+    temperature: Optional[float] = Field(
+        default=None, ge=0.0, le=2.0, description="Sampling temperature"
+    )
+    max_tokens: Optional[int] = Field(
+        default=None, ge=1, description="Maximum tokens to generate"
+    )
+    top_p: Optional[float] = Field(
+        default=None, ge=0.0, le=1.0, description="Nucleus sampling"
+    )
+    frequency_penalty: Optional[float] = Field(
+        default=None, ge=-2.0, le=2.0, description="Frequency penalty"
+    )
+    presence_penalty: Optional[float] = Field(
+        default=None, ge=-2.0, le=2.0, description="Presence penalty"
+    )
 
 
 class PromptUpdateRequest(BaseModel):
     """Request model for updating a prompt template (creates new version)."""
 
-    name: Optional[str] = Field(default=None, min_length=1, max_length=200, description="Prompt name")
-    content: Optional[str] = Field(default=None, min_length=1, description="Template content")
-    description: Optional[str] = Field(default=None, max_length=1000, description="Prompt description")
-    tags: Optional[List[str]] = Field(default=None, max_length=20, description="Tags for categorization")
-    extends: Optional[List[str]] = Field(default=None, max_length=10, description="Parent template IDs/names to extend")
-    variables: Optional[List[PromptVariableDefinition]] = Field(default=None, description="Variable definitions")
+    name: Optional[str] = Field(
+        default=None, min_length=1, max_length=200, description="Prompt name"
+    )
+    content: Optional[str] = Field(
+        default=None, min_length=1, description="Template content"
+    )
+    description: Optional[str] = Field(
+        default=None, max_length=1000, description="Prompt description"
+    )
+    tags: Optional[List[str]] = Field(
+        default=None, max_length=20, description="Tags for categorization"
+    )
+    extends: Optional[List[str]] = Field(
+        default=None, max_length=10, description="Parent template IDs/names to extend"
+    )
+    variables: Optional[List[PromptVariableDefinition]] = Field(
+        default=None, description="Variable definitions"
+    )
     model_provider: Optional[str] = Field(default=None, description="LLM provider")
     model_name: Optional[str] = Field(default=None, description="Model name")
-    temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0, description="Sampling temperature")
-    max_tokens: Optional[int] = Field(default=None, ge=1, description="Maximum tokens to generate")
-    top_p: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Nucleus sampling")
-    frequency_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0, description="Frequency penalty")
-    presence_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0, description="Presence penalty")
+    temperature: Optional[float] = Field(
+        default=None, ge=0.0, le=2.0, description="Sampling temperature"
+    )
+    max_tokens: Optional[int] = Field(
+        default=None, ge=1, description="Maximum tokens to generate"
+    )
+    top_p: Optional[float] = Field(
+        default=None, ge=0.0, le=1.0, description="Nucleus sampling"
+    )
+    frequency_penalty: Optional[float] = Field(
+        default=None, ge=-2.0, le=2.0, description="Frequency penalty"
+    )
+    presence_penalty: Optional[float] = Field(
+        default=None, ge=-2.0, le=2.0, description="Presence penalty"
+    )
 
 
 class PromptRenderRequest(BaseModel):
     """Request model for rendering a prompt template."""
 
-    variables: List[PromptVariableValue] = Field(default_factory=list, description="Variable values for rendering")
-    strict: bool = Field(default=True, description="Raise errors for missing required variables")
+    variables: List[PromptVariableValue] = Field(
+        default_factory=list, description="Variable values for rendering"
+    )
+    strict: bool = Field(
+        default=True, description="Raise errors for missing required variables"
+    )
 
 
 class PromptRenderResponse(BaseModel):
     """Response model for a rendered prompt."""
 
     rendered: str = Field(..., description="Rendered prompt content")
-    variables_used: List[str] = Field(default_factory=list, description="Variable names that were used")
-    variables_missing: List[str] = Field(default_factory=list, description="Required variables that were missing")
+    variables_used: List[str] = Field(
+        default_factory=list, description="Variable names that were used"
+    )
+    variables_missing: List[str] = Field(
+        default_factory=list, description="Required variables that were missing"
+    )
     template_id: str = Field(..., description="Template ID that was rendered")
     template_name: str = Field(..., description="Template name")
     token_count: Optional[int] = Field(None, description="Estimated token count")
-    llm_config: Optional[Dict[str, Any]] = Field(None, description="Model configuration used", alias="model_config")
+    llm_config: Optional[Dict[str, Any]] = Field(
+        None, description="Model configuration used", alias="model_config"
+    )
 
     model_config = {"populate_by_name": True}
 
@@ -1986,50 +2206,32 @@ class PromptGenerateRequest(BaseModel):
     """
 
     variables: List[PromptVariableValue] = Field(
-        default_factory=list,
-        description="Variable values for rendering the prompt"
+        default_factory=list, description="Variable values for rendering the prompt"
     )
     # Override model config from the prompt template
     provider: Optional[str] = Field(
-        None,
-        description="Override LLM provider (uses prompt config if not specified)"
+        None, description="Override LLM provider (uses prompt config if not specified)"
     )
     model_name: Optional[str] = Field(
-        None,
-        description="Override model name (uses prompt config if not specified)"
+        None, description="Override model name (uses prompt config if not specified)"
     )
     temperature: Optional[float] = Field(
-        None,
-        ge=0.0,
-        le=2.0,
-        description="Override sampling temperature"
+        None, ge=0.0, le=2.0, description="Override sampling temperature"
     )
     max_tokens: Optional[int] = Field(
-        None,
-        ge=1,
-        description="Override max tokens to generate"
+        None, ge=1, description="Override max tokens to generate"
     )
     top_p: Optional[float] = Field(
-        None,
-        ge=0.0,
-        le=1.0,
-        description="Override nucleus sampling"
+        None, ge=0.0, le=1.0, description="Override nucleus sampling"
     )
     frequency_penalty: Optional[float] = Field(
-        None,
-        ge=-2.0,
-        le=2.0,
-        description="Override frequency penalty"
+        None, ge=-2.0, le=2.0, description="Override frequency penalty"
     )
     presence_penalty: Optional[float] = Field(
-        None,
-        ge=-2.0,
-        le=2.0,
-        description="Override presence penalty"
+        None, ge=-2.0, le=2.0, description="Override presence penalty"
     )
     strict: bool = Field(
-        default=True,
-        description="Raise errors for missing required variables"
+        default=True, description="Raise errors for missing required variables"
     )
 
 
@@ -2045,7 +2247,9 @@ class PromptGenerateResponse(BaseModel):
     template_id: str = Field(..., description="Template ID that was used")
     template_name: str = Field(..., description="Template name")
     prompt_tokens: int = Field(..., description="Estimated input token count")
-    output_tokens: Optional[int] = Field(None, description="Output token count if available")
+    output_tokens: Optional[int] = Field(
+        None, description="Output token count if available"
+    )
     total_tokens: int = Field(..., description="Total token count")
     latency_ms: float = Field(..., description="Generation time in milliseconds")
     model_used: str = Field(..., description="Model that was used for generation")
@@ -2067,9 +2271,13 @@ class PromptAnalyticsTimePeriod(str, Enum):
 class PromptTimeSeriesDataPoint(BaseModel):
     """Single data point in time series analytics."""
 
-    period: str = Field(..., description="Time period identifier (ISO date or week number)")
+    period: str = Field(
+        ..., description="Time period identifier (ISO date or week number)"
+    )
     total_uses: int = Field(default=0, ge=0, description="Total uses in this period")
-    successful_uses: int = Field(default=0, ge=0, description="Successful uses in this period")
+    successful_uses: int = Field(
+        default=0, ge=0, description="Successful uses in this period"
+    )
     failed_uses: int = Field(default=0, ge=0, description="Failed uses in this period")
     total_tokens: int = Field(default=0, ge=0, description="Total tokens consumed")
     avg_latency_ms: float = Field(default=0.0, ge=0, description="Average latency")
@@ -2096,27 +2304,36 @@ class PromptAnalyticsResponse(BaseModel):
     prompt_id: str = Field(..., description="Prompt template ID")
     prompt_name: str = Field(..., description="Prompt name")
     period: PromptAnalyticsTimePeriod = Field(
-        default=PromptAnalyticsTimePeriod.all,
-        description="Time period for aggregation"
+        default=PromptAnalyticsTimePeriod.all, description="Time period for aggregation"
     )
 
     # Overall metrics
     total_uses: int = Field(default=0, ge=0, description="Total number of uses")
     successful_uses: int = Field(default=0, ge=0, description="Successful generations")
     failed_uses: int = Field(default=0, ge=0, description="Failed generations")
-    success_rate: float = Field(default=0.0, ge=0, le=100, description="Success rate percentage")
+    success_rate: float = Field(
+        default=0.0, ge=0, le=100, description="Success rate percentage"
+    )
 
     # Token metrics
     total_tokens: int = Field(default=0, ge=0, description="Total tokens consumed")
     total_input_tokens: int = Field(default=0, ge=0, description="Total input tokens")
     total_output_tokens: int = Field(default=0, ge=0, description="Total output tokens")
-    avg_tokens_per_use: float = Field(default=0.0, ge=0, description="Average tokens per use")
-    avg_input_tokens: float = Field(default=0.0, ge=0, description="Average input tokens")
-    avg_output_tokens: float = Field(default=0.0, ge=0, description="Average output tokens")
+    avg_tokens_per_use: float = Field(
+        default=0.0, ge=0, description="Average tokens per use"
+    )
+    avg_input_tokens: float = Field(
+        default=0.0, ge=0, description="Average input tokens"
+    )
+    avg_output_tokens: float = Field(
+        default=0.0, ge=0, description="Average output tokens"
+    )
 
     # Latency metrics
     total_latency_ms: float = Field(default=0.0, ge=0, description="Total latency")
-    avg_latency_ms: float = Field(default=0.0, ge=0, description="Average latency in ms")
+    avg_latency_ms: float = Field(
+        default=0.0, ge=0, description="Average latency in ms"
+    )
     min_latency_ms: float = Field(default=0.0, ge=0, description="Minimum latency")
     max_latency_ms: float = Field(default=0.0, ge=0, description="Maximum latency")
 
@@ -2125,14 +2342,12 @@ class PromptAnalyticsResponse(BaseModel):
     rating_count: int = Field(default=0, ge=0, description="Number of ratings")
     avg_rating: float = Field(default=0.0, ge=0, le=5, description="Average rating")
     rating_distribution: PromptRatingDistribution = Field(
-        default_factory=PromptRatingDistribution,
-        description="Distribution of ratings"
+        default_factory=PromptRatingDistribution, description="Distribution of ratings"
     )
 
     # Time series data
     time_series: List[PromptTimeSeriesDataPoint] = Field(
-        default_factory=list,
-        description="Usage over time grouped by period"
+        default_factory=list, description="Usage over time grouped by period"
     )
 
     # Metadata
@@ -2146,25 +2361,17 @@ class PromptAnalyticsRequest(BaseModel):
 
     period: PromptAnalyticsTimePeriod = Field(
         default=PromptAnalyticsTimePeriod.all,
-        description="Time period for aggregation (day, week, month, all)"
+        description="Time period for aggregation (day, week, month, all)",
     )
     start_date: Optional[str] = Field(
-        None,
-        description="ISO 8601 start date for filtering (exclusive of period)"
+        None, description="ISO 8601 start date for filtering (exclusive of period)"
     )
     end_date: Optional[str] = Field(
-        None,
-        description="ISO 8601 end date for filtering (exclusive of period)"
+        None, description="ISO 8601 end date for filtering (exclusive of period)"
     )
-    workspace_id: Optional[str] = Field(
-        None,
-        description="Filter by workspace ID"
-    )
+    workspace_id: Optional[str] = Field(None, description="Filter by workspace ID")
     limit: int = Field(
-        default=100,
-        ge=1,
-        le=1000,
-        description="Maximum time series data points"
+        default=100, ge=1, le=1000, description="Maximum time series data points"
     )
 
 
@@ -2177,22 +2384,38 @@ class ExperimentMetricsResponse(BaseModel):
     total_runs: int = Field(default=0, ge=0, description="Total number of runs")
     success_count: int = Field(default=0, ge=0, description="Number of successful runs")
     failure_count: int = Field(default=0, ge=0, description="Number of failed runs")
-    success_rate: float = Field(default=0.0, ge=0, le=100, description="Success rate percentage")
+    success_rate: float = Field(
+        default=0.0, ge=0, le=100, description="Success rate percentage"
+    )
     total_tokens: int = Field(default=0, ge=0, description="Total tokens consumed")
-    avg_tokens_per_run: float = Field(default=0.0, ge=0, description="Average tokens per run")
-    token_efficiency: float = Field(default=0.0, ge=0, description="Tokens per successful generation")
-    total_latency_ms: float = Field(default=0.0, ge=0, description="Total latency in milliseconds")
-    avg_latency_ms: float = Field(default=0.0, ge=0, description="Average latency in milliseconds")
+    avg_tokens_per_run: float = Field(
+        default=0.0, ge=0, description="Average tokens per run"
+    )
+    token_efficiency: float = Field(
+        default=0.0, ge=0, description="Tokens per successful generation"
+    )
+    total_latency_ms: float = Field(
+        default=0.0, ge=0, description="Total latency in milliseconds"
+    )
+    avg_latency_ms: float = Field(
+        default=0.0, ge=0, description="Average latency in milliseconds"
+    )
     rating_sum: float = Field(default=0.0, description="Sum of all ratings")
     rating_count: int = Field(default=0, ge=0, description="Number of ratings")
-    avg_rating: float = Field(default=0.0, ge=0, le=5, description="Average user rating")
+    avg_rating: float = Field(
+        default=0.0, ge=0, le=5, description="Average user rating"
+    )
 
 
 class ConfidenceIntervalResponse(BaseModel):
     """Schema for confidence interval of a metric."""
 
-    lower: float = Field(..., ge=0, le=100, description="Lower bound of confidence interval")
-    upper: float = Field(..., ge=0, le=100, description="Upper bound of confidence interval")
+    lower: float = Field(
+        ..., ge=0, le=100, description="Lower bound of confidence interval"
+    )
+    upper: float = Field(
+        ..., ge=0, le=100, description="Upper bound of confidence interval"
+    )
 
 
 class ExperimentVariantResponse(BaseModel):
@@ -2202,15 +2425,27 @@ class ExperimentVariantResponse(BaseModel):
     total_runs: int = Field(default=0, ge=0, description="Total number of runs")
     success_count: int = Field(default=0, ge=0, description="Number of successful runs")
     failure_count: int = Field(default=0, ge=0, description="Number of failed runs")
-    success_rate: float = Field(default=0.0, ge=0, le=100, description="Success rate percentage")
+    success_rate: float = Field(
+        default=0.0, ge=0, le=100, description="Success rate percentage"
+    )
     total_tokens: int = Field(default=0, ge=0, description="Total tokens consumed")
-    avg_tokens_per_run: float = Field(default=0.0, ge=0, description="Average tokens per run")
-    token_efficiency: float = Field(default=0.0, ge=0, description="Tokens per successful generation")
-    total_latency_ms: float = Field(default=0.0, ge=0, description="Total latency in milliseconds")
-    avg_latency_ms: float = Field(default=0.0, ge=0, description="Average latency in milliseconds")
+    avg_tokens_per_run: float = Field(
+        default=0.0, ge=0, description="Average tokens per run"
+    )
+    token_efficiency: float = Field(
+        default=0.0, ge=0, description="Tokens per successful generation"
+    )
+    total_latency_ms: float = Field(
+        default=0.0, ge=0, description="Total latency in milliseconds"
+    )
+    avg_latency_ms: float = Field(
+        default=0.0, ge=0, description="Average latency in milliseconds"
+    )
     rating_sum: float = Field(default=0.0, description="Sum of all ratings")
     rating_count: int = Field(default=0, ge=0, description="Number of ratings")
-    avg_rating: float = Field(default=0.0, ge=0, le=5, description="Average user rating")
+    avg_rating: float = Field(
+        default=0.0, ge=0, le=5, description="Average user rating"
+    )
     confidence_interval: Optional[ConfidenceIntervalResponse] = Field(
         default=None, description="Confidence interval for success rate"
     )
@@ -2219,13 +2454,27 @@ class ExperimentVariantResponse(BaseModel):
 class ExperimentComparisonResponse(BaseModel):
     """Schema for variant comparison."""
 
-    success_rate_diff: float = Field(default=0.0, description="Difference in success rate (A - B)")
-    success_rate_rel_diff: float = Field(default=0.0, description="Relative difference in success rate (%)")
-    avg_rating_diff: float = Field(default=0.0, description="Difference in average rating (A - B)")
-    avg_rating_rel_diff: float = Field(default=0.0, description="Relative difference in rating (%)")
-    token_efficiency_diff: float = Field(default=0.0, description="Difference in token efficiency (A - B)")
-    avg_latency_diff: float = Field(default=0.0, description="Difference in latency (A - B)")
-    avg_latency_rel_diff: float = Field(default=0.0, description="Relative difference in latency (%)")
+    success_rate_diff: float = Field(
+        default=0.0, description="Difference in success rate (A - B)"
+    )
+    success_rate_rel_diff: float = Field(
+        default=0.0, description="Relative difference in success rate (%)"
+    )
+    avg_rating_diff: float = Field(
+        default=0.0, description="Difference in average rating (A - B)"
+    )
+    avg_rating_rel_diff: float = Field(
+        default=0.0, description="Relative difference in rating (%)"
+    )
+    token_efficiency_diff: float = Field(
+        default=0.0, description="Difference in token efficiency (A - B)"
+    )
+    avg_latency_diff: float = Field(
+        default=0.0, description="Difference in latency (A - B)"
+    )
+    avg_latency_rel_diff: float = Field(
+        default=0.0, description="Relative difference in latency (%)"
+    )
 
 
 class ExperimentTimelineResponse(BaseModel):
@@ -2245,10 +2494,14 @@ class ExperimentResultsResponse(BaseModel):
     metric: str = Field(..., description="Primary metric for comparison")
     winner: Optional[str] = Field(None, description="Winning variant (A or B)")
     min_sample_size: int = Field(default=100, ge=1, description="Minimum sample size")
-    traffic_split: Dict[str, int] = Field(default_factory=dict, description="Traffic split percentage")
+    traffic_split: Dict[str, int] = Field(
+        default_factory=dict, description="Traffic split percentage"
+    )
     variant_a: ExperimentVariantResponse = Field(..., description="Variant A metrics")
     variant_b: ExperimentVariantResponse = Field(..., description="Variant B metrics")
-    comparison: ExperimentComparisonResponse = Field(..., description="Variant comparison")
+    comparison: ExperimentComparisonResponse = Field(
+        ..., description="Variant comparison"
+    )
     timeline: ExperimentTimelineResponse = Field(..., description="Experiment timeline")
     statistical_significance: Optional[Dict[str, Any]] = Field(
         None, description="Statistical significance analysis"
@@ -2267,7 +2520,9 @@ class ExperimentSummaryResponse(BaseModel):
     prompt_b_id: str = Field(..., description="Variant B prompt ID")
     traffic_split: int = Field(default=50, description="Traffic split for variant A")
     winner: Optional[str] = Field(None, description="Winning variant (A or B)")
-    total_runs: int = Field(default=0, ge=0, description="Total runs across both variants")
+    total_runs: int = Field(
+        default=0, ge=0, description="Total runs across both variants"
+    )
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     started_at: Optional[str] = Field(None, description="ISO 8601 start timestamp")
     ended_at: Optional[str] = Field(None, description="ISO 8601 end timestamp")
@@ -2286,16 +2541,24 @@ class ExperimentCreateRequest(BaseModel):
     """Request model for creating an experiment."""
 
     name: str = Field(..., min_length=1, max_length=200, description="Experiment name")
-    description: str = Field(default="", max_length=1000, description="Experiment description")
+    description: str = Field(
+        default="", max_length=1000, description="Experiment description"
+    )
     prompt_a_id: str = Field(..., description="Variant A prompt template ID")
     prompt_b_id: str = Field(..., description="Variant B prompt template ID")
     metric: str = Field(
         ...,
         description="Primary metric: success_rate, user_rating, token_efficiency, latency",
     )
-    traffic_split: int = Field(default=50, ge=0, le=100, description="Traffic split for variant A (0-100)")
-    min_sample_size: int = Field(default=100, ge=10, description="Minimum sample size per variant")
-    confidence_threshold: float = Field(default=0.95, ge=0.5, le=0.99, description="Confidence threshold")
+    traffic_split: int = Field(
+        default=50, ge=0, le=100, description="Traffic split for variant A (0-100)"
+    )
+    min_sample_size: int = Field(
+        default=100, ge=10, description="Minimum sample size per variant"
+    )
+    confidence_threshold: float = Field(
+        default=0.95, ge=0.5, le=0.99, description="Confidence threshold"
+    )
 
     @field_validator("metric")
     @classmethod
@@ -2311,7 +2574,9 @@ class ExperimentUpdateRequest(BaseModel):
 
     name: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=1000)
-    status: Optional[str] = Field(default=None, description="New status: draft, running, paused, completed")
+    status: Optional[str] = Field(
+        default=None, description="New status: draft, running, paused, completed"
+    )
     min_sample_size: Optional[int] = Field(default=None, ge=10)
 
     @field_validator("status")
@@ -2328,17 +2593,25 @@ class ExperimentUpdateRequest(BaseModel):
 class ExperimentRecordRequest(BaseModel):
     """Request model for recording a run result."""
 
-    variant_id: str = Field(..., description="The variant that was used (prompt_a_id or prompt_b_id)")
+    variant_id: str = Field(
+        ..., description="The variant that was used (prompt_a_id or prompt_b_id)"
+    )
     success: bool = Field(..., description="Whether the generation was successful")
     tokens: int = Field(default=0, ge=0, description="Number of tokens consumed")
-    latency_ms: float = Field(default=0.0, ge=0, description="Response time in milliseconds")
-    rating: Optional[float] = Field(None, ge=1.0, le=5.0, description="User rating (1-5)")
+    latency_ms: float = Field(
+        default=0.0, ge=0, description="Response time in milliseconds"
+    )
+    rating: Optional[float] = Field(
+        None, ge=1.0, le=5.0, description="User rating (1-5)"
+    )
 
 
 class ExperimentActionRequest(BaseModel):
     """Request model for experiment actions (start, pause, resume, complete)."""
 
-    winner: Optional[str] = Field(None, description="Winning variant (for complete action)")
+    winner: Optional[str] = Field(
+        None, description="Winning variant (for complete action)"
+    )
 
 
 __all__ = [
@@ -2528,8 +2801,8 @@ try:
         DocumentationSection,
         EnhancedDocumentationResponse,
         PatternValidationRequest,
-        ValidationIssue,
         PatternValidationResponse,
+        ValidationIssue,
     )
     from .emergent_narrative_api import (
         CausalGraphData,
@@ -2649,42 +2922,74 @@ class TaskRoutingRuleSchema(BaseModel):
     """Routing rule for a specific task type."""
 
     task_type: str = Field(..., description="Task type: creative, logical, fast, cheap")
-    provider: str = Field(..., description="LLM provider: openai, anthropic, gemini, ollama, mock")
+    provider: str = Field(
+        ..., description="LLM provider: openai, anthropic, gemini, ollama, mock"
+    )
     model_name: str = Field("", description="Model name (empty for provider default)")
-    temperature: Optional[float] = Field(None, ge=0, le=2, description="Temperature override")
-    max_tokens: Optional[int] = Field(None, ge=1, le=1000000, description="Max tokens override")
-    priority: int = Field(0, ge=0, description="Rule priority (higher = more important)")
+    temperature: Optional[float] = Field(
+        None, ge=0, le=2, description="Temperature override"
+    )
+    max_tokens: Optional[int] = Field(
+        None, ge=1, le=1000000, description="Max tokens override"
+    )
+    priority: int = Field(
+        0, ge=0, description="Rule priority (higher = more important)"
+    )
     enabled: bool = Field(True, description="Whether this rule is active")
 
 
 class RoutingConstraintsSchema(BaseModel):
     """Constraints for model routing decisions."""
 
-    max_cost_per_1m_tokens: Optional[float] = Field(None, ge=0, description="Maximum cost per 1M tokens (USD)")
-    max_latency_ms: Optional[int] = Field(None, ge=0, description="Maximum acceptable latency (ms)")
-    preferred_providers: List[str] = Field(default_factory=list, description="Provider preference order")
-    blocked_providers: List[str] = Field(default_factory=list, description="Providers to never use")
-    require_capabilities: List[str] = Field(default_factory=list, description="Required capabilities")
+    max_cost_per_1m_tokens: Optional[float] = Field(
+        None, ge=0, description="Maximum cost per 1M tokens (USD)"
+    )
+    max_latency_ms: Optional[int] = Field(
+        None, ge=0, description="Maximum acceptable latency (ms)"
+    )
+    preferred_providers: List[str] = Field(
+        default_factory=list, description="Provider preference order"
+    )
+    blocked_providers: List[str] = Field(
+        default_factory=list, description="Providers to never use"
+    )
+    require_capabilities: List[str] = Field(
+        default_factory=list, description="Required capabilities"
+    )
 
 
 class CircuitBreakerRuleSchema(BaseModel):
     """Circuit breaker configuration for a specific model."""
 
     model_key: str = Field(..., description="Model identifier (provider:model)")
-    failure_threshold: int = Field(5, ge=1, le=100, description="Failures before opening circuit")
-    timeout_seconds: int = Field(60, ge=1, le=3600, description="Seconds before half-open state")
+    failure_threshold: int = Field(
+        5, ge=1, le=100, description="Failures before opening circuit"
+    )
+    timeout_seconds: int = Field(
+        60, ge=1, le=3600, description="Seconds before half-open state"
+    )
     enabled: bool = Field(True, description="Whether circuit breaker is enabled")
 
 
 class RoutingConfigResponse(BaseModel):
     """Response model for routing configuration."""
 
-    workspace_id: str = Field(..., description="Workspace identifier (empty for global)")
+    workspace_id: str = Field(
+        ..., description="Workspace identifier (empty for global)"
+    )
     scope: str = Field(..., description="Configuration scope: global or workspace")
-    task_rules: List[TaskRoutingRuleSchema] = Field(default_factory=list, description="Task routing rules")
-    constraints: Optional[RoutingConstraintsSchema] = Field(None, description="Routing constraints")
-    circuit_breaker_rules: List[CircuitBreakerRuleSchema] = Field(default_factory=list, description="Circuit breaker rules")
-    enable_circuit_breaker: bool = Field(True, description="Whether circuit breaker is enabled")
+    task_rules: List[TaskRoutingRuleSchema] = Field(
+        default_factory=list, description="Task routing rules"
+    )
+    constraints: Optional[RoutingConstraintsSchema] = Field(
+        None, description="Routing constraints"
+    )
+    circuit_breaker_rules: List[CircuitBreakerRuleSchema] = Field(
+        default_factory=list, description="Circuit breaker rules"
+    )
+    enable_circuit_breaker: bool = Field(
+        True, description="Whether circuit breaker is enabled"
+    )
     enable_fallback: bool = Field(True, description="Whether fallback chain is enabled")
     created_at: str = Field(..., description="ISO 8601 creation timestamp")
     updated_at: str = Field(..., description="ISO 8601 update timestamp")
@@ -2694,29 +2999,51 @@ class RoutingConfigResponse(BaseModel):
 class RoutingConfigUpdateRequest(BaseModel):
     """Request model for updating routing configuration."""
 
-    task_rules: Optional[List[TaskRoutingRuleSchema]] = Field(None, description="New task rules")
-    constraints: Optional[RoutingConstraintsSchema] = Field(None, description="New constraints")
-    circuit_breaker_rules: Optional[List[CircuitBreakerRuleSchema]] = Field(None, description="New circuit breaker rules")
-    enable_circuit_breaker: Optional[bool] = Field(None, description="Circuit breaker setting")
+    task_rules: Optional[List[TaskRoutingRuleSchema]] = Field(
+        None, description="New task rules"
+    )
+    constraints: Optional[RoutingConstraintsSchema] = Field(
+        None, description="New constraints"
+    )
+    circuit_breaker_rules: Optional[List[CircuitBreakerRuleSchema]] = Field(
+        None, description="New circuit breaker rules"
+    )
+    enable_circuit_breaker: Optional[bool] = Field(
+        None, description="Circuit breaker setting"
+    )
     enable_fallback: Optional[bool] = Field(None, description="Fallback setting")
 
 
 class RoutingConfigResetRequest(BaseModel):
     """Request model for resetting routing configuration."""
 
-    workspace_id: str = Field(..., description="Workspace identifier (empty for global)")
+    workspace_id: str = Field(
+        ..., description="Workspace identifier (empty for global)"
+    )
 
 
 class RoutingStatsResponse(BaseModel):
     """Response model for routing statistics."""
 
     total_decisions: int = Field(..., ge=0, description="Total routing decisions made")
-    fallback_count: int = Field(..., ge=0, description="Number of times fallback was used")
-    fallback_rate: float = Field(..., ge=0, le=1, description="Rate of fallback usage (0-1)")
-    reason_counts: Dict[str, int] = Field(default_factory=dict, description="Count by routing reason")
-    provider_counts: Dict[str, int] = Field(default_factory=dict, description="Count by provider")
-    avg_routing_time_ms: float = Field(..., ge=0, description="Average routing decision time")
-    open_circuits: List[Dict[str, Any]] = Field(default_factory=list, description="Currently open circuits")
+    fallback_count: int = Field(
+        ..., ge=0, description="Number of times fallback was used"
+    )
+    fallback_rate: float = Field(
+        ..., ge=0, le=1, description="Rate of fallback usage (0-1)"
+    )
+    reason_counts: Dict[str, int] = Field(
+        default_factory=dict, description="Count by routing reason"
+    )
+    provider_counts: Dict[str, int] = Field(
+        default_factory=dict, description="Count by provider"
+    )
+    avg_routing_time_ms: float = Field(
+        ..., ge=0, description="Average routing decision time"
+    )
+    open_circuits: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Currently open circuits"
+    )
     total_circuits: int = Field(..., ge=0, description="Total circuit breakers tracked")
 
 
@@ -2741,7 +3068,9 @@ class APIKeysResponse(BaseModel):
     gemini_key: str = Field(..., description="Masked Gemini API key")
     ollama_base_url: Optional[str] = Field(None, description="Ollama base URL")
     has_openai: bool = Field(default=False, description="Whether OpenAI key is set")
-    has_anthropic: bool = Field(default=False, description="Whether Anthropic key is set")
+    has_anthropic: bool = Field(
+        default=False, description="Whether Anthropic key is set"
+    )
     has_gemini: bool = Field(default=False, description="Whether Gemini key is set")
 
 
@@ -2749,12 +3078,24 @@ class RAGConfigRequest(BaseModel):
     """Request model for updating RAG configuration."""
 
     enabled: Optional[bool] = Field(None, description="Whether RAG is enabled")
-    max_chunks: Optional[int] = Field(None, ge=1, le=50, description="Maximum chunks to retrieve")
-    score_threshold: Optional[float] = Field(None, ge=0, le=1, description="Minimum relevance score")
-    context_token_limit: Optional[int] = Field(None, ge=100, le=100000, description="Max tokens for context")
-    include_sources: Optional[bool] = Field(None, description="Whether to include source citations")
-    chunk_size: Optional[int] = Field(None, ge=100, le=10000, description="Default chunk size for ingestion")
-    chunk_overlap: Optional[int] = Field(None, ge=0, le=1000, description="Chunk overlap for ingestion")
+    max_chunks: Optional[int] = Field(
+        None, ge=1, le=50, description="Maximum chunks to retrieve"
+    )
+    score_threshold: Optional[float] = Field(
+        None, ge=0, le=1, description="Minimum relevance score"
+    )
+    context_token_limit: Optional[int] = Field(
+        None, ge=100, le=100000, description="Max tokens for context"
+    )
+    include_sources: Optional[bool] = Field(
+        None, description="Whether to include source citations"
+    )
+    chunk_size: Optional[int] = Field(
+        None, ge=100, le=10000, description="Default chunk size for ingestion"
+    )
+    chunk_overlap: Optional[int] = Field(
+        None, ge=0, le=1000, description="Chunk overlap for ingestion"
+    )
     hybrid_search_weight: Optional[float] = Field(
         None, ge=0, le=1, description="Vector search weight (1-BM25 weight)"
     )
@@ -2767,10 +3108,14 @@ class RAGConfigResponse(BaseModel):
     max_chunks: int = Field(..., description="Maximum chunks to retrieve")
     score_threshold: float = Field(..., description="Minimum relevance score")
     context_token_limit: int = Field(..., description="Max tokens for context")
-    include_sources: bool = Field(..., description="Whether to include source citations")
+    include_sources: bool = Field(
+        ..., description="Whether to include source citations"
+    )
     chunk_size: int = Field(..., description="Default chunk size for ingestion")
     chunk_overlap: int = Field(..., description="Chunk overlap for ingestion")
-    hybrid_search_weight: float = Field(..., description="Vector search weight (1-BM25 weight)")
+    hybrid_search_weight: float = Field(
+        ..., description="Vector search weight (1-BM25 weight)"
+    )
 
 
 class KnowledgeBaseStatusResponse(BaseModel):
@@ -2781,7 +3126,9 @@ class KnowledgeBaseStatusResponse(BaseModel):
     lore_count: int = Field(..., ge=0, description="Number of lore entries")
     scenes_count: int = Field(..., ge=0, description="Number of scene entries")
     plotlines_count: int = Field(..., ge=0, description="Number of plotline entries")
-    last_sync: Optional[str] = Field(None, description="ISO 8601 timestamp of last sync")
+    last_sync: Optional[str] = Field(
+        None, description="ISO 8601 timestamp of last sync"
+    )
     is_healthy: bool = Field(..., description="Whether the vector store is healthy")
 
 
@@ -2801,11 +3148,15 @@ class RetrievedChunkResponse(BaseModel):
 
     chunk_id: str = Field(..., description="ID of the chunk")
     source_id: str = Field(..., description="ID of the source entity")
-    source_type: str = Field(..., description="Type of source (CHARACTER, LORE, SCENE, etc.)")
+    source_type: str = Field(
+        ..., description="Type of source (CHARACTER, LORE, SCENE, etc.)"
+    )
     content: str = Field(..., description="Chunk content text")
     score: float = Field(..., ge=0, le=1, description="Relevance score (0-1)")
     token_count: int = Field(..., ge=0, description="Estimated token count")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
     used: bool = Field(
         default=False,
         description="Whether this chunk was used in the generated response (BRAIN-036-03)",
@@ -2817,7 +3168,9 @@ class RAGContextResponse(BaseModel):
 
     query: str = Field(..., description="The query used for retrieval")
     chunks: List[RetrievedChunkResponse] = Field(..., description="Retrieved chunks")
-    total_tokens: int = Field(..., ge=0, description="Total tokens in retrieved context")
+    total_tokens: int = Field(
+        ..., ge=0, description="Total tokens in retrieved context"
+    )
     chunk_count: int = Field(..., ge=0, description="Number of chunks retrieved")
     sources: List[str] = Field(default_factory=list, description="Source references")
 
@@ -2839,21 +3192,16 @@ class KnowledgeMetadataSchema(BaseModel):
     """Structured metadata for knowledge entries (OPT-006)."""
 
     world_version: str = Field(
-        "1.0.0",
-        description="Version of the world this knowledge belongs to"
+        "1.0.0", description="Version of the world this knowledge belongs to"
     )
     confidentiality_level: ConfidentialityLevel = Field(
-        default=ConfidentialityLevel.PUBLIC,
-        description="Access control classification"
+        default=ConfidentialityLevel.PUBLIC, description="Access control classification"
     )
     last_accessed: Optional[str] = Field(
-        None,
-        description="ISO 8601 timestamp of last access (UTC)"
+        None, description="ISO 8601 timestamp of last access (UTC)"
     )
     source_version: int = Field(
-        1,
-        ge=1,
-        description="Version of the source content for tracking updates"
+        1, ge=1, description="Version of the source content for tracking updates"
     )
 
     @field_validator("last_accessed", mode="before")
@@ -2864,6 +3212,7 @@ class KnowledgeMetadataSchema(BaseModel):
             try:
                 # Parse and re-format to ensure valid ISO format
                 from datetime import datetime
+
                 parsed = datetime.fromisoformat(v.replace("Z", "+00:00"))
                 return parsed.isoformat()
             except ValueError:
@@ -2889,13 +3238,22 @@ class StartIngestionJobRequest(BaseModel):
     """Request model for starting an async ingestion job."""
 
     content: str = Field(..., description="Text content to ingest")
-    source_type: str = Field(..., description="Type of source (CHARACTER, LORE, SCENE, etc.)")
+    source_type: str = Field(
+        ..., description="Type of source (CHARACTER, LORE, SCENE, etc.)"
+    )
     source_id: str = Field(..., description="Unique ID of the source entity")
     tags: Optional[List[str]] = Field(None, description="Optional tags for filtering")
-    extra_metadata: Optional[Dict[str, Any]] = Field(None, description="Optional additional metadata (preserved for backward compatibility)")
+    extra_metadata: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Optional additional metadata (preserved for backward compatibility)",
+    )
     # OPT-006: Structured metadata fields
-    world_version: Optional[str] = Field(None, description="World version (default: 1.0.0)")
-    confidentiality_level: Optional[ConfidentialityLevel] = Field(None, description="Access control level (default: PUBLIC)")
+    world_version: Optional[str] = Field(
+        None, description="World version (default: 1.0.0)"
+    )
+    confidentiality_level: Optional[ConfidentialityLevel] = Field(
+        None, description="Access control level (default: PUBLIC)"
+    )
 
 
 class IngestionJobResponse(BaseModel):
@@ -2903,15 +3261,25 @@ class IngestionJobResponse(BaseModel):
 
     job_id: str = Field(..., description="Unique identifier for the job")
     status: IngestionJobStatus = Field(..., description="Current job status")
-    progress: float = Field(..., ge=0, le=100, description="Progress percentage (0-100)")
+    progress: float = Field(
+        ..., ge=0, le=100, description="Progress percentage (0-100)"
+    )
     source_id: str = Field(..., description="ID of the source being ingested")
     source_type: str = Field(..., description="Type of source")
     created_at: str = Field(..., description="ISO 8601 timestamp when job was created")
-    started_at: Optional[str] = Field(None, description="ISO 8601 timestamp when job started")
-    completed_at: Optional[str] = Field(None, description="ISO 8601 timestamp when job completed")
+    started_at: Optional[str] = Field(
+        None, description="ISO 8601 timestamp when job started"
+    )
+    completed_at: Optional[str] = Field(
+        None, description="ISO 8601 timestamp when job completed"
+    )
     error: Optional[str] = Field(None, description="Error message if job failed")
-    chunk_count: Optional[int] = Field(None, description="Number of chunks created (when complete)")
-    entries_created: Optional[int] = Field(None, description="Number of entries created (when complete)")
+    chunk_count: Optional[int] = Field(
+        None, description="Number of chunks created (when complete)"
+    )
+    entries_created: Optional[int] = Field(
+        None, description="Number of entries created (when complete)"
+    )
 
 
 class StartIngestionJobResponse(BaseModel):

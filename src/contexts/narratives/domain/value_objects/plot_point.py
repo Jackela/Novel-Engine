@@ -187,9 +187,7 @@ class PlotPoint:
             self.dramatic_tension,
             self.story_significance,
             tuple(self.prerequisite_events) if self.prerequisite_events else (),
-            tuple(self.triggered_consequences)
-            if self.triggered_consequences
-            else (),
+            tuple(self.triggered_consequences) if self.triggered_consequences else (),
             self.reveals_information,
             self.changes_character_relationships,
             self.advances_main_plot,

@@ -16,8 +16,8 @@ from typing import Any
 import pytest
 
 from src.contexts.knowledge.application.ports.i_graph_store import (
-    CliqueResult,
     CentralityResult,
+    CliqueResult,
     GraphAddResult,
     GraphEntity,
     GraphExportResult,
@@ -32,6 +32,8 @@ from src.contexts.knowledge.domain.models.entity import EntityType, Relationship
 from src.contexts.knowledge.infrastructure.adapters.networkx_graph_store import (
     NetworkXGraphStore,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -156,7 +158,9 @@ class TestNetworkXGraphStoreBasics:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_add_entities_batch(self, graph_store: NetworkXGraphStore, sample_entities: list[GraphEntity]) -> None:
+    async def test_add_entities_batch(
+        self, graph_store: NetworkXGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
         """Adding multiple entities in batch."""
         result = await graph_store.add_entities(sample_entities)
         assert result.entities_added == 4
@@ -219,7 +223,9 @@ class TestNetworkXGraphStoreBasics:
         assert await graph_store.entity_exists("NonExistent") is False
 
     @pytest.mark.asyncio
-    async def test_entity_exists_case_insensitive(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_entity_exists_case_insensitive(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Entity names are case-insensitive."""
         entity = GraphEntity(
             name="TestEntity",
@@ -247,13 +253,17 @@ class TestNetworkXGraphStoreBasics:
         assert exists is False
 
     @pytest.mark.asyncio
-    async def test_remove_entity_not_found(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_remove_entity_not_found(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Removing non-existent entity returns False."""
         result = await graph_store.remove_entity("NonExistent")
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_clear(self, graph_store: NetworkXGraphStore, sample_entities: list[GraphEntity]) -> None:
+    async def test_clear(
+        self, graph_store: NetworkXGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
         """Clearing the graph removes all entities."""
         await graph_store.add_entities(sample_entities)
         stats_before = await graph_store.get_stats()
@@ -286,7 +296,9 @@ class TestNetworkXGraphStoreRelationships:
         assert await graph_store.entity_exists("Bob") is True
 
     @pytest.mark.asyncio
-    async def test_add_duplicate_relationship(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_add_duplicate_relationship(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Adding duplicate relationship returns False."""
         relationship = GraphRelationship(
             source="Alice",
@@ -299,7 +311,9 @@ class TestNetworkXGraphStoreRelationships:
 
     @pytest.mark.asyncio
     async def test_add_relationships_batch(
-        self, graph_store: NetworkXGraphStore, sample_relationships: list[GraphRelationship]
+        self,
+        graph_store: NetworkXGraphStore,
+        sample_relationships: list[GraphRelationship],
     ) -> None:
         """Adding multiple relationships in batch."""
         result = await graph_store.add_relationships(sample_relationships)
@@ -340,7 +354,9 @@ class TestNetworkXGraphStoreRelationships:
         assert relationship_targets == {"Bob", "Carol"}
 
     @pytest.mark.asyncio
-    async def test_get_relationships_filtered(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_get_relationships_filtered(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Getting relationships filtered by type."""
         await graph_store.add_relationship(
             GraphRelationship(
@@ -365,7 +381,9 @@ class TestNetworkXGraphStoreRelationships:
         assert relationships[0].relationship_type == RelationshipType.KNOWS
 
     @pytest.mark.asyncio
-    async def test_get_relationships_between(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_get_relationships_between(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Getting relationships between two specific entities."""
         await graph_store.add_relationship(
             GraphRelationship(
@@ -390,7 +408,9 @@ class TestNetworkXGraphStoreRelationships:
         assert strengths == {0.9, 0.7}
 
     @pytest.mark.asyncio
-    async def test_get_relationships_between_none(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_get_relationships_between_none(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Getting relationships between entities with no connection returns empty list."""
         await graph_store.add_entity(
             GraphEntity(name="Alice", entity_type=EntityType.CHARACTER)
@@ -423,7 +443,9 @@ class TestNetworkXGraphStoreRelationships:
         assert len(relationships) == 0
 
     @pytest.mark.asyncio
-    async def test_remove_relationship_not_found(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_remove_relationship_not_found(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Removing non-existent relationship returns False."""
         result = await graph_store.remove_relationship(
             "Alice", "Bob", RelationshipType.KNOWS
@@ -706,7 +728,10 @@ class TestNetworkXGraphStoreStats:
 
     @pytest.mark.asyncio
     async def test_get_stats(
-        self, graph_store: NetworkXGraphStore, sample_entities: list[GraphEntity], sample_relationships: list[GraphRelationship]
+        self,
+        graph_store: NetworkXGraphStore,
+        sample_entities: list[GraphEntity],
+        sample_relationships: list[GraphRelationship],
     ) -> None:
         """Getting stats for populated graph."""
         await graph_store.add_entities(sample_entities)
@@ -724,7 +749,9 @@ class TestNetworkXGraphStoreGetAllEntities:
     """Tests for get_all_entities operation."""
 
     @pytest.mark.asyncio
-    async def test_get_all_entities(self, graph_store: NetworkXGraphStore, sample_entities: list[GraphEntity]) -> None:
+    async def test_get_all_entities(
+        self, graph_store: NetworkXGraphStore, sample_entities: list[GraphEntity]
+    ) -> None:
         """Getting all entities from graph."""
         await graph_store.add_entities(sample_entities)
 
@@ -773,20 +800,56 @@ class TestNetworkXGraphStoreComplexGraph:
         """
         # Entities
         entities = [
-            GraphEntity(name="Aragorn", entity_type=EntityType.CHARACTER, description="The ranger"),
-            GraphEntity(name="Gandalf", entity_type=EntityType.CHARACTER, description="The wizard"),
-            GraphEntity(name="King", entity_type=EntityType.CHARACTER, description="The ruler"),
-            GraphEntity(name="Arwen", entity_type=EntityType.CHARACTER, description="The elf"),
-            GraphEntity(name="Sauron", entity_type=EntityType.CHARACTER, description="The dark lord"),
+            GraphEntity(
+                name="Aragorn",
+                entity_type=EntityType.CHARACTER,
+                description="The ranger",
+            ),
+            GraphEntity(
+                name="Gandalf",
+                entity_type=EntityType.CHARACTER,
+                description="The wizard",
+            ),
+            GraphEntity(
+                name="King", entity_type=EntityType.CHARACTER, description="The ruler"
+            ),
+            GraphEntity(
+                name="Arwen", entity_type=EntityType.CHARACTER, description="The elf"
+            ),
+            GraphEntity(
+                name="Sauron",
+                entity_type=EntityType.CHARACTER,
+                description="The dark lord",
+            ),
         ]
         await graph_store.add_entities(entities)
 
         # Relationships
         relationships = [
-            GraphRelationship(source="Aragorn", target="Gandalf", relationship_type=RelationshipType.KNOWS, strength=0.95),
-            GraphRelationship(source="Gandalf", target="King", relationship_type=RelationshipType.SERVES, strength=0.9),
-            GraphRelationship(source="Aragorn", target="Arwen", relationship_type=RelationshipType.LOVES, strength=1.0),
-            GraphRelationship(source="Sauron", target="King", relationship_type=RelationshipType.KILLED, strength=0.85),
+            GraphRelationship(
+                source="Aragorn",
+                target="Gandalf",
+                relationship_type=RelationshipType.KNOWS,
+                strength=0.95,
+            ),
+            GraphRelationship(
+                source="Gandalf",
+                target="King",
+                relationship_type=RelationshipType.SERVES,
+                strength=0.9,
+            ),
+            GraphRelationship(
+                source="Aragorn",
+                target="Arwen",
+                relationship_type=RelationshipType.LOVES,
+                strength=1.0,
+            ),
+            GraphRelationship(
+                source="Sauron",
+                target="King",
+                relationship_type=RelationshipType.KILLED,
+                strength=0.85,
+            ),
         ]
         await graph_store.add_relationships(relationships)
 
@@ -824,12 +887,24 @@ class TestNetworkXGraphStoreAdvancedQueries:
 
         # Create bidirectional relationships for clique
         relationships = [
-            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Bob", target="Alice", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Bob", target="Carol", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Carol", target="Bob", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Carol", target="Alice", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Alice", target="Carol", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(
+                source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Bob", target="Alice", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Bob", target="Carol", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Carol", target="Bob", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Carol", target="Alice", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Alice", target="Carol", relationship_type=RelationshipType.KNOWS
+            ),
         ]
         await graph_store.add_relationships(relationships)
 
@@ -840,12 +915,13 @@ class TestNetworkXGraphStoreAdvancedQueries:
         assert result.clique_count >= 1
         # The clique should contain all three characters
         assert any(
-            set(clique) == {"Alice", "Bob", "Carol"}
-            for clique in result.cliques
+            set(clique) == {"Alice", "Bob", "Carol"} for clique in result.cliques
         )
 
     @pytest.mark.asyncio
-    async def test_find_cliques_with_filter(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_find_cliques_with_filter(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Finding cliques with entity type filter."""
         entities = [
             GraphEntity(name="Alice", entity_type=EntityType.CHARACTER),
@@ -856,18 +932,26 @@ class TestNetworkXGraphStoreAdvancedQueries:
 
         # Create clique among characters
         relationships = [
-            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Bob", target="Alice", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(
+                source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Bob", target="Alice", relationship_type=RelationshipType.KNOWS
+            ),
         ]
         await graph_store.add_relationships(relationships)
 
         # Filter by CHARACTER type - should find the character clique
-        result = await graph_store.find_cliques(min_size=2, entity_type=EntityType.CHARACTER)
+        result = await graph_store.find_cliques(
+            min_size=2, entity_type=EntityType.CHARACTER
+        )
 
         assert result.clique_count >= 1
 
         # Filter by LOCATION type - should find no cliques (single node)
-        result = await graph_store.find_cliques(min_size=2, entity_type=EntityType.LOCATION)
+        result = await graph_store.find_cliques(
+            min_size=2, entity_type=EntityType.LOCATION
+        )
 
         assert result.clique_count == 0
 
@@ -884,10 +968,18 @@ class TestNetworkXGraphStoreAdvancedQueries:
 
         # Create fully connected clique of 4
         for i, entity1 in enumerate(entities):
-            for entity2 in entities[i + 1:]:
+            for entity2 in entities[i + 1 :]:
                 relationships = [
-                    GraphRelationship(source=entity1.name, target=entity2.name, relationship_type=RelationshipType.KNOWS),
-                    GraphRelationship(source=entity2.name, target=entity1.name, relationship_type=RelationshipType.KNOWS),
+                    GraphRelationship(
+                        source=entity1.name,
+                        target=entity2.name,
+                        relationship_type=RelationshipType.KNOWS,
+                    ),
+                    GraphRelationship(
+                        source=entity2.name,
+                        target=entity1.name,
+                        relationship_type=RelationshipType.KNOWS,
+                    ),
                 ]
                 await graph_store.add_relationships(relationships)
 
@@ -913,9 +1005,15 @@ class TestNetworkXGraphStoreAdvancedQueries:
 
         # Hub connects to all others (except Isolated)
         relationships = [
-            GraphRelationship(source="Hub", target="Node1", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Hub", target="Node2", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Hub", target="Node3", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(
+                source="Hub", target="Node1", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Hub", target="Node2", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Hub", target="Node3", relationship_type=RelationshipType.KNOWS
+            ),
         ]
         await graph_store.add_relationships(relationships)
 
@@ -939,7 +1037,9 @@ class TestNetworkXGraphStoreAdvancedQueries:
         assert pageranks == sorted(pageranks, reverse=True)
 
     @pytest.mark.asyncio
-    async def test_get_centrality_single_entity(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_get_centrality_single_entity(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Calculate centrality for a single entity."""
         await graph_store.add_entity(
             GraphEntity(name="Alice", entity_type=EntityType.CHARACTER)
@@ -948,7 +1048,9 @@ class TestNetworkXGraphStoreAdvancedQueries:
             GraphEntity(name="Bob", entity_type=EntityType.CHARACTER)
         )
         await graph_store.add_relationship(
-            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS)
+            GraphRelationship(
+                source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS
+            )
         )
 
         result = await graph_store.get_centrality(entity_name="Alice")
@@ -972,7 +1074,7 @@ class TestNetworkXGraphStoreAdvancedQueries:
                 GraphRelationship(
                     source="Entity0",
                     target=f"Entity{i}",
-                    relationship_type=RelationshipType.KNOWS
+                    relationship_type=RelationshipType.KNOWS,
                 )
             )
 
@@ -990,7 +1092,9 @@ class TestNetworkXGraphStoreAdvancedQueries:
         assert len(results) == 5
 
     @pytest.mark.asyncio
-    async def test_find_all_shortest_paths(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_find_all_shortest_paths(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Find shortest paths from source to all reachable entities."""
         # Create a line: A -> B -> C -> D
         entities = [
@@ -1003,9 +1107,15 @@ class TestNetworkXGraphStoreAdvancedQueries:
         await graph_store.add_entities(entities)
 
         relationships = [
-            GraphRelationship(source="A", target="B", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="B", target="C", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="C", target="D", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(
+                source="A", target="B", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="B", target="C", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="C", target="D", relationship_type=RelationshipType.KNOWS
+            ),
         ]
         await graph_store.add_relationships(relationships)
 
@@ -1023,7 +1133,9 @@ class TestNetworkXGraphStoreAdvancedQueries:
         assert results["D"].length == 3
 
     @pytest.mark.asyncio
-    async def test_find_all_shortest_paths_with_cutoff(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_find_all_shortest_paths_with_cutoff(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Find shortest paths with cutoff limit."""
         entities = [
             GraphEntity(name="Source", entity_type=EntityType.CHARACTER),
@@ -1034,9 +1146,15 @@ class TestNetworkXGraphStoreAdvancedQueries:
         await graph_store.add_entities(entities)
 
         relationships = [
-            GraphRelationship(source="Source", target="T1", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Source", target="T2", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="Source", target="T3", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(
+                source="Source", target="T1", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Source", target="T2", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="Source", target="T3", relationship_type=RelationshipType.KNOWS
+            ),
         ]
         await graph_store.add_relationships(relationships)
 
@@ -1046,7 +1164,9 @@ class TestNetworkXGraphStoreAdvancedQueries:
         assert len(results) == 2
 
     @pytest.mark.asyncio
-    async def test_find_all_shortest_paths_max_length(self, graph_store: NetworkXGraphStore) -> None:
+    async def test_find_all_shortest_paths_max_length(
+        self, graph_store: NetworkXGraphStore
+    ) -> None:
         """Find shortest paths with max_length constraint."""
         entities = [
             GraphEntity(name="A", entity_type=EntityType.CHARACTER),
@@ -1056,8 +1176,12 @@ class TestNetworkXGraphStoreAdvancedQueries:
         await graph_store.add_entities(entities)
 
         relationships = [
-            GraphRelationship(source="A", target="B", relationship_type=RelationshipType.KNOWS),
-            GraphRelationship(source="B", target="C", relationship_type=RelationshipType.KNOWS),
+            GraphRelationship(
+                source="A", target="B", relationship_type=RelationshipType.KNOWS
+            ),
+            GraphRelationship(
+                source="B", target="C", relationship_type=RelationshipType.KNOWS
+            ),
         ]
         await graph_store.add_relationships(relationships)
 
@@ -1072,18 +1196,29 @@ class TestNetworkXGraphStoreExport:
     """Tests for graph export operations - BRAIN-031B."""
 
     @pytest.mark.asyncio
-    async def test_export_graphml(self, graph_store: NetworkXGraphStore, tmp_path: Any) -> None:
+    async def test_export_graphml(
+        self, graph_store: NetworkXGraphStore, tmp_path: Any
+    ) -> None:
         """Export graph to GraphML format."""
         import os
 
         entities = [
-            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, description="A warrior"),
-            GraphEntity(name="Bob", entity_type=EntityType.CHARACTER, description="A wizard"),
+            GraphEntity(
+                name="Alice", entity_type=EntityType.CHARACTER, description="A warrior"
+            ),
+            GraphEntity(
+                name="Bob", entity_type=EntityType.CHARACTER, description="A wizard"
+            ),
         ]
         await graph_store.add_entities(entities)
 
         await graph_store.add_relationship(
-            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS, context="Friends")
+            GraphRelationship(
+                source="Alice",
+                target="Bob",
+                relationship_type=RelationshipType.KNOWS,
+                context="Friends",
+            )
         )
 
         output_path = str(tmp_path / "test_graph.graphml")
@@ -1103,12 +1238,18 @@ class TestNetworkXGraphStoreExport:
             assert "graphml" in content.lower()
 
     @pytest.mark.asyncio
-    async def test_export_graphml_without_metadata(self, graph_store: NetworkXGraphStore, tmp_path: Any) -> None:
+    async def test_export_graphml_without_metadata(
+        self, graph_store: NetworkXGraphStore, tmp_path: Any
+    ) -> None:
         """Export graph to GraphML without metadata."""
         import os
 
         entities = [
-            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, metadata={"custom": "data"}),
+            GraphEntity(
+                name="Alice",
+                entity_type=EntityType.CHARACTER,
+                metadata={"custom": "data"},
+            ),
         ]
         await graph_store.add_entities(entities)
 
@@ -1119,18 +1260,24 @@ class TestNetworkXGraphStoreExport:
         assert os.path.exists(output_path)
 
     @pytest.mark.asyncio
-    async def test_export_json_to_file(self, graph_store: NetworkXGraphStore, tmp_path: Any) -> None:
+    async def test_export_json_to_file(
+        self, graph_store: NetworkXGraphStore, tmp_path: Any
+    ) -> None:
         """Export graph to JSON file."""
         import json
         import os
 
         entities = [
-            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, aliases=("Ally",)),
+            GraphEntity(
+                name="Alice", entity_type=EntityType.CHARACTER, aliases=("Ally",)
+            ),
         ]
         await graph_store.add_entities(entities)
 
         await graph_store.add_relationship(
-            GraphRelationship(source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS)
+            GraphRelationship(
+                source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS
+            )
         )
 
         output_path = str(tmp_path / "test_graph.json")

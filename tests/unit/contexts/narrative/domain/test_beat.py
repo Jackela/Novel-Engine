@@ -13,6 +13,8 @@ import pytest
 
 from src.contexts.narrative.domain.entities.beat import Beat, BeatType
 
+pytestmark = pytest.mark.unit
+
 
 class TestBeatMoodShift:
     """Test suite for Beat mood_shift pacing feature."""

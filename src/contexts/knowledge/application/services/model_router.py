@@ -25,8 +25,6 @@ import structlog
 
 from ...domain.models.model_registry import (
     LLMProvider,
-    ModelDefinition,
-    TaskModelConfig,
     TaskType,
 )
 
@@ -246,10 +244,7 @@ class CircuitBreaker:
             True if request should be allowed, False if it should be rejected
         """
         # Auto-transition from OPEN to HALF_OPEN after timeout
-        if (
-            self._state.state == CircuitState.OPEN
-            and self._state.last_failure_time
-        ):
+        if self._state.state == CircuitState.OPEN and self._state.last_failure_time:
             time_since_failure = datetime.now() - self._state.last_failure_time
             if time_since_failure.total_seconds() >= self._config.timeout_seconds:
                 # Transition to HALF_OPEN
@@ -481,9 +476,7 @@ class ModelRouter:
 
         # Filter out blocked providers
         candidates = [
-            (p, m)
-            for p, m in candidates
-            if p not in config.blocked_providers
+            (p, m) for p, m in candidates if p not in config.blocked_providers
         ]
 
         # Select best candidate
@@ -724,7 +717,9 @@ class ModelRouter:
         if len(self._routing_history) > self._max_history_size:
             self._routing_history = self._routing_history[-self._max_history_size :]
 
-    async def record_model_success(self, provider: LLMProvider, model_name: str) -> None:
+    async def record_model_success(
+        self, provider: LLMProvider, model_name: str
+    ) -> None:
         """
         Record a successful model execution.
 
@@ -794,9 +789,8 @@ class ModelRouter:
             provider_counts[provider] = provider_counts.get(provider, 0) + 1
 
         # Calculate avg execution time
-        avg_time = (
-            sum(d.execution_time_ms for d in self._routing_history)
-            / len(self._routing_history)
+        avg_time = sum(d.execution_time_ms for d in self._routing_history) / len(
+            self._routing_history
         )
 
         # Circuit breaker stats
@@ -851,9 +845,7 @@ class ModelRouter:
             return True
         return False
 
-    def list_recent_decisions(
-        self, limit: int = 10
-    ) -> list[dict[str, Any]]:
+    def list_recent_decisions(self, limit: int = 10) -> list[dict[str, Any]]:
         """
         Get recent routing decisions.
 

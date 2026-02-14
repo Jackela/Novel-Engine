@@ -17,7 +17,7 @@ from src.api.schemas import (
     SimulationRequest,
 )
 from src.api.services.paths import get_characters_directory_path
-from src.core.result import Error, Ok, Result
+from src.core.result import Err, Error, Ok
 
 if TYPE_CHECKING:
     from src.core.result import _Error as ResultError
@@ -32,7 +32,9 @@ class OrchestrationService:
     def __init__(self, api_service: Any = None):
         self.api_service = api_service
 
-    async def get_status(self) -> ResultOk[OrchestrationStatusData] | ResultError[Error]:
+    async def get_status(
+        self,
+    ) -> ResultOk[OrchestrationStatusData] | ResultError[Error]:
         """
         Get current orchestration status.
 

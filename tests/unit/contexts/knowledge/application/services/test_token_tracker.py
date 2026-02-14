@@ -12,20 +12,22 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.contexts.knowledge.application.services.model_registry import (
+    ModelRegistry,
+)
 from src.contexts.knowledge.application.services.token_tracker import (
+    TokenAwareConfig,
     TokenTracker,
     TrackingContext,
-    TokenAwareConfig,
     create_token_tracker,
 )
-from src.contexts.knowledge.domain.models.token_usage import TokenUsage
 from src.contexts.knowledge.domain.models.model_registry import (
     LLMProvider,
     ModelDefinition,
 )
-from src.contexts.knowledge.application.services.model_registry import (
-    ModelRegistry,
-)
+from src.contexts.knowledge.domain.models.token_usage import TokenUsage
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -35,7 +37,9 @@ def mock_registry():
 
     # Setup resolve_model to return model definitions
     def mock_resolve(model_ref: str):
-        from src.contexts.knowledge.application.services.model_registry import ModelLookupResult
+        from src.contexts.knowledge.application.services.model_registry import (
+            ModelLookupResult,
+        )
 
         if "gpt" in model_ref.lower():
             return ModelLookupResult(

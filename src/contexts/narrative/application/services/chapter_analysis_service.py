@@ -242,9 +242,7 @@ class ChapterAnalysisService:
         tension_arc = self._analyze_tension_arc(sorted_scenes)
 
         # Generate warnings
-        warnings = self._generate_warnings(
-            sorted_scenes, phase_dist, tension_arc
-        )
+        warnings = self._generate_warnings(sorted_scenes, phase_dist, tension_arc)
 
         # Calculate overall health score
         health_score = self._calculate_health_score(warnings, total_scenes)
@@ -282,9 +280,7 @@ class ChapterAnalysisService:
             recommendations=["Add scenes to this chapter to begin analysis."],
         )
 
-    def _analyze_phase_distribution(
-        self, scenes: list[Scene]
-    ) -> PhaseDistribution:
+    def _analyze_phase_distribution(self, scenes: list[Scene]) -> PhaseDistribution:
         """Count scenes per story phase.
 
         Args:
@@ -305,9 +301,7 @@ class ChapterAnalysisService:
             resolution=counter.get(StoryPhase.RESOLUTION, 0),
         )
 
-    def _estimate_word_count(
-        self, scenes: list[Scene]
-    ) -> WordCountEstimate:
+    def _estimate_word_count(self, scenes: list[Scene]) -> WordCountEstimate:
         """Estimate word count based on beat counts.
 
         Args:
@@ -342,9 +336,7 @@ class ChapterAnalysisService:
             per_scene_average=round(per_scene_average, 1),
         )
 
-    def _analyze_tension_arc(
-        self, scenes: list[Scene]
-    ) -> TensionArcShape:
+    def _analyze_tension_arc(self, scenes: list[Scene]) -> TensionArcShape:
         """Analyze the shape of the tension arc.
 
         Args:
@@ -471,8 +463,7 @@ class ChapterAnalysisService:
                     ),
                     severity="medium",
                     affected_scenes=[
-                        s.id for s in scenes
-                        if s.story_phase.value == "rising_action"
+                        s.id for s in scenes if s.story_phase.value == "rising_action"
                     ],
                     recommendation=(
                         "Consider trimming or combining some rising action "
@@ -535,9 +526,7 @@ class ChapterAnalysisService:
             )
 
         # Check for underdeveloped scenes (too few beats)
-        underdeveloped = [
-            s for s in scenes if len(s.beats) < self.MIN_BEATS_PER_SCENE
-        ]
+        underdeveloped = [s for s in scenes if len(s.beats) < self.MIN_BEATS_PER_SCENE]
         if underdeveloped:
             warnings.append(
                 HealthWarning(
@@ -592,9 +581,7 @@ class ChapterAnalysisService:
             return HealthScore.GOOD
         return HealthScore.EXCELLENT
 
-    def _generate_recommendations(
-        self, warnings: list[HealthWarning]
-    ) -> list[str]:
+    def _generate_recommendations(self, warnings: list[HealthWarning]) -> list[str]:
         """Generate summary recommendations from warnings.
 
         Args:

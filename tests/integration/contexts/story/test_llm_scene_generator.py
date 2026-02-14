@@ -9,8 +9,9 @@ Tests the LLM adapter with mocked API calls to verify:
 from __future__ import annotations
 
 import json
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from src.api.schemas import CharacterGenerationResponse
 from src.contexts.story.application.ports.scene_generator_port import (
@@ -19,6 +20,8 @@ from src.contexts.story.application.ports.scene_generator_port import (
 from src.contexts.story.infrastructure.generators.llm_scene_generator import (
     LLMSceneGenerator,
 )
+
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
@@ -46,12 +49,14 @@ def scene_input(character_context: CharacterGenerationResponse) -> SceneGenerati
 @pytest.fixture
 def valid_llm_response() -> str:
     """Return a valid JSON response string."""
-    return json.dumps({
-        "title": "Shadows in the Alley",
-        "content": "Kael pressed his back against the cold brick wall, the distant neon signs casting fractured light across his scarred face. The footsteps grew closer, echoing through the narrow passage.",
-        "summary": "Kael faces off against pursuers in a rain-soaked alley.",
-        "visual_prompt": "dark alley, neon reflections on wet pavement, silhouette confrontation",
-    })
+    return json.dumps(
+        {
+            "title": "Shadows in the Alley",
+            "content": "Kael pressed his back against the cold brick wall, the distant neon signs casting fractured light across his scarred face. The footsteps grew closer, echoing through the narrow passage.",
+            "summary": "Kael faces off against pursuers in a rain-soaked alley.",
+            "visual_prompt": "dark alley, neon reflections on wet pavement, silhouette confrontation",
+        }
+    )
 
 
 @pytest.mark.integration
@@ -139,7 +144,7 @@ class TestLLMSceneGeneratorParsing:
         """Generator should extract JSON from markdown code blocks."""
         generator = LLMSceneGenerator(model="test-model")
 
-        markdown_response = '''Here's the scene:
+        markdown_response = """Here's the scene:
 ```json
 {
     "title": "Dawn's Edge",
@@ -148,7 +153,7 @@ class TestLLMSceneGeneratorParsing:
     "visual_prompt": "sunrise over ruins"
 }
 ```
-'''
+"""
 
         def fake_call(self, system_prompt: str, user_prompt: str) -> str:
             return markdown_response

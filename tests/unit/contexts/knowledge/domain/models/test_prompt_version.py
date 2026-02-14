@@ -5,21 +5,22 @@ Warzone 4: AI Brain - BRAIN-016A
 Tests for PromptVersion and VersionDiff value objects.
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.contexts.knowledge.domain.models.prompt_version import (
-    PromptVersion,
-    VersionDiff,
-)
 from src.contexts.knowledge.domain.models.prompt_template import (
     ModelConfig,
     PromptTemplate,
     VariableDefinition,
     VariableType,
 )
+from src.contexts.knowledge.domain.models.prompt_version import (
+    PromptVersion,
+    VersionDiff,
+)
 
+pytestmark = pytest.mark.unit
 
 class TestVersionDiff:
     """Tests for VersionDiff value object."""

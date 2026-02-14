@@ -417,5 +417,3 @@ class SimulationCoordinator:
         """Update simulation tracking metrics."""
         self.current_turn_number = turn_number
         self.total_actions_processed = actions_processed
-
-

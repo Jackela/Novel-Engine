@@ -12,6 +12,8 @@ import pytest
 from src.contexts.narratives.domain.services import StoryArcManager
 from src.contexts.narratives.domain.value_objects import StoryArcPhase, StoryArcState
 
+pytestmark = pytest.mark.unit
+
 
 def build_state(
     phase: StoryArcPhase,

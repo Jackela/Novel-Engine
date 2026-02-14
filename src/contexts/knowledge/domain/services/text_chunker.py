@@ -15,12 +15,11 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Final, List, Tuple, Optional
+from typing import Final, List, Tuple
 
 from ..models.chunking_strategy import (
-    ChunkStrategyType,
     ChunkingStrategy,
+    ChunkStrategyType,
 )
 
 
@@ -79,13 +78,9 @@ class TextChunker:
     """
 
     # Regex patterns for splitting
-    _SENTENCE_END: Final[re.Pattern] = re.compile(
-        r'[.!?]+\s+', re.MULTILINE
-    )
-    _PARAGRAPH_DELIM: Final[re.Pattern] = re.compile(
-        r'\n\n+', re.MULTILINE
-    )
-    _WORD_PATTERN: Final[re.Pattern] = re.compile(r'\S+')
+    _SENTENCE_END: Final[re.Pattern] = re.compile(r"[.!?]+\s+", re.MULTILINE)
+    _PARAGRAPH_DELIM: Final[re.Pattern] = re.compile(r"\n\n+", re.MULTILINE)
+    _WORD_PATTERN: Final[re.Pattern] = re.compile(r"\S+")
 
     @staticmethod
     def chunk(text: str, strategy: ChunkingStrategy) -> ChunkedDocument:
@@ -191,8 +186,7 @@ class TextChunker:
         current_sentences: List[Tuple[int, int]] = []
         current_word_count = 0
         chunk_index = 0
-        overlap_sentences: List[Tuple[int, int]] = []
-        overlap_word_count = 0
+        # Overlap tracking computed dynamically for each chunk
 
         for start, end in sentences:
             sentence_text = text[start:end].strip()
@@ -224,10 +218,13 @@ class TextChunker:
                 # Keep overlap sentences for next chunk
                 overlap_to_keep: List[Tuple[int, int]] = []
                 overlap_count = 0
+                overlap_limit = strategy.overlap or 0
                 # Walk backwards from the end of current sentences
                 for s_start, s_end in reversed(current_sentences):
-                    s_words = len(TextChunker._WORD_PATTERN.findall(text[s_start:s_end]))
-                    if overlap_count + s_words <= strategy.overlap:
+                    s_words = len(
+                        TextChunker._WORD_PATTERN.findall(text[s_start:s_end])
+                    )
+                    if overlap_count + s_words <= overlap_limit:
                         overlap_to_keep.insert(0, (s_start, s_end))
                         overlap_count += s_words
                     else:
@@ -266,7 +263,9 @@ class TextChunker:
 
         for match in TextChunker._PARAGRAPH_DELIM.finditer(text):
             end_pos = match.end()
-            paragraphs.append((last_end, end_pos - len(match.group())))  # Exclude delimiter
+            paragraphs.append(
+                (last_end, end_pos - len(match.group()))
+            )  # Exclude delimiter
             last_end = end_pos
 
         # Add remaining text
@@ -311,9 +310,12 @@ class TextChunker:
                 # Keep overlap paragraphs
                 overlap_to_keep: List[Tuple[int, int]] = []
                 overlap_count = 0
+                overlap_limit = strategy.overlap or 0
                 for p_start, p_end in reversed(current_paragraphs):
-                    p_words = len(TextChunker._WORD_PATTERN.findall(text[p_start:p_end]))
-                    if overlap_count + p_words <= strategy.overlap:
+                    p_words = len(
+                        TextChunker._WORD_PATTERN.findall(text[p_start:p_end])
+                    )
+                    if overlap_count + p_words <= overlap_limit:
                         overlap_to_keep.insert(0, (p_start, p_end))
                         overlap_count += p_words
                     else:
@@ -356,7 +358,10 @@ class TextChunker:
         para_chunks = TextChunker._chunk_by_paragraph(text, strategy)
 
         # If paragraphs are too large, fall back to sentence chunking
-        if len(para_chunks) == 1 and para_chunks[0].word_count > strategy.chunk_size * 1.5:
+        if (
+            len(para_chunks) == 1
+            and para_chunks[0].word_count > strategy.chunk_size * 1.5
+        ):
             return TextChunker._chunk_by_sentence(text, strategy)
 
         return para_chunks
@@ -378,7 +383,6 @@ class TextChunker:
             return len(text)
 
         target_word = words[word_index]
-        position = 0
         words_found = 0
 
         for match in TextChunker._WORD_PATTERN.finditer(text):

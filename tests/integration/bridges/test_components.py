@@ -13,6 +13,9 @@ import sys
 import pytest
 
 # Add src to path for package imports
+
+pytestmark = pytest.mark.integration
+
 project_root = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..")
 )
@@ -47,9 +50,7 @@ async def test_bridge_infrastructure():
     print("\n🌉 Testing Bridge Infrastructure...")
 
     if not BRIDGE_AVAILABLE:
-        pytest.skip(
-            "Bridge infrastructure not available after refactoring"
-        )
+        pytest.skip("Bridge infrastructure not available after refactoring")
 
     try:
         # Test basic coordinator functionality if available

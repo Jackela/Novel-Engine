@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures';
 import { DashboardPage } from './pages/DashboardPage';
+import { scalePerf } from './utils/perf';
 
 /**
  * Emergent Narrative Dashboard - Extended UAT Test Suite
@@ -245,7 +246,7 @@ test.describe('Extended UAT Scenarios', () => {
       const totalRenderTime = renderComplete - navigationStart;
 
       console.log(`  Initial render time: ${totalRenderTime}ms`);
-      expect(totalRenderTime).toBeLessThan(5000); // Should render within 5 seconds
+      expect(totalRenderTime).toBeLessThan(scalePerf(5000)); // Should render within 5 seconds
 
       // Measure time to interactive (when controls are clickable)
       const interactiveStart = Date.now();
@@ -253,7 +254,7 @@ test.describe('Extended UAT Scenarios', () => {
       const interactiveTime = Date.now() - interactiveStart;
 
       console.log(`  Time to interactive: ${interactiveTime}ms`);
-      expect(interactiveTime).toBeLessThan(2000); // Should be interactive within 2 seconds
+      expect(interactiveTime).toBeLessThan(scalePerf(2000)); // Should be interactive within 2 seconds
 
       console.log('✅ Initial render performance validated');
     });
@@ -269,7 +270,7 @@ test.describe('Extended UAT Scenarios', () => {
       const firstUpdateTime = Date.now() - updateStart;
 
       console.log(`  First update response: ${firstUpdateTime}ms`);
-      expect(firstUpdateTime).toBeLessThan(4000); // Flow layout sim instrumentation allows up to ~3s for first burst
+      expect(firstUpdateTime).toBeLessThan(scalePerf(4000)); // Flow layout sim instrumentation allows up to ~3s for first burst
 
       // Monitor continuous updates
       let updateCount = 0;

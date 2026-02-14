@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from ...application.ports.i_llm_client import ILLMClient, LLMRequest, LLMError
+from ...application.ports.i_llm_client import ILLMClient, LLMError, LLMRequest
 
 if TYPE_CHECKING:
     pass
@@ -129,6 +129,7 @@ class QueryRewriterCacheEntry:
         """Set creation timestamp if not provided."""
         if self.created_at == 0.0:
             import time
+
             self.created_at = time.time()
 
 
@@ -231,7 +232,9 @@ class QueryRewriter:
                 self._total_tokens_saved += cached.tokens_saved
                 return RewriteResult(
                     original_query=query,
-                    variants=self._build_result_variants(query, cached.variants, rewrite_config),
+                    variants=self._build_result_variants(
+                        query, cached.variants, rewrite_config
+                    ),
                     strategy=rewrite_config.strategy,
                     cached=True,
                     tokens_saved=cached.tokens_saved,
@@ -496,7 +499,7 @@ Return ONLY a valid JSON array of strings, like this:
             # Remove common prefixes
             for prefix in ['"-', "* ", "• ", "- ", "1. ", "2. ", "3. "]:
                 if line.startswith(prefix):
-                    line = line[len(prefix):].strip('"').strip()
+                    line = line[len(prefix) :].strip('"').strip()
                     break
             if line and len(line) > 2:
                 result.append(line)

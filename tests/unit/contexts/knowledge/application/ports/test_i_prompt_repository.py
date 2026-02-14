@@ -20,6 +20,8 @@ from src.contexts.knowledge.domain.models.prompt_template import (
     VariableType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class MockPromptRepository(IPromptRepository):
     """Mock implementation of IPromptRepository for testing."""
@@ -119,9 +121,7 @@ class TestIPromptRepository:
             id="test-1",
             name="Test Template",
             content="Hello {{name}}!",
-            variables=(
-                VariableDefinition(name="name", type=VariableType.STRING),
-            ),
+            variables=(VariableDefinition(name="name", type=VariableType.STRING),),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
@@ -167,9 +167,7 @@ class TestIPromptRepository:
         assert templates[0].id == "test-1"
 
     @pytest.mark.asyncio
-    async def test_list_all_with_tags(
-        self, repository: MockPromptRepository
-    ) -> None:
+    async def test_list_all_with_tags(self, repository: MockPromptRepository) -> None:
         """Should filter templates by tags."""
         template1 = PromptTemplate(
             id="test-1",
@@ -290,9 +288,7 @@ class TestIPromptRepository:
         assert await repository.count() == 1
 
     @pytest.mark.asyncio
-    async def test_search(
-        self, repository: MockPromptRepository
-    ) -> None:
+    async def test_search(self, repository: MockPromptRepository) -> None:
         """Should search templates by name or description."""
         template1 = PromptTemplate(
             id="test-1",

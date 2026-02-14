@@ -9,28 +9,31 @@ with prompt enrichment.
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.contexts.knowledge.application.services.rag_integration_service import (
-    RAGIntegrationService,
-    RAGConfig,
-    EnrichedPrompt,
-    RAGMetrics,
-    DEFAULT_MAX_CHUNKS,
-    DEFAULT_CONTEXT_TOKEN_LIMIT,
-    DEFAULT_ENABLED,
-)
-from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievalService,
-    RetrievalFilter,
-    RetrievalResult,
-    FormattedContext,
-)
+import pytest
+
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
     RetrievedChunk,
 )
+from src.contexts.knowledge.application.services.rag_integration_service import (
+    DEFAULT_CONTEXT_TOKEN_LIMIT,
+    DEFAULT_ENABLED,
+    DEFAULT_MAX_CHUNKS,
+    EnrichedPrompt,
+    RAGConfig,
+    RAGIntegrationService,
+    RAGMetrics,
+)
+from src.contexts.knowledge.application.services.retrieval_service import (
+    FormattedContext,
+    RetrievalFilter,
+    RetrievalResult,
+    RetrievalService,
+)
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -412,9 +415,13 @@ class TestRAGIntegrationService:
         mock_retrieval_service,
     ):
         """Test that failed queries are tracked."""
-        from src.contexts.knowledge.application.ports.i_vector_store import VectorStoreError
+        from src.contexts.knowledge.application.ports.i_vector_store import (
+            VectorStoreError,
+        )
 
-        mock_retrieval_service.retrieve_relevant.side_effect = VectorStoreError("DB error")
+        mock_retrieval_service.retrieve_relevant.side_effect = VectorStoreError(
+            "DB error"
+        )
 
         service = RAGIntegrationService(retrieval_service=mock_retrieval_service)
 

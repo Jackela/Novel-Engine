@@ -23,6 +23,8 @@ from src.contexts.knowledge.infrastructure.adapters.embedding_generator_adapter 
     EmbeddingServiceAdapter,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def mock_embedding_service() -> EmbeddingServiceAdapter:
@@ -208,9 +210,7 @@ class TestEmbeddingServiceAdapter:
         self, mock_embedding_service: EmbeddingServiceAdapter
     ):
         """Test that large model produces 3072-dimensional embeddings."""
-        service = EmbeddingServiceAdapter(
-            model="text-embedding-3-large", use_mock=True
-        )
+        service = EmbeddingServiceAdapter(model="text-embedding-3-large", use_mock=True)
         text = "The brave warrior fought with honor."
 
         embedding = await service.embed(text)

@@ -4,8 +4,8 @@ This test suite covers the Foreshadowing entity for Director Mode,
 testing foreshadowing creation, validation, and payoff linking.
 """
 
-from uuid import uuid4
 from datetime import datetime, timezone
+from uuid import uuid4
 
 import pytest
 
@@ -14,6 +14,8 @@ from src.contexts.narrative.domain.entities.foreshadowing import (
     ForeshadowingStatus,
 )
 from src.contexts.narrative.domain.entities.scene import Scene
+
+pytestmark = pytest.mark.unit
 
 
 class TestForeshadowingCreation:
@@ -60,7 +62,9 @@ class TestForeshadowingCreation:
     @pytest.mark.unit
     def test_create_foreshadowing_with_empty_description_raises_error(self):
         """Test that empty description raises ValueError."""
-        with pytest.raises(ValueError, match="Foreshadowing description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Foreshadowing description cannot be empty"
+        ):
             Foreshadowing(
                 setup_scene_id=uuid4(),
                 description="",
@@ -69,7 +73,9 @@ class TestForeshadowingCreation:
     @pytest.mark.unit
     def test_create_foreshadowing_with_whitespace_description_raises_error(self):
         """Test that whitespace-only description raises ValueError."""
-        with pytest.raises(ValueError, match="Foreshadowing description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Foreshadowing description cannot be empty"
+        ):
             Foreshadowing(
                 setup_scene_id=uuid4(),
                 description="   ",
@@ -78,7 +84,9 @@ class TestForeshadowingCreation:
     @pytest.mark.unit
     def test_create_foreshadowing_paid_off_without_payoff_scene_raises_error(self):
         """Test that PAID_OFF status without payoff_scene_id raises ValueError."""
-        with pytest.raises(ValueError, match="PAID_OFF status must have a payoff_scene_id"):
+        with pytest.raises(
+            ValueError, match="PAID_OFF status must have a payoff_scene_id"
+        ):
             Foreshadowing(
                 setup_scene_id=uuid4(),
                 description="The setup",
@@ -88,7 +96,9 @@ class TestForeshadowingCreation:
     @pytest.mark.unit
     def test_create_foreshadowing_with_payoff_but_planted_status_raises_error(self):
         """Test that payoff_scene_id with PLANTED status raises ValueError."""
-        with pytest.raises(ValueError, match="payoff_scene_id must have PAID_OFF status"):
+        with pytest.raises(
+            ValueError, match="payoff_scene_id must have PAID_OFF status"
+        ):
             Foreshadowing(
                 setup_scene_id=uuid4(),
                 description="The setup",
@@ -195,14 +205,18 @@ class TestForeshadowingPayoffLinking:
             description="The setup",
         )
 
-        with pytest.raises(ValueError, match="Payoff scene cannot be the same as setup scene"):
+        with pytest.raises(
+            ValueError, match="Payoff scene cannot be the same as setup scene"
+        ):
             foreshadowing.link_payoff(setup_scene.id, mock_get_scene)
 
     @pytest.mark.unit
     def test_link_payoff_validates_scene_order(self):
         """Test that payoff must come after setup in story order."""
         setup_scene = Scene(title="Setup Scene", chapter_id=uuid4(), order_index=5)
-        payoff_scene = Scene(title="Payoff Scene", chapter_id=setup_scene.chapter_id, order_index=2)
+        payoff_scene = Scene(
+            title="Payoff Scene", chapter_id=setup_scene.chapter_id, order_index=2
+        )
 
         def mock_get_scene(scene_id):
             return {
@@ -215,7 +229,9 @@ class TestForeshadowingPayoffLinking:
             description="The setup",
         )
 
-        with pytest.raises(ValueError, match="Payoff scene .* must come after setup scene"):
+        with pytest.raises(
+            ValueError, match="Payoff scene .* must come after setup scene"
+        ):
             foreshadowing.link_payoff(payoff_scene.id, mock_get_scene)
 
     @pytest.mark.unit
@@ -358,7 +374,9 @@ class TestForeshadowingUpdates:
             description="Original description",
         )
 
-        with pytest.raises(ValueError, match="Foreshadowing description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Foreshadowing description cannot be empty"
+        ):
             foreshadowing.update_description("")
 
     @pytest.mark.unit
@@ -369,7 +387,9 @@ class TestForeshadowingUpdates:
             description="Original description",
         )
 
-        with pytest.raises(ValueError, match="Foreshadowing description cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Foreshadowing description cannot be empty"
+        ):
             foreshadowing.update_description("   ")
 
 
@@ -396,7 +416,9 @@ class TestForeshadowingValidation:
     def test_validate_scene_order_payoff_after_setup_passes(self):
         """Test that validation passes when payoff is after setup."""
         setup_scene = Scene(title="Setup Scene", chapter_id=uuid4(), order_index=2)
-        payoff_scene = Scene(title="Payoff Scene", chapter_id=setup_scene.chapter_id, order_index=5)
+        payoff_scene = Scene(
+            title="Payoff Scene", chapter_id=setup_scene.chapter_id, order_index=5
+        )
 
         def mock_get_scene(scene_id):
             return {
@@ -418,7 +440,9 @@ class TestForeshadowingValidation:
     def test_validate_scene_order_payoff_before_setup_fails(self):
         """Test that validation fails when payoff is before setup."""
         setup_scene = Scene(title="Setup Scene", chapter_id=uuid4(), order_index=5)
-        payoff_scene = Scene(title="Payoff Scene", chapter_id=setup_scene.chapter_id, order_index=2)
+        payoff_scene = Scene(
+            title="Payoff Scene", chapter_id=setup_scene.chapter_id, order_index=2
+        )
 
         def mock_get_scene(scene_id):
             return {
@@ -433,14 +457,18 @@ class TestForeshadowingValidation:
             status=ForeshadowingStatus.PAID_OFF,
         )
 
-        with pytest.raises(ValueError, match="Payoff scene .* must come after setup scene"):
+        with pytest.raises(
+            ValueError, match="Payoff scene .* must come after setup scene"
+        ):
             foreshadowing.validate_scene_order(mock_get_scene)
 
     @pytest.mark.unit
     def test_validate_scene_order_payoff_equal_to_setup_fails(self):
         """Test that validation fails when payoff has same order as setup."""
         setup_scene = Scene(title="Setup Scene", chapter_id=uuid4(), order_index=3)
-        payoff_scene = Scene(title="Payoff Scene", chapter_id=setup_scene.chapter_id, order_index=3)
+        payoff_scene = Scene(
+            title="Payoff Scene", chapter_id=setup_scene.chapter_id, order_index=3
+        )
 
         def mock_get_scene(scene_id):
             return {
@@ -455,7 +483,9 @@ class TestForeshadowingValidation:
             status=ForeshadowingStatus.PAID_OFF,
         )
 
-        with pytest.raises(ValueError, match="Payoff scene .* must come after setup scene"):
+        with pytest.raises(
+            ValueError, match="Payoff scene .* must come after setup scene"
+        ):
             foreshadowing.validate_scene_order(mock_get_scene)
 
     @pytest.mark.unit

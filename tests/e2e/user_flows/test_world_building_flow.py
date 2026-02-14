@@ -23,6 +23,8 @@ import time
 
 import pytest
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.mark.e2e
 class TestWorldBuildingFlow:
@@ -138,7 +140,7 @@ class TestWorldBuildingFlow:
         }
 
         response = client.put(f"/api/worlds/{world_id}", json=update_data)
-        assert response.status_code in [200, 204], "Failed to update world"     
+        assert response.status_code in [200, 204], "Failed to update world"
         performance_tracker.record("world_update", time.time() - start_time)
 
         # Step 4: List all worlds
@@ -322,7 +324,7 @@ class TestWorldBuildingFlow:
         # Delete world
         response = client.delete(f"/api/worlds/{world_id}")
 
-        assert response.status_code in [200, 204], "Failed to delete world"     
+        assert response.status_code in [200, 204], "Failed to delete world"
 
         # Verify world no longer exists
         response = client.get(f"/api/worlds/{world_id}")

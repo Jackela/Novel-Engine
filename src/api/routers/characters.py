@@ -203,6 +203,19 @@ async def get_character_enhanced(character_id: str) -> Dict[str, Any]:
     }
 
 
+async def _get_public_character_entries(
+    service: Optional[CharacterRouterService] = None,
+) -> List[Tuple[datetime, CharacterSummary]]:
+    """
+    Fetch public character entries via a patchable helper.
+
+    Why: Error-handling tests patch this function to simulate database failures,
+    and the indirection keeps that seam stable without changing route logic.
+    """
+    service = service or CharacterRouterService()
+    return await service.get_public_character_entries()
+
+
 # ==================== Route Handlers ====================
 
 
@@ -217,10 +230,11 @@ async def get_characters_api(
 
     Why: Merges public and workspace characters into a single list.
     """
-    service = CharacterRouterService()
+    characters_path = get_characters_directory_path()
+    service = CharacterRouterService(characters_path)
     cache_service = HttpCacheService()
 
-    public_entries = await service.get_public_character_entries()
+    public_entries = await _get_public_character_entries(service)
     workspace_entries: List[Tuple[datetime, CharacterSummary]] = []
 
     store = getattr(request.app.state, "workspace_character_store", None)
@@ -284,7 +298,9 @@ async def get_character_detail_api(
 
         if record:
             try:
-                _, timestamp = service.summarize_workspace_character(record, workspace_id)
+                _, timestamp = service.summarize_workspace_character(
+                    record, workspace_id
+                )
                 etag = cache_service.build_etag(character_id, timestamp)
                 cache_service.set_cache_headers(response, etag, timestamp)
             except ValueError:

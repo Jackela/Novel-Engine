@@ -48,6 +48,8 @@ from src.contexts.narratives.application.services.narrative_arc_application_serv
     NarrativeArcApplicationService,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestNarrativeArcApplicationServiceInitialization:
     """Test suite for NarrativeArcApplicationService initialization."""

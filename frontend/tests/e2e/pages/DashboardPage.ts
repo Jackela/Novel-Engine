@@ -1,5 +1,6 @@
 import { type Page, type Locator, expect } from '@playwright/test';
 import { prepareGuestSession } from '../utils/auth';
+import { safeGoto } from '../utils/navigation';
 
 /**
  * Dashboard Page Object Model
@@ -12,6 +13,7 @@ export class DashboardPage {
 
   // Main layout elements
   readonly dashboardLayout: Locator;
+  readonly dashboardRoot: Locator;
   readonly headerNavigation: Locator;
   readonly bentoGrid: Locator;
 
@@ -50,6 +52,7 @@ export class DashboardPage {
 
     // Main layout
     this.dashboardLayout = page.locator('[data-testid="dashboard-layout"], #main-content').first();
+    this.dashboardRoot = page.locator('[data-testid="dashboard-layout"]');
     this.headerNavigation = page.locator('[data-testid="sidebar-navigation"]');
     this.bentoGrid = page.locator('[data-testid="bento-grid"]');
 
@@ -92,9 +95,18 @@ export class DashboardPage {
   async navigateToDashboard(options: { mockAPIs?: boolean; failCharacters?: boolean; waitForLoad?: boolean } = {}) {
     await this.prepareDashboard(options);
 
+    const ensureDashboardVisible = async () => {
+      const visible = await this.dashboardRoot.isVisible().catch(() => false);
+      if (visible) {
+        return;
+      }
+      await safeGoto(this.page, '/dashboard', { timeout: 45000 });
+      await this.dashboardRoot.waitFor({ state: 'visible', timeout: 45000 });
+    };
+
     let onDashboard = false;
     try {
-      await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await safeGoto(this.page, '/dashboard', { timeout: 45000 });
       onDashboard = true;
     } catch (error) {
       console.warn('⚠️ Direct dashboard navigation failed, falling back to landing CTA', error);
@@ -102,35 +114,22 @@ export class DashboardPage {
 
     if (!onDashboard) {
       try {
-        await this.page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await safeGoto(this.page, '/', { timeout: 30000 });
       } catch (error) {
         console.warn('⚠️ Landing page navigation timed out, retrying once more', error);
-        await this.page.goto('/', { waitUntil: 'commit', timeout: 30000 });
+        await safeGoto(this.page, '/', { waitUntil: 'commit', timeout: 30000 });
       }
 
       const demoCta = this.page.locator('[data-testid="cta-launch"]');
       const ctaReady = await demoCta.waitFor({ state: 'visible', timeout: 10000 }).then(() => true).catch(() => false);
       if (ctaReady) {
-        await demoCta.click();
+        await demoCta.click({ timeout: 10000 }).catch(() => {});
       }
 
-      await this.page.waitForURL('**/dashboard', { timeout: 20000 }).catch(async () => {
-        await this.page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 30000 });
-      });
+      await this.page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' }).catch(() => {});
     }
 
-    let navigated = false;
-    try {
-      await this.page.waitForURL('**/dashboard', { timeout: 20000 });
-      navigated = true;
-    } catch {
-      // fall through and try direct navigation
-    }
-
-    if (!navigated) {
-      await this.page.goto('/dashboard', { waitUntil: 'load' });
-      await this.page.waitForURL('**/dashboard', { timeout: 15000 });
-    }
+    await ensureDashboardVisible();
 
     if (options.waitForLoad ?? true) {
       await this.waitForDashboardLoad();
@@ -268,7 +267,7 @@ export class DashboardPage {
   async waitForDashboardLoad() {
     // Wait for main layout
     await Promise.race([
-      this.dashboardLayout.waitFor({ state: 'visible', timeout: 45000 }),
+      this.dashboardRoot.waitFor({ state: 'visible', timeout: 45000 }),
       this.pageTitle.waitFor({ state: 'visible', timeout: 45000 }),
     ]);
 

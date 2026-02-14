@@ -19,9 +19,8 @@ from typing import TYPE_CHECKING, Any
 import structlog
 
 from ...application.ports.i_reranker import (
-    IReranker,
-    RerankerError,
     RerankDocument,
+    RerankerError,
     RerankOutput,
     RerankResult,
 )
@@ -84,7 +83,9 @@ class CohereReranker:
         Raises:
             ValueError: If API key is not provided and not in environment
         """
-        self._model: str = model or os.getenv("COHERE_RERANK_MODEL", DEFAULT_COHERE_MODEL)
+        self._model: str = model or os.getenv(
+            "COHERE_RERANK_MODEL", DEFAULT_COHERE_MODEL
+        )
         self._api_key = api_key or os.getenv("COHERE_API_KEY", "")
 
         if not self._api_key:
@@ -150,7 +151,11 @@ class CohereReranker:
             results = self._parse_results(response, documents, top_k)
 
             # Calculate score improvement
-            avg_new_score = sum(r.relevance_score for r in results) / len(results) if results else 0.0
+            avg_new_score = (
+                sum(r.relevance_score for r in results) / len(results)
+                if results
+                else 0.0
+            )
             score_improvement = max(0.0, avg_new_score - avg_original_score)
 
             log.info(
@@ -172,7 +177,11 @@ class CohereReranker:
         except RerankerError:
             raise
         except Exception as e:
-            log.error("cohere_rerank_unexpected_error", error=str(e), error_type=type(e).__name__)
+            log.error(
+                "cohere_rerank_unexpected_error",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             raise RerankerError(f"Cohere reranking failed: {e}") from e
 
     async def _make_request(self, request_body: dict) -> dict[str, Any]:
@@ -206,7 +215,9 @@ class CohereReranker:
 
                 # Handle specific error codes
                 if response.status_code == 401:
-                    raise RerankerError("Cohere API authentication failed - check COHERE_API_KEY")
+                    raise RerankerError(
+                        "Cohere API authentication failed - check COHERE_API_KEY"
+                    )
                 elif response.status_code == 429:
                     raise RerankerError("Cohere API rate limit exceeded")
                 elif response.status_code >= 400:
@@ -216,12 +227,14 @@ class CohereReranker:
                         error_message = error_json.get("message", error_text)
                     except Exception:
                         error_message = error_text
-                    raise RerankerError(f"Cohere API error {response.status_code}: {error_message}")
+                    raise RerankerError(
+                        f"Cohere API error {response.status_code}: {error_message}"
+                    )
 
                 return response.json()
 
             except httpx.TimeoutException as e:
-                raise RerankerError(f"Cohere API request timed out") from e
+                raise RerankerError("Cohere API request timed out") from e
             except httpx.RequestError as e:
                 raise RerankerError(f"Cohere API request failed: {e}") from e
 
@@ -255,7 +268,6 @@ class CohereReranker:
             relevance_score = item.get("relevance_score", 0.0)
 
             if index is not None and 0 <= index < len(documents):
-                original_doc = documents[index]
                 results.append(
                     RerankResult(
                         index=index,
@@ -321,7 +333,9 @@ class LocalReranker:
             device: Device for inference (cpu/cuda, defaults to cpu)
             cache_dir: Optional cache directory for model files
         """
-        self._model_name: str = model or os.getenv("LOCAL_RERANK_MODEL", DEFAULT_LOCAL_MODEL)
+        self._model_name: str = model or os.getenv(
+            "LOCAL_RERANK_MODEL", DEFAULT_LOCAL_MODEL
+        )
         self._device: str = device or os.getenv("LOCAL_RERANK_DEVICE", "cpu")
         self._cache_dir = cache_dir
         self._model: Any = None  # Lazy loaded
@@ -392,9 +406,7 @@ class LocalReranker:
             latency_ms = (time.perf_counter() - start_time) * 1000
 
             # Build results sorted by score
-            scored = [
-                (i, float(score)) for i, score in enumerate(scores)
-            ]
+            scored = [(i, float(score)) for i, score in enumerate(scores)]
             scored.sort(key=lambda x: x[1], reverse=True)
 
             # Apply top_k
@@ -416,7 +428,11 @@ class LocalReranker:
             ]
 
             # Calculate score improvement
-            avg_new_score = sum(r.relevance_score for r in results) / len(results) if results else 0.0
+            avg_new_score = (
+                sum(r.relevance_score for r in results) / len(results)
+                if results
+                else 0.0
+            )
             score_improvement = max(0.0, avg_new_score - avg_original_score)
 
             log.info(
@@ -442,7 +458,11 @@ class LocalReranker:
                 "Install with: pip install sentence-transformers"
             ) from e
         except Exception as e:
-            log.error("local_rerank_unexpected_error", error=str(e), error_type=type(e).__name__)
+            log.error(
+                "local_rerank_unexpected_error",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             raise RerankerError(f"Local reranking failed: {e}") from e
 
     def _get_model(self) -> Any:

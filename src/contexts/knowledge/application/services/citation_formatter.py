@@ -13,15 +13,13 @@ Warzone 4: AI Brain - BRAIN-012
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
 from collections import defaultdict
+from dataclasses import dataclass
 
 import structlog
 
 from ...domain.models.source_type import SourceType
 from ..services.knowledge_ingestion_service import RetrievedChunk
-
 
 logger = structlog.get_logger()
 
@@ -293,7 +291,9 @@ class CitationFormatter:
         """
         references: dict[str, SourceReference] = {}
 
-        for idx, ((source_type, source_id), chunks) in enumerate(source_groups.items(), 1):
+        for idx, ((source_type, source_id), chunks) in enumerate(
+            source_groups.items(), 1
+        ):
             # Calculate average relevance score
             avg_score = sum(c.score for c in chunks) / len(chunks)
 
@@ -312,7 +312,9 @@ class CitationFormatter:
             if source_names and source_id in source_names:
                 display_name = source_names[source_id]
             else:
-                display_name = self._generate_display_name(source_type, source_id, chunks[0])
+                display_name = self._generate_display_name(
+                    source_type, source_id, chunks[0]
+                )
 
             references[citation_id] = SourceReference(
                 source_type=source_type,
@@ -389,7 +391,9 @@ class CitationFormatter:
             lines.append(line)
 
         if len(references) > self._config.max_sources_display:
-            lines.append(f"  ... and {len(references) - self._config.max_sources_display} more")
+            lines.append(
+                f"  ... and {len(references) - self._config.max_sources_display} more"
+            )
 
         return "\n".join(lines)
 

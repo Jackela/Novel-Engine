@@ -19,8 +19,7 @@ import {
  */
 export const critiqueKeys = {
   all: ['director', 'critique'] as const,
-  critique: (sceneId: string) =>
-    ['director', 'critique', sceneId] as const,
+  critique: (sceneId: string) => ['director', 'critique', sceneId] as const,
 };
 
 /**

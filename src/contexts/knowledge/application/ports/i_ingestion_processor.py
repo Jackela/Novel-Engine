@@ -54,7 +54,9 @@ class IIngestionProcessor(ABC):
         ...
 
     @abstractmethod
-    def get_chunking_strategy(self, custom_strategy: ChunkingStrategy | None = None) -> ChunkingStrategy:
+    def get_chunking_strategy(
+        self, custom_strategy: ChunkingStrategy | None = None
+    ) -> ChunkingStrategy:
         """
         Get the chunking strategy for this content type.
 

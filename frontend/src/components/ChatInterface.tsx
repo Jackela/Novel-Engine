@@ -22,7 +22,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Markdown, PlainText } from '@/components/ui/markdown';
 import { cn } from '@/lib/utils';
-import { brainSettingsApi, type ChatMessage, type ChatChunk } from '@/features/routing/api/brainSettingsApi';
+import {
+  brainSettingsApi,
+  type ChatMessage,
+  type ChatChunk,
+} from '@/features/routing/api/brainSettingsApi';
 
 interface ChatInterfaceProps {
   /** Optional initial session ID for conversation tracking */
@@ -63,10 +67,7 @@ function MessageRow({ index, style, data }: MessageRowProps) {
     return (
       <div style={style} className="px-4 py-1">
         <div className="mr-auto max-w-[80%] rounded-lg bg-muted px-3 py-2">
-          <PlainText
-            content={streamingContent + '▊'}
-            className="text-sm"
-          />
+          <PlainText content={streamingContent + '▊'} className="text-sm" />
           <span className="inline-block animate-pulse" />
         </div>
       </div>
@@ -83,7 +84,7 @@ function MessageRow({ index, style, data }: MessageRowProps) {
           'max-w-[80%] rounded-lg px-3 py-2',
           message.role === 'user'
             ? 'ml-auto bg-primary text-primary-foreground'
-            : 'mr-auto bg-muted',
+            : 'mr-auto bg-muted'
         )}
       >
         {message.role === 'assistant' ? (
@@ -104,11 +105,7 @@ const OuterElementType = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement>
 >((props, ref) => {
   return (
-    <div
-      ref={ref}
-      className="h-full overflow-y-auto overflow-x-hidden"
-      {...props}
-    />
+    <div ref={ref} className="h-full overflow-y-auto overflow-x-hidden" {...props} />
   );
 });
 OuterElementType.displayName = 'OuterElementType';
@@ -146,28 +143,31 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
    * Get item size for virtual list
    * Uses cache to avoid recalculating heights
    */
-  const getItemSize = useCallback((index: number) => {
-    // Check cache first
-    if (itemSizeCache.current.has(index)) {
-      return itemSizeCache.current.get(index)!;
-    }
+  const getItemSize = useCallback(
+    (index: number) => {
+      // Check cache first
+      if (itemSizeCache.current.has(index)) {
+        return itemSizeCache.current.get(index)!;
+      }
 
-    // Streaming indicator row
-    if (isStreaming && index === messages.length) {
-      const height = estimateMessageHeight(streamingContent) + 16;
+      // Streaming indicator row
+      if (isStreaming && index === messages.length) {
+        const height = estimateMessageHeight(streamingContent) + 16;
+        itemSizeCache.current.set(index, height);
+        return height;
+      }
+
+      const message = messages[index];
+      if (!message) {
+        return 60; // Default fallback
+      }
+
+      const height = estimateMessageHeight(message.content) + 16;
       itemSizeCache.current.set(index, height);
       return height;
-    }
-
-    const message = messages[index];
-    if (!message) {
-      return 60; // Default fallback
-    }
-
-    const height = estimateMessageHeight(message.content) + 16;
-    itemSizeCache.current.set(index, height);
-    return height;
-  }, [messages, isStreaming, streamingContent]);
+    },
+    [messages, isStreaming, streamingContent]
+  );
 
   /**
    * Reset item size cache when streaming content changes
@@ -234,7 +234,10 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
         (chunk: ChatChunk) => {
           if (chunk.done) {
             // Final chunk - add complete assistant message
-            const assistantMessage: ChatMessage = { role: 'assistant', content: streamingContent + chunk.delta };
+            const assistantMessage: ChatMessage = {
+              role: 'assistant',
+              content: streamingContent + chunk.delta,
+            };
             setMessages((prev) => {
               itemSizeCache.current.delete(prev.length + 1);
               return [...prev, assistantMessage];
@@ -254,7 +257,7 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
           ]);
           setStreamingContent('');
           setIsStreaming(false);
-        },
+        }
       );
     } catch (error) {
       console.error('Chat error:', error);
@@ -273,13 +276,13 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
         handleSend();
       }
     },
-    [handleSend],
+    [handleSend]
   );
 
   // Memoize list data to avoid unnecessary re-renders
   const listData = useMemo(
     () => ({ messages, streamingContent, isStreaming }),
-    [messages, streamingContent, isStreaming],
+    [messages, streamingContent, isStreaming]
   );
 
   // Toggle button - always visible
@@ -299,12 +302,15 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+    <div
+      className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2"
+      data-testid="chat-panel"
+    >
       {/* Main chat panel */}
       <Card
         className={cn(
-          'w-80 sm:w-96 shadow-lg transition-all duration-200',
-          isMinimized ? 'h-14' : 'h-[500px]',
+          'w-80 shadow-lg transition-all duration-200 sm:w-96',
+          isMinimized ? 'h-14' : 'h-[500px]'
         )}
       >
         {/* Header */}
@@ -373,6 +379,7 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
                   placeholder="Ask a question..."
                   disabled={isStreaming}
                   className="flex-1"
+                  data-testid="chat-input"
                 />
                 <Button
                   onClick={handleSend}

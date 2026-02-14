@@ -5,7 +5,8 @@ Warzone 4: AI Brain - BRAIN-022A
 Tests for PromptUsage entity and PromptUsageStats value object.
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from src.contexts.knowledge.domain.models.prompt_usage import (
@@ -13,6 +14,7 @@ from src.contexts.knowledge.domain.models.prompt_usage import (
     PromptUsageStats,
 )
 
+pytestmark = pytest.mark.unit
 
 def _utcnow() -> datetime:
     """Get current UTC timestamp."""

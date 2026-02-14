@@ -12,7 +12,7 @@ Constitution Compliance:
 """
 
 import datetime
-from datetime import timezone, timedelta
+from datetime import timedelta, timezone
 
 import pytest
 
@@ -21,6 +21,7 @@ from src.contexts.knowledge.domain.models.knowledge_metadata import (
     KnowledgeMetadata,
 )
 
+pytestmark = pytest.mark.unit
 
 class TestConfidentialityLevel:
     """Unit tests for ConfidentialityLevel enum."""

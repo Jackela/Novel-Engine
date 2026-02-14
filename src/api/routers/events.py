@@ -67,7 +67,9 @@ class EmitEventRequest(BaseModel):
     )
     title: str = Field(description="Event title")
     description: str = Field(description="Event description")
-    severity: str = Field(default="low", description="Event severity: low, medium, high")
+    severity: str = Field(
+        default="low", description="Event severity: low, medium, high"
+    )
     character_name: Optional[str] = Field(
         default=None, description="Character name for character events"
     )

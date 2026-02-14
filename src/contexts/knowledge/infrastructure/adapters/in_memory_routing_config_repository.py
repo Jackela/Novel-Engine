@@ -14,14 +14,12 @@ Warzone 4: AI Brain - BRAIN-028B
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
 
 import structlog
 
 from ...application.ports.i_routing_config_repository import (
     IRoutingConfigRepository,
     RoutingConfigNotFoundError,
-    RoutingConfigRepositoryError,
 )
 from ...domain.models.routing_config import RoutingScope, WorkspaceRoutingConfig
 

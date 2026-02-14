@@ -11,10 +11,10 @@ Constitution Compliance:
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.core.types.shared_types import KnowledgeEntryId, CharacterId
+from src.core.types.shared_types import CharacterId, KnowledgeEntryId
 
-from ...domain.models.knowledge_entry import KnowledgeEntry
 from ...domain.models.agent_identity import AgentIdentity
+from ...domain.models.knowledge_entry import KnowledgeEntry
 from ...domain.models.knowledge_type import KnowledgeType
 
 
@@ -131,4 +131,3 @@ class IKnowledgeRepository(ABC):
         Constitution Compliance:
         - Article IV (SSOT): Delete from PostgreSQL (CASCADE on audit log)
         """
-

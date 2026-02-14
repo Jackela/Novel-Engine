@@ -61,6 +61,8 @@ from src.security.security_logging import (
     SecurityLogger,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestSecurityService:
     """Security Service Tests"""
@@ -71,7 +73,7 @@ class TestSecurityService:
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
-        service = SecurityService(db_path, "test_secret_key")
+        service = SecurityService(db_path, "test-secret-key-32-bytes-minimum-0001")
         await service.initialize_database()
 
         yield service
@@ -505,7 +507,9 @@ class TestDataProtection:
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
-        service = DataProtectionService(db_path, "test_master_key")
+        service = DataProtectionService(
+            db_path, "test-master-key-32-bytes-minimum-0001"
+        )
         await service.initialize_database()
 
         yield service
@@ -516,7 +520,9 @@ class TestDataProtection:
     @pytest.mark.unit
     def test_encryption_service(self):
         """Test encryption and decryption"""
-        encryption_service = EncryptionService("test_key")
+        encryption_service = EncryptionService(
+            "test-encryption-key-32-bytes-minimum-0001"
+        )
 
         original_data = "sensitive information"
         encrypted_data = encryption_service.encrypt(original_data)
@@ -528,7 +534,9 @@ class TestDataProtection:
     @pytest.mark.unit
     def test_dictionary_encryption(self):
         """Test dictionary encryption"""
-        encryption_service = EncryptionService("test_key")
+        encryption_service = EncryptionService(
+            "test-encryption-key-32-bytes-minimum-0001"
+        )
 
         data = {
             "username": "testuser",
@@ -738,7 +746,9 @@ class TestIntegratedSecurity:
 
         try:
             # Initialize services
-            security_service = SecurityService(db_path, "test_secret")
+            security_service = SecurityService(
+                db_path, "test-integrated-secret-key-32-bytes-0001"
+            )
             await security_service.initialize_database()
 
             validator = InputValidator()

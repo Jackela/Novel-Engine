@@ -13,7 +13,7 @@ Warzone 4: AI Brain - BRAIN-028B
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from ...domain.models.routing_config import WorkspaceRoutingConfig
 
@@ -26,13 +26,13 @@ class RoutingConfigNotFoundError(Exception):
 
     def __init__(self, workspace_id: str) -> None:
         self.workspace_id = workspace_id
-        super().__init__(f"Routing configuration not found for workspace: {workspace_id}")
+        super().__init__(
+            f"Routing configuration not found for workspace: {workspace_id}"
+        )
 
 
 class RoutingConfigRepositoryError(Exception):
     """Raised when a repository operation fails."""
-
-    pass
 
 
 class IRoutingConfigRepository(ABC):

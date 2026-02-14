@@ -12,9 +12,9 @@ Constitution Compliance:
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Awaitable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Optional
 
 import structlog
@@ -132,6 +132,9 @@ class BudgetAlertService:
         self._repository = repository
         self._usage_repository = usage_repository
         self._config = config or BudgetAlertServiceConfig()
+        self._handlers = []
+        self._check_lock = asyncio.Lock()
+        self._background_task = None
 
         logger.info(
             "budget_alert_service_initialized",
@@ -318,9 +321,9 @@ class BudgetAlertService:
                         metadata={
                             "time_window_seconds": config.time_window_seconds,
                             "operator": config.operator.value,
-                            "stats": stats.to_dict()
-                            if hasattr(stats, "to_dict")
-                            else None,
+                            "stats": (
+                                stats.to_dict() if hasattr(stats, "to_dict") else None
+                            ),
                         },
                     )
 

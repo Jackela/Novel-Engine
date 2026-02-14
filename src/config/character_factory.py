@@ -22,8 +22,8 @@ import os
 import re
 from typing import Optional
 
-from src.core.event_bus import EventBus
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.event_bus import EventBus
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -195,6 +195,3 @@ class CharacterFactory:
 
         logger.info(f"Found {len(characters)} available characters: {characters}")
         return sorted(characters)
-
-
-

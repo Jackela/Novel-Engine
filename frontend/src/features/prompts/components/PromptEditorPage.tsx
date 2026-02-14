@@ -12,12 +12,13 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
-import { usePrompt, usePromptVersions, useUpdatePrompt, useCreatePrompt } from '../api/promptApi';
 import {
-  Card,
-  CardDescription,
-  CardHeader,
-} from '@/components/ui/card';
+  usePrompt,
+  usePromptVersions,
+  useUpdatePrompt,
+  useCreatePrompt,
+} from '../api/promptApi';
+import { Card, CardDescription, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -94,7 +95,11 @@ const PROVIDER_OPTIONS = [
 // Model suggestions per provider
 const MODEL_SUGGESTIONS: Record<string, string[]> = {
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-  anthropic: ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+  anthropic: [
+    'claude-3-opus-20240229',
+    'claude-3-sonnet-20240229',
+    'claude-3-haiku-20240307',
+  ],
   gemini: ['gemini-pro', 'gemini-ultra'],
   ollama: ['llama3', 'mistral', 'phi3'],
 };
@@ -151,7 +156,9 @@ export function PromptEditorPage() {
   const [extendsInput, setExtendsInput] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'content' | 'variables' | 'config' | 'history'>('content');
+  const [activeTab, setActiveTab] = useState<
+    'content' | 'variables' | 'config' | 'history'
+  >('content');
   const [playgroundOpen, setPlaygroundOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
 
@@ -235,7 +242,10 @@ export function PromptEditorPage() {
 
   // Add tag
   const addTag = () => {
-    const trimmed = tagInput.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const trimmed = tagInput
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '');
     if (trimmed && !formData.tags.includes(trimmed)) {
       updateField('tags', [...formData.tags, trimmed]);
     }
@@ -244,7 +254,10 @@ export function PromptEditorPage() {
 
   // Remove tag
   const removeTag = (tag: string) => {
-    updateField('tags', formData.tags.filter((t) => t !== tag));
+    updateField(
+      'tags',
+      formData.tags.filter((t) => t !== tag)
+    );
   };
 
   // Add extends reference
@@ -258,7 +271,10 @@ export function PromptEditorPage() {
 
   // Remove extends reference
   const removeExtends = (ref: string) => {
-    updateField('extends', formData.extends.filter((e) => e !== ref));
+    updateField(
+      'extends',
+      formData.extends.filter((e) => e !== ref)
+    );
   };
 
   // Add variable
@@ -274,7 +290,10 @@ export function PromptEditorPage() {
   };
 
   // Update variable
-  const updateVariable = (index: number, updates: Partial<PromptVariableDefinition>) => {
+  const updateVariable = (
+    index: number,
+    updates: Partial<PromptVariableDefinition>
+  ) => {
     const newVariables = [...formData.variables];
     // Ensure required fields have defaults
     const currentVar = newVariables[index];
@@ -285,7 +304,10 @@ export function PromptEditorPage() {
       type: updates.type ?? currentVar.type ?? 'string',
       description: updates.description ?? currentVar.description ?? '',
       required: updates.required ?? currentVar.required ?? true,
-      default_value: updates.default_value !== undefined ? updates.default_value : currentVar.default_value,
+      default_value:
+        updates.default_value !== undefined
+          ? updates.default_value
+          : currentVar.default_value,
     };
     newVariables[index] = mergedVar;
     updateField('variables', newVariables);
@@ -293,7 +315,10 @@ export function PromptEditorPage() {
 
   // Remove variable
   const removeVariable = (index: number) => {
-    updateField('variables', formData.variables.filter((_, i) => i !== index));
+    updateField(
+      'variables',
+      formData.variables.filter((_, i) => i !== index)
+    );
   };
 
   // Add detected variables to form
@@ -386,7 +411,7 @@ export function PromptEditorPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -404,9 +429,9 @@ export function PromptEditorPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col">
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex items-center justify-between border-b px-6 py-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -420,7 +445,7 @@ export function PromptEditorPage() {
               {isNew ? 'New Prompt' : formData.name || 'Untitled Prompt'}
             </h1>
             {hasUnsavedChanges && (
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
+              <p className="flex items-center gap-1 text-sm text-muted-foreground">
                 <AlertCircle className="h-3 w-3" />
                 Unsaved changes
               </p>
@@ -450,10 +475,7 @@ export function PromptEditorPage() {
               Clear Draft
             </Button>
           )}
-          <Button
-            onClick={savePrompt}
-            disabled={isSaving || !hasUnsavedChanges}
-          >
+          <Button onClick={savePrompt} disabled={isSaving || !hasUnsavedChanges}>
             {isSaving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -465,11 +487,17 @@ export function PromptEditorPage() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* Editor area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'content' | 'variables' | 'config' | 'history')} className="flex flex-col h-full">
-            <div className="px-6 pt-4 border-b">
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) =>
+              setActiveTab(v as 'content' | 'variables' | 'config' | 'history')
+            }
+            className="flex h-full flex-col"
+          >
+            <div className="border-b px-6 pt-4">
               <TabsList className="grid w-auto grid-cols-4">
                 <TabsTrigger value="content">
                   <FileText className="mr-2 h-4 w-4" />
@@ -496,8 +524,8 @@ export function PromptEditorPage() {
             </div>
 
             {/* Content Tab */}
-            <TabsContent value="content" className="flex-1 overflow-hidden p-6 m-0">
-              <div className="h-full flex flex-col gap-4">
+            <TabsContent value="content" className="m-0 flex-1 overflow-hidden p-6">
+              <div className="flex h-full flex-col gap-4">
                 {/* Name input */}
                 <div className="space-y-2">
                   <Label htmlFor="prompt-name">Prompt Name</Label>
@@ -523,7 +551,7 @@ export function PromptEditorPage() {
                 {/* Tags */}
                 <div className="space-y-2">
                   <Label>Tags</Label>
-                  <div className="flex flex-wrap gap-2 items-center">
+                  <div className="flex flex-wrap items-center gap-2">
                     {formData.tags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="gap-1">
                         <Tag className="h-3 w-3" />
@@ -543,7 +571,9 @@ export function PromptEditorPage() {
                         placeholder="Add tag..."
                         value={tagInput}
                         onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                        onKeyDown={(e) =>
+                          e.key === 'Enter' && (e.preventDefault(), addTag())
+                        }
                         className="h-8 w-32"
                       />
                       <Button
@@ -561,9 +591,11 @@ export function PromptEditorPage() {
                 {/* Extends (inheritance) */}
                 <div className="space-y-2">
                   <Label>Inherits From (Optional)</Label>
-                  <div className="flex flex-wrap gap-2 items-center">
+                  <div className="flex flex-wrap items-center gap-2">
                     {formData.extends.length === 0 ? (
-                      <span className="text-sm text-muted-foreground">No base templates</span>
+                      <span className="text-sm text-muted-foreground">
+                        No base templates
+                      </span>
                     ) : (
                       formData.extends.map((ext) => (
                         <Badge key={ext} variant="outline" className="gap-1">
@@ -584,7 +616,9 @@ export function PromptEditorPage() {
                         placeholder="Template ID or name..."
                         value={extendsInput}
                         onChange={(e) => setExtendsInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addExtends())}
+                        onKeyDown={(e) =>
+                          e.key === 'Enter' && (e.preventDefault(), addExtends())
+                        }
                         className="h-8 w-48"
                       />
                       <Button
@@ -600,8 +634,8 @@ export function PromptEditorPage() {
                 </div>
 
                 {/* Content editor with syntax highlighting */}
-                <div className="flex-1 flex flex-col min-h-0">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="flex min-h-0 flex-1 flex-col">
+                  <div className="mb-2 flex items-center justify-between">
                     <Label>Prompt Content</Label>
                     {undefinedVariables.length > 0 && (
                       <Button
@@ -611,7 +645,8 @@ export function PromptEditorPage() {
                         className="text-xs"
                       >
                         <Plus className="mr-1 h-3 w-3" />
-                        Add {undefinedVariables.length} detected variable{undefinedVariables.length > 1 ? 's' : ''}
+                        Add {undefinedVariables.length} detected variable
+                        {undefinedVariables.length > 1 ? 's' : ''}
                       </Button>
                     )}
                   </div>
@@ -619,15 +654,15 @@ export function PromptEditorPage() {
                     value={formData.content}
                     onChange={(e) => updateField('content', e.target.value)}
                     placeholder="Write your prompt here. Use {{variable_name}} for variables."
-                    className="flex-1 font-mono text-sm resize-none"
+                    className="flex-1 resize-none font-mono text-sm"
                   />
                 </div>
               </div>
             </TabsContent>
 
             {/* Variables Tab */}
-            <TabsContent value="variables" className="flex-1 overflow-hidden p-6 m-0">
-              <div className="h-full flex flex-col gap-4">
+            <TabsContent value="variables" className="m-0 flex-1 overflow-hidden p-6">
+              <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold">Variables</h3>
@@ -679,7 +714,7 @@ export function PromptEditorPage() {
             </TabsContent>
 
             {/* Config Tab */}
-            <TabsContent value="config" className="flex-1 overflow-auto p-6 m-0">
+            <TabsContent value="config" className="m-0 flex-1 overflow-auto p-6">
               <div className="max-w-2xl space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold">Model Configuration</h3>
@@ -726,11 +761,13 @@ export function PromptEditorPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {(MODEL_SUGGESTIONS[formData.model_provider] || []).map((model) => (
-                        <SelectItem key={model} value={model}>
-                          {model}
-                        </SelectItem>
-                      ))}
+                      {(MODEL_SUGGESTIONS[formData.model_provider] || []).map(
+                        (model) => (
+                          <SelectItem key={model} value={model}>
+                            {model}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -741,11 +778,15 @@ export function PromptEditorPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Temperature</Label>
-                    <span className="text-sm text-muted-foreground">{formData.temperature.toFixed(2)}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formData.temperature.toFixed(2)}
+                    </span>
                   </div>
                   <Slider
                     value={[formData.temperature]}
-                    onValueChange={([value]) => updateField('temperature', value ?? 0.7)}
+                    onValueChange={([value]) =>
+                      updateField('temperature', value ?? 0.7)
+                    }
                     min={0}
                     max={2}
                     step={0.1}
@@ -760,11 +801,15 @@ export function PromptEditorPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Max Tokens</Label>
-                    <span className="text-sm text-muted-foreground">{formData.max_tokens}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formData.max_tokens}
+                    </span>
                   </div>
                   <Slider
                     value={[formData.max_tokens]}
-                    onValueChange={([value]) => updateField('max_tokens', value ?? 1000)}
+                    onValueChange={([value]) =>
+                      updateField('max_tokens', value ?? 1000)
+                    }
                     min={100}
                     max={8000}
                     step={100}
@@ -779,7 +824,9 @@ export function PromptEditorPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Top P</Label>
-                    <span className="text-sm text-muted-foreground">{formData.top_p.toFixed(2)}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formData.top_p.toFixed(2)}
+                    </span>
                   </div>
                   <Slider
                     value={[formData.top_p]}
@@ -798,11 +845,15 @@ export function PromptEditorPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Frequency Penalty</Label>
-                    <span className="text-sm text-muted-foreground">{formData.frequency_penalty.toFixed(2)}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formData.frequency_penalty.toFixed(2)}
+                    </span>
                   </div>
                   <Slider
                     value={[formData.frequency_penalty]}
-                    onValueChange={([value]) => updateField('frequency_penalty', value ?? 0.0)}
+                    onValueChange={([value]) =>
+                      updateField('frequency_penalty', value ?? 0.0)
+                    }
                     min={-2}
                     max={2}
                     step={0.1}
@@ -817,11 +868,15 @@ export function PromptEditorPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Presence Penalty</Label>
-                    <span className="text-sm text-muted-foreground">{formData.presence_penalty.toFixed(2)}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formData.presence_penalty.toFixed(2)}
+                    </span>
                   </div>
                   <Slider
                     value={[formData.presence_penalty]}
-                    onValueChange={([value]) => updateField('presence_penalty', value ?? 0.0)}
+                    onValueChange={([value]) =>
+                      updateField('presence_penalty', value ?? 0.0)
+                    }
                     min={-2}
                     max={2}
                     step={0.1}
@@ -835,8 +890,8 @@ export function PromptEditorPage() {
             </TabsContent>
 
             {/* History Tab */}
-            <TabsContent value="history" className="flex-1 overflow-hidden p-6 m-0">
-              <div className="h-full flex flex-col gap-4">
+            <TabsContent value="history" className="m-0 flex-1 overflow-hidden p-6">
+              <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold">Version History</h3>
@@ -910,7 +965,12 @@ interface VariableRowProps {
   onRemove: () => void;
 }
 
-function VariableRow({ variable, detectedVariables, onChange, onRemove }: VariableRowProps) {
+function VariableRow({
+  variable,
+  detectedVariables,
+  onChange,
+  onRemove,
+}: VariableRowProps) {
   const isDetected = detectedVariables.includes(variable.name);
   const isUndefined = variable.name === '';
 
@@ -923,9 +983,7 @@ function VariableRow({ variable, detectedVariables, onChange, onRemove }: Variab
           placeholder="variable_name"
           className={isDetected ? 'border-green-500' : ''}
         />
-        {isDetected && (
-          <p className="text-xs text-green-600 mt-1">Found in content</p>
-        )}
+        {isDetected && <p className="mt-1 text-xs text-green-600">Found in content</p>}
       </TableCell>
       <TableCell>
         <Select
@@ -1012,7 +1070,7 @@ function VersionCard({ version, isCurrent }: VersionCardProps) {
           </span>
         </div>
         {version.description && (
-          <CardDescription className="text-sm mt-1">
+          <CardDescription className="mt-1 text-sm">
             {version.description}
           </CardDescription>
         )}
@@ -1027,7 +1085,12 @@ interface HighlightedTextareaProps extends React.ComponentProps<'textarea'> {
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-function HighlightedTextarea({ value, onChange, className, ...props }: HighlightedTextareaProps) {
+function HighlightedTextarea({
+  value,
+  onChange,
+  className,
+  ...props
+}: HighlightedTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -1063,11 +1126,11 @@ function HighlightedTextarea({ value, onChange, className, ...props }: Highlight
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative h-full w-full">
       {/* Highlighting overlay */}
       <div
         ref={overlayRef}
-        className="absolute inset-0 p-3 pointer-events-none whitespace-pre-wrap break-words font-mono text-sm overflow-hidden"
+        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words p-3 font-mono text-sm"
         style={{
           color: 'transparent',
         }}
@@ -1079,10 +1142,7 @@ function HighlightedTextarea({ value, onChange, className, ...props }: Highlight
         value={value}
         onChange={handleChange}
         onScroll={handleScroll}
-        className={cn(
-          'absolute inset-0 bg-transparent/80 resize-none',
-          className
-        )}
+        className={cn('absolute inset-0 resize-none bg-transparent/80', className)}
         {...props}
       />
     </div>

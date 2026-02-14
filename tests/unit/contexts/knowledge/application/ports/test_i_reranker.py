@@ -11,9 +11,11 @@ import pytest
 from src.contexts.knowledge.application.ports.i_reranker import (
     IReranker,
     RerankerError,
-    RerankResult,
     RerankOutput,
+    RerankResult,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestRerankResult:
@@ -121,6 +123,7 @@ class TestIRerankerProtocol:
 
     def test_ireranker_invalid_implementation(self):
         """Test that class without rerank is not compatible."""
+
         class InvalidReranker:
             def other_method(self) -> None:
                 pass

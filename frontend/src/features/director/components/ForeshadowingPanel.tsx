@@ -106,7 +106,9 @@ function ForeshadowingItem({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
   const [editDescription, setEditDescription] = useState(foreshadowing.description);
-  const [editStatus, setEditStatus] = useState<ForeshadowingStatus>(foreshadowing.status);
+  const [editStatus, setEditStatus] = useState<ForeshadowingStatus>(
+    foreshadowing.status
+  );
   const [selectedPayoffScene, setSelectedPayoffScene] = useState<string>(
     foreshadowing.payoff_scene_id || ''
   );
@@ -142,7 +144,7 @@ function ForeshadowingItem({
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           {isEditing ? (
             <div className="space-y-2">
               <Textarea
@@ -151,7 +153,10 @@ function ForeshadowingItem({
                 className="min-h-[60px] text-sm"
                 placeholder="Describe the setup..."
               />
-              <Select value={editStatus} onValueChange={(v) => setEditStatus(v as ForeshadowingStatus)}>
+              <Select
+                value={editStatus}
+                onValueChange={(v) => setEditStatus(v as ForeshadowingStatus)}
+              >
                 <SelectTrigger className="h-8">
                   <SelectValue />
                 </SelectTrigger>
@@ -165,11 +170,11 @@ function ForeshadowingItem({
               </Select>
               <div className="flex gap-2">
                 <Button size="sm" variant="ghost" onClick={handleSave}>
-                  <Save className="h-3 w-3 mr-1" />
+                  <Save className="mr-1 h-3 w-3" />
                   Save
                 </Button>
                 <Button size="sm" variant="ghost" onClick={handleCancel}>
-                  <X className="h-3 w-3 mr-1" />
+                  <X className="mr-1 h-3 w-3" />
                   Cancel
                 </Button>
               </div>
@@ -177,8 +182,11 @@ function ForeshadowingItem({
           ) : (
             <>
               <p className="text-sm leading-relaxed">{foreshadowing.description}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="outline" className={cn('text-xs', config.borderColor, config.color)}>
+              <div className="mt-2 flex items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={cn('text-xs', config.borderColor, config.color)}
+                >
                   {config.label}
                 </Badge>
                 {foreshadowing.payoff_scene_id && (
@@ -193,7 +201,7 @@ function ForeshadowingItem({
 
         {/* Actions */}
         {!isEditing && (
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
             <Button
               size="icon"
               variant="ghost"
@@ -266,17 +274,15 @@ function ForeshadowingItem({
           <DialogHeader>
             <DialogTitle>Delete Foreshadowing?</DialogTitle>
             <DialogDescription>
-              This will remove this foreshadowing setup permanently. This action cannot be undone.
+              This will remove this foreshadowing setup permanently. This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleting(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => onDelete(foreshadowing.id)}
-            >
+            <Button variant="destructive" onClick={() => onDelete(foreshadowing.id)}>
               Delete
             </Button>
           </DialogFooter>
@@ -319,7 +325,7 @@ function CreateForeshadowingDialog({
             Plant a narrative gun in "{setupSceneTitle}" that will be paid off later.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 space-y-4">
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -362,7 +368,10 @@ export function ForeshadowingPanel({
 
   // Query foreshadowings
   const { data: foreshadowingsData, isLoading } = useForeshadowings();
-  const foreshadowings = foreshadowingsData?.foreshadowings || [];
+  const foreshadowings = useMemo(
+    () => foreshadowingsData?.foreshadowings ?? [],
+    [foreshadowingsData?.foreshadowings]
+  );
 
   // Mutations
   const createMutation = useCreateForeshadowing();
@@ -425,7 +434,11 @@ export function ForeshadowingPanel({
     }
   };
 
-  const handleUpdate = async (id: string, description: string, status: ForeshadowingStatus) => {
+  const handleUpdate = async (
+    id: string,
+    description: string,
+    status: ForeshadowingStatus
+  ) => {
     try {
       await updateMutation.mutateAsync({
         id,
@@ -473,13 +486,13 @@ export function ForeshadowingPanel({
           onClick={() => setCreateDialogOpen(true)}
           disabled={!setupSceneId}
         >
-          <Plus className="h-4 w-4 mr-1" />
+          <Plus className="mr-1 h-4 w-4" />
           Plant
         </Button>
       </div>
 
       {/* Status Filters */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
           variant={statusFilter === 'all' ? 'default' : 'outline'}
@@ -517,11 +530,11 @@ export function ForeshadowingPanel({
       {/* Foreshadowing List */}
       <ScrollArea className="h-[400px]">
         {isLoading ? (
-          <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
             Loading foreshadowings...
           </div>
         ) : filteredForeshadowings.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
+          <div className="py-8 text-center text-sm text-muted-foreground">
             {statusFilter === 'all'
               ? 'No foreshadowings yet. Plant your first setup!'
               : `No ${statusFilter} foreshadowings.`}
@@ -531,12 +544,12 @@ export function ForeshadowingPanel({
             {Object.entries(groupedForeshadowings).map(([status, items]) =>
               items && items.length > 0 ? (
                 <Collapsible key={status} defaultOpen>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 hover:bg-accent rounded px-2 transition-colors">
-                    <ChevronRight className="h-4 w-4 transition-transform ui-expanded:rotate-90" />
-                    <span className="font-medium text-sm capitalize">
+                  <CollapsibleTrigger className="flex w-full items-center gap-2 rounded px-2 py-2 transition-colors hover:bg-accent">
+                    <ChevronRight className="ui-expanded:rotate-90 h-4 w-4 transition-transform" />
+                    <span className="text-sm font-medium capitalize">
                       {status.replace('_', ' ')}
                     </span>
-                    <Badge variant="outline" className="text-xs ml-auto">
+                    <Badge variant="outline" className="ml-auto text-xs">
                       {items.length}
                     </Badge>
                   </CollapsibleTrigger>

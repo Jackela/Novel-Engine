@@ -13,6 +13,8 @@ from src.contexts.narratives.domain.value_objects.narrative_context import (
     ContextType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestContextScopeEnum:
     """Test suite for ContextScope enum."""

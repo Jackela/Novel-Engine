@@ -14,6 +14,9 @@ from pathlib import Path
 import pytest
 
 # Add src directory to path
+
+pytestmark = pytest.mark.integration
+
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 # Import core systems

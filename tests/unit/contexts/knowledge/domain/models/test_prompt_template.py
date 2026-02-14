@@ -16,6 +16,7 @@ from src.contexts.knowledge.domain.models.prompt_template import (
     VariableType,
 )
 
+pytestmark = pytest.mark.unit
 
 class TestVariableDefinition:
     """Tests for VariableDefinition value object."""

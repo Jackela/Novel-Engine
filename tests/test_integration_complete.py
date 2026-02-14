@@ -25,10 +25,14 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = [pytest.mark.integration]
+
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
 if not FULL_INTEGRATION:
-    pytestmark = pytest.mark.skip(
-        reason="Complete integration tests require NOVEL_ENGINE_FULL_INTEGRATION=1"
+    pytestmark.append(
+        pytest.mark.skip(
+            reason="Complete integration tests require NOVEL_ENGINE_FULL_INTEGRATION=1"
+        )
     )
 
 # Core Novel Engine imports
@@ -894,6 +898,3 @@ class TestCompleteSystemIntegration:
 if __name__ == "__main__":
     # Run tests directly for debugging
     pytest.main([__file__, "-v", "-s"])
-
-
-

@@ -7,10 +7,13 @@ Since Weaver is primarily a frontend component, these tests validate
 the data contracts and types that flow between frontend and backend.
 """
 
-import pytest
-from typing import Literal
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Literal
+
+import pytest
+from pydantic import BaseModel, Field
+
+pytestmark = pytest.mark.integration
 
 
 class WeaverNodeStatus(str, Enum):

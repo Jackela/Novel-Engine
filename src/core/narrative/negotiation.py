@@ -438,4 +438,3 @@ class AgentNegotiationEngine:
             "created_at": session.created_at.isoformat(),
             "updated_at": session.updated_at.isoformat(),
         }
-

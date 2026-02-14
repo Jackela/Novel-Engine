@@ -14,14 +14,16 @@ Constitution Compliance:
 import pytest
 
 from src.contexts.knowledge.domain.models.chunking_strategy import (
-    ChunkStrategyType,
     ChunkingStrategy,
+    ChunkStrategyType,
 )
 from src.contexts.knowledge.domain.services.text_chunker import (
     ChunkedDocument,
     TextChunk,
     TextChunker,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -298,7 +300,9 @@ class TestSemanticChunking:
 
         # Semantic chunking should respect document structure
         assert result.total_chunks > 0
-        assert all(chunk.word_count <= strategy.chunk_size * 1.5 for chunk in result.chunks)
+        assert all(
+            chunk.word_count <= strategy.chunk_size * 1.5 for chunk in result.chunks
+        )
 
 
 class TestTextChunkerUtilities:

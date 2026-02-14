@@ -438,10 +438,7 @@ class TestWorldRuleGetSummary:
 
     def test_get_summary_short_consequence(self):
         """Test summary with short consequence."""
-        rule = WorldRule(
-            name="Magic Cost",
-            consequence="Drains stamina"
-        )
+        rule = WorldRule(name="Magic Cost", consequence="Drains stamina")
 
         summary = rule.get_summary()
         assert summary == "Magic Cost: Drains stamina"
@@ -449,10 +446,7 @@ class TestWorldRuleGetSummary:
     def test_get_summary_long_consequence_truncated(self):
         """Test summary truncates long consequence."""
         long_consequence = "x" * 150
-        rule = WorldRule(
-            name="Long Rule",
-            consequence=long_consequence
-        )
+        rule = WorldRule(name="Long Rule", consequence=long_consequence)
 
         summary = rule.get_summary()
         assert len(summary) < len(rule.name) + len(long_consequence) + 5

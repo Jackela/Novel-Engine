@@ -16,6 +16,9 @@ import pytest
 import requests
 
 # 配置日志
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )

@@ -599,7 +599,9 @@ class CampaignLoggingService:
         if entry.agent_id:
             signature_data += f"_{entry.agent_id}"
 
-        return hashlib.md5(signature_data.encode(), usedforsecurity=False).hexdigest()[:12]  # nosec B324
+        return hashlib.md5(signature_data.encode(), usedforsecurity=False).hexdigest()[
+            :12
+        ]  # nosec B324
 
     def _get_top_error_patterns(self, limit: int = 5) -> List[Dict[str, Any]]:
         """Get top error patterns by frequency."""

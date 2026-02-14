@@ -14,7 +14,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from ...domain.models.token_usage import TokenUsage, TokenUsageStats
@@ -235,8 +235,6 @@ class ITokenUsageRepository(ABC):
 
 class RepositoryError(Exception):
     """Base exception for repository errors."""
-
-    pass
 
 
 __all__ = [

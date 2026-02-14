@@ -13,7 +13,6 @@ Warzone 4: AI Brain - BRAIN-001
 
 from __future__ import annotations
 
-import logging
 import os
 from pathlib import Path
 from typing import Any
@@ -269,15 +268,28 @@ class ChromaDBVectorStore(IVectorStore):
                     query_results.append(
                         QueryResult(
                             id=doc_id,
-                            text=result["documents"][0][i]
-                            if result.get("documents")
-                            else "",
-                            score=float(1.0 - result["distances"][0][i])
-                            if result.get("distances")
-                            else 0.0,
-                            metadata=result["metadatas"][0][i]
-                            if result.get("metadatas")
-                            else None,
+                            text=(
+                                result["documents"][0][i]
+                                if result.get("documents")
+                                else ""
+                            ),
+                            score=(
+                                1.0
+                                / (
+                                    1.0
+                                    + max(
+                                        0.0,
+                                        float(result["distances"][0][i]),
+                                    )
+                                )
+                                if result.get("distances")
+                                else 0.0
+                            ),
+                            metadata=(
+                                result["metadatas"][0][i]
+                                if result.get("metadatas")
+                                else None
+                            ),
                         )
                     )
 

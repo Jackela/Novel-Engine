@@ -11,6 +11,8 @@ import pytest
 
 from src.contexts.narrative.domain.entities.beat import Beat, BeatType
 
+pytestmark = pytest.mark.unit
+
 
 class TestBeatCreation:
     """Test suite for Beat instantiation and basic functionality."""

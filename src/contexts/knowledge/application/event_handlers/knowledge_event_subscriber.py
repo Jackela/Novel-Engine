@@ -21,13 +21,13 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from ...domain.models.source_type import SourceType
 from .knowledge_sync_event_handler import (
     KnowledgeSyncEventHandler,
     _character_to_content,
     _lore_to_content,
     _scene_to_content,
 )
-from ...domain.models.source_type import SourceType
 
 if TYPE_CHECKING:
     from src.core.event_bus import EventBus

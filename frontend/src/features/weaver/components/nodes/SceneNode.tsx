@@ -32,7 +32,11 @@ const sceneTypeBadgeVariant: Record<
  * Why: Provides visual context for narrative threads in the Weaver graph.
  * Shows up to 5 colored dots; if more, shows a "+N" indicator.
  */
-function PlotlineIndicators({ plotlines }: { plotlines?: Array<{ id: string; name: string; color: string }> }) {
+function PlotlineIndicators({
+  plotlines,
+}: {
+  plotlines?: Array<{ id: string; name: string; color: string }>;
+}) {
   if (!plotlines || plotlines.length === 0) {
     return null;
   }
@@ -42,7 +46,10 @@ function PlotlineIndicators({ plotlines }: { plotlines?: Array<{ id: string; nam
   const extraCount = plotlines.length - MAX_VISIBLE;
 
   return (
-    <div className="flex items-center gap-1" title={plotlines.map((p) => p.name).join(', ')}>
+    <div
+      className="flex items-center gap-1"
+      title={plotlines.map((p) => p.name).join(', ')}
+    >
       {visible.map((plotline) => (
         <div
           key={plotline.id}

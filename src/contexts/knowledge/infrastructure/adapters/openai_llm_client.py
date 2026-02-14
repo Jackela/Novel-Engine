@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, AsyncIterator
 import httpx
 import structlog
 
-from ...application.ports.i_llm_client import LLMRequest, LLMResponse, LLMError
+from ...application.ports.i_llm_client import LLMError, LLMRequest, LLMResponse
 
 if TYPE_CHECKING:
     pass
@@ -193,9 +193,7 @@ class OpenAILLMClient:
             log.error("openai_response_parse_failed", error=str(e))
             raise LLMError(f"Failed to parse OpenAI response: {e}") from e
 
-    async def generate_stream(
-        self, request: LLMRequest
-    ) -> AsyncIterator[str]:
+    async def generate_stream(self, request: LLMRequest) -> AsyncIterator[str]:
         """
         Generate streaming text using the OpenAI API.
 
@@ -302,16 +300,10 @@ class OpenAILLMClient:
 
         # Add system message if provided
         if request.system_prompt:
-            messages.append({
-                "role": "system",
-                "content": request.system_prompt
-            })
+            messages.append({"role": "system", "content": request.system_prompt})
 
         # Add user message
-        messages.append({
-            "role": "user",
-            "content": request.user_prompt
-        })
+        messages.append({"role": "user", "content": request.user_prompt})
 
         return {
             "model": self._model,

@@ -15,18 +15,18 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import structlog
 
 from ..ports.i_vector_store import VectorStoreError
 from .retrieval_service import (
-    RetrievalService,
+    DEFAULT_RELEVANCE_THRESHOLD,
+    FormattedContext,
     RetrievalFilter,
     RetrievalOptions,
-    FormattedContext,
-    DEFAULT_RELEVANCE_THRESHOLD,
+    RetrievalService,
 )
 
 if TYPE_CHECKING:
@@ -250,7 +250,9 @@ class RAGIntegrationService:
             )
             return EnrichedPrompt(
                 prompt=base_prompt,
-                context=FormattedContext(text="", sources=[], total_tokens=0, chunk_count=0),
+                context=FormattedContext(
+                    text="", sources=[], total_tokens=0, chunk_count=0
+                ),
                 chunks_retrieved=0,
                 sources=[],
                 tokens_added=0,

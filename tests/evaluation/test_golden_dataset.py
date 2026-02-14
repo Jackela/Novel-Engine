@@ -14,27 +14,28 @@ OPT-007: Test - Golden Dataset Evaluation Harness
 from __future__ import annotations
 
 import json
-import pytest
+import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
-import sys
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import the evaluation module
 from scripts.evaluation.run_golden_dataset import (
-    GoldenQuestion,
-    GoldenDocument,
-    EvaluationResult,
-    EvaluationReport,
     DeterministicEmbeddingService,
+    EvaluationReport,
+    EvaluationResult,
+    GoldenDocument,
+    GoldenQuestion,
     InMemoryVectorStore,
+    check_exact_match,
+    check_fuzzy_match,
+    check_substring_match,
+    evaluate_question,
     load_golden_dataset,
     normalize_text,
-    check_exact_match,
-    check_substring_match,
-    check_fuzzy_match,
-    evaluate_question,
     run_evaluation,
 )
 
@@ -274,11 +275,12 @@ class TestEvaluationQuestion:
     @pytest.fixture
     def mock_retrieval_service(self):
         """Create mock retrieval service."""
+        from unittest.mock import AsyncMock
+
         from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
             RetrievedChunk,
         )
         from src.contexts.knowledge.domain.models.source_type import SourceType
-        from unittest.mock import AsyncMock
 
         service = AsyncMock()
 

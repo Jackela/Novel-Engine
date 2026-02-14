@@ -20,12 +20,12 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from ...application.ports.i_llm_client import ILLMClient, LLMRequest, LLMError
+from ...application.ports.i_llm_client import ILLMClient, LLMError, LLMRequest
 from ...domain.models.entity import (
-    ExtractedEntity,
-    EntityMention,
-    ExtractionResult,
     PRONOUNS,
+    EntityMention,
+    ExtractedEntity,
+    ExtractionResult,
 )
 
 if TYPE_CHECKING:
@@ -139,8 +139,6 @@ class CoreferenceResult:
 
 class CoreferenceResolutionError(Exception):
     """Base exception for co-reference resolution errors."""
-
-    pass
 
 
 class CoreferenceResolutionService:
@@ -271,8 +269,17 @@ class CoreferenceResolutionService:
 
         # Neutral patterns (groups, organizations, locations)
         neutral_patterns = (
-            "guild", "army", "order", "company", "tavern", "inn",
-            "kingdom", "empire", "forest", "mountain", "river"
+            "guild",
+            "army",
+            "order",
+            "company",
+            "tavern",
+            "inn",
+            "kingdom",
+            "empire",
+            "forest",
+            "mountain",
+            "river",
         )
         if any(p in name_lower for p in neutral_patterns):
             return "neutral"
@@ -312,7 +319,11 @@ class CoreferenceResolutionService:
         filtered = []
         for entity, distance in candidates:
             entity_gender = self._get_gender_from_name(entity.name)
-            if entity_gender is None or entity_gender == pronoun_gender or entity_gender == "neutral":
+            if (
+                entity_gender is None
+                or entity_gender == pronoun_gender
+                or entity_gender == "neutral"
+            ):
                 filtered.append((entity, distance))
 
         return filtered if filtered else candidates
@@ -391,7 +402,9 @@ Respond with ONLY valid JSON."""
 
             if entity_name and isinstance(entity_name, str):
                 confidence = (
-                    float(confidence_value) if isinstance(confidence_value, (int, float)) else 0.5
+                    float(confidence_value)
+                    if isinstance(confidence_value, (int, float))
+                    else 0.5
                 )
                 return entity_name, min(1.0, max(0.0, confidence))
 
@@ -465,11 +478,12 @@ Respond with ONLY valid JSON."""
 
         # Process pronoun mentions
         pronoun_mentions = [
-            m for m in extraction_result.mentions
+            m
+            for m in extraction_result.mentions
             if m.is_pronoun or m.mention_text.lower().strip() in PRONOUNS
         ]
 
-        for mention in pronoun_mentions[:effective_config.max_references]:
+        for mention in pronoun_mentions[: effective_config.max_references]:
             # Get candidates
             candidates = self._find_candidate_entities(
                 extraction_result.entities,
@@ -505,25 +519,23 @@ Respond with ONLY valid JSON."""
 
             # Record result
             if entity_name:
-                resolved.append(ResolvedReference(
-                    mention_text=mention.mention_text,
-                    entity_name=entity_name,
-                    start_pos=mention.start_pos,
-                    end_pos=mention.end_pos,
-                    confidence=confidence,
-                    resolution_method=method,
-                ))
+                resolved.append(
+                    ResolvedReference(
+                        mention_text=mention.mention_text,
+                        entity_name=entity_name,
+                        start_pos=mention.start_pos,
+                        end_pos=mention.end_pos,
+                        confidence=confidence,
+                        resolution_method=method,
+                    )
+                )
                 method_counts[method] += 1
             else:
                 unresolved.append(mention)
 
         # Calculate resolution rate
         total_pronouns = len(pronoun_mentions)
-        resolution_rate = (
-            len(resolved) / total_pronouns
-            if total_pronouns > 0
-            else 1.0
-        )
+        resolution_rate = len(resolved) / total_pronouns if total_pronouns > 0 else 1.0
 
         result = CoreferenceResult(
             resolved_references=tuple(resolved),
@@ -574,11 +586,12 @@ Respond with ONLY valid JSON."""
 
         # Process pronoun mentions
         pronoun_mentions = [
-            m for m in mentions
+            m
+            for m in mentions
             if m.is_pronoun or m.mention_text.lower().strip() in PRONOUNS
         ]
 
-        for mention in pronoun_mentions[:effective_config.max_references]:
+        for mention in pronoun_mentions[: effective_config.max_references]:
             # Get candidates
             candidates = self._find_candidate_entities(
                 entities,
@@ -614,25 +627,23 @@ Respond with ONLY valid JSON."""
 
             # Record result
             if entity_name:
-                resolved.append(ResolvedReference(
-                    mention_text=mention.mention_text,
-                    entity_name=entity_name,
-                    start_pos=mention.start_pos,
-                    end_pos=mention.end_pos,
-                    confidence=confidence,
-                    resolution_method=method,
-                ))
+                resolved.append(
+                    ResolvedReference(
+                        mention_text=mention.mention_text,
+                        entity_name=entity_name,
+                        start_pos=mention.start_pos,
+                        end_pos=mention.end_pos,
+                        confidence=confidence,
+                        resolution_method=method,
+                    )
+                )
                 method_counts[method] += 1
             else:
                 unresolved.append(mention)
 
         # Calculate resolution rate
         total_pronouns = len(pronoun_mentions)
-        resolution_rate = (
-            len(resolved) / total_pronouns
-            if total_pronouns > 0
-            else 1.0
-        )
+        resolution_rate = len(resolved) / total_pronouns if total_pronouns > 0 else 1.0
 
         result = CoreferenceResult(
             resolved_references=tuple(resolved),

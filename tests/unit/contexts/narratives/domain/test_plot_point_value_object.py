@@ -18,6 +18,8 @@ from src.contexts.narratives.domain.value_objects.plot_point import (
     PlotPointType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestPlotPointTypeEnum:
     """Test suite for PlotPointType enum."""

@@ -6,7 +6,6 @@ Test suite covering perception ranges, visibility calculations, perception capab
 and awareness zone management in the Subjective Context domain layer.
 """
 
-
 import pytest
 
 from src.contexts.subjective.domain.value_objects.perception_range import (
@@ -15,6 +14,8 @@ from src.contexts.subjective.domain.value_objects.perception_range import (
     PerceptionType,
     VisibilityLevel,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestPerceptionRangeCreation:

@@ -26,20 +26,25 @@ from src.contexts.knowledge.application.ports.i_graph_store import (
 )
 from src.contexts.knowledge.application.services.graph_retrieval_service import (
     GraphEntityContext,
+    GraphExplanation,
+    GraphExplanationStep,
     GraphRetrievalConfig,
     GraphRetrievalResult,
     GraphRetrievalService,
-    GraphExplanationStep,
-    GraphExplanation,
+)
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    RetrievedChunk,
 )
 from src.contexts.knowledge.domain.models.entity import EntityType, RelationshipType
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
 def mock_graph_store() -> IGraphStore:
     """Create a mock graph store for testing."""
+
     class MockGraphStore(IGraphStore):
         def __init__(self) -> None:
             self._entities: dict[str, GraphEntity] = {}
@@ -57,15 +62,20 @@ def mock_graph_store() -> IGraphStore:
             return None  # type: ignore[return-value]
 
         async def add_relationship(self, relationship: GraphRelationship) -> bool:
-            if any(r for r in self._relationships if
-                   r.source == relationship.source and
-                   r.target == relationship.target and
-                   str(r.relationship_type) == str(relationship.relationship_type)):
+            if any(
+                r
+                for r in self._relationships
+                if r.source == relationship.source
+                and r.target == relationship.target
+                and str(r.relationship_type) == str(relationship.relationship_type)
+            ):
                 return False
             self._relationships.append(relationship)
             return True
 
-        async def add_relationships(self, relationships: list[GraphRelationship]) -> Any:
+        async def add_relationships(
+            self, relationships: list[GraphRelationship]
+        ) -> Any:
             pass
             return None  # type: ignore[return-value]
 
@@ -73,24 +83,38 @@ def mock_graph_store() -> IGraphStore:
             return self._entities.get(name)
 
         async def get_neighbors(
-            self, entity_name: str, max_depth: int = 1,
+            self,
+            entity_name: str,
+            max_depth: int = 1,
             relationship_types: list[RelationshipType] | None = None,
         ) -> Any:
             return []  # type: ignore[return-value]
 
-        async def find_path(self, source: str, target: str, max_length: int | None = None) -> PathResult | None:
+        async def find_path(
+            self, source: str, target: str, max_length: int | None = None
+        ) -> PathResult | None:
             if source == target:
                 return PathResult(path=(source,), relationships=(), length=0)
             return None
 
-        async def find_paths_multiple(self, source: str, targets: list[str], max_length: int | None = None) -> dict[str, PathResult | None]:
+        async def find_paths_multiple(
+            self, source: str, targets: list[str], max_length: int | None = None
+        ) -> dict[str, PathResult | None]:
             return {}
 
-        async def get_relationships(self, entity_name: str, relationship_type: RelationshipType | None = None) -> list[GraphRelationship]:
+        async def get_relationships(
+            self, entity_name: str, relationship_type: RelationshipType | None = None
+        ) -> list[GraphRelationship]:
             return [r for r in self._relationships if r.source == entity_name]
 
-        async def get_relationships_between(self, source: str, target: str) -> list[GraphRelationship]:
-            return [r for r in self._relationships if r.source == source and r.target == target]
+        async def get_relationships_between(
+            self, source: str, target: str
+        ) -> list[GraphRelationship]:
+            return [
+                r
+                for r in self._relationships
+                if r.source == source and r.target == target
+            ]
 
         async def remove_entity(self, name: str) -> bool:
             if name in self._entities:
@@ -98,7 +122,9 @@ def mock_graph_store() -> IGraphStore:
                 return True
             return False
 
-        async def remove_relationship(self, source: str, target: str, relationship_type: RelationshipType) -> bool:
+        async def remove_relationship(
+            self, source: str, target: str, relationship_type: RelationshipType
+        ) -> bool:
             return False
 
         async def clear(self) -> None:
@@ -119,23 +145,38 @@ def mock_graph_store() -> IGraphStore:
         async def entity_exists(self, name: str) -> bool:
             return name in self._entities
 
-        async def get_all_entities(self, entity_type: EntityType | None = None, limit: int | None = None) -> list[GraphEntity]:
+        async def get_all_entities(
+            self, entity_type: EntityType | None = None, limit: int | None = None
+        ) -> list[GraphEntity]:
             return list(self._entities.values())
 
-        async def find_cliques(self, min_size: int = 3, max_size: int | None = None, entity_type: EntityType | None = None) -> CliqueResult:
+        async def find_cliques(
+            self,
+            min_size: int = 3,
+            max_size: int | None = None,
+            entity_type: EntityType | None = None,
+        ) -> CliqueResult:
             return CliqueResult(cliques=(), max_clique_size=0, clique_count=0)
 
-        async def get_centrality(self, entity_name: str | None = None, top_n: int | None = None) -> list[Any]:
+        async def get_centrality(
+            self, entity_name: str | None = None, top_n: int | None = None
+        ) -> list[Any]:
             return []
 
-        async def find_all_shortest_paths(self, source: str, max_length: int | None = None, cutoff: int | None = None) -> dict[str, PathResult]:
+        async def find_all_shortest_paths(
+            self, source: str, max_length: int | None = None, cutoff: int | None = None
+        ) -> dict[str, PathResult]:
             return {}
 
-        async def export_graphml(self, output_path: str, include_metadata: bool = True) -> Any:
+        async def export_graphml(
+            self, output_path: str, include_metadata: bool = True
+        ) -> Any:
             pass
             return None  # type: ignore[return-value]
 
-        async def export_json(self, output_path: str | None = None, pretty: bool = True) -> Any:
+        async def export_json(
+            self, output_path: str | None = None, pretty: bool = True
+        ) -> Any:
             pass
             return None  # type: ignore[return-value]
 
@@ -146,9 +187,15 @@ def mock_graph_store() -> IGraphStore:
 def sample_entities() -> list[GraphEntity]:
     """Create sample graph entities."""
     return [
-        GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, description="A warrior"),
-        GraphEntity(name="Bob", entity_type=EntityType.CHARACTER, description="A wizard"),
-        GraphEntity(name="Castle", entity_type=EntityType.LOCATION, description="Fortress"),
+        GraphEntity(
+            name="Alice", entity_type=EntityType.CHARACTER, description="A warrior"
+        ),
+        GraphEntity(
+            name="Bob", entity_type=EntityType.CHARACTER, description="A wizard"
+        ),
+        GraphEntity(
+            name="Castle", entity_type=EntityType.LOCATION, description="Fortress"
+        ),
     ]
 
 
@@ -157,12 +204,18 @@ def sample_relationships() -> list[GraphRelationship]:
     """Create sample relationships."""
     return [
         GraphRelationship(
-            source="Alice", target="Bob", relationship_type=RelationshipType.KNOWS,
-            context="Alice and Bob are friends", strength=0.9
+            source="Alice",
+            target="Bob",
+            relationship_type=RelationshipType.KNOWS,
+            context="Alice and Bob are friends",
+            strength=0.9,
         ),
         GraphRelationship(
-            source="Alice", target="Castle", relationship_type=RelationshipType.LOCATED_AT,
-            context="Alice lives near the castle", strength=0.8
+            source="Alice",
+            target="Castle",
+            relationship_type=RelationshipType.LOCATED_AT,
+            context="Alice lives near the castle",
+            strength=0.8,
         ),
     ]
 
@@ -215,7 +268,10 @@ class TestGraphRetrievalServiceEnrichment:
 
     @pytest.mark.asyncio
     async def test_enrich_chunks_with_graph(
-        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity], sample_relationships: list[GraphRelationship]
+        self,
+        mock_graph_store: IGraphStore,
+        sample_entities: list[GraphEntity],
+        sample_relationships: list[GraphRelationship],
     ) -> None:
         """Enriching chunks with graph context."""
         # Setup graph with entities and relationships
@@ -260,7 +316,10 @@ class TestGraphRetrievalServiceEnrichment:
 
     @pytest.mark.asyncio
     async def test_enrich_chunks_builds_entity_descriptions(
-        self, mock_graph_store: IGraphStore, sample_entities: list[GraphEntity], sample_relationships: list[GraphRelationship]
+        self,
+        mock_graph_store: IGraphStore,
+        sample_entities: list[GraphEntity],
+        sample_relationships: list[GraphRelationship],
     ) -> None:
         """Entity descriptions are built correctly."""
         # Setup graph
@@ -295,7 +354,9 @@ class TestGraphRetrievalServiceEntityContext:
     ) -> None:
         """Getting context for an existing entity."""
         await mock_graph_store.add_entity(
-            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, description="Warrior")
+            GraphEntity(
+                name="Alice", entity_type=EntityType.CHARACTER, description="Warrior"
+            )
         )
 
         service = GraphRetrievalService(mock_graph_store)
@@ -349,9 +410,7 @@ class TestGraphRetrievalServiceGraphMethods:
     """Tests for graph analysis methods."""
 
     @pytest.mark.asyncio
-    async def test_get_entity_centrality(
-        self, mock_graph_store: IGraphStore
-    ) -> None:
+    async def test_get_entity_centrality(self, mock_graph_store: IGraphStore) -> None:
         """Getting centrality for an entity."""
         service = GraphRetrievalService(mock_graph_store)
 
@@ -361,9 +420,7 @@ class TestGraphRetrievalServiceGraphMethods:
         assert centrality is None or isinstance(centrality, tuple)
 
     @pytest.mark.asyncio
-    async def test_find_shortest_path(
-        self, mock_graph_store: IGraphStore
-    ) -> None:
+    async def test_find_shortest_path(self, mock_graph_store: IGraphStore) -> None:
         """Finding shortest path between entities."""
         service = GraphRetrievalService(mock_graph_store)
 
@@ -380,9 +437,7 @@ class TestGraphRetrievalServiceGraphMethods:
         assert path is None
 
     @pytest.mark.asyncio
-    async def test_get_graph_stats(
-        self, mock_graph_store: IGraphStore
-    ) -> None:
+    async def test_get_graph_stats(self, mock_graph_store: IGraphStore) -> None:
         """Getting graph statistics."""
         service = GraphRetrievalService(mock_graph_store)
 
@@ -393,9 +448,7 @@ class TestGraphRetrievalServiceGraphMethods:
         assert stats.edge_count == 0
 
     @pytest.mark.asyncio
-    async def test_find_cliques(
-        self, mock_graph_store: IGraphStore
-    ) -> None:
+    async def test_find_cliques(self, mock_graph_store: IGraphStore) -> None:
         """Finding cliques in the graph."""
         service = GraphRetrievalService(mock_graph_store)
 
@@ -546,7 +599,9 @@ class TestGraphRetrievalServiceExplainMode:
         result = await service.enrich_chunks_with_graph(chunks)
 
         assert result.explanation is not None
-        lookup_steps = [s for s in result.explanation.steps if s.step_type == "entity_lookup"]
+        lookup_steps = [
+            s for s in result.explanation.steps if s.step_type == "entity_lookup"
+        ]
         assert len(lookup_steps) > 0
 
     @pytest.mark.asyncio
@@ -556,7 +611,9 @@ class TestGraphRetrievalServiceExplainMode:
         """Explanation records when entity is not found in graph."""
         # Only add Bob, not Alice
         await mock_graph_store.add_entity(
-            GraphEntity(name="Bob", entity_type=EntityType.CHARACTER, description="A wizard")
+            GraphEntity(
+                name="Bob", entity_type=EntityType.CHARACTER, description="A wizard"
+            )
         )
 
         config = GraphRetrievalConfig(explain_mode=True)
@@ -576,7 +633,9 @@ class TestGraphRetrievalServiceExplainMode:
         result = await service.enrich_chunks_with_graph(chunks)
 
         assert result.explanation is not None
-        lookup_steps = [s for s in result.explanation.steps if s.step_type == "entity_lookup"]
+        lookup_steps = [
+            s for s in result.explanation.steps if s.step_type == "entity_lookup"
+        ]
         # Should have a step showing Alice was not found
         not_found_steps = [s for s in lookup_steps if not s.metadata.get("found", True)]
         assert len(not_found_steps) > 0
@@ -616,7 +675,9 @@ class TestGraphRetrievalServiceExplainMode:
     ) -> None:
         """Explanation records maximum traversal depth."""
         await mock_graph_store.add_entity(
-            GraphEntity(name="Alice", entity_type=EntityType.CHARACTER, description="Warrior")
+            GraphEntity(
+                name="Alice", entity_type=EntityType.CHARACTER, description="Warrior"
+            )
         )
 
         config = GraphRetrievalConfig(explain_mode=True, entity_expansion_depth=2)

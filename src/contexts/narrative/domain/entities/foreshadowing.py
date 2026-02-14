@@ -80,11 +80,18 @@ class Foreshadowing:
 
         # If status is PAID_OFF, payoff_scene_id must be set
         if self.status == ForeshadowingStatus.PAID_OFF and self.payoff_scene_id is None:
-            raise ValueError("Foreshadowing with PAID_OFF status must have a payoff_scene_id")
+            raise ValueError(
+                "Foreshadowing with PAID_OFF status must have a payoff_scene_id"
+            )
 
         # If payoff_scene_id is set, status must be PAID_OFF
-        if self.payoff_scene_id is not None and self.status != ForeshadowingStatus.PAID_OFF:
-            raise ValueError("Foreshadowing with payoff_scene_id must have PAID_OFF status")
+        if (
+            self.payoff_scene_id is not None
+            and self.status != ForeshadowingStatus.PAID_OFF
+        ):
+            raise ValueError(
+                "Foreshadowing with payoff_scene_id must have PAID_OFF status"
+            )
 
     def validate_scene_order(
         self,
@@ -142,7 +149,9 @@ class Foreshadowing:
         self.description = new_description.strip()
         self._touch()
 
-    def link_payoff(self, payoff_scene_id: UUID, get_scene_by_id: Callable[[UUID], Optional[Scene]]) -> None:
+    def link_payoff(
+        self, payoff_scene_id: UUID, get_scene_by_id: Callable[[UUID], Optional[Scene]]
+    ) -> None:
         """Link a payoff scene to this foreshadowing.
 
         Args:
@@ -224,7 +233,9 @@ class Foreshadowing:
 
     def __str__(self) -> str:
         """Human-readable representation."""
-        payoff_str = f" -> {self.payoff_scene_id}" if self.payoff_scene_id else " (unpaid)"
+        payoff_str = (
+            f" -> {self.payoff_scene_id}" if self.payoff_scene_id else " (unpaid)"
+        )
         return f"Foreshadowing('{self.description[:30]}...'{payoff_str}, {self.status.value})"
 
     def __repr__(self) -> str:

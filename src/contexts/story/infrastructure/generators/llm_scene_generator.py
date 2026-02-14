@@ -118,7 +118,9 @@ class LLMSceneGenerator(SceneGeneratorPort):
         )
 
         if response.status_code == 401:
-            raise RuntimeError("Gemini API authentication failed - check GEMINI_API_KEY")
+            raise RuntimeError(
+                "Gemini API authentication failed - check GEMINI_API_KEY"
+            )
         elif response.status_code == 429:
             raise RuntimeError("Gemini API rate limit exceeded")
         elif response.status_code != 200:
@@ -171,6 +173,8 @@ class LLMSceneGenerator(SceneGeneratorPort):
                 f"Unable to generate scene for {request.character_context.name}. "
                 f"Please try again."
             ),
-            summary=f"Error: {reason[:100]}..." if len(reason) > 100 else f"Error: {reason}",
+            summary=(
+                f"Error: {reason[:100]}..." if len(reason) > 100 else f"Error: {reason}"
+            ),
             visual_prompt="error state, glitch textures, static",
         )

@@ -32,6 +32,8 @@ from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_repository 
     InMemoryPromptRepository,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def app() -> FastAPI:
@@ -253,7 +255,9 @@ class TestCreatePrompt:
         assert data["version"] == 1
         assert "id" in data
 
-    def test_create_prompt_with_model_config(self, client_with_repo: TestClient) -> None:
+    def test_create_prompt_with_model_config(
+        self, client_with_repo: TestClient
+    ) -> None:
         """Test creating a prompt with model configuration."""
         payload = {
             "name": "Configured Prompt",
@@ -280,14 +284,14 @@ class TestCreatePrompt:
         assert data["model_config"]["temperature"] == 0.5
         assert data["model_config"]["max_tokens"] == 2000
 
-    def test_create_prompt_invalid_variable_type(self, client_with_repo: TestClient) -> None:
+    def test_create_prompt_invalid_variable_type(
+        self, client_with_repo: TestClient
+    ) -> None:
         """Test creating prompt with invalid variable type."""
         payload = {
             "name": "Bad Prompt",
             "content": "Test {{var}}.",
-            "variables": [
-                {"name": "var", "type": "invalid_type", "required": True}
-            ],
+            "variables": [{"name": "var", "type": "invalid_type", "required": True}],
         }
         response = client_with_repo.post("/api/prompts", json=payload)
         assert response.status_code == 400
@@ -388,11 +392,7 @@ class TestRenderPrompt:
 
     def test_render_prompt(self, client_with_repo: TestClient) -> None:
         """Test rendering a prompt with variables."""
-        payload = {
-            "variables": [
-                {"name": "name", "value": "Alice"}
-            ]
-        }
+        payload = {"variables": [{"name": "name", "value": "Alice"}]}
         response = client_with_repo.post("/api/prompts/prompt-1/render", json=payload)
         assert response.status_code == 200
 
@@ -414,10 +414,14 @@ class TestRenderPrompt:
     def test_render_prompt_not_found(self, client_with_repo: TestClient) -> None:
         """Test rendering non-existent prompt returns 404."""
         payload = {"variables": []}
-        response = client_with_repo.post("/api/prompts/nonexistent/render", json=payload)
+        response = client_with_repo.post(
+            "/api/prompts/nonexistent/render", json=payload
+        )
         assert response.status_code == 404
 
-    def test_render_prompt_multiple_variables(self, client_with_repo: TestClient) -> None:
+    def test_render_prompt_multiple_variables(
+        self, client_with_repo: TestClient
+    ) -> None:
         """Test rendering prompt with multiple variables."""
         payload = {
             "variables": [
@@ -446,7 +450,9 @@ class TestGetVersionHistory:
         assert len(data["prompts"]) == 1
         assert data["prompts"][0]["version"] == 1
 
-    def test_get_version_history_nonexistent(self, client_with_repo: TestClient) -> None:
+    def test_get_version_history_nonexistent(
+        self, client_with_repo: TestClient
+    ) -> None:
         """Test version history for non-existent prompt returns 404."""
         response = client_with_repo.get("/api/prompts/nonexistent/versions")
         assert response.status_code == 404
@@ -465,4 +471,3 @@ class TestPromptsHealth:
         assert data["repository_type"] == "InMemoryPromptRepository"
         assert data["total_prompts"] >= 0
         assert "timestamp" in data
-

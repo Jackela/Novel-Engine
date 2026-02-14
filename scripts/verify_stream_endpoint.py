@@ -80,7 +80,9 @@ def verify_stream_endpoint(
                                 print("-" * 60)
                                 print("Stream completed!")
                                 metadata = data.get("metadata", {})
-                                print(f"Total chunks: {metadata.get('total_chunks', 'N/A')}")
+                                print(
+                                    f"Total chunks: {metadata.get('total_chunks', 'N/A')}"
+                                )
                                 print(
                                     f"Total characters: {metadata.get('total_characters', 'N/A')}"
                                 )
@@ -98,7 +100,9 @@ def verify_stream_endpoint(
                             print(f"Line: {line}")
 
                 print("-" * 60)
-                print(f"Verification PASSED: Received {chunk_count} chunks, {total_chars} chars")
+                print(
+                    f"Verification PASSED: Received {chunk_count} chunks, {total_chars} chars"
+                )
                 return True
 
     except httpx.ConnectError:

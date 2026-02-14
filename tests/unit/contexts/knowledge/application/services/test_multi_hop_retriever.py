@@ -11,35 +11,40 @@ BRAIN-013B: Adds reasoning chain logging and explain mode for debugging.
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, Mock
 
-from src.contexts.knowledge.application.services.multi_hop_retriever import (
-    MultiHopRetriever,
-    QueryDecomposer,
-    MultiHopConfig,
-    HopConfig,
-    ExplainConfig,
-    MultiHopResult,
-    HopResult,
-    HopStatus,
-    ReasoningStep,
-    DEFAULT_MAX_HOPS,
-    DEFAULT_HOP_K,
-)
-from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievalService,
-    RetrievalResult,
-    RetrievalOptions,
-)
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
+import pytest
+
 from src.contexts.knowledge.application.ports.i_llm_client import (
     ILLMClient,
+    LLMError,
     LLMRequest,
     LLMResponse,
-    LLMError,
+)
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    RetrievedChunk,
+)
+from src.contexts.knowledge.application.services.multi_hop_retriever import (
+    DEFAULT_HOP_K,
+    DEFAULT_MAX_HOPS,
+    ExplainConfig,
+    HopConfig,
+    HopResult,
+    HopStatus,
+    MultiHopConfig,
+    MultiHopResult,
+    MultiHopRetriever,
+    QueryDecomposer,
+    ReasoningStep,
+)
+from src.contexts.knowledge.application.services.retrieval_service import (
+    RetrievalOptions,
+    RetrievalResult,
+    RetrievalService,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -377,8 +382,10 @@ class TestQueryDecomposer:
         decomposer = QueryDecomposer(llm_client=mock_llm_client)
 
         # Mock _needs_decomposition to return True
-        with patch.object(decomposer, '_needs_decomposition', return_value=True):
-            result = await decomposer.decompose("Who is the villain that killed the king?")
+        with patch.object(decomposer, "_needs_decomposition", return_value=True):
+            result = await decomposer.decompose(
+                "Who is the villain that killed the king?"
+            )
 
         assert len(result) == 3
         assert "Who killed the king?" in result
@@ -392,7 +399,7 @@ class TestQueryDecomposer:
         decomposer = QueryDecomposer(llm_client=failing_llm_client)
 
         # Mock _needs_decomposition to return True
-        with patch.object(decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(decomposer, "_needs_decomposition", return_value=True):
             result = await decomposer.decompose("Who is the villain?")
 
         assert result == ["Who is the villain?"]
@@ -430,7 +437,9 @@ class TestQueryDecomposer:
         """Test _needs_decomposition detects multiple questions."""
         decomposer = QueryDecomposer(llm_client=mock_llm_client)
 
-        result = decomposer._needs_decomposition("Who killed the king? What was the motive?")
+        result = decomposer._needs_decomposition(
+            "Who killed the king? What was the motive?"
+        )
 
         assert result is True
 
@@ -477,9 +486,9 @@ class TestQueryDecomposer:
         """Test parsing JSON wrapped in markdown."""
         decomposer = QueryDecomposer(llm_client=mock_llm_client)
 
-        text = '''```json
+        text = """```json
 ["Who killed the king?", "What was the motive?"]
-```'''
+```"""
         result = decomposer._parse_decomposition(text, max_hops=3)
 
         assert len(result) == 2
@@ -519,7 +528,9 @@ class TestMultiHopRetriever:
         assert retriever._llm == mock_llm_client
         assert retriever._config.max_hops == DEFAULT_MAX_HOPS
 
-    def test_initialization_custom_config(self, mock_retrieval_service, mock_llm_client):
+    def test_initialization_custom_config(
+        self, mock_retrieval_service, mock_llm_client
+    ):
         """Test initialization with custom config."""
         config = MultiHopConfig(max_hops=5)
         retriever = MultiHopRetriever(
@@ -542,7 +553,9 @@ class TestMultiHopRetriever:
         from unittest.mock import patch
 
         # Configure decomposer to not decompose
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=False):
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=False
+        ):
             result = await multi_hop_retriever.retrieve("Who killed the king?")
 
         assert result.total_hops == 1
@@ -574,7 +587,9 @@ class TestMultiHopRetriever:
         from unittest.mock import patch
 
         # Force decomposition
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
             result = await multi_hop_retriever.retrieve("Who killed the king?")
 
         assert result.final_answer is not None
@@ -587,13 +602,19 @@ class TestMultiHopRetriever:
 
         config = MultiHopConfig(enable_answer_synthesis=False)
 
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
-            result = await multi_hop_retriever.retrieve("Who killed the king?", config=config)
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
+            result = await multi_hop_retriever.retrieve(
+                "Who killed the king?", config=config
+            )
 
         assert result.final_answer is None
 
     @pytest.mark.asyncio
-    async def test_retrieve_early_termination(self, mock_retrieval_service, mock_llm_client):
+    async def test_retrieve_early_termination(
+        self, mock_retrieval_service, mock_llm_client
+    ):
         """Test retrieval terminates early when enough chunks found."""
         from unittest.mock import patch
 
@@ -605,7 +626,9 @@ class TestMultiHopRetriever:
         retriever._should_terminate_early = lambda h, c: len(c) >= 1
 
         # Force multi-hop
-        with patch.object(retriever._decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(
+            retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
             result = await retriever.retrieve("Complex query about the story")
 
         assert result.terminated_early is True
@@ -625,7 +648,9 @@ class TestMultiHopRetriever:
 
         config = MultiHopConfig(max_hops=2)
 
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
             result = await multi_hop_retriever.retrieve("Complex query", config=config)
 
         # Should respect max_hops=2 even if LLM returns 3 sub-queries
@@ -707,7 +732,9 @@ class TestMultiHopIntegration:
         )
 
         # Verify structure
-        assert result.original_query == "Who is the villain that killed the king and why?"
+        assert (
+            result.original_query == "Who is the villain that killed the king and why?"
+        )
         # May have early termination if a hop returns 0 chunks
         assert 1 <= result.total_hops <= 3
         assert result.succeeded is True
@@ -739,13 +766,17 @@ class TestMultiHopIntegration:
         from unittest.mock import patch
 
         # Force decomposition to get multi-hop
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
             result = await multi_hop_retriever.retrieve("Complex query about the story")
 
         assert result.reasoning_chain is not None
         assert len(result.reasoning_chain) > 0
         # New format uses "Query:" and "Reasoning Path:" or "Single-hop" for single hop
-        assert "Query:" in result.reasoning_chain or "Single-hop" in result.reasoning_chain
+        assert (
+            "Query:" in result.reasoning_chain or "Single-hop" in result.reasoning_chain
+        )
 
     @pytest.mark.asyncio
     async def test_multi_hop_latency_tracking(self, multi_hop_retriever):
@@ -765,8 +796,12 @@ class TestReasoningChain:
         """Test that reasoning chain is captured for multi-hop retrieval."""
         from unittest.mock import patch
 
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
-            result = await multi_hop_retriever.retrieve("Who is the villain that killed the king?")
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
+            result = await multi_hop_retriever.retrieve(
+                "Who is the villain that killed the king?"
+            )
 
         # Reasoning chain should exist and contain query info
         assert result.reasoning_chain is not None
@@ -778,8 +813,12 @@ class TestReasoningChain:
         """Test that ReasoningStep objects are created for each hop."""
         from unittest.mock import patch
 
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
-            result = await multi_hop_retriever.retrieve("Who is the villain that killed the king?")
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
+            result = await multi_hop_retriever.retrieve(
+                "Who is the villain that killed the king?"
+            )
 
         # Should have reasoning steps if multi-hop occurred
         if result.total_hops > 1:
@@ -787,19 +826,21 @@ class TestReasoningChain:
 
             # Check first step structure
             first_step = result.reasoning_steps[0]
-            assert hasattr(first_step, 'hop_number')
-            assert hasattr(first_step, 'query')
-            assert hasattr(first_step, 'query_type')
-            assert hasattr(first_step, 'chunks_found')
-            assert hasattr(first_step, 'top_sources')
-            assert hasattr(first_step, 'latency_ms')
+            assert hasattr(first_step, "hop_number")
+            assert hasattr(first_step, "query")
+            assert hasattr(first_step, "query_type")
+            assert hasattr(first_step, "chunks_found")
+            assert hasattr(first_step, "top_sources")
+            assert hasattr(first_step, "latency_ms")
 
     @pytest.mark.asyncio
     async def test_reasoning_step_includes_query_type(self, multi_hop_retriever):
         """Test that reasoning steps track query type (original/decomposed/followup)."""
         from unittest.mock import patch
 
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
             result = await multi_hop_retriever.retrieve("Complex multi-part question")
 
         if result.reasoning_steps:
@@ -816,14 +857,15 @@ class TestReasoningChain:
         """Test that reasoning steps include top sources."""
         from unittest.mock import patch
 
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
             result = await multi_hop_retriever.retrieve("Who killed the king?")
 
         if result.reasoning_steps:
             # At least one step should have sources
             has_sources = any(
-                len(step.top_sources) > 0
-                for step in result.reasoning_steps
+                len(step.top_sources) > 0 for step in result.reasoning_steps
             )
             assert has_sources, "At least one reasoning step should have sources"
 
@@ -832,7 +874,9 @@ class TestReasoningChain:
         """Test get_explain_output() returns formatted explanation."""
         from unittest.mock import patch
 
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
             result = await multi_hop_retriever.retrieve("Who killed the king?")
 
         explain_output = result.get_explain_output()
@@ -850,7 +894,9 @@ class TestReasoningChain:
         """Test verbose explain output includes context summaries."""
         from unittest.mock import patch
 
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
             result = await multi_hop_retriever.retrieve("Who killed the king?")
 
         # Verbose output should include more detail
@@ -865,7 +911,9 @@ class TestReasoningChain:
         """Test explain output includes final answer when available."""
         from unittest.mock import patch
 
-        with patch.object(multi_hop_retriever._decomposer, '_needs_decomposition', return_value=True):
+        with patch.object(
+            multi_hop_retriever._decomposer, "_needs_decomposition", return_value=True
+        ):
             result = await multi_hop_retriever.retrieve("Who killed the king?")
 
         explain_output = result.get_explain_output()
@@ -877,7 +925,9 @@ class TestReasoningChain:
 
     def test_reasoning_step_to_explain_line(self):
         """Test ReasoningStep.to_explain_line() format."""
-        from src.contexts.knowledge.application.services.multi_hop_retriever import ReasoningStep
+        from src.contexts.knowledge.application.services.multi_hop_retriever import (
+            ReasoningStep,
+        )
 
         step = ReasoningStep(
             hop_number=0,
@@ -903,7 +953,9 @@ class TestExplainConfig:
 
     def test_default_explain_config(self):
         """Test default ExplainConfig values."""
-        from src.contexts.knowledge.application.services.multi_hop_retriever import ExplainConfig
+        from src.contexts.knowledge.application.services.multi_hop_retriever import (
+            ExplainConfig,
+        )
 
         config = ExplainConfig()
 
@@ -914,7 +966,9 @@ class TestExplainConfig:
 
     def test_custom_explain_config(self):
         """Test custom ExplainConfig values."""
-        from src.contexts.knowledge.application.services.multi_hop_retriever import ExplainConfig
+        from src.contexts.knowledge.application.services.multi_hop_retriever import (
+            ExplainConfig,
+        )
 
         config = ExplainConfig(
             enabled=True,
@@ -930,7 +984,9 @@ class TestExplainConfig:
 
     def test_explain_config_frozen(self):
         """Test ExplainConfig is immutable (frozen dataclass)."""
-        from src.contexts.knowledge.application.services.multi_hop_retriever import ExplainConfig
+        from src.contexts.knowledge.application.services.multi_hop_retriever import (
+            ExplainConfig,
+        )
 
         config = ExplainConfig()
         with pytest.raises(AttributeError):

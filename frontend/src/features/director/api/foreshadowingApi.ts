@@ -29,7 +29,9 @@ export const foreshadowingKeys = {
  * Fetch all foreshadowings
  */
 async function fetchForeshadowings(): Promise<ForeshadowingListResponse> {
-  const response = await api.get<ForeshadowingListResponse>('/structure/foreshadowings');
+  const response = await api.get<ForeshadowingListResponse>(
+    '/structure/foreshadowings'
+  );
   return ForeshadowingListResponseSchema.parse(response);
 }
 
@@ -47,7 +49,9 @@ export function useForeshadowings(): UseQueryResult<ForeshadowingListResponse, E
  * Fetch a single foreshadowing by ID
  */
 async function fetchForeshadowing(id: string): Promise<ForeshadowingResponse> {
-  const response = await api.get<ForeshadowingResponse>(`/structure/foreshadowings/${id}`);
+  const response = await api.get<ForeshadowingResponse>(
+    `/structure/foreshadowings/${id}`
+  );
   return ForeshadowingResponseSchema.parse(response);
 }
 
@@ -105,8 +109,13 @@ async function updateForeshadowing(
  */
 export function useUpdateForeshadowing() {
   return useMutation({
-    mutationFn: ({ id, request }: { id: string; request: ForeshadowingUpdateRequest }) =>
-      updateForeshadowing(id, request),
+    mutationFn: ({
+      id,
+      request,
+    }: {
+      id: string;
+      request: ForeshadowingUpdateRequest;
+    }) => updateForeshadowing(id, request),
   });
 }
 

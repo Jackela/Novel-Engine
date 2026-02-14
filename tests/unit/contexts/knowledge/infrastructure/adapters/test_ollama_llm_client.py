@@ -23,9 +23,11 @@ from src.contexts.knowledge.application.ports.i_llm_client import (
 )
 from src.contexts.knowledge.infrastructure.adapters.ollama_llm_client import (
     DEFAULT_MODEL,
-    OllamaLLMClient,
     OLLAMA_MODELS,
+    OllamaLLMClient,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestOllamaLLMClientInit:

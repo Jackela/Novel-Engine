@@ -51,10 +51,7 @@ export async function generateOutlineMarkdown(
   storyId: string,
   options: OutlineExportOptions = {}
 ): Promise<string> {
-  const {
-    includeBeats = false,
-    includeCharacters = false,
-  } = options;
+  const { includeBeats = false, includeCharacters = false } = options;
 
   // Fetch story data
   const storyData = await api.get<unknown>(`/structure/stories/${storyId}`);
@@ -69,7 +66,11 @@ export async function generateOutlineMarkdown(
   const plotlines = plotlinesResponse.plotlines;
 
   // Fetch characters if requested
-  let characterSummaries: Array<{ name?: string; archetype?: string; traits?: string[] }> = [];
+  let characterSummaries: Array<{
+    name?: string;
+    archetype?: string;
+    traits?: string[];
+  }> = [];
   if (includeCharacters) {
     const charactersData = await api.get<unknown>('/characters');
     // Character data is returned differently - handle gracefully

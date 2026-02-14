@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures';
+import { safeGoto } from './utils/navigation';
 
 test.describe('Weaver Scene Generation', () => {
   test('@weaver-smoke generates scene from selected character with smart placement', async ({
@@ -15,7 +16,10 @@ test.describe('Weaver Scene Generation', () => {
     });
 
     await test.step('GIVEN: 用户在 Weaver 画布页面', async () => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
+      await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible({
+        timeout: 30_000,
+      });
     });
 
     // ========================================
@@ -24,12 +28,15 @@ test.describe('Weaver Scene Generation', () => {
     await test.step('WHEN: 用户选中 Alice 角色节点', async () => {
       // Click on the Alice character node to select it
       const aliceNode = page.locator('.weaver-node', { hasText: 'Alice' });
+      await expect(aliceNode).toBeVisible({ timeout: 20_000 });
       await aliceNode.click();
       await expect(aliceNode).toHaveClass(/node-active/);
     });
 
     await test.step('WHEN: 用户点击 Generate Scene 按钮打开对话框', async () => {
-      await page.getByRole('button', { name: 'Generate Scene' }).click();
+      const generateSceneButton = page.getByRole('button', { name: 'Generate Scene' });
+      await expect(generateSceneButton).toBeVisible({ timeout: 20_000 });
+      await generateSceneButton.click();
       await expect(page.getByRole('heading', { name: 'Generate Scene' })).toBeVisible();
     });
 
@@ -78,7 +85,10 @@ test.describe('Weaver Scene Generation', () => {
     // GIVEN: 用户在 Weaver 画布，无节点选中
     // ========================================
     await test.step('GIVEN: 用户在 Weaver 画布页面', async () => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
+      await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible({
+        timeout: 30_000,
+      });
     });
 
     await test.step('GIVEN: 点击画布空白处取消所有选择', async () => {
@@ -107,7 +117,10 @@ test.describe('Weaver Scene Generation', () => {
     });
 
     await test.step('GIVEN: 用户在 Weaver 画布页面', async () => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
+      await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible({
+        timeout: 30_000,
+      });
     });
 
     // ========================================
@@ -115,12 +128,15 @@ test.describe('Weaver Scene Generation', () => {
     // ========================================
     await test.step('WHEN: 用户选中 Alice 角色节点', async () => {
       const aliceNode = page.locator('.weaver-node', { hasText: 'Alice' });
+      await expect(aliceNode).toBeVisible({ timeout: 20_000 });
       await aliceNode.click();
       await expect(aliceNode).toHaveClass(/node-active/);
     });
 
     await test.step('WHEN: 用户打开生成对话框', async () => {
-      await page.getByRole('button', { name: 'Generate Scene' }).click();
+      const generateSceneButton = page.getByRole('button', { name: 'Generate Scene' });
+      await expect(generateSceneButton).toBeVisible({ timeout: 20_000 });
+      await generateSceneButton.click();
       await expect(page.getByRole('heading', { name: 'Generate Scene' })).toBeVisible();
     });
 

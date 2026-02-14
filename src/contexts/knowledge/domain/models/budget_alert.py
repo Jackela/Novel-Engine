@@ -13,13 +13,10 @@ Constitution Compliance:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional, assert_never
 from uuid import uuid4
-
-if TYPE_CHECKING:
-    pass
 
 
 def _utcnow() -> datetime:
@@ -249,7 +246,7 @@ class BudgetAlertState:
                 # Always notify if cooldown passed
                 return True
 
-        return False
+        assert_never(self.config.frequency)
 
     def mark_triggered(self, notified: bool = False) -> None:
         """

@@ -18,14 +18,13 @@ from typing import Any
 
 from ...application.ports.i_ingestion_processor import IIngestionProcessor
 from ...domain.models.chunking_strategy import (
-    ChunkStrategyType,
     ChunkingStrategy,
+    ChunkStrategyType,
 )
 from ...domain.models.source_type import SourceType
 
-
 # Patterns for content analysis
-_WORD_PATTERN: re.Pattern[str] = re.compile(r'\S+')
+_WORD_PATTERN: re.Pattern[str] = re.compile(r"\S+")
 _DIALOGUE_PATTERN: re.Pattern[str] = re.compile(r'"[^"]*"')
 
 
@@ -94,13 +93,23 @@ class LoreProcessor(IIngestionProcessor):
         content_lower = content.lower()
 
         # Category hints
-        if any(word in content_lower for word in ["history", "historical", "ancient", "past"]):
+        if any(
+            word in content_lower
+            for word in ["history", "historical", "ancient", "past"]
+        ):
             enriched.setdefault("category", "history")
-        elif any(word in content_lower for word in ["magic", "spell", "enchantment", "curse"]):
+        elif any(
+            word in content_lower for word in ["magic", "spell", "enchantment", "curse"]
+        ):
             enriched.setdefault("category", "magic")
-        elif any(word in content_lower for word in ["geography", "region", "land", "terrain"]):
+        elif any(
+            word in content_lower for word in ["geography", "region", "land", "terrain"]
+        ):
             enriched.setdefault("category", "geography")
-        elif any(word in content_lower for word in ["culture", "society", "tradition", "custom"]):
+        elif any(
+            word in content_lower
+            for word in ["culture", "society", "tradition", "custom"]
+        ):
             enriched.setdefault("category", "culture")
         else:
             enriched.setdefault("category", "general")
@@ -140,8 +149,8 @@ class CharacterProcessor(IIngestionProcessor):
         enriched["processor"] = "character"
 
         # Extract character name if present (common pattern: "Name\n" or "Name -")
-        first_line = content.strip().split('\n')[0].strip()
-        if len(first_line) < 50 and not first_line.endswith('.'):
+        first_line = content.strip().split("\n")[0].strip()
+        if len(first_line) < 50 and not first_line.endswith("."):
             # Likely a name/title line
             enriched.setdefault("name_hint", first_line)
 
@@ -198,8 +207,7 @@ class SceneProcessor(IIngestionProcessor):
         # Count dialogue vs narration
         dialogue_matches = _DIALOGUE_PATTERN.findall(content)
         dialogue_words = sum(
-            len(_WORD_PATTERN.findall(match))
-            for match in dialogue_matches
+            len(_WORD_PATTERN.findall(match)) for match in dialogue_matches
         )
         total_words = len(_WORD_PATTERN.findall(content))
 
@@ -381,7 +389,14 @@ class LocationProcessor(IIngestionProcessor):
         type_keywords = {
             "settlement": ["city", "town", "village", "hamlet", "settlement"],
             "natural": ["forest", "mountain", "river", "lake", "ocean", "valley"],
-            "structure": ["castle", "fortress", "temple", "ruins", "building", "dungeon"],
+            "structure": [
+                "castle",
+                "fortress",
+                "temple",
+                "ruins",
+                "building",
+                "dungeon",
+            ],
             "region": ["kingdom", "realm", "territory", "province", "region", "land"],
         }
 

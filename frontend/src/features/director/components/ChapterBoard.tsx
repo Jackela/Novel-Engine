@@ -135,19 +135,19 @@ function SceneCard({ scene, isDragging }: SceneCardProps) {
         >
           <GripVertical className="h-4 w-4" />
         </button>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-sm truncate">{scene.title}</h4>
+        <div className="min-w-0 flex-1">
+          <h4 className="truncate text-sm font-medium">{scene.title}</h4>
           {scene.summary && (
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
               {scene.summary}
             </p>
           )}
-          <div className="flex items-center gap-2 mt-2">
+          <div className="mt-2 flex items-center gap-2">
             <Badge variant="outline" className="text-xs">
               {scene.beat_count} {scene.beat_count === 1 ? 'beat' : 'beats'}
             </Badge>
             {scene.location && (
-              <span className="text-xs text-muted-foreground truncate">
+              <span className="truncate text-xs text-muted-foreground">
                 📍 {scene.location}
               </span>
             )}
@@ -173,13 +173,13 @@ function PhaseColumn({ phase, scenes, onSceneClick }: PhaseColumnProps) {
   return (
     <div
       className={cn(
-        'flex flex-col rounded-lg border p-4 min-w-[280px] max-w-[320px]',
+        'flex min-w-[280px] max-w-[320px] flex-col rounded-lg border p-4',
         phase.color
       )}
     >
       <div className="mb-4">
-        <h3 className="font-semibold text-sm">{phase.label}</h3>
-        <p className="text-xs text-muted-foreground mt-1">{phase.description}</p>
+        <h3 className="text-sm font-semibold">{phase.label}</h3>
+        <p className="mt-1 text-xs text-muted-foreground">{phase.description}</p>
         <Badge variant="secondary" className="mt-2">
           {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
         </Badge>
@@ -205,7 +205,7 @@ function PhaseColumn({ phase, scenes, onSceneClick }: PhaseColumnProps) {
             </div>
           ))}
           {scenes.length === 0 && (
-            <div className="text-center py-8 text-sm text-muted-foreground">
+            <div className="py-8 text-center text-sm text-muted-foreground">
               Drop scenes here
             </div>
           )}
@@ -229,7 +229,7 @@ function ListView({ scenes, onSceneClick }: ListViewProps) {
       {scenes.map((scene) => (
         <Card
           key={scene.id}
-          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          className="cursor-pointer transition-colors hover:bg-accent/50"
           onClick={() => onSceneClick?.(scene)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -245,7 +245,7 @@ function ListView({ scenes, onSceneClick }: ListViewProps) {
               <div className="flex-1">
                 <h4 className="font-medium">{scene.title}</h4>
                 {scene.summary && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                  <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
                     {scene.summary}
                   </p>
                 )}
@@ -339,7 +339,7 @@ export function ChapterBoard({ storyId, chapterId }: ChapterBoardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <div className="text-muted-foreground">Loading scenes...</div>
       </div>
     );
@@ -348,9 +348,9 @@ export function ChapterBoard({ storyId, chapterId }: ChapterBoardProps) {
   const allScenes = scenesData?.scenes ?? [];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full flex-col">
       {/* Toolbar */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Chapter Board</h2>
           <Badge variant="secondary">{allScenes.length} scenes</Badge>
@@ -402,7 +402,7 @@ export function ChapterBoard({ storyId, chapterId }: ChapterBoardProps) {
             </DragOverlay>
           </DndContext>
         ) : (
-          <div className="max-w-3xl mx-auto pb-4">
+          <div className="mx-auto max-w-3xl pb-4">
             <ListView scenes={allScenes} onSceneClick={handleSceneClick} />
           </div>
         )}

@@ -7,27 +7,68 @@ remove_leader, and related methods.
 """
 
 import sys
-from unittest.mock import MagicMock, Mock
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Optional
+from unittest.mock import MagicMock
+from uuid import uuid4
 
 import pytest
 
 # Mock problematic dependencies
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
-event_bus_mock = MagicMock()
-event_mock = MagicMock()
-event_mock.return_value = Mock()
-event_bus_mock.Event = event_mock
-sys.modules["src.events.event_bus"] = event_bus_mock
+
+
+class MockEventPriority(Enum):
+    """Mock EventPriority for testing."""
+
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+@dataclass
+class MockEvent:
+    """Mock Event class that supports dataclass functionality."""
+
+    event_id: str | None = None
+    correlation_id: Optional[str] = None
+    source: Optional[str] = None
+    priority: MockEventPriority = MockEventPriority.NORMAL
+    timestamp: datetime | None = None
+    tags: set = field(default_factory=set)
+    payload: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.event_id is None:
+            self.event_id = str(uuid4())
+        if self.timestamp is None:
+            self.timestamp = datetime.now()
+
+
+class MockEventBusModule:
+    Event = MockEvent
+    EventPriority = MockEventPriority
+
+
+sys.modules["src.events.event_bus"] = MockEventBusModule()
 
 from src.contexts.world.domain.entities.faction import (
     Faction,
-    FactionType,
     FactionAlignment,
     FactionStatus,
+    FactionType,
 )
 
 
-def _create_test_faction(leader_id: str | None = None, leader_name: str | None = None) -> Faction:
+def _create_test_faction(
+    leader_id: str | None = None, leader_name: str | None = None
+) -> Faction:
     """Helper to create a valid faction for testing."""
     return Faction(
         name="Test Guild",
@@ -72,7 +113,9 @@ class TestFactionLeadership:
     @pytest.mark.unit
     def test_faction_created_with_leader_id_and_name(self):
         """Test faction can be created with both leader_id and leader_name."""
-        faction = _create_test_faction(leader_id="char-123", leader_name="Guild Master Theron")
+        faction = _create_test_faction(
+            leader_id="char-123", leader_name="Guild Master Theron"
+        )
 
         assert faction.leader_id == "char-123"
         assert faction.leader_name == "Guild Master Theron"
@@ -87,6 +130,7 @@ class TestFactionLeadership:
         old_updated_at = faction.updated_at
 
         import time
+
         time.sleep(0.01)
 
         faction.set_leader("new-leader-id", "Lord Commander")
@@ -147,10 +191,13 @@ class TestFactionLeadership:
     @pytest.mark.unit
     def test_remove_leader_success(self):
         """Test successfully removing a faction leader."""
-        faction = _create_test_faction(leader_id="current-leader", leader_name="The Boss")
+        faction = _create_test_faction(
+            leader_id="current-leader", leader_name="The Boss"
+        )
         old_updated_at = faction.updated_at
 
         import time
+
         time.sleep(0.01)
 
         result = faction.remove_leader()

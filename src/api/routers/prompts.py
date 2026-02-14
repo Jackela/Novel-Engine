@@ -379,10 +379,11 @@ async def prompts_health(
             "total_prompts": count,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-    except PromptRepositoryError as e:
+    except PromptRepositoryError:
+        logger.exception("Prompt repository health check failed")
         return {
             "status": "unhealthy",
-            "error": str(e),
+            "error": "repository_error",
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -429,8 +430,16 @@ async def create_prompt(
             temperature=payload.temperature if payload.temperature is not None else 0.7,
             max_tokens=payload.max_tokens if payload.max_tokens is not None else 1000,
             top_p=payload.top_p if payload.top_p is not None else 1.0,
-            frequency_penalty=payload.frequency_penalty if payload.frequency_penalty is not None else 0.0,
-            presence_penalty=payload.presence_penalty if payload.presence_penalty is not None else 0.0,
+            frequency_penalty=(
+                payload.frequency_penalty
+                if payload.frequency_penalty is not None
+                else 0.0
+            ),
+            presence_penalty=(
+                payload.presence_penalty
+                if payload.presence_penalty is not None
+                else 0.0
+            ),
         )
 
         # Create template
@@ -544,21 +553,31 @@ async def update_prompt(
             model_config = ModelConfig(
                 provider=payload.model_provider or existing.model_config.provider,
                 model_name=payload.model_name or existing.model_config.model_name,
-                temperature=payload.temperature
-                if payload.temperature is not None
-                else existing.model_config.temperature,
-                max_tokens=payload.max_tokens
-                if payload.max_tokens is not None
-                else existing.model_config.max_tokens,
-                top_p=payload.top_p
-                if payload.top_p is not None
-                else existing.model_config.top_p,
-                frequency_penalty=payload.frequency_penalty
-                if payload.frequency_penalty is not None
-                else existing.model_config.frequency_penalty,
-                presence_penalty=payload.presence_penalty
-                if payload.presence_penalty is not None
-                else existing.model_config.presence_penalty,
+                temperature=(
+                    payload.temperature
+                    if payload.temperature is not None
+                    else existing.model_config.temperature
+                ),
+                max_tokens=(
+                    payload.max_tokens
+                    if payload.max_tokens is not None
+                    else existing.model_config.max_tokens
+                ),
+                top_p=(
+                    payload.top_p
+                    if payload.top_p is not None
+                    else existing.model_config.top_p
+                ),
+                frequency_penalty=(
+                    payload.frequency_penalty
+                    if payload.frequency_penalty is not None
+                    else existing.model_config.frequency_penalty
+                ),
+                presence_penalty=(
+                    payload.presence_penalty
+                    if payload.presence_penalty is not None
+                    else existing.model_config.presence_penalty
+                ),
             )
 
         # Create new version
@@ -567,9 +586,9 @@ async def update_prompt(
             variables=variables,
             model_config=model_config,
             name=payload.name if payload.name is not None else None,
-            description=payload.description
-            if payload.description is not None
-            else None,
+            description=(
+                payload.description if payload.description is not None else None
+            ),
             tags=tuple(payload.tags) if payload.tags is not None else None,
             extends=tuple(payload.extends) if payload.extends is not None else None,
         )
@@ -612,7 +631,9 @@ async def delete_prompt(
     try:
         deleted = await service.delete_prompt(prompt_id)
         if not deleted:
-            raise HTTPException(status_code=404, detail=f"Prompt '{prompt_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Prompt '{prompt_id}' not found"
+            )
 
         return Response(status_code=204)
 
@@ -791,7 +812,9 @@ async def get_prompt_versions(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/prompts/{prompt_id}/rollback/{version}", response_model=PromptDetailResponse)
+@router.post(
+    "/prompts/{prompt_id}/rollback/{version}", response_model=PromptDetailResponse
+)
 async def rollback_prompt(
     prompt_id: str,
     version: int,

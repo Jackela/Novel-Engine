@@ -294,14 +294,22 @@ class CharacterRouterService:
                                 and status_candidate.strip()
                             ):
                                 status = status_candidate.strip()
-                            type_candidate = metadata.get("role") or metadata.get("type")
-                            if isinstance(type_candidate, str) and type_candidate.strip():
+                            type_candidate = metadata.get("role") or metadata.get(
+                                "type"
+                            )
+                            if (
+                                isinstance(type_candidate, str)
+                                and type_candidate.strip()
+                            ):
                                 type_value = type_candidate.strip().lower()
                         if isinstance(structured, dict):
                             type_candidate = structured.get("role") or structured.get(
                                 "type"
                             )
-                            if isinstance(type_candidate, str) and type_candidate.strip():
+                            if (
+                                isinstance(type_candidate, str)
+                                and type_candidate.strip()
+                            ):
                                 type_value = type_candidate.strip().lower()
             except Exception:
                 self.logger.debug("Failed to parse stats.", exc_info=True)
@@ -419,14 +427,19 @@ class CharacterRouterService:
             return entries
         except FileNotFoundError as exc:
             self.logger.error("Characters directory missing: %s", exc)
-            raise HTTPException(status_code=404, detail="Characters directory not found.")
+            raise HTTPException(
+                status_code=404, detail="Characters directory not found."
+            )
         except PermissionError as exc:
             self.logger.error("Permission denied reading characters: %s", exc)
             raise HTTPException(
-                status_code=500, detail="Permission denied accessing characters directory."
+                status_code=500,
+                detail="Permission denied accessing characters directory.",
             )
         except Exception as exc:
-            self.logger.error("Unexpected error loading characters: %s", exc, exc_info=True)
+            self.logger.error(
+                "Unexpected error loading characters: %s", exc, exc_info=True
+            )
             raise HTTPException(
                 status_code=500, detail=f"Failed to retrieve characters: {exc}"
             )

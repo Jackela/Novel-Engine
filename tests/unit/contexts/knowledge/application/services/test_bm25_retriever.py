@@ -8,18 +8,21 @@ Warzone 4: AI Brain - BRAIN-008A
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from src.contexts.knowledge.application.services.bm25_retriever import (
-    BM25Retriever,
-    BM25Result,
-    IndexedDocument,
-    BM25IndexStats,
-    tokenize,
-    DEFAULT_K1,
     DEFAULT_B,
+    DEFAULT_K1,
+    BM25IndexStats,
+    BM25Result,
+    BM25Retriever,
+    IndexedDocument,
+    tokenize,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.unit
@@ -268,21 +271,48 @@ class TestBM25RetrieverSearch:
                 source_id="char_aldric",
                 source_type="CHARACTER",
                 content="Sir Aldric is a brave knight of the realm",
-                tokens=["sir", "aldric", "is", "a", "brave", "knight", "of", "the", "realm"],
+                tokens=[
+                    "sir",
+                    "aldric",
+                    "is",
+                    "a",
+                    "brave",
+                    "knight",
+                    "of",
+                    "the",
+                    "realm",
+                ],
             ),
             IndexedDocument(
                 doc_id="chunk_2",
                 source_id="char_merlin",
                 source_type="CHARACTER",
                 content="Merlin is a wise wizard with magical powers",
-                tokens=["merlin", "is", "a", "wise", "wizard", "with", "magical", "powers"],
+                tokens=[
+                    "merlin",
+                    "is",
+                    "a",
+                    "wise",
+                    "wizard",
+                    "with",
+                    "magical",
+                    "powers",
+                ],
             ),
             IndexedDocument(
                 doc_id="chunk_3",
                 source_id="lore_sword",
                 source_type="LORE",
                 content="The Excalibur sword is legendary and powerful",
-                tokens=["the", "excalibur", "sword", "is", "legendary", "and", "powerful"],
+                tokens=[
+                    "the",
+                    "excalibur",
+                    "sword",
+                    "is",
+                    "legendary",
+                    "and",
+                    "powerful",
+                ],
             ),
             IndexedDocument(
                 doc_id="chunk_4",
@@ -759,11 +789,17 @@ class TestBM25RetrieverMatchesFilters:
             metadata={"tags": ["knight"], "chapter": 1},
         )
         # All filters must match
-        assert retriever._matches_filters(
-            doc,
-            {"source_type": "CHARACTER", "tags": ["knight"], "chapter": 1},
-        ) is True
-        assert retriever._matches_filters(
-            doc,
-            {"source_type": "CHARACTER", "tags": ["wizard"]},
-        ) is False
+        assert (
+            retriever._matches_filters(
+                doc,
+                {"source_type": "CHARACTER", "tags": ["knight"], "chapter": 1},
+            )
+            is True
+        )
+        assert (
+            retriever._matches_filters(
+                doc,
+                {"source_type": "CHARACTER", "tags": ["wizard"]},
+            )
+            is False
+        )

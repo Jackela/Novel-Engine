@@ -16,6 +16,8 @@ from src.contexts.narrative.application.services.pacing_service import (
 )
 from src.contexts.narrative.domain.entities.scene import Scene
 
+pytestmark = pytest.mark.unit
+
 
 class TestScenePacingMetrics:
     """Test suite for ScenePacingMetrics dataclass."""
@@ -119,7 +121,9 @@ class TestPacingServiceCalculateChapterPacing:
         service = PacingService()
         chapter_id = uuid4()
 
-        report = service.calculate_chapter_pacing(chapter_id, [])
+        result = service.calculate_chapter_pacing(chapter_id, [])
+        assert result.is_ok
+        report = result.value
 
         assert report.chapter_id == chapter_id
         assert report.scene_metrics == []
@@ -143,7 +147,9 @@ class TestPacingServiceCalculateChapterPacing:
             energy_level=4,
         )
 
-        report = service.calculate_chapter_pacing(chapter_id, [scene])
+        result = service.calculate_chapter_pacing(chapter_id, [scene])
+        assert result.is_ok
+        report = result.value
 
         assert len(report.scene_metrics) == 1
         assert report.scene_metrics[0].scene_title == "Solo Scene"
@@ -184,7 +190,9 @@ class TestPacingServiceCalculateChapterPacing:
             ),
         ]
 
-        report = service.calculate_chapter_pacing(chapter_id, scenes)
+        result = service.calculate_chapter_pacing(chapter_id, scenes)
+        assert result.is_ok
+        report = result.value
 
         assert len(report.scene_metrics) == 3
         assert report.average_tension == 6.0  # (3+6+9)/3
@@ -223,7 +231,9 @@ class TestPacingServiceCalculateChapterPacing:
             ),
         ]
 
-        report = service.calculate_chapter_pacing(chapter_id, scenes)
+        result = service.calculate_chapter_pacing(chapter_id, scenes)
+        assert result.is_ok
+        report = result.value
 
         assert report.scene_metrics[0].scene_title == "First"
         assert report.scene_metrics[1].scene_title == "Second"
@@ -253,7 +263,9 @@ class TestPacingServiceCalculateChapterPacing:
             ),
         ]
 
-        report = service.calculate_chapter_pacing(chapter_id, scenes)
+        result = service.calculate_chapter_pacing(chapter_id, scenes)
+        assert result.is_ok
+        report = result.value
 
         assert report.average_tension == 5.0  # (3+5+7)/3 = 5.0
 
@@ -523,7 +535,9 @@ class TestPacingServiceAnalyzePacingIssues:
         assert service.analyze_pacing_issues([]) == []
 
         # One scene
-        scene = Scene(title="Only", chapter_id=chapter_id, tension_level=5, energy_level=5)
+        scene = Scene(
+            title="Only", chapter_id=chapter_id, tension_level=5, energy_level=5
+        )
         assert service.analyze_pacing_issues([scene]) == []
 
     @pytest.mark.unit
@@ -663,7 +677,9 @@ class TestPacingServiceIntegration:
             ),
         ]
 
-        report = service.calculate_chapter_pacing(chapter_id, scenes)
+        result = service.calculate_chapter_pacing(chapter_id, scenes)
+        assert result.is_ok
+        report = result.value
 
         # Verify structure
         assert report.chapter_id == chapter_id
@@ -687,8 +703,12 @@ class TestPacingServiceIntegration:
         """Test that scene IDs are preserved in metrics."""
         service = PacingService()
         chapter_id = uuid4()
-        scene = Scene(title="Test", chapter_id=chapter_id, tension_level=5, energy_level=5)
+        scene = Scene(
+            title="Test", chapter_id=chapter_id, tension_level=5, energy_level=5
+        )
 
-        report = service.calculate_chapter_pacing(chapter_id, [scene])
+        result = service.calculate_chapter_pacing(chapter_id, [scene])
+        assert result.is_ok
+        report = result.value
 
         assert report.scene_metrics[0].scene_id == scene.id

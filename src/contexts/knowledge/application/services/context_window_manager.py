@@ -13,16 +13,15 @@ OPT-009: Context Window Manager
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
-from collections import deque
 
 import structlog
 
-from .token_counter import TokenCounter, LLMProvider
-from .context_optimizer import ContextOptimizer, PackingStrategy
 from ..services.knowledge_ingestion_service import RetrievedChunk
+from .context_optimizer import ContextOptimizer, PackingStrategy
+from .token_counter import LLMProvider, TokenCounter
 
 if TYPE_CHECKING:
     pass
@@ -141,10 +140,9 @@ class ManagedContext:
             List of message dicts with 'role' and 'content' keys
         """
         messages = [{"role": "system", "content": self.system_prompt}]
-        messages.extend([
-            {"role": msg.role, "content": msg.content}
-            for msg in self.chat_history
-        ])
+        messages.extend(
+            [{"role": msg.role, "content": msg.content} for msg in self.chat_history]
+        )
         return messages
 
 
@@ -258,7 +256,9 @@ class ContextWindowManager:
 
         # Calculate totals
         total_tokens = system_tokens + rag_tokens + history_tokens
-        fits_window = total_tokens <= (cfg.model_context_window - cfg.reserve_for_response)
+        fits_window = total_tokens <= (
+            cfg.model_context_window - cfg.reserve_for_response
+        )
 
         result = ManagedContext(
             system_prompt=system_prompt,
@@ -351,9 +351,11 @@ class ContextWindowManager:
         if not history:
             # Just include the query
             query_tokens = self._token_counter.count(query).token_count
-            return [
-                ChatMessage(role="user", content=query, tokens=query_tokens)
-            ], query_tokens, 0
+            return (
+                [ChatMessage(role="user", content=query, tokens=query_tokens)],
+                query_tokens,
+                0,
+            )
 
         # Count tokens for all history messages
         history_with_tokens = []
@@ -470,7 +472,9 @@ def create_context_window_manager(
     token_counter = TokenCounter(default_provider=provider)
 
     # Get model context window
-    model_window = DEFAULT_CONTEXT_WINDOWS.get(model_name, 128000) if model_name else 128000
+    model_window = (
+        DEFAULT_CONTEXT_WINDOWS.get(model_name, 128000) if model_name else 128000
+    )
 
     config = ContextWindowConfig(
         model_context_window=model_window,

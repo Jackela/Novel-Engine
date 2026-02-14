@@ -5,14 +5,17 @@ Tests LRU eviction, TTL expiration, batch operations, and statistics tracking.
 """
 
 import time
+
 import pytest
 
 from src.contexts.knowledge.application.services.embedding_cache_service import (
-    EmbeddingCacheService,
-    CacheKey,
     CacheEntry,
+    CacheKey,
     CacheStats,
+    EmbeddingCacheService,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestCacheKey:

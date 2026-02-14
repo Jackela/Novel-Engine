@@ -20,11 +20,14 @@ Technical Debt Resolved:
 """
 
 import asyncio
+import atexit
 import hashlib
 import json
 import logging
 import os
+import threading
 import time
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
@@ -298,10 +301,16 @@ class AsyncLLMClient:
             "faction": character_context.get("faction", ""),
         }
         context_str = json.dumps(context_data, sort_keys=True)
-        context_hash = hashlib.md5(context_str.encode(), usedforsecurity=False).hexdigest()[:8]  # nosec B324
+        context_hash = hashlib.md5(
+            context_str.encode(), usedforsecurity=False
+        ).hexdigest()[
+            :8
+        ]  # nosec B324
 
         # Create prompt hash
-        prompt_hash = hashlib.md5(prompt.encode(), usedforsecurity=False).hexdigest()[:12]  # nosec B324
+        prompt_hash = hashlib.md5(prompt.encode(), usedforsecurity=False).hexdigest()[
+            :12
+        ]  # nosec B324
 
         return f"{agent_id}:{prompt_hash}:{context_hash}"
 
@@ -339,7 +348,9 @@ class AsyncLLMClient:
             del self.cache[lru_key]
 
         # Create cache entry
-        prompt_hash = hashlib.md5(prompt.encode(), usedforsecurity=False).hexdigest()[:12]  # nosec B324
+        prompt_hash = hashlib.md5(prompt.encode(), usedforsecurity=False).hexdigest()[
+            :12
+        ]  # nosec B324
         context_hash = self._generate_cache_key(agent_id, "", character_context).split(
             ":"
         )[-1]
@@ -465,6 +476,76 @@ class AsyncLLMClient:
 
 # Global async LLM client instance for PersonaAgent integration
 _async_llm_client: Optional[AsyncLLMClient] = None
+_sync_loop: Optional[asyncio.AbstractEventLoop] = None
+_sync_thread: Optional[threading.Thread] = None
+_sync_loop_ready = threading.Event()
+_sync_loop_lock = threading.Lock()
+
+
+def _sync_loop_worker() -> None:
+    """Run a dedicated event loop for sync wrapper calls."""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    global _sync_loop
+    _sync_loop = loop
+    _sync_loop_ready.set()
+
+    loop.run_forever()
+
+    pending = asyncio.all_tasks(loop)
+    if pending:
+        for task in pending:
+            task.cancel()
+        loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+    loop.run_until_complete(loop.shutdown_asyncgens())
+    loop.close()
+
+
+def _ensure_sync_loop() -> asyncio.AbstractEventLoop:
+    """Ensure the sync wrapper event loop is running."""
+    global _sync_thread, _sync_loop
+
+    with _sync_loop_lock:
+        if _sync_loop and _sync_loop.is_running():
+            return _sync_loop
+
+        _sync_loop_ready.clear()
+        _sync_thread = threading.Thread(
+            target=_sync_loop_worker, name="async-llm-sync-loop", daemon=True
+        )
+        _sync_thread.start()
+
+        if not _sync_loop_ready.wait(timeout=5):
+            raise RuntimeError("Async LLM sync loop failed to start")
+        if _sync_loop is None:
+            raise RuntimeError("Async LLM sync loop unavailable")
+
+        return _sync_loop
+
+
+def _shutdown_sync_loop() -> None:
+    """Stop the sync wrapper event loop and close resources."""
+    global _sync_loop, _sync_thread
+
+    loop = _sync_loop
+    thread = _sync_thread
+    if not loop or not thread:
+        return
+
+    if loop.is_running():
+        try:
+            future = asyncio.run_coroutine_threadsafe(close_async_llm_client(), loop)
+            future.result(timeout=5)
+        except Exception:
+            logger.warning(
+                "Async LLM client shutdown did not complete cleanly", exc_info=True
+            )
+        loop.call_soon_threadsafe(loop.stop)
+
+    thread.join(timeout=5)
+    _sync_loop = None
+    _sync_thread = None
 
 
 async def get_async_llm_client() -> AsyncLLMClient:
@@ -498,19 +579,24 @@ def call_llm_async_wrapper(
     async optimizations while maintaining the same interface.
     """
     try:
-        loop = asyncio.get_running_loop()
-        if loop.is_running():
-            # If in async context, create task
-            task = loop.create_task(
-                _call_async_from_sync(agent_id, prompt, character_context)
-            )
-            # Wait briefly to avoid blocking
-            return asyncio.run_coroutine_threadsafe(task, loop).result(timeout=1.0)
-        else:
-            # Run in new event loop
-            return asyncio.run(
-                _call_async_from_sync(agent_id, prompt, character_context)
-            )
+        try:
+            asyncio.get_running_loop()
+            in_async_context = True
+        except RuntimeError:
+            in_async_context = False
+
+        loop = _ensure_sync_loop()
+        future = asyncio.run_coroutine_threadsafe(
+            _call_async_from_sync(agent_id, prompt, character_context), loop
+        )
+
+        if in_async_context:
+            return future.result(timeout=1.0)
+
+        return future.result()
+    except FutureTimeoutError:
+        logger.warning("Async LLM wrapper timed out - using fallback response")
+        return "ACTION: observe\nTARGET: none\nREASONING: System optimization in progress - using safe fallback mode."
     except Exception as e:
         logger.error(f"Async LLM wrapper error: {e}")
         # Fallback to basic response
@@ -527,3 +613,6 @@ async def _call_async_from_sync(
         result
         or "ACTION: observe\nTARGET: none\nREASONING: API unavailable - maintaining defensive posture."
     )
+
+
+atexit.register(_shutdown_sync_loop)

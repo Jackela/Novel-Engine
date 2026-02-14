@@ -21,6 +21,8 @@ from src.contexts.knowledge.application.event_handlers.knowledge_sync_event_hand
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.unit
 class TestKnowledgeEventSubscriber:

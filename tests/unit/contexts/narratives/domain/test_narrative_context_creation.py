@@ -18,6 +18,8 @@ from src.contexts.narratives.domain.value_objects.narrative_context import (
     NarrativeContext,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestNarrativeContextCreation:
     """Test suite for NarrativeContext creation and initialization."""

@@ -9,29 +9,32 @@ by generating query variants with synonym expansion and sub-query decomposition.
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock
 
-from src.contexts.knowledge.application.services.query_rewriter import (
-    QueryRewriter,
-    RewriteStrategy,
-    RewriteConfig,
-    RewriteResult,
-    QueryRewriterCacheEntry,
-    DEFAULT_STRATEGY,
-    DEFAULT_TEMPERATURE,
-    DEFAULT_MAX_VARIANTS,
-    DEFAULT_INCLUDE_ORIGINAL,
-)
+import pytest
+
 from src.contexts.knowledge.application.ports.i_llm_client import (
     ILLMClient,
+    LLMError,
     LLMRequest,
     LLMResponse,
-    LLMError,
+)
+from src.contexts.knowledge.application.services.query_rewriter import (
+    DEFAULT_INCLUDE_ORIGINAL,
+    DEFAULT_MAX_VARIANTS,
+    DEFAULT_STRATEGY,
+    DEFAULT_TEMPERATURE,
+    QueryRewriter,
+    QueryRewriterCacheEntry,
+    RewriteConfig,
+    RewriteResult,
+    RewriteStrategy,
 )
 from src.contexts.knowledge.infrastructure.adapters.gemini_llm_client import (
     MockLLMClient,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -214,7 +217,9 @@ class TestQueryRewriter:
     async def test_rewrite_decompose_strategy(self, query_rewriter):
         """Test rewrite with query decomposition strategy."""
         config = RewriteConfig(strategy=RewriteStrategy.DECOMPOSE, max_variants=3)
-        result = await query_rewriter.rewrite("protagonist motivation and goals", config)
+        result = await query_rewriter.rewrite(
+            "protagonist motivation and goals", config
+        )
 
         assert result.strategy == RewriteStrategy.DECOMPOSE
         assert len(result.variants) >= 1
@@ -270,6 +275,7 @@ class TestQueryRewriter:
     @pytest.mark.asyncio
     async def test_rewrite_removes_duplicate_variants(self, mock_llm_client):
         """Test that duplicate variants are removed."""
+
         # Set up mock to return duplicates
         async def mock_generate(request: LLMRequest) -> LLMResponse:
             return LLMResponse(
@@ -295,7 +301,9 @@ class TestQueryRewriter:
         assert result.variants == ["test query"]
 
     @pytest.mark.asyncio
-    async def test_rewrite_on_llm_error_excludes_original_if_configured(self, failing_llm_client):
+    async def test_rewrite_on_llm_error_excludes_original_if_configured(
+        self, failing_llm_client
+    ):
         """Test error handling when include_original=False."""
         rewriter = QueryRewriter(llm_client=failing_llm_client)
         config = RewriteConfig(include_original=False)
@@ -570,10 +578,7 @@ class TestMockLLMClient:
     async def test_mock_rewrite_query_response(self):
         """Test mock returns rewrite query response."""
         client = MockLLMClient()
-        request = LLMRequest(
-            system_prompt="rewrite the query",
-            user_prompt="test"
-        )
+        request = LLMRequest(system_prompt="rewrite the query", user_prompt="test")
 
         response = await client.generate(request)
 

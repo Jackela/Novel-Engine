@@ -83,4 +83,3 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
         turns_executed=turns,
         duration_seconds=duration,
     )
-

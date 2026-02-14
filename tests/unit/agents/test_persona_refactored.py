@@ -12,10 +12,12 @@ import sys
 import time
 from typing import Any, Dict
 
+import pytest
+
 # Add src to path for imports
 sys.path.append("src")
 
-import pytest
+pytestmark = pytest.mark.unit
 
 # Import components to test
 try:
@@ -90,9 +92,7 @@ def _validate_character_context_manager() -> bool:
     """Validate CharacterContextManager component behavior."""
     print("\n🔍 Testing CharacterContextManager...")
     if not AGENTS_AVAILABLE:
-        pytest.skip(
-            "Agent components not available for CharacterContextManager tests"
-        )
+        pytest.skip("Agent components not available for CharacterContextManager tests")
 
     event_bus = MockEventBus()
     core = PersonaCore("test_character", event_bus, "test_agent")
@@ -157,9 +157,7 @@ def _validate_decision_engine() -> bool:
     # Set up some test character data
     core.character_data = {
         "identity": {"name": "Test Character", "profession": "warrior"},
-        "psychological": {
-            "personality_traits": {"aggressive": 0.8, "cautious": 0.2}
-        },
+        "psychological": {"personality_traits": {"aggressive": 0.8, "cautious": 0.2}},
         "behavioral": {"decision_weights": {"combat": 0.9, "social": 0.1}},
     }
 

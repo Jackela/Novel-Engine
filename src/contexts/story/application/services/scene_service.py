@@ -66,7 +66,7 @@ class DeterministicSceneGenerator:
                 "title": f"Words from {char.name}",
                 "content": (
                     f'"There are things you need to understand," {char.name} began, '
-                    f'their voice carrying the weight of experience. {char.bio}'
+                    f"their voice carrying the weight of experience. {char.bio}"
                 ),
                 "summary": f"{char.name} reveals something important.",
                 "visual_prompt": f"{char.visual_prompt}, close-up, emotional",

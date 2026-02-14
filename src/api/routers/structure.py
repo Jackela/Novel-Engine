@@ -25,11 +25,11 @@ from src.api.schemas import (
     BeatSuggestionResponse,
     BeatUpdateRequest,
     ChapterCreateRequest,
+    ChapterHealthReportResponse,
     ChapterListResponse,
     ChapterPacingResponse,
     ChapterResponse,
     ChapterUpdateRequest,
-    ChapterHealthReportResponse,
     ConflictCreateRequest,
     ConflictListResponse,
     ConflictResponse,
@@ -37,6 +37,10 @@ from src.api.schemas import (
     CritiqueCategoryScoreResponse,
     CritiqueSceneRequest,
     CritiqueSceneResponse,
+    ForeshadowingCreateRequest,
+    ForeshadowingListResponse,
+    ForeshadowingResponse,
+    ForeshadowingUpdateRequest,
     HealthWarningResponse,
     LinkPayoffRequest,
     LinkSceneToPlotlineRequest,
@@ -52,8 +56,8 @@ from src.api.schemas import (
     ReorderBeatsRequest,
     SceneCreateRequest,
     SceneListResponse,
-    ScenePlotlinesResponse,
     ScenePacingMetricsResponse,
+    ScenePlotlinesResponse,
     SceneResponse,
     SceneUpdateRequest,
     SetScenePlotlinesRequest,
@@ -65,39 +69,35 @@ from src.api.schemas import (
     TensionArcShapeResponse,
     UnlinkSceneFromPlotlineRequest,
     WordCountEstimateResponse,
-    ForeshadowingCreateRequest,
-    ForeshadowingUpdateRequest,
-    ForeshadowingResponse,
-    ForeshadowingListResponse,
 )
 from src.contexts.narrative.application.ports.narrative_repository_port import (
     INarrativeRepository,
 )
+from src.contexts.narrative.application.services.chapter_analysis_service import (
+    ChapterAnalysisService,
+)
+from src.contexts.narrative.application.services.pacing_service import PacingService
 from src.contexts.narrative.domain import (
     Chapter,
     Scene,
     Story,
 )
-from src.contexts.narrative.domain.entities.scene import StoryPhase
 from src.contexts.narrative.domain.entities.beat import Beat, BeatType
 from src.contexts.narrative.domain.entities.conflict import (
     Conflict,
-    ConflictType,
     ConflictStakes,
+    ConflictType,
     ResolutionStatus,
-)
-from src.contexts.narrative.domain.entities.plotline import (
-    Plotline,
-    PlotlineStatus,
 )
 from src.contexts.narrative.domain.entities.foreshadowing import (
     Foreshadowing,
     ForeshadowingStatus,
 )
-from src.contexts.narrative.application.services.pacing_service import PacingService
-from src.contexts.narrative.application.services.chapter_analysis_service import (
-    ChapterAnalysisService,
+from src.contexts.narrative.domain.entities.plotline import (
+    Plotline,
+    PlotlineStatus,
 )
+from src.contexts.narrative.domain.entities.scene import StoryPhase
 from src.contexts.narrative.infrastructure.repositories.in_memory_narrative_repository import (
     InMemoryNarrativeRepository,
 )
@@ -418,9 +418,7 @@ async def list_chapters(
     )
 
 
-@router.get(
-    "/stories/{story_id}/chapters/{chapter_id}", response_model=ChapterResponse
-)
+@router.get("/stories/{story_id}/chapters/{chapter_id}", response_model=ChapterResponse)
 async def get_chapter(
     story_id: str,
     chapter_id: str,
@@ -1004,7 +1002,9 @@ async def delete_scene_manual_smart_tags(
 
     scene.clear_manual_smart_tags(category)
     _store_scene(scene)
-    logger.info("Cleared manual smart tags for category %s in scene: %s", category, scene_uuid)
+    logger.info(
+        "Cleared manual smart tags for category %s in scene: %s", category, scene_uuid
+    )
 
 
 @router.post(
@@ -1384,7 +1384,10 @@ async def suggest_beats(
                 error=result.error,
             )
 
-        log.info("Beat suggestions generated successfully", num_suggestions=len(result.suggestions))
+        log.info(
+            "Beat suggestions generated successfully",
+            num_suggestions=len(result.suggestions),
+        )
         return BeatSuggestionResponse(
             scene_id=scene_id,
             suggestions=[
@@ -1580,6 +1583,14 @@ def _get_scene(scene_id: UUID) -> Optional[Scene]:
 
     scene = _scenes.get(scene_id)
     return deepcopy(scene) if scene else None
+
+
+def _list_scenes() -> list[Scene]:
+    """Get all scenes from storage in deterministic order."""
+    from copy import deepcopy
+
+    scenes = [deepcopy(scene) for scene in _scenes.values()]
+    return sorted(scenes, key=lambda scene: (scene.chapter_id, scene.order_index))
 
 
 def _get_scenes_by_chapter(chapter_id: UUID) -> list[Scene]:
@@ -1789,7 +1800,9 @@ async def get_conflict(
 
     conflict = _get_conflict(conflict_uuid)
     if conflict is None or conflict.scene_id != scene_uuid:
-        raise HTTPException(status_code=404, detail=f"Conflict not found: {conflict_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Conflict not found: {conflict_id}"
+        )
 
     return _conflict_to_response(conflict)
 
@@ -1825,7 +1838,9 @@ async def update_conflict(
 
     conflict = _get_conflict(conflict_uuid)
     if conflict is None or conflict.scene_id != scene_uuid:
-        raise HTTPException(status_code=404, detail=f"Conflict not found: {conflict_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Conflict not found: {conflict_id}"
+        )
 
     try:
         if request.description is not None:
@@ -1897,7 +1912,9 @@ async def delete_conflict(
 
     conflict = _get_conflict(conflict_uuid)
     if conflict is None or conflict.scene_id != scene_uuid:
-        raise HTTPException(status_code=404, detail=f"Conflict not found: {conflict_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Conflict not found: {conflict_id}"
+        )
 
     _delete_conflict(conflict_uuid)
     logger.info("Deleted conflict: %s", conflict_uuid)
@@ -2033,7 +2050,11 @@ def _foreshadowing_to_response(foreshadowing: Foreshadowing) -> ForeshadowingRes
     return ForeshadowingResponse(
         id=str(foreshadowing.id),
         setup_scene_id=str(foreshadowing.setup_scene_id),
-        payoff_scene_id=str(foreshadowing.payoff_scene_id) if foreshadowing.payoff_scene_id else None,
+        payoff_scene_id=(
+            str(foreshadowing.payoff_scene_id)
+            if foreshadowing.payoff_scene_id
+            else None
+        ),
         description=foreshadowing.description,
         status=foreshadowing.status.value,
         created_at=foreshadowing.created_at.isoformat(),
@@ -2085,7 +2106,9 @@ async def create_plotline(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error("Failed to create plotline: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to create plotline: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create plotline: {str(e)}"
+        )
 
 
 @router.get(
@@ -2137,7 +2160,9 @@ async def get_plotline(
 
     plotline = _get_plotline(plotline_uuid)
     if plotline is None:
-        raise HTTPException(status_code=404, detail=f"Plotline not found: {plotline_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Plotline not found: {plotline_id}"
+        )
 
     scene_count = _count_scenes_for_plotline(plotline_uuid)
     return _plotline_to_response(plotline, scene_count=scene_count)
@@ -2167,7 +2192,9 @@ async def update_plotline(
 
     plotline = _get_plotline(plotline_uuid)
     if plotline is None:
-        raise HTTPException(status_code=404, detail=f"Plotline not found: {plotline_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Plotline not found: {plotline_id}"
+        )
 
     try:
         if request.name is not None:
@@ -2208,7 +2235,9 @@ async def update_plotline(
         raise
     except Exception as e:
         logger.error("Failed to update plotline: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to update plotline: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update plotline: {str(e)}"
+        )
 
 
 @router.delete(
@@ -2229,7 +2258,9 @@ async def delete_plotline(
     plotline_uuid = _parse_uuid(plotline_id, "plotline_id")
 
     if not _delete_plotline(plotline_uuid):
-        raise HTTPException(status_code=404, detail=f"Plotline not found: {plotline_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Plotline not found: {plotline_id}"
+        )
 
     logger.info("Deleted plotline: %s", plotline_uuid)
 
@@ -2263,7 +2294,9 @@ async def link_scene_to_plotline(
 
     plotline = _get_plotline(plotline_uuid)
     if plotline is None:
-        raise HTTPException(status_code=404, detail=f"Plotline not found: {request.plotline_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Plotline not found: {request.plotline_id}"
+        )
 
     scene.add_plotline(plotline_uuid)
     _store_scene(scene)
@@ -2361,7 +2394,9 @@ async def set_scene_plotlines(
     scene.set_plotlines(plotline_uuids)
     _store_scene(scene)
 
-    logger.info("Set plotlines for scene %s: %d plotlines", scene_uuid, len(plotline_uuids))
+    logger.info(
+        "Set plotlines for scene %s: %d plotlines", scene_uuid, len(plotline_uuids)
+    )
 
     return ScenePlotlinesResponse(
         scene_id=scene_id,
@@ -2426,7 +2461,9 @@ async def create_foreshadowing(
     # Verify setup scene exists
     setup_scene = _get_scene(setup_scene_uuid)
     if setup_scene is None:
-        raise HTTPException(status_code=404, detail=f"Setup scene not found: {request.setup_scene_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Setup scene not found: {request.setup_scene_id}"
+        )
 
     try:
         # Validate status
@@ -2444,7 +2481,11 @@ async def create_foreshadowing(
         )
 
         _store_foreshadowing(foreshadowing)
-        logger.info("Created foreshadowing %s for setup scene %s", foreshadowing.id, setup_scene_uuid)
+        logger.info(
+            "Created foreshadowing %s for setup scene %s",
+            foreshadowing.id,
+            setup_scene_uuid,
+        )
 
         return _foreshadowing_to_response(foreshadowing)
 
@@ -2452,7 +2493,9 @@ async def create_foreshadowing(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error("Failed to create foreshadowing: %s", e)
-        raise HTTPException(status_code=500, detail=f"Failed to create foreshadowing: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create foreshadowing: {str(e)}"
+        )
 
 
 @router.get(
@@ -2494,7 +2537,9 @@ async def get_foreshadowing(
 
     foreshadowing = _get_foreshadowing(foreshadowing_uuid)
     if foreshadowing is None:
-        raise HTTPException(status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}"
+        )
 
     return _foreshadowing_to_response(foreshadowing)
 
@@ -2523,7 +2568,9 @@ async def update_foreshadowing(
 
     foreshadowing = _get_foreshadowing(foreshadowing_uuid)
     if foreshadowing is None:
-        raise HTTPException(status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}"
+        )
 
     try:
         # Update description if provided
@@ -2551,7 +2598,10 @@ async def update_foreshadowing(
             # Verify payoff scene exists
             payoff_scene = _get_scene(payoff_uuid)
             if payoff_scene is None:
-                raise HTTPException(status_code=404, detail=f"Payoff scene not found: {request.payoff_scene_id}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Payoff scene not found: {request.payoff_scene_id}",
+                )
 
             # Link payoff with validation
             foreshadowing.link_payoff(payoff_uuid, _get_scene)
@@ -2565,7 +2615,9 @@ async def update_foreshadowing(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error("Failed to update foreshadowing %s: %s", foreshadowing_uuid, e)
-        raise HTTPException(status_code=500, detail=f"Failed to update foreshadowing: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update foreshadowing: {str(e)}"
+        )
 
 
 @router.post(
@@ -2595,28 +2647,38 @@ async def link_payoff_to_foreshadowing(
 
     foreshadowing = _get_foreshadowing(foreshadowing_uuid)
     if foreshadowing is None:
-        raise HTTPException(status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}"
+        )
 
     payoff_uuid = _parse_uuid(request.payoff_scene_id, "payoff_scene_id")
 
     # Verify payoff scene exists
     payoff_scene = _get_scene(payoff_uuid)
     if payoff_scene is None:
-        raise HTTPException(status_code=404, detail=f"Payoff scene not found: {request.payoff_scene_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Payoff scene not found: {request.payoff_scene_id}"
+        )
 
     try:
         # Link payoff with validation
         foreshadowing.link_payoff(payoff_uuid, _get_scene)
 
         _store_foreshadowing(foreshadowing)
-        logger.info("Linked payoff scene %s to foreshadowing %s", payoff_uuid, foreshadowing_uuid)
+        logger.info(
+            "Linked payoff scene %s to foreshadowing %s",
+            payoff_uuid,
+            foreshadowing_uuid,
+        )
 
         return _foreshadowing_to_response(foreshadowing)
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error("Failed to link payoff to foreshadowing %s: %s", foreshadowing_uuid, e)
+        logger.error(
+            "Failed to link payoff to foreshadowing %s: %s", foreshadowing_uuid, e
+        )
         raise HTTPException(status_code=500, detail=f"Failed to link payoff: {str(e)}")
 
 
@@ -2639,7 +2701,9 @@ async def delete_foreshadowing(
 
     deleted = _delete_foreshadowing(foreshadowing_uuid)
     if not deleted:
-        raise HTTPException(status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Foreshadowing not found: {foreshadowing_id}"
+        )
 
     logger.info("Deleted foreshadowing %s", foreshadowing_uuid)
 

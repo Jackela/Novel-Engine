@@ -4,12 +4,13 @@ Unit tests for CachedEmbeddingService.
 Tests caching behavior, batch operations, fallback, and cache management.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from src.contexts.knowledge.application.ports.i_embedding_service import (
-    IEmbeddingService,
     EmbeddingError,
+    IEmbeddingService,
 )
 from src.contexts.knowledge.application.services.embedding_cache_service import (
     EmbeddingCacheService,
@@ -17,6 +18,8 @@ from src.contexts.knowledge.application.services.embedding_cache_service import 
 from src.contexts.knowledge.infrastructure.adapters.cached_embedding_service import (
     CachedEmbeddingService,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class MockEmbeddingService(IEmbeddingService):
@@ -30,8 +33,10 @@ class MockEmbeddingService(IEmbeddingService):
     def _generate_embedding(self, text: str):
         """Generate deterministic mock embedding."""
         import hashlib
+
         seed = int(hashlib.sha256(text.encode()).hexdigest()[:8], 16)
         import random
+
         random.seed(seed)
         embedding = [random.gauss(0, 1) for _ in range(self._dimension)]
         # Normalize

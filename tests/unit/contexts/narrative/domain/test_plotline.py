@@ -13,6 +13,8 @@ from src.contexts.narrative.domain.entities.plotline import (
     PlotlineStatus,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestPlotlineCreation:
     """Test suite for Plotline entity creation."""
@@ -80,7 +82,9 @@ class TestPlotlineCreation:
     @pytest.mark.unit
     def test_create_plotline_with_invalid_color_length_raises_error(self):
         """Test that invalid color length raises ValueError."""
-        with pytest.raises(ValueError, match="Plotline color must be 3, 6, or 8 hex characters"):
+        with pytest.raises(
+            ValueError, match="Plotline color must be 3, 6, or 8 hex characters"
+        ):
             Plotline(
                 name="Test",
                 color="#ff57",
@@ -89,7 +93,9 @@ class TestPlotlineCreation:
     @pytest.mark.unit
     def test_create_plotline_with_invalid_color_chars_raises_error(self):
         """Test that invalid hex characters raise ValueError."""
-        with pytest.raises(ValueError, match="Plotline color contains invalid hex characters"):
+        with pytest.raises(
+            ValueError, match="Plotline color contains invalid hex characters"
+        ):
             Plotline(
                 name="Test",
                 color="#gggggg",
@@ -297,7 +303,9 @@ class TestPlotlineUpdates:
             color="#ff0000",
         )
 
-        with pytest.raises(ValueError, match="Plotline color contains invalid hex characters"):
+        with pytest.raises(
+            ValueError, match="Plotline color contains invalid hex characters"
+        ):
             plotline.update_color("#gggggg")
 
 

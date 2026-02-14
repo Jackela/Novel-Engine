@@ -13,12 +13,10 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
-
-from .access_level import AccessLevel
 
 
 class ConfidentialityLevel(str, Enum):

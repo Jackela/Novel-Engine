@@ -16,6 +16,7 @@ from src.contexts.knowledge.domain.models.routing_config import (
     WorkspaceRoutingConfig,
 )
 
+pytestmark = pytest.mark.unit
 
 class TestTaskRoutingRule:
     """Tests for TaskRoutingRule value object."""

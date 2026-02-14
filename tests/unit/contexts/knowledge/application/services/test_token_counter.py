@@ -11,14 +11,16 @@ from __future__ import annotations
 import pytest
 
 from src.contexts.knowledge.application.services.token_counter import (
-    TokenCounter,
+    MODEL_FAMILY_MAPPING,
+    TIKTOKEN_AVAILABLE,
     LLMProvider,
     ModelFamily,
+    TokenCounter,
     TokenCountResult,
     create_token_counter,
-    TIKTOKEN_AVAILABLE,
-    MODEL_FAMILY_MAPPING,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestTokenCounter:
@@ -336,7 +338,9 @@ class TestTokenCounterWithTiktoken:
 class TestTokenCounterFallback:
     """Tests for fallback behavior when tiktoken is unavailable."""
 
-    @pytest.mark.skipif(TIKTOKEN_AVAILABLE, reason="tiktoken available, testing fallback")
+    @pytest.mark.skipif(
+        TIKTOKEN_AVAILABLE, reason="tiktoken available, testing fallback"
+    )
     def test_estimation_fallback(self):
         """Test character-based estimation when tiktoken unavailable."""
         counter = TokenCounter()
@@ -344,7 +348,9 @@ class TestTokenCounterFallback:
         assert result.token_count > 0
         assert result.method in ("estimation", "fallback")
 
-    @pytest.mark.skipif(TIKTOKEN_AVAILABLE, reason="tiktoken available, testing fallback")
+    @pytest.mark.skipif(
+        TIKTOKEN_AVAILABLE, reason="tiktoken available, testing fallback"
+    )
     def test_different_provider_ratios(self):
         """Test different token ratios for different providers."""
         counter = TokenCounter()

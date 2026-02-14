@@ -77,11 +77,11 @@ export function PromptCompareModal({
   });
 
   // Fetch comparison data
-  const { data: compareData, isLoading, error } = usePromptCompareAuto(
-    promptId,
-    versionA,
-    versionB
-  );
+  const {
+    data: compareData,
+    isLoading,
+    error,
+  } = usePromptCompareAuto(promptId, versionA, versionB);
 
   // Swap versions
   const swapVersions = () => {
@@ -103,7 +103,7 @@ export function PromptCompareModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl h-[85vh] flex flex-col">
+      <DialogContent className="flex h-[85vh] max-w-6xl flex-col">
         <DialogHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div>
@@ -128,7 +128,10 @@ export function PromptCompareModal({
         <div className="flex items-center gap-4 pb-4">
           <div className="flex-1 space-y-2">
             <Label className="text-sm text-muted-foreground">Version A (Old)</Label>
-            <Select value={String(versionA)} onValueChange={(v) => setVersionA(Number(v))}>
+            <Select
+              value={String(versionA)}
+              onValueChange={(v) => setVersionA(Number(v))}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -143,12 +146,17 @@ export function PromptCompareModal({
           </div>
 
           <div className="flex items-center justify-center pt-6">
-            <Badge variant="outline" className="text-xs">vs</Badge>
+            <Badge variant="outline" className="text-xs">
+              vs
+            </Badge>
           </div>
 
           <div className="flex-1 space-y-2">
             <Label className="text-sm text-muted-foreground">Version B (New)</Label>
-            <Select value={String(versionB)} onValueChange={(v) => setVersionB(Number(v))}>
+            <Select
+              value={String(versionB)}
+              onValueChange={(v) => setVersionB(Number(v))}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -167,11 +175,11 @@ export function PromptCompareModal({
 
         {/* Content */}
         {isLoading ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-1 items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : error ? (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          <div className="flex flex-1 items-center justify-center text-muted-foreground">
             Failed to load comparison
           </div>
         ) : compareData ? (
@@ -208,9 +216,10 @@ export function PromptCompareModal({
                   icon={VariableIcon}
                   isOpen={sections.variables}
                   onToggle={() => toggleSection('variables')}
-                  badge={(compareData.variables.added.length +
-                    compareData.variables.removed.length +
-                    compareData.variables.changed.length) || 0
+                  badge={
+                    compareData.variables.added.length +
+                      compareData.variables.removed.length +
+                      compareData.variables.changed.length || 0
                   }
                 >
                   <VariablesTable variables={compareData.variables} />
@@ -256,10 +265,10 @@ function CollapsibleSection({
   children,
 }: CollapsibleSectionProps) {
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="overflow-hidden rounded-lg border">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors"
+        className="flex w-full items-center justify-between bg-muted/30 p-3 transition-colors hover:bg-muted/50"
       >
         <div className="flex items-center gap-2">
           {isOpen ? (
@@ -289,7 +298,7 @@ interface MetadataChangesProps {
 function MetadataChanges({ metadata }: MetadataChangesProps) {
   if (!metadata || Object.keys(metadata).length === 0) {
     return (
-      <div className="text-sm text-muted-foreground text-center py-4">
+      <div className="py-4 text-center text-sm text-muted-foreground">
         No metadata changes
       </div>
     );
@@ -314,10 +323,13 @@ function MetadataChanges({ metadata }: MetadataChangesProps) {
       {metadata.tags && (
         <div>
           <span className="text-sm font-medium">Tags</span>
-          <div className="flex gap-4 mt-1">
+          <div className="mt-1 flex gap-4">
             {metadata.tags.added.length > 0 && (
               <div className="flex items-center gap-1">
-                <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400">
+                <Badge
+                  variant="outline"
+                  className="bg-green-500/10 text-green-700 dark:text-green-400"
+                >
                   +{metadata.tags.added.length}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
@@ -327,7 +339,10 @@ function MetadataChanges({ metadata }: MetadataChangesProps) {
             )}
             {metadata.tags.removed.length > 0 && (
               <div className="flex items-center gap-1">
-                <Badge variant="outline" className="bg-red-500/10 text-red-700 dark:text-red-400">
+                <Badge
+                  variant="outline"
+                  className="bg-red-500/10 text-red-700 dark:text-red-400"
+                >
                   -{metadata.tags.removed.length}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
@@ -351,15 +366,13 @@ interface MetadataFieldProps {
 function MetadataField({ label, oldValue, newValue }: MetadataFieldProps) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm font-medium w-24">{label}</span>
-      <div className="flex-1 flex items-center gap-2">
-        <span className="text-sm text-red-600 dark:text-red-400 line-through">
+      <span className="w-24 text-sm font-medium">{label}</span>
+      <div className="flex flex-1 items-center gap-2">
+        <span className="text-sm text-red-600 line-through dark:text-red-400">
           {oldValue}
         </span>
         <span className="text-muted-foreground">→</span>
-        <span className="text-sm text-green-600 dark:text-green-400">
-          {newValue}
-        </span>
+        <span className="text-sm text-green-600 dark:text-green-400">{newValue}</span>
       </div>
     </div>
   );
@@ -373,7 +386,7 @@ interface ContentDiffViewProps {
 function ContentDiffView({ diff }: ContentDiffViewProps) {
   if (!diff || diff.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground text-center py-4">
+      <div className="py-4 text-center text-sm text-muted-foreground">
         No content changes
       </div>
     );
@@ -382,12 +395,12 @@ function ContentDiffView({ diff }: ContentDiffViewProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
       {/* Version A (Old) */}
-      <div className="border rounded-md">
-        <div className="bg-muted/30 px-3 py-2 border-b text-sm font-medium">
+      <div className="rounded-md border">
+        <div className="border-b bg-muted/30 px-3 py-2 text-sm font-medium">
           Version A (Old)
         </div>
         <ScrollArea className="h-[400px]">
-          <pre className="p-3 text-sm font-mono whitespace-pre-wrap break-words">
+          <pre className="whitespace-pre-wrap break-words p-3 font-mono text-sm">
             {diff.map((hunk, index) => (
               <DiffHunkLine key={index} hunk={hunk} side="old" />
             ))}
@@ -396,12 +409,12 @@ function ContentDiffView({ diff }: ContentDiffViewProps) {
       </div>
 
       {/* Version B (New) */}
-      <div className="border rounded-md">
-        <div className="bg-muted/30 px-3 py-2 border-b text-sm font-medium">
+      <div className="rounded-md border">
+        <div className="border-b bg-muted/30 px-3 py-2 text-sm font-medium">
           Version B (New)
         </div>
         <ScrollArea className="h-[400px]">
-          <pre className="p-3 text-sm font-mono whitespace-pre-wrap break-words">
+          <pre className="whitespace-pre-wrap break-words p-3 font-mono text-sm">
             {diff.map((hunk, index) => (
               <DiffHunkLine key={index} hunk={hunk} side="new" />
             ))}
@@ -448,7 +461,7 @@ function DiffHunkLine({ hunk, side }: DiffHunkLineProps) {
   if (hunk.type === 'replace') {
     if (side === 'old') {
       return (
-        <span className="bg-red-500/10 text-red-700 dark:text-red-400 line-through">
+        <span className="bg-red-500/10 text-red-700 line-through dark:text-red-400">
           {hunk.old_lines.join('\n')}
         </span>
       );
@@ -478,7 +491,7 @@ function VariablesTable({ variables }: VariablesTableProps) {
 
   if (!hasChanges) {
     return (
-      <div className="text-sm text-muted-foreground text-center py-4">
+      <div className="py-4 text-center text-sm text-muted-foreground">
         No variable changes
       </div>
     );
@@ -492,7 +505,7 @@ function VariablesTable({ variables }: VariablesTableProps) {
           <span className="text-sm font-medium text-green-600 dark:text-green-400">
             + Added ({variables.added.length})
           </span>
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {variables.added.map((name) => (
               <Badge key={name} variant="outline" className="bg-green-500/10">
                 {name}
@@ -508,7 +521,7 @@ function VariablesTable({ variables }: VariablesTableProps) {
           <span className="text-sm font-medium text-red-600 dark:text-red-400">
             - Removed ({variables.removed.length})
           </span>
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {variables.removed.map((name) => (
               <Badge key={name} variant="outline" className="bg-red-500/10">
                 {name}
@@ -521,7 +534,9 @@ function VariablesTable({ variables }: VariablesTableProps) {
       {/* Changed Variables */}
       {variables.changed.length > 0 && (
         <div>
-          <span className="text-sm font-medium">Changed ({variables.changed.length})</span>
+          <span className="text-sm font-medium">
+            Changed ({variables.changed.length})
+          </span>
           <Table>
             <TableHeader>
               <TableRow>
@@ -536,10 +551,7 @@ function VariablesTable({ variables }: VariablesTableProps) {
                 <TableRow key={change.name}>
                   <TableCell className="font-medium">{change.name}</TableCell>
                   <TableCell>
-                    <ChangedValue
-                      old={change.old.type}
-                      new={change.new.type}
-                    />
+                    <ChangedValue old={change.old.type} new={change.new.type} />
                   </TableCell>
                   <TableCell>
                     <ChangedValue
@@ -572,15 +584,13 @@ function ChangedValue({ old, new: newVal }: ChangedValueProps) {
   const isChanged = old !== newVal;
   return (
     <div className="flex items-center gap-2">
-      <span className={cn(isChanged && 'line-through text-red-600 dark:text-red-400')}>
+      <span className={cn(isChanged && 'text-red-600 line-through dark:text-red-400')}>
         {old}
       </span>
       {isChanged && (
         <>
           <span className="text-muted-foreground">→</span>
-          <span className="text-green-600 dark:text-green-400">
-            {newVal}
-          </span>
+          <span className="text-green-600 dark:text-green-400">{newVal}</span>
         </>
       )}
     </div>
@@ -595,7 +605,7 @@ interface ConfigDiffViewProps {
 function ConfigDiffView({ changes }: ConfigDiffViewProps) {
   if (!changes || changes.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground text-center py-4">
+      <div className="py-4 text-center text-sm text-muted-foreground">
         No configuration changes
       </div>
     );

@@ -1,8 +1,12 @@
+import pytest
+
 from src.contexts.character.application.services.generation_service import (
     CharacterGenerationInput,
     DeterministicCharacterGenerator,
     generate_character_card,
 )
+
+pytestmark = pytest.mark.unit
 
 
 def test_generate_character_card_hero_archetype() -> None:

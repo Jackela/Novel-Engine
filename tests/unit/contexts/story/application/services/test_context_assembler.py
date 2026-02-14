@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 try:
     import networkx as nx
 
@@ -27,8 +29,6 @@ from src.contexts.story.application.services.context_assembler import (
     WorldNode,
     create_context_assembler,
 )
-
-pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -289,7 +289,10 @@ class TestContextAssemblerPrioritization:
         result = assembler.assemble(sample_world_graph, input)
 
         # Context should include location descriptions
-        assert "Silver Castle" in result.context_text or "Dark Forest" in result.context_text
+        assert (
+            "Silver Castle" in result.context_text
+            or "Dark Forest" in result.context_text
+        )
 
 
 class TestContextAssemblerEdgeCases:

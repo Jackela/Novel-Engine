@@ -1,4 +1,5 @@
 import { Page, Locator } from '@playwright/test';
+import { safeGoto } from '../utils/navigation';
 
 /**
  * Landing Page Object Model
@@ -50,7 +51,7 @@ export class LandingPage {
    * Also sets up mocks needed for dashboard navigation in CI environment
    */
   async navigateToLanding(options: { timeoutMs?: number } = {}) {
-    const timeoutMs = options.timeoutMs ?? 30000;
+    const timeoutMs = options.timeoutMs ?? 45000;
     // Set up mocks needed for dashboard navigation (must be before goto)
     await this.page.route(/\/api\/guest\/sessions/, async route => {
       await route.fulfill({
@@ -112,9 +113,12 @@ export class LandingPage {
       (window as any).EventSource = MockEventSource;
     });
 
-    await this.page.goto('/', { waitUntil: 'domcontentloaded', timeout: timeoutMs });
+    await safeGoto(this.page, '/', { timeout: timeoutMs });
     // Wait for main content to be visible
-    await this.mainTitle.waitFor({ state: 'visible', timeout: timeoutMs });
+    await Promise.race([
+      this.mainTitle.waitFor({ state: 'visible', timeout: timeoutMs }),
+      this.launchEngineButton.waitFor({ state: 'visible', timeout: timeoutMs }),
+    ]);
   }
 
   /**
@@ -122,8 +126,14 @@ export class LandingPage {
    */
   async clickLaunchEngine() {
     await this.launchEngineButton.click();
-    // Wait for navigation to complete
-    await this.page.waitForURL('**/dashboard', { timeout: 30000 });
+    // Wait for navigation to complete (URL or dashboard shell)
+    await Promise.race([
+      this.page.waitForURL('**/dashboard', { timeout: 30000, waitUntil: 'domcontentloaded' }),
+      this.page.locator('[data-testid="dashboard-layout"]').waitFor({
+        state: 'visible',
+        timeout: 30000,
+      }),
+    ]);
     await this.page.evaluate(() => {
       try {
         window.localStorage.setItem('e2e_preserve_auth', '1');

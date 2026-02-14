@@ -33,6 +33,8 @@ from src.contexts.character.domain.value_objects.context_models import (
     StatsContext,
 )
 
+pytestmark = pytest.mark.unit
+
 
 def create_async_mock_file(content: str):
     """Create an async mock file for aiofiles.open."""

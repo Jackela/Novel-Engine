@@ -28,6 +28,8 @@ from src.core.config_manager import (
     reload_config,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestConfigFormat:
     """Unit tests for ConfigFormat enum."""

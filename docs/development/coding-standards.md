@@ -71,7 +71,7 @@ This document summarizes the conventions enforced across the Novel-Engine repo. 
 - Lighthouse CI must be run with a real Chrome binary defined explicitly:
   ```bash
   cd frontend
-  CHROME_PATH=/usr/bin/google-chrome npx @lhci/cli@0.14.0 autorun
+  CHROME_PATH=/usr/bin/google-chrome npx @lhci/cli@0.15.1 autorun
   ```
   This prevents WSL from creating stray `undefined:/Users/...` directories when Chromium can’t infer the home path.
 
