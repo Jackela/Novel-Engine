@@ -1,7 +1,7 @@
 {
-  "project": "Novel-Engine-Op-Synapse",
+  "project": "Novel-Engine-Op-Resilience",
   "branchName": "refactor/brain-optimization",
-  "description": "OPERATION SYNAPSE: Refactoring the AI Brain for performance, accuracy, and maintainability before World Simulation.",
+  "description": "OPERATION RESILIENCE: Fix skipped tests, complete backend stubs, resolve API contract issues, and improve infrastructure before production deployment.",
   "techContext": {
     "stack": "FastAPI + ChromaDB + Redis (mocked) + React (shadcn/ui + Zustand)",
     "testCommand": "pytest && npm --prefix frontend run test:e2e",
@@ -10,228 +10,249 @@
   },
   "userStories": [
     {
-      "id": "OPT-001",
-      "title": "Backend: Ingestion Processor Abstraction",
-      "description": "Split KnowledgeIngestionService into composable processors without behavior changes.",
+      "id": "RES-001",
+      "title": "Test: Fix Environment-Dependent Skipped Tests",
+      "description": "Enable and fix tests skipped due to missing environment variables or services.",
       "acceptanceCriteria": [
-        "Create an application-layer processor interface (e.g., IIngestionProcessor) and a factory mapping SourceType -> processor with a GenericProcessor fallback.",
-        "Implement LoreProcessor, SceneProcessor, CharacterProcessor that only define chunking defaults + metadata enrichment (no embedding/store logic).",
-        "KnowledgeIngestionService delegates chunking + entry creation to the processor while keeping embedding + vector store logic intact.",
-        "Add unit tests verifying processor selection and no regressions in tests/unit/contexts/knowledge/application/services/test_knowledge_ingestion_service.py."
+        "Audit all tests marked with @pytest.mark.skip(reason contains 'env', 'CI', 'redis', 'database') across the codebase.",
+        "Create mock fixtures or test doubles for external services (Redis, Neo4j, ChromaDB) where appropriate.",
+        "Add environment variable guards with skipif conditions that check for actual availability.",
+        "Ensure at least 80% of previously skipped tests now run and pass in CI.",
+        "Document required environment setup in tests/conftest.py docstrings."
       ],
       "priority": 1,
-      "passes": true,
-      "effort": "medium",
-      "notes": "Keep SRP: processor handles content-specific behavior, service orchestrates pipeline."
+      "passes": false,
+      "effort": "high",
+      "notes": "Focus on knowledge context tests first as they are most critical for RAG."
     },
     {
-      "id": "OPT-002",
-      "title": "Backend: Embedding Cache Layer",
-      "description": "Avoid repeat embedding calls with a cache wrapper prepared for Redis.",
+      "id": "RES-002",
+      "title": "Test: Fix TDD Placeholder Tests",
+      "description": "Implement or remove tests that were skipped as TDD placeholders.",
       "acceptanceCriteria": [
-        "Create EmbeddingCacheService with LRU + TTL (reuse src/caching/exact_cache.py or a typed LRU) and sha256(text + model) keys.",
-        "Add CachedEmbeddingService adapter implementing IEmbeddingService that wraps a delegate and uses EmbeddingCacheService for embed/embed_batch.",
-        "Remove or disable EmbeddingServiceAdapter's internal cache (or make it pluggable) to avoid double caching and TTL mismatch.",
-        "Add unit tests for cache hits, TTL expiration, batch caching, and structured logs for cache_hit/cache_miss."
+        "Identify all tests with skip markers containing 'TODO', 'TDD', 'placeholder', or 'not implemented'.",
+        "For each placeholder: either implement the test with proper assertions, or remove if the feature was abandoned.",
+        "Ensure implemented tests follow the AAA pattern (Arrange-Act-Assert) and have descriptive names.",
+        "No test file should have more than 10% placeholder skips after completion.",
+        "Update test count metrics in test_pyramid_monitor to reflect changes."
       ],
       "priority": 2,
-      "passes": true,
-      "effort": "medium",
-      "notes": "Design cache API to allow a Redis-backed implementation later."
+      "passes": false,
+      "effort": "high",
+      "notes": "Prioritize tests in src/contexts/ as they test core business logic."
     },
     {
-      "id": "OPT-003",
-      "title": "AI: RAG Re-ranking Integration",
-      "description": "Wire the existing RerankService into the retrieval pipeline.",
+      "id": "RES-003",
+      "title": "Test: Fix Dependency-Related Skipped Tests",
+      "description": "Resolve tests skipped due to missing optional dependencies.",
       "acceptanceCriteria": [
-        "Inject RerankService into RetrievalService and apply reranking after filtering/deduplication.",
-        "Add RetrievalOptions fields for candidate_k (e.g., 20) and final_k (e.g., 5) to support retrieve->rerank->trim.",
-        "On rerank failure, fall back to original order and emit a structured warning log.",
-        "Add unit tests covering rerank success, fallback path, and candidate/final top-k behavior using the mock reranker."
+        "Audit tests skipped due to missing imports (try/except ImportError patterns).",
+        "Add missing optional dependencies to requirements.txt or mark as truly optional in pyproject.toml extras.",
+        "Create integration test markers (e.g., @pytest.mark.integration_chromadb) for tests requiring specific services.",
+        "Document dependency requirements in test file docstrings.",
+        "Update CI workflow to run integration tests when services are available."
       ],
       "priority": 3,
-      "passes": true,
-      "effort": "high",
-      "notes": "Reuse src/contexts/knowledge/application/services/rerank_service.py and adapters; do not re-implement reranking."
+      "passes": false,
+      "effort": "medium",
+      "notes": "Common missing deps: neo4j, chromadb, tiktoken, rank_bm25"
     },
     {
-      "id": "OPT-004",
-      "title": "Frontend: Chat Virtualization",
-      "description": "Keep chat smooth with long histories.",
+      "id": "RES-004",
+      "title": "Backend: Complete WorldStateManager Implementation",
+      "description": "Replace stub implementations in world_state_manager with working code.",
       "acceptanceCriteria": [
-        "Refactor frontend/src/components/ChatInterface.tsx to use virtualization (prefer react-window already in deps; add react-virtuoso only if dynamic heights are too complex).",
-        "Support dynamic-height messages and preserve auto-scroll + streaming updates.",
-        "Use shared cn utility (frontend/src/lib/utils.ts) and keep shadcn/ui + Tailwind-only styling; no custom CSS.",
-        "Verify loading/empty/error/ready states still render correctly with 100+ messages."
+        "Identify all NotImplementError, pass, and TODO comments in src/contexts/world modules.",
+        "Implement world state persistence with proper serialization.",
+        "Add proper error handling with Result<T,E> pattern.",
+        "Create integration tests for state persistence and retrieval.",
+        "Document the world state schema and lifecycle in docstrings."
       ],
       "priority": 4,
-      "passes": true,
-      "effort": "medium",
-      "notes": "Avoid deep nesting; keep layout within 3 levels."
+      "passes": false,
+      "effort": "high",
+      "notes": "Coordinate with any Weaver UI that depends on world state."
     },
     {
-      "id": "OPT-005",
-      "title": "Backend: Async Ingestion Job API",
-      "description": "Run ingestion in the background and expose status.",
+      "id": "RES-005",
+      "title": "Backend: Complete Memory Interface Implementation",
+      "description": "Implement memory layer interfaces currently marked as stubs.",
       "acceptanceCriteria": [
-        "Add POST /api/brain/ingestion to start ingestion via FastAPI BackgroundTasks and return 202 + job_id.",
-        "Add in-memory job store and GET /api/brain/ingestion/{job_id} to return status/progress/errors.",
-        "Reuse KnowledgeSyncEventHandler or KnowledgeIngestionService for the worker path without blocking the request thread.",
-        "Update src/api/schemas.py, regenerate docs/api/openapi.json, and sync frontend/src/types/schemas.ts; add unit tests for 202 + status transitions."
+        "Audit memory_interface, episodic_memory, semantic_memory modules for stub implementations.",
+        "Implement CRUD operations for character memories with proper storage.",
+        "Add memory decay/relevance scoring algorithms.",
+        "Create unit tests with mocked storage backends.",
+        "Ensure memory retrieval integrates with RAG pipeline."
       ],
       "priority": 5,
-      "passes": true,
-      "effort": "medium",
-      "notes": "Keep router thin; business logic in application services."
+      "passes": false,
+      "effort": "high",
+      "notes": "Memory is critical for character consistency in narratives."
     },
     {
-      "id": "OPT-006",
-      "title": "Domain: Structured Metadata Schema",
-      "description": "Replace unstructured metadata dicts with a strict schema.",
+      "id": "RES-006",
+      "title": "Backend: Complete Narrative Stream Service",
+      "description": "Implement narrative_stream_service for real-time story updates.",
       "acceptanceCriteria": [
-        "Introduce KnowledgeMetadata value object (domain) + a Pydantic schema for API/migrations with fields: world_version, confidentiality_level, last_accessed (UTC), source_version.",
-        "Update SourceMetadata/SourceKnowledgeEntry to include structured metadata while preserving existing extra fields.",
-        "Create a mock migration script to backfill missing metadata fields for existing vector documents.",
-        "Add unit tests ensuring defaults, serialization, and timezone handling are stable."
+        "Replace placeholder SSE implementation with proper Server-Sent Events.",
+        "Implement narrative event publishing and subscription.",
+        "Add connection management and reconnection handling.",
+        "Create integration tests for stream lifecycle.",
+        "Document API contract for frontend integration."
       ],
       "priority": 6,
-      "passes": true,
-      "effort": "low",
-      "notes": "Preserve backward compatibility for existing extra metadata keys."
+      "passes": false,
+      "effort": "medium",
+      "notes": "Used by ChatInterface for real-time story generation."
     },
     {
-      "id": "OPT-007",
-      "title": "Test: Golden Dataset Evaluation Harness",
-      "description": "Automated QA to ensure RAG accuracy doesn't regress.",
+      "id": "RES-007",
+      "title": "API: Fix OpenAPI Path Duplication",
+      "description": "Resolve /api/api/ double-prefix issue in OpenAPI specification.",
       "acceptanceCriteria": [
-        "Create tests/evaluation/golden_dataset.json with at least 20 question -> expected fact pairs.",
-        "Add scripts/evaluation/run_golden_dataset.py to run retrieval + rerank and score exact/substring/fuzzy match (SequenceMatcher is OK).",
-        "Add tests/evaluation/test_golden_dataset.py that asserts a baseline score and prints a short report.",
-        "Use deterministic embeddings + an in-memory vector store fixture so results are stable in CI."
+        "Audit docs/api/openapi.json for paths containing /api/api/ prefix.",
+        "Fix FastAPI router configuration to use correct path prefixes.",
+        "Regenerate openapi.json with corrected paths.",
+        "Update frontend/src/types/schemas.ts to match corrected API.",
+        "Verify all API routes work correctly after fix.",
+        "Add CI check to prevent future path duplication."
       ],
       "priority": 7,
-      "passes": true,
-      "effort": "high",
-      "notes": "Keep the dataset small and curated; avoid flaky tests."
+      "passes": false,
+      "effort": "low",
+      "notes": "Currently 20 endpoints have /api/api/ duplication."
     },
     {
-      "id": "OPT-008",
-      "title": "UX: Markdown + Code Highlighting in Chat",
-      "description": "Improve readability of AI responses.",
+      "id": "RES-008",
+      "title": "API: Add Missing Error Response Schemas",
+      "description": "Define and document all API error response schemas.",
       "acceptanceCriteria": [
-        "Add a Markdown renderer component using markdown-it with safe HTML settings (no raw HTML by default).",
-        "Enable code block highlighting (add highlight.js or prismjs if needed) and style using Tailwind classes only.",
-        "Render assistant messages with Markdown; user messages stay plain text.",
-        "Verify tables, lists, and code blocks render correctly in ChatInterface."
+        "Create ErrorDetail, ValidationError, and NotFoundError schemas in src/api/schemas.py.",
+        "Add HTTPException handlers for common error codes (400, 401, 403, 404, 422, 500, 503).",
+        "Document all error responses in OpenAPI specification.",
+        "Ensure frontend has typed error handling for each schema.",
+        "Add request validation tests that verify error response shapes."
       ],
       "priority": 8,
-      "passes": true,
-      "effort": "low",
-      "notes": "No custom CSS files; shadcn/ui where appropriate."
+      "passes": false,
+      "effort": "medium",
+      "notes": "Essential for frontend error handling and user feedback."
     },
     {
-      "id": "OPT-009",
-      "title": "Backend: Context Window Manager",
-      "description": "Prevent context window overflow by pruning intelligently.",
+      "id": "RES-009",
+      "title": "API: Validate Frontend-Backend Schema Alignment",
+      "description": "Ensure frontend schemas exactly match backend OpenAPI spec.",
       "acceptanceCriteria": [
-        "Create ContextWindowManager that uses ContextOptimizer + TokenCounter to fit within model token limits.",
-        "Priority order: System Prompt > RAG Chunks > Recent History (oldest first pruned).",
-        "Integrate into /api/brain/chat prompt assembly (and optionally RAGIntegrationService) so prompts never exceed limits.",
-        "Add unit tests simulating overflow scenarios and verifying pruning order."
+        "Run scripts/audit_schema_sync.py and fix all mismatches.",
+        "Create CI check that fails on schema drift.",
+        "Document schema sync process in CLAUDE.md.",
+        "Add pre-commit hook for schema validation.",
+        "Ensure all API changes include schema updates as part of the PR."
       ],
       "priority": 9,
-      "passes": true,
-      "effort": "high",
-      "notes": "Use existing token_counter/context_optimizer modules; avoid new tokenizers."
+      "passes": false,
+      "effort": "medium",
+      "notes": "Use openapi-typescript for frontend generation."
     },
     {
-      "id": "OPT-010",
-      "title": "Codebase: Mypy Strictness Audit (Knowledge)",
-      "description": "Eliminate implicit Any in knowledge context.",
+      "id": "RES-010",
+      "title": "Infrastructure: Redis Integration Hardening",
+      "description": "Replace Redis mocks with configurable real/mocked implementation.",
       "acceptanceCriteria": [
-        "Run mypy --strict on src/contexts/knowledge and fix all type errors.",
-        "Address Result<T,E> generics and Optional handling in application services.",
-        "Add or update mypy config as needed without relaxing strictness.",
-        "Document any unavoidable ignores with justification."
+        "Create RedisConfig value object with connection pooling.",
+        "Implement graceful degradation when Redis is unavailable.",
+        "Add health check endpoint for Redis connectivity.",
+        "Create integration tests with real Redis (docker-compose).",
+        "Document Redis setup in README.md infrastructure section.",
+        "Add Redis connection metrics to monitoring dashboard."
       ],
       "priority": 10,
-      "passes": true,
-      "effort": "medium",
-      "notes": "Partial completion: Fixed most actionable errors in application services. Remaining errors are in token_tracker.py (complex), entity_extraction_service.py (dict params), budget_alert_service.py (unreachable code), model_router.py (type annotations), and missing library stubs (tiktoken, rank_bm25). These are pre-existing issues not introduced by recent work."
+      "passes": false,
+      "effort": "high",
+      "notes": "Critical for caching and session management."
     },
     {
-      "id": "OPT-011",
-      "title": "Frontend: Optimistic Updates for Smart Tags",
-      "description": "Make tagging feel instant with rollback on failure.",
+      "id": "RES-011",
+      "title": "Infrastructure: Structured Logging Standardization",
+      "description": "Ensure all modules use structlog consistently.",
       "acceptanceCriteria": [
-        "Refactor SmartTagsEditor to use @tanstack/react-query hooks for fetch + mutations.",
-        "Implement onMutate optimistic updates with rollback on error and consistent toast messaging.",
-        "Ensure UI states (loading/empty/error/ready) are preserved during optimistic updates.",
-        "Add a unit/integration test for optimistic update behavior or cover via e2e smoke."
+        "Audit all log statements across src/ for structlog usage.",
+        "Replace any print() or logging.info() with structlog.get_logger().",
+        "Add correlation IDs to all log entries for request tracing.",
+        "Create log level standards document (DEBUG vs INFO vs WARN vs ERROR).",
+        "Add log sampling for high-volume endpoints.",
+        "Ensure PII is never logged (add sensitive field filtering)."
       ],
       "priority": 11,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
-      "notes": "Remove direct fetch calls in the component; centralize in hooks."
+      "notes": "Essential for production debugging and observability."
     },
     {
-      "id": "OPT-012",
-      "title": "Integration: Local Model Prompt Strategy",
-      "description": "Support DeepSeek/Llama prompt formats without OpenAI assumptions.",
+      "id": "RES-012",
+      "title": "Infrastructure: Health Check Endpoints",
+      "description": "Implement comprehensive health check system.",
       "acceptanceCriteria": [
-        "Add prompt templates optimized for DeepSeek-Coder and Llama-3 in the prompt repository/migration flow.",
-        "Extend ModelRouter or prompt selection logic to choose templates by model family/provider.",
-        "Add tests verifying rendered prompt format for non-OpenAI models.",
-        "If API config changes, update schemas/openapi/front-end types accordingly."
+        "Create /health/live (liveness) and /health/ready (readiness) endpoints.",
+        "Check dependencies: ChromaDB, Redis, PostgreSQL (if configured).",
+        "Return detailed component status in /health/ready response.",
+        "Add timeout handling for dependency checks.",
+        "Document health check contracts for Kubernetes integration.",
+        "Create integration tests for health check scenarios."
       ],
       "priority": 12,
-      "passes": true,
-      "effort": "medium",
-      "notes": "Keep prompt strategy selection in application layer; no UI coupling."
+      "passes": false,
+      "effort": "low",
+      "notes": "Required for production deployment and auto-scaling."
     },
     {
-      "id": "OPT-013",
-      "title": "Docs: RAG Architecture Diagram",
-      "description": "Document the brain pipeline for onboarding and reviews.",
+      "id": "RES-013",
+      "title": "Frontend: Add Node.js Version Requirement",
+      "description": "Document and enforce Node.js version requirements.",
       "acceptanceCriteria": [
-        "Create docs/architecture/rag_pipeline.mermaid showing Ingestion -> Chunking -> Embedding -> Retrieval -> Rerank -> Generation.",
-        "Link the diagram from docs/index.md and README.md.",
-        "Ensure component names match current code (KnowledgeIngestionService, RetrievalService, RerankService)."
+        "Add engines field to frontend/package.json requiring Node >= 18.",
+        "Add .nvmrc file with recommended Node version.",
+        "Update CI workflow to check Node version.",
+        "Add pre-install script that warns on incompatible Node versions.",
+        "Document Node requirements in README.md and frontend/README.md."
       ],
       "priority": 13,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "notes": "Keep the diagram minimal and accurate."
+      "notes": "esbuild and other deps require Node 18+."
     },
     {
-      "id": "OPT-014",
-      "title": "Security: API Key Storage Hardening",
-      "description": "Ensure API keys are never stored or exposed in plaintext.",
+      "id": "RES-014",
+      "title": "Frontend: E2E Test Stability Improvements",
+      "description": "Fix flaky E2E tests and improve reliability.",
       "acceptanceCriteria": [
-        "Require BRAIN_SETTINGS_ENCRYPTION_KEY (log a warning if unset) and remove random fallback behavior.",
-        "Audit brain_settings repository to guarantee encrypted-at-rest storage and masked responses only.",
-        "Add unit tests verifying encrypted storage, masked output, and no raw keys in logs.",
-        "Update README.md/SECURITY.md with configuration requirement and rotation guidance."
+        "Identify all E2E tests with retry patterns or timeout issues.",
+        "Add proper wait conditions using Playwright's waitFor* methods.",
+        "Implement test isolation with proper cleanup between tests.",
+        "Add network idle checks before assertions.",
+        "Create E2E debugging guide in tests/e2e/README.md.",
+        "Reduce E2E test flake rate to < 5%."
       ],
       "priority": 14,
-      "passes": true,
+      "passes": false,
       "effort": "medium",
-      "notes": "No DB persistence required; focus on safety + tests."
+      "notes": "Focus on dashboard and chat tests first."
     },
     {
-      "id": "OPT-015",
-      "title": "E2E: Chat Stress + Resilience",
-      "description": "Break the chat and verify recovery.",
+      "id": "RES-015",
+      "title": "Tech Debt: Remove Deprecated Code",
+      "description": "Clean up deprecated functions and modules.",
       "acceptanceCriteria": [
-        "Create tests/e2e/chat-stress.spec.ts with rapid-fire message simulation (50+ messages).",
-        "Simulate network interruption during streaming and verify error state + recovery flow.",
-        "Ensure message order remains stable and UI remains responsive.",
-        "Tag test for e2e and include in npm --prefix frontend run test:e2e."
+        "Search for @deprecated, DEPRECATED, deprecation_warning patterns.",
+        "Remove or replace deprecated code that has alternatives.",
+        "Update all import references to use current modules.",
+        "Add migration notes to CHANGELOG.md for any breaking changes.",
+        "Run full test suite to ensure no regressions."
       ],
       "priority": 15,
-      "passes": true,
-      "effort": "high",
-      "notes": "Use Playwright route interception to simulate network faults."
+      "passes": false,
+      "effort": "medium",
+      "notes": "Check root-level compatibility files (character_factory.py, director_agent.py)."
     }
   ]
 }
