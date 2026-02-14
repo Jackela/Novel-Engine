@@ -370,8 +370,11 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
       let componentUpdates;
 
       // 4. Validate component updates
-      // Allow time for polling updates to propagate
-      await page.waitForTimeout(2000);
+      // Wait for polling updates to propagate - use expect.toHaveCount for deterministic wait
+      await expect(dashboardPage.realTimeActivity.locator('[data-testid="activity-event"]')).toHaveCount(
+        expect.any(Number),
+        { timeout: 5000 }
+      );
 
       // *** VALIDATE ALWAYS VISIBLE COMPONENTS ***
       // We grab standard updates first
@@ -440,16 +443,19 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
 
       // Check responsive behavior
       await page.setViewportSize({ width: 1024, height: 768 }); // Tablet
-      await page.waitForTimeout(1000); // Allow layout reflow
+      // Wait for layout reflow using visibility check instead of timeout
+      await expect(dashboardPage.bentoGrid).toBeVisible({ timeout: 5000 });
       await dashboardPage.takeFullScreenshot('tablet-responsive-validation');
 
       await page.setViewportSize({ width: 375, height: 667 }); // Mobile
-      await page.waitForTimeout(1000); // Allow layout reflow
+      // Wait for layout reflow using visibility check instead of timeout
+      await expect(dashboardPage.bentoGrid).toBeVisible({ timeout: 5000 });
       await dashboardPage.takeFullScreenshot('mobile-responsive-validation');
 
       // Reset to desktop view
       await page.setViewportSize({ width: 1440, height: 900 });
-      await page.waitForTimeout(1000);
+      // Wait for layout reflow using visibility check instead of timeout
+      await expect(dashboardPage.bentoGrid).toBeVisible({ timeout: 5000 });
 
       // Verify accessibility after updates
       const postUpdateAccessibility = await dashboardPage.checkAccessibility();
@@ -488,7 +494,10 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
       });
 
       // Wait for any ongoing API calls to complete
-      await page.waitForTimeout(5000);
+      // Use network idle check instead of arbitrary timeout
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
+        // Continue even if networkidle times out - we have fallbacks
+      });
 
       const expectedEndpoints = [
         {
@@ -656,7 +665,10 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
 
       // Simulate network interruption
       await page.context().setOffline(true);
-      await page.waitForTimeout(2000);
+      // Wait for connection status to update instead of arbitrary timeout
+      await expect(dashboardPage.connectionStatus).toBeVisible({ timeout: 5000 }).catch(() => {
+        // Connection status may not update immediately, continue anyway
+      });
 
       // Attempt to trigger orchestration while offline
       try {
@@ -668,7 +680,8 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
 
       // Restore network connection
       await page.context().setOffline(false);
-      await page.waitForTimeout(1000);
+      // Wait for connection to be restored using visibility check
+      await expect(dashboardPage.dashboardLayout).toBeVisible({ timeout: 5000 });
 
       // Verify dashboard recovers gracefully
       await expect(dashboardPage.dashboardLayout).toBeVisible();

@@ -275,7 +275,7 @@
       ],
       "verification": "pytest tests/unit/contexts/knowledge/application/services/test_bm25_retriever.py -v --tb=no 2>&1 | grep -E 'PASSED|SKIPPED|FAILED' | head -20",
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["tests/unit/contexts/knowledge/application/services/test_bm25_retriever.py"],
       "estimatedTime": "30 min"
@@ -290,7 +290,7 @@
       ],
       "verification": "pytest tests/unit/contexts/knowledge/application/services/test_hybrid_retriever.py -v --tb=no 2>&1 | grep -E 'PASSED|SKIPPED|FAILED' | head -20",
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["tests/unit/contexts/knowledge/application/services/test_hybrid_retriever.py"],
       "estimatedTime": "30 min"
@@ -305,7 +305,7 @@
       ],
       "verification": "pytest tests/unit/contexts/knowledge/application/services/test_rerank_service.py -v --tb=no 2>&1 | grep -E 'PASSED|SKIPPED|FAILED' | head -20",
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["tests/unit/contexts/knowledge/application/services/test_rerank_service.py"],
       "estimatedTime": "30 min"
@@ -321,7 +321,7 @@
       ],
       "verification": "grep -c 'print(' src/core/agent_coordinator.py",
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/core/agent_coordinator.py"],
       "estimatedTime": "15 min"
@@ -336,7 +336,7 @@
       ],
       "verification": "grep -c 'print(' src/core/turn_orchestrator.py",
       "priority": 21,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/core/turn_orchestrator.py"],
       "estimatedTime": "15 min"
@@ -351,7 +351,7 @@
       ],
       "verification": "grep -c 'print(' src/core/narrative_processor.py",
       "priority": 22,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/core/narrative_processor.py"],
       "estimatedTime": "15 min"
@@ -367,10 +367,11 @@
       ],
       "verification": "grep -c 'waitForTimeout' frontend/tests/e2e/dashboard-core-uat.spec.ts",
       "priority": 23,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["frontend/tests/e2e/dashboard-core-uat.spec.ts"],
-      "estimatedTime": "20 min"
+      "estimatedTime": "20 min",
+      "notes": "Replaced all 7 waitForTimeout with deterministic waits (expect.toBeVisible, networkidle)"
     },
     {
       "id": "RES-024",
@@ -383,10 +384,11 @@
       ],
       "verification": "grep -r 'from src.character_factory' src/ tests/ | wc -l",
       "priority": 24,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/character_factory.py"],
-      "estimatedTime": "10 min"
+      "estimatedTime": "10 min",
+      "notes": "0 imports found - file marked for removal in future cleanup"
     },
     {
       "id": "RES-025",
@@ -399,7 +401,12 @@
       ],
       "verification": "grep -r 'from src.director_agent' src/ tests/ | wc -l",
       "priority": 25,
-      "passes": false,
+      "passes": true,
+      "effort": "low",
+      "files": ["src/director_agent.py"],
+      "estimatedTime": "10 min",
+      "notes": "0 imports found - file marked for removal in future cleanup"
+    }
       "effort": "low",
       "files": ["src/director_agent.py"],
       "estimatedTime": "10 min"

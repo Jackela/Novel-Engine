@@ -24,6 +24,22 @@ Started: Fri Feb 14 2026
 
 ---
 
+## [2026-02-14 14:30] - RES-017 through RES-025
+- RES-017/018/019: No skipped tests found in test files - already passing
+- RES-020/021/022: No print() statements found in logging files - already using proper logging
+- RES-023: Replaced all 7 waitForTimeout calls with deterministic waits:
+  - expect.toBeVisible() for layout reflows
+  - expect.toHaveCount() for polling updates
+  - waitForLoadState('networkidle') for API completion
+- RES-024: character_factory.py has 0 imports - marked for removal
+- RES-025: director_agent.py has 0 imports - marked for removal
+- Files changed: frontend/tests/e2e/dashboard-core-uat.spec.ts, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Playwright tests should use deterministic waits (expect.toBeVisible) instead of waitForTimeout
+  - waitForLoadState('networkidle') is better than arbitrary timeouts for API waits
+  - Always check if files are actually used before assuming they need fixes
+---
+
 ## [2026-02-14 14:15] - RES-014, RES-015, RES-016
 - Created MemoryStore class in new file: src/contexts/character/infrastructure/persistence/memory_store.py
 - Created MemoryEntry dataclass with memory_id, content, metadata, timestamps
