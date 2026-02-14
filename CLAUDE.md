@@ -27,6 +27,13 @@
 
 ## IV. The Feedback Loop
 Before marking a task as complete, you MUST run:
+1. `./scripts/ci-check.sh` - **Comprehensive CI validation (RECOMMENDED)**
+   - Runs all backend and frontend checks in one command
+   - Generates `reports/ci-report.md` with detailed results
+   - Exit code 0 = all checks pass, 1 = some checks fail
+   - Options: `--fast` (quick checks), `--backend`, `--frontend`
+
+OR run individual checks:
 1. `npm run typecheck` (Frontend)
 2. `npm run lint` (Frontend & Backend)
 3. `pytest` (Backend Logic)
@@ -45,7 +52,7 @@ This file is the single source of truth for AI workflow, agent development, and 
 - Domain logic lives in `src/contexts/`; avoid reintroducing parallel implementations.
 - API contracts live in `src/api/schemas.py` and `docs/api/openapi.json`.
 - Frontend contract types live in `frontend/src/types/schemas.ts` and must align to the OpenAPI snapshot.
-- Validate with `scripts/validate_ci_locally.sh` (or `scripts/validate_ci_locally.ps1` on Windows).
+- Validate with `./scripts/ci-check.sh` (unified CI script) or `scripts/validate_ci_locally.sh` (comprehensive with venv).
 
 ## Vibe Coding Guardrails
 - TypeScript `strict: true`, no `any` without explicit approval.

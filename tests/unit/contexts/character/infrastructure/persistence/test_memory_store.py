@@ -14,6 +14,7 @@ from src.contexts.character.infrastructure.persistence.memory_store import (
 )
 
 
+@pytest.mark.unit
 class TestMemoryEntry:
     """Tests for MemoryEntry dataclass."""
 
