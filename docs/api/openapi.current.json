@@ -1130,13 +1130,13 @@
         }
       }
     },
-    "/api/auth/login": {
+    "/auth/login": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Login",
-        "operationId": "login_api_auth_login_post",
+        "operationId": "login_auth_login_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1171,13 +1171,13 @@
         }
       }
     },
-    "/api/auth/refresh": {
+    "/auth/refresh": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Refresh Token",
-        "operationId": "refresh_token_api_auth_refresh_post",
+        "operationId": "refresh_token_auth_refresh_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1212,13 +1212,13 @@
         }
       }
     },
-    "/api/auth/csrf-token": {
+    "/auth/csrf-token": {
       "get": {
         "tags": [
           "Authentication"
         ],
         "summary": "Get Csrf Token",
-        "operationId": "get_csrf_token_api_auth_csrf_token_get",
+        "operationId": "get_csrf_token_auth_csrf_token_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1233,13 +1233,13 @@
         }
       }
     },
-    "/api/auth/logout": {
+    "/auth/logout": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Logout",
-        "operationId": "logout_api_auth_logout_post",
+        "operationId": "logout_auth_logout_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1281,13 +1281,13 @@
         }
       }
     },
-    "/api/auth/validate": {
+    "/auth/validate": {
       "get": {
         "tags": [
           "Authentication"
         ],
         "summary": "Validate Token",
-        "operationId": "validate_token_api_auth_validate_get",
+        "operationId": "validate_token_auth_validate_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2225,6 +2225,50 @@
         }
       }
     },
+    "/health/live": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Live",
+        "description": "Liveness probe endpoint for Kubernetes/container orchestration.\n\nReturns a simple status check to indicate the application is running.\nThis endpoint should respond in < 10ms and have no external dependencies.",
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Ready",
+        "description": "Readiness probe endpoint for Kubernetes/container orchestration.\n\nChecks if the application is ready to receive traffic by verifying\ncritical dependencies like ChromaDB.\nReturns 503 Service Unavailable if any critical dependency is unhealthy.",
+        "operationId": "ready_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health/chromadb": {
       "get": {
         "tags": [
@@ -2293,14 +2337,14 @@
         }
       }
     },
-    "/api/orchestration/status": {
+    "/orchestration/status": {
       "get": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Get Orchestration Status",
         "description": "Get current orchestration status.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "get_orchestration_status_api_orchestration_status_get",
+        "operationId": "get_orchestration_status_orchestration_status_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2315,14 +2359,14 @@
         }
       }
     },
-    "/api/orchestration/start": {
+    "/orchestration/start": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Start Orchestration",
         "description": "Start orchestration with optional parameters.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "start_orchestration_api_orchestration_start_post",
+        "operationId": "start_orchestration_orchestration_start_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2364,14 +2408,14 @@
         }
       }
     },
-    "/api/orchestration/stop": {
+    "/orchestration/stop": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Stop Orchestration",
         "description": "Stop the current orchestration.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "stop_orchestration_api_orchestration_stop_post",
+        "operationId": "stop_orchestration_orchestration_stop_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2386,14 +2430,14 @@
         }
       }
     },
-    "/api/orchestration/pause": {
+    "/orchestration/pause": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Pause Orchestration",
         "description": "Pause the current orchestration.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "pause_orchestration_api_orchestration_pause_post",
+        "operationId": "pause_orchestration_orchestration_pause_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2408,14 +2452,14 @@
         }
       }
     },
-    "/api/orchestration/narrative": {
+    "/orchestration/narrative": {
       "get": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Get Narrative",
         "description": "Get current narrative content.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "get_narrative_api_orchestration_narrative_get",
+        "operationId": "get_narrative_orchestration_narrative_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -8926,13 +8970,13 @@
         }
       }
     },
-    "/api/api/auth/login": {
+    "/api/auth/login": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Login",
-        "operationId": "login_api_api_auth_login_post",
+        "operationId": "login_api_auth_login_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -8967,13 +9011,13 @@
         }
       }
     },
-    "/api/api/auth/refresh": {
+    "/api/auth/refresh": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Refresh Token",
-        "operationId": "refresh_token_api_api_auth_refresh_post",
+        "operationId": "refresh_token_api_auth_refresh_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -9008,13 +9052,13 @@
         }
       }
     },
-    "/api/api/auth/csrf-token": {
+    "/api/auth/csrf-token": {
       "get": {
         "tags": [
           "Authentication"
         ],
         "summary": "Get Csrf Token",
-        "operationId": "get_csrf_token_api_api_auth_csrf_token_get",
+        "operationId": "get_csrf_token_api_auth_csrf_token_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -9029,13 +9073,13 @@
         }
       }
     },
-    "/api/api/auth/logout": {
+    "/api/auth/logout": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Logout",
-        "operationId": "logout_api_api_auth_logout_post",
+        "operationId": "logout_api_auth_logout_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -9077,13 +9121,13 @@
         }
       }
     },
-    "/api/api/auth/validate": {
+    "/api/auth/validate": {
       "get": {
         "tags": [
           "Authentication"
         ],
         "summary": "Validate Token",
-        "operationId": "validate_token_api_api_auth_validate_get",
+        "operationId": "validate_token_api_auth_validate_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -9817,6 +9861,50 @@
         }
       }
     },
+    "/api/health/live": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Live",
+        "description": "Liveness probe endpoint for Kubernetes/container orchestration.\n\nReturns a simple status check to indicate the application is running.\nThis endpoint should respond in < 10ms and have no external dependencies.",
+        "operationId": "live_api_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Ready",
+        "description": "Readiness probe endpoint for Kubernetes/container orchestration.\n\nChecks if the application is ready to receive traffic by verifying\ncritical dependencies like ChromaDB.\nReturns 503 Service Unavailable if any critical dependency is unhealthy.",
+        "operationId": "ready_api_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/": {
       "get": {
         "tags": [
@@ -9929,14 +10017,14 @@
         }
       }
     },
-    "/api/api/orchestration/status": {
+    "/api/orchestration/status": {
       "get": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Get Orchestration Status",
         "description": "Get current orchestration status.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "get_orchestration_status_api_api_orchestration_status_get",
+        "operationId": "get_orchestration_status_api_orchestration_status_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -9951,14 +10039,14 @@
         }
       }
     },
-    "/api/api/orchestration/start": {
+    "/api/orchestration/start": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Start Orchestration",
         "description": "Start orchestration with optional parameters.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "start_orchestration_api_api_orchestration_start_post",
+        "operationId": "start_orchestration_api_orchestration_start_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -10000,14 +10088,14 @@
         }
       }
     },
-    "/api/api/orchestration/stop": {
+    "/api/orchestration/stop": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Stop Orchestration",
         "description": "Stop the current orchestration.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "stop_orchestration_api_api_orchestration_stop_post",
+        "operationId": "stop_orchestration_api_orchestration_stop_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -10022,14 +10110,14 @@
         }
       }
     },
-    "/api/api/orchestration/pause": {
+    "/api/orchestration/pause": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Pause Orchestration",
         "description": "Pause the current orchestration.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "pause_orchestration_api_api_orchestration_pause_post",
+        "operationId": "pause_orchestration_api_orchestration_pause_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -10044,14 +10132,14 @@
         }
       }
     },
-    "/api/api/orchestration/narrative": {
+    "/api/orchestration/narrative": {
       "get": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Get Narrative",
         "description": "Get current narrative content.\n\nUnwraps Result from service layer and converts to HTTP response.",
-        "operationId": "get_narrative_api_api_orchestration_narrative_get",
+        "operationId": "get_narrative_api_orchestration_narrative_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -22193,6 +22281,20 @@
         "title": "LinkSceneToPlotlineRequest",
         "description": "Request model for linking a scene to a plotline."
       },
+      "LivenessResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "LivenessResponse",
+        "description": "Liveness probe response."
+      },
       "LocationResponse": {
         "properties": {
           "id": {
@@ -24526,6 +24628,28 @@
         ],
         "title": "PromptVariableValue",
         "description": "Schema for a prompt variable value during rendering."
+      },
+      "ReadinessResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "checks": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "checks"
+        ],
+        "title": "ReadinessResponse",
+        "description": "Readiness probe response with dependency checks."
       },
       "RefreshTokenRequest": {
         "properties": {

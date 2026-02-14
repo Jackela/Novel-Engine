@@ -130,7 +130,7 @@
       ],
       "verification": "grep \"prefix=\" src/api/routers/auth.py",
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/api/routers/auth.py"],
       "estimatedTime": "5 min"
@@ -145,7 +145,7 @@
       ],
       "verification": "grep \"prefix=\" src/api/routers/characters.py",
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/api/routers/characters.py"],
       "estimatedTime": "5 min"
@@ -160,7 +160,7 @@
       ],
       "verification": "grep \"prefix=\" src/api/routers/generation.py",
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/api/routers/generation.py"],
       "estimatedTime": "5 min"
@@ -175,7 +175,7 @@
       ],
       "verification": "grep -c '/api/api/' docs/api/openapi.json || echo '0 (good)'",
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["docs/api/openapi.json"],
       "estimatedTime": "5 min",

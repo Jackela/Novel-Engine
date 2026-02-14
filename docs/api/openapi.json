@@ -94,7 +94,7 @@
           "characters"
         ],
         "summary": "Create Workspace Character",
-        "description": "Creates a new character in the current workspace.",
+        "description": "Creates a new character in the current workspace.\n\nWhy: Workspace characters are user-defined and stored separately from public catalog.",
         "operationId": "create_workspace_character_api_characters_post",
         "requestBody": {
           "content": {
@@ -176,7 +176,7 @@
           "characters"
         ],
         "summary": "Update Workspace Character",
-        "description": "Updates a character in the workspace.",
+        "description": "Updates a character in the workspace.\n\nWhy: Allows modification of user-defined character properties.",
         "operationId": "update_workspace_character_api_characters__character_id__put",
         "parameters": [
           {
@@ -227,7 +227,7 @@
           "characters"
         ],
         "summary": "Delete Workspace Character",
-        "description": "Deletes a character from the workspace.",
+        "description": "Deletes a character from the workspace.\n\nWhy: Removes user-defined characters; also unregisters from orchestrator if present.",
         "operationId": "delete_workspace_character_api_characters__character_id__delete",
         "parameters": [
           {
@@ -365,6 +365,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
           }
         ],
         "parameters": [
@@ -457,6 +460,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
           }
         ],
         "parameters": [
@@ -544,6 +550,9 @@
         "description": "Access agent's subjective belief model",
         "operationId": "get_agent_beliefs_api_agents__agent_id__beliefs_get",
         "security": [
+          {
+            "HTTPBearer": []
+          },
           {
             "HTTPBearer": []
           }
@@ -665,6 +674,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
           }
         ]
       }
@@ -709,6 +721,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "HTTPBearer": []
           }
         ]
       }
@@ -719,6 +734,9 @@
         "description": "Access causal relationship graph",
         "operationId": "get_causal_graph_api_causality_graph_get",
         "security": [
+          {
+            "HTTPBearer": []
+          },
           {
             "HTTPBearer": []
           }
@@ -794,6 +812,9 @@
         "description": "Retrieve previously generated emergent narrative",
         "operationId": "get_emergent_narrative_api_narratives_emergent__narrative_id__get",
         "security": [
+          {
+            "HTTPBearer": []
+          },
           {
             "HTTPBearer": []
           }
@@ -1109,13 +1130,13 @@
         }
       }
     },
-    "/api/auth/login": {
+    "/auth/login": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Login",
-        "operationId": "login_api_auth_login_post",
+        "operationId": "login_auth_login_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1150,13 +1171,13 @@
         }
       }
     },
-    "/api/auth/refresh": {
+    "/auth/refresh": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Refresh Token",
-        "operationId": "refresh_token_api_auth_refresh_post",
+        "operationId": "refresh_token_auth_refresh_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1191,13 +1212,13 @@
         }
       }
     },
-    "/api/auth/csrf-token": {
+    "/auth/csrf-token": {
       "get": {
         "tags": [
           "Authentication"
         ],
         "summary": "Get Csrf Token",
-        "operationId": "get_csrf_token_api_auth_csrf_token_get",
+        "operationId": "get_csrf_token_auth_csrf_token_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1212,13 +1233,13 @@
         }
       }
     },
-    "/api/auth/logout": {
+    "/auth/logout": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Logout",
-        "operationId": "logout_api_auth_logout_post",
+        "operationId": "logout_auth_logout_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1260,13 +1281,13 @@
         }
       }
     },
-    "/api/auth/validate": {
+    "/auth/validate": {
       "get": {
         "tags": [
           "Authentication"
         ],
         "summary": "Validate Token",
-        "operationId": "validate_token_api_auth_validate_get",
+        "operationId": "validate_token_auth_validate_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1599,7 +1620,7 @@
           "characters"
         ],
         "summary": "Create Workspace Character",
-        "description": "Creates a new character in the current workspace.",
+        "description": "Creates a new character in the current workspace.\n\nWhy: Workspace characters are user-defined and stored separately from public catalog.",
         "operationId": "create_workspace_character_characters_post",
         "requestBody": {
           "content": {
@@ -1681,7 +1702,7 @@
           "characters"
         ],
         "summary": "Update Workspace Character",
-        "description": "Updates a character in the workspace.",
+        "description": "Updates a character in the workspace.\n\nWhy: Allows modification of user-defined character properties.",
         "operationId": "update_workspace_character_characters__character_id__put",
         "parameters": [
           {
@@ -1732,7 +1753,7 @@
           "characters"
         ],
         "summary": "Delete Workspace Character",
-        "description": "Deletes a character from the workspace.",
+        "description": "Deletes a character from the workspace.\n\nWhy: Removes user-defined characters; also unregisters from orchestrator if present.",
         "operationId": "delete_workspace_character_characters__character_id__delete",
         "parameters": [
           {
@@ -1768,7 +1789,7 @@
           "characters"
         ],
         "summary": "Get Character Enhanced Api",
-        "description": "Retrieves enhanced character context.",
+        "description": "Retrieves enhanced character context.\n\nWhy: Provides enriched context for narrative generation.",
         "operationId": "get_character_enhanced_api_characters__character_id__enhanced_get",
         "parameters": [
           {
@@ -2204,6 +2225,74 @@
         }
       }
     },
+    "/health/live": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Live",
+        "description": "Liveness probe endpoint for Kubernetes/container orchestration.\n\nReturns a simple status check to indicate the application is running.\nThis endpoint should respond in < 10ms and have no external dependencies.",
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Ready",
+        "description": "Readiness probe endpoint for Kubernetes/container orchestration.\n\nChecks if the application is ready to receive traffic by verifying\ncritical dependencies like ChromaDB.\nReturns 503 Service Unavailable if any critical dependency is unhealthy.",
+        "operationId": "ready_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/chromadb": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Chromadb Health Check",
+        "description": "ChromaDB vector store health check endpoint.\n\nWarzone 4: AI Brain - BRAIN-001\nReturns the status of the ChromaDB vector database connection.",
+        "operationId": "chromadb_health_check_health_chromadb_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Chromadb Health Check Health Chromadb Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/meta/system-status": {
       "get": {
         "tags": [
@@ -2248,14 +2337,14 @@
         }
       }
     },
-    "/api/orchestration/status": {
+    "/orchestration/status": {
       "get": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Get Orchestration Status",
-        "description": "Get current orchestration status.",
-        "operationId": "get_orchestration_status_api_orchestration_status_get",
+        "description": "Get current orchestration status.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "get_orchestration_status_orchestration_status_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2270,14 +2359,14 @@
         }
       }
     },
-    "/api/orchestration/start": {
+    "/orchestration/start": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Start Orchestration",
-        "description": "Start orchestration with optional parameters.",
-        "operationId": "start_orchestration_api_orchestration_start_post",
+        "description": "Start orchestration with optional parameters.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "start_orchestration_orchestration_start_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2319,14 +2408,14 @@
         }
       }
     },
-    "/api/orchestration/stop": {
+    "/orchestration/stop": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Stop Orchestration",
-        "description": "Stop the current orchestration.",
-        "operationId": "stop_orchestration_api_orchestration_stop_post",
+        "description": "Stop the current orchestration.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "stop_orchestration_orchestration_stop_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2341,14 +2430,14 @@
         }
       }
     },
-    "/api/orchestration/pause": {
+    "/orchestration/pause": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Pause Orchestration",
-        "description": "Pause the current orchestration.",
-        "operationId": "pause_orchestration_api_orchestration_pause_post",
+        "description": "Pause the current orchestration.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "pause_orchestration_orchestration_pause_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2363,14 +2452,14 @@
         }
       }
     },
-    "/api/orchestration/narrative": {
+    "/orchestration/narrative": {
       "get": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Get Narrative",
-        "description": "Get current narrative content.",
-        "operationId": "get_narrative_api_orchestration_narrative_get",
+        "description": "Get current narrative content.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "get_narrative_orchestration_narrative_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3265,6 +3354,201 @@
         }
       }
     },
+    "/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/smart-tags": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Get Scene Smart Tags",
+        "description": "Get smart tags for a scene.\n\nReturns both auto-generated and manual smart tags.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    repo: Narrative repository (injected).\n\nReturns:\n    Smart tags response with auto, manual, and effective tags.\n\nRaises:\n    HTTPException: If not found.",
+        "operationId": "get_scene_smart_tags_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__smart_tags_get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTagsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/smart-tags/manual": {
+      "put": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Update Scene Manual Smart Tags",
+        "description": "Update manual smart tags for a scene.\n\nManual tags are never overridden by auto-tagging.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    request: Manual tags update request.\n    repo: Narrative repository (injected).\n\nReturns:\n    Updated smart tags response.\n\nRaises:\n    HTTPException: If not found.",
+        "operationId": "update_scene_manual_smart_tags_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__smart_tags_manual_put",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualSmartTagsUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTagsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/smart-tags/manual/{category}": {
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete Scene Manual Smart Tags",
+        "description": "Delete manual smart tags for a specific category.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    category: The tag category to clear.\n    repo: Narrative repository (injected).\n\nRaises:\n    HTTPException: If not found.",
+        "operationId": "delete_scene_manual_smart_tags_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__smart_tags_manual__category__delete",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/move": {
       "post": {
         "tags": [
@@ -4051,7 +4335,7 @@
           "structure"
         ],
         "summary": "List Plotlines",
-        "description": "List all plotlines.\n\nReturns:\n    List of all plotlines.",
+        "description": "List all plotlines with scene counts.\n\nReturns:\n    List of all plotlines with the number of scenes linked to each.",
         "operationId": "list_plotlines_structure_plotlines_get",
         "responses": {
           "200": {
@@ -6015,6 +6299,147 @@
         }
       }
     },
+    "/lore/{entry_id}/smart-tags": {
+      "get": {
+        "tags": [
+          "lore"
+        ],
+        "summary": "Get Lore Smart Tags",
+        "description": "Get smart tags for a lore entry.\n\nReturns both auto-generated and manual smart tags.\n\nArgs:\n    entry_id: Unique identifier for the entry.\n\nReturns:\n    Smart tags response with auto, manual, and effective tags.\n\nRaises:\n    HTTPException: If entry not found.",
+        "operationId": "get_lore_smart_tags_lore__entry_id__smart_tags_get",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTagsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lore/{entry_id}/smart-tags/manual": {
+      "put": {
+        "tags": [
+          "lore"
+        ],
+        "summary": "Update Lore Manual Smart Tags",
+        "description": "Update manual smart tags for a lore entry.\n\nManual tags are never overridden by auto-tagging.\n\nArgs:\n    entry_id: Unique identifier for the entry.\n    request: Manual tags update request.\n\nReturns:\n    Updated smart tags response.\n\nRaises:\n    HTTPException: If entry not found.",
+        "operationId": "update_lore_manual_smart_tags_lore__entry_id__smart_tags_manual_put",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualSmartTagsUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTagsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lore/{entry_id}/smart-tags/manual/{category}": {
+      "delete": {
+        "tags": [
+          "lore"
+        ],
+        "summary": "Delete Lore Manual Smart Tags",
+        "description": "Delete manual smart tags for a specific category.\n\nArgs:\n    entry_id: Unique identifier for the entry.\n    category: The tag category to clear.\n\nRaises:\n    HTTPException: If entry not found.",
+        "operationId": "delete_lore_manual_smart_tags_lore__entry_id__smart_tags_manual__category__delete",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/characters/{character_id}/memories": {
       "get": {
         "tags": [
@@ -7215,13 +7640,1343 @@
         }
       }
     },
-    "/api/api/auth/login": {
+    "/prompts": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "List Prompts",
+        "description": "List all prompt templates with optional filtering.\n\nWhy: Provides discovery and browsing of available prompts.\n\nArgs:\n    request: FastAPI request\n    response: FastAPI response (for cache headers)\n    tags: Comma-separated filter by tags\n    model: Filter by model name\n    limit: Maximum number of results\n    offset: Number of results to skip\n    service: Prompt router service\n\nReturns:\n    List of prompt summaries",
+        "operationId": "list_prompts_prompts_get",
+        "parameters": [
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags"
+            }
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Create Prompt",
+        "description": "Create a new prompt template.\n\nWhy: Allows users to define custom prompts.\n\nArgs:\n    payload: Prompt creation request\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Created prompt detail",
+        "operationId": "create_prompt_prompts_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/search": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Search Prompts",
+        "description": "Search prompt templates by name or description.\n\nWhy: Enables quick lookup of specific prompts.\n\nArgs:\n    query: Search query string\n    request: FastAPI request\n    limit: Maximum number of results\n    service: Prompt router service\n\nReturns:\n    List of matching prompt summaries",
+        "operationId": "search_prompts_prompts_search_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/tags": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "List Prompt Tags",
+        "description": "List all unique tags across all prompt templates.\n\nWhy: Provides tag values for filtering UI.\n\nArgs:\n    service: Prompt router service\n\nReturns:\n    Dictionary with tag categories and their values",
+        "operationId": "list_prompt_tags_prompts_tags_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response List Prompt Tags Prompts Tags Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/{prompt_id}/analytics": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Get Prompt Analytics",
+        "description": "Get analytics for a prompt template.\n\nBRAIN-022B: Backend: Prompt Analytics - API\nProvides usage statistics and metrics over time with period aggregation.\n\nQuery Parameters:\n    period: Time period for aggregation (day, week, month, all)\n    start_date: Optional ISO 8601 start date for filtering\n    end_date: Optional ISO 8601 end date for filtering\n    workspace_id: Optional filter by workspace ID\n    limit: Maximum time series data points (default: 100)\n\nReturns:\n    Analytics data with time series, metrics, and rating distribution\n\nRaises:\n    404: If prompt not found\n    400: If date format is invalid or usage repository not configured\n    500: If analytics retrieval fails",
+        "operationId": "get_prompt_analytics_prompts__prompt_id__analytics_get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PromptAnalyticsTimePeriod",
+              "default": "all"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Prompt Analytics Prompts  Prompt Id  Analytics Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/{prompt_id}/analytics/export": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Export Prompt Analytics",
+        "description": "Export prompt analytics as CSV.\n\nBRAIN-022B: Backend: Prompt Analytics - API (CSV export)\n\nQuery Parameters:\n    start_date: Optional ISO 8601 start date for filtering\n    end_date: Optional ISO 8601 end date for filtering\n    workspace_id: Optional filter by workspace ID\n\nReturns:\n    CSV file with all usage data\n\nRaises:\n    404: If prompt not found\n    400: If date format is invalid or usage repository not configured\n    500: If export fails",
+        "operationId": "export_prompt_analytics_prompts__prompt_id__analytics_export_get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/health": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Prompts Health",
+        "description": "Health check for the prompt management system.\n\nWhy: Verify repository is accessible and count templates.\n\nNOTE: This route must be defined BEFORE /prompts/{prompt_id}\n      to avoid 'health' being captured as a prompt_id.\n\nArgs:\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Health status information",
+        "operationId": "prompts_health_prompts_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Prompts Health Prompts Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/{prompt_id}": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Get Prompt",
+        "description": "Get a specific prompt template by ID.\n\nWhy: Retrieve full prompt details for editing or viewing.\n\nArgs:\n    prompt_id: Prompt template ID\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Prompt detail response",
+        "operationId": "get_prompt_prompts__prompt_id__get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Update Prompt",
+        "description": "Update a prompt template (creates a new version).\n\nWhy: Version tracking allows safe modifications and rollback.\n\nArgs:\n    prompt_id: ID of the prompt to update\n    payload: Update request fields\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    New version of the prompt",
+        "operationId": "update_prompt_prompts__prompt_id__put",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Delete Prompt",
+        "description": "Archive (soft delete) a prompt template.\n\nWhy: Soft delete preserves history and allows recovery.\n\nArgs:\n    prompt_id: ID of the prompt to delete\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    204 No Content on success",
+        "operationId": "delete_prompt_prompts__prompt_id__delete",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/{prompt_id}/render": {
+      "post": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Render Prompt",
+        "description": "Render a prompt template with variable values.\n\nWhy: Preview the rendered prompt before using it.\n\nArgs:\n    prompt_id: ID of the prompt to render\n    payload: Variable values for rendering\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Rendered prompt content with metadata",
+        "operationId": "render_prompt_prompts__prompt_id__render_post",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptRenderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptRenderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/{prompt_id}/generate": {
+      "post": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Generate Prompt",
+        "description": "Generate output using a prompt template and LLM.\n\nBRAIN-020B: Frontend: Prompt Playground - Integration\nBRAIN-022A: Backend: Prompt Analytics - Data Model (usage tracking)\nCombines rendering and LLM generation in a single request.\nTracks usage analytics for token consumption and latency.\n\nArgs:\n    prompt_id: ID of the prompt to use\n    payload: Variable values and optional model config overrides\n    request: FastAPI request\n    service: Prompt router service with usage tracking\n\nReturns:\n    Generated output with rendered prompt and metadata",
+        "operationId": "generate_prompt_prompts__prompt_id__generate_post",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptGenerateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptGenerateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/{prompt_id}/versions": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Get Prompt Versions",
+        "description": "Get all versions of a prompt template.\n\nWhy: Version history enables audit trail and rollback.\n\nArgs:\n    prompt_id: ID of any version of the prompt\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    List of all versions of the prompt",
+        "operationId": "get_prompt_versions_prompts__prompt_id__versions_get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/{prompt_id}/rollback/{version}": {
+      "post": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Rollback Prompt",
+        "description": "Rollback a prompt to a specific version.\n\nWhy: Restore previous versions by creating a new version with the target content.\n\nArgs:\n    prompt_id: ID of the current prompt version\n    version: Target version number to rollback to\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    New PromptTemplate created from the target version",
+        "operationId": "rollback_prompt_prompts__prompt_id__rollback__version__post",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/{prompt_id}/compare": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Compare Prompt Versions",
+        "description": "Compare two versions of a prompt template.\n\nWhy: View differences between versions for review and debugging.\n\nArgs:\n    prompt_id: ID of any version of the prompt\n    version_a: First version number to compare\n    version_b: Second version number to compare\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Comparison result with diffs",
+        "operationId": "compare_prompt_versions_prompts__prompt_id__compare_get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "version_a",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version A"
+            }
+          },
+          {
+            "name": "version_b",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version B"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Compare Prompt Versions Prompts  Prompt Id  Compare Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiments": {
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "List Experiments",
+        "description": "List all experiments with optional filtering.\n\nWhy: Provides discovery and browsing of experiments.\n\nArgs:\n    request: FastAPI request\n    response: FastAPI response (for cache headers)\n    status: Optional filter by status\n    prompt_id: Optional filter by prompt ID\n    limit: Maximum number of results\n    offset: Number of results to skip\n    service: Experiment router service\n\nReturns:\n    List of experiment summaries",
+        "operationId": "list_experiments_experiments_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "prompt_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Create Experiment",
+        "description": "Create a new A/B testing experiment.\n\nWhy: Allows users to compare prompt variants.\n\nArgs:\n    payload: Experiment creation request\n    service: Experiment router service\n\nReturns:\n    Created experiment summary",
+        "operationId": "create_experiment_experiments_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiments/health": {
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Experiments Health",
+        "description": "Health check for the experiment system.\n\nWhy: Verify repository is accessible and count experiments.\n\nNOTE: This route must be defined BEFORE /experiments/{experiment_id}\n      to avoid 'health' being captured as an experiment_id.\n\nArgs:\n    service: Experiment router service\n\nReturns:\n    Health status information",
+        "operationId": "experiments_health_experiments_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Experiments Health Experiments Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiments/{experiment_id}": {
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Get Experiment",
+        "description": "Get a specific experiment by ID.\n\nWhy: Retrieve full experiment details for viewing.\n\nArgs:\n    experiment_id: Experiment ID\n    service: Experiment router service\n\nReturns:\n    Experiment summary response",
+        "operationId": "get_experiment_experiments__experiment_id__get",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Delete Experiment",
+        "description": "Delete an experiment.\n\nWhy: Remove experiments that are no longer needed.\n\nArgs:\n    experiment_id: ID of the experiment to delete\n    service: Experiment router service\n\nReturns:\n    204 No Content on success",
+        "operationId": "delete_experiment_experiments__experiment_id__delete",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiments/{experiment_id}/results": {
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Get Experiment Results",
+        "description": "Get experiment results with statistical analysis.\n\nWhy: View detailed metrics and statistical significance.\n\nArgs:\n    experiment_id: Experiment ID\n    service: Experiment router service\n\nReturns:\n    Experiment results with metrics, comparison, and significance",
+        "operationId": "get_experiment_results_experiments__experiment_id__results_get",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentResultsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiments/{experiment_id}/start": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Start Experiment",
+        "description": "Start an experiment.\n\nWhy: Begin data collection for an A/B test.\n\nArgs:\n    experiment_id: ID of the experiment to start\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "start_experiment_experiments__experiment_id__start_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiments/{experiment_id}/pause": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Pause Experiment",
+        "description": "Pause a running experiment.\n\nWhy: Temporarily stop data collection.\n\nArgs:\n    experiment_id: ID of the experiment to pause\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "pause_experiment_experiments__experiment_id__pause_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiments/{experiment_id}/resume": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Resume Experiment",
+        "description": "Resume a paused experiment.\n\nWhy: Continue data collection.\n\nArgs:\n    experiment_id: ID of the experiment to resume\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "resume_experiment_experiments__experiment_id__resume_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiments/{experiment_id}/complete": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Complete Experiment",
+        "description": "Complete an experiment and optionally declare a winner.\n\nWhy: Finish data collection and finalize results.\n\nArgs:\n    experiment_id: ID of the experiment to complete\n    payload: Optional winner specification\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "complete_experiment_experiments__experiment_id__complete_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentActionRequest",
+                "default": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiments/{experiment_id}/record": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Record Result",
+        "description": "Record a generation result for an experiment.\n\nWhy: Track performance data for A/B testing.\n\nArgs:\n    experiment_id: ID of the experiment\n    payload: Result recording request\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "record_result_experiments__experiment_id__record_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentRecordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Login",
-        "operationId": "login_api_api_auth_login_post",
+        "operationId": "login_api_auth_login_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7256,13 +9011,13 @@
         }
       }
     },
-    "/api/api/auth/refresh": {
+    "/api/auth/refresh": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Refresh Token",
-        "operationId": "refresh_token_api_api_auth_refresh_post",
+        "operationId": "refresh_token_api_auth_refresh_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7297,13 +9052,13 @@
         }
       }
     },
-    "/api/api/auth/csrf-token": {
+    "/api/auth/csrf-token": {
       "get": {
         "tags": [
           "Authentication"
         ],
         "summary": "Get Csrf Token",
-        "operationId": "get_csrf_token_api_api_auth_csrf_token_get",
+        "operationId": "get_csrf_token_api_auth_csrf_token_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -7318,13 +9073,13 @@
         }
       }
     },
-    "/api/api/auth/logout": {
+    "/api/auth/logout": {
       "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Logout",
-        "operationId": "logout_api_api_auth_logout_post",
+        "operationId": "logout_api_auth_logout_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7366,13 +9121,13 @@
         }
       }
     },
-    "/api/api/auth/validate": {
+    "/api/auth/validate": {
       "get": {
         "tags": [
           "Authentication"
         ],
         "summary": "Validate Token",
-        "operationId": "validate_token_api_api_auth_validate_get",
+        "operationId": "validate_token_api_auth_validate_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -7686,7 +9441,7 @@
           "characters"
         ],
         "summary": "Get Character Enhanced Api",
-        "description": "Retrieves enhanced character context.",
+        "description": "Retrieves enhanced character context.\n\nWhy: Provides enriched context for narrative generation.",
         "operationId": "get_character_enhanced_api_api_characters__character_id__enhanced_get",
         "parameters": [
           {
@@ -8106,6 +9861,50 @@
         }
       }
     },
+    "/api/health/live": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Live",
+        "description": "Liveness probe endpoint for Kubernetes/container orchestration.\n\nReturns a simple status check to indicate the application is running.\nThis endpoint should respond in < 10ms and have no external dependencies.",
+        "operationId": "live_api_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Ready",
+        "description": "Readiness probe endpoint for Kubernetes/container orchestration.\n\nChecks if the application is ready to receive traffic by verifying\ncritical dependencies like ChromaDB.\nReturns 503 Service Unavailable if any critical dependency is unhealthy.",
+        "operationId": "ready_api_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/": {
       "get": {
         "tags": [
@@ -8143,6 +9942,30 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HealthCheckResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/chromadb": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Chromadb Health Check",
+        "description": "ChromaDB vector store health check endpoint.\n\nWarzone 4: AI Brain - BRAIN-001\nReturns the status of the ChromaDB vector database connection.",
+        "operationId": "chromadb_health_check_api_health_chromadb_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Chromadb Health Check Api Health Chromadb Get"
                 }
               }
             }
@@ -8194,14 +10017,14 @@
         }
       }
     },
-    "/api/api/orchestration/status": {
+    "/api/orchestration/status": {
       "get": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Get Orchestration Status",
-        "description": "Get current orchestration status.",
-        "operationId": "get_orchestration_status_api_api_orchestration_status_get",
+        "description": "Get current orchestration status.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "get_orchestration_status_api_orchestration_status_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -8216,14 +10039,14 @@
         }
       }
     },
-    "/api/api/orchestration/start": {
+    "/api/orchestration/start": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Start Orchestration",
-        "description": "Start orchestration with optional parameters.",
-        "operationId": "start_orchestration_api_api_orchestration_start_post",
+        "description": "Start orchestration with optional parameters.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "start_orchestration_api_orchestration_start_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -8265,14 +10088,14 @@
         }
       }
     },
-    "/api/api/orchestration/stop": {
+    "/api/orchestration/stop": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Stop Orchestration",
-        "description": "Stop the current orchestration.",
-        "operationId": "stop_orchestration_api_api_orchestration_stop_post",
+        "description": "Stop the current orchestration.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "stop_orchestration_api_orchestration_stop_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -8287,14 +10110,14 @@
         }
       }
     },
-    "/api/api/orchestration/pause": {
+    "/api/orchestration/pause": {
       "post": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Pause Orchestration",
-        "description": "Pause the current orchestration.",
-        "operationId": "pause_orchestration_api_api_orchestration_pause_post",
+        "description": "Pause the current orchestration.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "pause_orchestration_api_orchestration_pause_post",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -8309,14 +10132,14 @@
         }
       }
     },
-    "/api/api/orchestration/narrative": {
+    "/api/orchestration/narrative": {
       "get": {
         "tags": [
           "Orchestration"
         ],
         "summary": "Get Narrative",
-        "description": "Get current narrative content.",
-        "operationId": "get_narrative_api_api_orchestration_narrative_get",
+        "description": "Get current narrative content.\n\nUnwraps Result from service layer and converts to HTTP response.",
+        "operationId": "get_narrative_api_orchestration_narrative_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -9210,6 +11033,201 @@
         }
       }
     },
+    "/api/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/smart-tags": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Get Scene Smart Tags",
+        "description": "Get smart tags for a scene.\n\nReturns both auto-generated and manual smart tags.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    repo: Narrative repository (injected).\n\nReturns:\n    Smart tags response with auto, manual, and effective tags.\n\nRaises:\n    HTTPException: If not found.",
+        "operationId": "get_scene_smart_tags_api_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__smart_tags_get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTagsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/smart-tags/manual": {
+      "put": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Update Scene Manual Smart Tags",
+        "description": "Update manual smart tags for a scene.\n\nManual tags are never overridden by auto-tagging.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    request: Manual tags update request.\n    repo: Narrative repository (injected).\n\nReturns:\n    Updated smart tags response.\n\nRaises:\n    HTTPException: If not found.",
+        "operationId": "update_scene_manual_smart_tags_api_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__smart_tags_manual_put",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualSmartTagsUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTagsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/smart-tags/manual/{category}": {
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete Scene Manual Smart Tags",
+        "description": "Delete manual smart tags for a specific category.\n\nArgs:\n    story_id: UUID of the parent story.\n    chapter_id: UUID of the parent chapter.\n    scene_id: UUID of the scene.\n    category: The tag category to clear.\n    repo: Narrative repository (injected).\n\nRaises:\n    HTTPException: If not found.",
+        "operationId": "delete_scene_manual_smart_tags_api_structure_stories__story_id__chapters__chapter_id__scenes__scene_id__smart_tags_manual__category__delete",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "chapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chapter Id"
+            }
+          },
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scene Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/structure/stories/{story_id}/chapters/{chapter_id}/scenes/{scene_id}/move": {
       "post": {
         "tags": [
@@ -9996,7 +12014,7 @@
           "structure"
         ],
         "summary": "List Plotlines",
-        "description": "List all plotlines.\n\nReturns:\n    List of all plotlines.",
+        "description": "List all plotlines with scene counts.\n\nReturns:\n    List of all plotlines with the number of scenes linked to each.",
         "operationId": "list_plotlines_api_structure_plotlines_get",
         "responses": {
           "200": {
@@ -11960,6 +13978,147 @@
         }
       }
     },
+    "/api/lore/{entry_id}/smart-tags": {
+      "get": {
+        "tags": [
+          "lore"
+        ],
+        "summary": "Get Lore Smart Tags",
+        "description": "Get smart tags for a lore entry.\n\nReturns both auto-generated and manual smart tags.\n\nArgs:\n    entry_id: Unique identifier for the entry.\n\nReturns:\n    Smart tags response with auto, manual, and effective tags.\n\nRaises:\n    HTTPException: If entry not found.",
+        "operationId": "get_lore_smart_tags_api_lore__entry_id__smart_tags_get",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTagsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lore/{entry_id}/smart-tags/manual": {
+      "put": {
+        "tags": [
+          "lore"
+        ],
+        "summary": "Update Lore Manual Smart Tags",
+        "description": "Update manual smart tags for a lore entry.\n\nManual tags are never overridden by auto-tagging.\n\nArgs:\n    entry_id: Unique identifier for the entry.\n    request: Manual tags update request.\n\nReturns:\n    Updated smart tags response.\n\nRaises:\n    HTTPException: If entry not found.",
+        "operationId": "update_lore_manual_smart_tags_api_lore__entry_id__smart_tags_manual_put",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualSmartTagsUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartTagsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lore/{entry_id}/smart-tags/manual/{category}": {
+      "delete": {
+        "tags": [
+          "lore"
+        ],
+        "summary": "Delete Lore Manual Smart Tags",
+        "description": "Delete manual smart tags for a specific category.\n\nArgs:\n    entry_id: Unique identifier for the entry.\n    category: The tag category to clear.\n\nRaises:\n    HTTPException: If entry not found.",
+        "operationId": "delete_lore_manual_smart_tags_api_lore__entry_id__smart_tags_manual__category__delete",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/characters/{character_id}/memories": {
       "get": {
         "tags": [
@@ -13143,6 +15302,1336 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FactionSetLeaderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "List Prompts",
+        "description": "List all prompt templates with optional filtering.\n\nWhy: Provides discovery and browsing of available prompts.\n\nArgs:\n    request: FastAPI request\n    response: FastAPI response (for cache headers)\n    tags: Comma-separated filter by tags\n    model: Filter by model name\n    limit: Maximum number of results\n    offset: Number of results to skip\n    service: Prompt router service\n\nReturns:\n    List of prompt summaries",
+        "operationId": "list_prompts_api_prompts_get",
+        "parameters": [
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags"
+            }
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Create Prompt",
+        "description": "Create a new prompt template.\n\nWhy: Allows users to define custom prompts.\n\nArgs:\n    payload: Prompt creation request\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Created prompt detail",
+        "operationId": "create_prompt_api_prompts_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/search": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Search Prompts",
+        "description": "Search prompt templates by name or description.\n\nWhy: Enables quick lookup of specific prompts.\n\nArgs:\n    query: Search query string\n    request: FastAPI request\n    limit: Maximum number of results\n    service: Prompt router service\n\nReturns:\n    List of matching prompt summaries",
+        "operationId": "search_prompts_api_prompts_search_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/tags": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "List Prompt Tags",
+        "description": "List all unique tags across all prompt templates.\n\nWhy: Provides tag values for filtering UI.\n\nArgs:\n    service: Prompt router service\n\nReturns:\n    Dictionary with tag categories and their values",
+        "operationId": "list_prompt_tags_api_prompts_tags_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response List Prompt Tags Api Prompts Tags Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/{prompt_id}/analytics": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Get Prompt Analytics",
+        "description": "Get analytics for a prompt template.\n\nBRAIN-022B: Backend: Prompt Analytics - API\nProvides usage statistics and metrics over time with period aggregation.\n\nQuery Parameters:\n    period: Time period for aggregation (day, week, month, all)\n    start_date: Optional ISO 8601 start date for filtering\n    end_date: Optional ISO 8601 end date for filtering\n    workspace_id: Optional filter by workspace ID\n    limit: Maximum time series data points (default: 100)\n\nReturns:\n    Analytics data with time series, metrics, and rating distribution\n\nRaises:\n    404: If prompt not found\n    400: If date format is invalid or usage repository not configured\n    500: If analytics retrieval fails",
+        "operationId": "get_prompt_analytics_api_prompts__prompt_id__analytics_get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PromptAnalyticsTimePeriod",
+              "default": "all"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Prompt Analytics Api Prompts  Prompt Id  Analytics Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/{prompt_id}/analytics/export": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Export Prompt Analytics",
+        "description": "Export prompt analytics as CSV.\n\nBRAIN-022B: Backend: Prompt Analytics - API (CSV export)\n\nQuery Parameters:\n    start_date: Optional ISO 8601 start date for filtering\n    end_date: Optional ISO 8601 end date for filtering\n    workspace_id: Optional filter by workspace ID\n\nReturns:\n    CSV file with all usage data\n\nRaises:\n    404: If prompt not found\n    400: If date format is invalid or usage repository not configured\n    500: If export fails",
+        "operationId": "export_prompt_analytics_api_prompts__prompt_id__analytics_export_get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            }
+          },
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/health": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Prompts Health",
+        "description": "Health check for the prompt management system.\n\nWhy: Verify repository is accessible and count templates.\n\nNOTE: This route must be defined BEFORE /prompts/{prompt_id}\n      to avoid 'health' being captured as a prompt_id.\n\nArgs:\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Health status information",
+        "operationId": "prompts_health_api_prompts_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Prompts Health Api Prompts Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/{prompt_id}": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Get Prompt",
+        "description": "Get a specific prompt template by ID.\n\nWhy: Retrieve full prompt details for editing or viewing.\n\nArgs:\n    prompt_id: Prompt template ID\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Prompt detail response",
+        "operationId": "get_prompt_api_prompts__prompt_id__get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Update Prompt",
+        "description": "Update a prompt template (creates a new version).\n\nWhy: Version tracking allows safe modifications and rollback.\n\nArgs:\n    prompt_id: ID of the prompt to update\n    payload: Update request fields\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    New version of the prompt",
+        "operationId": "update_prompt_api_prompts__prompt_id__put",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Delete Prompt",
+        "description": "Archive (soft delete) a prompt template.\n\nWhy: Soft delete preserves history and allows recovery.\n\nArgs:\n    prompt_id: ID of the prompt to delete\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    204 No Content on success",
+        "operationId": "delete_prompt_api_prompts__prompt_id__delete",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/{prompt_id}/render": {
+      "post": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Render Prompt",
+        "description": "Render a prompt template with variable values.\n\nWhy: Preview the rendered prompt before using it.\n\nArgs:\n    prompt_id: ID of the prompt to render\n    payload: Variable values for rendering\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Rendered prompt content with metadata",
+        "operationId": "render_prompt_api_prompts__prompt_id__render_post",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptRenderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptRenderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/{prompt_id}/generate": {
+      "post": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Generate Prompt",
+        "description": "Generate output using a prompt template and LLM.\n\nBRAIN-020B: Frontend: Prompt Playground - Integration\nBRAIN-022A: Backend: Prompt Analytics - Data Model (usage tracking)\nCombines rendering and LLM generation in a single request.\nTracks usage analytics for token consumption and latency.\n\nArgs:\n    prompt_id: ID of the prompt to use\n    payload: Variable values and optional model config overrides\n    request: FastAPI request\n    service: Prompt router service with usage tracking\n\nReturns:\n    Generated output with rendered prompt and metadata",
+        "operationId": "generate_prompt_api_prompts__prompt_id__generate_post",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptGenerateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptGenerateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/{prompt_id}/versions": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Get Prompt Versions",
+        "description": "Get all versions of a prompt template.\n\nWhy: Version history enables audit trail and rollback.\n\nArgs:\n    prompt_id: ID of any version of the prompt\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    List of all versions of the prompt",
+        "operationId": "get_prompt_versions_api_prompts__prompt_id__versions_get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/{prompt_id}/rollback/{version}": {
+      "post": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Rollback Prompt",
+        "description": "Rollback a prompt to a specific version.\n\nWhy: Restore previous versions by creating a new version with the target content.\n\nArgs:\n    prompt_id: ID of the current prompt version\n    version: Target version number to rollback to\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    New PromptTemplate created from the target version",
+        "operationId": "rollback_prompt_api_prompts__prompt_id__rollback__version__post",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prompts/{prompt_id}/compare": {
+      "get": {
+        "tags": [
+          "prompts"
+        ],
+        "summary": "Compare Prompt Versions",
+        "description": "Compare two versions of a prompt template.\n\nWhy: View differences between versions for review and debugging.\n\nArgs:\n    prompt_id: ID of any version of the prompt\n    version_a: First version number to compare\n    version_b: Second version number to compare\n    request: FastAPI request\n    service: Prompt router service\n\nReturns:\n    Comparison result with diffs",
+        "operationId": "compare_prompt_versions_api_prompts__prompt_id__compare_get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "version_a",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version A"
+            }
+          },
+          {
+            "name": "version_b",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Version B"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Compare Prompt Versions Api Prompts  Prompt Id  Compare Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments": {
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "List Experiments",
+        "description": "List all experiments with optional filtering.\n\nWhy: Provides discovery and browsing of experiments.\n\nArgs:\n    request: FastAPI request\n    response: FastAPI response (for cache headers)\n    status: Optional filter by status\n    prompt_id: Optional filter by prompt ID\n    limit: Maximum number of results\n    offset: Number of results to skip\n    service: Experiment router service\n\nReturns:\n    List of experiment summaries",
+        "operationId": "list_experiments_api_experiments_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "prompt_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Prompt Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Create Experiment",
+        "description": "Create a new A/B testing experiment.\n\nWhy: Allows users to compare prompt variants.\n\nArgs:\n    payload: Experiment creation request\n    service: Experiment router service\n\nReturns:\n    Created experiment summary",
+        "operationId": "create_experiment_api_experiments_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/health": {
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Experiments Health",
+        "description": "Health check for the experiment system.\n\nWhy: Verify repository is accessible and count experiments.\n\nNOTE: This route must be defined BEFORE /experiments/{experiment_id}\n      to avoid 'health' being captured as an experiment_id.\n\nArgs:\n    service: Experiment router service\n\nReturns:\n    Health status information",
+        "operationId": "experiments_health_api_experiments_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Experiments Health Api Experiments Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{experiment_id}": {
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Get Experiment",
+        "description": "Get a specific experiment by ID.\n\nWhy: Retrieve full experiment details for viewing.\n\nArgs:\n    experiment_id: Experiment ID\n    service: Experiment router service\n\nReturns:\n    Experiment summary response",
+        "operationId": "get_experiment_api_experiments__experiment_id__get",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Delete Experiment",
+        "description": "Delete an experiment.\n\nWhy: Remove experiments that are no longer needed.\n\nArgs:\n    experiment_id: ID of the experiment to delete\n    service: Experiment router service\n\nReturns:\n    204 No Content on success",
+        "operationId": "delete_experiment_api_experiments__experiment_id__delete",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{experiment_id}/results": {
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Get Experiment Results",
+        "description": "Get experiment results with statistical analysis.\n\nWhy: View detailed metrics and statistical significance.\n\nArgs:\n    experiment_id: Experiment ID\n    service: Experiment router service\n\nReturns:\n    Experiment results with metrics, comparison, and significance",
+        "operationId": "get_experiment_results_api_experiments__experiment_id__results_get",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentResultsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{experiment_id}/start": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Start Experiment",
+        "description": "Start an experiment.\n\nWhy: Begin data collection for an A/B test.\n\nArgs:\n    experiment_id: ID of the experiment to start\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "start_experiment_api_experiments__experiment_id__start_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{experiment_id}/pause": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Pause Experiment",
+        "description": "Pause a running experiment.\n\nWhy: Temporarily stop data collection.\n\nArgs:\n    experiment_id: ID of the experiment to pause\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "pause_experiment_api_experiments__experiment_id__pause_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{experiment_id}/resume": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Resume Experiment",
+        "description": "Resume a paused experiment.\n\nWhy: Continue data collection.\n\nArgs:\n    experiment_id: ID of the experiment to resume\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "resume_experiment_api_experiments__experiment_id__resume_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{experiment_id}/complete": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Complete Experiment",
+        "description": "Complete an experiment and optionally declare a winner.\n\nWhy: Finish data collection and finalize results.\n\nArgs:\n    experiment_id: ID of the experiment to complete\n    payload: Optional winner specification\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "complete_experiment_api_experiments__experiment_id__complete_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentActionRequest",
+                "default": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experiments/{experiment_id}/record": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Record Result",
+        "description": "Record a generation result for an experiment.\n\nWhy: Track performance data for A/B testing.\n\nArgs:\n    experiment_id: ID of the experiment\n    payload: Result recording request\n    service: Experiment router service\n\nReturns:\n    Updated experiment summary",
+        "operationId": "record_result_api_experiments__experiment_id__record_post",
+        "parameters": [
+          {
+            "name": "experiment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentRecordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSummaryResponse"
                 }
               }
             }
@@ -15813,6 +19302,31 @@
         "title": "CodeExampleResponse",
         "description": "Context7-generated code example."
       },
+      "ConfidenceIntervalResponse": {
+        "properties": {
+          "lower": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Lower",
+            "description": "Lower bound of confidence interval"
+          },
+          "upper": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Upper",
+            "description": "Upper bound of confidence interval"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lower",
+          "upper"
+        ],
+        "title": "ConfidenceIntervalResponse",
+        "description": "Schema for confidence interval of a metric."
+      },
       "ConflictCreateRequest": {
         "properties": {
           "conflict_type": {
@@ -16298,7 +19812,7 @@
         "title": "DocumentationRequest",
         "description": "Request for Context7-enhanced documentation."
       },
-      "DocumentationSection": {
+      "DocumentationSection-Input": {
         "properties": {
           "title": {
             "type": "string",
@@ -16319,7 +19833,42 @@
           },
           "subsections": {
             "items": {
-              "$ref": "#/components/schemas/DocumentationSection"
+              "$ref": "#/components/schemas/DocumentationSection-Input"
+            },
+            "type": "array",
+            "title": "Subsections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "content"
+        ],
+        "title": "DocumentationSection",
+        "description": "Documentation section."
+      },
+      "DocumentationSection-Output": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Section title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Section content"
+          },
+          "code_examples": {
+            "items": {
+              "$ref": "#/components/schemas/CodeExampleResponse"
+            },
+            "type": "array",
+            "title": "Code Examples"
+          },
+          "subsections": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentationSection-Output"
             },
             "type": "array",
             "title": "Subsections"
@@ -16345,7 +19894,111 @@
         "title": "DocumentationType",
         "description": "Documentation types."
       },
-      "EmergentNarrativeData": {
+      "EmergentNarrativeData-Input": {
+        "properties": {
+          "narrative_id": {
+            "type": "string",
+            "title": "Narrative Id",
+            "description": "Unique narrative identifier"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Generated narrative title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "Comprehensive narrative summary"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/NarrativeEventResponse"
+            },
+            "type": "array",
+            "title": "Events",
+            "description": "Sequence of narrative events"
+          },
+          "character_arcs": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Character Arcs",
+            "description": "Character development arcs"
+          },
+          "plot_threads": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Plot Threads",
+            "description": "Active plot threads"
+          },
+          "causal_graph_stats": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Causal Graph Stats",
+            "description": "Causal graph statistics"
+          },
+          "coherence_report": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Coherence Report",
+            "description": "Narrative coherence analysis"
+          },
+          "narrative_patterns": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Narrative Patterns",
+            "description": "Detected narrative patterns"
+          },
+          "predicted_events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Predicted Events",
+            "description": "Predicted future events"
+          },
+          "generation_metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Generation Metadata",
+            "description": "Generation process metadata"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Narrative creation timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "narrative_id",
+          "title",
+          "summary",
+          "events",
+          "character_arcs",
+          "plot_threads",
+          "causal_graph_stats",
+          "coherence_report",
+          "narrative_patterns",
+          "generation_metadata"
+        ],
+        "title": "EmergentNarrativeData",
+        "description": "Generated emergent narrative data"
+      },
+      "EmergentNarrativeData-Output": {
         "properties": {
           "narrative_id": {
             "type": "string",
@@ -16612,7 +20265,7 @@
         "title": "EmitEventResponse",
         "description": "Response after emitting event."
       },
-      "EnhancedDocumentationResponse": {
+      "EnhancedDocumentationResponse-Input": {
         "properties": {
           "doc_type": {
             "type": "string",
@@ -16631,7 +20284,67 @@
           },
           "sections": {
             "items": {
-              "$ref": "#/components/schemas/DocumentationSection"
+              "$ref": "#/components/schemas/DocumentationSection-Input"
+            },
+            "type": "array",
+            "title": "Sections",
+            "description": "Documentation sections"
+          },
+          "quick_reference": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Quick Reference",
+            "description": "Quick reference links"
+          },
+          "external_resources": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "External Resources",
+            "description": "External resources"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_type",
+          "title",
+          "overview",
+          "sections"
+        ],
+        "title": "EnhancedDocumentationResponse",
+        "description": "Context7-enhanced documentation response."
+      },
+      "EnhancedDocumentationResponse-Output": {
+        "properties": {
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type",
+            "description": "Documentation type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Documentation title"
+          },
+          "overview": {
+            "type": "string",
+            "title": "Overview",
+            "description": "Documentation overview"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentationSection-Output"
             },
             "type": "array",
             "title": "Sections",
@@ -16729,6 +20442,569 @@
         ],
         "title": "ExampleFormat",
         "description": "Code example formats."
+      },
+      "ExperimentActionRequest": {
+        "properties": {
+          "winner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Winner",
+            "description": "Winning variant (for complete action)"
+          }
+        },
+        "type": "object",
+        "title": "ExperimentActionRequest",
+        "description": "Request model for experiment actions (start, pause, resume, complete)."
+      },
+      "ExperimentComparisonResponse": {
+        "properties": {
+          "success_rate_diff": {
+            "type": "number",
+            "title": "Success Rate Diff",
+            "description": "Difference in success rate (A - B)",
+            "default": 0.0
+          },
+          "success_rate_rel_diff": {
+            "type": "number",
+            "title": "Success Rate Rel Diff",
+            "description": "Relative difference in success rate (%)",
+            "default": 0.0
+          },
+          "avg_rating_diff": {
+            "type": "number",
+            "title": "Avg Rating Diff",
+            "description": "Difference in average rating (A - B)",
+            "default": 0.0
+          },
+          "avg_rating_rel_diff": {
+            "type": "number",
+            "title": "Avg Rating Rel Diff",
+            "description": "Relative difference in rating (%)",
+            "default": 0.0
+          },
+          "token_efficiency_diff": {
+            "type": "number",
+            "title": "Token Efficiency Diff",
+            "description": "Difference in token efficiency (A - B)",
+            "default": 0.0
+          },
+          "avg_latency_diff": {
+            "type": "number",
+            "title": "Avg Latency Diff",
+            "description": "Difference in latency (A - B)",
+            "default": 0.0
+          },
+          "avg_latency_rel_diff": {
+            "type": "number",
+            "title": "Avg Latency Rel Diff",
+            "description": "Relative difference in latency (%)",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "ExperimentComparisonResponse",
+        "description": "Schema for variant comparison."
+      },
+      "ExperimentCreateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Experiment name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Description",
+            "description": "Experiment description",
+            "default": ""
+          },
+          "prompt_a_id": {
+            "type": "string",
+            "title": "Prompt A Id",
+            "description": "Variant A prompt template ID"
+          },
+          "prompt_b_id": {
+            "type": "string",
+            "title": "Prompt B Id",
+            "description": "Variant B prompt template ID"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric",
+            "description": "Primary metric: success_rate, user_rating, token_efficiency, latency"
+          },
+          "traffic_split": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Traffic Split",
+            "description": "Traffic split for variant A (0-100)",
+            "default": 50
+          },
+          "min_sample_size": {
+            "type": "integer",
+            "minimum": 10.0,
+            "title": "Min Sample Size",
+            "description": "Minimum sample size per variant",
+            "default": 100
+          },
+          "confidence_threshold": {
+            "type": "number",
+            "maximum": 0.99,
+            "minimum": 0.5,
+            "title": "Confidence Threshold",
+            "description": "Confidence threshold",
+            "default": 0.95
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "prompt_a_id",
+          "prompt_b_id",
+          "metric"
+        ],
+        "title": "ExperimentCreateRequest",
+        "description": "Request model for creating an experiment."
+      },
+      "ExperimentListResponse": {
+        "properties": {
+          "experiments": {
+            "items": {
+              "$ref": "#/components/schemas/ExperimentSummaryResponse"
+            },
+            "type": "array",
+            "title": "Experiments"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total count of experiments",
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Page size limit",
+            "default": 100
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Pagination offset",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "ExperimentListResponse",
+        "description": "Response model for listing experiments."
+      },
+      "ExperimentRecordRequest": {
+        "properties": {
+          "variant_id": {
+            "type": "string",
+            "title": "Variant Id",
+            "description": "The variant that was used (prompt_a_id or prompt_b_id)"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the generation was successful"
+          },
+          "tokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Tokens",
+            "description": "Number of tokens consumed",
+            "default": 0
+          },
+          "latency_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Latency Ms",
+            "description": "Response time in milliseconds",
+            "default": 0.0
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating",
+            "description": "User rating (1-5)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "variant_id",
+          "success"
+        ],
+        "title": "ExperimentRecordRequest",
+        "description": "Request model for recording a run result."
+      },
+      "ExperimentResultsResponse": {
+        "properties": {
+          "experiment_id": {
+            "type": "string",
+            "title": "Experiment Id",
+            "description": "Experiment ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Experiment name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Experiment status"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric",
+            "description": "Primary metric for comparison"
+          },
+          "winner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Winner",
+            "description": "Winning variant (A or B)"
+          },
+          "min_sample_size": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Min Sample Size",
+            "description": "Minimum sample size",
+            "default": 100
+          },
+          "traffic_split": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Traffic Split",
+            "description": "Traffic split percentage"
+          },
+          "variant_a": {
+            "$ref": "#/components/schemas/ExperimentVariantResponse",
+            "description": "Variant A metrics"
+          },
+          "variant_b": {
+            "$ref": "#/components/schemas/ExperimentVariantResponse",
+            "description": "Variant B metrics"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/ExperimentComparisonResponse",
+            "description": "Variant comparison"
+          },
+          "timeline": {
+            "$ref": "#/components/schemas/ExperimentTimelineResponse",
+            "description": "Experiment timeline"
+          },
+          "statistical_significance": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statistical Significance",
+            "description": "Statistical significance analysis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "experiment_id",
+          "name",
+          "status",
+          "metric",
+          "variant_a",
+          "variant_b",
+          "comparison",
+          "timeline"
+        ],
+        "title": "ExperimentResultsResponse",
+        "description": "Schema for experiment results."
+      },
+      "ExperimentSummaryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Experiment ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Experiment name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Experiment description",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Experiment status"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric",
+            "description": "Primary metric for comparison"
+          },
+          "prompt_a_id": {
+            "type": "string",
+            "title": "Prompt A Id",
+            "description": "Variant A prompt ID"
+          },
+          "prompt_b_id": {
+            "type": "string",
+            "title": "Prompt B Id",
+            "description": "Variant B prompt ID"
+          },
+          "traffic_split": {
+            "type": "integer",
+            "title": "Traffic Split",
+            "description": "Traffic split for variant A",
+            "default": 50
+          },
+          "winner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Winner",
+            "description": "Winning variant (A or B)"
+          },
+          "total_runs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Runs",
+            "description": "Total runs across both variants",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO 8601 creation timestamp"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "ISO 8601 start timestamp"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At",
+            "description": "ISO 8601 end timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "metric",
+          "prompt_a_id",
+          "prompt_b_id",
+          "created_at"
+        ],
+        "title": "ExperimentSummaryResponse",
+        "description": "Schema for experiment summary (list view)."
+      },
+      "ExperimentTimelineResponse": {
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO 8601 creation timestamp"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "ISO 8601 start timestamp"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At",
+            "description": "ISO 8601 end timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "created_at"
+        ],
+        "title": "ExperimentTimelineResponse",
+        "description": "Schema for experiment timeline."
+      },
+      "ExperimentVariantResponse": {
+        "properties": {
+          "prompt_id": {
+            "type": "string",
+            "title": "Prompt Id",
+            "description": "Prompt template ID"
+          },
+          "total_runs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Runs",
+            "description": "Total number of runs",
+            "default": 0
+          },
+          "success_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Success Count",
+            "description": "Number of successful runs",
+            "default": 0
+          },
+          "failure_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Failure Count",
+            "description": "Number of failed runs",
+            "default": 0
+          },
+          "success_rate": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Success Rate",
+            "description": "Success rate percentage",
+            "default": 0.0
+          },
+          "total_tokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Tokens",
+            "description": "Total tokens consumed",
+            "default": 0
+          },
+          "avg_tokens_per_run": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Avg Tokens Per Run",
+            "description": "Average tokens per run",
+            "default": 0.0
+          },
+          "token_efficiency": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Token Efficiency",
+            "description": "Tokens per successful generation",
+            "default": 0.0
+          },
+          "total_latency_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Total Latency Ms",
+            "description": "Total latency in milliseconds",
+            "default": 0.0
+          },
+          "avg_latency_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Avg Latency Ms",
+            "description": "Average latency in milliseconds",
+            "default": 0.0
+          },
+          "rating_sum": {
+            "type": "number",
+            "title": "Rating Sum",
+            "description": "Sum of all ratings",
+            "default": 0.0
+          },
+          "rating_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Rating Count",
+            "description": "Number of ratings",
+            "default": 0
+          },
+          "avg_rating": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Avg Rating",
+            "description": "Average user rating",
+            "default": 0.0
+          },
+          "confidence_interval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfidenceIntervalResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Confidence interval for success rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt_id"
+        ],
+        "title": "ExperimentVariantResponse",
+        "description": "Schema for an experiment variant with metrics."
       },
       "FactionDetailResponse": {
         "properties": {
@@ -18005,6 +22281,20 @@
         "title": "LinkSceneToPlotlineRequest",
         "description": "Request model for linking a scene to a plotline."
       },
+      "LivenessResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "LivenessResponse",
+        "description": "Liveness probe response."
+      },
       "LocationResponse": {
         "properties": {
           "id": {
@@ -18261,6 +22551,12 @@
             "type": "array",
             "title": "Related Entry Ids"
           },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "description": "Flexible metadata including smart tags"
+          },
           "created_at": {
             "type": "string",
             "title": "Created At",
@@ -18354,6 +22650,36 @@
         "title": "LoreEntryUpdateRequest",
         "description": "Request model for updating a lore entry."
       },
+      "ManualSmartTagsUpdateRequest": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "description": "Tag category (e.g., 'genre', 'mood', 'themes')"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "List of manual tags for this category"
+          },
+          "replace": {
+            "type": "boolean",
+            "title": "Replace",
+            "description": "If True, replace existing tags. If False, append to existing.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "tags"
+        ],
+        "title": "ManualSmartTagsUpdateRequest",
+        "description": "Request model for updating manual smart tags."
+      },
       "MoveChapterRequest": {
         "properties": {
           "new_order_index": {
@@ -18398,7 +22724,53 @@
         "title": "MoveSceneRequest",
         "description": "Request model for moving a scene."
       },
-      "MultiBriefData": {
+      "MultiBriefData-Input": {
+        "properties": {
+          "turn_number": {
+            "type": "integer",
+            "title": "Turn Number",
+            "description": "Turn sequence number"
+          },
+          "agent_briefs": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TurnBriefData"
+            },
+            "type": "object",
+            "title": "Agent Briefs",
+            "description": "Agent ID to brief mapping"
+          },
+          "global_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Global Context",
+            "description": "Shared global context"
+          },
+          "turn_summary": {
+            "type": "string",
+            "title": "Turn Summary",
+            "description": "Overall turn situation summary"
+          },
+          "conflicts_detected": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Conflicts Detected",
+            "description": "Detected agent conflicts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "turn_number",
+          "agent_briefs",
+          "global_context",
+          "turn_summary"
+        ],
+        "title": "MultiBriefData",
+        "description": "Multiple agent brief data"
+      },
+      "MultiBriefData-Output": {
         "properties": {
           "turn_number": {
             "type": "integer",
@@ -19202,6 +23574,12 @@
             "title": "Status",
             "description": "Current status"
           },
+          "scene_count": {
+            "type": "integer",
+            "title": "Scene Count",
+            "description": "Number of scenes linked to this plotline",
+            "default": 0
+          },
           "created_at": {
             "type": "string",
             "title": "Created At",
@@ -19308,6 +23686,970 @@
         ],
         "title": "PolicyInfoResponse",
         "description": "Policy information response."
+      },
+      "PromptAnalyticsTimePeriod": {
+        "type": "string",
+        "enum": [
+          "day",
+          "week",
+          "month",
+          "all"
+        ],
+        "title": "PromptAnalyticsTimePeriod",
+        "description": "Time period for analytics aggregation."
+      },
+      "PromptCreateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Prompt name"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content",
+            "description": "Template content with {{variable}} placeholders"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Description",
+            "description": "Prompt description",
+            "default": ""
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Tags",
+            "description": "Tags for categorization"
+          },
+          "extends": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Extends",
+            "description": "Parent template IDs/names to extend"
+          },
+          "variables": {
+            "items": {
+              "$ref": "#/components/schemas/PromptVariableDefinition"
+            },
+            "type": "array",
+            "title": "Variables",
+            "description": "Variable definitions"
+          },
+          "model_provider": {
+            "type": "string",
+            "title": "Model Provider",
+            "description": "LLM provider",
+            "default": "openai"
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name",
+            "description": "Model name",
+            "default": "gpt-4"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature",
+            "description": "Sampling temperature"
+          },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Tokens",
+            "description": "Maximum tokens to generate"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top P",
+            "description": "Nucleus sampling"
+          },
+          "frequency_penalty": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": -2.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency Penalty",
+            "description": "Frequency penalty"
+          },
+          "presence_penalty": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": -2.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Presence Penalty",
+            "description": "Presence penalty"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "content"
+        ],
+        "title": "PromptCreateRequest",
+        "description": "Request model for creating a new prompt template."
+      },
+      "PromptDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Prompt template UUID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Prompt name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Prompt description",
+            "default": ""
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Template content with {{variable}} placeholders"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Tags for categorization"
+          },
+          "extends": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Extends",
+            "description": "Parent template IDs/names this template extends"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "Version number",
+            "default": 1
+          },
+          "parent_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Version Id",
+            "description": "Parent version ID"
+          },
+          "model_config": {
+            "$ref": "#/components/schemas/PromptModelConfig",
+            "description": "Model configuration"
+          },
+          "variables": {
+            "items": {
+              "$ref": "#/components/schemas/PromptVariableDefinition"
+            },
+            "type": "array",
+            "title": "Variables",
+            "description": "Variable definitions"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO 8601 creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At",
+            "description": "ISO 8601 last update timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "content",
+          "model_config",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PromptDetailResponse",
+        "description": "Schema for a full prompt template detail."
+      },
+      "PromptGenerateRequest": {
+        "properties": {
+          "variables": {
+            "items": {
+              "$ref": "#/components/schemas/PromptVariableValue"
+            },
+            "type": "array",
+            "title": "Variables",
+            "description": "Variable values for rendering the prompt"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider",
+            "description": "Override LLM provider (uses prompt config if not specified)"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name",
+            "description": "Override model name (uses prompt config if not specified)"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature",
+            "description": "Override sampling temperature"
+          },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Tokens",
+            "description": "Override max tokens to generate"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top P",
+            "description": "Override nucleus sampling"
+          },
+          "frequency_penalty": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": -2.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency Penalty",
+            "description": "Override frequency penalty"
+          },
+          "presence_penalty": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": -2.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Presence Penalty",
+            "description": "Override presence penalty"
+          },
+          "strict": {
+            "type": "boolean",
+            "title": "Strict",
+            "description": "Raise errors for missing required variables",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "PromptGenerateRequest",
+        "description": "Request model for generating output using a prompt template.\n\nBRAIN-020B: Frontend: Prompt Playground - Integration\nCombines rendering and LLM generation in a single request."
+      },
+      "PromptGenerateResponse": {
+        "properties": {
+          "rendered": {
+            "type": "string",
+            "title": "Rendered",
+            "description": "The rendered prompt content"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "description": "The LLM-generated output"
+          },
+          "template_id": {
+            "type": "string",
+            "title": "Template Id",
+            "description": "Template ID that was used"
+          },
+          "template_name": {
+            "type": "string",
+            "title": "Template Name",
+            "description": "Template name"
+          },
+          "prompt_tokens": {
+            "type": "integer",
+            "title": "Prompt Tokens",
+            "description": "Estimated input token count"
+          },
+          "output_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Tokens",
+            "description": "Output token count if available"
+          },
+          "total_tokens": {
+            "type": "integer",
+            "title": "Total Tokens",
+            "description": "Total token count"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms",
+            "description": "Generation time in milliseconds"
+          },
+          "model_used": {
+            "type": "string",
+            "title": "Model Used",
+            "description": "Model that was used for generation"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if generation failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rendered",
+          "output",
+          "template_id",
+          "template_name",
+          "prompt_tokens",
+          "total_tokens",
+          "latency_ms",
+          "model_used"
+        ],
+        "title": "PromptGenerateResponse",
+        "description": "Response model for prompt generation output.\n\nBRAIN-020B: Frontend: Prompt Playground - Integration\nContains both the rendered prompt and the LLM-generated output."
+      },
+      "PromptListResponse": {
+        "properties": {
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/PromptSummary"
+            },
+            "type": "array",
+            "title": "Prompts",
+            "description": "List of prompt summaries"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total count of prompts",
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Page size limit",
+            "default": 100
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Pagination offset",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "PromptListResponse",
+        "description": "Response model for listing prompts."
+      },
+      "PromptModelConfig": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "LLM provider",
+            "default": "openai"
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name",
+            "description": "Model name",
+            "default": "gpt-4"
+          },
+          "temperature": {
+            "type": "number",
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Temperature",
+            "description": "Sampling temperature",
+            "default": 0.7
+          },
+          "max_tokens": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Max Tokens",
+            "description": "Maximum tokens to generate",
+            "default": 1000
+          },
+          "top_p": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Top P",
+            "description": "Nucleus sampling",
+            "default": 1.0
+          },
+          "frequency_penalty": {
+            "type": "number",
+            "maximum": 2.0,
+            "minimum": -2.0,
+            "title": "Frequency Penalty",
+            "description": "Frequency penalty",
+            "default": 0.0
+          },
+          "presence_penalty": {
+            "type": "number",
+            "maximum": 2.0,
+            "minimum": -2.0,
+            "title": "Presence Penalty",
+            "description": "Presence penalty",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "PromptModelConfig",
+        "description": "Schema for prompt model configuration."
+      },
+      "PromptRenderRequest": {
+        "properties": {
+          "variables": {
+            "items": {
+              "$ref": "#/components/schemas/PromptVariableValue"
+            },
+            "type": "array",
+            "title": "Variables",
+            "description": "Variable values for rendering"
+          },
+          "strict": {
+            "type": "boolean",
+            "title": "Strict",
+            "description": "Raise errors for missing required variables",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "PromptRenderRequest",
+        "description": "Request model for rendering a prompt template."
+      },
+      "PromptRenderResponse": {
+        "properties": {
+          "rendered": {
+            "type": "string",
+            "title": "Rendered",
+            "description": "Rendered prompt content"
+          },
+          "variables_used": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Variables Used",
+            "description": "Variable names that were used"
+          },
+          "variables_missing": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Variables Missing",
+            "description": "Required variables that were missing"
+          },
+          "template_id": {
+            "type": "string",
+            "title": "Template Id",
+            "description": "Template ID that was rendered"
+          },
+          "template_name": {
+            "type": "string",
+            "title": "Template Name",
+            "description": "Template name"
+          },
+          "token_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Count",
+            "description": "Estimated token count"
+          },
+          "model_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Config",
+            "description": "Model configuration used"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rendered",
+          "template_id",
+          "template_name"
+        ],
+        "title": "PromptRenderResponse",
+        "description": "Response model for a rendered prompt."
+      },
+      "PromptSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Prompt template UUID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Prompt name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Prompt description",
+            "default": ""
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Tags for categorization"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "Version number",
+            "default": 1
+          },
+          "model_provider": {
+            "type": "string",
+            "title": "Model Provider",
+            "description": "LLM provider",
+            "default": "openai"
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name",
+            "description": "Model name",
+            "default": "gpt-4"
+          },
+          "variable_count": {
+            "type": "integer",
+            "title": "Variable Count",
+            "description": "Number of variables",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO 8601 creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At",
+            "description": "ISO 8601 last update timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PromptSummary",
+        "description": "Schema for a prompt template summary (list view)."
+      },
+      "PromptUpdateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Prompt name"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content",
+            "description": "Template content"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Prompt description"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "Tags for categorization"
+          },
+          "extends": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extends",
+            "description": "Parent template IDs/names to extend"
+          },
+          "variables": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PromptVariableDefinition"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variables",
+            "description": "Variable definitions"
+          },
+          "model_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Provider",
+            "description": "LLM provider"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name",
+            "description": "Model name"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature",
+            "description": "Sampling temperature"
+          },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Tokens",
+            "description": "Maximum tokens to generate"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top P",
+            "description": "Nucleus sampling"
+          },
+          "frequency_penalty": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": -2.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency Penalty",
+            "description": "Frequency penalty"
+          },
+          "presence_penalty": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": -2.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Presence Penalty",
+            "description": "Presence penalty"
+          }
+        },
+        "type": "object",
+        "title": "PromptUpdateRequest",
+        "description": "Request model for updating a prompt template (creates new version)."
+      },
+      "PromptVariableDefinition": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Variable name (must match {{var}} in template)"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "Variable type: string, integer, float, boolean, list, dict"
+          },
+          "default_value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Default value if not provided"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Description",
+            "description": "Human-readable description",
+            "default": ""
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required",
+            "description": "Whether this variable must be provided",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "PromptVariableDefinition",
+        "description": "Schema for a prompt variable definition."
+      },
+      "PromptVariableValue": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name",
+            "description": "Variable name"
+          },
+          "value": {
+            "$ref": "#/components/schemas/JsonValue",
+            "description": "Variable value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "title": "PromptVariableValue",
+        "description": "Schema for a prompt variable value during rendering."
+      },
+      "ReadinessResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "checks": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "checks"
+        ],
+        "title": "ReadinessResponse",
+        "description": "Readiness probe response with dependency checks."
       },
       "RefreshTokenRequest": {
         "properties": {
@@ -19962,6 +25304,12 @@
             "description": "Number of beats",
             "default": 0
           },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "description": "Flexible metadata including smart tags"
+          },
           "created_at": {
             "type": "string",
             "title": "Created At",
@@ -20152,6 +25500,46 @@
           "duration_seconds"
         ],
         "title": "SimulationResponse"
+      },
+      "SmartTagsResponse": {
+        "properties": {
+          "smart_tags": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Smart Tags",
+            "description": "Auto-generated smart tags by category"
+          },
+          "manual_smart_tags": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Manual Smart Tags",
+            "description": "Manual-only smart tags by category (never overridden)"
+          },
+          "effective_tags": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Effective Tags",
+            "description": "Combined tags (auto + manual) by category"
+          }
+        },
+        "type": "object",
+        "title": "SmartTagsResponse",
+        "description": "Response model for smart tags."
       },
       "SocialAnalysisResponse": {
         "properties": {
@@ -20452,7 +25840,7 @@
           "data": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/EmergentNarrativeData"
+                "$ref": "#/components/schemas/EmergentNarrativeData-Output"
               },
               {
                 "type": "null"
@@ -20495,7 +25883,7 @@
           "data": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/EnhancedDocumentationResponse"
+                "$ref": "#/components/schemas/EnhancedDocumentationResponse-Output"
               },
               {
                 "type": "null"
@@ -20538,7 +25926,7 @@
           "data": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/MultiBriefData"
+                "$ref": "#/components/schemas/MultiBriefData-Output"
               },
               {
                 "type": "null"

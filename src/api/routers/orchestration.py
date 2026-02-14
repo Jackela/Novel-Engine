@@ -30,7 +30,7 @@ def get_orchestration_service(request: Request) -> OrchestrationService:
     return OrchestrationService(api_service)
 
 
-@router.get("/api/orchestration/status", response_model=OrchestrationStatusResponse)
+@router.get("/orchestration/status", response_model=OrchestrationStatusResponse)
 async def get_orchestration_status(
     service: OrchestrationService = Depends(get_orchestration_service),
 ) -> OrchestrationStatusResponse:
@@ -55,7 +55,7 @@ async def get_orchestration_status(
     return OrchestrationStatusResponse(success=True, data=result.value)
 
 
-@router.post("/api/orchestration/start", response_model=OrchestrationStartResponse)
+@router.post("/orchestration/start", response_model=OrchestrationStartResponse)
 async def start_orchestration(
     payload: Optional[OrchestrationStartRequest] = None,
     service: OrchestrationService = Depends(get_orchestration_service),
@@ -83,7 +83,7 @@ async def start_orchestration(
     return OrchestrationStartResponse(**result.value)
 
 
-@router.post("/api/orchestration/stop", response_model=OrchestrationStopResponse)
+@router.post("/orchestration/stop", response_model=OrchestrationStopResponse)
 async def stop_orchestration(
     service: OrchestrationService = Depends(get_orchestration_service),
 ) -> OrchestrationStopResponse:
@@ -108,7 +108,7 @@ async def stop_orchestration(
     return OrchestrationStopResponse(**result.value)
 
 
-@router.post("/api/orchestration/pause", response_model=OrchestrationStopResponse)
+@router.post("/orchestration/pause", response_model=OrchestrationStopResponse)
 async def pause_orchestration(
     service: OrchestrationService = Depends(get_orchestration_service),
 ) -> OrchestrationStopResponse:
@@ -133,7 +133,7 @@ async def pause_orchestration(
     return OrchestrationStopResponse(**result.value)
 
 
-@router.get("/api/orchestration/narrative", response_model=NarrativeResponse)
+@router.get("/orchestration/narrative", response_model=NarrativeResponse)
 async def get_narrative(
     service: OrchestrationService = Depends(get_orchestration_service),
 ) -> NarrativeResponse:

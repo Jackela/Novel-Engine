@@ -17,7 +17,21 @@ Started: Fri Feb 14 2026
 - test_brain_settings_security.py needs `@pytest.mark.asyncio` for async tests
 - config/env/ in .gitignore - use `git add -f` for .env.example
 - Error handlers live in src/api/errors.py, not in app.py directly - use install_error_handlers()
+- Route decorators should NOT include /api prefix - it's added by app.include_router(router, prefix="/api")
+- orchestration.py had /api prefix in route decorators (same issue as auth.py) - check for similar issues
 
+---
+
+## [2026-02-14 12:15] - RES-008, RES-009, RES-010 & RES-011
+- Fixed route decorator paths in auth.py (removed /api prefix from /auth/* routes)
+- Fixed route decorator paths in orchestration.py (removed /api prefix from /orchestration/* routes)
+- characters.py and generation.py were already correct (no /api prefix in route decorators)
+- Regenerated OpenAPI spec - removed /api/api/ duplication
+- Files changed: src/api/routers/auth.py, src/api/routers/orchestration.py, docs/api/openapi.json, docs/api/openapi.current.json, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Route decorators should use paths like "/auth/login" not "/api/auth/login"
+  - The /api prefix is added by app.include_router(router, prefix="/api") in app.py
+  - generate_openapi.py creates openapi.current.json - copy to openapi.json if needed
 ---
 
 ## [2026-02-14 12:00] - RES-006 & RES-007

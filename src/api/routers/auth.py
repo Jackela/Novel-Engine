@@ -35,7 +35,7 @@ def _reject_query_credentials(request: Request) -> None:
         )
 
 
-@router.post("/api/auth/login", response_model=AuthResponse)
+@router.post("/auth/login", response_model=AuthResponse)
 async def login(
     credentials: LoginRequest,
     response: Response,
@@ -131,7 +131,7 @@ async def login(
         raise HTTPException(status_code=500, detail=f"Login failed: {exc}")
 
 
-@router.post("/api/auth/refresh", response_model=AuthResponse)
+@router.post("/auth/refresh", response_model=AuthResponse)
 async def refresh_token(
     payload: RefreshTokenRequest,
     response: Response,
@@ -217,7 +217,7 @@ async def refresh_token(
         raise HTTPException(status_code=500, detail=f"Token refresh failed: {exc}")
 
 
-@router.get("/api/auth/csrf-token", response_model=CSRFTokenResponse)
+@router.get("/auth/csrf-token", response_model=CSRFTokenResponse)
 async def get_csrf_token(
     response: Response,
     settings: APISettings = Depends(get_settings),
@@ -244,7 +244,7 @@ async def get_csrf_token(
         )
 
 
-@router.post("/api/auth/logout", response_model=LogoutResponse)
+@router.post("/auth/logout", response_model=LogoutResponse)
 async def logout(
     request: Request,
     response: Response,
@@ -295,7 +295,7 @@ async def logout(
         return LogoutResponse(success=True, message="Logout successful")
 
 
-@router.get("/api/auth/validate", response_model=TokenValidationResponse)
+@router.get("/auth/validate", response_model=TokenValidationResponse)
 async def validate_token(
     request: Request,
     settings: APISettings = Depends(get_settings),
