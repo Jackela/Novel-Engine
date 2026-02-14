@@ -49,11 +49,11 @@
         "Add @app.exception_handler(404) returning ErrorDetail",
         "Test: curl localhost:8000/nonexistent returns {\"error\": {\"code\": \"NOT_FOUND\"...}}"
       ],
-      "verification": "grep -A10 'exception_handler.*404' src/api/app.py",
+      "verification": "grep -A10 'exception_handler.*404' src/api/errors.py",
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "low",
-      "files": ["src/api/app.py"],
+      "files": ["src/api/errors.py"],
       "estimatedTime": "20 min",
       "blockedBy": ["RES-001"]
     },

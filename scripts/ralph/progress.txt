@@ -16,7 +16,29 @@ Started: Fri Feb 14 2026
 - Fernet.generate_key() on restart makes stored keys unreadable - never use random keys
 - test_brain_settings_security.py needs `@pytest.mark.asyncio` for async tests
 - config/env/ in .gitignore - use `git add -f` for .env.example
+- Error handlers live in src/api/errors.py, not in app.py directly - use install_error_handlers()
 
+---
+
+## [2026-02-14 11:30] - RES-003
+- Added dedicated 404 exception handler in src/api/errors.py
+- Handler uses ErrorDetail schema from src/api/schemas.py
+- Response format: {"error": {"code": "NOT_FOUND", "message": "...", "details": {"path": ...}}}
+- Files changed: src/api/errors.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Error handlers are centralized in src/api/errors.py, added via install_error_handlers()
+  - The 404 handler uses dedicated @app.exception_handler(404) for cleaner code
+  - ErrorDetail.model_dump(exclude_none=True) removes None fields from response
+---
+
+## [2026-02-14 10:00] - RES-002
+- Added ValidationError schema extending ErrorDetail in src/api/schemas.py
+- Schema includes: field_errors (Optional[Dict[str, List[str]]])
+- Added docstring with example showing field-level validation errors
+- Files changed: src/api/schemas.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - ValidationError extends ErrorDetail, so it inherits code, message, and details fields
+  - Use Optional[Dict[str, List[str]]] for field_errors to allow multiple error messages per field
 ---
 
 ## [2026-02-14 09:45] - RES-001
