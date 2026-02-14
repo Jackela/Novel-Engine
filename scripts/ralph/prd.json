@@ -35,7 +35,7 @@
       ],
       "verification": "grep -A3 'class ValidationError' src/api/schemas.py",
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/api/schemas.py"],
       "estimatedTime": "10 min",

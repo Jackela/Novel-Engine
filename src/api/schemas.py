@@ -114,6 +114,26 @@ class ErrorDetail(BaseModel):
     )
 
 
+class ValidationError(ErrorDetail):
+    """Validation error response with field-level error details.
+
+    Extends ErrorDetail with structured field-level validation errors.
+    Example:
+        {
+            "code": "VALIDATION_ERROR",
+            "message": "Request validation failed",
+            "field_errors": {
+                "email": ["Invalid email format"],
+                "age": ["Must be a positive integer"]
+            }
+        }
+    """
+
+    field_errors: Optional[Dict[str, List[str]]] = Field(
+        None, description="Mapping of field names to their validation error messages"
+    )
+
+
 class HealthResponse(BaseModel):
     message: str
     status: Optional[str] = None
