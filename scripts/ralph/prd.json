@@ -98,7 +98,7 @@
       ],
       "verification": "grep -A5 'def live' src/api/routers/health.py || grep -A5 '/health/live' src/api/routers/health.py",
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/api/routers/health.py"],
       "estimatedTime": "10 min"
@@ -114,7 +114,7 @@
       ],
       "verification": "grep -A10 'def ready' src/api/routers/health.py || grep -A10 '/health/ready' src/api/routers/health.py",
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["src/api/routers/health.py"],
       "estimatedTime": "20 min"

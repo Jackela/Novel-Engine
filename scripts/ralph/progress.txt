@@ -20,6 +20,17 @@ Started: Fri Feb 14 2026
 
 ---
 
+## [2026-02-14 12:00] - RES-006 & RES-007
+- Added /health/live endpoint for Kubernetes liveness probe (returns {"status": "ok"})
+- Added /health/ready endpoint for Kubernetes readiness probe with ChromaDB check
+- Created LivenessResponse and ReadinessResponse Pydantic models
+- Files changed: src/api/routers/health.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Liveness probe should have no dependencies and respond in <10ms
+  - Readiness probe checks critical dependencies and returns 503 if unhealthy
+  - Import from chromadb_vector_store may fail gracefully if not installed
+---
+
 ## [2026-02-14 11:45] - RES-004 & RES-005
 - Added engines field to frontend/package.json: {"node": ">=18.0.0", "npm": ">=9.0.0"}
 - Created frontend/.nvmrc with "20" for Node version management
