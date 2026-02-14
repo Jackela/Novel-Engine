@@ -19,7 +19,21 @@ Started: Fri Feb 14 2026
 - Error handlers live in src/api/errors.py, not in app.py directly - use install_error_handlers()
 - Route decorators should NOT include /api prefix - it's added by app.include_router(router, prefix="/api")
 - orchestration.py had /api prefix in route decorators (same issue as auth.py) - check for similar issues
+- Result pattern: Use Ok(value) and Err(Error(...)) from src/core/result.py
+- SaveError is defined in src/core/result.py - use for persistence errors
 
+---
+
+## [2026-02-14 12:30] - RES-012
+- Implemented WorldStateAggregate.save() method with Result[None, SaveError] pattern
+- Added SaveError class to src/core/result.py for persistence errors
+- Method serializes to JSON, optionally writes to file
+- Added 3 test cases for save functionality
+- Files changed: src/core/result.py, src/contexts/world/domain/aggregates/world_state.py, tests/unit/contexts/world/domain/test_world_state_aggregate.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Result pattern uses Ok(value) and Err(Error(...)) factory functions
+  - TYPE_CHECKING imports avoid circular imports for type hints
+  - Entity.to_dict() provides serialization - use it for JSON output
 ---
 
 ## [2026-02-14 12:15] - RES-008, RES-009, RES-010 & RES-011

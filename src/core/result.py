@@ -310,6 +310,21 @@ class PermissionError(Error):
         )
 
 
+class SaveError(Error):
+    """Error raised when saving an entity fails."""
+
+    def __init__(self, message: str, entity_type: str | None = None, details: dict[str, Any] | None = None):
+        full_details = details or {}
+        if entity_type:
+            full_details["entity_type"] = entity_type
+        super().__init__(
+            code="SAVE_ERROR",
+            message=message,
+            recoverable=True,
+            details=full_details,
+        )
+
+
 __all__ = [
     "Result",
     "Ok",
@@ -320,4 +335,5 @@ __all__ = [
     "ValidationError",
     "ConflictError",
     "PermissionError",
+    "SaveError",
 ]
