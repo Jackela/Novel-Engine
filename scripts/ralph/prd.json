@@ -67,7 +67,7 @@
       ],
       "verification": "grep -A2 '\"engines\"' frontend/package.json",
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["frontend/package.json"],
       "estimatedTime": "5 min"
@@ -82,7 +82,7 @@
       ],
       "verification": "cat frontend/.nvmrc",
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": ["frontend/.nvmrc"],
       "estimatedTime": "2 min"

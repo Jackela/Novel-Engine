@@ -2,6 +2,10 @@
   "name": "storyforge-ai-frontend",
   "private": true,
   "version": "0.1.1",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",

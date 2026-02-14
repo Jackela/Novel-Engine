@@ -20,6 +20,15 @@ Started: Fri Feb 14 2026
 
 ---
 
+## [2026-02-14 11:45] - RES-004 & RES-005
+- Added engines field to frontend/package.json: {"node": ">=18.0.0", "npm": ">=9.0.0"}
+- Created frontend/.nvmrc with "20" for Node version management
+- Files changed: frontend/package.json, frontend/.nvmrc, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Use .nvmrc file in frontend/ directory for Node version management
+  - Engines field in package.json ensures correct Node/npm versions
+---
+
 ## [2026-02-14 11:30] - RES-003
 - Added dedicated 404 exception handler in src/api/errors.py
 - Handler uses ErrorDetail schema from src/api/schemas.py
