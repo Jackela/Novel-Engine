@@ -91,25 +91,22 @@ class VariableDefinition:
         if value is None:
             return not self.required
 
-        try:
-            match self.type:
-                case VariableType.STRING:
-                    return isinstance(value, str)
-                case VariableType.INTEGER:
-                    return isinstance(value, int) and not isinstance(value, bool)
-                case VariableType.FLOAT:
-                    return isinstance(value, (int, float)) and not isinstance(
-                        value, bool
-                    )
-                case VariableType.BOOLEAN:
-                    return isinstance(value, bool)
-                case VariableType.LIST:
-                    return isinstance(value, list)
-                case VariableType.DICT:
-                    return isinstance(value, dict)
-            assert_never(self.type)
-        except Exception:
-            return False
+        match self.type:
+            case VariableType.STRING:
+                return isinstance(value, str)
+            case VariableType.INTEGER:
+                return isinstance(value, int) and not isinstance(value, bool)
+            case VariableType.FLOAT:
+                return isinstance(value, (int, float)) and not isinstance(
+                    value, bool
+                )
+            case VariableType.BOOLEAN:
+                return isinstance(value, bool)
+            case VariableType.LIST:
+                return isinstance(value, list)
+            case VariableType.DICT:
+                return isinstance(value, dict)
+        assert_never(self.type)
 
     def coerce_value(self, value: Any) -> Any:
         """

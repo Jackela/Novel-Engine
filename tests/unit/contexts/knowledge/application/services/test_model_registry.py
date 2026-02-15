@@ -264,7 +264,7 @@ class TestModelRegistry:
 
     def test_get_model_for_task_invalid(self) -> None:
         """Test getting model for invalid task type raises error."""
-        _registry = ModelRegistry()
+        _registry = ModelRegistry()  # noqa: F841
 
         # Create an invalid task type by direct enum access
         with pytest.raises(ValueError, match="No model configuration"):

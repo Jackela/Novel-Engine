@@ -14,6 +14,7 @@ import pytest
 
 try:
     from rank_bm25 import BM25Okapi  # noqa: F401 - imported for availability check
+
     RANK_BM25_AVAILABLE = True
 except ImportError:
     RANK_BM25_AVAILABLE = False

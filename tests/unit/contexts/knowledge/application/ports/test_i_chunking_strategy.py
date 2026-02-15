@@ -205,7 +205,7 @@ class TestIChunkingStrategyProtocol:
             ) -> list[Chunk]:
                 # Should use default when config is None
                 if config is None:
-                    config = ChunkingStrategy.default()
+                    _config = ChunkingStrategy.default()  # noqa: F841
                 return [Chunk(text=text, index=0)]
 
             def supports_strategy_type(self, strategy_type: str) -> bool:

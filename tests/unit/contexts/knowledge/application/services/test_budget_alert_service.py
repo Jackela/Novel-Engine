@@ -492,7 +492,7 @@ class TestBudgetAlertService:
         assert state.notification_count == 1
 
         # Refresh state from repository
-        state = await alert_service._repository.get_alert(state.id)
+        _state = await alert_service._repository.get_alert(state.id)  # noqa: F841
 
         # Second usage does not notify (already notified once)
         result2 = await alert_service.evaluate_usage(usage)

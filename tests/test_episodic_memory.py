@@ -20,7 +20,7 @@ from src.core.data_models import MemoryItem, MemoryType
 from src.database.context_db import ContextDatabase
 from src.memory.episodic_memory import EpisodicEvent, EpisodicMemory
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.unit  # noqa: F841
 
 
 class TestEpisodicEvent:

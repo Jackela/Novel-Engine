@@ -86,8 +86,6 @@ class PromptUsage:
     def __post_init__(self) -> None:
         """Validate usage event invariants."""
         # Skip id validation for create() factory which uses uuid4()
-        # if not self.id or not self.id.strip():
-        #     raise ValueError("PromptUsage.id cannot be empty")
 
         if not self.prompt_id or not self.prompt_id.strip():
             raise ValueError("PromptUsage.prompt_id cannot be empty")

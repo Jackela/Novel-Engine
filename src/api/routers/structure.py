@@ -1001,11 +1001,11 @@ async def delete_scene_manual_smart_tags(
 
     scene.clear_manual_smart_tags(category)
     _store_scene(scene)
-    # Log with sanitized values (category is enum-validated, scene_uuid is UUID-validated)
+    # Log with structlog key-value pairs to prevent log injection
     logger.info(
-        "Cleared manual smart tags for category %s in scene: %s",
-        str(category.value) if hasattr(category, 'value') else str(category),
-        str(scene_uuid),
+        "cleared_manual_smart_tags",
+        category=category.value if hasattr(category, 'value') else str(category),
+        scene_uuid=str(scene_uuid),
     )
 
 

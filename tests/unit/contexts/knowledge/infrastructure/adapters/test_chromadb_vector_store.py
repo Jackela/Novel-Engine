@@ -127,7 +127,7 @@ class TestChromaDBVectorStore:
         store = ChromaDBVectorStore(persist_dir=temp_persist_dir)
 
         # Access client to trigger initialization
-        _client = store._get_client()
+        _client = store._get_client()  # noqa: F841
 
         # Verify directory was created
         persist_path = Path(temp_persist_dir)
