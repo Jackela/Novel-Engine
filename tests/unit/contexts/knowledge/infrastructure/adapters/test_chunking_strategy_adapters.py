@@ -1387,6 +1387,7 @@ class TestSemanticChunkingStrategy:
         import pytest
 
         with pytest.raises(TypeError):  # Missing required argument
+            # lgtm[py/call-to-inherited-class-method] - intentional test for missing required argument
             SemanticChunkingStrategy()  # type: ignore
 
 

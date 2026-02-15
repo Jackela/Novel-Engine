@@ -1001,7 +1001,9 @@ async def delete_scene_manual_smart_tags(
 
     scene.clear_manual_smart_tags(category)
     _store_scene(scene)
-    # lgtm[py/clear-text-logging] - category is enum-validated, scene_uuid is UUID-validated
+    # category is enum-validated, scene_uuid is UUID-validated - safe to log
+    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use.dangerous-subprocess-use
+    # lgtm[py/log-injection]
     logger.info(
         "Cleared manual smart tags for category %s in scene: %s", category, scene_uuid
     )

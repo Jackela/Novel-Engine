@@ -1054,7 +1054,7 @@ class ModelRegistry:
             Dictionary with registry statistics
         """
         models_by_provider: dict[str, int] = {}
-        for provider in LLMProvider:
+        for provider in list(LLMProvider):
             models_by_provider[provider.value] = len(
                 [m for m in self._models.keys() if m[0] == provider]
             )

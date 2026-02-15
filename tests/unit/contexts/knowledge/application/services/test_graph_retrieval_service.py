@@ -58,7 +58,6 @@ def mock_graph_store() -> IGraphStore:
 
         async def add_entities(self, entities: list[GraphEntity]) -> Any:
             # Simplified implementation
-            pass
             return None  # type: ignore[return-value]
 
         async def add_relationship(self, relationship: GraphRelationship) -> bool:
@@ -76,7 +75,6 @@ def mock_graph_store() -> IGraphStore:
         async def add_relationships(
             self, relationships: list[GraphRelationship]
         ) -> Any:
-            pass
             return None  # type: ignore[return-value]
 
         async def get_entity(self, name: str) -> GraphEntity | None:
@@ -171,13 +169,11 @@ def mock_graph_store() -> IGraphStore:
         async def export_graphml(
             self, output_path: str, include_metadata: bool = True
         ) -> Any:
-            pass
             return None  # type: ignore[return-value]
 
         async def export_json(
             self, output_path: str | None = None, pretty: bool = True
         ) -> Any:
-            pass
             return None  # type: ignore[return-value]
 
     return MockGraphStore()
