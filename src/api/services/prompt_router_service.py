@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import time
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -624,7 +625,9 @@ class PromptRouterService:
             success = False
             error_message = str(e)
             logger.warning(
-                f"LLM generation failed for prompt {prompt_id}: {error_message}"
+                "llm_generation_failed",
+                prompt_id=prompt_id,
+                error_message=error_message,
             )
             raise
         finally:
@@ -747,9 +750,20 @@ class PromptRouterService:
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 
-        # Default to gemini-2.0-flash if not specified
-        if not model_name or model_name == "gpt-4":
-            model_name = "gemini-2.0-flash"
+        # Validate model_name to prevent SSRF - must be alphanumeric with dots and hyphens
+        if not re.match(r"^[a-zA-Z0-9.-]+$", model_name):
+            raise ValueError(f"Invalid model name: {model_name}")
+
+        # Allowed Gemini models for additional safety (updated 2026-02)
+        # See: https://ai.google.dev/gemini-api/docs/models
+        ALLOWED_GEMINI_MODELS = {
+            "gemini-3-pro-preview",
+            "gemini-3-flash-preview",
+        }
+
+        # Default to gemini-3-flash-preview if not specified or not in allowed list
+        if not model_name or model_name == "gpt-4" or model_name not in ALLOWED_GEMINI_MODELS:
+            model_name = "gemini-3-flash-preview"
 
         base_url = f"https://generativelanguage.googleapis.com/v1/models/{model_name}:generateContent"
 

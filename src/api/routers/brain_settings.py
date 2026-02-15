@@ -1422,7 +1422,10 @@ class IngestionJobStore:
             self._jobs[job_id] = job
 
         logger.info(
-            f"ingestion_job_created: job_id={job_id}, source_id={source_id}, source_type={source_type}"
+            "ingestion_job_created",
+            job_id=job_id,
+            source_id=source_id,
+            source_type=source_type,
         )
 
         return job
