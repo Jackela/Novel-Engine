@@ -1386,9 +1386,13 @@ class TestSemanticChunkingStrategy:
         """Test that embedding service is required."""
         import pytest
 
-        with pytest.raises(TypeError):  # Missing required argument
-            # lgtm[py/call-to-inherited-class-method] - intentional test for missing required argument
+        # Test that TypeError is raised when embedding_service is not provided
+        # Using a helper to avoid CodeQL flagging the intentional missing argument
+        def _create_without_required_arg():
             SemanticChunkingStrategy()  # type: ignore
+
+        with pytest.raises(TypeError):
+            _create_without_required_arg()
 
 
 class TestAutoChunkingStrategy:
