@@ -19,7 +19,7 @@ Warzone 4: AI Brain - BRAIN-006
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -1210,7 +1210,6 @@ class TestRetrievalServiceReranking:
         )
         from src.contexts.knowledge.application.services.rerank_service import (
             RerankService,
-            RerankServiceResult,
         )
 
         reranker = AsyncMock()

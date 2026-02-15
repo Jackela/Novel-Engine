@@ -4,7 +4,6 @@ Unit tests for CachedEmbeddingService.
 Tests caching behavior, batch operations, fallback, and cache management.
 """
 
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 

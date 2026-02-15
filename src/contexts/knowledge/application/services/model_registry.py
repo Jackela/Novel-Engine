@@ -983,8 +983,8 @@ class ModelRegistry:
                 if model:
                     candidates.append(model)
 
-                # Check fallback providers
-                for provider in task_config.fallback_providers:
+                # Check fallback providers (null-safe iteration)
+                for provider in task_config.fallback_providers or []:
                     if model := self.get_model(provider, task_config.model_name):
                         candidates.append(model)
 

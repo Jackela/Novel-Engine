@@ -9,7 +9,6 @@ in the Narrative Context domain layer.
 import pytest
 
 from src.contexts.narratives.domain.value_objects.narrative_theme import (
-    NarrativeTheme,
     ThemeIntensity,
     ThemeType,
 )

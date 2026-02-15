@@ -12,7 +12,7 @@ Constitution Compliance:
 """
 
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -29,16 +29,11 @@ from src.contexts.knowledge.application.ports.i_vector_store import (
 )
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
     IngestionProgress,
-    IngestionResult,
     KnowledgeIngestionService,
 )
 from src.contexts.knowledge.domain.models.chunking_strategy import (
     ChunkingStrategy,
     ChunkStrategyType,
-)
-from src.contexts.knowledge.domain.models.source_knowledge_entry import (
-    SourceKnowledgeEntry,
-    SourceMetadata,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 

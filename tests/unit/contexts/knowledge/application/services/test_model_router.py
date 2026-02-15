@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -30,8 +29,6 @@ from src.contexts.knowledge.application.services.model_router import (
 )
 from src.contexts.knowledge.domain.models.model_registry import (
     LLMProvider,
-    ModelDefinition,
-    TaskModelConfig,
     TaskType,
 )
 

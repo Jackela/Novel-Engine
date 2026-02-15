@@ -14,22 +14,18 @@ Constitution Compliance:
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from fastapi import FastAPI, Request
-from fastapi.testclient import TestClient
+from fastapi import FastAPI
 
 from src.api.routers.brain_settings import (
     IngestionJob,
     IngestionJobStore,
     _run_ingestion_job,
-    get_ingestion_job_store,
-    get_ingestion_service,
 )
 from src.api.schemas import (
     IngestionJobStatus,
-    StartIngestionJobRequest,
 )
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
     IngestionResult,
@@ -291,7 +287,6 @@ class TestIngestionJobWorker:
     @pytest.mark.asyncio
     async def test_nonexistent_job_is_logged(self, mock_ingestion_service, caplog):
         """Test worker handles nonexistent job gracefully."""
-        import logging
 
         store = IngestionJobStore()
 

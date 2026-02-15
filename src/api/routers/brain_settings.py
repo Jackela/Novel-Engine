@@ -20,8 +20,7 @@ import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from enum import Enum
-from typing import TYPE_CHECKING, Any, AsyncIterator, List, Optional
+from typing import TYPE_CHECKING, Any, AsyncIterator, List
 
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
@@ -1995,7 +1994,6 @@ async def chat_completion(
 
             # If RAG is enabled, retrieve relevant context
             # BRAIN-037A-03: Include conversation context in RAG query for better retrieval
-            rag_query = payload.query
             if chat_history and len(chat_history) > 0:
                 # Include last assistant response for context
                 last_assistant_msg = next(
@@ -2003,6 +2001,10 @@ async def chat_completion(
                 )
                 if last_assistant_msg:
                     rag_query = f"{last_assistant_msg.content}\n\nUser: {payload.query}"
+                else:
+                    rag_query = payload.query
+            else:
+                rag_query = payload.query
 
             rag_chunks: list = []
             if rag_config.get("enabled", False):

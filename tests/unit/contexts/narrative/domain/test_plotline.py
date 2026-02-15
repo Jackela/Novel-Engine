@@ -4,7 +4,6 @@ This test suite covers the Plotline entity for Director Mode,
 testing plotline creation, validation, and state transitions.
 """
 
-from uuid import uuid4
 
 import pytest
 

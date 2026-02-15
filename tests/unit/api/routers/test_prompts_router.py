@@ -7,21 +7,12 @@ Unit tests for the prompt management API endpoints.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.routers.prompts import router
-from src.api.schemas import (
-    PromptCreateRequest,
-    PromptDetailResponse,
-    PromptListResponse,
-    PromptRenderRequest,
-    PromptUpdateRequest,
-)
 from src.contexts.knowledge.domain.models.prompt_template import (
     ModelConfig,
     PromptTemplate,

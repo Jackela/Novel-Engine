@@ -182,14 +182,6 @@ async function sendMessage(page: Page, message: string) {
   await sendButton.click();
 }
 
-/**
- * Get all messages from the chat
- */
-async function getMessages(page: Page) {
-  const messageContainer = getChatPanel(page);
-  return await messageContainer.allTextContents();
-}
-
 test.describe('Chat Stress Tests', () => {
   test.beforeEach(async ({ page }) => {
     await mockChatAPI(page);

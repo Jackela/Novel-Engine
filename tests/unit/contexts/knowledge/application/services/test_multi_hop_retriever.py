@@ -27,7 +27,6 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
 from src.contexts.knowledge.application.services.multi_hop_retriever import (
     DEFAULT_HOP_K,
     DEFAULT_MAX_HOPS,
-    ExplainConfig,
     HopConfig,
     HopResult,
     HopStatus,
@@ -35,10 +34,8 @@ from src.contexts.knowledge.application.services.multi_hop_retriever import (
     MultiHopResult,
     MultiHopRetriever,
     QueryDecomposer,
-    ReasoningStep,
 )
 from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievalOptions,
     RetrievalResult,
     RetrievalService,
 )

@@ -9,8 +9,7 @@ Warzone 4: AI Brain - BRAIN-008B
 
 from __future__ import annotations
 
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -22,7 +21,6 @@ from src.contexts.knowledge.application.services.hybrid_retriever import (
     DEFAULT_RRF_ALPHA,
     DEFAULT_RRF_K,
     DEFAULT_VECTOR_WEIGHT,
-    FusionMetadata,
     HybridConfig,
     HybridResult,
     HybridRetriever,
@@ -36,7 +34,6 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
 )
 from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievalFilter,
-    RetrievalOptions,
     RetrievalResult,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
@@ -325,9 +322,7 @@ class TestHybridConfig:
 
     def test_weights_warning_when_not_summing_to_one(self, caplog):
         """Warning logged when weights don't sum to 1.0."""
-        import logging
 
-        import structlog
 
         # This should trigger a warning
         config = HybridConfig(vector_weight=0.8, bm25_weight=0.4)

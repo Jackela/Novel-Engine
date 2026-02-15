@@ -10,7 +10,6 @@ import pytest
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
     IPromptRepository,
     PromptNotFoundError,
-    PromptRepositoryError,
     PromptValidationError,
 )
 from src.contexts.knowledge.domain.models.prompt_template import (

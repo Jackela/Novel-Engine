@@ -11,7 +11,6 @@ import pytest
 
 from src.contexts.knowledge.domain.models.prompt_usage import (
     PromptUsage,
-    PromptUsageStats,
 )
 from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_usage_repository import (
     InMemoryPromptUsageRepository,

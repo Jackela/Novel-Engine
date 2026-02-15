@@ -25,7 +25,6 @@ from src.contexts.knowledge.application.services.coreference_resolution_service 
     DEFAULT_MAX_REFERENCES,
     DEFAULT_WINDOW_SIZE,
     CoreferenceConfig,
-    CoreferenceResolutionError,
     CoreferenceResolutionService,
     CoreferenceResult,
     ResolvedReference,
@@ -684,7 +683,6 @@ class TestEntityExtractionServiceLargeText:
         """Test that large texts are chunked and processed."""
         from src.contexts.knowledge.application.services.entity_extraction_service import (
             EntityExtractionService,
-            ExtractionConfig,
         )
 
         service = EntityExtractionService(llm_client=mock_llm_client)

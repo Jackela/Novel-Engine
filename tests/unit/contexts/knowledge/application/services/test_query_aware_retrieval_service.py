@@ -20,7 +20,6 @@ from src.contexts.knowledge.application.ports.i_vector_store import IVectorStore
 from src.contexts.knowledge.application.services.query_aware_retrieval_service import (
     DEFAULT_MAX_CONCURRENT,
     QueryAwareConfig,
-    QueryAwareMetrics,
     QueryAwareRetrievalResult,
     QueryAwareRetrievalService,
 )
@@ -31,8 +30,6 @@ from src.contexts.knowledge.application.services.query_rewriter import (
     RewriteStrategy,
 )
 from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievalFilter,
-    RetrievalOptions,
     RetrievedChunk,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType

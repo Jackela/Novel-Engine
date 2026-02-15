@@ -4,7 +4,6 @@ This test suite covers the Foreshadowing entity for Director Mode,
 testing foreshadowing creation, validation, and payoff linking.
 """
 
-from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest

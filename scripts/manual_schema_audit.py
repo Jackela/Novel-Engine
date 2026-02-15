@@ -10,7 +10,7 @@ Compares backend Pydantic schemas with frontend Zod schemas to identify:
 
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, Set, Tuple
 
 
 def extract_class_names(file_path: Path) -> Set[str]:

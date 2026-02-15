@@ -10,11 +10,9 @@ from __future__ import annotations
 import pytest
 
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
-    PromptNotFoundError,
     PromptValidationError,
 )
 from src.contexts.knowledge.domain.models.prompt_template import (
-    ModelConfig,
     PromptTemplate,
     VariableDefinition,
     VariableType,

@@ -10,10 +10,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from src.contexts.knowledge.domain.models.prompt_template import (
-    ModelConfig,
     PromptTemplate,
-    VariableDefinition,
-    VariableType,
 )
 from src.contexts.knowledge.domain.models.prompt_version import (
     PromptVersion,

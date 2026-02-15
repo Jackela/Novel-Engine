@@ -547,15 +547,15 @@ class TokenTracker:
                             cost_per_1m_output = model_def.cost_per_1m_output_tokens
 
                         # Create usage record
-                        if isinstance(result, LLMResponse):
-                            result_model = result.model or actual_model_ref
-                        else:
-                            result_model = actual_model_ref
-
                         if actual_model_ref:
                             provider_str = lookup_result.provider.value
                             model_name_str = lookup_result.model_name
                         else:
+                            # Infer model from result when no explicit model_ref
+                            if isinstance(result, LLMResponse):
+                                result_model = result.model or "unknown"
+                            else:
+                                result_model = "unknown"
                             provider_str = "unknown"
                             model_name_str = (
                                 result_model

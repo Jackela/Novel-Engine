@@ -15,7 +15,6 @@ import pytest
 from src.contexts.knowledge.application.ports.i_reranker import (
     RerankDocument,
     RerankerError,
-    RerankOutput,
 )
 from src.contexts.knowledge.infrastructure.adapters.reranker_adapters import (
     DEFAULT_COHERE_MODEL,

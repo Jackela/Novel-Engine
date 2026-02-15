@@ -22,17 +22,11 @@ except ImportError:
     SCIPY_AVAILABLE = False
 
 from src.contexts.knowledge.application.ports.i_graph_store import (
-    CentralityResult,
     CliqueResult,
-    GraphAddResult,
     GraphEntity,
     GraphExportResult,
-    GraphNeighbor,
     GraphRelationship,
-    GraphStats,
     GraphStoreError,
-    IGraphStore,
-    PathResult,
 )
 from src.contexts.knowledge.domain.models.entity import EntityType, RelationshipType
 from src.contexts.knowledge.infrastructure.adapters.networkx_graph_store import (

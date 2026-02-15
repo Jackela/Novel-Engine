@@ -7,15 +7,12 @@ Unit tests for the prompt router service layer.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 
 import pytest
 
 from src.api.services.prompt_router_service import PromptRouterService
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
     PromptNotFoundError,
-    PromptRepositoryError,
-    PromptValidationError,
 )
 from src.contexts.knowledge.domain.models.prompt_template import (
     ModelConfig,

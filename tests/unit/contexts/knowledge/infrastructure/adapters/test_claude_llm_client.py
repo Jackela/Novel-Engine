@@ -724,7 +724,6 @@ class TestClaudeLLMClientIntegration:
         claude_client: ClaudeLLMClient,
     ) -> None:
         """Test that ClaudeLLMClient can be used as ILLMClient."""
-        from src.contexts.knowledge.application.ports.i_llm_client import ILLMClient
 
         # Protocol check - verify the interface is implemented
         assert hasattr(claude_client, "generate")

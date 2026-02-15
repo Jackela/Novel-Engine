@@ -17,7 +17,6 @@ from src.contexts.knowledge.domain.models.prompt_template import (
 )
 from src.contexts.knowledge.domain.models.prompt_usage import (
     PromptUsage,
-    PromptUsageStats,
 )
 
 pytestmark = pytest.mark.unit

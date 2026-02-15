@@ -8,7 +8,6 @@ Tests for citation formatting and source attribution.
 import pytest
 
 from src.contexts.knowledge.application.services.citation_formatter import (
-    ChunkCitation,
     CitationFormat,
     CitationFormatter,
     CitationFormatterConfig,

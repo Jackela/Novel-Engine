@@ -16,9 +16,6 @@ import pytest
 from src.contexts.knowledge.application.event_handlers.knowledge_event_subscriber import (
     KnowledgeEventSubscriber,
 )
-from src.contexts.knowledge.application.event_handlers.knowledge_sync_event_handler import (
-    KnowledgeSyncEventHandler,
-)
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
 pytestmark = pytest.mark.unit

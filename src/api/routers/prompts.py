@@ -17,23 +17,18 @@ from typing import Any, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 
 from src.api.schemas import (
-    PromptAnalyticsRequest,
-    PromptAnalyticsResponse,
     PromptAnalyticsTimePeriod,
     PromptCreateRequest,
     PromptDetailResponse,
     PromptGenerateRequest,
     PromptGenerateResponse,
     PromptListResponse,
-    PromptModelConfig,
     PromptRenderRequest,
     PromptRenderResponse,
-    PromptSummary,
     PromptUpdateRequest,
-    PromptVariableValue,
 )
 from src.api.services.prompt_router_service import PromptRouterService
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
@@ -320,7 +315,6 @@ async def export_prompt_analytics(
         400: If date format is invalid or usage repository not configured
         500: If export fails
     """
-    import io
 
     try:
         csv_data = await service.export_analytics_csv(

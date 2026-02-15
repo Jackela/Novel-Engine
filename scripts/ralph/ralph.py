@@ -80,13 +80,14 @@ def run_claude_iteration() -> bool:
         ]
 
         # Run with the temp file as stdin
-        result = subprocess.run(
-            cmd,
-            stdin=open(tmp_path, "r"),
-            capture_output=True,
-            text=True,
-            timeout=600,  # 10 minute timeout per iteration
-        )
+        with open(tmp_path, "r") as stdin_file:
+            result = subprocess.run(
+                cmd,
+                stdin=stdin_file,
+                capture_output=True,
+                text=True,
+                timeout=600,  # 10 minute timeout per iteration
+            )
 
         output = result.stdout + result.stderr
 

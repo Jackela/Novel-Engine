@@ -19,7 +19,6 @@ from src.contexts.knowledge.application.event_handlers.smart_tagging_event_handl
 from src.contexts.knowledge.application.services.smart_tagging_service import (
     GeneratedTag,
     TagCategory,
-    TaggingConfig,
     TaggingResult,
 )
 

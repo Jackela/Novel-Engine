@@ -427,9 +427,6 @@ class TestSourceMetadataWithKnowledgeMetadata:
     @pytest.mark.fast
     def test_source_metadata_has_default_knowledge_metadata(self):
         """Test that SourceMetadata has default KnowledgeMetadata."""
-        from src.contexts.knowledge.domain.models.knowledge_metadata import (
-            KnowledgeMetadata,
-        )
 
         metadata = SourceMetadata(word_count=100)
 

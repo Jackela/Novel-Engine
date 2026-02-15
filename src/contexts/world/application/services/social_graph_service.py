@@ -25,7 +25,6 @@ from typing import Dict, List, Optional
 from src.contexts.world.domain.entities.relationship import (
     EntityType,
     Relationship,
-    RelationshipType,
 )
 from src.contexts.world.domain.repositories.relationship_repository import (
     IRelationshipRepository,

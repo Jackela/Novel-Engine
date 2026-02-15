@@ -9,15 +9,13 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock
 
 import pytest
 import yaml
 
 from src.contexts.knowledge.domain.models.prompt_template import (
-    ModelConfig,
     PromptTemplate,
-    VariableDefinition,
     VariableType,
 )
 from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_repository import (

@@ -35,7 +35,6 @@ from src.contexts.knowledge.domain.models.routing_config import (
     CircuitBreakerRule,
     LLMProvider,
     RoutingConstraints,
-    RoutingScope,
     TaskRoutingRule,
     TaskType,
     WorkspaceRoutingConfig,

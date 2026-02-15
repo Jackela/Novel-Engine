@@ -8,11 +8,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from src.api.schemas import (
-    NarrativeData,
     NarrativeResponse,
     OrchestrationStartRequest,
     OrchestrationStartResponse,
-    OrchestrationStatusData,
     OrchestrationStatusResponse,
     OrchestrationStopResponse,
 )

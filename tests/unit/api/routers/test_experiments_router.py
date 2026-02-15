@@ -7,8 +7,6 @@ Unit tests for the prompt experiment API endpoints.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import FastAPI
@@ -19,15 +17,8 @@ from src.api.routers.experiments import (
     get_prompt_repository,
 )
 from src.api.routers.experiments import router as experiments_router
-from src.api.schemas import (
-    ExperimentCreateRequest,
-    ExperimentListResponse,
-    ExperimentRecordRequest,
-    ExperimentSummaryResponse,
-)
 from src.contexts.knowledge.domain.models.prompt_experiment import (
     ExperimentMetric,
-    ExperimentStatus,
     PromptExperiment,
 )
 from src.contexts.knowledge.domain.models.prompt_template import (

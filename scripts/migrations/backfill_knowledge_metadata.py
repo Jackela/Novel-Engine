@@ -17,9 +17,7 @@ Usage:
 """
 
 import argparse
-import json
 import sys
-from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -30,9 +28,7 @@ sys.path.insert(0, str(project_root))
 
 from src.contexts.knowledge.domain.models.knowledge_metadata import (
     ConfidentialityLevel,
-    KnowledgeMetadata,
 )
-from src.contexts.knowledge.domain.models.source_type import SourceType
 
 
 # Mock vector document structure for demonstration

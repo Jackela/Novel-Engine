@@ -10,13 +10,10 @@ Tests verify:
 
 from __future__ import annotations
 
-import logging
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
-import pytest_asyncio
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
 
 from src.api.routers.brain_settings import (
     InMemoryBrainSettingsRepository,
@@ -27,7 +24,6 @@ from src.api.routers.brain_settings import (
     get_encryption_key,
     get_fernet,
 )
-from src.api.schemas import APIKeysRequest, APIKeysResponse
 
 # ==================== Encryption Tests ====================
 
@@ -53,7 +49,7 @@ class TestEncryption:
 
         assert encrypted != api_key
         assert len(encrypted) > 0
-        # Encrypted value should be base64-like (alphanumeric + special chars)
+        # Encrypted value should be different from original
         assert encrypted != api_key
 
     def test_encrypt_api_key_empty_string(self):

@@ -169,7 +169,8 @@ class PromptFormatter:
             has_history=bool(request.conversation_history),
         )
 
-        # Format based on type
+        # Format based on type (initialize result for type safety)
+        result: FormattedPrompt
         match prompt_format:
             case PromptFormat.CHAT_MESSAGES:
                 result = self._format_chat_messages(request)

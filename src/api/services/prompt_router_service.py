@@ -22,15 +22,12 @@ import requests
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
     IPromptRepository,
     PromptNotFoundError,
-    PromptRepositoryError,
 )
 from src.contexts.knowledge.application.ports.i_prompt_usage_repository import (
     IPromptUsageRepository,
 )
 from src.contexts.knowledge.domain.models.prompt_template import (
-    ModelConfig,
     PromptTemplate,
-    VariableType,
 )
 from src.contexts.knowledge.domain.models.prompt_usage import PromptUsage
 
@@ -319,7 +316,6 @@ class PromptRouterService:
 
         # Create a new version based on the target version content
         # This preserves history by creating a new version (v4) that copies v2 content
-        from uuid import uuid4
 
         new_version = current.create_new_version(
             content=target.content,
@@ -1091,7 +1087,7 @@ class PromptRouterService:
             PromptNotFoundError: If prompt not found
             ValueError: If usage repository is not configured
         """
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timezone
 
         if self._usage_repository is None:
             raise ValueError("Usage repository is not configured for analytics")
@@ -1232,7 +1228,6 @@ class PromptRouterService:
             List of time series data points
         """
         from collections import defaultdict
-        from datetime import timezone
 
         if not usages or period == "all":
             return []
@@ -1319,7 +1314,7 @@ class PromptRouterService:
         """
         import csv
         import io
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         if self._usage_repository is None:
             raise ValueError("Usage repository is not configured for analytics")

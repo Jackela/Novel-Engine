@@ -189,8 +189,6 @@ async function mockBrainSettingsAPI(page: Page) {
  * Helper mock for Chat API
  */
 async function mockChatAPI(page: Page) {
-  let sessionCreated = false;
-
   // Mock POST /api/brain/chat (SSE streaming)
   await page.route(/\/api\/brain\/chat/, async route => {
     const request = route.request();

@@ -34,7 +34,6 @@ from src.api.schemas import (
     ConflictListResponse,
     ConflictResponse,
     ConflictUpdateRequest,
-    CritiqueCategoryScoreResponse,
     CritiqueSceneRequest,
     CritiqueSceneResponse,
     ForeshadowingCreateRequest,
@@ -1945,7 +1944,6 @@ def _get_plotline(plotline_id: UUID) -> Optional[Plotline]:
 
 def _list_plotlines() -> list[Plotline]:
     """Get all plotlines from storage."""
-    from copy import deepcopy
 
     plotlines = list(_plotlines.values())
     return sorted(plotlines, key=lambda p: p.created_at, reverse=True)
@@ -2026,7 +2024,6 @@ def _get_foreshadowing(foreshadowing_id: UUID) -> Optional[Foreshadowing]:
 
 def _list_foreshadowings() -> list[Foreshadowing]:
     """Get all foreshadowings from storage."""
-    from copy import deepcopy
 
     foreshadowings = list(_foreshadowings.values())
     return sorted(foreshadowings, key=lambda f: f.created_at, reverse=True)

@@ -8,7 +8,7 @@ Compares Pydantic backend schemas (src/api/schemas.py) with Zod frontend schemas
 
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List
 
 
 def extract_pydantic_schemas(file_path: Path) -> Dict[str, Dict]:
@@ -315,6 +315,9 @@ def main():
     print("Comparing schemas...")
     discrepancies = compare_schemas(pydantic_schemas, zod_schemas)
 
+    # Initialize by_severity at function scope for use in both printing and report
+    by_severity: Dict[str, List[Dict]] = {"CRITICAL": [], "HIGH": [], "MEDIUM": [], "LOW": []}
+
     if not discrepancies:
         print("  No discrepancies found! Schemas are synchronized.")
     else:
@@ -322,7 +325,6 @@ def main():
         print()
 
         # Group by severity
-        by_severity = {"CRITICAL": [], "HIGH": [], "MEDIUM": [], "LOW": []}
         for d in discrepancies:
             by_severity[d["severity"]].append(d)
 
@@ -350,11 +352,7 @@ def main():
         f.write(f"**Discrepancies Found:** {len(discrepancies)}\n\n")
 
         if discrepancies:
-            # Group by severity
-            by_severity = {"CRITICAL": [], "HIGH": [], "MEDIUM": [], "LOW": []}
-            for d in discrepancies:
-                by_severity[d["severity"]].append(d)
-
+            # Reuse already populated by_severity (populated above)
             for severity in ["CRITICAL", "HIGH", "MEDIUM", "LOW"]:
                 items = by_severity[severity]
                 if items:

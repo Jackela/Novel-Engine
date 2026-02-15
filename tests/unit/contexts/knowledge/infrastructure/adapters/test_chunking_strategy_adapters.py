@@ -12,14 +12,12 @@ import pytest
 
 from src.contexts.knowledge.application.ports.i_chunking_strategy import (
     Chunk,
-    ChunkingError,
 )
 from src.contexts.knowledge.domain.models.chunking_strategy import (
     ChunkingStrategy,
     ChunkStrategyType,
 )
 from src.contexts.knowledge.infrastructure.adapters.chunking_strategy_adapters import (
-    DEFAULT_COHERENCE_THRESHOLD,
     AutoChunkingStrategy,
     ChunkCoherenceAnalyzer,
     CoherenceScore,

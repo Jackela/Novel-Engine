@@ -5,16 +5,11 @@ Warzone 4: AI Brain - BRAIN-034B
 Tests for BudgetAlertService budget monitoring and alerting.
 """
 
-import asyncio
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from src.contexts.knowledge.application.services.budget_alert_service import (
-    AlertHandler,
-    BudgetAlertService,
     BudgetAlertServiceConfig,
     create_budget_alert_service,
 )
@@ -30,7 +25,6 @@ from src.contexts.knowledge.domain.models.budget_alert import (
 )
 from src.contexts.knowledge.domain.models.token_usage import (
     TokenUsage,
-    TokenUsageStats,
 )
 from src.contexts.knowledge.infrastructure.adapters.in_memory_budget_alert_repository import (
     InMemoryBudgetAlertRepository,

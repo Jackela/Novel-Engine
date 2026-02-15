@@ -8,24 +8,16 @@ Tests that manual tags persist and are not overridden by auto-tagging.
 import pytest
 
 from src.contexts.character.domain.aggregates.character import Character
-from src.contexts.character.domain.value_objects.character_id import CharacterID
 from src.contexts.character.domain.value_objects.character_profile import (
-    Background,
     CharacterClass,
-    CharacterProfile,
     CharacterRace,
     Gender,
-    PersonalityTraits,
-    PhysicalTraits,
 )
 from src.contexts.character.domain.value_objects.character_stats import (
-    CharacterStats,
-    CombatStats,
     CoreAbilities,
-    VitalStats,
 )
-from src.contexts.narrative.domain.entities.scene import Scene, StoryPhase
-from src.contexts.world.domain.entities.lore_entry import LoreCategory, LoreEntry
+from src.contexts.narrative.domain.entities.scene import Scene
+from src.contexts.world.domain.entities.lore_entry import LoreEntry
 
 pytestmark = pytest.mark.unit
 

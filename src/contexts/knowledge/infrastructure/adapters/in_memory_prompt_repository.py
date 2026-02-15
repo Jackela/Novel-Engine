@@ -78,8 +78,7 @@ class InMemoryPromptRepository(IPromptRepository):
 
                 # Check if updating existing
                 if template.id in self._templates:
-                    existing = self._templates[template.id]
-                    # Update timestamp
+                    # Update timestamp for existing template
                     object.__setattr__(template, "updated_at", _utcnow())
 
                 # Store template
@@ -90,8 +89,8 @@ class InMemoryPromptRepository(IPromptRepository):
                 if existing_id is None:
                     self._name_index[template.name] = template.id
                 else:
-                    existing = self._templates.get(existing_id)
-                    if existing is None or template.version >= existing.version:
+                    existing_template = self._templates.get(existing_id)
+                    if existing_template is None or template.version >= existing_template.version:
                         self._name_index[template.name] = template.id
 
                 return template.id

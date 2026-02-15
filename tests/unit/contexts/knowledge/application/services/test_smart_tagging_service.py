@@ -6,7 +6,7 @@ Tests tag generation for sample content.
 """
 
 import json
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
