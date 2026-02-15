@@ -32,12 +32,11 @@ except ImportError:
 
 # Import narrative components
 try:
-    from campaign_brief import CampaignBrief, NarrativeEvent
+    from campaign_brief import CampaignBrief
 
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
     CampaignBrief = None
-    NarrativeEvent = None
 
     class NarrativeActionResolver:
         def __init__(self):

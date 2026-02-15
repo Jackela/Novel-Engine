@@ -1474,7 +1474,7 @@ class ForeshadowingUpdateRequest(BaseModel):
     )
 
 
-class LinkPayoffRequest(BaseModel):
+class LinkPayoffRequest(BaseModel):  # noqa: PLW0611 (used by FastAPI)
     """Request model for linking a payoff scene to foreshadowing.
 
     This validates that the payoff scene comes after the setup scene.
