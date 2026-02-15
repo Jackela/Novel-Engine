@@ -4,13 +4,19 @@
  * Why: Provides the consistent app shell with sidebar navigation
  * and top bar. Children are rendered in the main content area.
  */
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
 import { Sidebar } from '@/shared/components/layout/Sidebar';
 import { TopBar } from '@/shared/components/layout/TopBar';
-import { DecisionDialog } from '@/features/decision/DecisionDialog';
-import { ChatInterface } from '@/components/ChatInterface';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+
+// Lazy-load heavy components not needed for initial render
+const DecisionDialog = lazy(() =>
+  import('@/features/decision/DecisionDialog').then((m) => ({ default: m.DecisionDialog }))
+);
+const ChatInterface = lazy(() =>
+  import('@/components/ChatInterface').then((m) => ({ default: m.ChatInterface }))
+);
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -74,8 +80,12 @@ export function AppShell({ children }: AppShellProps) {
         <main id="main-content" className="flex-1 p-4 lg:p-6" tabIndex={-1}>
           {children}
         </main>
-        <DecisionDialog />
-        <ChatInterface />
+        <Suspense fallback={null}>
+          <DecisionDialog />
+        </Suspense>
+        <Suspense fallback={null}>
+          <ChatInterface />
+        </Suspense>
       </div>
     </div>
   );

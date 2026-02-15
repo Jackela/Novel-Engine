@@ -457,6 +457,9 @@ class LocalReranker:
                 "sentence-transformers package is required for LocalReranker. "
                 "Install with: pip install sentence-transformers"
             ) from e
+        except RerankerError:
+            # Re-raise RerankerError without wrapping (from _get_model)
+            raise
         except Exception as e:
             log.error(
                 "local_rerank_unexpected_error",

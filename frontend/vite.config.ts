@@ -13,12 +13,39 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
+        // Function-based manualChunks for better module resolution handling
+        manualChunks(id) {
           // Vendor chunks for better caching
-          vendor: ['react', 'react-dom'],
-          router: ['@tanstack/react-router'],
-          query: ['@tanstack/react-query'],
-          xyflow: ['@xyflow/react'],
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'vendor';
+          }
+          if (id.includes('node_modules/@tanstack/react-router/')) {
+            return 'router';
+          }
+          if (id.includes('node_modules/@tanstack/react-query/')) {
+            return 'query';
+          }
+          if (id.includes('node_modules/@xyflow/')) {
+            return 'xyflow';
+          }
+          // Code-split heavy dependencies to reduce initial bundle size
+          if (id.includes('node_modules/@tiptap/')) {
+            return 'tiptap';
+          }
+          if (id.includes('node_modules/@dnd-kit/')) {
+            return 'dnd';
+          }
+          if (id.includes('node_modules/recharts/')) {
+            return 'recharts';
+          }
+          // Split chat dependencies (highlight.js, markdown-it, react-window)
+          if (id.includes('node_modules/highlight.js/') || id.includes('node_modules/markdown-it/')) {
+            return 'vendor-markdown';
+          }
+          if (id.includes('node_modules/react-window/')) {
+            return 'vendor-react-window';
+          }
+          return undefined;
         },
       },
     },
