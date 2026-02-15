@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 try:
-    import chromadb
+    import chromadb  # noqa: F401 - imported for availability check
     CHROMADB_AVAILABLE = True
 except ImportError:
     CHROMADB_AVAILABLE = False
@@ -127,7 +127,7 @@ class TestChromaDBVectorStore:
         store = ChromaDBVectorStore(persist_dir=temp_persist_dir)
 
         # Access client to trigger initialization
-        client = store._get_client()
+        _client = store._get_client()
 
         # Verify directory was created
         persist_path = Path(temp_persist_dir)

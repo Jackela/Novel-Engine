@@ -620,7 +620,7 @@ class TestBudgetAlertService:
     async def test_check_thresholds_with_stats(self, alert_service, usage_repository):
         """Test checking thresholds against aggregated stats."""
         # Add some usage data
-        now = datetime.now(timezone.utc)
+        _now = datetime.now(timezone.utc)  # noqa: F841
         for i in range(10):
             usage = TokenUsage.create(
                 provider="openai",

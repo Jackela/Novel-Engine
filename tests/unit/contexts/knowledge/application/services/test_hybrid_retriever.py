@@ -233,7 +233,7 @@ class TestHybridScoreFusion:
 
         assert "doc1" in result
         # Should be based purely on ranks: 1/(60+1) + 1/(60+2)
-        expected = 1.0 / 61 + 1.0 / 62
+        _expected = 1.0 / 61 + 1.0 / 62
         # After normalization, should be 1.0 (only document)
         assert result["doc1"] == pytest.approx(0.5)  # Normalized single value
 

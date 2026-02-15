@@ -10,7 +10,6 @@ import uuid
 from datetime import datetime
 from typing import Dict, List
 
-from core_platform.persistence.models import FullAuditModel
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -24,6 +23,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
+
+from core_platform.persistence.models import FullAuditModel
 
 
 class WorldStateModel(FullAuditModel):

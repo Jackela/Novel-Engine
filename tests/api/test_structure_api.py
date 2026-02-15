@@ -4,10 +4,10 @@ Verifies the endpoints for managing Story, Chapter, and Scene entities,
 ensuring proper CRUD operations and move functionality work as expected.
 """
 
-import api_server
 import pytest
 from fastapi.testclient import TestClient
 
+import api_server
 from src.api.routers.structure import get_repository, reset_scene_storage
 
 pytestmark = pytest.mark.unit

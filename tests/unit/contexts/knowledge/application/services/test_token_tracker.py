@@ -302,7 +302,7 @@ class TestTokenTracker:
 
         mock_repository.get_summary = AsyncMock(return_value=mock_summary)
 
-        summary = await tracker.get_summary(start, now)
+        _summary = await tracker.get_summary(start, now)
 
         mock_repository.get_summary.assert_called_once_with(
             start_time=start,

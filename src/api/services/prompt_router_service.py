@@ -1092,7 +1092,7 @@ class PromptRouterService:
         if self._usage_repository is None:
             raise ValueError("Usage repository is not configured for analytics")
 
-        # Verify prompt exists
+        # Verify prompt exists (raises if not found)
         template = await self.get_prompt_by_id(prompt_id)
 
         # Parse date filters
@@ -1319,8 +1319,8 @@ class PromptRouterService:
         if self._usage_repository is None:
             raise ValueError("Usage repository is not configured for analytics")
 
-        # Verify prompt exists
-        template = await self.get_prompt_by_id(prompt_id)
+        # Verify prompt exists (raises if not found)
+        _template = await self.get_prompt_by_id(prompt_id)  # noqa: F841
 
         # Parse date filters
         start_dt: Optional[datetime] = None

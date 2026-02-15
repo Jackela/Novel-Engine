@@ -13,7 +13,7 @@ from unittest.mock import patch
 import pytest
 
 try:
-    from rank_bm25 import BM25Okapi
+    from rank_bm25 import BM25Okapi  # noqa: F401 - imported for availability check
     RANK_BM25_AVAILABLE = True
 except ImportError:
     RANK_BM25_AVAILABLE = False
@@ -235,8 +235,8 @@ class TestBM25RetrieverIndexDocuments:
 
     def test_index_without_rank_bm25_raises_error(self):
         """Test that indexing without rank-bm25 installed raises ImportError."""
-        retriever = BM25Retriever()
-        doc = IndexedDocument(
+        _retriever = BM25Retriever()  # noqa: F841
+        _doc = IndexedDocument(  # noqa: F841
             doc_id="chunk_1",
             source_id="char_aldric",
             source_type="CHARACTER",

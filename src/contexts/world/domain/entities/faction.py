@@ -216,13 +216,6 @@ class Faction(Entity):
         """
         return super().__eq__(other)
 
-    def __eq__(self, other: object) -> bool:
-        """Compare factions by identity rather than field values.
-
-        Why: Preserve entity semantics across evolving attributes.
-        """
-        return super().__eq__(other)
-
     def _validate_business_rules(self) -> List[str]:
         """Validate Faction-specific business rules."""
         errors = []

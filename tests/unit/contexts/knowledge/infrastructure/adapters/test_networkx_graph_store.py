@@ -16,7 +16,7 @@ from typing import Any
 import pytest
 
 try:
-    import scipy
+    import scipy  # noqa: F401 - imported for availability check
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False

@@ -1,8 +1,9 @@
 from datetime import datetime
 
-import api_server
 import pytest
 from fastapi.testclient import TestClient
+
+import api_server
 
 pytestmark = pytest.mark.integration
 

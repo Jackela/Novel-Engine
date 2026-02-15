@@ -1,9 +1,9 @@
 import uuid
 
-import api_server
 import pytest
 from fastapi.testclient import TestClient
 
+import api_server
 from src.workspaces import (
     FilesystemCharacterStore,
     FilesystemWorkspaceStore,

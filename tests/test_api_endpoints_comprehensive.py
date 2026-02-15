@@ -30,8 +30,9 @@ if not FULL_INTEGRATION:
             reason="API comprehensive tests require NOVEL_ENGINE_FULL_INTEGRATION=1"
         )
     )
-from api_server import app
 from fastapi.testclient import TestClient
+
+from api_server import app
 
 client = TestClient(app)
 

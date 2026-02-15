@@ -7,7 +7,6 @@ Unit tests for the prompt router service layer.
 
 from __future__ import annotations
 
-
 import pytest
 
 from src.api.services.prompt_router_service import PromptRouterService
@@ -469,7 +468,7 @@ class TestPromptRouterServiceCompare:
             description="Initial version",
             tags=("v1",),
         )
-        v1_id = await service.save_prompt(v1)
+        _v1_id = await service.save_prompt(v1)  # noqa: F841
 
         # Create second version with changes
         v2 = v1.create_new_version(

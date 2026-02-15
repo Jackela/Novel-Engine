@@ -7,7 +7,6 @@ Unit tests for the prompt experiment API endpoints.
 
 from __future__ import annotations
 
-
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient

@@ -72,7 +72,7 @@ class DeterministicSceneGenerator:
                 "visual_prompt": f"{char.visual_prompt}, close-up, emotional",
             },
             "climax": {
-                "title": f"The Turning Point",
+                "title": "The Turning Point",
                 "content": (
                     f"Everything had led to this moment. {char.name} stood at the precipice, "
                     f"their {char.traits[0] if char.traits else 'determined'} spirit tested "
@@ -82,7 +82,7 @@ class DeterministicSceneGenerator:
                 "visual_prompt": f"{char.visual_prompt}, dramatic lighting, peak tension",
             },
             "resolution": {
-                "title": f"After the Storm",
+                "title": "After the Storm",
                 "content": (
                     f"As the dust settled, {char.name} surveyed the aftermath. "
                     f"The path forward was clearer now, though not without its scars. "

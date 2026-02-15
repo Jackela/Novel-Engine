@@ -164,7 +164,7 @@ def compare_schemas(pydantic_schemas: Dict, zod_schemas: Dict) -> List[Dict]:
                 "severity": "HIGH",
                 "schema": name,
                 "issue": "Missing in frontend",
-                "details": f"Schema exists in backend but not in frontend",
+                "details": "Schema exists in backend but not in frontend",
             }
         )
 
@@ -176,7 +176,7 @@ def compare_schemas(pydantic_schemas: Dict, zod_schemas: Dict) -> List[Dict]:
                 "severity": "MEDIUM",
                 "schema": name,
                 "issue": "Missing in backend",
-                "details": f"Schema exists in frontend but not in backend",
+                "details": "Schema exists in frontend but not in backend",
             }
         )
 

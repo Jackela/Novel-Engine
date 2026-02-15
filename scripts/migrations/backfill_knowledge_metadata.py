@@ -205,7 +205,7 @@ def print_report(
             print(f"    source_type: {doc.metadata.get('source_type', 'N/A')}")
             if doc.needs_migration():
                 print(
-                    f"    Missing: world_version, confidentiality_level, source_version"
+                    "    Missing: world_version, confidentiality_level, source_version"
                 )
             else:
                 print(f"    world_version: {doc.metadata.get('world_version', 'N/A')}")

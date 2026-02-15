@@ -2714,7 +2714,7 @@ class TestConfigurableOverlap:
     @pytest.mark.asyncio
     async def test_auto_overlap_different_chunk_sizes(self) -> None:
         """Test auto-overlap with various chunk sizes."""
-        strategy = FixedChunkingStrategy()
+        _strategy = FixedChunkingStrategy()
 
         test_cases = [
             (60, 6),  # 10% of 60 (must be > min_chunk_size of 50)

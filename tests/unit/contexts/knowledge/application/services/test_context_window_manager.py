@@ -396,7 +396,7 @@ class TestContextWindowManager:
 
     def test_to_api_messages(self, mock_token_counter, mock_context_optimizer):
         """Test conversion to API message format."""
-        manager = ContextWindowManager(
+        _manager = ContextWindowManager(  # noqa: F841
             token_counter=mock_token_counter,
             context_optimizer=mock_context_optimizer,
         )

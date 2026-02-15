@@ -1,6 +1,7 @@
 import pytest
-from api_server import app
 from fastapi.testclient import TestClient
+
+from api_server import app
 
 pytestmark = pytest.mark.unit
 

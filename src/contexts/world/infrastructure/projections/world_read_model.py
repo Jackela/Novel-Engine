@@ -18,7 +18,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from core_platform.persistence.models import BaseModel
 from sqlalchemy import (
     ARRAY,
     JSON,
@@ -32,6 +31,8 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
+
+from core_platform.persistence.models import BaseModel
 
 
 @dataclass

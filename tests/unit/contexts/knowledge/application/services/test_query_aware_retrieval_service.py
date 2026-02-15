@@ -223,7 +223,7 @@ class TestQueryAwareRetrievalService:
     ):
         """Test retrieval with query rewriting."""
         # Set up mock to return some chunks
-        chunk = RetrievedChunk(
+        _chunk = RetrievedChunk(
             chunk_id="1",
             source_id="char1",
             source_type=SourceType.CHARACTER,

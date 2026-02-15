@@ -4,10 +4,10 @@ Verifies the endpoints for managing LoreEntry entities,
 ensuring proper CRUD operations and search functionality.
 """
 
-import api_server
 import pytest
 from fastapi.testclient import TestClient
 
+import api_server
 from src.api.routers.lore import get_repository
 
 pytestmark = pytest.mark.unit

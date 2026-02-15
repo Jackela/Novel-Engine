@@ -349,7 +349,7 @@ class TestRetrievalService:
         vector_store.query.return_value = sample_query_results
 
         filters = RetrievalFilter(source_types=[SourceType.CHARACTER])
-        result = await retrieval_service.retrieve_relevant(
+        _result = await retrieval_service.retrieve_relevant(
             query="brave knight",
             k=5,
             filters=filters,
@@ -370,7 +370,7 @@ class TestRetrievalService:
         vector_store.query.return_value = sample_query_results
 
         filters = RetrievalFilter(tags=["protagonist", "knight"])
-        result = await retrieval_service.retrieve_relevant(
+        _result = await retrieval_service.retrieve_relevant(
             query="brave knight",
             k=5,
             filters=filters,
@@ -1436,7 +1436,7 @@ class TestRetrievalServiceReranking:
         )
 
         # Don't specify candidate_k, should default to 2x k
-        result = await retrieval_service.retrieve_relevant(
+        _result = await retrieval_service.retrieve_relevant(
             query="knight",
             k=5,
             options=RetrievalOptions(

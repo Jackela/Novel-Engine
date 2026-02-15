@@ -201,7 +201,7 @@ class TestCachedEmbeddingService:
         # Populate cache for text1 and text3
         await cached_service.embed("text1")
         await cached_service.embed("text3")
-        initial_embed_count = mock_service.embed_count
+        _initial_embed_count = mock_service.embed_count
         initial_batch_count = mock_service.batch_count
 
         # Batch call - text2 should be cache miss, text1 and text3 are hits

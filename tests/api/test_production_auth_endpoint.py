@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 try:
-    from slowapi import Limiter
+    from slowapi import Limiter  # noqa: F401 - imported for availability check
     SLOWAPI_AVAILABLE = True
 except ImportError:
     SLOWAPI_AVAILABLE = False

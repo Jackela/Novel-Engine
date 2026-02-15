@@ -117,7 +117,7 @@ def run_claude_iteration() -> bool:
         # Clean up temp file
         try:
             Path(tmp_path).unlink()
-        except:
+        except Exception:
             pass
 
 

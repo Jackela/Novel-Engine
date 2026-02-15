@@ -15,11 +15,12 @@ from datetime import datetime
 from typing import Any, Dict, Optional, Set
 from uuid import UUID
 
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
 from core_platform.messaging.event_bus import EventHandler, get_event_bus
 from core_platform.monitoring.metrics import ProjectorMetrics
 from core_platform.persistence.database import get_db_session
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
 from ...domain.events.world_events import WorldChangeType, WorldStateChanged
 from .world_read_model import WorldSliceReadModel

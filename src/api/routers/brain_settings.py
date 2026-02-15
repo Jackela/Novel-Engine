@@ -2032,14 +2032,14 @@ async def chat_completion(
                         vector_store = ChromaDBVectorStore()
                         request.app.state.vector_store = vector_store
 
-                    # Retrieve relevant chunks
+                    # Retrieve relevant chunks using conversation-enhanced query
                     retrieval_service = RetrievalService(
                         embedding_service=embedding_service,
                         vector_store=vector_store,
                     )
 
                     result = await retrieval_service.retrieve_relevant(
-                        query=payload.query,
+                        query=rag_query,
                         k=payload.max_chunks,
                         filters=None,
                     )
@@ -2080,8 +2080,8 @@ async def chat_completion(
                 query=payload.query,
             )
 
-            # Get formatted messages for LLM
-            messages = managed_context.to_api_messages()
+            # Get formatted messages for LLM (for future LLM integration)
+            _messages = managed_context.to_api_messages()  # noqa: F841 - used by future LLM integration
             # Add current query (already included in managed_context.chat_history)
 
             # For now, return a mock streaming response

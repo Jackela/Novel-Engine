@@ -501,7 +501,7 @@ class ChapterAnalysisService:
                         )
                     )
                 high_energy_count = 0
-                high_energy_scens = []
+                high_energy_scenes = []
 
         # Check for flat tension arc
         if tension_arc.is_monotonic and len(scenes) >= 3:

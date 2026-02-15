@@ -45,15 +45,13 @@ from .context_optimizer import (
 )
 from .context_window_manager import (
     DEFAULT_CONTEXT_WINDOWS,
-)
-from .context_window_manager import ChatMessage as ContextWindowChatMessage
-from .context_window_manager import (
     ContextWindowConfig,
     ContextWindowManager,
     ManagedContext,
     PruningStrategy,
     create_context_window_manager,
 )
+from .context_window_manager import ChatMessage as ContextWindowChatMessage
 from .coreference_resolution_service import (
     DEFAULT_COREF_MAX_TOKENS,
     DEFAULT_COREF_TEMPERATURE,
@@ -116,9 +114,6 @@ from .model_registry import (
 from .multi_hop_retriever import (
     DEFAULT_HOP_K,
     DEFAULT_MAX_HOPS,
-)
-from .multi_hop_retriever import DEFAULT_TEMPERATURE as DEFAULT_MULTIHOP_TEMPERATURE
-from .multi_hop_retriever import (
     ExplainConfig,
     HopConfig,
     HopResult,
@@ -129,6 +124,7 @@ from .multi_hop_retriever import (
     QueryDecomposer,
     ReasoningStep,
 )
+from .multi_hop_retriever import DEFAULT_TEMPERATURE as DEFAULT_MULTIHOP_TEMPERATURE
 from .prompt_formatter import (
     FormattedPrompt,
     PromptFormat,

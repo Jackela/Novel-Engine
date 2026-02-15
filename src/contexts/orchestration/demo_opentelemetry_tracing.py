@@ -371,9 +371,8 @@ def demonstrate_intelligent_sampling():
     print("\n🎯 INTELLIGENT SAMPLING DEMONSTRATION")
     print("=" * 70)
 
-    from opentelemetry.trace import SpanKind
-
     from infrastructure.monitoring.tracing import IntelligentSampler
+    from opentelemetry.trace import SpanKind
 
     # Create intelligent sampler
     sampler = IntelligentSampler(default_rate=0.1)  # 10% default sampling

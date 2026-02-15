@@ -164,7 +164,7 @@ def main():
     # Start report
     report_lines = [
         "# Schema Synchronization Audit Report\n",
-        f"**Generated:** 2026-02-03",
+        "**Generated:** 2026-02-03",
         f"**Backend Schemas:** {len(pydantic_classes)}",
         f"**Frontend Schemas:** {len(zod_schemas)}",
         "",
@@ -309,7 +309,7 @@ def main():
     print(f"\n📄 Report saved to: {report_file}")
 
     # Print summary
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"  Missing in frontend: {len(missing_in_frontend)}")
     print(f"  Missing in backend:  {len(missing_in_backend)}")
     print(f"  Field mismatches:    {len(field_mismatches)}")
@@ -319,10 +319,10 @@ def main():
         print(f"\n❌ Found {critical_count} CRITICAL issues that must be fixed!")
         return 1
     elif missing_in_frontend or field_mismatches:
-        print(f"\n⚠️  Found issues that should be reviewed.")
+        print("\n⚠️  Found issues that should be reviewed.")
         return 0
     else:
-        print(f"\n✅ All schemas are synchronized!")
+        print("\n✅ All schemas are synchronized!")
         return 0
 
 

@@ -503,7 +503,7 @@ class TestKnowledgeIngestionService:
             source_id="char_to_delete",
         )
 
-        chunk_count = result.chunk_count
+        _chunk_count = result.chunk_count
 
         # Now delete
         deleted_count = await ingestion_service.delete("char_to_delete")
