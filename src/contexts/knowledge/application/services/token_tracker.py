@@ -40,7 +40,6 @@ from ...domain.models.model_registry import LLMProvider
 from ...domain.models.token_usage import TokenUsage, TokenUsageStats
 
 # Need LLMResponse at runtime for decorator isinstance checks
-from ..ports.i_llm_client import LLMResponse  # noqa: E402
 from ..services.model_registry import ModelRegistry
 from ..services.token_counter import TokenCounter
 
@@ -546,22 +545,9 @@ class TokenTracker:
                             cost_per_1m_input = model_def.cost_per_1m_input_tokens
                             cost_per_1m_output = model_def.cost_per_1m_output_tokens
 
-                        # Create usage record
-                        if actual_model_ref:
-                            provider_str = lookup_result.provider.value
-                            model_name_str = lookup_result.model_name
-                        else:
-                            # Infer model from result when no explicit model_ref
-                            if isinstance(result, LLMResponse):
-                                result_model = result.model or "unknown"
-                            else:
-                                result_model = "unknown"
-                            provider_str = "unknown"
-                            model_name_str = (
-                                result_model
-                                if isinstance(result_model, str)
-                                else str(result_model)
-                            )
+                        # Create usage record (we're already inside if actual_model_ref)
+                        provider_str = lookup_result.provider.value
+                        model_name_str = lookup_result.model_name
 
                         usage = TokenUsage.create(
                             provider=provider_str,

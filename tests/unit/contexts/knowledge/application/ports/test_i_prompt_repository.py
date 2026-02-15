@@ -221,13 +221,16 @@ class TestIPromptRepository:
     ) -> None:
         """Should delete template."""
         await repository.save(sample_template)
-        assert await repository.delete("test-1") is True
-        assert await repository.get_by_id("test-1") is None
+        delete_result = await repository.delete("test-1")
+        assert delete_result is True
+        get_result = await repository.get_by_id("test-1")
+        assert get_result is None
 
     @pytest.mark.asyncio
     async def test_delete_not_found(self, repository: MockPromptRepository) -> None:
         """Should return False when deleting non-existent template."""
-        assert await repository.delete("non-existent") is False
+        delete_result = await repository.delete("non-existent")
+        assert delete_result is False
 
     @pytest.mark.asyncio
     async def test_get_version_history(self, repository: MockPromptRepository) -> None:

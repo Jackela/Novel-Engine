@@ -170,20 +170,18 @@ class PromptFormatter:
         )
 
         # Format based on type (initialize result for type safety)
-        result: FormattedPrompt
+        result: FormattedPrompt = self._format_chat_messages(request)  # default
         match prompt_format:
-            case PromptFormat.CHAT_MESSAGES:
-                result = self._format_chat_messages(request)
             case PromptFormat.INSTRUCTION:
                 result = self._format_instruction(request)
             case PromptFormat.CODE_INSTRUCTION:
                 result = self._format_code_instruction(request)
             case PromptFormat.COMPLETION:
                 result = self._format_completion(request)
-            case _:
-                log.warning("unknown_prompt_format", format=prompt_format.value)
-                # Fall back to chat messages
-                result = self._format_chat_messages(request)
+            case PromptFormat.CHAT_MESSAGES | _:
+                # CHAT_MESSAGES is the default, already set above
+                if prompt_format not in (PromptFormat.CHAT_MESSAGES,):
+                    log.warning("unknown_prompt_format", format=prompt_format.value)
 
         log.debug(
             "prompt_formatted",

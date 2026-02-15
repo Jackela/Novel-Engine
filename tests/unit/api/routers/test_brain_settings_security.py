@@ -49,8 +49,6 @@ class TestEncryption:
 
         assert encrypted != api_key
         assert len(encrypted) > 0
-        # Encrypted value should be different from original
-        assert encrypted != api_key
 
     def test_encrypt_api_key_empty_string(self):
         """Test encrypting an empty string returns empty string."""

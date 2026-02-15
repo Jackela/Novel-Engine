@@ -1001,6 +1001,7 @@ async def delete_scene_manual_smart_tags(
 
     scene.clear_manual_smart_tags(category)
     _store_scene(scene)
+    # lgtm[py/clear-text-logging] - category is enum-validated, scene_uuid is UUID-validated
     logger.info(
         "Cleared manual smart tags for category %s in scene: %s", category, scene_uuid
     )
