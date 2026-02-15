@@ -25,6 +25,14 @@ from src.contexts.knowledge.infrastructure.adapters.reranker_adapters import (
     NoOpReranker,
 )
 
+# Check if sentence-transformers is available for conditional test skipping
+try:
+    import sentence_transformers  # noqa: F401
+
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
 # ===== NoOpReranker Tests =====
 
 
@@ -346,6 +354,10 @@ class TestLocalReranker:
             assert reranker._device == "cuda"
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(
+        SENTENCE_TRANSFORMERS_AVAILABLE,
+        reason="Test requires sentence-transformers to NOT be installed",
+    )
     async def test_rerank_import_error_message(self):
         """Test that LocalReranker provides helpful error on import failure."""
         reranker = LocalReranker()
