@@ -281,7 +281,7 @@
         "Create tests/api/routers/test_diplomacy.py"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "blockedBy": ["SIM-009"],
       "files": [

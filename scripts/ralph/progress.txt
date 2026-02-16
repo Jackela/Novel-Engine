@@ -196,3 +196,22 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Aggregate inherits from Entity, so gets id, version, created_at, updated_at automatically
   - Use self.touch() when modifying aggregate state to update timestamp and version
 ---
+## Mon Feb 16 23:30 CST 2026 - SIM-010
+- Created Diplomacy API router with 3 endpoints
+- Implemented: GET /world/{world_id}/diplomacy (full matrix), GET /world/{world_id}/diplomacy/faction/{faction_id} (single faction), PUT /world/{world_id}/diplomacy/{faction_a}/{faction_b} (set relation)
+- Request/Response models defined in router: DiplomacyMatrixResponse, FactionDiplomacyResponse, SetRelationRequest
+- Router registered in both src.api.main_api_server and src.api.app
+- In-memory storage pattern used (MVP implementation)
+- Status validation with case-insensitive and whitespace-tolerant parsing
+- All 17 tests pass
+- Files changed:
+  - src/api/routers/diplomacy.py (new)
+  - src/api/main_api_server.py (modified - added router import and include_router)
+  - src/api/app.py (modified - added router import and include_router)
+  - tests/api/routers/test_diplomacy.py (new - 17 tests)
+- **Learnings for future iterations:**
+  - Schemas can be defined directly in router file (not required to be in schemas.py for smaller routers)
+  - Status validation uses case-insensitive comparison with .lower().strip()
+  - Router registered in BOTH main_api_server.py and app.py for test compatibility
+  - Tests use reset_diplomacy_storage() fixture for test isolation
+---
