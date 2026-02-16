@@ -1,415 +1,491 @@
 {
-  "project": "Novel-Engine-Op-Resilience",
-  "branchName": "refactor/brain-optimization",
-  "description": "OPERATION RESILIENCE: Fix skipped tests, complete backend stubs, resolve API contract issues, and improve infrastructure.",
+  "project": "Novel-Engine-Warzone-5-Simulation",
+  "branchName": "feat/world-simulation",
+  "description": "WARZONE 5: World Simulation Engine - Time, Diplomacy, and Dynamic Events",
   "techContext": {
-    "stack": "FastAPI + ChromaDB + Redis (mocked) + React (shadcn/ui + Zustand)",
+    "stack": "FastAPI + React + Zustand + ChromaDB",
     "testCommand": "pytest && npm --prefix frontend run test:e2e",
-    "typecheckCommand": "mypy --strict src/contexts/knowledge && npm --prefix frontend run type-check",
-    "conventions": "Strict Hexagonal Architecture, contract-first (schemas -> OpenAPI -> frontend types), structured logging via structlog, shadcn/ui + Tailwind-only styling, required UI states (loading/empty/error/ready)."
+    "typecheckCommand": "mypy --strict src/contexts/world && npm --prefix frontend run type-check",
+    "conventions": "Hexagonal Architecture. Domain Events. Result pattern. shadcn/ui + Tailwind only."
   },
   "userStories": [
     {
-      "id": "RES-001",
-      "title": "API: Add ErrorDetail Schema",
-      "description": "Add single ErrorDetail schema to src/api/schemas.py.",
+      "id": "SIM-001",
+      "title": "Domain - WorldCalendar Value Object",
+      "description": "Create WorldCalendar value object with year, month, day, era_name fields.",
       "acceptanceCriteria": [
-        "Add class ErrorDetail(BaseModel) with fields: code (str), message (str), details (dict | None = None)",
-        "Add example in schema: {\"code\": \"NOT_FOUND\", \"message\": \"Resource not found\"}",
-        "Run: mypy src/api/schemas.py passes"
+        "Create src/contexts/world/domain/value_objects/world_calendar.py",
+        "Fields: year (int), month (int), day (int), era_name (str), days_per_month (int=30), months_per_year (int=12)",
+        "Methods: advance(days) -> WorldCalendar, format() -> str, from_datetime(dt) -> WorldCalendar",
+        "Value object: immutable, implements __eq__, __hash__",
+        "Test: tests/unit/contexts/world/domain/test_world_calendar.py with edge cases (month rollover, year rollover)"
       ],
-      "verification": "grep -A5 'class ErrorDetail' src/api/schemas.py",
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/api/schemas.py"],
-      "estimatedTime": "15 min"
+      "files": ["src/contexts/world/domain/value_objects/world_calendar.py", "tests/unit/contexts/world/domain/test_world_calendar.py"]
     },
     {
-      "id": "RES-002",
-      "title": "API: Add ValidationError Schema",
-      "description": "Add ValidationError extending ErrorDetail.",
+      "id": "SIM-002",
+      "title": "Domain - Calendar Integration",
+      "description": "Integrate WorldCalendar into WorldState aggregate, replacing raw datetime.",
       "acceptanceCriteria": [
-        "Add class ValidationError(ErrorDetail) with field: field_errors (dict[str, list[str]] | None = None)",
-        "Add example showing field validation errors"
+        "Update src/contexts/world/domain/aggregates/world_state.py",
+        "Replace world_time: datetime with calendar: WorldCalendar",
+        "Update advance_time() to use calendar.advance()",
+        "Emit existing WorldStateChanged.time_advanced event",
+        "Add from_datetime() migration for existing data",
+        "Update existing world_state tests"
       ],
-      "verification": "grep -A3 'class ValidationError' src/api/schemas.py",
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/api/schemas.py"],
-      "estimatedTime": "10 min",
-      "blockedBy": ["RES-001"]
+      "blockedBy": ["SIM-001"],
+      "files": ["src/contexts/world/domain/aggregates/world_state.py"]
     },
     {
-      "id": "RES-003",
-      "title": "API: Add 404 Exception Handler",
-      "description": "Add HTTPException handler for 404 in app.py.",
+      "id": "SIM-003",
+      "title": "API - Calendar Router",
+      "description": "Create API endpoints for calendar operations.",
       "acceptanceCriteria": [
-        "Add @app.exception_handler(404) returning ErrorDetail",
-        "Test: curl localhost:8000/nonexistent returns {\"error\": {\"code\": \"NOT_FOUND\"...}}"
+        "Create src/api/routers/calendar.py",
+        "GET /calendar/{world_id} returns CalendarResponse",
+        "POST /calendar/{world_id}/advance accepts AdvanceCalendarRequest",
+        "Add schemas to src/api/schemas.py: CalendarResponse, AdvanceCalendarRequest",
+        "Router prefix: /calendar (NO /api prefix in decorator)",
+        "Test: tests/api/test_calendar_router.py"
       ],
-      "verification": "grep -A10 'exception_handler.*404' src/api/errors.py",
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/api/errors.py"],
-      "estimatedTime": "20 min",
-      "blockedBy": ["RES-001"]
+      "blockedBy": ["SIM-002"],
+      "files": ["src/api/routers/calendar.py", "src/api/schemas.py"]
     },
     {
-      "id": "RES-004",
-      "title": "Frontend: Add Node.js Engines Field",
-      "description": "Add engines field to package.json.",
+      "id": "SIM-004",
+      "title": "Frontend - Calendar Display",
+      "description": "Create React component to display and control calendar.",
       "acceptanceCriteria": [
-        "Add: \"engines\": {\"node\": \">=18.0.0\", \"npm\": \">=9.0.0\"}",
-        "npm install should warn on Node 16 (can't test locally)"
+        "Create frontend/src/components/world/CalendarDisplay.tsx",
+        "Use shadcn/ui Card component",
+        "Display: formatted date, era name, Advance Time button",
+        "Use TanStack Query pattern from worldDataApi.ts",
+        "Add to existing WorldPage.tsx",
+        "Verify: renders correctly in browser"
       ],
-      "verification": "grep -A2 '\"engines\"' frontend/package.json",
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["frontend/package.json"],
-      "estimatedTime": "5 min"
+      "blockedBy": ["SIM-003"],
+      "files": ["frontend/src/components/world/CalendarDisplay.tsx", "frontend/src/features/world/WorldPage.tsx"]
     },
     {
-      "id": "RES-005",
-      "title": "Frontend: Add .nvmrc File",
-      "description": "Create .nvmrc with Node 20.",
+      "id": "SIM-005",
+      "title": "Domain - Enhance HistoryEvent",
+      "description": "Add new fields to HistoryEvent entity for simulation support.",
       "acceptanceCriteria": [
-        "Create frontend/.nvmrc with single line: \"20\"",
-        "nvm use should work in frontend/ directory"
+        "Update src/contexts/world/domain/entities/history_event.py",
+        "Add impact_scope: ImpactScope | None (LOCAL, REGIONAL, GLOBAL)",
+        "Add event_type: EventType | None (WAR, TRADE, DISCOVERY, POLITICAL, NATURAL, DEATH)",
+        "Add affected_faction_ids: list[str] | None",
+        "Add structured_date: WorldCalendar | None",
+        "All new fields nullable for backward compatibility",
+        "Update existing tests"
       ],
-      "verification": "cat frontend/.nvmrc",
       "priority": 5,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["frontend/.nvmrc"],
-      "estimatedTime": "2 min"
+      "blockedBy": ["SIM-001"],
+      "files": ["src/contexts/world/domain/entities/history_event.py"]
     },
     {
-      "id": "RES-006",
-      "title": "Infrastructure: Add /health/live Endpoint",
-      "description": "Add liveness probe endpoint.",
+      "id": "SIM-006",
+      "title": "API - Events Router",
+      "description": "Create/update API endpoints for historical events.",
       "acceptanceCriteria": [
-        "GET /health/live returns {\"status\": \"ok\"}",
-        "Response in < 10ms",
-        "Add to src/api/routers/health.py"
+        "Create or update src/api/routers/events.py",
+        "GET /world/{world_id}/events - list events (paginated, filter by type/scope)",
+        "POST /world/{world_id}/events - create event",
+        "Schemas: HistoryEventResponse, CreateEventRequest, EventFilterParams",
+        "Test: tests/api/test_events_router.py"
       ],
-      "verification": "grep -A5 'def live' src/api/routers/health.py || grep -A5 '/health/live' src/api/routers/health.py",
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/api/routers/health.py"],
-      "estimatedTime": "10 min"
+      "blockedBy": ["SIM-005"],
+      "files": ["src/api/routers/events.py", "src/api/schemas.py"]
     },
     {
-      "id": "RES-007",
-      "title": "Infrastructure: Add /health/ready Endpoint",
-      "description": "Add readiness probe with ChromaDB check.",
+      "id": "SIM-007",
+      "title": "Frontend - Timeline Component",
+      "description": "Create timeline component to display historical events.",
       "acceptanceCriteria": [
-        "GET /health/ready checks ChromaDB connection",
-        "Returns {\"status\": \"ok\", \"checks\": {\"chromadb\": \"ok\"}} on success",
-        "Returns 503 with error details on failure"
+        "Create frontend/src/components/world/WorldTimeline.tsx",
+        "Follow existing MemoryTimeline.tsx pattern",
+        "Vertical timeline with date grouping",
+        "Filter by event_type, impact_scope",
+        "Use shadcn/ui Card, Badge components",
+        "E2E test: verify renders"
       ],
-      "verification": "grep -A10 'def ready' src/api/routers/health.py || grep -A10 '/health/ready' src/api/routers/health.py",
       "priority": 7,
-      "passes": true,
-      "effort": "low",
-      "files": ["src/api/routers/health.py"],
-      "estimatedTime": "20 min"
+      "passes": false,
+      "effort": "medium",
+      "blockedBy": ["SIM-006"],
+      "files": ["frontend/src/components/world/WorldTimeline.tsx"]
     },
     {
-      "id": "RES-008",
-      "title": "API: Fix Router Prefix in auth.py",
-      "description": "Remove duplicate /api prefix in auth router.",
+      "id": "SIM-008",
+      "title": "Domain - DiplomaticStatus Enum",
+      "description": "Create enum for diplomatic relationship statuses.",
       "acceptanceCriteria": [
-        "File: src/api/routers/auth.py",
-        "If router has prefix='/api/auth', change to prefix='/auth'",
-        "Verify: grep 'prefix=' src/api/routers/auth.py"
+        "Create src/contexts/world/domain/value_objects/diplomatic_status.py",
+        "Enum values: ALLIED, FRIENDLY, NEUTRAL, COLD, HOSTILE, AT_WAR",
+        "Function: from_relation_strength(strength: int) -> DiplomaticStatus",
+        "Maps existing FactionRelation.strength (-100 to 100)",
+        "Test: unit tests for mapping logic"
       ],
-      "verification": "grep \"prefix=\" src/api/routers/auth.py",
       "priority": 8,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/api/routers/auth.py"],
-      "estimatedTime": "5 min"
+      "files": ["src/contexts/world/domain/value_objects/diplomatic_status.py"]
     },
     {
-      "id": "RES-009",
-      "title": "API: Fix Router Prefix in characters.py",
-      "description": "Remove duplicate /api prefix in characters router.",
+      "id": "SIM-009",
+      "title": "Domain - DiplomacyMatrix Aggregate",
+      "description": "Create aggregate to manage all faction diplomatic relations.",
       "acceptanceCriteria": [
-        "File: src/api/routers/characters.py",
-        "If router has prefix='/api/characters', change to prefix='/characters'"
+        "Create src/contexts/world/domain/aggregates/diplomacy_matrix.py",
+        "Wraps existing FactionRelation system from Faction entity",
+        "Methods: get_status(a, b), set_status(a, b, status), get_allies(faction), get_enemies(faction), to_matrix()",
+        "Validation: Prevent A->ALLIED and B->AT_WAR conflicts",
+        "Test: matrix consistency tests"
       ],
-      "verification": "grep \"prefix=\" src/api/routers/characters.py",
       "priority": 9,
-      "passes": true,
-      "effort": "low",
-      "files": ["src/api/routers/characters.py"],
-      "estimatedTime": "5 min"
+      "passes": false,
+      "effort": "medium",
+      "blockedBy": ["SIM-008"],
+      "files": ["src/contexts/world/domain/aggregates/diplomacy_matrix.py"]
     },
     {
-      "id": "RES-010",
-      "title": "API: Fix Router Prefix in generation.py",
-      "description": "Remove duplicate /api prefix in generation router.",
+      "id": "SIM-010",
+      "title": "API - Diplomacy Router",
+      "description": "Create API endpoints for diplomacy operations.",
       "acceptanceCriteria": [
-        "File: src/api/routers/generation.py",
-        "Fix prefix if duplicated"
+        "Create src/api/routers/diplomacy.py",
+        "GET /world/{world_id}/diplomacy - returns DiplomacyMatrixResponse",
+        "PUT /world/{world_id}/diplomacy/{faction_a}/{faction_b} - SetRelationRequest",
+        "Schemas: DiplomacyMatrixResponse, SetRelationRequest",
+        "Test: tests/api/test_diplomacy_router.py"
       ],
-      "verification": "grep \"prefix=\" src/api/routers/generation.py",
       "priority": 10,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/api/routers/generation.py"],
-      "estimatedTime": "5 min"
+      "blockedBy": ["SIM-009"],
+      "files": ["src/api/routers/diplomacy.py", "src/api/schemas.py"]
     },
     {
-      "id": "RES-011",
-      "title": "API: Regenerate OpenAPI Spec",
-      "description": "Run generate_openapi.py after router fixes.",
+      "id": "SIM-011",
+      "title": "Frontend - Diplomacy Matrix Grid",
+      "description": "Create visual grid showing faction relationships.",
       "acceptanceCriteria": [
-        "Run: python scripts/generate_openapi.py",
-        "Verify: grep -c '/api/api/' docs/api/openapi.json should be 0"
+        "Create frontend/src/components/world/DiplomacyMatrix.tsx",
+        "Data grid: rows and columns = factions, cells = relationship color",
+        "Color mapping: ALLIED=green, NEUTRAL=yellow, AT_WAR=red",
+        "Click cell opens edit relation modal",
+        "Use shadcn/ui Table component",
+        "E2E test: interaction test"
       ],
-      "verification": "grep -c '/api/api/' docs/api/openapi.json || echo '0 (good)'",
       "priority": 11,
-      "passes": true,
-      "effort": "low",
-      "files": ["docs/api/openapi.json"],
-      "estimatedTime": "5 min",
-      "blockedBy": ["RES-008", "RES-009", "RES-010"]
+      "passes": false,
+      "effort": "medium",
+      "blockedBy": ["SIM-010"],
+      "files": ["frontend/src/components/world/DiplomacyMatrix.tsx"]
     },
     {
-      "id": "RES-012",
-      "title": "Backend: Implement WorldStateAggregate.save()",
-      "description": "Replace NotImplementedError in save() method.",
+      "id": "SIM-012",
+      "title": "Domain - FactionIntent Entity",
+      "description": "Create entity representing a faction's intended action.",
       "acceptanceCriteria": [
-        "File: src/contexts/world/domain/aggregates/world_state.py",
-        "Implement save() to serialize to JSON",
-        "Use Result[None, SaveError] pattern",
-        "Add one test case"
+        "Create src/contexts/world/domain/entities/faction_intent.py",
+        "Fields: faction_id (str), intent_type (IntentType enum), target_id (str|None), priority (1-10), narrative (str)",
+        "IntentType enum: EXPAND, ATTACK, DEFEND, ALLY, TRADE, RECOVER",
+        "Immutable value object",
+        "Test: entity tests"
       ],
-      "verification": "grep -A20 'def save' src/contexts/world/domain/aggregates/world_state.py | head -25",
       "priority": 12,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/contexts/world/domain/aggregates/world_state.py"],
-      "estimatedTime": "30 min",
-      "referencePattern": "See Result pattern in src/contexts/character/"
+      "files": ["src/contexts/world/domain/entities/faction_intent.py"]
     },
     {
-      "id": "RES-013",
-      "title": "Backend: Implement LoreRepository.search()",
-      "description": "Implement search() in InMemoryLoreEntryRepository.",
+      "id": "SIM-013",
+      "title": "Application - FactionIntentGenerator",
+      "description": "Create service to generate faction intents based on world state.",
       "acceptanceCriteria": [
-        "File: src/contexts/world/infrastructure/persistence/in_memory_lore_entry_repository.py",
-        "Implement search(query: str) -> list[LoreEntry]",
-        "Use simple substring match",
-        "Return [] if no matches"
+        "Create src/contexts/world/application/services/faction_intent_generator.py",
+        "Method: generate_intents(faction: Faction, world: WorldState) -> list[FactionIntent]",
+        "Rule-based algorithm: low resources -> RECOVER, enemies weak -> ATTACK, no allies -> ALLY",
+        "No LLM integration yet (add later)",
+        "Test: mock-based unit tests"
       ],
-      "verification": "grep -A15 'def search' src/contexts/world/infrastructure/persistence/in_memory_lore_entry_repository.py",
       "priority": 13,
-      "passes": true,
-      "effort": "low",
-      "files": ["src/contexts/world/infrastructure/persistence/in_memory_lore_entry_repository.py"],
-      "estimatedTime": "20 min"
+      "passes": false,
+      "effort": "medium",
+      "blockedBy": ["SIM-012", "SIM-009"],
+      "files": ["src/contexts/world/application/services/faction_intent_generator.py"]
     },
     {
-      "id": "RES-014",
-      "title": "Backend: Implement MemoryStore.store()",
-      "description": "Implement single store() method in MemoryStore.",
+      "id": "SIM-014",
+      "title": "Domain - SimulationTick Value Object",
+      "description": "Create value object to record simulation step results.",
       "acceptanceCriteria": [
-        "File: src/contexts/character/infrastructure/persistence/memory_store.py (create if needed)",
-        "store(memory_id: str, content: str, metadata: dict) -> None",
-        "Use self._store: dict as backend"
+        "Create src/contexts/world/domain/value_objects/simulation_tick.py",
+        "Fields: tick_id, calendar_before, calendar_after, events_generated (list), resource_changes (dict), diplomacy_changes (list)",
+        "Immutable record of simulation step",
+        "Test: value object tests"
       ],
-      "verification": "grep -A10 'def store' src/contexts/character/infrastructure/persistence/memory_store.py 2>/dev/null || echo 'File not found'",
       "priority": 14,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/contexts/character/infrastructure/persistence/memory_store.py"],
-      "estimatedTime": "15 min"
+      "blockedBy": ["SIM-001", "SIM-005"],
+      "files": ["src/contexts/world/domain/value_objects/simulation_tick.py"]
     },
     {
-      "id": "RES-015",
-      "title": "Backend: Implement MemoryStore.retrieve()",
-      "description": "Implement retrieve() method in MemoryStore.",
+      "id": "SIM-015",
+      "title": "Application - WorldSimulationService",
+      "description": "Create main simulation service that advances world time and processes faction actions.",
       "acceptanceCriteria": [
-        "retrieve(memory_id: str) -> MemoryEntry | None",
-        "Return None if not found (no exception)"
+        "Create src/contexts/world/application/services/world_simulation_service.py",
+        "Method: advance_simulation(world_id: str, days: int) -> Result[SimulationTick, SimulationError]",
+        "Algorithm: snapshot -> advance calendar -> generate intents -> resolve -> apply -> return tick",
+        "Use Result pattern from src/core/result.py",
+        "Test: full simulation tick test with mocks"
       ],
-      "verification": "grep -A10 'def retrieve' src/contexts/character/infrastructure/persistence/memory_store.py",
       "priority": 15,
-      "passes": true,
-      "effort": "low",
-      "files": ["src/contexts/character/infrastructure/persistence/memory_store.py"],
-      "estimatedTime": "10 min",
-      "blockedBy": ["RES-014"]
+      "passes": false,
+      "effort": "high",
+      "blockedBy": ["SIM-013", "SIM-014"],
+      "files": ["src/contexts/world/application/services/world_simulation_service.py"]
     },
     {
-      "id": "RES-016",
-      "title": "Backend: Implement MemoryStore.delete()",
-      "description": "Implement delete() method in MemoryStore.",
+      "id": "SIM-016",
+      "title": "API - Simulation Router",
+      "description": "Create API endpoints for simulation operations.",
       "acceptanceCriteria": [
-        "delete(memory_id: str) -> bool",
-        "Return True if deleted, False if not found"
+        "Create src/api/routers/simulation.py",
+        "POST /world/{world_id}/simulate - SimulateRequest -> SimulationTickResponse",
+        "GET /world/{world_id}/simulate/history - list of SimulationTickSummary",
+        "Schemas: SimulateRequest, SimulationTickResponse, SimulationTickSummary",
+        "Consider BackgroundTasks for long simulations",
+        "Test: tests/api/test_simulation_router.py"
       ],
-      "verification": "grep -A10 'def delete' src/contexts/character/infrastructure/persistence/memory_store.py",
       "priority": 16,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/contexts/character/infrastructure/persistence/memory_store.py"],
-      "estimatedTime": "10 min",
-      "blockedBy": ["RES-014"]
+      "blockedBy": ["SIM-015"],
+      "files": ["src/api/routers/simulation.py", "src/api/schemas.py"]
     },
     {
-      "id": "RES-017",
-      "title": "Test: Fix 3 Skipped Tests in test_bm25_retriever.py",
-      "description": "Fix up to 3 skipped tests in BM25 retriever tests.",
+      "id": "SIM-017",
+      "title": "Domain - Character Birth Date",
+      "description": "Add birth date field to Character entity for age tracking.",
       "acceptanceCriteria": [
-        "File: tests/unit/contexts/knowledge/application/services/test_bm25_retriever.py",
-        "Fix 3 skipped tests by adding proper mocks",
-        "pytest this file should show fewer skips"
+        "Update src/contexts/character/domain/entities/character.py",
+        "Add birth_date: WorldCalendar | None field",
+        "Add computed age property (requires current calendar context)",
+        "Null-safe: None birth_date returns None age",
+        "Test: age calculation tests"
       ],
-      "verification": "pytest tests/unit/contexts/knowledge/application/services/test_bm25_retriever.py -v --tb=no 2>&1 | grep -E 'PASSED|SKIPPED|FAILED' | head -20",
       "priority": 17,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["tests/unit/contexts/knowledge/application/services/test_bm25_retriever.py"],
-      "estimatedTime": "30 min"
+      "blockedBy": ["SIM-001"],
+      "files": ["src/contexts/character/domain/entities/character.py"]
     },
     {
-      "id": "RES-018",
-      "title": "Test: Fix 3 Skipped Tests in test_hybrid_retriever.py",
-      "description": "Fix up to 3 skipped tests in hybrid retriever.",
+      "id": "SIM-018",
+      "title": "Domain - Character Location Tracking",
+      "description": "Add location tracking to Character entity.",
       "acceptanceCriteria": [
-        "File: tests/unit/contexts/knowledge/application/services/test_hybrid_retriever.py",
-        "Fix 3 skipped tests"
+        "Update Character entity",
+        "Add current_location_id: str | None field",
+        "Add move_to(location_id: str) -> Character method",
+        "Emit CharacterLocationChanged domain event",
+        "Test: movement tests"
       ],
-      "verification": "pytest tests/unit/contexts/knowledge/application/services/test_hybrid_retriever.py -v --tb=no 2>&1 | grep -E 'PASSED|SKIPPED|FAILED' | head -20",
       "priority": 18,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["tests/unit/contexts/knowledge/application/services/test_hybrid_retriever.py"],
-      "estimatedTime": "30 min"
+      "files": ["src/contexts/character/domain/entities/character.py"]
     },
     {
-      "id": "RES-019",
-      "title": "Test: Fix 3 Skipped Tests in test_rerank_service.py",
-      "description": "Fix up to 3 skipped tests in rerank service.",
+      "id": "SIM-019",
+      "title": "Application - Character Reaction",
+      "description": "Create service for character reactions to world events.",
       "acceptanceCriteria": [
-        "File: tests/unit/contexts/knowledge/application/services/test_rerank_service.py",
-        "Fix 3 skipped tests"
+        "Create src/contexts/character/application/services/character_reactor.py",
+        "Method: react_to_event(character_id: str, event: HistoryEvent) -> CharacterReaction",
+        "Reaction types: OBSERVE, FLEE, INVESTIGATE, IGNORE",
+        "Rule-based logic first (LLM later)",
+        "Creates CharacterMemory entry for reaction",
+        "Test: reaction tests"
       ],
-      "verification": "pytest tests/unit/contexts/knowledge/application/services/test_rerank_service.py -v --tb=no 2>&1 | grep -E 'PASSED|SKIPPED|FAILED' | head -20",
       "priority": 19,
-      "passes": true,
-      "effort": "low",
-      "files": ["tests/unit/contexts/knowledge/application/services/test_rerank_service.py"],
-      "estimatedTime": "30 min"
+      "passes": false,
+      "effort": "medium",
+      "blockedBy": ["SIM-005", "SIM-017"],
+      "files": ["src/contexts/character/application/services/character_reactor.py"]
     },
     {
-      "id": "RES-020",
-      "title": "Logging: Replace print() in agent_coordinator.py",
-      "description": "Replace print statements with structlog in one file.",
+      "id": "SIM-020",
+      "title": "Frontend - Character Location Display",
+      "description": "Update LocationTree to show characters at each location.",
       "acceptanceCriteria": [
-        "File: src/core/agent_coordinator.py",
-        "Replace all print() with logger.info/error",
-        "Add: logger = structlog.get_logger() at top"
+        "Update frontend/src/components/world/LocationTree.tsx",
+        "Show character avatars under each location node",
+        "Click avatar opens character detail modal",
+        "Use shadcn/ui Avatar component",
+        "E2E test: display test"
       ],
-      "verification": "grep -c 'print(' src/core/agent_coordinator.py",
       "priority": 20,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/core/agent_coordinator.py"],
-      "estimatedTime": "15 min"
+      "blockedBy": ["SIM-018"],
+      "files": ["frontend/src/components/world/LocationTree.tsx"]
     },
     {
-      "id": "RES-021",
-      "title": "Logging: Replace print() in turn_orchestrator.py",
-      "description": "Replace print statements with structlog in one file.",
+      "id": "SIM-021",
+      "title": "Domain - Rumor Entity",
+      "description": "Create entity for rumors that spread through the world.",
       "acceptanceCriteria": [
-        "File: src/core/turn_orchestrator.py",
-        "Replace all print() with structlog"
+        "Create src/contexts/world/domain/entities/rumor.py",
+        "Fields: content (str), truth_value (0-100), origin_location_id (str), spread_locations (set), created_date (WorldCalendar)",
+        "Method: spread_to(location_id: str) -> Rumor (decreases truth_value)",
+        "Test: rumor spread tests"
       ],
-      "verification": "grep -c 'print(' src/core/turn_orchestrator.py",
       "priority": 21,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/core/turn_orchestrator.py"],
-      "estimatedTime": "15 min"
+      "blockedBy": ["SIM-001"],
+      "files": ["src/contexts/world/domain/entities/rumor.py"]
     },
     {
-      "id": "RES-022",
-      "title": "Logging: Replace print() in narrative_processor.py",
-      "description": "Replace print statements with structlog in one file.",
+      "id": "SIM-022",
+      "title": "Application - RumorPropagation",
+      "description": "Create service to propagate rumors through locations.",
       "acceptanceCriteria": [
-        "File: src/core/narrative_processor.py",
-        "Replace all print() with structlog"
+        "Create src/contexts/world/application/services/rumor_propagation.py",
+        "Method: propagate_rumors(world_id: str) -> list[Rumor]",
+        "Each tick: rumors spread to adjacent locations",
+        "Truth decay: -10 per hop",
+        "Generate rumors from HistoricalEvents",
+        "Test: propagation tests"
       ],
-      "verification": "grep -c 'print(' src/core/narrative_processor.py",
       "priority": 22,
-      "passes": true,
-      "effort": "low",
-      "files": ["src/core/narrative_processor.py"],
-      "estimatedTime": "15 min"
+      "passes": false,
+      "effort": "medium",
+      "blockedBy": ["SIM-021"],
+      "files": ["src/contexts/world/application/services/rumor_propagation.py"]
     },
     {
-      "id": "RES-023",
-      "title": "Frontend: Fix Flaky Dashboard Core Test",
-      "description": "Fix flaky test in dashboard-core-uat.spec.ts.",
+      "id": "SIM-023",
+      "title": "Frontend - Rumor Board",
+      "description": "Create component to display rumors at a location.",
       "acceptanceCriteria": [
-        "File: frontend/tests/e2e/dashboard-core-uat.spec.ts",
-        "Replace waitForTimeout with waitForSelector",
-        "Add data-testid to slow elements if needed"
+        "Create frontend/src/components/world/RumorBoard.tsx",
+        "List rumors for selected location",
+        "Truth indicator: green=true (80+), yellow=uncertain (40-79), red=false (0-39)",
+        "Use existing Card/List patterns",
+        "E2E test: display test"
       ],
-      "verification": "grep -c 'waitForTimeout' frontend/tests/e2e/dashboard-core-uat.spec.ts",
       "priority": 23,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["frontend/tests/e2e/dashboard-core-uat.spec.ts"],
-      "estimatedTime": "20 min",
-      "notes": "Replaced all 7 waitForTimeout with deterministic waits (expect.toBeVisible, networkidle)"
+      "blockedBy": ["SIM-022"],
+      "files": ["frontend/src/components/world/RumorBoard.tsx"]
     },
     {
-      "id": "RES-024",
-      "title": "Tech Debt: Check character_factory.py Usage",
-      "description": "Check if character_factory.py is still imported anywhere.",
+      "id": "SIM-024",
+      "title": "Application - SanityChecker",
+      "description": "Create service to validate world state consistency.",
       "acceptanceCriteria": [
-        "Run: grep -r 'from src.character_factory' src/ tests/",
-        "If 0 results: mark for removal in notes",
-        "If used: add deprecation warning to file"
+        "Create src/contexts/world/application/services/simulation_sanity_checker.py",
+        "Method: check(world: WorldState) -> list[SanityViolation]",
+        "Rules: dead chars no location, zero-influence factions no territories, no circular location parents",
+        "Returns warnings (non-blocking)",
+        "Test: sanity check tests"
       ],
-      "verification": "grep -r 'from src.character_factory' src/ tests/ | wc -l",
       "priority": 24,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/character_factory.py"],
-      "estimatedTime": "10 min",
-      "notes": "0 imports found - file marked for removal in future cleanup"
+      "files": ["src/contexts/world/application/services/simulation_sanity_checker.py"]
     },
     {
-      "id": "RES-025",
-      "title": "Tech Debt: Check director_agent.py Usage",
-      "description": "Check if director_agent.py is still imported anywhere.",
+      "id": "SIM-025",
+      "title": "Domain - WorldSnapshot Entity",
+      "description": "Create entity for world state snapshots.",
       "acceptanceCriteria": [
-        "Run: grep -r 'from src.director_agent' src/ tests/",
-        "If 0 results: mark for removal in notes",
-        "If used: add deprecation warning to file"
+        "Create src/contexts/world/domain/entities/world_snapshot.py",
+        "Fields: snapshot_id, world_id, calendar, state_json (serialized WorldState), created_at",
+        "Method: restore() -> WorldState",
+        "Test: snapshot/restore tests"
       ],
-      "verification": "grep -r 'from src.director_agent' src/ tests/ | wc -l",
       "priority": 25,
-      "passes": true,
+      "passes": false,
       "effort": "low",
-      "files": ["src/director_agent.py"],
-      "estimatedTime": "10 min",
-      "notes": "0 imports found - file marked for removal in future cleanup"
-    }
+      "blockedBy": ["SIM-002"],
+      "files": ["src/contexts/world/domain/entities/world_snapshot.py"]
+    },
+    {
+      "id": "SIM-026",
+      "title": "Application - SnapshotService",
+      "description": "Create service to manage world state snapshots.",
+      "acceptanceCriteria": [
+        "Create src/contexts/world/application/services/snapshot_service.py",
+        "Methods: create_snapshot(world_id), restore_snapshot(snapshot_id) -> Result, list_snapshots(world_id)",
+        "Auto-snapshot before each simulation tick",
+        "Max 10 snapshots per world (FIFO)",
+        "Test: snapshot lifecycle tests"
+      ],
+      "priority": 26,
+      "passes": false,
+      "effort": "medium",
+      "blockedBy": ["SIM-025"],
+      "files": ["src/contexts/world/application/services/snapshot_service.py"]
+    },
+    {
+      "id": "SIM-027",
+      "title": "API - Snapshot Router",
+      "description": "Create API endpoints for snapshot operations.",
+      "acceptanceCriteria": [
+        "Create src/api/routers/snapshots.py",
+        "POST /world/{world_id}/snapshots - create snapshot",
+        "GET /world/{world_id}/snapshots - list snapshots",
+        "POST /world/{world_id}/snapshots/{snapshot_id}/restore - restore",
+        "Test: tests/api/test_snapshots_router.py"
+      ],
+      "priority": 27,
+      "passes": false,
       "effort": "low",
-      "files": ["src/director_agent.py"],
-      "estimatedTime": "10 min"
+      "blockedBy": ["SIM-026"],
+      "files": ["src/api/routers/snapshots.py"]
+    },
+    {
+      "id": "SIM-028",
+      "title": "Frontend - Simulation Dashboard",
+      "description": "Create main simulation dashboard page.",
+      "acceptanceCriteria": [
+        "Create frontend/src/pages/SimulationDashboard.tsx",
+        "Components: CalendarDisplay, Advance Time button, Recent Events feed, Faction status summary",
+        "Create Zustand store: frontend/src/stores/simulationStore.ts",
+        "Follow existing Dashboard patterns",
+        "E2E test: full flow test"
+      ],
+      "priority": 28,
+      "passes": false,
+      "effort": "high",
+      "blockedBy": ["SIM-004", "SIM-007", "SIM-016"],
+      "files": ["frontend/src/pages/SimulationDashboard.tsx", "frontend/src/stores/simulationStore.ts"]
     }
   ]
 }
