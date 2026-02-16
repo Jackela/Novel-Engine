@@ -32,7 +32,7 @@
         "  - invalid day (0, 32) returns Err(ValueError) on creation"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": [
         "src/contexts/world/domain/value_objects/world_calendar.py",

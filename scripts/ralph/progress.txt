@@ -1,16 +1,27 @@
-# Ralph Progress - Warzone 5: World Simulation
-Started: Sun Feb 16 2025
-Branch: feat/world-simulation
----
+# Ralph Progress Log
 
 ## Codebase Patterns
-- Hexagonal architecture: domain -> application -> infrastructure
-- Domain events for state changes (emit from aggregates)
-- Result pattern: Ok(value) and Err(Error(...)) from src/core/result.py
-- Route decorators: NO /api prefix (added by app.include_router)
-- Frontend: shadcn/ui + Tailwind ONLY, no custom CSS
-- Zustand for global state, TanStack Query for server state
-- Follow existing patterns in world/ context
-- All error returns use Result pattern, not exceptions (per CLAUDE.md)
+- Use `from src.core.result import Ok, Err, Result` for Result pattern
+- Value objects use `@dataclass(frozen=True)` with `__post_init__` for validation
+- Test files need `pytestmark = pytest.mark.unit` at module level
+- Mock `aioredis` in tests: `sys.modules["aioredis"] = MagicMock()`
+- Import path pattern: `from src.contexts.<context>.domain.value_objects.<name> import <Class>`
 
+Started: Mon Feb 16 16:36:42 CST 2026
+---
+
+## Mon Feb 16 16:40 CST 2026 - SIM-001
+- Created WorldCalendar value object with full functionality
+- Implemented: advance(), format(), from_datetime(), validate(), to_dict(), from_dict(), total_days(), days_until()
+- Files changed:
+  - src/contexts/world/domain/value_objects/__init__.py (new)
+  - src/contexts/world/domain/value_objects/world_calendar.py (new)
+  - tests/unit/contexts/world/domain/value_objects/__init__.py (new)
+  - tests/unit/contexts/world/domain/value_objects/test_world_calendar.py (new)
+- **Learnings for future iterations:**
+  - The world context value_objects directory had no __init__.py, needed to create one
+  - Test directory structure follows src structure: tests/unit/contexts/world/domain/value_objects/
+  - Result pattern uses Ok(value) and Err(exception) from src.core.result
+  - When advancing days, the calculation uses while loop for overflow handling (day > days_per_month)
+  - Mypy errors in coordinates.py are pre-existing (not from new code)
 ---
