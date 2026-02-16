@@ -1563,6 +1563,54 @@ export type EventListResponse = z.infer<typeof EventListResponseSchema>;
 export type EventFilterParams = z.infer<typeof EventFilterParamsSchema>;
 export type CreateEventRequest = z.infer<typeof CreateEventRequestSchema>;
 
+// === Diplomacy Schemas (SIM-011) ===
+
+/**
+ * Diplomatic status enum matching backend DiplomaticStatus.
+ * Represents the relationship strength between two factions.
+ */
+export const DiplomaticStatusEnum = z.enum([
+  'allied',
+  'friendly',
+  'neutral',
+  'cold',
+  'hostile',
+  'at_war',
+]);
+
+/**
+ * Diplomacy matrix response schema matching backend DiplomacyMatrixResponse.
+ * Contains the full diplomatic relationship matrix between all factions.
+ */
+export const DiplomacyMatrixResponseSchema = z.object({
+  world_id: z.string(),
+  matrix: z.record(z.string(), z.record(z.string(), z.string())),
+  factions: z.array(z.string()).default([]),
+});
+
+/**
+ * Faction diplomacy response schema matching backend FactionDiplomacyResponse.
+ * Shows a single faction's relations categorized by status.
+ */
+export const FactionDiplomacyResponseSchema = z.object({
+  faction_id: z.string(),
+  allies: z.array(z.string()).default([]),
+  enemies: z.array(z.string()).default([]),
+  neutral: z.array(z.string()).default([]),
+});
+
+/**
+ * Request to set diplomatic relation between two factions.
+ */
+export const SetRelationRequestSchema = z.object({
+  status: DiplomaticStatusEnum,
+});
+
+export type DiplomaticStatus = z.infer<typeof DiplomaticStatusEnum>;
+export type DiplomacyMatrixResponse = z.infer<typeof DiplomacyMatrixResponseSchema>;
+export type FactionDiplomacyResponse = z.infer<typeof FactionDiplomacyResponseSchema>;
+export type SetRelationRequest = z.infer<typeof SetRelationRequestSchema>;
+
 // === Dialogue Generation Schemas (CHAR-027/CHAR-028) ===
 
 /**

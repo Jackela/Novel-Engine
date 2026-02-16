@@ -318,7 +318,7 @@
         "E2E test: verify grid renders, tooltip shows, click cell opens dialog, save works"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "blockedBy": ["SIM-010"],
       "files": [

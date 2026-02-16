@@ -66,3 +66,13 @@ export {
   getWorldEvent,
   createWorldEvent,
 } from './eventsApi';
+
+// Diplomacy API (SIM-011)
+export {
+  useDiplomacyMatrix,
+  useFactionDiplomacy,
+  useSetRelation,
+  getDiplomacyMatrix,
+  getFactionDiplomacy,
+  setRelation,
+} from './diplomacyApi';

@@ -215,3 +215,27 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Router registered in BOTH main_api_server.py and app.py for test compatibility
   - Tests use reset_diplomacy_storage() fixture for test isolation
 ---
+## Mon Feb 17 10:45 CST 2026 - SIM-011
+- Created DiplomacyMatrix React component with TanStack Query hooks
+- Implemented: useDiplomacyMatrix(worldId), useFactionDiplomacy(), useSetRelation() hooks with optimistic updates
+- Added DiplomaticStatusEnum, DiplomacyMatrixResponse, FactionDiplomacyResponse, SetRelationRequest schemas to frontend types
+- Component uses shadcn/ui Card, Dialog, Select, Tooltip components
+- Grid with color-coded cells: ALLIED=#22c55e, FRIENDLY=#84cc16, NEUTRAL=#eab308, COLD=#f97316, HOSTILE=#ef4444, AT_WAR=#dc2626
+- Click cell opens dialog to edit relation with status dropdown
+- Keyboard navigation: Arrow keys navigate cells, Enter opens dialog
+- Loading skeleton, error state with retry, empty state, success state implemented
+- E2E tests for rendering, tooltip, dialog, keyboard navigation, accessibility
+- TypeScript passes, ESLint passes (2 warnings acceptable)
+- Files changed:
+  - frontend/src/types/schemas.ts (modified - added DiplomaticStatusEnum, DiplomacyMatrixResponse, FactionDiplomacyResponse, SetRelationRequest)
+  - frontend/src/lib/api/diplomacyApi.ts (new - TanStack Query hooks)
+  - frontend/src/lib/api/index.ts (modified - exported diplomacy hooks)
+  - frontend/src/components/world/DiplomacyMatrix.tsx (new)
+  - frontend/tests/e2e/diplomacy.spec.ts (new - E2E tests)
+- **Learnings for future iterations:**
+  - Grid role requires tabIndex={0} for keyboard focusability (eslint jsx-a11y/interactive-supports-focus)
+  - Scope attribute is only valid on th elements, not div elements with role="columnheader"/"rowheader"
+  - Use Fragment instead of empty <> when key is needed in map
+  - Labels without associated inputs should use <span> instead of <label>
+  - useCallback dependencies need to include functions used in the callback
+---
