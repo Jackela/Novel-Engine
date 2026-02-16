@@ -17,19 +17,19 @@
         "Create src/contexts/world/domain/value_objects/world_calendar.py",
         "Use @dataclass(frozen=True) for immutability",
         "Fields: year (int, min=1), month (int, min=1, max=months_per_year), day (int, min=1, max=days_per_month), era_name (str), days_per_month (int=30), months_per_year (int=12)",
-        "Method: advance(days: int) -> WorldCalendar (returns new instance, raises ValueError if days < 0)",
+        "Method: advance(days: int) -> Result[WorldCalendar, ValueError] (returns new instance, returns Err(ValueError) if days < 0)",
         "Method: format() -> str (e.g., 'Year 1042, Month 3, Day 15 - Third Age')",
         "Class method: from_datetime(dt: datetime) -> WorldCalendar",
-        "Class method: validate(year, month, day, ...) raises ValueError for invalid values",
+        "Class method: validate(year, month, day, ...) -> Result[WorldCalendar, ValueError] (returns Err(ValueError) for invalid values)",
         "Implement __eq__, __hash__ for value object semantics",
         "Create tests/unit/contexts/world/domain/value_objects/test_world_calendar.py",
         "Test cases:",
         "  - advance within month, month rollover, year rollover",
         "  - format output matches expected pattern",
         "  - advance(0) returns same calendar",
-        "  - advance(-1) raises ValueError",
-        "  - invalid month (0, 13) raises ValueError on creation",
-        "  - invalid day (0, 32) raises ValueError on creation"
+        "  - advance(-1) returns Err(ValueError)",
+        "  - invalid month (0, 13) returns Err(ValueError) on creation",
+        "  - invalid day (0, 32) returns Err(ValueError) on creation"
       ],
       "priority": 1,
       "passes": false,
@@ -113,11 +113,13 @@
       "priority": 4,
       "passes": false,
       "effort": "medium",
-      "blockedBy": ["SIM-003"],
+      "blockedBy": ["SIM-001", "SIM-003"],
       "files": [
         "frontend/src/components/world/CalendarDisplay.tsx",
         "frontend/src/lib/api/calendarApi.ts",
-        "frontend/src/features/world/WorldPage.tsx"
+        "frontend/src/features/world/WorldPage.tsx",
+        "frontend/src/types/schemas.ts",
+        "tests/e2e/calendar.spec.ts"
       ]
     },
     {
@@ -198,11 +200,13 @@
       ],
       "priority": 7,
       "passes": false,
-      "effort": "medium",
+      "effort": "high",
       "blockedBy": ["SIM-005", "SIM-006"],
       "files": [
         "frontend/src/components/world/WorldTimeline.tsx",
-        "frontend/src/lib/api/eventsApi.ts"
+        "frontend/src/lib/api/eventsApi.ts",
+        "frontend/src/types/schemas.ts",
+        "tests/e2e/timeline.spec.ts"
       ]
     },
     {
@@ -246,7 +250,7 @@
         "  - get_enemies(faction_id: str) -> list[str]",
         "  - get_neutral(faction_id: str) -> list[str]",
         "  - to_matrix() -> dict[str, dict[str, str]] (for API response)",
-        "Invariant validation: set_status raises ValueError if creates conflict",
+        "Invariant validation: set_status returns Err(ValueError) if creates conflict",
         "  (e.g., A declares ALLIED but B has AT_WAR)",
         "Create tests/unit/contexts/world/domain/aggregates/test_diplomacy_matrix.py"
       ],
@@ -315,11 +319,13 @@
       ],
       "priority": 11,
       "passes": false,
-      "effort": "medium",
+      "effort": "high",
       "blockedBy": ["SIM-010"],
       "files": [
         "frontend/src/components/world/DiplomacyMatrix.tsx",
-        "frontend/src/lib/api/diplomacyApi.ts"
+        "frontend/src/lib/api/diplomacyApi.ts",
+        "frontend/src/types/schemas.ts",
+        "tests/e2e/diplomacy.spec.ts"
       ]
     },
     {
@@ -374,7 +380,7 @@
       ],
       "priority": 13,
       "passes": false,
-      "effort": "medium",
+      "effort": "high",
       "blockedBy": ["SIM-012", "SIM-009"],
       "files": [
         "src/contexts/world/application/services/faction_intent_generator.py",
@@ -407,7 +413,7 @@
       "priority": 14,
       "passes": false,
       "effort": "low",
-      "blockedBy": ["SIM-001", "SIM-008"],
+      "blockedBy": ["SIM-001", "SIM-005", "SIM-008"],
       "files": [
         "src/contexts/world/domain/value_objects/simulation_tick.py",
         "tests/unit/contexts/world/domain/value_objects/test_simulation_tick.py"
@@ -469,7 +475,7 @@
       ],
       "priority": 16,
       "passes": false,
-      "effort": "medium",
+      "effort": "high",
       "blockedBy": ["SIM-015"],
       "files": [
         "src/contexts/world/application/services/world_simulation_service.py",
@@ -508,7 +514,7 @@
         "Add simulation history tracking (in-memory dict, max 100 entries per world)",
         "Update tests covering: successful commit, snapshot failure, save failure with rollback"
       ],
-      "priority": 17,
+      "priority": 23,
       "passes": false,
       "effort": "high",
       "blockedBy": ["SIM-016", "SIM-024", "SIM-025", "SIM-022"],
@@ -542,13 +548,14 @@
         "Register router in main_api_server.py",
         "Create tests/api/routers/test_simulation.py covering all endpoints and errors"
       ],
-      "priority": 18,
+      "priority": 24,
       "passes": false,
       "effort": "low",
       "blockedBy": ["SIM-017"],
       "files": [
         "src/api/routers/simulation.py",
         "src/api/schemas.py",
+        "frontend/src/types/schemas.ts",
         "tests/api/routers/test_simulation.py"
       ]
     },
@@ -649,7 +656,7 @@
         "Integration: Call memory_service.create_memory(character.id, event.description, intensity) if reaction_type != IGNORE",
         "Create tests with mock Character, HistoryEvent, WorldState covering all reaction types"
       ],
-      "priority": 22,
+      "priority": 18,
       "passes": false,
       "effort": "medium",
       "blockedBy": ["SIM-005", "SIM-021"],
@@ -683,7 +690,8 @@
       "effort": "low",
       "blockedBy": ["SIM-020"],
       "files": [
-        "frontend/src/components/world/LocationTree.tsx"
+        "frontend/src/components/world/LocationTree.tsx",
+        "tests/e2e/location-tree.spec.ts"
       ]
     },
     {
@@ -794,7 +802,9 @@
       "blockedBy": ["SIM-025"],
       "files": [
         "frontend/src/components/world/RumorBoard.tsx",
-        "frontend/src/lib/api/rumorApi.ts"
+        "frontend/src/lib/api/rumorApi.ts",
+        "frontend/src/types/schemas.ts",
+        "tests/e2e/rumor-board.spec.ts"
       ]
     },
     {
@@ -847,7 +857,7 @@
       "priority": 28,
       "passes": false,
       "effort": "low",
-      "blockedBy": ["SIM-002"],
+      "blockedBy": ["SIM-001", "SIM-002"],
       "files": [
         "src/contexts/world/domain/entities/world_snapshot.py",
         "tests/unit/contexts/world/domain/entities/test_world_snapshot.py"
@@ -956,7 +966,10 @@
       "blockedBy": ["SIM-004", "SIM-007", "SIM-018", "SIM-026", "SIM-030"],
       "files": [
         "frontend/src/pages/SimulationDashboard.tsx",
-        "frontend/src/stores/simulationStore.ts"
+        "frontend/src/stores/simulationStore.ts",
+        "frontend/src/types/schemas.ts",
+        "frontend/src/routes/routes.tsx",
+        "tests/e2e/simulation-dashboard.spec.ts"
       ]
     }
   ]
