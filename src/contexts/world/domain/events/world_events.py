@@ -396,8 +396,8 @@ class WorldStateChanged(Event):
     @classmethod
     def time_advanced(
         cls,
-        previous_time: datetime,
-        new_time: datetime,
+        previous_time: datetime | str,
+        new_time: datetime | str,
         reason: str,
         source: str = "world_context",
     ) -> "WorldStateChanged":
@@ -405,23 +405,27 @@ class WorldStateChanged(Event):
         Create an event for when world time is advanced.
 
         Args:
-            previous_time: Previous world time
-            new_time: New world time
+            previous_time: Previous world time (datetime or formatted string)
+            new_time: New world time (datetime or formatted string)
             reason: Reason for advancing time
             source: Event source
 
         Returns:
             WorldStateChanged event
         """
+        # Handle both datetime objects and strings (for WorldCalendar.format())
+        prev_str = previous_time.isoformat() if isinstance(previous_time, datetime) else previous_time
+        new_str = new_time.isoformat() if isinstance(new_time, datetime) else new_time
+
         return cls(
             event_id=str(uuid4()),
             source=source,
             change_type=WorldChangeType.TIME_ADVANCED,
             severity=WorldEventSeverity.MAJOR,
-            previous_state={"world_time": previous_time.isoformat()},
-            new_state={"world_time": new_time.isoformat()},
+            previous_state={"world_time": prev_str},
+            new_state={"world_time": new_str},
             change_reason=reason,
-            world_time=new_time,
+            world_time=datetime.now() if isinstance(new_time, str) else new_time,
         )
 
     def add_cascade_effect(self, entity_id: str) -> None:

@@ -18,6 +18,7 @@ from src.core.result import Err, Ok, Result
 from ..entities.entity import Entity
 from ..events.world_events import WorldStateChanged
 from ..value_objects.coordinates import Coordinates
+from ..value_objects.world_calendar import WorldCalendar
 
 if TYPE_CHECKING:
     from src.core.result import SaveError
@@ -122,7 +123,7 @@ class WorldState(Entity):
         name: Human-readable name for this world state
         description: Optional description of the world
         status: Current status of the world
-        world_time: Current time within the world (game time)
+        calendar: Current in-game calendar (WorldCalendar value object)
         entities: Dictionary of entities within the world, keyed by ID
         environment: Environmental properties and settings
         spatial_index: Spatial indexing for efficient location queries
@@ -132,7 +133,11 @@ class WorldState(Entity):
     name: str = ""
     description: Optional[str] = None
     status: WorldStatus = WorldStatus.INITIALIZING
-    world_time: datetime = field(default_factory=datetime.now)
+    calendar: WorldCalendar = field(
+        default_factory=lambda: WorldCalendar(
+            year=1, month=1, day=1, era_name="First Age"
+        )
+    )
     entities: Dict[str, WorldEntity] = field(default_factory=dict)
     environment: Dict[str, Any] = field(default_factory=dict)
     spatial_index: Dict[str, List[str]] = field(
@@ -182,12 +187,7 @@ class WorldState(Entity):
             if entity.id != entity_id:
                 errors.append(f"Entity ID mismatch: {entity.id} != {entity_id}")
 
-        # Validate world time
-        if self.world_time > datetime.now():
-            # Allow future time for simulation purposes, but warn about far future
-            time_diff = (self.world_time - datetime.now()).total_seconds()
-            if time_diff > 86400 * 365:  # More than a year in the future
-                errors.append("World time is more than a year in the future")
+        # Calendar validation is handled by WorldCalendar's __post_init__
 
         return errors
 
@@ -515,29 +515,75 @@ class WorldState(Entity):
         """
         return self.get_entities_in_area(coordinates, tolerance)
 
-    def advance_time(self, new_time: datetime, reason: Optional[str] = None) -> None:
+    def advance_time(self, days: int, reason: Optional[str] = None) -> Result["WorldState", ValueError]:
         """
-        Advance the world time.
+        Advance the world calendar by a specified number of days.
 
         Args:
-            new_time: New world time
+            days: Number of days to advance (must be >= 0)
             reason: Optional reason for time advancement
-        """
-        if new_time <= self.world_time:
-            raise ValueError("New time must be after current world time")
 
-        previous_time = self.world_time
-        self.world_time = new_time
+        Returns:
+            Result containing the updated WorldState or ValueError
+
+        Raises:
+            ValueError: If days is negative (via calendar.advance)
+        """
+        result = self.calendar.advance(days)
+        if result.is_error:
+            return result
+
+        previous_calendar = self.calendar
+        self.calendar = result.value
         self.touch()
 
         # Raise domain event
         self.raise_domain_event(
             WorldStateChanged.time_advanced(
-                previous_time=previous_time,
-                new_time=new_time,
-                reason=reason or "World time advanced",
+                previous_time=previous_calendar.format(),
+                new_time=self.calendar.format(),
+                reason=reason or f"World time advanced by {days} days",
             )
         )
+
+        return Ok(self)
+
+    @classmethod
+    def from_datetime_world_time(
+        cls,
+        world_id: str,
+        name: str,
+        dt: datetime,
+        era_name: str = "Modern Era",
+        **kwargs: Any,
+    ) -> "WorldState":
+        """
+        Create a WorldState from a datetime for migration purposes.
+
+        This class method facilitates migration from the old world_time: datetime
+        field to the new calendar: WorldCalendar field.
+
+        Args:
+            world_id: Unique identifier for the world
+            name: Human-readable name for the world
+            dt: Datetime to convert to WorldCalendar
+            era_name: Name of the era (default: "Modern Era")
+            **kwargs: Additional arguments passed to WorldState constructor
+
+        Returns:
+            New WorldState instance with calendar derived from datetime
+        """
+        calendar = WorldCalendar.from_datetime(dt)
+        # Create a new calendar with the specified era_name
+        calendar = WorldCalendar(
+            year=calendar.year,
+            month=calendar.month,
+            day=calendar.day,
+            era_name=era_name,
+            days_per_month=calendar.days_per_month,
+            months_per_year=calendar.months_per_year,
+        )
+        return cls(id=world_id, name=name, calendar=calendar, **kwargs)
 
     def update_environment(
         self, environment_changes: Dict[str, Any], reason: Optional[str] = None
@@ -576,7 +622,7 @@ class WorldState(Entity):
             "name": self.name,
             "description": self.description,
             "status": self.status.value,
-            "world_time": self.world_time.isoformat(),
+            "calendar": self.calendar.to_dict(),
             "entities": {
                 eid: entity.to_dict() for eid, entity in self.entities.items()
             },
@@ -610,7 +656,7 @@ class WorldState(Entity):
             self.spatial_index.clear()
 
         self.environment.clear()
-        self.world_time = datetime.now()
+        self.calendar = WorldCalendar(year=1, month=1, day=1, era_name="First Age")
         self.status = WorldStatus.INITIALIZING
         self.touch()
 
@@ -637,7 +683,7 @@ class WorldState(Entity):
             "entity_count": len(self.entities),
             "entity_types": entity_type_counts,
             "environment_properties": len(self.environment),
-            "world_time": self.world_time.isoformat(),
+            "calendar": self.calendar.format(),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "version": self.version,
@@ -752,7 +798,7 @@ class WorldState(Entity):
             "name": self.name,
             "description": self.description,
             "status": self.status.value,
-            "world_time": self.world_time.isoformat(),
+            "calendar": self.calendar.to_dict(),
             "entities": {
                 eid: entity.to_dict() for eid, entity in self.entities.items()
             },
@@ -762,3 +808,55 @@ class WorldState(Entity):
             "spatial_grid_size": self.spatial_grid_size,
             "max_entities": self.max_entities,
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "WorldState":
+        """
+        Create a WorldState from dictionary representation.
+
+        Supports backward compatibility with the old world_time field by
+        automatically converting it to a WorldCalendar.
+
+        Args:
+            data: Dictionary containing world state data
+
+        Returns:
+            New WorldState instance
+
+        Raises:
+            KeyError: If required keys are missing
+            ValueError: If values are invalid
+        """
+        # Handle calendar field with backward compatibility
+        if "calendar" in data:
+            calendar = WorldCalendar.from_dict(data["calendar"])
+        elif "world_time" in data:
+            # Backward compatibility: convert old world_time to calendar
+            dt = datetime.fromisoformat(data["world_time"])
+            calendar = WorldCalendar.from_datetime(dt)
+        else:
+            # Default calendar if neither is present
+            calendar = WorldCalendar(year=1, month=1, day=1, era_name="First Age")
+
+        # Parse entities
+        entities: Dict[str, WorldEntity] = {}
+        entities_data = data.get("entities", {})
+        for eid, entity_data in entities_data.items():
+            entities[eid] = WorldEntity.from_dict(entity_data)
+
+        return cls(
+            id=data["id"],
+            name=data.get("name", ""),
+            description=data.get("description"),
+            status=WorldStatus(data.get("status", "initializing")),
+            calendar=calendar,
+            entities=entities,
+            environment=data.get("environment", {}),
+            spatial_index=data.get("spatial_index", {}),
+            metadata=data.get("metadata", {}),
+            created_at=datetime.fromisoformat(data["created_at"]),
+            updated_at=datetime.fromisoformat(data["updated_at"]),
+            version=data.get("version", 1),
+            max_entities=data.get("max_entities", 10000),
+            spatial_grid_size=data.get("spatial_grid_size", 100.0),
+        )
