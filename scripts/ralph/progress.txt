@@ -6,6 +6,8 @@
 - Test files need `pytestmark = pytest.mark.unit` at module level
 - Mock `aioredis` in tests: `sys.modules["aioredis"] = MagicMock()`
 - Import path pattern: `from src.contexts.<context>.domain.value_objects.<name> import <Class>`
+- Domain events can accept Union types for backward compatibility (datetime | str)
+- from_dict class methods should handle backward compatibility for renamed fields
 
 Started: Mon Feb 16 16:36:42 CST 2026
 ---
@@ -25,3 +27,24 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - When advancing days, the calculation uses while loop for overflow handling (day > days_per_month)
   - Mypy errors in coordinates.py are pre-existing (not from new code)
 ---
+
+## Mon Feb 16 16:55 CST 2026 - SIM-002
+- Integrated WorldCalendar into WorldState aggregate
+- Replaced world_time: datetime field with calendar: WorldCalendar
+- Updated advance_time() to use calendar.advance() and return Result type
+- Added from_datetime_world_time() class method for migration from old format
+- Added from_dict() class method with backward compatibility for old world_time field
+- Updated WorldStateChanged.time_advanced to accept datetime | str
+- Files changed:
+  - src/contexts/world/domain/aggregates/world_state.py (modified)
+  - src/contexts/world/domain/events/world_events.py (modified)
+  - tests/unit/contexts/world/domain/aggregates/__init__.py (new)
+  - tests/unit/contexts/world/domain/aggregates/test_world_state.py (new)
+- **Learnings for future iterations:**
+  - WorldState.aggregate now uses calendar field instead of world_time
+  - from_dict() should check for both new field name and old field name for backward compat
+  - Domain event factory methods may need Union types when changing from datetime to custom types
+  - Test directory needed to be created: tests/unit/contexts/world/domain/aggregates/
+  - Pre-existing mypy errors in coordinates.py and event_bus.py are not from new code
+---
+
