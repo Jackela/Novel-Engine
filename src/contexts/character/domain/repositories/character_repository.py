@@ -307,6 +307,74 @@ class ICharacterRepository(ABC):
             NotSupportedException: If history tracking is not supported
         """
 
+    # ==================== Metadata/Smart Tag Operations ====================
+
+    @abstractmethod
+    async def find_by_smart_tag(
+        self,
+        category: str,
+        tag: str,
+        limit: int = 100,
+    ) -> List[Character]:
+        """
+        Find characters with a specific smart tag in metadata.
+
+        Args:
+            category: The smart tag category (e.g., "genre", "mood").
+            tag: The tag value to search for (case-insensitive).
+            limit: Maximum number of results.
+
+        Returns:
+            List of Character instances with the smart tag.
+
+        Raises:
+            RepositoryException: If search fails
+        """
+
+    @abstractmethod
+    async def find_by_smart_tags(
+        self,
+        tags: Dict[str, List[str]],
+        match_all: bool = False,
+        limit: int = 100,
+    ) -> List[Character]:
+        """
+        Find characters matching multiple smart tags.
+
+        Args:
+            tags: Dictionary mapping categories to tag lists.
+            match_all: If True, character must have ALL tags. If False, ANY tag.
+            limit: Maximum number of results.
+
+        Returns:
+            List of matching Character instances.
+
+        Raises:
+            RepositoryException: If search fails
+        """
+
+    @abstractmethod
+    async def find_by_metadata(
+        self,
+        metadata_key: str,
+        metadata_value: Any = None,
+        limit: int = 100,
+    ) -> List[Character]:
+        """
+        Find characters with a specific metadata key or key-value pair.
+
+        Args:
+            metadata_key: The metadata key to search for.
+            metadata_value: Optional value to match. If None, matches any value.
+            limit: Maximum number of results.
+
+        Returns:
+            List of Character instances with the metadata key.
+
+        Raises:
+            RepositoryException: If search fails
+        """
+
 
 class RepositoryException(Exception):
     """Base exception for repository operations."""

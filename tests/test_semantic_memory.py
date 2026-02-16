@@ -20,6 +20,8 @@ from src.core.data_models import MemoryItem, MemoryType
 from src.database.context_db import ContextDatabase
 from src.memory.semantic_memory import ConceptNode, KnowledgeFact, SemanticMemory
 
+pytestmark = pytest.mark.unit  # noqa: F841
+
 
 class TestKnowledgeFact:
     """Unit tests for KnowledgeFact dataclass."""

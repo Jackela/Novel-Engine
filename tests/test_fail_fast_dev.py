@@ -4,10 +4,16 @@
 
 此脚本故意破坏配置,然后触发 LLM 调用,验证系统是否立即崩溃。
 """
+
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
+
+import pytest
+
+pytestmark = pytest.mark.integration
+
 
 def test_fail_fast():
     """测试开发环境 Fail Fast 行为"""
@@ -16,8 +22,8 @@ def test_fail_fast():
     print("=" * 60)
 
     # 1. 备份 .env 文件
-    env_path = Path(__file__).parent.parent / '.env'
-    env_backup = env_path.with_suffix('.env.backup')
+    env_path = Path(__file__).parent.parent / ".env"
+    env_backup = env_path.with_suffix(".env.backup")
 
     if env_path.exists():
         print(f"\n✓ 备份 .env → {env_backup}")
@@ -28,12 +34,12 @@ def test_fail_fast():
 
     try:
         # 2. 设置环境为 DEVELOPMENT
-        os.environ['NOVEL_ENGINE_ENV'] = 'development'
+        os.environ["NOVEL_ENGINE_ENV"] = "development"
         print("✓ 设置环境: NOVEL_ENGINE_ENV=development")
 
         # 3. 移除 API 密钥
-        if 'GEMINI_API_KEY' in os.environ:
-            del os.environ['GEMINI_API_KEY']
+        if "GEMINI_API_KEY" in os.environ:
+            del os.environ["GEMINI_API_KEY"]
         print("✓ 移除环境变量: GEMINI_API_KEY")
 
         # 4. 尝试运行 LLM 调用 (应该崩溃)
@@ -51,6 +57,7 @@ from pathlib import Path
 from src.core.event_bus import EventBus
 from src.config.character_factory import CharacterFactory
 
+
 event_bus = EventBus()
 factory = CharacterFactory(event_bus)
 detective = factory.create_character('detective_kane')
@@ -60,10 +67,10 @@ detective._call_llm("Test prompt")
 """
 
         result = subprocess.run(
-            [sys.executable, '-c', test_code],
+            [sys.executable, "-c", test_code],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         # 5. 验证结果
@@ -100,6 +107,7 @@ detective._call_llm("Test prompt")
     except Exception as e:
         print(f"\n❌ 测试执行失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -108,6 +116,7 @@ detective._call_llm("Test prompt")
         if env_backup and env_backup.exists():
             env_backup.rename(env_path)
             print("\n✓ 恢复 .env 文件")
+
 
 if __name__ == "__main__":
     success = test_fail_fast()
@@ -121,4 +130,3 @@ if __name__ == "__main__":
         print("❌ Fail Fast 验证失败")
         print("=" * 60)
         sys.exit(1)
-

@@ -21,11 +21,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from src.agents.persona_agent.protocols import ThreatLevel
-from src.core.types.shared_types import ActionPriority, CharacterAction
-from src.core.event_bus import EventBus
-from src.agents.persona_agent.integrated import PersonaAgent as _PersonaAgentImpl
 from src.agents.decision_engine import SituationAssessment
+from src.agents.persona_agent.integrated import PersonaAgent as _PersonaAgentImpl
+from src.agents.persona_agent.protocols import ThreatLevel
+from src.core.event_bus import EventBus
+from src.core.types.shared_types import ActionPriority, CharacterAction
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +124,7 @@ def _make_gemini_api_request(prompt: str) -> Optional[str]:
     # Run async call synchronously
     # Enable nested event loops to avoid "event loop is already running" errors
     import nest_asyncio
+
     nest_asyncio.apply()
 
     try:
@@ -182,9 +183,7 @@ class PersonaAgent(_PersonaAgentImpl):
         agent_id: Optional[str] = None,
         character_name: Optional[str] = None,
     ):
-        is_test_runtime = (
-            "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules
-        )
+        is_test_runtime = "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules
 
         default_root = DEFAULT_CHARACTERS_ROOT.resolve()
         if is_test_runtime:
@@ -507,9 +506,7 @@ class PersonaAgent(_PersonaAgentImpl):
         env_loader = get_environment_config_loader()
         is_development = env_loader.environment == Environment.DEVELOPMENT
 
-        is_test_runtime = (
-            "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules
-        )
+        is_test_runtime = "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules
 
         api_key = _validate_gemini_api_key()
         if not api_key:
@@ -541,7 +538,9 @@ class PersonaAgent(_PersonaAgentImpl):
                 ) from exc
             else:
                 # 生产环境：记录错误但继续运行
-                logger.error("Gemini API request failed in production: %s", exc, exc_info=True)
+                logger.error(
+                    "Gemini API request failed in production: %s", exc, exc_info=True
+                )
                 return "[LLM-Fallback] Gemini service unavailable."
 
         if response:
@@ -753,4 +752,3 @@ __all__ = [
     "_make_gemini_api_request",
     "_generate_fallback_response",
 ]
-

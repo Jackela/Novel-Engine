@@ -80,43 +80,24 @@ def create_app(
     from src.api.routers.events import router as events_router
     from src.api.routers.generation import router as generation_router
     from src.api.routers.guest import router as guest_router
-    from src.api.routers.narratives import router as narratives_router
-    from src.api.routers.scene import router as scene_router
     from src.api.routers.health import router as health_router
-    from src.api.routers.meta import router as meta_router
-    from src.api.routers.orchestration import router as orchestration_router
-    from src.api.routers.simulations import router as simulations_router
-    from src.api.routers.world import router as world_gen_router
-    from src.api.routers.structure import router as structure_router
-    from src.api.routers.narrative_generation import router as narrative_generation_router
-    from src.api.routers.relationships import router as relationships_router
-    from src.api.routers.items import router as items_router
     from src.api.routers.items import character_inventory_router
+    from src.api.routers.items import router as items_router
     from src.api.routers.lore import router as lore_router
+    from src.api.routers.meta import router as meta_router
+    from src.api.routers.narrative_generation import (
+        router as narrative_generation_router,
+    )
+    from src.api.routers.narratives import router as narratives_router
+    from src.api.routers.orchestration import router as orchestration_router
+    from src.api.routers.relationships import router as relationships_router
+    from src.api.routers.scene import router as scene_router
+    from src.api.routers.simulations import router as simulations_router
+    from src.api.routers.structure import router as structure_router
+    from src.api.routers.world import router as world_gen_router
     from src.api.routers.world_rules import router as world_rules_router
 
-    app.include_router(health_router)
-    app.include_router(meta_router)
-    app.include_router(cache_router)
-    app.include_router(orchestration_router)
-    app.include_router(simulations_router)
-    app.include_router(characters_router)
-    app.include_router(campaigns_router)
-    app.include_router(guest_router)
-    app.include_router(events_router)
-    app.include_router(generation_router)
-    app.include_router(narratives_router)
-    app.include_router(scene_router)
-    app.include_router(auth_router)
-    app.include_router(world_gen_router)
-    app.include_router(structure_router)
-    app.include_router(narrative_generation_router)
-    app.include_router(relationships_router)
-    app.include_router(items_router)
-    app.include_router(character_inventory_router)
-    app.include_router(lore_router)
-    app.include_router(world_rules_router)
-
+    # Register all routers with /api prefix only (no duplicate unprefixed routes)
     app.include_router(health_router, prefix="/api")
     app.include_router(meta_router, prefix="/api")
     app.include_router(cache_router, prefix="/api")
@@ -142,7 +123,6 @@ def create_app(
     try:
         from src.api.prompts_router import router as prompts_router
 
-        app.include_router(prompts_router)
         app.include_router(prompts_router, prefix="/api")
         app.state.prompts_router_available = True
         logger.info("Prompts router included with prefix /api")
@@ -153,7 +133,6 @@ def create_app(
     try:
         from src.decision import decision_router
 
-        app.include_router(decision_router)
         app.include_router(decision_router, prefix="/api")
         app.state.decision_router_available = True
         logger.info("Decision router included with prefix /api")
@@ -164,12 +143,33 @@ def create_app(
     try:
         from apps.api.http import world_router
 
-        app.include_router(world_router)
         app.include_router(world_router, prefix="/api")
         app.state.world_router_available = True
         logger.info("World context router included with prefix /api")
     except ImportError as exc:
         app.state.world_router_available = False
         logger.warning("World context router not available: %s", exc)
+
+    # BRAIN-028B: Model Routing Configuration
+    try:
+        from src.api.routers.routing import router as routing_router
+
+        app.include_router(routing_router, prefix="/api")
+        app.state.routing_router_available = True
+        logger.info("Routing configuration router included with prefix /api")
+    except ImportError as exc:
+        app.state.routing_router_available = False
+        logger.warning("Routing configuration router not available: %s", exc)
+
+    # BRAIN-033: Brain Settings
+    try:
+        from src.api.routers.brain_settings import router as brain_settings_router
+
+        app.include_router(brain_settings_router, prefix="/api")
+        app.state.brain_settings_router_available = True
+        logger.info("Brain settings router included with prefix /api")
+    except ImportError as exc:
+        app.state.brain_settings_router_available = False
+        logger.warning("Brain settings router not available: %s", exc)
 
     return app

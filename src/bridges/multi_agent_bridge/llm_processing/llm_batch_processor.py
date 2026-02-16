@@ -580,4 +580,3 @@ class LLMBatchProcessor:
 
         except Exception as e:
             self.logger.error(f"Error during batch processor shutdown: {e}")
-

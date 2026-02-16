@@ -19,6 +19,8 @@ from pathlib import Path
 import pytest
 import yaml
 
+pytestmark = pytest.mark.unit
+
 
 class TestLegalFoundation:
     """Test legal and compliance infrastructure."""

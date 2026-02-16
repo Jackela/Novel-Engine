@@ -12,6 +12,8 @@ import pytest
 
 from src.contexts.interactions.domain.value_objects.interaction_id import InteractionId
 
+pytestmark = pytest.mark.unit
+
 
 class TestInteractionIdCreation:
     """Test suite for InteractionId creation and basic functionality."""

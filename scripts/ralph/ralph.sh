@@ -91,8 +91,10 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   if [[ "$TOOL" == "amp" ]]; then
     OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
   else
-    # Claude Code: use --dangerously-skip-permissions for autonomous operation, --print for output
-    OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+    # Claude Code: run from project root so it loads CLAUDE.md automatically
+    # Pass a trigger message to start the Ralph workflow
+    PROJECT_ROOT="$SCRIPT_DIR/../.."
+    OUTPUT=$(cd "$PROJECT_ROOT" && claude --dangerously-skip-permissions --print "Execute Ralph workflow - check scripts/ralph/prd.json for pending stories" 2>&1 | tee /dev/stderr) || true
   fi
   
   # Check for completion signal

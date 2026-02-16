@@ -8,6 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src.api.schemas import ErrorDetail
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,6 +49,23 @@ def _envelope(
 
 
 def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
+    @app.exception_handler(404)
+    async def _not_found_handler(request: Request, exc: Any) -> JSONResponse:
+        """Handle 404 Not Found errors with ErrorDetail schema.
+
+        Returns a structured error response matching ErrorDetail schema.
+        Example: {"code": "NOT_FOUND", "message": "Resource not found"}
+        """
+        error_detail = ErrorDetail(
+            code="NOT_FOUND",
+            message="The requested endpoint does not exist.",
+            details={"path": request.url.path},
+        )
+        return JSONResponse(
+            status_code=404,
+            content=error_detail.model_dump(exclude_none=True),
+        )
+
     @app.exception_handler(StarletteHTTPException)
     async def _starlette_http_exception_handler(
         request: Request, exc: StarletteHTTPException

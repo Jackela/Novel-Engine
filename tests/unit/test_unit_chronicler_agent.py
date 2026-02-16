@@ -3,6 +3,7 @@
 记录代理单元测试套件
 测试故事生成、日志转录、叙述整合等核心功能
 """
+
 import logging
 import os
 import time
@@ -11,6 +12,9 @@ from unittest.mock import Mock, patch
 import pytest
 
 # 导入被测试的模块
+
+pytestmark = pytest.mark.unit
+
 try:
     from src.agents.chronicler_agent import ChroniclerAgent
 

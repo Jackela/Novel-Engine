@@ -1,4 +1,6 @@
 import { test, expect } from './fixtures';
+import { safeGoto } from './utils/navigation';
+import { scalePerf } from './utils/perf';
 
 /**
  * Visual Regression Testing - Theme Combination Baselines
@@ -59,7 +61,7 @@ test.describe('Visual Regression - Theme Combinations', () => {
    * Helper to navigate to dashboard and wait for content
    */
   async function navigateToDashboard(page: import('@playwright/test').Page) {
-    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    await safeGoto(page, '/dashboard');
     // Wait for main dashboard layout to be visible
     await page.waitForSelector('[data-testid="dashboard-layout"], main', {
       state: 'visible',
@@ -77,10 +79,17 @@ test.describe('Visual Regression - Theme Combinations', () => {
     await page.screenshot({
       path: `test-results/visual-baselines/${name}.png`,
       fullPage: false, // Capture viewport for consistent sizing
+      timeout: scalePerf(20000),
     });
   }
 
   test.beforeEach(async ({ page }) => {
+    // Prevent external font fetches from hanging screenshots.
+    await page.route('https://fonts.googleapis.com/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'text/css', body: '' })
+    );
+    await page.route('https://fonts.gstatic.com/**', (route) => route.abort());
+
     // Clear localStorage to ensure clean theme state
     await page.addInitScript(() => {
       try {
@@ -178,7 +187,7 @@ test.describe('Visual Regression - Theme Combinations', () => {
 
   test.describe('Landing Page Theme Baselines', () => {
     async function navigateToLanding(page: import('@playwright/test').Page) {
-      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/', { timeout: 45000 });
       await page.waitForSelector('h1', {
         state: 'visible',
         timeout: 30000,

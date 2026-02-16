@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { safeGoto } from './utils/navigation';
 
 test.describe('Weaver Journey - Login to Weaver', () => {
   test('@weaver-smoke Login -> Create Character -> Open Weaver', async ({ page }) => {
@@ -12,8 +13,11 @@ test.describe('Weaver Journey - Login to Weaver', () => {
     await dashboardPage.waitForDashboardLoad();
     await expect(page).toHaveURL(/\/dashboard/);
 
-    await page.goto('/characters', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Characters' })).toBeVisible();
+    await safeGoto(page, '/characters');
+    await page.waitForURL('**/characters**', { timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: 'Characters' })).toBeVisible({
+      timeout: 20_000,
+    });
 
     const newCharacterButton = page.getByRole('button', { name: 'New Character' });
     await expect(newCharacterButton).toBeVisible();
@@ -29,7 +33,7 @@ test.describe('Weaver Journey - Login to Weaver', () => {
     await expect(page.getByRole('heading', { name: 'Characters' })).toBeVisible();
     await expect(page.getByText(characterName)).toBeVisible();
 
-    await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+    await safeGoto(page, '/weaver');
     await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible();
   });
 });

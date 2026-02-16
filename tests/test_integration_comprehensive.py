@@ -16,6 +16,7 @@ Test Categories:
 7. Error Propagation & Recovery
 8. Security & Validation Integration
 """
+
 import logging
 import os
 import tempfile
@@ -25,8 +26,9 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = [pytest.mark.integration]
+
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
-pytestmark = [pytest.mark.integration, pytest.mark.system, pytest.mark.e2e]
 if not FULL_INTEGRATION:
     pytestmark.append(
         pytest.mark.skip(
@@ -35,9 +37,9 @@ if not FULL_INTEGRATION:
     )
 
 # Import system components
-from api_server import app
 from fastapi.testclient import TestClient
 
+from api_server import app
 from src.agents.chronicler_agent import ChroniclerAgent
 from src.agents.director_agent_integrated import DirectorAgent
 from src.agents.persona_agent.agent import PersonaAgent
@@ -404,14 +406,12 @@ class TestStoryGenerationPipeline:
         """Test narrative style consistency across story generation"""
         # Create test simulation log
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
-            f.write(
-                """
+            f.write("""
             Turn 1 - 2024-01-01 12:00:00
             [Agent Registration] pilot registered
             [Action] pilot: Strategic maneuver
             [Turn End] Mission completed
-            """
-            )
+            """)
             test_log_path = f.name
 
         try:
@@ -793,5 +793,3 @@ def clean_test_environment():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])
-
-

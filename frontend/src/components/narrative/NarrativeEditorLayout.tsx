@@ -17,6 +17,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 import { NarrativeSidebarWithTabs } from './NarrativeSidebarWithTabs';
@@ -28,6 +29,7 @@ import { useStoryStructure } from '@/hooks/useStoryStructure';
 import { moveScene } from '@/lib/api';
 import type { OutlinerChapter, SceneMoveResult } from './NarrativeSidebar';
 import { useCharacters } from '@/features/characters/api/characterApi';
+import { ContextInspector } from './ContextInspector';
 
 interface NarrativeEditorLayoutProps {
   /** Story ID to load (optional, loads from backend when provided) */
@@ -56,6 +58,9 @@ export function NarrativeEditorLayout({
   // CHAR-038: Get characters list for @mention suggestions
   const { data: characters = [] } = useCharacters();
   const queryClient = useQueryClient();
+
+  // BRAIN-036-02: Context Inspector state
+  const [contextInspectorOpen, setContextInspectorOpen] = useState(false);
 
   // Load story structure from backend
   const {
@@ -243,7 +248,7 @@ export function NarrativeEditorLayout({
         );
       } catch (error) {
         console.error('Failed to move scene:', error);
-        // TODO: Show error toast to user
+        toast.error('Failed to move scene. Please try again.');
       }
     },
     [chapters, useMockData, loadStories]
@@ -319,8 +324,24 @@ export function NarrativeEditorLayout({
             onMentionInserted={handleMentionInserted}
             characters={characters}
             onCharacterCreated={handleCharacterCreated}
+            ragEnabled={true}
+            onViewAIContext={() => setContextInspectorOpen(true)}
           />
         </main>
+
+        {/* BRAIN-036-02: Context Inspector Panel */}
+        {/* BRAIN-036-04: Pass optional regenerate callback */}
+        <ContextInspector
+          open={contextInspectorOpen}
+          onClose={() => setContextInspectorOpen(false)}
+          query={getSceneContent(activeSceneId)}
+          {...(activeSceneId && { sceneId: activeSceneId })}
+          onRegenerateWithChunks={(chunkIds) => {
+            // BRAIN-036-04: Handle regenerate with selected chunks
+            // This will be connected to scene generation in a future story
+            console.log('Regenerate with chunks:', chunkIds);
+          }}
+        />
 
         {/* Drag overlay for character being dragged */}
         <DragOverlay>

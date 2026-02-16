@@ -1,6 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture()
 def client():
@@ -17,9 +19,9 @@ def test_create_app_openapi_exposes_core_product_routes(client: TestClient):
     paths = schema.get("paths", {})
 
     for path in (
-        "/health",
-        "/cache/metrics",
-        "/cache/invalidate",
+        "/api/health",
+        "/api/cache/metrics",
+        "/api/cache/invalidate",
         "/api/guest/session",
         "/api/workspace/export",
         "/api/workspace/import",
@@ -41,14 +43,14 @@ def test_error_envelope_includes_stable_code_for_missing_route(client: TestClien
     resp = client.get("/__does_not_exist__")
     assert resp.status_code == 404
     payload = resp.json()
-    assert "error" in payload
-    assert "detail" in payload
-    assert payload.get("code") == "not_found"
+    assert "code" in payload
+    assert payload.get("code") == "NOT_FOUND"
+    assert "message" in payload
 
 
 @pytest.mark.integration
 def test_validation_errors_are_normalized(client: TestClient):
-    resp = client.post("/cache/invalidate", json={})
+    resp = client.post("/api/cache/invalidate", json={})
     assert resp.status_code == 422
     payload = resp.json()
     assert payload.get("code") == "validation_error"

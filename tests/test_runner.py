@@ -12,6 +12,8 @@ import time
 
 import pytest
 
+pytestmark = pytest.mark.integration
+
 
 def run_unit_tests():
     """Run unit tests for all components."""

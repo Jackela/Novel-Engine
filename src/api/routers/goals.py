@@ -116,8 +116,7 @@ async def get_character_goals(
     if status:
         status_upper = status.upper()
         goals_data = [
-            g for g in goals_data
-            if g.get("status", "ACTIVE").upper() == status_upper
+            g for g in goals_data if g.get("status", "ACTIVE").upper() == status_upper
         ]
 
     # Convert to schema

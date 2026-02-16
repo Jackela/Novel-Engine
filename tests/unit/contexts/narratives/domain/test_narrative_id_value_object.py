@@ -12,6 +12,8 @@ import pytest
 
 from src.contexts.narratives.domain.value_objects.narrative_id import NarrativeId
 
+pytestmark = pytest.mark.unit
+
 
 class TestNarrativeIdCreation:
     """Test suite for NarrativeId creation and basic functionality."""

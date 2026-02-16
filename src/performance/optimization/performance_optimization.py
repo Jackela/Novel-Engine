@@ -444,4 +444,3 @@ if __name__ == "__main__":
         logger.info("Performance optimization systems tested successfully")
 
     asyncio.run(test_performance())
-

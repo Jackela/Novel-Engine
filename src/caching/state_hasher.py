@@ -11,7 +11,6 @@ caching optimization, and state change detection.
 
 """
 
-
 import hashlib
 import importlib.util
 import json
@@ -21,7 +20,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-SHARED_TYPES_AVAILABLE = importlib.util.find_spec("src.core.types.shared_types") is not None
+SHARED_TYPES_AVAILABLE = (
+    importlib.util.find_spec("src.core.types.shared_types") is not None
+)
 
 if not SHARED_TYPES_AVAILABLE:
 
@@ -171,4 +172,3 @@ class StateHasher:
         self.hash_cache.clear()
 
         logger.info("Hash cache cleared.")
-

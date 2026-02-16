@@ -181,9 +181,12 @@ Wave 6.1 - Technical Debt Assessment & Quality Metrics
 
         for severity, count in report["issues_by_severity"].items():
             if count > 0:
-                emoji = {"critical": "🔥", "high": "⚠️", "medium": "📋", "low": "ℹ️"}.get(
-                    severity, "•"
-                )
+                emoji = {
+                    "critical": "🔥",
+                    "high": "⚠️",
+                    "medium": "📋",
+                    "low": "ℹ️",
+                }.get(severity, "•")
                 detailed_report += f"\n{emoji} {severity.upper()}: {count} issues"
 
         detailed_report += """
@@ -487,4 +490,3 @@ def main():
 if __name__ == "__main__":
     results = main()
     sys.exit(0 if results.get("success") else 1)
-

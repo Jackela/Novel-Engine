@@ -19,6 +19,9 @@ from uuid import uuid4
 import pytest
 
 # Mock the aioredis dependency to avoid import errors
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 
 
@@ -57,6 +60,9 @@ class MockEventBusModule:
     EventPriority = MockEventPriority
 
 
+# Save original module if it exists
+_original_event_bus = sys.modules.get("src.events.event_bus")
+
 sys.modules["src.events.event_bus"] = MockEventBusModule()
 
 # Now import the actual modules we're testing
@@ -67,7 +73,11 @@ from src.contexts.world.domain.aggregates.world_state import (
 )
 from src.contexts.world.domain.value_objects.coordinates import Coordinates
 
-pytestmark = pytest.mark.unit
+# Restore original module to avoid polluting other tests
+if _original_event_bus is not None:
+    sys.modules["src.events.event_bus"] = _original_event_bus
+else:
+    del sys.modules["src.events.event_bus"]
 
 
 class TestWorldStateAggregate:
@@ -1015,3 +1025,53 @@ class TestWorldStateAggregate:
 
         assert len(env_events) >= 2  # Initial and evening updates
         assert len(time_events) >= 1  # Time advancement
+
+    # ==================== Save Method Tests ====================
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_save_without_file_path(self, world_state, sample_entity_data):
+        """Test save method validates serialization without writing file."""
+        world_state.add_entity(**sample_entity_data)
+        world_state.update_environment({"weather": "sunny"}, "Setup")
+
+        # Should return Ok without file path (just validates serialization)
+        result = world_state.save()
+
+        assert result.is_ok
+        assert result.value is None
+
+    @pytest.mark.unit
+    def test_save_to_file(self, world_state, sample_entity_data, tmp_path):
+        """Test save method writes to file successfully."""
+        world_state.add_entity(**sample_entity_data)
+        world_state.update_environment({"weather": "sunny"}, "Setup")
+
+        file_path = str(tmp_path / "world_state_test.json")
+        result = world_state.save(file_path)
+
+        assert result.is_ok
+
+        # Verify file was created and contains valid JSON
+        import json
+        from pathlib import Path
+
+        assert Path(file_path).exists()
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        assert data["id"] == world_state.id
+        assert data["name"] == world_state.name
+        assert sample_entity_data["entity_id"] in data["entities"]
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_save_returns_error_on_invalid_path(self, world_state):
+        """Test save method returns error for invalid file path."""
+        # Use an invalid path (e.g., a path that requires permissions we don't have)
+        result = world_state.save("/nonexistent/directory/world.json")
+
+        assert result.is_error
+        assert result.error.code == "SAVE_ERROR"
+        assert "WorldState" in result.error.details.get("entity_type", "")
+

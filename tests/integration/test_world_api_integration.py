@@ -6,12 +6,14 @@ This test validates the World context FastAPI endpoints implementation
 to ensure M3 milestone completion is functional.
 """
 
-
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 # Import the World router
+
+pytestmark = pytest.mark.integration
+
 try:
     from apps.api.http.world_router import router as world_router
 

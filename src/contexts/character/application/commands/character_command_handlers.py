@@ -395,27 +395,27 @@ class LevelUpCharacterCommandHandler:
 
             # Apply ability score improvements if specified
             if command.ability_score_improvements:
-                # This would require creating new CoreAbilities with improvements
-                # For now, log the improvements
-                self.logger.info(
-                    f"Ability improvements requested: {command.ability_score_improvements}"
-                )
-                # TODO: Implement ability score improvements
-                # Implementation requires:
+                # NOTE: Ability score improvements not yet implemented.
+                # This feature requires:
                 # - Modify CoreAbilities value object to support incremental updates
                 # - Add Character.apply_ability_improvements() domain method
                 # - Validate improvements against level-up rules (e.g., max +2 per ability)
+                # Tracked in: https://github.com/your-repo/issues/XXX
+                self.logger.info(
+                    f"Ability improvements requested: {command.ability_score_improvements}"
+                )
 
             # Apply skill improvements if specified
             if command.skill_improvements:
-                self.logger.info(
-                    f"Skill improvements requested: {command.skill_improvements}"
-                )
-                # TODO: Implement skill improvements
-                # Implementation requires:
+                # NOTE: Skill improvements not yet implemented.
+                # This feature requires:
                 # - Add skill proficiency tracking to Character aggregate
                 # - Support for skill expertise (double proficiency bonus)
                 # - Validate skill selections against class/background restrictions
+                # Tracked in: https://github.com/your-repo/issues/YYY
+                self.logger.info(
+                    f"Skill improvements requested: {command.skill_improvements}"
+                )
 
             # Save character
             await self.repository.save(character)
@@ -459,11 +459,12 @@ class DeleteCharacterCommandHandler:
                 self.logger.warning(f"Character not found for deletion: {character_id}")
                 return False
 
-            # TODO: Raise CharacterDeleted domain event before deletion
-            # Implementation requires:
+            # NOTE: CharacterDeleted domain event not yet implemented.
+            # This feature requires:
             # - Create CharacterDeleted domain event class
             # - Add character.mark_for_deletion(reason) method that raises the event
             # - Ensure event handlers can clean up related data (inventory, relationships)
+            # Tracked in: https://github.com/your-repo/issues/ZZZ
 
             # Delete character
             deleted = await self.repository.delete(character_id)

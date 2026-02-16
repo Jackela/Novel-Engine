@@ -352,6 +352,77 @@ class HealthMonitor:
             )
         )
 
+    def register_chromadb_check(self, persist_dir: str = ".data/chroma"):
+        """
+        Register ChromaDB vector store health check.
+
+        Warzone 4: AI Brain - BRAIN-001
+        Verifies ChromaDB connection and basic operations.
+
+        Args:
+            persist_dir: ChromaDB persistent storage directory
+        """
+
+        async def check_chromadb():
+            """
+            Check ChromaDB vector store health.
+
+            Returns:
+                ChromaDB health status and metrics
+
+            Raises:
+                Exception: If ChromaDB is not accessible or unhealthy
+            """
+            try:
+                from src.contexts.knowledge.infrastructure.adapters.chromadb_vector_store import (
+                    ChromaDBVectorStore,
+                )
+
+                # Initialize store with specified persist dir
+                store = ChromaDBVectorStore(persist_dir=persist_dir)
+
+                # Perform health check
+                is_healthy = await store.health_check()
+                if not is_healthy:
+                    raise Exception("ChromaDB health check failed")
+
+                # Get collection count if possible
+                from pathlib import Path
+
+                persist_path = Path(persist_dir)
+                collection_count = 0
+                if persist_path.exists():
+                    # Count subdirectories as proxy for collection count
+                    collection_count = len(
+                        [p for p in persist_path.iterdir() if p.is_dir()]
+                    )
+
+                return {
+                    "message": "ChromaDB vector store operational",
+                    "details": {
+                        "persist_dir": str(persist_path.absolute()),
+                        "collection_count": collection_count,
+                    },
+                }
+
+            except ImportError:
+                # ChromaDB not installed - not critical for basic operation
+                return {
+                    "message": "ChromaDB not installed (vector features disabled)",
+                    "details": {"install_command": "pip install chromadb"},
+                }
+            except Exception as e:
+                raise Exception(f"ChromaDB check failed: {str(e)}")
+
+        checker = HealthChecker(
+            name="chromadb",
+            component_type=ComponentType.EXTERNAL_SERVICE,
+            check_func=check_chromadb,
+            timeout_seconds=3.0,
+            critical=False,  # Vector store is optional for basic operation
+        )
+        self.register_checker(checker)
+
     async def run_health_checks(
         self, include_non_critical: bool = True
     ) -> SystemHealth:

@@ -1,16 +1,19 @@
+from datetime import datetime
 from types import SimpleNamespace
 
 import pytest
-
-from datetime import datetime
 
 from src.core.event_bus import EventBus
 from src.core.turn_orchestrator import TurnOrchestrator
 from src.core.types.shared_types import CharacterAction
 
+pytestmark = pytest.mark.unit
+
 
 class DummyAgent:
-    def __init__(self, agent_id: str, refresh_result: bool, *, raise_error: bool = False):
+    def __init__(
+        self, agent_id: str, refresh_result: bool, *, raise_error: bool = False
+    ):
         self.agent_id = agent_id
         self.character_data = {"name": f"Agent {agent_id}"}
         self.core = SimpleNamespace(

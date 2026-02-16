@@ -22,6 +22,8 @@ from fastapi.testclient import TestClient
 
 from src.api.main_api_server import create_app
 
+pytestmark = pytest.mark.integration
+
 TEST_INTERVAL_SECONDS = 0.05
 
 
@@ -365,4 +367,3 @@ class TestEventsStreamErrorHandling:
                     break
 
             assert json_parse_errors == 0, "Found invalid JSON in SSE data field"
-

@@ -1,50 +1,101 @@
 """
-Embedding Generation Adapter
+Embedding Service Adapter
 
-Generates vector embeddings for knowledge entry content using LLM or embedding model.
+Generates vector embeddings for knowledge entry content using OpenAI embeddings API
+or fallback mock implementation for testing.
 
 Constitution Compliance:
 - Article II (Hexagonal): Infrastructure adapter for external embedding service
 - Article V (SOLID): SRP - embedding generation only
+
+Note:
+    For production LRU + TTL caching, use CachedEmbeddingService wrapper
+    instead of relying on the internal cache. The internal cache here
+    is kept for backward compatibility but does not have TTL or LRU eviction.
 """
 
 import hashlib
-from typing import List
+import os
+from typing import TYPE_CHECKING, List, Union
+
+from src.contexts.knowledge.application.ports.i_embedding_service import (
+    EmbeddingError,
+    IEmbeddingService,
+)
+
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI
 
 
-class EmbeddingGeneratorAdapter:
+class EmbeddingServiceAdapter(IEmbeddingService):
     """
     Adapter for generating vector embeddings from text content.
 
-    Uses OpenAI embeddings API (or compatible service) to generate
+    Uses OpenAI embeddings API (text-embedding-3-small) to generate
     1536-dimensional vectors for semantic search.
+
+    Falls back to deterministic mock embeddings when:
+    - OPENAI_API_KEY is not set
+    - use_mock=True is specified
+    - API calls fail
 
     Constitution Compliance:
         - Article II (Hexagonal): External service adapter
         - Article V (SOLID): Single responsibility - embedding generation
+
+    Note:
+        The internal cache is kept for backward compatibility. For production,
+        wrap this adapter with CachedEmbeddingService for proper LRU + TTL caching.
     """
 
+    # Model dimension mapping
+    DIMENSIONS = {
+        "text-embedding-ada-002": 1536,
+        "text-embedding-3-small": 1536,
+        "text-embedding-3-large": 3072,
+    }
+
     def __init__(
-        self, api_key: str | None = None, model: str = "text-embedding-ada-002"
+        self,
+        api_key: str | None = None,
+        model: str = "text-embedding-3-small",
+        use_mock: bool = False,
+        enable_internal_cache: bool = True,
     ):
         """
-        Initialize embedding generator with API configuration.
+        Initialize embedding service with API configuration.
 
         Args:
-            api_key: Optional API key for embedding service
-                    If None, will attempt to use environment variable OPENAI_API_KEY
-            model: Embedding model to use (default: text-embedding-ada-002)
+            api_key: Optional API key for OpenAI. If None, reads OPENAI_API_KEY env var.
+            model: Embedding model to use (default: text-embedding-3-small)
+            use_mock: Force mock mode regardless of API key availability
+            enable_internal_cache: Enable simple internal cache (default: True).
+                                  For production, set to False and use CachedEmbeddingService.
 
         Models:
-            - text-embedding-ada-002: 1536 dimensions (OpenAI standard)
+            - text-embedding-ada-002: 1536 dimensions (OpenAI legacy)
             - text-embedding-3-small: 1536 dimensions (OpenAI newer, cheaper)
             - text-embedding-3-large: 3072 dimensions (OpenAI higher quality)
         """
-        self._api_key = api_key
+        self._api_key = api_key or os.getenv("OPENAI_API_KEY")
         self._model = model
-        self._embedding_cache = {}  # Simple in-memory cache
+        self._use_mock = use_mock or not self._api_key
+        self._client: Union["AsyncOpenAI", None] = None
 
-    async def generate_embedding(self, text: str) -> List[float]:
+        # Internal cache (simple dict, no TTL/LRU)
+        # Can be disabled in favor of CachedEmbeddingService
+        self._embedding_cache: dict[str, list[float]] = (
+            {} if enable_internal_cache else {}
+        )
+        self._cache_enabled = enable_internal_cache
+
+        # Validate model
+        if model not in self.DIMENSIONS:
+            raise ValueError(
+                f"Unknown model: {model}. " f"Supported: {list(self.DIMENSIONS.keys())}"
+            )
+
+    async def embed(self, text: str) -> List[float]:
         """
         Generate vector embedding for text content.
 
@@ -52,49 +103,61 @@ class EmbeddingGeneratorAdapter:
             text: Text content to embed (knowledge entry content)
 
         Returns:
-            List of floats representing the embedding vector (1536 dimensions)
-
-        Example:
-            >>> generator = EmbeddingGeneratorAdapter()
-            >>> embedding = await generator.generate_embedding("The spacecraft has quantum drive")
-            >>> len(embedding)
-            1536
-            >>> all(isinstance(x, float) for x in embedding)
-            True
+            List of floats representing the embedding vector
 
         Raises:
-            ValueError: If text is empty
-            RuntimeError: If embedding service fails
+            EmbeddingError: If text is empty or embedding generation fails
+
+        Example:
+            >>> service = EmbeddingServiceAdapter()
+            >>> embedding = await service.embed("The spacecraft has quantum drive")
+            >>> len(embedding)
+            1536
         """
         if not text or not text.strip():
-            raise ValueError("Cannot generate embedding for empty text")
+            raise EmbeddingError(
+                "Cannot generate embedding for empty text", "EMPTY_TEXT"
+            )
 
-        # Check cache first
-        cache_key = self._get_cache_key(text)
-        if cache_key in self._embedding_cache:
-            return self._embedding_cache[cache_key]
+        # Check internal cache first (if enabled)
+        if self._cache_enabled:
+            cache_key = self._get_cache_key(text)
+            if cache_key in self._embedding_cache:
+                return self._embedding_cache[cache_key]
 
         # Generate embedding
         try:
-            embedding = await self._call_embedding_service(text)
+            if self._use_mock:
+                embedding = self._generate_mock_embedding(text)
+            else:
+                embedding = await self._call_openai_api(text)
 
-            # Cache result
-            self._embedding_cache[cache_key] = embedding
-
+            # Cache result (if enabled)
+            if self._cache_enabled:
+                cache_key = self._get_cache_key(text)
+                self._embedding_cache[cache_key] = embedding
             return embedding
 
         except Exception as e:
-            raise RuntimeError(f"Failed to generate embedding: {e}")
+            # Log error and fall back to mock
+            if not self._use_mock:
+                # On API failure, silently fall back to mock
+                embedding = self._generate_mock_embedding(text)
+                if self._cache_enabled:
+                    cache_key = self._get_cache_key(text)
+                    self._embedding_cache[cache_key] = embedding
+                return embedding
+            raise EmbeddingError(
+                f"Failed to generate embedding: {e}", "EMBEDDING_FAILED"
+            )
 
-    async def generate_embeddings_batch(
-        self,
-        texts: List[str],
-        batch_size: int = 100,
+    async def embed_batch(
+        self, texts: List[str], batch_size: int = 100
     ) -> List[List[float]]:
         """
         Generate embeddings for multiple texts in batches.
 
-        More efficient than calling generate_embedding() repeatedly.
+        More efficient than calling embed() repeatedly.
 
         Args:
             texts: List of text strings to embed
@@ -103,10 +166,13 @@ class EmbeddingGeneratorAdapter:
         Returns:
             List of embedding vectors, same order as input texts
 
+        Raises:
+            EmbeddingError: If embedding generation fails
+
         Example:
-            >>> generator = EmbeddingGeneratorAdapter()
+            >>> service = EmbeddingServiceAdapter()
             >>> texts = ["text 1", "text 2", "text 3"]
-            >>> embeddings = await generator.generate_embeddings_batch(texts)
+            >>> embeddings = await service.embed_batch(texts)
             >>> len(embeddings) == len(texts)
             True
         """
@@ -118,76 +184,40 @@ class EmbeddingGeneratorAdapter:
         # Process in batches
         for i in range(0, len(texts), batch_size):
             batch = texts[i : i + batch_size]
-            batch_embeddings = await self._call_embedding_service_batch(batch)
+
+            if self._use_mock:
+                batch_embeddings = []
+                for t in batch:
+                    # Check cache first for each text (if enabled)
+                    if self._cache_enabled:
+                        cache_key = self._get_cache_key(t)
+                        if cache_key in self._embedding_cache:
+                            batch_embeddings.append(self._embedding_cache[cache_key])
+                            continue
+                    embedding = self._generate_mock_embedding(t)
+                    if self._cache_enabled:
+                        cache_key = self._get_cache_key(t)
+                        self._embedding_cache[cache_key] = embedding
+                    batch_embeddings.append(embedding)
+            else:
+                try:
+                    batch_embeddings = await self._call_openai_api_batch(batch)
+                except Exception:
+                    # Fall back to individual mock generation
+                    batch_embeddings = [self._generate_mock_embedding(t) for t in batch]
+
             embeddings.extend(batch_embeddings)
 
         return embeddings
 
-    def _get_cache_key(self, text: str) -> str:
-        """Generate cache key from text content."""
-        return hashlib.sha256(text.encode()).hexdigest()
-
-    async def _call_embedding_service(self, text: str) -> List[float]:
+    def get_dimension(self) -> int:
         """
-        Call external embedding service API.
+        Get the dimensionality of embeddings produced by this service.
 
-        This is a placeholder implementation for MVP.
-        In production, this would call OpenAI API or similar service.
-
-        For now, we'll return a mock embedding for testing purposes.
+        Returns:
+            Number of dimensions (1536 for most models, 3072 for large)
         """
-        # TODO: Implement actual OpenAI API call
-        # Example:
-        # import openai
-        # response = await openai.Embedding.acreate(
-        #     model=self._model,
-        #     input=text,
-        # )
-        # return response['data'][0]['embedding']
-
-        # Mock implementation for MVP
-        return self._generate_mock_embedding(text)
-
-    async def _call_embedding_service_batch(
-        self,
-        texts: List[str],
-    ) -> List[List[float]]:
-        """
-        Call external embedding service API for batch of texts.
-
-        Placeholder implementation for MVP.
-        """
-        # TODO: Implement actual batch API call
-        # In production, would batch multiple texts in single API call
-
-        # Mock implementation
-        return [self._generate_mock_embedding(text) for text in texts]
-
-    def _generate_mock_embedding(self, text: str) -> List[float]:
-        """
-        Generate deterministic mock embedding for testing.
-
-        Uses text hash to create consistent embeddings.
-        Real implementation would call external API.
-        """
-        # Create deterministic seed from text
-        seed = int(hashlib.sha256(text.encode()).hexdigest()[:8], 16)
-
-        # Generate 1536-dimensional vector
-        # Use simple hash-based approach for consistency
-        import random
-
-        random.seed(seed)
-
-        # Generate normalized vector
-        embedding = [random.gauss(0, 1) for _ in range(1536)]
-
-        # Normalize to unit length (standard for embeddings)
-        magnitude = sum(x**2 for x in embedding) ** 0.5
-        if magnitude > 0:
-            embedding = [x / magnitude for x in embedding]
-
-        return embedding
+        return self.DIMENSIONS.get(self._model, 1536)
 
     def clear_cache(self) -> None:
         """
@@ -197,14 +227,103 @@ class EmbeddingGeneratorAdapter:
         """
         self._embedding_cache.clear()
 
-    def get_embedding_dimension(self) -> int:
+    def _get_cache_key(self, text: str) -> str:
+        """Generate cache key from text content."""
+        return hashlib.sha256(text.encode()).hexdigest()
+
+    def _get_client(self) -> "AsyncOpenAI":
+        """Lazy-load OpenAI client."""
+        if self._client is None:
+            try:
+                from openai import AsyncOpenAI
+
+                self._client = AsyncOpenAI(api_key=self._api_key)
+            except ImportError:
+                raise EmbeddingError(
+                    "OpenAI package not installed. Install with: pip install openai",
+                    "PACKAGE_NOT_FOUND",
+                )
+        return self._client
+
+    async def _call_openai_api(self, text: str) -> List[float]:
         """
-        Get dimensionality of embeddings produced by this generator.
+        Call OpenAI embeddings API for a single text.
+
+        Args:
+            text: Text to embed
 
         Returns:
-            1536 for text-embedding-ada-002 (default)
-            3072 for text-embedding-3-large
+            List of floats representing the embedding vector
         """
-        if self._model == "text-embedding-3-large":
-            return 3072
-        return 1536
+        client = self._get_client()
+
+        response = await client.embeddings.create(
+            model=self._model,
+            input=text,
+        )
+
+        return list(response.data[0].embedding)
+
+    async def _call_openai_api_batch(self, texts: List[str]) -> List[List[float]]:
+        """
+        Call OpenAI embeddings API for multiple texts.
+
+        More efficient than individual calls as OpenAI processes
+        multiple texts in a single request.
+
+        Args:
+            texts: List of texts to embed
+
+        Returns:
+            List of embedding vectors
+        """
+        client = self._get_client()
+
+        # OpenAI supports up to 2048 texts in a batch, but we limit
+        # to batch_size (default 100) for safety
+        response = await client.embeddings.create(
+            model=self._model,
+            input=texts,
+        )
+
+        # Return embeddings in same order as input
+        return [item.embedding for item in response.data]
+
+    def _generate_mock_embedding(self, text: str) -> List[float]:
+        """
+        Generate deterministic mock embedding for testing.
+
+        Uses text hash to create consistent embeddings that normalize
+        to unit vectors (standard practice for embeddings).
+
+        Real embeddings would have semantic properties - similar texts
+        produce similar vectors. Mock embeddings are only for
+        testing infrastructure, not for semantic search quality.
+
+        Args:
+            text: Text to generate mock embedding for
+
+        Returns:
+            Normalized vector of appropriate dimension
+        """
+        import random
+
+        # Create deterministic seed from text
+        seed = int(hashlib.sha256(text.encode()).hexdigest()[:8], 16)
+        random.seed(seed)
+
+        dimension = self.get_dimension()
+
+        # Generate normalized vector using Gaussian distribution
+        embedding = [random.gauss(0, 1) for _ in range(dimension)]
+
+        # Normalize to unit length (standard for embeddings)
+        magnitude = sum(x**2 for x in embedding) ** 0.5
+        if magnitude > 0:
+            embedding = [x / magnitude for x in embedding]
+
+        return embedding
+
+
+# Backward compatibility alias
+EmbeddingGeneratorAdapter = EmbeddingServiceAdapter

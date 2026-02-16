@@ -66,7 +66,9 @@ curl -X POST http://localhost:8000/api/world/generation \
 
 ### Architecture Documentation
 
-For detailed architecture, see [`docs/architecture/world_engine.mermaid`](docs/architecture/world_engine.mermaid).
+For detailed architecture, see:
+- [`docs/architecture/world_engine.mermaid`](docs/architecture/world_engine.mermaid) - World Generation System
+- [`docs/architecture/rag_pipeline.mermaid`](docs/architecture/rag_pipeline.mermaid) - RAG Knowledge Retrieval Pipeline (ingestion, retrieval, reranking)
 
 ---
 

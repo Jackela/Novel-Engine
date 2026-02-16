@@ -3,6 +3,7 @@
 Shared Type Definitions.
 This module defines shared Pydantic models and enums used across the system.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -433,9 +434,7 @@ class WorldState(BaseModel):
     turn_number: int
     entities: Dict[str, WorldEntity] = Field(default_factory=dict)
     global_properties: Dict[str, Any] = Field(default_factory=dict)
-    environmental_conditions: List[EnvironmentalCondition] = Field(
-        default_factory=list
-    )
+    environmental_conditions: List[EnvironmentalCondition] = Field(default_factory=list)
     timestamp: datetime = Field(default_factory=datetime.now)
 
     model_config = ConfigDict(validate_assignment=True)
@@ -802,10 +801,10 @@ class CharacterAction(BaseModel):
 
     @field_validator("priority")
     @classmethod
-    def _validate_priority(cls, value: ActionPriority) -> ActionPriority:
-        if isinstance(value, str):
-            return ActionPriority(value.lower())
-        return value
+    def _validate_priority(cls, value: ActionPriority | str) -> ActionPriority:
+        if isinstance(value, ActionPriority):
+            return value
+        return ActionPriority(value.lower())
 
 
 MODEL_REGISTRY = {

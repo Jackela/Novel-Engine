@@ -6,6 +6,7 @@ Director Agent Advanced Feature Test Suite
 Advanced testing for director_agent.py covering knowledge retrieval, narrative engine,
 world state management, and agent orchestration systems.
 """
+
 import json
 import logging
 import os
@@ -15,11 +16,14 @@ from unittest.mock import Mock, patch
 import pytest
 
 # Import the modules under test
+
+pytestmark = pytest.mark.unit
+
 try:
-    from src.core.types.shared_types import CharacterAction
     from src.agents.director_agent_integrated import DirectorAgent
-    from src.core.event_bus import EventBus
     from src.agents.persona_agent.agent import PersonaAgent
+    from src.core.event_bus import EventBus
+    from src.core.types.shared_types import CharacterAction
 
     DIRECTOR_AGENT_AVAILABLE = True
 except ImportError as e:
@@ -591,6 +595,3 @@ def run_director_advanced_tests():
 if __name__ == "__main__":
     # Direct execution runs all tests
     run_director_advanced_tests()
-
-
-

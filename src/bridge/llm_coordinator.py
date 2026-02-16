@@ -377,7 +377,9 @@ class LLMCoordinator:
         """Generate cache key for request."""
         content_str = str(sorted(request.content.items()))
         key_data = f"{request.request_type}:{content_str}"
-        return hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+        return hashlib.md5(
+            key_data.encode(), usedforsecurity=False
+        ).hexdigest()  # nosec B324
 
     async def _get_cached_response(self, cache_key: str) -> Optional[Any]:
         """Get cached response if valid."""
@@ -523,4 +525,3 @@ class LLMCoordinator:
                     await self._process_priority_batch(priority)
         except Exception as e:
             self.logger.error(f"Error flushing pending requests: {e}")
-

@@ -28,6 +28,7 @@ pandas>=1.5.0; python_version>="3.9"
 pandas>=1.3.0; python_version=="3.8"
 numpy>=1.21.0; python_version=="3.8"
 numpy>=1.24.0; python_version>="3.9"
+rank-bm25>=0.2.2,<1.0.0
 Pillow>=10.0.0
 
 # Testing and validation
@@ -56,7 +57,9 @@ bcrypt>=4.0.0  # Password hashing for auth_system
 bleach>=6.0.0  # HTML sanitization for security_middleware
 slowapi>=0.1.9  # Rate limiting middleware for production_api_server
 networkx>=3.0  # Graph library for causal graph
+scipy>=1.10.0  # Required for NetworkX PageRank calculations
 aiosqlite>=0.19.0  # Async SQLite for context database
 
 # Database
 sqlalchemy>=2.0.0  # ORM for narrative arc repository
+chromadb>=0.5.0,<1.0.0  # Vector database for semantic search

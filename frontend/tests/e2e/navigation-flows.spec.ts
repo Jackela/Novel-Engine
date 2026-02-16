@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { safeGoto } from './utils/navigation';
 import { waitForDashboardReady, waitForLandingReady, waitForLoginReady, waitForRouteReady } from './utils/waitForReady';
 import { resetAuthState } from './utils/auth';
 
@@ -54,13 +55,13 @@ test.describe('Navigation Flows E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       // Build up history
-      await page.goto('/');
+      await safeGoto(page, '/');
       await waitForLandingReady(page);
 
-      await page.goto('/login');
+      await safeGoto(page, '/login');
       await waitForLoginReady(page);
 
-      await page.goto('/');
+      await safeGoto(page, '/');
       await waitForLandingReady(page);
 
       // Go back
@@ -152,11 +153,11 @@ test.describe('Navigation Flows E2E Tests', () => {
       });
 
       await test.step('When: User navigates away then enters /dashboard directly', async () => {
-        await page.goto('/');
+        await safeGoto(page, '/');
         await waitForDashboardReady(page);
 
         // Direct navigation
-        await page.goto('/dashboard');
+        await safeGoto(page, '/dashboard');
         await waitForDashboardReady(page);
       });
 
@@ -173,7 +174,7 @@ test.describe('Navigation Flows E2E Tests', () => {
       await resetAuthState(page);
 
       // Direct navigation attempt
-      await page.goto('/dashboard');
+      await safeGoto(page, '/dashboard');
       await waitForLandingReady(page);
 
       // Should redirect to landing
@@ -186,7 +187,7 @@ test.describe('Navigation Flows E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       // Navigate to unknown route (should redirect)
-      await page.goto('/unknown-route');
+      await safeGoto(page, '/unknown-route');
       await waitForLandingReady(page);
 
       // Should be on landing
@@ -226,7 +227,7 @@ test.describe('Navigation Flows E2E Tests', () => {
       const landingPage = new LandingPage(page);
 
       // Navigate with query params
-      await page.goto('/?source=test&campaign=e2e');
+      await safeGoto(page, '/?source=test&campaign=e2e');
       await waitForLandingReady(page);
 
       // Landing page should load
@@ -241,7 +242,7 @@ test.describe('Navigation Flows E2E Tests', () => {
     test('should handle hash fragments in URL', async ({ page }) => {
       const landingPage = new LandingPage(page);
 
-      await page.goto('/#features');
+      await safeGoto(page, '/#features');
       await waitForLandingReady(page);
 
       // Should still render the page

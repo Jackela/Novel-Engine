@@ -125,9 +125,9 @@ class KnowledgeRevealed(SubjectiveDomainEvent):
     turn_brief_id: SubjectiveId
     knowledge_item: KnowledgeItem
     revelation_method: str  # How the knowledge was acquired
-    confidence_change: Optional[
-        float
-    ] = None  # Change in confidence if updating existing knowledge
+    confidence_change: Optional[float] = (
+        None  # Change in confidence if updating existing knowledge
+    )
 
     def get_event_type(self) -> str:
         return "KnowledgeRevealed"

@@ -9,8 +9,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from src.contexts.narrative.domain.entities.story import Story, StoryStatus
 from src.contexts.narrative.domain.entities.chapter import Chapter
+from src.contexts.narrative.domain.entities.story import Story, StoryStatus
+
+pytestmark = pytest.mark.unit
 
 
 class TestStoryCreation:

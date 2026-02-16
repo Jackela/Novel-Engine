@@ -3,6 +3,7 @@
 pytest配置文件和共享fixture
 提供测试环境的通用设置和数据
 """
+
 import asyncio
 import logging
 import os
@@ -20,6 +21,8 @@ from tests.helpers.postgres import ensure_postgres_service
 
 # Load pytest-asyncio plugin early so asyncio_mode=auto in pytest.ini is recognized.
 # This must happen before pytest parses config options.
+
+
 pytest_plugins = ("pytest_asyncio",)
 
 

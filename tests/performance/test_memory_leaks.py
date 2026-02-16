@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import psutil
+import pytest
 
 # Import memory fix components
 from src.performance_optimizations.memory_leak_fixes import (
@@ -28,6 +29,9 @@ from src.performance_optimizations.memory_leak_fixes import (
 )
 
 # Set up logging
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

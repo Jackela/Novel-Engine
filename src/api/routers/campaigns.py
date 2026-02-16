@@ -89,7 +89,9 @@ def _get_campaign_file_from_registry(campaign_id: str) -> str | None:
     return _CAMPAIGN_FILE_REGISTRY.get(campaign_id)
 
 
-def _build_campaign_detail(campaign_id: str, payload: dict[str, Any], updated_at: str) -> CampaignDetailResponse:
+def _build_campaign_detail(
+    campaign_id: str, payload: dict[str, Any], updated_at: str
+) -> CampaignDetailResponse:
     created_at = str(payload.get("created_at") or updated_at)
     return CampaignDetailResponse(
         id=campaign_id,

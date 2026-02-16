@@ -206,6 +206,12 @@ export async function updateScene(
   sceneId: string,
   updates: Partial<SceneCreateRequest> & {
     status?: 'draft' | 'generating' | 'review' | 'published';
+    story_phase?:
+      | 'setup'
+      | 'inciting_incident'
+      | 'rising_action'
+      | 'climax'
+      | 'resolution';
   }
 ): Promise<SceneResponse> {
   const data = await api.patch<unknown>(

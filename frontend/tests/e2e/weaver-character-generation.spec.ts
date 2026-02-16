@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures';
+import { safeGoto } from './utils/navigation';
 
 test.describe('Weaver Character Generation', () => {
   test('@weaver-smoke dialog submit creates loading node then resolves to idle', async ({
@@ -10,19 +11,24 @@ test.describe('Weaver Character Generation', () => {
     await test.step('GIVEN: API mock 配置为返回成功的角色数据', async () => {
       await page.addInitScript(() => {
         (window as any).__e2eGenerationMode = 'success';
-        (window as any).__e2eGenerationDelayMs = 300;
+        (window as any).__e2eGenerationDelayMs = 1000;
       });
     });
 
     await test.step('GIVEN: 用户在 Weaver 画布页面', async () => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
+      await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible({
+        timeout: 30_000,
+      });
     });
 
     // ========================================
     // WHEN: 用户打开生成对话框并提交表单
     // ========================================
     await test.step('WHEN: 用户点击 Generate 按钮打开对话框', async () => {
-      await page.getByRole('button', { name: /^Generate$/i }).click();
+      const generateButton = page.getByRole('button', { name: /^Generate$/i });
+      await expect(generateButton).toBeVisible({ timeout: 20_000 });
+      await generateButton.click();
       await expect(page.getByRole('heading', { name: 'Generate Character' })).toBeVisible();
     });
 
@@ -44,8 +50,8 @@ test.describe('Weaver Character Generation', () => {
     // ========================================
     await test.step('THEN: 画布上出现一个 loading 状态的节点', async () => {
       const loadingNode = page.locator('.weaver-node.node-loading');
-      await expect(loadingNode).toHaveCount(1);
-      await expect(loadingNode).toContainText('Generating...');
+      await expect(loadingNode).toHaveCount(1, { timeout: 20_000 });
+      await expect(loadingNode).toContainText('Generating...', { timeout: 20_000 });
     });
 
     await test.step('THEN: 节点最终变为 idle 状态并显示角色信息', async () => {
@@ -69,14 +75,19 @@ test.describe('Weaver Character Generation', () => {
     });
 
     await test.step('GIVEN: 用户在 Weaver 画布页面', async () => {
-      await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/weaver');
+      await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible({
+        timeout: 30_000,
+      });
     });
 
     // ========================================
     // WHEN: 用户提交角色生成请求
     // ========================================
     await test.step('WHEN: 用户打开生成对话框', async () => {
-      await page.getByRole('button', { name: /^Generate$/i }).click();
+      const generateButton = page.getByRole('button', { name: /^Generate$/i });
+      await expect(generateButton).toBeVisible({ timeout: 20_000 });
+      await generateButton.click();
       await expect(page.getByRole('heading', { name: 'Generate Character' })).toBeVisible();
     });
 

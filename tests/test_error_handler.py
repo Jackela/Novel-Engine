@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from core.error_handler import (

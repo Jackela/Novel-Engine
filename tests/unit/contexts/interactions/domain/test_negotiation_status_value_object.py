@@ -18,6 +18,8 @@ from src.contexts.interactions.domain.value_objects.negotiation_status import (
     TerminationReason,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestNegotiationEnums:
     """Test suite for negotiation enumeration types."""

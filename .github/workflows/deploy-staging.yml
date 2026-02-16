@@ -84,7 +84,7 @@ jobs:
     - name: Health check staging deployment
       run: |
         sleep 30  # Wait for deployment
-        curl -f http://localhost:8000/health || exit 1
+        curl -f http://localhost:8000/api/health || exit 1
         echo "✅ Staging deployment healthy"
 
     - name: Run staging smoke tests

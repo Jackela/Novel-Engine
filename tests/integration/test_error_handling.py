@@ -18,6 +18,8 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def test_client():
@@ -166,7 +168,9 @@ class TestDatabaseFailureHandling:
             assert response.status_code >= 400
 
             # Response should be JSON, not a raw traceback
-            assert response.headers.get("content-type", "").startswith("application/json")
+            assert response.headers.get("content-type", "").startswith(
+                "application/json"
+            )
 
             # Should have structured error info
             data = response.json()
@@ -232,7 +236,9 @@ class TestMalformedLLMResponse:
 
             # Should either succeed after retry or fail gracefully
             # The key is no raw exception traceback
-            assert response.headers.get("content-type", "").startswith("application/json")
+            assert response.headers.get("content-type", "").startswith(
+                "application/json"
+            )
 
     @pytest.mark.integration
     def test_persistent_bad_json_fails_gracefully(self, test_client: TestClient):
@@ -308,15 +314,15 @@ class TestGracefulDegradation:
 
             # Should be JSON
             content_type = response.headers.get("content-type", "")
-            assert "application/json" in content_type, (
-                f"Non-JSON response for {method} {path}: {content_type}"
-            )
+            assert (
+                "application/json" in content_type
+            ), f"Non-JSON response for {method} {path}: {content_type}"
 
             # Should not contain Python traceback markers
             text = response.text
-            assert "Traceback (most recent call last)" not in text, (
-                f"Raw traceback in response for {method} {path}"
-            )
-            assert "File \"" not in text or "line" not in text.lower(), (
-                f"Stack trace leaked in response for {method} {path}"
-            )
+            assert (
+                "Traceback (most recent call last)" not in text
+            ), f"Raw traceback in response for {method} {path}"
+            assert (
+                'File "' not in text or "line" not in text.lower()
+            ), f"Stack trace leaked in response for {method} {path}"

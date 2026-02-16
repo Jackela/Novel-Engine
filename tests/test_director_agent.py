@@ -3,10 +3,12 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.core.types.shared_types import CharacterAction
 from src.agents.director_agent_integrated import DirectorAgent
-from src.core.event_bus import EventBus
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.event_bus import EventBus
+from src.core.types.shared_types import CharacterAction
+
+pytestmark = pytest.mark.unit
 
 
 class TestDirectorAgent(unittest.TestCase):
@@ -75,6 +77,3 @@ class TestDirectorAgent(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
-

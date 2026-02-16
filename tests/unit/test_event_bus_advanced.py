@@ -5,6 +5,8 @@ import pytest
 
 from src.core.event_bus import EventBus, EventPriority, InMemoryEventBus
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.unit
 @pytest.mark.asyncio
@@ -45,7 +47,9 @@ def test_pause_and_resume_event_type():
     assert event_bus.get_history(event_type="paused_event") == []
 
     event_bus.resume_event_type("paused_event")
-    event_id = event_bus.emit("paused_event", payload="data", priority=EventPriority.HIGH)
+    event_id = event_bus.emit(
+        "paused_event", payload="data", priority=EventPriority.HIGH
+    )
 
     assert event_id is not None
     assert handler.call_count == 1
@@ -69,9 +73,7 @@ async def test_publish_supports_sync_and_async_handlers():
     event_bus.subscribe("async_event", sync_handler)
     event_bus.subscribe("async_event", async_handler)
 
-    await event_bus.publish(
-        "async_event", {"sync": True, "async": True}, source="test"
-    )
+    await event_bus.publish("async_event", {"sync": True, "async": True}, source="test")
 
     assert sync_called["value"] is True
     assert async_called["value"] is True

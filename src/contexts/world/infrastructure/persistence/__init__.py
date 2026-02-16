@@ -24,8 +24,10 @@ def __getattr__(name: str):
     """Lazy load modules on first access to avoid import-time issues."""
     if name == "WorldStateModel":
         from .models import WorldStateModel
+
         return WorldStateModel
     if name == "PostgresWorldStateRepository":
         from .postgres_world_state_repo import PostgresWorldStateRepository
+
         return PostgresWorldStateRepository
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

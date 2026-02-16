@@ -668,9 +668,9 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
                     category, events
                 )
             else:
-                summaries[
-                    category
-                ] = f"No {category.replace('_', ' ')} occurred during this turn."
+                summaries[category] = (
+                    f"No {category.replace('_', ' ')} occurred during this turn."
+                )
 
         return summaries
 

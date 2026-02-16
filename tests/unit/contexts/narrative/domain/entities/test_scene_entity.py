@@ -9,8 +9,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from src.contexts.narrative.domain.entities.scene import Scene, SceneStatus
 from src.contexts.narrative.domain.entities.beat import Beat
+from src.contexts.narrative.domain.entities.scene import Scene, SceneStatus
+
+pytestmark = pytest.mark.unit
 
 
 class TestSceneCreation:
@@ -493,3 +495,348 @@ class TestSceneTimestamps:
         timestamp_after_complete = scene.updated_at
         scene.move_to_position(3)
         assert scene.updated_at >= timestamp_after_complete
+
+
+class TestScenePacingLevels:
+    """Test suite for Scene pacing level operations (Director Mode)."""
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_default_pacing_levels(self):
+        """Test that default tension and energy levels are 5."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+
+        assert scene.tension_level == 5
+        assert scene.energy_level == 5
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_create_scene_with_custom_pacing_levels(self):
+        """Test creating a scene with custom pacing levels."""
+        scene = Scene(
+            title="Climax Scene",
+            chapter_id=uuid4(),
+            tension_level=9,
+            energy_level=8,
+        )
+
+        assert scene.tension_level == 9
+        assert scene.energy_level == 8
+
+    @pytest.mark.unit
+    def test_create_scene_with_invalid_tension_level_raises_error(self):
+        """Test that invalid tension level raises ValueError."""
+        with pytest.raises(ValueError, match="tension_level must be between 1 and 10"):
+            Scene(title="Scene", chapter_id=uuid4(), tension_level=0)
+
+        with pytest.raises(ValueError, match="tension_level must be between 1 and 10"):
+            Scene(title="Scene", chapter_id=uuid4(), tension_level=11)
+
+    @pytest.mark.unit
+    def test_create_scene_with_invalid_energy_level_raises_error(self):
+        """Test that invalid energy level raises ValueError."""
+        with pytest.raises(ValueError, match="energy_level must be between 1 and 10"):
+            Scene(title="Scene", chapter_id=uuid4(), energy_level=0)
+
+        with pytest.raises(ValueError, match="energy_level must be between 1 and 10"):
+            Scene(title="Scene", chapter_id=uuid4(), energy_level=11)
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_update_tension_level(self):
+        """Test updating scene tension level."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        original_timestamp = scene.updated_at
+
+        scene.update_tension_level(8)
+
+        assert scene.tension_level == 8
+        assert scene.updated_at >= original_timestamp
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_update_energy_level(self):
+        """Test updating scene energy level."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        original_timestamp = scene.updated_at
+
+        scene.update_energy_level(3)
+
+        assert scene.energy_level == 3
+        assert scene.updated_at >= original_timestamp
+
+    @pytest.mark.unit
+    def test_update_tension_level_invalid_raises_error(self):
+        """Test that updating to invalid tension level raises ValueError."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+
+        with pytest.raises(ValueError, match="tension_level must be between 1 and 10"):
+            scene.update_tension_level(0)
+
+        with pytest.raises(ValueError, match="tension_level must be between 1 and 10"):
+            scene.update_tension_level(11)
+
+    @pytest.mark.unit
+    def test_update_energy_level_invalid_raises_error(self):
+        """Test that updating to invalid energy level raises ValueError."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+
+        with pytest.raises(ValueError, match="energy_level must be between 1 and 10"):
+            scene.update_energy_level(0)
+
+        with pytest.raises(ValueError, match="energy_level must be between 1 and 10"):
+            scene.update_energy_level(11)
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_pacing_levels_boundary_values(self):
+        """Test that boundary values (1 and 10) are valid."""
+        scene_min = Scene(
+            title="Low Scene", chapter_id=uuid4(), tension_level=1, energy_level=1
+        )
+        scene_max = Scene(
+            title="High Scene", chapter_id=uuid4(), tension_level=10, energy_level=10
+        )
+
+        assert scene_min.tension_level == 1
+        assert scene_min.energy_level == 1
+        assert scene_max.tension_level == 10
+        assert scene_max.energy_level == 10
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_repr_includes_pacing_levels(self):
+        """Test that repr includes tension and energy levels."""
+        scene = Scene(title="Test", chapter_id=uuid4(), tension_level=7, energy_level=4)
+
+        repr_str = repr(scene)
+
+        assert "tension=7" in repr_str
+        assert "energy=4" in repr_str
+
+
+class TestScenePlotlineManagement:
+    """Test suite for Scene plotline management (DIR-049)."""
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_default_plotline_ids_is_empty(self):
+        """Test that new scenes have empty plotline_ids list."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        assert scene.plotline_ids == []
+        assert len(scene.plotline_ids) == 0
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_add_plotline(self):
+        """Test adding a plotline to a scene."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+        original_timestamp = scene.updated_at
+
+        scene.add_plotline(plotline_id)
+
+        assert plotline_id in scene.plotline_ids
+        assert len(scene.plotline_ids) == 1
+        assert scene.updated_at >= original_timestamp
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_add_multiple_plotlines(self):
+        """Test adding multiple plotlines to a scene."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id_1 = uuid4()
+        plotline_id_2 = uuid4()
+        plotline_id_3 = uuid4()
+
+        scene.add_plotline(plotline_id_1)
+        scene.add_plotline(plotline_id_2)
+        scene.add_plotline(plotline_id_3)
+
+        assert plotline_id_1 in scene.plotline_ids
+        assert plotline_id_2 in scene.plotline_ids
+        assert plotline_id_3 in scene.plotline_ids
+        assert len(scene.plotline_ids) == 3
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_add_duplicate_plotline_no_change(self):
+        """Test that adding the same plotline twice doesn't duplicate it."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+        scene.add_plotline(plotline_id)
+        original_timestamp = scene.updated_at
+        scene.add_plotline(plotline_id)  # Add same plotline again
+
+        assert scene.plotline_ids.count(plotline_id) == 1
+        assert len(scene.plotline_ids) == 1
+        # Should not have updated timestamp on no-op
+        assert scene.updated_at == original_timestamp
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_remove_plotline(self):
+        """Test removing a plotline from a scene."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+        scene.add_plotline(plotline_id)
+
+        result = scene.remove_plotline(plotline_id)
+
+        assert result is True
+        assert plotline_id not in scene.plotline_ids
+        assert len(scene.plotline_ids) == 0
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_remove_nonexistent_plotline_returns_false(self):
+        """Test that removing a non-existent plotline returns False."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+
+        result = scene.remove_plotline(plotline_id)
+
+        assert result is False
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_set_plotlines_replaces_all(self):
+        """Test that set_plotlines replaces all existing plotlines."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id_1 = uuid4()
+        plotline_id_2 = uuid4()
+        plotline_id_3 = uuid4()
+
+        # Add initial plotlines
+        scene.add_plotline(plotline_id_1)
+        scene.add_plotline(plotline_id_2)
+
+        # Replace with new list
+        new_plotlines = [plotline_id_2, plotline_id_3]
+        scene.set_plotlines(new_plotlines)
+
+        assert len(scene.plotline_ids) == 2
+        assert plotline_id_2 in scene.plotline_ids
+        assert plotline_id_3 in scene.plotline_ids
+        assert plotline_id_1 not in scene.plotline_ids
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_set_plotlines_with_empty_list(self):
+        """Test that set_plotlines with empty list clears all plotlines."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id_1 = uuid4()
+        plotline_id_2 = uuid4()
+
+        scene.add_plotline(plotline_id_1)
+        scene.add_plotline(plotline_id_2)
+        scene.set_plotlines([])
+
+        assert len(scene.plotline_ids) == 0
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_plotline_operations_touch_timestamp(self):
+        """Test that plotline operations update the timestamp."""
+        scene = Scene(title="Scene", chapter_id=uuid4())
+        plotline_id = uuid4()
+
+        import time
+
+        time.sleep(0.01)  # Small delay to ensure timestamp changes
+
+        scene.add_plotline(plotline_id)
+
+        assert scene.updated_at > scene.created_at
+
+
+class TestSceneMetadataSmartTags:
+    """Tests for Scene metadata and smart tags functionality."""
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_update_metadata_adds_key_value(self):
+        """Test updating metadata with a key-value pair."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        scene.update_metadata("custom_field", "custom_value")
+
+        assert scene.get_metadata("custom_field") == "custom_value"
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_update_metadata_overwrites_existing(self):
+        """Test that updating metadata overwrites existing values."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        scene.update_metadata("key", "value1")
+        scene.update_metadata("key", "value2")
+
+        assert scene.get_metadata("key") == "value2"
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_get_metadata_returns_default_for_missing_key(self):
+        """Test that get_metadata returns default for missing keys."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+
+        assert scene.get_metadata("nonexistent", "default") == "default"
+        assert scene.get_metadata("nonexistent") is None
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_set_smart_tags_stores_tags(self):
+        """Test storing smart tags in metadata."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        tags = {
+            "mood": ["tense", "mysterious"],
+            "pacing": ["fast"],
+        }
+        scene.set_smart_tags(tags)
+
+        assert scene.get_smart_tags() == tags
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_get_smart_tags_empty_when_none_set(self):
+        """Test that get_smart_tags returns empty dict when none set."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+
+        assert scene.get_smart_tags() == {}
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_smart_tags_stored_alongside_other_metadata(self):
+        """Test that smart tags coexist with other metadata."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        scene.update_metadata("other_key", "other_value")
+        scene.set_smart_tags({"mood": ["tense"]})
+
+        assert scene.get_metadata("other_key") == "other_value"
+        assert scene.get_smart_tags() == {"mood": ["tense"]}
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_metadata_updates_touch_timestamp(self):
+        """Test that metadata updates trigger timestamp change."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        original_timestamp = scene.updated_at
+
+        import time
+
+        time.sleep(0.01)
+        scene.update_metadata("test", "value")
+
+        assert scene.updated_at > original_timestamp
+
+    @pytest.mark.unit
+    @pytest.mark.fast
+    def test_smart_tags_updates_touch_timestamp(self):
+        """Test that smart tags updates trigger timestamp change."""
+        scene = Scene(title="Test Scene", chapter_id=uuid4())
+        original_timestamp = scene.updated_at
+
+        import time
+
+        time.sleep(0.01)
+        scene.set_smart_tags({"mood": ["tense"]})
+
+        assert scene.updated_at > original_timestamp

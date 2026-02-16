@@ -14,6 +14,9 @@ from datetime import datetime
 import pytest
 
 # Configure logging for performance testing
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

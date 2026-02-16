@@ -21,6 +21,8 @@ from src.contexts.ai.domain.value_objects.common import (
     TokenBudget,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestProviderTypeEnum:
     """Test suite for ProviderType enum."""

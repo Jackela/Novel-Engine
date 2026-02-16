@@ -20,6 +20,8 @@ from src.contexts.narratives.domain.value_objects import (
     StoryArcState,
 )
 
+pytestmark = pytest.mark.unit
+
 
 def _build_state(phase: StoryArcPhase) -> StoryArcState:
     """Helper for constructing minimal StoryArcState fixtures."""

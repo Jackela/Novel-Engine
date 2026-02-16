@@ -1,110 +1,152 @@
-# Ralph Progress - Warzone 3: Director Mode
+# Ralph Progress Log
+Started: Fri Feb 14 2026
+---
 
 ## Codebase Patterns
-(Inherited from previous sprints + Director Mode specific patterns)
-
-### Architecture
-- **Domain Context**: New entities go in `src/contexts/narrative/domain/`
-- **Value Objects**: Use frozen dataclass with Tuple for immutable collections
-- **Application Services**: `src/contexts/{context}/application/services/`
-- **API Routers**: `src/api/routers/{feature}.py`, register in `main_api_server.py`
-
-### Frontend Organization
-- **Feature Components**: `frontend/src/features/director/components/`
-- **Director API Client**: `frontend/src/lib/api/directorApi.ts`
-- **Composed Components**: `frontend/src/components/composed/` (AppShell, EditorLayout)
-- **shadcn/ui**: `frontend/src/components/ui/` (DO NOT MODIFY)
-
-### Three Rendering Domains
-- **App Shell**: Tailwind + shadcn/ui, font-sans, bg-background
-- **Editor Canvas**: Custom CSS (.prose-editor), font-serif in literary mode, bg-paper
-- **Graph Canvas**: Weaver colors, .weaver-node + status classes
-
-### Orthogonal Theming
-- Color mode: `class="dark"` on `<html>` (light/dark)
-- Typography mode: `data-typography="literary"` on `<html>` (default/literary)
-
-### State Management
-- Server state → TanStack Query (useQuery, useMutation)
-- Global UI state → Zustand stores
-- Form state → React Hook Form + Zod validation
-
-### Visualization Patterns
-- **Recharts**: Already installed, use for PacingGraph (AreaChart), ChapterHealth (PieChart)
-- **Radar Chart**: Used in PsychologyChart (CHAR-022)
-- **Tooltips**: Custom tooltip requires null check for payload[0]
-- **Theming**: Use `hsl(var(--css-variable))` pattern for Recharts components
-
-### Drag-and-Drop Patterns
-- **dnd-kit**: Already installed, used for scene reordering in NarrativeEditorLayout
-- **DndContext**: Wrap draggable areas with sensors and event handlers
-- **useSensors**: PointerSensor with distance constraint (10px) to avoid accidental drags
-- **DragOverlay**: Custom overlay component for visual feedback
-
-### LLM Generation Patterns
-- **LLMWorldGenerator**: Main AI service in `src/contexts/world/infrastructure/generators/`
-- **Prompt Templates**: YAML files in `src/contexts/world/infrastructure/prompts/`
-- **Pattern**: _load_*_prompt + _build_*_user_prompt + _parse_*_response
-- **Result Dataclasses**: to_dict() method that omits null optional fields
-
-### Testing Patterns
-- E2E tests: `frontend/tests/e2e/`
-- Unit tests: `tests/unit/contexts/{context}/domain/`
-- Run `npm run type-check && npm run lint:all` before commit
-- Playwright: test.describe.configure({ mode: 'serial' }) for ordered tests
-
-### API Patterns
-- Zod schemas in `frontend/src/types/schemas.ts` must match backend `src/api/schemas.py`
-- Use frozen dataclasses for immutable value objects
-- TanStack Router uses `$paramName` for dynamic route segments
+- Use `sql<number>` template for aggregations
+- Always use `IF NOT EXISTS` for migrations
+- Export types from actions.ts for UI components
+- The token_counter module has ModelFamily enum - use PromptModelFamily for prompt formatting to avoid conflicts
+- Domain models directory may be in .gitignore - use `git add -f` if needed
+- ChatInterface uses aria-label for accessibility, not data-testid
+- Use `.ChatInterface` class name as stable selector for E2E tests
+- Lucide icons: `svg[data-lucide="icon-name"]`
+- Playwright route interception for network simulation
+- Mock SSE with `text/event-stream` content type
+- Fernet.generate_key() on restart makes stored keys unreadable - never use random keys
+- test_brain_settings_security.py needs `@pytest.mark.asyncio` for async tests
+- config/env/ in .gitignore - use `git add -f` for .env.example
+- Error handlers live in src/api/errors.py, not in app.py directly - use install_error_handlers()
+- Route decorators should NOT include /api prefix - it's added by app.include_router(router, prefix="/api")
+- orchestration.py had /api prefix in route decorators (same issue as auth.py) - check for similar issues
+- Result pattern: Use Ok(value) and Err(Error(...)) from src/core/result.py
+- SaveError is defined in src/core/result.py - use for persistence errors
 
 ---
 
-## Director Mode Domain Models
+## [2026-02-14 14:30] - RES-017 through RES-025
+- RES-017/018/019: No skipped tests found in test files - already passing
+- RES-020/021/022: No print() statements found in logging files - already using proper logging
+- RES-023: Replaced all 7 waitForTimeout calls with deterministic waits:
+  - expect.toBeVisible() for layout reflows
+  - expect.toHaveCount() for polling updates
+  - waitForLoadState('networkidle') for API completion
+- RES-024: character_factory.py has 0 imports - marked for removal
+- RES-025: director_agent.py has 0 imports - marked for removal
+- Files changed: frontend/tests/e2e/dashboard-core-uat.spec.ts, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Playwright tests should use deterministic waits (expect.toBeVisible) instead of waitForTimeout
+  - waitForLoadState('networkidle') is better than arbitrary timeouts for API waits
+  - Always check if files are actually used before assuming they need fixes
+---
 
-### Beat (Value Object)
-```python
-@dataclass(frozen=True)
-class Beat:
-    id: str
-    content: str
-    beat_type: BeatType  # ACTION | REACTION
-    mood_shift: int  # -5 to +5
-    order_index: int
-```
+## [2026-02-14 14:15] - RES-014, RES-015, RES-016
+- Created MemoryStore class in new file: src/contexts/character/infrastructure/persistence/memory_store.py
+- Created MemoryEntry dataclass with memory_id, content, metadata, timestamps
+- Implemented store(memory_id, content, metadata) -> None with upsert semantics
+- Implemented retrieve(memory_id) -> MemoryEntry | None (returns None if not found)
+- Implemented delete(memory_id) -> bool (returns True/False based on deletion)
+- Added utility methods: clear(), count(), list_all()
+- Files changed: src/contexts/character/infrastructure/persistence/memory_store.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - MemoryStore uses Dict[str, MemoryEntry] internally, similar to other in-memory repos
+  - MemoryEntry is a dataclass with timestamps - created_at preserved on updates
+  - The file was created from scratch since it didn't exist before
+---
 
-### Plotline (Entity)
-```python
-@dataclass
-class Plotline:
-    id: str
-    name: str
-    color: str  # hex color
-    description: str
-    status: PlotlineStatus  # ACTIVE | RESOLVED | ABANDONED
-```
+## [2026-02-14 14:00] - RES-013
+- Verified search() method was already implemented in InMemoryLoreEntryRepository
+- Method performs case-insensitive substring match on title
+- Returns [] if no matches, supports optional tag and category filters
+- Files changed: scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - The search() method already existed - it was likely implemented during OPERATION SYNAPSE but PRD wasn't updated
+  - Always verify if a method exists before implementing it
+---
 
-### Conflict (Entity)
-```python
-@dataclass
-class Conflict:
-    id: str
-    conflict_type: ConflictType  # INTERNAL | EXTERNAL | INTERPERSONAL
-    stakes: StakesLevel  # LOW | MEDIUM | HIGH | CRITICAL
-    description: str
-    resolution_status: ResolutionStatus  # UNRESOLVED | ESCALATING | RESOLVED
-    scene_id: str
-```
+## [2026-02-14 12:30] - RES-012
+- Implemented WorldStateAggregate.save() method with Result[None, SaveError] pattern
+- Added SaveError class to src/core/result.py for persistence errors
+- Method serializes to JSON, optionally writes to file
+- Added 3 test cases for save functionality
+- Files changed: src/core/result.py, src/contexts/world/domain/aggregates/world_state.py, tests/unit/contexts/world/domain/test_world_state_aggregate.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Result pattern uses Ok(value) and Err(Error(...)) factory functions
+  - TYPE_CHECKING imports avoid circular imports for type hints
+  - Entity.to_dict() provides serialization - use it for JSON output
+---
 
-### Foreshadowing (Entity)
-```python
-@dataclass
-class Foreshadowing:
-    id: str
-    setup_scene_id: str
-    payoff_scene_id: str | None
-    description: str
-    status: ForeshadowingStatus  # PLANTED | PAID_OFF | ABANDONED
-```
+## [2026-02-14 12:15] - RES-008, RES-009, RES-010 & RES-011
+- Fixed route decorator paths in auth.py (removed /api prefix from /auth/* routes)
+- Fixed route decorator paths in orchestration.py (removed /api prefix from /orchestration/* routes)
+- characters.py and generation.py were already correct (no /api prefix in route decorators)
+- Regenerated OpenAPI spec - removed /api/api/ duplication
+- Files changed: src/api/routers/auth.py, src/api/routers/orchestration.py, docs/api/openapi.json, docs/api/openapi.current.json, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Route decorators should use paths like "/auth/login" not "/api/auth/login"
+  - The /api prefix is added by app.include_router(router, prefix="/api") in app.py
+  - generate_openapi.py creates openapi.current.json - copy to openapi.json if needed
+---
+
+## [2026-02-14 12:00] - RES-006 & RES-007
+- Added /health/live endpoint for Kubernetes liveness probe (returns {"status": "ok"})
+- Added /health/ready endpoint for Kubernetes readiness probe with ChromaDB check
+- Created LivenessResponse and ReadinessResponse Pydantic models
+- Files changed: src/api/routers/health.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Liveness probe should have no dependencies and respond in <10ms
+  - Readiness probe checks critical dependencies and returns 503 if unhealthy
+  - Import from chromadb_vector_store may fail gracefully if not installed
+---
+
+## [2026-02-14 11:45] - RES-004 & RES-005
+- Added engines field to frontend/package.json: {"node": ">=18.0.0", "npm": ">=9.0.0"}
+- Created frontend/.nvmrc with "20" for Node version management
+- Files changed: frontend/package.json, frontend/.nvmrc, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Use .nvmrc file in frontend/ directory for Node version management
+  - Engines field in package.json ensures correct Node/npm versions
+---
+
+## [2026-02-14 11:30] - RES-003
+- Added dedicated 404 exception handler in src/api/errors.py
+- Handler uses ErrorDetail schema from src/api/schemas.py
+- Response format: {"error": {"code": "NOT_FOUND", "message": "...", "details": {"path": ...}}}
+- Files changed: src/api/errors.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Error handlers are centralized in src/api/errors.py, added via install_error_handlers()
+  - The 404 handler uses dedicated @app.exception_handler(404) for cleaner code
+  - ErrorDetail.model_dump(exclude_none=True) removes None fields from response
+---
+
+## [2026-02-14 10:00] - RES-002
+- Added ValidationError schema extending ErrorDetail in src/api/schemas.py
+- Schema includes: field_errors (Optional[Dict[str, List[str]]])
+- Added docstring with example showing field-level validation errors
+- Files changed: src/api/schemas.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - ValidationError extends ErrorDetail, so it inherits code, message, and details fields
+  - Use Optional[Dict[str, List[str]]] for field_errors to allow multiple error messages per field
+---
+
+## [2026-02-14 09:45] - RES-001
+- Added ErrorDetail schema to src/api/schemas.py in Health/Meta Schemas section
+- Schema includes: code (str), message (str), details (Optional[Dict[str, Any]])
+- Added docstring with example usage
+- Files changed: src/api/schemas.py, scripts/ralph/prd.json
+- **Learnings for future iterations:**
+  - Error schemas should go in Health/Meta Schemas section (after line 100)
+  - Use Dict[str, Any] for flexible metadata fields
+---
+
+- Committed all 584 files from OPERATION SYNAPSE refactoring sprint
+- Files included: formatting changes, line ending normalization, all OPT-001 through OPT-015 implementations
+- Created new PRD: OPERATION RESILIENCE with 15 stories for test fixes, backend stubs, API contracts, infrastructure
+
+**Learnings for future iterations:**
+- CRLF warnings are normal on Windows/WSL - Git auto-converts on checkout
+- Large commits (500+ files) are acceptable when consolidating a sprint's work
+- .pyc files in __pycache__ should be removed before committing
+- scripts/ralph/archive/ should be gitignored
 
 ---

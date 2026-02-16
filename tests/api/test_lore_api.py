@@ -5,10 +5,12 @@ ensuring proper CRUD operations and search functionality.
 """
 
 import pytest
-import api_server
 from fastapi.testclient import TestClient
 
+import api_server
 from src.api.routers.lore import get_repository
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture(autouse=True)
@@ -113,7 +115,9 @@ class TestLoreEntryGet:
         """Getting a non-existent entry returns 404."""
         response = client.get("/api/lore/nonexistent-id")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"]
+        payload = response.json()
+        assert payload.get("code") == "NOT_FOUND"
+        assert "message" in payload
 
 
 @pytest.mark.unit

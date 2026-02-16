@@ -5,17 +5,20 @@ Character API Integration Tests
 Tests the Character API endpoints with full request/response validation.
 """
 
-import pytest
-from unittest.mock import MagicMock
 from datetime import datetime
+from unittest.mock import MagicMock
+
+import pytest
 
 from src.api.character_api import (
     CharacterAPI,
     CharacterCreationRequest,
-    CharacterUpdateRequest,
-    CharacterResponse,
     CharacterListResponse,
+    CharacterResponse,
+    CharacterUpdateRequest,
 )
+
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture

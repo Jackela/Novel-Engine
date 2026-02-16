@@ -22,6 +22,8 @@ import time
 
 import pytest
 
+pytestmark = pytest.mark.e2e
+
 
 @pytest.mark.e2e
 class TestStoryCreationFlow:

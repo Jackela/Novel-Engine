@@ -11,9 +11,9 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from src.core.types.shared_types import CharacterAction
-from src.core.event_bus import EventBus
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.event_bus import EventBus
+from src.core.types.shared_types import CharacterAction
 
 logger = logging.getLogger(__name__)
 
@@ -243,6 +243,3 @@ class TurnManager:
     def get_total_actions_processed(self) -> int:
         """Get the total number of actions processed."""
         return self.total_actions_processed
-
-
-

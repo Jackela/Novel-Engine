@@ -216,13 +216,6 @@ class Faction(Entity):
         """
         return super().__eq__(other)
 
-    def __eq__(self, other: object) -> bool:
-        """Compare factions by identity rather than field values.
-
-        Why: Preserve entity semantics across evolving attributes.
-        """
-        return super().__eq__(other)
-
     def _validate_business_rules(self) -> List[str]:
         """Validate Faction-specific business rules."""
         errors = []
@@ -277,7 +270,10 @@ class Faction(Entity):
             FactionAlignment.LAWFUL_NEUTRAL,
             FactionAlignment.LAWFUL_EVIL,
         }
-        if self.faction_type == FactionType.GUILD and self.alignment not in lawful_alignments:
+        if (
+            self.faction_type == FactionType.GUILD
+            and self.alignment not in lawful_alignments
+        ):
             # This is allowed but noted
             pass
 
@@ -311,7 +307,9 @@ class Faction(Entity):
         """
         # Remove existing relation if present
         self.relations = [
-            r for r in self.relations if r.target_faction_id != relation.target_faction_id
+            r
+            for r in self.relations
+            if r.target_faction_id != relation.target_faction_id
         ]
         self.relations.append(relation)
         self.touch()

@@ -447,15 +447,13 @@ class ContextDatabase:
         try:
             async with self.get_enhanced_connection() as connection:
                 # Construct enhanced query with standard parameters
-                query_parts = [
-                    """
+                query_parts = ["""
                     SELECT memory_id, agent_id, memory_type, content, emotional_weight,
                            relevance_score, participants, location, tags, decay_factor,
                            created_at, last_accessed, access_count
                     FROM memories
                     WHERE agent_id = ? AND relevance_score >= ?
-                """
-                ]
+                """]
 
                 params = [agent_id, relevance_threshold]
 
@@ -466,12 +464,10 @@ class ContextDatabase:
                     params.extend([mem_type.value for mem_type in memory_types])
 
                 # Sacred ordering enhanced by relevance and recency
-                query_parts.append(
-                    """
+                query_parts.append("""
                     ORDER BY relevance_score * decay_factor DESC, last_accessed DESC
                     LIMIT ?
-                """
-                )
+                """)
                 params.append(limit)
 
                 final_query = " ".join(query_parts)
@@ -920,15 +916,13 @@ class ContextDatabase:
                 statistics["database_size_bytes"] = self.database_path.stat().st_size
 
                 # Blessed memory statistics
-                async with connection.execute(
-                    """
+                async with connection.execute("""
                     SELECT 
                         AVG(emotional_weight) as avg_emotional_weight,
                         AVG(relevance_score) as avg_relevance_score,
                         MAX(access_count) as max_access_count
                     FROM memories
-                """
-                ) as cursor:
+                """) as cursor:
                     row = await cursor.fetchone()
                     statistics.update(
                         {

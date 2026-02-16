@@ -167,3 +167,19 @@ forbidden_modules =
     src.contexts.knowledge
     src.contexts.subjective
     src.contexts.world
+
+# Rule 9: Orchestration Context Isolation
+# Orchestration coordinates other contexts through domain events only
+[importlinter:contract:9]
+name = Orchestration Context Isolation
+type = forbidden
+source_modules = src.contexts.orchestration
+forbidden_modules =
+    src.contexts.character
+    src.contexts.narratives
+    src.contexts.campaigns
+    src.contexts.interactions
+    src.contexts.story
+    src.contexts.knowledge
+    src.contexts.subjective
+    src.contexts.world

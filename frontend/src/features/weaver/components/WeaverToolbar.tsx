@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { PlotlineFilter } from './PlotlineFilter';
 
 interface WeaverToolbarProps {
   onAddCharacter?: (() => void) | undefined;
@@ -45,6 +46,8 @@ export function WeaverToolbar({
       </div>
 
       <div className="flex items-center gap-2">
+        <PlotlineFilter />
+        <Divider />
         <WeaverNodeControls
           onAddCharacter={onAddCharacter}
           onAddEvent={onAddEvent}

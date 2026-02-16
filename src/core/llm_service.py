@@ -286,7 +286,7 @@ class UnifiedLLMService:
             env_loader = get_environment_config_loader()
             is_development = env_loader.environment in [
                 Environment.DEVELOPMENT,
-                Environment.TESTING
+                Environment.TESTING,
             ]
 
             self.metrics.failed_requests += 1
@@ -417,7 +417,11 @@ class UnifiedLLMService:
 
     def _generate_request_id(self, request: LLMRequest) -> str:
         """Generate unique request ID."""
-        prompt_hash = hashlib.md5(request.prompt.encode(), usedforsecurity=False).hexdigest()[:8]  # nosec B324
+        prompt_hash = hashlib.md5(
+            request.prompt.encode(), usedforsecurity=False
+        ).hexdigest()[
+            :8
+        ]  # nosec B324
         timestamp = int(time.time() * 1000) % 10000
         return f"{request.requester}_{prompt_hash}_{timestamp}"
 

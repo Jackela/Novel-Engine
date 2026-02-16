@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """生成当前 API 的 OpenAPI 规范文件"""
+
 import json
 import sys
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 # 添加项目根目录到 Python 路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
 
 def generate_openapi():
     """生成 OpenAPI JSON 文件"""
@@ -29,16 +31,16 @@ def generate_openapi():
             json.dump(openapi_schema, f, indent=2, ensure_ascii=False)
 
         # 统计信息
-        total_endpoints = len([r for r in app.routes if hasattr(r, 'methods')])
+        total_endpoints = len([r for r in app.routes if hasattr(r, "methods")])
         tags = set()
-        if 'tags' in openapi_schema:
-            tags = {tag['name'] for tag in openapi_schema['tags']}
-        elif 'paths' in openapi_schema:
+        if "tags" in openapi_schema:
+            tags = {tag["name"] for tag in openapi_schema["tags"]}
+        elif "paths" in openapi_schema:
             # 从路径中提取 tags
-            for path_data in openapi_schema['paths'].values():
+            for path_data in openapi_schema["paths"].values():
                 for method_data in path_data.values():
-                    if isinstance(method_data, dict) and 'tags' in method_data:
-                        tags.update(method_data['tags'])
+                    if isinstance(method_data, dict) and "tags" in method_data:
+                        tags.update(method_data["tags"])
 
         print(f"\n✅ OpenAPI schema generated: {output_path}")
         print(f"   Total endpoints: {total_endpoints}")
@@ -51,8 +53,10 @@ def generate_openapi():
     except Exception as e:
         print(f"\n❌ Error generating OpenAPI schema: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(generate_openapi())

@@ -23,17 +23,18 @@ from pathlib import Path
 import pytest
 import yaml
 
+from src.agents.director_agent_integrated import DirectorAgent
+from src.config.character_factory import CharacterFactory
+from src.core.event_bus import EventBus
+
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
-pytestmark = []
+pytestmark = [pytest.mark.integration]
 if not FULL_INTEGRATION:
     pytestmark.append(
         pytest.mark.skip(
             reason="Character system comprehensive suite requires NOVEL_ENGINE_FULL_INTEGRATION=1"
         )
     )
-from src.agents.director_agent_integrated import DirectorAgent
-from src.config.character_factory import CharacterFactory
-from src.core.event_bus import EventBus
 
 # Test Constants
 GENERIC_CHARACTERS = ["pilot", "scientist", "engineer", "test"]
@@ -737,9 +738,7 @@ class TestCharacterValidation:
 
 
 # Pytest configuration
-pytestmark = [pytest.mark.character, pytest.mark.unit]
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

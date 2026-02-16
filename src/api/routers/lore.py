@@ -23,6 +23,8 @@ from src.api.schemas import (
     LoreEntryListResponse,
     LoreEntryResponse,
     LoreEntryUpdateRequest,
+    ManualSmartTagsUpdateRequest,
+    SmartTagsResponse,
 )
 from src.contexts.world.domain.entities.lore_entry import LoreCategory, LoreEntry
 from src.contexts.world.infrastructure.persistence.in_memory_lore_entry_repository import (
@@ -80,6 +82,7 @@ def _entry_to_response(entry: LoreEntry) -> LoreEntryResponse:
         category=entry.category.value,
         summary=entry.summary,
         related_entry_ids=entry.related_entry_ids.copy(),
+        metadata=entry.metadata.copy(),
         created_at=entry.created_at.isoformat(),
         updated_at=entry.updated_at.isoformat(),
     )
@@ -147,7 +150,9 @@ async def list_lore_entries(
         entries = await repo.find_by_tag(tag, limit=limit, offset=offset)
     elif category:
         parsed_category = _parse_category(category)
-        entries = await repo.find_by_category(parsed_category, limit=limit, offset=offset)
+        entries = await repo.find_by_category(
+            parsed_category, limit=limit, offset=offset
+        )
     else:
         entries = await repo.get_all(limit=limit, offset=offset)
 
@@ -283,6 +288,126 @@ async def update_lore_entry(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
+
+# === Smart Tags Management Routes ===
+
+
+@router.get("/{entry_id}/smart-tags", response_model=SmartTagsResponse)
+async def get_lore_smart_tags(entry_id: str) -> SmartTagsResponse:
+    """Get smart tags for a lore entry.
+
+    Returns both auto-generated and manual smart tags.
+
+    Args:
+        entry_id: Unique identifier for the entry.
+
+    Returns:
+        Smart tags response with auto, manual, and effective tags.
+
+    Raises:
+        HTTPException: If entry not found.
+    """
+    repo = get_repository()
+    entry = await repo.get_by_id(entry_id)
+
+    if not entry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore entry not found: {entry_id}",
+        )
+
+    return SmartTagsResponse(
+        smart_tags=entry.get_smart_tags(),
+        manual_smart_tags=entry.get_manual_smart_tags(),
+        effective_tags=entry.get_effective_smart_tags(),
+    )
+
+
+@router.put("/{entry_id}/smart-tags/manual", response_model=SmartTagsResponse)
+async def update_lore_manual_smart_tags(
+    entry_id: str,
+    request: ManualSmartTagsUpdateRequest,
+) -> SmartTagsResponse:
+    """Update manual smart tags for a lore entry.
+
+    Manual tags are never overridden by auto-tagging.
+
+    Args:
+        entry_id: Unique identifier for the entry.
+        request: Manual tags update request.
+
+    Returns:
+        Updated smart tags response.
+
+    Raises:
+        HTTPException: If entry not found.
+    """
+    repo = get_repository()
+    entry = await repo.get_by_id(entry_id)
+
+    if not entry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore entry not found: {entry_id}",
+        )
+
+    # Get existing manual tags for this category
+    existing_manual = entry.get_manual_smart_tags_for_category(request.category)
+
+    if request.replace:
+        # Replace entirely
+        entry.set_manual_smart_tags(request.category, request.tags)
+    else:
+        # Append to existing
+        combined = existing_manual + request.tags
+        # Remove duplicates while preserving order
+        seen: set[str] = set()
+        unique: list[str] = []
+        for tag in combined:
+            normalized = tag.lower()
+            if normalized not in seen:
+                seen.add(normalized)
+                unique.append(tag)
+        entry.set_manual_smart_tags(request.category, unique)
+
+    # Save the updated entry
+    await repo.save(entry)
+
+    return SmartTagsResponse(
+        smart_tags=entry.get_smart_tags(),
+        manual_smart_tags=entry.get_manual_smart_tags(),
+        effective_tags=entry.get_effective_smart_tags(),
+    )
+
+
+@router.delete(
+    "/{entry_id}/smart-tags/manual/{category}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_lore_manual_smart_tags(
+    entry_id: str,
+    category: str,
+) -> None:
+    """Delete manual smart tags for a specific category.
+
+    Args:
+        entry_id: Unique identifier for the entry.
+        category: The tag category to clear.
+
+    Raises:
+        HTTPException: If entry not found.
+    """
+    repo = get_repository()
+    entry = await repo.get_by_id(entry_id)
+
+    if not entry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Lore entry not found: {entry_id}",
+        )
+
+    entry.clear_manual_smart_tags(category)
+    await repo.save(entry)
 
 
 @router.delete("/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)

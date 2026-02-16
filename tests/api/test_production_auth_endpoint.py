@@ -9,11 +9,23 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
+try:
+    from slowapi import Limiter  # noqa: F401 - imported for availability check
+
+    SLOWAPI_AVAILABLE = True
+except ImportError:
+    SLOWAPI_AVAILABLE = False
+
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(not SLOWAPI_AVAILABLE, reason="slowapi not installed")
+]
+
 
 def _load_production_app(monkeypatch) -> TestClient:
     monkeypatch.setenv("ENVIRONMENT", "development")
-    monkeypatch.setenv("SECRET_KEY", "test-secret")
-    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret")
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-32-bytes-minimum-0001")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret-key-32-bytes-minimum-0001")
     monkeypatch.setenv("ADMIN_PASSWORD", "admin-password")
     monkeypatch.setenv("ADMIN_USERNAME", "admin")
 
@@ -30,6 +42,7 @@ def client(monkeypatch):
     return _load_production_app(monkeypatch)
 
 
+@pytest.mark.integration
 def test_auth_rejects_query_credentials(client):
     response = client.post(
         "/auth/token?username=admin&password=admin-password",
@@ -39,6 +52,7 @@ def test_auth_rejects_query_credentials(client):
     assert "Credentials must be sent" in response.json()["detail"]
 
 
+@pytest.mark.integration
 def test_auth_accepts_body_credentials(client):
     response = client.post(
         "/auth/token",

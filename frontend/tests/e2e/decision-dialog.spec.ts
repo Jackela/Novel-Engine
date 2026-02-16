@@ -71,6 +71,29 @@ test.describe('Decision Dialog', () => {
       expect(isVisible).toBe(true);
     });
 
+    test('does not emit Radix accessibility warnings', async ({ page }) => {
+      const warnings: string[] = [];
+      page.on('console', (msg) => {
+        if (msg.type() !== 'warning' && msg.type() !== 'error') {
+          return;
+        }
+        const text = msg.text();
+        if (text.includes('DialogContent') || text.includes('aria-describedby')) {
+          warnings.push(text);
+        }
+      });
+
+      const mockDecision = DecisionDialogPage.createMockDecision();
+      await decisionDialog.injectDecisionPoint(mockDecision);
+      await decisionDialog.waitForDialog();
+
+      await page.waitForTimeout(100);
+      expect(
+        warnings,
+        `Radix accessibility warnings detected:\n${warnings.join('\n')}`
+      ).toHaveLength(0);
+    });
+
     test('displays correct title and description', async ({ page }) => {
       const mockDecision = DecisionDialogPage.createMockDecision({
         title: 'Test Decision Title',

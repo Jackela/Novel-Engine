@@ -45,4 +45,3 @@ class KnowledgeEntryDeleted:
     deleted_by: UserId
     timestamp: datetime
     event_id: str = field(default_factory=lambda: str(uuid4()))
-

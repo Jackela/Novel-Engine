@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
     CharacterData,
     LLMWorldGenerator,
@@ -350,10 +352,12 @@ class TestRelationshipHistoryResponseParsing:
         generator: LLMWorldGenerator,
     ) -> None:
         """Test parsing response with missing backstory uses default."""
-        content = json.dumps({
-            "first_meeting": "At a tavern",
-            "defining_moment": "They fought together",
-        })
+        content = json.dumps(
+            {
+                "first_meeting": "At a tavern",
+                "defining_moment": "They fought together",
+            }
+        )
         result = generator._parse_relationship_history_response(content)
 
         assert result.backstory == "Unable to generate backstory."

@@ -5,6 +5,10 @@ import { mockDashboardApi, mockDecisionApi, mockEventSource } from './utils/apiM
 export const test = base.extend({
   page: async ({ page }, use) => {
     await page.context().setOffline(false).catch(() => {});
+    await page.route('https://fonts.googleapis.com/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'text/css', body: '' })
+    );
+    await page.route('https://fonts.gstatic.com/**', (route) => route.abort());
     await mockEventSource(page);
     await mockGuestSessionApi(page);
     await mockDashboardApi(page);

@@ -18,6 +18,8 @@ from src.contexts.subjective.domain.value_objects.knowledge_level import (
     KnowledgeType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestKnowledgeItemCreation:
     """Test suite for KnowledgeItem value object creation and validation."""

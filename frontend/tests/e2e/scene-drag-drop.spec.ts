@@ -7,11 +7,30 @@
  * @see NAR-013 - Weaver: Drag & Drop Reordering
  */
 import { test, expect } from './fixtures';
+import { prepareGuestSession } from './utils/auth';
+import { safeGoto } from './utils/navigation';
+import { waitForRouteReady } from './utils/waitForReady';
+
+const goToNarrative = async (page: import('@playwright/test').Page) => {
+  await safeGoto(page, '/story');
+  await waitForRouteReady(page, page.getByTestId('narrative-page'), { url: /\/story/ });
+};
 
 test.describe('Scene Drag and Drop - Outliner Reordering', () => {
+  test.beforeEach(async ({ page }) => {
+    await prepareGuestSession(page);
+    await page.route(/\/api\/structure\/stories(\/|\?|$)/, async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ stories: [] }),
+      });
+    });
+  });
+
   test('@narrative sidebar renders with chapters and scenes', async ({ page }) => {
     // Navigate to the narrative page (which uses NarrativeEditorLayout with sidebar)
-    await page.goto('/story');
+    await goToNarrative(page);
 
     // Wait for the sidebar to be visible
     const sidebar = page.getByTestId('narrative-sidebar');
@@ -29,7 +48,7 @@ test.describe('Scene Drag and Drop - Outliner Reordering', () => {
   });
 
   test('@narrative scene item shows drag handle on hover', async ({ page }) => {
-    await page.goto('/story');
+    await goToNarrative(page);
 
     // Wait for sidebar to load
     const sidebar = page.getByTestId('narrative-sidebar');
@@ -70,7 +89,7 @@ test.describe('Scene Drag and Drop - Outliner Reordering', () => {
       });
     });
 
-    await page.goto('/story');
+    await goToNarrative(page);
 
     // Wait for sidebar to load
     const sidebar = page.getByTestId('narrative-sidebar');
@@ -89,7 +108,7 @@ test.describe('Scene Drag and Drop - Outliner Reordering', () => {
   });
 
   test('@narrative chapter can be expanded and collapsed', async ({ page }) => {
-    await page.goto('/story');
+    await goToNarrative(page);
 
     // Wait for sidebar to load
     const sidebar = page.getByTestId('narrative-sidebar');
@@ -112,7 +131,7 @@ test.describe('Scene Drag and Drop - Outliner Reordering', () => {
   });
 
   test('@narrative active scene is highlighted', async ({ page }) => {
-    await page.goto('/story');
+    await goToNarrative(page);
 
     // Wait for sidebar to load
     const sidebar = page.getByTestId('narrative-sidebar');
@@ -127,7 +146,7 @@ test.describe('Scene Drag and Drop - Outliner Reordering', () => {
   });
 
   test('@narrative sidebar shows correct chapter and scene counts', async ({ page }) => {
-    await page.goto('/story');
+    await goToNarrative(page);
 
     // Wait for sidebar to load
     const sidebar = page.getByTestId('narrative-sidebar');
@@ -140,7 +159,7 @@ test.describe('Scene Drag and Drop - Outliner Reordering', () => {
   });
 
   test('@narrative status badges display correctly', async ({ page }) => {
-    await page.goto('/story');
+    await goToNarrative(page);
 
     // Wait for sidebar to load
     const sidebar = page.getByTestId('narrative-sidebar');

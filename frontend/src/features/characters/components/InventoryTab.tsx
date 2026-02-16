@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -175,6 +176,9 @@ function GiveItemDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Give Item to Character</DialogTitle>
+          <DialogDescription className="sr-only">
+            Select an item to add to the character inventory.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <Select

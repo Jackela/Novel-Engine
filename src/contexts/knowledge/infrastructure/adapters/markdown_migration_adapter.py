@@ -10,22 +10,22 @@ Constitution Compliance:
 """
 
 import shutil
+import time
 import uuid
-from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, List, Any
+from pathlib import Path
+from typing import Any, Dict, List
 
 from ...application.ports.i_knowledge_repository import IKnowledgeRepository
+from ...domain.models.access_control_rule import AccessControlRule
+from ...domain.models.access_level import AccessLevel
+from ...domain.models.agent_identity import AgentIdentity
 from ...domain.models.knowledge_entry import KnowledgeEntry
 from ...domain.models.knowledge_type import KnowledgeType
-from ...domain.models.access_level import AccessLevel
-from ...domain.models.access_control_rule import AccessControlRule
-from ...domain.models.agent_identity import AgentIdentity
 from ..metrics_config import (
-    migration_entries_processed_total,
     migration_duration_seconds,
+    migration_entries_processed_total,
 )
-import time
 
 
 class MarkdownMigrationAdapter:
@@ -55,9 +55,9 @@ class MarkdownMigrationAdapter:
             repository: Knowledge repository for persisting migrated entries
         """
         self._repository = repository
-        self._migration_metadata: Dict[
-            str, Dict[str, Any]
-        ] = {}  # Track migration details
+        self._migration_metadata: Dict[str, Dict[str, Any]] = (
+            {}
+        )  # Track migration details
 
     async def migrate_all_agents(
         self,

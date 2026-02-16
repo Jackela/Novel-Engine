@@ -283,6 +283,7 @@ desktop.ini
 # Testing and Coverage
 test-results/
 playwright-report/
+frontend/reports/
 junit-results.xml
 coverage/
 .nyc_output/
@@ -305,13 +306,13 @@ secrets/
 vault/
 
 # ML and AI Models
-models/
+/models/
 *.model
 *.pkl
 *.h5
 *.onnx
-!contexts/knowledge/domain/models/
-!contexts/knowledge/domain/models/**
+!src/contexts/knowledge/domain/models/
+!src/contexts/knowledge/domain/models/**
 
 # Performance and Profiling
 *.prof
@@ -512,3 +513,9 @@ undefined:*/
 /.trunk
 .worktrees/
 nul
+
+# Ralph agent archive directories
+scripts/ralph/archive/
+
+# Ralph worktree directories
+scripts/ralph-*

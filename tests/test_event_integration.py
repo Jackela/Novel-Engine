@@ -4,8 +4,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.agents.director_agent_integrated import DirectorAgent
-from src.core.event_bus import EventBus
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.event_bus import EventBus
+
+pytestmark = pytest.mark.integration
 
 
 class TestEventIntegration(unittest.TestCase):
@@ -62,6 +64,3 @@ class TestEventIntegration(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-
-

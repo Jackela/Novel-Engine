@@ -3,6 +3,7 @@ import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { waitForDashboardReady, waitForLandingReady } from './utils/waitForReady';
 import { prepareGuestSession, resetAuthState } from './utils/auth';
+import { safeGoto } from './utils/navigation';
 
 /**
  * Protected Routes E2E Test Suite
@@ -32,7 +33,7 @@ test.describe('Protected Routes E2E Tests', () => {
       });
 
       await test.step('When: User navigates directly to /dashboard', async () => {
-        await page.goto('/dashboard');
+        await safeGoto(page, '/dashboard');
         // Wait for potential redirect to complete
         await waitForLandingReady(page);
       });
@@ -53,7 +54,7 @@ test.describe('Protected Routes E2E Tests', () => {
       await resetAuthState(page);
 
       // Try to access dashboard sub-routes (if any exist)
-      await page.goto('/dashboard/settings');
+      await safeGoto(page, '/dashboard/settings');
       await waitForLandingReady(page);
 
       // Should redirect to landing
@@ -109,11 +110,11 @@ test.describe('Protected Routes E2E Tests', () => {
       await expect(page).toHaveURL(/.*\/dashboard/);
 
       // Now navigate away and back directly
-      await page.goto('/');
+      await safeGoto(page, '/');
       await waitForDashboardReady(page);
 
       // Navigate directly to dashboard - should work since authenticated
-      await page.goto('/dashboard');
+      await safeGoto(page, '/dashboard');
       await waitForDashboardReady(page);
 
       // Should stay on dashboard (not redirect)
@@ -170,7 +171,7 @@ test.describe('Protected Routes E2E Tests', () => {
 
       // Try to go directly to dashboard
       await prepareGuestSession(page2);
-      await page2.goto('/dashboard');
+      await safeGoto(page2, '/dashboard');
       await waitForDashboardReady(page2);
 
       // Should be able to access dashboard with persisted state
@@ -190,9 +191,12 @@ test.describe('Protected Routes E2E Tests', () => {
       await resetAuthState(page);
 
       // Rapid navigation attempts to protected route
-      await page.goto('/dashboard');
-      await page.goto('/dashboard');
-      await page.goto('/dashboard');
+      const navigate = async (url: string) => {
+        await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => {});
+      };
+      await navigate('/dashboard');
+      await navigate('/dashboard');
+      await navigate('/dashboard');
       await waitForLandingReady(page);
 
       // Should end up on landing
@@ -208,7 +212,7 @@ test.describe('Protected Routes E2E Tests', () => {
       await expect(page).toHaveURL(/.*\/dashboard/);
 
       // Press back button
-      await page.goBack();
+      await page.goBack({ waitUntil: 'domcontentloaded' });
       await waitForDashboardReady(page);
 
       // Auth redirect should keep user on dashboard

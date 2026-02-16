@@ -15,6 +15,8 @@ from src.contexts.narratives.domain.value_objects.plot_point import (
     PlotPointType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestPlotPointOverallImpactScore:
     """Test suite for overall impact score calculation."""

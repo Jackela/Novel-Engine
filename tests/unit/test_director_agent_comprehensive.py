@@ -4,6 +4,7 @@ Director Agent Comprehensive Test Suite
 Systematic testing for director_agent.py covering initialization, agent management,
 turn execution, logging, and world state management
 """
+
 import json
 import logging
 import os
@@ -12,10 +13,12 @@ from unittest.mock import Mock, patch
 import pytest
 
 # Import the modules under test
+
+
 try:
     from src.agents.director_agent_integrated import DirectorAgent
-    from src.core.event_bus import EventBus
     from src.agents.persona_agent.agent import PersonaAgent
+    from src.core.event_bus import EventBus
 
     DIRECTOR_AGENT_AVAILABLE = True
 except ImportError:
@@ -114,16 +117,14 @@ class TestDirectorAgentInitialization:
         """Test initialization with campaign brief file"""
         # Create test campaign brief file
         with open(self.temp_campaign_brief, "w") as f:
-            f.write(
-                """
+            f.write("""
 # Test Campaign Brief
 setting: "Fantasy World"
 objective: "Defeat the dragon"
 characters:
   - name: "Hero"
     role: "protagonist"
-            """
-            )
+            """)
 
         director = DirectorAgent(
             event_bus=self.mock_event_bus,
@@ -634,6 +635,3 @@ def run_all_director_tests():
 if __name__ == "__main__":
     # Direct execution runs all tests
     run_all_director_tests()
-
-
-

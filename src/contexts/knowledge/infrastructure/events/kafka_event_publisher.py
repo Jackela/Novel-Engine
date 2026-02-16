@@ -13,7 +13,7 @@ Constitution Compliance:
 import logging
 from typing import Any, Dict
 
-from core_platform.messaging.kafka_client import get_kafka_client, KafkaClient
+from core_platform.messaging.kafka_client import KafkaClient, get_kafka_client
 
 from ...application.ports.i_event_publisher import (
     EventPublishException,

@@ -40,7 +40,9 @@ async def generate_character(
     )
 
 
-@router.post("/generation/character-profile", response_model=CharacterProfileGenerationResponse)
+@router.post(
+    "/generation/character-profile", response_model=CharacterProfileGenerationResponse
+)
 async def generate_character_profile(
     request: CharacterProfileGenerationRequest,
 ) -> CharacterProfileGenerationResponse:

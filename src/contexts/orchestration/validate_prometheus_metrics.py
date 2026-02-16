@@ -16,7 +16,6 @@ from uuid import uuid4
 sys.path.insert(0, str(Path(__file__).parent))
 
 from domain.services import EnhancedPerformanceTracker
-
 from infrastructure.monitoring import PrometheusMetricsCollector
 
 # Configure logging

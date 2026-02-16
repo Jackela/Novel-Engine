@@ -263,8 +263,7 @@ class EnterpriseSecurityManager:
             await conn.execute("PRAGMA journal_mode = WAL")
 
             # Enhanced threat intelligence table
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS threat_intelligence (
                     ip_address TEXT PRIMARY KEY,
                     reputation_score REAL NOT NULL,
@@ -279,12 +278,10 @@ class EnterpriseSecurityManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
 
             # Behavioral analytics table
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS behavioral_profiles (
                     user_id TEXT PRIMARY KEY,
                     typical_access_hours TEXT, -- JSON array
@@ -296,12 +293,10 @@ class EnterpriseSecurityManager:
                     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 )
-            """
-            )
+            """)
 
             # Enhanced security events table
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS enhanced_security_events (
                     id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -319,12 +314,10 @@ class EnterpriseSecurityManager:
                     resolved_at TIMESTAMP,
                     false_positive BOOLEAN DEFAULT FALSE
                 )
-            """
-            )
+            """)
 
             # IP reputation blacklist/whitelist
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS ip_reputation (
                     ip_address TEXT PRIMARY KEY,
                     list_type TEXT NOT NULL, -- 'blacklist', 'whitelist'
@@ -335,12 +328,10 @@ class EnterpriseSecurityManager:
                     expires_at TIMESTAMP,
                     is_active BOOLEAN DEFAULT TRUE
                 )
-            """
-            )
+            """)
 
             # Compliance audit trails
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS compliance_audit_trail (
                     id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -353,8 +344,7 @@ class EnterpriseSecurityManager:
                     evidence TEXT, -- JSON object
                     compliance_officer TEXT NOT NULL
                 )
-            """
-            )
+            """)
 
             await conn.commit()
             logger.info("🛡️ Enhanced security database schema initialized")
@@ -1103,12 +1093,10 @@ class EnterpriseSecurityManager:
                 threat_counts = dict(await cursor.fetchall())
 
                 # Get blocked IPs
-                cursor = await conn.execute(
-                    """
+                cursor = await conn.execute("""
                     SELECT COUNT(*) FROM ip_reputation 
                     WHERE list_type = 'blacklist' AND is_active = TRUE
-                """
-                )
+                """)
                 blocked_ips_count = (await cursor.fetchone())[0]
 
                 # Get top threat indicators

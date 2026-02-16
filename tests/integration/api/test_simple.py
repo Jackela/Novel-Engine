@@ -12,6 +12,8 @@ from datetime import datetime
 import pytest
 import requests
 
+pytestmark = pytest.mark.integration
+
 
 def check_env():
     """检查环境"""

@@ -1,5 +1,63 @@
 import { z } from 'zod';
 
+// === Character Stats and Equipment Types ===
+
+/**
+ * Combat stats schema for character attributes.
+ * Represents the six primary character statistics used in gameplay.
+ */
+export const CombatStatsSchema = z.object({
+  strength: z.number(),
+  dexterity: z.number(),
+  intelligence: z.number(),
+  willpower: z.number(),
+  perception: z.number(),
+  charisma: z.number(),
+});
+
+/**
+ * Partial combat stats - each stat field is optional.
+ * Used in structured_data where only some stats may be present.
+ */
+export const PartialCombatStatsSchema = z.object({
+  strength: z.number().optional(),
+  dexterity: z.number().optional(),
+  intelligence: z.number().optional(),
+  willpower: z.number().optional(),
+  perception: z.number().optional(),
+  charisma: z.number().optional(),
+});
+
+/**
+ * Structured character data schema.
+ * Contains character stats and equipment information from structured_data field.
+ */
+export const StructuredCharacterDataSchema = z.object({
+  combat_stats: PartialCombatStatsSchema.optional(),
+  equipment: z
+    .object({
+      primary_weapon: z.string().optional(),
+      armor: z.string().optional(),
+      special_gear: z.array(z.string()).optional(),
+    })
+    .optional(),
+});
+
+/**
+ * Equipment item schema.
+ * Represents a single piece of equipment with its properties.
+ */
+export const EquipmentItemSchema = z.object({
+  name: z.string(),
+  equipment_type: z.string().optional(),
+  condition: z.number().optional(),
+});
+
+export type CombatStats = z.infer<typeof CombatStatsSchema>;
+export type PartialCombatStats = z.infer<typeof PartialCombatStatsSchema>;
+export type StructuredCharacterData = z.infer<typeof StructuredCharacterDataSchema>;
+export type EquipmentItem = z.infer<typeof EquipmentItemSchema>;
+
 // Character Psychology Schema (Big Five / OCEAN model)
 // All traits scored 0-100: 0-30 = Low, 31-70 = Average, 71-100 = High
 export const CharacterPsychologySchema = z.object({
@@ -582,6 +640,18 @@ export const ChapterListResponseSchema = z.object({
 });
 
 /**
+ * Story phase enum matching backend StoryPhase.
+ * Classifications for narrative structure phases.
+ */
+export const StoryPhaseEnum = z.enum([
+  'setup', // Introduction, status quo
+  'inciting_incident', // Event that launches the plot
+  'rising_action', // Building tension and complications
+  'climax', // Peak of dramatic tension
+  'resolution', // Aftermath and new status quo
+]);
+
+/**
  * Scene response schema matching backend SceneResponse.
  */
 export const SceneResponseSchema = z.object({
@@ -592,6 +662,7 @@ export const SceneResponseSchema = z.object({
   location: z.string().default(''),
   order_index: z.number(),
   status: z.enum(['draft', 'generating', 'review', 'published']),
+  story_phase: StoryPhaseEnum,
   beat_count: z.number().default(0),
   created_at: z.string(),
   updated_at: z.string(),
@@ -642,6 +713,570 @@ export type SceneListResponse = z.infer<typeof SceneListResponseSchema>;
 export type StoryCreateRequest = z.infer<typeof StoryCreateRequestSchema>;
 export type ChapterCreateRequest = z.infer<typeof ChapterCreateRequestSchema>;
 export type SceneCreateRequest = z.infer<typeof SceneCreateRequestSchema>;
+export type StoryPhase = z.infer<typeof StoryPhaseEnum>;
+
+// === Beat Schemas (DIR-042) ===
+
+/**
+ * Beat type enum matching backend BeatType.
+ * Classifications for narrative beat functions.
+ */
+export const BeatTypeEnum = z.enum([
+  'action',
+  'dialogue',
+  'reaction',
+  'revelation',
+  'transition',
+  'description',
+]);
+
+/**
+ * Beat response schema matching backend BeatResponse.
+ * Beats are atomic narrative units within a scene.
+ */
+export const BeatResponseSchema = z.object({
+  id: z.string(),
+  scene_id: z.string(),
+  content: z.string().default(''),
+  beat_type: BeatTypeEnum,
+  mood_shift: z.number().min(-5).max(5).default(0),
+  order_index: z.number(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Beat list response schema matching backend BeatListResponse.
+ */
+export const BeatListResponseSchema = z.object({
+  scene_id: z.string(),
+  beats: z.array(BeatResponseSchema).default([]),
+});
+
+/**
+ * Beat create request schema.
+ */
+export const BeatCreateRequestSchema = z.object({
+  content: z.string().max(10000).default(''),
+  beat_type: BeatTypeEnum.default('action'),
+  mood_shift: z.number().min(-5).max(5).default(0),
+  order_index: z.number().int().min(0).optional(),
+});
+
+/**
+ * Beat update request schema.
+ */
+export const BeatUpdateRequestSchema = z.object({
+  content: z.string().max(10000).optional(),
+  beat_type: BeatTypeEnum.optional(),
+  mood_shift: z.number().min(-5).max(5).optional(),
+});
+
+/**
+ * Reorder beats request schema.
+ */
+export const ReorderBeatsRequestSchema = z.object({
+  beat_ids: z.array(z.string()),
+});
+
+// === Beat Suggestion Schemas (DIR-047/DIR-048) ===
+
+/**
+ * A single AI-generated beat suggestion.
+ */
+export const BeatSuggestionSchema = z.object({
+  beat_type: z.string(),
+  content: z.string(),
+  mood_shift: z.number().min(-5).max(5).default(0),
+  rationale: z.string().optional(),
+});
+
+/**
+ * Beat suggestion request schema.
+ */
+export const BeatSuggestionRequestSchema = z.object({
+  scene_id: z.string(),
+  current_beats: z
+    .array(
+      z.object({
+        beat_type: z.string(),
+        content: z.string(),
+        mood_shift: z.number().optional(),
+      })
+    )
+    .default([]),
+  scene_context: z.string().min(1).max(5000),
+  mood_target: z.number().min(-5).max(5).optional(),
+});
+
+/**
+ * Beat suggestion response schema.
+ */
+export const BeatSuggestionResponseSchema = z.object({
+  scene_id: z.string(),
+  suggestions: z.array(BeatSuggestionSchema).min(0).max(3),
+  error: z.string().optional(),
+});
+
+// Beat Types
+export type BeatType = z.infer<typeof BeatTypeEnum>;
+export type BeatResponse = z.infer<typeof BeatResponseSchema>;
+export type BeatListResponse = z.infer<typeof BeatListResponseSchema>;
+export type BeatCreateRequest = z.infer<typeof BeatCreateRequestSchema>;
+export type BeatUpdateRequest = z.infer<typeof BeatUpdateRequestSchema>;
+export type ReorderBeatsRequest = z.infer<typeof ReorderBeatsRequestSchema>;
+export type BeatSuggestion = z.infer<typeof BeatSuggestionSchema>;
+export type BeatSuggestionRequest = z.infer<typeof BeatSuggestionRequestSchema>;
+export type BeatSuggestionResponse = z.infer<typeof BeatSuggestionResponseSchema>;
+
+// === Scene Critique Schemas (DIR-057/DIR-058) ===
+
+/**
+ * Category-specific critique score with issues and suggestions.
+ */
+export const CritiqueCategoryScoreSchema = z.object({
+  category: z.string(), // 'pacing', 'voice', 'showing', 'dialogue'
+  score: z.number().min(1).max(10),
+  issues: z.array(z.string()),
+  suggestions: z.array(z.string()),
+});
+
+/**
+ * Request model for AI scene critique.
+ */
+export const CritiqueSceneRequestSchema = z.object({
+  scene_text: z.string().min(50).max(12000),
+  scene_goals: z.array(z.string()).optional(),
+});
+
+/**
+ * Response model for AI scene critique.
+ */
+export const CritiqueSceneResponseSchema = z.object({
+  overall_score: z.number().min(1).max(10),
+  category_scores: z.array(CritiqueCategoryScoreSchema),
+  highlights: z.array(z.string()),
+  summary: z.string(),
+  error: z.string().optional(),
+});
+
+export type CritiqueCategoryScore = z.infer<typeof CritiqueCategoryScoreSchema>;
+export type CritiqueSceneRequest = z.infer<typeof CritiqueSceneRequestSchema>;
+export type CritiqueSceneResponse = z.infer<typeof CritiqueSceneResponseSchema>;
+
+// === Pacing Schemas (DIR-043/DIR-044) ===
+
+/**
+ * Pacing metrics for a single scene.
+ * Used by the PacingGraph to plot tension/energy curves.
+ */
+export const ScenePacingMetricsSchema = z.object({
+  scene_id: z.string(),
+  scene_title: z.string(),
+  order_index: z.number(),
+  tension_level: z.number().min(1).max(10),
+  energy_level: z.number().min(1).max(10),
+});
+
+/**
+ * A detected pacing problem in the chapter.
+ */
+export const PacingIssueSchema = z.object({
+  issue_type: z.string(),
+  description: z.string(),
+  affected_scenes: z.array(z.string()),
+  severity: z.enum(['low', 'medium', 'high']),
+  suggestion: z.string(),
+});
+
+/**
+ * Complete pacing analysis for a chapter.
+ * Response from GET /structure/stories/{story_id}/chapters/{chapter_id}/pacing
+ */
+export const ChapterPacingResponseSchema = z.object({
+  chapter_id: z.string(),
+  scene_metrics: z.array(ScenePacingMetricsSchema).default([]),
+  issues: z.array(PacingIssueSchema).default([]),
+  average_tension: z.number(),
+  average_energy: z.number(),
+  tension_range: z.tuple([z.number(), z.number()]),
+  energy_range: z.tuple([z.number(), z.number()]),
+});
+
+// Pacing Types
+export type ScenePacingMetrics = z.infer<typeof ScenePacingMetricsSchema>;
+export type PacingIssue = z.infer<typeof PacingIssueSchema>;
+export type ChapterPacingResponse = z.infer<typeof ChapterPacingResponseSchema>;
+
+// === Conflict Schemas (DIR-045) ===
+
+/**
+ * Conflict type enum matching backend ConflictType.
+ * Classifications for dramatic tension sources.
+ */
+export const ConflictTypeEnum = z.enum([
+  'internal', // Character vs self (moral dilemma, fear, desire)
+  'external', // Character vs environment/nature/fate
+  'interpersonal', // Character vs character
+]);
+
+/**
+ * Stakes level enum matching backend ConflictStakes.
+ * Indicates how much is at risk in the conflict.
+ */
+export const ConflictStakesEnum = z.enum([
+  'low', // Minor inconvenience, embarrassment
+  'medium', // Significant loss, relationship damage
+  'high', // Major life impact, severe consequences
+  'critical', // Life or death, irreversible change
+]);
+
+/**
+ * Resolution status enum matching backend ResolutionStatus.
+ * Tracks conflict progression through the narrative.
+ */
+export const ResolutionStatusEnum = z.enum([
+  'unresolved', // Conflict is active, no resolution yet
+  'escalating', // Conflict is intensifying
+  'resolved', // Conflict has been addressed
+]);
+
+/**
+ * Conflict response schema matching backend ConflictResponse.
+ * Conflicts are dramatic tension drivers within a scene.
+ */
+export const ConflictResponseSchema = z.object({
+  id: z.string(),
+  scene_id: z.string(),
+  conflict_type: ConflictTypeEnum,
+  stakes: ConflictStakesEnum,
+  description: z.string(),
+  resolution_status: ResolutionStatusEnum,
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Conflict list response schema matching backend ConflictListResponse.
+ */
+export const ConflictListResponseSchema = z.object({
+  scene_id: z.string(),
+  conflicts: z.array(ConflictResponseSchema).default([]),
+});
+
+/**
+ * Conflict create request schema.
+ */
+export const ConflictCreateRequestSchema = z.object({
+  conflict_type: ConflictTypeEnum,
+  stakes: ConflictStakesEnum.default('medium'),
+  description: z.string().min(1).max(2000),
+  resolution_status: ResolutionStatusEnum.default('unresolved'),
+});
+
+/**
+ * Conflict update request schema.
+ */
+export const ConflictUpdateRequestSchema = z.object({
+  conflict_type: ConflictTypeEnum.optional(),
+  stakes: ConflictStakesEnum.optional(),
+  description: z.string().min(1).max(2000).optional(),
+  resolution_status: ResolutionStatusEnum.optional(),
+});
+
+// Conflict Types
+export type ConflictType = z.infer<typeof ConflictTypeEnum>;
+export type ConflictStakes = z.infer<typeof ConflictStakesEnum>;
+export type ResolutionStatus = z.infer<typeof ResolutionStatusEnum>;
+export type ConflictResponse = z.infer<typeof ConflictResponseSchema>;
+export type ConflictListResponse = z.infer<typeof ConflictListResponseSchema>;
+export type ConflictCreateRequest = z.infer<typeof ConflictCreateRequestSchema>;
+export type ConflictUpdateRequest = z.infer<typeof ConflictUpdateRequestSchema>;
+
+// === Plotline Schemas (DIR-049) ===
+
+/**
+ * Plotline status enum matching backend PlotlineStatus.
+ * Tracks the lifecycle state of a narrative thread.
+ */
+export const PlotlineStatusEnum = z.enum([
+  'active', // Currently unfolding in the story
+  'resolved', // Concluded and tied up
+  'abandoned', // Dropped or no longer relevant
+]);
+
+/**
+ * Plotline response schema matching backend PlotlineResponse.
+ *
+ * Why: Represents a narrative thread that weaves through multiple scenes.
+ * A scene can belong to multiple plotlines simultaneously for complex
+ * storytelling (e.g., main plot + subplot + character arc).
+ */
+export const PlotlineResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  color: z.string().regex(/^#[0-9a-fA-F]{3,8}$/, 'Invalid hex color code'),
+  description: z.string(),
+  status: PlotlineStatusEnum,
+  scene_count: z.number().int().nonnegative().default(0),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Plotline list response schema.
+ */
+export const PlotlineListResponseSchema = z.object({
+  plotlines: z.array(PlotlineResponseSchema).default([]),
+});
+
+/**
+ * Plotline create request schema matching backend PlotlineCreateRequest.
+ */
+export const PlotlineCreateRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{3,8}$/, 'Color must be a valid hex code (e.g., #ff5733)'),
+  description: z.string().max(2000).default(''),
+  status: PlotlineStatusEnum.default('active'),
+});
+
+/**
+ * Plotline update request schema matching backend PlotlineUpdateRequest.
+ */
+export const PlotlineUpdateRequestSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{3,8}$/, 'Color must be a valid hex code')
+    .optional(),
+  description: z.string().max(2000).optional(),
+  status: PlotlineStatusEnum.optional(),
+});
+
+/**
+ * Link scene to plotline request schema.
+ */
+export const LinkSceneToPlotlineRequestSchema = z.object({
+  plotline_id: z.string(),
+});
+
+/**
+ * Unlink scene from plotline request schema.
+ */
+export const UnlinkSceneFromPlotlineRequestSchema = z.object({
+  plotline_id: z.string(),
+});
+
+/**
+ * Set scene plotlines request schema matching backend SetScenePlotlinesRequest.
+ *
+ * Why: Replaces all plotlines for a scene in a single operation.
+ * Used for bulk plotline assignment changes.
+ */
+export const SetScenePlotlinesRequestSchema = z.object({
+  plotline_ids: z.array(z.string()).default([]),
+});
+
+/**
+ * Scene plotlines response schema matching backend ScenePlotlinesResponse.
+ *
+ * Why: Returns the list of plotline IDs associated with a scene.
+ * The frontend fetches full plotline details separately for display.
+ */
+export const ScenePlotlinesResponseSchema = z.object({
+  scene_id: z.string(),
+  plotline_ids: z.array(z.string()).default([]),
+});
+
+// Plotline Types
+export type PlotlineStatus = z.infer<typeof PlotlineStatusEnum>;
+export type PlotlineResponse = z.infer<typeof PlotlineResponseSchema>;
+export type PlotlineListResponse = z.infer<typeof PlotlineListResponseSchema>;
+export type PlotlineCreateRequest = z.infer<typeof PlotlineCreateRequestSchema>;
+export type PlotlineUpdateRequest = z.infer<typeof PlotlineUpdateRequestSchema>;
+export type LinkSceneToPlotlineRequest = z.infer<
+  typeof LinkSceneToPlotlineRequestSchema
+>;
+export type UnlinkSceneFromPlotlineRequest = z.infer<
+  typeof UnlinkSceneFromPlotlineRequestSchema
+>;
+export type SetScenePlotlinesRequest = z.infer<typeof SetScenePlotlinesRequestSchema>;
+export type ScenePlotlinesResponse = z.infer<typeof ScenePlotlinesResponseSchema>;
+
+// === Foreshadowing Schemas (DIR-052) ===
+
+/**
+ * Foreshadowing status enum matching backend ForeshadowingStatus.
+ * Tracks the progression from setup to payoff.
+ */
+export const ForeshadowingStatusEnum = z.enum([
+  'planted', // Setup has been introduced
+  'paid_off', // Payoff has been delivered
+  'abandoned', // Setup was dropped without payoff
+]);
+
+/**
+ * Foreshadowing response schema matching backend ForeshadowingResponse.
+ *
+ * Why: Represents Chekhov's Gun - narrative setups that must be paid off.
+ * This enforces narrative discipline by tracking all planted threads.
+ */
+export const ForeshadowingResponseSchema = z.object({
+  id: z.string(),
+  setup_scene_id: z.string(),
+  payoff_scene_id: z.string().nullable(),
+  description: z.string(),
+  status: ForeshadowingStatusEnum,
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Foreshadowing list response schema.
+ */
+export const ForeshadowingListResponseSchema = z.object({
+  foreshadowings: z.array(ForeshadowingResponseSchema).default([]),
+});
+
+/**
+ * Foreshadowing create request schema matching backend ForeshadowingCreateRequest.
+ */
+export const ForeshadowingCreateRequestSchema = z.object({
+  setup_scene_id: z.string().min(1, 'Setup scene ID is required'),
+  description: z.string().min(1).max(2000, 'Description must be 1-2000 characters'),
+  status: ForeshadowingStatusEnum.default('planted'),
+});
+
+/**
+ * Foreshadowing update request schema matching backend ForeshadowingUpdateRequest.
+ */
+export const ForeshadowingUpdateRequestSchema = z.object({
+  description: z.string().max(2000).optional(),
+  status: ForeshadowingStatusEnum.optional(),
+  payoff_scene_id: z.string().nullable().optional(),
+});
+
+/**
+ * Link payoff request schema matching backend LinkPayoffRequest.
+ *
+ * Why: Separates payoff linking from general updates to validate
+ * temporal order (payoff must come after setup).
+ */
+export const LinkPayoffRequestSchema = z.object({
+  payoff_scene_id: z.string().min(1, 'Payoff scene ID is required'),
+});
+
+// Foreshadowing Types
+export type ForeshadowingStatus = z.infer<typeof ForeshadowingStatusEnum>;
+export type ForeshadowingResponse = z.infer<typeof ForeshadowingResponseSchema>;
+export type ForeshadowingListResponse = z.infer<typeof ForeshadowingListResponseSchema>;
+export type ForeshadowingCreateRequest = z.infer<
+  typeof ForeshadowingCreateRequestSchema
+>;
+export type ForeshadowingUpdateRequest = z.infer<
+  typeof ForeshadowingUpdateRequestSchema
+>;
+export type LinkPayoffRequest = z.infer<typeof LinkPayoffRequestSchema>;
+
+// ============ Chapter Analysis Schemas (DIR-055/DIR-056) ============
+
+/**
+ * Health score enum for chapter analysis.
+ * CRITICAL: Major structural issues
+ * POOR: Multiple significant issues
+ * FAIR: Some issues but functional
+ * GOOD: Minor issues or well-balanced
+ * EXCELLENT: No issues detected
+ */
+export const HealthScoreEnum = z.enum([
+  'critical',
+  'poor',
+  'fair',
+  'good',
+  'excellent',
+]);
+
+/**
+ * Warning category enum for structural issues.
+ */
+export const WarningCategoryEnum = z.enum([
+  'pacing', // Tension/energy issues
+  'structure', // Phase distribution issues
+  'conflict', // Missing or unresolved conflicts
+  'balance', // Word count and beat count issues
+  'arc', // Tension arc shape issues
+]);
+
+/**
+ * Phase distribution response schema.
+ */
+export const PhaseDistributionSchema = z.object({
+  setup: z.number().int().min(0),
+  inciting_incident: z.number().int().min(0),
+  rising_action: z.number().int().min(0),
+  climax: z.number().int().min(0),
+  resolution: z.number().int().min(0),
+});
+
+/**
+ * Word count estimate response schema.
+ */
+export const WordCountEstimateSchema = z.object({
+  total_words: z.number().int().min(0),
+  min_words: z.number().int().min(0),
+  max_words: z.number().int().min(0),
+  per_scene_average: z.number(),
+});
+
+/**
+ * Health warning response schema.
+ */
+export const HealthWarningSchema = z.object({
+  category: z.string(),
+  title: z.string(),
+  description: z.string(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  affected_scenes: z.array(z.string()).default([]),
+  recommendation: z.string(),
+});
+
+/**
+ * Tension arc shape response schema.
+ */
+export const TensionArcShapeSchema = z.object({
+  shape_type: z.string(),
+  starts_at: z.number().int().min(0).max(10),
+  peaks_at: z.number().int().min(0).max(10),
+  ends_at: z.number().int().min(0).max(10),
+  has_clear_climax: z.boolean(),
+  is_monotonic: z.boolean(),
+});
+
+/**
+ * Chapter health report response schema.
+ */
+export const ChapterHealthReportSchema = z.object({
+  chapter_id: z.string(),
+  health_score: HealthScoreEnum,
+  phase_distribution: PhaseDistributionSchema,
+  word_count: WordCountEstimateSchema,
+  total_scenes: z.number().int().min(0),
+  total_beats: z.number().int().min(0),
+  tension_arc: TensionArcShapeSchema,
+  warnings: z.array(HealthWarningSchema).default([]),
+  recommendations: z.array(z.string()).default([]),
+});
+
+// Type exports
+export type HealthScore = z.infer<typeof HealthScoreEnum>;
+export type WarningCategory = z.infer<typeof WarningCategoryEnum>;
+export type PhaseDistribution = z.infer<typeof PhaseDistributionSchema>;
+export type WordCountEstimate = z.infer<typeof WordCountEstimateSchema>;
+export type HealthWarning = z.infer<typeof HealthWarningSchema>;
+export type TensionArcShape = z.infer<typeof TensionArcShapeSchema>;
+export type ChapterHealthReport = z.infer<typeof ChapterHealthReportSchema>;
 
 /**
  * Standard API response envelope matching backend's StandardResponse
@@ -1029,3 +1664,294 @@ export type FactionType = z.infer<typeof FactionTypeEnum>;
 export type FactionAlignment = z.infer<typeof FactionAlignmentEnum>;
 export type FactionStatus = z.infer<typeof FactionStatusEnum>;
 export type FactionDetailResponse = z.infer<typeof FactionDetailResponseSchema>;
+
+// === Prompt Management Schemas (BRAIN-015, BRAIN-019) ===
+
+/**
+ * Prompt variable type enum matching backend VariableType.
+ */
+export const PromptVariableTypeEnum = z.enum([
+  'string',
+  'integer',
+  'float',
+  'boolean',
+  'list',
+  'dict',
+]);
+
+/**
+ * Schema for a prompt variable definition.
+ * Defines the structure of variables used in prompt templates.
+ */
+export const PromptVariableDefinitionSchema = z.object({
+  name: z.string().min(1).max(100),
+  type: PromptVariableTypeEnum,
+  default_value: z.unknown().nullable().optional(),
+  description: z.string().default(''),
+  required: z.boolean().default(true),
+});
+
+/**
+ * Schema for a prompt variable value during rendering.
+ * Used when providing values to replace {{variable}} placeholders.
+ */
+export const PromptVariableValueSchema = z.object({
+  name: z.string().min(1),
+  value: z.unknown(),
+});
+
+/**
+ * Schema for prompt model configuration.
+ * LLM settings associated with a prompt template.
+ */
+export const PromptModelConfigSchema = z.object({
+  provider: z.string().default('openai'),
+  model_name: z.string().default('gpt-4'),
+  temperature: z.number().min(0).max(2).default(0.7),
+  max_tokens: z.number().int().positive().default(1000),
+  top_p: z.number().min(0).max(1).default(1.0),
+  frequency_penalty: z.number().min(-2).max(2).default(0.0),
+  presence_penalty: z.number().min(-2).max(2).default(0.0),
+});
+
+/**
+ * Schema for a prompt template summary (list view).
+ * Lightweight representation for listing prompts.
+ */
+export const PromptSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().default(''),
+  tags: z.array(z.string()).default([]),
+  model_provider: z.string().optional(),
+  model_name: z.string().optional(),
+  version: z.number().int().positive().default(1),
+  variable_count: z.number().int().nonnegative().default(0),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+/**
+ * Schema for a full prompt template detail.
+ * Complete representation including all fields.
+ */
+export const PromptDetailResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().default(''),
+  content: z.string(),
+  tags: z.array(z.string()).default([]),
+  variables: z.array(PromptVariableDefinitionSchema).default([]),
+  version: z.number().int().positive().default(1),
+  parent_version_id: z.string().nullable().optional(),
+  extends: z.array(z.string()).default([]),
+  created_at: z.string(),
+  updated_at: z.string(),
+  model_provider: z.string().optional(),
+  model_name: z.string().optional(),
+  temperature: z.number().optional(),
+  max_tokens: z.number().optional(),
+  top_p: z.number().optional(),
+  frequency_penalty: z.number().optional(),
+  presence_penalty: z.number().optional(),
+});
+
+/**
+ * Response model for listing prompts.
+ */
+export const PromptListResponseSchema = z.object({
+  prompts: z.array(PromptSummarySchema).default([]),
+  total: z.number().int().nonnegative().default(0),
+  limit: z.number().int().positive().default(100),
+  offset: z.number().int().nonnegative().default(0),
+});
+
+/**
+ * Request model for creating a new prompt template.
+ */
+export const PromptCreateRequestSchema = z.object({
+  name: z.string().min(1).max(200),
+  content: z.string().min(1),
+  description: z.string().max(1000).default(''),
+  tags: z.array(z.string()).max(20).default([]),
+  extends: z.array(z.string()).max(10).default([]),
+  variables: z.array(PromptVariableDefinitionSchema).max(50).default([]),
+  model_provider: z.string().optional(),
+  model_name: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  max_tokens: z.number().int().positive().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  frequency_penalty: z.number().min(-2).max(2).optional(),
+  presence_penalty: z.number().min(-2).max(2).optional(),
+});
+
+/**
+ * Request model for updating a prompt template (creates new version).
+ */
+export const PromptUpdateRequestSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  content: z.string().min(1).optional(),
+  description: z.string().max(1000).optional(),
+  tags: z.array(z.string()).max(20).optional(),
+  extends: z.array(z.string()).max(10).optional(),
+  variables: z.array(PromptVariableDefinitionSchema).max(50).optional(),
+  model_provider: z.string().optional(),
+  model_name: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  max_tokens: z.number().int().positive().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  frequency_penalty: z.number().min(-2).max(2).optional(),
+  presence_penalty: z.number().min(-2).max(2).optional(),
+});
+
+/**
+ * Request model for rendering a prompt template.
+ */
+export const PromptRenderRequestSchema = z.object({
+  variables: z.array(PromptVariableValueSchema).default([]),
+  strict: z.boolean().default(true),
+});
+
+/**
+ * Response model for a rendered prompt.
+ */
+export const PromptRenderResponseSchema = z.object({
+  rendered: z.string(),
+  variables_used: z.array(z.string()).default([]),
+  variables_missing: z.array(z.string()).default([]),
+  template_id: z.string(),
+  template_name: z.string(),
+  token_count: z.number().int().nonnegative().optional(),
+  llm_config: PromptModelConfigSchema.optional(),
+});
+
+/**
+ * Schema for prompt generate request.
+ * BRAIN-020B: Frontend: Prompt Playground - Integration
+ */
+export const PromptGenerateRequestSchema = z.object({
+  variables: z.array(PromptVariableValueSchema).default([]),
+  provider: z.string().optional(),
+  model_name: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  max_tokens: z.number().int().positive().optional(),
+  top_p: z.number().min(0).max(1).optional(),
+  frequency_penalty: z.number().min(-2).max(2).optional(),
+  presence_penalty: z.number().min(-2).max(2).optional(),
+  strict: z.boolean().default(true),
+});
+
+/**
+ * Schema for prompt generate response.
+ * BRAIN-020B: Frontend: Prompt Playground - Integration
+ */
+export const PromptGenerateResponseSchema = z.object({
+  rendered: z.string(),
+  output: z.string(),
+  template_id: z.string(),
+  template_name: z.string(),
+  prompt_tokens: z.number().int().nonnegative(),
+  output_tokens: z.number().int().nonnegative().optional(),
+  total_tokens: z.number().int().nonnegative(),
+  latency_ms: z.number().nonnegative(),
+  model_used: z.string(),
+  error: z.string().nullable().optional(),
+});
+
+/**
+ * Schema for prompt tags response.
+ * Dictionary of tag categories to their values.
+ */
+export const PromptTagsResponseSchema = z.record(z.string(), z.array(z.string()));
+
+/**
+ * Schema for prompt compare response.
+ * BRAIN-021: Frontend: Prompt Comparison View
+ * Shows differences between two versions of a prompt.
+ */
+
+// Diff hunk schema
+const PromptDiffHunkSchema = z.object({
+  type: z.enum(['equal', 'delete', 'insert', 'replace']),
+  old_lines: z.array(z.string()).default([]),
+  new_lines: z.array(z.string()).default([]),
+  old_start: z.number().int().optional(),
+  new_start: z.number().int().optional(),
+});
+
+// Variable change schema
+const PromptVariableChangeSchema = z.object({
+  name: z.string(),
+  old: z.object({
+    type: z.string(),
+    default_value: z.unknown().nullable(),
+    required: z.boolean(),
+  }),
+  new: z.object({
+    type: z.string(),
+    default_value: z.unknown().nullable(),
+    required: z.boolean(),
+  }),
+});
+
+// Config change schema
+const PromptConfigChangeSchema = z.object({
+  field: z.string(),
+  old: z.unknown(),
+  new: z.unknown(),
+});
+
+// Metadata changes schema
+const PromptMetadataChangeSchema = z.object({
+  name: z.object({ old: z.string(), new: z.string() }).optional(),
+  description: z.object({ old: z.string(), new: z.string() }).optional(),
+  tags: z
+    .object({
+      added: z.array(z.string()),
+      removed: z.array(z.string()),
+    })
+    .optional(),
+});
+
+// Version info schema
+const PromptVersionInfoSchema = z.object({
+  version: z.number().int().positive(),
+  id: z.string(),
+  created_at: z.string(),
+});
+
+// Full compare response schema
+export const PromptCompareResponseSchema = z.object({
+  version_a: PromptVersionInfoSchema,
+  version_b: PromptVersionInfoSchema,
+  content_diff: z.array(PromptDiffHunkSchema).default([]),
+  variables: z.object({
+    added: z.array(z.string()).default([]),
+    removed: z.array(z.string()).default([]),
+    changed: z.array(PromptVariableChangeSchema).default([]),
+  }),
+  model_config: z.array(PromptConfigChangeSchema).default([]),
+  metadata: PromptMetadataChangeSchema.optional(),
+});
+
+// Prompt Types
+export type PromptVariableType = z.infer<typeof PromptVariableTypeEnum>;
+export type PromptVariableDefinition = z.infer<typeof PromptVariableDefinitionSchema>;
+export type PromptVariableValue = z.infer<typeof PromptVariableValueSchema>;
+export type PromptModelConfig = z.infer<typeof PromptModelConfigSchema>;
+export type PromptSummary = z.infer<typeof PromptSummarySchema>;
+export type PromptDetailResponse = z.infer<typeof PromptDetailResponseSchema>;
+export type PromptListResponse = z.infer<typeof PromptListResponseSchema>;
+export type PromptCreateRequest = z.infer<typeof PromptCreateRequestSchema>;
+export type PromptUpdateRequest = z.infer<typeof PromptUpdateRequestSchema>;
+export type PromptRenderRequest = z.infer<typeof PromptRenderRequestSchema>;
+export type PromptRenderResponse = z.infer<typeof PromptRenderResponseSchema>;
+export type PromptGenerateRequest = z.infer<typeof PromptGenerateRequestSchema>;
+export type PromptGenerateResponse = z.infer<typeof PromptGenerateResponseSchema>;
+export type PromptTagsResponse = z.infer<typeof PromptTagsResponseSchema>;
+export type PromptCompareResponse = z.infer<typeof PromptCompareResponseSchema>;
+export type PromptDiffHunk = z.infer<typeof PromptDiffHunkSchema>;
+export type PromptVariableChange = z.infer<typeof PromptVariableChangeSchema>;
+export type PromptConfigChange = z.infer<typeof PromptConfigChangeSchema>;
+export type PromptMetadataChange = z.infer<typeof PromptMetadataChangeSchema>;
+export type PromptVersionInfo = z.infer<typeof PromptVersionInfoSchema>;

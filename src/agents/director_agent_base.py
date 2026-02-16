@@ -17,10 +17,9 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from src.core.event_bus import EventBus
-
 # Import agent and shared types
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.event_bus import EventBus
 
 # Try to import configuration loader
 try:
@@ -33,12 +32,11 @@ except ImportError:
 
 # Import narrative components
 try:
-    from campaign_brief import CampaignBrief, NarrativeEvent
+    from campaign_brief import CampaignBrief
 
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
     CampaignBrief = None
-    NarrativeEvent = None
 
     class NarrativeActionResolver:
         def __init__(self):
@@ -436,6 +434,3 @@ class DirectorAgentBase:
             )
         except Exception:
             return False
-
-
-

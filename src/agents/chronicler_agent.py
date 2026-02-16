@@ -22,11 +22,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.core.config.config_loader import get_config
-from src.core.types.shared_types import CharacterAction
-from src.core.event_bus import EventBus
-from src.core.llm_service import LLMProvider, LLMRequest, ResponseFormat, UnifiedLLMService
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.config.config_loader import get_config
+from src.core.event_bus import EventBus
+from src.core.llm_service import (
+    LLMProvider,
+    LLMRequest,
+    ResponseFormat,
+    UnifiedLLMService,
+)
+from src.core.types.shared_types import CharacterAction
 from src.prompts import (
     Language,
     PromptRegistry,
@@ -164,6 +169,7 @@ def _make_gemini_api_request(prompt: str) -> Any:
     # Run async call synchronously
     # Enable nested event loops to avoid "event loop is already running" errors
     import nest_asyncio
+
     nest_asyncio.apply()
 
     try:
@@ -575,7 +581,7 @@ just the pure narrative prose that could be published in an anthology.
         env_loader = get_environment_config_loader()
         is_development = env_loader.environment in [
             Environment.DEVELOPMENT,
-            Environment.TESTING
+            Environment.TESTING,
         ]
 
         logger.debug(f"ChroniclerAgent calling LLM with prompt length: {len(prompt)}")
@@ -907,6 +913,3 @@ def example_usage():
 
 if __name__ == "__main__":
     example_usage()
-
-
-

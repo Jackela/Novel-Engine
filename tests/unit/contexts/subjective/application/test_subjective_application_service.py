@@ -12,6 +12,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 
 from src.contexts.subjective.application.commands.subjective_command_handlers import (

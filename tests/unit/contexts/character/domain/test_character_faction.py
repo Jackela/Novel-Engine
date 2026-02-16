@@ -12,11 +12,18 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 # Mock problematic dependencies
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 event_bus_mock = MagicMock()
 event_mock = MagicMock()
 event_mock.return_value = Mock()
 event_bus_mock.Event = event_mock
+
+# Save original module if it exists
+_original_event_bus = sys.modules.get("src.events.event_bus")
+
 sys.modules["src.events.event_bus"] = event_bus_mock
 
 from src.contexts.character.domain.aggregates.character import Character
@@ -38,6 +45,12 @@ from src.contexts.character.domain.value_objects.character_stats import (
 )
 from src.contexts.character.domain.value_objects.skills import Skills
 
+# Restore original module to avoid polluting other tests
+if _original_event_bus is not None:
+    sys.modules["src.events.event_bus"] = _original_event_bus
+else:
+    del sys.modules["src.events.event_bus"]
+
 
 def _create_test_character(faction_id: str | None = None) -> Character:
     """Helper to create a valid character for testing."""
@@ -50,7 +63,12 @@ def _create_test_character(faction_id: str | None = None) -> Character:
         level=1,
         physical_traits=PhysicalTraits(),
         personality_traits=PersonalityTraits(
-            traits={"courage": 0.7, "intelligence": 0.5, "charisma": 0.5, "loyalty": 0.5}
+            traits={
+                "courage": 0.7,
+                "intelligence": 0.5,
+                "charisma": 0.5,
+                "loyalty": 0.5,
+            }
         ),
         background=Background(),
     )
@@ -165,6 +183,7 @@ class TestCharacterFactionMembership:
 
         # Small delay to ensure timestamp difference
         import time
+
         time.sleep(0.01)
 
         character.join_faction("test-faction")
@@ -253,6 +272,7 @@ class TestCharacterFactionMembership:
         old_updated_at = character.updated_at
 
         import time
+
         time.sleep(0.01)
 
         character.leave_faction()

@@ -60,9 +60,7 @@ class CharacterPsychology:
                     f"{trait_name} must be an integer, got {type(value).__name__}"
                 )
             if value < 0 or value > 100:
-                raise ValueError(
-                    f"{trait_name} must be between 0 and 100, got {value}"
-                )
+                raise ValueError(f"{trait_name} must be between 0 and 100, got {value}")
 
     def get_trait_level(self, trait_name: str) -> str:
         """

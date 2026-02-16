@@ -68,9 +68,9 @@ class NarrativeContext:
 
     # Character context
     affected_characters: FrozenSet[UUID] = None
-    character_knowledge_required: FrozenSet[
-        UUID
-    ] = None  # Characters who must know this context
+    character_knowledge_required: FrozenSet[UUID] = (
+        None  # Characters who must know this context
+    )
     character_reactions: Dict[UUID, str] = None  # Expected character reactions
 
     # Contextual details
@@ -266,7 +266,9 @@ class NarrativeContext:
             if not values:
                 return frozenset()
             items = []
-            for key, value in sorted(values.items(), key=lambda item: (str(item[0]), str(item[1]))):
+            for key, value in sorted(
+                values.items(), key=lambda item: (str(item[0]), str(item[1]))
+            ):
                 key_hash = str(key) if isinstance(key, UUID) else key
                 if isinstance(value, dict):
                     value = _dict_to_hashable(value)

@@ -7,10 +7,12 @@ from src.core.types.shared_types import (
     ActionParameters,
     ActionTarget,
     ActionType,
+    EntityType,
     ProposedAction,
     ValidationResult,
-    EntityType,
 )
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.unit
@@ -56,6 +58,8 @@ def test_adjudicate_action_repairs_missing_target_and_reasoning():
     assert result.success is True
     assert result.violations
     assert any("Added default target" in entry for entry in result.repair_log)
-    assert any("Added default narrative reasoning" in entry for entry in result.repair_log)
+    assert any(
+        "Added default narrative reasoning" in entry for entry in result.repair_log
+    )
     assert manager.violation_history
     assert manager.repair_attempts_count == 1

@@ -24,6 +24,9 @@ from datetime import datetime
 import pytest
 
 # Import all shared types for comprehensive testing
+
+pytestmark = pytest.mark.unit
+
 try:
     # Enums; Spatial Types; Resource Types; Character Types; Action Types; Iron Laws Types;
     # World Types; Fog of War Types; Turn Brief Types; Simulation Types; API Types;
@@ -1484,5 +1487,3 @@ class TestJSONSerialization:
 if __name__ == "__main__":
     # Allow running tests directly
     pytest.main([__file__, "-v"])
-
-

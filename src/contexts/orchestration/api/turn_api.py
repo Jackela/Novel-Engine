@@ -11,13 +11,13 @@ import logging
 import os
 import tempfile
 import threading
+from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import uvicorn
-from contextlib import asynccontextmanager
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field, field_validator
@@ -958,5 +958,9 @@ async def general_exception_handler(request, exc):
 # Development Server
 if __name__ == "__main__":
     uvicorn.run(
-        "turn_api:app", host="0.0.0.0", port=8000, log_level="info", reload=True  # nosec B104 - dev server
+        "turn_api:app",
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
+        reload=True,  # nosec B104 - dev server
     )

@@ -7,6 +7,8 @@ from src.orchestrators.enhanced_multi_agent_bridge import (
     create_enhanced_bridge,
 )
 
+pytestmark = pytest.mark.integration
+
 
 class _StubDirector:
     def __init__(self) -> None:

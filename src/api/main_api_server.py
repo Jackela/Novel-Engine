@@ -11,12 +11,13 @@ This server provides a comprehensive, production-ready API with:
 - Security enhancements and monitoring
 """
 
-# Load environment variables from .env file
-from dotenv import load_dotenv
 from pathlib import Path
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+
 # Load .env file (system environment variables take precedence)
-env_path = Path(__file__).parent.parent.parent / '.env'
+env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(dotenv_path=env_path, override=False)
 
 import asyncio
@@ -87,6 +88,7 @@ try:
         RateLimitMiddleware,
         RateLimitStrategy,
     )
+
     SECURITY_AVAILABLE = True
 except ImportError:
     SECURITY_AVAILABLE = False
@@ -687,7 +689,7 @@ def create_app() -> FastAPI:
 
 def _register_api_routes(app: FastAPI):
     """Register all API routes immediately."""
-    # Create API instances; orchestrator will be injected during lifespan       
+    # Create API instances; orchestrator will be injected during lifespan
     character_api = create_character_api(None)
     interaction_api = create_interaction_api(None)
     subjective_reality_api = create_subjective_reality_api(None)
@@ -729,59 +731,34 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.cache import router as cache_router
     from src.api.routers.campaigns import router as campaigns_router
     from src.api.routers.characters import router as characters_router
+    from src.api.routers.dialogue import router as dialogue_router
     from src.api.routers.events import router as events_router
+    from src.api.routers.experiments import router as experiments_router
+    from src.api.routers.factions import router as factions_router
     from src.api.routers.generation import router as generation_router
+    from src.api.routers.goals import router as goals_router
     from src.api.routers.guest import router as guest_router
-    from src.api.routers.narratives import router as narratives_router
-    from src.api.routers.scene import router as scene_router
     from src.api.routers.health import router as health_router
-    from src.api.routers.meta import router as meta_router
-    from src.api.routers.orchestration import router as orchestration_router
-    from src.api.routers.simulations import router as simulations_router
-    from src.api.routers.world import router as world_gen_router
-    from src.api.routers.structure import router as structure_router
-    from src.api.routers.narrative_generation import router as narrative_generation_router
-    from src.api.routers.relationships import router as relationships_router
-    from src.api.routers.items import router as items_router
     from src.api.routers.items import character_inventory_router
+    from src.api.routers.items import router as items_router
     from src.api.routers.lore import router as lore_router
     from src.api.routers.memories import router as memories_router
-    from src.api.routers.goals import router as goals_router
-    from src.api.routers.world_rules import router as world_rules_router
-    from src.api.routers.dialogue import router as dialogue_router
+    from src.api.routers.meta import router as meta_router
+    from src.api.routers.narrative_generation import (
+        router as narrative_generation_router,
+    )
+    from src.api.routers.narratives import router as narratives_router
+    from src.api.routers.orchestration import router as orchestration_router
+    from src.api.routers.prompts import router as prompts_router
+    from src.api.routers.relationships import router as relationships_router
+    from src.api.routers.scene import router as scene_router
+    from src.api.routers.simulations import router as simulations_router
     from src.api.routers.social import router as social_router
-    from src.api.routers.factions import router as factions_router
+    from src.api.routers.structure import router as structure_router
+    from src.api.routers.world import router as world_gen_router
+    from src.api.routers.world_rules import router as world_rules_router
 
-    # Register all routers with and without /api prefix for backward compatibility
-    # Order matters: register without prefix first, then with prefix
-    app.include_router(auth_router)
-    app.include_router(cache_router)
-    app.include_router(campaigns_router)
-    app.include_router(characters_router)
-    app.include_router(events_router)
-    app.include_router(generation_router)
-    app.include_router(guest_router)
-    app.include_router(narratives_router)
-    app.include_router(scene_router)
-    app.include_router(health_router)
-    app.include_router(meta_router)
-    app.include_router(orchestration_router)
-    app.include_router(simulations_router)
-    app.include_router(world_gen_router)
-    app.include_router(structure_router)
-    app.include_router(narrative_generation_router)
-    app.include_router(relationships_router)
-    app.include_router(items_router)
-    app.include_router(character_inventory_router)
-    app.include_router(lore_router)
-    app.include_router(memories_router)
-    app.include_router(goals_router)
-    app.include_router(world_rules_router)
-    app.include_router(dialogue_router)
-    app.include_router(social_router)
-    app.include_router(factions_router)
-
-    # Register with /api prefix
+    # Register all routers with /api prefix only (no duplicate unprefixed routes)
     app.include_router(auth_router, prefix="/api")
     app.include_router(cache_router, prefix="/api")
     app.include_router(campaigns_router, prefix="/api")
@@ -808,6 +785,8 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(dialogue_router, prefix="/api")
     app.include_router(social_router, prefix="/api")
     app.include_router(factions_router, prefix="/api")
+    app.include_router(prompts_router, prefix="/api")
+    app.include_router(experiments_router, prefix="/api")
 
     @app.get("/", response_model=dict)
     async def root_index():
@@ -963,11 +942,11 @@ def _register_legacy_routes(app: FastAPI):
 
                 ensure_workspace_services(app)
             except Exception:
-                logger.debug(
-                    "Failed to initialize workspace services", exc_info=True
-                )
+                logger.debug("Failed to initialize workspace services", exc_info=True)
 
-    def _resolve_workspace_id(request: Request, create_if_missing: bool) -> Optional[str]:
+    def _resolve_workspace_id(
+        request: Request, create_if_missing: bool
+    ) -> Optional[str]:
         _ensure_workspace_services()
         manager = getattr(app.state, "guest_session_manager", None)
         store = getattr(app.state, "workspace_store", None)
@@ -1201,7 +1180,9 @@ def _register_legacy_routes(app: FastAPI):
             }
             store_worlds[world_id] = payload_world
 
-        return {"data": {"imported_characters": imported, "imported_worlds": len(worlds)}}
+        return {
+            "data": {"imported_characters": imported, "imported_worlds": len(worlds)}
+        }
 
     # ===================================================================
     # Real-time Events SSE Endpoint (Dashboard Live API Integration)

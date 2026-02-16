@@ -11,7 +11,7 @@ search and tag-based filtering without coupling to other aggregates.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..entities.lore_entry import LoreCategory, LoreEntry
 
@@ -196,6 +196,64 @@ class ILoreEntryRepository(ABC):
 
         Returns:
             Sorted list of unique tags.
+        """
+
+    # Metadata/Smart Tag Queries
+
+    @abstractmethod
+    async def find_by_smart_tag(
+        self,
+        category: str,
+        tag: str,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[LoreEntry]:
+        """Find entries with a specific smart tag in metadata.
+
+        Args:
+            category: The smart tag category (e.g., "genre", "mood").
+            tag: The tag value to search for (case-insensitive).
+            limit: Maximum number of results.
+            offset: Number of results to skip.
+
+        Returns:
+            List of LoreEntry instances with the smart tag.
+        """
+
+    @abstractmethod
+    async def find_by_smart_tags(
+        self,
+        tags: Dict[str, List[str]],
+        match_all: bool = False,
+        limit: int = 100,
+    ) -> List[LoreEntry]:
+        """Find entries matching multiple smart tags.
+
+        Args:
+            tags: Dictionary mapping categories to tag lists.
+            match_all: If True, entry must have ALL tags. If False, ANY tag.
+            limit: Maximum number of results.
+
+        Returns:
+            List of matching LoreEntry instances.
+        """
+
+    @abstractmethod
+    async def find_by_metadata(
+        self,
+        metadata_key: str,
+        metadata_value: Any = None,
+        limit: int = 100,
+    ) -> List[LoreEntry]:
+        """Find entries with a specific metadata key or key-value pair.
+
+        Args:
+            metadata_key: The metadata key to search for.
+            metadata_value: Optional value to match. If None, matches any value.
+            limit: Maximum number of results.
+
+        Returns:
+            List of LoreEntry instances with the metadata key.
         """
 
 

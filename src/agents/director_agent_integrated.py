@@ -24,16 +24,16 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 from src.agents.agent_lifecycle_manager import AgentLifecycleManager
-from src.core.iron_laws_processor import IronLawsProcessor
-from src.core.types.shared_types import CharacterAction
 
 # Import extracted components
 from src.agents.director_agent_base import DirectorAgentBase
-from src.core.event_bus import EventBus
 
 # Import agent and shared types
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.event_bus import EventBus
+from src.core.iron_laws_processor import IronLawsProcessor
 from src.core.turn_orchestrator import TurnOrchestrator
+from src.core.types.shared_types import CharacterAction
 from src.core.world_state_coordinator import WorldStateCoordinator
 
 # Try to import Iron Laws types
@@ -203,8 +203,7 @@ class DirectorAgent:
         """Initialize the campaign log file."""
         try:
             # Create fresh campaign log for each simulation
-            initial_content = dedent(
-                f"""
+            initial_content = dedent(f"""
                 # Campaign Log
 
                 **Simulation Started:** {self.base.simulation_start_time.strftime('%Y-%m-%d %H:%M:%S')}
@@ -225,8 +224,7 @@ class DirectorAgent:
                 **Event:** DirectorAgent initialized with modular component architecture
                 **Participants:** System
                 **Details:** Integrated DirectorAgent successfully started with base, orchestrator, world state, and lifecycle components
-                """
-            ).strip()
+                """).strip()
 
             with open(self.base.campaign_log_path, "w", encoding="utf-8") as file:
                 file.write(initial_content)
@@ -1176,8 +1174,7 @@ class DirectorAgent:
                 end_time - self.simulation_start_time
             ).total_seconds()
 
-            closing_summary = dedent(
-                f"""
+            closing_summary = dedent(f"""
                 ## Campaign Summary
 
                 **Simulation End Time:** {end_time.strftime('%Y-%m-%d %H:%M:%S')}
@@ -1194,8 +1191,7 @@ class DirectorAgent:
                 - **Agent Lifecycle Manager:** {self.agent_lifecycle_manager.get_lifecycle_metrics().get('total_validations', 0)} validations performed
 
                 **Status:** Campaign completed successfully with modular component architecture
-                """
-            ).strip()
+                """).strip()
 
             with open(self.campaign_log_path, "a", encoding="utf-8") as file:
                 file.write(closing_summary)
@@ -1275,6 +1271,3 @@ class _AgentCollectionFacade:
 
     def __len__(self) -> int:
         return len(self._director._get_all_agent_instances())
-
-
-

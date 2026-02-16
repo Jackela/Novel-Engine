@@ -25,9 +25,7 @@ class LLMCharacterGenerator(CharacterGeneratorPort):
         temperature: float = 0.7,
         prompt_path: Path | None = None,
     ) -> None:
-        self._model = model or os.getenv(
-            "GEMINI_MODEL", "gemini-2.0-flash"
-        )
+        self._model = model or os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         self._temperature = temperature
         self._prompt_path = prompt_path or (
             Path(__file__).resolve().parents[1] / "prompts" / "character_gen.yaml"
@@ -101,7 +99,9 @@ class LLMCharacterGenerator(CharacterGeneratorPort):
         )
 
         if response.status_code == 401:
-            raise RuntimeError("Gemini API authentication failed - check GEMINI_API_KEY")
+            raise RuntimeError(
+                "Gemini API authentication failed - check GEMINI_API_KEY"
+            )
         elif response.status_code == 429:
             raise RuntimeError("Gemini API rate limit exceeded")
         elif response.status_code != 200:

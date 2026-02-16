@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.data_models import ErrorInfo, StandardResponse
+from src.core.llm_service import generate_narrative_content
 from src.database.context_db import ContextDatabase
 from src.interactions.interaction_engine_system.core.types import (
     InteractionContext,
@@ -22,7 +23,6 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionPriority,
     InteractionType,
 )
-from src.core.llm_service import generate_narrative_content
 from src.memory.layered_memory import LayeredMemorySystem
 from src.templates.character import CharacterTemplateManager
 from src.templates.context_renderer import ContextRenderer
@@ -609,4 +609,3 @@ class InteractionEngine:
             )
             * 100,
         }
-

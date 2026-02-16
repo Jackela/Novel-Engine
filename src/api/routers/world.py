@@ -7,15 +7,14 @@ from typing import List, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
+from src.api.error_handlers import ServiceUnavailableException
 from src.contexts.world.application.ports.world_generator_port import (
     WorldGenerationInput,
 )
 from src.contexts.world.domain.entities import Era, Genre, ToneType
-from src.api.error_handlers import ServiceUnavailableException
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
     LLMWorldGenerator,
 )
-
 
 router = APIRouter(tags=["world"])
 
@@ -26,18 +25,30 @@ router = APIRouter(tags=["world"])
 class WorldGenerationRequest(BaseModel):
     """Request model for world generation."""
 
-    genre: str = Field(default="fantasy", description="Primary genre (fantasy, sci-fi, etc.)")
-    era: str = Field(default="medieval", description="Temporal era (medieval, modern, etc.)")
-    tone: str = Field(default="heroic", description="Narrative tone (dark, heroic, etc.)")
+    genre: str = Field(
+        default="fantasy", description="Primary genre (fantasy, sci-fi, etc.)"
+    )
+    era: str = Field(
+        default="medieval", description="Temporal era (medieval, modern, etc.)"
+    )
+    tone: str = Field(
+        default="heroic", description="Narrative tone (dark, heroic, etc.)"
+    )
     themes: List[str] = Field(
         default_factory=lambda: ["adventure", "heroism"],
         description="Thematic elements",
     )
     magic_level: int = Field(default=5, ge=0, le=10, description="Magic level (0-10)")
-    technology_level: int = Field(default=3, ge=0, le=10, description="Technology level (0-10)")
+    technology_level: int = Field(
+        default=3, ge=0, le=10, description="Technology level (0-10)"
+    )
     num_factions: int = Field(default=3, ge=1, le=10, description="Number of factions")
-    num_locations: int = Field(default=5, ge=1, le=10, description="Number of locations")
-    num_events: int = Field(default=3, ge=1, le=10, description="Number of history events")
+    num_locations: int = Field(
+        default=5, ge=1, le=10, description="Number of locations"
+    )
+    num_events: int = Field(
+        default=3, ge=1, le=10, description="Number of history events"
+    )
 
 
 class WorldSettingResponse(BaseModel):
@@ -151,8 +162,9 @@ async def generate_world(request: WorldGenerationRequest) -> WorldGenerationResp
     )
 
     result = generator.generate(input_data)
-    if result.world_setting.name == "Generation Failed" or result.generation_summary.startswith(
-        "Error:"
+    if (
+        result.world_setting.name == "Generation Failed"
+        or result.generation_summary.startswith("Error:")
     ):
         raise ServiceUnavailableException(
             service_name="World generation",

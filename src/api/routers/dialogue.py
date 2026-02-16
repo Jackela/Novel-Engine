@@ -50,7 +50,11 @@ def _fetch_character_data(
     overrides. This centralizes the logic for building that data.
     """
     # Check for override data in request
-    if payload.psychology_override or payload.traits_override or payload.speaking_style_override:
+    if (
+        payload.psychology_override
+        or payload.traits_override
+        or payload.speaking_style_override
+    ):
         psychology_dict = None
         if payload.psychology_override:
             psychology_dict = {

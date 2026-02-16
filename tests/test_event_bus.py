@@ -5,6 +5,8 @@ import pytest
 
 from src.core.event_bus import EventBus
 
+pytestmark = pytest.mark.unit
+
 
 class TestEventBus(unittest.TestCase):
     def setUp(self):
@@ -55,4 +57,3 @@ class TestEventBus(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

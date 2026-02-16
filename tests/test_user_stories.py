@@ -33,6 +33,8 @@ from src.core.system_orchestrator import (
 )
 from src.interactions.engine import InteractionType
 
+pytestmark = pytest.mark.integration  # noqa: F841
+
 
 class TestUserStories:
     """

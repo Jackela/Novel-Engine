@@ -203,10 +203,10 @@ class NegotiationService:
 
         # Party-specific strategies
         for party in decision_makers:
-            strategy["party_specific_strategies"][
-                str(party.party_id)
-            ] = self._recommend_party_specific_strategy(
-                party, parties, negotiation_domain
+            strategy["party_specific_strategies"][str(party.party_id)] = (
+                self._recommend_party_specific_strategy(
+                    party, parties, negotiation_domain
+                )
             )
 
         return strategy
@@ -368,9 +368,9 @@ class NegotiationService:
         )
 
         # Implementation difficulty
-        optimization[
-            "implementation_difficulty"
-        ] = self._assess_implementation_difficulty(optimized_terms)
+        optimization["implementation_difficulty"] = (
+            self._assess_implementation_difficulty(optimized_terms)
+        )
 
         return optimization
 
@@ -1322,9 +1322,9 @@ class NegotiationService:
 
         if term.priority == ProposalPriority.LOW and len(term.dependencies or []) > 0:
             analysis["optimization_potential"] = Decimal("20")
-            analysis[
-                "reasoning"
-            ] = "Low priority term with dependencies adds complexity"
+            analysis["reasoning"] = (
+                "Low priority term with dependencies adds complexity"
+            )
             analysis["suggested_changes"].append(
                 "Remove dependencies or increase priority"
             )

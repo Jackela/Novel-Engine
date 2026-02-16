@@ -404,3 +404,102 @@ class TestLoreEntrySerialization:
         assert "created_at" in data
         assert "updated_at" in data
         assert "version" in data
+
+
+class TestLoreEntrySmartTags:
+    """Tests for smart tags metadata functionality."""
+
+    def test_set_smart_tags(self):
+        """Test storing smart tags in metadata."""
+        entry = LoreEntry(title="The Binding Laws")
+        tags = {
+            "genre": ["fantasy", "dark"],
+            "mood": ["serious", "mysterious"],
+            "themes": ["sacrifice", "power"],
+        }
+        entry.set_smart_tags(tags)
+
+        assert entry.get_smart_tags() == tags
+        assert entry.version > 1  # Version incremented
+
+    def test_get_smart_tags_empty_when_none_set(self):
+        """Test that get_smart_tags returns empty dict when none set."""
+        entry = LoreEntry(title="Test")
+        assert entry.get_smart_tags() == {}
+
+    def test_has_smart_tag(self):
+        """Test checking for specific smart tag."""
+        entry = LoreEntry(title="Test")
+        entry.set_smart_tags(
+            {
+                "genre": ["fantasy", "dark"],
+                "mood": ["serious"],
+            }
+        )
+
+        assert entry.has_smart_tag("genre", "fantasy") is True
+        assert entry.has_smart_tag("genre", "FANTASY") is True  # Case-insensitive
+        assert entry.has_smart_tag("mood", "serious") is True
+        assert entry.has_smart_tag("genre", "scifi") is False
+        assert entry.has_smart_tag("nonexistent", "fantasy") is False
+
+    def test_set_smart_tags_merges_with_metadata(self):
+        """Test that smart tags are stored alongside other metadata."""
+        entry = LoreEntry(title="Test")
+        entry.metadata["custom_field"] = "custom_value"
+        entry.set_smart_tags({"genre": ["fantasy"]})
+
+        assert "custom_field" in entry.metadata
+        assert entry.metadata["custom_field"] == "custom_value"
+        assert "smart_tags" in entry.metadata
+        assert entry.metadata["smart_tags"] == {"genre": ["fantasy"]}
+
+    def test_get_all_tags_combined(self):
+        """Test getting all manual and smart tags combined."""
+        entry = LoreEntry(
+            title="Test",
+            tags=["manual1", "manual2"],
+        )
+        entry.set_smart_tags(
+            {
+                "genre": ["smart1"],
+                "mood": ["smart2", "manual1"],  # Duplicate to test deduplication
+            }
+        )
+
+        all_tags = entry.get_all_tags_combined()
+
+        assert "manual1" in all_tags
+        assert "manual2" in all_tags
+        assert "smart1" in all_tags
+        assert "smart2" in all_tags
+        # Check no duplicates
+        assert all_tags.count("manual1") == 1
+
+    def test_get_all_tags_combined_no_smart_tags(self):
+        """Test getting all tags when no smart tags set."""
+        entry = LoreEntry(title="Test", tags=["manual1", "manual2"])
+
+        all_tags = entry.get_all_tags_combined()
+
+        assert all_tags == ["manual1", "manual2"]
+
+    def test_get_all_tags_combined_no_manual_tags(self):
+        """Test getting all tags when no manual tags set."""
+        entry = LoreEntry(title="Test")
+        entry.set_smart_tags({"genre": ["fantasy"]})
+
+        all_tags = entry.get_all_tags_combined()
+
+        assert "fantasy" in all_tags
+
+    def test_smart_tags_persist_in_to_dict(self):
+        """Test that smart tags are included in serialization."""
+        entry = LoreEntry(title="Test")
+        entry.set_smart_tags({"genre": ["fantasy"]})
+
+        data = entry.to_dict()
+
+        assert "metadata" in data
+        assert "smart_tags" in data["metadata"]
+        assert data["metadata"]["smart_tags"] == {"genre": ["fantasy"]}

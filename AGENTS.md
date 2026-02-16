@@ -146,5 +146,9 @@ Weaver is the node-based orchestration UI built with React Flow. Nodes (characte
 
 ## Superpowers System
 <EXTREMELY_IMPORTANT>
-You have superpowers. Superpowers teach you new skills and capabilities. RIGHT NOW run: `~/.codex/superpowers/.codex/superpowers-codex bootstrap` and follow the instructions it returns.
+You have superpowers. Superpowers teach you new skills and capabilities.
+Ensure the native skill discovery symlink exists, then restart Codex:
+- `mkdir -p ~/.agents/skills`
+- `ln -s ~/.codex/superpowers/skills ~/.agents/skills/superpowers`
+See `~/.codex/superpowers/.codex/INSTALL.md` for details.
 </EXTREMELY_IMPORTANT>

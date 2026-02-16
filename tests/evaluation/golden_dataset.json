@@ -1,0 +1,333 @@
+{
+  "version": "1.0.0",
+  "description": "Golden dataset for RAG evaluation - question -> expected fact pairs",
+  "created_at": "2026-02-06",
+  "questions": [
+    {
+      "id": "q001",
+      "query": "Who is the brave knight in Eldoria?",
+      "expected_facts": [
+        "Sir Aldric",
+        "brave knight",
+        "Eldoria",
+        "chivalry"
+      ],
+      "expected_source_type": "CHARACTER",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q002",
+      "query": "Tell me about the kingdom of Eldoria",
+      "expected_facts": [
+        "kingdom",
+        "Eldoria",
+        "thousand years",
+        "ancient"
+      ],
+      "expected_source_type": "LORE",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q003",
+      "query": "What weapon does Sir Aldric wield?",
+      "expected_facts": [
+        "sword",
+        "weapon",
+        "Aldric",
+        "legendary"
+      ],
+      "expected_source_type": "CHARACTER",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q004",
+      "query": "Who is the cunning thief character?",
+      "expected_facts": [
+        "Bob",
+        "thief",
+        "cunning",
+        "heart of gold"
+      ],
+      "expected_source_type": "CHARACTER",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q005",
+      "query": "What is the code that knights must follow?",
+      "expected_facts": [
+        "code of chivalry",
+        "knights",
+        "follow",
+        "rules"
+      ],
+      "expected_source_type": "LORE",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q006",
+      "query": "Tell me about dragons in this world",
+      "expected_facts": [
+        "dragons",
+        "common",
+        "rare",
+        "once"
+      ],
+      "expected_source_type": "LORE",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q007",
+      "query": "Who is the wizard from the eastern lands?",
+      "expected_facts": [
+        "Charlie",
+        "wizard",
+        "eastern",
+        "wise"
+      ],
+      "expected_source_type": "CHARACTER",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q008",
+      "query": "What special property does the sword have?",
+      "expected_facts": [
+        "sword",
+        "glows",
+        "evil",
+        "presence"
+      ],
+      "expected_source_type": "ITEM",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q009",
+      "query": "Where is the castle located?",
+      "expected_facts": [
+        "castle",
+        "hill",
+        "valley",
+        "overlooking"
+      ],
+      "expected_source_type": "LOCATION",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q010",
+      "query": "What kind of warrior is Alice?",
+      "expected_facts": [
+        "Alice",
+        "knight",
+        "brave",
+        "fights",
+        "honor"
+      ],
+      "expected_source_type": "CHARACTER",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q011",
+      "query": "Describe the main castle",
+      "expected_facts": [
+        "castle",
+        "hill",
+        "overlooking",
+        "valley"
+      ],
+      "expected_source_type": "LORE",
+      "min_relevance_score": 0.6
+    },
+    {
+      "id": "q012",
+      "query": "Who are the main characters in this story?",
+      "expected_facts": [
+        "Alice",
+        "Bob",
+        "Charlie",
+        "Aldric",
+        "characters"
+      ],
+      "expected_source_type": "CHARACTER",
+      "min_relevance_score": 0.6
+    },
+    {
+      "id": "q013",
+      "query": "What magical items exist?",
+      "expected_facts": [
+        "sword",
+        "glows",
+        "evil",
+        "item",
+        "magical"
+      ],
+      "expected_source_type": "ITEM",
+      "min_relevance_score": 0.6
+    },
+    {
+      "id": "q014",
+      "query": "Tell me about the code of chivalry",
+      "expected_facts": [
+        "chivalry",
+        "code",
+        "knights",
+        "must follow"
+      ],
+      "expected_source_type": "LORE",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q015",
+      "query": "What locations are mentioned?",
+      "expected_facts": [
+        "kingdom",
+        "castle",
+        "eastern lands",
+        "valley",
+        "hill"
+      ],
+      "expected_source_type": "LOCATION",
+      "min_relevance_score": 0.6
+    },
+    {
+      "id": "q016",
+      "query": "Who fights with honor?",
+      "expected_facts": [
+        "Alice",
+        "knight",
+        "honor",
+        "fights"
+      ],
+      "expected_source_type": "CHARACTER",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q017",
+      "query": "What happened to dragons over time?",
+      "expected_facts": [
+        "dragons",
+        "common",
+        "now rare",
+        "changed"
+      ],
+      "expected_source_type": "LORE",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q018",
+      "query": "Describe the magical sword",
+      "expected_facts": [
+        "sword",
+        "glows",
+        "evil",
+        "presence",
+        "magical"
+      ],
+      "expected_source_type": "ITEM",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q019",
+      "query": "Who has a heart of gold?",
+      "expected_facts": [
+        "Bob",
+        "thief",
+        "heart of gold",
+        "cunning"
+      ],
+      "expected_source_type": "CHARACTER",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q020",
+      "query": "How old is the kingdom?",
+      "expected_facts": [
+        "thousand years",
+        "kingdom",
+        "old",
+        "stood"
+      ],
+      "expected_source_type": "LORE",
+      "min_relevance_score": 0.7
+    },
+    {
+      "id": "q021",
+      "query": "What is special about the eastern lands?",
+      "expected_facts": [
+        "eastern",
+        "Charlie",
+        "wizard",
+        "lands"
+      ],
+      "expected_source_type": "LORE",
+      "min_relevance_score": 0.6
+    },
+    {
+      "id": "q022",
+      "query": "Who serves as a knight?",
+      "expected_facts": [
+        "Alice",
+        "knight",
+        "serves",
+        "brave"
+      ],
+      "expected_source_type": "CHARACTER",
+      "min_relevance_score": 0.7
+    }
+  ],
+  "documents": [
+    {
+      "id": "char_alice",
+      "source_type": "CHARACTER",
+      "content": "Alice is a brave knight who fights with honor. She serves the kingdom of Eldoria with unwavering loyalty."
+    },
+    {
+      "id": "char_bob",
+      "source_type": "CHARACTER",
+      "content": "Bob is a cunning thief with a heart of gold. Despite his criminal background, he often helps those in need."
+    },
+    {
+      "id": "char_charlie",
+      "source_type": "CHARACTER",
+      "content": "Charlie is a wise wizard from the eastern lands. His knowledge of ancient magic is unparalleled."
+    },
+    {
+      "id": "char_aldric",
+      "source_type": "CHARACTER",
+      "content": "Sir Aldric is a brave knight of Eldoria. He wields a legendary sword and follows the code of chivalry."
+    },
+    {
+      "id": "lore_kingdom",
+      "source_type": "LORE",
+      "content": "The kingdom of Eldoria has stood for a thousand years. It is a land of ancient magic and noble traditions."
+    },
+    {
+      "id": "lore_dragons",
+      "source_type": "LORE",
+      "content": "Dragons were once common in Eldoria but are now rare. The last confirmed sighting was fifty years ago."
+    },
+    {
+      "id": "lore_chivalry",
+      "source_type": "LORE",
+      "content": "Knights must follow the code of chivalry. This code emphasizes honor, bravery, and protection of the innocent."
+    },
+    {
+      "id": "lore_castle",
+      "source_type": "LORE",
+      "content": "The castle stands on a hill overlooking the valley. It has been the seat of power for generations."
+    },
+    {
+      "id": "item_sword",
+      "source_type": "ITEM",
+      "content": "The sword glows in the presence of evil. This legendary weapon was forged in the eternal flames."
+    },
+    {
+      "id": "loc_castle",
+      "source_type": "LOCATION",
+      "content": "The castle stands on a hill overlooking the valley. It serves as the administrative center of Eldoria."
+    },
+    {
+      "id": "loc_eastern",
+      "source_type": "LOCATION",
+      "content": "The eastern lands are home to many wizards and scholars. Ancient magic is practiced here freely."
+    }
+  ]
+}

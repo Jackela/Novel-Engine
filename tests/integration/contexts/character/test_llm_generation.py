@@ -1,12 +1,16 @@
 import json
 from unittest.mock import patch
 
+import pytest
+
 from src.contexts.character.application.services.generation_service import (
     CharacterGenerationInput,
 )
 from src.contexts.character.infrastructure.generators.llm_character_generator import (
     LLMCharacterGenerator,
 )
+
+pytestmark = pytest.mark.integration
 
 
 def test_llm_character_generator_parses_response() -> None:

@@ -36,9 +36,9 @@ from __future__ import annotations
 
 import json
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import requests
 import structlog
@@ -65,6 +65,11 @@ from src.contexts.world.domain.entities import (
     WorldSetting,
 )
 
+if TYPE_CHECKING:
+    from src.contexts.knowledge.application.services.rag_integration_service import (
+        RAGIntegrationService,
+    )
+
 logger = structlog.get_logger(__name__)
 
 
@@ -76,17 +81,31 @@ class LLMWorldGenerator(WorldGeneratorPort):
     WorldSetting, multiple Factions, Locations, and HistoryEvents in a single
     API call, maintaining cross-references between entities.
 
+    Warzone 4 Integration:
+        Optionally uses RAG (Retrieval-Augmented Generation) to enrich
+        dialogue and beat suggestions with relevant context from the knowledge
+        base. When a RAGIntegrationService is provided, the generator will
+        retrieve relevant character, lore, and scene information to inform
+        its outputs.
+
     Attributes:
         _model: Gemini model name (e.g., "gemini-2.0-flash").
         _temperature: Generation temperature controlling creativity (0-2).
         _prompt_path: Path to the YAML file containing system prompts.
         _api_key: Gemini API authentication key.
         _base_url: Gemini API endpoint URL.
+        _rag_service: Optional RAG integration service for context enrichment.
 
     Example:
         >>> generator = LLMWorldGenerator(model="gemini-2.0-flash", temperature=0.7)
         >>> result = generator.generate(WorldGenerationInput(genre=Genre.FANTASY))
         >>> print(f"Generated {result.total_entities} entities")
+
+        >>> # With RAG integration
+        >>> from src.contexts.knowledge.application.services import RAGIntegrationService
+        >>> rag_service = RAGIntegrationService.create(...)
+        >>> generator_with_rag = LLMWorldGenerator(rag_service=rag_service)
+        >>> dialogue = generator_with_rag.generate_dialogue(...)
     """
 
     def __init__(
@@ -94,6 +113,7 @@ class LLMWorldGenerator(WorldGeneratorPort):
         model: str | None = None,
         temperature: float = 0.8,
         prompt_path: Path | None = None,
+        rag_service: RAGIntegrationService | None = None,
     ) -> None:
         """Initialize the LLM world generator.
 
@@ -101,6 +121,7 @@ class LLMWorldGenerator(WorldGeneratorPort):
             model: Gemini model name (defaults to env GEMINI_MODEL)
             temperature: Generation temperature (0-2)
             prompt_path: Path to prompt YAML file
+            rag_service: Optional RAG integration service for context enrichment
         """
         self._model = model or os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         self._temperature = temperature
@@ -112,6 +133,7 @@ class LLMWorldGenerator(WorldGeneratorPort):
             f"https://generativelanguage.googleapis.com/v1/models/"
             f"{self._model}:generateContent"
         )
+        self._rag_service = rag_service
 
     def generate(self, request: WorldGenerationInput) -> WorldGenerationResult:
         """Generate a complete world using the Gemini API.
@@ -243,7 +265,9 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         )
 
         if response.status_code == 401:
-            raise RuntimeError("Gemini API authentication failed - check GEMINI_API_KEY")
+            raise RuntimeError(
+                "Gemini API authentication failed - check GEMINI_API_KEY"
+            )
         elif response.status_code == 429:
             raise RuntimeError("Gemini API rate limit exceeded")
         elif response.status_code != 200:
@@ -485,7 +509,9 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
                     FactionType, item.get("faction_type"), FactionType.GUILD
                 ),
                 alignment=self._parse_enum(
-                    FactionAlignment, item.get("alignment"), FactionAlignment.TRUE_NEUTRAL
+                    FactionAlignment,
+                    item.get("alignment"),
+                    FactionAlignment.TRUE_NEUTRAL,
                 ),
                 status=self._parse_enum(
                     FactionStatus, item.get("status"), FactionStatus.ACTIVE
@@ -553,7 +579,9 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
                     EventType, item.get("event_type"), EventType.POLITICAL
                 ),
                 significance=self._parse_enum(
-                    EventSignificance, item.get("significance"), EventSignificance.MODERATE
+                    EventSignificance,
+                    item.get("significance"),
+                    EventSignificance.MODERATE,
                 ),
                 outcome=self._parse_enum(
                     EventOutcome, item.get("outcome"), EventOutcome.NEUTRAL
@@ -644,13 +672,122 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             generation_summary=f"Error: {reason}",
         )
 
+    # ==================== RAG Integration Helpers ====================
+
+    async def _enrich_with_rag(
+        self,
+        query: str,
+        base_prompt: str,
+    ) -> tuple[str, int, int]:
+        """Enrich a prompt with RAG context if available.
+
+        Args:
+            query: Search query for retrieving relevant context
+            base_prompt: The base prompt to enrich
+
+        Returns:
+            Tuple of (enriched_prompt, chunks_retrieved, tokens_added)
+            Returns original prompt if RAG unavailable
+        """
+        if self._rag_service is None:
+            return base_prompt, 0, 0
+
+        try:
+            result = await self._rag_service.enrich_prompt(
+                query=query,
+                base_prompt=base_prompt,
+            )
+            logger.info(
+                "rag_enrichment",
+                chunks_retrieved=result.chunks_retrieved,
+                tokens_added=result.tokens_added,
+            )
+            return result.prompt, result.chunks_retrieved, result.tokens_added
+        except Exception as exc:
+            logger.warning(
+                "rag_enrichment_failed",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
+            return base_prompt, 0, 0
+
+    def _extract_keywords_for_dialogue(
+        self,
+        character: "CharacterData",
+        context: str,
+        mood: Optional[str] | None,
+    ) -> str:
+        """Extract keywords from dialogue request for RAG query.
+
+        Builds a search query combining character name, traits, and context
+        to retrieve relevant knowledge base entries.
+
+        Args:
+            character: Character data for name and traits
+            context: The dialogue context/situation
+            mood: Optional current mood
+
+        Returns:
+            Search query string for RAG retrieval
+        """
+        parts = [character.name]
+
+        if character.traits:
+            parts.extend(character.traits[:3])  # Top 3 traits
+
+        if mood:
+            parts.append(mood)
+
+        # Extract key phrases from context (simple extraction)
+        context_words = context.split()[:5]  # First 5 words
+        parts.extend(context_words)
+
+        return " ".join(parts)
+
+    def _extract_keywords_for_beats(
+        self,
+        current_beats: List[Dict[str, Any]],
+        scene_context: str,
+        mood_target: Optional[int] | None,
+    ) -> str:
+        """Extract keywords from beat request for RAG query.
+
+        Args:
+            current_beats: Existing beat sequence
+            scene_context: Scene description
+            mood_target: Optional target mood
+
+        Returns:
+            Search query string for RAG retrieval
+        """
+        parts = []
+
+        # Add scene context keywords
+        context_words = scene_context.split()[:8]
+        parts.extend(context_words)
+
+        # Add mood direction if specified
+        if mood_target is not None:
+            if mood_target > 0:
+                parts.append("uplifting positive")
+            elif mood_target < 0:
+                parts.append("tense negative dramatic")
+
+        # Add recent beat types for pattern matching
+        if current_beats:
+            recent_types = [b.get("beat_type", "") for b in current_beats[-3:]]
+            parts.extend(recent_types)
+
+        return " ".join(parts)
+
     # ==================== Dialogue Generation ====================
 
-    def generate_dialogue(
+    async def generate_dialogue(
         self,
         character: "CharacterData",
         context: str,
         mood: Optional[str] = None,
+        use_rag: bool = True,
     ) -> "DialogueResult":
         """Generate dialogue in character voice using psychology, traits, and speaking style.
 
@@ -658,6 +795,13 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         prompt. The dialogue generator considers the Big Five psychology traits,
         character-specific traits, and speaking style to produce responses that
         sound like the character would naturally speak.
+
+        RAG Integration (Warzone 4):
+            When use_rag is True and a RAGIntegrationService is available,
+            the generator retrieves relevant character knowledge, lore, and
+            context from the knowledge base to inform the dialogue.
+            Retrieved context is injected into the System Prompt as a
+            "Relevant Context:" section.
 
         Why this matters: Characters need consistent voices. A high-neuroticism
         character should hedge and worry, while a high-extraversion character
@@ -671,13 +815,14 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
                     Examples: "A stranger asks for directions", "Their rival insults them".
             mood: Optional current emotional state that modifies normal patterns.
                  Examples: "angry", "melancholic", "excited", "fearful".
+            use_rag: Whether to use RAG for context enrichment (default: True).
 
         Returns:
             DialogueResult containing the generated dialogue, internal thought,
             tone, and optional body language.
 
         Example:
-            >>> result = generator.generate_dialogue(
+            >>> result = await generator.generate_dialogue(
             ...     character=my_character,
             ...     context="A merchant offers a suspiciously good deal",
             ...     mood="cautious"
@@ -689,12 +834,29 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             character_name=character.name,
             has_psychology=character.psychology is not None,
             mood=mood,
+            has_rag=self._rag_service is not None and use_rag,
         )
         log.info("Starting dialogue generation")
 
         try:
-            system_prompt = self._load_dialogue_prompt()
+            base_system_prompt = self._load_dialogue_prompt()
             user_prompt = self._build_dialogue_user_prompt(character, context, mood)
+
+            # Enrich system prompt with RAG if enabled and available
+            if use_rag and self._rag_service is not None:
+                rag_query = self._extract_keywords_for_dialogue(
+                    character, context, mood
+                )
+                system_prompt, chunks_retrieved, tokens_added = (
+                    await self._enrich_with_rag(rag_query, base_system_prompt)
+                )
+                log.info(
+                    "rag_context_injected",
+                    chunks_retrieved=chunks_retrieved,
+                    tokens_added=tokens_added,
+                )
+            else:
+                system_prompt = base_system_prompt
 
             response_text = self._call_gemini(system_prompt, user_prompt)
             result = self._parse_dialogue_response(response_text)
@@ -985,6 +1147,505 @@ Return valid JSON only with the exact structure specified in the system prompt."
             current_status=payload.get("current_status"),
         )
 
+    # ==================== Beat Suggestion Generation ====================
+
+    async def suggest_next_beats(
+        self,
+        current_beats: List[Dict[str, Any]],
+        scene_context: str,
+        mood_target: Optional[int] = None,
+        use_rag: bool = True,
+    ) -> "BeatSuggestionResult":
+        """Suggest next beats for a scene based on current sequence and context.
+
+        Breaks writer's block by generating 3 AI-suggested beats that could
+        logically follow the current beat sequence. Considers the scene context,
+        current beat types, and desired mood trajectory.
+
+        RAG Integration (Warzone 4):
+            When use_rag is True and a RAGIntegrationService is available,
+            the generator retrieves relevant scene patterns, narrative conventions,
+            and story context to inform beat suggestions.
+            Retrieved context is injected into the System Prompt as a
+            "Relevant Context:" section.
+
+        Why this matters: Writers often struggle with "what happens next?"
+        This method provides creative sparks while respecting the established
+        narrative flow and emotional pacing.
+
+        Args:
+            current_beats: List of existing beats with 'beat_type', 'content',
+                          and optionally 'mood_shift' keys. Can be empty.
+            scene_context: Description of the scene including setting, characters
+                          involved, and current situation/goals.
+            mood_target: Optional target mood level (-5 to +5) for the scene's
+                        direction. If None, suggestions maintain current mood.
+            use_rag: Whether to use RAG for context enrichment (default: True).
+
+        Returns:
+            BeatSuggestionResult containing 3 suggestions with beat_type,
+            content, mood_shift, and rationale.
+
+        Example:
+            >>> result = await generator.suggest_next_beats(
+            ...     current_beats=[
+            ...         {"beat_type": "action", "content": "She drew her sword."},
+            ...         {"beat_type": "dialogue", "content": "'Stay back!' she warned."},
+            ...     ],
+            ...     scene_context="A tense standoff in an abandoned warehouse between
+            ...                   the hero and a mysterious figure blocking her path.",
+            ...     mood_target=-2  # Building tension
+            ... )
+            >>> print(result.suggestions[0].content)
+        """
+        log = logger.bind(
+            num_current_beats=len(current_beats),
+            has_mood_target=mood_target is not None,
+            has_rag=self._rag_service is not None and use_rag,
+        )
+        log.info("Starting beat suggestion generation")
+
+        try:
+            base_system_prompt = self._load_beat_suggester_prompt()
+            user_prompt = self._build_beat_suggester_user_prompt(
+                current_beats, scene_context, mood_target
+            )
+
+            # Enrich system prompt with RAG if enabled and available
+            if use_rag and self._rag_service is not None:
+                rag_query = self._extract_keywords_for_beats(
+                    current_beats, scene_context, mood_target
+                )
+                system_prompt, chunks_retrieved, tokens_added = (
+                    await self._enrich_with_rag(rag_query, base_system_prompt)
+                )
+                log.info(
+                    "rag_context_injected",
+                    chunks_retrieved=chunks_retrieved,
+                    tokens_added=tokens_added,
+                )
+            else:
+                system_prompt = base_system_prompt
+
+            response_text = self._call_gemini(system_prompt, user_prompt)
+            result = self._parse_beat_suggestion_response(response_text)
+
+            log.info(
+                "Beat suggestion generation completed",
+                num_suggestions=len(result.suggestions),
+            )
+            return result
+
+        except Exception as exc:
+            log.error("Beat suggestion generation failed", error=str(exc))
+            return BeatSuggestionResult(
+                suggestions=[],
+                error=str(exc),
+            )
+
+    def _load_beat_suggester_prompt(self) -> str:
+        """Load the beat suggester system prompt from YAML file.
+
+        Returns:
+            The system prompt string for beat suggestion generation.
+
+        Raises:
+            ValueError: If system_prompt key is missing in the YAML file.
+            FileNotFoundError: If the prompt file doesn't exist.
+        """
+        prompt_path = (
+            Path(__file__).resolve().parents[1] / "prompts" / "beat_suggester.yaml"
+        )
+        with prompt_path.open("r", encoding="utf-8") as handle:
+            payload = yaml.safe_load(handle) or {}
+        prompt = str(payload.get("system_prompt", "")).strip()
+        if not prompt:
+            raise ValueError("Missing system_prompt in beat_suggester.yaml")
+        return prompt
+
+    def _build_beat_suggester_user_prompt(
+        self,
+        current_beats: List[Dict[str, Any]],
+        scene_context: str,
+        mood_target: Optional[int],
+    ) -> str:
+        """Build the user prompt for beat suggestion generation.
+
+        Constructs a detailed prompt containing the current beat sequence,
+        scene context, and mood trajectory to guide the AI's suggestions.
+
+        Args:
+            current_beats: List of existing beats with type and content.
+            scene_context: Description of the scene.
+            mood_target: Optional target mood level.
+
+        Returns:
+            Formatted user prompt string.
+        """
+        # Build current beats section
+        if current_beats:
+            beats_section = ""
+            for i, beat in enumerate(current_beats, 1):
+                beat_type = beat.get("beat_type", "unknown")
+                content = beat.get("content", "")
+                mood = beat.get("mood_shift", 0)
+                beats_section += (
+                    f"{i}. [{beat_type.upper()}] (mood: {mood:+d}) {content}\n"
+                )
+        else:
+            beats_section = "No beats yet - this is the start of the scene."
+
+        # Analyze beat type balance
+        beat_types = [b.get("beat_type", "").lower() for b in current_beats]
+        action_count = sum(1 for t in beat_types if t in ("action", "transition"))
+        reaction_count = sum(1 for t in beat_types if t in ("reaction", "dialogue"))
+
+        if action_count > reaction_count + 1:
+            balance_hint = (
+                "The scene is heavy on action - consider a reaction or dialogue."
+            )
+        elif reaction_count > action_count + 1:
+            balance_hint = (
+                "The scene is heavy on reaction/dialogue - consider an action."
+            )
+        else:
+            balance_hint = "The action/reaction balance is good."
+
+        # Calculate current mood trajectory
+        if current_beats:
+            mood_shifts = [b.get("mood_shift", 0) for b in current_beats]
+            current_mood = sum(mood_shifts)
+            mood_trend = (
+                "upward"
+                if current_mood > 0
+                else "downward" if current_mood < 0 else "neutral"
+            )
+        else:
+            current_mood = 0
+            mood_trend = "neutral"
+
+        # Build mood target section
+        if mood_target is not None:
+            mood_diff = mood_target - current_mood
+            if mood_diff > 0:
+                mood_direction = f"Aim for positive mood shifts (target: {mood_target:+d}, current: {current_mood:+d})"
+            elif mood_diff < 0:
+                mood_direction = f"Aim for negative mood shifts (target: {mood_target:+d}, current: {current_mood:+d})"
+            else:
+                mood_direction = f"Maintain current mood level ({current_mood:+d})"
+        else:
+            mood_direction = "Follow natural story momentum"
+
+        return f"""Suggest 3 beats to continue this scene:
+
+SCENE CONTEXT:
+{scene_context}
+
+CURRENT BEAT SEQUENCE:
+{beats_section}
+
+PACING ANALYSIS:
+- Beat type balance: {balance_hint}
+- Current mood trajectory: {mood_trend} (cumulative: {current_mood:+d})
+- Mood target: {mood_direction}
+
+Generate 3 suggested beats that could follow this sequence. Each suggestion should:
+1. Logically follow from the current beats
+2. Move toward the mood target
+3. Serve the scene's dramatic purpose
+
+Return valid JSON only with the exact structure specified in the system prompt."""
+
+    def _parse_beat_suggestion_response(self, content: str) -> "BeatSuggestionResult":
+        """Parse the LLM response into a BeatSuggestionResult.
+
+        Args:
+            content: Raw text response from the LLM.
+
+        Returns:
+            BeatSuggestionResult with parsed suggestions.
+        """
+        payload = self._extract_json(content)
+
+        suggestions_data = payload.get("suggestions", [])
+        suggestions = []
+
+        for item in suggestions_data[:3]:  # Limit to 3 suggestions
+            suggestion = BeatSuggestion(
+                beat_type=str(item.get("beat_type", "action")).lower(),
+                content=str(item.get("content", "")),
+                mood_shift=int(item.get("mood_shift", 0)),
+                rationale=item.get("rationale"),
+            )
+            # Clamp mood_shift to valid range
+            suggestion.mood_shift = max(-5, min(5, suggestion.mood_shift))
+            suggestions.append(suggestion)
+
+        return BeatSuggestionResult(suggestions=suggestions)
+
+    # ==================== Scene Critique Generation ====================
+
+    def critique_scene(
+        self,
+        scene_text: str,
+        scene_goals: Optional[List[str]] = None,
+    ) -> "CritiqueResult":
+        """Analyze scene quality across multiple craft dimensions.
+
+        Provides AI-generated feedback on scene writing quality, evaluating
+        pacing, narrative voice, showing vs. telling, and dialogue naturalism.
+        Returns specific, actionable suggestions for improvement along with
+        recognition of what works well.
+
+        Why this matters: Writers need objective feedback beyond subjective
+        impressions. The AI critique analyzes specific craft elements and
+        provides actionable suggestions to elevate prose to professional
+        standards, similar to a harsh but fair literary editor.
+
+        Args:
+            scene_text: The full text content of the scene to analyze.
+            scene_goals: Optional list of writer's goals for the scene.
+                        Examples: ["reveal character motivation", "build tension",
+                        "establish setting", "advance plot"]. The critique will
+                        evaluate how well the scene achieves these goals.
+
+        Returns:
+            CritiqueResult containing overall score (1-10), category-specific
+            evaluations (pacing, voice, showing, dialogue), highlights of what
+            works, summary assessment, and actionable suggestions.
+
+        Example:
+            >>> result = generator.critique_scene(
+            ...     scene_text="The room was dark. John felt scared. "
+            ...                "'Who's there?' he asked nervously.",
+            ...     scene_goals=["build tension", "establish suspense"]
+            ... )
+            >>> print(result.summary)
+            >>> # "The scene establishes suspense but relies on telling
+            >>> #  emotions rather than showing them through action..."
+        """
+        log = logger.bind(
+            scene_text_length=len(scene_text),
+            has_scene_goals=scene_goals is not None,
+        )
+        log.info("Starting scene critique")
+
+        try:
+            system_prompt = self._load_critique_prompt()
+            user_prompt = self._build_critique_user_prompt(scene_text, scene_goals)
+
+            response_text = self._call_gemini(system_prompt, user_prompt)
+            result = self._parse_critique_response(response_text)
+
+            log.info(
+                "Scene critique completed",
+                overall_score=result.overall_score,
+                num_categories=len(result.category_scores),
+            )
+            return result
+
+        except Exception as exc:
+            log.error("Scene critique failed", error=str(exc))
+            return CritiqueResult(
+                overall_score=0,
+                category_scores=[],
+                highlights=[],
+                summary="Unable to generate critique.",
+                error=str(exc),
+            )
+
+    def _load_critique_prompt(self) -> str:
+        """Load the scene critique system prompt from YAML file.
+
+        Returns:
+            The system prompt string for scene critique.
+
+        Raises:
+            ValueError: If system_prompt key is missing in the YAML file.
+            FileNotFoundError: If the prompt file doesn't exist.
+        """
+        prompt_path = (
+            Path(__file__).resolve().parents[1] / "prompts" / "scene_critique.yaml"
+        )
+        with prompt_path.open("r", encoding="utf-8") as handle:
+            payload = yaml.safe_load(handle) or {}
+        prompt = str(payload.get("system_prompt", "")).strip()
+        if not prompt:
+            raise ValueError("Missing system_prompt in scene_critique.yaml")
+        return prompt
+
+    def _build_critique_user_prompt(
+        self,
+        scene_text: str,
+        scene_goals: Optional[List[str]],
+    ) -> str:
+        """Build the user prompt for scene critique generation.
+
+        Constructs a detailed prompt containing the scene text and optional
+        writer goals, guiding the AI to provide targeted, actionable feedback.
+
+        Args:
+            scene_text: The full text content of the scene.
+            scene_goals: Optional list of writer's goals for the scene.
+
+        Returns:
+            Formatted user prompt string.
+        """
+        # Truncate scene text if too long (max ~2000 words for context limit)
+        max_length = 12000  # ~2000 words
+        truncated_text = (
+            scene_text[:max_length] + "..."
+            if len(scene_text) > max_length
+            else scene_text
+        )
+
+        # Build goals section
+        if scene_goals:
+            goals_section = "\n".join(f"- {goal}" for goal in scene_goals)
+        else:
+            goals_section = "No specific goals provided - evaluate general quality."
+
+        return f"""Critique the following scene:
+
+SCENE TEXT:
+{truncated_text}
+
+SCENE GOALS:
+{goals_section}
+
+Analyze this scene across the four quality dimensions (pacing, voice, showing, dialogue)
+and provide specific, actionable feedback. Consider how well the scene achieves its
+stated goals.
+
+Return valid JSON only with the exact structure specified in the system prompt."""
+
+    def _parse_critique_response(self, content: str) -> "CritiqueResult":
+        """Parse the LLM response into a CritiqueResult.
+
+        Args:
+            content: Raw text response from the LLM.
+
+        Returns:
+            CritiqueResult with parsed critique data.
+        """
+        payload = self._extract_json(content)
+
+        # Parse overall score
+        overall_score = int(payload.get("overall_score", 5))
+        overall_score = max(1, min(10, overall_score))  # Clamp to 1-10
+
+        # Parse category scores
+        category_scores_data = payload.get("category_scores", [])
+        category_scores = []
+
+        valid_categories = {"pacing", "voice", "showing", "dialogue"}
+
+        for cat_data in category_scores_data:
+            category = str(cat_data.get("category", "")).lower()
+            # Normalize category names
+            if category not in valid_categories:
+                continue
+
+            score = int(cat_data.get("score", 5))
+            score = max(1, min(10, score))  # Clamp to 1-10
+
+            issues = cat_data.get("issues", []) or []
+            suggestions = cat_data.get("suggestions", []) or []
+
+            # Ensure lists
+            if not isinstance(issues, list):
+                issues = []
+            if not isinstance(suggestions, list):
+                suggestions = []
+
+            category_scores.append(
+                CritiqueCategoryScore(
+                    category=category,
+                    score=score,
+                    issues=issues,
+                    suggestions=suggestions,
+                )
+            )
+
+        # Parse highlights
+        highlights_data = payload.get("highlights", []) or []
+        if not isinstance(highlights_data, list):
+            highlights_data = []
+        highlights = [str(h) for h in highlights_data]
+
+        # Parse summary
+        summary = str(payload.get("summary", ""))
+
+        return CritiqueResult(
+            overall_score=overall_score,
+            category_scores=category_scores,
+            highlights=highlights,
+            summary=summary,
+        )
+
+
+@dataclass
+class BeatSuggestion:
+    """A single beat suggestion from the AI.
+
+    Represents one suggested narrative beat with its type, content, emotional
+    impact, and the AI's reasoning for the suggestion.
+
+    Attributes:
+        beat_type: Classification of the beat (action, reaction, dialogue, etc.)
+        content: The suggested narrative text (1-3 sentences).
+        mood_shift: Emotional impact (-5 to +5).
+        rationale: AI's explanation of why this beat fits.
+    """
+
+    beat_type: str
+    content: str
+    mood_shift: int = 0
+    rationale: Optional[str] = None
+
+
+@dataclass
+class BeatSuggestionResult:
+    """Result of beat suggestion generation.
+
+    Contains 3 AI-generated beat suggestions that could follow the current
+    sequence, along with optional error information.
+
+    Why 3 suggestions:
+        Offering multiple options gives writers creative choice while
+        preventing paralysis from too many options. The suggestions represent
+        different approaches: expected continuation, dramatic turn, and
+        character-focused moment.
+
+    Attributes:
+        suggestions: List of 3 BeatSuggestion objects.
+        error: Error message if generation failed.
+    """
+
+    suggestions: List[BeatSuggestion] = field(default_factory=list)
+    error: Optional[str] = None
+
+    def is_error(self) -> bool:
+        """Check if this result represents an error."""
+        return self.error is not None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format for API responses."""
+        result: Dict[str, Any] = {
+            "suggestions": [
+                {
+                    "beat_type": s.beat_type,
+                    "content": s.content,
+                    "mood_shift": s.mood_shift,
+                    "rationale": s.rationale,
+                }
+                for s in self.suggestions
+            ]
+        }
+        if self.error:
+            result["error"] = self.error
+        return result
+
 
 @dataclass
 class CharacterData:
@@ -1015,21 +1676,25 @@ class CharacterData:
             CharacterData with extracted fields.
         """
         psychology_dict = None
-        if hasattr(character, 'psychology') and character.psychology:
+        if hasattr(character, "psychology") and character.psychology:
             psychology_dict = character.psychology.to_dict()
 
         traits_list = None
-        if hasattr(character, 'profile') and character.profile:
-            if hasattr(character.profile, 'traits') and character.profile.traits:
+        if hasattr(character, "profile") and character.profile:
+            if hasattr(character.profile, "traits") and character.profile.traits:
                 traits_list = list(character.profile.traits)
-            elif hasattr(character.profile, 'personality_traits'):
+            elif hasattr(character.profile, "personality_traits"):
                 # Fallback to personality_traits if traits not set
                 pt = character.profile.personality_traits
-                if hasattr(pt, 'quirks') and pt.quirks:
+                if hasattr(pt, "quirks") and pt.quirks:
                     traits_list = list(pt.quirks)
 
         return cls(
-            name=character.profile.name if hasattr(character, 'profile') else str(character),
+            name=(
+                character.profile.name
+                if hasattr(character, "profile")
+                else str(character)
+            ),
             psychology=psychology_dict,
             traits=traits_list,
             speaking_style=None,  # Can be extended in future
@@ -1117,6 +1782,79 @@ class RelationshipHistoryResult:
             result["defining_moment"] = self.defining_moment
         if self.current_status:
             result["current_status"] = self.current_status
+        if self.error:
+            result["error"] = self.error
+        return result
+
+
+@dataclass
+class CritiqueCategoryScore:
+    """A category-specific critique score.
+
+    Represents evaluation of a single quality dimension (pacing, voice, showing,
+    dialogue) with specific issues and suggestions.
+
+    Attributes:
+        category: The quality dimension being evaluated.
+        score: Score from 1-10 for this category.
+        issues: List of specific problems identified in this category.
+        suggestions: List of actionable improvements for this category.
+    """
+
+    category: str
+    score: int
+    issues: List[str] = field(default_factory=list)
+    suggestions: List[str] = field(default_factory=list)
+
+
+@dataclass
+class CritiqueResult:
+    """Result of scene critique analysis.
+
+    Contains AI-generated feedback on scene quality across multiple dimensions.
+    Provides category-specific scores, overall assessment, highlights of what
+    works, and actionable suggestions for improvement.
+
+    Why scene critique:
+        Writers need objective feedback on their work beyond subjective
+        impressions. The AI critique analyzes specific craft elements like
+        pacing, voice, showing vs. telling, and dialogue quality, providing
+        actionable suggestions to elevate prose to professional standards.
+
+    Attributes:
+        overall_score: Overall quality score from 1-10.
+        category_scores: List of category-specific evaluations.
+        highlights: What works well in the scene.
+        summary: Brief 2-3 sentence assessment.
+        error: Error message if critique failed.
+    """
+
+    overall_score: int
+    category_scores: List[CritiqueCategoryScore] = field(default_factory=list)
+    highlights: List[str] = field(default_factory=list)
+    summary: str = ""
+    error: Optional[str] = None
+
+    def is_error(self) -> bool:
+        """Check if this result represents an error."""
+        return self.error is not None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format for API responses."""
+        result: Dict[str, Any] = {
+            "overall_score": self.overall_score,
+            "category_scores": [
+                {
+                    "category": cat.category,
+                    "score": cat.score,
+                    "issues": cat.issues,
+                    "suggestions": cat.suggestions,
+                }
+                for cat in self.category_scores
+            ],
+            "highlights": self.highlights,
+            "summary": self.summary,
+        }
         if self.error:
             result["error"] = self.error
         return result

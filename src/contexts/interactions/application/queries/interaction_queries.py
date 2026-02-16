@@ -296,9 +296,9 @@ class GetSessionPerformanceQuery(InteractionQuery):
     """Query to get performance metrics for a negotiation session."""
 
     session_id: UUID
-    metrics_types: List[
-        str
-    ] = None  # efficiency, effectiveness, engagement, satisfaction
+    metrics_types: List[str] = (
+        None  # efficiency, effectiveness, engagement, satisfaction
+    )
     include_benchmarks: bool = True
     include_party_performance: bool = True
     performance_period: Optional[str] = None  # overall, recent, phase-specific

@@ -13,16 +13,29 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 # Mock problematic dependencies
+
+pytestmark = pytest.mark.unit
+
 sys.modules["aioredis"] = MagicMock()
 event_bus_mock = MagicMock()
 event_mock = MagicMock()
 event_mock.return_value = Mock()
 event_bus_mock.Event = event_mock
+
+# Save original module if it exists
+_original_event_bus = sys.modules.get("src.events.event_bus")
+
 sys.modules["src.events.event_bus"] = event_bus_mock
 
 from src.contexts.character.domain.value_objects.character_memory import (
     CharacterMemory,
 )
+
+# Restore original module to avoid polluting other tests
+if _original_event_bus is not None:
+    sys.modules["src.events.event_bus"] = _original_event_bus
+else:
+    del sys.modules["src.events.event_bus"]
 
 
 class TestCharacterMemoryValueObject:
@@ -337,44 +350,68 @@ class TestCharacterMemoryAggregateIntegration:
             level=1,
             physical_traits=PhysicalTraits(),
             personality_traits=PersonalityTraits(
-                traits={"courage": 0.8, "intelligence": 0.6, "charisma": 0.5, "loyalty": 0.9}
+                traits={
+                    "courage": 0.8,
+                    "intelligence": 0.6,
+                    "charisma": 0.5,
+                    "loyalty": 0.9,
+                }
             ),
             background=Background(),
         )
 
         core_abilities = CoreAbilities(
-            strength=15, dexterity=14, constitution=16,
-            intelligence=12, wisdom=13, charisma=11,
+            strength=15,
+            dexterity=14,
+            constitution=16,
+            intelligence=12,
+            wisdom=13,
+            charisma=11,
         )
         vital_stats = VitalStats(
-            max_health=36, current_health=36,
-            max_mana=15, current_mana=15,
-            max_stamina=31, current_stamina=31,
-            armor_class=12, speed=30,
+            max_health=36,
+            current_health=36,
+            max_mana=15,
+            current_mana=15,
+            max_stamina=31,
+            current_stamina=31,
+            armor_class=12,
+            speed=30,
         )
         combat_stats = CombatStats(
-            base_attack_bonus=0, initiative_modifier=2,
-            damage_reduction=0, spell_resistance=0,
-            critical_hit_chance=0.05, critical_damage_multiplier=2.0,
+            base_attack_bonus=0,
+            initiative_modifier=2,
+            damage_reduction=0,
+            spell_resistance=0,
+            critical_hit_chance=0.05,
+            critical_damage_multiplier=2.0,
         )
         stats = CharacterStats(
             core_abilities=core_abilities,
             vital_stats=vital_stats,
             combat_stats=combat_stats,
-            experience_points=0, skill_points=5,
+            experience_points=0,
+            skill_points=5,
         )
 
         # Create mock skills
         from src.contexts.character.domain.value_objects.skills import (
-            ProficiencyLevel, Skill, SkillCategory,
+            ProficiencyLevel,
+            Skill,
+            SkillCategory,
         )
+
         combat_skill = Skill(
-            name="Melee Combat", category=SkillCategory.COMBAT,
-            proficiency_level=ProficiencyLevel.NOVICE, modifier=0,
+            name="Melee Combat",
+            category=SkillCategory.COMBAT,
+            proficiency_level=ProficiencyLevel.NOVICE,
+            modifier=0,
         )
         physical_skill = Skill(
-            name="Athletics", category=SkillCategory.PHYSICAL,
-            proficiency_level=ProficiencyLevel.APPRENTICE, modifier=1,
+            name="Athletics",
+            category=SkillCategory.PHYSICAL,
+            proficiency_level=ProficiencyLevel.APPRENTICE,
+            modifier=1,
         )
         skills = Mock()
         skills.skill_groups = {
@@ -465,7 +502,9 @@ class TestCharacterMemoryAggregateIntegration:
         memories = [
             CharacterMemory(content="Family event", importance=7, tags=("family",)),
             CharacterMemory(content="Work memory", importance=5, tags=("work",)),
-            CharacterMemory(content="Family trauma", importance=9, tags=("family", "trauma")),
+            CharacterMemory(
+                content="Family trauma", importance=9, tags=("family", "trauma")
+            ),
         ]
 
         for memory in memories:

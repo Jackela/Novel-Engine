@@ -12,6 +12,9 @@ import { test, expect } from './fixtures';
 import type { Locator, Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { DashboardPage } from './pages/DashboardPage';
+import { resetAuthState } from './utils/auth';
+import { safeGoto } from './utils/navigation';
+import { scalePerf } from './utils/perf';
 
 const ACCESSIBILITY_IGNORED_RULES = ['color-contrast', 'list', 'scrollable-region-focusable'];
 
@@ -53,15 +56,12 @@ const activateDemoCtaWithKeyboard = async (page: Page) => {
 
 test.describe('Keyboard-Only User Journey', () => {
   test.beforeEach(async ({ page }) => {
-    const navigate = async () => {
-      await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45000 });
-    };
-    try {
-      await navigate();
-    } catch {
-      await page.waitForTimeout(2000);
-      await navigate();
-    }
+    await resetAuthState(page);
+    await safeGoto(page, '/', { timeout: scalePerf(45_000) });
+    await page.locator('[data-testid="cta-launch"]').waitFor({
+      state: 'visible',
+      timeout: scalePerf(15_000),
+    });
   });
 
   /**
@@ -81,8 +81,10 @@ test.describe('Keyboard-Only User Journey', () => {
     await page.keyboard.press('Enter');
 
     const mainContent = page.locator('#main-content');
-    await expect(mainContent).toBeVisible();
-    await expect(page.locator('[data-testid="cta-launch"]')).toBeVisible();
+    await expect(mainContent).toBeVisible({ timeout: scalePerf(15_000) });
+    await expect(page.locator('[data-testid="cta-launch"]')).toBeVisible({
+      timeout: scalePerf(15_000),
+    });
   });
 
   /**

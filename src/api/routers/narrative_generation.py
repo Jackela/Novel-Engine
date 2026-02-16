@@ -39,6 +39,7 @@ def _parse_uuid_safe(value: str | None) -> UUID | None:
     except (ValueError, TypeError):
         return None
 
+
 router = APIRouter(prefix="/narrative/generate", tags=["narrative-generation"])
 
 

@@ -3,6 +3,7 @@
 导演代理单元测试套件
 测试游戏导演、回合管理、代理协调等核心功能
 """
+
 import logging
 import os
 import time
@@ -11,6 +12,9 @@ from unittest.mock import Mock
 import pytest
 
 # 导入被测试的模块
+
+pytestmark = pytest.mark.unit
+
 try:
     from src.agents.director_agent_integrated import DirectorAgent
 

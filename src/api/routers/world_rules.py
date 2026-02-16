@@ -104,8 +104,12 @@ async def create_world_rule(request: WorldRuleCreateRequest) -> WorldRuleRespons
 @router.get("", response_model=WorldRuleListResponse)
 async def list_world_rules(
     category: Optional[str] = Query(None, description="Filter by category"),
-    min_severity: Optional[int] = Query(None, ge=0, le=100, description="Minimum severity"),
-    max_severity: Optional[int] = Query(None, ge=0, le=100, description="Maximum severity"),
+    min_severity: Optional[int] = Query(
+        None, ge=0, le=100, description="Minimum severity"
+    ),
+    max_severity: Optional[int] = Query(
+        None, ge=0, le=100, description="Maximum severity"
+    ),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ) -> WorldRuleListResponse:

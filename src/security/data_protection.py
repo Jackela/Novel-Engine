@@ -300,8 +300,7 @@ class DataProtectionService:
             await conn.execute("PRAGMA synchronous = NORMAL")
 
             # Consent management table
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS consent_records (
                     consent_id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -315,12 +314,10 @@ class DataProtectionService:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
 
             # Data processing records
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS data_processing_records (
                     record_id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -334,12 +331,10 @@ class DataProtectionService:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
 
             # Data retention schedule
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS data_retention_schedule (
                     id TEXT PRIMARY KEY,
                     data_type TEXT NOT NULL,
@@ -350,12 +345,10 @@ class DataProtectionService:
                     deleted BOOLEAN DEFAULT FALSE,
                     deletion_reason TEXT NULL
                 )
-            """
-            )
+            """)
 
             # Pseudonym mappings (encrypted)
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS pseudonym_mappings (
                     id TEXT PRIMARY KEY,
                     purpose TEXT NOT NULL,
@@ -363,8 +356,7 @@ class DataProtectionService:
                     pseudonym TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
 
             await conn.commit()
             logger.info("DATA PROTECTION DATABASE INITIALIZED")

@@ -11,14 +11,18 @@
  * Dependencies: CHAR-021, CHAR-025, CHAR-029
  */
 import { test, expect, Page } from '@playwright/test';
+import { scalePerf } from './utils/perf';
 
 // Test configuration
-const BASE_URL = 'http://localhost:3000';
+const DEFAULT_PORT = 3000;
+const envPort = Number(process.env.PLAYWRIGHT_PORT || process.env.VITE_DEV_PORT || DEFAULT_PORT);
+const BASE_URL =
+  process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${Number.isFinite(envPort) ? envPort : DEFAULT_PORT}`;
 const TIMEOUTS = {
-  navigation: 30000,
-  element: 10000,
-  dialog: 5000,
-  network: 15000,
+  navigation: scalePerf(30_000),
+  element: scalePerf(10_000),
+  dialog: scalePerf(5_000),
+  network: scalePerf(15_000),
 };
 
 // Mock API setup helper for E2E tests

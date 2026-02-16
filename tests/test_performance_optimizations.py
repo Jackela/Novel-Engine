@@ -14,6 +14,8 @@ import pytest
 # Import our optimized components
 from src.core.performance_cache import CacheLevel, PerformanceCache
 
+pytestmark = pytest.mark.unit
+
 
 class TestPerformanceCache:
     """Test caching system performance and correctness."""
@@ -142,7 +144,6 @@ class TestIntegratedPerformance:
         # Cache should still be functional
         recent_char = await cache.get_character("char_999")
         assert recent_char is not None
-
 
 
 class TestFrontendOptimizations:

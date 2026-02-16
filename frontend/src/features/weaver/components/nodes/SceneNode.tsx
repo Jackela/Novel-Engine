@@ -2,6 +2,8 @@
  * SceneNode - React Flow node for scenes
  *
  * Memoized component to prevent unnecessary re-renders during canvas interactions.
+ *
+ * DIR-050: Shows plotline indicators as colored dots.
  */
 import { memo } from 'react';
 import type { NodeProps, Node } from '@xyflow/react';
@@ -23,6 +25,45 @@ const sceneTypeBadgeVariant: Record<
   climax: 'destructive',
   resolution: 'default',
 };
+
+/**
+ * Plotline indicators - colored dots showing which plotlines this scene belongs to.
+ *
+ * Why: Provides visual context for narrative threads in the Weaver graph.
+ * Shows up to 5 colored dots; if more, shows a "+N" indicator.
+ */
+function PlotlineIndicators({
+  plotlines,
+}: {
+  plotlines?: Array<{ id: string; name: string; color: string }>;
+}) {
+  if (!plotlines || plotlines.length === 0) {
+    return null;
+  }
+
+  const MAX_VISIBLE = 5;
+  const visible = plotlines.slice(0, MAX_VISIBLE);
+  const extraCount = plotlines.length - MAX_VISIBLE;
+
+  return (
+    <div
+      className="flex items-center gap-1"
+      title={plotlines.map((p) => p.name).join(', ')}
+    >
+      {visible.map((plotline) => (
+        <div
+          key={plotline.id}
+          className="h-2 w-2 rounded-full border border-white/20"
+          style={{ backgroundColor: plotline.color }}
+          title={plotline.name}
+        />
+      ))}
+      {extraCount > 0 && (
+        <span className="text-xs text-muted-foreground">+{extraCount}</span>
+      )}
+    </div>
+  );
+}
 
 function SceneNodeComponent({ data, id, selected }: NodeProps<SceneNodeType>) {
   const badgeVariant = sceneTypeBadgeVariant[data.sceneType] ?? 'secondary';
@@ -51,6 +92,12 @@ function SceneNodeComponent({ data, id, selected }: NodeProps<SceneNodeType>) {
         {data.summary ? (
           <p className="line-clamp-2 text-xs text-muted-foreground">{data.summary}</p>
         ) : null}
+        {/* Plotline indicators (DIR-050) */}
+        {data.plotlines && data.plotlines.length > 0 && (
+          <div className="mt-2 flex items-center gap-2">
+            <PlotlineIndicators plotlines={data.plotlines} />
+          </div>
+        )}
         {data.visualPrompt && data.status === 'idle' ? (
           <p className="mt-2 truncate text-xs italic text-muted-foreground/70">
             Visual: {data.visualPrompt}

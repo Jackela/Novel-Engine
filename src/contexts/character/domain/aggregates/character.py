@@ -17,13 +17,16 @@ from ..events.character_events import (
     CharacterStatsChanged,
     CharacterUpdated,
 )
+from ..value_objects.character_goal import CharacterGoal, GoalUrgency
 from ..value_objects.character_id import CharacterID
+from ..value_objects.character_memory import CharacterMemory
 from ..value_objects.character_profile import (
     CharacterClass,
     CharacterProfile,
     CharacterRace,
     Gender,
 )
+from ..value_objects.character_psychology import CharacterPsychology
 from ..value_objects.character_stats import (
     AbilityScore,
     CharacterStats,
@@ -31,9 +34,6 @@ from ..value_objects.character_stats import (
     CoreAbilities,
     VitalStats,
 )
-from ..value_objects.character_goal import CharacterGoal, GoalUrgency
-from ..value_objects.character_memory import CharacterMemory
-from ..value_objects.character_psychology import CharacterPsychology
 from ..value_objects.skills import SkillCategory, Skills
 
 
@@ -71,6 +71,11 @@ class Character:
     # Faction membership - which faction/group the character belongs to
     # Why optional: Characters may be unaffiliated (lone wolves, neutrals)
     faction_id: Optional[str] = None
+
+    # Metadata: Flexible dict for additional data like smart tags
+    # Why optional: Stores smart tags from AI tagging system without
+    # requiring schema changes
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     # Entity state
     created_at: datetime = field(default_factory=datetime.now)
@@ -358,9 +363,7 @@ class Character:
             TypeError: If memory is not a CharacterMemory instance
         """
         if not isinstance(memory, CharacterMemory):
-            raise TypeError(
-                f"Expected CharacterMemory, got {type(memory).__name__}"
-            )
+            raise TypeError(f"Expected CharacterMemory, got {type(memory).__name__}")
 
         self.memories.append(memory)
         self.updated_at = datetime.now()
@@ -417,9 +420,7 @@ class Character:
         Returns:
             List of most recent memories, sorted by timestamp descending
         """
-        sorted_memories = sorted(
-            self.memories, key=lambda m: m.timestamp, reverse=True
-        )
+        sorted_memories = sorted(self.memories, key=lambda m: m.timestamp, reverse=True)
         return sorted_memories[:count]
 
     # ==================== Goal Operations ====================
@@ -439,9 +440,7 @@ class Character:
             ValueError: If a goal with the same ID already exists
         """
         if not isinstance(goal, CharacterGoal):
-            raise TypeError(
-                f"Expected CharacterGoal, got {type(goal).__name__}"
-            )
+            raise TypeError(f"Expected CharacterGoal, got {type(goal).__name__}")
 
         # Check for duplicate goal_id
         if any(g.goal_id == goal.goal_id for g in self.goals):
@@ -532,10 +531,7 @@ class Character:
         completed_goal = goal.complete()
 
         # Replace the goal in the list
-        self.goals = [
-            completed_goal if g.goal_id == goal_id else g
-            for g in self.goals
-        ]
+        self.goals = [completed_goal if g.goal_id == goal_id else g for g in self.goals]
 
         self.updated_at = datetime.now()
         self.version += 1
@@ -571,10 +567,7 @@ class Character:
         failed_goal = goal.fail()
 
         # Replace the goal in the list
-        self.goals = [
-            failed_goal if g.goal_id == goal_id else g
-            for g in self.goals
-        ]
+        self.goals = [failed_goal if g.goal_id == goal_id else g for g in self.goals]
 
         self.updated_at = datetime.now()
         self.version += 1
@@ -613,10 +606,7 @@ class Character:
         updated_goal = goal.update_urgency(new_urgency)
 
         # Replace the goal in the list
-        self.goals = [
-            updated_goal if g.goal_id == goal_id else g
-            for g in self.goals
-        ]
+        self.goals = [updated_goal if g.goal_id == goal_id else g for g in self.goals]
 
         self.updated_at = datetime.now()
         self.version += 1
@@ -990,6 +980,216 @@ class Character:
         if faction_id is None:
             return self.faction_id is not None
         return self.faction_id == faction_id
+
+    # ==================== Metadata Operations ====================
+
+    def update_metadata(self, key: str, value: Any) -> None:
+        """Update a metadata key-value pair.
+
+        Args:
+            key: The metadata key to update.
+            value: The value to set.
+
+        Why this method:
+            Provides controlled access to metadata for storing flexible
+            data like smart tags from the AI tagging system.
+        """
+        self.metadata[key] = value
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["metadata"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def get_metadata(self, key: str, default: Any = None) -> Any:
+        """Get a metadata value by key.
+
+        Args:
+            key: The metadata key to retrieve.
+            default: Default value if key not found.
+
+        Returns:
+            The metadata value or default if not found.
+        """
+        return self.metadata.get(key, default)
+
+    def set_smart_tags(self, tags: Dict[str, List[str]]) -> None:
+        """Store smart tags in metadata.
+
+        Args:
+            tags: Dictionary mapping category names to tag lists.
+
+        Why this method:
+            Provides a consistent interface for storing smart tags
+            generated by the AI tagging system.
+        """
+        self.metadata["smart_tags"] = tags
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["smart_tags"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def get_smart_tags(self) -> Dict[str, List[str]]:
+        """Get smart tags from metadata.
+
+        Returns:
+            Dictionary mapping category names to tag lists, or empty dict if none.
+        """
+        return self.metadata.get("smart_tags", {})
+
+    # ==================== Manual Smart Tags Override ====================
+
+    def set_manual_smart_tags(self, category: str, tags: List[str]) -> None:
+        """Set manual tags for a specific category.
+
+        These tags are marked as manual-only and will never be overridden
+        by auto-tagging. They are stored under a separate key in metadata.
+
+        Args:
+            category: The tag category (e.g., "genre", "mood", "themes")
+            tags: List of manual tags for this category
+        """
+        if "manual_smart_tags" not in self.metadata:
+            self.metadata["manual_smart_tags"] = {}
+
+        self.metadata["manual_smart_tags"][category] = [
+            t.strip().lower() for t in tags if t.strip()
+        ]
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["manual_smart_tags"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def get_manual_smart_tags(self) -> Dict[str, List[str]]:
+        """Get manual-only smart tags.
+
+        Returns:
+            Dictionary mapping category names to manual tag lists.
+        """
+        return self.metadata.get("manual_smart_tags", {})
+
+    def get_manual_smart_tags_for_category(self, category: str) -> List[str]:
+        """Get manual tags for a specific category.
+
+        Args:
+            category: The tag category
+
+        Returns:
+            List of manual tags for this category
+        """
+        manual_tags = self.get_manual_smart_tags()
+        return manual_tags.get(category, [])
+
+    def remove_manual_smart_tag(self, category: str, tag: str) -> bool:
+        """Remove a manual smart tag.
+
+        Args:
+            category: The tag category
+            tag: The tag to remove
+
+        Returns:
+            True if tag was found and removed
+        """
+        manual_tags = self.get_manual_smart_tags()
+        if category in manual_tags:
+            tag_normalized = tag.strip().lower()
+            if tag_normalized in [t.lower() for t in manual_tags[category]]:
+                manual_tags[category] = [
+                    t for t in manual_tags[category] if t.lower() != tag_normalized
+                ]
+                self.metadata["manual_smart_tags"] = manual_tags
+                self.updated_at = datetime.now()
+                self.version += 1
+
+                # Record update event
+                self._add_event(
+                    CharacterUpdated.create(
+                        character_id=self.character_id,
+                        updated_fields=["manual_smart_tags"],
+                        old_version=self.version - 1,
+                        new_version=self.version,
+                        updated_at=self.updated_at,
+                    )
+                )
+                return True
+        return False
+
+    def clear_manual_smart_tags(self, category: Optional[str] = None) -> None:
+        """Clear manual smart tags.
+
+        Args:
+            category: If provided, only clear this category.
+                     If None, clear all manual tags.
+        """
+        if "manual_smart_tags" not in self.metadata:
+            return
+
+        if category:
+            self.metadata["manual_smart_tags"].pop(category, None)
+        else:
+            self.metadata["manual_smart_tags"] = {}
+
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record update event
+        self._add_event(
+            CharacterUpdated.create(
+                character_id=self.character_id,
+                updated_fields=["manual_smart_tags"],
+                old_version=self.version - 1,
+                new_version=self.version,
+                updated_at=self.updated_at,
+            )
+        )
+
+    def get_effective_smart_tags(self) -> Dict[str, List[str]]:
+        """Get all smart tags (auto + manual) combined.
+
+        Returns:
+            Dictionary with all tags by category, merging auto-generated
+            and manual tags.
+        """
+        auto_tags = self.get_smart_tags()
+        manual_tags = self.get_manual_smart_tags()
+
+        effective: Dict[str, List[str]] = {}
+
+        # All categories
+        all_categories = set(auto_tags.keys()) | set(manual_tags.keys())
+
+        for category in all_categories:
+            auto = set(auto_tags.get(category, []))
+            manual = set(manual_tags.get(category, []))
+            effective[category] = list(auto | manual)
+
+        return effective
 
     # ==================== Query Methods ====================
 

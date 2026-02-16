@@ -21,16 +21,18 @@ import time
 
 import pytest
 
+pytestmark = [pytest.mark.integration]
+
 FULL_INTEGRATION = os.getenv("NOVEL_ENGINE_FULL_INTEGRATION") == "1"
-pytestmark = [pytest.mark.api, pytest.mark.integration]
 if not FULL_INTEGRATION:
     pytestmark.append(
         pytest.mark.skip(
             reason="API comprehensive tests require NOVEL_ENGINE_FULL_INTEGRATION=1"
         )
     )
-from api_server import app
 from fastapi.testclient import TestClient
+
+from api_server import app
 
 client = TestClient(app)
 

@@ -42,6 +42,7 @@ Workflow rules and SSOT locations for AI contributors
 - Domain-Driven Design
 - Performance & Scalability
 - Security Architecture
+- [RAG Pipeline](./architecture/rag_pipeline.mermaid) - Knowledge ingestion, retrieval, and reranking flow
 
 ### [API](./api/)
 **API documentation, specifications, and integration guides**

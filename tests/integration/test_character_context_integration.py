@@ -33,6 +33,8 @@ from src.contexts.character.domain.value_objects.skills import (
     SkillGroup,
 )
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.mark.integration
 class TestCharacterContextIntegration:
@@ -196,12 +198,13 @@ class TestCharacterContextIntegration:
         )
 
         # Create character through application service
-        character_id = await character_application_service.create_character(
+        result = await character_application_service.create_character(
             **sample_character_data
         )
 
         # Validate results
-        assert character_id is not None
+        assert result.is_ok
+        character_id = result.value
         assert isinstance(character_id, CharacterID)
 
         # Verify repository calls
@@ -223,10 +226,12 @@ class TestCharacterContextIntegration:
         )
 
         # Attempt to create character with duplicate name
-        with pytest.raises(ValueError, match="already taken"):
-            await character_application_service.create_character(
-                **sample_character_data
-            )
+        result = await character_application_service.create_character(
+            **sample_character_data
+        )
+        assert result.is_error
+        assert result.error.code == "CONFLICT"
+        assert "already taken" in result.error.message
 
     def test_create_character_command_validation(self, sample_character_data):
         """Test CreateCharacterCommand validation."""

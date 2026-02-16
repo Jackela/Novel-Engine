@@ -21,10 +21,10 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
+from fastapi.testclient import TestClient
 
 # Import the FastAPI app
 from api_server import JWT_ALGORITHM, JWT_SECRET_KEY, app
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture

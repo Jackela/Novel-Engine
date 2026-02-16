@@ -17,6 +17,8 @@
 
 import { test, expect } from './fixtures';
 import { activateGuestSession } from './utils/auth';
+import { waitForDashboardReady } from './utils/waitForReady';
+import { safeGoto } from './utils/navigation';
 
 // Test data for world-building scenarios
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -350,6 +352,18 @@ async function mockWorldBuildingApis(page: import('@playwright/test').Page) {
   });
 }
 
+const goToDashboard = async (page: import('@playwright/test').Page) => {
+  await safeGoto(page, '/dashboard');
+  await waitForDashboardReady(page);
+};
+
+const goToCharacters = async (page: import('@playwright/test').Page) => {
+  await safeGoto(page, '/characters');
+  await expect(page.getByRole('heading', { name: 'Characters' })).toBeVisible({
+    timeout: 30000,
+  });
+};
+
 test.describe('World Building E2E Smoke Tests', () => {
   test.describe('Flow 1: Character Management', () => {
     test.beforeEach(async ({ page }) => {
@@ -359,10 +373,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should display characters on the characters page', async ({ page }) => {
       await test.step('Navigate to characters page', async () => {
-        await page.goto('/characters', { waitUntil: 'networkidle' });
-        await expect(page.getByRole('heading', { name: 'Characters' })).toBeVisible({
-          timeout: 10000,
-        });
+        await goToCharacters(page);
       });
 
       await test.step('Verify existing characters are displayed', async () => {
@@ -374,10 +385,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should show New Character button', async ({ page }) => {
       await test.step('Navigate to characters page', async () => {
-        await page.goto('/characters', { waitUntil: 'networkidle' });
-        await expect(page.getByRole('heading', { name: 'Characters' })).toBeVisible({
-          timeout: 10000,
-        });
+        await goToCharacters(page);
       });
 
       await test.step('Verify New Character button is visible', async () => {
@@ -388,7 +396,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should open character creation form when clicking New Character', async ({ page }) => {
       await test.step('Navigate to characters page', async () => {
-        await page.goto('/characters', { waitUntil: 'networkidle' });
+        await goToCharacters(page);
       });
 
       await test.step('Click New Character button', async () => {
@@ -407,7 +415,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should filter characters using search', async ({ page }) => {
       await test.step('Navigate to characters page', async () => {
-        await page.goto('/characters', { waitUntil: 'networkidle' });
+        await goToCharacters(page);
         await expect(page.locator('text=Aria Shadowbane').first()).toBeVisible({ timeout: 10000 });
       });
 
@@ -434,7 +442,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should open global search with keyboard shortcut', async ({ page }) => {
       await test.step('Navigate to dashboard', async () => {
-        await page.goto('/dashboard', { waitUntil: 'networkidle' });
+        await goToDashboard(page);
       });
 
       await test.step('Open search with Ctrl+K', async () => {
@@ -456,7 +464,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should search and find characters', async ({ page }) => {
       await test.step('Navigate to dashboard', async () => {
-        await page.goto('/dashboard', { waitUntil: 'networkidle' });
+        await goToDashboard(page);
       });
 
       await test.step('Open search dialog', async () => {
@@ -479,7 +487,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should search and find locations', async ({ page }) => {
       await test.step('Navigate to dashboard', async () => {
-        await page.goto('/dashboard', { waitUntil: 'networkidle' });
+        await goToDashboard(page);
       });
 
       await test.step('Open search and search for location', async () => {
@@ -497,7 +505,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should search and find lore entries', async ({ page }) => {
       await test.step('Navigate to dashboard', async () => {
-        await page.goto('/dashboard', { waitUntil: 'networkidle' });
+        await goToDashboard(page);
       });
 
       await test.step('Open search and search for lore', async () => {
@@ -522,7 +530,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should persist character data across page refreshes', async ({ page }) => {
       await test.step('Navigate to characters page', async () => {
-        await page.goto('/characters', { waitUntil: 'networkidle' });
+        await goToCharacters(page);
       });
 
       await test.step('Verify initial characters are displayed', async () => {
@@ -530,7 +538,7 @@ test.describe('World Building E2E Smoke Tests', () => {
       });
 
       await test.step('Refresh the page', async () => {
-        await page.reload({ waitUntil: 'networkidle' });
+        await page.reload({ waitUntil: 'domcontentloaded' });
       });
 
       await test.step('Verify characters persist after refresh', async () => {
@@ -541,12 +549,11 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should maintain auth state across page refreshes', async ({ page }) => {
       await test.step('Navigate to dashboard', async () => {
-        await page.goto('/dashboard', { waitUntil: 'networkidle' });
-        await expect(page).toHaveURL(/.*\/dashboard/);
+        await goToDashboard(page);
       });
 
       await test.step('Refresh the page', async () => {
-        await page.reload({ waitUntil: 'networkidle' });
+        await page.reload({ waitUntil: 'domcontentloaded' });
       });
 
       await test.step('Verify still on dashboard (auth persisted)', async () => {
@@ -556,17 +563,16 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should persist character data across navigation', async ({ page }) => {
       await test.step('Navigate to characters page', async () => {
-        await page.goto('/characters', { waitUntil: 'networkidle' });
+        await goToCharacters(page);
         await expect(page.locator('text=Aria Shadowbane').first()).toBeVisible({ timeout: 10000 });
       });
 
       await test.step('Navigate to dashboard', async () => {
-        await page.goto('/dashboard', { waitUntil: 'networkidle' });
-        await expect(page).toHaveURL(/.*\/dashboard/);
+        await goToDashboard(page);
       });
 
       await test.step('Navigate back to characters', async () => {
-        await page.goto('/characters', { waitUntil: 'networkidle' });
+        await goToCharacters(page);
       });
 
       await test.step('Verify characters still displayed', async () => {
@@ -584,9 +590,7 @@ test.describe('World Building E2E Smoke Tests', () => {
 
     test('should navigate between pages via sidebar', async ({ page }) => {
       await test.step('Start at dashboard', async () => {
-        await page.goto('/dashboard', { waitUntil: 'networkidle' });
-        // Use specific selector to avoid multiple matches
-        await expect(page.getByTestId('dashboard-layout')).toBeVisible({ timeout: 10000 });
+        await goToDashboard(page);
       });
 
       await test.step('Navigate to characters via sidebar', async () => {
@@ -596,7 +600,7 @@ test.describe('World Building E2E Smoke Tests', () => {
           await charactersLink.click();
           await expect(page).toHaveURL(/.*\/characters/);
         } else {
-          await page.goto('/characters', { waitUntil: 'networkidle' });
+          await safeGoto(page, '/characters');
         }
         await expect(page.getByRole('heading', { name: 'Characters' })).toBeVisible();
       });
@@ -608,17 +612,18 @@ test.describe('World Building E2E Smoke Tests', () => {
           await storiesLink.click();
           await expect(page).toHaveURL(/.*\/stories/);
         } else {
-          await page.goto('/stories', { waitUntil: 'networkidle' });
+          await safeGoto(page, '/stories');
         }
       });
     });
 
     test('should handle keyboard navigation in global search', async ({ page }) => {
       await test.step('Navigate to dashboard', async () => {
-        await page.goto('/dashboard', { waitUntil: 'networkidle' });
+        await goToDashboard(page);
       });
 
       await test.step('Open global search', async () => {
+        await page.click('body');
         await page.keyboard.press('Control+k');
         await expect(page.getByTestId('global-search-input')).toBeVisible({ timeout: 5000 });
       });

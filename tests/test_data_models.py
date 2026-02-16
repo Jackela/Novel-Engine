@@ -39,6 +39,8 @@ from src.core.data_models import (  # Sacred enumerations; Blessed data structur
     validate_blessed_data_model,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestSacredMemoryItem:
     """++ BLESSED MEMORY ITEM TESTING RITUALS ++"""

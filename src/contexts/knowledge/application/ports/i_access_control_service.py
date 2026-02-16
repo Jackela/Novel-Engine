@@ -12,8 +12,8 @@ Constitution Compliance:
 from abc import ABC, abstractmethod
 from typing import List
 
-from ...domain.models.knowledge_entry import KnowledgeEntry
 from ...domain.models.agent_identity import AgentIdentity
+from ...domain.models.knowledge_entry import KnowledgeEntry
 
 
 class IAccessControlService(ABC):

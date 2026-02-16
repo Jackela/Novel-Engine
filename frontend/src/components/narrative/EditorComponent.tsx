@@ -21,6 +21,7 @@ import {
   Sparkles,
   Loader2,
   Square,
+  Brain,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -72,6 +73,10 @@ interface EditorComponentProps {
   onCharacterCreated?:
     | ((characterId: string, characterName: string) => void)
     | undefined;
+  /** BRAIN-036-01: Whether RAG is enabled for showing context inspector button */
+  ragEnabled?: boolean | undefined;
+  /** BRAIN-036-01: Called when View AI Context button is clicked */
+  onViewAIContext?: (() => void) | undefined;
 }
 
 /**
@@ -79,18 +84,23 @@ interface EditorComponentProps {
  *
  * Why: Provides accessible formatting controls using shadcn Toggle
  * components that sync with editor state for visual feedback. Includes
- * a Generate button for triggering LLM streaming.
+ * a Generate button for triggering LLM streaming and BRAIN-036-01:
+ * a View AI Context button when RAG is enabled.
  */
 function EditorToolbar({
   editor,
   isStreaming,
   onGenerate,
   onStopGenerate,
+  ragEnabled = false,
+  onViewAIContext,
 }: {
   editor: Editor | null;
   isStreaming: boolean;
   onGenerate: () => void;
   onStopGenerate: () => void;
+  ragEnabled?: boolean;
+  onViewAIContext?: (() => void) | undefined;
 }) {
   if (!editor) {
     return null;
@@ -155,6 +165,21 @@ function EditorToolbar({
 
       <Separator orientation="vertical" className="mx-1 h-6" />
 
+      {/* BRAIN-036-01: View AI Context button - only visible when RAG is enabled */}
+      {ragEnabled && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onViewAIContext}
+          aria-label="View AI context"
+          data-testid="toolbar-view-ai-context"
+          disabled={isStreaming}
+        >
+          <Brain className="mr-1 h-4 w-4" />
+          View AI Context
+        </Button>
+      )}
+
       {/* Generate / Stop button */}
       {isStreaming ? (
         <Button
@@ -203,6 +228,8 @@ export function EditorComponent({
   onMentionInserted,
   characters = [],
   onCharacterCreated,
+  ragEnabled = false,
+  onViewAIContext,
 }: EditorComponentProps) {
   // Track the cursor position where we'll insert streamed text
   const insertPositionRef = useRef<number | null>(null);
@@ -461,6 +488,8 @@ export function EditorComponent({
         isStreaming={isStreaming}
         onGenerate={handleGenerate}
         onStopGenerate={handleStopGenerate}
+        ragEnabled={ragEnabled}
+        {...(onViewAIContext !== undefined && { onViewAIContext })}
       />
 
       {/* Drop indicator */}

@@ -2,6 +2,7 @@
 """
 简化的UI功能验证测试
 """
+
 import json
 import logging
 import subprocess
@@ -12,6 +13,8 @@ from pathlib import Path
 
 import pytest
 import requests
+
+pytestmark = pytest.mark.integration
 
 
 def start_frontend_server():

@@ -214,9 +214,9 @@ if (Test-Path $frontendDir) {
             $lhciInstalled = npm list -g @lhci/cli 2>&1 | Select-String "@lhci/cli"
             if (-not $lhciInstalled) {
                 Write-Host "Installing @lhci/cli..." -ForegroundColor Yellow
-                npm install -g @lhci/cli@0.14.0
+                npm install -g @lhci/cli@0.15.1
             }
-            npx @lhci/cli@0.14.0 autorun
+            npx @lhci/cli@0.15.1 autorun
             if ($LASTEXITCODE -ne 0) {
                 Write-Host "⚠ Lighthouse CI failed - continuing with other checks" -ForegroundColor Yellow
             } else {

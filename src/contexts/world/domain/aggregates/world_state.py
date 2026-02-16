@@ -7,14 +7,20 @@ boundary for all world-related operations. It encapsulates business logic and
 ensures invariants are maintained across the entire world state.
 """
 
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
+
+from src.core.result import Err, Ok, Result
 
 from ..entities.entity import Entity
 from ..events.world_events import WorldStateChanged
 from ..value_objects.coordinates import Coordinates
+
+if TYPE_CHECKING:
+    from src.core.result import SaveError
 
 
 class WorldStatus(Enum):
@@ -637,6 +643,60 @@ class WorldState(Entity):
             "version": self.version,
             "spatial_grid_cells": len(self.spatial_index),
         }
+
+    def save(self, file_path: Optional[str] = None) -> Result[None, "SaveError"]:
+        """
+        Save the world state to JSON.
+
+        Serializes the complete world state to a JSON file for persistence.
+        Uses the to_dict() method to create a serializable representation.
+
+        Args:
+            file_path: Optional file path to save to. If not provided,
+                      returns Ok(None) after validating serialization works.
+
+        Returns:
+            Result[None, SaveError]: Ok(None) on success, Error on failure.
+
+        Example:
+            result = world_state.save("world_backup.json")
+            if result.is_ok:
+                print("World state saved successfully")
+            else:
+                print(f"Save failed: {result.error.message}")
+        """
+        from src.core.result import SaveError
+
+        try:
+            # Serialize to JSON to validate it works
+            state_dict = self.to_dict()
+            json_data = json.dumps(state_dict, indent=2, ensure_ascii=False)
+
+            if file_path:
+                # Write to file
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(json_data)
+
+            return Ok(None)
+
+        except (TypeError, ValueError) as e:
+            return Err(SaveError(
+                message=f"Failed to serialize world state: {e}",
+                entity_type="WorldState",
+                details={"error_type": type(e).__name__},
+            ))
+        except OSError as e:
+            return Err(SaveError(
+                message=f"Failed to write world state file: {e}",
+                entity_type="WorldState",
+                details={"file_path": file_path, "error_type": type(e).__name__},
+            ))
+        except Exception as e:
+            return Err(SaveError(
+                message=f"Unexpected error saving world state: {e}",
+                entity_type="WorldState",
+                details={"error_type": type(e).__name__},
+            ))
 
     # Spatial Index Management
 

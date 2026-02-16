@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -60,7 +61,12 @@ export default function CharacterDetailsDialog({ open, onClose, character }: Pro
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between gap-4">
-          <DialogTitle>{character?.name || 'Character Details'}</DialogTitle>
+          <div className="space-y-1">
+            <DialogTitle>{character?.name || 'Character Details'}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Review character profile, psychology, memories, goals, and inventory.
+            </DialogDescription>
+          </div>
           {character && (
             <Button
               variant="outline"

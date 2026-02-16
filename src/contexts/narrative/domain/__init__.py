@@ -10,10 +10,10 @@ Why this structure:
     concerns. The hexagonal architecture principle guides this separation.
 """
 
-from .entities.story import Story, StoryStatus
+from .entities.beat import Beat, BeatType
 from .entities.chapter import Chapter, ChapterStatus
 from .entities.scene import Scene, SceneStatus
-from .entities.beat import Beat, BeatType
+from .entities.story import Story, StoryStatus
 
 __all__ = [
     "Story",

@@ -17,11 +17,14 @@ Coverage:
 - Narrative generation quality
 - Resource cleanup
 """
+
 import json
 import logging
 import time
 
 import pytest
+
+pytestmark = pytest.mark.e2e
 
 
 @pytest.mark.e2e

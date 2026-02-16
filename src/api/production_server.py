@@ -19,25 +19,26 @@ from typing import Any, Dict, List, Optional
 
 import jwt
 import uvicorn
-from src.config.character_factory import CharacterFactory
-from src.agents.chronicler_agent import ChroniclerAgent
-
-# Import existing modules
-from src.core.config.config_loader import get_config
-from src.agents.director_agent_integrated import DirectorAgent
-from src.core.event_bus import EventBus
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, field_validator
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from src.agents.chronicler_agent import ChroniclerAgent
+from src.agents.director_agent_integrated import DirectorAgent
+from src.config.character_factory import CharacterFactory
+
+# Import existing modules
+from src.core.config.config_loader import get_config
+from src.core.event_bus import EventBus
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -241,6 +242,7 @@ if os.getenv("ENVIRONMENT") == "production":
         TrustedHostMiddleware, allowed_hosts=["your-domain.com", "*.your-domain.com"]
     )
 
+
 # CORS with restricted origins for production
 def _parse_cors_origins(raw: Optional[str]) -> List[str]:
     if not raw:
@@ -357,10 +359,12 @@ async def health_check(request: Request) -> Dict[str, Any]:
 @app.post("/auth/token")
 @limiter.limit("5/minute")
 async def login(request: Request, credentials: TokenRequest) -> Dict[str, str]:
-    """Authentication endpoint (implement your authentication logic)."""
-    # TODO: Implement proper authentication against your user database
-    # This is a placeholder implementation
+    """
+    Authentication endpoint.
 
+    NOTE: Current implementation uses environment variable-based admin authentication.
+    For production use, integrate with your user database for proper authentication.
+    """
     _reject_query_credentials(request)
 
     admin_username = os.getenv("ADMIN_USERNAME", "admin")
@@ -508,4 +512,3 @@ def run_production_server(host: str = "127.0.0.1", port: int = 8000):
 
 if __name__ == "__main__":
     run_production_server()
-

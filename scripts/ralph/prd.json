@@ -1,342 +1,415 @@
 {
-  "project": "Novel-Engine-Warzone-3",
-  "branchName": "feat/director-mode",
-  "description": "WARZONE 3: Implementing the Director Mode - Beats, Pacing, Conflict, and Plotlines. Making AI the co-director.",
+  "project": "Novel-Engine-Op-Resilience",
+  "branchName": "refactor/brain-optimization",
+  "description": "OPERATION RESILIENCE: Fix skipped tests, complete backend stubs, resolve API contract issues, and improve infrastructure.",
   "techContext": {
-    "stack": "FastAPI + React + Recharts + Tiptap + dnd-kit",
-    "testCommand": "pytest",
-    "e2eCommand": "npm run test:e2e",
-    "typecheckCommand": "npm run typecheck",
-    "conventions": "READ CONVENTIONS.md AND DESIGN_SYSTEM.md BEFORE CODING",
-    "domainContext": "New entities go in src/contexts/narrative/domain/"
+    "stack": "FastAPI + ChromaDB + Redis (mocked) + React (shadcn/ui + Zustand)",
+    "testCommand": "pytest && npm --prefix frontend run test:e2e",
+    "typecheckCommand": "mypy --strict src/contexts/knowledge && npm --prefix frontend run type-check",
+    "conventions": "Strict Hexagonal Architecture, contract-first (schemas -> OpenAPI -> frontend types), structured logging via structlog, shadcn/ui + Tailwind-only styling, required UI states (loading/empty/error/ready)."
   },
   "userStories": [
     {
-      "id": "DIR-041",
-      "title": "Domain: Scene Beats Architecture",
-      "description": "Scenes are too big. Break them down into Beats (ACTION/REACTION micro-units).",
+      "id": "RES-001",
+      "title": "API: Add ErrorDetail Schema",
+      "description": "Add single ErrorDetail schema to src/api/schemas.py.",
       "acceptanceCriteria": [
-        "Create `src/contexts/narrative/domain/value_objects/beat.py`",
-        "Beat value object: id, content, beat_type (ACTION/REACTION), mood_shift (-5 to +5), order_index",
-        "Update Scene entity to contain list of Beats",
-        "Add beat CRUD methods to Scene: add_beat(), remove_beat(), reorder_beats()",
-        "Test: `pytest tests/unit/contexts/narrative/domain/test_beat.py`"
+        "Add class ErrorDetail(BaseModel) with fields: code (str), message (str), details (dict | None = None)",
+        "Add example in schema: {\"code\": \"NOT_FOUND\", \"message\": \"Resource not found\"}",
+        "Run: mypy src/api/schemas.py passes"
       ],
+      "verification": "grep -A5 'class ErrorDetail' src/api/schemas.py",
       "priority": 1,
-      "passes": false,
-      "effort": "low"
+      "passes": true,
+      "effort": "low",
+      "files": ["src/api/schemas.py"],
+      "estimatedTime": "15 min"
     },
     {
-      "id": "DIR-042",
-      "title": "Frontend: Beat Editor UI",
-      "description": "A micro-editor inside the Scene detail view for managing beats.",
+      "id": "RES-002",
+      "title": "API: Add ValidationError Schema",
+      "description": "Add ValidationError extending ErrorDetail.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/BeatList.tsx`",
-        "Use dnd-kit for drag-and-drop reordering",
-        "Visual distinction: ACTION beats = blue border, REACTION beats = amber border",
-        "Add/Edit/Delete beat functionality with inline editing",
-        "API integration: beats persist to backend",
-        "Verify: Changes persist after page refresh"
+        "Add class ValidationError(ErrorDetail) with field: field_errors (dict[str, list[str]] | None = None)",
+        "Add example showing field validation errors"
       ],
+      "verification": "grep -A3 'class ValidationError' src/api/schemas.py",
       "priority": 2,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-041"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/api/schemas.py"],
+      "estimatedTime": "10 min",
+      "blockedBy": ["RES-001"]
     },
     {
-      "id": "DIR-043",
-      "title": "Domain: Pacing Metrics",
-      "description": "Quantify the tension and energy of each scene.",
+      "id": "RES-003",
+      "title": "API: Add 404 Exception Handler",
+      "description": "Add HTTPException handler for 404 in app.py.",
       "acceptanceCriteria": [
-        "Update Scene entity with `tension_level` (1-10) and `energy_level` (1-10)",
-        "Create `PacingService` in `src/contexts/narrative/application/services/`",
-        "Implement `calculate_chapter_pacing(chapter_id)` returning scene-by-scene metrics",
-        "Implement `analyze_pacing_issues()` detecting monotony (same level 3+ scenes)",
-        "Test: `pytest` calculation and analysis logic"
+        "Add @app.exception_handler(404) returning ErrorDetail",
+        "Test: curl localhost:8000/nonexistent returns {\"error\": {\"code\": \"NOT_FOUND\"...}}"
       ],
+      "verification": "grep -A10 'exception_handler.*404' src/api/errors.py",
       "priority": 3,
-      "passes": false,
-      "effort": "low"
+      "passes": true,
+      "effort": "low",
+      "files": ["src/api/errors.py"],
+      "estimatedTime": "20 min",
+      "blockedBy": ["RES-001"]
     },
     {
-      "id": "DIR-044",
-      "title": "Frontend: Pacing Graph Visualizer",
-      "description": "See the rhythm of the story as a tension/energy curve.",
+      "id": "RES-004",
+      "title": "Frontend: Add Node.js Engines Field",
+      "description": "Add engines field to package.json.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/PacingGraph.tsx`",
-        "Use Recharts AreaChart with dual Y-axis (tension + energy)",
-        "X-Axis: Scene sequence, Y-Axis: Tension (0-10) and Energy (0-10)",
-        "Add tooltips showing scene title on hover",
-        "Integrate into Chapter Dashboard view",
-        "Verify: Graph renders correctly with mock/real data"
+        "Add: \"engines\": {\"node\": \">=18.0.0\", \"npm\": \">=9.0.0\"}",
+        "npm install should warn on Node 16 (can't test locally)"
       ],
+      "verification": "grep -A2 '\"engines\"' frontend/package.json",
       "priority": 4,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-043"]
+      "passes": true,
+      "effort": "low",
+      "files": ["frontend/package.json"],
+      "estimatedTime": "5 min"
     },
     {
-      "id": "DIR-045",
-      "title": "Domain: Conflict System",
-      "description": "No conflict, no story. Track conflicts per scene.",
+      "id": "RES-005",
+      "title": "Frontend: Add .nvmrc File",
+      "description": "Create .nvmrc with Node 20.",
       "acceptanceCriteria": [
-        "Create `src/contexts/narrative/domain/entities/conflict.py`",
-        "Conflict entity: id, conflict_type (INTERNAL/EXTERNAL/INTERPERSONAL), stakes (LOW/MEDIUM/HIGH/CRITICAL), description, resolution_status (UNRESOLVED/ESCALATING/RESOLVED)",
-        "Link Conflicts to Scenes via scene_id",
-        "Add API endpoints for conflict CRUD",
-        "Test: `pytest` conflict creation and linking"
+        "Create frontend/.nvmrc with single line: \"20\"",
+        "nvm use should work in frontend/ directory"
       ],
+      "verification": "cat frontend/.nvmrc",
       "priority": 5,
-      "passes": false,
-      "effort": "low"
+      "passes": true,
+      "effort": "low",
+      "files": ["frontend/.nvmrc"],
+      "estimatedTime": "2 min"
     },
     {
-      "id": "DIR-046",
-      "title": "Frontend: Conflict Manager",
-      "description": "Manage stakes and track conflict resolution.",
+      "id": "RES-006",
+      "title": "Infrastructure: Add /health/live Endpoint",
+      "description": "Add liveness probe endpoint.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/ConflictPanel.tsx`",
-        "Add to Director Sidebar with collapsible sections by conflict type",
-        "Allow tagging a Scene with existing or new Conflict",
-        "Visual cue: Scenes with CRITICAL stakes show fire/red indicator",
-        "Badge showing unresolved conflict count",
-        "Verify: Tagging and untagging works"
+        "GET /health/live returns {\"status\": \"ok\"}",
+        "Response in < 10ms",
+        "Add to src/api/routers/health.py"
       ],
+      "verification": "grep -A5 'def live' src/api/routers/health.py || grep -A5 '/health/live' src/api/routers/health.py",
       "priority": 6,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-045"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/api/routers/health.py"],
+      "estimatedTime": "10 min"
     },
     {
-      "id": "DIR-047",
-      "title": "AI: Beat Suggester",
-      "description": "Writer's block breaker - AI suggests next beats.",
+      "id": "RES-007",
+      "title": "Infrastructure: Add /health/ready Endpoint",
+      "description": "Add readiness probe with ChromaDB check.",
       "acceptanceCriteria": [
-        "Add `suggest_next_beats(current_beats, scene_context, mood_target)` to LLMWorldGenerator",
-        "Create `beat_suggester.yaml` prompt template",
-        "Prompt should consider: current beat sequence, desired mood shift, action/reaction balance",
-        "Return 3 suggestions with beat_type and content",
-        "Test: Mock LLM response parsing"
+        "GET /health/ready checks ChromaDB connection",
+        "Returns {\"status\": \"ok\", \"checks\": {\"chromadb\": \"ok\"}} on success",
+        "Returns 503 with error details on failure"
       ],
+      "verification": "grep -A10 'def ready' src/api/routers/health.py || grep -A10 '/health/ready' src/api/routers/health.py",
       "priority": 7,
-      "passes": false,
-      "effort": "high",
-      "dependencies": ["DIR-041"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/api/routers/health.py"],
+      "estimatedTime": "20 min"
     },
     {
-      "id": "DIR-048",
-      "title": "Frontend: AI Beat Suggestions UI",
-      "description": "One-click inspiration for beat creation.",
+      "id": "RES-008",
+      "title": "API: Fix Router Prefix in auth.py",
+      "description": "Remove duplicate /api prefix in auth router.",
       "acceptanceCriteria": [
-        "Add 'Spark' button (Sparkles icon) to Beat Editor",
-        "Display suggestions in Popover with 3 beat cards",
-        "Each card shows: beat_type badge, content preview",
-        "Clicking a suggestion inserts it into the beat list",
-        "Loading state while AI generates",
-        "Verify: Mock data flows through UI correctly"
+        "File: src/api/routers/auth.py",
+        "If router has prefix='/api/auth', change to prefix='/auth'",
+        "Verify: grep 'prefix=' src/api/routers/auth.py"
       ],
+      "verification": "grep \"prefix=\" src/api/routers/auth.py",
       "priority": 8,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-047"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/api/routers/auth.py"],
+      "estimatedTime": "5 min"
     },
     {
-      "id": "DIR-049",
-      "title": "Domain: Plotlines (Threads)",
-      "description": "Track multiple storylines weaving through the narrative.",
+      "id": "RES-009",
+      "title": "API: Fix Router Prefix in characters.py",
+      "description": "Remove duplicate /api prefix in characters router.",
       "acceptanceCriteria": [
-        "Create `src/contexts/narrative/domain/entities/plotline.py`",
-        "Plotline entity: id, name, color (hex), description, status (ACTIVE/RESOLVED/ABANDONED)",
-        "Many-to-many: Scenes can belong to multiple Plotlines",
-        "Add plotline_ids to Scene entity",
-        "API: CRUD for plotlines + scene linking",
-        "Test: `pytest` plotline management"
+        "File: src/api/routers/characters.py",
+        "If router has prefix='/api/characters', change to prefix='/characters'"
       ],
+      "verification": "grep \"prefix=\" src/api/routers/characters.py",
       "priority": 9,
-      "passes": false,
-      "effort": "low"
+      "passes": true,
+      "effort": "low",
+      "files": ["src/api/routers/characters.py"],
+      "estimatedTime": "5 min"
     },
     {
-      "id": "DIR-050",
-      "title": "Frontend: Plotline Manager",
-      "description": "The strings of the puppet master.",
+      "id": "RES-010",
+      "title": "API: Fix Router Prefix in generation.py",
+      "description": "Remove duplicate /api prefix in generation router.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/PlotlineManager.tsx`",
-        "Color picker for each plotline (predefined palette)",
-        "CRUD operations: Create, rename, change status, delete",
-        "Visual tags on Scene Cards showing attached plotlines (colored dots)",
-        "Plotline sidebar with scene count per line",
-        "Verify: Creating/editing plotline updates across UI"
+        "File: src/api/routers/generation.py",
+        "Fix prefix if duplicated"
       ],
+      "verification": "grep \"prefix=\" src/api/routers/generation.py",
       "priority": 10,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-049"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/api/routers/generation.py"],
+      "estimatedTime": "5 min"
     },
     {
-      "id": "DIR-051",
-      "title": "Integration: Plotline Filtering",
-      "description": "Focus on one narrative thread at a time.",
+      "id": "RES-011",
+      "title": "API: Regenerate OpenAPI Spec",
+      "description": "Run generate_openapi.py after router fixes.",
       "acceptanceCriteria": [
-        "Add 'Filter by Plotline' dropdown to Weaver toolbar",
-        "When filtering: dim (opacity 30%) scenes not in the plotline",
-        "Edges between filtered scenes remain visible, others dim",
-        "Clear filter button to reset view",
-        "Keyboard shortcut: Ctrl+L to toggle filter menu",
-        "Verify: Filtering state persists during session"
+        "Run: python scripts/generate_openapi.py",
+        "Verify: grep -c '/api/api/' docs/api/openapi.json should be 0"
       ],
+      "verification": "grep -c '/api/api/' docs/api/openapi.json || echo '0 (good)'",
       "priority": 11,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-050"]
+      "passes": true,
+      "effort": "low",
+      "files": ["docs/api/openapi.json"],
+      "estimatedTime": "5 min",
+      "blockedBy": ["RES-008", "RES-009", "RES-010"]
     },
     {
-      "id": "DIR-052",
-      "title": "Domain: Foreshadowing Tracker",
-      "description": "Chekhov's Gun enforcement - track setups and payoffs.",
+      "id": "RES-012",
+      "title": "Backend: Implement WorldStateAggregate.save()",
+      "description": "Replace NotImplementedError in save() method.",
       "acceptanceCriteria": [
-        "Create `src/contexts/narrative/domain/entities/foreshadowing.py`",
-        "Foreshadowing entity: id, setup_scene_id, payoff_scene_id (nullable), description, status (PLANTED/PAID_OFF/ABANDONED)",
-        "Validation: payoff_scene must come after setup_scene in story order",
-        "API: CRUD + link payoff to setup",
-        "Test: `pytest` validation and linking logic"
+        "File: src/contexts/world/domain/aggregates/world_state.py",
+        "Implement save() to serialize to JSON",
+        "Use Result[None, SaveError] pattern",
+        "Add one test case"
       ],
+      "verification": "grep -A20 'def save' src/contexts/world/domain/aggregates/world_state.py | head -25",
       "priority": 12,
-      "passes": false,
-      "effort": "low"
+      "passes": true,
+      "effort": "low",
+      "files": ["src/contexts/world/domain/aggregates/world_state.py"],
+      "estimatedTime": "30 min",
+      "referencePattern": "See Result pattern in src/contexts/character/"
     },
     {
-      "id": "DIR-053",
-      "title": "Frontend: Foreshadowing UI",
-      "description": "Connecting the dots visually in Weaver.",
+      "id": "RES-013",
+      "title": "Backend: Implement LoreRepository.search()",
+      "description": "Implement search() in InMemoryLoreEntryRepository.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/ForeshadowingConnector.tsx`",
-        "Draw dashed curved lines between setup and payoff scenes in Weaver",
-        "Line color: gold for PLANTED, green for PAID_OFF, red for ABANDONED",
-        "Hover on line shows foreshadowing description tooltip",
-        "Panel listing all foreshadowing items with status filters",
-        "Verify: Visual connection appears correctly"
+        "File: src/contexts/world/infrastructure/persistence/in_memory_lore_entry_repository.py",
+        "Implement search(query: str) -> list[LoreEntry]",
+        "Use simple substring match",
+        "Return [] if no matches"
       ],
+      "verification": "grep -A15 'def search' src/contexts/world/infrastructure/persistence/in_memory_lore_entry_repository.py",
       "priority": 13,
-      "passes": false,
-      "effort": "high",
-      "dependencies": ["DIR-052"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/contexts/world/infrastructure/persistence/in_memory_lore_entry_repository.py"],
+      "estimatedTime": "20 min"
     },
     {
-      "id": "DIR-054",
-      "title": "UX: Chapter Board View",
-      "description": "Kanban-style scene organization by story beats.",
+      "id": "RES-014",
+      "title": "Backend: Implement MemoryStore.store()",
+      "description": "Implement single store() method in MemoryStore.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/ChapterBoard.tsx`",
-        "Columns: Setup, Inciting Incident, Rising Action, Climax, Resolution",
-        "Scene cards can be dragged between columns (dnd-kit)",
-        "Scene.story_phase field updated on drop",
-        "Toggle between Board and List view",
-        "Verify: Dnd works, changes persist"
+        "File: src/contexts/character/infrastructure/persistence/memory_store.py (create if needed)",
+        "store(memory_id: str, content: str, metadata: dict) -> None",
+        "Use self._store: dict as backend"
       ],
+      "verification": "grep -A10 'def store' src/contexts/character/infrastructure/persistence/memory_store.py 2>/dev/null || echo 'File not found'",
       "priority": 14,
-      "passes": false,
-      "effort": "high",
-      "dependencies": ["DIR-041"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/contexts/character/infrastructure/persistence/memory_store.py"],
+      "estimatedTime": "15 min"
     },
     {
-      "id": "DIR-055",
-      "title": "Domain: Chapter Structural Analysis",
-      "description": "Is this chapter balanced? Automated health check.",
+      "id": "RES-015",
+      "title": "Backend: Implement MemoryStore.retrieve()",
+      "description": "Implement retrieve() method in MemoryStore.",
       "acceptanceCriteria": [
-        "Create `ChapterAnalysisService` in application layer",
-        "Analyze: scene count per phase, estimated word count, tension arc shape",
-        "Generate warnings: 'Too much action, no rest', 'Missing climax', 'Unresolved conflicts'",
-        "Return ChapterHealthReport with scores and recommendations",
-        "Test: `pytest` analysis rules"
+        "retrieve(memory_id: str) -> MemoryEntry | None",
+        "Return None if not found (no exception)"
       ],
+      "verification": "grep -A10 'def retrieve' src/contexts/character/infrastructure/persistence/memory_store.py",
       "priority": 15,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-043"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/contexts/character/infrastructure/persistence/memory_store.py"],
+      "estimatedTime": "10 min",
+      "blockedBy": ["RES-014"]
     },
     {
-      "id": "DIR-056",
-      "title": "Frontend: Chapter Health Dashboard",
-      "description": "Stats and health indicators for the chapter.",
+      "id": "RES-016",
+      "title": "Backend: Implement MemoryStore.delete()",
+      "description": "Implement delete() method in MemoryStore.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/ChapterHealth.tsx`",
-        "Display: Word count target vs actual (progress bar)",
-        "Display: Phase distribution pie chart",
-        "Display: Health warnings as colored badges",
-        "Expandable recommendations section",
-        "Verify: Mock data renders correctly"
+        "delete(memory_id: str) -> bool",
+        "Return True if deleted, False if not found"
       ],
+      "verification": "grep -A10 'def delete' src/contexts/character/infrastructure/persistence/memory_store.py",
       "priority": 16,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-055"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/contexts/character/infrastructure/persistence/memory_store.py"],
+      "estimatedTime": "10 min",
+      "blockedBy": ["RES-014"]
     },
     {
-      "id": "DIR-057",
-      "title": "AI: Scene Critique Agent",
-      "description": "The harsh editor - AI analyzes scene quality.",
+      "id": "RES-017",
+      "title": "Test: Fix 3 Skipped Tests in test_bm25_retriever.py",
+      "description": "Fix up to 3 skipped tests in BM25 retriever tests.",
       "acceptanceCriteria": [
-        "Add `critique_scene(scene_text, scene_goals)` to LLMWorldGenerator",
-        "Create `scene_critique.yaml` prompt template",
-        "Analyze: show-don't-tell ratio, pacing, character voice consistency, dialogue naturalism",
-        "Return CritiqueResult with category scores and specific suggestions",
-        "Test: Mock critique response parsing"
+        "File: tests/unit/contexts/knowledge/application/services/test_bm25_retriever.py",
+        "Fix 3 skipped tests by adding proper mocks",
+        "pytest this file should show fewer skips"
       ],
+      "verification": "pytest tests/unit/contexts/knowledge/application/services/test_bm25_retriever.py -v --tb=no 2>&1 | grep -E 'PASSED|SKIPPED|FAILED' | head -20",
       "priority": 17,
-      "passes": false,
-      "effort": "high",
-      "dependencies": ["DIR-041"]
+      "passes": true,
+      "effort": "low",
+      "files": ["tests/unit/contexts/knowledge/application/services/test_bm25_retriever.py"],
+      "estimatedTime": "30 min"
     },
     {
-      "id": "DIR-058",
-      "title": "Frontend: Critique Sidebar",
-      "description": "AI feedback loop in the editor.",
+      "id": "RES-018",
+      "title": "Test: Fix 3 Skipped Tests in test_hybrid_retriever.py",
+      "description": "Fix up to 3 skipped tests in hybrid retriever.",
       "acceptanceCriteria": [
-        "Create `frontend/src/features/director/components/CritiqueSidebar.tsx`",
-        "Add 'Critique' panel toggle to Editor toolbar",
-        "Display feedback points as checklist items with severity icons",
-        "Group by category: Pacing, Voice, Showing, Dialogue",
-        "'Critique Scene' button triggers analysis (loading state)",
-        "Verify: Mock critique renders in panel"
+        "File: tests/unit/contexts/knowledge/application/services/test_hybrid_retriever.py",
+        "Fix 3 skipped tests"
       ],
+      "verification": "pytest tests/unit/contexts/knowledge/application/services/test_hybrid_retriever.py -v --tb=no 2>&1 | grep -E 'PASSED|SKIPPED|FAILED' | head -20",
       "priority": 18,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-057"]
+      "passes": true,
+      "effort": "low",
+      "files": ["tests/unit/contexts/knowledge/application/services/test_hybrid_retriever.py"],
+      "estimatedTime": "30 min"
     },
     {
-      "id": "DIR-059",
-      "title": "Data: Export Outline Report",
-      "description": "The synopsis package for external sharing.",
+      "id": "RES-019",
+      "title": "Test: Fix 3 Skipped Tests in test_rerank_service.py",
+      "description": "Fix up to 3 skipped tests in rerank service.",
       "acceptanceCriteria": [
-        "Create `frontend/src/lib/api/outlineExportApi.ts`",
-        "Generate Markdown report: Logline, Character Arcs, Chapter Summaries, Plotline Status",
-        "Include scene-by-scene beat breakdown (optional toggle)",
-        "Download as .md file",
-        "Future: PDF generation (out of scope for now)",
-        "Verify: Download produces valid markdown"
+        "File: tests/unit/contexts/knowledge/application/services/test_rerank_service.py",
+        "Fix 3 skipped tests"
       ],
+      "verification": "pytest tests/unit/contexts/knowledge/application/services/test_rerank_service.py -v --tb=no 2>&1 | grep -E 'PASSED|SKIPPED|FAILED' | head -20",
       "priority": 19,
-      "passes": false,
-      "effort": "medium",
-      "dependencies": ["DIR-049"]
+      "passes": true,
+      "effort": "low",
+      "files": ["tests/unit/contexts/knowledge/application/services/test_rerank_service.py"],
+      "estimatedTime": "30 min"
     },
     {
-      "id": "DIR-060",
-      "title": "E2E: Director Workflow Test",
-      "description": "Full loop verification of director mode features.",
+      "id": "RES-020",
+      "title": "Logging: Replace print() in agent_coordinator.py",
+      "description": "Replace print statements with structlog in one file.",
       "acceptanceCriteria": [
-        "Create `frontend/tests/e2e/director-mode.spec.ts`",
-        "Flow: Create Plotline -> Add Scene -> Add Beats -> Set Pacing -> Check Graph",
-        "Verify: Foreshadowing connection visible",
-        "Verify: Chapter Health shows correct stats",
-        "Run `npm run test:e2e` passes"
+        "File: src/core/agent_coordinator.py",
+        "Replace all print() with logger.info/error",
+        "Add: logger = structlog.get_logger() at top"
       ],
+      "verification": "grep -c 'print(' src/core/agent_coordinator.py",
       "priority": 20,
-      "passes": false,
-      "effort": "high",
-      "dependencies": ["DIR-044", "DIR-050"]
+      "passes": true,
+      "effort": "low",
+      "files": ["src/core/agent_coordinator.py"],
+      "estimatedTime": "15 min"
+    },
+    {
+      "id": "RES-021",
+      "title": "Logging: Replace print() in turn_orchestrator.py",
+      "description": "Replace print statements with structlog in one file.",
+      "acceptanceCriteria": [
+        "File: src/core/turn_orchestrator.py",
+        "Replace all print() with structlog"
+      ],
+      "verification": "grep -c 'print(' src/core/turn_orchestrator.py",
+      "priority": 21,
+      "passes": true,
+      "effort": "low",
+      "files": ["src/core/turn_orchestrator.py"],
+      "estimatedTime": "15 min"
+    },
+    {
+      "id": "RES-022",
+      "title": "Logging: Replace print() in narrative_processor.py",
+      "description": "Replace print statements with structlog in one file.",
+      "acceptanceCriteria": [
+        "File: src/core/narrative_processor.py",
+        "Replace all print() with structlog"
+      ],
+      "verification": "grep -c 'print(' src/core/narrative_processor.py",
+      "priority": 22,
+      "passes": true,
+      "effort": "low",
+      "files": ["src/core/narrative_processor.py"],
+      "estimatedTime": "15 min"
+    },
+    {
+      "id": "RES-023",
+      "title": "Frontend: Fix Flaky Dashboard Core Test",
+      "description": "Fix flaky test in dashboard-core-uat.spec.ts.",
+      "acceptanceCriteria": [
+        "File: frontend/tests/e2e/dashboard-core-uat.spec.ts",
+        "Replace waitForTimeout with waitForSelector",
+        "Add data-testid to slow elements if needed"
+      ],
+      "verification": "grep -c 'waitForTimeout' frontend/tests/e2e/dashboard-core-uat.spec.ts",
+      "priority": 23,
+      "passes": true,
+      "effort": "low",
+      "files": ["frontend/tests/e2e/dashboard-core-uat.spec.ts"],
+      "estimatedTime": "20 min",
+      "notes": "Replaced all 7 waitForTimeout with deterministic waits (expect.toBeVisible, networkidle)"
+    },
+    {
+      "id": "RES-024",
+      "title": "Tech Debt: Check character_factory.py Usage",
+      "description": "Check if character_factory.py is still imported anywhere.",
+      "acceptanceCriteria": [
+        "Run: grep -r 'from src.character_factory' src/ tests/",
+        "If 0 results: mark for removal in notes",
+        "If used: add deprecation warning to file"
+      ],
+      "verification": "grep -r 'from src.character_factory' src/ tests/ | wc -l",
+      "priority": 24,
+      "passes": true,
+      "effort": "low",
+      "files": ["src/character_factory.py"],
+      "estimatedTime": "10 min",
+      "notes": "0 imports found - file marked for removal in future cleanup"
+    },
+    {
+      "id": "RES-025",
+      "title": "Tech Debt: Check director_agent.py Usage",
+      "description": "Check if director_agent.py is still imported anywhere.",
+      "acceptanceCriteria": [
+        "Run: grep -r 'from src.director_agent' src/ tests/",
+        "If 0 results: mark for removal in notes",
+        "If used: add deprecation warning to file"
+      ],
+      "verification": "grep -r 'from src.director_agent' src/ tests/ | wc -l",
+      "priority": 25,
+      "passes": true,
+      "effort": "low",
+      "files": ["src/director_agent.py"],
+      "estimatedTime": "10 min",
+      "notes": "0 imports found - file marked for removal in future cleanup"
+    }
+      "effort": "low",
+      "files": ["src/director_agent.py"],
+      "estimatedTime": "10 min"
     }
   ]
 }

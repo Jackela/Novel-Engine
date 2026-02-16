@@ -6,8 +6,8 @@ This module implements the InteractionId value object, which provides
 unique identification for interaction entities in the system.
 """
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from typing import Any
 from uuid import UUID, uuid4
 

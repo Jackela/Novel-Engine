@@ -17,6 +17,8 @@ from src.contexts.narratives.domain.value_objects.plot_point import (
     PlotPointType,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestPlotPointCreation:
     """Test suite for PlotPoint creation and initialization."""

@@ -13,10 +13,8 @@ from typing import Any, Dict, List, Optional
 # Import existing Novel Engine components (no legacy fallbacks)
 from src.agents.chronicler_agent import ChroniclerAgent
 from src.agents.director_agent_integrated import DirectorAgent
-
-
-from src.core.event_bus import EventBus
 from src.agents.persona_agent.agent import PersonaAgent
+from src.core.event_bus import EventBus
 
 # Import modular components
 from .core.types import (
@@ -152,7 +150,6 @@ class EnhancedMultiAgentBridge:
                 self.logger.warning("LLM processor initialization failed")
 
             # Initialize AI orchestrator if available
-
 
             self._is_initialized = True
             self._integration_stats["initialization_time"] = (
@@ -651,6 +648,3 @@ def create_performance_optimized_config(
         cost_optimization_level="balanced",
         enable_performance_monitoring=True,
     )
-
-
-

@@ -521,4 +521,3 @@ Agent State: Active and operational with current morale {morale_level:.2f}
             return ActionPriority.MEDIUM
         else:
             return ActionPriority.LOW
-

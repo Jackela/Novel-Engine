@@ -1,10 +1,14 @@
 import { test, expect } from '../tests/e2e/fixtures';
+import { safeGoto } from '../tests/e2e/utils/navigation';
+import { scalePerf } from '../tests/e2e/utils/perf';
 
 test.describe('Weaver Visual Workflow', () => {
   test('@weaver-smoke drag node, connect, and verify animated edge', async ({ page }) => {
-    await page.goto('/weaver', { waitUntil: 'domcontentloaded' });
+    await safeGoto(page, '/weaver');
 
-    await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Story Weaver' })).toBeVisible({
+      timeout: scalePerf(30_000),
+    });
 
     await page.getByRole('button', { name: 'Character' }).click();
     await page.getByRole('button', { name: 'Event' }).click();

@@ -13,7 +13,9 @@ Value objects included:
 - Skills: Character abilities and proficiencies
 """
 
+from .character_goal import CharacterGoal, GoalStatus, GoalUrgency
 from .character_id import CharacterID
+from .character_memory import CharacterMemory
 from .character_profile import (
     Background,
     CharacterClass,
@@ -23,6 +25,7 @@ from .character_profile import (
     PersonalityTraits,
     PhysicalTraits,
 )
+from .character_psychology import CharacterPsychology
 from .character_stats import (
     AbilityScore,
     CharacterStats,
@@ -30,9 +33,6 @@ from .character_stats import (
     CoreAbilities,
     VitalStats,
 )
-from .character_goal import CharacterGoal, GoalStatus, GoalUrgency
-from .character_memory import CharacterMemory
-from .character_psychology import CharacterPsychology
 from .skills import ProficiencyLevel, Skill, SkillCategory, SkillGroup, Skills
 
 __all__ = [

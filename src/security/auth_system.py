@@ -328,8 +328,7 @@ class SecurityService:
             await conn.execute("PRAGMA synchronous = NORMAL")
 
             # Users table
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY,
                     username TEXT UNIQUE NOT NULL,
@@ -344,12 +343,10 @@ class SecurityService:
                     locked_until TIMESTAMP NULL,
                     api_key TEXT UNIQUE NULL
                 )
-            """
-            )
+            """)
 
             # Refresh tokens table
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS refresh_tokens (
                     id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -359,12 +356,10 @@ class SecurityService:
                     revoked BOOLEAN DEFAULT FALSE,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 )
-            """
-            )
+            """)
 
             # Security events table
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS security_events (
                     id TEXT PRIMARY KEY,
                     event_type TEXT NOT NULL,
@@ -375,12 +370,10 @@ class SecurityService:
                     details TEXT NOT NULL,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
                 )
-            """
-            )
+            """)
 
             # Sessions table
-            await conn.execute(
-                """
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS user_sessions (
                     id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -392,8 +385,7 @@ class SecurityService:
                     expires_at TIMESTAMP NOT NULL,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 )
-            """
-            )
+            """)
 
             await conn.commit()
         logger.info("SECURITY DATABASE INITIALIZED SUCCESSFULLY")
@@ -441,7 +433,9 @@ class SecurityService:
             clauses.append("email = ?")
             params.append(email)
 
-        query = f"SELECT 1 FROM users WHERE {' OR '.join(clauses)} LIMIT 1"  # nosec B608
+        query = (
+            f"SELECT 1 FROM users WHERE {' OR '.join(clauses)} LIMIT 1"  # nosec B608
+        )
         async with self._connection() as conn:
             cursor = await conn.execute(query, tuple(params))
             row = await cursor.fetchone()
@@ -1063,7 +1057,9 @@ def require_role(required_role: UserRole):
     """Standalone wrapper for requiring a minimum role level."""
 
     async def role_checker(
-        credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
+        credentials: HTTPAuthorizationCredentials = Depends(
+            HTTPBearer(auto_error=False)
+        ),
         x_user_id: Optional[str] = Header(default=None, alias="X-User-ID"),
         x_user_role: Optional[str] = Header(default=None, alias="X-User-Role"),
     ) -> User:

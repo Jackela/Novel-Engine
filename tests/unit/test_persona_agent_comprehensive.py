@@ -6,6 +6,7 @@ PersonaAgent Comprehensive Test Suite
 Systematic testing for src/agents/persona_agent/agent.py covering character initialization,
 decision-making, world event interpretation, AI integration, and character evolution.
 """
+
 import logging
 import os
 from unittest.mock import Mock, mock_open, patch
@@ -13,14 +14,16 @@ from unittest.mock import Mock, mock_open, patch
 import pytest
 
 # Import the modules under test
+
+
 try:
-    from src.core.types.shared_types import CharacterAction
-    from src.core.event_bus import EventBus
     from src.agents.persona_agent.agent import (
         PersonaAgent,
         ThreatLevel,
         WorldEvent,
     )
+    from src.core.event_bus import EventBus
+    from src.core.types.shared_types import CharacterAction
 
     PERSONA_AGENT_AVAILABLE = True
 except ImportError as e:
@@ -302,7 +305,8 @@ Just random text"""
             "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
             return_value="# Test Character",
         ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._parse_cached_yaml", return_value={}
+            "src.agents.persona_agent.agent.PersonaAgent._parse_cached_yaml",
+            return_value={},
         ), patch.object(
             PersonaAgent, "_extract_core_identity"
         ), patch.object(
@@ -419,7 +423,9 @@ class TestPersonaAgentDecisionMaking:
         agent = self.create_test_agent()
 
         # Mock AI integration to avoid external dependencies
-        with patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None):
+        with patch(
+            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None
+        ):
             result = agent._make_decision(self.test_world_state)
 
             # Result should be CharacterAction or None
@@ -434,7 +440,9 @@ class TestPersonaAgentDecisionMaking:
         # Test with invalid world state
         invalid_world_state = None
 
-        with patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None):
+        with patch(
+            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None
+        ):
             result = agent._make_decision(invalid_world_state)
             # Should handle gracefully
             assert result is None or isinstance(result, CharacterAction)
@@ -611,7 +619,9 @@ class TestPersonaAgentAIIntegration:
 
         # Decision making should use fallback logic
         world_state = {"current_turn": 1}
-        with patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None):
+        with patch(
+            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None
+        ):
             result = agent._make_decision(world_state)
             # Should return None or basic CharacterAction
             assert result is None or isinstance(result, CharacterAction)
@@ -624,7 +634,9 @@ class TestPersonaAgentAIIntegration:
 
         # Test decision making without actual AI calls
         world_state = {"current_turn": 1, "threats": ["orks"]}
-        with patch("src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None):
+        with patch(
+            "src.agents.persona_agent.agent._validate_gemini_api_key", return_value=None
+        ):
             result = agent._make_decision(world_state)
             # Should process appropriately without AI
             assert result is None or isinstance(result, CharacterAction)
@@ -796,6 +808,3 @@ def run_all_persona_tests():
 if __name__ == "__main__":
     # Direct execution runs all tests
     run_all_persona_tests()
-
-
-

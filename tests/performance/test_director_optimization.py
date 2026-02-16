@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import psutil
+import pytest
 
 # Import optimization components
 from src.performance_optimizations.director_agent_loop_optimizer import (
@@ -28,6 +29,9 @@ from src.performance_optimizations.director_agent_loop_optimizer import (
 )
 
 # Set up logging
+
+pytestmark = pytest.mark.integration
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

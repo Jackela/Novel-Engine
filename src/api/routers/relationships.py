@@ -130,8 +130,12 @@ def _relationship_to_response(relationship: Relationship) -> RelationshipRespons
     )
 
 
-@router.post("", response_model=RelationshipResponse, status_code=status.HTTP_201_CREATED)
-async def create_relationship(request: RelationshipCreateRequest) -> RelationshipResponse:
+@router.post(
+    "", response_model=RelationshipResponse, status_code=status.HTTP_201_CREATED
+)
+async def create_relationship(
+    request: RelationshipCreateRequest,
+) -> RelationshipResponse:
     """Create a new relationship between entities.
 
     Creates a directed relationship from source to target. For bidirectional
@@ -368,7 +372,9 @@ async def delete_relationship(relationship_id: str) -> None:
 
 @router.get("", response_model=RelationshipListResponse)
 async def list_relationships(
-    relationship_type: Optional[str] = Query(None, description="Filter by relationship type"),
+    relationship_type: Optional[str] = Query(
+        None, description="Filter by relationship type"
+    ),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ) -> RelationshipListResponse:
@@ -396,7 +402,9 @@ async def list_relationships(
     )
 
 
-@router.get("/between/{entity_a_id}/{entity_b_id}", response_model=RelationshipListResponse)
+@router.get(
+    "/between/{entity_a_id}/{entity_b_id}", response_model=RelationshipListResponse
+)
 async def get_relationships_between(
     entity_a_id: str,
     entity_b_id: str,

@@ -20,9 +20,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
-from core_platform.persistence.database import get_db_session
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
+
+from core_platform.persistence.database import get_db_session
 
 from ..projections.world_read_model import WorldSliceReadModel
 

@@ -2,6 +2,10 @@
   "name": "storyforge-ai-frontend",
   "private": true,
   "version": "0.1.1",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -67,6 +71,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-collapsible": "^1.1.12",
+    "@radix-ui/react-checkbox": "^1.1.8",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-hover-card": "^1.1.15",
     "@radix-ui/react-label": "^2.1.8",
@@ -89,13 +94,15 @@
     "@tiptap/pm": "^3.18.0",
     "@tiptap/react": "^3.18.0",
     "@tiptap/starter-kit": "^3.18.0",
+    "@types/markdown-it": "^14.1.2",
     "@xyflow/react": "^12.10.0",
-    "axios": "^1.11.0",
+    "axios": "^1.13.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^2.30.0",
     "framer-motion": "^10.16.1",
+    "highlight.js": "^11.11.1",
     "i18next": "^23.5.1",
     "i18next-browser-languagedetector": "^8.2.0",
     "lodash-es": "^4.17.21",
@@ -126,7 +133,7 @@
     "@axe-core/playwright": "^4.11.0",
     "@axe-core/react": "^4.11.0",
     "@eslint/js": "^9.30.1",
-    "@lhci/cli": "^0.14.0",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.54.1",
     "@size-limit/file": "^11.1.0",
     "@testing-library/jest-dom": "^6.1.2",
@@ -163,7 +170,7 @@
     "terser": "^5.44.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.2",
-    "vite": "^4.5.5",
+    "vite": "^6.4.1",
     "vitest": "^4.0.15",
     "yaml": "^2.8.2"
   },
@@ -171,5 +178,8 @@
     "workerDirectory": [
       "public"
     ]
+  },
+  "overrides": {
+    "tmp": "0.2.5"
   }
 }

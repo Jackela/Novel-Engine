@@ -19,6 +19,8 @@ from src.contexts.narratives.domain.value_objects.causal_node import (
     CausalStrength,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestCausalRelationTypeEnum:
     """Test suite for CausalRelationType enum."""

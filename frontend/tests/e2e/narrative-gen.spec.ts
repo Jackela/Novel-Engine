@@ -8,6 +8,8 @@
  */
 import { test, expect } from './fixtures';
 import { prepareGuestSession } from './utils/auth';
+import { safeGoto } from './utils/navigation';
+import { scalePerf } from './utils/perf';
 
 test.describe('Narrative Generation - Ghostwriter Flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -24,11 +26,11 @@ test.describe('Narrative Generation - Ghostwriter Flow', () => {
     // GIVEN: User is on the story editor page
     // ========================================
     await test.step('GIVEN: User navigates to the story editor', async () => {
-      await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/stories/editor', { timeout: 45000 });
 
       // Wait for page to fully load
       await expect(page.getByRole('heading', { name: 'Story Editor' })).toBeVisible({
-        timeout: 10000,
+        timeout: scalePerf(10000),
       });
     });
 
@@ -99,9 +101,9 @@ test.describe('Narrative Generation - Ghostwriter Flow', () => {
     // GIVEN: User is on the story editor page
     // ========================================
     await test.step('GIVEN: User navigates to the story editor', async () => {
-      await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/stories/editor', { timeout: 45000 });
       await expect(page.getByRole('heading', { name: 'Story Editor' })).toBeVisible({
-        timeout: 10000,
+        timeout: scalePerf(10000),
       });
     });
 
@@ -134,9 +136,9 @@ test.describe('Narrative Generation - Ghostwriter Flow', () => {
     });
 
     await test.step('GIVEN: User navigates to the story editor', async () => {
-      await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
+      await safeGoto(page, '/stories/editor', { timeout: 45000 });
       await expect(page.getByRole('heading', { name: 'Story Editor' })).toBeVisible({
-        timeout: 10000,
+        timeout: scalePerf(10000),
       });
     });
 

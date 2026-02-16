@@ -442,14 +442,18 @@ class WorldStateManager:
             state_json = json.dumps(
                 self._current_state, sort_keys=True, ensure_ascii=True
             )
-            return hashlib.md5(state_json.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+            return hashlib.md5(
+                state_json.encode(), usedforsecurity=False
+            ).hexdigest()  # nosec B324
         except Exception:
             return "checksum_error"
 
     def _generate_change_id(self, path: str, change_type: StateChangeType) -> str:
         """Generate unique ID for a change."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        path_hash = hashlib.md5(path.encode(), usedforsecurity=False).hexdigest()[:8]  # nosec B324
+        path_hash = hashlib.md5(path.encode(), usedforsecurity=False).hexdigest()[
+            :8
+        ]  # nosec B324
         return f"{change_type.value}_{path_hash}_{timestamp}"
 
     def _create_default_state(self) -> Dict[str, Any]:

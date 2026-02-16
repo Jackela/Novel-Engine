@@ -1,5 +1,6 @@
-import pytest
 from types import SimpleNamespace
+
+import pytest
 
 from src.core.iron_laws_processor import IronLawsProcessor
 from src.core.types.shared_types import (
@@ -16,6 +17,8 @@ from src.core.types.shared_types import (
     ResourceValue,
     ValidationResult,
 )
+
+pytestmark = pytest.mark.unit
 
 
 def _build_character_data(
@@ -101,12 +104,8 @@ def test_adjudicate_action_applies_repairs_for_multiple_violations():
     assert report.overall_result == ValidationResult.REQUIRES_REPAIR
     assert report.final_action is not None
     assert report.final_action.action_type == ActionType.COMMUNICATE
-    assert any(
-        "Inserted reasoning" in entry for entry in report.repair_attempts
-    )
-    assert any(
-        "Reduced intensity" in entry for entry in report.repair_attempts
-    )
+    assert any("Inserted reasoning" in entry for entry in report.repair_attempts)
+    assert any("Reduced intensity" in entry for entry in report.repair_attempts)
     assert report.final_action.parameters.intensity != ActionIntensity.HIGH
     law_codes = {violation.law_code for violation in report.violations}
     assert {"E001", "E002", "E004", "E005"} <= law_codes

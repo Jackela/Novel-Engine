@@ -15,6 +15,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -107,6 +108,11 @@ export default function CharactersPage() {
             <DialogTitle>
               {editingCharacter ? 'Edit Character' : 'Create Character'}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {editingCharacter
+                ? 'Update the character profile details.'
+                : 'Create a new character profile.'}
+            </DialogDescription>
           </DialogHeader>
           <CharacterForm
             {...(editingDetail ? { character: editingDetail } : {})}

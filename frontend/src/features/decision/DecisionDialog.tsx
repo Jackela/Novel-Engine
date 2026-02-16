@@ -94,20 +94,12 @@ export function DecisionDialog() {
         }
       }}
     >
-      <DialogContent
-        aria-labelledby="decision-dialog-title"
-        aria-describedby="decision-dialog-description"
-        data-testid="decision-dialog"
-      >
+      <DialogContent data-testid="decision-dialog">
         <DialogHeader className="space-y-2">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
-              <DialogTitle id="decision-dialog-title">
-                {currentDecision.title}
-              </DialogTitle>
-              <DialogDescription id="decision-dialog-description">
-                {currentDecision.description}
-              </DialogDescription>
+              <DialogTitle>{currentDecision.title}</DialogTitle>
+              <DialogDescription>{currentDecision.description}</DialogDescription>
             </div>
             <Button
               type="button"

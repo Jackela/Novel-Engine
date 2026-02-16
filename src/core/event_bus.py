@@ -538,7 +538,9 @@ class InMemoryEventBus:
     def subscribe(self, topic: str, handler: Callable[[Any], None]) -> None:
         self._subscribers[topic].append(handler)
 
-    def replay(self, *, from_index: int = 0, topic: Optional[str] = None) -> List[Dict[str, Any]]:
+    def replay(
+        self, *, from_index: int = 0, topic: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         events = self._history[from_index:]
         if topic is None:
             return list(events)

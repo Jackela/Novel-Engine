@@ -37,6 +37,23 @@ class CharacterCreationRequest(BaseModel):
     inventory: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
+    @field_validator("archetype", mode="before")
+    @classmethod
+    def normalize_archetype(cls, value):
+        """
+        Normalize archetype input for case-insensitive matching.
+
+        Why: User-facing payloads may use uppercase archetype names (e.g., "WARRIOR"),
+        but the enum values are lowercase. Normalizing avoids validation failures.
+        """
+        if value is None:
+            return value
+        if isinstance(value, CharacterArchetype):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower()
+        return value
+
     @field_validator("agent_id")
     @classmethod
     def validate_agent_id(cls, v):

@@ -3,6 +3,7 @@
 UI功能验证测试脚本
 使用Playwright测试前端用户交互
 """
+
 import json
 import logging
 import os
@@ -12,7 +13,10 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import pytest
 import requests
+
+pytestmark = pytest.mark.integration
 
 
 def check_dependencies():
@@ -212,6 +216,7 @@ test('字符选择功能测试', async ({ page }) => {
 
     screenshot_test = """
 import { test } from '@playwright/test';
+
 
 test('页面截图', async ({ page }) => {
   await page.goto('/');

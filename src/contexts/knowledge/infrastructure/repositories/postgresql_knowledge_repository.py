@@ -76,8 +76,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # Upsert SQL with ON CONFLICT for idempotency
-        upsert_sql = text(
-            """
+        upsert_sql = text("""
             INSERT INTO knowledge_entries (
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
@@ -90,8 +89,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             ON CONFLICT (id) DO UPDATE SET
                 content = EXCLUDED.content,
                 updated_at = EXCLUDED.updated_at
-        """
-        )
+        """)
 
         # Execute upsert
         await self._session.execute(
@@ -139,16 +137,14 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # SELECT query
-        select_sql = text(
-            """
+        select_sql = text("""
             SELECT 
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by
             FROM knowledge_entries
             WHERE id = :entry_id
-        """
-        )
+        """)
 
         result = await self._session.execute(select_sql, {"entry_id": UUID(entry_id)})
         row = result.fetchone()
@@ -227,8 +223,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         where_clause = " AND ".join(where_conditions)
 
         # Final SELECT query - uses parameterized conditions with params dict
-        select_sql = text(
-            f"""
+        select_sql = text(f"""
             SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
@@ -236,8 +231,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             FROM knowledge_entries
             WHERE {where_clause}
             ORDER BY updated_at DESC
-        """  # nosec B608
-        )
+        """)  # nosec B608
 
         result = await self._session.execute(select_sql, params)
         rows = result.fetchall()
@@ -268,12 +262,10 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # DELETE query
-        delete_sql = text(
-            """
+        delete_sql = text("""
             DELETE FROM knowledge_entries
             WHERE id = :entry_id
-        """
-        )
+        """)
 
         result = await self._session.execute(delete_sql, {"entry_id": UUID(entry_id)})
 
@@ -362,8 +354,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         # Semantic search query using pgvector cosine similarity
         # Cosine distance: 0 = identical, 2 = opposite
         # Convert to similarity score: 1 - (distance / 2) = 0.0-1.0 range
-        semantic_sql = text(
-            f"""
+        semantic_sql = text(f"""
             SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
@@ -373,8 +364,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             WHERE {where_clause}
             ORDER BY embedding <=> CAST(:query_embedding AS vector(1536))
             LIMIT :top_k
-        """  # nosec B608
-        )
+        """)  # nosec B608
 
         result = await self._session.execute(semantic_sql, params)
         rows = result.fetchall()
@@ -429,4 +419,3 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             updated_at=row.updated_at,
             created_by=row.created_by,
         )
-

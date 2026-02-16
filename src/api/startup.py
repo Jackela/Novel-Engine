@@ -5,11 +5,11 @@ import logging
 import os
 from typing import Optional
 
-from src.core.config.config_loader import get_config
 from fastapi import FastAPI
 
 from src.api.services.paths import find_project_root
 from src.api.settings import APISettings
+from src.core.config.config_loader import get_config
 from src.core.service_container import get_service_container
 from src.core.system_orchestrator import OrchestratorConfig, SystemOrchestrator
 from src.services.api_service import ApiOrchestrationService
@@ -164,4 +164,3 @@ async def shutdown_app_state(app: FastAPI) -> None:
             await api_service.stop_simulation()
     except Exception as exc:
         logger.error("Error during shutdown: %s", exc, exc_info=True)
-

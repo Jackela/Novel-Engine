@@ -13,11 +13,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from core_platform.messaging.outbox import publish_event_transactionally
-from core_platform.persistence.database import get_db_session
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+
+from core_platform.messaging.outbox import publish_event_transactionally
+from core_platform.persistence.database import get_db_session
 
 from ...domain.aggregates.world_state import WorldState
 from ...domain.repositories.world_state_repo import (
