@@ -15,15 +15,22 @@
       "description": "Create WorldCalendar value object with year, month, day, era_name fields.",
       "acceptanceCriteria": [
         "Create src/contexts/world/domain/value_objects/world_calendar.py",
+        "Use @dataclass(frozen=True) for immutability",
         "Fields: year (int), month (int), day (int), era_name (str), days_per_month (int=30), months_per_year (int=12)",
-        "Methods: advance(days) -> WorldCalendar, format() -> str, from_datetime(dt) -> WorldCalendar",
-        "Value object: immutable, implements __eq__, __hash__",
-        "Test: tests/unit/contexts/world/domain/test_world_calendar.py with edge cases (month rollover, year rollover)"
+        "Method: advance(days: int) -> WorldCalendar (returns new instance)",
+        "Method: format() -> str (e.g., 'Year 1042, Month 3, Day 15 - Third Age')",
+        "Class method: from_datetime(dt: datetime) -> WorldCalendar",
+        "Implement __eq__, __hash__ for value object semantics",
+        "Create tests/unit/contexts/world/domain/value_objects/test_world_calendar.py",
+        "Test cases: advance within month, month rollover, year rollover, format output"
       ],
       "priority": 1,
       "passes": false,
       "effort": "low",
-      "files": ["src/contexts/world/domain/value_objects/world_calendar.py", "tests/unit/contexts/world/domain/test_world_calendar.py"]
+      "files": [
+        "src/contexts/world/domain/value_objects/world_calendar.py",
+        "tests/unit/contexts/world/domain/value_objects/test_world_calendar.py"
+      ]
     },
     {
       "id": "SIM-002",
@@ -31,17 +38,21 @@
       "description": "Integrate WorldCalendar into WorldState aggregate, replacing raw datetime.",
       "acceptanceCriteria": [
         "Update src/contexts/world/domain/aggregates/world_state.py",
-        "Replace world_time: datetime with calendar: WorldCalendar",
-        "Update advance_time() to use calendar.advance()",
+        "Replace world_time: datetime field with calendar: WorldCalendar",
+        "Update advance_time() method to use calendar.advance()",
         "Emit existing WorldStateChanged.time_advanced event",
-        "Add from_datetime() migration for existing data",
-        "Update existing world_state tests"
+        "Add class method: from_datetime_world_time(dt: datetime) for migration",
+        "Update tests/unit/contexts/world/domain/aggregates/test_world_state.py",
+        "Ensure backward compatibility for deserialization"
       ],
       "priority": 2,
       "passes": false,
       "effort": "low",
       "blockedBy": ["SIM-001"],
-      "files": ["src/contexts/world/domain/aggregates/world_state.py"]
+      "files": [
+        "src/contexts/world/domain/aggregates/world_state.py",
+        "tests/unit/contexts/world/domain/aggregates/test_world_state.py"
+      ]
     },
     {
       "id": "SIM-003",
@@ -49,35 +60,52 @@
       "description": "Create API endpoints for calendar operations.",
       "acceptanceCriteria": [
         "Create src/api/routers/calendar.py",
-        "GET /calendar/{world_id} returns CalendarResponse",
-        "POST /calendar/{world_id}/advance accepts AdvanceCalendarRequest",
-        "Add schemas to src/api/schemas.py: CalendarResponse, AdvanceCalendarRequest",
-        "Router prefix: /calendar (NO /api prefix in decorator)",
-        "Test: tests/api/test_calendar_router.py"
+        "Router prefix: /calendar (NO /api prefix in decorator - it's added by include_router)",
+        "GET /{world_id} -> CalendarResponse",
+        "POST /{world_id}/advance -> AdvanceCalendarRequest -> CalendarResponse",
+        "Add schemas to src/api/schemas.py:",
+        "  - CalendarResponse: year, month, day, era_name, formatted_date",
+        "  - AdvanceCalendarRequest: days (int, default=1)",
+        "Register router in src/api/main_api_server.py",
+        "Create tests/api/routers/test_calendar.py"
       ],
       "priority": 3,
       "passes": false,
       "effort": "low",
       "blockedBy": ["SIM-002"],
-      "files": ["src/api/routers/calendar.py", "src/api/schemas.py"]
+      "files": [
+        "src/api/routers/calendar.py",
+        "src/api/schemas.py",
+        "src/api/main_api_server.py",
+        "tests/api/routers/test_calendar.py"
+      ]
     },
     {
       "id": "SIM-004",
-      "title": "Frontend - Calendar Display",
+      "title": "Frontend - Calendar Display Component",
       "description": "Create React component to display and control calendar.",
       "acceptanceCriteria": [
         "Create frontend/src/components/world/CalendarDisplay.tsx",
-        "Use shadcn/ui Card component",
-        "Display: formatted date, era name, Advance Time button",
-        "Use TanStack Query pattern from worldDataApi.ts",
-        "Add to existing WorldPage.tsx",
-        "Verify: renders correctly in browser"
+        "Props: worldId: string, onAdvance?: (days: number) => void",
+        "Use shadcn/ui Card component for container",
+        "Display: formatted date (large text), era name (subtitle), Advance buttons (1 day, 7 days, 30 days)",
+        "Use TanStack Query for data fetching",
+        "Handle loading, error, and success states",
+        "Create frontend/src/lib/api/calendarApi.ts with:",
+        "  - useCalendar(worldId) hook",
+        "  - useAdvanceCalendar(worldId) mutation hook",
+        "Add component to frontend/src/features/world/WorldPage.tsx",
+        "Verify: renders correctly with mock data"
       ],
       "priority": 4,
       "passes": false,
-      "effort": "low",
+      "effort": "medium",
       "blockedBy": ["SIM-003"],
-      "files": ["frontend/src/components/world/CalendarDisplay.tsx", "frontend/src/features/world/WorldPage.tsx"]
+      "files": [
+        "frontend/src/components/world/CalendarDisplay.tsx",
+        "frontend/src/lib/api/calendarApi.ts",
+        "frontend/src/features/world/WorldPage.tsx"
+      ]
     },
     {
       "id": "SIM-005",
@@ -85,35 +113,51 @@
       "description": "Add new fields to HistoryEvent entity for simulation support.",
       "acceptanceCriteria": [
         "Update src/contexts/world/domain/entities/history_event.py",
-        "Add impact_scope: ImpactScope | None (LOCAL, REGIONAL, GLOBAL)",
-        "Add event_type: EventType | None (WAR, TRADE, DISCOVERY, POLITICAL, NATURAL, DEATH)",
-        "Add affected_faction_ids: list[str] | None",
-        "Add structured_date: WorldCalendar | None",
-        "All new fields nullable for backward compatibility",
-        "Update existing tests"
+        "Add ImpactScope enum: LOCAL, REGIONAL, GLOBAL",
+        "Add EventType enum: WAR, TRADE, DISCOVERY, POLITICAL, NATURAL, DEATH, BIRTH, MARRIAGE",
+        "Add nullable fields (backward compatible):",
+        "  - impact_scope: ImpactScope | None = None",
+        "  - event_type: EventType | None = None",
+        "  - affected_faction_ids: list[str] | None = None",
+        "  - affected_location_ids: list[str] | None = None",
+        "  - structured_date: WorldCalendar | None = None",
+        "Update tests for new fields"
       ],
       "priority": 5,
       "passes": false,
       "effort": "low",
       "blockedBy": ["SIM-001"],
-      "files": ["src/contexts/world/domain/entities/history_event.py"]
+      "files": [
+        "src/contexts/world/domain/entities/history_event.py",
+        "tests/unit/contexts/world/domain/entities/test_history_event.py"
+      ]
     },
     {
       "id": "SIM-006",
       "title": "API - Events Router",
-      "description": "Create/update API endpoints for historical events.",
+      "description": "Create API endpoints for historical events CRUD.",
       "acceptanceCriteria": [
-        "Create or update src/api/routers/events.py",
-        "GET /world/{world_id}/events - list events (paginated, filter by type/scope)",
-        "POST /world/{world_id}/events - create event",
-        "Schemas: HistoryEventResponse, CreateEventRequest, EventFilterParams",
-        "Test: tests/api/test_events_router.py"
+        "Create src/api/routers/events.py",
+        "Router prefix: /world/{world_id}/events",
+        "GET / -> list events (paginated, filter by type, scope, date range)",
+        "POST / -> create event",
+        "GET /{event_id} -> get event details",
+        "Add schemas to src/api/schemas.py:",
+        "  - HistoryEventResponse",
+        "  - CreateEventRequest",
+        "  - EventFilterParams (event_type, impact_scope, from_date, to_date, page, page_size)",
+        "Register router in main_api_server.py",
+        "Create tests/api/routers/test_events.py"
       ],
       "priority": 6,
       "passes": false,
-      "effort": "low",
+      "effort": "medium",
       "blockedBy": ["SIM-005"],
-      "files": ["src/api/routers/events.py", "src/api/schemas.py"]
+      "files": [
+        "src/api/routers/events.py",
+        "src/api/schemas.py",
+        "tests/api/routers/test_events.py"
+      ]
     },
     {
       "id": "SIM-007",
@@ -121,33 +165,51 @@
       "description": "Create timeline component to display historical events.",
       "acceptanceCriteria": [
         "Create frontend/src/components/world/WorldTimeline.tsx",
-        "Follow existing MemoryTimeline.tsx pattern",
-        "Vertical timeline with date grouping",
-        "Filter by event_type, impact_scope",
-        "Use shadcn/ui Card, Badge components",
-        "E2E test: verify renders"
+        "Props: worldId: string, filters?: EventFilters",
+        "Follow existing MemoryTimeline.tsx pattern for styling",
+        "Vertical timeline with date grouping (use WorldCalendar.format())",
+        "Each event shows: title, date, type badge, impact scope badge, description",
+        "Filter controls: event_type dropdown, impact_scope dropdown",
+        "Use shadcn/ui Card, Badge, Select components",
+        "Create frontend/src/lib/api/eventsApi.ts with:",
+        "  - useWorldEvents(worldId, filters) hook",
+        "  - useCreateEvent(worldId) mutation",
+        "E2E test: verify timeline renders with mock events"
       ],
       "priority": 7,
       "passes": false,
       "effort": "medium",
-      "blockedBy": ["SIM-006"],
-      "files": ["frontend/src/components/world/WorldTimeline.tsx"]
+      "blockedBy": ["SIM-001", "SIM-006"],
+      "files": [
+        "frontend/src/components/world/WorldTimeline.tsx",
+        "frontend/src/lib/api/eventsApi.ts"
+      ]
     },
     {
       "id": "SIM-008",
       "title": "Domain - DiplomaticStatus Enum",
-      "description": "Create enum for diplomatic relationship statuses.",
+      "description": "Create enum for diplomatic relationship statuses with strength mapping.",
       "acceptanceCriteria": [
         "Create src/contexts/world/domain/value_objects/diplomatic_status.py",
-        "Enum values: ALLIED, FRIENDLY, NEUTRAL, COLD, HOSTILE, AT_WAR",
-        "Function: from_relation_strength(strength: int) -> DiplomaticStatus",
-        "Maps existing FactionRelation.strength (-100 to 100)",
-        "Test: unit tests for mapping logic"
+        "Enum values with strength ranges:",
+        "  - ALLIED (strength >= 50)",
+        "  - FRIENDLY (strength >= 20 and < 50)",
+        "  - NEUTRAL (strength > -20 and < 20)",
+        "  - COLD (strength <= -20 and > -50)",
+        "  - HOSTILE (strength <= -50 and > -80)",
+        "  - AT_WAR (strength <= -80)",
+        "Class method: from_relation_strength(strength: int) -> DiplomaticStatus",
+        "Property: color -> str (for UI: green, yellow, red, etc.)",
+        "Property: label -> str (human-readable name)",
+        "Create tests/unit/contexts/world/domain/value_objects/test_diplomatic_status.py"
       ],
       "priority": 8,
       "passes": false,
       "effort": "low",
-      "files": ["src/contexts/world/domain/value_objects/diplomatic_status.py"]
+      "files": [
+        "src/contexts/world/domain/value_objects/diplomatic_status.py",
+        "tests/unit/contexts/world/domain/value_objects/test_diplomatic_status.py"
+      ]
     },
     {
       "id": "SIM-009",
@@ -156,15 +218,26 @@
       "acceptanceCriteria": [
         "Create src/contexts/world/domain/aggregates/diplomacy_matrix.py",
         "Wraps existing FactionRelation system from Faction entity",
-        "Methods: get_status(a, b), set_status(a, b, status), get_allies(faction), get_enemies(faction), to_matrix()",
-        "Validation: Prevent A->ALLIED and B->AT_WAR conflicts",
-        "Test: matrix consistency tests"
+        "Fields: world_id: str, relations: dict[tuple[str, str], DiplomaticStatus]",
+        "Methods:",
+        "  - get_status(faction_a: str, faction_b: str) -> DiplomaticStatus",
+        "  - set_status(faction_a: str, faction_b: str, status: DiplomaticStatus) -> None",
+        "  - get_allies(faction_id: str) -> list[str]",
+        "  - get_enemies(faction_id: str) -> list[str]",
+        "  - get_neutral(faction_id: str) -> list[str]",
+        "  - to_matrix() -> dict[str, dict[str, str]] (for API response)",
+        "Invariant validation: set_status raises ValueError if creates conflict",
+        "  (e.g., A declares ALLIED but B has AT_WAR)",
+        "Create tests/unit/contexts/world/domain/aggregates/test_diplomacy_matrix.py"
       ],
       "priority": 9,
       "passes": false,
       "effort": "medium",
       "blockedBy": ["SIM-008"],
-      "files": ["src/contexts/world/domain/aggregates/diplomacy_matrix.py"]
+      "files": [
+        "src/contexts/world/domain/aggregates/diplomacy_matrix.py",
+        "tests/unit/contexts/world/domain/aggregates/test_diplomacy_matrix.py"
+      ]
     },
     {
       "id": "SIM-010",
@@ -172,16 +245,26 @@
       "description": "Create API endpoints for diplomacy operations.",
       "acceptanceCriteria": [
         "Create src/api/routers/diplomacy.py",
-        "GET /world/{world_id}/diplomacy - returns DiplomacyMatrixResponse",
-        "PUT /world/{world_id}/diplomacy/{faction_a}/{faction_b} - SetRelationRequest",
-        "Schemas: DiplomacyMatrixResponse, SetRelationRequest",
-        "Test: tests/api/test_diplomacy_router.py"
+        "Router prefix: /world/{world_id}/diplomacy",
+        "GET / -> DiplomacyMatrixResponse (full matrix)",
+        "GET /faction/{faction_id} -> FactionDiplomacyResponse (single faction's relations)",
+        "PUT /{faction_a}/{faction_b} -> SetRelationRequest -> DiplomacyMatrixResponse",
+        "Add schemas to src/api/schemas.py:",
+        "  - DiplomacyMatrixResponse: world_id, matrix (dict), factions (list)",
+        "  - FactionDiplomacyResponse: faction_id, allies, enemies, neutral",
+        "  - SetRelationRequest: status (DiplomaticStatus)",
+        "Register router in main_api_server.py",
+        "Create tests/api/routers/test_diplomacy.py"
       ],
       "priority": 10,
       "passes": false,
       "effort": "low",
       "blockedBy": ["SIM-009"],
-      "files": ["src/api/routers/diplomacy.py", "src/api/schemas.py"]
+      "files": [
+        "src/api/routers/diplomacy.py",
+        "src/api/schemas.py",
+        "tests/api/routers/test_diplomacy.py"
+      ]
     },
     {
       "id": "SIM-011",
@@ -189,17 +272,27 @@
       "description": "Create visual grid showing faction relationships.",
       "acceptanceCriteria": [
         "Create frontend/src/components/world/DiplomacyMatrix.tsx",
-        "Data grid: rows and columns = factions, cells = relationship color",
-        "Color mapping: ALLIED=green, NEUTRAL=yellow, AT_WAR=red",
-        "Click cell opens edit relation modal",
-        "Use shadcn/ui Table component",
-        "E2E test: interaction test"
+        "Props: worldId: string",
+        "Data grid: rows = factions, columns = factions, cells = relationship color",
+        "Diagonal cells (self-relation) shown as gray/disabled",
+        "Color mapping using DiplomaticStatus.color from API",
+        "Click cell opens shadcn/ui Dialog to edit relation",
+        "Dialog contains: faction names, current status, status dropdown, save/cancel buttons",
+        "Create frontend/src/lib/api/diplomacyApi.ts with:",
+        "  - useDiplomacyMatrix(worldId) hook",
+        "  - useSetRelation(worldId) mutation",
+        "Use shadcn/ui Table (or custom grid), Dialog, Select components",
+        "Handle loading state with skeleton",
+        "E2E test: verify grid renders, click cell opens dialog"
       ],
       "priority": 11,
       "passes": false,
       "effort": "medium",
       "blockedBy": ["SIM-010"],
-      "files": ["frontend/src/components/world/DiplomacyMatrix.tsx"]
+      "files": [
+        "frontend/src/components/world/DiplomacyMatrix.tsx",
+        "frontend/src/lib/api/diplomacyApi.ts"
+      ]
     },
     {
       "id": "SIM-012",
@@ -207,32 +300,53 @@
       "description": "Create entity representing a faction's intended action.",
       "acceptanceCriteria": [
         "Create src/contexts/world/domain/entities/faction_intent.py",
-        "Fields: faction_id (str), intent_type (IntentType enum), target_id (str|None), priority (1-10), narrative (str)",
-        "IntentType enum: EXPAND, ATTACK, DEFEND, ALLY, TRADE, RECOVER",
-        "Immutable value object",
-        "Test: entity tests"
+        "Create IntentType enum: EXPAND, ATTACK, DEFEND, ALLY, TRADE, RECOVER, CONSOLIDATE",
+        "Create FactionIntent dataclass (frozen=True):",
+        "  - intent_id: str (UUID)",
+        "  - faction_id: str",
+        "  - intent_type: IntentType",
+        "  - target_id: str | None (faction_id or location_id depending on type)",
+        "  - priority: int (1-10, higher = more important)",
+        "  - narrative: str (human-readable description)",
+        "  - created_at: datetime",
+        "Property: is_offensive -> bool (ATTACK, EXPAND)",
+        "Property: is_defensive -> bool (DEFEND, CONSOLIDATE)",
+        "Create tests/unit/contexts/world/domain/entities/test_faction_intent.py"
       ],
       "priority": 12,
       "passes": false,
       "effort": "low",
-      "files": ["src/contexts/world/domain/entities/faction_intent.py"]
+      "files": [
+        "src/contexts/world/domain/entities/faction_intent.py",
+        "tests/unit/contexts/world/domain/entities/test_faction_intent.py"
+      ]
     },
     {
       "id": "SIM-013",
       "title": "Application - FactionIntentGenerator",
-      "description": "Create service to generate faction intents based on world state.",
+      "description": "Create service to generate faction intents based on world state (rule-based).",
       "acceptanceCriteria": [
         "Create src/contexts/world/application/services/faction_intent_generator.py",
-        "Method: generate_intents(faction: Faction, world: WorldState) -> list[FactionIntent]",
-        "Rule-based algorithm: low resources -> RECOVER, enemies weak -> ATTACK, no allies -> ALLY",
-        "No LLM integration yet (add later)",
-        "Test: mock-based unit tests"
+        "Class: FactionIntentGenerator",
+        "Method: generate_intents(faction: Faction, world: WorldState, diplomacy: DiplomacyMatrix) -> list[FactionIntent]",
+        "Rule-based decision logic:",
+        "  1. If wealth < 20: RECOVER intent (priority 9)",
+        "  2. If has_enemies and enemy.military < faction.military * 0.5: ATTACK intent (priority 7)",
+        "  3. If has_no_allies and wealth > 40: ALLY intent with strongest neutral faction (priority 6)",
+        "  4. If territories < 3 and wealth > 50: EXPAND intent (priority 5)",
+        "  5. If military > 80 and has_enemies: DEFEND border intent (priority 4)",
+        "  6. Default: CONSOLIDATE intent (priority 1)",
+        "Return max 3 intents per faction, sorted by priority",
+        "Create tests with mock Faction and WorldState"
       ],
       "priority": 13,
       "passes": false,
       "effort": "medium",
       "blockedBy": ["SIM-012", "SIM-009"],
-      "files": ["src/contexts/world/application/services/faction_intent_generator.py"]
+      "files": [
+        "src/contexts/world/application/services/faction_intent_generator.py",
+        "tests/unit/contexts/world/application/services/test_faction_intent_generator.py"
+      ]
     },
     {
       "id": "SIM-014",
@@ -240,252 +354,500 @@
       "description": "Create value object to record simulation step results.",
       "acceptanceCriteria": [
         "Create src/contexts/world/domain/value_objects/simulation_tick.py",
-        "Fields: tick_id, calendar_before, calendar_after, events_generated (list), resource_changes (dict), diplomacy_changes (list)",
-        "Immutable record of simulation step",
-        "Test: value object tests"
+        "Create SimulationTick dataclass (frozen=True):",
+        "  - tick_id: str (UUID)",
+        "  - world_id: str",
+        "  - calendar_before: WorldCalendar",
+        "  - calendar_after: WorldCalendar",
+        "  - days_advanced: int",
+        "  - events_generated: list[str] (event IDs)",
+        "  - resource_changes: dict[str, ResourceChanges] (faction_id -> changes)",
+        "  - diplomacy_changes: list[DiplomacyChange]",
+        "  - character_reactions: list[str] (character IDs that reacted)",
+        "  - rumors_created: int",
+        "  - created_at: datetime",
+        "Create ResourceChanges dataclass: wealth_delta, military_delta, influence_delta",
+        "Create DiplomacyChange dataclass: faction_a, faction_b, status_before, status_after",
+        "Property: has_changes -> bool",
+        "Create tests"
       ],
       "priority": 14,
       "passes": false,
       "effort": "low",
-      "blockedBy": ["SIM-001", "SIM-005"],
-      "files": ["src/contexts/world/domain/value_objects/simulation_tick.py"]
+      "blockedBy": ["SIM-001", "SIM-008"],
+      "files": [
+        "src/contexts/world/domain/value_objects/simulation_tick.py",
+        "tests/unit/contexts/world/domain/value_objects/test_simulation_tick.py"
+      ]
     },
     {
       "id": "SIM-015",
-      "title": "Application - WorldSimulationService",
-      "description": "Create main simulation service that advances world time and processes faction actions.",
+      "title": "Application - Basic Simulation Tick",
+      "description": "Create basic simulation service that advances calendar and generates faction intents.",
       "acceptanceCriteria": [
         "Create src/contexts/world/application/services/world_simulation_service.py",
-        "Method: advance_simulation(world_id: str, days: int) -> Result[SimulationTick, SimulationError]",
-        "Algorithm: snapshot -> advance calendar -> generate intents -> resolve -> apply -> return tick",
+        "Class: WorldSimulationService",
+        "Method: advance_simulation(world_id: str, days: int = 1) -> Result[SimulationTick, SimulationError]",
+        "Basic implementation:",
+        "  1. Load WorldState from repository",
+        "  2. Store calendar_before",
+        "  3. Advance calendar by days",
+        "  4. For each faction: generate intents using FactionIntentGenerator",
+        "  5. Create SimulationTick with results (no changes applied yet)",
+        "  6. Return tick (this version is read-only, for preview)",
+        "Create SimulationError enum in src/core/errors.py if needed",
         "Use Result pattern from src/core/result.py",
-        "Test: full simulation tick test with mocks"
+        "Dependency injection: takes repositories in constructor",
+        "Create tests with mock repositories"
       ],
       "priority": 15,
       "passes": false,
-      "effort": "high",
+      "effort": "medium",
       "blockedBy": ["SIM-013", "SIM-014"],
-      "files": ["src/contexts/world/application/services/world_simulation_service.py"]
+      "files": [
+        "src/contexts/world/application/services/world_simulation_service.py",
+        "tests/unit/contexts/world/application/services/test_world_simulation_service.py"
+      ]
     },
     {
       "id": "SIM-016",
+      "title": "Application - Intent Resolution",
+      "description": "Add intent resolution logic to simulation service.",
+      "acceptanceCriteria": [
+        "Update src/contexts/world/application/services/world_simulation_service.py",
+        "Add method: _resolve_intents(intents: list[FactionIntent], world: WorldState) -> ResolutionResult",
+        "Resolution rules:",
+        "  - ATTACK: Reduces attacker and defender military (-5 each), may change territory ownership",
+        "  - EXPAND: Requires wealth >= 20, reduces wealth by 10, adds territory if available",
+        "  - ALLY: Creates bilateral ALLIED status if target accepts (target has no conflicts)",
+        "  - RECOVER: Increases wealth by +5 if below 50",
+        "  - DEFEND: Increases military by +3 if below 80",
+        "  - CONSOLIDATE: Small wealth +2, military +1",
+        "Handle conflicts: two factions attacking same target",
+        "Create ResolutionResult dataclass with changes to apply",
+        "Update tests with resolution scenarios"
+      ],
+      "priority": 16,
+      "passes": false,
+      "effort": "medium",
+      "blockedBy": ["SIM-015"],
+      "files": [
+        "src/contexts/world/application/services/world_simulation_service.py",
+        "tests/unit/contexts/world/application/services/test_intent_resolution.py"
+      ]
+    },
+    {
+      "id": "SIM-017",
+      "title": "Application - Full Simulation Integration",
+      "description": "Complete simulation service with snapshots, events, and side effects.",
+      "acceptanceCriteria": [
+        "Update src/contexts/world/application/services/world_simulation_service.py",
+        "Add commit_simulation(world_id: str, days: int = 1) -> Result[SimulationTick, SimulationError]",
+        "Full implementation:",
+        "  1. Create snapshot before changes (call SnapshotService)",
+        "  2. Run advance_simulation (get tick)",
+        "  3. Resolve intents (get changes)",
+        "  4. Apply changes to WorldState",
+        "  5. Generate HistoricalEvents for significant changes",
+        "  6. Run SanityChecker (log warnings but don't block)",
+        "  7. Propagate rumors (call RumorPropagationService)",
+        "  8. Save WorldState",
+        "  9. Return complete SimulationTick",
+        "Add simulation history tracking (in-memory for now)",
+        "Update tests for full flow"
+      ],
+      "priority": 17,
+      "passes": false,
+      "effort": "high",
+      "blockedBy": ["SIM-016", "SIM-024", "SIM-026", "SIM-022"],
+      "files": [
+        "src/contexts/world/application/services/world_simulation_service.py"
+      ]
+    },
+    {
+      "id": "SIM-018",
       "title": "API - Simulation Router",
       "description": "Create API endpoints for simulation operations.",
       "acceptanceCriteria": [
         "Create src/api/routers/simulation.py",
-        "POST /world/{world_id}/simulate - SimulateRequest -> SimulationTickResponse",
-        "GET /world/{world_id}/simulate/history - list of SimulationTickSummary",
-        "Schemas: SimulateRequest, SimulationTickResponse, SimulationTickSummary",
-        "Consider BackgroundTasks for long simulations",
-        "Test: tests/api/test_simulation_router.py"
-      ],
-      "priority": 16,
-      "passes": false,
-      "effort": "low",
-      "blockedBy": ["SIM-015"],
-      "files": ["src/api/routers/simulation.py", "src/api/schemas.py"]
-    },
-    {
-      "id": "SIM-017",
-      "title": "Domain - Character Birth Date",
-      "description": "Add birth date field to Character entity for age tracking.",
-      "acceptanceCriteria": [
-        "Update src/contexts/character/domain/entities/character.py",
-        "Add birth_date: WorldCalendar | None field",
-        "Add computed age property (requires current calendar context)",
-        "Null-safe: None birth_date returns None age",
-        "Test: age calculation tests"
-      ],
-      "priority": 17,
-      "passes": false,
-      "effort": "low",
-      "blockedBy": ["SIM-001"],
-      "files": ["src/contexts/character/domain/entities/character.py"]
-    },
-    {
-      "id": "SIM-018",
-      "title": "Domain - Character Location Tracking",
-      "description": "Add location tracking to Character entity.",
-      "acceptanceCriteria": [
-        "Update Character entity",
-        "Add current_location_id: str | None field",
-        "Add move_to(location_id: str) -> Character method",
-        "Emit CharacterLocationChanged domain event",
-        "Test: movement tests"
+        "Router prefix: /world/{world_id}/simulate",
+        "POST /preview -> SimulateRequest -> SimulationTickResponse (read-only preview)",
+        "POST /commit -> SimulateRequest -> SimulationTickResponse (applies changes)",
+        "GET /history -> list[SimulationTickSummary]",
+        "Add schemas to src/api/schemas.py:",
+        "  - SimulateRequest: days (int, default=1, max=365)",
+        "  - SimulationTickResponse: full tick data",
+        "  - SimulationTickSummary: tick_id, days_advanced, events_count, created_at",
+        "Consider using BackgroundTasks for long simulations (>30 days)",
+        "Register router in main_api_server.py",
+        "Create tests/api/routers/test_simulation.py"
       ],
       "priority": 18,
       "passes": false,
       "effort": "low",
-      "files": ["src/contexts/character/domain/entities/character.py"]
+      "blockedBy": ["SIM-017"],
+      "files": [
+        "src/api/routers/simulation.py",
+        "src/api/schemas.py",
+        "tests/api/routers/test_simulation.py"
+      ]
     },
     {
       "id": "SIM-019",
-      "title": "Application - Character Reaction",
-      "description": "Create service for character reactions to world events.",
+      "title": "Domain - Character Birth Date",
+      "description": "Add birth date field to Character entity for age tracking.",
       "acceptanceCriteria": [
-        "Create src/contexts/character/application/services/character_reactor.py",
-        "Method: react_to_event(character_id: str, event: HistoryEvent) -> CharacterReaction",
-        "Reaction types: OBSERVE, FLEE, INVESTIGATE, IGNORE",
-        "Rule-based logic first (LLM later)",
-        "Creates CharacterMemory entry for reaction",
-        "Test: reaction tests"
+        "Update src/contexts/character/domain/entities/character.py",
+        "Add field: birth_date: WorldCalendar | None = None",
+        "Add method: get_age(current_calendar: WorldCalendar) -> int | None",
+        "  - Returns None if birth_date is None",
+        "  - Returns age in years (simplified: year difference)",
+        "Add field: is_deceased: bool = False",
+        "Add field: death_date: WorldCalendar | None = None",
+        "All new fields nullable for backward compatibility",
+        "Update tests"
       ],
       "priority": 19,
       "passes": false,
-      "effort": "medium",
-      "blockedBy": ["SIM-005", "SIM-017"],
-      "files": ["src/contexts/character/application/services/character_reactor.py"]
+      "effort": "low",
+      "blockedBy": ["SIM-001"],
+      "files": [
+        "src/contexts/character/domain/entities/character.py",
+        "tests/unit/contexts/character/domain/entities/test_character.py"
+      ]
     },
     {
       "id": "SIM-020",
-      "title": "Frontend - Character Location Display",
-      "description": "Update LocationTree to show characters at each location.",
+      "title": "Domain - Character Location Tracking",
+      "description": "Add location tracking to Character entity.",
       "acceptanceCriteria": [
-        "Update frontend/src/components/world/LocationTree.tsx",
-        "Show character avatars under each location node",
-        "Click avatar opens character detail modal",
-        "Use shadcn/ui Avatar component",
-        "E2E test: display test"
+        "Update Character entity",
+        "Add field: current_location_id: str | None = None",
+        "Add method: move_to(location_id: str) -> Character (returns new instance)",
+        "Create CharacterLocationChanged event in src/contexts/character/domain/events/",
+        "Event fields: character_id, location_id_before, location_id_after, timestamp",
+        "Add field: travel_history: list[TravelRecord] = field(default_factory=list)",
+        "Create TravelRecord dataclass: location_id, arrived_date, departed_date | None",
+        "Update tests"
       ],
       "priority": 20,
       "passes": false,
       "effort": "low",
-      "blockedBy": ["SIM-018"],
-      "files": ["frontend/src/components/world/LocationTree.tsx"]
+      "files": [
+        "src/contexts/character/domain/entities/character.py",
+        "src/contexts/character/domain/events/character_events.py",
+        "tests/unit/contexts/character/domain/entities/test_character.py"
+      ]
     },
     {
       "id": "SIM-021",
-      "title": "Domain - Rumor Entity",
-      "description": "Create entity for rumors that spread through the world.",
+      "title": "Domain - CharacterReaction Value Object",
+      "description": "Create value object for character reactions to events.",
       "acceptanceCriteria": [
-        "Create src/contexts/world/domain/entities/rumor.py",
-        "Fields: content (str), truth_value (0-100), origin_location_id (str), spread_locations (set), created_date (WorldCalendar)",
-        "Method: spread_to(location_id: str) -> Rumor (decreases truth_value)",
-        "Test: rumor spread tests"
+        "Create src/contexts/character/domain/value_objects/character_reaction.py",
+        "Create ReactionType enum: OBSERVE, FLEE, INVESTIGATE, IGNORE, CELEBRATE, MOURN, PROTEST",
+        "Create CharacterReaction dataclass (frozen=True):",
+        "  - reaction_id: str",
+        "  - character_id: str",
+        "  - event_id: str",
+        "  - reaction_type: ReactionType",
+        "  - intensity: int (1-10)",
+        "  - narrative: str (LLM-generated or rule-based description)",
+        "  - memory_created: bool",
+        "  - created_at: datetime",
+        "Create tests"
       ],
       "priority": 21,
       "passes": false,
       "effort": "low",
-      "blockedBy": ["SIM-001"],
-      "files": ["src/contexts/world/domain/entities/rumor.py"]
+      "files": [
+        "src/contexts/character/domain/value_objects/character_reaction.py",
+        "tests/unit/contexts/character/domain/value_objects/test_character_reaction.py"
+      ]
     },
     {
       "id": "SIM-022",
-      "title": "Application - RumorPropagation",
-      "description": "Create service to propagate rumors through locations.",
+      "title": "Application - Character Reactor",
+      "description": "Create service for character reactions to world events.",
       "acceptanceCriteria": [
-        "Create src/contexts/world/application/services/rumor_propagation.py",
-        "Method: propagate_rumors(world_id: str) -> list[Rumor]",
-        "Each tick: rumors spread to adjacent locations",
-        "Truth decay: -10 per hop",
-        "Generate rumors from HistoricalEvents",
-        "Test: propagation tests"
+        "Create src/contexts/character/application/services/character_reactor.py",
+        "Class: CharacterReactor",
+        "Method: react_to_event(character: Character, event: HistoryEvent, world: WorldState) -> CharacterReaction",
+        "Rule-based reaction logic:",
+        "  - If character.faction_id in event.affected_faction_ids: higher intensity",
+        "  - If event.impact_scope == GLOBAL: all characters react",
+        "  - If event.event_type == WAR and character.pacifist: PROTEST",
+        "  - If event.event_type == DEATH and character knows deceased: MOURN",
+        "  - If event.event_type == TRADE and character is merchant: CELEBRATE",
+        "  - Default: OBSERVE with random intensity 1-5",
+        "Integration with CharacterMemoryService to create memory entry",
+        "Create tests with various event types"
       ],
       "priority": 22,
       "passes": false,
       "effort": "medium",
-      "blockedBy": ["SIM-021"],
-      "files": ["src/contexts/world/application/services/rumor_propagation.py"]
+      "blockedBy": ["SIM-005", "SIM-021"],
+      "files": [
+        "src/contexts/character/application/services/character_reactor.py",
+        "tests/unit/contexts/character/application/services/test_character_reactor.py"
+      ]
     },
     {
       "id": "SIM-023",
-      "title": "Frontend - Rumor Board",
-      "description": "Create component to display rumors at a location.",
+      "title": "Frontend - Character Location Display",
+      "description": "Update LocationTree to show characters at each location.",
       "acceptanceCriteria": [
-        "Create frontend/src/components/world/RumorBoard.tsx",
-        "List rumors for selected location",
-        "Truth indicator: green=true (80+), yellow=uncertain (40-79), red=false (0-39)",
-        "Use existing Card/List patterns",
-        "E2E test: display test"
+        "Update frontend/src/components/world/LocationTree.tsx",
+        "For each location node, show character avatars as children",
+        "Use shadcn/ui Avatar component with character initials or image",
+        "Avatar shows: name tooltip on hover, status indicator (alive/deceased)",
+        "Click avatar opens CharacterDetailDialog (existing or create minimal)",
+        "Add filter toggle: show/hide characters in tree",
+        "Handle: characters without location (show in 'Unknown' category)",
+        "E2E test: verify characters appear under correct locations"
       ],
       "priority": 23,
       "passes": false,
       "effort": "low",
-      "blockedBy": ["SIM-022"],
-      "files": ["frontend/src/components/world/RumorBoard.tsx"]
+      "blockedBy": ["SIM-020"],
+      "files": [
+        "frontend/src/components/world/LocationTree.tsx"
+      ]
     },
     {
       "id": "SIM-024",
-      "title": "Application - SanityChecker",
-      "description": "Create service to validate world state consistency.",
+      "title": "Domain - Rumor Entity",
+      "description": "Create entity for rumors that spread through the world.",
       "acceptanceCriteria": [
-        "Create src/contexts/world/application/services/simulation_sanity_checker.py",
-        "Method: check(world: WorldState) -> list[SanityViolation]",
-        "Rules: dead chars no location, zero-influence factions no territories, no circular location parents",
-        "Returns warnings (non-blocking)",
-        "Test: sanity check tests"
+        "Create src/contexts/world/domain/entities/rumor.py",
+        "Create RumorOrigin enum: EVENT, NPC, PLAYER, UNKNOWN",
+        "Create Rumor dataclass:",
+        "  - rumor_id: str",
+        "  - content: str",
+        "  - truth_value: int (0-100, 100 = completely true)",
+        "  - origin_type: RumorOrigin",
+        "  - source_event_id: str | None",
+        "  - origin_location_id: str",
+        "  - current_locations: set[str]",
+        "  - created_date: WorldCalendar",
+        "  - spread_count: int (times it has spread)",
+        "Method: spread_to(location_id: str) -> Rumor (returns new instance with decreased truth)",
+        "Method: truth_after_spread() -> int (truth_value - 10 per hop, min 0)",
+        "Property: veracity_label -> str ('Confirmed', 'Likely True', 'Uncertain', 'Likely False', 'False')",
+        "Create tests"
       ],
       "priority": 24,
       "passes": false,
       "effort": "low",
-      "files": ["src/contexts/world/application/services/simulation_sanity_checker.py"]
+      "blockedBy": ["SIM-001"],
+      "files": [
+        "src/contexts/world/domain/entities/rumor.py",
+        "tests/unit/contexts/world/domain/entities/test_rumor.py"
+      ]
     },
     {
       "id": "SIM-025",
-      "title": "Domain - WorldSnapshot Entity",
-      "description": "Create entity for world state snapshots.",
+      "title": "Application - Rumor Propagation",
+      "description": "Create service to propagate rumors through locations.",
       "acceptanceCriteria": [
-        "Create src/contexts/world/domain/entities/world_snapshot.py",
-        "Fields: snapshot_id, world_id, calendar, state_json (serialized WorldState), created_at",
-        "Method: restore() -> WorldState",
-        "Test: snapshot/restore tests"
+        "Create src/contexts/world/application/services/rumor_propagation_service.py",
+        "Class: RumorPropagationService",
+        "Method: propagate_rumors(world: WorldState) -> list[Rumor]",
+        "Propagation logic:",
+        "  - Get all active rumors",
+        "  - For each rumor, find adjacent locations to current_locations",
+        "  - Spread to adjacent locations (decrease truth by 10)",
+        "  - Remove rumors with truth_value == 0",
+        "Method: create_rumor_from_event(event: HistoryEvent, world: WorldState) -> Rumor",
+        "  - Generate rumor content based on event (rule-based template)",
+        "  - Initial truth_value based on event impact_scope",
+        "  - Start at event location or random faction territory",
+        "Track rumor statistics: total_rumors, avg_truth, most_spread",
+        "Create tests"
       ],
       "priority": 25,
       "passes": false,
-      "effort": "low",
-      "blockedBy": ["SIM-002"],
-      "files": ["src/contexts/world/domain/entities/world_snapshot.py"]
+      "effort": "medium",
+      "blockedBy": ["SIM-005", "SIM-024"],
+      "files": [
+        "src/contexts/world/application/services/rumor_propagation_service.py",
+        "tests/unit/contexts/world/application/services/test_rumor_propagation_service.py"
+      ]
     },
     {
       "id": "SIM-026",
-      "title": "Application - SnapshotService",
-      "description": "Create service to manage world state snapshots.",
+      "title": "Frontend - Rumor Board",
+      "description": "Create component to display rumors at a location.",
       "acceptanceCriteria": [
-        "Create src/contexts/world/application/services/snapshot_service.py",
-        "Methods: create_snapshot(world_id), restore_snapshot(snapshot_id) -> Result, list_snapshots(world_id)",
-        "Auto-snapshot before each simulation tick",
-        "Max 10 snapshots per world (FIFO)",
-        "Test: snapshot lifecycle tests"
+        "Create frontend/src/components/world/RumorBoard.tsx",
+        "Props: worldId: string, locationId?: string (optional filter)",
+        "Display rumors as cards with:",
+        "  - Content (text)",
+        "  - Veracity indicator (color-coded badge)",
+        "  - Origin location name",
+        "  - Spread count",
+        "  - Age (days since created)",
+        "Color mapping: green (80+), yellow (40-79), orange (20-39), red (0-19)",
+        "Sort options: by truth_value, by spread_count, by created_date",
+        "Create frontend/src/lib/api/rumorApi.ts with:",
+        "  - useRumors(worldId, locationId?) hook",
+        "E2E test: verify rumors display with correct colors"
       ],
       "priority": 26,
       "passes": false,
-      "effort": "medium",
+      "effort": "low",
       "blockedBy": ["SIM-025"],
-      "files": ["src/contexts/world/application/services/snapshot_service.py"]
+      "files": [
+        "frontend/src/components/world/RumorBoard.tsx",
+        "frontend/src/lib/api/rumorApi.ts"
+      ]
     },
     {
       "id": "SIM-027",
-      "title": "API - Snapshot Router",
-      "description": "Create API endpoints for snapshot operations.",
+      "title": "Application - Sanity Checker",
+      "description": "Create service to validate world state consistency.",
       "acceptanceCriteria": [
-        "Create src/api/routers/snapshots.py",
-        "POST /world/{world_id}/snapshots - create snapshot",
-        "GET /world/{world_id}/snapshots - list snapshots",
-        "POST /world/{world_id}/snapshots/{snapshot_id}/restore - restore",
-        "Test: tests/api/test_snapshots_router.py"
+        "Create src/contexts/world/application/services/simulation_sanity_checker.py",
+        "Create SanityViolation dataclass: rule_name, severity, message, affected_ids",
+        "Create Severity enum: WARNING, ERROR",
+        "Class: SimulationSanityChecker",
+        "Method: check(world: WorldState) -> list[SanityViolation]",
+        "Rules to check:",
+        "  1. dead_character_has_location: ERROR if deceased character has current_location_id",
+        "  2. faction_no_influence_has_territories: WARNING if faction.influence == 0 and has territories",
+        "  3. circular_location_hierarchy: ERROR if location parent chain has cycles",
+        "  4. orphaned_entities: WARNING if entity references non-existent parent",
+        "  5. duplicate_faction_relations: ERROR if faction has duplicate relation entries",
+        "Method: check_and_raise(world) -> None (raises on ERROR severity)",
+        "Create tests with various violation scenarios"
       ],
       "priority": 27,
       "passes": false,
       "effort": "low",
-      "blockedBy": ["SIM-026"],
-      "files": ["src/api/routers/snapshots.py"]
+      "files": [
+        "src/contexts/world/application/services/simulation_sanity_checker.py",
+        "tests/unit/contexts/world/application/services/test_simulation_sanity_checker.py"
+      ]
     },
     {
       "id": "SIM-028",
-      "title": "Frontend - Simulation Dashboard",
-      "description": "Create main simulation dashboard page.",
+      "title": "Domain - WorldSnapshot Entity",
+      "description": "Create entity for world state snapshots.",
       "acceptanceCriteria": [
-        "Create frontend/src/pages/SimulationDashboard.tsx",
-        "Components: CalendarDisplay, Advance Time button, Recent Events feed, Faction status summary",
-        "Create Zustand store: frontend/src/stores/simulationStore.ts",
-        "Follow existing Dashboard patterns",
-        "E2E test: full flow test"
+        "Create src/contexts/world/domain/entities/world_snapshot.py",
+        "Create WorldSnapshot dataclass:",
+        "  - snapshot_id: str",
+        "  - world_id: str",
+        "  - calendar: WorldCalendar",
+        "  - state_json: str (JSON-serialized WorldState)",
+        "  - tick_number: int (sequential, 0 = initial)",
+        "  - description: str (auto-generated or user-provided)",
+        "  - created_at: datetime",
+        "Method: to_dict() -> dict (for serialization)",
+        "Class method: from_dict(data: dict) -> WorldSnapshot",
+        "Method: restore() -> WorldState (deserializes state_json)",
+        "Property: size_bytes -> int (length of state_json)",
+        "Create tests for serialize/deserialize cycle"
       ],
       "priority": 28,
       "passes": false,
+      "effort": "low",
+      "blockedBy": ["SIM-002"],
+      "files": [
+        "src/contexts/world/domain/entities/world_snapshot.py",
+        "tests/unit/contexts/world/domain/entities/test_world_snapshot.py"
+      ]
+    },
+    {
+      "id": "SIM-029",
+      "title": "Application - Snapshot Service",
+      "description": "Create service to manage world state snapshots.",
+      "acceptanceCriteria": [
+        "Create src/contexts/world/application/services/snapshot_service.py",
+        "Create SnapshotError enum: NOT_FOUND, RESTORE_FAILED, STORAGE_ERROR",
+        "Class: SnapshotService",
+        "Methods:",
+        "  - create_snapshot(world_id: str, description: str = '') -> WorldSnapshot",
+        "  - restore_snapshot(snapshot_id: str) -> Result[WorldState, SnapshotError]",
+        "  - list_snapshots(world_id: str, limit: int = 10) -> list[WorldSnapshot]",
+        "  - delete_snapshot(snapshot_id: str) -> bool",
+        "  - get_latest_snapshot(world_id: str) -> WorldSnapshot | None",
+        "Auto-naming: 'Tick {tick_number} - {calendar.format()}'",
+        "Storage: in-memory dict for now (add repository later)",
+        "Max snapshots per world: 10 (FIFO deletion)",
+        "Create tests"
+      ],
+      "priority": 29,
+      "passes": false,
+      "effort": "medium",
+      "blockedBy": ["SIM-028"],
+      "files": [
+        "src/contexts/world/application/services/snapshot_service.py",
+        "tests/unit/contexts/world/application/services/test_snapshot_service.py"
+      ]
+    },
+    {
+      "id": "SIM-030",
+      "title": "API - Snapshot Router",
+      "description": "Create API endpoints for snapshot operations.",
+      "acceptanceCriteria": [
+        "Create src/api/routers/snapshots.py",
+        "Router prefix: /world/{world_id}/snapshots",
+        "POST / -> CreateSnapshotRequest -> SnapshotResponse",
+        "GET / -> list[SnapshotSummary]",
+        "GET /{snapshot_id} -> SnapshotResponse",
+        "POST /{snapshot_id}/restore -> SnapshotResponse (confirms restore)",
+        "DELETE /{snapshot_id} -> bool",
+        "Add schemas to src/api/schemas.py:",
+        "  - CreateSnapshotRequest: description (optional)",
+        "  - SnapshotResponse: snapshot_id, calendar, tick_number, description, created_at, size_bytes",
+        "  - SnapshotSummary: snapshot_id, tick_number, description, created_at",
+        "Register router in main_api_server.py",
+        "Create tests/api/routers/test_snapshots.py"
+      ],
+      "priority": 30,
+      "passes": false,
+      "effort": "low",
+      "blockedBy": ["SIM-029"],
+      "files": [
+        "src/api/routers/snapshots.py",
+        "src/api/schemas.py",
+        "tests/api/routers/test_snapshots.py"
+      ]
+    },
+    {
+      "id": "SIM-031",
+      "title": "Frontend - Simulation Dashboard",
+      "description": "Create main simulation dashboard page with all controls.",
+      "acceptanceCriteria": [
+        "Create frontend/src/pages/SimulationDashboard.tsx",
+        "Layout: 3-column grid (left: controls, center: events, right: factions)",
+        "Left column - Controls:",
+        "  - CalendarDisplay component",
+        "  - SimulateButton: Preview (1/7/30 days) and Commit buttons",
+        "  - SnapshotControls: Create, List, Restore dropdown",
+        "  - Progress indicator during simulation",
+        "Center column - Events:",
+        "  - WorldTimeline component (filtered to recent)",
+        "  - RumorBoard component (collapsible)",
+        "Right column - Factions:",
+        "  - Faction status summary cards",
+        "  - Link to full DiplomacyMatrix",
+        "Create Zustand store: frontend/src/stores/simulationStore.ts",
+        "  - State: isLoading, lastTick, snapshots, error",
+        "  - Actions: runSimulation, createSnapshot, restoreSnapshot",
+        "Add route: /simulation in router",
+        "Add navigation link in sidebar",
+        "E2E test: full simulation flow (advance time, verify events, rollback)"
+      ],
+      "priority": 31,
+      "passes": false,
       "effort": "high",
-      "blockedBy": ["SIM-004", "SIM-007", "SIM-016"],
-      "files": ["frontend/src/pages/SimulationDashboard.tsx", "frontend/src/stores/simulationStore.ts"]
+      "blockedBy": ["SIM-004", "SIM-007", "SIM-018", "SIM-026", "SIM-030"],
+      "files": [
+        "frontend/src/pages/SimulationDashboard.tsx",
+        "frontend/src/stores/simulationStore.ts"
+      ]
     }
   ]
 }
