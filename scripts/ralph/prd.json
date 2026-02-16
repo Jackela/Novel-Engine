@@ -447,7 +447,7 @@
         "  - Empty world (no factions)"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "blockedBy": ["SIM-013", "SIM-014"],
       "files": [
