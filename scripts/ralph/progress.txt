@@ -137,3 +137,26 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Test file named test_history_events.py to distinguish from SSE events tests
   - Use reset_events_storage() fixture for test isolation
 ---
+## Mon Feb 16 22:00 CST 2026 - SIM-007
+- Created WorldTimeline React component with TanStack Query hooks
+- Implemented: useWorldEvents(worldId, filters) and useCreateEvent() hooks with cache invalidation
+- Added HistoryEventResponse, EventListResponse, EventFilterParams, CreateEventRequest schemas to frontend types
+- Component uses shadcn/ui Card, Badge, Button, Select, Skeleton, ScrollArea components
+- Vertical timeline with event cards showing: title, date, type badge, impact scope badge, description (expandable)
+- Filter controls: event_type dropdown, impact_scope dropdown with clear button
+- Accessibility: role='feed' on timeline, aria-labelledby on event cards, labels on filter dropdowns
+- Empty state, error state with retry, loading state with skeleton
+- E2E tests for rendering, filters, empty state, error handling, accessibility
+- Files changed:
+  - frontend/src/types/schemas.ts (modified - added HistoryEventResponse, EventListResponse, EventFilterParams, CreateEventRequest schemas)
+  - frontend/src/lib/api/eventsApi.ts (new - TanStack Query hooks for events API)
+  - frontend/src/lib/api/index.ts (modified - exported events hooks)
+  - frontend/src/components/world/WorldTimeline.tsx (new - timeline component)
+  - frontend/tests/e2e/timeline.spec.ts (new - E2E tests)
+- **Learnings for future iterations:**
+  - shadcn/ui components in this codebase use two paths: @/components/ui/* and @/shared/components/ui/*
+  - Badge and Skeleton are in @/shared/components/ui/, Card and Button are in @/components/ui/
+  - ScrollArea is in @/components/ui/scroll-area (kebab-case)
+  - Use role='feed' for timeline containers per ARIA best practices
+  - Article elements have implicit role="article" - don't add explicit role
+---

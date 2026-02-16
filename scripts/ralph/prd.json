@@ -199,7 +199,7 @@
         "E2E test: verify timeline renders, filters work, empty state displays"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "blockedBy": ["SIM-005", "SIM-006"],
       "files": [

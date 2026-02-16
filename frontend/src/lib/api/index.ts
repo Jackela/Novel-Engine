@@ -56,3 +56,13 @@ export {
 
 // Calendar API (SIM-004)
 export { useCalendar, useAdvanceCalendar } from './calendarApi';
+
+// Events API (SIM-007)
+export {
+  useWorldEvents,
+  useWorldEvent,
+  useCreateEvent,
+  getWorldEvents,
+  getWorldEvent,
+  createWorldEvent,
+} from './eventsApi';

@@ -1448,6 +1448,121 @@ export const AdvanceCalendarRequestSchema = z.object({
 export type CalendarResponse = z.infer<typeof CalendarResponseSchema>;
 export type AdvanceCalendarRequest = z.infer<typeof AdvanceCalendarRequestSchema>;
 
+// === History Event Schemas (SIM-006/SIM-007) ===
+
+/**
+ * Impact scope enum for historical events.
+ */
+export const ImpactScopeEnum = z.enum(['local', 'regional', 'global']);
+
+/**
+ * History event response schema matching backend HistoryEventResponse.
+ * Represents a historical event in the world timeline.
+ */
+export const HistoryEventResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  event_type: z.string(),
+  significance: z.string(),
+  outcome: z.string(),
+  date_description: z.string(),
+  duration_description: z.string().nullable().optional(),
+  location_ids: z.array(z.string()).default([]),
+  faction_ids: z.array(z.string()).default([]),
+  key_figures: z.array(z.string()).default([]),
+  causes: z.array(z.string()).default([]),
+  consequences: z.array(z.string()).default([]),
+  preceding_event_ids: z.array(z.string()).default([]),
+  following_event_ids: z.array(z.string()).default([]),
+  related_event_ids: z.array(z.string()).default([]),
+  is_secret: z.boolean().default(false),
+  sources: z.array(z.string()).default([]),
+  narrative_importance: z.number().min(0).max(100).default(50),
+  impact_scope: z.string().nullable().optional(),
+  affected_faction_ids: z.array(z.string()).nullable().optional(),
+  affected_location_ids: z.array(z.string()).nullable().optional(),
+  structured_date: z
+    .object({
+      year: z.number(),
+      month: z.number(),
+      day: z.number(),
+      era_name: z.string(),
+    })
+    .nullable()
+    .optional(),
+  created_at: z.string().nullable().optional(),
+  updated_at: z.string().nullable().optional(),
+});
+
+/**
+ * Event list response schema matching backend EventListResponse.
+ * Paginated list of historical events.
+ */
+export const EventListResponseSchema = z.object({
+  events: z.array(HistoryEventResponseSchema).default([]),
+  total_count: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  page_size: z.number().int().positive(),
+  total_pages: z.number().int().nonnegative(),
+});
+
+/**
+ * Event filter parameters for querying events.
+ */
+export const EventFilterParamsSchema = z.object({
+  event_type: z.string().optional(),
+  impact_scope: z.string().optional(),
+  from_date: z.string().optional(),
+  to_date: z.string().optional(),
+  faction_id: z.string().optional(),
+  location_id: z.string().optional(),
+  is_secret: z.boolean().optional(),
+  page: z.number().int().min(1).default(1),
+  page_size: z.number().int().min(1).max(100).default(20),
+});
+
+/**
+ * Request to create a new historical event.
+ */
+export const CreateEventRequestSchema = z.object({
+  name: z.string().min(1).max(300),
+  description: z.string().min(1),
+  event_type: z.string().default('political'),
+  significance: z.string().default('moderate'),
+  outcome: z.string().default('neutral'),
+  date_description: z.string().min(1),
+  duration_description: z.string().optional(),
+  location_ids: z.array(z.string()).optional(),
+  faction_ids: z.array(z.string()).optional(),
+  key_figures: z.array(z.string()).optional(),
+  causes: z.array(z.string()).optional(),
+  consequences: z.array(z.string()).optional(),
+  preceding_event_ids: z.array(z.string()).optional(),
+  following_event_ids: z.array(z.string()).optional(),
+  related_event_ids: z.array(z.string()).optional(),
+  is_secret: z.boolean().default(false),
+  sources: z.array(z.string()).optional(),
+  narrative_importance: z.number().min(0).max(100).default(50),
+  impact_scope: z.string().optional(),
+  affected_faction_ids: z.array(z.string()).optional(),
+  affected_location_ids: z.array(z.string()).optional(),
+  structured_date: z
+    .object({
+      year: z.number(),
+      month: z.number(),
+      day: z.number(),
+      era_name: z.string(),
+    })
+    .optional(),
+});
+
+export type ImpactScope = z.infer<typeof ImpactScopeEnum>;
+export type HistoryEventResponse = z.infer<typeof HistoryEventResponseSchema>;
+export type EventListResponse = z.infer<typeof EventListResponseSchema>;
+export type EventFilterParams = z.infer<typeof EventFilterParamsSchema>;
+export type CreateEventRequest = z.infer<typeof CreateEventRequestSchema>;
+
 // === Dialogue Generation Schemas (CHAR-027/CHAR-028) ===
 
 /**
