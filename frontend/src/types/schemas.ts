@@ -1422,6 +1422,32 @@ export type WorldRuleListResponse = z.infer<typeof WorldRuleListResponseSchema>;
 export type WorldRuleCreateRequest = z.infer<typeof WorldRuleCreateRequestSchema>;
 export type WorldRuleUpdateRequest = z.infer<typeof WorldRuleUpdateRequestSchema>;
 
+// === Calendar Schemas (SIM-004) ===
+
+/**
+ * Calendar response schema matching backend CalendarResponse.
+ * Represents the current world calendar state.
+ */
+export const CalendarResponseSchema = z.object({
+  year: z.number().int().min(1),
+  month: z.number().int().min(1),
+  day: z.number().int().min(1),
+  era_name: z.string(),
+  formatted_date: z.string(),
+  days_per_month: z.number().int().default(30),
+  months_per_year: z.number().int().default(12),
+});
+
+/**
+ * Request to advance the calendar by a number of days.
+ */
+export const AdvanceCalendarRequestSchema = z.object({
+  days: z.number().int().min(1).max(365).default(1),
+});
+
+export type CalendarResponse = z.infer<typeof CalendarResponseSchema>;
+export type AdvanceCalendarRequest = z.infer<typeof AdvanceCalendarRequestSchema>;
+
 // === Dialogue Generation Schemas (CHAR-027/CHAR-028) ===
 
 /**

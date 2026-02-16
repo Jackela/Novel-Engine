@@ -53,3 +53,6 @@ export {
   useExportOutline,
   type OutlineExportOptions,
 } from './outlineExportApi';
+
+// Calendar API (SIM-004)
+export { useCalendar, useAdvanceCalendar } from './calendarApi';

@@ -3,7 +3,7 @@
  * Full-page view for world state management
  */
 import { Suspense } from 'react';
-import { Globe, MapPin, Clock, Users, Layers, Settings, Network } from 'lucide-react';
+import { Globe, MapPin, Users, Layers, Network } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -14,6 +14,7 @@ import {
 import { Button } from '@/shared/components/ui';
 import { LoadingSpinner } from '@/shared/components/feedback';
 import { RelationshipGraph } from '@/components/graph';
+import { CalendarDisplay } from '@/components/world/CalendarDisplay';
 
 function RelationshipGraphCard() {
   return (
@@ -79,31 +80,16 @@ function LocationsList() {
 }
 
 function WorldClock() {
+  // Default world ID for demo - in production this would come from context/route
+  const DEFAULT_WORLD_ID = 'default-world';
+
   return (
-    <Card data-testid="world-clock">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-primary" />
-          World Time
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="text-center">
-            <p className="text-3xl font-bold">Day 15</p>
-            <p className="text-lg text-muted-foreground">Year 1042</p>
-          </div>
-          <div className="flex justify-center gap-2">
-            <Button variant="outline" size="sm">
-              Advance Day
-            </Button>
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <CalendarDisplay
+      worldId={DEFAULT_WORLD_ID}
+      onAdvance={(days) => {
+        console.log(`Calendar advanced by ${days} days`);
+      }}
+    />
   );
 }
 

@@ -11,6 +11,10 @@
 - Two app factories exist: src.api.main_api_server:create_app and src.api.app:create_app - routers must be registered in both
 - Tests use `import api_server` which loads src.api.app, not src.api.main_api_server
 - Error responses use ErrorDetail schema with 'code', 'message', 'details' fields (not 'detail')
+- Frontend TanStack Query hooks pattern: use queryClient.invalidateQueries for cache invalidation, onMutate/onError/onSettled for optimistic updates
+- Frontend API hooks are in frontend/src/lib/api/*.ts, feature-specific hooks can go in frontend/src/features/*/api/
+- Frontend components use shadcn/ui from @/shared/components/ui/ (Card, Button, etc.)
+- E2E tests import Page type from '@playwright/test' at top of file, not inline
 
 Started: Mon Feb 16 16:36:42 CST 2026
 ---
@@ -70,4 +74,28 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - The 404 handler in src.api.errors catches ALL 404s and reformats them with generic message
   - Result.unwrap() returns T but mypy still sees it as T | None due to type stub limitations
   - Pre-existing test failures in test_world_state_aggregate.py (uses old world_time field)
+---
+
+## Mon Feb 16 19:45 CST 2026 - SIM-004
+- Created CalendarDisplay React component with TanStack Query hooks
+- Implemented: useCalendar(worldId) and useAdvanceCalendar() hooks with optimistic updates
+- Added CalendarResponse and AdvanceCalendarRequest schemas to frontend types
+- Component uses shadcn/ui Card, Button components
+- Replaced hardcoded WorldClock component with CalendarDisplay in WorldPage
+- Accessibility: aria-live regions for announcements, aria-labels on all buttons
+- Loading skeleton, error state with retry, and success state implemented
+- E2E tests for rendering, button interactions, error handling, and accessibility
+- Files changed:
+  - frontend/src/types/schemas.ts (modified - added CalendarResponse, AdvanceCalendarRequest)
+  - frontend/src/lib/api/calendarApi.ts (new - TanStack Query hooks)
+  - frontend/src/lib/api/index.ts (modified - exported calendar hooks)
+  - frontend/src/components/world/CalendarDisplay.tsx (new)
+  - frontend/src/features/world/WorldPage.tsx (modified - replaced WorldClock with CalendarDisplay)
+  - frontend/tests/e2e/calendar.spec.ts (new - E2E tests)
+- **Learnings for future iterations:**
+  - Frontend TanStack Query pattern: queryKeys object for cache key factory
+  - Optimistic updates use onMutate (save previous, update cache), onError (rollback), onSettled (invalidate)
+  - E2E tests import Page type from '@playwright/test' at top level (not inline) to avoid ESLint parsing errors
+  - Component uses data-testid and data-state for test assertions
+  - Screen reader announcements use .sr-only class with aria-live="polite"
 ---

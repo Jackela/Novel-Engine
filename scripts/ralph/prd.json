@@ -111,7 +111,7 @@
         "E2E test: verify component renders, buttons work, error state displays"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "blockedBy": ["SIM-001", "SIM-003"],
       "files": [
