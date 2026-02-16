@@ -348,7 +348,7 @@
         "Create tests/unit/contexts/world/domain/entities/test_faction_intent.py"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": [
         "src/contexts/world/domain/entities/faction_intent.py",

@@ -239,3 +239,20 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Labels without associated inputs should use <span> instead of <label>
   - useCallback dependencies need to include functions used in the callback
 ---
+## Mon Feb 17 12:55 CST 2026 - SIM-012
+- Created FactionIntent entity with frozen dataclass for immutability
+- Implemented: IntentType enum (7 values: EXPAND, ATTACK, DEFEND, ALLY, TRADE, RECOVER, CONSOLIDATE)
+- Implemented: is_offensive property (ATTACK, EXPAND), is_defensive property (DEFEND, CONSOLIDATE)
+- Added to_dict() and from_dict() serialization methods with datetime parsing
+- Added validation: empty faction_id, empty narrative, priority range (1-10)
+- All 36 tests pass
+- Files changed:
+  - src/contexts/world/domain/entities/faction_intent.py (new)
+  - src/contexts/world/domain/entities/__init__.py (modified - added exports)
+  - tests/unit/contexts/world/domain/entities/test_faction_intent.py (new - 36 tests)
+- **Learnings for future iterations:**
+  - Frozen dataclasses are hashable and can be used in sets/dicts
+  - For frozen dataclass equality, all fields must match (including created_at)
+  - Test equality with frozen dataclasses requires same timestamp for created_at field
+  - isinstance check for typed enum fields is redundant and causes mypy unreachable error
+---
