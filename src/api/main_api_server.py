@@ -729,6 +729,7 @@ def _register_legacy_routes(app: FastAPI):
     # Import all router modules
     from src.api.routers.auth import router as auth_router
     from src.api.routers.cache import router as cache_router
+    from src.api.routers.calendar import router as calendar_router
     from src.api.routers.campaigns import router as campaigns_router
     from src.api.routers.characters import router as characters_router
     from src.api.routers.dialogue import router as dialogue_router
@@ -761,6 +762,7 @@ def _register_legacy_routes(app: FastAPI):
     # Register all routers with /api prefix only (no duplicate unprefixed routes)
     app.include_router(auth_router, prefix="/api")
     app.include_router(cache_router, prefix="/api")
+    app.include_router(calendar_router, prefix="/api")
     app.include_router(campaigns_router, prefix="/api")
     app.include_router(characters_router, prefix="/api")
     app.include_router(events_router, prefix="/api")

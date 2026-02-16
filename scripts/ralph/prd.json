@@ -77,7 +77,7 @@
         "Create tests/api/routers/test_calendar.py"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "blockedBy": ["SIM-002"],
       "files": [

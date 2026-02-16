@@ -75,6 +75,7 @@ def create_app(
 
     from src.api.routers.auth import router as auth_router
     from src.api.routers.cache import router as cache_router
+    from src.api.routers.calendar import router as calendar_router
     from src.api.routers.campaigns import router as campaigns_router
     from src.api.routers.characters import router as characters_router
     from src.api.routers.events import router as events_router
@@ -119,6 +120,7 @@ def create_app(
     app.include_router(character_inventory_router, prefix="/api")
     app.include_router(lore_router, prefix="/api")
     app.include_router(world_rules_router, prefix="/api")
+    app.include_router(calendar_router, prefix="/api")
 
     try:
         from src.api.prompts_router import router as prompts_router

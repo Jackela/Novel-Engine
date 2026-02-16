@@ -8,6 +8,9 @@
 - Import path pattern: `from src.contexts.<context>.domain.value_objects.<name> import <Class>`
 - Domain events can accept Union types for backward compatibility (datetime | str)
 - from_dict class methods should handle backward compatibility for renamed fields
+- Two app factories exist: src.api.main_api_server:create_app and src.api.app:create_app - routers must be registered in both
+- Tests use `import api_server` which loads src.api.app, not src.api.main_api_server
+- Error responses use ErrorDetail schema with 'code', 'message', 'details' fields (not 'detail')
 
 Started: Mon Feb 16 16:36:42 CST 2026
 ---
@@ -48,3 +51,23 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Pre-existing mypy errors in coordinates.py and event_bus.py are not from new code
 ---
 
+## Mon Feb 16 17:20 CST 2026 - SIM-003
+- Created Calendar API router with GET and POST endpoints
+- Implemented: GET /calendar/{world_id}, POST /calendar/{world_id}/advance
+- Request/Response models defined in router: CalendarResponse, AdvanceCalendarRequest
+- Router registered in both src.api.main_api_server and src.api.app
+- In-memory storage pattern used (MVP implementation)
+- Files changed:
+  - src/api/routers/calendar.py (new)
+  - src/api/main_api_server.py (modified - added router import and include_router)
+  - src/api/app.py (modified - added router import and include_router)
+  - tests/api/routers/__init__.py (new)
+  - tests/api/routers/test_calendar.py (new)
+- **Learnings for future iterations:**
+  - There are TWO app factories: src.api.main_api_server:create_app and src.api.app:create_app
+  - Tests import `api_server` which uses src.api.app, so routers must be registered in both places
+  - Error responses use ErrorDetail schema with 'code', 'message', 'details' fields (not 'detail')
+  - The 404 handler in src.api.errors catches ALL 404s and reformats them with generic message
+  - Result.unwrap() returns T but mypy still sees it as T | None due to type stub limitations
+  - Pre-existing test failures in test_world_state_aggregate.py (uses old world_time field)
+---
