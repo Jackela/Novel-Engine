@@ -395,3 +395,20 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - get_locations_visited() returns unique locations in order of first visit
   - Event includes location_id_before for tracking movement history
 ---
+## Mon Feb 17 20:30 CST 2026 - SIM-021
+- Created CharacterReaction value object with frozen dataclass
+- Implemented ReactionType enum with 7 values: OBSERVE, FLEE, INVESTIGATE, IGNORE, CELEBRATE, MOURN, PROTEST
+- Added enum properties: is_active, is_emotional, creates_memory
+- CharacterReaction fields: reaction_id, character_id, event_id, reaction_type, intensity (1-10), narrative, memory_created, created_at
+- Methods: is_intense(threshold), is_mild(), should_create_memory(), with_memory_created(), to_dict(), from_dict(), create()
+- All 65 new tests pass (plus 433 existing character tests = 498 total)
+- Files changed:
+  - src/contexts/character/domain/value_objects/character_reaction.py (new)
+  - src/contexts/character/domain/value_objects/__init__.py (modified - added exports)
+  - tests/unit/contexts/character/domain/test_character_reaction.py (new - 65 tests)
+- **Learnings for future iterations:**
+  - CharacterReaction tests are in test_character_reaction.py in tests/unit/contexts/character/domain/ (not in a value_objects subdirectory)
+  - ReactionType.creates_memory property can be used to determine if a reaction should create a memory
+  - should_create_memory() combines reaction_type check with intensity threshold (>=4)
+  - Pre-existing mypy errors in other value objects (character_goal.py, etc.) are not from new code
+---

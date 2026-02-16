@@ -625,11 +625,11 @@
         "Create tests"
       ],
       "priority": 21,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": [
         "src/contexts/character/domain/value_objects/character_reaction.py",
-        "tests/unit/contexts/character/domain/value_objects/test_character_reaction.py"
+        "tests/unit/contexts/character/domain/test_character_reaction.py"
       ]
     },
     {

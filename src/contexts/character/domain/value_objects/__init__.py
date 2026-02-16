@@ -11,6 +11,7 @@ Value objects included:
 - CharacterProfile: Core character identity and traits
 - CharacterStats: Abilities, health, mana, and combat statistics
 - Skills: Character abilities and proficiencies
+- CharacterReaction: Character responses to world events
 """
 
 from .character_goal import CharacterGoal, GoalStatus, GoalUrgency
@@ -26,6 +27,7 @@ from .character_profile import (
     PhysicalTraits,
 )
 from .character_psychology import CharacterPsychology
+from .character_reaction import CharacterReaction, ReactionType
 from .character_stats import (
     AbilityScore,
     CharacterStats,
@@ -39,8 +41,10 @@ __all__ = [
     "CharacterGoal",
     "CharacterMemory",
     "CharacterPsychology",
+    "CharacterReaction",
     "GoalStatus",
     "GoalUrgency",
+    "ReactionType",
     "CharacterID",
     "CharacterProfile",
     "Gender",
