@@ -379,7 +379,7 @@
         "Test scenarios: critical resources, no enemies, no territories available, collapsed faction"
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "blockedBy": ["SIM-012", "SIM-009"],
       "files": [

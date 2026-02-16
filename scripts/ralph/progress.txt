@@ -256,3 +256,22 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Test equality with frozen dataclasses requires same timestamp for created_at field
   - isinstance check for typed enum fields is redundant and causes mypy unreachable error
 ---
+## Mon Feb 17 13:30 CST 2026 - SIM-013
+- Created FactionIntentGenerator application service
+- Implemented rule-based intent generation with 6 rules evaluated in order
+- Rules: RECOVER (wealth<20), ATTACK (enemies+military>=30), ALLY (isolated+wealth>40), EXPAND (territories<3+wealth>50), DEFEND (military>80+enemies), CONSOLIDATE (default)
+- Max 3 intents returned per faction, sorted by priority descending
+- Edge case: disbanded faction returns empty list
+- All 22 tests pass
+- Files changed:
+  - src/contexts/world/application/services/faction_intent_generator.py (new)
+  - tests/unit/contexts/world/application/services/test_faction_intent_generator.py (new - 22 tests)
+- **Learnings for future iterations:**
+  - Application services directory is at src/contexts/world/application/services/
+  - Test directory structure: tests/unit/contexts/world/application/services/
+  - Faction uses economic_power for wealth, military_strength for military, territories list for territory count
+  - DiplomacyMatrix.get_enemies() returns list of faction IDs with HOSTILE or AT_WAR status
+  - DiplomacyMatrix.get_allies() returns list of faction IDs with ALLIED status
+  - DiplomacyMatrix.get_neutral() returns list of faction IDs with NEUTRAL status
+  - For MVP, target selection (weakest enemy, wealthiest neutral) needs faction repository access - currently picks first available
+---
