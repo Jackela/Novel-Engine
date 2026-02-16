@@ -356,3 +356,22 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - ResourceChanges accumulation uses clamping to -100/100 range
   - Territory changes recorded as dict: location_id -> new_owner_faction_id
 ---
+## Mon Feb 17 18:30 CST 2026 - SIM-019
+- Added life cycle fields to Character aggregate for birth/death tracking
+- New fields: birth_date (WorldCalendar | None), is_deceased (bool), death_date (WorldCalendar | None)
+- Added get_age(current_calendar) method: returns year difference or None if birth_date not set
+- Added mark_deceased(death_date) method: sets is_deceased=True, records death_date, emits CharacterUpdated event
+- Updated is_alive() to also check is_deceased flag (not just vital stats health)
+- Updated get_character_summary() to include birth_date, death_date, and is_deceased fields
+- Used TYPE_CHECKING pattern for WorldCalendar forward reference to avoid circular imports
+- All 17 new tests pass (plus 50 existing tests still pass = 67 total)
+- Files changed:
+  - src/contexts/character/domain/aggregates/character.py (modified - added fields, methods)
+  - tests/unit/contexts/character/domain/test_character_aggregate.py (modified - added TestCharacterBirthDate class)
+- **Learnings for future iterations:**
+  - Character is an aggregate (in domain/aggregates/), not an entity (in domain/entities/)
+  - Use TYPE_CHECKING import block for forward references to avoid circular imports
+  - WorldCalendar.to_dict() called in get_character_summary() - mock needs this method configured
+  - All new fields use Optional[Type] = None pattern for backward compatibility
+  - is_alive() now returns False if either health <= 0 OR is_deceased is True
+---

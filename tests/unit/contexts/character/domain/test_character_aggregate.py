@@ -1275,3 +1275,341 @@ class TestCharacterMetadataSmartTags:
 
         # Smart tag updates trigger CharacterUpdated event
         assert len(character_with_metadata.get_events()) > initial_event_count
+
+
+class TestCharacterBirthDate:
+    """Tests for Character birth date and life cycle functionality (SIM-019)."""
+
+    @pytest.fixture
+    def sample_core_abilities(self) -> CoreAbilities:
+        """Create sample core abilities for testing."""
+        return CoreAbilities(
+            strength=15,
+            dexterity=14,
+            constitution=16,
+            intelligence=12,
+            wisdom=13,
+            charisma=11,
+        )
+
+    @pytest.fixture
+    def sample_vital_stats(self) -> VitalStats:
+        """Create sample vital stats for testing."""
+        return VitalStats(
+            max_health=36,
+            current_health=36,
+            max_mana=15,
+            current_mana=15,
+            max_stamina=31,
+            current_stamina=31,
+            armor_class=12,
+            speed=30,
+        )
+
+    @pytest.fixture
+    def sample_combat_stats(self) -> CombatStats:
+        """Create sample combat stats for testing."""
+        return CombatStats(
+            base_attack_bonus=0,
+            initiative_modifier=2,
+            damage_reduction=0,
+            spell_resistance=0,
+            critical_hit_chance=0.05,
+            critical_damage_multiplier=2.0,
+        )
+
+    @pytest.fixture
+    def sample_character_stats(
+        self, sample_core_abilities, sample_vital_stats, sample_combat_stats
+    ) -> CharacterStats:
+        """Create sample character stats for testing."""
+        return CharacterStats(
+            core_abilities=sample_core_abilities,
+            vital_stats=sample_vital_stats,
+            combat_stats=sample_combat_stats,
+            experience_points=0,
+            skill_points=5,
+        )
+
+    @pytest.fixture
+    def sample_character_profile(self) -> CharacterProfile:
+        """Create sample character profile for testing."""
+        return CharacterProfile(
+            name="Test Warrior",
+            gender=Gender.MALE,
+            race=CharacterRace.HUMAN,
+            character_class=CharacterClass.FIGHTER,
+            age=25,
+            level=1,
+            physical_traits=PhysicalTraits(),
+            personality_traits=PersonalityTraits(
+                traits={
+                    "courage": 0.8,
+                    "intelligence": 0.6,
+                    "charisma": 0.5,
+                    "loyalty": 0.9,
+                }
+            ),
+            background=Background(),
+        )
+
+    @pytest.fixture
+    def sample_skills(self) -> Skills:
+        """Create sample skills for testing."""
+        combat_skill = Skill(
+            name="Melee Combat",
+            category=SkillCategory.COMBAT,
+            proficiency_level=ProficiencyLevel.NOVICE,
+            modifier=0,
+        )
+
+        physical_skill = Skill(
+            name="Athletics",
+            category=SkillCategory.PHYSICAL,
+            proficiency_level=ProficiencyLevel.APPRENTICE,
+            modifier=1,
+        )
+
+        skills = Mock()
+        skills.skill_groups = {
+            SkillCategory.COMBAT: [combat_skill],
+            SkillCategory.PHYSICAL: [physical_skill],
+        }
+        skills.get_skills_by_category = Mock(
+            side_effect=lambda cat: skills.skill_groups.get(cat, [])
+        )
+        skills.get_skill_summary = Mock(
+            return_value={"total_skills": 2, "trained_skills": 2}
+        )
+
+        return skills
+
+    @pytest.fixture
+    def sample_character(
+        self, sample_character_profile, sample_character_stats, sample_skills
+    ) -> Character:
+        """Create a test Character instance."""
+        return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills,
+        )
+
+    @pytest.fixture
+    def mock_world_calendar(self):
+        """Create a mock WorldCalendar for testing."""
+        calendar = Mock()
+        calendar.year = 1042
+        calendar.month = 3
+        calendar.day = 15
+        calendar.era_name = "Third Age"
+        calendar.to_dict = Mock(return_value={
+            "year": 1042,
+            "month": 3,
+            "day": 15,
+            "era_name": "Third Age",
+        })
+        return calendar
+
+    @pytest.fixture
+    def mock_birth_calendar(self):
+        """Create a mock birth date calendar."""
+        calendar = Mock()
+        calendar.year = 1017
+        calendar.month = 6
+        calendar.day = 20
+        calendar.era_name = "Third Age"
+        return calendar
+
+    # ==================== Birth Date Tests ====================
+
+    @pytest.mark.unit
+    def test_birth_date_defaults_to_none(self, sample_character):
+        """Test that birth_date defaults to None for backward compatibility."""
+        assert sample_character.birth_date is None
+
+    @pytest.mark.unit
+    def test_birth_date_can_be_set(
+        self, sample_character, mock_birth_calendar
+    ):
+        """Test that birth_date can be set on a character."""
+        sample_character.birth_date = mock_birth_calendar
+
+        assert sample_character.birth_date == mock_birth_calendar
+        assert sample_character.birth_date.year == 1017
+
+    @pytest.mark.unit
+    def test_get_age_returns_none_without_birth_date(
+        self, sample_character, mock_world_calendar
+    ):
+        """Test that get_age returns None when birth_date is not set."""
+        age = sample_character.get_age(mock_world_calendar)
+
+        assert age is None
+
+    @pytest.mark.unit
+    def test_get_age_calculates_correctly(
+        self, sample_character, mock_world_calendar, mock_birth_calendar
+    ):
+        """Test that get_age calculates age correctly from birth date."""
+        sample_character.birth_date = mock_birth_calendar
+
+        age = sample_character.get_age(mock_world_calendar)
+
+        # 1042 - 1017 = 25
+        assert age == 25
+
+    @pytest.mark.unit
+    def test_get_age_same_year(
+        self, sample_character, mock_world_calendar
+    ):
+        """Test get_age when current year equals birth year."""
+        mock_birth = Mock()
+        mock_birth.year = 1042  # Same as current year
+        sample_character.birth_date = mock_birth
+
+        age = sample_character.get_age(mock_world_calendar)
+
+        assert age == 0
+
+    # ==================== Deceased Status Tests ====================
+
+    @pytest.mark.unit
+    def test_is_deceased_defaults_to_false(self, sample_character):
+        """Test that is_deceased defaults to False."""
+        assert sample_character.is_deceased is False
+
+    @pytest.mark.unit
+    def test_death_date_defaults_to_none(self, sample_character):
+        """Test that death_date defaults to None."""
+        assert sample_character.death_date is None
+
+    @pytest.mark.unit
+    def test_mark_deceased_sets_flag_and_date(
+        self, sample_character, mock_world_calendar
+    ):
+        """Test mark_deceased sets both is_deceased and death_date."""
+        initial_version = sample_character.version
+
+        sample_character.mark_deceased(mock_world_calendar)
+
+        assert sample_character.is_deceased is True
+        assert sample_character.death_date == mock_world_calendar
+        assert sample_character.version == initial_version + 1
+
+    @pytest.mark.unit
+    def test_mark_deceased_fails_if_already_deceased(
+        self, sample_character, mock_world_calendar
+    ):
+        """Test mark_deceased raises error if already deceased."""
+        sample_character.mark_deceased(mock_world_calendar)
+
+        with pytest.raises(ValueError) as exc_info:
+            sample_character.mark_deceased(mock_world_calendar)
+
+        assert "already marked as deceased" in str(exc_info.value)
+
+    @pytest.mark.unit
+    def test_mark_deceased_triggers_domain_event(
+        self, sample_character, mock_world_calendar
+    ):
+        """Test mark_deceased triggers a CharacterUpdated event."""
+        initial_event_count = len(sample_character.get_events())
+
+        sample_character.mark_deceased(mock_world_calendar)
+
+        assert len(sample_character.get_events()) == initial_event_count + 1
+        event = sample_character.get_events()[-1]
+        assert event.__class__.__name__ == "CharacterUpdated"
+
+    @pytest.mark.unit
+    def test_is_alive_returns_false_when_deceased(
+        self, sample_character, mock_world_calendar
+    ):
+        """Test is_alive returns False when character is marked deceased."""
+        sample_character.mark_deceased(mock_world_calendar)
+
+        # Even though health > 0, is_alive should return False
+        assert sample_character.stats.vital_stats.current_health > 0
+        assert sample_character.is_alive() is False
+
+    # ==================== Summary Integration Tests ====================
+
+    @pytest.mark.unit
+    def test_summary_includes_birth_date_when_set(
+        self, sample_character, mock_birth_calendar
+    ):
+        """Test that get_character_summary includes birth_date when set."""
+        sample_character.birth_date = mock_birth_calendar
+
+        summary = sample_character.get_character_summary()
+
+        assert "birth_date" in summary
+        # Verify the birth_date was serialized via to_dict()
+        mock_birth_calendar.to_dict.assert_called_once()
+
+    @pytest.mark.unit
+    def test_summary_includes_death_date_when_set(
+        self, sample_character, mock_world_calendar
+    ):
+        """Test that get_character_summary includes death_date when set."""
+        sample_character.mark_deceased(mock_world_calendar)
+
+        summary = sample_character.get_character_summary()
+
+        assert "death_date" in summary
+        assert "is_deceased" in summary
+        assert summary["is_deceased"] is True
+
+    @pytest.mark.unit
+    def test_summary_excludes_birth_date_when_none(self, sample_character):
+        """Test that get_character_summary excludes birth_date when None."""
+        summary = sample_character.get_character_summary()
+
+        assert "birth_date" not in summary
+
+    @pytest.mark.unit
+    def test_summary_excludes_death_date_when_none(self, sample_character):
+        """Test that get_character_summary excludes death_date when None."""
+        summary = sample_character.get_character_summary()
+
+        assert "death_date" not in summary
+        # is_deceased should still be included (as False)
+        assert summary["is_deceased"] is False
+
+    # ==================== Backward Compatibility Tests ====================
+
+    @pytest.mark.unit
+    def test_character_creation_without_birth_date(
+        self, sample_character_profile, sample_character_stats, sample_skills
+    ):
+        """Test that characters can still be created without birth_date."""
+        character = Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills,
+        )
+
+        assert character.birth_date is None
+        assert character.is_deceased is False
+        assert character.death_date is None
+
+    @pytest.mark.unit
+    def test_character_creation_with_birth_date(
+        self, sample_character_profile, sample_character_stats,
+        sample_skills, mock_birth_calendar
+    ):
+        """Test that characters can be created with birth_date."""
+        character = Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills,
+            birth_date=mock_birth_calendar,
+        )
+
+        assert character.birth_date == mock_birth_calendar
+        assert character.is_deceased is False
+        assert character.death_date is None
