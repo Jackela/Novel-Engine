@@ -99,3 +99,21 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Component uses data-testid and data-state for test assertions
   - Screen reader announcements use .sr-only class with aria-live="polite"
 ---
+## Mon Feb 16 20:15 CST 2026 - SIM-005
+- Enhanced HistoryEvent entity with simulation support fields
+- Added ImpactScope enum: LOCAL, REGIONAL, GLOBAL
+- Added EventType values: TRADE, NATURAL (EventType already existed with many values)
+- Added nullable backward-compatible fields: impact_scope, affected_faction_ids, affected_location_ids, structured_date
+- Updated to_dict() serialization for new fields
+- All 32 HistoryEvent tests pass
+- Files changed:
+  - src/contexts/world/domain/entities/history_event.py (modified)
+  - tests/unit/contexts/world/domain/test_world_entities.py (modified - added 11 new tests)
+- **Learnings for future iterations:**
+  - EventType enum already existed with extensive values - added TRADE and NATURAL
+  - Used TYPE_CHECKING pattern for forward reference to WorldCalendar to avoid circular import
+  - New fields use Optional[Type] = None pattern for backward compatibility
+  - Tests for this entity are in test_world_entities.py, not a separate file
+  - to_dict() needs explicit handling for optional enums (check None before .value)
+  - to_dict() needs explicit handling for structured objects (call .to_dict() if not None)
+---
