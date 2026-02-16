@@ -474,7 +474,7 @@
         "Update tests with resolution scenarios"
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "blockedBy": ["SIM-015"],
       "files": [

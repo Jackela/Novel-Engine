@@ -322,3 +322,37 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Calendar advance returns Result type that needs proper error unwrapping
   - Use AsyncMock for async repository methods in tests
 ---
+## Mon Feb 17 17:30 CST 2026 - SIM-016
+- Created ResolutionResult dataclass for tracking intent resolution outcomes
+- Implemented _resolve_intents() method with all resolution rules
+- Resolution rules implemented:
+  - ATTACK: Reduces military (-5 each), transfers territory if attacker stronger, conflict detection for multiple attackers
+  - EXPAND: Requires economic_power >= 20, costs 10 wealth
+  - ALLY: Creates ALLIED diplomacy status, fails if currently AT_WAR/HOSTILE
+  - RECOVER: +5 wealth if below 50
+  - DEFEND: +3 military if below 80
+  - CONSOLIDATE: +2 wealth, +1 military (default fallback)
+  - TRADE: Succeeds with no immediate effect (placeholder for future trade routes)
+- Conflict handling: Multiple attackers on same target - strongest wins territory, all suffer losses
+- ResolutionResult tracks: resource_changes, diplomacy_changes, territory_changes, successful_intents, failed_intents
+- All 35 unit tests pass covering:
+  - ResolutionResult dataclass methods (12 tests)
+  - ATTACK intent scenarios (6 tests)
+  - EXPAND intent scenarios (2 tests)
+  - ALLY intent scenarios (3 tests)
+  - RECOVER intent scenarios (2 tests)
+  - DEFEND intent scenarios (2 tests)
+  - CONSOLIDATE intent (1 test)
+  - TRADE intent (1 test)
+  - Priority handling (2 tests)
+  - Edge cases (4 tests)
+- Files changed:
+  - src/contexts/world/application/services/world_simulation_service.py (modified - added ResolutionResult, _resolve_intents, helper methods)
+  - tests/unit/contexts/world/application/services/test_intent_resolution.py (new - 35 tests)
+- **Learnings for future iterations:**
+  - Faction() default constructor fails validation - must provide name field
+  - Use helper function instead of lambda when type narrowing is needed for mypy
+  - Intent conflict resolution happens BEFORE military losses to ensure all attackers take damage
+  - ResourceChanges accumulation uses clamping to -100/100 range
+  - Territory changes recorded as dict: location_id -> new_owner_faction_id
+---
