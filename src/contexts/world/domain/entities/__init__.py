@@ -39,6 +39,10 @@ from .relationship import (
     Relationship,
     RelationshipType,
 )
+from .faction_intent import (
+    FactionIntent,
+    IntentType,
+)
 from .world_rule import WorldRule
 from .world_setting import (
     Era,
@@ -85,4 +89,7 @@ __all__ = [
     "LoreCategory",
     # WorldRule
     "WorldRule",
+    # FactionIntent
+    "FactionIntent",
+    "IntentType",
 ]
