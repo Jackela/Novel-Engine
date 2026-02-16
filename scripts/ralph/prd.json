@@ -179,7 +179,7 @@
       "priority": 7,
       "passes": false,
       "effort": "medium",
-      "blockedBy": ["SIM-001", "SIM-006"],
+      "blockedBy": ["SIM-005", "SIM-006"],
       "files": [
         "frontend/src/components/world/WorldTimeline.tsx",
         "frontend/src/lib/api/eventsApi.ts"
@@ -459,7 +459,7 @@
       "priority": 17,
       "passes": false,
       "effort": "high",
-      "blockedBy": ["SIM-016", "SIM-024", "SIM-026", "SIM-022"],
+      "blockedBy": ["SIM-016", "SIM-024", "SIM-025", "SIM-022"],
       "files": [
         "src/contexts/world/application/services/world_simulation_service.py"
       ]
