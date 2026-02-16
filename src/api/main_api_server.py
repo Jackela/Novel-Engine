@@ -733,6 +733,7 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.campaigns import router as campaigns_router
     from src.api.routers.characters import router as characters_router
     from src.api.routers.dialogue import router as dialogue_router
+    from src.api.routers.diplomacy import router as diplomacy_router
     from src.api.routers.events import router as events_router
     from src.api.routers.experiments import router as experiments_router
     from src.api.routers.factions import router as factions_router
@@ -765,6 +766,7 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(calendar_router, prefix="/api")
     app.include_router(campaigns_router, prefix="/api")
     app.include_router(characters_router, prefix="/api")
+    app.include_router(diplomacy_router, prefix="/api")
     app.include_router(events_router, prefix="/api")
     app.include_router(generation_router, prefix="/api")
     app.include_router(guest_router, prefix="/api")
