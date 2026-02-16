@@ -1,5 +1,6 @@
 # Ralph Progress - Warzone 5: World Simulation
 Started: Sun Feb 16 2025
+Branch: feat/world-simulation
 ---
 
 ## Codebase Patterns
@@ -10,5 +11,6 @@ Started: Sun Feb 16 2025
 - Frontend: shadcn/ui + Tailwind ONLY, no custom CSS
 - Zustand for global state, TanStack Query for server state
 - Follow existing patterns in world/ context
+- All error returns use Result pattern, not exceptions (per CLAUDE.md)
 
 ---
