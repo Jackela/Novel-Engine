@@ -657,7 +657,7 @@
         "Create tests with mock Character, HistoryEvent, WorldState covering all reaction types"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "blockedBy": ["SIM-005", "SIM-021"],
       "files": [

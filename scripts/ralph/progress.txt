@@ -412,3 +412,33 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - should_create_memory() combines reaction_type check with intensity threshold (>=4)
   - Pre-existing mypy errors in other value objects (character_goal.py, etc.) are not from new code
 ---
+## Mon Feb 17 21:30 CST 2026 - SIM-022
+- Created CharacterReactor application service for character reactions to world events
+- Implemented: react_to_event(character, event, world) -> CharacterReaction with full rule-based logic
+- Intensity calculation:
+  - Base by impact_scope: LOCAL=3, REGIONAL=5, GLOBAL=7
+  - +2 modifier if character.faction_id in event.affected_faction_ids
+  - +1 modifier if character.current_location_id in event.affected_location_ids
+  - Clamped to range 1-10
+- Reaction type rules (first match wins):
+  - WAR + pacifist trait -> PROTEST
+  - DEATH + relationship to figure -> MOURN
+  - TRADE + merchant trait -> CELEBRATE
+  - WAR + location affected -> FLEE
+  - GLOBAL impact scope -> OBSERVE
+  - Default -> IGNORE
+- Narrative generation: "{character_name} {reaction_verb} upon hearing {event_title}"
+- Memory integration: Calls memory_service.create_memory() if reaction should create memory
+- Trait detection: Checks personality_traits (>=0.7 score), psychology dominant traits, and metadata traits
+- Batch processing: batch_react() method for processing multiple characters
+- All 36 new tests pass
+- Files changed:
+  - src/contexts/character/application/services/character_reactor.py (new)
+  - tests/unit/contexts/character/application/services/test_character_reactor.py (new - 36 tests)
+- **Learnings for future iterations:**
+  - CharacterProfile is frozen - can't modify personality_traits after creation, must create character with desired traits
+  - HistoryEvent requires date_description field (non-nullable)
+  - Trait detection uses get_trait_score() method on PersonalityTraits, with 0.7 threshold
+  - Memory service is injected via Protocol for dependency injection
+  - Pre-existing mypy errors in dependencies (skills.py, character_stats.py, etc.) are not from new code
+---
