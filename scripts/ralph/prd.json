@@ -165,7 +165,7 @@
         "Create tests/api/routers/test_events.py"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "blockedBy": ["SIM-005"],
       "files": [

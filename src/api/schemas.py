@@ -3322,3 +3322,146 @@ class StartIngestionJobResponse(BaseModel):
     job_id: str = Field(..., description="Unique identifier for the job")
     status: IngestionJobStatus = Field(..., description="Initial job status")
     message: str = Field(..., description="Status message")
+
+
+# === History Event Schemas (SIM-006) ===
+
+
+class HistoryEventResponse(BaseModel):
+    """Response model for a historical event."""
+
+    id: str = Field(..., description="Unique identifier for the event")
+    name: str = Field(..., description="Short name/title of the event")
+    description: str = Field(..., description="Detailed description of what happened")
+    event_type: str = Field(..., description="Classification of the event type")
+    significance: str = Field(..., description="Level of historical significance")
+    outcome: str = Field(..., description="General outcome of the event")
+    date_description: str = Field(..., description="Narrative date description")
+    duration_description: Optional[str] = Field(
+        None, description="How long the event lasted"
+    )
+    location_ids: List[str] = Field(
+        default_factory=list, description="IDs of locations where event occurred"
+    )
+    faction_ids: List[str] = Field(
+        default_factory=list, description="IDs of factions involved"
+    )
+    key_figures: List[str] = Field(
+        default_factory=list, description="Names of key individuals involved"
+    )
+    causes: List[str] = Field(default_factory=list, description="What led to this event")
+    consequences: List[str] = Field(
+        default_factory=list, description="What resulted from this event"
+    )
+    preceding_event_ids: List[str] = Field(
+        default_factory=list, description="IDs of events that directly preceded this one"
+    )
+    following_event_ids: List[str] = Field(
+        default_factory=list, description="IDs of events that directly followed this one"
+    )
+    related_event_ids: List[str] = Field(
+        default_factory=list, description="IDs of related but not directly connected events"
+    )
+    is_secret: bool = Field(False, description="Whether this event is hidden from common knowledge")
+    sources: List[str] = Field(
+        default_factory=list, description="Where knowledge of this event comes from"
+    )
+    narrative_importance: int = Field(
+        50, ge=0, le=100, description="How important this is to the story (0-100)"
+    )
+    impact_scope: Optional[str] = Field(
+        None, description="Geographic scope of the event's impact (local, regional, global)"
+    )
+    affected_faction_ids: Optional[List[str]] = Field(
+        None, description="IDs of factions directly affected (distinct from involved)"
+    )
+    affected_location_ids: Optional[List[str]] = Field(
+        None, description="IDs of locations directly affected (distinct from where occurred)"
+    )
+    structured_date: Optional[Dict[str, Any]] = Field(
+        None, description="Structured calendar date for simulation events"
+    )
+    created_at: Optional[str] = Field(None, description="ISO 8601 timestamp when event was created")
+    updated_at: Optional[str] = Field(None, description="ISO 8601 timestamp when event was last updated")
+
+
+class CreateEventRequest(BaseModel):
+    """Request model for creating a new historical event."""
+
+    name: str = Field(..., min_length=1, max_length=300, description="Short name/title of the event")
+    description: str = Field(..., min_length=1, description="Detailed description of what happened")
+    event_type: str = Field(
+        default="political",
+        description="Classification of the event type (e.g., war, battle, treaty, discovery)",
+    )
+    significance: str = Field(
+        default="moderate",
+        description="Level of historical significance (trivial, minor, moderate, major, world_changing, legendary)",
+    )
+    outcome: str = Field(
+        default="neutral",
+        description="General outcome of the event (positive, negative, neutral, mixed, unknown)",
+    )
+    date_description: str = Field(..., min_length=1, description="Narrative date description")
+    duration_description: Optional[str] = Field(None, description="How long the event lasted")
+    location_ids: Optional[List[str]] = Field(None, description="IDs of locations where event occurred")
+    faction_ids: Optional[List[str]] = Field(None, description="IDs of factions involved")
+    key_figures: Optional[List[str]] = Field(None, description="Names of key individuals involved")
+    causes: Optional[List[str]] = Field(None, description="What led to this event")
+    consequences: Optional[List[str]] = Field(None, description="What resulted from this event")
+    preceding_event_ids: Optional[List[str]] = Field(
+        None, description="IDs of events that directly preceded this one"
+    )
+    following_event_ids: Optional[List[str]] = Field(
+        None, description="IDs of events that directly followed this one"
+    )
+    related_event_ids: Optional[List[str]] = Field(
+        None, description="IDs of related but not directly connected events"
+    )
+    is_secret: bool = Field(False, description="Whether this event is hidden from common knowledge")
+    sources: Optional[List[str]] = Field(
+        None, description="Where knowledge of this event comes from"
+    )
+    narrative_importance: int = Field(
+        default=50, ge=0, le=100, description="How important this is to the story (0-100)"
+    )
+    impact_scope: Optional[str] = Field(
+        None, description="Geographic scope of the event's impact (local, regional, global)"
+    )
+    affected_faction_ids: Optional[List[str]] = Field(
+        None, description="IDs of factions directly affected (distinct from involved)"
+    )
+    affected_location_ids: Optional[List[str]] = Field(
+        None, description="IDs of locations directly affected (distinct from where occurred)"
+    )
+    structured_date: Optional[Dict[str, Any]] = Field(
+        None, description="Structured calendar date for simulation events"
+    )
+
+
+class EventFilterParams(BaseModel):
+    """Query parameters for filtering historical events."""
+
+    event_type: Optional[str] = Field(None, description="Filter by event type")
+    impact_scope: Optional[str] = Field(None, description="Filter by impact scope (local, regional, global)")
+    from_date: Optional[str] = Field(None, description="Filter events from this date (ISO format or narrative)")
+    to_date: Optional[str] = Field(None, description="Filter events to this date (ISO format or narrative)")
+    faction_id: Optional[str] = Field(None, description="Filter by faction ID involved")
+    location_id: Optional[str] = Field(None, description="Filter by location ID")
+    is_secret: Optional[bool] = Field(None, description="Filter by secret status")
+    page: int = Field(default=1, ge=1, description="Page number for pagination")
+    page_size: int = Field(
+        default=20, ge=1, le=100, description="Number of items per page (1-100)"
+    )
+
+
+class EventListResponse(BaseModel):
+    """Response model for paginated list of historical events."""
+
+    events: List[HistoryEventResponse] = Field(
+        default_factory=list, description="List of historical events"
+    )
+    total_count: int = Field(..., description="Total number of events matching the filter")
+    page: int = Field(..., description="Current page number")
+    page_size: int = Field(..., description="Number of items per page")
+    total_pages: int = Field(..., description="Total number of pages")

@@ -117,3 +117,23 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - to_dict() needs explicit handling for optional enums (check None before .value)
   - to_dict() needs explicit handling for structured objects (call .to_dict() if not None)
 ---
+## Mon Feb 16 21:30 CST 2026 - SIM-006
+- Created Events API router with GET and POST endpoints
+- Implemented: GET /world/{world_id}/events (list with pagination/filters), POST /world/{world_id}/events (create), GET /world/{world_id}/events/{event_id} (details)
+- Added schemas to src/api/schemas.py: HistoryEventResponse, CreateEventRequest, EventListResponse
+- Filter parameters: event_type, impact_scope, from_date, to_date, faction_id, location_id, is_secret, page, page_size
+- Router added to existing events.py file (which already had SSE streaming endpoints)
+- In-memory storage pattern used (MVP implementation)
+- All 22 new tests pass
+- Files changed:
+  - src/api/routers/events.py (modified - added history event endpoints)
+  - src/api/schemas.py (modified - added HistoryEventResponse, CreateEventRequest, EventListResponse)
+  - tests/api/routers/test_history_events.py (new - 22 tests)
+- **Learnings for future iterations:**
+  - events.py router was already registered in main_api_server.py and app.py - no registration changes needed
+  - Router paths start with /world/{world_id}/events and get /api prefix from include_router
+  - Error responses use ErrorDetail schema with 'code', 'message', 'details' fields (not 'detail')
+  - The global 404 handler catches ALL 404s including HTTPException with 404 status
+  - Test file named test_history_events.py to distinguish from SSE events tests
+  - Use reset_events_storage() fixture for test isolation
+---
