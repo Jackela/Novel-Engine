@@ -177,3 +177,22 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Boundary tests are crucial for strength-based enum mappings
   - Pre-existing mypy errors in coordinates.py are not from new code
 ---
+## Mon Feb 16 23:00 CST 2026 - SIM-009
+- Created DiplomacyMatrix aggregate to manage faction diplomatic relations
+- Implemented: get_status, set_status (with Result pattern), get_allies, get_enemies, get_neutral, to_matrix
+- Relations stored as symmetric tuples (A,B) where tuple is always sorted for consistency
+- Added register_faction and remove_faction for faction lifecycle management
+- Added get_factions_by_status for filtering by specific status
+- Validation: self-relations rejected, unknown factions in relations detected
+- All 33 tests pass
+- Files changed:
+  - src/contexts/world/domain/aggregates/diplomacy_matrix.py (new)
+  - src/contexts/world/domain/aggregates/__init__.py (new)
+  - tests/unit/contexts/world/domain/aggregates/test_diplomacy_matrix.py (new - 33 tests)
+- **Learnings for future iterations:**
+  - Aggregate directory needed __init__.py (didn't exist before)
+  - Relations use sorted tuple keys for O(1) lookup regardless of (A,B) or (B,A) order
+  - to_matrix() fills missing relations with NEUTRAL and self-relations as "-"
+  - Aggregate inherits from Entity, so gets id, version, created_at, updated_at automatically
+  - Use self.touch() when modifying aggregate state to update timestamp and version
+---
