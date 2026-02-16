@@ -375,3 +375,23 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - All new fields use Optional[Type] = None pattern for backward compatibility
   - is_alive() now returns False if either health <= 0 OR is_deceased is True
 ---
+## Mon Feb 17 19:30 CST 2026 - SIM-020
+- Added location tracking to Character aggregate
+- New fields: current_location_id (str | None), travel_history (List[TravelRecord])
+- Created TravelRecord dataclass: location_id, arrived_date, departed_date (nullable)
+- Created CharacterLocationChanged event: character_id, location_id_before, location_id_after, moved_at
+- Added move_to(location_id, arrival_date) method: updates location, creates travel record, emits event
+- Added query methods: get_current_location(), is_at_location(), get_travel_history(), get_locations_visited()
+- TravelRecord features: depart() method to close record, is_current() to check if still there
+- Event features: is_initial_placement() to check if first location
+- All 16 new location tests pass (plus 67 existing tests = 83 total)
+- Files changed:
+  - src/contexts/character/domain/aggregates/character.py (modified - added fields, methods)
+  - src/contexts/character/domain/events/character_events.py (modified - added TravelRecord, CharacterLocationChanged)
+  - tests/unit/contexts/character/domain/test_character_aggregate.py (modified - added TestCharacterLocationTracking class)
+- **Learnings for future iterations:**
+  - TravelRecord is a mutable dataclass (not frozen) to allow depart() to update departed_date
+  - move_to() closes previous travel record before creating new one
+  - get_locations_visited() returns unique locations in order of first visit
+  - Event includes location_id_before for tracking movement history
+---

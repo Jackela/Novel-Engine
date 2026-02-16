@@ -14,8 +14,10 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from ..events.character_events import (
     CharacterCreated,
     CharacterEvent,
+    CharacterLocationChanged,
     CharacterStatsChanged,
     CharacterUpdated,
+    TravelRecord,
 )
 from ..value_objects.character_goal import CharacterGoal, GoalUrgency
 from ..value_objects.character_id import CharacterID
@@ -95,6 +97,12 @@ class Character:
     is_deceased: bool = False
     # Date of death if applicable
     death_date: Optional["WorldCalendar"] = None
+
+    # Location tracking fields (SIM-020)
+    # Current location ID - which location the character is currently in
+    current_location_id: Optional[str] = None
+    # Travel history - record of all locations visited
+    travel_history: List[TravelRecord] = field(default_factory=list)
 
     # Domain events (not persisted)
     _events: List[CharacterEvent] = field(default_factory=list, init=False)
@@ -1266,6 +1274,98 @@ class Character:
             )
         )
 
+    # ==================== Location Operations (SIM-020) ====================
+
+    def move_to(
+        self,
+        location_id: str,
+        arrival_date: "WorldCalendar",
+    ) -> None:
+        """Move the character to a new location.
+
+        Updates the current location, closes the previous travel record
+        if any, and creates a new travel record for the new location.
+
+        Args:
+            location_id: The ID of the location to move to.
+            arrival_date: The world calendar date of arrival.
+
+        Raises:
+            ValueError: If location_id is empty.
+        """
+        if not location_id or not location_id.strip():
+            raise ValueError("Location ID cannot be empty")
+
+        previous_location = self.current_location_id
+
+        # Close the previous travel record if exists
+        if self.travel_history and self.travel_history[-1].is_current():
+            self.travel_history[-1].depart(arrival_date)
+
+        # Create new travel record
+        new_record = TravelRecord(
+            location_id=location_id,
+            arrived_date=arrival_date,
+            departed_date=None,
+        )
+        self.travel_history.append(new_record)
+
+        # Update current location
+        self.current_location_id = location_id
+        self.updated_at = datetime.now()
+        self.version += 1
+
+        # Record location change event
+        self._add_event(
+            CharacterLocationChanged.create(
+                character_id=self.character_id,
+                location_id_before=previous_location,
+                location_id_after=location_id,
+                moved_at=self.updated_at,
+            )
+        )
+
+    def get_current_location(self) -> Optional[str]:
+        """Get the character's current location ID.
+
+        Returns:
+            Current location ID or None if not placed anywhere.
+        """
+        return self.current_location_id
+
+    def is_at_location(self, location_id: str) -> bool:
+        """Check if character is at a specific location.
+
+        Args:
+            location_id: The location ID to check.
+
+        Returns:
+            True if character is currently at that location.
+        """
+        return self.current_location_id == location_id
+
+    def get_travel_history(self) -> List[TravelRecord]:
+        """Get the character's travel history.
+
+        Returns:
+            Copy of the travel history list.
+        """
+        return self.travel_history.copy()
+
+    def get_locations_visited(self) -> List[str]:
+        """Get a list of unique location IDs the character has visited.
+
+        Returns:
+            List of unique location IDs in order of first visit.
+        """
+        seen = set()
+        locations = []
+        for record in self.travel_history:
+            if record.location_id not in seen:
+                seen.add(record.location_id)
+                locations.append(record.location_id)
+        return locations
+
     def can_level_up(self, required_xp: int) -> bool:
         """Check if character has enough experience to level up."""
         return self.stats.experience_points >= required_xp and self.profile.level < 100
@@ -1286,6 +1386,7 @@ class Character:
             "inventory_count": len(self.inventory),
             "is_alive": self.is_alive(),
             "is_deceased": self.is_deceased,
+            "current_location_id": self.current_location_id,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "version": self.version,
@@ -1296,6 +1397,11 @@ class Character:
             summary["birth_date"] = self.birth_date.to_dict()
         if self.death_date is not None:
             summary["death_date"] = self.death_date.to_dict()
+
+        # Include travel history if any
+        if self.travel_history:
+            summary["travel_history"] = [r.to_dict() for r in self.travel_history]
+            summary["locations_visited_count"] = len(self.get_locations_visited())
 
         # Include psychology if set
         if self.psychology is not None:

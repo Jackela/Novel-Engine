@@ -598,7 +598,7 @@
         "Update tests"
       ],
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": [
         "src/contexts/character/domain/entities/character.py",

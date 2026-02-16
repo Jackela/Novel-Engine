@@ -1613,3 +1613,348 @@ class TestCharacterBirthDate:
         assert character.birth_date == mock_birth_calendar
         assert character.is_deceased is False
         assert character.death_date is None
+
+
+class TestCharacterLocationTracking:
+    """Tests for Character location tracking functionality (SIM-020)."""
+
+    @pytest.fixture
+    def sample_core_abilities(self) -> CoreAbilities:
+        """Create sample core abilities for testing."""
+        return CoreAbilities(
+            strength=15,
+            dexterity=14,
+            constitution=16,
+            intelligence=12,
+            wisdom=13,
+            charisma=11,
+        )
+
+    @pytest.fixture
+    def sample_vital_stats(self) -> VitalStats:
+        """Create sample vital stats for testing."""
+        return VitalStats(
+            max_health=36,
+            current_health=36,
+            max_mana=15,
+            current_mana=15,
+            max_stamina=31,
+            current_stamina=31,
+            armor_class=12,
+            speed=30,
+        )
+
+    @pytest.fixture
+    def sample_combat_stats(self) -> CombatStats:
+        """Create sample combat stats for testing."""
+        return CombatStats(
+            base_attack_bonus=0,
+            initiative_modifier=2,
+            damage_reduction=0,
+            spell_resistance=0,
+            critical_hit_chance=0.05,
+            critical_damage_multiplier=2.0,
+        )
+
+    @pytest.fixture
+    def sample_character_stats(
+        self, sample_core_abilities, sample_vital_stats, sample_combat_stats
+    ) -> CharacterStats:
+        """Create sample character stats for testing."""
+        return CharacterStats(
+            core_abilities=sample_core_abilities,
+            vital_stats=sample_vital_stats,
+            combat_stats=sample_combat_stats,
+            experience_points=0,
+            skill_points=5,
+        )
+
+    @pytest.fixture
+    def sample_character_profile(self) -> CharacterProfile:
+        """Create sample character profile for testing."""
+        return CharacterProfile(
+            name="Test Traveler",
+            gender=Gender.MALE,
+            race=CharacterRace.HUMAN,
+            character_class=CharacterClass.RANGER,
+            age=25,
+            level=1,
+            physical_traits=PhysicalTraits(),
+            personality_traits=PersonalityTraits(
+                traits={
+                    "courage": 0.8,
+                    "curiosity": 0.9,
+                    "charisma": 0.5,
+                    "loyalty": 0.9,
+                }
+            ),
+            background=Background(),
+        )
+
+    @pytest.fixture
+    def sample_skills(self) -> Skills:
+        """Create sample skills for testing."""
+        combat_skill = Skill(
+            name="Melee Combat",
+            category=SkillCategory.COMBAT,
+            proficiency_level=ProficiencyLevel.NOVICE,
+            modifier=0,
+        )
+
+        survival_skill = Skill(
+            name="Survival",
+            category=SkillCategory.SURVIVAL,
+            proficiency_level=ProficiencyLevel.APPRENTICE,
+            modifier=2,
+        )
+
+        skills = Mock()
+        skills.skill_groups = {
+            SkillCategory.COMBAT: [combat_skill],
+            SkillCategory.SURVIVAL: [survival_skill],
+        }
+        skills.get_skills_by_category = Mock(
+            side_effect=lambda cat: skills.skill_groups.get(cat, [])
+        )
+        skills.get_skill_summary = Mock(
+            return_value={"total_skills": 2, "trained_skills": 2}
+        )
+
+        return skills
+
+    @pytest.fixture
+    def sample_character(
+        self, sample_character_profile, sample_character_stats, sample_skills
+    ) -> Character:
+        """Create a test Character instance."""
+        return Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills,
+        )
+
+    @pytest.fixture
+    def mock_calendar(self):
+        """Create a mock WorldCalendar for testing."""
+        calendar = Mock()
+        calendar.year = 1042
+        calendar.month = 3
+        calendar.day = 15
+        calendar.era_name = "Third Age"
+        calendar.to_dict = Mock(return_value={
+            "year": 1042,
+            "month": 3,
+            "day": 15,
+            "era_name": "Third Age",
+        })
+        return calendar
+
+    # ==================== Location Field Tests ====================
+
+    @pytest.mark.unit
+    def test_current_location_defaults_to_none(self, sample_character):
+        """Test that current_location_id defaults to None."""
+        assert sample_character.current_location_id is None
+
+    @pytest.mark.unit
+    def test_travel_history_defaults_to_empty(self, sample_character):
+        """Test that travel_history defaults to empty list."""
+        assert sample_character.travel_history == []
+        assert len(sample_character.travel_history) == 0
+
+    # ==================== move_to Method Tests ====================
+
+    @pytest.mark.unit
+    def test_move_to_sets_current_location(
+        self, sample_character, mock_calendar
+    ):
+        """Test that move_to sets the current location."""
+        sample_character.move_to("location-tavern", mock_calendar)
+
+        assert sample_character.current_location_id == "location-tavern"
+
+    @pytest.mark.unit
+    def test_move_to_creates_travel_record(
+        self, sample_character, mock_calendar
+    ):
+        """Test that move_to creates a travel record."""
+        sample_character.move_to("location-tavern", mock_calendar)
+
+        assert len(sample_character.travel_history) == 1
+        record = sample_character.travel_history[0]
+        assert record.location_id == "location-tavern"
+        assert record.arrived_date == mock_calendar
+        assert record.departed_date is None
+        assert record.is_current() is True
+
+    @pytest.mark.unit
+    def test_move_to_closes_previous_travel_record(
+        self, sample_character, mock_calendar
+    ):
+        """Test that move_to closes the previous travel record."""
+        calendar2 = Mock()
+        calendar2.year = 1042
+        calendar2.month = 3
+        calendar2.day = 16
+
+        sample_character.move_to("location-tavern", mock_calendar)
+        sample_character.move_to("location-market", calendar2)
+
+        # First record should be closed
+        assert sample_character.travel_history[0].departed_date == calendar2
+        assert sample_character.travel_history[0].is_current() is False
+
+        # Second record should be current
+        assert sample_character.travel_history[1].is_current() is True
+
+    @pytest.mark.unit
+    def test_move_to_updates_version(
+        self, sample_character, mock_calendar
+    ):
+        """Test that move_to increments version."""
+        initial_version = sample_character.version
+
+        sample_character.move_to("location-tavern", mock_calendar)
+
+        assert sample_character.version == initial_version + 1
+
+    @pytest.mark.unit
+    def test_move_to_fails_with_empty_location_id(
+        self, sample_character, mock_calendar
+    ):
+        """Test that move_to raises error with empty location ID."""
+        with pytest.raises(ValueError) as exc_info:
+            sample_character.move_to("", mock_calendar)
+        assert "Location ID cannot be empty" in str(exc_info.value)
+
+        with pytest.raises(ValueError) as exc_info:
+            sample_character.move_to("   ", mock_calendar)
+        assert "Location ID cannot be empty" in str(exc_info.value)
+
+    @pytest.mark.unit
+    def test_move_to_triggers_location_changed_event(
+        self, sample_character, mock_calendar
+    ):
+        """Test that move_to triggers a CharacterLocationChanged event."""
+        initial_event_count = len(sample_character.get_events())
+
+        sample_character.move_to("location-tavern", mock_calendar)
+
+        assert len(sample_character.get_events()) == initial_event_count + 1
+        event = sample_character.get_events()[-1]
+        assert event.__class__.__name__ == "CharacterLocationChanged"
+        assert event.location_id_before is None
+        assert event.location_id_after == "location-tavern"
+
+    @pytest.mark.unit
+    def test_move_to_event_includes_previous_location(
+        self, sample_character, mock_calendar
+    ):
+        """Test that location change event includes previous location."""
+        calendar2 = Mock()
+        calendar2.year = 1042
+        calendar2.month = 3
+        calendar2.day = 16
+
+        sample_character.move_to("location-tavern", mock_calendar)
+        sample_character.move_to("location-market", calendar2)
+
+        # Get the last event (second move)
+        event = sample_character.get_events()[-1]
+        assert event.location_id_before == "location-tavern"
+        assert event.location_id_after == "location-market"
+
+    # ==================== Query Method Tests ====================
+
+    @pytest.mark.unit
+    def test_get_current_location(self, sample_character, mock_calendar):
+        """Test get_current_location returns current location."""
+        assert sample_character.get_current_location() is None
+
+        sample_character.move_to("location-tavern", mock_calendar)
+        assert sample_character.get_current_location() == "location-tavern"
+
+    @pytest.mark.unit
+    def test_is_at_location(self, sample_character, mock_calendar):
+        """Test is_at_location checks current location."""
+        assert sample_character.is_at_location("location-tavern") is False
+
+        sample_character.move_to("location-tavern", mock_calendar)
+        assert sample_character.is_at_location("location-tavern") is True
+        assert sample_character.is_at_location("location-market") is False
+
+    @pytest.mark.unit
+    def test_get_travel_history(self, sample_character, mock_calendar):
+        """Test get_travel_history returns copy of history."""
+        sample_character.move_to("location-tavern", mock_calendar)
+
+        history = sample_character.get_travel_history()
+
+        assert len(history) == 1
+        assert history is not sample_character.travel_history  # It's a copy
+
+    @pytest.mark.unit
+    def test_get_locations_visited(self, sample_character, mock_calendar):
+        """Test get_locations_visited returns unique locations."""
+        calendar2 = Mock()
+        calendar2.year = 1042
+        calendar2.month = 3
+        calendar2.day = 16
+        calendar3 = Mock()
+        calendar3.year = 1042
+        calendar3.month = 3
+        calendar3.day = 17
+
+        sample_character.move_to("location-tavern", mock_calendar)
+        sample_character.move_to("location-market", calendar2)
+        sample_character.move_to("location-tavern", calendar3)  # Revisit
+
+        locations = sample_character.get_locations_visited()
+
+        # Should return unique locations in order of first visit
+        assert locations == ["location-tavern", "location-market"]
+        assert len(locations) == 2
+
+    # ==================== Summary Integration Tests ====================
+
+    @pytest.mark.unit
+    def test_summary_includes_location_when_set(
+        self, sample_character, mock_calendar
+    ):
+        """Test that get_character_summary includes location info."""
+        sample_character.move_to("location-tavern", mock_calendar)
+
+        summary = sample_character.get_character_summary()
+
+        assert "current_location_id" in summary
+        assert summary["current_location_id"] == "location-tavern"
+        assert "travel_history" in summary
+        assert "locations_visited_count" in summary
+
+    @pytest.mark.unit
+    def test_summary_shows_none_when_no_location(self, sample_character):
+        """Test that get_character_summary shows None for location."""
+        summary = sample_character.get_character_summary()
+
+        assert "current_location_id" in summary
+        assert summary["current_location_id"] is None
+        # travel_history should not be in summary if empty
+        assert "travel_history" not in summary
+
+    # ==================== Backward Compatibility Tests ====================
+
+    @pytest.mark.unit
+    def test_character_creation_without_location(
+        self, sample_character_profile, sample_character_stats, sample_skills
+    ):
+        """Test that characters can be created without location."""
+        character = Character(
+            character_id=CharacterID.generate(),
+            profile=sample_character_profile,
+            stats=sample_character_stats,
+            skills=sample_skills,
+        )
+
+        assert character.current_location_id is None
+        assert character.travel_history == []
