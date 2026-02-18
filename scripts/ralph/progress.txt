@@ -441,4 +441,30 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Trait detection uses get_trait_score() method on PersonalityTraits, with 0.7 threshold
   - Memory service is injected via Protocol for dependency injection
   - Pre-existing mypy errors in dependencies (skills.py, character_stats.py, etc.) are not from new code
+---## Tue Feb 18 10:00 CST 2026 - SIM-023
+- Created LocationTree character display features for showing characters at locations
+- Added current_location_id and is_deceased fields to CharacterSummary schema (backend + frontend)
+- Updated LocationTree to use current_location_id instead of workspace_id for character placement
+- Implemented CharacterAvatarGroup component with max 5 visible avatars and overflow indicator
+- Added status indicator ring on avatar: green=alive, gray=deceased
+- Created CharacterDetailDialog for viewing character details on click
+- Added filter toggle button (Eye/EyeOff icon) in WorldSidebarTab LocationsSection
+- Added "Unknown Location" section for characters without valid location
+- Updated mock handlers to include is_deceased field
+- Created E2E tests for LocationTree character display features
+- All 8 E2E tests pass
+- Files changed:
+  - src/api/schemas.py (added current_location_id, is_deceased)
+  - frontend/src/types/schemas.ts (added current_location_id, is_deceased)
+  - frontend/src/components/world/LocationTree.tsx (added character display features)
+  - frontend/src/components/narrative/WorldSidebarTab.tsx (added filter toggle, pass characters to LocationTree)
+  - frontend/src/mocks/handlers.ts (added is_deceased to mock data)
+  - frontend/tests/e2e/location-tree.spec.ts (new - 8 E2E tests)
+- **Learnings for future iterations:**
+  - LocationTree is used in WorldSidebarTab which is in the NarrativeEditor at /story
+  - WorldSidebarTab has tabs: Outline and World - must click World tab to see LocationTree
+  - LocationsSection starts collapsed - tests must expand it to see the tree
+  - CharacterSummary needed current_location_id field (was using workspace_id as fallback)
+  - E2E tests use MSW for API mocking - route mocking may conflict with MSW handlers
+  - Filter toggle button uses Eye/EyeOff icons from lucide-react
 ---

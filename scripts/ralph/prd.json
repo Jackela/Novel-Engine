@@ -686,7 +686,7 @@
         "E2E test: verify characters appear under correct locations, filter works, dialog opens"
       ],
       "priority": 23,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "blockedBy": ["SIM-020"],
       "files": [
