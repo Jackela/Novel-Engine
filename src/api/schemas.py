@@ -482,6 +482,10 @@ class CharacterSummary(BaseModel):
     archetype: Optional[str] = None
     traits: List[str] = Field(default_factory=list)
     appearance: Optional[str] = None
+    # SIM-020: Character location tracking
+    current_location_id: Optional[str] = None
+    # SIM-019: Character life cycle
+    is_deceased: bool = False
 
 
 class CharactersListResponse(BaseModel):

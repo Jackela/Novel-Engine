@@ -99,6 +99,10 @@ export const CharacterSummarySchema = z.object({
   appearance: z.string().nullable().optional(),
   // CHAR-037: Faction membership for sidebar sorting
   faction_id: z.string().nullable().optional(),
+  // SIM-020: Character location tracking
+  current_location_id: z.string().nullable().optional(),
+  // SIM-019: Character life cycle
+  is_deceased: z.boolean().optional().default(false),
 });
 
 export const CharactersListResponseSchema = z.object({

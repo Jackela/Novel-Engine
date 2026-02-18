@@ -10,7 +10,7 @@
  * - Sort by: Name (A-Z), Faction, Role (archetype)
  */
 import { useState, useCallback, useMemo } from 'react';
-import { Users, MapPin, Globe, ChevronRight, ArrowUpDown } from 'lucide-react';
+import { Users, MapPin, Globe, ChevronRight, ArrowUpDown, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -72,44 +72,6 @@ function sortCharacters(
         return 0;
     }
   });
-}
-
-/**
- * Collapsible section wrapper for sidebar sections.
- */
-interface SidebarSectionProps {
-  title: string;
-  icon: React.ReactNode;
-  count: number;
-  defaultExpanded?: boolean;
-  children: React.ReactNode;
-}
-
-function SidebarSection({
-  title,
-  icon,
-  count,
-  defaultExpanded = true,
-  children,
-}: SidebarSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
-  return (
-    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
-        <ChevronRight
-          className={cn(
-            'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
-            isExpanded && 'rotate-90'
-          )}
-        />
-        {icon}
-        <span>{title}</span>
-        <span className="ml-auto text-xs text-muted-foreground">{count}</span>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pl-4">{children}</CollapsibleContent>
-    </Collapsible>
-  );
 }
 
 /** Loading state display */
@@ -223,34 +185,78 @@ function CharactersSection({
   );
 }
 
-/** Locations section content */
+/** Locations section content with character toggle (SIM-023) */
 interface LocationsSectionProps {
   locations: WorldLocation[];
+  characters: CharacterSummary[];
   selectedLocationId: string | null | undefined;
   onLocationSelect: (id: string) => void;
+  onCharacterClick?: (character: CharacterSummary) => void;
 }
 
 function LocationsSection({
   locations,
+  characters,
   selectedLocationId,
   onLocationSelect,
+  onCharacterClick,
 }: LocationsSectionProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showCharacters, setShowCharacters] = useState(false);
+
   return (
-    <SidebarSection
-      title="Locations"
-      icon={<MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />}
-      count={locations.length}
-      defaultExpanded={false}
-    >
-      <div className="mt-1">
-        <LocationTree
-          locations={locations}
-          selectedId={selectedLocationId ?? null}
-          onSelect={onLocationSelect}
-          defaultExpandedIds={[]}
-        />
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <div className="flex items-center gap-2 px-2 py-1.5">
+        <CollapsibleTrigger className="flex flex-1 items-center gap-2 rounded-md text-sm font-medium hover:text-accent-foreground">
+          <ChevronRight
+            className={cn(
+              'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+              isExpanded && 'rotate-90'
+            )}
+          />
+          <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span>Locations</span>
+          <span className="text-xs text-muted-foreground">({locations.length})</span>
+        </CollapsibleTrigger>
+        {/* SIM-023: Toggle button for showing/hiding characters */}
+        {isExpanded && characters.length > 0 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCharacters((prev) => !prev);
+            }}
+            className={cn(
+              'flex h-6 w-6 items-center justify-center rounded-md transition-colors',
+              showCharacters
+                ? 'bg-primary text-primary-foreground'
+                : 'hover:bg-accent text-muted-foreground'
+            )}
+            aria-label={showCharacters ? 'Hide Characters' : 'Show Characters'}
+            aria-pressed={showCharacters}
+          >
+            {showCharacters ? (
+              <Eye className="h-3.5 w-3.5" />
+            ) : (
+              <EyeOff className="h-3.5 w-3.5" />
+            )}
+          </button>
+        )}
       </div>
-    </SidebarSection>
+      <CollapsibleContent className="pl-4">
+        <div className="mt-1">
+          <LocationTree
+            locations={locations}
+            selectedId={selectedLocationId ?? null}
+            onSelect={onLocationSelect}
+            defaultExpandedIds={[]}
+            characters={characters}
+            showCharacters={showCharacters}
+            onCharacterClick={onCharacterClick}
+          />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -311,8 +317,10 @@ export function WorldSidebarTab({
         />
         <LocationsSection
           locations={locations}
+          characters={characters}
           selectedLocationId={selectedLocationId}
           onLocationSelect={handleLocationSelect}
+          onCharacterClick={(character) => onCharacterSelect?.(character.id)}
         />
       </div>
     </ScrollArea>

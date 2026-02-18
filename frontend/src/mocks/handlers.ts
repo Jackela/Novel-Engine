@@ -89,6 +89,7 @@ const defaultCharacterSummaries: CharacterSummary[] = [
     traits: ['Strategic', 'Resilient', 'Decisive'],
     appearance: 'Tall with dark hair and piercing eyes',
     faction_id: 'faction-shadowbane-order',
+    is_deceased: false,
   },
   {
     id: 'merchant-aldric',
@@ -103,6 +104,7 @@ const defaultCharacterSummaries: CharacterSummary[] = [
     traits: ['Shrewd', 'Friendly'],
     appearance: null,
     faction_id: 'faction-merchants-alliance',
+    is_deceased: false,
   },
 ];
 
@@ -360,6 +362,7 @@ const additionalCharacterSummaries: CharacterSummary[] = [
     traits: ['Cunning', 'Ambitious', 'Ruthless'],
     appearance: 'Pale complexion with silver hair and cold grey eyes',
     faction_id: 'faction-vexars-dominion',
+    is_deceased: false,
   },
   {
     id: 'finn-bard',
@@ -374,6 +377,7 @@ const additionalCharacterSummaries: CharacterSummary[] = [
     traits: ['Wise', 'Musical', 'Mysterious'],
     appearance: 'An elderly man with a warm smile and a worn lute',
     faction_id: 'faction-merchants-alliance',
+    is_deceased: false,
   },
 ];
 
@@ -950,6 +954,7 @@ export const handlers = [
       traits: [],
       appearance: null,
       faction_id: null,
+      is_deceased: false,
     });
     persistCharacters();
     return HttpResponse.json(detail, { status: 201 });
