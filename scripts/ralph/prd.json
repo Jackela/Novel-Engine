@@ -549,7 +549,7 @@
         "Create tests/api/routers/test_simulation.py covering all endpoints and errors"
       ],
       "priority": 24,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "blockedBy": ["SIM-017"],
       "files": [
@@ -797,7 +797,7 @@
         "E2E test: verify rumors display with correct colors, sort works, empty state shows"
       ],
       "priority": 26,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "blockedBy": ["SIM-025"],
       "files": [
@@ -883,7 +883,7 @@
         "Create tests"
       ],
       "priority": 29,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "blockedBy": ["SIM-028"],
       "files": [
@@ -911,7 +911,7 @@
         "Create tests/api/routers/test_snapshots.py"
       ],
       "priority": 30,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "blockedBy": ["SIM-029"],
       "files": [

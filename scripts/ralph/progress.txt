@@ -587,3 +587,85 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Protocol interfaces allow optional dependencies to be injected without requiring actual implementations
   - History tracking uses OrderedDict with FIFO eviction for max entries enforcement
 ---
+## Thu Feb 19 16:30 CST 2026 - SIM-018
+- Created Simulation API router with 4 endpoints
+- Implemented: POST /preview (read-only), POST /commit (persists changes), GET /history, GET /{tick_id}
+- Added request/response models in router file: SimulateRequest, SimulationTickResponse, SimulationTickSummary, etc.
+- Implemented rate limiting: Max 10 commits per minute per world_id (in-memory tracking)
+- Added 202 Accepted for large simulations (>30 days) with BackgroundTasks support
+- Added simulation lock detection for concurrent operations (503 response)
+- Error handling: 400 (invalid days), 404 (tick not found), 429 (rate limited), 503 (locked)
+- Router registered in both main_api_server.py and app.py
+- All 28 tests pass covering: preview, commit, history, tick details, rate limiting, concurrent access, edge cases
+- Files changed:
+  - src/api/routers/simulation.py (new)
+  - src/api/main_api_server.py (modified - added router import and include_router)
+  - src/api/app.py (modified - added router import and include_router)
+  - tests/api/routers/test_simulation.py (new - 28 tests)
+- **Learnings for future iterations:**
+  - Router schemas can be defined directly in the router file (not required to be in schemas.py)
+  - HTTPException with dict detail may be serialized as string in some test contexts
+  - WorldCalendar year = 360 days (30 days * 12 months), not 365
+  - TestClient doesn't have access to in-memory storage of simulation module unless imported from same module
+  - Rate limiting in tests requires clearing _commit_timestamps between tests or using separate worlds
+---
+## Thu Feb 19 17:15 CST 2026 - SIM-026
+- Created RumorBoard React component with veracity badges, sorting, expandable content
+- Implemented color-coded badges: Confirmed (green), Likely True (lime), Uncertain (yellow), Likely False (orange), False (gray)
+- Added sort dropdown: Most Recent, Most Reliable, Most Spread
+- Created frontend/src/lib/api/rumorApi.ts with useRumors and useRumor hooks
+- Added Rumor schemas to frontend/src/types/schemas.ts
+- Created backend src/api/routers/rumors.py with GET /world/{world_id}/rumors endpoint
+- Included mock data for development with 5 sample rumors
+- Registered router in both main_api_server.py and app.py
+- Created E2E tests in frontend/tests/e2e/rumor-board.spec.ts
+- Files changed:
+  - frontend/src/components/world/RumorBoard.tsx (new)
+  - frontend/src/lib/api/rumorApi.ts (new)
+  - frontend/src/types/schemas.ts (modified - added Rumor schemas)
+  - frontend/src/lib/api/index.ts (modified - exported rumor hooks)
+  - src/api/routers/rumors.py (new)
+  - src/api/main_api_server.py (modified)
+  - src/api/app.py (modified)
+  - frontend/tests/e2e/rumor-board.spec.ts (new)
+- **Learnings for future iterations:**
+  - TypeScript Record<string, T> returns T | undefined on access - use `as const satisfies` and `keyof typeof` for safe lookups
+  - E2E tests need to skip gracefully when component isn't on current page
+  - ESLint jsx-a11y/no-redundant-roles forbids explicit role="list" on <ul> and role="listitem" on <li>
+  - WorldCalendar year = 360 days (30 days * 12 months), not 365
+---
+## Thu Feb 19 18:00 CST 2026 - SIM-029
+- Created SnapshotService for managing world state snapshots
+- Implemented SnapshotError enum with NOT_FOUND, RESTORE_FAILED, STORAGE_ERROR
+- Created methods: create_snapshot, restore_snapshot, list_snapshots, delete_snapshot, get_latest_snapshot
+- Auto-naming: 'Tick {tick_number} - {calendar.format()}'
+- In-memory storage with OrderedDict per world
+- FIFO eviction when max snapshots (default 10) exceeded
+- Added helper methods: clear_storage (for testing), get_snapshot_count
+- Created 18 tests covering all methods and edge cases
+- Files changed:
+  - src/contexts/world/application/services/snapshot_service.py (new)
+  - tests/unit/contexts/world/application/services/test_snapshot_service.py (new)
+- **Learnings for future iterations:**
+  - Use OrderedDict for predictable FIFO ordering when eviction is needed
+  - Result[T, E] pattern for operations that can fail with typed errors
+  - Type hints for WorldSnapshot import use forward reference with quotes
+---
+## Thu Feb 19 18:45 CST 2026 - SIM-030
+- Created Snapshots API router with 5 endpoints
+- Endpoints: POST / (create), GET / (list), GET /{id} (details), POST /{id}/restore, DELETE /{id}
+- Added request/response models: CreateSnapshotRequest, SnapshotResponse, SnapshotSummary, RestoreSnapshotResponse
+- Integrated with SnapshotService for storage and retrieval
+- Shared calendar storage with simulation router for MVP
+- Registered router in both main_api_server.py and app.py
+- Created 14 tests covering all endpoints and world isolation
+- Files changed:
+  - src/api/routers/snapshots.py (new)
+  - src/api/main_api_server.py (modified)
+  - src/api/app.py (modified)
+  - tests/api/routers/test_snapshots.py (new)
+- **Learnings for future iterations:**
+  - Schemas can be defined directly in router files rather than schemas.py
+  - Use singleton pattern for service instances in routers (MVP approach)
+  - Error handling uses HTTPException with dict detail for structured responses
+---
