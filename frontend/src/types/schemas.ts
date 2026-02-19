@@ -2195,4 +2195,153 @@ export type PromptDiffHunk = z.infer<typeof PromptDiffHunkSchema>;
 export type PromptVariableChange = z.infer<typeof PromptVariableChangeSchema>;
 export type PromptConfigChange = z.infer<typeof PromptConfigChangeSchema>;
 export type PromptMetadataChange = z.infer<typeof PromptMetadataChangeSchema>;
+
+// === Simulation Schemas (SIM-031) ===
+
+/**
+ * Calendar data for simulation responses.
+ */
+export const SimulationCalendarSchema = z.object({
+  year: z.number().int(),
+  month: z.number().int(),
+  day: z.number().int(),
+  era_name: z.string(),
+  formatted_date: z.string(),
+});
+
+/**
+ * Resource changes in a simulation tick.
+ */
+export const ResourceChangesSchema = z.object({
+  wealth_delta: z.number().int(),
+  military_delta: z.number().int(),
+  influence_delta: z.number().int(),
+  has_changes: z.boolean(),
+});
+
+/**
+ * Diplomacy change in a simulation tick.
+ */
+export const DiplomacyChangeSchema = z.object({
+  faction_a: z.string(),
+  faction_b: z.string(),
+  status_before: z.string(),
+  status_after: z.string(),
+  is_significant: z.boolean(),
+});
+
+/**
+ * Request to run a simulation.
+ */
+export const SimulateRequestSchema = z.object({
+  days: z.number().int().min(1).max(365).default(1),
+});
+
+/**
+ * Response for a simulation tick.
+ */
+export const SimulationTickResponseSchema = z.object({
+  tick_id: z.string(),
+  world_id: z.string(),
+  calendar_before: SimulationCalendarSchema.nullable(),
+  calendar_after: SimulationCalendarSchema.nullable(),
+  days_advanced: z.number().int(),
+  events_generated: z.array(z.string()).default([]),
+  resource_changes: z.record(z.string(), ResourceChangesSchema).default({}),
+  diplomacy_changes: z.array(DiplomacyChangeSchema).default([]),
+  created_at: z.string(),
+});
+
+/**
+ * Summary of a simulation tick for history.
+ */
+export const SimulationTickSummarySchema = z.object({
+  tick_id: z.string(),
+  days_advanced: z.number().int(),
+  events_count: z.number().int(),
+  created_at: z.string(),
+});
+
+/**
+ * Response for simulation history.
+ */
+export const SimulationHistoryResponseSchema = z.object({
+  ticks: z.array(SimulationTickSummarySchema).default([]),
+  total: z.number().int(),
+});
+
+/**
+ * Request to create a snapshot.
+ */
+export const CreateSnapshotRequestSchema = z.object({
+  description: z.string().max(200).optional(),
+  tick_number: z.number().int().min(0).default(0),
+  state_json: z.string().default('{}'),
+});
+
+/**
+ * Calendar data in snapshot response.
+ */
+export const SnapshotCalendarSchema = z.object({
+  year: z.number().int(),
+  month: z.number().int(),
+  day: z.number().int(),
+  era_name: z.string(),
+  formatted: z.string(),
+});
+
+/**
+ * Response for a snapshot.
+ */
+export const SnapshotResponseSchema = z.object({
+  snapshot_id: z.string(),
+  world_id: z.string(),
+  calendar: SnapshotCalendarSchema.nullable(),
+  tick_number: z.number().int(),
+  description: z.string(),
+  created_at: z.string(),
+  size_bytes: z.number().int(),
+});
+
+/**
+ * Summary of a snapshot for listing.
+ */
+export const SnapshotSummarySchema = z.object({
+  snapshot_id: z.string(),
+  tick_number: z.number().int(),
+  description: z.string(),
+  created_at: z.string(),
+});
+
+/**
+ * Response for list of snapshots.
+ */
+export const SnapshotListResponseSchema = z.object({
+  snapshots: z.array(SnapshotSummarySchema).default([]),
+  total: z.number().int(),
+});
+
+/**
+ * Response for snapshot restoration.
+ */
+export const RestoreSnapshotResponseSchema = z.object({
+  snapshot_id: z.string(),
+  world_id: z.string(),
+  restored: z.boolean(),
+  message: z.string(),
+});
+
+export type SimulationCalendar = z.infer<typeof SimulationCalendarSchema>;
+export type ResourceChanges = z.infer<typeof ResourceChangesSchema>;
+export type DiplomacyChange = z.infer<typeof DiplomacyChangeSchema>;
+export type SimulateRequest = z.infer<typeof SimulateRequestSchema>;
+export type SimulationTickResponse = z.infer<typeof SimulationTickResponseSchema>;
+export type SimulationTickSummary = z.infer<typeof SimulationTickSummarySchema>;
+export type SimulationHistoryResponse = z.infer<typeof SimulationHistoryResponseSchema>;
+export type CreateSnapshotRequest = z.infer<typeof CreateSnapshotRequestSchema>;
+export type SnapshotCalendar = z.infer<typeof SnapshotCalendarSchema>;
+export type SnapshotResponse = z.infer<typeof SnapshotResponseSchema>;
+export type SnapshotSummary = z.infer<typeof SnapshotSummarySchema>;
+export type SnapshotListResponse = z.infer<typeof SnapshotListResponseSchema>;
+export type RestoreSnapshotResponse = z.infer<typeof RestoreSnapshotResponseSchema>;
 export type PromptVersionInfo = z.infer<typeof PromptVersionInfoSchema>;

@@ -9,6 +9,7 @@ import {
   Swords,
   BookOpen,
   GitBranch,
+  Clock,
   ChevronLeft,
   ChevronRight,
   X,
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/characters', label: 'Characters', icon: Users },
   { path: '/campaigns', label: 'Campaigns', icon: Swords },
   { path: '/stories', label: 'Stories', icon: BookOpen },
+  { path: '/simulation', label: 'Simulation', icon: Clock },
   { path: '/weaver', label: 'Weaver', icon: GitBranch },
 ] as const;
 

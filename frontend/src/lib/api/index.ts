@@ -79,3 +79,23 @@ export {
 
 // Rumors API (SIM-026)
 export { useRumors, useRumor, getRumors, getRumor } from './rumorApi';
+
+// Simulation API (SIM-031)
+export {
+  useSimulationHistory,
+  useSimulationTick,
+  usePreviewSimulation,
+  useCommitSimulation,
+  useSnapshots,
+  useCreateSnapshot,
+  useRestoreSnapshot,
+  useDeleteSnapshot,
+  previewSimulation,
+  commitSimulation,
+  getSimulationHistory,
+  getSimulationTick,
+  createSnapshot,
+  listSnapshots,
+  restoreSnapshot,
+  deleteSnapshot,
+} from './simulationApi';

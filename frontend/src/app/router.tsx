@@ -139,6 +139,12 @@ const worldRoute = createRoute({
   component: lazyRouteComponent(() => import('@/pages/WorldPage')),
 });
 
+const simulationRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: '/simulation',
+  component: lazyRouteComponent(() => import('@/pages/SimulationPage')),
+});
+
 const wikiRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: '/world/wiki',
@@ -203,6 +209,7 @@ const routeTree = rootRoute.addChildren([
     storiesRoute,
     storyEditorRoute,
     worldRoute,
+    simulationRoute,
     wikiRoute,
     storyRoute,
     characterVoiceRoute,
