@@ -468,3 +468,25 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - E2E tests use MSW for API mocking - route mocking may conflict with MSW handlers
   - Filter toggle button uses Eye/EyeOff icons from lucide-react
 ---
+## Wed Feb 19 06:05 CST 2026 - SIM-024
+- Created Rumor entity with spread mechanics and veracity tracking
+- Implemented: RumorOrigin enum (EVENT, NPC, PLAYER, UNKNOWN)
+- Implemented: Rumor dataclass with truth_value (0-100), spread mechanics
+- Methods: spread_to(location_id), truth_after_spread(), to_dict(), from_dict()
+- Properties: veracity_label, veracity_color, is_dead
+- Truth decay: -10 per spread hop (TRUTH_DECAY_PER_HOP constant)
+- Veracity thresholds: Confirmed (80+), Likely True (60-79), Uncertain (40-59), Likely False (20-39), False (0-19)
+- Added __hash__ and __eq__ for use in sets/dicts (based on rumor_id)
+- All 49 tests pass
+- Files changed:
+  - src/contexts/world/domain/entities/rumor.py (new)
+  - src/contexts/world/domain/entities/__init__.py (added exports)
+  - tests/unit/contexts/world/domain/entities/test_rumor.py (new - 49 tests)
+- **Learnings for future iterations:**
+  - Rumor entity is NOT frozen (unlike FactionIntent) because set fields can't be frozen
+  - Use TYPE_CHECKING pattern for WorldCalendar forward reference to avoid circular imports
+  - Equality and hashing based on rumor_id only (same ID = same rumor regardless of other fields)
+  - created_date uses Any type hint to avoid circular import with WorldCalendar
+  - to_dict() handles created_date by checking for to_dict() method
+  - Pre-existing test failures in test_world_state_aggregate.py are from SIM-002 changes (world_time -> calendar)
+---

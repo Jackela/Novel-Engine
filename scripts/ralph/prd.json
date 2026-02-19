@@ -717,7 +717,7 @@
         "Create tests"
       ],
       "priority": 24,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "blockedBy": ["SIM-001"],
       "files": [

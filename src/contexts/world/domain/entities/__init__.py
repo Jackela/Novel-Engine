@@ -43,6 +43,10 @@ from .faction_intent import (
     FactionIntent,
     IntentType,
 )
+from .rumor import (
+    Rumor,
+    RumorOrigin,
+)
 from .world_rule import WorldRule
 from .world_setting import (
     Era,
@@ -92,4 +96,7 @@ __all__ = [
     # FactionIntent
     "FactionIntent",
     "IntentType",
+    # Rumor
+    "Rumor",
+    "RumorOrigin",
 ]
