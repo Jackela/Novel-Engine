@@ -669,3 +669,37 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Use singleton pattern for service instances in routers (MVP approach)
   - Error handling uses HTTPException with dict detail for structured responses
 ---
+## Thu Feb 19 21:45 CST 2026 - SIM-031
+- Created comprehensive Simulation Dashboard frontend page
+- Implemented Zustand store for simulation state management (loading, lastTick, snapshots, error, statusMessage)
+- Created Simulation API hooks with TanStack Query (useSimulationHistory, usePreviewSimulation, useCommitSimulation, useSnapshots, useCreateSnapshot, useRestoreSnapshot, useDeleteSnapshot)
+- Added simulation and snapshot schemas to frontend types (SimulationTickResponse, SimulationHistoryResponse, SnapshotResponse, etc.)
+- Created SimulationDashboard.tsx with 3-column responsive grid layout:
+  - Left: Calendar display, preview/commit buttons, snapshot controls
+  - Center: WorldTimeline, collapsible RumorBoard
+  - Right: Factions summary, recent simulations list
+- Added /simulation route to TanStack Router
+- Added navigation link in sidebar with Clock icon
+- Created E2E tests for dashboard functionality (13 tests)
+- TypeScript passes, ESLint passes (2 pre-existing warnings)
+- Files changed:
+  - frontend/src/features/simulation/SimulationDashboard.tsx (new)
+  - frontend/src/features/simulation/index.ts (new)
+  - frontend/src/features/simulation/stores/simulationStore.ts (new)
+  - frontend/src/lib/api/simulationApi.ts (new)
+  - frontend/src/lib/api/index.ts (modified - exported simulation hooks)
+  - frontend/src/pages/SimulationPage.tsx (new)
+  - frontend/src/app/router.tsx (modified - added simulation route)
+  - frontend/src/shared/components/layout/Sidebar.tsx (modified - added Simulation nav item)
+  - frontend/src/types/schemas.ts (modified - added simulation/snapshot schemas)
+  - frontend/tests/e2e/simulation-dashboard.spec.ts (new - 13 E2E tests)
+- **Learnings for future iterations:**
+  - WorldTimeline uses default export, not named export: `import WorldTimeline from '@/components/world/WorldTimeline'`
+  - Feature folder structure: frontend/src/features/{feature}/ for components, stores/, api/ subdirs
+  - TanStack Router routes use lazyRouteComponent() with dynamic imports
+  - Sidebar navItems array is typed `as const` for type-safe icon mapping
+  - Zustand store pattern: create selectors for common state slices (useSimulationLoading, useSimulationError, etc.)
+  - E2E tests with API mocking may conflict with Vite proxy - tests verify component structure even if API calls fail
+  - API hooks use queryClient.invalidateQueries() for cache invalidation on mutations
+---
+

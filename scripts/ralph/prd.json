@@ -961,7 +961,7 @@
         "  5. Commit another day, then restore snapshot, verify rollback"
       ],
       "priority": 31,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "blockedBy": ["SIM-004", "SIM-007", "SIM-018", "SIM-026", "SIM-030"],
       "files": [
