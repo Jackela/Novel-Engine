@@ -753,6 +753,7 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.orchestration import router as orchestration_router
     from src.api.routers.prompts import router as prompts_router
     from src.api.routers.relationships import router as relationships_router
+    from src.api.routers.rumors import router as rumors_router
     from src.api.routers.scene import router as scene_router
     from src.api.routers.simulation import router as simulation_router
     from src.api.routers.simulations import router as simulations_router
@@ -793,6 +794,7 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(prompts_router, prefix="/api")
     app.include_router(experiments_router, prefix="/api")
     app.include_router(simulation_router, prefix="/api")
+    app.include_router(rumors_router, prefix="/api")
 
     @app.get("/", response_model=dict)
     async def root_index():

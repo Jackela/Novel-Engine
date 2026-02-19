@@ -76,3 +76,6 @@ export {
   getFactionDiplomacy,
   setRelation,
 } from './diplomacyApi';
+
+// Rumors API (SIM-026)
+export { useRumors, useRumor, getRumors, getRumor } from './rumorApi';

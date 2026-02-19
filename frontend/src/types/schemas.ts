@@ -1615,6 +1615,54 @@ export type DiplomacyMatrixResponse = z.infer<typeof DiplomacyMatrixResponseSche
 export type FactionDiplomacyResponse = z.infer<typeof FactionDiplomacyResponseSchema>;
 export type SetRelationRequest = z.infer<typeof SetRelationRequestSchema>;
 
+// === Rumor Schemas (SIM-026) ===
+
+/**
+ * Calendar data embedded in rumor response.
+ */
+export const RumorCalendarSchema = z.object({
+  year: z.number(),
+  month: z.number(),
+  day: z.number(),
+  era_name: z.string(),
+  formatted: z.string(),
+});
+
+/**
+ * Rumor response schema matching backend RumorResponse.
+ * Represents a piece of information spreading through the world.
+ */
+export const RumorResponseSchema = z.object({
+  rumor_id: z.string(),
+  content: z.string(),
+  truth_value: z.number().min(0).max(100),
+  origin_type: z.enum(['event', 'npc', 'player', 'unknown']),
+  source_event_id: z.string().nullable(),
+  origin_location_id: z.string(),
+  current_locations: z.array(z.string()),
+  created_date: RumorCalendarSchema.nullable(),
+  spread_count: z.number(),
+  veracity_label: z.enum(['Confirmed', 'Likely True', 'Uncertain', 'Likely False', 'False']),
+});
+
+/**
+ * Rumor list response schema matching backend RumorListResponse.
+ */
+export const RumorListResponseSchema = z.object({
+  rumors: z.array(RumorResponseSchema),
+  total: z.number(),
+});
+
+/**
+ * Sort options for rumors.
+ */
+export const RumorSortBySchema = z.enum(['recent', 'reliable', 'spread']);
+
+export type RumorCalendar = z.infer<typeof RumorCalendarSchema>;
+export type RumorResponse = z.infer<typeof RumorResponseSchema>;
+export type RumorListResponse = z.infer<typeof RumorListResponseSchema>;
+export type RumorSortBy = z.infer<typeof RumorSortBySchema>;
+
 // === Dialogue Generation Schemas (CHAR-027/CHAR-028) ===
 
 /**

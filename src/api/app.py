@@ -93,6 +93,7 @@ def create_app(
     from src.api.routers.narratives import router as narratives_router
     from src.api.routers.orchestration import router as orchestration_router
     from src.api.routers.relationships import router as relationships_router
+    from src.api.routers.rumors import router as rumors_router
     from src.api.routers.scene import router as scene_router
     from src.api.routers.simulation import router as simulation_router
     from src.api.routers.simulations import router as simulations_router
@@ -125,6 +126,7 @@ def create_app(
     app.include_router(calendar_router, prefix="/api")
     app.include_router(diplomacy_router, prefix="/api")
     app.include_router(simulation_router, prefix="/api")
+    app.include_router(rumors_router, prefix="/api")
 
     try:
         from src.api.prompts_router import router as prompts_router
