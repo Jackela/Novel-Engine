@@ -827,7 +827,7 @@
         "Create tests with various violation scenarios"
       ],
       "priority": 27,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "files": [
         "src/contexts/world/application/services/simulation_sanity_checker.py",

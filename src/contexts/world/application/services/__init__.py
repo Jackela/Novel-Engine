@@ -11,6 +11,12 @@ from .rumor_propagation_service import (
     RumorPropagationService,
     RumorStatistics,
 )
+from .simulation_sanity_checker import (
+    SanityCheckError,
+    SanityViolation,
+    Severity,
+    SimulationSanityChecker,
+)
 from .social_graph_service import (
     CharacterCentrality,
     SocialAnalysisResult,
@@ -23,6 +29,10 @@ __all__ = [
     "IRumorRepository",
     "RumorPropagationService",
     "RumorStatistics",
+    "SanityCheckError",
+    "SanityViolation",
+    "Severity",
     "SocialAnalysisResult",
     "SocialGraphService",
+    "SimulationSanityChecker",
 ]
