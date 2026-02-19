@@ -63,8 +63,14 @@ from src.contexts.world.application.services.faction_intent_generator import (
     FactionIntentGenerator,
 )
 from src.contexts.world.application.services.world_simulation_service import (
+    IFactionRepository,
     InvalidDaysError,
+    ISnapshotService,
+    IWorldStateRepository,
     RepositoryError,
+    RollbackError,
+    SaveFailedError,
+    SnapshotFailedError,
     WorldNotFoundError,
     WorldSimulationService,
 )
@@ -100,9 +106,18 @@ class MockFactionRepository:
 
     def __init__(self, factions_by_world: Dict[str, List[Faction]] = None):
         self._factions_by_world = factions_by_world or {}
+        self._saved_factions: List[Faction] = []
 
     async def get_by_world_id(self, world_id: str) -> List[Faction]:
         return self._factions_by_world.get(world_id, [])
+
+    async def save(self, faction: Faction) -> Faction:
+        self._saved_factions.append(faction)
+        return faction
+
+    async def save_all(self, factions: List[Faction]) -> List[Faction]:
+        self._saved_factions.extend(factions)
+        return factions
 
 
 class TestWorldSimulationService:
@@ -555,3 +570,406 @@ class TestWorldSimulationService:
         # Actually the calendar.advance handles rollover
         # Let's check the actual values
         assert tick.days_advanced == 359
+
+
+class TestWorldSimulationCommit:
+    """Test suite for WorldSimulationService.commit_simulation (SIM-017)."""
+
+    @pytest.fixture
+    def intent_generator(self) -> FactionIntentGenerator:
+        """Create a FactionIntentGenerator instance."""
+        return FactionIntentGenerator()
+
+    @pytest.fixture
+    def world(self) -> WorldState:
+        """Create a basic WorldState for testing."""
+        return WorldState(
+            id="world-commit-test",
+            name="Commit Test World",
+            calendar=WorldCalendar(year=100, month=1, day=1, era_name="Test Age"),
+        )
+
+    @pytest.fixture
+    def faction_active(self) -> Faction:
+        """Create an active faction for testing."""
+        return Faction(
+            id="faction-commit-1",
+            name="Test Kingdom",
+            economic_power=60,
+            military_strength=50,
+            influence=50,
+            territories=["territory-commit-1"],
+        )
+
+    @pytest.fixture
+    def mock_world_repo(self, world: WorldState) -> MockWorldRepository:
+        """Create a mock world repository with a test world."""
+        return MockWorldRepository({world.id: world})
+
+    @pytest.fixture
+    def mock_faction_repo(
+        self, world: WorldState, faction_active: Faction
+    ) -> MockFactionRepository:
+        """Create a mock faction repository with test factions."""
+        return MockFactionRepository({world.id: [faction_active]})
+
+    @pytest.fixture
+    def service(
+        self,
+        mock_world_repo: MockWorldRepository,
+        mock_faction_repo: MockFactionRepository,
+        intent_generator: FactionIntentGenerator,
+    ) -> WorldSimulationService:
+        """Create a WorldSimulationService instance without optional services."""
+        return WorldSimulationService(
+            world_repo=mock_world_repo,
+            faction_repo=mock_faction_repo,
+            intent_generator=intent_generator,
+        )
+
+    # === Basic Commit Tests ===
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_successful_one_day(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test successful simulation commit with 1 day advance."""
+        result = await service.commit_simulation(world.id, days=1)
+
+        assert result.is_ok
+        tick = result.value
+        assert tick.world_id == world.id
+        assert tick.days_advanced == 1
+        assert tick.calendar_after.day == 2
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_successful_seven_days(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test successful simulation commit with 7 days advance."""
+        result = await service.commit_simulation(world.id, days=7)
+
+        assert result.is_ok
+        tick = result.value
+        assert tick.days_advanced == 7
+        assert tick.calendar_after.day == 8
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_produces_events_for_changes(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test that commit produces events for significant changes."""
+        result = await service.commit_simulation(world.id, days=1)
+
+        assert result.is_ok
+        tick = result.value
+        # Events may or may not be generated depending on intents
+        assert tick.events_generated is not None
+
+    # === Validation Error Tests ===
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_error_days_zero(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test commit error when days is 0."""
+        result = await service.commit_simulation(world.id, days=0)
+
+        assert result.is_error
+        assert isinstance(result.error, InvalidDaysError)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_error_days_negative(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test commit error when days is negative."""
+        result = await service.commit_simulation(world.id, days=-1)
+
+        assert result.is_error
+        assert isinstance(result.error, InvalidDaysError)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_error_days_exceeds_max(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test commit error when days exceeds maximum."""
+        result = await service.commit_simulation(world.id, days=366)
+
+        assert result.is_error
+        assert isinstance(result.error, InvalidDaysError)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_error_world_not_found(self, service: WorldSimulationService):
+        """Test commit error when world does not exist."""
+        result = await service.commit_simulation("nonexistent-world", days=1)
+
+        assert result.is_error
+        assert isinstance(result.error, WorldNotFoundError)
+
+    # === History Tracking Tests ===
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_tracks_history(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test that commit adds tick to history."""
+        result = await service.commit_simulation(world.id, days=1)
+
+        assert result.is_ok
+        tick = result.value
+
+        # Check history was tracked
+        history = service.get_tick_history(world.id)
+        assert len(history) == 1
+        assert history[0].tick_id == tick.tick_id
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_multiple_ticks_in_history(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test that multiple commits are tracked in history."""
+        result1 = await service.commit_simulation(world.id, days=1)
+        result2 = await service.commit_simulation(world.id, days=1)
+        result3 = await service.commit_simulation(world.id, days=1)
+
+        assert result1.is_ok
+        assert result2.is_ok
+        assert result3.is_ok
+
+        history = service.get_tick_history(world.id)
+        assert len(history) == 3
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_history_most_recent_first(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test that history returns ticks most recent first."""
+        await service.commit_simulation(world.id, days=1)
+        await service.commit_simulation(world.id, days=7)
+        await service.commit_simulation(world.id, days=30)
+
+        history = service.get_tick_history(world.id)
+        assert len(history) == 3
+        # Most recent first
+        assert history[0].days_advanced == 30
+        assert history[1].days_advanced == 7
+        assert history[2].days_advanced == 1
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_history_limit(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test that get_tick_history respects limit parameter."""
+        # Add 5 ticks
+        for _ in range(5):
+            await service.commit_simulation(world.id, days=1)
+
+        history = service.get_tick_history(world.id, limit=3)
+        assert len(history) == 3
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_tick_by_id(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test retrieving a specific tick by ID."""
+        result = await service.commit_simulation(world.id, days=7)
+
+        assert result.is_ok
+        tick = result.value
+
+        retrieved = service.get_tick_by_id(world.id, tick.tick_id)
+        assert retrieved is not None
+        assert retrieved.tick_id == tick.tick_id
+        assert retrieved.days_advanced == 7
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_tick_by_id_not_found(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test retrieving non-existent tick returns None."""
+        retrieved = service.get_tick_by_id(world.id, "nonexistent-tick")
+        assert retrieved is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_clear_history(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test clearing history for a world."""
+        await service.commit_simulation(world.id, days=1)
+        await service.commit_simulation(world.id, days=1)
+
+        count = service.clear_history(world.id)
+        assert count == 2
+
+        history = service.get_tick_history(world.id)
+        assert len(history) == 0
+
+    # === Empty World Tests ===
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_empty_world(
+        self, world: WorldState, intent_generator: FactionIntentGenerator
+    ):
+        """Test commit succeeds when world has no factions."""
+        empty_faction_repo = MockFactionRepository({world.id: []})
+        service = WorldSimulationService(
+            world_repo=MockWorldRepository({world.id: world}),
+            faction_repo=empty_faction_repo,
+            intent_generator=intent_generator,
+        )
+
+        result = await service.commit_simulation(world.id, days=1)
+
+        assert result.is_ok
+        tick = result.value
+        assert tick.resource_changes == {}
+
+    # === With Optional Services Tests ===
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_with_snapshot_service(
+        self, world: WorldState, faction_active: Faction, intent_generator
+    ):
+        """Test commit creates snapshot when snapshot service is available."""
+        from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
+
+        # Create mock snapshot service
+        mock_snapshot_service = MagicMock()
+        mock_snapshot = WorldSnapshot(
+            world_id=world.id,
+            calendar=world.calendar,
+            state_json='{"id": "test"}',
+            tick_number=0,
+        )
+        mock_snapshot_service.create_snapshot = MagicMock(return_value=mock_snapshot)
+        mock_snapshot_service.restore_snapshot = MagicMock(
+            return_value=MagicMock(is_ok=True)
+        )
+
+        faction_repo = MockFactionRepository({world.id: [faction_active]})
+        service = WorldSimulationService(
+            world_repo=MockWorldRepository({world.id: world}),
+            faction_repo=faction_repo,
+            intent_generator=intent_generator,
+            snapshot_service=mock_snapshot_service,
+        )
+
+        result = await service.commit_simulation(world.id, days=1)
+
+        assert result.is_ok
+        # Snapshot should have been created
+        mock_snapshot_service.create_snapshot.assert_called_once()
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_with_sanity_checker_warnings(
+        self, world: WorldState, faction_active: Faction, intent_generator
+    ):
+        """Test commit runs sanity checker but doesn't block on warnings."""
+        from src.contexts.world.application.services.simulation_sanity_checker import (
+            SanityViolation,
+            Severity,
+            SimulationSanityChecker,
+        )
+
+        # Create mock sanity checker that returns warnings
+        mock_checker = MagicMock(spec=SimulationSanityChecker)
+        mock_checker.check = MagicMock(return_value=[
+            SanityViolation(
+                rule_name="test_warning",
+                severity=Severity.WARNING,
+                message="Test warning",
+            )
+        ])
+
+        faction_repo = MockFactionRepository({world.id: [faction_active]})
+        service = WorldSimulationService(
+            world_repo=MockWorldRepository({world.id: world}),
+            faction_repo=faction_repo,
+            intent_generator=intent_generator,
+            sanity_checker=mock_checker,
+        )
+
+        result = await service.commit_simulation(world.id, days=1)
+
+        # Should succeed despite warnings
+        assert result.is_ok
+        mock_checker.check.assert_called_once()
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_commit_with_rumor_service(
+        self, world: WorldState, faction_active: Faction, intent_generator
+    ):
+        """Test commit propagates rumors when rumor service is available."""
+        # Create mock rumor service
+        mock_rumor_service = MagicMock()
+        mock_rumor_service.propagate_rumors = AsyncMock(return_value=[])
+        mock_rumor_service.create_rumor_from_event = MagicMock()
+
+        faction_repo = MockFactionRepository({world.id: [faction_active]})
+        service = WorldSimulationService(
+            world_repo=MockWorldRepository({world.id: world}),
+            faction_repo=faction_repo,
+            intent_generator=intent_generator,
+            rumor_service=mock_rumor_service,
+        )
+
+        result = await service.commit_simulation(world.id, days=1)
+
+        assert result.is_ok
+        # Rumor service should have been called
+        mock_rumor_service.propagate_rumors.assert_called_once()
+
+    # === Max History Enforcement Tests ===
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_max_history_enforcement(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test that history is limited to MAX_HISTORY_PER_WORLD entries."""
+        # Add more than max entries
+        max_entries = WorldSimulationService.MAX_HISTORY_PER_WORLD
+        for _ in range(max_entries + 10):
+            await service.commit_simulation(world.id, days=1)
+
+        # Should have exactly MAX_HISTORY_PER_WORLD entries
+        history = service.get_tick_history(world.id, limit=1000)
+        assert len(history) == max_entries
+
+    # === Tick Number Tracking Tests ===
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_tick_number_increments(
+        self, service: WorldSimulationService, world: WorldState
+    ):
+        """Test that tick numbers increment correctly."""
+        # First commit should be tick 0
+        result1 = await service.commit_simulation(world.id, days=1)
+        assert result1.is_ok
+        tick_number_1 = service._tick_numbers.get(world.id, 0)
+
+        # Second commit should be tick 1
+        result2 = await service.commit_simulation(world.id, days=1)
+        assert result2.is_ok
+        tick_number_2 = service._tick_numbers.get(world.id, 0)
+
+        assert tick_number_2 == tick_number_1 + 1

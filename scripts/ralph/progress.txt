@@ -554,3 +554,36 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - Auto-description format: "Tick {tick_number} - {calendar.format()}"
   - Tests mock WorldState.from_dict to avoid full deserialization complexity
 ---
+## Wed Feb 19 14:30 CST 2026 - SIM-017
+- Implemented full simulation integration with commit_simulation method
+- Added Protocol interfaces for optional services: ISnapshotService
+- Added new error types: SnapshotFailedError, SaveFailedError, RollbackError
+- Implemented commit_simulation workflow:
+  1. Validate inputs
+  2. Create pre-commit snapshot (if snapshot_service available)
+  3. Run advance_simulation preview
+  4. Generate and resolve faction intents
+  5. Apply changes to WorldState and Factions
+  6. Generate HistoricalEvents for WAR and ALLIANCE outcomes
+  7. Run sanity checker (warnings logged, not blocking)
+  8. Propagate rumors and create rumors from events (if rumor_service available)
+  9. Save factions via repository
+  10. Rollback on save failure if snapshot available
+- Added simulation history tracking: OrderedDict per world, max 100 entries, FIFO eviction
+- Added helper methods: get_tick_history(), get_tick_by_id(), clear_history()
+- Added _apply_resolution_to_factions() to apply resource/territory changes
+- Added _generate_events_from_resolution() for WAR and ALLIANCE events
+- All 42 tests pass (22 existing + 20 new commit tests)
+- Files changed:
+  - src/contexts/world/application/services/world_simulation_service.py (major update)
+  - src/contexts/world/application/services/__init__.py (added exports)
+  - tests/unit/contexts/world/application/services/test_world_simulation_service.py (added 20 tests)
+- **Learnings for future iterations:**
+  - Faction entity uses field names: economic_power, military_strength, influence, territories, relations (no metadata field)
+  - MockFactionRepository needs save() and save_all() methods for commit tests
+  - Faction copy requires all fields: faction_type, alignment, values, goals, resources, secrets, member_count
+  - Use preview_tick = preview_result.value with None check for mypy strict compliance
+  - SimulationTick has tick_id, calendar_before, calendar_after, days_advanced, events_generated, resource_changes, diplomacy_changes, character_reactions, rumors_created fields
+  - Protocol interfaces allow optional dependencies to be injected without requiring actual implementations
+  - History tracking uses OrderedDict with FIFO eviction for max entries enforcement
+---

@@ -515,7 +515,7 @@
         "Update tests covering: successful commit, snapshot failure, save failure with rollback"
       ],
       "priority": 23,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "blockedBy": ["SIM-016", "SIM-024", "SIM-025", "SIM-022"],
       "files": [

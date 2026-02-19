@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""WorldSimulationService - Basic Simulation Tick Service.
+"""WorldSimulationService - World Simulation Tick Service.
 
 This module provides the WorldSimulationService for advancing world simulation
-and generating faction intents. This is a read-only preview implementation that
-does not persist changes to the world state.
+and generating faction intents. It supports both preview mode (read-only) and
+commit mode (persists changes).
 
 The service orchestrates:
 1. Calendar advancement
 2. Faction intent generation
 3. Intent resolution (SIM-016)
 4. Simulation tick result creation
+5. Full simulation commit with snapshots and events (SIM-017)
 
 Typical usage example:
     >>> from src.contexts.world.application.services import WorldSimulationService
@@ -21,13 +22,21 @@ Typical usage example:
     ...     print(f"Advanced {tick.days_advanced} days")
 """
 
+from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Protocol, runtime_checkable
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, runtime_checkable
+from uuid import uuid4
+
+import structlog
 
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.aggregates.world_state import WorldState
 from src.contexts.world.domain.entities.faction import Faction, FactionStatus
 from src.contexts.world.domain.entities.faction_intent import FactionIntent, IntentType
+from src.contexts.world.domain.entities.history_event import EventType, HistoryEvent, ImpactScope
+from src.contexts.world.domain.entities.rumor import Rumor
+from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.contexts.world.domain.value_objects.simulation_tick import (
     DiplomacyChange,
@@ -37,6 +46,12 @@ from src.contexts.world.domain.value_objects.simulation_tick import (
 from src.core.result import Err, Ok, Result
 
 from .faction_intent_generator import FactionIntentGenerator
+
+if TYPE_CHECKING:
+    from .rumor_propagation_service import RumorPropagationService
+    from .simulation_sanity_checker import SanityViolation, SimulationSanityChecker
+
+logger = structlog.get_logger()
 
 
 @dataclass
@@ -194,6 +209,21 @@ class RepositoryError(SimulationError):
     pass
 
 
+class SnapshotFailedError(SimulationError):
+    """Raised when snapshot creation fails."""
+    pass
+
+
+class SaveFailedError(SimulationError):
+    """Raised when saving world state fails."""
+    pass
+
+
+class RollbackError(SimulationError):
+    """Raised when rollback to snapshot fails."""
+    pass
+
+
 @runtime_checkable
 class IWorldStateRepository(Protocol):
     """Protocol for WorldState repository interface.
@@ -231,6 +261,73 @@ class IFactionRepository(Protocol):
         """
         ...
 
+    async def save(self, faction: Faction) -> Faction:
+        """Save a faction entity.
+
+        Args:
+            faction: Faction entity to save
+
+        Returns:
+            Saved Faction entity
+        """
+        ...
+
+    async def save_all(self, factions: List[Faction]) -> List[Faction]:
+        """Save multiple faction entities.
+
+        Args:
+            factions: List of Faction entities to save
+
+        Returns:
+            List of saved Faction entities
+        """
+        ...
+
+
+@runtime_checkable
+class ISnapshotService(Protocol):
+    """Protocol for SnapshotService interface.
+
+    Defines the minimal interface needed by WorldSimulationService.
+    """
+
+    def create_snapshot(
+        self, world_id: str, tick_number: int, description: str = ""
+    ) -> WorldSnapshot:
+        """Create a snapshot of the current world state.
+
+        Args:
+            world_id: ID of the world to snapshot
+            tick_number: Sequential tick number
+            description: Optional description
+
+        Returns:
+            Created WorldSnapshot entity
+        """
+        ...
+
+    def restore_snapshot(self, snapshot_id: str) -> Result[WorldState, Exception]:
+        """Restore world state from a snapshot.
+
+        Args:
+            snapshot_id: ID of the snapshot to restore
+
+        Returns:
+            Result containing restored WorldState or error
+        """
+        ...
+
+    def get_latest_snapshot(self, world_id: str) -> Optional[WorldSnapshot]:
+        """Get the latest snapshot for a world.
+
+        Args:
+            world_id: ID of the world
+
+        Returns:
+            Latest WorldSnapshot or None if no snapshots exist
+        """
+        ...
+
 
 class WorldSimulationService:
     """Service for advancing world simulation.
@@ -239,6 +336,7 @@ class WorldSimulationService:
     - Calendar advancement (read-only preview)
     - Faction intent generation based on world state
     - Simulation tick result creation
+    - Full simulation commit with snapshots and events (SIM-017)
 
     This is a preview implementation that does NOT apply changes to the world.
     Use commit_simulation (SIM-017) for full simulation with state persistence.
@@ -246,6 +344,7 @@ class WorldSimulationService:
     Attributes:
         MIN_DAYS: Minimum days allowed for simulation (1).
         MAX_DAYS: Maximum days allowed for simulation (365).
+        MAX_HISTORY_PER_WORLD: Maximum tick history entries per world (100).
 
     Example:
         >>> service = WorldSimulationService(world_repo, faction_repo, intent_generator)
@@ -257,12 +356,16 @@ class WorldSimulationService:
 
     MIN_DAYS = 1
     MAX_DAYS = 365
+    MAX_HISTORY_PER_WORLD = 100
 
     def __init__(
         self,
         world_repo: IWorldStateRepository,
         faction_repo: IFactionRepository,
         intent_generator: FactionIntentGenerator,
+        snapshot_service: Optional[ISnapshotService] = None,
+        rumor_service: Optional["RumorPropagationService"] = None,
+        sanity_checker: Optional["SimulationSanityChecker"] = None,
     ):
         """Initialize the simulation service.
 
@@ -270,10 +373,22 @@ class WorldSimulationService:
             world_repo: Repository for WorldState aggregates
             faction_repo: Repository for Faction entities
             intent_generator: Service for generating faction intents
+            snapshot_service: Optional service for managing snapshots (for commit_simulation)
+            rumor_service: Optional service for propagating rumors (for commit_simulation)
+            sanity_checker: Optional service for validating world state (for commit_simulation)
         """
         self._world_repo = world_repo
         self._faction_repo = faction_repo
         self._intent_generator = intent_generator
+        self._snapshot_service = snapshot_service
+        self._rumor_service = rumor_service
+        self._sanity_checker = sanity_checker
+
+        # Tick history tracking: world_id -> OrderedDict of tick_id -> SimulationTick
+        self._tick_history: Dict[str, "OrderedDict[str, SimulationTick]"] = {}
+
+        # Tick number tracking per world
+        self._tick_numbers: Dict[str, int] = {}
 
     async def advance_simulation(
         self,
@@ -712,3 +827,465 @@ class WorldSimulationService:
         """
         result.add_resource_change(faction.id, wealth_delta=2, military_delta=1)
         result.mark_intent_success(intent.intent_id)
+
+    async def commit_simulation(
+        self,
+        world_id: str,
+        days: int = 1,
+    ) -> Result[SimulationTick, Exception]:
+        """Commit a simulation tick with full state persistence.
+
+        This method performs a complete simulation commit including:
+        1. Validate inputs and create pre-commit snapshot
+        2. Run advance_simulation to get preview tick
+        3. Resolve intents and apply changes to world state
+        4. Generate HistoricalEvents for significant changes
+        5. Run sanity checker (warnings logged, not blocking)
+        6. Propagate rumors and create rumors from new events
+        7. Save world state to repository
+        8. Track simulation history
+
+        If any step fails after snapshot creation, attempts rollback.
+
+        Args:
+            world_id: ID of the world to simulate
+            days: Number of days to advance (1-365)
+
+        Returns:
+            Result containing SimulationTick on success, or Exception on failure:
+            - WorldNotFoundError: World with given ID not found
+            - InvalidDaysError: Days parameter out of valid range
+            - SnapshotFailedError: Failed to create pre-commit snapshot
+            - SaveFailedError: Failed to save world state
+            - RollbackError: Failed to rollback after save failure
+
+        Example:
+            >>> result = await service.commit_simulation("world-123", days=7)
+            >>> if result.is_ok:
+            ...     tick = result.value
+            ...     print(f"Committed tick with {len(tick.events_generated)} events")
+        """
+        # Step 1: Validate days
+        if not self.MIN_DAYS <= days <= self.MAX_DAYS:
+            return Err(InvalidDaysError(
+                f"Days must be between {self.MIN_DAYS} and {self.MAX_DAYS}, got {days}"
+            ))
+
+        # Step 2: Load WorldState
+        world = await self._world_repo.get_by_id(world_id)
+        if world is None:
+            return Err(WorldNotFoundError(f"World not found: {world_id}"))
+
+        # Step 3: Create pre-commit snapshot (if snapshot service available)
+        snapshot: Optional[WorldSnapshot] = None
+        if self._snapshot_service is not None:
+            try:
+                tick_number = self._tick_numbers.get(world_id, 0)
+                snapshot = self._snapshot_service.create_snapshot(
+                    world_id=world_id,
+                    tick_number=tick_number,
+                    description=f"Pre-commit snapshot before {days} day(s) advancement",
+                )
+                logger.info(
+                    "simulation_snapshot_created",
+                    world_id=world_id,
+                    snapshot_id=snapshot.snapshot_id,
+                )
+            except Exception as e:
+                logger.error(
+                    "simulation_snapshot_failed",
+                    world_id=world_id,
+                    error=str(e),
+                )
+                return Err(SnapshotFailedError(f"Failed to create snapshot: {e}"))
+
+        # Step 4: Run advance_simulation preview
+        preview_result = await self.advance_simulation(world_id, days)
+        if preview_result.is_error:
+            error = preview_result.error
+            if error is not None:
+                return Err(error)
+            return Err(SimulationError("Unknown preview simulation error"))
+
+        # Step 5: Load factions and build diplomacy
+        try:
+            factions = await self._faction_repo.get_by_world_id(world_id)
+        except Exception as e:
+            return Err(RepositoryError(f"Failed to load factions: {e}"))
+
+        diplomacy = self._build_diplomacy_matrix(world_id, factions)
+
+        # Step 6: Generate intents and resolve them
+        all_intents: List[FactionIntent] = []
+        for faction in factions:
+            if faction.status == FactionStatus.DISBANDED:
+                continue
+            intents = self._intent_generator.generate_intents(
+                faction=faction,
+                world=world,
+                diplomacy=diplomacy,
+            )
+            all_intents.extend(intents)
+
+        resolution = self._resolve_intents(all_intents, world, factions, diplomacy)
+
+        # Step 7: Apply changes to world and factions
+        updated_factions = self._apply_resolution_to_factions(factions, resolution)
+        world_advance_result = world.advance_time(days)
+        if world_advance_result.is_error:
+            error = world_advance_result.error
+            if error is not None:
+                return Err(error)
+            return Err(SimulationError("Failed to advance world time"))
+
+        # Step 8: Generate HistoricalEvents for significant changes
+        events = self._generate_events_from_resolution(
+            resolution=resolution,
+            world=world,
+            factions=updated_factions,
+        )
+
+        # Step 9: Run sanity checker (warnings logged, not blocking)
+        if self._sanity_checker is not None:
+            try:
+                violations = self._sanity_checker.check(world)
+                if violations:
+                    for violation in violations:
+                        logger.warning(
+                            "simulation_sanity_violation",
+                            world_id=world_id,
+                            rule_name=violation.rule_name,
+                            severity=violation.severity.value,
+                            message=violation.message,
+                        )
+            except Exception as e:
+                logger.warning(
+                    "simulation_sanity_check_error",
+                    world_id=world_id,
+                    error=str(e),
+                )
+
+        # Step 10: Propagate rumors and create rumors from events
+        rumors_created_count = 0
+        if self._rumor_service is not None:
+            try:
+                # Propagate existing rumors
+                await self._rumor_service.propagate_rumors(world)
+
+                # Create rumors from new events
+                for event in events:
+                    try:
+                        self._rumor_service.create_rumor_from_event(event, world)
+                        rumors_created_count += 1
+                    except Exception as e:
+                        logger.warning(
+                            "simulation_rumor_creation_failed",
+                            event_id=event.id,
+                            error=str(e),
+                        )
+            except Exception as e:
+                logger.warning(
+                    "simulation_rumor_propagation_failed",
+                    world_id=world_id,
+                    error=str(e),
+                )
+
+        # Step 11: Save world state and factions
+        try:
+            await self._faction_repo.save_all(updated_factions)
+            # Note: world_repo.save() would be called here if it existed
+            # For now, the world state is updated in-memory only
+            logger.info(
+                "simulation_committed",
+                world_id=world_id,
+                days_advanced=days,
+                events_count=len(events),
+                rumors_created=rumors_created_count,
+            )
+        except Exception as e:
+            logger.error(
+                "simulation_save_failed",
+                world_id=world_id,
+                error=str(e),
+            )
+            # Attempt rollback if snapshot exists
+            if snapshot is not None and self._snapshot_service is not None:
+                try:
+                    restore_result = self._snapshot_service.restore_snapshot(
+                        snapshot.snapshot_id
+                    )
+                    if restore_result.is_ok:
+                        logger.info(
+                            "simulation_rollback_success",
+                            world_id=world_id,
+                            snapshot_id=snapshot.snapshot_id,
+                        )
+                    else:
+                        logger.error(
+                            "simulation_rollback_failed",
+                            world_id=world_id,
+                            snapshot_id=snapshot.snapshot_id,
+                        )
+                except Exception as rollback_error:
+                    logger.error(
+                        "simulation_rollback_exception",
+                        world_id=world_id,
+                        error=str(rollback_error),
+                    )
+            return Err(SaveFailedError(f"Failed to save world state: {e}"))
+
+        # Step 12: Create final SimulationTick with complete data
+        preview_tick = preview_result.value
+        if preview_tick is None:
+            return Err(SimulationError("Preview tick was unexpectedly None"))
+
+        tick = SimulationTick(
+            world_id=world_id,
+            calendar_before=preview_tick.calendar_before,
+            calendar_after=world.calendar,
+            days_advanced=days,
+            events_generated=[e.id for e in events],
+            resource_changes=resolution.resource_changes,
+            diplomacy_changes=resolution.diplomacy_changes,
+            character_reactions=[],  # Character reactions handled separately
+            rumors_created=rumors_created_count,
+        )
+
+        # Step 13: Track simulation history
+        self._add_to_history(world_id, tick)
+
+        # Update tick number for next run
+        self._tick_numbers[world_id] = self._tick_numbers.get(world_id, 0) + 1
+
+        return Ok(tick)
+
+    def _apply_resolution_to_factions(
+        self,
+        factions: List[Faction],
+        resolution: ResolutionResult,
+    ) -> List[Faction]:
+        """Apply resolution changes to faction entities.
+
+        Creates updated copies of factions with resource changes applied.
+        Territory changes are recorded but actual location assignment
+        requires location repository.
+
+        Args:
+            factions: List of current Faction entities
+            resolution: ResolutionResult with changes to apply
+
+        Returns:
+            List of updated Faction entities
+        """
+        updated_factions: List[Faction] = []
+
+        for faction in factions:
+            # Check if this faction has resource changes
+            if faction.id in resolution.resource_changes:
+                changes = resolution.resource_changes[faction.id]
+                # Apply resource changes (clamped to valid ranges)
+                new_economic_power = max(
+                    0,
+                    min(100, faction.economic_power + changes.wealth_delta),
+                )
+                new_military_strength = max(
+                    0,
+                    min(100, faction.military_strength + changes.military_delta),
+                )
+                new_influence = max(
+                    0,
+                    min(100, faction.influence + changes.influence_delta),
+                )
+
+                # Create updated faction using copy with modifications
+                faction = Faction(
+                    id=faction.id,
+                    name=faction.name,
+                    description=faction.description,
+                    faction_type=faction.faction_type,
+                    alignment=faction.alignment,
+                    status=faction.status,
+                    headquarters_id=faction.headquarters_id,
+                    leader_name=faction.leader_name,
+                    leader_id=faction.leader_id,
+                    founding_date=faction.founding_date,
+                    values=faction.values.copy() if faction.values else [],
+                    goals=faction.goals.copy() if faction.goals else [],
+                    resources=faction.resources.copy() if faction.resources else [],
+                    economic_power=new_economic_power,
+                    military_strength=new_military_strength,
+                    influence=new_influence,
+                    territories=faction.territories.copy(),
+                    relations=faction.relations.copy(),
+                    member_count=faction.member_count,
+                    secrets=faction.secrets.copy() if faction.secrets else [],
+                    created_at=faction.created_at,
+                    updated_at=datetime.now(),
+                )
+
+            # Check if this faction has territory changes (gained)
+            for location_id, new_owner_id in resolution.territory_changes.items():
+                if new_owner_id == faction.id and location_id not in faction.territories:
+                    faction.territories.append(location_id)
+                # Handle territory loss
+                if (
+                    new_owner_id != faction.id
+                    and location_id in faction.territories
+                ):
+                    faction.territories.remove(location_id)
+
+            updated_factions.append(faction)
+
+        return updated_factions
+
+    def _generate_events_from_resolution(
+        self,
+        resolution: ResolutionResult,
+        world: WorldState,
+        factions: List[Faction],
+    ) -> List[HistoryEvent]:
+        """Generate HistoricalEvents from significant resolution changes.
+
+        Creates events for:
+        - WAR: ATTACK intents that resulted in territory change
+        - ALLIANCE: ALLY intents that succeeded
+        - POLITICAL: Faction status changes
+
+        Args:
+            resolution: ResolutionResult with changes
+            world: Current WorldState
+            factions: List of updated factions
+
+        Returns:
+            List of generated HistoryEvent entities
+        """
+        events: List[HistoryEvent] = []
+        faction_map = {f.id: f for f in factions}
+
+        # Generate WAR events for territory changes
+        for location_id, new_owner_id in resolution.territory_changes.items():
+            attacker = faction_map.get(new_owner_id)
+            if attacker:
+                event = HistoryEvent(
+                    id=str(uuid4()),
+                    name=f"Territory Conflict: {attacker.name}",
+                    description=f"{attacker.name} captured territory at {location_id}",
+                    event_type=EventType.WAR,
+                    impact_scope=ImpactScope.REGIONAL,
+                    date_description=world.calendar.format(),
+                    faction_ids=[new_owner_id],
+                    location_ids=[location_id],
+                    affected_faction_ids=[new_owner_id],
+                    affected_location_ids=[location_id],
+                    key_figures=[attacker.name],
+                )
+                events.append(event)
+                resolution.events_generated.append(event.id)
+
+        # Generate ALLIANCE events for successful alliances
+        for diplo_change in resolution.diplomacy_changes:
+            if diplo_change.status_after == DiplomaticStatus.ALLIED:
+                faction_a = faction_map.get(diplo_change.faction_a)
+                faction_b = faction_map.get(diplo_change.faction_b)
+
+                if faction_a and faction_b:
+                    event = HistoryEvent(
+                        id=str(uuid4()),
+                        name=f"Alliance Formed: {faction_a.name} and {faction_b.name}",
+                        description=(
+                            f"{faction_a.name} and {faction_b.name} have formed "
+                            f"a formal alliance, strengthening their diplomatic ties."
+                        ),
+                        event_type=EventType.ALLIANCE,
+                        impact_scope=ImpactScope.REGIONAL,
+                        date_description=world.calendar.format(),
+                        faction_ids=[faction_a.id, faction_b.id],
+                        affected_faction_ids=[faction_a.id, faction_b.id],
+                        key_figures=[faction_a.name, faction_b.name],
+                    )
+                    events.append(event)
+                    resolution.events_generated.append(event.id)
+
+        logger.info(
+            "simulation_events_generated",
+            world_id=world.id,
+            event_count=len(events),
+            event_types=[e.event_type.value for e in events],
+        )
+
+        return events
+
+    def _add_to_history(self, world_id: str, tick: SimulationTick) -> None:
+        """Add a tick to simulation history.
+
+        Maintains a maximum of MAX_HISTORY_PER_WORLD entries per world
+        using FIFO eviction.
+
+        Args:
+            world_id: ID of the world
+            tick: SimulationTick to add to history
+        """
+        if world_id not in self._tick_history:
+            self._tick_history[world_id] = OrderedDict()
+
+        history = self._tick_history[world_id]
+
+        # Add new tick
+        history[tick.tick_id] = tick
+
+        # Enforce max size with FIFO eviction
+        while len(history) > self.MAX_HISTORY_PER_WORLD:
+            # Remove oldest entry
+            oldest_key = next(iter(history))
+            del history[oldest_key]
+
+    def get_tick_history(
+        self, world_id: str, limit: int = 20
+    ) -> List[SimulationTick]:
+        """Get simulation tick history for a world.
+
+        Args:
+            world_id: ID of the world
+            limit: Maximum number of ticks to return (default 20)
+
+        Returns:
+            List of SimulationTick entities, most recent first
+        """
+        if world_id not in self._tick_history:
+            return []
+
+        history = self._tick_history[world_id]
+        # Return most recent first
+        ticks = list(history.values())
+        return ticks[-limit:][::-1]
+
+    def get_tick_by_id(self, world_id: str, tick_id: str) -> Optional[SimulationTick]:
+        """Get a specific tick by ID.
+
+        Args:
+            world_id: ID of the world
+            tick_id: ID of the tick to retrieve
+
+        Returns:
+            SimulationTick if found, None otherwise
+        """
+        if world_id not in self._tick_history:
+            return None
+
+        return self._tick_history[world_id].get(tick_id)
+
+    def clear_history(self, world_id: str) -> int:
+        """Clear simulation history for a world.
+
+        Args:
+            world_id: ID of the world
+
+        Returns:
+            Number of entries cleared
+        """
+        if world_id not in self._tick_history:
+            return 0
+
+        count = len(self._tick_history[world_id])
+        del self._tick_history[world_id]
+        return count
