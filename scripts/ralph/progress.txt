@@ -490,3 +490,25 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - to_dict() handles created_date by checking for to_dict() method
   - Pre-existing test failures in test_world_state_aggregate.py are from SIM-002 changes (world_time -> calendar)
 ---
+## Wed Feb 19 08:30 CST 2026 - SIM-025
+- Created RumorPropagationService for spreading rumors through world locations
+- Implemented: propagate_rumors(world), create_rumor_from_event(event, world), get_statistics(rumors)
+- Protocol interfaces: ILocationRepository, IRumorRepository with find_adjacent, get_active_rumors, save_all, delete methods
+- Propagation logic: spreads to adjacent locations via location_repo.find_adjacent(), truth decays -10 per hop
+- Event templates: WAR, TRADE, DEATH, BIRTH, MARRIAGE, ALLIANCE, CORONATION, DISASTER, DISCOVERY, REVOLUTION, MIRACLE, MAGICAL
+- Initial truth by impact_scope: GLOBAL=90, REGIONAL=70, LOCAL=50
+- Statistics: RumorStatistics dataclass with total_rumors, active_rumors, avg_truth, most_spread, dead_rumors
+- Error handling: logs warning and skips propagation on location_repo failure, returns empty list on error
+- All 44 tests pass
+- Files changed:
+  - src/contexts/world/application/services/rumor_propagation_service.py (new)
+  - src/contexts/world/application/services/__init__.py (modified - added exports)
+  - tests/unit/contexts/world/application/services/test_rumor_propagation_service.py (new - 44 tests)
+- **Learnings for future iterations:**
+  - RumorPropagationService uses Protocol interfaces for repository dependency injection
+  - propagate_rumors() is async, create_rumor_from_event() is sync (no repo access needed)
+  - Rumor.spread_to() returns a new Rumor instance with updated locations and decayed truth
+  - Dead rumors (truth_value == 0) are deleted after propagation
+  - Event content templates use helper methods _format_faction_list() and _format_location_list()
+  - Statistics properties on service are placeholder (require sync repo access) - use get_statistics() method instead
+---

@@ -5,6 +5,12 @@ This module exports services that provide higher-level business operations
 beyond simple CRUD, such as graph analytics and social network analysis.
 """
 
+from .rumor_propagation_service import (
+    ILocationRepository,
+    IRumorRepository,
+    RumorPropagationService,
+    RumorStatistics,
+)
 from .social_graph_service import (
     CharacterCentrality,
     SocialAnalysisResult,
@@ -12,7 +18,11 @@ from .social_graph_service import (
 )
 
 __all__ = [
-    "SocialGraphService",
-    "SocialAnalysisResult",
     "CharacterCentrality",
+    "ILocationRepository",
+    "IRumorRepository",
+    "RumorPropagationService",
+    "RumorStatistics",
+    "SocialAnalysisResult",
+    "SocialGraphService",
 ]

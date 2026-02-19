@@ -757,7 +757,7 @@
         "Create tests with mock repositories, covering: propagation, truth decay, event templates"
       ],
       "priority": 25,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "blockedBy": ["SIM-005", "SIM-024"],
       "files": [
