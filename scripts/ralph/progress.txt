@@ -535,3 +535,22 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - check_and_raise() only raises on ERROR severity, not WARNING
   - Tests use pytest.raises to verify SanityCheckError is raised correctly
 ---
+## Wed Feb 19 09:30 CST 2026 - SIM-028
+- Created WorldSnapshot entity for saving/restoring world state
+- Fields: snapshot_id, world_id, calendar, state_json, tick_number, description, created_at
+- Methods: to_dict(), from_dict(), restore(), size_bytes property
+- Factory methods: create(), create_from_world()
+- Validation: empty IDs, negative tick_number, empty state_json
+- Auto-generates description from tick number and calendar if not provided
+- All 34 tests pass
+- Files changed:
+  - src/contexts/world/domain/entities/world_snapshot.py (new)
+  - src/contexts/world/domain/entities/__init__.py (modified - added export)
+  - tests/unit/contexts/world/domain/entities/test_world_snapshot.py (new - 34 tests)
+- **Learnings for future iterations:**
+  - WorldSnapshot stores state_json as string - must json.dumps(world.to_dict()) before storing
+  - restore() imports WorldState inside method to avoid circular import at module level
+  - size_bytes returns length of state_json encoded as UTF-8
+  - Auto-description format: "Tick {tick_number} - {calendar.format()}"
+  - Tests mock WorldState.from_dict to avoid full deserialization complexity
+---

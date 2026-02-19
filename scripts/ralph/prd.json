@@ -855,7 +855,7 @@
         "Create tests for serialize/deserialize cycle"
       ],
       "priority": 28,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "blockedBy": ["SIM-001", "SIM-002"],
       "files": [
