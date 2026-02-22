@@ -14,6 +14,9 @@ from src.contexts.world.application.services.snapshot_service import (
     SnapshotError,
     SnapshotService,
 )
+
+# Mark all tests in this module as unit tests
+pytestmark = pytest.mark.unit
 from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 

@@ -117,7 +117,7 @@ class TestWorldStateAggregate:
         assert world.name == "Test World"
         assert world.description == "Test Description"
         assert world.status == WorldStatus.ACTIVE
-        assert isinstance(world.world_time, datetime)
+        assert world.calendar is not None  # Changed from world_time to calendar
         assert world.entities == {}
         assert world.environment == {}
         assert world.spatial_index == {}
@@ -148,11 +148,14 @@ class TestWorldStateAggregate:
     @pytest.mark.unit
     @pytest.mark.fast
     def test_world_state_validation_future_time(self):
-        """Test validation for world time in far future."""
-        future_time = datetime.now() + timedelta(days=400)  # More than a year
-        with pytest.raises(ValueError) as exc_info:
-            WorldState(name="Test", world_time=future_time)
-        assert "World time is more than a year in the future" in str(exc_info.value)
+        """Test that calendar can be created with far future year."""
+        # The new calendar-based system doesn't validate against "future" dates
+        # since it's an in-game calendar, not real-world time
+        from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
+        calendar = WorldCalendar(year=5000, month=1, day=1, era_name="Future Age")
+        world = WorldState(name="Test", calendar=calendar)
+        assert world.calendar.year == 5000
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -528,15 +531,15 @@ class TestWorldStateAggregate:
 
     @pytest.mark.unit
     def test_advance_time_success(self, world_state):
-        """Test advancing world time."""
-        initial_time = world_state.world_time
+        """Test advancing world calendar."""
+        initial_day = world_state.calendar.day
         initial_version = world_state.version
-        new_time = initial_time + timedelta(hours=1)
         world_state.clear_domain_events()
 
-        world_state.advance_time(new_time, "Time progression")
+        result = world_state.advance_time(5, "Time progression")
 
-        assert world_state.world_time == new_time
+        assert result.is_ok
+        assert world_state.calendar.day == initial_day + 5
         assert world_state.version == initial_version + 1
 
         # Check domain event was raised
@@ -548,24 +551,20 @@ class TestWorldStateAggregate:
 
     @pytest.mark.unit
     @pytest.mark.fast
-    def test_advance_time_backwards_fails(self, world_state):
+    def test_advance_time_negative_fails(self, world_state):
         """Test advancing time backwards fails."""
-        initial_time = world_state.world_time
-        past_time = initial_time - timedelta(hours=1)
-
-        with pytest.raises(ValueError) as exc_info:
-            world_state.advance_time(past_time, "Invalid time")
-        assert "New time must be after current world time" in str(exc_info.value)
+        result = world_state.advance_time(-1, "Invalid time")
+        assert result.is_error
+        assert "must be >= 0" in str(result.error) or "negative" in str(result.error).lower()
 
     @pytest.mark.unit
     @pytest.mark.fast
-    def test_advance_time_same_time_fails(self, world_state):
-        """Test advancing to same time fails."""
-        current_time = world_state.world_time
-
-        with pytest.raises(ValueError) as exc_info:
-            world_state.advance_time(current_time, "Same time")
-        assert "New time must be after current world time" in str(exc_info.value)
+    def test_advance_time_zero_returns_same(self, world_state):
+        """Test advancing by zero days returns same calendar."""
+        initial_day = world_state.calendar.day
+        result = world_state.advance_time(0, "Zero time")
+        assert result.is_ok
+        assert result.value.calendar.day == initial_day
 
     # ==================== Environment Tests ====================
 
@@ -780,7 +779,7 @@ class TestWorldStateAggregate:
         assert stats["entity_types"]["character"] == 2
         assert stats["entity_types"]["object"] == 1
         assert stats["environment_properties"] == 2
-        assert "world_time" in stats
+        assert "calendar" in stats  # Changed from world_time to calendar
         assert "created_at" in stats
         assert "updated_at" in stats
         assert "version" in stats
@@ -1005,9 +1004,9 @@ class TestWorldStateAggregate:
             {"weather": "sunny", "temperature": 25}, "Day setup"
         )
 
-        # Advance time
-        new_time = world_state.world_time + timedelta(hours=6)
-        world_state.advance_time(new_time, "Evening transition")
+        # Advance time by 6 days
+        initial_day = world_state.calendar.day
+        world_state.advance_time(6, "Evening transition")
 
         # Update environment for evening
         world_state.update_environment(
@@ -1016,7 +1015,7 @@ class TestWorldStateAggregate:
 
         assert world_state.environment["weather"] == "cloudy"
         assert world_state.environment["temperature"] == 18
-        assert world_state.world_time == new_time
+        assert world_state.calendar.day == initial_day + 6  # Changed from world_time
 
         # Check all changes generated events
         events = world_state.get_domain_events()
