@@ -13,6 +13,8 @@ Constitution Compliance:
 from datetime import datetime, timezone
 from uuid import uuid4
 
+import structlog
+
 from src.core.types.shared_types import CharacterId, KnowledgeEntryId, UserId
 
 from ...domain.events.knowledge_entry_created import KnowledgeEntryCreated
@@ -20,12 +22,10 @@ from ...domain.models.access_control_rule import AccessControlRule
 from ...domain.models.access_level import AccessLevel
 from ...domain.models.knowledge_entry import KnowledgeEntry
 from ...domain.models.knowledge_type import KnowledgeType
-from ...infrastructure.logging_config import (
-    get_knowledge_logger,
-    log_knowledge_entry_created,
-)
 from ..ports.i_event_publisher import IEventPublisher
 from ..ports.i_knowledge_repository import IKnowledgeRepository
+
+logger = structlog.get_logger(__name__)
 
 
 class CreateKnowledgeEntryUseCase:
@@ -96,6 +96,11 @@ class CreateKnowledgeEntryUseCase:
         - Article I (DDD): Domain model enforces invariants
         - Article VI (EDA): Publishes KnowledgeEntryCreated event
         """
+        operation_logger = logger.bind(
+            component="CreateKnowledgeEntryUseCase",
+            user_id=created_by,
+        )
+
         # Create access control rule (validates invariants)
         access_control = AccessControlRule(
             access_level=access_level,
@@ -122,12 +127,8 @@ class CreateKnowledgeEntryUseCase:
         )
 
         # Log operation start (Article VII - Observability)
-        logger = get_knowledge_logger(
-            component="CreateKnowledgeEntryUseCase",
-            user_id=created_by,
-        )
-        logger.info(
-            "Creating knowledge entry",
+        operation_logger.info(
+            "knowledge_entry_create_started",
             knowledge_type=knowledge_type.value,
             access_level=access_level.value,
         )
@@ -136,14 +137,13 @@ class CreateKnowledgeEntryUseCase:
         await self._repository.save(entry)
 
         # Log successful creation
-        log_knowledge_entry_created(
+        operation_logger.info(
+            "knowledge_entry_created",
             entry_id=entry.id,
             knowledge_type=entry.knowledge_type.value,
             created_by=entry.created_by,
-            metadata={
-                "access_level": entry.access_control.access_level.value,
-                "owning_character_id": entry.owning_character_id,
-            },
+            access_level=entry.access_control.access_level.value,
+            owning_character_id=entry.owning_character_id,
         )
 
         # Create and publish domain event
@@ -173,11 +173,16 @@ class CreateKnowledgeEntryUseCase:
                     "source": "knowledge-management",
                 },
             )
-            logger.info("Domain event published successfully", event_id=event.event_id)
+            operation_logger.info(
+                "knowledge_entry_created_event_published",
+                event_id=event.event_id,
+            )
         except Exception as e:
             # Event publishing failure is non-blocking (log warning)
-            logger.warning(
-                "Failed to publish domain event", error=str(e), event_id=event.event_id
+            operation_logger.warning(
+                "knowledge_entry_created_event_publish_failed",
+                error=str(e),
+                event_id=event.event_id,
             )
 
         return entry.id

@@ -123,7 +123,8 @@ export default defineConfig({
     actionTimeout: 10 * 1000,
     navigationTimeout: 30 * 1000,
 
-    // Ensure MSW service workers can register in test runs
+    // Keep service workers enabled globally because a subset of e2e suites relies on MSW.
+    // Individual specs that need deterministic page.route interception can override to "block".
     serviceWorkers: 'allow',
 
     // Screenshots and videos

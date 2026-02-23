@@ -18,9 +18,11 @@ Typical usage example:
     ... )
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional, Set
+from typing import Dict, Optional, Set
 from uuid import uuid4
 
 from src.core.result import Err, Ok, Result
@@ -61,12 +63,16 @@ VERACITY_UNCERTAIN = 40
 VERACITY_LIKELY_FALSE = 20
 
 
-@dataclass
+@dataclass(frozen=True)
 class Rumor:
-    """Rumor Entity.
+    """Rumor Entity (Immutable).
 
     Represents a piece of information that spreads through the world.
     Truth value decays as the rumor spreads from location to location.
+
+    Why frozen: Rumors are immutable records of information spreading.
+    When a rumor spreads, a new Rumor instance is created with updated
+    values (see spread_to() method).
 
     Attributes:
         rumor_id: Unique identifier for this rumor (UUID).
@@ -87,7 +93,7 @@ class Rumor:
     source_event_id: Optional[str] = None
     origin_location_id: str = ""
     current_locations: Set[str] = field(default_factory=set)
-    created_date: Any = None  # WorldCalendar | None (avoid circular import)
+    created_date: Optional["WorldCalendar"] = None
     spread_count: int = 0
 
     def __post_init__(self) -> None:

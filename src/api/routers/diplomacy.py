@@ -10,8 +10,13 @@ from __future__ import annotations
 from typing import Dict, List
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
 
+from src.api.schemas import (
+    DiplomacyMatrixResponse,
+    ErrorDetail,
+    FactionDiplomacyResponse,
+    SetRelationRequest,
+)
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 
@@ -31,36 +36,6 @@ def reset_diplomacy_storage() -> None:
     """Reset diplomacy storage (for testing)."""
     global _diplomacy_matrices
     _diplomacy_matrices = {}
-
-
-# === Request/Response Models ===
-
-
-class DiplomacyMatrixResponse(BaseModel):
-    """Response model for full diplomacy matrix."""
-
-    world_id: str = Field(description="World ID for this diplomacy matrix")
-    matrix: Dict[str, Dict[str, str]] = Field(
-        description="2D matrix of faction relationships"
-    )
-    factions: List[str] = Field(description="List of all faction IDs in the matrix")
-
-
-class FactionDiplomacyResponse(BaseModel):
-    """Response model for a single faction's diplomatic relations."""
-
-    faction_id: str = Field(description="The faction's ID")
-    allies: List[str] = Field(description="List of allied faction IDs")
-    enemies: List[str] = Field(description="List of hostile/at war faction IDs")
-    neutral: List[str] = Field(description="List of neutral faction IDs")
-
-
-class SetRelationRequest(BaseModel):
-    """Request model for setting a diplomatic relation."""
-
-    status: str = Field(
-        description="Diplomatic status to set (allied, friendly, neutral, cold, hostile, at_war)"
-    )
 
 
 # === Helper Functions ===
@@ -125,7 +100,10 @@ def _validate_status(status_str: str) -> DiplomaticStatus:
         valid_values = ", ".join(status_map.keys())
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid status '{status_str}'. Valid values: {valid_values}",
+            detail=ErrorDetail(
+                code="INVALID_STATUS",
+                message=f"Invalid status '{status_str}'. Valid values: {valid_values}",
+            ).model_dump(),
         )
 
     return status_map[status_lower]
@@ -183,7 +161,10 @@ async def get_faction_diplomacy(
     if faction_id not in matrix.faction_ids:
         raise HTTPException(
             status_code=404,
-            detail=f"Faction '{faction_id}' not found in world '{world_id}'",
+            detail=ErrorDetail(
+                code="FACTION_NOT_FOUND",
+                message=f"Faction '{faction_id}' not found in world '{world_id}'",
+            ).model_dump(),
         )
 
     return FactionDiplomacyResponse(
@@ -230,7 +211,10 @@ async def set_relation(
     if result.is_error:
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to set relation: {str(result.error)}",
+            detail=ErrorDetail(
+                code="SET_RELATION_FAILED",
+                message=f"Failed to set relation: {str(result.error)}",
+            ).model_dump(),
         )
 
     return _matrix_to_response(matrix)

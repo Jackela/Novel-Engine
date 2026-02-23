@@ -13,11 +13,19 @@ Endpoints:
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
 
+from src.api.schemas import (
+    CalendarData,
+    CreateSnapshotRequest,
+    ErrorDetail,
+    RestoreSnapshotResponse,
+    SnapshotListResponse,
+    SnapshotResponse,
+    SnapshotSummary,
+)
 from src.contexts.world.application.services.snapshot_service import (
     SnapshotService,
 )
@@ -52,70 +60,6 @@ def _get_or_create_calendar(world_id: str) -> WorldCalendar:
             year=1, month=1, day=1, era_name="First Age"
         )
     return _world_calendars[world_id]
-
-
-# === Request/Response Models ===
-
-
-class CalendarData(BaseModel):
-    """Calendar data in snapshot response."""
-
-    year: int
-    month: int
-    day: int
-    era_name: str
-    formatted: str
-
-
-class CreateSnapshotRequest(BaseModel):
-    """Request model for creating a snapshot."""
-
-    description: Optional[str] = Field(
-        None, max_length=200, description="Optional description for the snapshot"
-    )
-    tick_number: int = Field(
-        default=0, ge=0, description="Sequential tick number for the snapshot"
-    )
-    state_json: str = Field(
-        default="{}", description="JSON-serialized world state data"
-    )
-
-
-class SnapshotResponse(BaseModel):
-    """Response model for a snapshot."""
-
-    snapshot_id: str
-    world_id: str
-    calendar: Optional[CalendarData]
-    tick_number: int
-    description: str
-    created_at: str
-    size_bytes: int
-
-
-class SnapshotSummary(BaseModel):
-    """Summary model for snapshot list."""
-
-    snapshot_id: str
-    tick_number: int
-    description: str
-    created_at: str
-
-
-class SnapshotListResponse(BaseModel):
-    """Response model for list of snapshots."""
-
-    snapshots: List[SnapshotSummary]
-    total: int
-
-
-class RestoreSnapshotResponse(BaseModel):
-    """Response model for snapshot restoration."""
-
-    snapshot_id: str
-    world_id: str
-    restored: bool
-    message: str
 
 
 # === Helper Functions ===
@@ -197,10 +141,10 @@ async def create_snapshot(
     except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail={
-                "code": "INVALID_REQUEST",
-                "message": str(e),
-            },
+            detail=ErrorDetail(
+                code="INVALID_REQUEST",
+                message=str(e),
+            ).model_dump(),
         )
 
 
@@ -264,10 +208,10 @@ async def get_snapshot(
         if result.is_error:
             raise HTTPException(
                 status_code=404,
-                detail={
-                    "code": "SNAPSHOT_NOT_FOUND",
-                    "message": f"Snapshot '{snapshot_id}' not found",
-                },
+                detail=ErrorDetail(
+                    code="SNAPSHOT_NOT_FOUND",
+                    message=f"Snapshot '{snapshot_id}' not found",
+                ).model_dump(),
             )
         snapshot = result.value
     else:
@@ -278,10 +222,10 @@ async def get_snapshot(
         if snapshot is None:
             raise HTTPException(
                 status_code=404,
-                detail={
-                    "code": "SNAPSHOT_NOT_FOUND",
-                    "message": f"Snapshot '{snapshot_id}' not found in world '{world_id}'",
-                },
+                detail=ErrorDetail(
+                    code="SNAPSHOT_NOT_FOUND",
+                    message=f"Snapshot '{snapshot_id}' not found in world '{world_id}'",
+                ).model_dump(),
             )
 
     return _snapshot_to_response(snapshot)
@@ -318,18 +262,18 @@ async def restore_snapshot(
         if error.value == "not_found":
             raise HTTPException(
                 status_code=404,
-                detail={
-                    "code": "SNAPSHOT_NOT_FOUND",
-                    "message": f"Snapshot '{snapshot_id}' not found",
-                },
+                detail=ErrorDetail(
+                    code="SNAPSHOT_NOT_FOUND",
+                    message=f"Snapshot '{snapshot_id}' not found",
+                ).model_dump(),
             )
         else:
             raise HTTPException(
                 status_code=500,
-                detail={
-                    "code": "RESTORE_FAILED",
-                    "message": f"Failed to restore snapshot: {error.value}",
-                },
+                detail=ErrorDetail(
+                    code="RESTORE_FAILED",
+                    message=f"Failed to restore snapshot: {error.value}",
+                ).model_dump(),
             )
 
     snapshot = result.value
@@ -368,10 +312,10 @@ async def delete_snapshot(
     if not deleted:
         raise HTTPException(
             status_code=404,
-            detail={
-                "code": "SNAPSHOT_NOT_FOUND",
-                "message": f"Snapshot '{snapshot_id}' not found",
-            },
+            detail=ErrorDetail(
+                code="SNAPSHOT_NOT_FOUND",
+                message=f"Snapshot '{snapshot_id}' not found",
+            ).model_dump(),
         )
 
     return {"deleted": True, "snapshot_id": snapshot_id}

@@ -34,6 +34,7 @@ interface CalendarDisplayProps {
  */
 export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
   const [announcement, setAnnouncement] = useState<string>('');
+  const [isAdvancingUi, setIsAdvancingUi] = useState(false);
   const {
     data: calendar,
     isLoading,
@@ -45,12 +46,15 @@ export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
   const advanceMutation = useAdvanceCalendar();
 
   const handleAdvance = async (days: number) => {
+    setIsAdvancingUi(true);
     try {
       await advanceMutation.mutateAsync({ worldId, days });
       setAnnouncement(`Time advanced by ${days} day${days > 1 ? 's' : ''}`);
       onAdvance?.(days);
     } catch {
       setAnnouncement('Failed to advance time');
+    } finally {
+      setIsAdvancingUi(false);
     }
   };
 
@@ -114,7 +118,11 @@ export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
     );
   }
 
-  const isAdvancing = advanceMutation.isPending;
+  const isAdvancing = isAdvancingUi || advanceMutation.isPending;
+  const eraSuffix = ` - ${calendar.era_name}`;
+  const formattedDateWithoutEra = calendar.formatted_date.endsWith(eraSuffix)
+    ? calendar.formatted_date.slice(0, -eraSuffix.length)
+    : calendar.formatted_date;
 
   return (
     <Card data-testid="calendar-display" data-state="success">
@@ -136,7 +144,7 @@ export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
               aria-live="polite"
               aria-atomic="true"
             >
-              {calendar.formatted_date}
+              {formattedDateWithoutEra}
             </p>
           </div>
 

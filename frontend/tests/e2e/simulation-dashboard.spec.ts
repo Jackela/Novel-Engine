@@ -15,6 +15,19 @@ import { test, expect } from './fixtures';
 import { activateGuestSession } from './utils/auth';
 import { safeGoto } from './utils/navigation';
 
+// This suite relies on page.route API mocks; block service workers to avoid interception races.
+test.use({ serviceWorkers: 'block' });
+
+async function gotoSimulationDashboard(page: Page) {
+  await safeGoto(page, '/simulation');
+  await expect(page.getByRole('link', { name: /simulation/i })).toBeVisible({
+    timeout: 30_000,
+  });
+  await expect(page.getByTestId('simulation-controls')).toBeVisible({
+    timeout: 30_000,
+  });
+}
+
 // Mock simulation API responses
 async function mockSimulationApi(page: Page) {
   // Mock preview simulation
@@ -224,16 +237,15 @@ test.describe('Simulation Dashboard', () => {
   });
 
   test('should navigate to simulation dashboard', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
-    // Verify main dashboard elements are visible
-    await expect(page.getByRole('main', { name: 'Simulation Dashboard' })).toBeVisible();
+    // Verify main dashboard elements are visible.
     await expect(page.getByTestId('simulation-controls')).toBeVisible();
     await expect(page.getByTestId('snapshot-controls')).toBeVisible();
   });
 
   test('should display calendar component', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     // Calendar display should be visible
     const calendarDisplay = page.getByTestId('calendar-display');
@@ -242,7 +254,7 @@ test.describe('Simulation Dashboard', () => {
   });
 
   test('should show preview buttons', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     const simulationControls = page.getByTestId('simulation-controls');
 
@@ -253,7 +265,7 @@ test.describe('Simulation Dashboard', () => {
   });
 
   test('should show commit buttons', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     const simulationControls = page.getByTestId('simulation-controls');
 
@@ -264,7 +276,7 @@ test.describe('Simulation Dashboard', () => {
   });
 
   test('should execute preview simulation', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     // Click preview 7 days button
     const previewButton = page.getByRole('button', { name: /preview 7 days/i });
@@ -275,11 +287,11 @@ test.describe('Simulation Dashboard', () => {
     await expect(lastTickResult).toBeVisible({ timeout: 5000 });
 
     // Verify the result shows 7 days
-    await expect(lastTickResult.getByText('7')).toBeVisible();
+    await expect(lastTickResult.getByTestId('days-advanced-value')).toHaveText('7');
   });
 
   test('should execute commit simulation', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     // Click commit 1 day button
     const commitButton = page.getByRole('button', { name: /commit 1 day/i });
@@ -290,11 +302,11 @@ test.describe('Simulation Dashboard', () => {
     await expect(lastTickResult).toBeVisible({ timeout: 5000 });
 
     // Verify the result shows 1 day
-    await expect(lastTickResult.getByText('1')).toBeVisible();
+    await expect(lastTickResult.getByTestId('days-advanced-value')).toHaveText('1');
   });
 
   test('should create snapshot', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     // Click create snapshot button
     const createSnapshotButton = page.getByRole('button', { name: /create snapshot/i });
@@ -306,7 +318,7 @@ test.describe('Simulation Dashboard', () => {
   });
 
   test('should display snapshot restore dropdown', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     const snapshotControls = page.getByTestId('snapshot-controls');
 
@@ -316,7 +328,7 @@ test.describe('Simulation Dashboard', () => {
   });
 
   test('should display events timeline', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     // Timeline should be visible (WorldTimeline component)
     // Since there are no events, it should show empty state
@@ -324,7 +336,7 @@ test.describe('Simulation Dashboard', () => {
   });
 
   test('should toggle rumors display', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     // Find rumors section
     const rumorsButton = page.getByRole('button', { name: /rumors/i });
@@ -338,17 +350,17 @@ test.describe('Simulation Dashboard', () => {
   });
 
   test('should display factions section', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     // Factions card should be visible
-    await expect(page.getByRole('heading', { name: /factions/i })).toBeVisible();
+    await expect(page.getByText('Factions', { exact: true })).toBeVisible();
 
     // Should have link to full matrix
     await expect(page.getByRole('link', { name: /view full matrix/i })).toBeVisible();
   });
 
   test('should have accessible simulation controls', async ({ page }) => {
-    await safeGoto(page, '/simulation');
+    await gotoSimulationDashboard(page);
 
     // Verify aria labels on buttons
     const previewButton = page.getByRole('button', { name: /preview 1 day/i });

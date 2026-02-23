@@ -3469,3 +3469,236 @@ class EventListResponse(BaseModel):
     page: int = Field(..., description="Current page number")
     page_size: int = Field(..., description="Number of items per page")
     total_pages: int = Field(..., description="Total number of pages")
+
+
+# === World Simulation Schemas ===
+
+
+# --- Calendar Schemas ---
+
+
+class CalendarResponse(BaseModel):
+    """Response model for calendar state.
+
+    Used by both calendar router and simulation router for consistent
+    calendar data representation.
+    """
+
+    year: int = Field(description="Current year in the world calendar")
+    month: int = Field(description="Current month (1 to months_per_year)")
+    day: int = Field(description="Current day (1 to days_per_month)")
+    era_name: str = Field(description="Name of the current era")
+    formatted_date: str = Field(description="Human-readable formatted date string")
+    days_per_month: int = Field(default=30, description="Number of days per month")
+    months_per_year: int = Field(default=12, description="Number of months per year")
+
+
+class AdvanceCalendarRequest(BaseModel):
+    """Request model for advancing the calendar."""
+
+    days: int = Field(
+        default=1, ge=1, le=365, description="Number of days to advance (1-365)"
+    )
+
+
+class CalendarData(BaseModel):
+    """Calendar data embedded in other responses.
+
+    Lightweight calendar representation for nested use in snapshots,
+    rumors, and other entities.
+    """
+
+    year: int
+    month: int
+    day: int
+    era_name: str
+    formatted: str
+
+
+# --- Diplomacy Schemas ---
+
+
+class DiplomacyMatrixResponse(BaseModel):
+    """Response model for full diplomacy matrix."""
+
+    world_id: str = Field(description="World ID for this diplomacy matrix")
+    matrix: Dict[str, Dict[str, str]] = Field(
+        description="2D matrix of faction relationships"
+    )
+    factions: List[str] = Field(description="List of all faction IDs in the matrix")
+
+
+class FactionDiplomacyResponse(BaseModel):
+    """Response model for a single faction's diplomatic relations."""
+
+    faction_id: str = Field(description="The faction's ID")
+    allies: List[str] = Field(description="List of allied faction IDs")
+    enemies: List[str] = Field(description="List of hostile/at war faction IDs")
+    neutral: List[str] = Field(description="List of neutral faction IDs")
+
+
+class SetRelationRequest(BaseModel):
+    """Request model for setting a diplomatic relation."""
+
+    status: str = Field(
+        description="Diplomatic status to set (allied, friendly, neutral, cold, hostile, at_war)"
+    )
+
+
+# --- Simulation Schemas ---
+
+
+class SimulateRequest(BaseModel):
+    """Request model for simulation operations."""
+
+    days: int = Field(
+        default=1,
+        ge=1,
+        le=365,
+        description="Number of days to simulate (1-365)",
+    )
+
+
+class ResourceChangesResponse(BaseModel):
+    """Response model for resource changes during simulation."""
+
+    wealth_delta: int
+    military_delta: int
+    influence_delta: int
+    has_changes: bool
+
+
+class DiplomacyChangeResponse(BaseModel):
+    """Response model for diplomacy changes during simulation."""
+
+    faction_a: str
+    faction_b: str
+    status_before: str
+    status_after: str
+    is_significant: bool
+
+
+class SimulationTickSummary(BaseModel):
+    """Summary model for simulation tick history."""
+
+    tick_id: str
+    days_advanced: int
+    events_count: int
+    created_at: str
+
+
+class SimulationTickResponse(BaseModel):
+    """Response model for a complete simulation tick."""
+
+    tick_id: str
+    world_id: str
+    calendar_before: Optional[CalendarResponse]
+    calendar_after: Optional[CalendarResponse]
+    days_advanced: int
+    events_generated: List[str]
+    resource_changes: Dict[str, ResourceChangesResponse]
+    diplomacy_changes: List[DiplomacyChangeResponse]
+    created_at: str
+
+
+class SimulationHistoryResponse(BaseModel):
+    """Response model for simulation history."""
+
+    ticks: List[SimulationTickSummary]
+    total: int
+
+
+class SimulationStatusResponse(BaseModel):
+    """Response model for async simulation status."""
+
+    tick_id: str
+    status: str
+    status_url: str
+    message: str
+
+
+# --- Snapshot Schemas ---
+
+
+class CreateSnapshotRequest(BaseModel):
+    """Request model for creating a snapshot."""
+
+    description: Optional[str] = Field(
+        None, max_length=200, description="Optional description for the snapshot"
+    )
+    tick_number: int = Field(
+        default=0, ge=0, description="Sequential tick number for the snapshot"
+    )
+    state_json: str = Field(
+        default="{}", description="JSON-serialized world state data"
+    )
+
+
+class SnapshotSummary(BaseModel):
+    """Summary model for snapshot list."""
+
+    snapshot_id: str
+    tick_number: int
+    description: str
+    created_at: str
+
+
+class SnapshotResponse(BaseModel):
+    """Response model for a snapshot."""
+
+    snapshot_id: str
+    world_id: str
+    calendar: Optional[CalendarData]
+    tick_number: int
+    description: str
+    created_at: str
+    size_bytes: int
+
+
+class SnapshotListResponse(BaseModel):
+    """Response model for list of snapshots."""
+
+    snapshots: List[SnapshotSummary]
+    total: int
+
+
+class RestoreSnapshotResponse(BaseModel):
+    """Response model for snapshot restoration."""
+
+    snapshot_id: str
+    world_id: str
+    restored: bool
+    message: str
+
+
+# --- Rumor Schemas ---
+
+
+class SortByEnum(str, Enum):
+    """Sort options for rumors."""
+
+    RECENT = "recent"
+    RELIABLE = "reliable"
+    SPREAD = "spread"
+
+
+class RumorResponse(BaseModel):
+    """Response model for a single rumor."""
+
+    rumor_id: str
+    content: str
+    truth_value: int = Field(ge=0, le=100)
+    origin_type: str
+    source_event_id: Optional[str] = None
+    origin_location_id: str
+    current_locations: List[str]
+    created_date: Optional[CalendarData]
+    spread_count: int
+    veracity_label: str
+
+
+class RumorListResponse(BaseModel):
+    """Response model for list of rumors."""
+
+    rumors: List[RumorResponse]
+    total: int

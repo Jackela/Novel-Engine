@@ -15,6 +15,8 @@ import { Button } from '@/shared/components/ui';
 import { LoadingSpinner } from '@/shared/components/feedback';
 import { RelationshipGraph } from '@/components/graph';
 import { CalendarDisplay } from '@/components/world/CalendarDisplay';
+import { DiplomacyMatrix } from '@/components/world/DiplomacyMatrix';
+import WorldTimeline from '@/components/world/WorldTimeline';
 
 function RelationshipGraphCard() {
   return (
@@ -93,6 +95,18 @@ function WorldClock() {
   );
 }
 
+function WorldDiplomacy() {
+  const DEFAULT_WORLD_ID = 'default-world';
+
+  return <DiplomacyMatrix worldId={DEFAULT_WORLD_ID} />;
+}
+
+function WorldTimelineSection() {
+  const DEFAULT_WORLD_ID = 'default-world';
+
+  return <WorldTimeline worldId={DEFAULT_WORLD_ID} />;
+}
+
 function WorldStats() {
   const stats = [
     { label: 'Characters', value: 12, icon: Users },
@@ -154,6 +168,12 @@ export default function WorldPage() {
 
         {/* Locations list */}
         <LocationsList />
+
+        {/* World event timeline */}
+        <WorldTimelineSection />
+
+        {/* Diplomacy matrix */}
+        <WorldDiplomacy />
       </div>
     </Suspense>
   );

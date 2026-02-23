@@ -9,8 +9,8 @@ from __future__ import annotations
 from typing import Dict
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
 
+from src.api.schemas import AdvanceCalendarRequest, CalendarResponse, ErrorDetail
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 
 router = APIRouter(tags=["calendar"])
@@ -29,29 +29,6 @@ def reset_calendar_storage() -> None:
     """Reset calendar storage (for testing)."""
     global _world_calendars
     _world_calendars = {}
-
-
-# === Request/Response Models ===
-
-
-class CalendarResponse(BaseModel):
-    """Response model for calendar state."""
-
-    year: int = Field(description="Current year in the world calendar")
-    month: int = Field(description="Current month (1 to months_per_year)")
-    day: int = Field(description="Current day (1 to days_per_month)")
-    era_name: str = Field(description="Name of the current era")
-    formatted_date: str = Field(description="Human-readable formatted date string")
-    days_per_month: int = Field(default=30, description="Number of days per month")
-    months_per_year: int = Field(default=12, description="Number of months per year")
-
-
-class AdvanceCalendarRequest(BaseModel):
-    """Request model for advancing the calendar."""
-
-    days: int = Field(
-        default=1, ge=1, le=365, description="Number of days to advance (1-365)"
-    )
 
 
 # === Helper Functions ===
@@ -115,7 +92,11 @@ async def get_calendar(world_id: str) -> CalendarResponse:
     """
     if world_id not in _world_calendars:
         raise HTTPException(
-            status_code=404, detail=f"World '{world_id}' not found"
+            status_code=404,
+            detail=ErrorDetail(
+                code="WORLD_NOT_FOUND",
+                message=f"World '{world_id}' not found",
+            ).model_dump(),
         )
 
     calendar = _world_calendars[world_id]
@@ -140,7 +121,11 @@ async def advance_calendar(world_id: str, request: AdvanceCalendarRequest) -> Ca
     """
     if world_id not in _world_calendars:
         raise HTTPException(
-            status_code=404, detail=f"World '{world_id}' not found"
+            status_code=404,
+            detail=ErrorDetail(
+                code="WORLD_NOT_FOUND",
+                message=f"World '{world_id}' not found",
+            ).model_dump(),
         )
 
     calendar = _world_calendars[world_id]
@@ -149,7 +134,10 @@ async def advance_calendar(world_id: str, request: AdvanceCalendarRequest) -> Ca
     if result.is_error:
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to advance calendar: {str(result.error)}"
+            detail=ErrorDetail(
+                code="CALENDAR_ADVANCE_FAILED",
+                message=f"Failed to advance calendar: {str(result.error)}",
+            ).model_dump(),
         )
 
     # Update stored calendar - unwrap() is safe here since we checked is_error

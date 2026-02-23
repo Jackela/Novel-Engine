@@ -126,9 +126,9 @@ export function useAdvanceCalendar() {
         );
       }
     },
-    // Always refetch after error or success to ensure sync with server
-    onSettled: (_, __, variables) => {
-      queryClient.invalidateQueries({ queryKey: calendarKeys.detail(variables.worldId) });
+    // Persist server-truth response in cache to avoid UI flicker back to stale GET data.
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(calendarKeys.detail(variables.worldId), data);
     },
   });
 }

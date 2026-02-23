@@ -379,16 +379,22 @@ export function SimulationDashboard() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Days Advanced:</span>
-                    <span className="font-medium">{lastTick.days_advanced}</span>
+                    <span className="font-medium" data-testid="days-advanced-value">
+                      {lastTick.days_advanced}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Events Generated:</span>
-                    <span className="font-medium">{lastTick.events_generated.length}</span>
+                    <span className="font-medium" data-testid="events-generated-value">
+                      {lastTick.events_generated.length}
+                    </span>
                   </div>
                   {lastTick.calendar_after && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">New Date:</span>
-                      <span className="font-medium">{lastTick.calendar_after.formatted_date}</span>
+                      <span className="font-medium" data-testid="new-date-value">
+                        {lastTick.calendar_after.formatted_date}
+                      </span>
                     </div>
                   )}
                 </div>

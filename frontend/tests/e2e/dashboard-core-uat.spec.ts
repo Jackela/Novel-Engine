@@ -370,11 +370,16 @@ test.describe('Emergent Narrative Dashboard - Core UAT', () => {
       let componentUpdates;
 
       // 4. Validate component updates
-      // Wait for polling updates to propagate - use expect.toHaveCount for deterministic wait
-      await expect(dashboardPage.realTimeActivity.locator('[data-testid="activity-event"]')).toHaveCount(
-        expect.any(Number),
-        { timeout: 5000 }
-      );
+      // Wait for activity events to appear after the injected SSE payload.
+      await expect
+        .poll(
+          async () =>
+            dashboardPage.realTimeActivity
+              .locator('[data-testid="activity-event"]')
+              .count(),
+          { timeout: 5000 }
+        )
+        .toBeGreaterThan(0);
 
       // *** VALIDATE ALWAYS VISIBLE COMPONENTS ***
       // We grab standard updates first

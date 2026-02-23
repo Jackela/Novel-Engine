@@ -166,15 +166,15 @@ export function PromptsPage() {
         <LoadingState />
       ) : filteredPrompts.length === 0 ? (
         !searchQuery && selectedModel === 'all' && selectedTag === 'all' ? (
-          <EmptyState
-            title="No prompts found"
-            description="Get started by creating your first prompt template"
-            action={{
-              label: 'Create Prompt',
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onClick: () => navigate({ to: '/brain/prompts/new' as any }),
-            }}
-          />
+            <EmptyState
+              title="No prompts found"
+              description="Get started by creating your first prompt template"
+              action={{
+                label: 'Create Prompt',
+                onClick: () =>
+                  navigate({ to: '/brain/prompts/$id', params: { id: 'new' } }),
+              }}
+            />
         ) : (
           <EmptyState
             title="No prompts found"
@@ -188,10 +188,12 @@ export function PromptsPage() {
               key={prompt.id}
               prompt={prompt}
               onDelete={() => handleDelete(prompt.id, prompt.name)}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onEdit={() => navigate({ to: `/brain/prompts/${prompt.id}` as any })}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onView={() => navigate({ to: `/brain/prompts/${prompt.id}` as any })}
+              onEdit={() =>
+                navigate({ to: '/brain/prompts/$id', params: { id: prompt.id } })
+              }
+              onView={() =>
+                navigate({ to: '/brain/prompts/$id', params: { id: prompt.id } })
+              }
             />
           ))}
         </div>
@@ -213,8 +215,7 @@ function PromptsHeader({ navigate }: PromptsHeaderProps) {
           Manage and version your AI prompt templates
         </p>
       </div>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <Button onClick={() => navigate({ to: '/brain/prompts/new' as any })}>
+      <Button onClick={() => navigate({ to: '/brain/prompts/$id', params: { id: 'new' } })}>
         <Plus className="mr-2 h-4 w-4" />
         New Prompt
       </Button>

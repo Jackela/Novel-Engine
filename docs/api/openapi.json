@@ -1488,6 +1488,102 @@
         }
       }
     },
+    "/api/calendar/{world_id}": {
+      "get": {
+        "tags": [
+          "calendar"
+        ],
+        "summary": "Get Calendar",
+        "description": "Get the current calendar state for a world.\n\nArgs:\n    world_id: Unique identifier for the world\n\nReturns:\n    CalendarResponse with current calendar state\n\nRaises:\n    404: If world not found (no calendar exists)",
+        "operationId": "get_calendar_api_calendar__world_id__get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calendar/{world_id}/advance": {
+      "post": {
+        "tags": [
+          "calendar"
+        ],
+        "summary": "Advance Calendar",
+        "description": "Advance the calendar for a world by a specified number of days.\n\nArgs:\n    world_id: Unique identifier for the world\n    request: AdvanceCalendarRequest with days to advance\n\nReturns:\n    CalendarResponse with updated calendar state\n\nRaises:\n    404: If world not found (no calendar exists)\n    400: If advance operation fails (e.g., invalid days value)",
+        "operationId": "advance_calendar_api_calendar__world_id__advance_post",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvanceCalendarRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/campaigns": {
       "get": {
         "tags": [
@@ -1638,6 +1734,172 @@
         }
       }
     },
+    "/api/world/{world_id}/diplomacy": {
+      "get": {
+        "tags": [
+          "diplomacy"
+        ],
+        "summary": "Get Diplomacy Matrix",
+        "description": "Get the full diplomacy matrix for a world.\n\nReturns a 2D matrix showing diplomatic relations between all factions.\nMatrix entries are status strings (allied, friendly, neutral, cold, hostile, at_war).\nSelf-relations are shown as '-'.\n\nArgs:\n    world_id: Unique identifier for the world\n\nReturns:\n    DiplomacyMatrixResponse with full matrix and faction list",
+        "operationId": "get_diplomacy_matrix_api_world__world_id__diplomacy_get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiplomacyMatrixResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/diplomacy/faction/{faction_id}": {
+      "get": {
+        "tags": [
+          "diplomacy"
+        ],
+        "summary": "Get Faction Diplomacy",
+        "description": "Get diplomatic relations for a single faction.\n\nReturns categorized lists of allies, enemies, and neutral factions.\n\nArgs:\n    world_id: Unique identifier for the world\n    faction_id: ID of the faction to get relations for\n\nReturns:\n    FactionDiplomacyResponse with categorized faction lists\n\nRaises:\n    404: If faction not found in the diplomacy matrix",
+        "operationId": "get_faction_diplomacy_api_world__world_id__diplomacy_faction__faction_id__get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "faction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Faction Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactionDiplomacyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/diplomacy/{faction_a}/{faction_b}": {
+      "put": {
+        "tags": [
+          "diplomacy"
+        ],
+        "summary": "Set Relation",
+        "description": "Set the diplomatic relation between two factions.\n\nUpdates the diplomatic status between two factions. The relation is\nsymmetric - setting A's relation to B automatically sets B's relation to A.\n\nArgs:\n    world_id: Unique identifier for the world\n    faction_a: First faction ID\n    faction_b: Second faction ID\n    request: SetRelationRequest with the new status\n\nReturns:\n    DiplomacyMatrixResponse with updated matrix\n\nRaises:\n    400: If status is invalid or operation fails",
+        "operationId": "set_relation_api_world__world_id__diplomacy__faction_a___faction_b__put",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "faction_a",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Faction A"
+            }
+          },
+          {
+            "name": "faction_b",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Faction B"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetRelationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiplomacyMatrixResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/stream": {
       "get": {
         "tags": [
@@ -1689,7 +1951,8 @@
     "/api/events/emit": {
       "post": {
         "tags": [
-          "Dashboard"
+          "Dashboard",
+          "History Events"
         ],
         "summary": "Emit Dashboard Event",
         "description": "Emit event to all connected clients.",
@@ -1731,7 +1994,8 @@
     "/api/events/stats": {
       "get": {
         "tags": [
-          "Dashboard"
+          "Dashboard",
+          "History Events"
         ],
         "summary": "Get Sse Stats",
         "description": "Get SSE connection statistics.",
@@ -1753,7 +2017,8 @@
     "/api/analytics/metrics": {
       "get": {
         "tags": [
-          "Dashboard"
+          "Dashboard",
+          "History Events"
         ],
         "summary": "Get Analytics Metrics",
         "description": "Get analytics metrics for dashboard.",
@@ -1765,6 +2030,308 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnalyticsMetricsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/events": {
+      "get": {
+        "tags": [
+          "Dashboard",
+          "History Events"
+        ],
+        "summary": "List Historical Events",
+        "description": "List historical events for a world with pagination and filtering.\n\nArgs:\n    world_id: Unique identifier for the world\n    event_type: Optional filter by event type (e.g., war, battle, treaty)\n    impact_scope: Optional filter by impact scope (local, regional, global)\n    from_date: Optional filter events from this date\n    to_date: Optional filter events to this date\n    faction_id: Optional filter by faction ID involved\n    location_id: Optional filter by location ID\n    is_secret: Optional filter by secret status\n    page: Page number for pagination (starts at 1)\n    page_size: Number of items per page (1-100)\n\nReturns:\n    EventListResponse with paginated list of events",
+        "operationId": "list_historical_events_api_world__world_id__events_get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by event type",
+              "title": "Event Type"
+            },
+            "description": "Filter by event type"
+          },
+          {
+            "name": "impact_scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by impact scope",
+              "title": "Impact Scope"
+            },
+            "description": "Filter by impact scope"
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter events from this date",
+              "title": "From Date"
+            },
+            "description": "Filter events from this date"
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter events to this date",
+              "title": "To Date"
+            },
+            "description": "Filter events to this date"
+          },
+          {
+            "name": "faction_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by faction ID",
+              "title": "Faction Id"
+            },
+            "description": "Filter by faction ID"
+          },
+          {
+            "name": "location_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by location ID",
+              "title": "Location Id"
+            },
+            "description": "Filter by location ID"
+          },
+          {
+            "name": "is_secret",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by secret status",
+              "title": "Is Secret"
+            },
+            "description": "Filter by secret status"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Items per page",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Dashboard",
+          "History Events"
+        ],
+        "summary": "Create Historical Event",
+        "description": "Create a new historical event for a world.\n\nArgs:\n    world_id: Unique identifier for the world\n    request: CreateEventRequest with event details\n\nReturns:\n    HistoryEventResponse with the created event\n\nRaises:\n    400: Invalid request data (e.g., invalid event_type)",
+        "operationId": "create_historical_event_api_world__world_id__events_post",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryEventResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/events/{event_id}": {
+      "get": {
+        "tags": [
+          "Dashboard",
+          "History Events"
+        ],
+        "summary": "Get Historical Event",
+        "description": "Get details of a specific historical event.\n\nArgs:\n    world_id: Unique identifier for the world\n    event_id: Unique identifier for the event\n\nReturns:\n    HistoryEventResponse with the event details\n\nRaises:\n    404: Event not found",
+        "operationId": "get_historical_event_api_world__world_id__events__event_id__get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryEventResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -8807,6 +9374,625 @@
         }
       }
     },
+    "/api/world/{world_id}/simulate/preview": {
+      "post": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Preview simulation (read-only)",
+        "description": "Run a read-only simulation preview without persisting changes.",
+        "operationId": "preview_simulation_api_world__world_id__simulate_preview_post",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationTickResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/simulate/commit": {
+      "post": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Commit simulation (applies changes)",
+        "description": "Commit a simulation tick that persists changes to the world state.",
+        "operationId": "commit_simulation_api_world__world_id__simulate_commit_post",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationTickResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Simulation accepted for background processing (days > 30)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/simulate/history": {
+      "get": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Get simulation history",
+        "description": "Get the last 20 simulation tick summaries for a world.",
+        "operationId": "get_simulation_history_api_world__world_id__simulate_history_get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/simulate/{tick_id}": {
+      "get": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Get single tick details",
+        "description": "Get detailed information about a specific simulation tick.",
+        "operationId": "get_tick_details_api_world__world_id__simulate__tick_id__get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "tick_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tick Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationTickResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/rumors": {
+      "get": {
+        "tags": [
+          "rumors"
+        ],
+        "summary": "List rumors",
+        "description": "Get a list of rumors with optional location filter and sorting.",
+        "operationId": "list_rumors_api_world__world_id__rumors_get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "location_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by location ID (rumors at this location)",
+              "title": "Location Id"
+            },
+            "description": "Filter by location ID (rumors at this location)"
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortByEnum",
+              "description": "Sort order: recent, reliable, or spread",
+              "default": "recent"
+            },
+            "description": "Sort order: recent, reliable, or spread"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RumorListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/rumors/{rumor_id}": {
+      "get": {
+        "tags": [
+          "rumors"
+        ],
+        "summary": "Get rumor details",
+        "description": "Get detailed information about a specific rumor.",
+        "operationId": "get_rumor_api_world__world_id__rumors__rumor_id__get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "rumor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rumor Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RumorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/snapshots": {
+      "post": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Create snapshot",
+        "description": "Create a new snapshot of the world state.",
+        "operationId": "create_snapshot_api_world__world_id__snapshots_post",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSnapshotRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "List snapshots",
+        "description": "Get a list of snapshots for a world.",
+        "operationId": "list_snapshots_api_world__world_id__snapshots_get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/snapshots/{snapshot_id}": {
+      "get": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Get snapshot details",
+        "description": "Get detailed information about a specific snapshot.",
+        "operationId": "get_snapshot_api_world__world_id__snapshots__snapshot_id__get",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Delete snapshot",
+        "description": "Delete a snapshot.",
+        "operationId": "delete_snapshot_api_world__world_id__snapshots__snapshot_id__delete",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Snapshot Api World  World Id  Snapshots  Snapshot Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/world/{world_id}/snapshots/{snapshot_id}/restore": {
+      "post": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Restore snapshot",
+        "description": "Restore world state from a snapshot.",
+        "operationId": "restore_snapshot_api_world__world_id__snapshots__snapshot_id__restore_post",
+        "parameters": [
+          {
+            "name": "world_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "World Id"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreSnapshotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/characters": {
       "get": {
         "summary": "Legacy Get Characters",
@@ -9210,6 +10396,21 @@
   },
   "components": {
     "schemas": {
+      "AdvanceCalendarRequest": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Days",
+            "description": "Number of days to advance (1-365)",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "title": "AdvanceCalendarRequest",
+        "description": "Request model for advancing the calendar."
+      },
       "AnalyticsMetricsData": {
         "properties": {
           "story_quality": {
@@ -9859,6 +11060,91 @@
         ],
         "title": "CSRFTokenResponse",
         "description": "Response model for CSRF token endpoint."
+      },
+      "CalendarData": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "month": {
+            "type": "integer",
+            "title": "Month"
+          },
+          "day": {
+            "type": "integer",
+            "title": "Day"
+          },
+          "era_name": {
+            "type": "string",
+            "title": "Era Name"
+          },
+          "formatted": {
+            "type": "string",
+            "title": "Formatted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "year",
+          "month",
+          "day",
+          "era_name",
+          "formatted"
+        ],
+        "title": "CalendarData",
+        "description": "Calendar data embedded in other responses.\n\nLightweight calendar representation for nested use in snapshots,\nrumors, and other entities."
+      },
+      "CalendarResponse": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "title": "Year",
+            "description": "Current year in the world calendar"
+          },
+          "month": {
+            "type": "integer",
+            "title": "Month",
+            "description": "Current month (1 to months_per_year)"
+          },
+          "day": {
+            "type": "integer",
+            "title": "Day",
+            "description": "Current day (1 to days_per_month)"
+          },
+          "era_name": {
+            "type": "string",
+            "title": "Era Name",
+            "description": "Name of the current era"
+          },
+          "formatted_date": {
+            "type": "string",
+            "title": "Formatted Date",
+            "description": "Human-readable formatted date string"
+          },
+          "days_per_month": {
+            "type": "integer",
+            "title": "Days Per Month",
+            "description": "Number of days per month",
+            "default": 30
+          },
+          "months_per_year": {
+            "type": "integer",
+            "title": "Months Per Year",
+            "description": "Number of months per year",
+            "default": 12
+          }
+        },
+        "type": "object",
+        "required": [
+          "year",
+          "month",
+          "day",
+          "era_name",
+          "formatted_date"
+        ],
+        "title": "CalendarResponse",
+        "description": "Response model for calendar state.\n\nUsed by both calendar router and simulation router for consistent\ncalendar data representation."
       },
       "CampaignCreationRequest": {
         "properties": {
@@ -11312,6 +12598,22 @@
               }
             ],
             "title": "Appearance"
+          },
+          "current_location_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Location Id"
+          },
+          "is_deceased": {
+            "type": "boolean",
+            "title": "Is Deceased",
+            "default": false
           }
         },
         "type": "object",
@@ -11747,6 +13049,304 @@
         "title": "ConflictUpdateRequest",
         "description": "Request model for updating a conflict."
       },
+      "CreateEventRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Short name/title of the event"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Description",
+            "description": "Detailed description of what happened"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type",
+            "description": "Classification of the event type (e.g., war, battle, treaty, discovery)",
+            "default": "political"
+          },
+          "significance": {
+            "type": "string",
+            "title": "Significance",
+            "description": "Level of historical significance (trivial, minor, moderate, major, world_changing, legendary)",
+            "default": "moderate"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "General outcome of the event (positive, negative, neutral, mixed, unknown)",
+            "default": "neutral"
+          },
+          "date_description": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Date Description",
+            "description": "Narrative date description"
+          },
+          "duration_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Description",
+            "description": "How long the event lasted"
+          },
+          "location_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Ids",
+            "description": "IDs of locations where event occurred"
+          },
+          "faction_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faction Ids",
+            "description": "IDs of factions involved"
+          },
+          "key_figures": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Figures",
+            "description": "Names of key individuals involved"
+          },
+          "causes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Causes",
+            "description": "What led to this event"
+          },
+          "consequences": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consequences",
+            "description": "What resulted from this event"
+          },
+          "preceding_event_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preceding Event Ids",
+            "description": "IDs of events that directly preceded this one"
+          },
+          "following_event_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Following Event Ids",
+            "description": "IDs of events that directly followed this one"
+          },
+          "related_event_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Event Ids",
+            "description": "IDs of related but not directly connected events"
+          },
+          "is_secret": {
+            "type": "boolean",
+            "title": "Is Secret",
+            "description": "Whether this event is hidden from common knowledge",
+            "default": false
+          },
+          "sources": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sources",
+            "description": "Where knowledge of this event comes from"
+          },
+          "narrative_importance": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Narrative Importance",
+            "description": "How important this is to the story (0-100)",
+            "default": 50
+          },
+          "impact_scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Impact Scope",
+            "description": "Geographic scope of the event's impact (local, regional, global)"
+          },
+          "affected_faction_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Faction Ids",
+            "description": "IDs of factions directly affected (distinct from involved)"
+          },
+          "affected_location_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Location Ids",
+            "description": "IDs of locations directly affected (distinct from where occurred)"
+          },
+          "structured_date": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Date",
+            "description": "Structured calendar date for simulation events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "date_description"
+        ],
+        "title": "CreateEventRequest",
+        "description": "Request model for creating a new historical event."
+      },
+      "CreateSnapshotRequest": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Optional description for the snapshot"
+          },
+          "tick_number": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Tick Number",
+            "description": "Sequential tick number for the snapshot",
+            "default": 0
+          },
+          "state_json": {
+            "type": "string",
+            "title": "State Json",
+            "description": "JSON-serialized world state data",
+            "default": "{}"
+          }
+        },
+        "type": "object",
+        "title": "CreateSnapshotRequest",
+        "description": "Request model for creating a snapshot."
+      },
       "CritiqueCategoryScoreResponse": {
         "properties": {
           "category": {
@@ -12006,6 +13606,76 @@
         ],
         "title": "DialogueGenerationResponse",
         "description": "Response model for generated dialogue.\n\nContains the character's spoken words along with metadata about\ntheir internal state and physical expression."
+      },
+      "DiplomacyChangeResponse": {
+        "properties": {
+          "faction_a": {
+            "type": "string",
+            "title": "Faction A"
+          },
+          "faction_b": {
+            "type": "string",
+            "title": "Faction B"
+          },
+          "status_before": {
+            "type": "string",
+            "title": "Status Before"
+          },
+          "status_after": {
+            "type": "string",
+            "title": "Status After"
+          },
+          "is_significant": {
+            "type": "boolean",
+            "title": "Is Significant"
+          }
+        },
+        "type": "object",
+        "required": [
+          "faction_a",
+          "faction_b",
+          "status_before",
+          "status_after",
+          "is_significant"
+        ],
+        "title": "DiplomacyChangeResponse",
+        "description": "Response model for diplomacy changes during simulation."
+      },
+      "DiplomacyMatrixResponse": {
+        "properties": {
+          "world_id": {
+            "type": "string",
+            "title": "World Id",
+            "description": "World ID for this diplomacy matrix"
+          },
+          "matrix": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Matrix",
+            "description": "2D matrix of faction relationships"
+          },
+          "factions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Factions",
+            "description": "List of all faction IDs in the matrix"
+          }
+        },
+        "type": "object",
+        "required": [
+          "world_id",
+          "matrix",
+          "factions"
+        ],
+        "title": "DiplomacyMatrixResponse",
+        "description": "Response model for full diplomacy matrix."
       },
       "DocumentationRequest": {
         "properties": {
@@ -12681,6 +14351,47 @@
         ],
         "title": "ErrorInfo"
       },
+      "EventListResponse": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryEventResponse"
+            },
+            "type": "array",
+            "title": "Events",
+            "description": "List of historical events"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total number of events matching the filter"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page",
+            "description": "Current page number"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size",
+            "description": "Number of items per page"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages",
+            "description": "Total number of pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_count",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "EventListResponse",
+        "description": "Response model for paginated list of historical events."
+      },
       "ExampleFormat": {
         "type": "string",
         "enum": [
@@ -13348,6 +15059,48 @@
         "title": "FactionDetailResponse",
         "description": "Response model for faction details including members."
       },
+      "FactionDiplomacyResponse": {
+        "properties": {
+          "faction_id": {
+            "type": "string",
+            "title": "Faction Id",
+            "description": "The faction's ID"
+          },
+          "allies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allies",
+            "description": "List of allied faction IDs"
+          },
+          "enemies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Enemies",
+            "description": "List of hostile/at war faction IDs"
+          },
+          "neutral": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Neutral",
+            "description": "List of neutral faction IDs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "faction_id",
+          "allies",
+          "enemies",
+          "neutral"
+        ],
+        "title": "FactionDiplomacyResponse",
+        "description": "Response model for a single faction's diplomatic relations."
+      },
       "FactionJoinRequest": {
         "properties": {
           "character_id": {
@@ -13790,6 +15543,48 @@
         "title": "GenerateStreamRequest",
         "description": "Request body for narrative streaming generation.\n\nAttributes:\n    scene_id: Optional UUID of the scene to generate content for.\n    prompt: Optional custom prompt for generation.\n    context: Optional context string to inform generation.\n    max_tokens: Maximum tokens to generate (controls length)."
       },
+      "GeneratedEventResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "significance": {
+            "type": "integer",
+            "title": "Significance"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Participants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "event_type",
+          "significance",
+          "participants"
+        ],
+        "title": "GeneratedEventResponse",
+        "description": "Response model for generated history event in world generation.\n\nNote: This is a simplified version for world generation output.\nFor detailed event management, see HistoryEventResponse in schemas.py."
+      },
       "GiveItemRequest": {
         "properties": {
           "item_id": {
@@ -13961,30 +15756,215 @@
         "properties": {
           "id": {
             "type": "string",
-            "title": "Id"
+            "title": "Id",
+            "description": "Unique identifier for the event"
           },
           "name": {
             "type": "string",
-            "title": "Name"
+            "title": "Name",
+            "description": "Short name/title of the event"
           },
           "description": {
             "type": "string",
-            "title": "Description"
+            "title": "Description",
+            "description": "Detailed description of what happened"
           },
           "event_type": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Event Type",
+            "description": "Classification of the event type"
           },
           "significance": {
-            "type": "integer",
-            "title": "Significance"
+            "type": "string",
+            "title": "Significance",
+            "description": "Level of historical significance"
           },
-          "participants": {
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "General outcome of the event"
+          },
+          "date_description": {
+            "type": "string",
+            "title": "Date Description",
+            "description": "Narrative date description"
+          },
+          "duration_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Description",
+            "description": "How long the event lasted"
+          },
+          "location_ids": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Participants"
+            "title": "Location Ids",
+            "description": "IDs of locations where event occurred"
+          },
+          "faction_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Faction Ids",
+            "description": "IDs of factions involved"
+          },
+          "key_figures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Key Figures",
+            "description": "Names of key individuals involved"
+          },
+          "causes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Causes",
+            "description": "What led to this event"
+          },
+          "consequences": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Consequences",
+            "description": "What resulted from this event"
+          },
+          "preceding_event_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Preceding Event Ids",
+            "description": "IDs of events that directly preceded this one"
+          },
+          "following_event_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Following Event Ids",
+            "description": "IDs of events that directly followed this one"
+          },
+          "related_event_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Related Event Ids",
+            "description": "IDs of related but not directly connected events"
+          },
+          "is_secret": {
+            "type": "boolean",
+            "title": "Is Secret",
+            "description": "Whether this event is hidden from common knowledge",
+            "default": false
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Where knowledge of this event comes from"
+          },
+          "narrative_importance": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Narrative Importance",
+            "description": "How important this is to the story (0-100)",
+            "default": 50
+          },
+          "impact_scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Impact Scope",
+            "description": "Geographic scope of the event's impact (local, regional, global)"
+          },
+          "affected_faction_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Faction Ids",
+            "description": "IDs of factions directly affected (distinct from involved)"
+          },
+          "affected_location_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Location Ids",
+            "description": "IDs of locations directly affected (distinct from where occurred)"
+          },
+          "structured_date": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Date",
+            "description": "Structured calendar date for simulation events"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At",
+            "description": "ISO 8601 timestamp when event was created"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "ISO 8601 timestamp when event was last updated"
           }
         },
         "type": "object",
@@ -13994,10 +15974,11 @@
           "description",
           "event_type",
           "significance",
-          "participants"
+          "outcome",
+          "date_description"
         ],
         "title": "HistoryEventResponse",
-        "description": "Response model for history event."
+        "description": "Response model for a historical event."
       },
       "InformationFragmentResponse": {
         "properties": {
@@ -17276,6 +19257,162 @@
         "title": "ReorderBeatsRequest",
         "description": "Request model for reordering beats within a scene."
       },
+      "ResourceChangesResponse": {
+        "properties": {
+          "wealth_delta": {
+            "type": "integer",
+            "title": "Wealth Delta"
+          },
+          "military_delta": {
+            "type": "integer",
+            "title": "Military Delta"
+          },
+          "influence_delta": {
+            "type": "integer",
+            "title": "Influence Delta"
+          },
+          "has_changes": {
+            "type": "boolean",
+            "title": "Has Changes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "wealth_delta",
+          "military_delta",
+          "influence_delta",
+          "has_changes"
+        ],
+        "title": "ResourceChangesResponse",
+        "description": "Response model for resource changes during simulation."
+      },
+      "RestoreSnapshotResponse": {
+        "properties": {
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "world_id": {
+            "type": "string",
+            "title": "World Id"
+          },
+          "restored": {
+            "type": "boolean",
+            "title": "Restored"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshot_id",
+          "world_id",
+          "restored",
+          "message"
+        ],
+        "title": "RestoreSnapshotResponse",
+        "description": "Response model for snapshot restoration."
+      },
+      "RumorListResponse": {
+        "properties": {
+          "rumors": {
+            "items": {
+              "$ref": "#/components/schemas/RumorResponse"
+            },
+            "type": "array",
+            "title": "Rumors"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rumors",
+          "total"
+        ],
+        "title": "RumorListResponse",
+        "description": "Response model for list of rumors."
+      },
+      "RumorResponse": {
+        "properties": {
+          "rumor_id": {
+            "type": "string",
+            "title": "Rumor Id"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "truth_value": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Truth Value"
+          },
+          "origin_type": {
+            "type": "string",
+            "title": "Origin Type"
+          },
+          "source_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Event Id"
+          },
+          "origin_location_id": {
+            "type": "string",
+            "title": "Origin Location Id"
+          },
+          "current_locations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Current Locations"
+          },
+          "created_date": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "spread_count": {
+            "type": "integer",
+            "title": "Spread Count"
+          },
+          "veracity_label": {
+            "type": "string",
+            "title": "Veracity Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rumor_id",
+          "content",
+          "truth_value",
+          "origin_type",
+          "origin_location_id",
+          "current_locations",
+          "created_date",
+          "spread_count",
+          "veracity_label"
+        ],
+        "title": "RumorResponse",
+        "description": "Response model for a single rumor."
+      },
       "SSEStatsResponse": {
         "properties": {
           "connected_clients": {
@@ -17652,6 +19789,21 @@
         "title": "SceneUpdateRequest",
         "description": "Request model for updating a scene."
       },
+      "SetRelationRequest": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Diplomatic status to set (allied, friendly, neutral, cold, hostile, at_war)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "SetRelationRequest",
+        "description": "Request model for setting a diplomatic relation."
+      },
       "SetScenePlotlinesRequest": {
         "properties": {
           "plotline_ids": {
@@ -17666,6 +19818,43 @@
         "type": "object",
         "title": "SetScenePlotlinesRequest",
         "description": "Request model for setting all plotlines for a scene."
+      },
+      "SimulateRequest": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Days",
+            "description": "Number of days to simulate (1-365)",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "title": "SimulateRequest",
+        "description": "Request model for simulation operations."
+      },
+      "SimulationHistoryResponse": {
+        "properties": {
+          "ticks": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationTickSummary"
+            },
+            "type": "array",
+            "title": "Ticks"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticks",
+          "total"
+        ],
+        "title": "SimulationHistoryResponse",
+        "description": "Response model for simulation history."
       },
       "SimulationRequest": {
         "properties": {
@@ -17751,6 +19940,139 @@
         ],
         "title": "SimulationResponse"
       },
+      "SimulationStatusResponse": {
+        "properties": {
+          "tick_id": {
+            "type": "string",
+            "title": "Tick Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "status_url": {
+            "type": "string",
+            "title": "Status Url"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tick_id",
+          "status",
+          "status_url",
+          "message"
+        ],
+        "title": "SimulationStatusResponse",
+        "description": "Response model for async simulation status."
+      },
+      "SimulationTickResponse": {
+        "properties": {
+          "tick_id": {
+            "type": "string",
+            "title": "Tick Id"
+          },
+          "world_id": {
+            "type": "string",
+            "title": "World Id"
+          },
+          "calendar_before": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "calendar_after": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "days_advanced": {
+            "type": "integer",
+            "title": "Days Advanced"
+          },
+          "events_generated": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Events Generated"
+          },
+          "resource_changes": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ResourceChangesResponse"
+            },
+            "type": "object",
+            "title": "Resource Changes"
+          },
+          "diplomacy_changes": {
+            "items": {
+              "$ref": "#/components/schemas/DiplomacyChangeResponse"
+            },
+            "type": "array",
+            "title": "Diplomacy Changes"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tick_id",
+          "world_id",
+          "calendar_before",
+          "calendar_after",
+          "days_advanced",
+          "events_generated",
+          "resource_changes",
+          "diplomacy_changes",
+          "created_at"
+        ],
+        "title": "SimulationTickResponse",
+        "description": "Response model for a complete simulation tick."
+      },
+      "SimulationTickSummary": {
+        "properties": {
+          "tick_id": {
+            "type": "string",
+            "title": "Tick Id"
+          },
+          "days_advanced": {
+            "type": "integer",
+            "title": "Days Advanced"
+          },
+          "events_count": {
+            "type": "integer",
+            "title": "Events Count"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tick_id",
+          "days_advanced",
+          "events_count",
+          "created_at"
+        ],
+        "title": "SimulationTickSummary",
+        "description": "Summary model for simulation tick history."
+      },
       "SmartTagsResponse": {
         "properties": {
           "smart_tags": {
@@ -17790,6 +20112,107 @@
         "type": "object",
         "title": "SmartTagsResponse",
         "description": "Response model for smart tags."
+      },
+      "SnapshotListResponse": {
+        "properties": {
+          "snapshots": {
+            "items": {
+              "$ref": "#/components/schemas/SnapshotSummary"
+            },
+            "type": "array",
+            "title": "Snapshots"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshots",
+          "total"
+        ],
+        "title": "SnapshotListResponse",
+        "description": "Response model for list of snapshots."
+      },
+      "SnapshotResponse": {
+        "properties": {
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "world_id": {
+            "type": "string",
+            "title": "World Id"
+          },
+          "calendar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tick_number": {
+            "type": "integer",
+            "title": "Tick Number"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshot_id",
+          "world_id",
+          "calendar",
+          "tick_number",
+          "description",
+          "created_at",
+          "size_bytes"
+        ],
+        "title": "SnapshotResponse",
+        "description": "Response model for a snapshot."
+      },
+      "SnapshotSummary": {
+        "properties": {
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "tick_number": {
+            "type": "integer",
+            "title": "Tick Number"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshot_id",
+          "tick_number",
+          "description",
+          "created_at"
+        ],
+        "title": "SnapshotSummary",
+        "description": "Summary model for snapshot list."
       },
       "SocialAnalysisResponse": {
         "properties": {
@@ -17863,6 +20286,16 @@
         "type": "object",
         "title": "SocialAnalysisResponse",
         "description": "Complete social network analysis result.\n\nProvides graph analytics for the character relationship network including\ncentrality metrics, extreme characters, and network properties."
+      },
+      "SortByEnum": {
+        "type": "string",
+        "enum": [
+          "recent",
+          "reliable",
+          "spread"
+        ],
+        "title": "SortByEnum",
+        "description": "Sort options for rumors."
       },
       "StandardResponse_BeliefModelData_": {
         "properties": {
@@ -19184,7 +21617,7 @@
           },
           "events": {
             "items": {
-              "$ref": "#/components/schemas/HistoryEventResponse"
+              "$ref": "#/components/schemas/GeneratedEventResponse"
             },
             "type": "array",
             "title": "Events"

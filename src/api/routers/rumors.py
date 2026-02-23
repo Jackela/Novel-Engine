@@ -10,12 +10,18 @@ Endpoints:
 
 from __future__ import annotations
 
-from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+
+from src.api.schemas import (
+    CalendarData,
+    ErrorDetail,
+    RumorListResponse,
+    RumorResponse,
+    SortByEnum,
+)
 
 router = APIRouter(tags=["rumors"])
 
@@ -139,49 +145,6 @@ def _get_mock_rumors(world_id: str, location_id: Optional[str] = None) -> List[D
     return rumors
 
 
-class SortByEnum(str, Enum):
-    """Sort options for rumors."""
-
-    RECENT = "recent"
-    RELIABLE = "reliable"
-    SPREAD = "spread"
-
-
-# === Request/Response Models ===
-
-
-class CalendarData(BaseModel):
-    """Calendar data in rumor response."""
-
-    year: int
-    month: int
-    day: int
-    era_name: str
-    formatted: str
-
-
-class RumorResponse(BaseModel):
-    """Response model for a single rumor."""
-
-    rumor_id: str
-    content: str
-    truth_value: int = Field(ge=0, le=100)
-    origin_type: str
-    source_event_id: Optional[str] = None
-    origin_location_id: str
-    current_locations: List[str]
-    created_date: Optional[CalendarData]
-    spread_count: int
-    veracity_label: str
-
-
-class RumorListResponse(BaseModel):
-    """Response model for list of rumors."""
-
-    rumors: List[RumorResponse]
-    total: int
-
-
 # === Helper Functions ===
 
 
@@ -300,8 +263,8 @@ async def get_rumor(
 
     raise HTTPException(
         status_code=404,
-        detail={
-            "code": "RUMOR_NOT_FOUND",
-            "message": f"Rumor '{rumor_id}' not found in world '{world_id}'",
-        },
+        detail=ErrorDetail(
+            code="RUMOR_NOT_FOUND",
+            message=f"Rumor '{rumor_id}' not found in world '{world_id}'",
+        ).model_dump(),
     )

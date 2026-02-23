@@ -16,6 +16,14 @@ import { test, expect } from './fixtures';
 import { activateGuestSession } from './utils/auth';
 import { safeGoto } from './utils/navigation';
 
+// This suite relies on page.route API mocks; block service workers to avoid interception races.
+test.use({ serviceWorkers: 'block' });
+
+async function gotoWorldPage(page: Page) {
+  await safeGoto(page, '/world');
+  await expect(page.getByTestId('world-page')).toBeVisible({ timeout: 30_000 });
+}
+
 // Mock events API responses
 async function mockEventsApiEmpty(page: Page) {
   await page.route('**/api/world/*/events*', async (route) => {
@@ -33,117 +41,119 @@ async function mockEventsApiEmpty(page: Page) {
   });
 }
 
+const SUCCESS_EVENTS_PAYLOAD = {
+  events: [
+    {
+      id: 'event-1',
+      name: 'The Great Battle of Eldoria',
+      description:
+        'A pivotal conflict between the Kingdom of Eldoria and the Northern Alliance that reshaped the political landscape of the realm. The battle lasted for three days and resulted in significant casualties on both sides.',
+      event_type: 'battle',
+      significance: 'major',
+      outcome: 'positive',
+      date_description: 'Year 1042, Month 3, Day 15',
+      duration_description: '3 days',
+      location_ids: ['loc-1'],
+      faction_ids: ['faction-1', 'faction-2'],
+      key_figures: ['King Aldric', 'General Theron'],
+      causes: ['Territorial dispute', 'Trade route control'],
+      consequences: ['Treaty of Eldoria', 'Border redefinition'],
+      preceding_event_ids: [],
+      following_event_ids: [],
+      related_event_ids: [],
+      is_secret: false,
+      sources: ['Royal Archives'],
+      narrative_importance: 85,
+      impact_scope: 'regional',
+      affected_faction_ids: ['faction-1', 'faction-2'],
+      affected_location_ids: ['loc-1'],
+      structured_date: {
+        year: 1042,
+        month: 3,
+        day: 15,
+        era_name: 'Third Age',
+      },
+      created_at: '2026-02-16T10:00:00Z',
+      updated_at: '2026-02-16T10:00:00Z',
+    },
+    {
+      id: 'event-2',
+      name: 'Discovery of the Crystal Caves',
+      description: 'Miners discovered ancient caves filled with magical crystals.',
+      event_type: 'discovery',
+      significance: 'moderate',
+      outcome: 'positive',
+      date_description: 'Year 1042, Month 2, Day 8',
+      duration_description: null,
+      location_ids: ['loc-2'],
+      faction_ids: ['faction-3'],
+      key_figures: ['Miner Gareth'],
+      causes: [],
+      consequences: ['New trade opportunities'],
+      preceding_event_ids: [],
+      following_event_ids: [],
+      related_event_ids: [],
+      is_secret: false,
+      sources: ['Mining Guild Records'],
+      narrative_importance: 50,
+      impact_scope: 'local',
+      affected_faction_ids: ['faction-3'],
+      affected_location_ids: ['loc-2'],
+      structured_date: {
+        year: 1042,
+        month: 2,
+        day: 8,
+        era_name: 'Third Age',
+      },
+      created_at: '2026-02-15T14:00:00Z',
+      updated_at: '2026-02-15T14:00:00Z',
+    },
+    {
+      id: 'event-3',
+      name: 'Global Trade Agreement',
+      description:
+        'A comprehensive trade agreement signed by all major factions, establishing new trade routes and economic cooperation across the entire realm.',
+      event_type: 'trade',
+      significance: 'world_changing',
+      outcome: 'positive',
+      date_description: 'Year 1042, Month 1, Day 1',
+      duration_description: '1 day',
+      location_ids: ['loc-3'],
+      faction_ids: ['faction-1', 'faction-2', 'faction-3'],
+      key_figures: ['Chancellor Mira', 'Merchant Lord Vex'],
+      causes: ['Economic instability'],
+      consequences: ['Prosperity era'],
+      preceding_event_ids: [],
+      following_event_ids: [],
+      related_event_ids: [],
+      is_secret: false,
+      sources: ['Trade Archives'],
+      narrative_importance: 95,
+      impact_scope: 'global',
+      affected_faction_ids: [],
+      affected_location_ids: [],
+      structured_date: {
+        year: 1042,
+        month: 1,
+        day: 1,
+        era_name: 'Third Age',
+      },
+      created_at: '2026-02-14T09:00:00Z',
+      updated_at: '2026-02-14T09:00:00Z',
+    },
+  ],
+  total_count: 3,
+  page: 1,
+  page_size: 20,
+  total_pages: 1,
+};
+
 async function mockEventsApiSuccess(page: Page) {
   await page.route('**/api/world/*/events*', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        events: [
-          {
-            id: 'event-1',
-            name: 'The Great Battle of Eldoria',
-            description:
-              'A pivotal conflict between the Kingdom of Eldoria and the Northern Alliance that reshaped the political landscape of the realm. The battle lasted for three days and resulted in significant casualties on both sides.',
-            event_type: 'battle',
-            significance: 'major',
-            outcome: 'positive',
-            date_description: 'Year 1042, Month 3, Day 15',
-            duration_description: '3 days',
-            location_ids: ['loc-1'],
-            faction_ids: ['faction-1', 'faction-2'],
-            key_figures: ['King Aldric', 'General Theron'],
-            causes: ['Territorial dispute', 'Trade route control'],
-            consequences: ['Treaty of Eldoria', 'Border redefinition'],
-            preceding_event_ids: [],
-            following_event_ids: [],
-            related_event_ids: [],
-            is_secret: false,
-            sources: ['Royal Archives'],
-            narrative_importance: 85,
-            impact_scope: 'regional',
-            affected_faction_ids: ['faction-1', 'faction-2'],
-            affected_location_ids: ['loc-1'],
-            structured_date: {
-              year: 1042,
-              month: 3,
-              day: 15,
-              era_name: 'Third Age',
-            },
-            created_at: '2026-02-16T10:00:00Z',
-            updated_at: '2026-02-16T10:00:00Z',
-          },
-          {
-            id: 'event-2',
-            name: 'Discovery of the Crystal Caves',
-            description: 'Miners discovered ancient caves filled with magical crystals.',
-            event_type: 'discovery',
-            significance: 'moderate',
-            outcome: 'positive',
-            date_description: 'Year 1042, Month 2, Day 8',
-            duration_description: null,
-            location_ids: ['loc-2'],
-            faction_ids: ['faction-3'],
-            key_figures: ['Miner Gareth'],
-            causes: [],
-            consequences: ['New trade opportunities'],
-            preceding_event_ids: [],
-            following_event_ids: [],
-            related_event_ids: [],
-            is_secret: false,
-            sources: ['Mining Guild Records'],
-            narrative_importance: 50,
-            impact_scope: 'local',
-            affected_faction_ids: ['faction-3'],
-            affected_location_ids: ['loc-2'],
-            structured_date: {
-              year: 1042,
-              month: 2,
-              day: 8,
-              era_name: 'Third Age',
-            },
-            created_at: '2026-02-15T14:00:00Z',
-            updated_at: '2026-02-15T14:00:00Z',
-          },
-          {
-            id: 'event-3',
-            name: 'Global Trade Agreement',
-            description:
-              'A comprehensive trade agreement signed by all major factions, establishing new trade routes and economic cooperation across the entire realm.',
-            event_type: 'trade',
-            significance: 'world_changing',
-            outcome: 'positive',
-            date_description: 'Year 1042, Month 1, Day 1',
-            duration_description: '1 day',
-            location_ids: ['loc-3'],
-            faction_ids: ['faction-1', 'faction-2', 'faction-3'],
-            key_figures: ['Chancellor Mira', 'Merchant Lord Vex'],
-            causes: ['Economic instability'],
-            consequences: ['Prosperity era'],
-            preceding_event_ids: [],
-            following_event_ids: [],
-            related_event_ids: [],
-            is_secret: false,
-            sources: ['Trade Archives'],
-            narrative_importance: 95,
-            impact_scope: 'global',
-            affected_faction_ids: [],
-            affected_location_ids: [],
-            structured_date: {
-              year: 1042,
-              month: 1,
-              day: 1,
-              era_name: 'Third Age',
-            },
-            created_at: '2026-02-14T09:00:00Z',
-            updated_at: '2026-02-14T09:00:00Z',
-          },
-        ],
-        total_count: 3,
-        page: 1,
-        page_size: 20,
-        total_pages: 1,
-      }),
+      body: JSON.stringify(SUCCESS_EVENTS_PAYLOAD),
     });
   });
 }
@@ -236,8 +246,11 @@ async function mockEventsApiFiltered(page: Page) {
       });
     } else {
       // Default: return all events
-      await mockEventsApiSuccess(page);
-      await route.continue();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(SUCCESS_EVENTS_PAYLOAD),
+      });
     }
   });
 }
@@ -261,10 +274,10 @@ test.describe('WorldTimeline Component', () => {
 
   test('should display empty state when no events exist', async ({ page }) => {
     await mockEventsApiEmpty(page);
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
-    await expect(timeline).toBeVisible();
+    await expect(timeline).toBeVisible({ timeout: 30_000 });
     await expect(timeline).toHaveAttribute('data-state', 'empty');
 
     // Should show empty message
@@ -292,7 +305,7 @@ test.describe('WorldTimeline Component', () => {
     });
 
     await activateGuestSession(page);
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -305,7 +318,7 @@ test.describe('WorldTimeline Component', () => {
 
   test('should display events with correct badges', async ({ page }) => {
     await mockEventsApiSuccess(page);
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -322,21 +335,21 @@ test.describe('WorldTimeline Component', () => {
     await expect(timeline.getByText('Global Trade Agreement')).toBeVisible();
 
     // Should show event type badges
-    await expect(timeline.getByRole('article').getByText('battle')).toBeVisible();
-    await expect(timeline.getByRole('article').getByText('discovery')).toBeVisible();
-    await expect(timeline.getByRole('article').getByText('trade')).toBeVisible();
+    await expect(timeline.getByRole('article').getByText(/^battle$/i)).toBeVisible();
+    await expect(timeline.getByRole('article').getByText(/^discovery$/i)).toBeVisible();
+    await expect(timeline.getByRole('article').getByText(/^trade$/i)).toBeVisible();
 
     // Should show impact scope badges
     await expect(
-      timeline.getByRole('article').getByText('regional')
+      timeline.getByRole('article').getByText(/^regional$/i)
     ).toBeVisible();
-    await expect(timeline.getByRole('article').getByText('local')).toBeVisible();
-    await expect(timeline.getByRole('article').getByText('global')).toBeVisible();
+    await expect(timeline.getByRole('article').getByText(/^local$/i)).toBeVisible();
+    await expect(timeline.getByRole('article').getByText(/^global$/i)).toBeVisible();
   });
 
   test('should expand long descriptions', async ({ page }) => {
     await mockEventsApiSuccess(page);
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -359,7 +372,7 @@ test.describe('WorldTimeline Component', () => {
 
   test('should filter by event type', async ({ page }) => {
     await mockEventsApiFiltered(page);
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -384,7 +397,7 @@ test.describe('WorldTimeline Component', () => {
 
   test('should filter by impact scope', async ({ page }) => {
     await mockEventsApiFiltered(page);
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -407,7 +420,7 @@ test.describe('WorldTimeline Component', () => {
 
   test('should clear filters', async ({ page }) => {
     await mockEventsApiSuccess(page);
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -463,7 +476,7 @@ test.describe('WorldTimeline Component', () => {
     });
 
     await activateGuestSession(page);
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -490,7 +503,7 @@ test.describe('WorldTimeline Accessibility', () => {
   });
 
   test('should have feed role with aria-label', async ({ page }) => {
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -502,7 +515,7 @@ test.describe('WorldTimeline Accessibility', () => {
   });
 
   test('should have article role for each event', async ({ page }) => {
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -517,7 +530,7 @@ test.describe('WorldTimeline Accessibility', () => {
   });
 
   test('should have accessible filter dropdowns', async ({ page }) => {
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -534,7 +547,7 @@ test.describe('WorldTimeline Accessibility', () => {
   });
 
   test('should be keyboard navigable', async ({ page }) => {
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
@@ -559,13 +572,13 @@ test.describe('WorldTimeline Accessibility', () => {
   });
 
   test('should have accessible impact scope badge', async ({ page }) => {
-    await safeGoto(page, '/world');
+    await gotoWorldPage(page);
 
     const timeline = page.locator('[data-testid="world-timeline"]');
     await expect(timeline).toBeVisible();
 
     // Impact scope badges should have aria-label
-    const globalBadge = timeline.getByRole('article').getByText('global');
+    const globalBadge = timeline.getByLabel(/impact:\s*global/i);
     await expect(globalBadge).toBeVisible();
     await expect(globalBadge).toHaveAttribute('aria-label', /impact: global/i);
   });

@@ -18,8 +18,18 @@ from typing import Dict, List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
-from pydantic import BaseModel, Field
 
+from src.api.schemas import (
+    CalendarResponse,
+    DiplomacyChangeResponse,
+    ErrorDetail,
+    ResourceChangesResponse,
+    SimulationHistoryResponse,
+    SimulationStatusResponse,
+    SimulationTickResponse,
+    SimulationTickSummary,
+    SimulateRequest,
+)
 from src.contexts.world.domain.value_objects.simulation_tick import (
     DiplomacyChange,
     ResourceChanges,
@@ -130,88 +140,6 @@ def _get_tick_by_id(world_id: str, tick_id: str) -> Optional[SimulationTick]:
     if world_id not in _simulation_history:
         return None
     return _simulation_history[world_id].get(tick_id)
-
-
-# === Request/Response Models ===
-
-
-class SimulateRequest(BaseModel):
-    """Request model for simulation operations."""
-
-    days: int = Field(
-        default=1,
-        ge=1,
-        le=365,
-        description="Number of days to simulate (1-365)",
-    )
-
-
-class CalendarResponse(BaseModel):
-    """Response model for calendar data."""
-
-    year: int
-    month: int
-    day: int
-    era_name: str
-    formatted_date: str
-
-
-class ResourceChangesResponse(BaseModel):
-    """Response model for resource changes."""
-
-    wealth_delta: int
-    military_delta: int
-    influence_delta: int
-    has_changes: bool
-
-
-class DiplomacyChangeResponse(BaseModel):
-    """Response model for diplomacy changes."""
-
-    faction_a: str
-    faction_b: str
-    status_before: str
-    status_after: str
-    is_significant: bool
-
-
-class SimulationTickResponse(BaseModel):
-    """Response model for a complete simulation tick."""
-
-    tick_id: str
-    world_id: str
-    calendar_before: Optional[CalendarResponse]
-    calendar_after: Optional[CalendarResponse]
-    days_advanced: int
-    events_generated: List[str]
-    resource_changes: Dict[str, ResourceChangesResponse]
-    diplomacy_changes: List[DiplomacyChangeResponse]
-    created_at: str
-
-
-class SimulationTickSummary(BaseModel):
-    """Summary model for simulation tick history."""
-
-    tick_id: str
-    days_advanced: int
-    events_count: int
-    created_at: str
-
-
-class SimulationHistoryResponse(BaseModel):
-    """Response model for simulation history."""
-
-    ticks: List[SimulationTickSummary]
-    total: int
-
-
-class SimulationStatusResponse(BaseModel):
-    """Response model for async simulation status."""
-
-    tick_id: str
-    status: str
-    status_url: str
-    message: str
 
 
 # === Helper Functions ===
@@ -366,10 +294,10 @@ async def preview_simulation(
     if result.is_error:
         raise HTTPException(
             status_code=400,
-            detail={
-                "code": "INVALID_DAYS",
-                "message": f"Failed to advance calendar: {result.error}",
-            },
+            detail=ErrorDetail(
+                code="INVALID_DAYS",
+                message=f"Failed to advance calendar: {result.error}",
+            ).model_dump(),
         )
 
     calendar_after = result.unwrap()
@@ -439,21 +367,21 @@ async def commit_simulation(
     if world_id in _active_simulations:
         raise HTTPException(
             status_code=503,
-            detail={
-                "code": "SIMULATION_LOCKED",
-                "message": "Another simulation is in progress for this world",
-                "details": {"active_tick_id": _active_simulations[world_id]},
-            },
+            detail=ErrorDetail(
+                code="SIMULATION_LOCKED",
+                message="Another simulation is in progress for this world",
+                details={"active_tick_id": _active_simulations[world_id]},
+            ).model_dump(),
         )
 
     # Check rate limit
     if not _check_rate_limit(world_id):
         raise HTTPException(
             status_code=429,
-            detail={
-                "code": "RATE_LIMITED",
-                "message": f"Too many commits. Max {MAX_COMMITS_PER_MINUTE} per minute.",
-            },
+            detail=ErrorDetail(
+                code="RATE_LIMITED",
+                message=f"Too many commits. Max {MAX_COMMITS_PER_MINUTE} per minute.",
+            ).model_dump(),
         )
 
     # For large simulations, process in background
@@ -488,10 +416,10 @@ async def commit_simulation(
     except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail={
-                "code": "SIMULATION_ERROR",
-                "message": str(e),
-            },
+            detail=ErrorDetail(
+                code="SIMULATION_ERROR",
+                message=str(e),
+            ).model_dump(),
         )
     finally:
         _active_simulations.pop(world_id, None)
@@ -554,10 +482,10 @@ async def get_tick_details(
     if tick is None:
         raise HTTPException(
             status_code=404,
-            detail={
-                "code": "TICK_NOT_FOUND",
-                "message": f"Tick '{tick_id}' not found for world '{world_id}'",
-            },
+            detail=ErrorDetail(
+                code="TICK_NOT_FOUND",
+                message=f"Tick '{tick_id}' not found for world '{world_id}'",
+            ).model_dump(),
         )
 
     return _tick_to_response(tick)

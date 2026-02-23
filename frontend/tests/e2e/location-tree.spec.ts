@@ -28,12 +28,12 @@ import { safeGoto } from './utils/navigation';
 async function navigateToWorldTab(page: import('@playwright/test').Page) {
   await safeGoto(page, '/story');
 
-  // Wait for the page to be ready
-  await page.waitForLoadState('networkidle');
+  // Wait for app shell and story tabs to be ready (cold start can be slow in dev server).
+  await expect(page.getByRole('main')).toBeVisible({ timeout: 30_000 });
 
   // Click on the World tab
   const worldTab = page.getByRole('tab', { name: /world/i });
-  await worldTab.waitFor({ state: 'visible', timeout: 10000 });
+  await worldTab.waitFor({ state: 'visible', timeout: 30_000 });
   await worldTab.click();
 
   // Wait a moment for the tab content to load

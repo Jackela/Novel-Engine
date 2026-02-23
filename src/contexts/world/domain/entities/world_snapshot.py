@@ -16,6 +16,8 @@ Typical usage example:
     >>> restored = snapshot.restore()
 """
 
+from __future__ import annotations
+
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -27,12 +29,16 @@ if TYPE_CHECKING:
     from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 
 
-@dataclass
+@dataclass(frozen=True)
 class WorldSnapshot:
-    """WorldSnapshot Entity.
+    """WorldSnapshot Entity (Immutable).
 
     Represents a saved state of the world at a specific point in time.
     Used for rollback, history tracking, and state comparison.
+
+    Why frozen: Snapshots are immutable point-in-time records. Once created,
+    a snapshot should never be modified - it represents a fixed state that
+    can be restored but not changed.
 
     Attributes:
         snapshot_id: Unique identifier for this snapshot (UUID).

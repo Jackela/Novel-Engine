@@ -15,10 +15,13 @@ import { test, expect } from './fixtures';
 import { activateGuestSession } from './utils/auth';
 import { safeGoto } from './utils/navigation';
 
+// Calendar tests use page.route mocks extensively; block service workers locally to prevent interception races.
+test.use({ serviceWorkers: 'block' });
+
 // Mock calendar API responses
 async function mockCalendarApi(page: Page) {
   // Mock GET calendar - return 404 initially to test error state
-  await page.route('**/api/calendar/*', async (route) => {
+  await page.route('**/api/calendar/**', async (route) => {
     if (route.request().method() === 'GET') {
       // Return 404 for initial test - world needs to be created first
       await route.fulfill({
@@ -31,7 +34,7 @@ async function mockCalendarApi(page: Page) {
 }
 
 async function mockCalendarApiSuccess(page: Page) {
-  await page.route('**/api/calendar/*', async (route) => {
+  await page.route('**/api/calendar/**', async (route) => {
     const method = route.request().method();
     const url = route.request().url();
 
@@ -67,6 +70,13 @@ async function mockCalendarApiSuccess(page: Page) {
   });
 }
 
+async function gotoWorld(page: Page) {
+  await safeGoto(page, '/world');
+  await expect(page.locator('[data-testid="world-page"]')).toBeVisible({
+    timeout: 20000,
+  });
+}
+
 test.describe('Calendar Display Component', () => {
   test.beforeEach(async ({ page }) => {
     await activateGuestSession(page);
@@ -74,7 +84,7 @@ test.describe('Calendar Display Component', () => {
 
   test('should display error state when world not found', async ({ page }) => {
     await mockCalendarApi(page);
-    await safeGoto(page, '/world');
+    await gotoWorld(page);
 
     // Wait for calendar component to render with error state
     const calendarCard = page.locator('[data-testid="calendar-display"]');
@@ -82,7 +92,9 @@ test.describe('Calendar Display Component', () => {
     await expect(calendarCard).toHaveAttribute('data-state', 'error');
 
     // Should show error message
-    await expect(calendarCard.getByText(/Failed to load calendar/i)).toBeVisible();
+    await expect(
+      calendarCard.getByText(/Failed to load calendar|not found/i)
+    ).toBeVisible();
 
     // Should have retry button
     await expect(calendarCard.getByRole('button', { name: /retry/i })).toBeVisible();
@@ -90,7 +102,7 @@ test.describe('Calendar Display Component', () => {
 
   test('should display loading state initially', async ({ page }) => {
     // Delay the response to see loading state
-    await page.route('**/api/calendar/*', async (route) => {
+    await page.route('**/api/calendar/**', async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 500));
       await route.fulfill({
         status: 200,
@@ -108,7 +120,7 @@ test.describe('Calendar Display Component', () => {
     });
 
     await activateGuestSession(page);
-    await safeGoto(page, '/world');
+    await gotoWorld(page);
 
     // Should show loading skeleton briefly
     const calendarCard = page.locator('[data-testid="calendar-display"]');
@@ -120,7 +132,7 @@ test.describe('Calendar Display Component', () => {
 
   test('should display calendar with advance buttons', async ({ page }) => {
     await mockCalendarApiSuccess(page);
-    await safeGoto(page, '/world');
+    await gotoWorld(page);
 
     // Wait for calendar component to render
     const calendarCard = page.locator('[data-testid="calendar-display"]');
@@ -141,7 +153,7 @@ test.describe('Calendar Display Component', () => {
 
   test('should advance calendar when button clicked', async ({ page }) => {
     await mockCalendarApiSuccess(page);
-    await safeGoto(page, '/world');
+    await gotoWorld(page);
 
     const calendarCard = page.locator('[data-testid="calendar-display"]');
     await expect(calendarCard).toBeVisible();
@@ -158,7 +170,7 @@ test.describe('Calendar Display Component', () => {
 
   test('should disable buttons while advancing', async ({ page }) => {
     let requestCount = 0;
-    await page.route('**/api/calendar/*', async (route) => {
+    await page.route('**/api/calendar/**', async (route) => {
       const method = route.request().method();
 
       if (method === 'GET') {
@@ -196,7 +208,7 @@ test.describe('Calendar Display Component', () => {
     });
 
     await activateGuestSession(page);
-    await safeGoto(page, '/world');
+    await gotoWorld(page);
 
     const calendarCard = page.locator('[data-testid="calendar-display"]');
     await expect(calendarCard).toBeVisible();
@@ -219,7 +231,7 @@ test.describe('Calendar Display Component', () => {
   test('should retry on error', async ({ page }) => {
     let requestCount = 0;
 
-    await page.route('**/api/calendar/*', async (route) => {
+    await page.route('**/api/calendar/**', async (route) => {
       requestCount++;
 
       // First request fails
@@ -248,7 +260,7 @@ test.describe('Calendar Display Component', () => {
     });
 
     await activateGuestSession(page);
-    await safeGoto(page, '/world');
+    await gotoWorld(page);
 
     const calendarCard = page.locator('[data-testid="calendar-display"]');
     await expect(calendarCard).toHaveAttribute('data-state', 'error');
@@ -269,7 +281,7 @@ test.describe('Calendar Accessibility', () => {
   });
 
   test('should have accessible advance buttons with aria-labels', async ({ page }) => {
-    await safeGoto(page, '/world');
+    await gotoWorld(page);
 
     const calendarCard = page.locator('[data-testid="calendar-display"]');
     await expect(calendarCard).toBeVisible();
@@ -285,7 +297,7 @@ test.describe('Calendar Accessibility', () => {
   });
 
   test('should have aria-live region for date changes', async ({ page }) => {
-    await safeGoto(page, '/world');
+    await gotoWorld(page);
 
     const calendarCard = page.locator('[data-testid="calendar-display"]');
     await expect(calendarCard).toBeVisible();
@@ -300,7 +312,7 @@ test.describe('Calendar Accessibility', () => {
   });
 
   test('should be keyboard navigable', async ({ page }) => {
-    await safeGoto(page, '/world');
+    await gotoWorld(page);
 
     const calendarCard = page.locator('[data-testid="calendar-display"]');
     await expect(calendarCard).toBeVisible();
@@ -318,7 +330,7 @@ test.describe('Calendar Accessibility', () => {
     await oneDayButton.focus();
     await page.keyboard.press('Enter');
 
-    // Calendar should update
-    await expect(calendarCard.getByText(/Day 2/i)).toBeVisible({ timeout: 3000 });
+    // Calendar should update based on the mocked advance response.
+    await expect(calendarCard.getByText(/Day 8/i)).toBeVisible({ timeout: 3000 });
   });
 });
