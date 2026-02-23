@@ -9,7 +9,7 @@
  * - Keyboard navigation with arrow keys
  * - Accessible with WCAG 2.1 AA compliance
  */
-import { useState, useRef, useCallback, Fragment, type KeyboardEvent } from 'react';
+import { useState, useRef, useCallback, useMemo, Fragment, type KeyboardEvent } from 'react';
 import { Users, AlertCircle, RefreshCw } from 'lucide-react';
 import {
   Card,
@@ -50,16 +50,16 @@ interface DiplomacyMatrixProps {
 
 /**
  * Color mapping for diplomatic statuses.
- * Matches the PRD color specifications.
+ * Uses HSL CSS variables from the design system.
  */
 const STATUS_COLORS: Record<string, string> = {
-  allied: '#22c55e',
-  friendly: '#84cc16',
-  neutral: '#eab308',
-  cold: '#f97316',
-  hostile: '#ef4444',
-  at_war: '#dc2626',
-  '-': '#6b7280', // Gray for self-relation
+  allied: 'hsl(var(--success))',
+  friendly: 'hsl(var(--success))',
+  neutral: 'hsl(var(--warning))',
+  cold: 'hsl(var(--warning))',
+  hostile: 'hsl(var(--destructive))',
+  at_war: 'hsl(var(--destructive))',
+  '-': 'hsl(var(--muted-foreground))', // Gray for self-relation
 };
 
 /**
@@ -108,8 +108,8 @@ export function DiplomacyMatrix({ worldId }: DiplomacyMatrixProps) {
 
   const setRelationMutation = useSetRelation();
 
-  const factions = diplomacyData?.factions ?? [];
-  const matrix = diplomacyData?.matrix ?? {};
+  const factions = useMemo(() => diplomacyData?.factions ?? [], [diplomacyData?.factions]);
+  const matrix = useMemo(() => diplomacyData?.matrix ?? {}, [diplomacyData?.matrix]);
 
   /**
    * Get status label for display (capitalized).
@@ -122,7 +122,7 @@ export function DiplomacyMatrix({ worldId }: DiplomacyMatrixProps) {
    * Get background color for a status.
    */
   const getStatusColor = (status: string): string => {
-    return STATUS_COLORS[status] ?? '#6b7280';
+    return STATUS_COLORS[status] ?? 'hsl(var(--muted-foreground))';
   };
 
   /**

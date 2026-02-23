@@ -2199,4 +2199,64 @@ export const handlers = [
       visual_prompt: 'dark library, ancient tomes, ethereal glow, shadowy figure',
     });
   }),
+
+  // === Plotlines API (Weaver) ===
+
+  http.get(`${API_PREFIX}/structure/plotlines`, async () => {
+    await withLatency();
+    return HttpResponse.json({
+      plotlines: [
+        {
+          id: 'plotline-1',
+          title: 'The Main Conflict',
+          description: 'The central tension driving the story forward.',
+          status: 'active',
+          story_id: 'story-1',
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+        {
+          id: 'plotline-2',
+          title: 'Character Arc',
+          description: 'The protagonist\'s journey of growth and change.',
+          status: 'active',
+          story_id: 'story-1',
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+      ],
+      total: 2,
+    });
+  }),
+
+  // === Foreshadowing API (Weaver) ===
+
+  http.get(`${API_PREFIX}/structure/foreshadowings`, async () => {
+    await withLatency();
+    return HttpResponse.json({
+      foreshadowings: [
+        {
+          id: 'foreshadow-1',
+          title: 'The Hidden Truth',
+          description: 'Hints about a secret that will be revealed later.',
+          status: 'planted',
+          payoff_chapter_id: null,
+          planted_chapter_id: 'chapter-1',
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+        {
+          id: 'foreshadow-2',
+          title: 'The Mysterious Stranger',
+          description: 'A character who will play a major role later.',
+          status: 'planted',
+          payoff_chapter_id: null,
+          planted_chapter_id: 'chapter-2',
+          created_at: nowIso(),
+          updated_at: nowIso(),
+        },
+      ],
+      total: 2,
+    });
+  }),
 ];
