@@ -516,6 +516,10 @@ nul
 
 # Ralph agent archive directories
 scripts/ralph/archive/
+# Ralph local runtime state
+scripts/ralph/.last-branch
+scripts/ralph/*.tmp
+scripts/ralph/*~
 
 # Ralph worktree directories
 scripts/ralph-*
