@@ -12,6 +12,10 @@ from .faction import (
     FactionStatus,
     FactionType,
 )
+from .faction_intent import (
+    FactionIntent,
+    IntentType,
+)
 from .history_event import (
     EventOutcome,
     EventSignificance,
@@ -39,6 +43,10 @@ from .relationship import (
     Relationship,
     RelationshipType,
 )
+from .rumor import (
+    Rumor,
+    RumorOrigin,
+)
 from .world_rule import WorldRule
 from .world_setting import (
     Era,
@@ -46,6 +54,7 @@ from .world_setting import (
     ToneType,
     WorldSetting,
 )
+from .world_snapshot import WorldSnapshot
 
 __all__ = [
     # Base Entity
@@ -85,4 +94,12 @@ __all__ = [
     "LoreCategory",
     # WorldRule
     "WorldRule",
+    # FactionIntent
+    "FactionIntent",
+    "IntentType",
+    # Rumor
+    "Rumor",
+    "RumorOrigin",
+    # WorldSnapshot
+    "WorldSnapshot",
 ]

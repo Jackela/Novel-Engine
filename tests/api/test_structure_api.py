@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 import api_server
 from src.api.routers.structure import get_repository, reset_scene_storage
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture(autouse=True)
@@ -38,7 +38,7 @@ def client():
 # ============ Story Endpoint Tests ============
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestStoryEndpoints:
     """Tests for story CRUD operations."""
 
@@ -150,7 +150,7 @@ class TestStoryEndpoints:
 # ============ Chapter Endpoint Tests ============
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestChapterEndpoints:
     """Tests for chapter CRUD operations."""
 
@@ -269,7 +269,7 @@ class TestChapterEndpoints:
 # ============ Scene Endpoint Tests ============
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestSceneEndpoints:
     """Tests for scene CRUD operations."""
 

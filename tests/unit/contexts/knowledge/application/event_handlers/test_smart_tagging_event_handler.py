@@ -22,10 +22,10 @@ from src.contexts.knowledge.application.services.smart_tagging_service import (
     TaggingResult,
 )
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestSmartTaggingEventHandler:
     """Tests for SmartTaggingEventHandler."""
 
@@ -351,7 +351,7 @@ class TestSmartTaggingEventHandler:
         assert len(merged["genre"]) == 3
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestSmartTaggingEventHandlerIntegration:
     """Integration tests for SmartTaggingEventHandler."""
 

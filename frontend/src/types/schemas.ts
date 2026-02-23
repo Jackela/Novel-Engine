@@ -99,6 +99,10 @@ export const CharacterSummarySchema = z.object({
   appearance: z.string().nullable().optional(),
   // CHAR-037: Faction membership for sidebar sorting
   faction_id: z.string().nullable().optional(),
+  // SIM-020: Character location tracking
+  current_location_id: z.string().nullable().optional(),
+  // SIM-019: Character life cycle
+  is_deceased: z.boolean().optional().default(false),
 });
 
 export const CharactersListResponseSchema = z.object({
@@ -1422,6 +1426,243 @@ export type WorldRuleListResponse = z.infer<typeof WorldRuleListResponseSchema>;
 export type WorldRuleCreateRequest = z.infer<typeof WorldRuleCreateRequestSchema>;
 export type WorldRuleUpdateRequest = z.infer<typeof WorldRuleUpdateRequestSchema>;
 
+// === Calendar Schemas (SIM-004) ===
+
+/**
+ * Calendar response schema matching backend CalendarResponse.
+ * Represents the current world calendar state.
+ */
+export const CalendarResponseSchema = z.object({
+  year: z.number().int().min(1),
+  month: z.number().int().min(1),
+  day: z.number().int().min(1),
+  era_name: z.string(),
+  formatted_date: z.string(),
+  days_per_month: z.number().int().default(30),
+  months_per_year: z.number().int().default(12),
+});
+
+/**
+ * Request to advance the calendar by a number of days.
+ */
+export const AdvanceCalendarRequestSchema = z.object({
+  days: z.number().int().min(1).max(365).default(1),
+});
+
+export type CalendarResponse = z.infer<typeof CalendarResponseSchema>;
+export type AdvanceCalendarRequest = z.infer<typeof AdvanceCalendarRequestSchema>;
+
+// === History Event Schemas (SIM-006/SIM-007) ===
+
+/**
+ * Impact scope enum for historical events.
+ */
+export const ImpactScopeEnum = z.enum(['local', 'regional', 'global']);
+
+/**
+ * History event response schema matching backend HistoryEventResponse.
+ * Represents a historical event in the world timeline.
+ */
+export const HistoryEventResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  event_type: z.string(),
+  significance: z.string(),
+  outcome: z.string(),
+  date_description: z.string(),
+  duration_description: z.string().nullable().optional(),
+  location_ids: z.array(z.string()).default([]),
+  faction_ids: z.array(z.string()).default([]),
+  key_figures: z.array(z.string()).default([]),
+  causes: z.array(z.string()).default([]),
+  consequences: z.array(z.string()).default([]),
+  preceding_event_ids: z.array(z.string()).default([]),
+  following_event_ids: z.array(z.string()).default([]),
+  related_event_ids: z.array(z.string()).default([]),
+  is_secret: z.boolean().default(false),
+  sources: z.array(z.string()).default([]),
+  narrative_importance: z.number().min(0).max(100).default(50),
+  impact_scope: z.string().nullable().optional(),
+  affected_faction_ids: z.array(z.string()).nullable().optional(),
+  affected_location_ids: z.array(z.string()).nullable().optional(),
+  structured_date: z
+    .object({
+      year: z.number(),
+      month: z.number(),
+      day: z.number(),
+      era_name: z.string(),
+    })
+    .nullable()
+    .optional(),
+  created_at: z.string().nullable().optional(),
+  updated_at: z.string().nullable().optional(),
+});
+
+/**
+ * Event list response schema matching backend EventListResponse.
+ * Paginated list of historical events.
+ */
+export const EventListResponseSchema = z.object({
+  events: z.array(HistoryEventResponseSchema).default([]),
+  total_count: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  page_size: z.number().int().positive(),
+  total_pages: z.number().int().nonnegative(),
+});
+
+/**
+ * Event filter parameters for querying events.
+ */
+export const EventFilterParamsSchema = z.object({
+  event_type: z.string().optional(),
+  impact_scope: z.string().optional(),
+  from_date: z.string().optional(),
+  to_date: z.string().optional(),
+  faction_id: z.string().optional(),
+  location_id: z.string().optional(),
+  is_secret: z.boolean().optional(),
+  page: z.number().int().min(1).default(1),
+  page_size: z.number().int().min(1).max(100).default(20),
+});
+
+/**
+ * Request to create a new historical event.
+ */
+export const CreateEventRequestSchema = z.object({
+  name: z.string().min(1).max(300),
+  description: z.string().min(1),
+  event_type: z.string().default('political'),
+  significance: z.string().default('moderate'),
+  outcome: z.string().default('neutral'),
+  date_description: z.string().min(1),
+  duration_description: z.string().optional(),
+  location_ids: z.array(z.string()).optional(),
+  faction_ids: z.array(z.string()).optional(),
+  key_figures: z.array(z.string()).optional(),
+  causes: z.array(z.string()).optional(),
+  consequences: z.array(z.string()).optional(),
+  preceding_event_ids: z.array(z.string()).optional(),
+  following_event_ids: z.array(z.string()).optional(),
+  related_event_ids: z.array(z.string()).optional(),
+  is_secret: z.boolean().default(false),
+  sources: z.array(z.string()).optional(),
+  narrative_importance: z.number().min(0).max(100).default(50),
+  impact_scope: z.string().optional(),
+  affected_faction_ids: z.array(z.string()).optional(),
+  affected_location_ids: z.array(z.string()).optional(),
+  structured_date: z
+    .object({
+      year: z.number(),
+      month: z.number(),
+      day: z.number(),
+      era_name: z.string(),
+    })
+    .optional(),
+});
+
+export type ImpactScope = z.infer<typeof ImpactScopeEnum>;
+export type HistoryEventResponse = z.infer<typeof HistoryEventResponseSchema>;
+export type EventListResponse = z.infer<typeof EventListResponseSchema>;
+export type EventFilterParams = z.infer<typeof EventFilterParamsSchema>;
+export type CreateEventRequest = z.infer<typeof CreateEventRequestSchema>;
+
+// === Diplomacy Schemas (SIM-011) ===
+
+/**
+ * Diplomatic status enum matching backend DiplomaticStatus.
+ * Represents the relationship strength between two factions.
+ */
+export const DiplomaticStatusEnum = z.enum([
+  'allied',
+  'friendly',
+  'neutral',
+  'cold',
+  'hostile',
+  'at_war',
+]);
+
+/**
+ * Diplomacy matrix response schema matching backend DiplomacyMatrixResponse.
+ * Contains the full diplomatic relationship matrix between all factions.
+ */
+export const DiplomacyMatrixResponseSchema = z.object({
+  world_id: z.string(),
+  matrix: z.record(z.string(), z.record(z.string(), z.string())),
+  factions: z.array(z.string()).default([]),
+});
+
+/**
+ * Faction diplomacy response schema matching backend FactionDiplomacyResponse.
+ * Shows a single faction's relations categorized by status.
+ */
+export const FactionDiplomacyResponseSchema = z.object({
+  faction_id: z.string(),
+  allies: z.array(z.string()).default([]),
+  enemies: z.array(z.string()).default([]),
+  neutral: z.array(z.string()).default([]),
+});
+
+/**
+ * Request to set diplomatic relation between two factions.
+ */
+export const SetRelationRequestSchema = z.object({
+  status: DiplomaticStatusEnum,
+});
+
+export type DiplomaticStatus = z.infer<typeof DiplomaticStatusEnum>;
+export type DiplomacyMatrixResponse = z.infer<typeof DiplomacyMatrixResponseSchema>;
+export type FactionDiplomacyResponse = z.infer<typeof FactionDiplomacyResponseSchema>;
+export type SetRelationRequest = z.infer<typeof SetRelationRequestSchema>;
+
+// === Rumor Schemas (SIM-026) ===
+
+/**
+ * Calendar data embedded in rumor response.
+ */
+export const RumorCalendarSchema = z.object({
+  year: z.number(),
+  month: z.number(),
+  day: z.number(),
+  era_name: z.string(),
+  formatted: z.string(),
+});
+
+/**
+ * Rumor response schema matching backend RumorResponse.
+ * Represents a piece of information spreading through the world.
+ */
+export const RumorResponseSchema = z.object({
+  rumor_id: z.string(),
+  content: z.string(),
+  truth_value: z.number().min(0).max(100),
+  origin_type: z.enum(['event', 'npc', 'player', 'unknown']),
+  source_event_id: z.string().nullable(),
+  origin_location_id: z.string(),
+  current_locations: z.array(z.string()),
+  created_date: RumorCalendarSchema.nullable(),
+  spread_count: z.number(),
+  veracity_label: z.enum(['Confirmed', 'Likely True', 'Uncertain', 'Likely False', 'False']),
+});
+
+/**
+ * Rumor list response schema matching backend RumorListResponse.
+ */
+export const RumorListResponseSchema = z.object({
+  rumors: z.array(RumorResponseSchema),
+  total: z.number(),
+});
+
+/**
+ * Sort options for rumors.
+ */
+export const RumorSortBySchema = z.enum(['recent', 'reliable', 'spread']);
+
+export type RumorCalendar = z.infer<typeof RumorCalendarSchema>;
+export type RumorResponse = z.infer<typeof RumorResponseSchema>;
+export type RumorListResponse = z.infer<typeof RumorListResponseSchema>;
+export type RumorSortBy = z.infer<typeof RumorSortBySchema>;
+
 // === Dialogue Generation Schemas (CHAR-027/CHAR-028) ===
 
 /**
@@ -1954,4 +2195,153 @@ export type PromptDiffHunk = z.infer<typeof PromptDiffHunkSchema>;
 export type PromptVariableChange = z.infer<typeof PromptVariableChangeSchema>;
 export type PromptConfigChange = z.infer<typeof PromptConfigChangeSchema>;
 export type PromptMetadataChange = z.infer<typeof PromptMetadataChangeSchema>;
+
+// === Simulation Schemas (SIM-031) ===
+
+/**
+ * Calendar data for simulation responses.
+ */
+export const SimulationCalendarSchema = z.object({
+  year: z.number().int(),
+  month: z.number().int(),
+  day: z.number().int(),
+  era_name: z.string(),
+  formatted_date: z.string(),
+});
+
+/**
+ * Resource changes in a simulation tick.
+ */
+export const ResourceChangesSchema = z.object({
+  wealth_delta: z.number().int(),
+  military_delta: z.number().int(),
+  influence_delta: z.number().int(),
+  has_changes: z.boolean(),
+});
+
+/**
+ * Diplomacy change in a simulation tick.
+ */
+export const DiplomacyChangeSchema = z.object({
+  faction_a: z.string(),
+  faction_b: z.string(),
+  status_before: z.string(),
+  status_after: z.string(),
+  is_significant: z.boolean(),
+});
+
+/**
+ * Request to run a simulation.
+ */
+export const SimulateRequestSchema = z.object({
+  days: z.number().int().min(1).max(365).default(1),
+});
+
+/**
+ * Response for a simulation tick.
+ */
+export const SimulationTickResponseSchema = z.object({
+  tick_id: z.string(),
+  world_id: z.string(),
+  calendar_before: SimulationCalendarSchema.nullable(),
+  calendar_after: SimulationCalendarSchema.nullable(),
+  days_advanced: z.number().int(),
+  events_generated: z.array(z.string()).default([]),
+  resource_changes: z.record(z.string(), ResourceChangesSchema).default({}),
+  diplomacy_changes: z.array(DiplomacyChangeSchema).default([]),
+  created_at: z.string(),
+});
+
+/**
+ * Summary of a simulation tick for history.
+ */
+export const SimulationTickSummarySchema = z.object({
+  tick_id: z.string(),
+  days_advanced: z.number().int(),
+  events_count: z.number().int(),
+  created_at: z.string(),
+});
+
+/**
+ * Response for simulation history.
+ */
+export const SimulationHistoryResponseSchema = z.object({
+  ticks: z.array(SimulationTickSummarySchema).default([]),
+  total: z.number().int(),
+});
+
+/**
+ * Request to create a snapshot.
+ */
+export const CreateSnapshotRequestSchema = z.object({
+  description: z.string().max(200).optional(),
+  tick_number: z.number().int().min(0).default(0),
+  state_json: z.string().default('{}'),
+});
+
+/**
+ * Calendar data in snapshot response.
+ */
+export const SnapshotCalendarSchema = z.object({
+  year: z.number().int(),
+  month: z.number().int(),
+  day: z.number().int(),
+  era_name: z.string(),
+  formatted: z.string(),
+});
+
+/**
+ * Response for a snapshot.
+ */
+export const SnapshotResponseSchema = z.object({
+  snapshot_id: z.string(),
+  world_id: z.string(),
+  calendar: SnapshotCalendarSchema.nullable(),
+  tick_number: z.number().int(),
+  description: z.string(),
+  created_at: z.string(),
+  size_bytes: z.number().int(),
+});
+
+/**
+ * Summary of a snapshot for listing.
+ */
+export const SnapshotSummarySchema = z.object({
+  snapshot_id: z.string(),
+  tick_number: z.number().int(),
+  description: z.string(),
+  created_at: z.string(),
+});
+
+/**
+ * Response for list of snapshots.
+ */
+export const SnapshotListResponseSchema = z.object({
+  snapshots: z.array(SnapshotSummarySchema).default([]),
+  total: z.number().int(),
+});
+
+/**
+ * Response for snapshot restoration.
+ */
+export const RestoreSnapshotResponseSchema = z.object({
+  snapshot_id: z.string(),
+  world_id: z.string(),
+  restored: z.boolean(),
+  message: z.string(),
+});
+
+export type SimulationCalendar = z.infer<typeof SimulationCalendarSchema>;
+export type ResourceChanges = z.infer<typeof ResourceChangesSchema>;
+export type DiplomacyChange = z.infer<typeof DiplomacyChangeSchema>;
+export type SimulateRequest = z.infer<typeof SimulateRequestSchema>;
+export type SimulationTickResponse = z.infer<typeof SimulationTickResponseSchema>;
+export type SimulationTickSummary = z.infer<typeof SimulationTickSummarySchema>;
+export type SimulationHistoryResponse = z.infer<typeof SimulationHistoryResponseSchema>;
+export type CreateSnapshotRequest = z.infer<typeof CreateSnapshotRequestSchema>;
+export type SnapshotCalendar = z.infer<typeof SnapshotCalendarSchema>;
+export type SnapshotResponse = z.infer<typeof SnapshotResponseSchema>;
+export type SnapshotSummary = z.infer<typeof SnapshotSummarySchema>;
+export type SnapshotListResponse = z.infer<typeof SnapshotListResponseSchema>;
+export type RestoreSnapshotResponse = z.infer<typeof RestoreSnapshotResponseSchema>;
 export type PromptVersionInfo = z.infer<typeof PromptVersionInfoSchema>;

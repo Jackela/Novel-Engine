@@ -10,14 +10,14 @@ Constitution Compliance:
 - Article VII (Observability): Structured logging for all operations
 """
 
+import structlog
+
 from src.core.types.shared_types import KnowledgeEntryId, UserId
 
-from ...infrastructure.logging_config import (
-    get_knowledge_logger,
-    log_knowledge_entry_updated,
-)
 from ..ports.i_event_publisher import IEventPublisher
 from ..ports.i_knowledge_repository import IKnowledgeRepository
+
+logger = structlog.get_logger(__name__)
 
 
 class UpdateKnowledgeEntryUseCase:
@@ -78,17 +78,18 @@ class UpdateKnowledgeEntryUseCase:
         - Article I (DDD): Domain model (update_content) enforces invariants
         - Article VI (EDA): Publishes KnowledgeEntryUpdated event
         """
-        # Log operation start (Article VII - Observability)
-        logger = get_knowledge_logger(
+        operation_logger = logger.bind(
             component="UpdateKnowledgeEntryUseCase",
             user_id=updated_by,
         )
-        logger.info("Updating knowledge entry", entry_id=entry_id)
+
+        # Log operation start (Article VII - Observability)
+        operation_logger.info("knowledge_entry_update_started", entry_id=entry_id)
 
         # Retrieve existing entry
         entry = await self._repository.get_by_id(entry_id)
         if entry is None:
-            logger.warning("Knowledge entry not found", entry_id=entry_id)
+            operation_logger.warning("knowledge_entry_not_found", entry_id=entry_id)
             raise ValueError(f"Knowledge entry not found: {entry_id}")
 
         # Store old content for change tracking
@@ -101,23 +102,16 @@ class UpdateKnowledgeEntryUseCase:
         await self._repository.save(entry)
 
         # Log successful update
-        log_knowledge_entry_updated(
+        operation_logger.info(
+            "knowledge_entry_updated",
             entry_id=entry.id,
             updated_by=updated_by,
-            changes={
-                "content": {
-                    "old": (
-                        old_content[:50] + "..."
-                        if len(old_content) > 50
-                        else old_content
-                    ),
-                    "new": (
-                        new_content[:50] + "..."
-                        if len(new_content) > 50
-                        else new_content
-                    ),
-                }
-            },
+            old_content_preview=(
+                old_content[:50] + "..." if len(old_content) > 50 else old_content
+            ),
+            new_content_preview=(
+                new_content[:50] + "..." if len(new_content) > 50 else new_content
+            ),
         )
 
         # Publish domain event to Kafka (non-blocking, best-effort)
@@ -136,9 +130,14 @@ class UpdateKnowledgeEntryUseCase:
                     "source": "knowledge-management",
                 },
             )
-            logger.info("Domain event published successfully", event_id=event.event_id)
+            operation_logger.info(
+                "knowledge_entry_updated_event_published",
+                event_id=event.event_id,
+            )
         except Exception as e:
             # Event publishing failure is non-blocking (log warning)
-            logger.warning(
-                "Failed to publish domain event", error=str(e), event_id=event.event_id
+            operation_logger.warning(
+                "knowledge_entry_updated_event_publish_failed",
+                error=str(e),
+                event_id=event.event_id,
             )

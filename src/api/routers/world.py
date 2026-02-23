@@ -93,8 +93,12 @@ class LocationResponse(BaseModel):
     danger_level: str
 
 
-class HistoryEventResponse(BaseModel):
-    """Response model for history event."""
+class GeneratedEventResponse(BaseModel):
+    """Response model for generated history event in world generation.
+
+    Note: This is a simplified version for world generation output.
+    For detailed event management, see HistoryEventResponse in schemas.py.
+    """
 
     id: str
     name: str
@@ -110,7 +114,7 @@ class WorldGenerationResponse(BaseModel):
     world_setting: WorldSettingResponse
     factions: List[FactionResponse]
     locations: List[LocationResponse]
-    events: List[HistoryEventResponse]
+    events: List[GeneratedEventResponse]
     generation_summary: str
 
 
@@ -215,7 +219,7 @@ async def generate_world(request: WorldGenerationRequest) -> WorldGenerationResp
     ]
 
     events = [
-        HistoryEventResponse(
+        GeneratedEventResponse(
             id=e.id,
             name=e.name,
             description=e.description,

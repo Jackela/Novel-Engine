@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 from src.contexts.world.application.ports.world_generator_port import (
     WorldGenerationInput,
@@ -198,7 +198,7 @@ def generator() -> LLMWorldGenerator:
 class TestWorldGenerationInput:
     """Tests for WorldGenerationInput dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_default_values(self) -> None:
         """Test default input values."""
         request = WorldGenerationInput()
@@ -211,7 +211,7 @@ class TestWorldGenerationInput:
         assert request.num_locations == 5
         assert request.num_events == 3
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_custom_values(self) -> None:
         """Test custom input values."""
         request = WorldGenerationInput(
@@ -230,13 +230,13 @@ class TestWorldGenerationInput:
         assert request.technology_level == 9
         assert request.custom_constraints == "Include a space station"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_invalid_magic_level_raises(self) -> None:
         """Test that invalid magic level raises ValueError."""
         with pytest.raises(ValueError, match="magic_level must be between 0 and 10"):
             WorldGenerationInput(magic_level=11)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_invalid_technology_level_raises(self) -> None:
         """Test that invalid technology level raises ValueError."""
         with pytest.raises(
@@ -244,19 +244,19 @@ class TestWorldGenerationInput:
         ):
             WorldGenerationInput(technology_level=-1)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_invalid_num_factions_raises(self) -> None:
         """Test that invalid faction count raises ValueError."""
         with pytest.raises(ValueError, match="num_factions must be between 1 and 10"):
             WorldGenerationInput(num_factions=0)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_invalid_num_locations_raises(self) -> None:
         """Test that invalid location count raises ValueError."""
         with pytest.raises(ValueError, match="num_locations must be between 1 and 10"):
             WorldGenerationInput(num_locations=15)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_invalid_num_events_raises(self) -> None:
         """Test that invalid event count raises ValueError."""
         with pytest.raises(ValueError, match="num_events must be between 1 and 10"):
@@ -266,14 +266,14 @@ class TestWorldGenerationInput:
 class TestLLMWorldGeneratorParsing:
     """Tests for LLMWorldGenerator JSON parsing."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_json_direct(self, generator: LLMWorldGenerator) -> None:
         """Test direct JSON extraction."""
         content = '{"world_setting": {"name": "Test"}}'
         result = generator._extract_json(content)
         assert result["world_setting"]["name"] == "Test"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_json_from_markdown(self, generator: LLMWorldGenerator) -> None:
         """Test JSON extraction from markdown code block."""
         content = """Here is the world:
@@ -284,7 +284,7 @@ That's it!"""
         result = generator._extract_json(content)
         assert result["world_setting"]["name"] == "MarkdownWorld"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_json_with_surrounding_text(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -293,7 +293,7 @@ That's it!"""
         result = generator._extract_json(content)
         assert result["world_setting"]["name"] == "Embedded"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_json_invalid_raises(self, generator: LLMWorldGenerator) -> None:
         """Test that invalid JSON raises error."""
         content = "This is not JSON at all"
@@ -304,7 +304,7 @@ That's it!"""
 class TestLLMWorldGeneratorBuilding:
     """Tests for LLMWorldGenerator entity building."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_world_setting(
         self,
         generator: LLMWorldGenerator,
@@ -322,7 +322,7 @@ class TestLLMWorldGeneratorBuilding:
         assert world.genre == Genre.FANTASY
         assert world.era == Era.MEDIEVAL
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_locations(
         self,
         generator: LLMWorldGenerator,
@@ -346,7 +346,7 @@ class TestLLMWorldGeneratorBuilding:
         assert undercroft.parent_location_id == silverhold.id
         assert undercroft.id in silverhold.child_location_ids
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_factions(
         self,
         generator: LLMWorldGenerator,
@@ -375,7 +375,7 @@ class TestLLMWorldGeneratorBuilding:
         assert locations[0].id in crown.territories  # Silverhold
         assert locations[2].id in crown.territories  # Thornwood
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_events(
         self,
         generator: LLMWorldGenerator,
@@ -407,7 +407,7 @@ class TestLLMWorldGeneratorBuilding:
         assert founding.id in discovery.preceding_event_ids
         assert discovery.id in founding.following_event_ids
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_result_complete(
         self,
         generator: LLMWorldGenerator,
@@ -424,13 +424,13 @@ class TestLLMWorldGeneratorBuilding:
         assert len(result.events) == 2
         assert result.total_entities == 8  # 1 world + 3 loc + 2 fac + 2 events
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_enum_valid(self, generator: LLMWorldGenerator) -> None:
         """Test enum parsing with valid value."""
         result = generator._parse_enum(Genre, "fantasy", Genre.HORROR)
         assert result == Genre.FANTASY
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_enum_invalid_returns_default(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -438,7 +438,7 @@ class TestLLMWorldGeneratorBuilding:
         result = generator._parse_enum(Genre, "invalid_genre", Genre.HORROR)
         assert result == Genre.HORROR
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_enum_none_returns_default(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -450,7 +450,7 @@ class TestLLMWorldGeneratorBuilding:
 class TestLLMWorldGeneratorPrompt:
     """Tests for prompt building."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_user_prompt_includes_all_params(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -484,7 +484,7 @@ class TestLLMWorldGeneratorPrompt:
 class TestLLMWorldGeneratorIntegration:
     """Integration-style tests with mocked API."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
@@ -515,7 +515,7 @@ class TestLLMWorldGeneratorIntegration:
         assert len(result.locations) == 3
         assert len(result.events) == 2
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
@@ -539,7 +539,7 @@ class TestLLMWorldGeneratorIntegration:
         assert len(result.factions) == 0
         assert len(result.locations) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_generate_missing_api_key_returns_error_result(self) -> None:
         """Test that missing API key returns error result."""
         with patch.dict("os.environ", {"GEMINI_API_KEY": ""}, clear=False):
@@ -556,7 +556,7 @@ class TestLLMWorldGeneratorIntegration:
 class TestWorldGenerationResult:
     """Tests for WorldGenerationResult dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_total_entities_count(
         self,
         generator: LLMWorldGenerator,
@@ -569,7 +569,7 @@ class TestWorldGenerationResult:
         # 1 world + 3 locations + 2 factions + 2 events = 8
         assert result.total_entities == 8
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_empty_result(self) -> None:
         """Test result with only world setting."""
         from src.contexts.world.domain.entities import WorldSetting
@@ -632,7 +632,7 @@ def current_beats_fixture() -> list:
 class TestBeatSuggestion:
     """Tests for BeatSuggestion dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_beat_suggestion_creation(self) -> None:
         """Test creating a BeatSuggestion."""
         suggestion = BeatSuggestion(
@@ -646,7 +646,7 @@ class TestBeatSuggestion:
         assert suggestion.mood_shift == -2
         assert suggestion.rationale == "Escalates the conflict."
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_beat_suggestion_defaults(self) -> None:
         """Test BeatSuggestion default values."""
         suggestion = BeatSuggestion(beat_type="reaction", content="She paused.")
@@ -657,7 +657,7 @@ class TestBeatSuggestion:
 class TestBeatSuggestionResult:
     """Tests for BeatSuggestionResult dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_result_with_suggestions(self) -> None:
         """Test BeatSuggestionResult with suggestions."""
         suggestions = [
@@ -670,7 +670,7 @@ class TestBeatSuggestionResult:
         assert len(result.suggestions) == 3
         assert not result.is_error()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_result_with_error(self) -> None:
         """Test BeatSuggestionResult with error."""
         result = BeatSuggestionResult(suggestions=[], error="API call failed")
@@ -679,7 +679,7 @@ class TestBeatSuggestionResult:
         assert result.error == "API call failed"
         assert len(result.suggestions) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict(self) -> None:
         """Test BeatSuggestionResult.to_dict()."""
         suggestions = [
@@ -700,7 +700,7 @@ class TestBeatSuggestionResult:
         assert data["suggestions"][0]["mood_shift"] == -1
         assert data["suggestions"][0]["rationale"] == "Test reason"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict_with_error(self) -> None:
         """Test BeatSuggestionResult.to_dict() includes error."""
         result = BeatSuggestionResult(suggestions=[], error="Test error")
@@ -713,7 +713,7 @@ class TestBeatSuggestionResult:
 class TestBeatSuggestionParsing:
     """Tests for beat suggestion response parsing."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_beat_suggestion_response(
         self,
         generator: LLMWorldGenerator,
@@ -729,7 +729,7 @@ class TestBeatSuggestionParsing:
         assert result.suggestions[0].mood_shift == -1
         assert "tension" in str(result.suggestions[0].rationale)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_beat_suggestion_limits_to_three(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -745,7 +745,7 @@ class TestBeatSuggestionParsing:
 
         assert len(result.suggestions) == 3
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_beat_suggestion_clamps_mood_shift(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -770,7 +770,7 @@ class TestBeatSuggestionParsing:
         assert result.suggestions[0].mood_shift == 5  # Clamped to max
         assert result.suggestions[1].mood_shift == -5  # Clamped to min
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_beat_suggestion_handles_missing_fields(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -792,7 +792,7 @@ class TestBeatSuggestionParsing:
 class TestBeatSuggestionPromptBuilding:
     """Tests for beat suggestion prompt building."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_beat_suggester_user_prompt_with_beats(
         self,
         generator: LLMWorldGenerator,
@@ -813,7 +813,7 @@ class TestBeatSuggestionPromptBuilding:
         assert "mood: +0" in prompt or "mood: -1" in prompt
         assert "target:" in prompt.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_beat_suggester_user_prompt_empty_beats(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -828,7 +828,7 @@ class TestBeatSuggestionPromptBuilding:
         assert "start of the scene" in prompt.lower()
         assert "Follow natural story momentum" in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_beat_suggester_user_prompt_action_heavy(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -847,7 +847,7 @@ class TestBeatSuggestionPromptBuilding:
         assert "heavy on action" in prompt.lower()
         assert "reaction" in prompt.lower() or "dialogue" in prompt.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_beat_suggester_user_prompt_calculates_mood(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -870,7 +870,7 @@ class TestBeatSuggestionPromptBuilding:
 class TestBeatSuggestionIntegration:
     """Integration-style tests for beat suggestion with mocked API."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.asyncio
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
@@ -908,7 +908,7 @@ class TestBeatSuggestionIntegration:
         assert result.suggestions[1].beat_type == "action"
         assert result.suggestions[2].beat_type == "dialogue"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.asyncio
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
@@ -934,7 +934,7 @@ class TestBeatSuggestionIntegration:
         assert "500" in result.error
         assert len(result.suggestions) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_suggest_next_beats_missing_api_key(self) -> None:
         """Test beat suggestion returns error when API key missing."""
@@ -1028,7 +1028,7 @@ def scene_text_fixture() -> str:
 class TestCritiqueCategoryScore:
     """Tests for CritiqueCategoryScore dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_category_score_creation(self) -> None:
         """Test creating a CritiqueCategoryScore."""
         score = CritiqueCategoryScore(
@@ -1042,7 +1042,7 @@ class TestCritiqueCategoryScore:
         assert len(score.issues) == 1
         assert len(score.suggestions) == 1
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_category_score_defaults(self) -> None:
         """Test CritiqueCategoryScore default values."""
         score = CritiqueCategoryScore(category="voice", score=7)
@@ -1053,7 +1053,7 @@ class TestCritiqueCategoryScore:
 class TestCritiqueResult:
     """Tests for CritiqueResult dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_critique_result_creation(self) -> None:
         """Test creating a CritiqueResult."""
         categories = [
@@ -1073,7 +1073,7 @@ class TestCritiqueResult:
         assert "Good scene" in result.summary
         assert not result.is_error()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_critique_result_with_error(self) -> None:
         """Test CritiqueResult with error."""
         result = CritiqueResult(
@@ -1088,7 +1088,7 @@ class TestCritiqueResult:
         assert result.error == "API call failed"
         assert result.overall_score == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict(self) -> None:
         """Test CritiqueResult.to_dict()."""
         categories = [
@@ -1116,7 +1116,7 @@ class TestCritiqueResult:
         assert data["highlights"] == ["Good dialogue"]
         assert "Needs work on showing" in data["summary"]
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict_with_error(self) -> None:
         """Test CritiqueResult.to_dict() includes error."""
         result = CritiqueResult(
@@ -1135,7 +1135,7 @@ class TestCritiqueResult:
 class TestCritiqueParsing:
     """Tests for scene critique response parsing."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_critique_response(
         self,
         generator: LLMWorldGenerator,
@@ -1175,7 +1175,7 @@ class TestCritiqueParsing:
         assert len(result.summary) > 0
         assert "solid foundation" in result.summary.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_critique_clamps_overall_score(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1202,7 +1202,7 @@ class TestCritiqueParsing:
         result = generator._parse_critique_response(json_content)
         assert result.overall_score == 1
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_critique_clamps_category_scores(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1229,7 +1229,7 @@ class TestCritiqueParsing:
         assert voice is not None
         assert voice.score == 1
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_critique_filters_invalid_categories(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1257,7 +1257,7 @@ class TestCritiqueParsing:
         categories = {c.category for c in result.category_scores}
         assert categories == {"pacing", "voice"}
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_critique_handles_missing_fields(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1283,7 +1283,7 @@ class TestCritiqueParsing:
         assert result.highlights == []
         assert result.summary == "Test summary"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_critique_ensures_lists(self, generator: LLMWorldGenerator) -> None:
         """Test that issues and suggestions are always lists."""
         response = {
@@ -1310,7 +1310,7 @@ class TestCritiqueParsing:
 class TestCritiquePromptBuilding:
     """Tests for scene critique prompt building."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_critique_user_prompt_with_goals(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1324,7 +1324,7 @@ class TestCritiquePromptBuilding:
         assert "build tension" in prompt
         assert "establish suspense" in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_critique_user_prompt_without_goals(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1336,7 +1336,7 @@ class TestCritiquePromptBuilding:
         assert "She walked into the room" in prompt
         assert "No specific goals provided" in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_critique_user_prompt_truncates_long_text(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1350,7 +1350,7 @@ class TestCritiquePromptBuilding:
         assert len(prompt) < 16000  # Should be significantly less
         assert "..." in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_critique_user_prompt_includes_dimensions(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1369,7 +1369,7 @@ class TestCritiquePromptBuilding:
 class TestCritiqueIntegration:
     """Integration-style tests for scene critique with mocked API."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
@@ -1404,7 +1404,7 @@ class TestCritiqueIntegration:
         assert len(result.category_scores) == 4
         assert len(result.highlights) == 3
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
@@ -1426,7 +1426,7 @@ class TestCritiqueIntegration:
         assert result.overall_score == 0
         assert len(result.category_scores) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_critique_scene_missing_api_key(self) -> None:
         """Test scene critique returns error when API key missing."""
         gen = LLMWorldGenerator()
@@ -1444,7 +1444,7 @@ class TestCritiqueIntegration:
 class TestRAGIntegration:
     """Tests for RAG integration in LLMWorldGenerator."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_generator_with_rag_service(self) -> None:
         """Test creating generator with RAG service."""
         from unittest.mock import MagicMock
@@ -1455,12 +1455,12 @@ class TestRAGIntegration:
         assert gen._rag_service is rag_mock
         assert gen._rag_service is not None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_generator_without_rag_service(self, generator: LLMWorldGenerator) -> None:
         """Test creating generator without RAG service."""
         assert generator._rag_service is None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_keywords_for_dialogue(self, generator: LLMWorldGenerator) -> None:
         """Test keyword extraction for dialogue RAG query."""
         from src.contexts.world.infrastructure.generators.llm_world_generator import (
@@ -1485,7 +1485,7 @@ class TestRAGIntegration:
         assert "suspicious" in keywords
         assert "stranger" in keywords
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_keywords_for_dialogue_minimal(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1505,7 +1505,7 @@ class TestRAGIntegration:
         assert "Bob" in keywords
         assert "Hello" in keywords
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_keywords_for_beats(self, generator: LLMWorldGenerator) -> None:
         """Test keyword extraction for beat suggestion RAG query."""
         current_beats = [
@@ -1524,7 +1524,7 @@ class TestRAGIntegration:
         assert "tense" in keywords or "negative" in keywords or "dramatic" in keywords
         assert "action" in keywords
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_keywords_for_beats_empty(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1538,7 +1538,7 @@ class TestRAGIntegration:
         assert "Opening" in keywords
         assert "scene" in keywords
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_keywords_for_beats_positive_mood(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1551,7 +1551,7 @@ class TestRAGIntegration:
 
         assert "uplifting" in keywords or "positive" in keywords
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_enrich_with_rag_no_service(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1567,7 +1567,7 @@ class TestRAGIntegration:
         assert chunks == 0
         assert tokens == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_enrich_with_rag_service_error(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1590,7 +1590,7 @@ class TestRAGIntegration:
         assert chunks == 0
         assert tokens == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_enrich_with_rag_service_success(self) -> None:
         """Test successful enrichment with RAG service."""
         from unittest.mock import AsyncMock, MagicMock
@@ -1624,7 +1624,7 @@ class TestRAGIntegration:
             base_prompt=base_prompt,
         )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_generate_dialogue_with_rag_disabled(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1635,7 +1635,7 @@ class TestRAGIntegration:
         assert callable(generator.generate_dialogue)
         assert hasattr(generator.generate_dialogue, "__annotations__")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_suggest_next_beats_with_rag_disabled(
         self, generator: LLMWorldGenerator
     ) -> None:
@@ -1643,7 +1643,7 @@ class TestRAGIntegration:
         # Verify the method accepts use_rag parameter
         assert callable(generator.suggest_next_beats)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_rag_integration_docstring(self) -> None:
         """Test that RAG integration is documented."""
         from src.contexts.world.infrastructure.generators.llm_world_generator import (
@@ -1655,7 +1655,7 @@ class TestRAGIntegration:
         assert docstring is not None
         assert "RAG" in docstring or "Retrieval" in docstring
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_rag_service_attribute_optional(self) -> None:
         """Test that _rag_service is optional in __init__."""
         # Should not raise when rag_service is not provided
@@ -1670,7 +1670,7 @@ class TestRAGIntegration:
         gen_with_rag = LLMWorldGenerator(rag_service=rag_mock)
         assert gen_with_rag._rag_service is rag_mock
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_enrich_with_rag_returns_context_in_prompt(self) -> None:
         """Test that RAG enrichment injects context with 'Relevant Context:' header."""
         from unittest.mock import AsyncMock, MagicMock
@@ -1705,7 +1705,7 @@ Generate dialogue for Alice."""
         assert chunks == 1
         assert tokens == 25
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_enrich_with_rag_logs_chunks_and_tokens(self) -> None:
         """Test that RAG enrichment logs chunks retrieved and tokens added."""
         from unittest.mock import AsyncMock, MagicMock
@@ -1741,7 +1741,7 @@ Generate dialogue for Alice."""
             assert chunks == 3
             assert tokens == 150
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_generate_dialogue_use_rag_toggle(self) -> None:
         """Test that use_rag parameter controls RAG enrichment."""
         from unittest.mock import AsyncMock, MagicMock, patch
@@ -1790,7 +1790,7 @@ Generate dialogue for Alice."""
             # RAG service should NOT have been called
             assert not rag_mock.enrich_prompt.called
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_suggest_next_beats_use_rag_toggle(self) -> None:
         """Test that use_rag parameter controls RAG enrichment for beat suggestions."""
         from unittest.mock import AsyncMock, MagicMock, patch
@@ -1833,7 +1833,7 @@ Generate dialogue for Alice."""
             # RAG service should NOT have been called
             assert not rag_mock.enrich_prompt.called
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_enrich_with_rag_no_context_returns_original(self) -> None:
         """Test that enrichment returns original prompt when no context is retrieved."""
         from unittest.mock import AsyncMock, MagicMock
@@ -1860,7 +1860,7 @@ Generate dialogue for Alice."""
         assert tokens == 0
         assert rag_mock.enrich_prompt.called
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_rag_context_injected_into_system_prompt(self) -> None:
         """Test that RAG context is injected into the system prompt, not user prompt.
 
@@ -1914,7 +1914,7 @@ Original system prompt"""
         # User prompt should NOT contain the RAG context
         assert "Relevant Context:" not in call_args[0]["user"]
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_rag_context_injection_logs_metrics(self) -> None:
         """Test that context injection logs chunks and tokens at info level.
 

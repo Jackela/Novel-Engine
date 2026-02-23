@@ -10,10 +10,89 @@ of the system in a decoupled manner.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from uuid import uuid4
 
 from ..value_objects.character_id import CharacterID
+
+if TYPE_CHECKING:
+    from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
+
+@dataclass
+class TravelRecord:
+    """Record of a character's travel to a location.
+
+    Tracks when a character arrived at and departed from a location
+    for travel history purposes.
+
+    Attributes:
+        location_id: ID of the location visited.
+        arrived_date: Calendar date when the character arrived.
+        departed_date: Calendar date when the character left (None if still there).
+    """
+
+    location_id: str
+    arrived_date: "WorldCalendar"
+    departed_date: Optional["WorldCalendar"] = None
+
+    def __post_init__(self) -> None:
+        """Validate travel record data."""
+        if not self.location_id or not self.location_id.strip():
+            raise ValueError("Location ID cannot be empty")
+
+    def depart(self, departed_date: "WorldCalendar") -> None:
+        """Mark the character as having departed this location.
+
+        Args:
+            departed_date: The calendar date of departure.
+
+        Raises:
+            ValueError: If already departed.
+        """
+        if self.departed_date is not None:
+            raise ValueError("Character has already departed this location")
+        self.departed_date = departed_date
+
+    def is_current(self) -> bool:
+        """Check if this is the character's current location.
+
+        Returns:
+            True if departed_date is None.
+        """
+        return self.departed_date is None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization.
+
+        Returns:
+            Dictionary representation of the travel record.
+        """
+        result = {
+            "location_id": self.location_id,
+            "arrived_date": self.arrived_date.to_dict() if self.arrived_date else None,
+            "departed_date": self.departed_date.to_dict() if self.departed_date else None,
+            "is_current": self.is_current(),
+        }
+        return result
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "TravelRecord":
+        """Create a TravelRecord from a dictionary.
+
+        Args:
+            data: Dictionary with travel record data.
+
+        Returns:
+            A new TravelRecord instance.
+        """
+        # Note: This is a simplified implementation for serialization.
+        # Full implementation would need to deserialize WorldCalendar objects.
+        return cls(
+            location_id=data["location_id"],
+            arrived_date=data.get("arrived_date"),
+            departed_date=data.get("departed_date"),
+        )
 
 
 @dataclass(frozen=True)
@@ -410,3 +489,67 @@ class CharacterDeleted(CharacterEvent):
             deleted_at=deleted_at,
             reason=reason,
         )
+
+
+@dataclass(frozen=True)
+class CharacterLocationChanged(CharacterEvent):
+    """
+    Event raised when a character moves to a new location.
+
+    This event tracks character movement for world simulation,
+    narrative generation, and location-based event triggers.
+
+    Attributes:
+        location_id_before: Previous location ID (None if first location).
+        location_id_after: New location ID.
+        timestamp: When the movement occurred.
+    """
+
+    location_id_before: Optional[str]
+    location_id_after: str
+    moved_at: datetime
+
+    def __post_init__(self):
+        """Validate character location change event."""
+        super().__post_init__()
+
+        if not self.location_id_after or not self.location_id_after.strip():
+            raise ValueError("New location ID cannot be empty")
+
+    def get_event_type(self) -> str:
+        """Get the type of this event."""
+        return "character.location_changed"
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert event to dictionary for serialization."""
+        return {
+            "event_id": self.event_id,
+            "event_type": self.get_event_type(),
+            "character_id": str(self.character_id),
+            "location_id_before": self.location_id_before,
+            "location_id_after": self.location_id_after,
+            "moved_at": self.moved_at.isoformat(),
+            "occurred_at": self.occurred_at.isoformat(),
+        }
+
+    @classmethod
+    def create(
+        cls,
+        character_id: CharacterID,
+        location_id_before: Optional[str],
+        location_id_after: str,
+        moved_at: datetime,
+    ) -> "CharacterLocationChanged":
+        """Factory method to create a CharacterLocationChanged event."""
+        return cls(
+            event_id=str(uuid4()),
+            character_id=character_id,
+            occurred_at=datetime.now(),
+            location_id_before=location_id_before,
+            location_id_after=location_id_after,
+            moved_at=moved_at,
+        )
+
+    def is_initial_placement(self) -> bool:
+        """Check if this is the character's initial placement (no previous location)."""
+        return self.location_id_before is None

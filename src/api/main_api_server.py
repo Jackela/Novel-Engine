@@ -729,9 +729,11 @@ def _register_legacy_routes(app: FastAPI):
     # Import all router modules
     from src.api.routers.auth import router as auth_router
     from src.api.routers.cache import router as cache_router
+    from src.api.routers.calendar import router as calendar_router
     from src.api.routers.campaigns import router as campaigns_router
     from src.api.routers.characters import router as characters_router
     from src.api.routers.dialogue import router as dialogue_router
+    from src.api.routers.diplomacy import router as diplomacy_router
     from src.api.routers.events import router as events_router
     from src.api.routers.experiments import router as experiments_router
     from src.api.routers.factions import router as factions_router
@@ -751,8 +753,11 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.orchestration import router as orchestration_router
     from src.api.routers.prompts import router as prompts_router
     from src.api.routers.relationships import router as relationships_router
+    from src.api.routers.rumors import router as rumors_router
     from src.api.routers.scene import router as scene_router
+    from src.api.routers.simulation import router as simulation_router
     from src.api.routers.simulations import router as simulations_router
+    from src.api.routers.snapshots import router as snapshots_router
     from src.api.routers.social import router as social_router
     from src.api.routers.structure import router as structure_router
     from src.api.routers.world import router as world_gen_router
@@ -761,8 +766,10 @@ def _register_legacy_routes(app: FastAPI):
     # Register all routers with /api prefix only (no duplicate unprefixed routes)
     app.include_router(auth_router, prefix="/api")
     app.include_router(cache_router, prefix="/api")
+    app.include_router(calendar_router, prefix="/api")
     app.include_router(campaigns_router, prefix="/api")
     app.include_router(characters_router, prefix="/api")
+    app.include_router(diplomacy_router, prefix="/api")
     app.include_router(events_router, prefix="/api")
     app.include_router(generation_router, prefix="/api")
     app.include_router(guest_router, prefix="/api")
@@ -787,6 +794,9 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(factions_router, prefix="/api")
     app.include_router(prompts_router, prefix="/api")
     app.include_router(experiments_router, prefix="/api")
+    app.include_router(simulation_router, prefix="/api")
+    app.include_router(rumors_router, prefix="/api")
+    app.include_router(snapshots_router, prefix="/api")
 
     @app.get("/", response_model=dict)
     async def root_index():

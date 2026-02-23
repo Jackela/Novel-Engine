@@ -90,10 +90,30 @@ function buildUrl(
   path: string,
   params?: Record<string, string | number | boolean | undefined>
 ): string {
-  const url = new URL(path, window.location.origin);
+  const isAbsolutePath = /^https?:\/\//i.test(path);
+  let url: URL;
 
-  if (!path.startsWith('http')) {
-    url.pathname = `${API_BASE_URL}${path}`;
+  if (isAbsolutePath) {
+    url = new URL(path);
+  } else {
+    const [rawPath = '', rawQuery] = path.split('?');
+    const basePrefix = API_BASE_URL.endsWith('/')
+      ? API_BASE_URL.slice(0, -1)
+      : API_BASE_URL;
+    const normalizedPath = rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
+    const prefixedPath =
+      normalizedPath === basePrefix || normalizedPath.startsWith(`${basePrefix}/`)
+        ? normalizedPath
+        : `${basePrefix}${normalizedPath}`;
+
+    url = new URL(prefixedPath, window.location.origin);
+
+    if (rawQuery) {
+      const queryParams = new URLSearchParams(rawQuery);
+      queryParams.forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+    }
   }
 
   if (params) {

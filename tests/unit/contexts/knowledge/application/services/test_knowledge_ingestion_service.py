@@ -37,7 +37,7 @@ from src.contexts.knowledge.domain.models.chunking_strategy import (
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
@@ -230,7 +230,7 @@ def sample_character_content() -> str:
 class TestKnowledgeIngestionService:
     """Unit tests for KnowledgeIngestionService."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_ingest_character_entry(
@@ -271,7 +271,7 @@ class TestKnowledgeIngestionService:
             assert doc.metadata["source_type"] == "CHARACTER"
             assert doc.metadata["source_id"] == "char_aldric"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_ingest_with_custom_chunking(
@@ -301,7 +301,7 @@ class TestKnowledgeIngestionService:
         # Verify chunks were created with the strategy
         assert len(documents) == result.chunk_count
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_ingest_with_tags_and_metadata(
@@ -334,7 +334,7 @@ class TestKnowledgeIngestionService:
         assert doc.metadata["rarity"] == "legendary"
         assert doc.metadata["damage"] == 100
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_ingest_empty_content_raises_error(
@@ -351,7 +351,7 @@ class TestKnowledgeIngestionService:
 
         assert "content" in str(exc_info.value).lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_ingest_empty_source_id_raises_error(
@@ -368,7 +368,7 @@ class TestKnowledgeIngestionService:
 
         assert "source_id" in str(exc_info.value).lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_batch_ingest_multiple_entries(
@@ -405,7 +405,7 @@ class TestKnowledgeIngestionService:
         # Verify upsert was called once for the batch
         assert mock_vector_store.upsert.call_count == 3  # One per entry
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_batch_ingest_with_progress_callback(
@@ -440,7 +440,7 @@ class TestKnowledgeIngestionService:
             assert progress.total == 5
             assert progress.source_id == f"char_{i}"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_batch_ingest_continues_on_error(
@@ -487,7 +487,7 @@ class TestKnowledgeIngestionService:
         assert result.failed >= 1
         assert "char_fail" in result.errors
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_delete_by_source_id(
@@ -519,7 +519,7 @@ class TestKnowledgeIngestionService:
         assert delete_args[1]["collection"] == "knowledge"
         assert delete_args[1]["where"]["source_id"] == "char_to_delete"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_delete_by_source_id_and_type(
@@ -545,7 +545,7 @@ class TestKnowledgeIngestionService:
         delete_args = mock_vector_store.delete.call_args
         assert delete_args[1]["where"] is not None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_delete_nonexistent_source_returns_zero(
@@ -557,7 +557,7 @@ class TestKnowledgeIngestionService:
 
         assert deleted_count == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_update_replaces_existing_chunks(
@@ -593,7 +593,7 @@ class TestKnowledgeIngestionService:
         # Verify upsert was called again
         assert mock_vector_store.upsert.call_count > first_upsert_count
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_update_with_tags(
@@ -626,7 +626,7 @@ class TestKnowledgeIngestionService:
             assert "updated" in doc.metadata["tags"]
             assert doc.metadata["version"] == 2
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_update_nonexistent_source_ingests_new(
@@ -644,7 +644,7 @@ class TestKnowledgeIngestionService:
         assert result.entries_created > 0
         assert result.entries_deleted == 0  # Nothing to delete
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_update_empty_content_raises_error(
@@ -661,7 +661,7 @@ class TestKnowledgeIngestionService:
 
         assert "content" in str(exc_info.value).lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_query_by_source_returns_ingested_content(
@@ -683,7 +683,7 @@ class TestKnowledgeIngestionService:
         assert len(results) > 0
         assert all(r.source_id == "char_query" for r in results)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_query_by_nonexistent_source_returns_empty(
@@ -695,7 +695,7 @@ class TestKnowledgeIngestionService:
 
         assert results == []
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_ingest_with_collection_override(
@@ -717,7 +717,7 @@ class TestKnowledgeIngestionService:
         call_args = mock_vector_store.upsert.call_args
         assert call_args[1]["collection"] == "custom_collection"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_embedding_service_error_propagates(
@@ -736,7 +736,7 @@ class TestKnowledgeIngestionService:
                 source_id="char_1",
             )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_vector_store_error_propagates(
@@ -754,7 +754,7 @@ class TestKnowledgeIngestionService:
                 source_id="char_1",
             )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_ingest_creates_entries_with_embeddings(
@@ -780,7 +780,7 @@ class TestKnowledgeIngestionService:
         embeddings = call_args[0][0]  # First positional arg is texts list
         assert len(embeddings) == result.chunk_count
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_health_check_delegates_to_services(
@@ -794,7 +794,7 @@ class TestKnowledgeIngestionService:
         assert is_healthy is True
         assert mock_vector_store.health_check.call_count == 1
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
     async def test_get_count_returns_vector_store_count(

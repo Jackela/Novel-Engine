@@ -13,7 +13,7 @@ import pytest
 
 # 导入被测试的模块
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 try:
     from src.agents.chronicler_agent import ChroniclerAgent
@@ -57,8 +57,8 @@ class TestChroniclerAgent:
         except Exception:
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
-    @pytest.mark.unit
+    @pytest.mark.integration
+    @pytest.mark.integration
     def test_chronicler_initialization_success(self):
         """测试记录代理初始化 - 成功情况"""
         event_bus = Mock()
@@ -77,13 +77,13 @@ class TestChroniclerAgent:
         elif hasattr(chronicler, "characters"):
             assert chronicler.characters == character_names
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_chronicler_initialization_no_event_bus(self):
         """测试记录代理初始化 - 无事件总线"""
         with pytest.raises((TypeError, ValueError)):
             ChroniclerAgent(event_bus=None, character_names=["test"])
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_chronicler_initialization_no_characters(self):
         """测试记录代理初始化 - 无角色名"""
         event_bus = Mock()
@@ -96,7 +96,7 @@ class TestChroniclerAgent:
         with pytest.raises((ValueError, TypeError)):
             ChroniclerAgent(event_bus=event_bus, character_names=None)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_transcribe_log_success(self):
         """测试日志转录 - 成功情况"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -119,7 +119,7 @@ class TestChroniclerAgent:
             assert len(story) > 0
             assert "adventure" in story or "challenge" in story
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_transcribe_log_file_not_found(self):
         """测试日志转录 - 文件不存在"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -130,7 +130,7 @@ class TestChroniclerAgent:
         with pytest.raises(FileNotFoundError):
             self.chronicler.transcribe_log(non_existent_file)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_transcribe_log_empty_file(self):
         """测试日志转录 - 空文件"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -160,7 +160,7 @@ class TestChroniclerAgent:
             except Exception:
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_transcribe_log_api_failure(self):
         """测试日志转录 - API调用失败"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -175,7 +175,7 @@ class TestChroniclerAgent:
             with pytest.raises(Exception):
                 self.chronicler.transcribe_log(self.temp_log_file)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_transcribe_log_invalid_response(self):
         """测试日志转录 - 无效API响应"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -198,7 +198,7 @@ class TestChroniclerAgent:
                 # 或者抛出适当的错误
                 pass
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_log_content_processing(self):
         """测试日志内容处理"""
         # 测试日志文件是否能正确读取
@@ -223,7 +223,7 @@ class TestChroniclerAgent:
             except Exception as e:
                 pytest.skip(f"Log content processing test failed: {e}")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_character_name_integration(self):
         """测试角色名集成"""
         # 检查角色名是否在转录过程中被使用
@@ -274,8 +274,8 @@ class TestChroniclerAgentAdvanced:
             event_bus=self.mock_event_bus, character_names=["protagonist", "antagonist"]
         )
 
-    @pytest.mark.unit
-    @pytest.mark.unit
+    @pytest.mark.integration
+    @pytest.mark.integration
     def test_event_bus_integration(self):
         """测试与事件总线的集成"""
         # 检查记录代理是否正确使用事件总线
@@ -294,7 +294,7 @@ class TestChroniclerAgentAdvanced:
             except Exception as e:
                 pytest.skip(f"Event subscription test failed: {e}")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_story_quality_validation(self):
         """测试故事质量验证"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -341,7 +341,7 @@ class TestChroniclerAgentAdvanced:
             except Exception:
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_different_character_configurations(self):
         """测试不同角色配置"""
         # 测试不同数量的角色
@@ -371,7 +371,7 @@ class TestChroniclerAgentAdvanced:
                     f"Character configuration test failed for {len(char_names)} characters: {e}"
                 )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_large_log_file_handling(self):
         """测试大型日志文件处理"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -427,8 +427,8 @@ class TestChroniclerAgentPerformance:
         )
 
     @pytest.mark.performance
-    @pytest.mark.unit
-    @pytest.mark.unit
+    @pytest.mark.integration
+    @pytest.mark.integration
     def test_transcription_performance(self):
         """测试转录性能"""
         if not hasattr(self.chronicler, "transcribe_log"):
@@ -476,7 +476,7 @@ class TestChroniclerAgentPerformance:
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.performance
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_multiple_transcriptions_performance(self):
         """测试多次转录性能"""
         if not hasattr(self.chronicler, "transcribe_log"):

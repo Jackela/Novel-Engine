@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
     CharacterData,
@@ -58,7 +58,7 @@ def sample_character() -> CharacterData:
 class TestCharacterData:
     """Tests for CharacterData dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_minimal(self) -> None:
         """Test creating CharacterData with minimal fields."""
         char = CharacterData(name="Test Character")
@@ -67,7 +67,7 @@ class TestCharacterData:
         assert char.traits is None
         assert char.speaking_style is None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_full(self, sample_character: CharacterData) -> None:
         """Test creating CharacterData with all fields."""
         assert sample_character.name == "Marcus"
@@ -77,7 +77,7 @@ class TestCharacterData:
         assert "skeptical" in sample_character.traits
         assert "measured speech" in sample_character.speaking_style
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_from_character_aggregate_with_psychology(self) -> None:
         """Test creating CharacterData from a mock Character aggregate."""
         # Create a mock character aggregate
@@ -99,7 +99,7 @@ class TestCharacterData:
         assert char_data.psychology["openness"] == 80
         assert char_data.traits == ["brave", "impulsive"]
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_from_character_aggregate_without_psychology(self) -> None:
         """Test creating CharacterData when psychology is None."""
         mock_character = MagicMock()
@@ -120,7 +120,7 @@ class TestCharacterData:
 class TestDialogueResult:
     """Tests for DialogueResult dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_minimal(self) -> None:
         """Test creating DialogueResult with minimal fields."""
         result = DialogueResult(dialogue="Hello there.", tone="friendly")
@@ -131,7 +131,7 @@ class TestDialogueResult:
         assert result.error is None
         assert not result.is_error()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_full(self) -> None:
         """Test creating DialogueResult with all fields."""
         result = DialogueResult(
@@ -146,7 +146,7 @@ class TestDialogueResult:
         assert result.body_language == "steps back, hand on sword"
         assert not result.is_error()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_error_result(self) -> None:
         """Test creating an error DialogueResult."""
         result = DialogueResult(
@@ -157,7 +157,7 @@ class TestDialogueResult:
         assert result.is_error()
         assert result.error == "API connection failed"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict_minimal(self) -> None:
         """Test to_dict with minimal fields."""
         result = DialogueResult(dialogue="Yes.", tone="curt")
@@ -169,7 +169,7 @@ class TestDialogueResult:
         assert "body_language" not in d
         assert "error" not in d
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict_full(self) -> None:
         """Test to_dict with all fields."""
         result = DialogueResult(
@@ -187,7 +187,7 @@ class TestDialogueResult:
         assert d["body_language"] == "leans forward eagerly"
         assert "error" not in d
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict_with_error(self) -> None:
         """Test to_dict includes error when present."""
         result = DialogueResult(
@@ -203,7 +203,7 @@ class TestDialogueResult:
 class TestDialoguePromptBuilding:
     """Tests for dialogue prompt building."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_dialogue_user_prompt_full(
         self,
         generator: LLMWorldGenerator,
@@ -239,7 +239,7 @@ class TestDialoguePromptBuilding:
         assert "merchant" in prompt.lower()
         assert "suspiciously good deal" in prompt.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_dialogue_user_prompt_minimal(
         self,
         generator: LLMWorldGenerator,
@@ -261,7 +261,7 @@ class TestDialoguePromptBuilding:
 class TestDialogueResponseParsing:
     """Tests for dialogue response parsing."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_dialogue_response_full(
         self,
         generator: LLMWorldGenerator,
@@ -276,7 +276,7 @@ class TestDialogueResponseParsing:
         assert result.tone == "suspicious"
         assert result.body_language == "narrows eyes, crosses arms"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_dialogue_response_minimal(
         self,
         generator: LLMWorldGenerator,
@@ -290,7 +290,7 @@ class TestDialogueResponseParsing:
         assert result.internal_thought is None
         assert result.body_language is None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_dialogue_response_missing_fields(
         self,
         generator: LLMWorldGenerator,
@@ -306,7 +306,7 @@ class TestDialogueResponseParsing:
 class TestDialogueGeneration:
     """Integration-style tests for dialogue generation with mocked API."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.asyncio
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
@@ -343,7 +343,7 @@ class TestDialogueGeneration:
         assert result.internal_thought is not None
         assert result.body_language is not None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.asyncio
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
@@ -370,7 +370,7 @@ class TestDialogueGeneration:
         assert result.dialogue == "..."
         assert "500" in result.error
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_generate_dialogue_missing_api_key_returns_error(
         self,
@@ -392,7 +392,7 @@ class TestDialogueGeneration:
 class TestDialoguePromptFile:
     """Tests for dialogue prompt file loading."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_load_dialogue_prompt_exists(
         self,
         generator: LLMWorldGenerator,
@@ -406,7 +406,7 @@ class TestDialoguePromptFile:
         assert "big five" in prompt.lower()
         assert "json" in prompt.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_load_dialogue_prompt_contains_guidelines(
         self,
         generator: LLMWorldGenerator,
@@ -425,7 +425,7 @@ class TestDialoguePromptFile:
 class TestPsychologyInfluenceOnPrompt:
     """Tests verifying psychology traits influence prompt construction."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_high_extraversion_character(
         self,
         generator: LLMWorldGenerator,
@@ -449,7 +449,7 @@ class TestPsychologyInfluenceOnPrompt:
 
         assert "Extraversion: 95/100" in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_high_neuroticism_character(
         self,
         generator: LLMWorldGenerator,
@@ -474,7 +474,7 @@ class TestPsychologyInfluenceOnPrompt:
         assert "Neuroticism: 90/100" in prompt
         assert "anxious" in prompt.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_low_agreeableness_character(
         self,
         generator: LLMWorldGenerator,

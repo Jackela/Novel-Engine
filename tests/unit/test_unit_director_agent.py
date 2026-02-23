@@ -13,7 +13,7 @@ import pytest
 
 # 导入被测试的模块
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 try:
     from src.agents.director_agent_integrated import DirectorAgent
@@ -44,7 +44,7 @@ class TestDirectorAgent:
         except Exception:
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_director_initialization_success(self):
         """测试导演代理初始化 - 成功情况"""
@@ -56,13 +56,13 @@ class TestDirectorAgent:
         assert hasattr(director, "event_bus")
         assert hasattr(director, "campaign_log_path") or hasattr(director, "log_path")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_director_initialization_no_event_bus(self):
         """测试导演代理初始化 - 无事件总线"""
         with pytest.raises((TypeError, ValueError)):
             DirectorAgent(event_bus=None, campaign_log_path="test.md")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_register_agent_success(self):
         """测试注册代理 - 成功情况"""
         mock_agent = Mock()
@@ -80,7 +80,7 @@ class TestDirectorAgent:
         else:
             pytest.skip("Director agent does not have register_agent method")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_register_multiple_agents(self):
         """测试注册多个代理"""
         if not hasattr(self.director, "register_agent"):
@@ -102,7 +102,7 @@ class TestDirectorAgent:
             for agent in agents:
                 assert agent in self.director.registered_agents
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_register_agent_duplicate(self):
         """测试注册重复代理"""
         if not hasattr(self.director, "register_agent"):
@@ -125,7 +125,7 @@ class TestDirectorAgent:
             # 预期的重复注册错误
             pass
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_register_agent_invalid_agent(self):
         """测试注册无效代理"""
         if not hasattr(self.director, "register_agent"):
@@ -142,7 +142,7 @@ class TestDirectorAgent:
         with pytest.raises((AttributeError, ValueError)):
             self.director.register_agent(invalid_agent)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_run_turn_success(self):
         """测试运行回合 - 成功情况"""
         if not hasattr(self.director, "run_turn"):
@@ -175,7 +175,7 @@ class TestDirectorAgent:
             else:
                 raise
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_run_turn_no_agents(self):
         """测试运行回合 - 没有代理"""
@@ -193,7 +193,7 @@ class TestDirectorAgent:
             # 预期的"没有代理"错误
             assert "agent" in str(e).lower() or "empty" in str(e).lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_run_turn_agent_failure(self):
         """测试运行回合 - 代理失败"""
         if not hasattr(self.director, "run_turn") or not hasattr(
@@ -218,7 +218,7 @@ class TestDirectorAgent:
             # 检查是否是预期的错误处理
             assert "action failed" in str(e).lower() or "agent" in str(e).lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_campaign_logging(self):
         """测试战役日志记录"""
         # 检查日志文件是否可以创建
@@ -273,9 +273,9 @@ class TestDirectorAgentAdvanced:
         except Exception:
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_event_bus_interaction(self):
         """测试与事件总线的交互"""
         # 检查导演是否使用事件总线
@@ -298,7 +298,7 @@ class TestDirectorAgentAdvanced:
                     # 即使运行失败，事件总线应该仍然连接
                     pass
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_director_state_management(self):
         """测试导演状态管理"""
         # 检查导演是否维护内部状态
@@ -339,7 +339,7 @@ class TestDirectorAgentAdvanced:
                 # 即使运行失败，状态管理功能应该存在
                 pass
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_director_configuration_handling(self):
         """测试导演配置处理"""
         # 测试不同的日志路径配置
@@ -385,8 +385,8 @@ class TestDirectorAgentPerformance:
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
     @pytest.mark.performance
-    @pytest.mark.unit
-    @pytest.mark.unit
+    @pytest.mark.integration
+    @pytest.mark.integration
     def test_agent_registration_performance(self):
         """测试代理注册性能"""
         if not hasattr(self.director, "register_agent"):
@@ -408,7 +408,7 @@ class TestDirectorAgentPerformance:
         assert registration_time / 10 < 0.2  # 每个代理注册不超过200ms
 
     @pytest.mark.performance
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_turn_execution_performance(self):
         """测试回合执行性能"""
         if not hasattr(self.director, "run_turn"):

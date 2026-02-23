@@ -32,13 +32,13 @@ from src.contexts.knowledge.domain.models.chunking_strategy import (
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 class TestIngestionProcessorInterface:
     """Tests for IIngestionProcessor interface compliance."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_all_processors_implement_interface(self):
         """Verify all processor classes implement IIngestionProcessor."""
@@ -59,7 +59,7 @@ class TestIngestionProcessorInterface:
             assert hasattr(processor, "enrich_metadata")
             assert hasattr(processor, "supports_batching")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_all_processors_support_batching(self):
         """Verify all processors support batching by default."""
@@ -80,14 +80,14 @@ class TestIngestionProcessorInterface:
 class TestGenericProcessor:
     """Tests for GenericProcessor fallback."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_source_type_is_lore(self):
         """Generic processor should return LORE as source type."""
         processor = GenericProcessor()
         assert processor.source_type == SourceType.LORE
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_default_chunking_strategy(self):
         """Generic processor should return default strategy."""
@@ -98,7 +98,7 @@ class TestGenericProcessor:
         assert strategy.strategy == ChunkStrategyType.FIXED
         assert strategy.chunk_size == 500  # DEFAULT_CHUNK_SIZE
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_custom_strategy_uses_override(self):
         """Generic processor should use custom strategy when provided."""
@@ -113,7 +113,7 @@ class TestGenericProcessor:
         assert strategy.strategy == ChunkStrategyType.SENTENCE
         assert strategy.chunk_size == 200
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_adds_processor_marker(self):
         """Generic processor should add processor marker to metadata."""
@@ -129,14 +129,14 @@ class TestGenericProcessor:
 class TestLoreProcessor:
     """Tests for LoreProcessor."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_source_type_is_lore(self):
         """Lore processor should return LORE source type."""
         processor = LoreProcessor()
         assert processor.source_type == SourceType.LORE
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_default_chunking_strategy(self):
         """Lore processor should use 400-word fixed chunks."""
@@ -146,7 +146,7 @@ class TestLoreProcessor:
         assert strategy.strategy == ChunkStrategyType.FIXED
         assert strategy.chunk_size == 400
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_detects_history(self):
         """Lore processor should detect history-related content."""
@@ -158,7 +158,7 @@ class TestLoreProcessor:
         assert enriched["processor"] == "lore"
         assert enriched["category"] == "history"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_detects_magic(self):
         """Lore processor should detect magic-related content."""
@@ -170,7 +170,7 @@ class TestLoreProcessor:
         assert enriched["processor"] == "lore"
         assert enriched["category"] == "magic"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_defaults_to_general(self):
         """Lore processor should default to general category."""
@@ -186,14 +186,14 @@ class TestLoreProcessor:
 class TestCharacterProcessor:
     """Tests for CharacterProcessor."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_source_type_is_character(self):
         """Character processor should return CHARACTER source type."""
         processor = CharacterProcessor()
         assert processor.source_type == SourceType.CHARACTER
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_default_chunking_strategy(self):
         """Character processor should use 200-word semantic chunks."""
@@ -203,7 +203,7 @@ class TestCharacterProcessor:
         assert strategy.strategy == ChunkStrategyType.SEMANTIC
         assert strategy.chunk_size == 200
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_extracts_name_hint(self):
         """Character processor should extract name from first line."""
@@ -217,7 +217,7 @@ class TestCharacterProcessor:
         assert enriched["processor"] == "character"
         assert "Sir Aldric the Brave" in enriched["name_hint"]
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_detects_protagonist(self):
         """Character processor should detect protagonist keywords."""
@@ -229,7 +229,7 @@ class TestCharacterProcessor:
         assert enriched["processor"] == "character"
         assert enriched["role_hint"] == "protagonist"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_detects_antagonist(self):
         """Character processor should detect antagonist keywords."""
@@ -246,14 +246,14 @@ class TestCharacterProcessor:
 class TestSceneProcessor:
     """Tests for SceneProcessor."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_source_type_is_scene(self):
         """Scene processor should return SCENE source type."""
         processor = SceneProcessor()
         assert processor.source_type == SourceType.SCENE
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_default_chunking_strategy(self):
         """Scene processor should use 300-word paragraph chunks."""
@@ -263,7 +263,7 @@ class TestSceneProcessor:
         assert strategy.strategy == ChunkStrategyType.PARAGRAPH
         assert strategy.chunk_size == 300
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_calculates_dialogue_ratio(self):
         """Scene processor should calculate dialogue ratio."""
@@ -277,7 +277,7 @@ class TestSceneProcessor:
         assert "dialogue_ratio" in enriched
         assert enriched["dialogue_ratio"] == 1.0  # All dialogue
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_classifies_dialogue_heavy(self):
         """Scene processor should classify dialogue-heavy scenes."""
@@ -289,7 +289,7 @@ class TestSceneProcessor:
 
         assert enriched["scene_type"] == "dialogue_heavy"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_classifies_narration_heavy(self):
         """Scene processor should classify narration-heavy scenes."""
@@ -304,7 +304,7 @@ class TestSceneProcessor:
 class TestIngestionProcessorFactory:
     """Tests for IngestionProcessorFactory."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_processor_for_lore_returns_lore_processor(self):
         """Factory should return LoreProcessor for LORE type."""
@@ -313,7 +313,7 @@ class TestIngestionProcessorFactory:
 
         assert isinstance(processor, LoreProcessor)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_processor_for_character_returns_character_processor(self):
         """Factory should return CharacterProcessor for CHARACTER type."""
@@ -322,7 +322,7 @@ class TestIngestionProcessorFactory:
 
         assert isinstance(processor, CharacterProcessor)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_processor_for_scene_returns_scene_processor(self):
         """Factory should return SceneProcessor for SCENE type."""
@@ -331,7 +331,7 @@ class TestIngestionProcessorFactory:
 
         assert isinstance(processor, SceneProcessor)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_processor_for_plotline_returns_plotline_processor(self):
         """Factory should return PlotlineProcessor for PLOTLINE type."""
@@ -340,7 +340,7 @@ class TestIngestionProcessorFactory:
 
         assert isinstance(processor, PlotlineProcessor)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_processor_for_item_returns_item_processor(self):
         """Factory should return ItemProcessor for ITEM type."""
@@ -349,7 +349,7 @@ class TestIngestionProcessorFactory:
 
         assert isinstance(processor, ItemProcessor)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_processor_for_location_returns_location_processor(self):
         """Factory should return LocationProcessor for LOCATION type."""
@@ -358,7 +358,7 @@ class TestIngestionProcessorFactory:
 
         assert isinstance(processor, LocationProcessor)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_processor_caches_instances(self):
         """Factory should cache processor instances."""
@@ -368,7 +368,7 @@ class TestIngestionProcessorFactory:
 
         assert processor1 is processor2  # Same instance
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_register_processor_overrides_default(self):
         """Factory should use custom processor when registered."""
@@ -381,7 +381,7 @@ class TestIngestionProcessorFactory:
         assert processor is custom_processor
         assert not isinstance(processor, CharacterProcessor)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_has_processor_returns_true_for_registered_types(self):
         """Factory should report has_processor correctly."""
@@ -390,7 +390,7 @@ class TestIngestionProcessorFactory:
         assert factory.has_processor(SourceType.LORE) is True
         assert factory.has_processor(SourceType.CHARACTER) is True
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_default_factory_creates_factory(self):
         """Default factory classmethod should create factory."""
@@ -398,7 +398,7 @@ class TestIngestionProcessorFactory:
 
         assert isinstance(factory, IngestionProcessorFactory)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_registered_types_returns_all_types(self):
         """Factory should list all registered source types."""
@@ -417,14 +417,14 @@ class TestIngestionProcessorFactory:
 class TestPlotlineProcessor:
     """Tests for PlotlineProcessor."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_source_type_is_plotline(self):
         """Plotline processor should return PLOTLINE source type."""
         processor = PlotlineProcessor()
         assert processor.source_type == SourceType.PLOTLINE
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_chunking_strategy(self):
         """Plotline processor should use semantic chunking."""
@@ -434,7 +434,7 @@ class TestPlotlineProcessor:
         assert strategy.strategy == ChunkStrategyType.SEMANTIC
         assert strategy.chunk_size == 350
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_detects_climax(self):
         """Plotline processor should detect climax phase."""
@@ -450,14 +450,14 @@ class TestPlotlineProcessor:
 class TestItemProcessor:
     """Tests for ItemProcessor."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_source_type_is_item(self):
         """Item processor should return ITEM source type."""
         processor = ItemProcessor()
         assert processor.source_type == SourceType.ITEM
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_chunking_strategy(self):
         """Item processor should use smaller chunks."""
@@ -467,7 +467,7 @@ class TestItemProcessor:
         assert strategy.strategy == ChunkStrategyType.SEMANTIC
         assert strategy.chunk_size == 150
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_detects_weapon(self):
         """Item processor should detect weapon type."""
@@ -483,14 +483,14 @@ class TestItemProcessor:
 class TestLocationProcessor:
     """Tests for LocationProcessor."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_source_type_is_location(self):
         """Location processor should return LOCATION source type."""
         processor = LocationProcessor()
         assert processor.source_type == SourceType.LOCATION
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_chunking_strategy(self):
         """Location processor should use 300-word chunks."""
@@ -500,7 +500,7 @@ class TestLocationProcessor:
         assert strategy.strategy == ChunkStrategyType.SEMANTIC
         assert strategy.chunk_size == 300
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_enrich_metadata_detects_settlement(self):
         """Location processor should detect settlement type."""

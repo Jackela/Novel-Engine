@@ -14,7 +14,7 @@ from src.contexts.character.infrastructure.persistence.memory_store import (
 )
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestMemoryEntry:
     """Tests for MemoryEntry dataclass."""
 
@@ -44,7 +44,7 @@ class TestMemoryEntry:
 class TestMemoryStoreStore:
     """Tests for MemoryStore.store() method."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_store_creates_new_entry(self):
         """store() creates a new memory entry."""
         store = MemoryStore()
@@ -54,7 +54,7 @@ class TestMemoryStoreStore:
         assert entry is not None
         assert entry.content == "First memory"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_store_with_metadata(self):
         """store() preserves metadata."""
         store = MemoryStore()
@@ -66,7 +66,7 @@ class TestMemoryStoreStore:
         assert entry.metadata["importance"] == 10
         assert entry.metadata["character"] == "Alice"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_store_updates_existing_entry(self):
         """store() updates an existing entry while preserving created_at."""
         store = MemoryStore()
@@ -81,7 +81,7 @@ class TestMemoryStoreStore:
         assert updated_entry.created_at == original_created_at
         assert updated_entry.updated_at >= original_entry.updated_at
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_store_empty_string_content(self):
         """store() accepts empty string content."""
         store = MemoryStore()
@@ -91,7 +91,7 @@ class TestMemoryStoreStore:
         assert entry is not None
         assert entry.content == ""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_store_none_metadata_defaults_to_empty_dict(self):
         """store() converts None metadata to empty dict."""
         store = MemoryStore()
@@ -105,7 +105,7 @@ class TestMemoryStoreStore:
 class TestMemoryStoreRetrieve:
     """Tests for MemoryStore.retrieve() method."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_retrieve_existing_entry(self):
         """retrieve() returns the entry if it exists."""
         store = MemoryStore()
@@ -115,7 +115,7 @@ class TestMemoryStoreRetrieve:
         assert entry is not None
         assert entry.content == "Retrievable content"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_retrieve_nonexistent_entry_returns_none(self):
         """retrieve() returns None for nonexistent IDs."""
         store = MemoryStore()
@@ -123,7 +123,7 @@ class TestMemoryStoreRetrieve:
         entry = store.retrieve("nonexistent-id")
         assert entry is None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_retrieve_after_delete_returns_none(self):
         """retrieve() returns None after entry is deleted."""
         store = MemoryStore()
@@ -137,7 +137,7 @@ class TestMemoryStoreRetrieve:
 class TestMemoryStoreDelete:
     """Tests for MemoryStore.delete() method."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_delete_existing_entry_returns_true(self):
         """delete() returns True when entry is deleted."""
         store = MemoryStore()
@@ -146,7 +146,7 @@ class TestMemoryStoreDelete:
         result = store.delete("mem-del-001")
         assert result is True
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_delete_removes_entry(self):
         """delete() actually removes the entry from the store."""
         store = MemoryStore()
@@ -156,7 +156,7 @@ class TestMemoryStoreDelete:
         entry = store.retrieve("mem-del-002")
         assert entry is None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_delete_nonexistent_entry_returns_false(self):
         """delete() returns False when entry doesn't exist."""
         store = MemoryStore()
@@ -164,7 +164,7 @@ class TestMemoryStoreDelete:
         result = store.delete("nonexistent-id")
         assert result is False
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_delete_twice_returns_false_second_time(self):
         """delete() returns False on second call for same ID."""
         store = MemoryStore()
@@ -180,7 +180,7 @@ class TestMemoryStoreDelete:
 class TestMemoryStoreHelperMethods:
     """Tests for MemoryStore helper methods."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_clear_removes_all_entries(self):
         """clear() removes all entries from the store."""
         store = MemoryStore()
@@ -192,7 +192,7 @@ class TestMemoryStoreHelperMethods:
 
         assert store.count() == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_count_returns_correct_number(self):
         """count() returns the number of stored entries."""
         store = MemoryStore()
@@ -204,7 +204,7 @@ class TestMemoryStoreHelperMethods:
         store.store("mem-2", "Two")
         assert store.count() == 2
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_list_all_returns_sorted_entries(self):
         """list_all() returns entries sorted by created_at descending."""
         store = MemoryStore()

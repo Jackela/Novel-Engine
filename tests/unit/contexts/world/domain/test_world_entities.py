@@ -73,6 +73,7 @@ from src.contexts.world.domain.entities.history_event import (  # noqa: E402
     EventSignificance,
     EventType,
     HistoryEvent,
+    ImpactScope,
 )
 from src.contexts.world.domain.entities.location import (  # noqa: E402
     ClimateType,
@@ -699,6 +700,140 @@ class TestHistoryEvent:
         assert data["name"] == "The Great War"
         assert data["event_type"] == "war"
         assert data["significance"] == "major"
+
+    # New tests for SIM-005: Simulation support fields
+
+    @pytest.mark.unit
+    def test_impact_scope_enum_values(self):
+        """Test ImpactScope enum has expected values."""
+        assert ImpactScope.LOCAL.value == "local"
+        assert ImpactScope.REGIONAL.value == "regional"
+        assert ImpactScope.GLOBAL.value == "global"
+
+    @pytest.mark.unit
+    def test_event_type_new_values(self):
+        """Test new EventType values TRADE and NATURAL exist."""
+        assert EventType.TRADE.value == "trade"
+        assert EventType.NATURAL.value == "natural"
+
+    @pytest.mark.unit
+    def test_new_fields_default_to_none(self, event: HistoryEvent):
+        """Test new simulation fields default to None (backward compatible)."""
+        assert event.impact_scope is None
+        assert event.affected_faction_ids is None
+        assert event.affected_location_ids is None
+        assert event.structured_date is None
+
+    @pytest.mark.unit
+    def test_create_event_with_impact_scope(self):
+        """Test creating event with impact_scope field."""
+        event = HistoryEvent(
+            name="Local Skirmish",
+            description="A small battle",
+            event_type=EventType.BATTLE,
+            date_description="Year 1050",
+            impact_scope=ImpactScope.LOCAL,
+        )
+        assert event.impact_scope == ImpactScope.LOCAL
+
+    @pytest.mark.unit
+    def test_create_event_with_affected_faction_ids(self):
+        """Test creating event with affected_faction_ids field."""
+        event = HistoryEvent(
+            name="Trade Agreement",
+            description="Trade deal signed",
+            event_type=EventType.TRADE,
+            date_description="Year 1050",
+            affected_faction_ids=["faction-1", "faction-2", "faction-3"],
+        )
+        assert event.affected_faction_ids == ["faction-1", "faction-2", "faction-3"]
+
+    @pytest.mark.unit
+    def test_create_event_with_affected_location_ids(self):
+        """Test creating event with affected_location_ids field."""
+        event = HistoryEvent(
+            name="Earthquake",
+            description="Natural disaster",
+            event_type=EventType.NATURAL,
+            date_description="Year 1050",
+            affected_location_ids=["city-1", "town-2"],
+        )
+        assert event.affected_location_ids == ["city-1", "town-2"]
+
+    @pytest.mark.unit
+    def test_create_event_with_structured_date(self):
+        """Test creating event with structured_date field."""
+        from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
+        calendar = WorldCalendar(
+            year=1042,
+            month=3,
+            day=15,
+            era_name="Third Age",
+        )
+        event = HistoryEvent(
+            name="Coronation",
+            description="New king crowned",
+            event_type=EventType.CORONATION,
+            date_description="Year 1042",
+            structured_date=calendar,
+        )
+        assert event.structured_date == calendar
+        assert event.structured_date.year == 1042
+
+    @pytest.mark.unit
+    def test_to_dict_includes_new_fields(self):
+        """Test to_dict includes new simulation fields."""
+        from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
+        calendar = WorldCalendar(
+            year=1042,
+            month=3,
+            day=15,
+            era_name="Third Age",
+        )
+        event = HistoryEvent(
+            name="Global Event",
+            description="World-changing event",
+            event_type=EventType.POLITICAL,
+            date_description="Year 1042",
+            impact_scope=ImpactScope.GLOBAL,
+            affected_faction_ids=["faction-1"],
+            affected_location_ids=["location-1"],
+            structured_date=calendar,
+        )
+        data = event.to_dict()
+
+        assert data["impact_scope"] == "global"
+        assert data["affected_faction_ids"] == ["faction-1"]
+        assert data["affected_location_ids"] == ["location-1"]
+        assert data["structured_date"]["year"] == 1042
+
+    @pytest.mark.unit
+    def test_to_dict_new_fields_none(self, event: HistoryEvent):
+        """Test to_dict handles None values for new fields."""
+        data = event.to_dict()
+
+        assert data["impact_scope"] is None
+        assert data["affected_faction_ids"] is None
+        assert data["affected_location_ids"] is None
+        assert data["structured_date"] is None
+
+    @pytest.mark.unit
+    def test_backward_compatibility_without_new_fields(self):
+        """Test that old code still works without new fields."""
+        # Simulate old-style event creation
+        event = HistoryEvent(
+            name="Classic Event",
+            description="Created the old way",
+            event_type=EventType.WAR,
+            date_description="Year 1000",
+        )
+
+        # Should work fine
+        assert event.name == "Classic Event"
+        assert event.impact_scope is None
+        assert event.structured_date is None
 
 
 class TestEntityBaseClass:

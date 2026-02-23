@@ -20,13 +20,13 @@ from src.contexts.narrative.application.services.chapter_analysis_service import
 from src.contexts.narrative.domain.entities.beat import Beat, BeatType
 from src.contexts.narrative.domain.entities.scene import Scene, SceneStatus, StoryPhase
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 class TestPhaseDistribution:
     """Test suite for PhaseDistribution dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_create_phase_distribution(self):
         """Test creating PhaseDistribution."""
@@ -44,7 +44,7 @@ class TestPhaseDistribution:
         assert dist.climax == 1
         assert dist.resolution == 1
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_phase_distribution_is_immutable(self):
         """Test that PhaseDistribution is frozen."""
@@ -57,7 +57,7 @@ class TestPhaseDistribution:
 class TestWordCountEstimate:
     """Test suite for WordCountEstimate dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_create_word_count_estimate(self):
         """Test creating WordCountEstimate."""
@@ -73,7 +73,7 @@ class TestWordCountEstimate:
         assert estimate.max_words == 6000
         assert estimate.per_scene_average == 500.0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_word_count_estimate_is_immutable(self):
         """Test that WordCountEstimate is frozen."""
@@ -86,7 +86,7 @@ class TestWordCountEstimate:
 class TestHealthWarning:
     """Test suite for HealthWarning dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_create_health_warning(self):
         """Test creating HealthWarning."""
@@ -109,7 +109,7 @@ class TestHealthWarning:
 class TestTensionArcShape:
     """Test suite for TensionArcShape dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_create_tension_arc_shape(self):
         """Test creating TensionArcShape."""
@@ -174,7 +174,7 @@ class TestChapterAnalysisService:
 
     # analyze_chapter_structure tests
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_analyze_empty_chapter(self, service):
         """Test analysis of chapter with no scenes."""
@@ -186,7 +186,7 @@ class TestChapterAnalysisService:
         assert report.total_beats == 0
         assert report.health_score == HealthScore.FAIR
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_analyze_healthy_chapter(self, service, sample_scene):
         """Test analysis of a well-structured chapter."""
@@ -209,7 +209,7 @@ class TestChapterAnalysisService:
         assert report.phase_distribution.climax == 1
         assert report.phase_distribution.resolution == 1
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_phase_distribution_calculation(self, service, sample_scene):
         """Test phase distribution analysis."""
@@ -232,7 +232,7 @@ class TestChapterAnalysisService:
         assert report.phase_distribution.climax == 1
         assert report.phase_distribution.resolution == 1
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_word_count_estimation(self, service, sample_scene):
         """Test word count estimation based on beats."""
@@ -249,7 +249,7 @@ class TestChapterAnalysisService:
         assert report.word_count.max_words == 3000  # 120% of 2500
         assert report.word_count.per_scene_average == 1250.0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_tension_arc_mountain_shape(self, service, sample_scene):
         """Test detection of mountain-shaped tension arc."""
@@ -270,7 +270,7 @@ class TestChapterAnalysisService:
         assert report.tension_arc.has_clear_climax is True
         assert report.tension_arc.is_monotonic is False
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_tension_arc_flat_detection(self, service, sample_scene):
         """Test detection of flat tension arc."""
@@ -287,7 +287,7 @@ class TestChapterAnalysisService:
 
     # Warning generation tests
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_warning_missing_climax(self, service, sample_scene):
         """Test warning when chapter has no climax."""
@@ -304,7 +304,7 @@ class TestChapterAnalysisService:
         assert climax_warnings[0].severity == "high"
         assert climax_warnings[0].category == WarningCategory.STRUCTURE
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_warning_missing_resolution(self, service, sample_scene):
         """Test warning when chapter has no resolution."""
@@ -321,7 +321,7 @@ class TestChapterAnalysisService:
         assert len(resolution_warnings) == 1
         assert resolution_warnings[0].severity == "medium"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_warning_overlong_rising_action(self, service, sample_scene):
         """Test warning when >70% of scenes are rising action."""
@@ -344,7 +344,7 @@ class TestChapterAnalysisService:
         assert len(rising_warnings) == 1
         assert rising_warnings[0].category == WarningCategory.BALANCE
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_warning_flat_tension_arc(self, service, sample_scene):
         """Test warning for flat tension arc with 3+ scenes."""
@@ -361,7 +361,7 @@ class TestChapterAnalysisService:
         assert len(flat_warnings) == 1
         assert flat_warnings[0].category == WarningCategory.ARC
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_warning_underdeveloped_scenes(self, service, sample_scene):
         """Test warning for scenes with fewer than 3 beats."""
@@ -383,7 +383,7 @@ class TestChapterAnalysisService:
 
     # Health score calculation tests
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_health_score_critical(self, service, sample_scene):
         """Test critical health score with multiple high-severity warnings."""
@@ -398,7 +398,7 @@ class TestChapterAnalysisService:
         # Missing climax (high) + no resolution (medium) = at least POOR
         assert report.health_score in [HealthScore.CRITICAL, HealthScore.POOR]
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_health_score_excellent(self, service, sample_scene):
         """Test excellent health score for well-structured chapter."""
@@ -418,7 +418,7 @@ class TestChapterAnalysisService:
 
     # Recommendation tests
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_recommendations_generated(self, service, sample_scene):
         """Test that recommendations are generated from warnings."""
@@ -434,7 +434,7 @@ class TestChapterAnalysisService:
         all_recs = " ".join(report.recommendations).lower()
         assert "climax" in all_recs or "resolution" in all_recs
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_recommendations_for_healthy_chapter(self, service, sample_scene):
         """Test recommendations for a chapter with no warnings."""
@@ -453,7 +453,7 @@ class TestChapterAnalysisService:
 
     # Edge case tests
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_scenes_sorted_by_order_index(self, service, sample_scene):
         """Test that scenes are analyzed in order_index order, not creation order."""
@@ -470,7 +470,7 @@ class TestChapterAnalysisService:
         assert report.tension_arc.peaks_at == 9
         assert report.tension_arc.ends_at == 3
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_zero_beats_word_count(self, service):
         """Test word count estimation for scenes with no beats."""
@@ -494,7 +494,7 @@ class TestChapterAnalysisService:
         assert report.word_count.total_words == 0
         assert report.word_count.per_scene_average == 0.0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_all_phases_represented(self, service, sample_scene):
         """Test analysis when all phases have at least one scene."""
@@ -515,7 +515,7 @@ class TestChapterAnalysisService:
         assert report.phase_distribution.climax == 1
         assert report.phase_distribution.resolution == 1
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_clear_climax_detection_in_final_40_percent(self, service, sample_scene):
         """Test that climax in final 40% is detected."""
@@ -533,7 +533,7 @@ class TestChapterAnalysisService:
 
         assert report.tension_arc.has_clear_climax is True
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_no_clear_climax_peak_too_early(self, service, sample_scene):
         """Test that peak before final 40% is not detected as clear climax."""

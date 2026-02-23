@@ -4,6 +4,9 @@
  * Why: Provides a file-explorer style interface for navigating hierarchical
  * world locations (Continent > Region > City > Building). Uses shadcn/ui
  * Collapsible for expand/collapse and lucide-react icons for location types.
+ *
+ * SIM-023: Now supports displaying characters at each location with avatar display,
+ * filter toggle, and CharacterDetailDialog for viewing character details.
  */
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -38,10 +41,26 @@ import {
   Rocket,
   Moon,
   Sparkles,
+  UserX,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { WorldLocation, LocationType } from '@/types/schemas';
+import type { WorldLocation, LocationType, CharacterSummary } from '@/types/schemas';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/Avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 /**
  * Map LocationType to appropriate lucide-react icon.
@@ -86,6 +105,18 @@ function getLocationIcon(locationType: string): LucideIcon {
 }
 
 /**
+ * Get initials from a character name for avatar fallback.
+ */
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+/**
  * Build a tree structure from flat location array.
  * Why: API returns flat array with parent_id references; we need nested structure
  * for recursive rendering.
@@ -124,6 +155,156 @@ function buildLocationTree(locations: WorldLocation[]): LocationNode[] {
   return rootNodes;
 }
 
+/**
+ * CharacterAvatarGroup - Display a group of character avatars under a location.
+ * Shows max 5 visible avatars with "+N more" overflow indicator.
+ * Status indicator ring: green=alive, gray=deceased (SIM-023).
+ */
+interface CharacterAvatarGroupProps {
+  characters: CharacterSummary[];
+  onCharacterClick: (character: CharacterSummary) => void;
+  maxVisible?: number;
+}
+
+function CharacterAvatarGroup({
+  characters,
+  onCharacterClick,
+  maxVisible = 5,
+}: CharacterAvatarGroupProps) {
+  const visibleCharacters = characters.slice(0, maxVisible);
+  const overflowCount = characters.length - maxVisible;
+
+  return (
+    <TooltipProvider>
+      <div
+        className="flex flex-wrap items-center gap-1 pl-6 pt-1"
+        role="group"
+        aria-label={`${characters.length} character${characters.length !== 1 ? 's' : ''} at this location`}
+      >
+        {visibleCharacters.map((character) => {
+          // SIM-019: Status indicator ring - green for alive, gray for deceased
+          const statusRingClass = character.is_deceased
+            ? 'ring-gray-400'
+            : 'ring-green-500';
+          const ariaStatusText = character.is_deceased ? 'deceased' : 'alive';
+
+          return (
+            <Tooltip key={character.id}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCharacterClick(character);
+                  }}
+                  className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-full"
+                  aria-label={`${character.name}, ${ariaStatusText}`}
+                >
+                  <Avatar
+                    size="sm"
+                    className={cn(
+                      'ring-2 ring-offset-1 hover:ring-primary transition-shadow',
+                      statusRingClass
+                    )}
+                  >
+                    <AvatarImage src={character.appearance ?? undefined} alt={character.name} />
+                    <AvatarFallback>{getInitials(character.name)}</AvatarFallback>
+                  </Avatar>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p className="font-medium">{character.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {character.is_deceased ? 'Deceased' : character.status}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+        {overflowCount > 0 && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                +{overflowCount}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>{overflowCount} more character{overflowCount !== 1 ? 's' : ''}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </TooltipProvider>
+  );
+}
+
+/**
+ * CharacterDetailDialog - Minimal dialog showing character details.
+ */
+interface CharacterDetailDialogProps {
+  character: CharacterSummary | null;
+  open: boolean;
+  onClose: () => void;
+}
+
+function CharacterDetailDialog({ character, open, onClose }: CharacterDetailDialogProps) {
+  if (!character) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-w-md" aria-modal="true">
+        <DialogHeader>
+          <DialogTitle>{character.name}</DialogTitle>
+          <DialogDescription>Character details</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 text-sm">
+          <div className="flex items-center gap-3">
+            <Avatar size="lg">
+              <AvatarImage src={character.appearance ?? undefined} alt={character.name} />
+              <AvatarFallback>{getInitials(character.name)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">{character.name}</p>
+              <p className="text-muted-foreground">{character.status}</p>
+            </div>
+          </div>
+
+          {character.archetype && (
+            <div>
+              <span className="text-muted-foreground">Archetype: </span>
+              <span className="font-medium">{character.archetype}</span>
+            </div>
+          )}
+
+          {character.traits && character.traits.length > 0 && (
+            <div>
+              <span className="text-muted-foreground">Traits: </span>
+              <span>{character.traits.join(', ')}</span>
+            </div>
+          )}
+
+          <div>
+            <span className="text-muted-foreground">Type: </span>
+            <span>{character.type}</span>
+          </div>
+
+          {character.faction_id && (
+            <div>
+              <span className="text-muted-foreground">Faction: </span>
+              <span>{character.faction_id}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export interface LocationTreeItemProps {
   /** The location node to render */
   node: LocationNode;
@@ -137,6 +318,12 @@ export interface LocationTreeItemProps {
   expandedIds: Set<string>;
   /** Toggle expansion state of a node */
   onToggleExpand: (locationId: string) => void;
+  /** Characters at this location (SIM-023) */
+  charactersAtLocation?: CharacterSummary[];
+  /** Whether to show characters (SIM-023) */
+  showCharacters?: boolean;
+  /** Callback when character is clicked (SIM-023) */
+  onCharacterClick?: ((character: CharacterSummary) => void) | undefined;
 }
 
 /**
@@ -149,6 +336,9 @@ function LocationTreeItem({
   onSelect,
   expandedIds,
   onToggleExpand,
+  charactersAtLocation = [],
+  showCharacters = false,
+  onCharacterClick,
 }: LocationTreeItemProps) {
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedIds.has(node.id);
@@ -238,6 +428,16 @@ function LocationTreeItem({
         )}
       </div>
 
+      {/* Character avatars under this location (SIM-023) */}
+      {showCharacters && charactersAtLocation.length > 0 && (
+        <div style={{ paddingLeft: `${depth * 12 + 8}px` }}>
+          <CharacterAvatarGroup
+            characters={charactersAtLocation}
+            onCharacterClick={onCharacterClick ?? (() => {})}
+          />
+        </div>
+      )}
+
       {/* Render children recursively */}
       {hasChildren && (
         <CollapsibleContent>
@@ -250,6 +450,9 @@ function LocationTreeItem({
               onSelect={onSelect}
               expandedIds={expandedIds}
               onToggleExpand={onToggleExpand}
+              charactersAtLocation={charactersAtLocation}
+              showCharacters={showCharacters}
+              onCharacterClick={onCharacterClick}
             />
           ))}
         </CollapsibleContent>
@@ -269,6 +472,53 @@ export interface LocationTreeProps {
   onSelect?: (locationId: string) => void;
   /** IDs to expand by default */
   defaultExpandedIds?: string[];
+  /** Characters to display at locations (SIM-023) */
+  characters?: CharacterSummary[];
+  /** Whether to show characters (SIM-023) */
+  showCharacters?: boolean;
+  /** Callback when character is clicked (SIM-023) */
+  onCharacterClick?: ((character: CharacterSummary) => void) | undefined;
+}
+
+/**
+ * Build a map of location ID to characters at that location.
+ * Characters without a valid location go to "unknown" category.
+ */
+function buildLocationCharacterMap(
+  characters: CharacterSummary[],
+  locations: WorldLocation[]
+): Record<string, CharacterSummary[]> {
+  const locationIds = new Set(locations.map((loc) => loc.id));
+  const map: Record<string, CharacterSummary[]> = {};
+
+  for (const character of characters) {
+    // SIM-020: Use current_location_id to determine character location
+    const locationId = character.current_location_id ?? null;
+
+    if (locationId && locationIds.has(locationId)) {
+      const existing = map[locationId] ?? [];
+      existing.push(character);
+      map[locationId] = existing;
+    }
+    // Characters without valid location will be shown in "Unknown Location" section
+  }
+
+  return map;
+}
+
+/**
+ * Get characters without a valid location.
+ */
+function getCharactersWithoutLocation(
+  characters: CharacterSummary[],
+  locations: WorldLocation[]
+): CharacterSummary[] {
+  const locationIds = new Set(locations.map((loc) => loc.id));
+  return characters.filter((char) => {
+    // SIM-020: Use current_location_id to determine character location
+    const locationId = char.current_location_id ?? null;
+    return !locationId || !locationIds.has(locationId);
+  });
 }
 
 /**
@@ -277,12 +527,17 @@ export interface LocationTreeProps {
  * Why: Writers need to navigate complex world hierarchies (e.g., Kingdom > Province
  * > City > District > Building). A tree view provides intuitive spatial navigation.
  *
+ * SIM-023: Now supports displaying characters at each location with toggle filter.
+ *
  * @example
  * ```tsx
  * <LocationTree
  *   locations={locations}
  *   selectedId={selectedLocationId}
  *   onSelect={(id) => setSelectedLocationId(id)}
+ *   characters={characters}
+ *   showCharacters={showCharacters}
+ *   onCharacterClick={(char) => openCharacterDialog(char)}
  * />
  * ```
  */
@@ -292,13 +547,30 @@ export function LocationTree({
   selectedId,
   onSelect,
   defaultExpandedIds = [],
+  characters = [],
+  showCharacters = false,
+  onCharacterClick,
 }: LocationTreeProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(defaultExpandedIds)
   );
+  const [selectedCharacter, setSelectedCharacter] = useState<CharacterSummary | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Build tree structure from flat array
   const tree = useMemo(() => buildLocationTree(locations), [locations]);
+
+  // Build location to characters map
+  const locationCharacterMap = useMemo(
+    () => buildLocationCharacterMap(characters, locations),
+    [characters, locations]
+  );
+
+  // Get characters without valid location
+  const orphanedCharacters = useMemo(
+    () => getCharactersWithoutLocation(characters, locations),
+    [characters, locations]
+  );
 
   // Toggle expansion state
   const handleToggleExpand = useCallback((locationId: string) => {
@@ -313,6 +585,13 @@ export function LocationTree({
     });
   }, []);
 
+  // Handle character click
+  const handleCharacterClick = useCallback((character: CharacterSummary) => {
+    setSelectedCharacter(character);
+    setDialogOpen(true);
+    onCharacterClick?.(character);
+  }, [onCharacterClick]);
+
   if (locations.length === 0) {
     return (
       <div
@@ -321,7 +600,7 @@ export function LocationTree({
           className
         )}
         role="tree"
-        aria-label="Location hierarchy"
+        aria-label="World locations and characters"
       >
         <Globe className="mb-2 h-8 w-8 opacity-50" />
         <p className="text-sm font-medium">No locations yet</p>
@@ -334,7 +613,7 @@ export function LocationTree({
     <div
       className={cn('flex flex-col gap-0.5', className)}
       role="tree"
-      aria-label="Location hierarchy"
+      aria-label="World locations and characters"
     >
       {tree.map((node) => (
         <LocationTreeItem
@@ -344,8 +623,35 @@ export function LocationTree({
           onSelect={onSelect}
           expandedIds={expandedIds}
           onToggleExpand={handleToggleExpand}
+          charactersAtLocation={locationCharacterMap[node.id] ?? []}
+          showCharacters={showCharacters}
+          onCharacterClick={handleCharacterClick}
         />
       ))}
+
+      {/* Unknown Location section for characters without valid location */}
+      {showCharacters && orphanedCharacters.length > 0 && (
+        <div className="mt-4 border-t pt-2">
+          <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground">
+            <UserX className="h-4 w-4" />
+            <span>Unknown Location</span>
+            <span className="text-xs">({orphanedCharacters.length})</span>
+          </div>
+          <div className="pl-2">
+            <CharacterAvatarGroup
+              characters={orphanedCharacters}
+              onCharacterClick={handleCharacterClick}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Character detail dialog */}
+      <CharacterDetailDialog
+        character={selectedCharacter}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+      />
     </div>
   );
 }

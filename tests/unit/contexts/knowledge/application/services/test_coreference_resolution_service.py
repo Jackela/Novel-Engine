@@ -37,7 +37,7 @@ from src.contexts.knowledge.domain.models.entity import (
 
 # Sample LLM response for co-reference resolution
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 SAMPLE_COREF_JSON = """{
   "entity_name": "Alice",
@@ -526,7 +526,7 @@ class TestCoreferenceResolutionService:
         assert result.resolution_rate == 1.0  # No pronouns to resolve
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 @pytest.mark.medium
 class TestCoreferenceResolutionServiceIntegration:
     """
@@ -669,7 +669,7 @@ class TestCoreferenceResolutionServiceIntegration:
         assert result.total_resolved >= 0
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 @pytest.mark.fast
 class TestEntityExtractionServiceLargeText:
     """

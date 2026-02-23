@@ -7,7 +7,7 @@ from src.core.event_bus import EventBus
 from src.core.turn_orchestrator import TurnOrchestrator
 from src.core.types.shared_types import CharacterAction
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 class DummyAgent:
@@ -31,7 +31,7 @@ class DummyAgent:
         return self._refresh_result
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_run_turn_tracks_context_refresh_and_emits_event():
     event_bus = EventBus()
@@ -53,7 +53,7 @@ async def test_run_turn_tracks_context_refresh_and_emits_event():
     assert orchestrator.current_turn_state.world_state_updates["context_enhanced"]
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_handle_agent_action_records_wait_and_action():
     event_bus = EventBus()
     orchestrator = TurnOrchestrator(event_bus)
@@ -80,7 +80,7 @@ def test_handle_agent_action_records_wait_and_action():
     assert "waiting" in log_entries[-1].lower()
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_turn_history_and_performance_metrics():
     event_bus = EventBus()
     orchestrator = TurnOrchestrator(event_bus, max_turn_history=1)

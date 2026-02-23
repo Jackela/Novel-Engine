@@ -41,7 +41,7 @@ from src.contexts.knowledge.domain.models.entity import (
 
 # Sample LLM response for entity extraction
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 SAMPLE_EXTRACTION_JSON = """{
   "entities": [
@@ -632,7 +632,7 @@ class TestPronounsConstant:
         assert all(p.islower() for p in PRONOUNS)
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 @pytest.mark.medium
 class TestEntityExtractionServiceIntegration:
     """
@@ -1225,7 +1225,7 @@ class TestRelationshipExtraction:
         assert len(located_rels) > 0
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 @pytest.mark.medium
 class TestRelationshipExtractionIntegration:
     """Integration tests for relationship extraction."""
@@ -1257,7 +1257,7 @@ class TestRelationshipExtractionIntegration:
                 assert 0.0 <= rel.strength <= 1.0
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 @pytest.mark.medium
 class TestBidirectionalRelationshipNormalization:
     """Tests for BRAIN-030B: Bidirectional relationship normalization."""
@@ -1440,7 +1440,7 @@ class TestBidirectionalRelationshipNormalization:
         assert is_naturally_bidirectional(RelationshipType.LEADS) is False
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 @pytest.mark.medium
 class TestTemporalRelationships:
     """Tests for BRAIN-030B: Temporal relationship filtering."""

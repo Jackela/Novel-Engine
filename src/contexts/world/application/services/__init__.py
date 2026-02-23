@@ -5,14 +5,62 @@ This module exports services that provide higher-level business operations
 beyond simple CRUD, such as graph analytics and social network analysis.
 """
 
+from .rumor_propagation_service import (
+    ILocationRepository,
+    IRumorRepository,
+    RumorPropagationService,
+    RumorStatistics,
+)
+from .simulation_sanity_checker import (
+    SanityCheckError,
+    SanityViolation,
+    Severity,
+    SimulationSanityChecker,
+)
 from .social_graph_service import (
     CharacterCentrality,
     SocialAnalysisResult,
     SocialGraphService,
 )
+from .world_simulation_service import (
+    IFactionRepository,
+    ISnapshotService,
+    IWorldStateRepository,
+    InvalidDaysError,
+    ResolutionResult,
+    RepositoryError,
+    RollbackError,
+    SaveFailedError,
+    SimulationError,
+    SimulationTick,
+    SnapshotFailedError,
+    WorldNotFoundError,
+    WorldSimulationService,
+)
 
 __all__ = [
-    "SocialGraphService",
-    "SocialAnalysisResult",
     "CharacterCentrality",
+    "IFactionRepository",
+    "ILocationRepository",
+    "IRumorRepository",
+    "ISnapshotService",
+    "IWorldStateRepository",
+    "InvalidDaysError",
+    "ResolutionResult",
+    "RepositoryError",
+    "RollbackError",
+    "RumorPropagationService",
+    "RumorStatistics",
+    "SaveFailedError",
+    "SanityCheckError",
+    "SanityViolation",
+    "Severity",
+    "SimulationError",
+    "SimulationTick",
+    "SnapshotFailedError",
+    "SocialAnalysisResult",
+    "SocialGraphService",
+    "SimulationSanityChecker",
+    "WorldNotFoundError",
+    "WorldSimulationService",
 ]

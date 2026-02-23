@@ -11,7 +11,7 @@ import pytest
 
 # Import modules under test
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 try:
     from src.config.character_factory import CharacterFactory
@@ -32,9 +32,9 @@ class TestCharacterFactory:
         """Setup for each test method"""
         self.mock_event_bus = Mock(spec=EventBus)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_factory_initialization_success(self):
         """Test factory initialization - success case"""
         event_bus = Mock(spec=EventBus)
@@ -44,8 +44,8 @@ class TestCharacterFactory:
         assert hasattr(factory, "event_bus")
         assert hasattr(factory, "base_character_path")
 
-    @pytest.mark.unit
-    @pytest.mark.unit
+    @pytest.mark.integration
+    @pytest.mark.integration
     def test_create_character_empty_name(self):
         """Test character creation with empty name raises ValueError"""
         factory = CharacterFactory(self.mock_event_bus)
@@ -56,7 +56,7 @@ class TestCharacterFactory:
         with pytest.raises(ValueError, match="Character name cannot be empty"):
             factory.create_character("   ")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_character_not_found(self, tmp_path):
         """Test character creation - character not found"""
         # Create factory with temporary path
@@ -67,7 +67,7 @@ class TestCharacterFactory:
         with pytest.raises(FileNotFoundError, match="Character directory not found"):
             factory.create_character("nonexistent_character")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_character_path_is_file_not_directory(self, tmp_path):
         """Test character creation when path exists but is a file not directory"""
         # Create a file instead of directory
@@ -81,7 +81,7 @@ class TestCharacterFactory:
         with pytest.raises(FileNotFoundError, match="not a directory"):
             factory.create_character("testchar")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_character_success(self, tmp_path):
         """Test successful character creation"""
         # Create character directory
@@ -110,7 +110,7 @@ class TestCharacterFactory:
             call_args = mock_persona.call_args
             assert str(char_dir) in str(call_args[0][0])
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_character_with_agent_id(self, tmp_path):
         """Test character creation with custom agent_id"""
         char_dir = tmp_path / "testchar"
@@ -133,7 +133,7 @@ class TestCharacterFactory:
             call_args = mock_persona.call_args
             assert call_args[1]["agent_id"] == "custom_id"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_character_factory_persona_creation_error(self, tmp_path):
         """Test error handling when PersonaAgent creation fails"""
         char_dir = tmp_path / "testchar"
@@ -151,7 +151,7 @@ class TestCharacterFactory:
             with pytest.raises(Exception, match="Persona creation failed"):
                 factory.create_character("testchar")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_list_available_characters(self, tmp_path):
         """Test listing available characters"""
         # Create multiple character directories
@@ -173,7 +173,7 @@ class TestCharacterFactory:
         assert "char3" in characters
         assert "notachar.txt" not in characters
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_list_available_characters_no_directory(self, tmp_path):
         """Test listing characters when base directory doesn't exist"""
         nonexistent = tmp_path / "nonexistent"
@@ -187,7 +187,7 @@ class TestCharacterFactory:
         ):
             factory.list_available_characters()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_multiple_character_creation(self, tmp_path):
         """Test creating multiple characters"""
         # Create multiple character directories
@@ -224,9 +224,9 @@ class TestCharacterFactoryConfiguration:
         """Setup for each test method"""
         self.mock_event_bus = Mock(spec=EventBus)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_factory_with_different_event_buses(self):
         """Test factory with different event bus instances"""
         bus1 = Mock(spec=EventBus)
@@ -239,7 +239,7 @@ class TestCharacterFactoryConfiguration:
         assert factory2.event_bus == bus2
         assert factory1.event_bus != factory2.event_bus
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_factory_with_custom_base_path(self, tmp_path):
         """Test factory initialization with custom base path"""
         custom_path = tmp_path / "custom_characters"
@@ -251,7 +251,7 @@ class TestCharacterFactoryConfiguration:
 
         assert str(custom_path) in factory.base_character_path
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_factory_path_resolution(self, tmp_path):
         """Test character path resolution"""
         char_dir = tmp_path / "testchar"
@@ -288,8 +288,8 @@ class TestCharacterFactoryPerformance:
         self.mock_event_bus = Mock(spec=EventBus)
 
     @pytest.mark.performance
-    @pytest.mark.unit
-    @pytest.mark.unit
+    @pytest.mark.integration
+    @pytest.mark.integration
     def test_character_creation_performance(self, tmp_path):
         """Test character creation performance"""
         import time

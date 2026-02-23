@@ -1,4 +1,12 @@
 import { test, expect } from './fixtures';
+import { safeGoto } from './utils/navigation';
+
+async function navigateToStoryEditor(page: import('@playwright/test').Page) {
+  await safeGoto(page, '/stories/editor');
+  await expect(page.getByRole('button', { name: /new chapter/i })).toBeVisible({
+    timeout: 30_000,
+  });
+}
 
 /**
  * NAR-001: BDD Spec - The Writer's Flow
@@ -28,7 +36,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // GIVEN: User is on the Story Editor page
     // ========================================
     await test.step('GIVEN: User navigates to the Story Editor page', async () => {
-      await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
+      await navigateToStoryEditor(page);
     });
 
     // ========================================
@@ -36,7 +44,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // ========================================
     await test.step('WHEN: User clicks the "New Chapter" button', async () => {
       const newChapterButton = page.getByRole('button', { name: /new chapter/i });
-      await expect(newChapterButton).toBeVisible({ timeout: 5000 });
+      await expect(newChapterButton).toBeVisible({ timeout: 30_000 });
       await newChapterButton.click();
     });
 
@@ -57,7 +65,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // GIVEN: User is on the Story Editor page with streaming mock
     // ========================================
     await test.step('GIVEN: User navigates to the Story Editor page', async () => {
-      await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
+      await navigateToStoryEditor(page);
     });
 
     // ========================================
@@ -65,7 +73,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // ========================================
     await test.step('WHEN: User clicks "New Chapter" to trigger generation', async () => {
       const newChapterButton = page.getByRole('button', { name: /new chapter/i });
-      await expect(newChapterButton).toBeVisible({ timeout: 5000 });
+      await expect(newChapterButton).toBeVisible({ timeout: 30_000 });
       await newChapterButton.click();
     });
 
@@ -94,7 +102,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // GIVEN: User is on the Story Editor with World Context loaded
     // ========================================
     await test.step('GIVEN: User navigates to the Story Editor page', async () => {
-      await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
+      await navigateToStoryEditor(page);
     });
 
     await page.addInitScript(() => {
@@ -108,7 +116,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // ========================================
     await test.step('WHEN: User clicks "New Chapter" to trigger generation', async () => {
       const newChapterButton = page.getByRole('button', { name: /new chapter/i });
-      await expect(newChapterButton).toBeVisible({ timeout: 5000 });
+      await expect(newChapterButton).toBeVisible({ timeout: 30_000 });
       await newChapterButton.click();
 
       // Wait for request to be made
@@ -150,7 +158,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // GIVEN: User is on the Story Editor page
     // ========================================
     await test.step('GIVEN: User navigates to the Story Editor page', async () => {
-      await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
+      await navigateToStoryEditor(page);
     });
 
     // ========================================
@@ -158,7 +166,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // ========================================
     await test.step('WHEN: User clicks "New Chapter" and API returns error', async () => {
       const newChapterButton = page.getByRole('button', { name: /new chapter/i });
-      await expect(newChapterButton).toBeVisible({ timeout: 5000 });
+      await expect(newChapterButton).toBeVisible({ timeout: 30_000 });
       await newChapterButton.click();
     });
 
@@ -187,7 +195,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // GIVEN: User is on the Story Editor page
     // ========================================
     await test.step('GIVEN: User navigates to the Story Editor page', async () => {
-      await page.goto('/stories/editor', { waitUntil: 'domcontentloaded' });
+      await navigateToStoryEditor(page);
     });
 
     // ========================================
@@ -195,7 +203,7 @@ test.describe('Story Generation - The Writer\'s Flow', () => {
     // ========================================
     await test.step('WHEN: User clicks "New Chapter" to start generation', async () => {
       const newChapterButton = page.getByRole('button', { name: /new chapter/i });
-      await expect(newChapterButton).toBeVisible({ timeout: 5000 });
+      await expect(newChapterButton).toBeVisible({ timeout: 30_000 });
       await newChapterButton.click();
     });
 

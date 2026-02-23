@@ -49,7 +49,7 @@ class TestDirectorAgentInitialization:
             except Exception:
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_initialization_with_valid_config(self):
         """Test DirectorAgent initialization with valid configuration"""
         with patch(
@@ -76,7 +76,7 @@ class TestDirectorAgentInitialization:
             # get_config may or may not be called depending on implementation
             # Just verify director initialized successfully
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_initialization_without_config(self):
         """Test DirectorAgent initialization when config loading fails"""
         with patch(
@@ -91,7 +91,7 @@ class TestDirectorAgentInitialization:
 
             assert director.event_bus == self.mock_event_bus
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_initialization_with_world_state_file(self):
         """Test initialization with existing world state file"""
         # Create test world state file
@@ -112,7 +112,7 @@ class TestDirectorAgentInitialization:
 
         assert director.event_bus == self.mock_event_bus
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_initialization_with_campaign_brief(self):
         """Test initialization with campaign brief file"""
         # Create test campaign brief file
@@ -134,7 +134,7 @@ characters:
 
         assert director.event_bus == self.mock_event_bus
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_initialization_event_bus_subscription(self):
         """Test that DirectorAgent properly subscribes to event bus events"""
         with patch.object(self.mock_event_bus, "subscribe"):
@@ -187,7 +187,7 @@ class TestDirectorAgentRegistration:
         mock_agent.act = Mock(return_value="Test action")
         return mock_agent
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_register_agent_success(self):
         """Test successful agent registration"""
@@ -203,7 +203,7 @@ class TestDirectorAgentRegistration:
             elif hasattr(self.director, "registered_agents"):
                 assert mock_agent in self.director.registered_agents
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_register_agent_validation_checks(self):
         """Test agent validation during registration"""
@@ -220,7 +220,7 @@ class TestDirectorAgentRegistration:
         result = self.director.register_agent(invalid_agent)
         assert result is False  # Should return False for invalid type
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_register_multiple_agents(self):
         """Test registering multiple agents"""
         if not hasattr(self.director, "register_agent"):
@@ -240,7 +240,7 @@ class TestDirectorAgentRegistration:
             for agent in agents:
                 assert agent in self.director.registered_agents
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_register_agent_duplicate_handling(self):
         """Test handling of duplicate agent registration"""
@@ -261,7 +261,7 @@ class TestDirectorAgentRegistration:
             # If it fails, should be a meaningful error
             assert "duplicate" in str(e).lower() or "already" in str(e).lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_register_agent_character_data_validation(self):
         """Test validation of agent character data during registration"""
         if not hasattr(self.director, "register_agent"):
@@ -312,7 +312,7 @@ class TestDirectorAgentTurnExecution:
         mock_agent.act = Mock(return_value="Test action performed")
         return mock_agent
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_run_turn_with_registered_agents(self):
         """Test running a turn with registered agents"""
         if not hasattr(self.director, "run_turn") or not hasattr(
@@ -340,7 +340,7 @@ class TestDirectorAgentTurnExecution:
             # Just ensure the agents were at least involved
             pass
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_run_turn_no_agents(self):
         """Test running a turn with no registered agents"""
@@ -355,7 +355,7 @@ class TestDirectorAgentTurnExecution:
             # Should be a meaningful error about no agents
             assert any(word in str(e).lower() for word in ["agent", "empty", "no"])
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_run_turn_agent_error_handling(self):
         """Test turn execution when an agent throws an error"""
         if not hasattr(self.director, "run_turn") or not hasattr(
@@ -404,7 +404,7 @@ class TestDirectorAgentLogging:
         except Exception:
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_campaign_log_initialization(self):
         """Test campaign log file creation during initialization"""
@@ -418,7 +418,7 @@ class TestDirectorAgentLogging:
         elif hasattr(director, "log_path"):
             assert director.log_path == self.temp_log_path
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_campaign_log_creation_with_existing_file(self):
         """Test behavior when campaign log file already exists"""
         # Create existing log file
@@ -432,7 +432,7 @@ class TestDirectorAgentLogging:
         # Should handle existing file gracefully (backup or append)
         assert os.path.exists(self.temp_log_path)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_log_event_functionality(self):
         """Test event logging functionality"""
         director = DirectorAgent(
@@ -449,7 +449,7 @@ class TestDirectorAgentLogging:
                     content = f.read()
                     assert "test event" in content.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_turn_logging_integration(self):
         """Test that turns are logged to campaign log"""
         director = DirectorAgent(
@@ -502,7 +502,7 @@ class TestDirectorAgentWorldState:
         except Exception:
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.integration
     def test_world_state_loading_existing_file(self):
         """Test loading world state from existing file"""
@@ -529,7 +529,7 @@ class TestDirectorAgentWorldState:
         if hasattr(director, "world_state"):
             assert director.world_state is not None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_world_state_initialization_missing_file(self):
         """Test world state initialization when file doesn't exist"""
@@ -544,7 +544,7 @@ class TestDirectorAgentWorldState:
             # Should have default or None
             assert director.world_state is not None or director.world_state is None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_world_state_agent_specific_generation(self):
         """Test generation of agent-specific world state"""
         director = DirectorAgent(

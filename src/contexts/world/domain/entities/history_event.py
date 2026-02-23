@@ -19,9 +19,12 @@ Typical usage example:
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from .entity import Entity
+
+if TYPE_CHECKING:
+    from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 
 
 class EventType(Enum):
@@ -85,6 +88,8 @@ class EventType(Enum):
     SCIENTIFIC = "scientific"
     MAGICAL = "magical"
     POLITICAL = "political"
+    TRADE = "trade"
+    NATURAL = "natural"
 
 
 class EventSignificance(Enum):
@@ -130,6 +135,23 @@ class EventOutcome(Enum):
     UNKNOWN = "unknown"
 
 
+class ImpactScope(Enum):
+    """Geographic/narrative scope of an event's impact.
+
+    Determines how widely an event affects the world and is used
+    for filtering and narrative importance calculations.
+
+    Attributes:
+        LOCAL: Affects a single location or small area.
+        REGIONAL: Affects multiple locations or a significant region.
+        GLOBAL: Affects the entire world or has far-reaching consequences.
+    """
+
+    LOCAL = "local"
+    REGIONAL = "regional"
+    GLOBAL = "global"
+
+
 @dataclass(eq=False)
 class HistoryEvent(Entity):
     """HistoryEvent Entity.
@@ -157,6 +179,10 @@ class HistoryEvent(Entity):
         is_secret: Whether this event is hidden from common knowledge
         sources: Where knowledge of this event comes from
         narrative_importance: How important this is to the story (0-100)
+        impact_scope: Geographic scope of the event's impact (simulation support)
+        affected_faction_ids: IDs of factions directly affected (distinct from involved)
+        affected_location_ids: IDs of locations directly affected (distinct from where occurred)
+        structured_date: Structured calendar date for simulation events
     """
 
     name: str = ""
@@ -177,6 +203,11 @@ class HistoryEvent(Entity):
     is_secret: bool = False
     sources: List[str] = field(default_factory=list)
     narrative_importance: int = 50
+    # Simulation support fields (backward compatible, nullable)
+    impact_scope: Optional["ImpactScope"] = None
+    affected_faction_ids: Optional[List[str]] = None
+    affected_location_ids: Optional[List[str]] = None
+    structured_date: Optional["WorldCalendar"] = None
 
     def __eq__(self, other: object) -> bool:
         """Equality comparison based on entity identity (inherited from Entity)."""
@@ -495,6 +526,10 @@ class HistoryEvent(Entity):
             "is_secret": self.is_secret,
             "sources": self.sources,
             "narrative_importance": self.narrative_importance,
+            "impact_scope": self.impact_scope.value if self.impact_scope else None,
+            "affected_faction_ids": self.affected_faction_ids,
+            "affected_location_ids": self.affected_location_ids,
+            "structured_date": self.structured_date.to_dict() if self.structured_date else None,
         }
 
     @classmethod

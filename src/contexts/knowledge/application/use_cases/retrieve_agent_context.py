@@ -11,16 +11,31 @@ Constitution Compliance:
 """
 
 import time
+from collections.abc import Callable
 from typing import List
+
+import structlog
 
 from src.core.types.shared_types import CharacterId
 
 from ...domain.models.agent_context import AgentContext
 from ...domain.models.agent_identity import AgentIdentity
 from ...domain.models.knowledge_type import KnowledgeType
-from ...infrastructure.metrics_config import record_knowledge_retrieval
 from ..ports.i_context_assembler import IContextAssembler
 from ..ports.i_knowledge_retriever import IKnowledgeRetriever
+
+logger = structlog.get_logger(__name__)
+KnowledgeRetrievalRecorder = Callable[[str, int, int, float], None]
+
+
+def _noop_record_knowledge_retrieval(
+    agent_character_id: str,
+    turn_number: int,
+    entry_count: int,
+    duration_seconds: float,
+) -> None:
+    """Why: keep use-case layering pure when no metrics adapter is wired."""
+    _ = (agent_character_id, turn_number, entry_count, duration_seconds)
 
 
 class RetrieveAgentContextUseCase:
@@ -42,6 +57,7 @@ class RetrieveAgentContextUseCase:
         self,
         knowledge_retriever: IKnowledgeRetriever,
         context_assembler: IContextAssembler,
+        record_knowledge_retrieval: KnowledgeRetrievalRecorder = _noop_record_knowledge_retrieval,
     ):
         """
         Initialize use case with dependencies.
@@ -49,12 +65,14 @@ class RetrieveAgentContextUseCase:
         Args:
             knowledge_retriever: Port for retrieving knowledge entries
             context_assembler: Port for assembling agent context
+            record_knowledge_retrieval: Optional observability callback wired at composition root
 
         Constitution Compliance:
             - Article V (SOLID): Dependency Inversion - depend on abstractions
         """
         self._retriever = knowledge_retriever
         self._assembler = context_assembler
+        self._record_knowledge_retrieval = record_knowledge_retrieval
 
     async def execute(
         self,
@@ -160,7 +178,7 @@ class RetrieveAgentContextUseCase:
 
             # Step 3: Record metrics (Article VII - Observability)
             duration_seconds = time.time() - start_time
-            record_knowledge_retrieval(
+            self._record_knowledge_retrieval(
                 agent_character_id=agent.character_id,
                 turn_number=turn_number if turn_number is not None else 0,
                 entry_count=len(entries),
@@ -172,10 +190,16 @@ class RetrieveAgentContextUseCase:
         except Exception:
             # Record metrics even on failure for observability
             duration_seconds = time.time() - start_time
-            record_knowledge_retrieval(
+            self._record_knowledge_retrieval(
                 agent_character_id=agent.character_id,
                 turn_number=turn_number if turn_number is not None else 0,
                 entry_count=0,
+                duration_seconds=duration_seconds,
+            )
+            logger.exception(
+                "knowledge_context_retrieval_failed",
+                agent_character_id=agent.character_id,
+                turn_number=turn_number if turn_number is not None else 0,
                 duration_seconds=duration_seconds,
             )
             raise

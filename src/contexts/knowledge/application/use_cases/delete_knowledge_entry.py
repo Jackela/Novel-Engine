@@ -12,15 +12,15 @@ Constitution Compliance:
 
 from datetime import datetime, timezone
 
+import structlog
+
 from src.core.types.shared_types import KnowledgeEntryId, UserId
 
 from ...domain.events.knowledge_entry_deleted import KnowledgeEntryDeleted
-from ...infrastructure.logging_config import (
-    get_knowledge_logger,
-    log_knowledge_entry_deleted,
-)
 from ..ports.i_event_publisher import IEventPublisher
 from ..ports.i_knowledge_repository import IKnowledgeRepository
+
+logger = structlog.get_logger(__name__)
 
 
 class DeleteKnowledgeEntryUseCase:
@@ -78,17 +78,21 @@ class DeleteKnowledgeEntryUseCase:
         - Article IV (SSOT): Hard delete from PostgreSQL (CASCADE on audit log)
         - Article VI (EDA): Publishes KnowledgeEntryDeleted event
         """
-        # Log operation start (Article VII - Observability)
-        logger = get_knowledge_logger(
+        operation_logger = logger.bind(
             component="DeleteKnowledgeEntryUseCase",
             user_id=deleted_by,
         )
-        logger.info("Deleting knowledge entry", entry_id=entry_id)
+
+        # Log operation start (Article VII - Observability)
+        operation_logger.info("knowledge_entry_delete_started", entry_id=entry_id)
 
         # Verify entry exists before deletion
         entry = await self._repository.get_by_id(entry_id)
         if entry is None:
-            logger.warning("Knowledge entry not found for deletion", entry_id=entry_id)
+            operation_logger.warning(
+                "knowledge_entry_not_found_for_deletion",
+                entry_id=entry_id,
+            )
             raise ValueError(f"Knowledge entry not found: {entry_id}")
 
         # Create snapshot for audit log
@@ -104,10 +108,14 @@ class DeleteKnowledgeEntryUseCase:
         await self._repository.delete(entry_id)
 
         # Log successful deletion
-        log_knowledge_entry_deleted(
+        operation_logger.info(
+            "knowledge_entry_deleted",
             entry_id=entry_id,
             deleted_by=deleted_by,
-            snapshot=snapshot,
+            snapshot_id=snapshot["id"],
+            snapshot_knowledge_type=snapshot["knowledge_type"],
+            snapshot_access_level=snapshot["access_level"],
+            snapshot_owning_character_id=snapshot["owning_character_id"],
         )
 
         # Create domain event
@@ -134,9 +142,14 @@ class DeleteKnowledgeEntryUseCase:
                     "source": "knowledge-management",
                 },
             )
-            logger.info("Domain event published successfully", event_id=event.event_id)
+            operation_logger.info(
+                "knowledge_entry_deleted_event_published",
+                event_id=event.event_id,
+            )
         except Exception as e:
             # Event publishing failure is non-blocking (log warning)
-            logger.warning(
-                "Failed to publish domain event", error=str(e), event_id=event.event_id
+            operation_logger.warning(
+                "knowledge_entry_deleted_event_publish_failed",
+                error=str(e),
+                event_id=event.event_id,
             )
