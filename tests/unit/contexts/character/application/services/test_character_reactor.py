@@ -523,7 +523,7 @@ class TestNarrativeGeneration:
         reactor = CharacterReactor()
 
         # Test each reaction type has a corresponding verb
-        for reaction_type in ReactionType:
+        for reaction_type in ReactionType.__members__.values():
             verb = REACTION_VERBS.get(reaction_type)
             assert verb is not None, f"No verb defined for {reaction_type}"
 
