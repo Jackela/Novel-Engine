@@ -703,3 +703,31 @@ Started: Mon Feb 16 16:36:42 CST 2026
   - API hooks use queryClient.invalidateQueries() for cache invalidation on mutations
 ---
 
+## Thu Feb 20 09:15 CST 2026 - Code Quality Fixes (Post-Implementation Review)
+- Fixed Schema SSOT violation: moved all simulation schemas from routers to src/api/schemas.py
+- Standardized error handling: all routers now use ErrorDetail model for consistent error responses
+- Added frozen=True to Rumor and WorldSnapshot entities for immutability (HistoryEvent intentionally mutable as Entity subclass)
+- Fixed Rumor.created_date type annotation from Any to Optional[WorldCalendar]
+- Regenerated docs/api/openapi.json
+- Fixed tests to handle new ErrorDetail format and frozen dataclass pattern
+- Files changed:
+  - src/api/schemas.py (modified - added simulation schemas)
+  - src/api/routers/calendar.py (modified - use centralized schemas, ErrorDetail)
+  - src/api/routers/diplomacy.py (modified - use centralized schemas, ErrorDetail)
+  - src/api/routers/simulation.py (modified - use centralized schemas, ErrorDetail)
+  - src/api/routers/snapshots.py (modified - use centralized schemas, ErrorDetail)
+  - src/api/routers/rumors.py (modified - use centralized schemas, ErrorDetail)
+  - src/api/routers/world.py (modified - renamed HistoryEventResponse to GeneratedEventResponse)
+  - src/contexts/world/domain/entities/rumor.py (modified - frozen=True, fixed type annotation)
+  - src/contexts/world/domain/entities/world_snapshot.py (modified - frozen=True)
+  - tests/api/routers/test_diplomacy.py (modified - handle ErrorDetail format)
+  - tests/unit/contexts/world/application/services/test_rumor_propagation_service.py (modified - create new Rumor instances instead of mutating)
+  - docs/api/openapi.json (regenerated)
+- **Learnings for future iterations:**
+  - Schema SSOT: All API schemas must be in src/api/schemas.py, not defined in routers
+  - ErrorDetail model: Use `ErrorDetail(code="...", message="...").model_dump()` for all error responses
+  - Frozen dataclasses: Create new instances instead of mutating (e.g., `Rumor(...)` with updated values)
+  - HistoryEvent inherits from Entity with mutable methods (add_cause, etc.) - intentionally NOT frozen
+  - Frontend schemas already in sync in frontend/src/types/schemas.ts
+---
+
