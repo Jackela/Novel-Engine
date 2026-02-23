@@ -5,10 +5,10 @@ import pytest
 
 from src.core.event_bus import EventBus, EventPriority, InMemoryEventBus
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_dead_letter_retry_clears_on_success():
     event_bus = EventBus()
@@ -33,7 +33,7 @@ async def test_dead_letter_retry_clears_on_success():
     assert event_bus.get_metrics()["retries_attempted"] == 1
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_pause_and_resume_event_type():
     event_bus = EventBus()
     handler = Mock()
@@ -56,7 +56,7 @@ def test_pause_and_resume_event_type():
     assert len(event_bus.get_history(event_type="paused_event")) == 1
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_publish_supports_sync_and_async_handlers():
     event_bus = EventBus()
@@ -79,7 +79,7 @@ async def test_publish_supports_sync_and_async_handlers():
     assert async_called["value"] is True
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_in_memory_event_bus_replay_and_stats():
     bus = InMemoryEventBus()
     received = []

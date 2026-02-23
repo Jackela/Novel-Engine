@@ -23,7 +23,7 @@ from src.contexts.knowledge.infrastructure.adapters.embedding_generator_adapter 
     EmbeddingServiceAdapter,
 )
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ def sample_texts() -> List[str]:
 class TestEmbeddingServiceAdapter:
     """Unit tests for EmbeddingServiceAdapter."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_init_creates_service_with_defaults(self):
         """Test that initialization creates service with default settings."""
@@ -70,7 +70,7 @@ class TestEmbeddingServiceAdapter:
         assert service._use_mock is True
         assert service.get_dimension() == 1536
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_init_with_custom_model(self):
         """Test that initialization accepts custom model."""
@@ -79,7 +79,7 @@ class TestEmbeddingServiceAdapter:
         assert service._model == "text-embedding-3-large"
         assert service.get_dimension() == 3072
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_init_with_invalid_model_raises_error(self):
         """Test that invalid model name raises ValueError."""
@@ -88,7 +88,7 @@ class TestEmbeddingServiceAdapter:
 
         assert "Unknown model" in str(exc_info.value)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_init_with_api_key_sets_key(self):
         """Test that API key is set when provided."""
@@ -98,13 +98,13 @@ class TestEmbeddingServiceAdapter:
         # use_mock=True takes precedence
         assert service._use_mock is True
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_service_implements_interface(self):
         """Test that EmbeddingServiceAdapter implements IEmbeddingService."""
         assert issubclass(EmbeddingServiceAdapter, IEmbeddingService)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_generates_vector_of_correct_dimension(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -117,7 +117,7 @@ class TestEmbeddingServiceAdapter:
         assert len(embedding) == 1536
         assert all(isinstance(x, float) for x in embedding)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_normalizes_vector_to_unit_length(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -132,7 +132,7 @@ class TestEmbeddingServiceAdapter:
         # Should be approximately 1.0 (unit vector)
         assert abs(magnitude - 1.0) < 0.001
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_returns_deterministic_results_for_same_input(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -146,7 +146,7 @@ class TestEmbeddingServiceAdapter:
         # Mock embeddings should be deterministic
         assert embedding1 == embedding2
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_caches_results(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -167,7 +167,7 @@ class TestEmbeddingServiceAdapter:
 
         assert embedding == cached
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_with_empty_text_raises_error(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -178,7 +178,7 @@ class TestEmbeddingServiceAdapter:
 
         assert exc_info.value.code == "EMPTY_TEXT"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_with_whitespace_only_raises_error(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -189,7 +189,7 @@ class TestEmbeddingServiceAdapter:
 
         assert exc_info.value.code == "EMPTY_TEXT"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_different_texts_produce_different_embeddings(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -204,7 +204,7 @@ class TestEmbeddingServiceAdapter:
         # Different texts should produce different embeddings
         assert embedding1 != embedding2
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_large_model_dimension(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -222,7 +222,7 @@ class TestEmbeddingServiceAdapter:
 class TestEmbeddingServiceBatch:
     """Unit tests for batch embedding functionality."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_batch_with_multiple_texts(
         self, mock_embedding_service: EmbeddingServiceAdapter, sample_texts: List[str]
@@ -234,7 +234,7 @@ class TestEmbeddingServiceBatch:
         assert all(isinstance(e, list) for e in embeddings)
         assert all(len(e) == 1536 for e in embeddings)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_batch_maintains_order(
         self, mock_embedding_service: EmbeddingServiceAdapter, sample_texts: List[str]
@@ -251,7 +251,7 @@ class TestEmbeddingServiceBatch:
         for i in range(len(sample_texts)):
             assert embeddings[i] == individual_embeddings[i]
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_batch_with_empty_list(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -261,7 +261,7 @@ class TestEmbeddingServiceBatch:
 
         assert embeddings == []
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_batch_with_single_text(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -272,7 +272,7 @@ class TestEmbeddingServiceBatch:
         assert len(embeddings) == 1
         assert len(embeddings[0]) == 1536
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_batch_respects_batch_size(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -284,7 +284,7 @@ class TestEmbeddingServiceBatch:
 
         assert len(embeddings) == 5
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embed_batch_caches_results(
         self, mock_embedding_service: EmbeddingServiceAdapter, sample_texts: List[str]
@@ -301,7 +301,7 @@ class TestEmbeddingServiceBatch:
 class TestEmbeddingServiceCache:
     """Unit tests for caching functionality."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_clear_cache_removes_cached_embeddings(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -316,7 +316,7 @@ class TestEmbeddingServiceCache:
 
         assert len(mock_embedding_service._embedding_cache) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_cache_key_is_deterministic(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -329,7 +329,7 @@ class TestEmbeddingServiceCache:
 
         assert key1 == key2
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_cache_key_differs_for_different_texts(
         self, mock_embedding_service: EmbeddingServiceAdapter
@@ -347,21 +347,21 @@ class TestEmbeddingServiceCache:
 class TestEmbeddingServiceModels:
     """Unit tests for different embedding models."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_dimension_for_ada_002(self):
         """Test dimension for text-embedding-ada-002."""
         service = EmbeddingServiceAdapter(model="text-embedding-ada-002", use_mock=True)
         assert service.get_dimension() == 1536
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_dimension_for_3_small(self):
         """Test dimension for text-embedding-3-small."""
         service = EmbeddingServiceAdapter(model="text-embedding-3-small", use_mock=True)
         assert service.get_dimension() == 1536
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_dimension_for_3_large(self):
         """Test dimension for text-embedding-3-large."""
@@ -372,7 +372,7 @@ class TestEmbeddingServiceModels:
 class TestBackwardCompatibility:
     """Tests for backward compatibility aliases."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_embedding_generator_adapter_alias_exists(self):
         """Test that EmbeddingGeneratorAdapter alias exists."""
@@ -382,7 +382,7 @@ class TestBackwardCompatibility:
 
         assert EmbeddingGeneratorAdapter is EmbeddingServiceAdapter
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_embedding_generator_adapter_works(self):
         """Test that old alias still works."""
@@ -399,7 +399,7 @@ class TestBackwardCompatibility:
 class TestEmbeddingServiceApiMode:
     """Tests for API mode (when OPENAI_API_KEY is available)."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_api_mode_false_when_no_key(self, monkeypatch):
         """Test that API mode is disabled when no key is available."""
@@ -409,14 +409,14 @@ class TestEmbeddingServiceApiMode:
         service = EmbeddingServiceAdapter()
         assert service._use_mock is True
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_api_mode_true_when_key_provided(self):
         """Test that API mode is enabled when key is provided."""
         service = EmbeddingServiceAdapter(api_key="test-key")
         assert service._use_mock is False
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_force_mock_overrides_api_key(self):
         """Test that use_mock=True overrides API key presence."""
@@ -427,7 +427,7 @@ class TestEmbeddingServiceApiMode:
 class TestEmbeddingError:
     """Tests for EmbeddingError exception."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_embedding_error_has_message_and_code(self):
         """Test that EmbeddingError has message and code."""
@@ -436,7 +436,7 @@ class TestEmbeddingError:
         assert str(error) == "Test error"
         assert error.code == "TEST_CODE"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_embedding_error_default_code(self):
         """Test that EmbeddingError has default code."""

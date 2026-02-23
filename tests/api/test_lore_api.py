@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 import api_server
 from src.api.routers.lore import get_repository
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture(autouse=True)
@@ -35,7 +35,7 @@ def client():
 # ============ LoreEntry CRUD Endpoint Tests ============
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestLoreEntryCreate:
     """Tests for lore entry creation endpoint."""
 
@@ -91,7 +91,7 @@ class TestLoreEntryCreate:
         assert "Invalid category" in response.json()["detail"]
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestLoreEntryGet:
     """Tests for getting lore entries."""
 
@@ -120,7 +120,7 @@ class TestLoreEntryGet:
         assert "message" in payload
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestLoreEntryUpdate:
     """Tests for updating lore entries."""
 
@@ -196,7 +196,7 @@ class TestLoreEntryUpdate:
         assert response.status_code == 404
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestLoreEntryDelete:
     """Tests for deleting lore entries."""
 
@@ -223,7 +223,7 @@ class TestLoreEntryDelete:
         assert response.status_code == 404
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestLoreEntryList:
     """Tests for listing lore entries."""
 
@@ -270,7 +270,7 @@ class TestLoreEntryList:
         assert len(data["entries"]) == 2
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestLoreEntrySearch:
     """Tests for searching lore entries."""
 

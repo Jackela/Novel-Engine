@@ -207,12 +207,22 @@ class TestPropagateRumors:
         world_state: WorldState,
         mock_location_repo: MagicMock,
         mock_rumor_repo: MagicMock,
-        base_rumor: Rumor,
+        calendar: WorldCalendar,
     ) -> None:
         """Should not spread to locations already reached."""
-        # Rumor already at capital and town
-        base_rumor.current_locations = {"loc-capital", "loc-town"}
-        mock_rumor_repo.get_active_rumors.return_value = [base_rumor]
+        # Create rumor already at capital and town (frozen, so create new instance)
+        rumor_at_multiple = Rumor(
+            rumor_id="rumor-001",
+            content="Word spreads of conflict between two great powers.",
+            truth_value=80,
+            origin_type=RumorOrigin.EVENT,
+            source_event_id="event-001",
+            origin_location_id="loc-capital",
+            current_locations={"loc-capital", "loc-town"},
+            created_date=calendar,
+            spread_count=0,
+        )
+        mock_rumor_repo.get_active_rumors.return_value = [rumor_at_multiple]
         # Adjacent to capital includes town (already reached)
         mock_location_repo.find_adjacent.return_value = ["loc-town", "loc-village"]
 
@@ -295,17 +305,27 @@ class TestPropagateRumors:
         world_state: WorldState,
         mock_location_repo: MagicMock,
         mock_rumor_repo: MagicMock,
-        base_rumor: Rumor,
+        calendar: WorldCalendar,
     ) -> None:
         """Should continue propagation if adjacent lookup fails."""
-        mock_rumor_repo.get_active_rumors.return_value = [base_rumor]
+        # Create rumor at two locations (frozen, so create new instance)
+        rumor_at_multiple = Rumor(
+            rumor_id="rumor-001",
+            content="Word spreads of conflict between two great powers.",
+            truth_value=80,
+            origin_type=RumorOrigin.EVENT,
+            source_event_id="event-001",
+            origin_location_id="loc-capital",
+            current_locations={"loc-capital", "loc-port"},
+            created_date=calendar,
+            spread_count=0,
+        )
+        mock_rumor_repo.get_active_rumors.return_value = [rumor_at_multiple]
         # First call fails, second succeeds
         mock_location_repo.find_adjacent.side_effect = [
             Exception("DB error"),
             ["loc-town"],
         ]
-        # Rumor at two locations
-        base_rumor.current_locations = {"loc-capital", "loc-port"}
 
         result = await service.propagate_rumors(world_state)
 

@@ -5,10 +5,10 @@ import pytest
 from src.core.character_llm_integration import LLMIntegration
 from src.core.types.shared_types import ActionPriority
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_enhanced_decision_making_parses_llm_response():
     integration = LLMIntegration(agent_id="agent_1")
 
@@ -51,7 +51,7 @@ def test_enhanced_decision_making_parses_llm_response():
     assert integration.prompt_history
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_parse_llm_response_rejects_invalid_format():
     integration = LLMIntegration(agent_id="agent_2")
 
@@ -60,7 +60,7 @@ def test_parse_llm_response_rejects_invalid_format():
     assert result is None
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_priority_detection_rules():
     integration = LLMIntegration(agent_id="agent_3")
 

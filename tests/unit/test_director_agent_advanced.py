@@ -17,7 +17,7 @@ import pytest
 
 # Import the modules under test
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 try:
     from src.agents.director_agent_integrated import DirectorAgent
@@ -70,7 +70,7 @@ class TestDirectorAgentKnowledgeSystem:
         }
         return mock_agent
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_retrieve_relevant_knowledge_rag_no_knowledge_base(self):
         """Test RAG knowledge retrieval when knowledge base doesn't exist"""
@@ -87,7 +87,7 @@ class TestDirectorAgentKnowledgeSystem:
                 assert result is not None
                 assert isinstance(result, list)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_create_default_knowledge_fragments(self):
         """Test creation of default knowledge fragments"""
@@ -105,7 +105,7 @@ class TestDirectorAgentKnowledgeSystem:
                 # Basic validation of fragment structure
                 assert len(result) >= 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_extract_rag_context_keywords(self):
         """Test extraction of RAG context keywords"""
         mock_agent = self.create_mock_agent()
@@ -128,7 +128,7 @@ class TestDirectorAgentKnowledgeSystem:
             assert result is not None
             assert isinstance(result, (list, set, str))
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_rank_knowledge_fragments(self):
         """Test ranking of knowledge fragments by relevance"""
         # Create mock knowledge fragments with proper tags attribute
@@ -185,16 +185,16 @@ class TestDirectorAgentNarrativeEngine:
         except Exception:
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_narrative_resolver_initialization(self):
         """Test narrative action resolver initialization"""
         # Check if director has narrative resolver
         assert hasattr(self.director, "narrative_resolver")
         assert self.director.narrative_resolver is not None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_story_state_tracking(self):
         """Test story state tracking system"""
@@ -207,7 +207,7 @@ class TestDirectorAgentNarrativeEngine:
         for component in expected_components:
             assert component in self.director.story_state
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_world_state_tracker_initialization(self):
         """Test world state tracker initialization"""
@@ -224,7 +224,7 @@ class TestDirectorAgentNarrativeEngine:
         for component in expected_components:
             assert component in self.director.world_state_tracker
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_campaign_brief_integration(self):
         """Test campaign brief integration"""
@@ -257,7 +257,7 @@ class TestDirectorAgentWorldStateManagement:
             except Exception:
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_world_state_data_initialization(self):
         """Test world state data structure initialization"""
@@ -269,7 +269,7 @@ class TestDirectorAgentWorldStateManagement:
         assert hasattr(director, "world_state_data")
         assert isinstance(director.world_state_data, dict)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_world_state_file_handling(self):
         """Test world state file loading and saving"""
         # Create test world state file
@@ -292,7 +292,7 @@ class TestDirectorAgentWorldStateManagement:
         assert hasattr(director, "world_state_file_path")
         assert director.world_state_file_path == self.temp_world_state
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_initialize_default_world_state(self):
         """Test default world state initialization"""
@@ -305,7 +305,7 @@ class TestDirectorAgentWorldStateManagement:
             # Method should exist and be callable
             assert callable(director._initialize_default_world_state)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_world_state_persistence_methods(self):
         """Test world state persistence capabilities"""
         director = DirectorAgent(
@@ -356,7 +356,7 @@ class TestDirectorAgentAgentOrchestration:
         mock_agent.act = Mock(return_value="Test action")
         return mock_agent
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_agent_registration_capacity(self):
         """Test agent registration capacity and management"""
@@ -375,7 +375,7 @@ class TestDirectorAgentAgentOrchestration:
             # Should track registered agents
             assert len(self.director.registered_agents) <= len(agents)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_agent_validation_system(self):
         """Test comprehensive agent validation"""
         if not hasattr(self.director, "register_agent"):
@@ -392,7 +392,7 @@ class TestDirectorAgentAgentOrchestration:
             result = self.director.register_agent(invalid_agent)
             assert result is False  # Should reject invalid agents
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_turn_orchestration_workflow(self):
         """Test complete turn orchestration workflow"""
         if not hasattr(self.director, "run_turn"):
@@ -418,7 +418,7 @@ class TestDirectorAgentAgentOrchestration:
             # If turn execution fails, should be graceful
             assert "agent" in str(e).lower() or "turn" in str(e).lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_error_tracking_system(self):
         """Test error tracking and recovery system"""
@@ -431,7 +431,7 @@ class TestDirectorAgentAgentOrchestration:
         assert self.director.error_count == 0
         assert self.director.last_error_time is None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_simulation_state_tracking(self):
         """Test simulation state tracking and management"""
@@ -445,7 +445,7 @@ class TestDirectorAgentAgentOrchestration:
         assert self.director.total_actions_processed == 0
         assert isinstance(self.director.simulation_start_time, datetime)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_configuration_driven_parameters(self):
         """Test configuration-driven parameter management"""
@@ -475,9 +475,9 @@ class TestDirectorAgentEventHandling:
         except Exception:
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_event_bus_integration(self):
         """Test event bus integration and subscription"""
         director = DirectorAgent(
@@ -489,7 +489,7 @@ class TestDirectorAgentEventHandling:
             "AGENT_ACTION_COMPLETE", director._bus_agent_action_handler
         )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_agent_action_handling(self):
         """Test handling of agent action events"""
         director = DirectorAgent(
@@ -514,7 +514,7 @@ class TestDirectorAgentEventHandling:
             # Should handle gracefully
             assert "action" in str(e).lower() or "agent" in str(e).lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_turn_start_event_emission(self):
         """Test TURN_START event emission"""
         director = DirectorAgent(
@@ -532,7 +532,7 @@ class TestDirectorAgentEventHandling:
                 # Turn execution might fail, that's OK for this test
                 pass
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_event_logging_integration(self):
         """Test integration between event handling and logging"""
         director = DirectorAgent(

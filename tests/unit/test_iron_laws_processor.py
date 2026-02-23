@@ -18,7 +18,7 @@ from src.core.types.shared_types import (
     ValidationResult,
 )
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 def _build_character_data(
@@ -49,7 +49,7 @@ def _build_character_data(
     )
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_adjudicate_action_valid_returns_clean_report():
     processor = IronLawsProcessor()
     character_data = _build_character_data(
@@ -79,7 +79,7 @@ def test_adjudicate_action_valid_returns_clean_report():
     assert report.checks_performed
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_adjudicate_action_applies_repairs_for_multiple_violations():
     processor = IronLawsProcessor()
     character_data = _build_character_data(stamina_current=2.0, equipment=[])
@@ -111,7 +111,7 @@ def test_adjudicate_action_applies_repairs_for_multiple_violations():
     assert {"E001", "E002", "E004", "E005"} <= law_codes
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_adjudicate_action_coerces_unstructured_action_payload():
     processor = IronLawsProcessor()
     character_data = _build_character_data(

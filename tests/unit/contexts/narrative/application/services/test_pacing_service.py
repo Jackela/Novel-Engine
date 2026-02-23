@@ -16,13 +16,13 @@ from src.contexts.narrative.application.services.pacing_service import (
 )
 from src.contexts.narrative.domain.entities.scene import Scene
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 class TestScenePacingMetrics:
     """Test suite for ScenePacingMetrics dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_create_metrics(self):
         """Test creating ScenePacingMetrics."""
@@ -41,7 +41,7 @@ class TestScenePacingMetrics:
         assert metrics.tension_level == 7
         assert metrics.energy_level == 5
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_metrics_are_immutable(self):
         """Test that metrics are frozen (immutable)."""
@@ -60,7 +60,7 @@ class TestScenePacingMetrics:
 class TestPacingIssue:
     """Test suite for PacingIssue dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_create_pacing_issue(self):
         """Test creating a PacingIssue."""
@@ -81,7 +81,7 @@ class TestPacingIssue:
 class TestChapterPacingReport:
     """Test suite for ChapterPacingReport dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_create_report(self):
         """Test creating a ChapterPacingReport."""
@@ -114,7 +114,7 @@ class TestChapterPacingReport:
 class TestPacingServiceCalculateChapterPacing:
     """Test suite for PacingService.calculate_chapter_pacing()."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_empty_scenes_returns_empty_report(self):
         """Test that empty scene list returns empty report."""
@@ -133,7 +133,7 @@ class TestPacingServiceCalculateChapterPacing:
         assert report.tension_range == (0, 0)
         assert report.energy_range == (0, 0)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_single_scene_metrics(self):
         """Test metrics calculation for a single scene."""
@@ -160,7 +160,7 @@ class TestPacingServiceCalculateChapterPacing:
         assert report.tension_range == (7, 7)
         assert report.energy_range == (4, 4)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_multiple_scenes_metrics(self):
         """Test metrics calculation for multiple scenes."""
@@ -200,7 +200,7 @@ class TestPacingServiceCalculateChapterPacing:
         assert report.tension_range == (3, 9)
         assert report.energy_range == (4, 10)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_scenes_sorted_by_order_index(self):
         """Test that scenes are sorted by order_index in output."""
@@ -239,7 +239,7 @@ class TestPacingServiceCalculateChapterPacing:
         assert report.scene_metrics[1].scene_title == "Second"
         assert report.scene_metrics[2].scene_title == "Third"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_average_tension_rounded(self):
         """Test that average tension is rounded to 2 decimal places."""
@@ -273,7 +273,7 @@ class TestPacingServiceCalculateChapterPacing:
 class TestPacingServiceAnalyzePacingIssues:
     """Test suite for PacingService.analyze_pacing_issues()."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_no_issues_with_varied_pacing(self):
         """Test that varied pacing produces no issues."""
@@ -307,7 +307,7 @@ class TestPacingServiceAnalyzePacingIssues:
 
         assert len(issues) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_detect_monotonous_tension(self):
         """Test detection of monotonous tension (3+ same levels)."""
@@ -344,7 +344,7 @@ class TestPacingServiceAnalyzePacingIssues:
         assert len(monotony_issues[0].affected_scenes) == 3
         assert "tension level (5)" in monotony_issues[0].description
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_detect_monotonous_energy(self):
         """Test detection of monotonous energy (3+ same levels)."""
@@ -380,7 +380,7 @@ class TestPacingServiceAnalyzePacingIssues:
         assert len(energy_issues) == 1
         assert "energy level (7)" in energy_issues[0].description
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_monotony_severity_medium_for_three(self):
         """Test that exactly 3 monotonous scenes is medium severity."""
@@ -415,7 +415,7 @@ class TestPacingServiceAnalyzePacingIssues:
         monotony_issues = [i for i in issues if i.issue_type == "monotonous_tension"]
         assert monotony_issues[0].severity == "medium"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_monotony_severity_high_for_more_than_three(self):
         """Test that >3 monotonous scenes is high severity."""
@@ -437,7 +437,7 @@ class TestPacingServiceAnalyzePacingIssues:
         monotony_issues = [i for i in issues if i.issue_type == "monotonous_tension"]
         assert monotony_issues[0].severity == "high"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_detect_tension_spike(self):
         """Test detection of abrupt tension spike (>4 level change)."""
@@ -467,7 +467,7 @@ class TestPacingServiceAnalyzePacingIssues:
         assert "from 2 to 8" in spike_issues[0].description
         assert len(spike_issues[0].affected_scenes) == 2
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_detect_energy_spike(self):
         """Test detection of abrupt energy spike (>4 level change)."""
@@ -496,7 +496,7 @@ class TestPacingServiceAnalyzePacingIssues:
         assert len(spike_issues) == 1
         assert "decrease" in spike_issues[0].description
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_no_spike_for_four_level_change(self):
         """Test that exactly 4 level change doesn't trigger spike."""
@@ -524,7 +524,7 @@ class TestPacingServiceAnalyzePacingIssues:
         spike_issues = [i for i in issues if "spike" in i.issue_type]
         assert len(spike_issues) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_less_than_two_scenes_returns_empty(self):
         """Test that <2 scenes returns no issues."""
@@ -540,7 +540,7 @@ class TestPacingServiceAnalyzePacingIssues:
         )
         assert service.analyze_pacing_issues([scene]) == []
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_multiple_issues_detected(self):
         """Test that multiple different issues can be detected."""
@@ -586,7 +586,7 @@ class TestPacingServiceAnalyzePacingIssues:
         assert "tension_spike" in issue_types
         assert "energy_spike" in issue_types
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_monotony_at_end_of_chapter(self):
         """Test that monotony at the end of chapter is detected."""
@@ -633,7 +633,7 @@ class TestPacingServiceAnalyzePacingIssues:
 class TestPacingServiceIntegration:
     """Integration tests for PacingService with full reports."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_full_chapter_analysis(self):
         """Test complete chapter pacing analysis."""
@@ -697,7 +697,7 @@ class TestPacingServiceIntegration:
         # Tension drops from 9 to 4 (5 points) and energy from 10 to 3 (7 points)
         assert len(spike_issues) == 2  # Both tension and energy spike
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_report_contains_scene_ids(self):
         """Test that scene IDs are preserved in metrics."""

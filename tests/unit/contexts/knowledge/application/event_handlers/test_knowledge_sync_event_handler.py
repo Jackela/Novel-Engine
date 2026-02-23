@@ -27,10 +27,10 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestIngestionTask:
     """Tests for IngestionTask value object."""
 
@@ -123,7 +123,7 @@ class TestIngestionTask:
         assert task.retry_delay == 300.0
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestHelperFunctions:
     """Tests for content formatting helper functions."""
 
@@ -214,7 +214,7 @@ class TestHelperFunctions:
         assert "They fight" in content
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestKnowledgeSyncEventHandler:
     """Tests for KnowledgeSyncEventHandler."""
 

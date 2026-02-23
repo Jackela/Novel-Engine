@@ -73,7 +73,7 @@ class TestPersonaAgentInitialization:
             except Exception:
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_initialization_with_valid_character_directory(self):
         """Test PersonaAgent initialization with valid character directory"""
         with patch("os.path.exists", return_value=True), patch(
@@ -109,7 +109,7 @@ class TestPersonaAgentInitialization:
             assert hasattr(agent, "character_data")
             assert hasattr(agent, "subjective_worldview")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_initialization_auto_generate_agent_id(self):
         """Test agent ID auto-generation from character directory path"""
         with patch("os.path.exists", return_value=True), patch(
@@ -141,7 +141,7 @@ class TestPersonaAgentInitialization:
             assert agent.agent_id is not None
             assert len(agent.agent_id) > 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_initialization_missing_character_directory(self):
         """Test initialization behavior with missing character directory"""
         with patch("os.path.exists", return_value=False):
@@ -151,7 +151,7 @@ class TestPersonaAgentInitialization:
                     event_bus=self.mock_event_bus,
                 )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.integration
     def test_initialization_empty_character_directory(self):
         """Test initialization with empty character directory"""
@@ -164,7 +164,7 @@ class TestPersonaAgentInitialization:
                     event_bus=self.mock_event_bus,
                 )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_event_bus_subscription(self):
         """Test that PersonaAgent subscribes to TURN_START event"""
         with patch("os.path.exists", return_value=True), patch(
@@ -234,7 +234,7 @@ class TestPersonaAgentCharacterLoading:
                 agent_id="test_agent",
             )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_character_data_parsing_basic_info(self):
         """Test parsing of basic character information"""
         character_content = """# Character Sheet: Brother Marcus
@@ -257,7 +257,7 @@ class TestPersonaAgentCharacterLoading:
         if hasattr(agent, "character"):
             assert hasattr(agent.character, "name")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_character_data_parsing_personality_traits(self):
         """Test parsing of personality traits and behavioral data"""
         character_content = """# Character Sheet: Inquisitor Vex
@@ -280,7 +280,7 @@ class TestPersonaAgentCharacterLoading:
         # Character should have some form of personality or traits data
         assert hasattr(agent, "subjective_worldview")
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_character_data_parsing_malformed_content(self):
         """Test handling of malformed character sheet content"""
         malformed_content = """This is not a proper character sheet
@@ -291,7 +291,7 @@ Just random text"""
         # Should handle gracefully with defaults
         assert agent.character_data is not None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_multiple_character_files_handling(self):
         """Test handling multiple character files in directory"""
         with patch("os.path.exists", return_value=True), patch(
@@ -378,7 +378,7 @@ class TestPersonaAgentDecisionMaking:
                 agent_id="test_agent",
             )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_handle_turn_start_basic_functionality(self):
         """Test basic turn start handling"""
         agent = self.create_test_agent()
@@ -400,7 +400,7 @@ class TestPersonaAgentDecisionMaking:
             "AGENT_ACTION_COMPLETE", agent=agent, action=mock_action
         )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_handle_turn_start_no_action(self):
         """Test turn start handling when no action is generated"""
@@ -416,7 +416,7 @@ class TestPersonaAgentDecisionMaking:
             "AGENT_ACTION_COMPLETE", agent=agent, action=None
         )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_make_decision_with_valid_world_state(self):
         """Test decision making with valid world state"""
@@ -431,7 +431,7 @@ class TestPersonaAgentDecisionMaking:
             # Result should be CharacterAction or None
             assert result is None or isinstance(result, CharacterAction)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_decision_making_error_handling(self):
         """Test decision making error handling"""
@@ -501,7 +501,7 @@ class TestPersonaAgentWorldInterpretation:
                 agent_id="kasrkin_vet",
             )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_subjective_worldview_initialization(self):
         """Test subjective worldview initialization"""
         agent = self.create_test_agent()
@@ -522,7 +522,7 @@ class TestPersonaAgentWorldInterpretation:
         for component in expected_components:
             assert component in agent.subjective_worldview
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_world_event_interpretation_methods(self):
         """Test world event interpretation capabilities"""
         agent = self.create_test_agent()
@@ -540,7 +540,7 @@ class TestPersonaAgentWorldInterpretation:
                 method = getattr(agent, method_name)
                 assert callable(method)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_threat_assessment_capability(self):
         """Test agent's threat assessment capabilities"""
@@ -592,7 +592,7 @@ class TestPersonaAgentAIIntegration:
                 event_bus=self.mock_event_bus,
             )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_ai_api_key_validation(self):
         """Test AI API key validation"""
@@ -608,7 +608,7 @@ class TestPersonaAgentAIIntegration:
             result = _validate_gemini_api_key()
             assert result is None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_ai_integration_fallback_behavior(self):
         """Test fallback behavior when AI integration fails"""
@@ -626,7 +626,7 @@ class TestPersonaAgentAIIntegration:
             # Should return None or basic CharacterAction
             assert result is None or isinstance(result, CharacterAction)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_ai_request_handling_with_mock(self):
         """Test AI request handling with mocked responses"""
@@ -685,7 +685,7 @@ class TestPersonaAgentMemoryAndEvolution:
                 event_bus=self.mock_event_bus,
             )
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_memory_system_initialization(self):
         """Test memory system initialization"""
@@ -701,7 +701,7 @@ class TestPersonaAgentMemoryAndEvolution:
         for attr in memory_attributes:
             assert hasattr(agent, attr)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_character_evolution_tracking(self):
         """Test character evolution and experience tracking"""
@@ -719,7 +719,7 @@ class TestPersonaAgentMemoryAndEvolution:
                 # If evolution system exists, verify it's properly initialized
                 assert getattr(agent, attr) is not None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_memory_persistence_capability(self):
         """Test memory persistence capabilities"""
         agent = self.create_test_agent()

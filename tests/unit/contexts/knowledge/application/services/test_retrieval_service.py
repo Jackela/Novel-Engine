@@ -46,10 +46,10 @@ from src.contexts.knowledge.application.services.retrieval_service import (
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestRetrievalFilter:
     """Test RetrievalFilter value object."""
 
@@ -134,7 +134,7 @@ class TestRetrievalFilter:
         assert not filter.matches(metadata)
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestRetrievalOptions:
     """Test RetrievalOptions value object."""
 
@@ -160,7 +160,7 @@ class TestRetrievalOptions:
         assert options.deduplication_threshold == 0.9
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestFormattedContext:
     """Test FormattedContext value object."""
 
@@ -178,7 +178,7 @@ class TestFormattedContext:
         assert context.chunk_count == 0
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestRetrievalResult:
     """Test RetrievalResult value object."""
 
@@ -210,7 +210,7 @@ class TestRetrievalResult:
         assert result.deduplicated == 1
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestRetrievalService:
     """Test RetrievalService."""
 
@@ -1078,7 +1078,7 @@ class TestRetrievalServiceCitationFormatting:
         assert "Alice is brave" in formatted
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestRetrievalServiceReranking:
     """Tests for reranking integration in RetrievalService (OPT-003)."""
 

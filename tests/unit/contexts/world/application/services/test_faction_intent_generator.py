@@ -16,7 +16,7 @@ from uuid import uuid4
 
 import pytest
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 # Mock problematic dependencies
 sys.modules["aioredis"] = MagicMock()
@@ -140,7 +140,7 @@ class TestFactionIntentGenerator:
 
     # === Edge Case Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_collapsed_faction_returns_empty_list(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -157,7 +157,7 @@ class TestFactionIntentGenerator:
 
     # === Rule 1: RECOVER Intent Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_low_wealth_triggers_recover_intent(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -176,7 +176,7 @@ class TestFactionIntentGenerator:
         assert intents[0].priority == 9
         assert "economic" in intents[0].narrative.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_recover_intent_priority_highest(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -197,7 +197,7 @@ class TestFactionIntentGenerator:
 
     # === Rule 2: ATTACK Intent Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_attack_intent_with_weak_enemy(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -218,7 +218,7 @@ class TestFactionIntentGenerator:
         assert attack_intents[0].target_id == enemy_id
         assert attack_intents[0].priority == 7
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_no_attack_without_enemies(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -236,7 +236,7 @@ class TestFactionIntentGenerator:
         attack_intents = [i for i in intents if i.intent_type == IntentType.ATTACK]
         assert len(attack_intents) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_no_attack_with_low_military(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -256,7 +256,7 @@ class TestFactionIntentGenerator:
 
     # === Rule 3: ALLY Intent Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_ally_intent_isolated_and_wealthy(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -277,7 +277,7 @@ class TestFactionIntentGenerator:
         assert ally_intents[0].target_id == neutral_faction
         assert ally_intents[0].priority == 6
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_no_ally_intent_with_existing_allies(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -295,7 +295,7 @@ class TestFactionIntentGenerator:
         ally_intents = [i for i in intents if i.intent_type == IntentType.ALLY]
         assert len(ally_intents) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_no_ally_intent_without_wealth(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -315,7 +315,7 @@ class TestFactionIntentGenerator:
 
     # === Rule 4: EXPAND Intent Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_expand_intent_few_territories_and_wealthy(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -335,7 +335,7 @@ class TestFactionIntentGenerator:
         assert expand_intents[0].priority == 5
         assert "expand" in expand_intents[0].narrative.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_no_expand_with_many_territories(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -352,7 +352,7 @@ class TestFactionIntentGenerator:
         expand_intents = [i for i in intents if i.intent_type == IntentType.EXPAND]
         assert len(expand_intents) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_no_expand_without_wealth(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -371,7 +371,7 @@ class TestFactionIntentGenerator:
 
     # === Rule 5: DEFEND Intent Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_defend_intent_strong_military_with_enemies(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -392,7 +392,7 @@ class TestFactionIntentGenerator:
         assert defend_intents[0].priority == 4
         assert "defens" in defend_intents[0].narrative.lower()  # matches "defensive" or "defend"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_no_defend_without_enemies(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -409,7 +409,7 @@ class TestFactionIntentGenerator:
         defend_intents = [i for i in intents if i.intent_type == IntentType.DEFEND]
         assert len(defend_intents) == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_no_defend_with_low_military(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -428,7 +428,7 @@ class TestFactionIntentGenerator:
 
     # === Rule 6: Default CONSOLIDATE Intent Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_default_consolidate_intent(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -451,7 +451,7 @@ class TestFactionIntentGenerator:
 
     # === Max Intents and Priority Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_max_three_intents_returned(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -470,7 +470,7 @@ class TestFactionIntentGenerator:
 
         assert len(intents) <= 3
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_intents_sorted_by_priority_descending(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -492,7 +492,7 @@ class TestFactionIntentGenerator:
 
     # === Integration Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_multiple_intents_generated(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -512,7 +512,7 @@ class TestFactionIntentGenerator:
         # Should generate multiple intents: EXPAND, DEFEND, possibly more
         assert len(intents) >= 2
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_intent_faction_id_matches(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -530,7 +530,7 @@ class TestFactionIntentGenerator:
 
     # === Properties Tests ===
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_attack_is_offensive(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):
@@ -549,7 +549,7 @@ class TestFactionIntentGenerator:
             assert attack_intents[0].is_offensive is True
             assert attack_intents[0].is_defensive is False
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_defend_is_defensive(
         self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
     ):

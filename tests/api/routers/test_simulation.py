@@ -9,8 +9,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-# Mark all tests in this module as unit tests
-pytestmark = pytest.mark.unit
+# Mark all tests in this module as integration tests
+pytestmark = pytest.mark.integration
 
 # Mock aioredis before importing any app modules
 import sys

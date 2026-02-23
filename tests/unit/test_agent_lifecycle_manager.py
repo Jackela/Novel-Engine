@@ -12,10 +12,10 @@ from src.core.types.shared_types import (
     ValidationResult,
 )
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_adjudicate_action_records_successful_validation():
     manager = AgentLifecycleManager()
     agent = SimpleNamespace(agent_id="agent_1")
@@ -39,7 +39,7 @@ def test_adjudicate_action_records_successful_validation():
     assert metrics["failed_actions"] == 0
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_adjudicate_action_repairs_missing_target_and_reasoning():
     manager = AgentLifecycleManager()
     agent = SimpleNamespace(agent_id="agent_2")

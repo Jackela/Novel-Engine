@@ -120,7 +120,7 @@ def sample_documents(sample_embedding: list[float]) -> list[VectorDocument]:
 class TestChromaDBVectorStore:
     """Unit tests for ChromaDBVectorStore adapter."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_init_creates_persist_directory(self, temp_persist_dir: str):
         """Test that initialization creates the persist directory."""
@@ -134,7 +134,7 @@ class TestChromaDBVectorStore:
         assert persist_path.exists()
         assert persist_path.is_dir()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_upsert_inserts_documents(
         self, vector_store: ChromaDBVectorStore, sample_documents: list[VectorDocument]
@@ -146,7 +146,7 @@ class TestChromaDBVectorStore:
         assert result.success is True
         assert result.count == len(sample_documents)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_upsert_empty_list_returns_success(
         self, vector_store: ChromaDBVectorStore
@@ -158,7 +158,7 @@ class TestChromaDBVectorStore:
         assert result.success is True
         assert result.count == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_upsert_then_query_returns_documents(
         self,
@@ -179,7 +179,7 @@ class TestChromaDBVectorStore:
         assert all(isinstance(r, QueryResult) for r in results)
         assert all(0 <= r.score <= 1 for r in results)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_query_with_metadata_filter(
         self,
@@ -204,7 +204,7 @@ class TestChromaDBVectorStore:
         assert len(results) > 0
         assert all(r.metadata.get("source_type") == "CHARACTER" for r in results)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_count_returns_document_count(
         self,
@@ -223,7 +223,7 @@ class TestChromaDBVectorStore:
         count = await vector_store.count(collection)
         assert count == len(sample_documents)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_delete_by_ids(
         self,
@@ -244,7 +244,7 @@ class TestChromaDBVectorStore:
         count = await vector_store.count(collection)
         assert count < len(sample_documents)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_delete_by_metadata_filter(
         self,
@@ -263,7 +263,7 @@ class TestChromaDBVectorStore:
         )
         assert deleted_count >= 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_clear_removes_all_documents(
         self,
@@ -284,7 +284,7 @@ class TestChromaDBVectorStore:
         count = await vector_store.count(collection)
         assert count == 0
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     async def test_health_check_returns_true_when_initialized(
         self, vector_store: ChromaDBVectorStore
@@ -293,7 +293,7 @@ class TestChromaDBVectorStore:
         is_healthy = await vector_store.health_check()
         assert is_healthy is True
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.slow
     async def test_data_persists_across_restarts(
         self,
@@ -321,7 +321,7 @@ class TestChromaDBVectorStore:
         assert count2 == count1
         assert count2 == len(sample_documents)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_multiple_collections_independent(
         self,
@@ -350,27 +350,27 @@ class TestChromaDBVectorStore:
         assert await vector_store.count("collection1") == 0
         assert await vector_store.count("collection2") == 1
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_vector_store_implements_interface(self):
         """Test that ChromaDBVectorStore implements IVectorStore interface."""
         assert issubclass(ChromaDBVectorStore, IVectorStore)
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_default_persist_dir_is_dot_data_chroma(self):
         """Test that default persist directory is .data/chroma."""
         store = ChromaDBVectorStore()
         assert store._persist_dir == ".data/chroma"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_custom_embedding_dimension(self):
         """Test that custom embedding dimension can be set."""
         store = ChromaDBVectorStore(embedding_dimension=3072)
         assert store._embedding_dimension == 3072
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_query_respects_n_results_limit(
         self,
@@ -389,7 +389,7 @@ class TestChromaDBVectorStore:
 
         assert len(results) <= 2
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.medium
     async def test_delete_without_filter_raises_error(
         self, vector_store: ChromaDBVectorStore
@@ -400,7 +400,7 @@ class TestChromaDBVectorStore:
 
         assert exc_info.value.code == "INVALID_DELETE"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_reset_deletes_all_data(
         self, temp_persist_dir: str, sample_documents: list[VectorDocument]
@@ -418,7 +418,7 @@ class TestChromaDBVectorStore:
 class TestVectorDocument:
     """Unit tests for VectorDocument value object."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_vector_document_is_immutable(self):
         """Test that VectorDocument is frozen (immutable)."""
@@ -428,7 +428,7 @@ class TestVectorDocument:
         with pytest.raises(Exception):  # FrozenInstanceError
             doc.id = "new_id"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_vector_document_with_metadata(self):
         """Test VectorDocument with optional metadata."""
@@ -441,7 +441,7 @@ class TestVectorDocument:
 
         assert doc.metadata == {"key": "value"}
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_vector_document_defaults_metadata_to_none(self):
         """Test that metadata defaults to None."""
@@ -453,7 +453,7 @@ class TestVectorDocument:
 class TestQueryResult:
     """Unit tests for QueryResult value object."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_query_result_is_immutable(self):
         """Test that QueryResult is frozen (immutable)."""
@@ -463,7 +463,7 @@ class TestQueryResult:
         with pytest.raises(Exception):
             result.id = "new_id"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_query_result_score_in_valid_range(self):
         """Test that score is within valid range (0-1)."""
@@ -475,7 +475,7 @@ class TestQueryResult:
 class TestUpsertResult:
     """Unit tests for UpsertResult value object."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_upsert_result_fields(self):
         """Test UpsertResult fields."""

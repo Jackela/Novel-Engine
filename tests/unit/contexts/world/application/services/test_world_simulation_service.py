@@ -16,7 +16,7 @@ from uuid import uuid4
 
 import pytest
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 # Mock problematic dependencies
 sys.modules["aioredis"] = MagicMock()
@@ -227,7 +227,7 @@ class TestWorldSimulationService:
     # === Successful Simulation Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_successful_preview_one_day(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -242,7 +242,7 @@ class TestWorldSimulationService:
         assert tick.calendar_after.day == 2  # Advanced by 1 day
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_successful_preview_seven_days(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -255,7 +255,7 @@ class TestWorldSimulationService:
         assert tick.calendar_after.day == 8
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_successful_preview_thirty_days(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -270,7 +270,7 @@ class TestWorldSimulationService:
         assert tick.calendar_after.day == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_successful_preview_max_days(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -284,7 +284,7 @@ class TestWorldSimulationService:
         assert tick.calendar_after.year == 101
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_preview_generates_intents_for_active_factions(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -301,7 +301,7 @@ class TestWorldSimulationService:
     # === Invalid Days Error Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_error_days_zero(self, service: WorldSimulationService, world: WorldState):
         """Test error when days is 0."""
         result = await service.advance_simulation(world.id, days=0)
@@ -311,7 +311,7 @@ class TestWorldSimulationService:
         assert "0" in str(result.error)
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_error_days_negative(self, service: WorldSimulationService, world: WorldState):
         """Test error when days is negative."""
         result = await service.advance_simulation(world.id, days=-1)
@@ -321,7 +321,7 @@ class TestWorldSimulationService:
         assert "-1" in str(result.error)
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_error_days_exceeds_max(self, service: WorldSimulationService, world: WorldState):
         """Test error when days exceeds maximum (365)."""
         result = await service.advance_simulation(world.id, days=366)
@@ -331,7 +331,7 @@ class TestWorldSimulationService:
         assert "366" in str(result.error)
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_error_days_far_exceeds_max(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -344,7 +344,7 @@ class TestWorldSimulationService:
     # === World Not Found Error Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_error_world_not_found(self, service: WorldSimulationService):
         """Test error when world does not exist."""
         result = await service.advance_simulation("nonexistent-world", days=1)
@@ -354,7 +354,7 @@ class TestWorldSimulationService:
         assert "nonexistent-world" in str(result.error)
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_error_world_empty_id(self, service: WorldSimulationService):
         """Test error when world ID is empty."""
         result = await service.advance_simulation("", days=1)
@@ -365,7 +365,7 @@ class TestWorldSimulationService:
     # === Repository Error Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_error_faction_repository_fails(self, world: WorldState, intent_generator):
         """Test error when faction repository throws exception."""
         failing_repo = MagicMock()
@@ -386,7 +386,7 @@ class TestWorldSimulationService:
     # === Empty World Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_empty_world_no_factions(self, world: WorldState, intent_generator):
         """Test simulation succeeds when world has no factions."""
         empty_faction_repo = MockFactionRepository({world.id: []})
@@ -406,7 +406,7 @@ class TestWorldSimulationService:
         assert tick.resource_changes == {}
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_all_factions_disbanded(
         self, world: WorldState, faction_disbanded: Faction, intent_generator
     ):
@@ -429,7 +429,7 @@ class TestWorldSimulationService:
     # === Diplomacy Matrix Building Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_diplomacy_matrix_built_from_relations(
         self, world: WorldState, faction_with_relations: Faction, intent_generator
     ):
@@ -448,7 +448,7 @@ class TestWorldSimulationService:
         assert result.is_ok
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_diplomacy_matrix_includes_all_factions(
         self,
         world: WorldState,
@@ -474,7 +474,7 @@ class TestWorldSimulationService:
     # === Tick Data Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_tick_has_valid_id(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -487,7 +487,7 @@ class TestWorldSimulationService:
         assert len(tick.tick_id) > 0
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_tick_has_calendar_before_and_after(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -502,7 +502,7 @@ class TestWorldSimulationService:
         assert tick.calendar_after.day == 16
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_tick_preview_mode_no_changes(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -519,7 +519,7 @@ class TestWorldSimulationService:
         assert tick.rumors_created == 0
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_tick_created_at_timestamp(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -534,7 +534,7 @@ class TestWorldSimulationService:
     # === Multiple Simulation Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_multiple_simulations_produce_different_ticks(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -547,7 +547,7 @@ class TestWorldSimulationService:
         assert result1.value.tick_id != result2.value.tick_id
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_cumulative_days_calculation(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -630,7 +630,7 @@ class TestWorldSimulationCommit:
     # === Basic Commit Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_successful_one_day(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -644,7 +644,7 @@ class TestWorldSimulationCommit:
         assert tick.calendar_after.day == 2
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_successful_seven_days(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -657,7 +657,7 @@ class TestWorldSimulationCommit:
         assert tick.calendar_after.day == 8
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_produces_events_for_changes(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -672,7 +672,7 @@ class TestWorldSimulationCommit:
     # === Validation Error Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_error_days_zero(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -683,7 +683,7 @@ class TestWorldSimulationCommit:
         assert isinstance(result.error, InvalidDaysError)
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_error_days_negative(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -694,7 +694,7 @@ class TestWorldSimulationCommit:
         assert isinstance(result.error, InvalidDaysError)
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_error_days_exceeds_max(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -705,7 +705,7 @@ class TestWorldSimulationCommit:
         assert isinstance(result.error, InvalidDaysError)
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_error_world_not_found(self, service: WorldSimulationService):
         """Test commit error when world does not exist."""
         result = await service.commit_simulation("nonexistent-world", days=1)
@@ -716,7 +716,7 @@ class TestWorldSimulationCommit:
     # === History Tracking Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_tracks_history(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -732,7 +732,7 @@ class TestWorldSimulationCommit:
         assert history[0].tick_id == tick.tick_id
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_multiple_ticks_in_history(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -749,7 +749,7 @@ class TestWorldSimulationCommit:
         assert len(history) == 3
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_history_most_recent_first(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -766,7 +766,7 @@ class TestWorldSimulationCommit:
         assert history[2].days_advanced == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_history_limit(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -779,7 +779,7 @@ class TestWorldSimulationCommit:
         assert len(history) == 3
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_get_tick_by_id(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -795,7 +795,7 @@ class TestWorldSimulationCommit:
         assert retrieved.days_advanced == 7
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_get_tick_by_id_not_found(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -804,7 +804,7 @@ class TestWorldSimulationCommit:
         assert retrieved is None
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_clear_history(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -821,7 +821,7 @@ class TestWorldSimulationCommit:
     # === Empty World Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_empty_world(
         self, world: WorldState, intent_generator: FactionIntentGenerator
     ):
@@ -842,7 +842,7 @@ class TestWorldSimulationCommit:
     # === With Optional Services Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_with_snapshot_service(
         self, world: WorldState, faction_active: Faction, intent_generator
     ):
@@ -877,7 +877,7 @@ class TestWorldSimulationCommit:
         mock_snapshot_service.create_snapshot.assert_called_once()
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_with_sanity_checker_warnings(
         self, world: WorldState, faction_active: Faction, intent_generator
     ):
@@ -913,7 +913,7 @@ class TestWorldSimulationCommit:
         mock_checker.check.assert_called_once()
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_commit_with_rumor_service(
         self, world: WorldState, faction_active: Faction, intent_generator
     ):
@@ -940,7 +940,7 @@ class TestWorldSimulationCommit:
     # === Max History Enforcement Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_max_history_enforcement(
         self, service: WorldSimulationService, world: WorldState
     ):
@@ -957,7 +957,7 @@ class TestWorldSimulationCommit:
     # === Tick Number Tracking Tests ===
 
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
     async def test_tick_number_increments(
         self, service: WorldSimulationService, world: WorldState
     ):

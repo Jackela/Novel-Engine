@@ -2,10 +2,10 @@ import pytest
 
 from src.core.character_decision_maker import DecisionMaker, ThreatLevel
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_make_decision_returns_action_when_score_above_threshold():
     maker = DecisionMaker(agent_id="agent_1")
 
@@ -42,7 +42,7 @@ def test_make_decision_returns_action_when_score_above_threshold():
     assert maker.decision_history
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_make_decision_returns_none_when_scores_below_threshold():
     maker = DecisionMaker(agent_id="agent_2")
 
@@ -68,7 +68,7 @@ def test_make_decision_returns_none_when_scores_below_threshold():
     assert action is None
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_threat_level_detection_prefers_hostile_signals():
     maker = DecisionMaker(agent_id="agent_3")
 

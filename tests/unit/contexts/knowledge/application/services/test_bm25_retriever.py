@@ -35,7 +35,7 @@ pytestmark = [
 ]
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestTokenize:
     """Test the tokenize utility function."""
 
@@ -79,7 +79,7 @@ class TestTokenize:
         assert tokens == ["uppercase", "and", "lowercase", "mixed"]
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestIndexedDocument:
     """Test the IndexedDocument value object."""
 
@@ -124,7 +124,7 @@ class TestIndexedDocument:
         assert doc.metadata == {}
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25RetrieverInit:
     """Test BM25Retriever initialization."""
 
@@ -148,7 +148,7 @@ class TestBM25RetrieverInit:
         assert retriever._documents == {}
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25RetrieverIndexDocuments:
     """Test document indexing."""
 
@@ -267,7 +267,7 @@ class TestBM25RetrieverIndexDocuments:
         assert count == 1
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25RetrieverSearch:
     """Test BM25 search functionality."""
 
@@ -430,7 +430,7 @@ class TestBM25RetrieverSearch:
         assert isinstance(result.score, float)
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25RetrieverRemoveDocument:
     """Test document removal from index."""
 
@@ -472,7 +472,7 @@ class TestBM25RetrieverRemoveDocument:
         assert removed is True
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25RetrieverClearCollection:
     """Test clearing collections."""
 
@@ -501,7 +501,7 @@ class TestBM25RetrieverClearCollection:
         assert count == 0
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25RetrieverGetStats:
     """Test getting index statistics."""
 
@@ -558,7 +558,7 @@ class TestBM25RetrieverGetStats:
         assert stats.avg_doc_length == 0.0
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25RetrieverIntegration:
     """Integration-style tests for BM25Retriever."""
 
@@ -652,7 +652,7 @@ class TestBM25RetrieverIntegration:
             assert r1.score == r2.score
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25Result:
     """Test BM25Result value object."""
 
@@ -687,7 +687,7 @@ class TestBM25Result:
         assert result.score == 6.0
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25IndexStats:
     """Test BM25IndexStats value object."""
 
@@ -714,7 +714,7 @@ class TestBM25IndexStats:
         assert stats.last_updated is None
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestBM25RetrieverMatchesFilters:
     """Test the _matches_filters helper method."""
 

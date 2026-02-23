@@ -41,7 +41,7 @@ def client():
 class TestGetDiplomacyMatrix:
     """Tests for GET /world/{world_id}/diplomacy endpoint."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_empty_matrix(self, client):
         """Test getting an empty diplomacy matrix for a new world."""
@@ -53,7 +53,7 @@ class TestGetDiplomacyMatrix:
         assert data["matrix"] == {}
         assert data["factions"] == []
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_matrix_with_factions(self, client):
         """Test getting a matrix after setting relations."""
@@ -74,7 +74,7 @@ class TestGetDiplomacyMatrix:
         assert data["matrix"]["faction-a"]["faction-b"] == "allied"
         assert data["matrix"]["faction-b"]["faction-a"] == "allied"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_matrix_self_relation_is_dash(self, client):
         """Test that self-relations in matrix are '-'."""
@@ -93,7 +93,7 @@ class TestGetDiplomacyMatrix:
 class TestGetFactionDiplomacy:
     """Tests for GET /world/{world_id}/diplomacy/faction/{faction_id} endpoint."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_faction_not_found(self, client):
         """Test getting diplomacy for nonexistent faction."""
@@ -101,7 +101,7 @@ class TestGetFactionDiplomacy:
 
         assert response.status_code == 404
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_faction_allies(self, client):
         """Test getting allies for a faction."""
@@ -128,7 +128,7 @@ class TestGetFactionDiplomacy:
         assert data["enemies"] == ["faction-d"]
         assert data["neutral"] == []
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_faction_enemies(self, client):
         """Test getting enemies for a faction."""
@@ -148,7 +148,7 @@ class TestGetFactionDiplomacy:
         assert set(data["enemies"]) == {"faction-b", "faction-c"}
         assert data["allies"] == []
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_get_faction_neutral(self, client):
         """Test getting neutral relations for a faction."""
@@ -171,7 +171,7 @@ class TestGetFactionDiplomacy:
 class TestSetRelation:
     """Tests for PUT /world/{world_id}/diplomacy/{faction_a}/{faction_b} endpoint."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_set_allied_status(self, client):
         """Test setting ALLIED status between factions."""
@@ -184,7 +184,7 @@ class TestSetRelation:
         data = response.json()
         assert data["matrix"]["faction-a"]["faction-b"] == "allied"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_set_at_war_status(self, client):
         """Test setting AT_WAR status between factions."""
@@ -197,7 +197,7 @@ class TestSetRelation:
         data = response.json()
         assert data["matrix"]["faction-a"]["faction-b"] == "at_war"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_set_all_status_types(self, client):
         """Test setting all valid status types."""
@@ -210,7 +210,7 @@ class TestSetRelation:
             )
             assert response.status_code == 200
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_set_invalid_status(self, client):
         """Test setting an invalid status returns 400."""
@@ -220,9 +220,11 @@ class TestSetRelation:
         )
 
         assert response.status_code == 400
-        assert "Invalid status" in response.json()["detail"]
+        detail = response.json()["detail"]
+        # ErrorDetail format: {"code": "...", "message": "..."}
+        assert "Invalid status" in detail["message"]
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_set_relation_is_symmetric(self, client):
         """Test that setting relation is symmetric (A->B same as B->A)."""
@@ -239,7 +241,7 @@ class TestSetRelation:
         data = response.json()
         assert "faction-a" in data["allies"]
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_set_self_relation_fails(self, client):
         """Test that setting self-relation fails."""
@@ -249,9 +251,11 @@ class TestSetRelation:
         )
 
         assert response.status_code == 400
-        assert "itself" in response.json()["detail"].lower()
+        detail = response.json()["detail"]
+        # ErrorDetail format: {"code": "...", "message": "..."}
+        assert "itself" in detail["message"].lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_update_existing_relation(self, client):
         """Test updating an existing relation."""
@@ -271,7 +275,7 @@ class TestSetRelation:
         data = response.json()
         assert data["matrix"]["faction-a"]["faction-b"] == "at_war"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_status_case_insensitive(self, client):
         """Test that status values are case-insensitive."""
@@ -284,7 +288,7 @@ class TestSetRelation:
         data = response.json()
         assert data["matrix"]["faction-a"]["faction-b"] == "allied"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_status_with_whitespace(self, client):
         """Test that status values with whitespace are handled."""
@@ -301,7 +305,7 @@ class TestSetRelation:
 class TestWorldsAreIsolated:
     """Tests for world isolation."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @pytest.mark.fast
     def test_different_worlds_isolated(self, client):
         """Test that different worlds have isolated diplomacy matrices."""

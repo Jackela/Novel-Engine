@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 import api_server
 from src.api.routers.calendar import get_calendar_storage, reset_calendar_storage
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture(autouse=True)
@@ -32,7 +32,7 @@ def client():
     return TestClient(api_server.app)
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestCalendarEndpoints:
     """Tests for calendar CRUD operations."""
 

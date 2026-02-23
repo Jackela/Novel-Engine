@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 import api_server
 from src.api.routers.events import reset_events_storage
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture(autouse=True)
@@ -32,7 +32,7 @@ def client():
     return TestClient(api_server.app)
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestListHistoricalEvents:
     """Tests for listing historical events."""
 
@@ -289,7 +289,7 @@ class TestListHistoricalEvents:
         assert data["events"][0]["name"] == "World 2 Event"
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestCreateHistoricalEvent:
     """Tests for creating historical events."""
 
@@ -439,7 +439,7 @@ class TestCreateHistoricalEvent:
         assert data["is_secret"] is False  # Default
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestGetHistoricalEvent:
     """Tests for getting a single historical event."""
 
@@ -493,7 +493,7 @@ class TestGetHistoricalEvent:
         assert response.status_code == 404
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestEventResponseFields:
     """Tests for verifying all response fields are present."""
 

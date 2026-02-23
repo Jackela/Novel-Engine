@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
     CharacterData,
@@ -93,7 +93,7 @@ def character_b() -> CharacterData:
 class TestRelationshipHistoryResult:
     """Tests for RelationshipHistoryResult dataclass."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_minimal(self) -> None:
         """Test creating RelationshipHistoryResult with minimal fields."""
         result = RelationshipHistoryResult(backstory="They were childhood friends.")
@@ -104,7 +104,7 @@ class TestRelationshipHistoryResult:
         assert result.error is None
         assert not result.is_error()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_create_full(self, sample_history_response: Dict[str, Any]) -> None:
         """Test creating RelationshipHistoryResult with all fields."""
         result = RelationshipHistoryResult(
@@ -119,7 +119,7 @@ class TestRelationshipHistoryResult:
         assert "trust each other implicitly" in result.current_status
         assert not result.is_error()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_error_result(self) -> None:
         """Test creating an error RelationshipHistoryResult."""
         result = RelationshipHistoryResult(
@@ -129,7 +129,7 @@ class TestRelationshipHistoryResult:
         assert result.is_error()
         assert result.error == "API connection failed"
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict_minimal(self) -> None:
         """Test to_dict with minimal fields."""
         result = RelationshipHistoryResult(backstory="Simple backstory.")
@@ -141,7 +141,7 @@ class TestRelationshipHistoryResult:
         assert "current_status" not in d
         assert "error" not in d
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict_full(self, sample_history_response: Dict[str, Any]) -> None:
         """Test to_dict with all fields."""
         result = RelationshipHistoryResult(
@@ -158,7 +158,7 @@ class TestRelationshipHistoryResult:
         assert d["current_status"] == sample_history_response["current_status"]
         assert "error" not in d
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_to_dict_with_error(self) -> None:
         """Test to_dict includes error when present."""
         result = RelationshipHistoryResult(
@@ -173,7 +173,7 @@ class TestRelationshipHistoryResult:
 class TestRelationshipHistoryPromptBuilding:
     """Tests for relationship history prompt building."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_prompt_includes_both_characters(
         self,
         generator: LLMWorldGenerator,
@@ -192,7 +192,7 @@ class TestRelationshipHistoryPromptBuilding:
         assert "Marcus" in prompt
         assert "Elena" in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_prompt_includes_psychology(
         self,
         generator: LLMWorldGenerator,
@@ -217,7 +217,7 @@ class TestRelationshipHistoryPromptBuilding:
         assert "Extraversion: 70" in prompt
         assert "Neuroticism: 35" in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_prompt_includes_traits(
         self,
         generator: LLMWorldGenerator,
@@ -240,7 +240,7 @@ class TestRelationshipHistoryPromptBuilding:
         assert "brave" in prompt
         assert "impulsive" in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_prompt_includes_relationship_metrics(
         self,
         generator: LLMWorldGenerator,
@@ -258,7 +258,7 @@ class TestRelationshipHistoryPromptBuilding:
         assert "Trust Level: 85/100" in prompt
         assert "Romance Level: 60/100" in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_prompt_minimal_characters(
         self,
         generator: LLMWorldGenerator,
@@ -279,7 +279,7 @@ class TestRelationshipHistoryPromptBuilding:
         assert "Not specified" in prompt  # Psychology placeholder
         assert "None specified" in prompt  # Traits placeholder
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_prompt_low_trust(
         self,
         generator: LLMWorldGenerator,
@@ -296,7 +296,7 @@ class TestRelationshipHistoryPromptBuilding:
 
         assert "Trust Level: 15/100" in prompt
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_build_prompt_high_romance(
         self,
         generator: LLMWorldGenerator,
@@ -317,7 +317,7 @@ class TestRelationshipHistoryPromptBuilding:
 class TestRelationshipHistoryResponseParsing:
     """Tests for relationship history response parsing."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_response_full(
         self,
         generator: LLMWorldGenerator,
@@ -332,7 +332,7 @@ class TestRelationshipHistoryResponseParsing:
         assert "ambush" in result.defining_moment
         assert "trust each other implicitly" in result.current_status
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_response_minimal(
         self,
         generator: LLMWorldGenerator,
@@ -346,7 +346,7 @@ class TestRelationshipHistoryResponseParsing:
         assert result.defining_moment is None
         assert result.current_status is None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_parse_response_missing_backstory_uses_default(
         self,
         generator: LLMWorldGenerator,
@@ -366,7 +366,7 @@ class TestRelationshipHistoryResponseParsing:
 class TestRelationshipHistoryGeneration:
     """Integration-style tests for relationship history generation with mocked API."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
@@ -402,7 +402,7 @@ class TestRelationshipHistoryGeneration:
         assert result.defining_moment is not None
         assert result.current_status is not None
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
@@ -430,7 +430,7 @@ class TestRelationshipHistoryGeneration:
         assert result.is_error()
         assert "500" in result.error
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_generate_history_missing_api_key_returns_error(
         self,
         character_a: CharacterData,
@@ -450,7 +450,7 @@ class TestRelationshipHistoryGeneration:
         assert result.is_error()
         assert "GEMINI_API_KEY" in result.error
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
@@ -492,7 +492,7 @@ class TestRelationshipHistoryGeneration:
         assert not result.is_error()
         assert "ballroom" in result.backstory or "connection" in result.backstory
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     @patch(
         "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
     )
@@ -539,7 +539,7 @@ class TestRelationshipHistoryGeneration:
 class TestRelationshipHistoryPromptFile:
     """Tests for relationship history prompt file loading."""
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_load_prompt_exists(
         self,
         generator: LLMWorldGenerator,
@@ -552,7 +552,7 @@ class TestRelationshipHistoryPromptFile:
         assert "backstory" in prompt.lower()
         assert "json" in prompt.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_load_prompt_contains_trust_guidance(
         self,
         generator: LLMWorldGenerator,
@@ -564,7 +564,7 @@ class TestRelationshipHistoryPromptFile:
         # Should explain what different trust levels mean
         assert "distrust" in prompt.lower() or "betrayal" in prompt.lower()
 
-    @pytest.mark.unit
+    @pytest.mark.integration
     def test_load_prompt_contains_romance_guidance(
         self,
         generator: LLMWorldGenerator,

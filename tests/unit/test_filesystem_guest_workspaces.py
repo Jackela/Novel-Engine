@@ -4,10 +4,10 @@ import pytest
 
 from src.workspaces.filesystem import FilesystemCharacterStore, FilesystemWorkspaceStore
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_workspace_manifest_created(tmp_path):
     store = FilesystemWorkspaceStore(tmp_path / "workspaces")
     workspace = store.create()
@@ -21,7 +21,7 @@ def test_workspace_manifest_created(tmp_path):
     assert manifest["lastAccessedAt"]
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_character_store_rejects_path_traversal_ids(tmp_path):
     ws_store = FilesystemWorkspaceStore(tmp_path / "workspaces")
     character_store = FilesystemCharacterStore(ws_store)
@@ -34,7 +34,7 @@ def test_character_store_rejects_path_traversal_ids(tmp_path):
         character_store.get(workspace.id, "..\\evil")
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_character_store_atomic_write_leaves_no_tmp_files(tmp_path):
     ws_store = FilesystemWorkspaceStore(tmp_path / "workspaces")
     character_store = FilesystemCharacterStore(ws_store)

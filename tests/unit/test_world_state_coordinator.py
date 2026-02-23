@@ -4,10 +4,10 @@ import pytest
 
 from src.core.world_state_coordinator import WorldStateCoordinator
 
-pytestmark = pytest.mark.unit
+pytestmark = pytest.mark.integration
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_world_state_defaults_and_feedback_generation(tmp_path):
     coordinator = WorldStateCoordinator()
 
@@ -29,7 +29,7 @@ def test_world_state_defaults_and_feedback_generation(tmp_path):
     assert summary["environmental_changes"] == 1
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_missing_world_state_file_creates_default(tmp_path):
     state_path = tmp_path / "world_state.json"
     _unused_coordinator = WorldStateCoordinator(
@@ -42,7 +42,7 @@ def test_missing_world_state_file_creates_default(tmp_path):
     assert "locations" in saved
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_invalid_world_state_json_raises(tmp_path):
     state_path = tmp_path / "bad_state.json"
     state_path.write_text("{invalid json", encoding="utf-8")
@@ -51,7 +51,7 @@ def test_invalid_world_state_json_raises(tmp_path):
         WorldStateCoordinator(str(state_path))
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 def test_save_world_state_persists_tracker(tmp_path):
     state_path = tmp_path / "state.json"
     coordinator = WorldStateCoordinator()
