@@ -252,7 +252,7 @@
         "Test: Restart server, verify chat history persists"
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "investigationNotes": "Currently using in-memory dict. Need SQLite/Postgres persistence."
     },

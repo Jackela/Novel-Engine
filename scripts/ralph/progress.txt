@@ -294,3 +294,18 @@
   - TypeScript index access on Record returns T | undefined, need fallback value
   - useDiplomacyMatrix is alias for useDiplomacyDetail for naming consistency
 ---
+
+## 2025-02-26 20:20 - PREP-013
+- **What was implemented**: Chat Session Persistence with SQLite backend
+- **Files changed**:
+  - Created: src/contexts/knowledge/infrastructure/models/chat_session.py (SQLAlchemy models: ChatSessionORM, ChatMessageORM)
+  - Created: src/contexts/knowledge/infrastructure/repositories/chat_session_repository.py (ChatSessionRepository)
+  - Updated: src/api/routers/brain_settings.py (replaced in-memory ChatSessionStore, added session endpoints)
+- **Learnings for future iterations:**
+  - SQLAlchemy models use DeclarativeBase with __tablename__ attribute
+  - SQLite database stored in data/chat_sessions.db (configurable via DATA_DIR env var)
+  - Repository pattern separates domain objects (ChatMessage, ChatSession) from ORM models
+  - ChatSessionStore wrapper maintains backward compatibility while delegating to repository
+  - New endpoints: GET /brain/chat/sessions, GET /brain/chat/sessions/{session_id}/messages, DELETE /brain/chat/sessions/{session_id}
+  - session_metadata column (not metadata) to avoid SQLAlchemy reserved word conflict
+---
