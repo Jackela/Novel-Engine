@@ -282,9 +282,9 @@ from src.api.schemas.world_schemas import (
     RumorListResponse,
 )
 
-# Note: remaining_schemas.py is kept for backward compatibility but schemas
-# have been moved to domain-specific modules. Add any future schemas to
-# appropriate module files rather than remaining_schemas.py.
+# Note: remaining_schemas.py has been fully deprecated and deleted.
+# All schemas now live in domain-specific modules. Add any future schemas
+# to the appropriate module file based on their domain.
 
 # Define __all__ for clean exports
 __all__ = [
