@@ -611,6 +611,144 @@ class EventBus:
         self.dead_letter_queue.clear()
         logger.info(f"Cleared {cleared_count} events from dead letter queue")
 
+    async def publish_immediate(self, event: Event) -> str:
+        """
+        Publish an event immediately, bypassing any queuing.
+
+        This is for real-time events that must be processed synchronously
+        before the call returns. Use sparingly as it blocks until handlers complete.
+
+        Args:
+            event: Event to publish
+
+        Returns:
+            Event ID
+        """
+        event.status = EventStatus.PUBLISHED
+        event.timestamp = datetime.now()
+
+        # Store for persistence
+        if self.config.event_persistence_enabled:
+            await self._store_event(event)
+
+        # Process immediately (not async task)
+        await self._process_event(event)
+
+        if self.metrics:
+            self.metrics.record_event_published()
+
+        logger.debug(f"Immediately processed event {event.event_id}")
+        return event.event_id
+
+    def enqueue_simulation_event(
+        self,
+        event_type: str,
+        payload: Dict[str, Any],
+        priority: EventPriority = EventPriority.NORMAL,
+        source: str = "simulation",
+    ) -> str:
+        """
+        Enqueue an event for deferred simulation processing.
+
+        Events are stored in the outbox and processed in priority order
+        during simulation ticks. This allows for batch processing and
+        event ordering guarantees.
+
+        Args:
+            event_type: Type of simulation event
+            payload: Event data
+            priority: Processing priority (default: NORMAL)
+            source: Event source identifier
+
+        Returns:
+            Event ID
+        """
+        from .outbox import OutboxEvent
+
+        outbox_event = OutboxEvent(
+            event_type=event_type,
+            payload=payload,
+            priority=priority,
+            metadata={"source": source},
+        )
+
+        # Store in outbox (create if not exists)
+        if not hasattr(self, "_simulation_outbox"):
+            from .outbox import Outbox
+
+            self._simulation_outbox = Outbox()
+
+        event_id = self._simulation_outbox.enqueue(outbox_event, priority=priority)
+
+        logger.debug(
+            f"Enqueued simulation event {event_id} of type {event_type} with priority {priority.name}"
+        )
+        return event_id
+
+    def get_simulation_outbox(self):
+        """Get the simulation outbox for batch processing."""
+        if not hasattr(self, "_simulation_outbox"):
+            from .outbox import Outbox
+
+            self._simulation_outbox = Outbox()
+        return self._simulation_outbox
+
+    async def process_simulation_events(self, limit: int = 10) -> int:
+        """
+        Process pending simulation events from the outbox.
+
+        This should be called during simulation ticks to process
+        deferred events in priority order.
+
+        Args:
+            limit: Maximum events to process in this batch
+
+        Returns:
+            Number of events processed
+        """
+        outbox = self.get_simulation_outbox()
+        pending = outbox.get_pending(limit=limit)
+
+        processed = 0
+        for outbox_event in pending:
+            try:
+                # Convert to Event for handler processing
+                event = Event(
+                    event_id=outbox_event.event_id,
+                    event_type=outbox_event.event_type,
+                    payload=outbox_event.payload,
+                    source=outbox_event.metadata.get("source", "simulation"),
+                    priority=outbox_event.priority,
+                )
+
+                # Process through handlers
+                await self._process_event(event)
+
+                # Mark as processed in outbox
+                outbox.mark_processed(outbox_event.event_id)
+                processed += 1
+
+            except Exception as e:
+                logger.error(
+                    f"Failed to process simulation event {outbox_event.event_id}: {e}"
+                )
+                failed_event = outbox.mark_failed(outbox_event.event_id)
+                if failed_event:
+                    # Max retries exceeded - add to dead letter queue
+                    self.dead_letter_queue.append(
+                        Event(
+                            event_id=failed_event.event_id,
+                            event_type=failed_event.event_type,
+                            payload=failed_event.payload,
+                            status=EventStatus.DEAD_LETTER,
+                        )
+                    )
+
+        if processed > 0:
+            logger.debug(f"Processed {processed} simulation events")
+
+        return processed
+
     async def health_check(self) -> Dict[str, Any]:
         """Perform health check on the event bus."""
         health = {

@@ -231,3 +231,21 @@
   - Use `create_embedding_cache()` factory for standard embedding cache configuration
   - structlog is used for cache metrics: hits, misses, evictions logged at debug/info level
 ---
+
+## 2025-02-26 19:35 - PREP-009
+- **What was implemented**: Robust Event Bus with outbox pattern and priority queuing
+- **Files changed**:
+  - Created: src/events/outbox.py (OutboxEvent, Outbox, EventPriority, OutboxStatus)
+  - Created: tests/unit/events/__init__.py
+  - Created: tests/unit/events/test_outbox.py (23 tests)
+  - Updated: src/events/__init__.py (exports Outbox, OutboxEvent, etc.)
+  - Updated: src/events/event_bus.py (added publish_immediate, enqueue_simulation_event, process_simulation_events)
+- **Learnings for future iterations:**
+  - Existing event_bus.py already had most features (dead_letter_queue, retry with exponential backoff, circuit breaker)
+  - Added outbox pattern for deferred simulation event processing with priority queuing
+  - Outbox uses heap-based priority queue (heapq) for efficient priority ordering
+  - EventPriority enum: CRITICAL(4) > HIGH(3) > NORMAL(2) > LOW(1)
+  - Use enqueue_simulation_event() for deferred processing, publish_immediate() for synchronous
+  - process_simulation_events() should be called during simulation ticks to process batch
+  - max_retries in OutboxEvent controls retry attempts before moving to dead letter
+---
