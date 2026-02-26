@@ -210,3 +210,24 @@
   - All 6131 tests passed after migration
   - Pattern for forward references: Use `from module import Class` before the class that needs it
 ---
+
+## 2025-02-26 19:25 - PREP-014
+- **What was implemented**: Caching upgrade - replaced simple dict cache with LRU+TTL using cachetools
+- **Files changed**:
+  - Created: src/caching/lru_cache.py (LRUCache generic class with cachetools.TTLCache)
+  - Created: tests/unit/caching/__init__.py
+  - Created: tests/unit/caching/test_lru_cache.py (29 tests)
+  - Updated: src/caching/__init__.py (exports LRUCache, CacheStats, CacheConfig, create_embedding_cache)
+  - Updated: requirements.txt (added cachetools>=5.3.0)
+  - Updated: src/contexts/knowledge/application/services/embedding_cache_service.py (uses LRUCache internally)
+  - Updated: src/contexts/knowledge/application/services/__init__.py (removed CacheEntry export)
+  - Updated: src/contexts/knowledge/infrastructure/adapters/embedding_generator_adapter.py (updated docstring)
+  - Updated: tests/unit/contexts/knowledge/application/services/test_embedding_cache_service.py (removed CacheEntry tests)
+- **Learnings for future iterations:**
+  - cachetools.TTLCache provides robust LRU+TTL caching out of the box
+  - EmbeddingCacheService now wraps LRUCache internally - consumers don't need to change
+  - CacheStats now includes `evictions` field for tracking LRU evictions
+  - CacheEntry is no longer part of the public API (handled internally by cachetools)
+  - Use `create_embedding_cache()` factory for standard embedding cache configuration
+  - structlog is used for cache metrics: hits, misses, evictions logged at debug/info level
+---

@@ -6,6 +6,7 @@ budget primitives without needing to know the underlying modules.
 """
 
 from .interfaces import CacheEntryMeta
+from .lru_cache import CacheConfig, CacheStats, LRUCache, create_embedding_cache
 from .semantic_cache import SemanticCache, SemanticCacheConfig
 from .state_hasher import HashingConfig, StateHasher
 from .token_budget import (
@@ -27,4 +28,8 @@ __all__ = [
     "SemanticCache",
     "SemanticCacheConfig",
     "CacheEntryMeta",
+    "LRUCache",
+    "CacheStats",
+    "CacheConfig",
+    "create_embedding_cache",
 ]

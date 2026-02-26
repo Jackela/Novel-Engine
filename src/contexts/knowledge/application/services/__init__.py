@@ -64,7 +64,6 @@ from .coreference_resolution_service import (
     ResolvedReference,
 )
 from .embedding_cache_service import (
-    CacheEntry,
     CacheKey,
     CacheStats,
     EmbeddingCacheService,
@@ -361,7 +360,6 @@ __all__ = [
     # Embedding Cache Service
     "EmbeddingCacheService",
     "CacheKey",
-    "CacheEntry",
     "CacheStats",
     # Context Window Manager
     "ContextWindowManager",
