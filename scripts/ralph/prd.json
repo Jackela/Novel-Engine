@@ -38,7 +38,7 @@
         "Test: pytest tests/ passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "effort": "high",
       "dependencies": ["PREP-001"],
       "investigationNotes": "World Simulation has 21 schemas but well-structured. Smart Tagging has 8 schemas in 1124 lines - complex but cohesive."
@@ -58,7 +58,7 @@
         "Test: pytest tests/ passes, import-linter rules pass"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "investigationNotes": "Only 4 violations found (not 11). All are schema imports: CharacterGenerationResponse (3 files), SceneGenerationResponse (1 file). Use dependency inversion pattern."
     },

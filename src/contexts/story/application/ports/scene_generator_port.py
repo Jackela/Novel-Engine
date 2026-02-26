@@ -5,26 +5,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from src.api.schemas import CharacterGenerationResponse
+from src.contexts.character.domain.value_objects import CharacterContext
+from src.contexts.story.domain.value_objects import SceneGenerationResult
 
 
 @dataclass(frozen=True)
 class SceneGenerationInput:
     """Input data for scene generation."""
 
-    character_context: CharacterGenerationResponse
+    character_context: CharacterContext
     scene_type: str  # 'opening', 'action', 'dialogue', 'climax', 'resolution'
     tone: str | None = None
-
-
-@dataclass(frozen=True)
-class SceneGenerationResult:
-    """Result of scene generation."""
-
-    title: str
-    content: str  # Markdown story text
-    summary: str  # Short text for node display
-    visual_prompt: str
 
 
 class SceneGeneratorPort(Protocol):

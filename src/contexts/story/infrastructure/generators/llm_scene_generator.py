@@ -10,12 +10,11 @@ from typing import Any, Dict
 import requests
 import yaml
 
-from src.api.schemas import SceneGenerationResponse
 from src.contexts.story.application.ports.scene_generator_port import (
     SceneGenerationInput,
-    SceneGenerationResult,
     SceneGeneratorPort,
 )
+from src.contexts.story.domain.value_objects import SceneGenerationResult
 
 
 class LLMSceneGenerator(SceneGeneratorPort):
@@ -135,10 +134,15 @@ class LLMSceneGenerator(SceneGeneratorPort):
         except (KeyError, IndexError, TypeError) as e:
             raise RuntimeError(f"Failed to parse Gemini response: {e}")
 
-    def _parse_response(self, content: str) -> SceneGenerationResponse:
-        """Parse the LLM response into a SceneGenerationResponse."""
+    def _parse_response(self, content: str) -> SceneGenerationResult:
+        """Parse the LLM response into a SceneGenerationResult."""
         payload = self._extract_json(content)
-        return SceneGenerationResponse.model_validate(payload)
+        return SceneGenerationResult(
+            title=str(payload.get("title", "")),
+            content=str(payload.get("content", "")),
+            summary=str(payload.get("summary", "")),
+            visual_prompt=str(payload.get("visual_prompt", "")),
+        )
 
     def _extract_json(self, content: str) -> Dict[str, Any]:
         """Extract JSON from the response content."""

@@ -52,6 +52,41 @@
 
 ## Progress Log
 
+## 2025-02-26 10:30 - PREP-002
+- **What was implemented**: Completed schema modularization - verified world_schemas.py and knowledge_schemas.py exist
+- **Files changed**:
+  - Verified: src/api/schemas/world_schemas.py (created in previous session)
+  - Verified: src/api/schemas/knowledge_schemas.py (created in previous session)
+  - Updated: scripts/ralph/prd.json (marked PREP-002 as passes: true)
+- **Learnings for future iterations:**
+  - PREP-002 was already completed in a previous session, PRD just needed updating
+  - Schema modularization complete: character_schemas.py, narrative_schemas.py, world_schemas.py, knowledge_schemas.py, etc.
+---
+
+## 2025-02-26 10:45 - PREP-003
+- **What was implemented**: Fixed domain import violations by creating domain value objects
+- **Files changed**:
+  - Created: src/contexts/character/domain/value_objects/character_context.py (CharacterContext dataclass)
+  - Created: src/contexts/story/domain/__init__.py
+  - Created: src/contexts/story/domain/value_objects/__init__.py
+  - Created: src/contexts/story/domain/value_objects/scene_generation.py (SceneGenerationResult dataclass)
+  - Updated: src/contexts/character/domain/value_objects/__init__.py (added CharacterContext export)
+  - Updated: src/contexts/story/application/ports/scene_generator_port.py (use CharacterContext instead of API schema)
+  - Updated: src/contexts/story/application/services/scene_service.py (use CharacterContext, SceneGenerationResult)
+  - Updated: src/contexts/story/infrastructure/generators/llm_scene_generator.py (use domain types)
+  - Updated: src/contexts/character/infrastructure/generators/llm_character_generator.py (use CharacterContext)
+  - Updated: .importlinter (added ignore rule for story->character value object dependency)
+- **Learnings for future iterations:**
+  - Domain value objects use `@dataclass(frozen=True)` with `__post_init__` for validation
+  - When domain layer needs data that was in API schemas, create domain value objects first
+  - Cross-context dependencies (story->character) need explicit ignore rules in .importlinter
+  - LLM generators parse JSON into domain types directly, not Pydantic models
+  - The `from_dict` class method pattern is useful for creating value objects from parsed JSON
+  - Import-linter has pre-existing violations (character->world, orchestration->knowledge) that are separate from this task
+---
+
+## Progress Log
+
 ## 2025-02-25 17:45 - PREP-001
 - **What was implemented**: Schema modularization - split 3700-line schemas.py into organized package
 - **Files changed**:

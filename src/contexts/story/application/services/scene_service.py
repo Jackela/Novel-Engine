@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.api.schemas import CharacterGenerationResponse
+from src.contexts.character.domain.value_objects import CharacterContext
 from src.contexts.story.application.ports.scene_generator_port import (
     SceneGenerationInput,
-    SceneGenerationResult,
     SceneGeneratorPort,
 )
+from src.contexts.story.domain.value_objects import SceneGenerationResult
 
 if TYPE_CHECKING:
     pass
@@ -122,7 +122,7 @@ class SceneGenerationService:
 
     def generate(
         self,
-        character_context: CharacterGenerationResponse,
+        character_context: CharacterContext,
         scene_type: str,
         tone: str | None = None,
     ) -> SceneGenerationResult:
@@ -159,7 +159,7 @@ def _select_default_generator() -> SceneGeneratorPort:
 
 
 def generate_scene(
-    character_context: CharacterGenerationResponse,
+    character_context: CharacterContext,
     scene_type: str,
     tone: str | None = None,
     generator: SceneGeneratorPort | None = None,
