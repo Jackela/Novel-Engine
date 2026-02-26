@@ -239,7 +239,7 @@ class Outbox:
         Returns:
             List of pending events (highest priority first)
         """
-        events = []
+        events: list[OutboxEvent] = []
 
         with self._lock:
             while len(events) < limit and self._heap:

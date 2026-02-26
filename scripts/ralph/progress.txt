@@ -309,3 +309,23 @@
   - New endpoints: GET /brain/chat/sessions, GET /brain/chat/sessions/{session_id}/messages, DELETE /brain/chat/sessions/{session_id}
   - session_metadata column (not metadata) to avoid SQLAlchemy reserved word conflict
 ---
+
+## 2025-02-26 20:30 - PREP-015
+- **What was implemented**: Vanguard Stability Check validation
+- **Validation Results:**
+  - TypeScript check: PASSED
+  - Pytest: 6288 passed, 281 skipped in 270.60s
+  - Coverage for modified modules: lru_cache.py (94.96%), outbox.py (97.62%)
+  - Mypy: Pre-existing issues in event_bus.py, event_registry.py - no new issues from Vanguard changes
+  - Fixed: Added type annotation `events: list[OutboxEvent] = []` in outbox.py
+- **Files changed:**
+  - Updated: src/events/outbox.py (fixed mypy type annotation)
+- **Learnings for future iterations:**
+  - mypy strict mode has many pre-existing issues in the codebase
+  - New code should target >90% coverage for critical modules
+  - TypeScript type-check catches frontend issues early
+  - Full test suite (6288 tests) validates no regressions
+- **Known Issues:**
+  - E2E tests require browser environment (Playwright) which may not be available in all environments
+  - Pre-existing mypy strict issues in event_bus.py, event_registry.py, coordinates.py, skills.py, etc.
+---
