@@ -78,7 +78,7 @@
         "Test: npm run typecheck passes, page renders correctly"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "investigationNotes": "File has 8 logical sections, 2109 lines. Original 3-component split too conservative. Shared state: config, stats, brainSettings, isSaving, date filters."
     },
