@@ -5,13 +5,21 @@ The schemas are organized into modular files for maintainability:
 
 - character_schemas.py: Character-related schemas (psychology, memory, goals, generation)
 - narrative_schemas.py: Narrative structure schemas (stories, chapters, scenes, beats, plotlines)
-- remaining_schemas.py: All other schemas (will be further modularized in PREP-002)
+- orchestration_schemas.py: Orchestration status/control schemas
+- system_schemas.py: Health, auth, campaign, workspace, event, analytics schemas
+- social_schemas.py: Relationship, item, faction, social network schemas
+- lore_schemas.py: Lore entry, world rule, smart tags schemas
+- knowledge_schemas.py: RAG, brain settings, routing, knowledge base schemas
+- experiment_schemas.py: Prompt management, A/B testing, analytics schemas
+- world_schemas.py: Calendar, diplomacy, simulation, snapshot, rumor schemas
+- remaining_schemas.py: Catch-all for remaining schemas (to be organized in future)
 
 Backward Compatibility:
     All imports continue to work as before:
         from src.api.schemas import CharacterGenerationResponse
 
 Created as part of PREP-001 (Operation Vanguard).
+Updated in PREP-002 to further modularize schemas.
 """
 
 # Re-export all character schemas
@@ -102,38 +110,35 @@ from src.api.schemas.narrative_schemas import (
     WorldContextEntity,
 )
 
-# Import remaining schemas explicitly (will be organized in PREP-002)
-# Note: We use explicit imports to avoid conflicts with narrative/character schemas
-from src.api.schemas.remaining_schemas import (
-    # Orchestration schemas
+# Re-export orchestration schemas
+from src.api.schemas.orchestration_schemas import (
     OrchestrationStep,
     OrchestrationStatusData,
     OrchestrationStatusResponse,
     OrchestrationStartRequest,
     OrchestrationStartResponse,
     OrchestrationStopResponse,
-    # Health/Meta schemas
+)
+
+# Re-export system schemas
+from src.api.schemas.system_schemas import (
     ErrorDetail,
     ValidationError,
     HealthResponse,
     HealthCheckResponse,
     SystemStatusResponse,
     PolicyInfoResponse,
-    # Events/Analytics schemas
     SSEEventData,
     SSEStatsResponse,
     AnalyticsMetricsData,
     AnalyticsMetricsResponse,
-    # Simulation schemas
     SimulationRequest,
     SimulationResponse,
-    # Campaign schemas
     FileCount,
     CampaignsListResponse,
     CampaignCreationRequest,
     CampaignCreationResponse,
     CampaignDetailResponse,
-    # Auth schemas
     LoginRequest,
     AuthResponse,
     LogoutRequest,
@@ -144,10 +149,12 @@ from src.api.schemas.remaining_schemas import (
     InvalidationRequest,
     ChunkInRequest,
     GuestSessionResponse,
-    # Workspace schemas
     WorkspaceCharacterCreateRequest,
     WorkspaceCharacterUpdateRequest,
-    # Relationship schemas
+)
+
+# Re-export social schemas
+from src.api.schemas.social_schemas import (
     RelationshipCreateRequest,
     RelationshipUpdateRequest,
     InteractionLogSchema,
@@ -157,27 +164,12 @@ from src.api.schemas.remaining_schemas import (
     RelationshipListResponse,
     CharacterCentralitySchema,
     SocialAnalysisResponse,
-    # Item schemas
     ItemCreateRequest,
     ItemUpdateRequest,
     ItemResponse,
     ItemListResponse,
     GiveItemRequest,
     RemoveItemResponse,
-    # Lore schemas
-    LoreEntryCreateRequest,
-    LoreEntryUpdateRequest,
-    LoreEntryResponse,
-    SmartTagsResponse,
-    ManualSmartTagsUpdateRequest,
-    LoreEntryListResponse,
-    LoreSearchRequest,
-    # World Rule schemas
-    WorldRuleCreateRequest,
-    WorldRuleUpdateRequest,
-    WorldRuleResponse,
-    WorldRuleListResponse,
-    # Faction schemas
     FactionJoinRequest,
     FactionJoinResponse,
     FactionLeaveRequest,
@@ -186,38 +178,25 @@ from src.api.schemas.remaining_schemas import (
     FactionSetLeaderResponse,
     FactionMemberSchema,
     FactionDetailResponse,
-    # Prompt schemas
-    PromptVariableDefinition,
-    PromptVariableValue,
-    PromptSummary,
-    PromptModelConfig,
-    PromptDetailResponse,
-    PromptListResponse,
-    PromptCreateRequest,
-    PromptUpdateRequest,
-    PromptRenderRequest,
-    PromptRenderResponse,
-    PromptGenerateRequest,
-    PromptGenerateResponse,
-    PromptAnalyticsTimePeriod,
-    PromptTimeSeriesDataPoint,
-    PromptRatingDistribution,
-    PromptAnalyticsResponse,
-    PromptAnalyticsRequest,
-    # Experiment schemas
-    ExperimentMetricsResponse,
-    ConfidenceIntervalResponse,
-    ExperimentVariantResponse,
-    ExperimentComparisonResponse,
-    ExperimentTimelineResponse,
-    ExperimentResultsResponse,
-    ExperimentSummaryResponse,
-    ExperimentListResponse,
-    ExperimentCreateRequest,
-    ExperimentUpdateRequest,
-    ExperimentRecordRequest,
-    ExperimentActionRequest,
-    # Routing/Brain schemas
+)
+
+# Re-export lore schemas
+from src.api.schemas.lore_schemas import (
+    LoreEntryCreateRequest,
+    LoreEntryUpdateRequest,
+    LoreEntryResponse,
+    SmartTagsResponse,
+    ManualSmartTagsUpdateRequest,
+    LoreEntryListResponse,
+    LoreSearchRequest,
+    WorldRuleCreateRequest,
+    WorldRuleUpdateRequest,
+    WorldRuleResponse,
+    WorldRuleListResponse,
+)
+
+# Re-export knowledge schemas
+from src.api.schemas.knowledge_schemas import (
     TaskRoutingRuleSchema,
     RoutingConstraintsSchema,
     CircuitBreakerRuleSchema,
@@ -239,16 +218,50 @@ from src.api.schemas.remaining_schemas import (
     StartIngestionJobRequest,
     IngestionJobResponse,
     StartIngestionJobResponse,
-    # Event schemas
+)
+
+# Re-export experiment schemas
+from src.api.schemas.experiment_schemas import (
+    PromptVariableDefinition,
+    PromptVariableValue,
+    PromptSummary,
+    PromptModelConfig,
+    PromptDetailResponse,
+    PromptListResponse,
+    PromptCreateRequest,
+    PromptUpdateRequest,
+    PromptRenderRequest,
+    PromptRenderResponse,
+    PromptGenerateRequest,
+    PromptGenerateResponse,
+    PromptAnalyticsTimePeriod,
+    PromptTimeSeriesDataPoint,
+    PromptRatingDistribution,
+    PromptAnalyticsResponse,
+    PromptAnalyticsRequest,
+    ExperimentMetricsResponse,
+    ConfidenceIntervalResponse,
+    ExperimentVariantResponse,
+    ExperimentComparisonResponse,
+    ExperimentTimelineResponse,
+    ExperimentResultsResponse,
+    ExperimentSummaryResponse,
+    ExperimentListResponse,
+    ExperimentCreateRequest,
+    ExperimentUpdateRequest,
+    ExperimentRecordRequest,
+    ExperimentActionRequest,
+)
+
+# Re-export world schemas
+from src.api.schemas.world_schemas import (
     HistoryEventResponse,
     CreateEventRequest,
     EventFilterParams,
     EventListResponse,
-    # Calendar schemas
     CalendarResponse,
     AdvanceCalendarRequest,
     CalendarData,
-    # Diplomacy schemas
     DiplomacyMatrixResponse,
     FactionDiplomacyResponse,
     SetRelationRequest,
@@ -259,17 +272,19 @@ from src.api.schemas.remaining_schemas import (
     SimulationTickResponse,
     SimulationHistoryResponse,
     SimulationStatusResponse,
-    # Snapshot schemas
     CreateSnapshotRequest,
     SnapshotSummary,
     SnapshotResponse,
     SnapshotListResponse,
     RestoreSnapshotResponse,
-    # Rumor schemas
     SortByEnum,
     RumorResponse,
     RumorListResponse,
 )
+
+# Note: remaining_schemas.py is kept for backward compatibility but schemas
+# have been moved to domain-specific modules. Add any future schemas to
+# appropriate module files rather than remaining_schemas.py.
 
 # Define __all__ for clean exports
 __all__ = [
@@ -355,8 +370,14 @@ __all__ = [
     "WordCountEstimateResponse",
     "WorldContext",
     "WorldContextEntity",
-    # Add remaining schema names from remaining_schemas
-    # These are imported via * so we list key ones here
+    # Orchestration schemas
+    "OrchestrationStep",
+    "OrchestrationStatusData",
+    "OrchestrationStatusResponse",
+    "OrchestrationStartRequest",
+    "OrchestrationStartResponse",
+    "OrchestrationStopResponse",
+    # System schemas
     "ErrorDetail",
     "ValidationError",
     "HealthResponse",
@@ -369,12 +390,6 @@ __all__ = [
     "AnalyticsMetricsResponse",
     "SimulationRequest",
     "SimulationResponse",
-    "OrchestrationStep",
-    "OrchestrationStatusData",
-    "OrchestrationStatusResponse",
-    "OrchestrationStartRequest",
-    "OrchestrationStartResponse",
-    "OrchestrationStopResponse",
     "FileCount",
     "CampaignsListResponse",
     "CampaignCreationRequest",
@@ -392,4 +407,118 @@ __all__ = [
     "GuestSessionResponse",
     "WorkspaceCharacterCreateRequest",
     "WorkspaceCharacterUpdateRequest",
+    # Social schemas
+    "RelationshipCreateRequest",
+    "RelationshipUpdateRequest",
+    "InteractionLogSchema",
+    "LogInteractionRequest",
+    "RelationshipHistoryGenerationResponse",
+    "RelationshipResponse",
+    "RelationshipListResponse",
+    "CharacterCentralitySchema",
+    "SocialAnalysisResponse",
+    "ItemCreateRequest",
+    "ItemUpdateRequest",
+    "ItemResponse",
+    "ItemListResponse",
+    "GiveItemRequest",
+    "RemoveItemResponse",
+    "FactionJoinRequest",
+    "FactionJoinResponse",
+    "FactionLeaveRequest",
+    "FactionLeaveResponse",
+    "FactionSetLeaderRequest",
+    "FactionSetLeaderResponse",
+    "FactionMemberSchema",
+    "FactionDetailResponse",
+    # Lore schemas
+    "LoreEntryCreateRequest",
+    "LoreEntryUpdateRequest",
+    "LoreEntryResponse",
+    "SmartTagsResponse",
+    "ManualSmartTagsUpdateRequest",
+    "LoreEntryListResponse",
+    "LoreSearchRequest",
+    "WorldRuleCreateRequest",
+    "WorldRuleUpdateRequest",
+    "WorldRuleResponse",
+    "WorldRuleListResponse",
+    # Knowledge schemas
+    "TaskRoutingRuleSchema",
+    "RoutingConstraintsSchema",
+    "CircuitBreakerRuleSchema",
+    "RoutingConfigResponse",
+    "RoutingConfigUpdateRequest",
+    "RoutingConfigResetRequest",
+    "RoutingStatsResponse",
+    "APIKeysRequest",
+    "APIKeysResponse",
+    "RAGConfigRequest",
+    "RAGConfigResponse",
+    "KnowledgeBaseStatusResponse",
+    "BrainSettingsResponse",
+    "RetrievedChunkResponse",
+    "RAGContextResponse",
+    "ConfidentialityLevel",
+    "KnowledgeMetadataSchema",
+    "IngestionJobStatus",
+    "StartIngestionJobRequest",
+    "IngestionJobResponse",
+    "StartIngestionJobResponse",
+    # Experiment schemas
+    "PromptVariableDefinition",
+    "PromptVariableValue",
+    "PromptSummary",
+    "PromptModelConfig",
+    "PromptDetailResponse",
+    "PromptListResponse",
+    "PromptCreateRequest",
+    "PromptUpdateRequest",
+    "PromptRenderRequest",
+    "PromptRenderResponse",
+    "PromptGenerateRequest",
+    "PromptGenerateResponse",
+    "PromptAnalyticsTimePeriod",
+    "PromptTimeSeriesDataPoint",
+    "PromptRatingDistribution",
+    "PromptAnalyticsResponse",
+    "PromptAnalyticsRequest",
+    "ExperimentMetricsResponse",
+    "ConfidenceIntervalResponse",
+    "ExperimentVariantResponse",
+    "ExperimentComparisonResponse",
+    "ExperimentTimelineResponse",
+    "ExperimentResultsResponse",
+    "ExperimentSummaryResponse",
+    "ExperimentListResponse",
+    "ExperimentCreateRequest",
+    "ExperimentUpdateRequest",
+    "ExperimentRecordRequest",
+    "ExperimentActionRequest",
+    # World schemas
+    "HistoryEventResponse",
+    "CreateEventRequest",
+    "EventFilterParams",
+    "EventListResponse",
+    "CalendarResponse",
+    "AdvanceCalendarRequest",
+    "CalendarData",
+    "DiplomacyMatrixResponse",
+    "FactionDiplomacyResponse",
+    "SetRelationRequest",
+    "SimulateRequest",
+    "ResourceChangesResponse",
+    "DiplomacyChangeResponse",
+    "SimulationTickSummary",
+    "SimulationTickResponse",
+    "SimulationHistoryResponse",
+    "SimulationStatusResponse",
+    "CreateSnapshotRequest",
+    "SnapshotSummary",
+    "SnapshotResponse",
+    "SnapshotListResponse",
+    "RestoreSnapshotResponse",
+    "SortByEnum",
+    "RumorResponse",
+    "RumorListResponse",
 ]
