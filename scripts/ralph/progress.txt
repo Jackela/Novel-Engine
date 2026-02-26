@@ -280,3 +280,17 @@
   - TypeScript exactOptionalPropertyTypes requires explicit `| undefined` on optional props
   - Resource tooltip shows resource type and stock amounts on hover
 ---
+
+## 2025-02-26 20:10 - PREP-012
+- **What was implemented**: Frontend Diplomacy Matrix Grid visualization
+- **Files changed**:
+  - Created: frontend/src/components/world/DiplomacyGrid.tsx (2D faction relationship grid)
+  - Updated: frontend/src/lib/api/worldStateApi.ts (added useDiplomacyMatrix alias)
+- **Learnings for future iterations:**
+  - DiplomacyGrid uses HTML table for 2D matrix layout (rows/columns = factions)
+  - STATUS_COLORS mapping: allied=green, friendly=lime, neutral=yellow, cold=orange, hostile=red, at_war=dark-red
+  - White dot indicator on cells with active pacts
+  - PactDetailDialog shows pact type, status, signed date, expiry date
+  - TypeScript index access on Record returns T | undefined, need fallback value
+  - useDiplomacyMatrix is alias for useDiplomacyDetail for naming consistency
+---

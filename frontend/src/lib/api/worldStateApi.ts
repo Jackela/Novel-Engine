@@ -259,3 +259,11 @@ export function getFactionBorderColor(
 
 // Export raw functions for non-hook usage
 export { getTerritories, getWorldResources, getDiplomacyDetail };
+
+// ============ Aliases for backward compatibility ============
+
+/**
+ * Alias for useDiplomacyDetail for consistency with API naming.
+ * PREP-012: Used by DiplomacyGrid component.
+ */
+export const useDiplomacyMatrix = useDiplomacyDetail;
