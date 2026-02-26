@@ -115,7 +115,7 @@
         "Test: pytest tests/unit/contexts/world/domain/entities/test_location.py passes"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": ["PREP-005"],
       "investigationNotes": "Location entity exists with basic structure. Extensions are backward-compatible (nullable fields)."

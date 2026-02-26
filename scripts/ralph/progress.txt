@@ -73,6 +73,25 @@
 
 ---
 
+## 2025-02-26 12:30 - PREP-006
+- **What was implemented**: Added Territory Control System to Location entity
+- **Files changed**:
+  - Updated: src/contexts/world/domain/entities/location.py
+    - Added: contested_by, resource_yields, territory_value, infrastructure_level fields
+    - Added: transfer_control(), add_contender(), remove_contender(), is_contested()
+    - Added: add_resource_yield(), get_resource_yield(), collect_resources()
+    - Added: upgrade_infrastructure(), set_territory_value()
+    - Added: _validate_territory_control() validation
+  - Created: tests/unit/contexts/world/domain/entities/test_location.py (20 tests)
+- **Learnings for future iterations:**
+  - Entity validation runs in __post_init__, so test data must be valid at construction time
+  - When controller changes, clear contested_by list to reset conflict state
+  - ResourceYield added as list with TYPE_CHECKING import to avoid circular imports
+  - Territory validation ensures controller is never in contested_by list
+  - Use .append() on mutable list fields to bypass validation for testing edge cases
+
+---
+
 ## Progress Log
 
 ## 2025-02-26 11:30 - PREP-004
