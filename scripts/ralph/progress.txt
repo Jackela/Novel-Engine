@@ -264,3 +264,19 @@
   - World state stored in app.state.world_store dict (keyed by world_id)
   - Each world has locations[], factions[], diplomacy_matrix{}
 ---
+
+## 2025-02-26 20:00 - PREP-011
+- **What was implemented**: Frontend Geopolitical Map Base with territory control visualization
+- **Files changed**:
+  - Created: frontend/src/lib/api/worldStateApi.ts (TanStack Query hooks for territories, resources, diplomacy)
+  - Updated: frontend/src/components/world/LocationTree.tsx (added faction color-coding, resource tooltips, territory value badges)
+- **Learnings for future iterations:**
+  - worldStateApi.ts uses TanStack Query with query key factory pattern for cache management
+  - getFactionColor() generates consistent HSL colors from faction IDs using hash-based algorithm
+  - LocationTree now accepts optional territoryDataMap prop for territory control data
+  - TerritoryControlData interface: controlling_faction_id, contested_by, territory_value, resource_yields
+  - Strategic locations (territory_value >= 50) show value badge
+  - Contested territories show orange dot indicator
+  - TypeScript exactOptionalPropertyTypes requires explicit `| undefined` on optional props
+  - Resource tooltip shows resource type and stock amounts on hover
+---

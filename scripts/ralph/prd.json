@@ -216,7 +216,7 @@
         "Test: npm run typecheck passes, map renders with colors"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "dependencies": ["PREP-010"]
     },
