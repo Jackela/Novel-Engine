@@ -95,7 +95,7 @@
         "Test: Create tests/unit/contexts/world/domain/value_objects/test_resources.py with add/spend scenarios"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "effort": "medium",
       "investigationNotes": "No existing resource models. Create in world context following existing dataclass patterns."
     },

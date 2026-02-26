@@ -43,6 +43,7 @@ from .relationship import (
     Relationship,
     RelationshipType,
 )
+from .resource import Resource
 from .rumor import (
     Rumor,
     RumorOrigin,
@@ -92,6 +93,8 @@ __all__ = [
     # LoreEntry
     "LoreEntry",
     "LoreCategory",
+    # Resource
+    "Resource",
     # WorldRule
     "WorldRule",
     # FactionIntent

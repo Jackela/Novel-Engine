@@ -52,6 +52,29 @@
 
 ## Progress Log
 
+## 2025-02-26 12:00 - PREP-005
+- **What was implemented**: Created Resource & Asset Engine domain types
+- **Files changed**:
+  - Created: src/contexts/world/domain/value_objects/resource_type.py (ResourceType enum with 10 types)
+  - Created: src/contexts/world/domain/value_objects/resource_yield.py (ResourceYield frozen dataclass)
+  - Created: src/contexts/world/domain/value_objects/faction_resources.py (FactionResources frozen dataclass)
+  - Created: src/contexts/world/domain/entities/resource.py (Resource entity with add/consume/transfer)
+  - Updated: src/contexts/world/domain/value_objects/__init__.py (exports new types)
+  - Updated: src/contexts/world/domain/entities/__init__.py (exports Resource)
+  - Created: tests/unit/contexts/world/domain/value_objects/test_resources.py (41 tests)
+- **Learnings for future iterations:**
+  - Use `@dataclass(frozen=True)` for immutable value objects
+  - Value objects with `__post_init__` validation raise ValueError for invalid state
+  - Resource entity inherits from Entity base class with touch() for tracking updates
+  - Factory methods on entities (create_gold_vault, create_food_storage) provide convenient construction
+  - is_strategic(), is_consumable(), is_tradeable() helper methods on ResourceType enum
+  - FactionResources uses Dict[ResourceType, int] for type-safe resource tracking
+  - Test frozen dataclasses by checking original is unchanged after "modification"
+
+---
+
+## Progress Log
+
 ## 2025-02-26 11:30 - PREP-004
 - **What was implemented**: Decomposed BrainSettingsPage from 2109 lines into 5 modular panel components
 - **Files changed**:
