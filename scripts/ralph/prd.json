@@ -135,7 +135,7 @@
         "Test: Create test enforcing diplomatic constraints"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "investigationNotes": "DiplomacyMatrix aggregate already exists. Add pact layer on top. Constraint: War prevents trade."
     },

@@ -92,6 +92,30 @@
 
 ---
 
+## 2025-02-26 13:00 - PREP-007
+- **What was implemented**: Added Diplomacy Matrix Mechanics with pact entities
+- **Files changed**:
+  - Created: src/contexts/world/domain/entities/diplomatic_pact.py
+    - PactType enum with 8 types (TRADE_AGREEMENT, NON_AGGRESSION, ALLIANCE, WAR, etc.)
+    - DiplomaticPact entity with is_active(), break_pact(), renew(), is_incompatible_with()
+    - INCOMPATIBLE_PACTS mapping for constraint checking
+    - Factory methods: create_alliance(), create_trade_agreement(), create_war_declaration(), create_ceasefire()
+  - Updated: src/contexts/world/domain/entities/__init__.py (exports DiplomaticPact, PactType)
+  - Updated: src/contexts/world/domain/aggregates/diplomacy_matrix.py
+    - Added active_pacts field
+    - Added add_pact() with validation (war blocks trade)
+    - Added get_pacts_between(), get_active_pacts_between(), get_pacts_for_faction()
+    - Added remove_pact(), cleanup_expired_pacts()
+  - Created: tests/unit/contexts/world/domain/entities/test_diplomatic_pact.py (30 tests)
+- **Learnings for future iterations:**
+  - PactType enum helper methods (is_hostile, is_friendly, is_economic, is_military) simplify business logic
+  - INCOMPATIBLE_PACTS dict enables declarative constraint checking
+  - Validation runs on __post_init__, so expired pacts need past signed_date too
+  - Factory methods on entities provide convenient construction with sensible defaults
+  - DiplomacyMatrix add_pact() validates against both existing pacts AND diplomatic status
+
+---
+
 ## Progress Log
 
 ## 2025-02-26 11:30 - PREP-004
