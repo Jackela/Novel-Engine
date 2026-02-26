@@ -155,7 +155,7 @@
         "Test: Verify population aggregation across multiple controlled locations"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "effort": "low",
       "dependencies": ["PREP-006"],
       "investigationNotes": "Basic population fields missing. Aggregation is straightforward sum of controlled locations."

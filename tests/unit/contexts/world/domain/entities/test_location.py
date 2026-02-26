@@ -273,3 +273,113 @@ class TestLocationValidation:
                 controlling_faction_id="faction-123",
                 contested_by=["faction-123"],
             )
+
+
+class TestLocationDemographics:
+    """Tests for population and demographic functionality."""
+
+    def test_location_with_demographics(self) -> None:
+        """Test creating a location with demographic data."""
+        location = Location(
+            name="Diverse City",
+            population=100000,
+            demographic_breakdown={"human": 60.0, "elf": 25.0, "dwarf": 15.0},
+            population_growth_rate=0.02,  # 2% growth
+            happiness_level=75,
+        )
+
+        assert location.population == 100000
+        assert location.demographic_breakdown["human"] == 60.0
+        assert location.population_growth_rate == 0.02
+        assert location.happiness_level == 75
+
+    def test_invalid_happiness_level_raises_error(self) -> None:
+        """Test that invalid happiness level raises validation error."""
+        with pytest.raises(ValueError, match="Happiness level must be between 0 and 100"):
+            Location(
+                name="Test",
+                happiness_level=150,
+            )
+
+    def test_demographic_percentages_sum_check(self) -> None:
+        """Test that demographic percentages must sum to ~100."""
+        # This should fail - only 50%
+        with pytest.raises(ValueError, match="Demographic percentages sum to 50"):
+            Location(
+                name="Test",
+                demographic_breakdown={"human": 30.0, "elf": 20.0},
+            )
+
+        # This should work - sums to 100%
+        location = Location(
+            name="Test",
+            demographic_breakdown={"human": 50.0, "elf": 50.0},
+        )
+        assert location.demographic_breakdown["human"] == 50.0
+
+    def test_demographic_percentage_bounds(self) -> None:
+        """Test that individual percentages must be 0-100."""
+        with pytest.raises(ValueError, match="must be between 0 and 100"):
+            Location(
+                name="Test",
+                demographic_breakdown={"human": 150.0},
+            )
+
+    def test_empty_demographics_allowed(self) -> None:
+        """Test that empty demographic breakdown is allowed."""
+        location = Location(
+            name="Test",
+            demographic_breakdown={},
+        )
+        assert location.demographic_breakdown == {}
+
+
+class TestFactionPopulation:
+    """Tests for faction population aggregation."""
+
+    def test_total_population_property(self) -> None:
+        """Test total_population property returns member_count."""
+        from src.contexts.world.domain.entities import Faction
+
+        faction = Faction(
+            name="Test Faction",
+            member_count=50000,
+        )
+
+        assert faction.total_population == 50000
+
+    def test_calculate_population_from_territories(self) -> None:
+        """Test calculating population from controlled locations."""
+        from src.contexts.world.domain.entities import Faction
+
+        faction = Faction(
+            id="faction-1",
+            name="Kingdom",
+            member_count=100000,
+        )
+
+        locations = [
+            Location(
+                id="loc-1",
+                name="City 1",
+                controlling_faction_id="faction-1",
+                population=50000,
+            ),
+            Location(
+                id="loc-2",
+                name="City 2",
+                controlling_faction_id="faction-1",
+                population=30000,
+            ),
+            Location(
+                id="loc-3",
+                name="City 3",
+                controlling_faction_id="faction-2",  # Different controller
+                population=40000,
+            ),
+        ]
+
+        total = faction.calculate_population_from_territories(locations)
+
+        # Only loc-1 and loc-2 are controlled by faction-1
+        assert total == 80000

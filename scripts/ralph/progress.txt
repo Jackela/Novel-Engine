@@ -116,6 +116,25 @@
 
 ---
 
+## 2025-02-26 13:30 - PREP-008
+- **What was implemented**: Added Population & Demographics tracking
+- **Files changed**:
+  - Updated: src/contexts/world/domain/entities/location.py
+    - Added: demographic_breakdown, population_growth_rate, happiness_level fields
+    - Added: _validate_demographics() with percentage sum check
+  - Updated: src/contexts/world/domain/entities/faction.py
+    - Added: total_population property (returns member_count)
+    - Added: calculate_population_from_territories(locations) method
+  - Updated: tests/unit/contexts/world/domain/entities/test_location.py (7 new tests, 27 total)
+- **Learnings for future iterations:**
+  - DemographicBreakdown type alias: Dict[str, float] for race/species -> percentage
+  - Demographic percentages should sum to ~100% (allow 1% tolerance for rounding)
+  - Faction.total_population returns member_count; use calculate_population_from_territories() for accurate count
+  - Location.population already existed, so no new field needed for population count
+  - TYPE_CHECKING import pattern for avoiding circular imports with Location in Faction
+
+---
+
 ## Progress Log
 
 ## 2025-02-26 11:30 - PREP-004

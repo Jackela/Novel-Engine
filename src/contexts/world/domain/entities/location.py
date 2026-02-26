@@ -28,6 +28,10 @@ if TYPE_CHECKING:
     from src.contexts.world.domain.value_objects import ResourceYield
 
 
+# Type alias for demographic breakdown (race/species -> percentage)
+DemographicBreakdown = Dict[str, float]
+
+
 class LocationType(Enum):
     """Classification of location types.
 
@@ -195,6 +199,9 @@ class Location(Entity):
     territory_value: int = 0  # Strategic importance (0-100)
     infrastructure_level: int = 0  # Development level (0-100)
     population: int = 0
+    demographic_breakdown: DemographicBreakdown = field(default_factory=dict)  # race/species -> percentage
+    population_growth_rate: float = 0.0  # Annual growth rate (e.g., 0.02 = 2%)
+    happiness_level: int = 50  # Population happiness (0-100)
     notable_features: List[str] = field(default_factory=list)
     resources: List[str] = field(default_factory=list)
     dangers: List[str] = field(default_factory=list)
@@ -237,6 +244,12 @@ class Location(Entity):
         if not 0 <= self.infrastructure_level <= 100:
             errors.append("Infrastructure level must be between 0 and 100")
 
+        if not 0 <= self.happiness_level <= 100:
+            errors.append("Happiness level must be between 0 and 100")
+
+        # Validate demographic breakdown percentages sum to ~100
+        errors.extend(self._validate_demographics())
+
         # Validate type-specific rules
         errors.extend(self._validate_type_specific_rules())
 
@@ -258,6 +271,27 @@ class Location(Entity):
                 f"Controlling faction {self.controlling_faction_id} "
                 "should not be in contested_by list"
             )
+
+        return errors
+
+    def _validate_demographics(self) -> List[str]:
+        """Validate demographic breakdown consistency."""
+        errors = []
+
+        if self.demographic_breakdown:
+            # Check that all percentages are valid
+            for group, percentage in self.demographic_breakdown.items():
+                if percentage < 0 or percentage > 100:
+                    errors.append(
+                        f"Demographic percentage for {group} must be between 0 and 100"
+                    )
+
+            # Check that percentages approximately sum to 100 (allow 1% tolerance)
+            total = sum(self.demographic_breakdown.values())
+            if total > 0 and abs(total - 100) > 1:
+                errors.append(
+                    f"Demographic percentages sum to {total:.1f}%, should be ~100%"
+                )
 
         return errors
 
@@ -684,6 +718,9 @@ class Location(Entity):
             "territory_value": self.territory_value,
             "infrastructure_level": self.infrastructure_level,
             "population": self.population,
+            "demographic_breakdown": self.demographic_breakdown,
+            "population_growth_rate": self.population_growth_rate,
+            "happiness_level": self.happiness_level,
             "notable_features": self.notable_features,
             "resources": self.resources,
             "dangers": self.dangers,

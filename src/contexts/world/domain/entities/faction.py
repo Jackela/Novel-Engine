@@ -16,9 +16,12 @@ Typical usage example:
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
 from .entity import Entity
+
+if TYPE_CHECKING:
+    from .location import Location
 
 
 class FactionType(Enum):
@@ -466,6 +469,40 @@ class Faction(Entity):
     def is_minor_faction(self) -> bool:
         """Check if faction is a minor faction (power rating < 30)."""
         return self.get_power_rating() < 30
+
+    @property
+    def total_population(self) -> int:
+        """Get the total population across all controlled territories.
+
+        Note: This returns member_count by default. For accurate population
+        from territories, use calculate_population_from_territories().
+
+        Returns:
+            The faction's total population.
+        """
+        return self.member_count
+
+    def calculate_population_from_territories(
+        self, locations: List["Location"]
+    ) -> int:
+        """Calculate total population from controlled locations.
+
+        Args:
+            locations: List of Location entities to sum populations from.
+                Only locations where this faction is the controller are counted.
+
+        Returns:
+            Total population across all controlled territories.
+
+        Example:
+            >>> faction.calculate_population_from_territories(all_locations)
+            150000
+        """
+        total = 0
+        for location in locations:
+            if location.controlling_faction_id == self.id:
+                total += location.population
+        return total
 
     def set_leader(self, character_id: str, leader_name: Optional[str] = None) -> None:
         """Set the faction leader.
