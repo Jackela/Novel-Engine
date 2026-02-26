@@ -249,3 +249,18 @@
   - process_simulation_events() should be called during simulation ticks to process batch
   - max_retries in OutboxEvent controls retry attempts before moving to dead letter
 ---
+
+## 2025-02-26 19:50 - PREP-010
+- **What was implemented**: World State Snapshot APIs for geopolitical queries
+- **Files changed**:
+  - Created: src/api/routers/world_state.py (GET territories, diplomacy, resources)
+  - Created: tests/api/routers/test_world_state.py (12 tests)
+  - Updated: src/api/schemas/world_schemas.py (added TerritorySummary, TerritoriesResponse, FactionResourceSummary, WorldResourcesResponse, PactSummary, DiplomacyMatrixDetailResponse)
+  - Updated: src/api/main_api_server.py (registered world_state_router)
+- **Learnings for future iterations:**
+  - TerritorySummary includes: location_id, name, location_type, controlling_faction_id, contested_by, territory_value, infrastructure_level, population, resource_types
+  - WorldResourcesResponse aggregates resources per faction from controlled territories
+  - DiplomacyMatrixDetailResponse includes active_pacts for detailed diplomacy view
+  - World state stored in app.state.world_store dict (keyed by world_id)
+  - Each world has locations[], factions[], diplomacy_matrix{}
+---

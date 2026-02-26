@@ -388,3 +388,90 @@ class RumorListResponse(BaseModel):
 
     rumors: List[RumorResponse]
     total: int
+
+
+# === World State Schemas (PREP-010) ===
+
+
+class TerritorySummary(BaseModel):
+    """Summary of a territory with control information."""
+
+    location_id: str = Field(description="Unique identifier for the location")
+    name: str = Field(description="Name of the location/territory")
+    location_type: str = Field(description="Type of location (kingdom, city, fortress, etc.)")
+    controlling_faction_id: Optional[str] = Field(
+        None, description="ID of faction controlling this territory"
+    )
+    contested_by: List[str] = Field(
+        default_factory=list, description="Factions contesting control"
+    )
+    territory_value: int = Field(
+        default=0, ge=0, le=100, description="Strategic importance (0-100)"
+    )
+    infrastructure_level: int = Field(
+        default=0, ge=0, le=100, description="Development level (0-100)"
+    )
+    population: int = Field(default=0, description="Population count")
+    resource_types: List[str] = Field(
+        default_factory=list, description="Types of resources produced"
+    )
+
+
+class TerritoriesResponse(BaseModel):
+    """Response model for world territories."""
+
+    world_id: str = Field(description="World ID")
+    territories: List[TerritorySummary] = Field(description="List of territories")
+    total_count: int = Field(description="Total number of territories")
+    controlled_count: int = Field(description="Number of controlled territories")
+    contested_count: int = Field(description="Number of contested territories")
+
+
+class FactionResourceSummary(BaseModel):
+    """Summary of a faction's resources."""
+
+    faction_id: str = Field(description="Faction ID")
+    faction_name: str = Field(description="Faction name")
+    resources: Dict[str, int] = Field(
+        default_factory=dict, description="Resource type -> amount"
+    )
+    total_territories: int = Field(description="Number of controlled territories")
+    total_population: int = Field(description="Total population across territories")
+
+
+class WorldResourcesResponse(BaseModel):
+    """Response model for world resources summary."""
+
+    world_id: str = Field(description="World ID")
+    factions: List[FactionResourceSummary] = Field(
+        description="Resource summary per faction"
+    )
+    total_resources: Dict[str, int] = Field(
+        default_factory=dict, description="Total resources in world"
+    )
+    timestamp: str = Field(description="ISO 8601 timestamp of snapshot")
+
+
+class PactSummary(BaseModel):
+    """Summary of a diplomatic pact."""
+
+    pact_id: str = Field(description="Pact ID")
+    faction_a_id: str = Field(description="First faction ID")
+    faction_b_id: str = Field(description="Second faction ID")
+    pact_type: str = Field(description="Type of pact (alliance, trade, etc.)")
+    signed_date: Optional[str] = Field(None, description="When pact was signed")
+    expires_date: Optional[str] = Field(None, description="When pact expires")
+    is_active: bool = Field(description="Whether pact is currently active")
+
+
+class DiplomacyMatrixDetailResponse(BaseModel):
+    """Detailed response model for diplomacy matrix with pacts."""
+
+    world_id: str = Field(description="World ID for this diplomacy matrix")
+    matrix: Dict[str, Dict[str, str]] = Field(
+        description="2D matrix of faction relationships"
+    )
+    factions: List[str] = Field(description="List of all faction IDs in the matrix")
+    active_pacts: List[PactSummary] = Field(
+        default_factory=list, description="List of active diplomatic pacts"
+    )
