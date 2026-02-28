@@ -117,19 +117,24 @@ class TestWorldTimeEndpoints:
         )
         assert response.status_code == 422  # Validation error
 
-    def test_advance_time_missing_days_parameter(self, client):
-        """Advancing without days parameter returns validation error."""
+    def test_advance_time_missing_days_parameter_uses_default(self, client):
+        """Advancing without days parameter uses default of 1 day."""
         response = client.post(
             "/api/world/time/advance",
             json={},
         )
-        assert response.status_code == 422  # Validation error
+        # AdvanceTimeRequest has default=1 for days
+        assert response.status_code == 200
+        data = response.json()
+        assert data["day"] == 2  # 1 + 1 = 2
 
     def test_display_string_format(self, client):
         """Display string follows expected format."""
         # Advance to a specific date: Year 2, Month 5, Day 14
         # 1 year = 360 days, so 360 + 4 months * 30 + 13 days = 360 + 120 + 13 = 493
-        client.post("/api/world/time/advance", json={"days": 493})
+        # Split into multiple advances since schema limits to 365 days per request
+        client.post("/api/world/time/advance", json={"days": 365})  # Year 2, Month 1, Day 6
+        client.post("/api/world/time/advance", json={"days": 128})   # Year 2, Month 5, Day 14
 
         response = client.get("/api/world/time")
         assert response.status_code == 200
@@ -163,7 +168,10 @@ class TestWorldTimeEndpoints:
     def test_large_advance_multiple_years(self, client):
         """Advancing multiple years works correctly."""
         # Advance 720 days = 2 years
-        response = client.post("/api/world/time/advance", json={"days": 720})
+        # Split into multiple advances since schema limits to 365 days per request
+        client.post("/api/world/time/advance", json={"days": 365})  # Year 2
+        response = client.post("/api/world/time/advance", json={"days": 355})  # +355 days to reach Year 3, Day 1
+
         assert response.status_code == 200
         data = response.json()
 
