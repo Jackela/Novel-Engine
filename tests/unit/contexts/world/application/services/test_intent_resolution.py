@@ -16,7 +16,7 @@ from src.contexts.world.application.services.world_simulation_service import (
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.aggregates.world_state import WorldState
 from src.contexts.world.domain.entities.faction import Faction
-from src.contexts.world.domain.entities.faction_intent import FactionIntent, IntentType
+from src.contexts.world.domain.entities.faction_intent import FactionIntent, ActionType
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 
@@ -232,12 +232,12 @@ class TestResolveIntentsAttack:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-attacker",
-            intent_type=IntentType.ATTACK,
+            action_type=ActionType.ATTACK,
             target_id="faction-defender",
-            priority=7,
-            narrative="Attack the enemy",
+            priority=3,
+            rationale="Attack the enemy",
         )
 
         result = service._resolve_intents(
@@ -272,12 +272,12 @@ class TestResolveIntentsAttack:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-attacker",
-            intent_type=IntentType.ATTACK,
+            action_type=ActionType.ATTACK,
             target_id="faction-defender",
-            priority=7,
-            narrative="Attack the enemy",
+            priority=3,
+            rationale="Attack the enemy",
         )
 
         result = service._resolve_intents(
@@ -311,12 +311,12 @@ class TestResolveIntentsAttack:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-attacker",
-            intent_type=IntentType.ATTACK,
+            action_type=ActionType.ATTACK,
             target_id="faction-defender",
-            priority=7,
-            narrative="Attack the enemy",
+            priority=3,
+            rationale="Attack the enemy",
         )
 
         result = service._resolve_intents(
@@ -355,20 +355,20 @@ class TestResolveIntentsAttack:
         )
 
         intent1 = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-a1",
-            intent_type=IntentType.ATTACK,
+            action_type=ActionType.ATTACK,
             target_id="faction-defender",
-            priority=7,
-            narrative="Attack the enemy",
+            priority=3,
+            rationale="Attack the enemy",
         )
         intent2 = FactionIntent(
-            intent_id="intent-2",
+            id="intent-2",
             faction_id="faction-a2",
-            intent_type=IntentType.ATTACK,
+            action_type=ActionType.ATTACK,
             target_id="faction-defender",
-            priority=7,
-            narrative="Attack the enemy",
+            priority=3,
+            rationale="Attack the enemy",
         )
 
         result = service._resolve_intents(
@@ -402,12 +402,12 @@ class TestResolveIntentsAttack:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-attacker",
-            intent_type=IntentType.ATTACK,
+            action_type=ActionType.ATTACK,
             target_id=None,  # No target
-            priority=7,
-            narrative="Attack!",
+            priority=3,
+            rationale="Attack!",
         )
 
         result = service._resolve_intents(
@@ -438,11 +438,11 @@ class TestResolveIntentsExpand:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.EXPAND,
-            priority=5,
-            narrative="Expand territory",
+            action_type=ActionType.EXPAND,
+            priority=2,
+            rationale="Expand territory",
         )
 
         result = service._resolve_intents(
@@ -469,11 +469,11 @@ class TestResolveIntentsExpand:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.EXPAND,
-            priority=5,
-            narrative="Expand territory",
+            action_type=ActionType.EXPAND,
+            priority=2,
+            rationale="Expand territory",
         )
 
         result = service._resolve_intents(
@@ -510,12 +510,12 @@ class TestResolveIntentsAlly:
         diplomacy_matrix.register_faction("faction-b")
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-a",
-            intent_type=IntentType.ALLY,
+            action_type=ActionType.TRADE,
             target_id="faction-b",
-            priority=6,
-            narrative="Form alliance",
+            priority=2,
+            rationale="Form alliance",
         )
 
         result = service._resolve_intents(
@@ -551,12 +551,12 @@ class TestResolveIntentsAlly:
         diplomacy_matrix.set_status("faction-a", "faction-b", DiplomaticStatus.AT_WAR)
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-a",
-            intent_type=IntentType.ALLY,
+            action_type=ActionType.TRADE,
             target_id="faction-b",
-            priority=6,
-            narrative="Form alliance",
+            priority=2,
+            rationale="Form alliance",
         )
 
         result = service._resolve_intents(
@@ -582,12 +582,12 @@ class TestResolveIntentsAlly:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-a",
-            intent_type=IntentType.ALLY,
+            action_type=ActionType.TRADE,
             target_id=None,
-            priority=6,
-            narrative="Form alliance",
+            priority=2,
+            rationale="Form alliance",
         )
 
         result = service._resolve_intents(
@@ -617,11 +617,11 @@ class TestResolveIntentsRecover:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.RECOVER,
-            priority=9,
-            narrative="Recover economically",
+            action_type=ActionType.STABILIZE,
+            priority=3,
+            rationale="Recover economically",
         )
 
         result = service._resolve_intents(
@@ -631,7 +631,9 @@ class TestResolveIntentsRecover:
             diplomacy_matrix,
         )
 
-        assert result.resource_changes["faction-1"].wealth_delta == 5
+        # STABILIZE provides +2 wealth, +1 military (unified behavior)
+        assert result.resource_changes["faction-1"].wealth_delta == 2
+        assert result.resource_changes["faction-1"].military_delta == 1
         assert "intent-1" in result.successful_intents
 
     def test_recover_no_change_when_wealth_high(
@@ -640,7 +642,7 @@ class TestResolveIntentsRecover:
         world_state: WorldState,
         diplomacy_matrix: DiplomacyMatrix,
     ) -> None:
-        """RECOVER should not change wealth when already >= 50."""
+        """STABILIZE provides gains regardless of current wealth level."""
         faction = Faction(
             id="faction-1",
             name="Recoverers",
@@ -648,11 +650,11 @@ class TestResolveIntentsRecover:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.RECOVER,
-            priority=9,
-            narrative="Recover economically",
+            action_type=ActionType.STABILIZE,
+            priority=3,
+            rationale="Recover economically",
         )
 
         result = service._resolve_intents(
@@ -662,9 +664,9 @@ class TestResolveIntentsRecover:
             diplomacy_matrix,
         )
 
-        # No wealth change (already high)
-        assert "faction-1" not in result.resource_changes
-        # But intent is still successful
+        # STABILIZE always provides gains (+2 wealth, +1 military)
+        assert result.resource_changes["faction-1"].wealth_delta == 2
+        assert result.resource_changes["faction-1"].military_delta == 1
         assert "intent-1" in result.successful_intents
 
 
@@ -685,11 +687,11 @@ class TestResolveIntentsDefend:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.DEFEND,
-            priority=4,
-            narrative="Strengthen defenses",
+            action_type=ActionType.STABILIZE,
+            priority=2,
+            rationale="Strengthen defenses",
         )
 
         result = service._resolve_intents(
@@ -699,7 +701,9 @@ class TestResolveIntentsDefend:
             diplomacy_matrix,
         )
 
-        assert result.resource_changes["faction-1"].military_delta == 3
+        # STABILIZE provides +2 wealth, +1 military (unified behavior)
+        assert result.resource_changes["faction-1"].wealth_delta == 2
+        assert result.resource_changes["faction-1"].military_delta == 1
         assert "intent-1" in result.successful_intents
 
     def test_defend_no_change_when_military_high(
@@ -708,7 +712,7 @@ class TestResolveIntentsDefend:
         world_state: WorldState,
         diplomacy_matrix: DiplomacyMatrix,
     ) -> None:
-        """DEFEND should not change military when already >= 80."""
+        """STABILIZE provides gains regardless of current military level."""
         faction = Faction(
             id="faction-1",
             name="Defenders",
@@ -716,11 +720,11 @@ class TestResolveIntentsDefend:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.DEFEND,
-            priority=4,
-            narrative="Strengthen defenses",
+            action_type=ActionType.STABILIZE,
+            priority=2,
+            rationale="Strengthen defenses",
         )
 
         result = service._resolve_intents(
@@ -730,9 +734,9 @@ class TestResolveIntentsDefend:
             diplomacy_matrix,
         )
 
-        # No military change (already high)
-        assert "faction-1" not in result.resource_changes
-        # But intent is still successful
+        # STABILIZE always provides gains (+2 wealth, +1 military)
+        assert result.resource_changes["faction-1"].wealth_delta == 2
+        assert result.resource_changes["faction-1"].military_delta == 1
         assert "intent-1" in result.successful_intents
 
 
@@ -752,11 +756,11 @@ class TestResolveIntentsConsolidate:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.CONSOLIDATE,
-            priority=1,
-            narrative="Focus on internal affairs",
+            action_type=ActionType.STABILIZE,
+            priority=3,
+            rationale="Focus on internal affairs",
         )
 
         result = service._resolve_intents(
@@ -785,23 +789,28 @@ class TestResolveIntentsTrade:
             id="faction-1",
             name="Traders",
         )
+        target_faction = Faction(
+            id="faction-2",
+            name="Trade Partner",
+        )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.TRADE,
-            priority=5,
-            narrative="Establish trade routes",
+            action_type=ActionType.TRADE,
+            target_id="faction-2",
+            priority=2,
+            rationale="Establish trade routes",
         )
 
         result = service._resolve_intents(
             [intent],
             world_state,
-            [faction],
+            [faction, target_faction],
             diplomacy_matrix,
         )
 
-        # No resource changes currently
+        # TRADE with target creates alliance, no resource changes
         assert "faction-1" not in result.resource_changes
         assert "intent-1" in result.successful_intents
 
@@ -823,27 +832,27 @@ class TestResolveIntentsPriority:
             military_strength=30,
         )
 
-        # Create intents with different priorities
+        # Create intents with different priorities (1=highest, 3=lowest)
         low_intent = FactionIntent(
-            intent_id="intent-low",
+            id="intent-low",
             faction_id="faction-1",
-            intent_type=IntentType.CONSOLIDATE,
-            priority=1,
-            narrative="Low priority",
+            action_type=ActionType.STABILIZE,
+            priority=3,  # lowest priority
+            rationale="Low priority",
         )
         high_intent = FactionIntent(
-            intent_id="intent-high",
+            id="intent-high",
             faction_id="faction-1",
-            intent_type=IntentType.RECOVER,
-            priority=9,
-            narrative="High priority",
+            action_type=ActionType.STABILIZE,
+            priority=1,  # highest priority
+            rationale="High priority",
         )
         mid_intent = FactionIntent(
-            intent_id="intent-mid",
+            id="intent-mid",
             faction_id="faction-1",
-            intent_type=IntentType.DEFEND,
-            priority=4,
-            narrative="Mid priority",
+            action_type=ActionType.STABILIZE,
+            priority=2,  # medium priority
+            rationale="Mid priority",
         )
 
         result = service._resolve_intents(
@@ -875,18 +884,18 @@ class TestResolveIntentsPriority:
         )
 
         intent1 = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.RECOVER,
-            priority=9,
-            narrative="Recover",
+            action_type=ActionType.STABILIZE,
+            priority=3,
+            rationale="Recover",
         )
         intent2 = FactionIntent(
-            intent_id="intent-2",
+            id="intent-2",
             faction_id="faction-2",
-            intent_type=IntentType.RECOVER,
-            priority=9,
-            narrative="Recover",
+            action_type=ActionType.STABILIZE,
+            priority=3,
+            rationale="Recover",
         )
 
         result = service._resolve_intents(
@@ -896,8 +905,9 @@ class TestResolveIntentsPriority:
             diplomacy_matrix,
         )
 
-        assert result.resource_changes["faction-1"].wealth_delta == 5
-        assert result.resource_changes["faction-2"].wealth_delta == 5
+        # STABILIZE provides +2 wealth, +1 military per faction
+        assert result.resource_changes["faction-1"].wealth_delta == 2
+        assert result.resource_changes["faction-2"].wealth_delta == 2
 
 
 class TestResolveIntentsEdgeCases:
@@ -929,11 +939,11 @@ class TestResolveIntentsEdgeCases:
     ) -> None:
         """Intent for non-existent faction should fail."""
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="unknown-faction",
-            intent_type=IntentType.CONSOLIDATE,
-            priority=1,
-            narrative="Consolidate",
+            action_type=ActionType.STABILIZE,
+            priority=3,
+            rationale="Consolidate",
         )
 
         result = service._resolve_intents(
@@ -959,12 +969,12 @@ class TestResolveIntentsEdgeCases:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-attacker",
-            intent_type=IntentType.ATTACK,
+            action_type=ActionType.ATTACK,
             target_id="unknown-target",
-            priority=7,
-            narrative="Attack",
+            priority=3,
+            rationale="Attack",
         )
 
         result = service._resolve_intents(
@@ -989,12 +999,12 @@ class TestResolveIntentsEdgeCases:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-1",
-            intent_type=IntentType.ALLY,
+            action_type=ActionType.TRADE,
             target_id="unknown-target",
-            priority=6,
-            narrative="Form alliance",
+            priority=2,
+            rationale="Form alliance",
         )
 
         result = service._resolve_intents(
@@ -1026,12 +1036,12 @@ class TestResolveIntentsEdgeCases:
         )
 
         intent = FactionIntent(
-            intent_id="intent-1",
+            id="intent-1",
             faction_id="faction-attacker",
-            intent_type=IntentType.ATTACK,
+            action_type=ActionType.ATTACK,
             target_id="faction-defender",
-            priority=7,
-            narrative="Attack",
+            priority=3,
+            rationale="Attack",
         )
 
         result = service._resolve_intents(
