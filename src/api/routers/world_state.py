@@ -1,5 +1,11 @@
-"""
-World State API Router (PREP-010)
+"""World State API Router (PREP-010)
+
+DEPRECATED: This router is deprecated in favor of src.api.routers.geopolitics
+
+The /world/{world_id}/* endpoints are now served by the unified
+geopolitics router at /api/geopolitics/world/{world_id}/*
+
+This file will be removed in a future version.
 
 This module provides API endpoints for geopolitical state queries,
 enabling the frontend to visualize territory control, diplomacy, and resources.
@@ -11,6 +17,13 @@ Endpoints:
 """
 
 from __future__ import annotations
+
+import warnings
+warnings.warn(
+    "world_state router is deprecated. Use geopolitics router instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 import logging
 from datetime import datetime

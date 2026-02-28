@@ -1,11 +1,21 @@
 """Diplomacy API router for faction relationship operations.
 
-This module provides API endpoints for managing diplomatic relations
-between factions in a world, including retrieving the full diplomacy
-matrix and individual faction relations.
+DEPRECATED: This router is deprecated in favor of src.api.routers.geopolitics
+
+The /world/{world_id}/diplomacy endpoint is now served by the unified
+geopolitics router at /api/geopolitics/world/{world_id}/diplomacy
+
+This file will be removed in a future version.
 """
 
 from __future__ import annotations
+
+import warnings
+warnings.warn(
+    "diplomacy router is deprecated. Use geopolitics router instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 from typing import Dict, List
 
