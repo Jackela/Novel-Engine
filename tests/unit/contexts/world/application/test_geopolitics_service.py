@@ -8,6 +8,7 @@ from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatri
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 
 
+@pytest.mark.unit
 class TestGeopoliticsService:
     """Tests for GeopoliticsService."""
 

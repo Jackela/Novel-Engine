@@ -13,6 +13,7 @@ def client() -> TestClient:
     return TestClient(app)
 
 
+@pytest.mark.integration
 class TestGeopoliticsEndpoints:
     """Tests for geopolitics API endpoints."""
 

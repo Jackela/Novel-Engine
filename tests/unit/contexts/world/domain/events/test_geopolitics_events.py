@@ -10,6 +10,7 @@ from src.contexts.world.domain.events.geopolitics_events import (
 )
 
 
+@pytest.mark.unit
 class TestWarDeclaredEvent:
     """Tests for WarDeclaredEvent."""
 
@@ -38,6 +39,7 @@ class TestWarDeclaredEvent:
         assert event.priority == EventPriority.HIGH
 
 
+@pytest.mark.unit
 class TestAllianceFormedEvent:
     """Tests for AllianceFormedEvent."""
 
@@ -56,6 +58,7 @@ class TestAllianceFormedEvent:
         assert event.event_type == "geopolitics.alliance_formed"
 
 
+@pytest.mark.unit
 class TestTerritoryChangedEvent:
     """Tests for TerritoryChangedEvent."""
 
