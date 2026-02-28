@@ -5,6 +5,12 @@ This module exports services that provide higher-level business operations
 beyond simple CRUD, such as graph analytics and social network analysis.
 """
 
+from .faction_decision_service import (
+    ACTION_DEFINITIONS,
+    ActionDefinition,
+    DecisionContext,
+    FactionDecisionService,
+)
 from .rumor_propagation_service import (
     ILocationRepository,
     IRumorRepository,
@@ -39,7 +45,11 @@ from .world_simulation_service import (
 )
 
 __all__ = [
+    "ACTION_DEFINITIONS",
+    "ActionDefinition",
     "CharacterCentrality",
+    "DecisionContext",
+    "FactionDecisionService",
     "IFactionRepository",
     "ILocationRepository",
     "IRumorRepository",

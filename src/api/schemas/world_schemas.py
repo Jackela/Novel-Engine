@@ -490,3 +490,92 @@ class DiplomacyMatrixDetailResponse(BaseModel):
     active_pacts: List[PactSummary] = Field(
         default_factory=list, description="List of active diplomatic pacts"
     )
+
+
+# === Faction Intel Schemas (W5-Faction-AI-Intents) ===
+
+
+class ActionTypeEnum(str, Enum):
+    """Classification of faction action types for API responses."""
+
+    EXPAND = "expand"
+    ATTACK = "attack"
+    TRADE = "trade"
+    SABOTAGE = "sabotage"
+    STABILIZE = "stabilize"
+
+
+class IntentStatusEnum(str, Enum):
+    """Lifecycle status of a faction intent for API responses."""
+
+    PROPOSED = "proposed"
+    SELECTED = "selected"
+    EXECUTED = "executed"
+    REJECTED = "rejected"
+
+
+class FactionIntentResponse(BaseModel):
+    """Response model for a faction intent.
+
+    Represents a faction's intended action within the simulation,
+    including action type, target, rationale, and status.
+    """
+
+    id: str = Field(description="Unique identifier for this intent")
+    faction_id: str = Field(description="ID of the faction that has this intent")
+    action_type: ActionTypeEnum = Field(description="Classification of the action")
+    target_id: Optional[str] = Field(
+        None, description="ID of target (faction_id or location_id)"
+    )
+    rationale: str = Field(description="AI-generated explanation for the intent")
+    priority: int = Field(
+        ge=1, le=3, description="Importance level (1-3, 1 = highest priority)"
+    )
+    status: IntentStatusEnum = Field(description="Current lifecycle status")
+    created_at: str = Field(description="ISO 8601 timestamp when intent was created")
+
+
+class GenerateIntentsRequest(BaseModel):
+    """Request model for triggering faction intent generation.
+
+    Optional context hints can guide the AI's decision-making process.
+    """
+
+    context_hints: Optional[List[str]] = Field(
+        default=None,
+        description="Optional hints to guide intent generation (e.g., 'focus:expansion')",
+    )
+
+
+class GenerateIntentsResponse(BaseModel):
+    """Response model for intent generation.
+
+    Returns the generated intents and a unique generation ID for tracking.
+    """
+
+    intents: List[FactionIntentResponse] = Field(
+        default_factory=list, description="List of generated intents"
+    )
+    generation_id: str = Field(
+        description="Unique identifier for this generation batch"
+    )
+
+
+class IntentListResponse(BaseModel):
+    """Response model for paginated list of faction intents."""
+
+    intents: List[FactionIntentResponse] = Field(
+        default_factory=list, description="List of faction intents"
+    )
+    total: int = Field(description="Total number of intents matching the filter")
+    has_more: bool = Field(description="Whether more results are available")
+
+
+class SelectIntentResponse(BaseModel):
+    """Response model for selecting an intent.
+
+    Returns the selected intent with updated status.
+    """
+
+    intent: FactionIntentResponse = Field(description="The selected intent")
+    status: str = Field(default="SELECTED", description="Confirmation of selection")

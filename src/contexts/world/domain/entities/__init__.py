@@ -18,8 +18,16 @@ from .faction import (
     FactionType,
 )
 from .faction_intent import (
+    ActionType,
+    DEFENSIVE_ACTIONS,
+    DEFENSIVE_INTENTS,  # Legacy alias
     FactionIntent,
-    IntentType,
+    IntentStatus,
+    IntentType,  # Backward compatibility alias for ActionType
+    OFFENSIVE_ACTIONS,
+    OFFENSIVE_INTENTS,  # Legacy alias
+    VALID_STATUS_TRANSITIONS,
+    _normalize_action_type,
 )
 from .history_event import (
     EventOutcome,
@@ -108,7 +116,15 @@ __all__ = [
     "WorldRule",
     # FactionIntent
     "FactionIntent",
-    "IntentType",
+    "ActionType",
+    "IntentStatus",
+    "IntentType",  # Backward compatibility alias
+    "OFFENSIVE_ACTIONS",
+    "DEFENSIVE_ACTIONS",
+    "OFFENSIVE_INTENTS",  # Legacy alias
+    "DEFENSIVE_INTENTS",  # Legacy alias
+    "VALID_STATUS_TRANSITIONS",
+    "_normalize_action_type",
     # Rumor
     "Rumor",
     "RumorOrigin",

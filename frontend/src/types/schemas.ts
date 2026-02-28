@@ -2370,6 +2370,94 @@ export const AdvanceTimeRequestSchema = z.object({
 export type WorldTimeResponse = z.infer<typeof WorldTimeResponseSchema>;
 export type AdvanceTimeRequest = z.infer<typeof AdvanceTimeRequestSchema>;
 
+// === Faction Intent Schemas (W5 Faction AI Intents) ===
+
+/**
+ * Action type enum matching backend ActionType.
+ * Classification of strategic actions a faction can intend.
+ */
+export const ActionTypeEnum = z.enum([
+  'EXPAND', // Grow territory by claiming new locations
+  'ATTACK', // Initiate conflict with an enemy faction
+  'TRADE', // Establish trade relationships
+  'SABOTAGE', // Undermine enemy operations
+  'STABILIZE', // Focus on internal stability and recovery
+]);
+
+/**
+ * Intent status enum matching backend IntentStatus.
+ * Tracks the lifecycle of a faction intent.
+ */
+export const IntentStatusEnum = z.enum([
+  'PROPOSED', // Generated but not yet selected
+  'SELECTED', // Chosen for execution
+  'EXECUTED', // Successfully executed
+  'REJECTED', // Discarded without execution
+]);
+
+/**
+ * Faction intent response schema.
+ * Represents a faction's intended action within the simulation.
+ */
+export const FactionIntentResponseSchema = z.object({
+  intent_id: z.string(),
+  faction_id: z.string(),
+  action_type: ActionTypeEnum,
+  target_id: z.string().nullable(),
+  target_name: z.string().nullable().optional(),
+  priority: z.number().int().min(1).max(3),
+  rationale: z.string(),
+  status: IntentStatusEnum,
+  created_at: z.string(),
+  updated_at: z.string().optional(),
+});
+
+/**
+ * Faction intent list response schema.
+ */
+export const FactionIntentListResponseSchema = z.object({
+  intents: z.array(FactionIntentResponseSchema).default([]),
+  total: z.number().int().nonnegative(),
+  faction_id: z.string(),
+});
+
+/**
+ * Request to generate new intents for a faction.
+ */
+export const GenerateIntentsRequestSchema = z.object({
+  faction_id: z.string().min(1),
+  max_intents: z.number().int().min(1).max(5).default(3),
+  context_override: z.string().max(1000).optional(),
+});
+
+/**
+ * Response from intent generation.
+ */
+export const GenerateIntentsResponseSchema = z.object({
+  intents: z.array(FactionIntentResponseSchema),
+  faction_id: z.string(),
+  generated_count: z.number().int(),
+  message: z.string().optional(),
+});
+
+/**
+ * Response from selecting an intent.
+ */
+export const SelectIntentResponseSchema = z.object({
+  intent_id: z.string(),
+  faction_id: z.string(),
+  status: IntentStatusEnum,
+  message: z.string(),
+});
+
+export type ActionType = z.infer<typeof ActionTypeEnum>;
+export type IntentStatus = z.infer<typeof IntentStatusEnum>;
+export type FactionIntentResponse = z.infer<typeof FactionIntentResponseSchema>;
+export type FactionIntentListResponse = z.infer<typeof FactionIntentListResponseSchema>;
+export type GenerateIntentsRequest = z.infer<typeof GenerateIntentsRequestSchema>;
+export type GenerateIntentsResponse = z.infer<typeof GenerateIntentsResponseSchema>;
+export type SelectIntentResponse = z.infer<typeof SelectIntentResponseSchema>;
+
 // === Geopolitics Schemas ===
 
 /**
