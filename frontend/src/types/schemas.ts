@@ -2345,3 +2345,167 @@ export type SnapshotSummary = z.infer<typeof SnapshotSummarySchema>;
 export type SnapshotListResponse = z.infer<typeof SnapshotListResponseSchema>;
 export type RestoreSnapshotResponse = z.infer<typeof RestoreSnapshotResponseSchema>;
 export type PromptVersionInfo = z.infer<typeof PromptVersionInfoSchema>;
+
+// === World Time Schemas (W5 Calendar System) ===
+
+/**
+ * Response model for world time state.
+ * Provides a simplified view of the world calendar.
+ */
+export const WorldTimeResponseSchema = z.object({
+  year: z.number().int(),
+  month: z.number().int().min(1).max(12),
+  day: z.number().int().min(1).max(30),
+  era_name: z.string(),
+  display_string: z.string(),
+});
+
+/**
+ * Request model for advancing world time.
+ */
+export const AdvanceTimeRequestSchema = z.object({
+  days: z.number().int().positive('Days must be greater than 0'),
+});
+
+export type WorldTimeResponse = z.infer<typeof WorldTimeResponseSchema>;
+export type AdvanceTimeRequest = z.infer<typeof AdvanceTimeRequestSchema>;
+
+// === Geopolitics Schemas ===
+
+/**
+ * Request body for declaring war between two factions.
+ */
+export const DeclareWarRequestSchema = z.object({
+  aggressor_id: z.string(),
+  defender_id: z.string(),
+  reason: z.string(),
+});
+
+/**
+ * Request body for forming an alliance between two factions.
+ */
+export const FormAllianceRequestSchema = z.object({
+  faction_a_id: z.string(),
+  faction_b_id: z.string(),
+  pact_type: z.string().optional().default('defensive_alliance'),
+});
+
+/**
+ * Request body for transferring territory control.
+ */
+export const TransferTerritoryRequestSchema = z.object({
+  location_id: z.string(),
+  new_controller_id: z.string().nullable(),
+  reason: z.string().optional().default(''),
+});
+
+/**
+ * Response after declaring war.
+ */
+export const WarResponseSchema = z.object({
+  status: z.literal('war_declared'),
+  aggressor_id: z.string(),
+  defender_id: z.string(),
+});
+
+/**
+ * Response after forming an alliance.
+ */
+export const AllianceResponseSchema = z.object({
+  status: z.literal('alliance_formed'),
+  faction_a_id: z.string(),
+  faction_b_id: z.string(),
+});
+
+/**
+ * Response after transferring territory.
+ */
+export const TerritoryTransferResponseSchema = z.object({
+  status: z.literal('territory_transferred'),
+  location_id: z.string(),
+  previous_controller_id: z.string().nullable(),
+  new_controller_id: z.string().nullable(),
+});
+
+/**
+ * Pact summary for diplomacy matrix detail response.
+ */
+export const PactSummarySchema = z.object({
+  pact_id: z.string(),
+  faction_a_id: z.string(),
+  faction_b_id: z.string(),
+  pact_type: z.string(),
+  signed_date: z.string().nullable().optional(),
+  expires_date: z.string().nullable().optional(),
+  is_active: z.boolean().default(true),
+});
+
+/**
+ * Diplomacy matrix detail response with active pacts.
+ */
+export const DiplomacyMatrixDetailResponseSchema = z.object({
+  world_id: z.string(),
+  matrix: z.record(z.string(), z.record(z.string(), z.string())),
+  factions: z.array(z.string()).default([]),
+  active_pacts: z.array(PactSummarySchema).default([]),
+});
+
+/**
+ * Territory summary for a single location.
+ */
+export const TerritorySummarySchema = z.object({
+  location_id: z.string(),
+  name: z.string(),
+  location_type: z.string(),
+  controlling_faction_id: z.string().nullable(),
+  contested_by: z.array(z.string()).default([]),
+  territory_value: z.number().int().default(0),
+  infrastructure_level: z.number().int().default(0),
+  population: z.number().int().default(0),
+  resource_types: z.array(z.string()).default([]),
+});
+
+/**
+ * Territories response for a world.
+ */
+export const TerritoriesResponseSchema = z.object({
+  world_id: z.string(),
+  territories: z.array(TerritorySummarySchema).default([]),
+  total_count: z.number().int(),
+  controlled_count: z.number().int(),
+  contested_count: z.number().int(),
+});
+
+/**
+ * Faction resource summary.
+ */
+export const FactionResourceSummarySchema = z.object({
+  faction_id: z.string(),
+  faction_name: z.string(),
+  resources: z.record(z.string(), z.number()).default({}),
+  total_territories: z.number().int().default(0),
+  total_population: z.number().int().default(0),
+});
+
+/**
+ * World resources response.
+ */
+export const WorldResourcesResponseSchema = z.object({
+  world_id: z.string(),
+  factions: z.array(FactionResourceSummarySchema).default([]),
+  total_resources: z.record(z.string(), z.number()).default({}),
+  timestamp: z.string(),
+});
+
+export type DeclareWarRequest = z.infer<typeof DeclareWarRequestSchema>;
+export type FormAllianceRequest = z.infer<typeof FormAllianceRequestSchema>;
+export type TransferTerritoryRequest = z.infer<typeof TransferTerritoryRequestSchema>;
+export type WarResponse = z.infer<typeof WarResponseSchema>;
+export type AllianceResponse = z.infer<typeof AllianceResponseSchema>;
+export type TerritoryTransferResponse = z.infer<typeof TerritoryTransferResponseSchema>;
+export type PactSummary = z.infer<typeof PactSummarySchema>;
+export type DiplomacyMatrixDetailResponse = z.infer<typeof DiplomacyMatrixDetailResponseSchema>;
+export type TerritorySummary = z.infer<typeof TerritorySummarySchema>;
+export type TerritoriesResponse = z.infer<typeof TerritoriesResponseSchema>;
+export type FactionResourceSummary = z.infer<typeof FactionResourceSummarySchema>;
+export type WorldResourcesResponse = z.infer<typeof WorldResourcesResponseSchema>;

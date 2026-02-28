@@ -7,13 +7,19 @@ relations between all factions in a world. It serves as a consistency boundary
 for diplomatic status changes and provides efficient querying capabilities.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from src.core.result import Err, Ok, Result
 
 from ..entities.entity import Entity
 from ..value_objects.diplomatic_status import DiplomaticStatus
+
+if TYPE_CHECKING:
+    from ..entities.diplomatic_pact import DiplomaticPact, PactType
 
 
 @dataclass
@@ -33,6 +39,7 @@ class DiplomacyMatrix(Entity):
         relations: Dict mapping (faction_a_id, faction_b_id) tuples to DiplomaticStatus
             The tuple is always stored in sorted order to ensure (A, B) == (B, A)
         faction_ids: Set of all faction IDs tracked in this matrix
+        active_pacts: List of active diplomatic pacts between factions
 
     Example:
         >>> matrix = DiplomacyMatrix(world_id="world-1")
@@ -44,6 +51,7 @@ class DiplomacyMatrix(Entity):
     world_id: str = ""
     relations: Dict[Tuple[str, str], DiplomaticStatus] = field(default_factory=dict)
     faction_ids: set = field(default_factory=set)
+    active_pacts: List["DiplomaticPact"] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Initialize diplomacy matrix with validation."""
@@ -342,6 +350,162 @@ class DiplomacyMatrix(Entity):
         """
         return len(self.faction_ids)
 
+    def add_pact(self, pact: "DiplomaticPact") -> Result[None, ValueError]:
+        """Add a diplomatic pact between factions.
+
+        Validates that the pact is compatible with existing relations.
+        For example, factions at WAR cannot have a TRADE_AGREEMENT.
+
+        Args:
+            pact: The DiplomaticPact to add.
+
+        Returns:
+            Ok(None) on success, Err(ValueError) if pact is incompatible.
+
+        Example:
+            >>> from src.contexts.world.domain.entities import DiplomaticPact, PactType
+            >>> pact = DiplomaticPact.create_trade_agreement("f1", "f2")
+            >>> result = matrix.add_pact(pact)
+        """
+        from ..entities.diplomatic_pact import PactType
+
+        # Check for incompatible existing pacts
+        existing_pacts = self.get_pacts_between(pact.faction_a_id, pact.faction_b_id)
+        for existing in existing_pacts:
+            if existing.is_active() and existing.is_incompatible_with(pact.pact_type):
+                return Err(
+                    ValueError(
+                        f"Cannot add {pact.pact_type.value}: incompatible with "
+                        f"existing {existing.pact_type.value} between "
+                        f"{pact.faction_a_id} and {pact.faction_b_id}"
+                    )
+                )
+
+        # Check for incompatible diplomatic status
+        status = self.get_status(pact.faction_a_id, pact.faction_b_id)
+        if status == DiplomaticStatus.AT_WAR and pact.pact_type in (
+            PactType.TRADE_AGREEMENT,
+            PactType.NON_AGGRESSION,
+            PactType.DEFENSIVE_PACT,
+            PactType.RESEARCH_AGREEMENT,
+        ):
+            return Err(
+                ValueError(
+                    f"Cannot add {pact.pact_type.value} while factions are at war"
+                )
+            )
+
+        # Add the pact
+        self.active_pacts.append(pact)
+
+        # Track factions
+        self.faction_ids.add(pact.faction_a_id)
+        self.faction_ids.add(pact.faction_b_id)
+
+        self.touch()
+        return Ok(None)
+
+    def get_pacts_between(
+        self, faction_a: str, faction_b: str
+    ) -> List["DiplomaticPact"]:
+        """Get all pacts between two factions.
+
+        Args:
+            faction_a: First faction ID.
+            faction_b: Second faction ID.
+
+        Returns:
+            List of DiplomaticPact objects between the two factions.
+
+        Example:
+            >>> pacts = matrix.get_pacts_between("kingdom-a", "empire-b")
+            >>> for pact in pacts:
+            ...     print(f"{pact.pact_type.value}: active={pact.is_active()}")
+        """
+        result = []
+        for pact in self.active_pacts:
+            if pact.involves_faction(faction_a) and pact.involves_faction(faction_b):
+                result.append(pact)
+        return result
+
+    def get_active_pacts_between(
+        self, faction_a: str, faction_b: str
+    ) -> List["DiplomaticPact"]:
+        """Get all active pacts between two factions.
+
+        Args:
+            faction_a: First faction ID.
+            faction_b: Second faction ID.
+
+        Returns:
+            List of active DiplomaticPact objects.
+        """
+        return [
+            pact
+            for pact in self.get_pacts_between(faction_a, faction_b)
+            if pact.is_active()
+        ]
+
+    def get_pacts_by_type(
+        self, pact_type: "PactType"
+    ) -> List["DiplomaticPact"]:
+        """Get all pacts of a specific type.
+
+        Args:
+            pact_type: The type of pact to filter by.
+
+        Returns:
+            List of DiplomaticPact objects of the specified type.
+        """
+        return [pact for pact in self.active_pacts if pact.pact_type == pact_type]
+
+    def get_pacts_for_faction(self, faction_id: str) -> List["DiplomaticPact"]:
+        """Get all pacts involving a specific faction.
+
+        Args:
+            faction_id: The faction ID to query.
+
+        Returns:
+            List of DiplomaticPact objects involving the faction.
+        """
+        return [pact for pact in self.active_pacts if pact.involves_faction(faction_id)]
+
+    def remove_pact(self, pact_id: str) -> bool:
+        """Remove a pact by its ID.
+
+        Args:
+            pact_id: The ID of the pact to remove.
+
+        Returns:
+            True if pact was removed, False if not found.
+        """
+        for i, pact in enumerate(self.active_pacts):
+            if pact.id == pact_id:
+                self.active_pacts.pop(i)
+                self.touch()
+                return True
+        return False
+
+    def cleanup_expired_pacts(self) -> int:
+        """Remove all expired pacts from the active list.
+
+        Returns:
+            Number of expired pacts removed.
+        """
+        current_time = datetime.now()
+        initial_count = len(self.active_pacts)
+
+        self.active_pacts = [
+            pact for pact in self.active_pacts
+            if pact.is_active(current_time)
+        ]
+
+        removed = initial_count - len(self.active_pacts)
+        if removed > 0:
+            self.touch()
+
+        return removed
+
     def _to_dict_specific(self) -> Dict[str, Any]:
         """Convert DiplomacyMatrix-specific data to dictionary."""
         return {
@@ -353,6 +517,7 @@ class DiplomacyMatrix(Entity):
             "faction_ids": list(self.faction_ids),
             "faction_count": len(self.faction_ids),
             "relation_count": len(self.relations),
+            "active_pacts": [pact.to_dict() for pact in self.active_pacts],
         }
 
     @classmethod

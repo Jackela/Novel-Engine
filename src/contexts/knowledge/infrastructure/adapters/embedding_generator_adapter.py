@@ -9,10 +9,22 @@ Constitution Compliance:
 - Article V (SOLID): SRP - embedding generation only
 
 Note:
-    For production LRU + TTL caching, use CachedEmbeddingService wrapper
-    instead of relying on the internal cache. The internal cache here
-    is kept for backward compatibility but does not have TTL or LRU eviction.
+    For production LRU + TTL caching, wrap this adapter with CachedEmbeddingService
+    from src.contexts.knowledge.infrastructure.adapters.cached_embedding_service.
+    The internal cache here is kept for backward compatibility but does not have
+    proper TTL or LRU eviction.
+
+Usage:
+    >>> # Simple usage (internal cache, no TTL)
+    >>> service = EmbeddingServiceAdapter()
+
+    >>> # Production usage (with LRU + TTL caching)
+    >>> from src.contexts.knowledge.infrastructure.adapters.cached_embedding_service import CachedEmbeddingService
+    >>> base_service = EmbeddingServiceAdapter(enable_internal_cache=False)
+    >>> cached_service = CachedEmbeddingService(base_service)
 """
+
+from __future__ import annotations
 
 import hashlib
 import os

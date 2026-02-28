@@ -1880,6 +1880,16 @@ class ChatMessage(BaseModel):
     content: str
 
 
+# PREP-013: Import persistent chat session repository
+from src.contexts.knowledge.infrastructure.repositories.chat_session_repository import (
+    ChatSessionRepository as PersistentChatSessionRepository,
+    ChatMessage as DomainChatMessage,
+)
+
+# PREP-013: Use persistent repository instead of in-memory store
+_persistent_chat_repository = PersistentChatSessionRepository()
+
+
 def get_context_window_manager(request: Request) -> ContextWindowManager:
     """
     Get or create the context window manager from app state.
@@ -1921,25 +1931,33 @@ class ChatRequest(BaseModel):
 
 
 # BRAIN-037A-03: In-memory session storage for chat history
+# PREP-013: Replaced with persistent repository
+
+
 class ChatSessionStore:
-    """In-memory store for chat sessions."""
+    """
+    Wrapper for chat session storage.
+
+    PREP-013: Now delegates to persistent repository for durability.
+    Maintains backward compatibility with existing code.
+    """
 
     def __init__(self) -> None:
-        self._sessions: dict[str, list[ChatMessage]] = {}
+        self._repository = _persistent_chat_repository
 
     def get_session(self, session_id: str) -> list[ChatMessage]:
         """Get chat history for a session."""
-        return self._sessions.get(session_id, [])
+        messages = self._repository.get_session(session_id)
+        return [ChatMessage(role=m.role, content=m.content) for m in messages]
 
     def add_message(self, session_id: str, message: ChatMessage) -> None:
         """Add a message to a session."""
-        if session_id not in self._sessions:
-            self._sessions[session_id] = []
-        self._sessions[session_id].append(message)
+        domain_message = DomainChatMessage(role=message.role, content=message.content)
+        self._repository.add_message(session_id, domain_message)
 
     def clear_session(self, session_id: str) -> None:
         """Clear chat history for a session."""
-        self._sessions.pop(session_id, None)
+        self._repository.clear_session(session_id)
 
 
 # Global session store
@@ -2138,3 +2156,75 @@ async def chat_completion(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+# ==================== Chat Session Endpoints (PREP-013) ====================
+
+
+class ChatSessionListResponse(BaseModel):
+    """Response for listing chat sessions."""
+
+    sessions: list[dict]
+    total: int
+
+
+class ChatSessionMessagesResponse(BaseModel):
+    """Response for getting session messages."""
+
+    session_id: str
+    messages: list[dict]
+    total: int
+
+
+@router.get("/brain/chat/sessions", response_model=ChatSessionListResponse)
+async def list_chat_sessions(
+    limit: int = 50,
+    offset: int = 0,
+) -> ChatSessionListResponse:
+    """
+    List all chat sessions.
+
+    PREP-013: Returns a paginated list of chat sessions.
+    Sessions are ordered by most recently updated.
+    """
+    sessions = _persistent_chat_repository.list_sessions(limit=limit, offset=offset)
+    return ChatSessionListResponse(
+        sessions=[s.to_dict() for s in sessions],
+        total=len(sessions),
+    )
+
+
+@router.get(
+    "/brain/chat/sessions/{session_id}/messages",
+    response_model=ChatSessionMessagesResponse,
+)
+async def get_session_messages(
+    session_id: str,
+    limit: int = 100,
+    offset: int = 0,
+) -> ChatSessionMessagesResponse:
+    """
+    Get messages for a specific chat session.
+
+    PREP-013: Returns paginated messages for a session.
+    Messages are ordered chronologically.
+    """
+    messages = _persistent_chat_repository.get_session_messages(
+        session_id, limit=limit, offset=offset
+    )
+    return ChatSessionMessagesResponse(
+        session_id=session_id,
+        messages=[m.to_dict() for m in messages],
+        total=len(messages),
+    )
+
+
+@router.delete("/brain/chat/sessions/{session_id}")
+async def clear_chat_session(session_id: str) -> dict:
+    """
+    Clear a chat session.
+
+    PREP-013: Deletes all messages in a session.
+    """
+    _persistent_chat_repository.clear_session(session_id)
+    return {"status": "success", "message": f"Session {session_id} cleared"}

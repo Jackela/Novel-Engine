@@ -5,6 +5,11 @@ This module exports all domain entities for the World context.
 """
 
 from .entity import Entity
+from .diplomatic_pact import (
+    DiplomaticPact,
+    INCOMPATIBLE_PACTS,
+    PactType,
+)
 from .faction import (
     Faction,
     FactionAlignment,
@@ -43,6 +48,7 @@ from .relationship import (
     Relationship,
     RelationshipType,
 )
+from .resource import Resource
 from .rumor import (
     Rumor,
     RumorOrigin,
@@ -92,6 +98,12 @@ __all__ = [
     # LoreEntry
     "LoreEntry",
     "LoreCategory",
+    # Resource
+    "Resource",
+    # DiplomaticPact
+    "DiplomaticPact",
+    "PactType",
+    "INCOMPATIBLE_PACTS",
     # WorldRule
     "WorldRule",
     # FactionIntent

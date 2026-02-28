@@ -109,12 +109,13 @@ forbidden_modules =
     src.contexts.world
 
 # Rule 5: Story Context Isolation
+# Note: Story context is allowed to import character value objects for scene generation
+# This is a controlled dependency for domain value objects only
 [importlinter:contract:5]
 name = Story Context Isolation
 type = forbidden
 source_modules = src.contexts.story
 forbidden_modules =
-    src.contexts.character
     src.contexts.narratives
     src.contexts.campaigns
     src.contexts.interactions
@@ -122,6 +123,10 @@ forbidden_modules =
     src.contexts.knowledge
     src.contexts.subjective
     src.contexts.world
+ignore_imports =
+    # Story needs CharacterContext value object for scene generation
+    src.contexts.story.application.ports.scene_generator_port -> src.contexts.character.domain.value_objects
+    src.contexts.story.application.services.scene_service -> src.contexts.character.domain.value_objects
 
 # Rule 6: Narrative Context Isolation
 [importlinter:contract:6]

@@ -20,9 +20,16 @@ Typical usage example:
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from .entity import Entity
+
+if TYPE_CHECKING:
+    from src.contexts.world.domain.value_objects import ResourceYield
+
+
+# Type alias for demographic breakdown (race/species -> percentage)
+DemographicBreakdown = Dict[str, float]
 
 
 class LocationType(Enum):
@@ -187,7 +194,14 @@ class Location(Entity):
     parent_location_id: Optional[str] = None
     child_location_ids: List[str] = field(default_factory=list)
     controlling_faction_id: Optional[str] = None
+    contested_by: List[str] = field(default_factory=list)  # Faction IDs contesting control
+    resource_yields: List["ResourceYield"] = field(default_factory=list)  # Production rates
+    territory_value: int = 0  # Strategic importance (0-100)
+    infrastructure_level: int = 0  # Development level (0-100)
     population: int = 0
+    demographic_breakdown: DemographicBreakdown = field(default_factory=dict)  # race/species -> percentage
+    population_growth_rate: float = 0.0  # Annual growth rate (e.g., 0.02 = 2%)
+    happiness_level: int = 50  # Population happiness (0-100)
     notable_features: List[str] = field(default_factory=list)
     resources: List[str] = field(default_factory=list)
     dangers: List[str] = field(default_factory=list)
@@ -224,11 +238,60 @@ class Location(Entity):
         if not 0 <= self.magic_concentration <= 100:
             errors.append("Magic concentration must be between 0 and 100")
 
+        if not 0 <= self.territory_value <= 100:
+            errors.append("Territory value must be between 0 and 100")
+
+        if not 0 <= self.infrastructure_level <= 100:
+            errors.append("Infrastructure level must be between 0 and 100")
+
+        if not 0 <= self.happiness_level <= 100:
+            errors.append("Happiness level must be between 0 and 100")
+
+        # Validate demographic breakdown percentages sum to ~100
+        errors.extend(self._validate_demographics())
+
         # Validate type-specific rules
         errors.extend(self._validate_type_specific_rules())
 
         # Validate hierarchy consistency
         errors.extend(self._validate_hierarchy())
+
+        # Validate territory control
+        errors.extend(self._validate_territory_control())
+
+        return errors
+
+    def _validate_territory_control(self) -> List[str]:
+        """Validate territory control consistency."""
+        errors = []
+
+        # Controlling faction shouldn't be in contested list
+        if self.controlling_faction_id and self.controlling_faction_id in self.contested_by:
+            errors.append(
+                f"Controlling faction {self.controlling_faction_id} "
+                "should not be in contested_by list"
+            )
+
+        return errors
+
+    def _validate_demographics(self) -> List[str]:
+        """Validate demographic breakdown consistency."""
+        errors = []
+
+        if self.demographic_breakdown:
+            # Check that all percentages are valid
+            for group, percentage in self.demographic_breakdown.items():
+                if percentage < 0 or percentage > 100:
+                    errors.append(
+                        f"Demographic percentage for {group} must be between 0 and 100"
+                    )
+
+            # Check that percentages approximately sum to 100 (allow 1% tolerance)
+            total = sum(self.demographic_breakdown.values())
+            if total > 0 and abs(total - 100) > 1:
+                errors.append(
+                    f"Demographic percentages sum to {total:.1f}%, should be ~100%"
+                )
 
         return errors
 
@@ -418,6 +481,146 @@ class Location(Entity):
             faction_id: ID of the controlling faction, or None
         """
         self.controlling_faction_id = faction_id
+        # Remove from contested_by if present
+        if faction_id and faction_id in self.contested_by:
+            self.contested_by.remove(faction_id)
+        self.touch()
+
+    def transfer_control(self, new_faction_id: str) -> None:
+        """
+        Transfer control of this location to a new faction.
+
+        This performs a formal transfer of control, updating the controlling
+        faction and clearing the contested list.
+
+        Args:
+            new_faction_id: ID of the faction taking control
+
+        Raises:
+            ValueError: If new_faction_id is empty
+        """
+        if not new_faction_id or not new_faction_id.strip():
+            raise ValueError("New faction ID cannot be empty")
+
+        self.controlling_faction_id = new_faction_id
+        # Clear contested list on successful transfer
+        self.contested_by.clear()
+        self.touch()
+
+    def add_contender(self, faction_id: str) -> None:
+        """
+        Add a faction as a contender for control of this location.
+
+        Args:
+            faction_id: ID of the faction contesting control
+
+        Raises:
+            ValueError: If faction is already the controller
+        """
+        if faction_id == self.controlling_faction_id:
+            raise ValueError("Cannot add controlling faction as contender")
+
+        if faction_id not in self.contested_by:
+            self.contested_by.append(faction_id)
+            self.touch()
+
+    def remove_contender(self, faction_id: str) -> bool:
+        """
+        Remove a faction from the contenders list.
+
+        Args:
+            faction_id: ID of the faction to remove
+
+        Returns:
+            True if removed, False if not found
+        """
+        if faction_id in self.contested_by:
+            self.contested_by.remove(faction_id)
+            self.touch()
+            return True
+        return False
+
+    def is_contested(self) -> bool:
+        """Check if this location is being contested."""
+        return len(self.contested_by) > 0
+
+    def add_resource_yield(self, resource_yield: "ResourceYield") -> None:
+        """
+        Add a resource yield to this location.
+
+        Args:
+            resource_yield: The ResourceYield to add
+        """
+        # Check if this resource type already exists
+        from src.contexts.world.domain.value_objects import ResourceYield as RY
+
+        if isinstance(resource_yield, RY):
+            # Remove existing yield of same type
+            self.resource_yields = [
+                ry for ry in self.resource_yields
+                if ry.resource_type != resource_yield.resource_type
+            ]
+            self.resource_yields.append(resource_yield)
+            self.touch()
+
+    def get_resource_yield(self, resource_type) -> Optional["ResourceYield"]:
+        """
+        Get the resource yield for a specific resource type.
+
+        Args:
+            resource_type: The ResourceType to look up
+
+        Returns:
+            The ResourceYield if found, None otherwise
+        """
+        for ry in self.resource_yields:
+            if ry.resource_type == resource_type:
+                return ry
+        return None
+
+    def collect_resources(self) -> Dict[str, int]:
+        """
+        Collect all resource yields from this location.
+
+        Returns:
+            Dictionary mapping resource type names to collected amounts
+        """
+        collected = {}
+        for ry in self.resource_yields:
+            yield_amount = ry.calculate_yield()
+            if yield_amount > 0:
+                collected[ry.resource_type.value] = yield_amount
+        return collected
+
+    def upgrade_infrastructure(self, levels: int = 1) -> None:
+        """
+        Upgrade the infrastructure level of this location.
+
+        Args:
+            levels: Number of levels to increase (default 1)
+
+        Raises:
+            ValueError: If resulting level exceeds 100
+        """
+        new_level = self.infrastructure_level + levels
+        if new_level > 100:
+            raise ValueError(f"Infrastructure level cannot exceed 100 (would be {new_level})")
+        self.infrastructure_level = new_level
+        self.touch()
+
+    def set_territory_value(self, value: int) -> None:
+        """
+        Set the strategic value of this territory.
+
+        Args:
+            value: Strategic importance (0-100)
+
+        Raises:
+            ValueError: If value is outside valid range
+        """
+        if not 0 <= value <= 100:
+            raise ValueError("Territory value must be between 0 and 100")
+        self.territory_value = value
         self.touch()
 
     def update_status(self, new_status: LocationStatus) -> None:
@@ -502,7 +705,22 @@ class Location(Entity):
             "parent_location_id": self.parent_location_id,
             "child_location_ids": self.child_location_ids,
             "controlling_faction_id": self.controlling_faction_id,
+            "contested_by": self.contested_by,
+            "resource_yields": [
+                {
+                    "resource_type": ry.resource_type.value,
+                    "base_amount": ry.base_amount,
+                    "modifier": ry.modifier,
+                    "current_stock": ry.current_stock,
+                }
+                for ry in self.resource_yields
+            ],
+            "territory_value": self.territory_value,
+            "infrastructure_level": self.infrastructure_level,
             "population": self.population,
+            "demographic_breakdown": self.demographic_breakdown,
+            "population_growth_rate": self.population_growth_rate,
+            "happiness_level": self.happiness_level,
             "notable_features": self.notable_features,
             "resources": self.resources,
             "dangers": self.dangers,

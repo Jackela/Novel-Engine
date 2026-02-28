@@ -8,12 +8,12 @@ from typing import Any, Dict
 import requests
 import yaml
 
-from src.api.schemas import CharacterGenerationResponse
 from src.contexts.character.application.services.generation_service import (
     CharacterGenerationInput,
     CharacterGenerationResult,
     CharacterGeneratorPort,
 )
+from src.contexts.character.domain.value_objects import CharacterContext
 
 
 class LLMCharacterGenerator(CharacterGeneratorPort):
@@ -116,9 +116,9 @@ class LLMCharacterGenerator(CharacterGeneratorPort):
         except (KeyError, IndexError, TypeError) as e:
             raise RuntimeError(f"Failed to parse Gemini response: {e}")
 
-    def _parse_response(self, content: str) -> CharacterGenerationResponse:
+    def _parse_response(self, content: str) -> CharacterContext:
         payload = self._extract_json(content)
-        return CharacterGenerationResponse.model_validate(payload)
+        return CharacterContext.from_dict(payload)
 
     def _extract_json(self, content: str) -> Dict[str, Any]:
         # Try direct parse first

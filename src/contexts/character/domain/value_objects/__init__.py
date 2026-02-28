@@ -14,6 +14,7 @@ Value objects included:
 - CharacterReaction: Character responses to world events
 """
 
+from .character_context import CharacterContext
 from .character_goal import CharacterGoal, GoalStatus, GoalUrgency
 from .character_id import CharacterID
 from .character_memory import CharacterMemory
@@ -38,6 +39,7 @@ from .character_stats import (
 from .skills import ProficiencyLevel, Skill, SkillCategory, SkillGroup, Skills
 
 __all__ = [
+    "CharacterContext",
     "CharacterGoal",
     "CharacterMemory",
     "CharacterPsychology",

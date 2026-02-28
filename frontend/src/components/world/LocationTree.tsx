@@ -7,6 +7,9 @@
  *
  * SIM-023: Now supports displaying characters at each location with avatar display,
  * filter toggle, and CharacterDetailDialog for viewing character details.
+ *
+ * PREP-011: Added territory control visualization - color-coding by faction,
+ * resource tooltips, and territory value badges.
  */
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -47,6 +50,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { WorldLocation, LocationType, CharacterSummary } from '@/types/schemas';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/Avatar';
+import { getFactionColor, getFactionBorderColor } from '@/lib/api/worldStateApi';
 import {
   Tooltip,
   TooltipContent,
@@ -61,6 +65,26 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+
+/**
+ * Resource yield data for territory tooltip (PREP-011).
+ */
+export interface ResourceYield {
+  resource_type: string;
+  current_stock?: number;
+  base_amount?: number;
+}
+
+/**
+ * Territory control data for location visualization (PREP-011).
+ */
+export interface TerritoryControlData {
+  controlling_faction_id: string | null;
+  contested_by?: string[];
+  territory_value?: number;
+  resource_yields?: ResourceYield[];
+}
 
 /**
  * Map LocationType to appropriate lucide-react icon.
@@ -324,10 +348,15 @@ export interface LocationTreeItemProps {
   showCharacters?: boolean;
   /** Callback when character is clicked (SIM-023) */
   onCharacterClick?: ((character: CharacterSummary) => void) | undefined;
+  /** Territory control data (PREP-011) */
+  territoryData?: TerritoryControlData | undefined;
+  /** Map of location IDs to territory data for children (PREP-011) */
+  territoryDataMap?: Record<string, TerritoryControlData> | undefined;
 }
 
 /**
  * LocationTreeItem - Recursive component for a single tree node.
+ * PREP-011: Now includes faction color-coding, resource tooltips, and territory badges.
  */
 function LocationTreeItem({
   node,
@@ -339,11 +368,22 @@ function LocationTreeItem({
   charactersAtLocation = [],
   showCharacters = false,
   onCharacterClick,
+  territoryData,
+  territoryDataMap = {},
 }: LocationTreeItemProps) {
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedIds.has(node.id);
   const isSelected = selectedId === node.id;
   const Icon = getLocationIcon(node.location_type);
+
+  // PREP-011: Get faction color for territory control visualization
+  const controllingFaction = territoryData?.controlling_faction_id ?? node.controlling_faction_id;
+  const factionColor = getFactionColor(controllingFaction);
+  const factionBorderColor = getFactionBorderColor(controllingFaction);
+  const isContested = territoryData?.contested_by && territoryData.contested_by.length > 0;
+  const territoryValue = territoryData?.territory_value ?? 0;
+  const resourceYields = territoryData?.resource_yields ?? [];
+  const isStrategic = territoryValue >= 50;
 
   const handleSelect = useCallback(() => {
     onSelect?.(node.id);
@@ -366,67 +406,125 @@ function LocationTreeItem({
 
   return (
     <Collapsible open={isExpanded} onOpenChange={handleToggle}>
-      <div
-        className={cn(
-          'flex items-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors',
-          'hover:bg-accent hover:text-accent-foreground',
-          'cursor-pointer select-none',
-          isSelected && 'bg-accent font-medium text-accent-foreground'
-        )}
-        style={{ paddingLeft: `${depth * 12 + 8}px` }}
-        onClick={handleSelect}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleSelect();
-          }
-          if (e.key === 'ArrowRight' && hasChildren && !isExpanded) {
-            e.preventDefault();
-            handleToggle();
-          }
-          if (e.key === 'ArrowLeft' && hasChildren && isExpanded) {
-            e.preventDefault();
-            handleToggle();
-          }
-        }}
-        role="treeitem"
-        aria-selected={isSelected}
-        aria-expanded={hasChildren ? isExpanded : undefined}
-        tabIndex={0}
-      >
-        {/* Expand/collapse chevron or spacer */}
-        {hasChildren ? (
-          <CollapsibleTrigger asChild onClick={handleChevronClick}>
-            <button
-              type="button"
-              className="flex h-4 w-4 shrink-0 items-center justify-center rounded hover:bg-muted"
-              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className={cn(
+                'flex items-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors',
+                'hover:bg-accent hover:text-accent-foreground',
+                'cursor-pointer select-none',
+                isSelected && 'bg-accent font-medium text-accent-foreground',
+                // PREP-011: Faction border styling
+                controllingFaction && 'border-l-2'
+              )}
+              style={{
+                paddingLeft: `${depth * 12 + 8}px`,
+                // PREP-011: Dynamic faction border color
+                borderLeftColor: controllingFaction ? factionBorderColor : undefined,
+              }}
+              onClick={handleSelect}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelect();
+                }
+                if (e.key === 'ArrowRight' && hasChildren && !isExpanded) {
+                  e.preventDefault();
+                  handleToggle();
+                }
+                if (e.key === 'ArrowLeft' && hasChildren && isExpanded) {
+                  e.preventDefault();
+                  handleToggle();
+                }
+              }}
+              role="treeitem"
+              aria-selected={isSelected}
+              aria-expanded={hasChildren ? isExpanded : undefined}
+              tabIndex={0}
             >
-              <ChevronRight
-                className={cn(
-                  'h-3.5 w-3.5 text-muted-foreground transition-transform',
-                  isExpanded && 'rotate-90'
-                )}
+              {/* Expand/collapse chevron or spacer */}
+              {hasChildren ? (
+                <CollapsibleTrigger asChild onClick={handleChevronClick}>
+                  <button
+                    type="button"
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded hover:bg-muted"
+                    aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                  >
+                    <ChevronRight
+                      className={cn(
+                        'h-3.5 w-3.5 text-muted-foreground transition-transform',
+                        isExpanded && 'rotate-90'
+                      )}
+                    />
+                  </button>
+                </CollapsibleTrigger>
+              ) : (
+                <span className="w-4 shrink-0" />
+              )}
+
+              {/* Location type icon - PREP-011: colored by faction */}
+              <Icon
+                className="h-4 w-4 shrink-0"
+                style={{ color: controllingFaction ? factionColor : undefined }}
               />
-            </button>
-          </CollapsibleTrigger>
-        ) : (
-          <span className="w-4 shrink-0" />
-        )}
 
-        {/* Location type icon */}
-        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+              {/* Location name */}
+              <span className="truncate">{node.name}</span>
 
-        {/* Location name */}
-        <span className="truncate">{node.name}</span>
+              {/* PREP-011: Territory value badge for strategic locations */}
+              {isStrategic && (
+                <Badge
+                  variant="outline"
+                  className="ml-1 h-4 px-1 text-[10px] font-medium"
+                  style={{
+                    borderColor: factionBorderColor,
+                    color: factionColor,
+                  }}
+                >
+                  {territoryValue}
+                </Badge>
+              )}
 
-        {/* Child count badge */}
-        {hasChildren && (
-          <span className="ml-auto text-xs text-muted-foreground">
-            {node.children.length}
-          </span>
-        )}
-      </div>
+              {/* PREP-011: Contested indicator */}
+              {isContested && (
+                <span
+                  className="ml-1 h-2 w-2 rounded-full bg-orange-500"
+                  title="Contested territory"
+                />
+              )}
+
+              {/* Child count badge */}
+              {hasChildren && (
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {node.children.length}
+                </span>
+              )}
+            </div>
+          </TooltipTrigger>
+          {/* PREP-011: Resource tooltip */}
+          {resourceYields.length > 0 && (
+            <TooltipContent side="right" className="max-w-xs">
+              <p className="mb-1 font-medium">Resources</p>
+              <ul className="text-xs">
+                {resourceYields.map((resource, idx) => (
+                  <li key={idx} className="flex justify-between gap-4">
+                    <span className="capitalize">{resource.resource_type.replace('_', ' ')}</span>
+                    {resource.current_stock !== undefined && (
+                      <span className="text-muted-foreground">{resource.current_stock}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {isContested && (
+                <p className="mt-2 text-xs text-orange-500">
+                  Contested by {territoryData?.contested_by?.join(', ')}
+                </p>
+              )}
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
 
       {/* Character avatars under this location (SIM-023) */}
       {showCharacters && charactersAtLocation.length > 0 && (
@@ -453,6 +551,8 @@ function LocationTreeItem({
               charactersAtLocation={charactersAtLocation}
               showCharacters={showCharacters}
               onCharacterClick={onCharacterClick}
+              territoryData={territoryDataMap[child.id]}
+              territoryDataMap={territoryDataMap}
             />
           ))}
         </CollapsibleContent>
@@ -478,6 +578,8 @@ export interface LocationTreeProps {
   showCharacters?: boolean;
   /** Callback when character is clicked (SIM-023) */
   onCharacterClick?: ((character: CharacterSummary) => void) | undefined;
+  /** Map of location IDs to territory control data (PREP-011) */
+  territoryDataMap?: Record<string, TerritoryControlData>;
 }
 
 /**
@@ -529,6 +631,9 @@ function getCharactersWithoutLocation(
  *
  * SIM-023: Now supports displaying characters at each location with toggle filter.
  *
+ * PREP-011: Now supports territory control visualization with faction colors,
+ * resource tooltips, and strategic value badges.
+ *
  * @example
  * ```tsx
  * <LocationTree
@@ -538,6 +643,7 @@ function getCharactersWithoutLocation(
  *   characters={characters}
  *   showCharacters={showCharacters}
  *   onCharacterClick={(char) => openCharacterDialog(char)}
+ *   territoryDataMap={territoryDataMap}
  * />
  * ```
  */
@@ -550,6 +656,7 @@ export function LocationTree({
   characters = [],
   showCharacters = false,
   onCharacterClick,
+  territoryDataMap = {},
 }: LocationTreeProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(defaultExpandedIds)
@@ -626,6 +733,8 @@ export function LocationTree({
           charactersAtLocation={locationCharacterMap[node.id] ?? []}
           showCharacters={showCharacters}
           onCharacterClick={handleCharacterClick}
+          territoryData={territoryDataMap[node.id]}
+          territoryDataMap={territoryDataMap}
         />
       ))}
 
