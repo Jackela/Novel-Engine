@@ -70,12 +70,12 @@ async def initialize_app_state(app: FastAPI) -> None:
 
     global_event_bus: Optional[object] = None
     try:
-        from src.core.event_bus import EventBus
+        from src.events.event_bus import EventBus
 
         global_event_bus = EventBus()
         app.state.event_bus = global_event_bus
         container.register_singleton(EventBus, global_event_bus)
-        logger.info("Global EventBus initialized and registered")
+        logger.info("Global EventBus (Enterprise) initialized and registered")
     except Exception as exc:
         logger.warning("Could not initialize EventBus: %s", exc)
         app.state.event_bus = None
