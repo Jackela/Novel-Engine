@@ -13,6 +13,7 @@ from src.contexts.world.domain.value_objects import (
 )
 
 
+@pytest.mark.unit
 class TestResourceType:
     """Tests for ResourceType enum."""
 
@@ -54,6 +55,7 @@ class TestResourceType:
         assert ResourceType.KNOWLEDGE.is_tradeable() is False
 
 
+@pytest.mark.unit
 class TestResourceYield:
     """Tests for ResourceYield value object."""
 
@@ -157,6 +159,7 @@ class TestResourceYield:
             yield_obj.consume(100)
 
 
+@pytest.mark.unit
 class TestFactionResources:
     """Tests for FactionResources value object."""
 
@@ -295,6 +298,7 @@ class TestFactionResources:
         assert restored.get_amount(ResourceType.FOOD) == 500
 
 
+@pytest.mark.unit
 class TestResourceEntity:
     """Tests for Resource entity."""
 

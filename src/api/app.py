@@ -101,7 +101,8 @@ def create_app(
     from src.api.routers.structure import router as structure_router
     from src.api.routers.world import router as world_gen_router
     from src.api.routers.world_rules import router as world_rules_router
-    from src.api.routers.world_time import router as world_time_router
+    # TODO: Uncomment when world_time feature is ready for production
+    # from src.api.routers.world_time import router as world_time_router
     from src.api.routers.geopolitics import router as geopolitics_router
 
     # Register all routers with /api prefix only (no duplicate unprefixed routes)
@@ -127,8 +128,9 @@ def create_app(
     app.include_router(lore_router, prefix="/api")
     app.include_router(world_rules_router, prefix="/api")
     app.include_router(calendar_router, prefix="/api")
+    # TODO: Uncomment when world_time feature is ready for production
     # world_time_router must be registered before routers with /world/{world_id} patterns
-    app.include_router(world_time_router, prefix="/api")
+    # app.include_router(world_time_router, prefix="/api")
     app.include_router(diplomacy_router, prefix="/api")
     app.include_router(simulation_router, prefix="/api")
     app.include_router(rumors_router, prefix="/api")
