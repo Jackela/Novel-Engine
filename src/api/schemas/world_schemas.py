@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-
 # === History Event Schemas (SIM-006) ===
 
 
@@ -185,6 +184,22 @@ class AdvanceCalendarRequest(BaseModel):
     days: int = Field(
         default=1, ge=1, le=365, description="Number of days to advance (1-365)"
     )
+
+
+class WorldTimeResponse(BaseModel):
+    """Response model for world time state."""
+
+    year: int = Field(description="Current year in the world calendar")
+    month: int = Field(description="Current month (1-12)")
+    day: int = Field(description="Current day (1-30)")
+    era_name: str = Field(description="Name of the current era")
+    display_string: str = Field(description="Human-readable formatted date string")
+
+
+class AdvanceTimeRequest(BaseModel):
+    """Request model for advancing world time."""
+
+    days: int = Field(default=1, ge=1, le=365, description="Number of days to advance (1-365)")
 
 
 class CalendarData(BaseModel):

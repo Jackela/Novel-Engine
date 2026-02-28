@@ -70,15 +70,35 @@ async def initialize_app_state(app: FastAPI) -> None:
 
     global_event_bus: Optional[object] = None
     try:
-        from src.core.event_bus import EventBus
+        from src.events.event_bus import EventBus
 
         global_event_bus = EventBus()
         app.state.event_bus = global_event_bus
         container.register_singleton(EventBus, global_event_bus)
-        logger.info("Global EventBus initialized and registered")
+        logger.info("Global EventBus (Enterprise) initialized and registered")
     except Exception as exc:
         logger.warning("Could not initialize EventBus: %s", exc)
         app.state.event_bus = None
+
+    # Wire event bus to world_time router
+    if global_event_bus is not None:
+        try:
+            from src.api.routers.world_time import set_event_bus
+
+            set_event_bus(global_event_bus)
+            logger.info("Event bus wired to world_time router")
+        except ImportError:
+            logger.warning("world_time router not available for event bus wiring")
+
+        # Register event handlers
+        try:
+            from src.contexts.world.application.handlers import TimeAdvancedHandler
+
+            time_handler = TimeAdvancedHandler()
+            global_event_bus.register_handler(time_handler)
+            logger.info("TimeAdvancedHandler registered with EventBus")
+        except Exception as exc:
+            logger.warning("Could not register TimeAdvancedHandler: %s", exc)
 
     orchestrator: Optional[SystemOrchestrator] = None
     try:
