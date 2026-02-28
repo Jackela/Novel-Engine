@@ -3,85 +3,85 @@
 ## Phase 1: Domain Layer
 
 ### Task 1: Create FactionIntent Entity
-- [ ] Create `src/contexts/world/domain/entities/faction_intent.py`
-- [ ] Define `ActionType` enum (EXPAND, ATTACK, TRADE, SABOTAGE, STABILIZE)
-- [ ] Define `IntentStatus` enum (PROPOSED, SELECTED, EXECUTED, REJECTED)
-- [ ] Define `FactionIntent` entity with all required attributes
-- [ ] Add validation for priority (1-3) and status transitions
+- [x] Create `src/contexts/world/domain/entities/faction_intent.py`
+- [x] Define `ActionType` enum (EXPAND, ATTACK, TRADE, SABOTAGE, STABILIZE)
+- [x] Define `IntentStatus` enum (PROPOSED, SELECTED, EXECUTED, REJECTED)
+- [x] Define `FactionIntent` entity with all required attributes
+- [x] Add validation for priority (1-3) and status transitions
 
 ### Task 2: Create IntentGeneratedEvent
-- [ ] Create `src/contexts/world/domain/events/intent_events.py`
-- [ ] Define `IntentGeneratedEvent` with faction_id, intent_ids, timestamp
-- [ ] Register event type as `faction.intent_generated`
+- [x] Create `src/contexts/world/domain/events/intent_events.py`
+- [x] Define `IntentGeneratedEvent` with faction_id, intent_ids, timestamp
+- [x] Register event type as `faction.intent_generated`
 
 ### Task 3: Create FactionIntentRepository Port
-- [ ] Create `src/contexts/world/domain/ports/faction_intent_repository.py`
-- [ ] Define abstract methods: `save()`, `find_by_faction()`, `find_by_id()`, `find_active()`
+- [x] Create `src/contexts/world/domain/ports/faction_intent_repository.py`
+- [x] Define abstract methods: `save()`, `find_by_faction()`, `find_by_id()`, `find_active()`
 
 ## Phase 2: Application Layer
 
 ### Task 4: Implement FactionDecisionService
-- [ ] Create `src/contexts/world/application/services/faction_decision_service.py`
-- [ ] Implement context assembly (resources, diplomacy, territories)
-- [ ] Integrate with RetrievalService for RAG context
-- [ ] Build LLM prompt with faction state and action definitions
-- [ ] Implement intent generation with validation
-- [ ] Add low-resource constraint handling
-- [ ] Add fallback behavior for LLM failures
+- [x] Create `src/contexts/world/application/services/faction_decision_service.py`
+- [x] Implement context assembly (resources, diplomacy, territories)
+- [x] Integrate with RetrievalService for RAG context
+- [x] Build LLM prompt with faction state and action definitions
+- [x] Implement intent generation with validation
+- [x] Add low-resource constraint handling
+- [x] Add fallback behavior for LLM failures
 
 ### Task 5: Create FactionIntentRepository Implementation
-- [ ] Create `src/contexts/world/infrastructure/persistence/in_memory_faction_intent_repository.py`
-- [ ] Implement all repository methods
-- [ ] Add max active intents constraint (10 per faction)
-- [ ] Add auto-expiry for old intents (7 in-game days)
+- [x] Create `src/contexts/world/infrastructure/persistence/in_memory_faction_intent_repository.py`
+- [x] Implement all repository methods
+- [x] Add max active intents constraint (10 per faction)
+- [x] Add auto-expiry for old intents (7 in-game days)
 
 ## Phase 3: API Layer
 
 ### Task 6: Create Faction Intel API Schemas
-- [ ] Add schemas to `src/api/schemas/world_schemas.py`:
+- [x] Add schemas to `src/api/schemas/world_schemas.py`:
   - `FactionIntentResponse`
   - `GenerateIntentsRequest`
   - `GenerateIntentsResponse`
   - `SelectIntentResponse`
 
 ### Task 7: Create Faction Intel Router
-- [ ] Create `src/api/routers/faction_intel.py`
-- [ ] Implement `POST /api/world/factions/{faction_id}/decide`
-- [ ] Implement `GET /api/world/factions/{faction_id}/intents`
-- [ ] Implement `POST /api/world/factions/{faction_id}/intents/{intent_id}/select`
-- [ ] Add rate limiting (1 request per 60 seconds per faction)
-- [ ] Register router in `app.py`
+- [x] Create `src/api/routers/faction_intel.py`
+- [x] Implement `POST /api/world/factions/{faction_id}/decide`
+- [x] Implement `GET /api/world/factions/{faction_id}/intents`
+- [x] Implement `POST /api/world/factions/{faction_id}/intents/{intent_id}/select`
+- [x] Add rate limiting (1 request per 60 seconds per faction)
+- [x] Register router in `app.py`
 
 ## Phase 4: Frontend Layer
 
 ### Task 8: Add Frontend Types
-- [ ] Add types to `frontend/src/types/schemas.ts`:
+- [x] Add types to `frontend/src/types/schemas.ts`:
   - `FactionIntent`
   - `ActionType`
   - `IntentStatus`
   - `GenerateIntentsRequest/Response`
 
 ### Task 9: Create API Hooks
-- [ ] Create `frontend/src/features/world/api/factionIntelApi.ts`
-- [ ] Implement `useGenerateIntents()` mutation
-- [ ] Implement `useFactionIntents()` query
-- [ ] Implement `useSelectIntent()` mutation
-- [ ] Add cache invalidation on generation
+- [x] Create `frontend/src/features/world/api/factionIntelApi.ts`
+- [x] Implement `useGenerateIntents()` mutation
+- [x] Implement `useFactionIntents()` query
+- [x] Implement `useSelectIntent()` mutation
+- [x] Add cache invalidation on generation
 
 ### Task 10: Create FactionIntelPanel Component
-- [ ] Create `frontend/src/features/world/components/FactionIntelPanel.tsx`
-- [ ] Implement faction selector dropdown
-- [ ] Implement "Generate Intents" button with loading state
-- [ ] Create IntentCard component with:
+- [x] Create `frontend/src/features/world/components/FactionIntelPanel.tsx`
+- [x] Implement faction selector dropdown
+- [x] Implement "Generate Intents" button with loading state
+- [x] Create IntentCard component with:
   - Color-coded action type icons
   - Target name display
   - Rationale text
   - Priority badge
   - Select button
   - Status indicator
-- [ ] Implement history accordion
-- [ ] Add error handling with retry button
-- [ ] Ensure WCAG 2.1 AA compliance
+- [x] Implement history accordion
+- [x] Add error handling with retry button
+- [x] Ensure WCAG 2.1 AA compliance
 
 ## Phase 5: Integration & Testing
 
@@ -99,7 +99,6 @@
 
 ## Verification Checklist
 
-- [ ] All tests pass: `pytest tests/ -v`
-- [ ] Frontend typecheck passes: `cd frontend && npm run type-check`
-- [ ] Frontend lint passes: `cd frontend && npm run lint`
+- [x] Frontend typecheck passes: `cd frontend && npm run type-check`
+- [x] Frontend lint passes: `cd frontend && npm run lint`
 - [ ] CI pipeline green: `./scripts/ci-check.sh`
