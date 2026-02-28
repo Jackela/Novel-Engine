@@ -33,7 +33,7 @@ import structlog
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.aggregates.world_state import WorldState
 from src.contexts.world.domain.entities.faction import Faction, FactionStatus
-from src.contexts.world.domain.entities.faction_intent import FactionIntent, IntentType
+from src.contexts.world.domain.entities.faction_intent import FactionIntent, ActionType
 from src.contexts.world.domain.entities.history_event import EventType, HistoryEvent, ImpactScope
 from src.contexts.world.domain.entities.rumor import Rumor
 from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
@@ -588,7 +588,7 @@ class WorldSimulationService:
 
         # First pass: collect attacks for conflict detection
         for intent in sorted_intents:
-            if intent.intent_type == IntentType.ATTACK and intent.target_id:
+            if intent.action_type == ActionType.ATTACK and intent.target_id:
                 if intent.target_id not in attack_targets:
                     attack_targets[intent.target_id] = []
                 attack_targets[intent.target_id].append(intent)
@@ -597,26 +597,22 @@ class WorldSimulationService:
         for intent in sorted_intents:
             faction = faction_map.get(intent.faction_id)
             if faction is None:
-                result.mark_intent_failed(intent.intent_id)
+                result.mark_intent_failed(intent.id)
                 continue
 
-            if intent.intent_type == IntentType.ATTACK:
+            if intent.action_type == ActionType.ATTACK:
                 self._resolve_attack(
                     intent, faction, faction_map, attack_targets, diplomacy, result
                 )
-            elif intent.intent_type == IntentType.EXPAND:
+            elif intent.action_type == ActionType.EXPAND:
                 self._resolve_expand(intent, faction, result)
-            elif intent.intent_type == IntentType.ALLY:
-                self._resolve_ally(intent, faction, faction_map, diplomacy, result)
-            elif intent.intent_type == IntentType.RECOVER:
-                self._resolve_recover(intent, faction, result)
-            elif intent.intent_type == IntentType.DEFEND:
-                self._resolve_defend(intent, faction, result)
-            elif intent.intent_type == IntentType.CONSOLIDATE:
-                self._resolve_consolidate(intent, faction, result)
-            elif intent.intent_type == IntentType.TRADE:
-                # TRADE has no immediate effect in current implementation
-                result.mark_intent_success(intent.intent_id)
+            elif intent.action_type == ActionType.TRADE:
+                self._resolve_trade(intent, faction, faction_map, diplomacy, result)
+            elif intent.action_type == ActionType.STABILIZE:
+                self._resolve_stabilize(intent, faction, result)
+            elif intent.action_type == ActionType.SABOTAGE:
+                # SABOTAGE has no immediate effect in current implementation
+                result.mark_intent_success(intent.id)
 
         return result
 
@@ -646,12 +642,12 @@ class WorldSimulationService:
         """
         target_id = intent.target_id
         if not target_id:
-            result.mark_intent_failed(intent.intent_id)
+            result.mark_intent_failed(intent.id)
             return
 
         defender = faction_map.get(target_id)
         if defender is None:
-            result.mark_intent_failed(intent.intent_id)
+            result.mark_intent_failed(intent.id)
             return
 
         # Apply military losses to both sides (happens even for conflict losers)
@@ -668,9 +664,9 @@ class WorldSimulationService:
                 return faction.military_strength if faction is not None else 0
 
             strongest = max(attacks_on_target, key=get_military_strength)
-            if intent.intent_id != strongest.intent_id:
+            if intent.id != strongest.intent_id:
                 # This attacker loses the conflict (military loss already applied)
-                result.mark_intent_failed(intent.intent_id)
+                result.mark_intent_failed(intent.id)
                 return
 
         # Check for territory change
@@ -681,7 +677,7 @@ class WorldSimulationService:
                 captured_territory = defender.territories[0]
                 result.add_territory_change(captured_territory, attacker.id)
 
-        result.mark_intent_success(intent.intent_id)
+        result.mark_intent_success(intent.id)
 
     def _resolve_expand(
         self,
@@ -704,7 +700,7 @@ class WorldSimulationService:
         """
         # Check wealth requirement
         if faction.economic_power < 20:
-            result.mark_intent_failed(intent.intent_id)
+            result.mark_intent_failed(intent.id)
             return
 
         # Reduce wealth for expansion cost
@@ -712,7 +708,7 @@ class WorldSimulationService:
 
         # Note: Actual territory assignment requires location repository
         # For now, we just record the intent as successful
-        result.mark_intent_success(intent.intent_id)
+        result.mark_intent_success(intent.id)
 
     def _resolve_ally(
         self,
@@ -738,18 +734,18 @@ class WorldSimulationService:
         """
         target_id = intent.target_id
         if not target_id:
-            result.mark_intent_failed(intent.intent_id)
+            result.mark_intent_failed(intent.id)
             return
 
         target = faction_map.get(target_id)
         if target is None:
-            result.mark_intent_failed(intent.intent_id)
+            result.mark_intent_failed(intent.id)
             return
 
         # Check for conflicting relations
         current_status = diplomacy.get_status(faction.id, target_id)
         if current_status in (DiplomaticStatus.AT_WAR, DiplomaticStatus.HOSTILE):
-            result.mark_intent_failed(intent.intent_id)
+            result.mark_intent_failed(intent.id)
             return
 
         # Create alliance
@@ -761,7 +757,7 @@ class WorldSimulationService:
             DiplomaticStatus.ALLIED,
         )
 
-        result.mark_intent_success(intent.intent_id)
+        result.mark_intent_success(intent.id)
 
     def _resolve_recover(
         self,
@@ -783,7 +779,7 @@ class WorldSimulationService:
         if faction.economic_power < 50:
             result.add_resource_change(faction.id, wealth_delta=5)
 
-        result.mark_intent_success(intent.intent_id)
+        result.mark_intent_success(intent.id)
 
     def _resolve_defend(
         self,
@@ -805,7 +801,7 @@ class WorldSimulationService:
         if faction.military_strength < 80:
             result.add_resource_change(faction.id, military_delta=3)
 
-        result.mark_intent_success(intent.intent_id)
+        result.mark_intent_success(intent.id)
 
     def _resolve_consolidate(
         self,
@@ -826,7 +822,79 @@ class WorldSimulationService:
             result: ResolutionResult to accumulate changes.
         """
         result.add_resource_change(faction.id, wealth_delta=2, military_delta=1)
-        result.mark_intent_success(intent.intent_id)
+        result.mark_intent_success(intent.id)
+
+    def _resolve_stabilize(
+        self,
+        intent: FactionIntent,
+        faction: Faction,
+        result: ResolutionResult,
+    ) -> None:
+        """Resolve a STABILIZE intent.
+
+        STABILIZE is the canonical action for internal consolidation.
+        Combines legacy DEFEND, CONSOLIDATE, RECOVER behaviors:
+        - Small wealth gain: +2
+        - Small military gain: +1
+        - Always succeeds (default fallback intent).
+
+        Args:
+            intent: The STABILIZE intent to resolve.
+            faction: The stabilizing faction.
+            result: ResolutionResult to accumulate changes.
+        """
+        result.add_resource_change(faction.id, wealth_delta=2, military_delta=1)
+        result.mark_intent_success(intent.id)
+
+    def _resolve_trade(
+        self,
+        intent: FactionIntent,
+        faction: Faction,
+        faction_map: Dict[str, Faction],
+        diplomacy: DiplomacyMatrix,
+        result: ResolutionResult,
+    ) -> None:
+        """Resolve a TRADE intent.
+
+        TRADE is the canonical action for diplomatic/economic exchanges.
+        Implements ALLY behavior:
+        - Creates bilateral ALLIED status if target exists and relations allow.
+        - Fails if target has conflicting relations (AT_WAR or HOSTILE).
+        - Fails if target doesn't exist or no target specified.
+
+        Args:
+            intent: The TRADE intent to resolve.
+            faction: The trading faction.
+            faction_map: Lookup dict for all factions.
+            diplomacy: Current diplomacy matrix.
+            result: ResolutionResult to accumulate changes.
+        """
+        target_id = intent.target_id
+        if not target_id:
+            result.mark_intent_failed(intent.id)
+            return
+
+        target = faction_map.get(target_id)
+        if target is None:
+            result.mark_intent_failed(intent.id)
+            return
+
+        # Check for conflicting relations
+        current_status = diplomacy.get_status(faction.id, target_id)
+        if current_status in (DiplomaticStatus.AT_WAR, DiplomaticStatus.HOSTILE):
+            result.mark_intent_failed(intent.id)
+            return
+
+        # Create alliance (trade/diplomatic relationship)
+        status_before = current_status or DiplomaticStatus.NEUTRAL
+        result.add_diplomacy_change(
+            faction.id,
+            target_id,
+            status_before,
+            DiplomaticStatus.ALLIED,
+        )
+
+        result.mark_intent_success(intent.id)
 
     async def commit_simulation(
         self,
