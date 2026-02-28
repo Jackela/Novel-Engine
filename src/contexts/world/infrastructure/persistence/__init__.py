@@ -11,13 +11,21 @@ when importing in-memory repositories that don't need database models.
 
 from typing import TYPE_CHECKING
 
+from .in_memory_calendar_repository import InMemoryCalendarRepository
+from .in_memory_faction_intent_repository import InMemoryFactionIntentRepository
+
 # Lazy imports to avoid SQLAlchemy initialization issues
 # when only in-memory repositories are needed
 if TYPE_CHECKING:
     from .models import WorldStateModel
     from .postgres_world_state_repo import PostgresWorldStateRepository
 
-__all__ = ["PostgresWorldStateRepository", "WorldStateModel"]
+__all__ = [
+    "InMemoryCalendarRepository",
+    "InMemoryFactionIntentRepository",
+    "PostgresWorldStateRepository",
+    "WorldStateModel",
+]
 
 
 def __getattr__(name: str):

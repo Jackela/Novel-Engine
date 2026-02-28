@@ -103,6 +103,7 @@ def create_app(
     from src.api.routers.world_rules import router as world_rules_router
     from src.api.routers.world_time import router as world_time_router
     from src.api.routers.geopolitics import router as geopolitics_router
+    from src.api.routers.faction_intel import router as faction_intel_router
 
     # Register all routers with /api prefix only (no duplicate unprefixed routes)
     app.include_router(health_router, prefix="/api")
@@ -134,6 +135,7 @@ def create_app(
     app.include_router(rumors_router, prefix="/api")
     app.include_router(snapshots_router, prefix="/api")
     app.include_router(geopolitics_router, prefix="/api")
+    app.include_router(faction_intel_router, prefix="/api")
 
     try:
         from src.api.prompts_router import router as prompts_router
