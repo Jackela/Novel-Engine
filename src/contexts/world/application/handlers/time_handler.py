@@ -6,7 +6,7 @@ faction simulation updates via FactionTickService.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Set
 
 import structlog
 
@@ -14,14 +14,12 @@ from src.contexts.world.application.services.faction_tick_service import (
     FactionTickService,
     TickResult,
 )
-
-if TYPE_CHECKING:
-    from src.contexts.world.domain.events.time_events import TimeAdvancedEvent
+from src.events.event_bus import Event, EventHandler
 
 logger = structlog.get_logger()
 
 
-class TimeAdvancedHandler:
+class TimeAdvancedHandler(EventHandler):
     """Handler for TimeAdvancedEvent.
 
     This handler is called when world time advances. It triggers
@@ -45,17 +43,21 @@ class TimeAdvancedHandler:
         self._tick_service = tick_service or FactionTickService()
         logger.debug("time_advanced_handler_initialized")
 
-    async def handle(self, event: "TimeAdvancedEvent") -> TickResult:
+    @property
+    def handled_event_types(self) -> Set[str]:
+        """Set of event types this handler can process."""
+        return {"world.time_advanced"}
+
+    async def handle(self, event: Event) -> bool:
         """Handle a TimeAdvancedEvent.
 
+        Implements EventHandler interface.
+
         Args:
-            event: The TimeAdvancedEvent to process
+            event: The Event to process (must be TimeAdvancedEvent)
 
         Returns:
-            TickResult with processing details
-
-        Raises:
-            No exceptions are raised - errors are logged and returned in TickResult
+            True if handled successfully, False otherwise
         """
         logger.info(
             "time_advanced_event_received",
@@ -81,7 +83,7 @@ class TimeAdvancedHandler:
                 diplomatic_changes=result.diplomatic_changes,
             )
 
-            return result
+            return result.success
 
         except Exception as e:
             logger.error(
@@ -92,12 +94,7 @@ class TimeAdvancedHandler:
                 exc_info=True,
             )
 
-            return TickResult(
-                world_id=world_id,
-                days_advanced=event.days_advanced,
-                success=False,
-                errors=[str(e)],
-            )
+            return False  # EventHandler contract: return False on failure
 
     @classmethod
     def create_for_event_bus(cls) -> "TimeAdvancedHandler":
@@ -107,24 +104,3 @@ class TimeAdvancedHandler:
             TimeAdvancedHandler instance ready for event subscription
         """
         return cls()
-
-
-def handle_time_advanced(event: "TimeAdvancedEvent") -> None:
-    """Sync wrapper for event bus compatibility.
-
-    This function can be registered as a handler with the EventBus.
-
-    Args:
-        event: The TimeAdvancedEvent to process
-    """
-    import asyncio
-
-    handler = TimeAdvancedHandler()
-
-    # Run async handler in sync context
-    try:
-        loop = asyncio.get_running_loop()
-        loop.create_task(handler.handle(event))
-    except RuntimeError:
-        # No running loop, create new one
-        asyncio.run(handler.handle(event))

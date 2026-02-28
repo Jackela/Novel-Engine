@@ -92,9 +92,10 @@ async def initialize_app_state(app: FastAPI) -> None:
 
         # Register event handlers
         try:
-            from src.contexts.world.application.handlers import handle_time_advanced
+            from src.contexts.world.application.handlers import TimeAdvancedHandler
 
-            global_event_bus.subscribe("world.time_advanced", handle_time_advanced)
+            time_handler = TimeAdvancedHandler()
+            global_event_bus.register_handler(time_handler)
             logger.info("TimeAdvancedHandler registered with EventBus")
         except Exception as exc:
             logger.warning("Could not register TimeAdvancedHandler: %s", exc)

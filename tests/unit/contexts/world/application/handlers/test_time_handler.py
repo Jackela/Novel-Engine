@@ -4,10 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.contexts.world.application.handlers.time_handler import (
-    TimeAdvancedHandler,
-    handle_time_advanced,
-)
+from src.contexts.world.application.handlers.time_handler import TimeAdvancedHandler
 from src.contexts.world.domain.events.time_events import TimeAdvancedEvent
 
 
@@ -34,6 +31,18 @@ class TestTimeAdvancedHandler:
         """Test that TimeAdvancedHandler can be instantiated."""
         assert handler is not None
 
+    def test_handler_implements_event_handler_interface(
+        self, handler: TimeAdvancedHandler
+    ) -> None:
+        """Test that handler implements EventHandler interface."""
+        from src.events.event_bus import EventHandler
+
+        assert isinstance(handler, EventHandler)
+
+    def test_handled_event_types(self, handler: TimeAdvancedHandler) -> None:
+        """Test that handler declares correct event types."""
+        assert "world.time_advanced" in handler.handled_event_types
+
     def test_handler_has_tick_service(self, handler: TimeAdvancedHandler) -> None:
         """Test that handler has a tick service."""
         assert hasattr(handler, "_tick_service")
@@ -42,12 +51,11 @@ class TestTimeAdvancedHandler:
     async def test_handle_time_advanced_event(
         self, handler: TimeAdvancedHandler, sample_event: TimeAdvancedEvent
     ) -> None:
-        """Test handling a TimeAdvancedEvent."""
+        """Test handling a TimeAdvancedEvent returns bool."""
         result = await handler.handle(sample_event)
 
-        assert result.success is True
-        assert result.world_id == "test-world"
-        assert result.days_advanced == 5
+        # EventHandler interface returns bool
+        assert result is True
 
     @pytest.mark.asyncio
     async def test_handler_with_custom_tick_service(self) -> None:
@@ -77,11 +85,7 @@ class TestTimeAdvancedHandler:
 
         result = await handler.handle(event)
 
-        assert result.success is True
-        assert result.world_id == "custom-world"
-        assert result.days_advanced == 10
-        assert result.resources_updated == 5
-        assert result.diplomatic_changes == 2
+        assert result is True
         mock_service.process_tick.assert_called_once_with(
             world_id="custom-world", days_advanced=10
         )
@@ -103,7 +107,7 @@ class TestTimeAdvancedHandler:
     async def test_handler_catches_exceptions(
         self, sample_event: TimeAdvancedEvent
     ) -> None:
-        """Test that handler catches exceptions and returns error result."""
+        """Test that handler catches exceptions and returns False."""
         from src.contexts.world.application.services.faction_tick_service import (
             FactionTickService,
         )
@@ -115,8 +119,8 @@ class TestTimeAdvancedHandler:
 
         result = await handler.handle(sample_event)
 
-        assert result.success is False
-        assert "Test error" in result.errors
+        # EventHandler interface returns False on failure
+        assert result is False
 
     def test_create_for_event_bus(self) -> None:
         """Test factory method creates handler."""
@@ -124,29 +128,3 @@ class TestTimeAdvancedHandler:
 
         assert handler is not None
         assert isinstance(handler, TimeAdvancedHandler)
-
-
-@pytest.mark.unit
-class TestHandleTimeAdvancedFunction:
-    """Tests for handle_time_advanced sync wrapper function."""
-
-    @pytest.fixture
-    def sample_event(self) -> TimeAdvancedEvent:
-        """Create a sample TimeAdvancedEvent."""
-        return TimeAdvancedEvent.create(
-            previous_date={"year": 1, "month": 1, "day": 1, "era_name": "First Age"},
-            new_date={"year": 1, "month": 1, "day": 2, "era_name": "First Age"},
-            days_advanced=1,
-            world_id="test-world",
-        )
-
-    def test_handle_time_advanced_exists(self) -> None:
-        """Test that handle_time_advanced function exists."""
-        assert callable(handle_time_advanced)
-
-    def test_handle_time_advanced_runs_without_error(
-        self, sample_event: TimeAdvancedEvent
-    ) -> None:
-        """Test that handle_time_advanced can be called without error."""
-        # Should not raise an exception
-        handle_time_advanced(sample_event)
