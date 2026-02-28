@@ -194,3 +194,27 @@ class TestWorldTimeEndpoints:
         # Detail contains the error code and message from our ErrorDetail
         assert "TIME_ADVANCE_FAILED" in str(data["detail"])
         assert "Simulated service failure" in str(data["detail"])
+
+
+@pytest.mark.integration
+class TestWorldTimeEventBusWiring:
+    """Tests for event bus wiring in world_time router."""
+
+    def test_event_bus_is_configured_on_startup(self) -> None:
+        """Test that the event bus is configured when app starts."""
+        from src.api.app import create_app
+        from fastapi.testclient import TestClient
+
+        # Create app and use TestClient to trigger the lifespan
+        app = create_app()
+
+        # The world_time router should have access to event bus
+        from src.api.routers import world_time
+
+        # Reset the event bus to None to simulate fresh start
+        world_time._event_bus = None
+
+        # Use TestClient to trigger the lifespan (startup/shutdown)
+        with TestClient(app):
+            # Inside the context, the startup event should have wired the event bus
+            assert world_time._event_bus is not None, "Event bus should be wired on startup"
