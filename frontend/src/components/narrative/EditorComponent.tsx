@@ -350,9 +350,39 @@ export function EditorComponent({
    *
    * Why: When a character is selected from the dropdown, we need to insert
    * our custom CharacterMention node (which has hover cards) rather than
-   * a generic mention node. We cast the command to bypass strict typing
-   * since our items() returns SuggestionItems that get passed to command().
+   * a generic mention node.
+   *
+   * Note: The command callback is typed to accept our SuggestionItem type.
+   * This is safe because our custom render() function in mentionSuggestion
+   * passes SuggestionItem objects to command(), not Tiptap's MentionNodeAttrs.
    */
+  const mentionCommand = useCallback(
+    ({
+      editor,
+      range,
+      props: item,
+    }: {
+      editor: Editor;
+      range: { from: number; to: number };
+      props: SuggestionItem;
+    }) => {
+      // Delete the @query text
+      editor.chain().focus().deleteRange(range).run();
+
+      // Insert our custom CharacterMention node
+      editor
+        .chain()
+        .focus()
+        .insertCharacterMention({
+          characterId: item.id,
+          characterName: item.name,
+        })
+        .insertContent(' ')
+        .run();
+    },
+    []
+  );
+
   const MentionExtension = useMemo(
     () =>
       Mention.configure({
@@ -361,31 +391,15 @@ export function EditorComponent({
         },
         suggestion: {
           ...mentionSuggestion,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Tiptap Mention extension type mismatch
-          command: (commandProps: any) => {
-            const { editor, range, props } = commandProps as {
-              editor: Editor;
-              range: { from: number; to: number };
-              props: SuggestionItem;
-            };
-            const item = props;
-            // Delete the @query text
-            editor.chain().focus().deleteRange(range).run();
-
-            // Insert our custom CharacterMention node
-            editor
-              .chain()
-              .focus()
-              .insertCharacterMention({
-                characterId: item.id,
-                characterName: item.name,
-              })
-              .insertContent(' ')
-              .run();
-          },
+          // Type assertion needed: our render() passes SuggestionItem, not MentionNodeAttrs
+          command: mentionCommand as (props: {
+            editor: Editor;
+            range: { from: number; to: number };
+            props: unknown;
+          }) => void,
         },
       }),
-    [mentionSuggestion]
+    [mentionSuggestion, mentionCommand]
   );
 
   const editor = useEditor({
