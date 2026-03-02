@@ -57,6 +57,26 @@ class FactionIntentRepository(ABC):
         pass
 
     @abstractmethod
+    def save_batch(self, intents: List[FactionIntent]) -> None:
+        """
+        Persist multiple faction intents in a single operation.
+
+        This is more efficient than calling save() multiple times,
+        especially for database implementations that can batch inserts.
+
+        Args:
+            intents: List of FactionIntent objects to persist
+
+        Example:
+            >>> intents = [
+            ...     FactionIntent(faction_id="f1", action_type=ActionType.EXPAND, ...),
+            ...     FactionIntent(faction_id="f1", action_type=ActionType.TRADE, ...),
+            ... ]
+            >>> repository.save_batch(intents)
+        """
+        pass
+
+    @abstractmethod
     def find_by_id(self, intent_id: str) -> Optional[FactionIntent]:
         """
         Retrieve a specific intent by its ID.

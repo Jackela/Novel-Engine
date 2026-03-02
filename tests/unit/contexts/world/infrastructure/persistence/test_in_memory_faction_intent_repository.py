@@ -373,3 +373,127 @@ class TestInMemoryFactionIntentRepositoryOperations:
         assert len(page3) == 5
         assert total == 25
         assert has_more is False
+
+
+class TestInMemoryFactionIntentRepositoryBatchOperations:
+    """Tests for batch save operations."""
+
+    @pytest.mark.unit
+    def test_save_batch_saves_all_intents(self):
+        """Test that save_batch persists all intents."""
+        repo = InMemoryFactionIntentRepository()
+        faction_id = "test-faction-batch"
+
+        intents = [
+            FactionIntent(
+                faction_id=faction_id,
+                action_type=ActionType.EXPAND,
+                rationale=f"Batch intent {i}",
+                priority=i + 1,
+            )
+            for i in range(3)
+        ]
+
+        repo.save_batch(intents)
+
+        # Verify all intents were saved
+        saved = repo.find_by_faction(faction_id)
+        assert len(saved) == 3
+
+    @pytest.mark.unit
+    def test_save_batch_empty_list_is_noop(self):
+        """Test that save_batch with empty list does nothing."""
+        repo = InMemoryFactionIntentRepository()
+
+        # Should not raise any errors
+        repo.save_batch([])
+
+        # Repository should remain empty
+        all_intents = repo.find_by_faction("any-faction")
+        assert len(all_intents) == 0
+
+    @pytest.mark.unit
+    def test_save_batch_enforces_max_active_per_faction(self):
+        """Test that save_batch enforces max active constraint per faction."""
+        repo = InMemoryFactionIntentRepository()
+
+        # Create intents for two different factions
+        intents_faction_a = [
+            FactionIntent(
+                faction_id="faction-a",
+                action_type=ActionType.EXPAND,
+                rationale=f"Intent {i}",
+                priority=1,
+            )
+            for i in range(8)
+        ]
+        intents_faction_b = [
+            FactionIntent(
+                faction_id="faction-b",
+                action_type=ActionType.TRADE,
+                rationale=f"Intent {i}",
+                priority=1,
+            )
+            for i in range(8)
+        ]
+
+        # Save all at once
+        repo.save_batch(intents_faction_a + intents_faction_b)
+
+        # Both factions should have max active constraint enforced
+        active_a = repo.count_active("faction-a")
+        active_b = repo.count_active("faction-b")
+        assert active_a <= repo.MAX_ACTIVE_INTENTS
+        assert active_b <= repo.MAX_ACTIVE_INTENTS
+
+    @pytest.mark.unit
+    def test_save_batch_updates_existing_intents(self):
+        """Test that save_batch updates existing intents with same ID."""
+        repo = InMemoryFactionIntentRepository()
+        faction_id = "test-faction-update"
+
+        # Create and save initial intent
+        intent = FactionIntent(
+            faction_id=faction_id,
+            action_type=ActionType.EXPAND,
+            rationale="Original rationale",
+            priority=1,
+        )
+        repo.save(intent)
+
+        # Update the intent
+        intent.rationale = "Updated rationale"
+        repo.save_batch([intent])
+
+        # Verify update was applied
+        saved = repo.find_by_id(intent.id)
+        assert saved.rationale == "Updated rationale"
+
+    @pytest.mark.unit
+    def test_save_batch_is_thread_safe(self):
+        """Test that concurrent save_batch calls are thread-safe."""
+        repo = InMemoryFactionIntentRepository()
+        num_threads = 10
+        intents_per_thread = 3
+
+        def save_batch(thread_id: int) -> None:
+            intents = [
+                FactionIntent(
+                    faction_id=f"faction-{thread_id}",
+                    action_type=ActionType.STABILIZE,
+                    rationale=f"Thread {thread_id} intent {i}",
+                    priority=1,
+                )
+                for i in range(intents_per_thread)
+            ]
+            repo.save_batch(intents)
+
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            futures = [executor.submit(save_batch, i) for i in range(num_threads)]
+            for future in futures:
+                future.result()
+
+        # Verify each faction has their intents
+        for thread_id in range(num_threads):
+            saved = repo.find_by_faction(f"faction-{thread_id}")
+            assert len(saved) == intents_per_thread

@@ -259,9 +259,8 @@ class FactionDecisionService:
             )
             return Err(error_msg)
 
-        # Persist intents
-        for intent in intents:
-            self._repository.save(intent)
+        # Persist intents in batch (fixes N+1 query pattern)
+        self._repository.save_batch(intents)
 
         # Create event with RAG status - Issue 7: include rag_enriched
         event = IntentGeneratedEvent.create(

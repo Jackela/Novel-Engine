@@ -125,6 +125,7 @@ class TestFactionDecisionService:
         """Create a mock repository for testing."""
         repo = MagicMock()
         repo.save = MagicMock()
+        repo.save_batch = MagicMock()
         repo.find_by_faction = MagicMock(return_value=[])
         repo.count_active = MagicMock(return_value=0)
         repo.can_add_intent = MagicMock(return_value=True)
@@ -230,10 +231,11 @@ class TestFactionDecisionServiceIntegration:
         repo = MagicMock()
         repo.saved_intents = []
 
-        def track_save(intent):
-            repo.saved_intents.append(intent)
+        def track_save_batch(intents):
+            repo.saved_intents.extend(intents)
 
-        repo.save = MagicMock(side_effect=track_save)
+        repo.save = MagicMock()  # Keep for backwards compatibility
+        repo.save_batch = MagicMock(side_effect=track_save_batch)
         repo.count_active = MagicMock(return_value=0)
         repo.can_add_intent = MagicMock(return_value=True)
         return repo
@@ -241,7 +243,7 @@ class TestFactionDecisionServiceIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_generate_intents_saves_to_repository(self, mock_repository):
-        """Test that generated intents are saved to the repository."""
+        """Test that generated intents are saved to the repository via batch save."""
         service = FactionDecisionService(
             repository=mock_repository,
             llm_client=None,
@@ -258,8 +260,11 @@ class TestFactionDecisionServiceIntegration:
 
         result = await service.generate_intents(faction, context)
 
-        # Should have saved intents
+        # Should have saved intents via batch save
         assert result.is_ok, f"Expected Ok result, got error: {result.error if result.is_error else 'unknown'}"
+        assert len(mock_repository.saved_intents) > 0
+        # Verify save_batch was called, not individual save
+        mock_repository.save_batch.assert_called_once()
         assert len(mock_repository.saved_intents) > 0
 
     @pytest.mark.integration
@@ -345,6 +350,7 @@ class TestFactionDecisionServiceErrorPaths:
         """Create a mock repository for testing."""
         repo = MagicMock()
         repo.save = MagicMock()
+        repo.save_batch = MagicMock()
         repo.find_by_faction = MagicMock(return_value=[])
         repo.count_active = MagicMock(return_value=0)
         repo.can_add_intent = MagicMock(return_value=True)
