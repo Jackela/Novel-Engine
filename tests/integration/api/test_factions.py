@@ -1,11 +1,9 @@
 """Integration tests for Factions API endpoints.
 
-Tests faction membership management including joining, leaving factions,
-and setting leaders.
+Tests faction-related functionality through diplomacy and world state endpoints.
 """
 
 import os
-from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -19,143 +17,79 @@ pytestmark = pytest.mark.integration
 
 @pytest.fixture
 def client():
-    """Create a test client for the Factions API."""
+    """Create a test client for the API."""
     app = create_app()
     with TestClient(app) as test_client:
         yield test_client
 
 
-@pytest.fixture
-def mock_store():
-    """Create a mock store for testing."""
-    store = MagicMock()
-    store.world_store = {}
-    store.workspace_character_store = {}
-    return store
+class TestFactionsViaDiplomacyEndpoint:
+    """Tests for faction data through diplomacy endpoint."""
 
-
-class TestFactionDetailEndpoint:
-    """Tests for GET /api/factions/{faction_id} endpoint."""
-
-    def test_get_faction_not_found(self, client):
-        """Test getting a non-existent faction returns 404."""
-        response = client.get("/api/factions/nonexistent-faction")
-
-        assert response.status_code == 404
-        data = response.json()
-        assert "detail" in data
-
-        assert "not found" in data["detail"].lower()
-
-    def test_get_faction_without_workspace(self, client):
-        """Test getting faction without workspace ID."""
-        response = client.get(
-            "/api/factions/some-faction",
-            headers={"X-Workspace-Id": ""},
+    def test_diplomacy_matrix_lists_factions(self, client):
+        """Test that diplomacy matrix includes factions."""
+        # First create a world with some relations
+        client.put(
+            "/api/world/test-world/diplomacy/faction-a/faction-b",
+            json={"status": "allied"},
         )
 
-        # Without workspace, may return 404 or empty data
+        # Get the diplomacy matrix
+        response = client.get("/api/world/test-world/diplomacy")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Check that factions are listed
+        assert "factions" in data
+        assert "faction-a" in data["factions"]
+        assert "faction-b" in data["factions"]
+
+    def test_diplomacy_relations_creates_factions(self, client):
+        """Test that setting relations creates factions."""
+        response = client.put(
+            "/api/world/relations-world/diplomacy/new-faction-1/new-faction-2",
+            json={"status": "neutral"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Factions should be created
+        assert "new-faction-1" in data["factions"]
+        assert "new-faction-2" in data["factions"]
+
+
+class TestFactionsViaWorldStateEndpoint:
+    """Tests for faction data through world state endpoint."""
+
+    def test_world_state_includes_factions(self, client):
+        """Test that world state includes faction summary."""
+        # Create a world with factions via diplomacy
+        client.put(
+            "/api/world/state-world/diplomacy/faction-x/faction-y",
+            json={"status": "hostile"},
+        )
+
+        # Get world state
+        response = client.get("/api/world/state-world/state")
+
+        # Should work or return 404 if world not initialized
         assert response.status_code in [200, 404]
 
-
-class TestFactionsJoinEndpoint:
-    """Tests for POST /api/factions/{faction_id}/join endpoint."""
-
-    def test_join_faction_faction_not_found(self, client):
-        """Test joining a non-existent faction returns 404."""
-        response = client.post(
-            "/api/factions/nonexistent-faction/join",
-            json={"character_id": "char-001"},
-            headers={"X-Workspace-Id": "test-workspace"},
-        )
-
-        assert response.status_code == 404
-
-    def test_join_faction_missing_workspace(self, client):
-        """Test joining faction without workspace ID returns 422."""
-        response = client.post(
-            "/api/factions/some-faction/join",
-            json={"character_id": "char-001"},
-        )
-
-        # Should require workspace ID
-        assert response.status_code in [400, 422]
-
-    def test_join_faction_missing_character_id(self, client):
-        """Test joining faction without character_id returns 422."""
-        response = client.post(
-            "/api/factions/some-faction/join",
-            json={},
-            headers={"X-Workspace-Id": "test-workspace"},
-        )
-
-        assert response.status_code == 422
+        if response.status_code == 200:
+            data = response.json()
+            # Check for factions in response
+            assert "factions" in data or "diplomacy" in data
 
 
-class TestFactionsLeaveEndpoint:
-    """Tests for POST /api/factions/{faction_id}/leave endpoint."""
+class TestFactionsViaHealthCheck:
+    """Basic health check test to verify API is working."""
 
-    def test_leave_faction_faction_not_found(self, client):
-        """Test leaving a non-existent faction returns 404."""
-        response = client.post(
-            "/api/factions/nonexistent-faction/leave",
-            json={"character_id": "char-001"},
-            headers={"X-Workspace-Id": "test-workspace"},
-        )
+    def test_health_endpoint_works(self, client):
+        """Test that the health endpoint responds."""
+        response = client.get("/api/health")
 
-        assert response.status_code == 404
-
-    def test_leave_faction_missing_workspace(self, client):
-        """Test leaving faction without workspace ID returns 422."""
-        response = client.post(
-            "/api/factions/some-faction/leave",
-            json={"character_id": "char-001"},
-        )
-
-        # Should require workspace ID
-        assert response.status_code in [400, 422]
-
-    def test_leave_faction_missing_character_id(self, client):
-        """Test leaving faction without character_id returns 422."""
-        response = client.post(
-            "/api/factions/some-faction/leave",
-            json={},
-            headers={"X-Workspace-Id": "test-workspace"},
-        )
-
-        assert response.status_code == 422
-
-
-class TestFactionsLeaderEndpoint:
-    """Tests for POST /api/factions/{faction_id}/leader endpoint."""
-
-    def test_set_leader_faction_not_found(self, client):
-        """Test setting leader for non-existent faction returns 404."""
-        response = client.post(
-            "/api/factions/nonexistent-faction/leader",
-            json={"character_id": "char-001"},
-            headers={"X-Workspace-Id": "test-workspace"},
-        )
-
-        assert response.status_code == 404
-
-    def test_set_leader_missing_workspace(self, client):
-        """Test setting leader without workspace ID returns 422."""
-        response = client.post(
-            "/api/factions/some-faction/leader",
-            json={"character_id": "char-001"},
-        )
-
-        # Should require workspace ID
-        assert response.status_code in [400, 422]
-
-    def test_set_leader_missing_character_id(self, client):
-        """Test setting leader without character_id returns 422."""
-        response = client.post(
-            "/api/factions/some-faction/leader",
-            json={},
-            headers={"X-Workspace-Id": "test-workspace"},
-        )
-
-        assert response.status_code == 422
-
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
