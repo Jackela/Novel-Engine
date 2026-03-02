@@ -218,8 +218,9 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
     // Clear size cache for new index
     itemSizeCache.current.delete(messages.length);
 
-    // Prepare messages for API
-    const chatHistory = messages.map((msg) => ({
+    // Prepare messages for API - include the user message we just added
+    // to avoid stale closure bug where messages state hasn't updated yet
+    const chatHistory = [...messages, userMessage].map((msg) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
     }));
