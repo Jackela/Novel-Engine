@@ -12,7 +12,7 @@
  * - Age display (days ago or Today)
  * - Accessible with ARIA roles and keyboard navigation
  */
-import { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { MessageCircleWarning, TrendingUp, CheckCircle, AlertTriangle, XCircle, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/Badge';
 import { Button } from '@/components/ui/button';
@@ -59,26 +59,49 @@ type RumorCardProps = {
   rumor: RumorResponse;
 };
 
-function RumorCard({ rumor }: RumorCardProps) {
+const RumorCard = React.memo(function RumorCard({ rumor }: RumorCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const shouldTruncate = rumor.content.length > MAX_CONTENT_LENGTH;
-  const displayContent =
-    shouldTruncate && !isExpanded
-      ? rumor.content.slice(0, MAX_CONTENT_LENGTH) + '...'
-      : rumor.content;
+  const handleToggleExpand = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
 
-  const colorClasses =
-    VERACITY_COLORS[rumor.veracity_label as keyof typeof VERACITY_COLORS] ??
-    VERACITY_COLORS.Uncertain;
-  const veracityIcon = VERACITY_ICONS[rumor.veracity_label] || VERACITY_ICONS.Uncertain;
+  // Memoize derived data
+  const shouldTruncate = useMemo(
+    () => rumor.content.length > MAX_CONTENT_LENGTH,
+    [rumor.content]
+  );
+
+  const displayContent = useMemo(
+    () => shouldTruncate && !isExpanded
+      ? rumor.content.slice(0, MAX_CONTENT_LENGTH) + '...'
+      : rumor.content,
+    [shouldTruncate, isExpanded, rumor.content]
+  );
+
+  const colorClasses = useMemo(
+    () => VERACITY_COLORS[rumor.veracity_label as keyof typeof VERACITY_COLORS] ??
+      VERACITY_COLORS.Uncertain,
+    [rumor.veracity_label]
+  );
+
+  const veracityIcon = useMemo(
+    () => VERACITY_ICONS[rumor.veracity_label] || VERACITY_ICONS.Uncertain,
+    [rumor.veracity_label]
+  );
 
   // Calculate age in days
-  const ageDays = rumor.created_date
-    ? Math.max(0, rumor.created_date.day) // Simplified: just use day as proxy for age
-    : 0;
+  const ageDisplay = useMemo(() => {
+    const ageDays = rumor.created_date
+      ? Math.max(0, rumor.created_date.day) // Simplified: just use day as proxy for age
+      : 0;
+    return ageDays === 0 ? 'Today' : `${ageDays} day${ageDays === 1 ? '' : 's'} ago`;
+  }, [rumor.created_date]);
 
-  const ageDisplay = ageDays === 0 ? 'Today' : `${ageDays} day${ageDays === 1 ? '' : 's'} ago`;
+  const originLocationDisplay = useMemo(
+    () => rumor.origin_location_id.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    [rumor.origin_location_id]
+  );
 
   return (
     <li
@@ -110,7 +133,7 @@ function RumorCard({ rumor }: RumorCardProps) {
           <p className="text-sm leading-relaxed">{displayContent}</p>
           {shouldTruncate && (
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={handleToggleExpand}
               className="text-xs text-primary hover:underline"
               aria-expanded={isExpanded}
             >
@@ -134,7 +157,7 @@ function RumorCard({ rumor }: RumorCardProps) {
           <div className="flex items-center gap-1">
             <MessageCircleWarning className="h-3 w-3" aria-hidden="true" />
             <span className="truncate max-w-[200px]">
-              From: {rumor.origin_location_id.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+              From: {originLocationDisplay}
             </span>
           </div>
           <span>{ageDisplay}</span>
@@ -142,7 +165,7 @@ function RumorCard({ rumor }: RumorCardProps) {
       </div>
     </li>
   );
-}
+});
 
 function RumorSkeleton() {
   return (
@@ -161,7 +184,7 @@ function RumorSkeleton() {
   );
 }
 
-export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
+export const RumorBoard = React.memo(function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
   const [sortBy, setSortBy] = useState<RumorSortBy>('recent');
 
   const { data, isLoading, isError, refetch } = useRumors(
@@ -171,7 +194,17 @@ export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
     maxItems
   );
 
-  const rumors = data?.rumors ?? [];
+  // Memoize derived data
+  const rumors = useMemo(() => data?.rumors ?? [], [data?.rumors]);
+
+  // Memoize handlers
+  const handleSortChange = useCallback((value: RumorSortBy) => {
+    setSortBy(value);
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   return (
     <Card className="h-full">
@@ -184,7 +217,7 @@ export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
           {/* Sort dropdown */}
           <Select
             value={sortBy}
-            onValueChange={(value: RumorSortBy) => setSortBy(value)}
+            onValueChange={handleSortChange}
           >
             <SelectTrigger
               className="w-[140px] h-8"
@@ -216,7 +249,7 @@ export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => refetch()}
+              onClick={handleRetry}
             >
               Try again
             </Button>
@@ -243,6 +276,6 @@ export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
       </CardContent>
     </Card>
   );
-}
+});
 
 export default RumorBoard;
