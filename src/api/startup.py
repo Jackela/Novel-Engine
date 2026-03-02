@@ -100,6 +100,47 @@ async def initialize_app_state(app: FastAPI) -> None:
         except Exception as exc:
             logger.warning("Could not register TimeAdvancedHandler: %s", exc)
 
+        # Register FactionIntentRepository in DI container
+        try:
+            from src.contexts.world.domain.ports.faction_intent_repository import (
+                FactionIntentRepository,
+            )
+            from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repository import (
+                InMemoryFactionIntentRepository,
+            )
+
+            intent_repository = InMemoryFactionIntentRepository()
+            container.register_singleton(FactionIntentRepository, intent_repository)
+            app.state.faction_intent_repository = intent_repository
+            app.state.faction_intent_repository_available = True
+            logger.info("FactionIntentRepository registered in DI container")
+        except Exception as exc:
+            app.state.faction_intent_repository_available = False
+            logger.warning("Could not register FactionIntentRepository: %s", exc)
+
+        # Register RetrievalService reference for FactionDecisionService
+        try:
+            from src.contexts.knowledge.application.services.retrieval_service import (
+                RetrievalService,
+            )
+
+            retrieval_service = container.try_get(RetrievalService)
+            if retrieval_service:
+                app.state.retrieval_service = retrieval_service
+                logger.info("RetrievalService available for FactionDecisionService")
+            else:
+                app.state.retrieval_service = None
+                logger.warning(
+                    "RetrievalService not available - RAG context enrichment disabled"
+                )
+        except Exception as exc:
+            app.state.retrieval_service = None
+            logger.warning("Could not retrieve RetrievalService: %s", exc)
+
+        # EventBus is now accessed via request.app.state.event_bus
+        # No global set_event_bus() call needed - see Issue 6 fix
+        logger.info("EventBus available at app.state.event_bus for faction_intel router")
+
     orchestrator: Optional[SystemOrchestrator] = None
     try:
         if global_event_bus is not None:

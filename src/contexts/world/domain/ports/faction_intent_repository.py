@@ -290,6 +290,42 @@ class FactionIntentRepository(ABC):
         """
         pass
 
+    @abstractmethod
+    def find_by_faction_paginated(
+        self,
+        faction_id: str,
+        status: Optional["IntentStatus"] = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[List["FactionIntent"], int, bool]:
+        """
+        Retrieve paginated intents for a faction.
+
+        This method supports pagination for large intent histories,
+        returning a subset of results along with total count and
+        a flag indicating if more results exist.
+
+        Args:
+            faction_id: ID of the faction
+            status: Optional filter by status (PROPOSED, SELECTED, EXECUTED, REJECTED)
+            limit: Maximum number of intents to return (default 20, max 100)
+            offset: Number of intents to skip for pagination
+
+        Returns:
+            Tuple of (list of intents, total count, has_more flag)
+
+        Example:
+            >>> intents, total, has_more = repository.find_by_faction_paginated(
+            ...     "faction-1", limit=10, offset=0
+            ... )
+            >>> if has_more:
+            ...     # Fetch next page
+            ...     next_page, _, _ = repository.find_by_faction_paginated(
+            ...         "faction-1", limit=10, offset=10
+            ...     )
+        """
+        pass
+
     def can_add_intent(self, faction_id: str) -> bool:
         """
         Check if a faction can add a new active intent.

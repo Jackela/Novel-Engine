@@ -559,6 +559,9 @@ class GenerateIntentsResponse(BaseModel):
     generation_id: str = Field(
         description="Unique identifier for this generation batch"
     )
+    event_published: bool = Field(
+        default=True, description="Whether IntentGeneratedEvent was published successfully"
+    )
 
 
 class IntentListResponse(BaseModel):
