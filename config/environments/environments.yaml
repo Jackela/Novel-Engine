@@ -36,8 +36,8 @@ development:
   <<: *base
   
   state_store:
-    redis_url: "redis://localhost:6379/0"
-    postgres_url: "postgresql://postgres:password@localhost:5432/novelengine_dev"
+    redis_url: ${REDIS_URL}
+    postgres_url: ${POSTGRES_URL}
     s3_bucket: "novel-engine-dev"
     s3_region: "us-east-1"
     cache_ttl: 300  # 5 minutes
@@ -68,8 +68,8 @@ testing:
   <<: *base
   
   state_store:
-    redis_url: "redis://localhost:6379/1"  # Different DB for tests
-    postgres_url: "postgresql://postgres:password@localhost:5432/novelengine_test"
+    redis_url: ${REDIS_URL}
+    postgres_url: ${POSTGRES_URL}
     s3_bucket: "novel-engine-test"
     s3_region: "us-east-1"
     cache_ttl: 60  # 1 minute
@@ -202,8 +202,8 @@ kubernetes:
   
   state_store:
     # Use Kubernetes service discovery
-    redis_url: "redis://redis-service:6379/0"
-    postgres_url: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres-service:5432/novelengine"
+    redis_url: ${REDIS_URL}
+    postgres_url: ${POSTGRES_URL}
     s3_bucket: "${S3_BUCKET}"
     s3_region: "${S3_REGION}"
     aws_access_key: "${AWS_ACCESS_KEY_ID}"
