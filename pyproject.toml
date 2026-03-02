@@ -210,10 +210,11 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+timeout = 300  # Global timeout to prevent external process termination
 addopts = [
     "-v",
     "--tb=short",
-    "-p", "asyncio", 
+    "-p", "asyncio",
     "--asyncio-mode=auto"
 ]
 
