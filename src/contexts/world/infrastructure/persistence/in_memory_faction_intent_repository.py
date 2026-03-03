@@ -85,6 +85,51 @@ class InMemoryFactionIntentRepository(FactionIntentRepository):
                 is_new=is_new,
             )
 
+    def save_batch(self, intents: List[FactionIntent]) -> None:
+        """Persist multiple faction intents in a single operation.
+
+        This implementation uses a single lock acquisition for all intents,
+        which is more efficient than individual save() calls with lock overhead.
+        Enforces max active intents constraint after all saves complete.
+
+        Args:
+            intents: List of FactionIntent objects to persist
+        """
+        if not intents:
+            return
+
+        with self._lock:
+            faction_ids: set[str] = set()
+
+            for intent in intents:
+                is_new = intent.id not in self._intents
+                self._intents[intent.id] = intent
+
+                # Update faction index
+                if intent.faction_id not in self._faction_intents:
+                    self._faction_intents[intent.faction_id] = set()
+                self._faction_intents[intent.faction_id].add(intent.id)
+                faction_ids.add(intent.faction_id)
+
+                logger.debug(
+                    "intent_saved_in_batch",
+                    intent_id=intent.id,
+                    faction_id=intent.faction_id,
+                    action_type=intent.action_type.value,
+                    status=intent.status.value,
+                    is_new=is_new,
+                )
+
+            # Enforce max active intents for all affected factions
+            for faction_id in faction_ids:
+                self._enforce_max_active(faction_id)
+
+            logger.info(
+                "intents_batch_saved",
+                count=len(intents),
+                factions_affected=list(faction_ids),
+            )
+
     def _enforce_max_active(self, faction_id: str) -> None:
         """Enforce maximum active intents constraint.
 

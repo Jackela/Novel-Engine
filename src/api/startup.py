@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from typing import Optional
+from typing import List, Optional, Set
 
 from fastapi import FastAPI
 
@@ -20,6 +20,118 @@ from src.workspaces import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Environment variables that are strictly required for the application to function.
+# These have no sensible defaults and must be explicitly set.
+REQUIRED_ENV_VARS: List[str] = []
+
+# Environment variables required in production mode for security.
+PRODUCTION_REQUIRED_ENV_VARS: List[str] = [
+    "SECRET_KEY",
+    "JWT_SECRET_KEY",
+]
+
+# Environment variables that should not be empty if set.
+# These are optional but must have non-empty values when present.
+NON_EMPTY_WHEN_SET: Set[str] = {
+    "GEMINI_API_KEY",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "BRAIN_SETTINGS_ENCRYPTION_KEY",
+}
+
+
+class EnvironmentValidationError(RuntimeError):
+    """Raised when required environment variables are missing or invalid."""
+
+    pass
+
+
+def validate_environment() -> None:
+    """
+    Validate all required environment variables are set and non-empty.
+
+    This function checks for:
+    1. Absolutely required variables (from REQUIRED_ENV_VARS)
+    2. Production-only required variables (from PRODUCTION_REQUIRED_ENV_VARS)
+    3. Variables that must be non-empty when explicitly set
+
+    Raises:
+        EnvironmentValidationError: If any required variable is missing or empty.
+    """
+    missing: List[str] = []
+    empty: List[str] = []
+    warnings: List[str] = []
+
+    # Check absolutely required variables
+    for var in REQUIRED_ENV_VARS:
+        value = os.getenv(var)
+        if value is None:
+            missing.append(var)
+        elif value == "":
+            empty.append(var)
+
+    # Check production-only required variables
+    environment = os.getenv("ENVIRONMENT", "development").lower()
+    is_production = environment in ("production", "staging")
+
+    if is_production:
+        for var in PRODUCTION_REQUIRED_ENV_VARS:
+            value = os.getenv(var)
+            if value is None:
+                missing.append(var)
+            elif value == "":
+                empty.append(var)
+
+        # Warn about production security settings
+        jwt_key = os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY", "")
+        if jwt_key in (
+            "development-secret-key-change-in-production",
+            "your-secret-key-here",
+            "changeme",
+        ):
+            warnings.append(
+                "JWT_SECRET_KEY is using a development default value in production"
+            )
+    else:
+        # In development, still check if production vars exist but allow defaults
+        for var in PRODUCTION_REQUIRED_ENV_VARS:
+            value = os.getenv(var)
+            if value is None:
+                # This is fine in development - APISettings provides a default
+                logger.debug(
+                    "Optional production variable %s not set (development mode)", var
+                )
+
+    # Check that optional API keys are non-empty when set
+    for var in NON_EMPTY_WHEN_SET:
+        value = os.getenv(var)
+        if value == "":
+            empty.append(var)
+        elif value is not None and value.startswith("your_"):
+            # Detect placeholder values
+            warnings.append(f"{var} appears to contain a placeholder value")
+
+    # Log warnings
+    for warning in warnings:
+        logger.warning("Environment validation warning: %s", warning)
+
+    # Raise errors if any critical issues found
+    if missing:
+        error_msg = f"Missing required environment variables: {', '.join(missing)}"
+        logger.error(error_msg)
+        raise EnvironmentValidationError(error_msg)
+
+    if empty:
+        error_msg = f"Empty required environment variables: {', '.join(empty)}"
+        logger.error(error_msg)
+        raise EnvironmentValidationError(error_msg)
+
+    # Log successful validation
+    if is_production:
+        logger.info("Environment validation passed (production mode)")
+    else:
+        logger.info("Environment validation passed (development mode)")
 
 
 def ensure_workspace_services(
@@ -58,6 +170,10 @@ def ensure_workspace_services(
 
 
 async def initialize_app_state(app: FastAPI) -> None:
+    """Initialize application state with environment validation and service setup."""
+    # Validate environment variables first - fail fast if configuration is incomplete
+    validate_environment()
+
     logger.info("Starting StoryForge AI API server...")
     settings: APISettings = getattr(app.state, "settings", APISettings.from_env())
     app.state.settings = settings
@@ -80,17 +196,12 @@ async def initialize_app_state(app: FastAPI) -> None:
         logger.warning("Could not initialize EventBus: %s", exc)
         app.state.event_bus = None
 
-    # Wire event bus to world_time router
+    # EventBus is now accessed via request.app.state.event_bus in routers
+    # No global set_event_bus() call needed - routers use DI pattern
+    logger.info("EventBus available at app.state.event_bus for routers")
+
+    # Register event handlers
     if global_event_bus is not None:
-        try:
-            from src.api.routers.world_time import set_event_bus
-
-            set_event_bus(global_event_bus)
-            logger.info("Event bus wired to world_time router")
-        except ImportError:
-            logger.warning("world_time router not available for event bus wiring")
-
-        # Register event handlers
         try:
             from src.contexts.world.application.handlers import TimeAdvancedHandler
 
@@ -99,6 +210,64 @@ async def initialize_app_state(app: FastAPI) -> None:
             logger.info("TimeAdvancedHandler registered with EventBus")
         except Exception as exc:
             logger.warning("Could not register TimeAdvancedHandler: %s", exc)
+
+    # Register FactionIntentRepository in DI container
+    try:
+        from src.contexts.world.domain.ports.faction_intent_repository import (
+            FactionIntentRepository,
+        )
+        from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repository import (
+            InMemoryFactionIntentRepository,
+        )
+
+        intent_repository = InMemoryFactionIntentRepository()
+        container.register_singleton(FactionIntentRepository, intent_repository)
+        app.state.faction_intent_repository = intent_repository
+        app.state.faction_intent_repository_available = True
+        logger.info("FactionIntentRepository registered in DI container")
+    except Exception as exc:
+        app.state.faction_intent_repository_available = False
+        logger.warning("Could not register FactionIntentRepository: %s", exc)
+
+    # Register CalendarRepository in DI container
+    try:
+        from src.contexts.world.domain.ports.calendar_repository import (
+            CalendarRepository,
+        )
+        from src.contexts.world.infrastructure.persistence.in_memory_calendar_repository import (
+            InMemoryCalendarRepository,
+        )
+
+        calendar_repository = InMemoryCalendarRepository()
+        container.register_singleton(CalendarRepository, calendar_repository)
+        app.state.calendar_repository = calendar_repository
+        logger.info("CalendarRepository registered in DI container")
+    except Exception as exc:
+        app.state.calendar_repository = None
+        logger.warning("Could not register CalendarRepository: %s", exc)
+
+    # Register RetrievalService reference for FactionDecisionService
+    try:
+        from src.contexts.knowledge.application.services.retrieval_service import (
+            RetrievalService,
+        )
+
+        retrieval_service = container.try_get(RetrievalService)
+        if retrieval_service:
+            app.state.retrieval_service = retrieval_service
+            logger.info("RetrievalService available for FactionDecisionService")
+        else:
+            app.state.retrieval_service = None
+            logger.warning(
+                "RetrievalService not available - RAG context enrichment disabled"
+            )
+    except Exception as exc:
+        app.state.retrieval_service = None
+        logger.warning("Could not retrieve RetrievalService: %s", exc)
+
+    # EventBus is now accessed via request.app.state.event_bus
+    # No global set_event_bus() call needed - see Issue 6 fix
+    logger.info("EventBus available at app.state.event_bus for faction_intel router")
 
     orchestrator: Optional[SystemOrchestrator] = None
     try:

@@ -19,6 +19,7 @@ System coordinates all security operations 🛡️
 
 import asyncio
 import logging
+import os
 import secrets
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -171,11 +172,17 @@ class EnterpriseSecuritySuite:
                 admin_count = (await cursor.fetchone())[0]
 
             if admin_count == 0:
-                # Create default admin user
+                # Create default admin user - password MUST be set via environment variable
+                admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD")
+                if not admin_password:
+                    logger.error("DEFAULT_ADMIN_PASSWORD environment variable not set. Cannot create admin user.")
+                    logger.error("Set DEFAULT_ADMIN_PASSWORD to create the default admin user on first run.")
+                    return
+
                 default_admin = UserRegistration(
                     username="admin",
                     email="admin@novelengine.local",
-                    password="AdminPassword123!",  # Should be changed immediately
+                    password=admin_password,
                     role=UserRole.ADMIN,
                 )
 
@@ -185,10 +192,9 @@ class EnterpriseSecuritySuite:
                     user_agent="system_initialization",
                 )
 
-                logger.warning("⚠️ DEFAULT ADMIN USER CREATED")
+                logger.warning("DEFAULT ADMIN USER CREATED")
                 logger.warning("   Username: admin")
-                logger.warning("   Password: AdminPassword123!")
-                logger.warning("   🚨 CHANGE THIS PASSWORD IMMEDIATELY! 🚨")
+                logger.warning("   Password: [from DEFAULT_ADMIN_PASSWORD env var]")
 
         except Exception as e:
             logger.error(f"Error ensuring admin user: {e}")

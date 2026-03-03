@@ -1,12 +1,27 @@
-import { useMemo } from 'react';
+/**
+ * MemoryTimeline Component
+ *
+ * Displays character memories in a vertical timeline format.
+ *
+ * Features:
+ * - Sorted by timestamp (newest first)
+ * - Core memory highlighting with star icon
+ * - Importance level badges
+ * - Tag display
+ * - Virtualized list using react-window for performance with 50+ memories
+ */
+import React, { useMemo, useRef, useCallback } from 'react';
+import { VariableSizeList as List } from 'react-window';
 import { Brain, Star, Calendar, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import type { CharacterMemory } from '@/types/schemas';
 
 type Props = {
   memories: CharacterMemory[] | undefined;
 };
+
+const LIST_HEIGHT = 320;
+const ITEM_PADDING = 12; // space-y-3 = 12px gap between items
 
 const IMPORTANCE_COLORS: Record<string, string> = {
   minor: 'bg-zinc-500/20 text-zinc-700 dark:text-zinc-300',
@@ -26,11 +41,22 @@ function formatDate(timestamp: string): string {
   });
 }
 
+/**
+ * Estimate memory card height based on content.
+ * Used for initial virtual list sizing.
+ */
+function estimateMemoryHeight(memory: CharacterMemory): number {
+  const baseHeight = 80; // Header + footer + padding
+  const contentLines = Math.ceil(memory.content.length / 60); // ~60 chars per line
+  const tagsHeight = memory.tags.length > 0 ? 28 : 0;
+  return baseHeight + Math.min(contentLines * 20, 120) + tagsHeight;
+}
+
 type MemoryCardProps = {
   memory: CharacterMemory;
 };
 
-function MemoryCard({ memory }: MemoryCardProps) {
+const MemoryCard = React.memo(function MemoryCard({ memory }: MemoryCardProps) {
   const isCoreMemory = memory.is_core_memory;
 
   return (
@@ -38,6 +64,7 @@ function MemoryCard({ memory }: MemoryCardProps) {
       className={`relative rounded-lg border p-4 transition-colors ${
         isCoreMemory ? 'border-amber-500/50 bg-amber-500/5' : 'border-border bg-card'
       }`}
+      style={{ marginBottom: ITEM_PADDING }}
     >
       {isCoreMemory && (
         <div className="absolute -right-2 -top-2">
@@ -79,9 +106,37 @@ function MemoryCard({ memory }: MemoryCardProps) {
       </div>
     </div>
   );
+});
+
+/**
+ * Virtualized row component for react-window.
+ */
+interface MemoryRowProps {
+  index: number;
+  style: React.CSSProperties;
+  data: {
+    memories: CharacterMemory[];
+  };
 }
 
+const MemoryRow = React.memo(function MemoryRow({ index, style, data }: MemoryRowProps) {
+  const { memories } = data;
+  const memory = memories[index];
+
+  if (!memory) return null;
+
+  return (
+    <div style={style} role="listitem">
+      <MemoryCard memory={memory} />
+    </div>
+  );
+});
+
 export default function MemoryTimeline({ memories }: Props) {
+  const listRef = useRef<List>(null);
+  // Cache for item sizes to avoid recalculation
+  const itemSizeCache = useRef<Map<number, number>>(new Map());
+
   const sortedMemories = useMemo(() => {
     if (!memories || memories.length === 0) return [];
     return [...memories].sort(
@@ -91,6 +146,32 @@ export default function MemoryTimeline({ memories }: Props) {
 
   const coreMemoryCount = useMemo(
     () => sortedMemories.filter((m) => m.is_core_memory).length,
+    [sortedMemories]
+  );
+
+  // Get item size for virtual list
+  const getItemSize = useCallback(
+    (index: number) => {
+      // Check cache first
+      if (itemSizeCache.current.has(index)) {
+        return itemSizeCache.current.get(index)!;
+      }
+
+      const memory = sortedMemories[index];
+      if (!memory) {
+        return 120; // Default fallback
+      }
+
+      const height = estimateMemoryHeight(memory);
+      itemSizeCache.current.set(index, height);
+      return height;
+    },
+    [sortedMemories]
+  );
+
+  // Memoize list data to avoid unnecessary re-renders
+  const listData = useMemo(
+    () => ({ memories: sortedMemories }),
     [sortedMemories]
   );
 
@@ -118,13 +199,18 @@ export default function MemoryTimeline({ memories }: Props) {
         )}
       </div>
 
-      <ScrollArea className="h-[320px] pr-4">
-        <div className="space-y-3">
-          {sortedMemories.map((memory) => (
-            <MemoryCard key={memory.memory_id} memory={memory} />
-          ))}
-        </div>
-      </ScrollArea>
+      <div style={{ height: LIST_HEIGHT }} className="pr-4" role="list" aria-label="Character memories">
+        <List
+          ref={listRef}
+          height={LIST_HEIGHT}
+          itemCount={sortedMemories.length}
+          itemSize={getItemSize}
+          width="100%"
+          itemData={listData}
+        >
+          {MemoryRow}
+        </List>
+      </div>
     </div>
   );
 }

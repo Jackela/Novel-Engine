@@ -66,8 +66,8 @@ class DatabaseSettings(BaseSettings):
     """Database configuration settings."""
 
     url: str = Field(
-        default="postgresql://novel_engine:novel_engine_dev_password@localhost:5432/novel_engine",
-        description="Database connection URL",
+        default="",  # Must be set via DB_URL or DATABASE_URL environment variable
+        description="Database connection URL (set via DB_URL or DATABASE_URL env var)",
     )
 
     # Connection pool settings
@@ -160,8 +160,8 @@ class SecuritySettings(BaseSettings):
 
     # JWT settings
     jwt_secret_key: str = Field(
-        default="development-secret-key-change-in-production",
-        description="JWT secret key",
+        default="",  # Must be set via SECURITY_JWT_SECRET_KEY or JWT_SECRET environment variable
+        description="JWT secret key (set via SECURITY_JWT_SECRET_KEY or JWT_SECRET env var)",
     )
     jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
     jwt_access_token_expires: int = Field(
@@ -264,9 +264,9 @@ class StorageSettings(BaseSettings):
     endpoint_url: str = Field(
         default="http://localhost:9000", description="Storage endpoint URL"
     )
-    access_key: str = Field(default="novel_engine", description="Storage access key")
+    access_key: str = Field(default="", description="Storage access key (set via STORAGE_ACCESS_KEY env var)")
     secret_key: str = Field(
-        default="novel_engine_dev_password", description="Storage secret key"
+        default="", description="Storage secret key (set via STORAGE_SECRET_KEY env var)"
     )
     bucket_name: str = Field(default="novel-engine", description="Default bucket name")
     region: str = Field(default="us-east-1", description="Storage region")
@@ -498,11 +498,8 @@ class PlatformConfig:
 
         # Production-specific validations
         if self.is_production():
-            if (
-                self.security.jwt_secret_key
-                == "development-secret-key-change-in-production"
-            ):
-                errors.append("JWT secret key must be changed for production")
+            if not self.security.jwt_secret_key:
+                errors.append("JWT secret key must be set via SECURITY_JWT_SECRET_KEY or JWT_SECRET env var")
 
             if self.app.debug:
                 errors.append("Debug mode should be disabled in production")

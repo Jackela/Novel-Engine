@@ -32,6 +32,7 @@ from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievalService,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
+from src.core.result import Ok
 
 pytestmark = pytest.mark.unit
 
@@ -190,13 +191,13 @@ class TestRAGIntegrationService:
         formatted_context,
     ):
         """Test successful prompt enrichment."""
-        # Setup mock retrieval
+        # Setup mock retrieval - return Ok wrapped result
         retrieval_result = RetrievalResult(
             chunks=mock_chunks,
             query="brave warrior",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant.return_value = retrieval_result
+        mock_retrieval_service.retrieve_relevant.return_value = Ok(retrieval_result)
         mock_retrieval_service.format_context.return_value = formatted_context
 
         service = RAGIntegrationService(retrieval_service=mock_retrieval_service)
@@ -234,7 +235,7 @@ class TestRAGIntegrationService:
             query="brave warrior",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant.return_value = retrieval_result
+        mock_retrieval_service.retrieve_relevant.return_value = Ok(retrieval_result)
         mock_retrieval_service.format_context.return_value = formatted_context
 
         service = RAGIntegrationService(retrieval_service=mock_retrieval_service)
@@ -264,7 +265,7 @@ class TestRAGIntegrationService:
             query="brave warrior",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant.return_value = retrieval_result
+        mock_retrieval_service.retrieve_relevant.return_value = Ok(retrieval_result)
         mock_retrieval_service.format_context.return_value = formatted_context
 
         service = RAGIntegrationService(retrieval_service=mock_retrieval_service)
@@ -316,7 +317,7 @@ class TestRAGIntegrationService:
             query="unknown topic",
             total_retrieved=0,
         )
-        mock_retrieval_service.retrieve_relevant.return_value = retrieval_result
+        mock_retrieval_service.retrieve_relevant.return_value = Ok(retrieval_result)
 
         # Setup format_context to return empty context
         empty_context = FormattedContext(
@@ -387,7 +388,7 @@ class TestRAGIntegrationService:
             query="warrior",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant.return_value = retrieval_result
+        mock_retrieval_service.retrieve_relevant.return_value = Ok(retrieval_result)
         mock_retrieval_service.format_context.return_value = formatted_context
 
         service = RAGIntegrationService(retrieval_service=mock_retrieval_service)
@@ -460,7 +461,7 @@ class TestRAGIntegrationService:
             query="test",
             total_retrieved=2,
         )
-        mock_retrieval_service.retrieve_relevant.return_value = retrieval_result
+        mock_retrieval_service.retrieve_relevant.return_value = Ok(retrieval_result)
         mock_retrieval_service.format_context.return_value = formatted_context
 
         service = RAGIntegrationService(retrieval_service=mock_retrieval_service)

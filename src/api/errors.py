@@ -8,6 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src.api.error_handlers import NovelEngineException
 from src.api.schemas import ErrorDetail
 
 logger = logging.getLogger(__name__)
@@ -98,6 +99,26 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
                 status_code=422,
                 detail="Request validation failed.",
                 extra={"fields": exc.errors()},
+            ),
+        )
+
+    @app.exception_handler(NovelEngineException)
+    async def _novel_engine_exception_handler(
+        request: Request, exc: NovelEngineException
+    ) -> JSONResponse:
+        """Handle custom NovelEngine exceptions with proper status codes."""
+        logger.warning(
+            "NovelEngine exception for %s: %s",
+            request.url.path,
+            exc.message,
+            extra={"detail": exc.detail, "code": exc.code},
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=_envelope(
+                status_code=exc.status_code,
+                detail=exc.detail or exc.message,
+                code=exc.code,
             ),
         )
 

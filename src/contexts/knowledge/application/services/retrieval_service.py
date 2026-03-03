@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from src.core.result import Err, Ok, Result
+
 from ...application.ports.i_embedding_service import EmbeddingError, IEmbeddingService
 from ...application.ports.i_vector_store import (
     IVectorStore,
@@ -259,9 +261,12 @@ class RetrievalService:
         filters: RetrievalFilter | None = None,
         options: RetrievalOptions | None = None,
         collection: str | None = None,
-    ) -> RetrievalResult:
+    ) -> Result[RetrievalResult, str]:
         """
         Retrieve relevant chunks for a query.
+
+        Uses Result pattern for explicit error handling without exceptions.
+        Callers must check result.is_ok before accessing result.value.
 
         Args:
             query: Search query text
@@ -271,24 +276,24 @@ class RetrievalService:
             collection: Optional collection name (uses default if None)
 
         Returns:
-            RetrievalResult with retrieved chunks
-
-        Raises:
-            ValueError: If query is empty
-            EmbeddingError: If query embedding fails
-            VectorStoreError: If vector search fails
+            Result containing:
+            - Ok: RetrievalResult with retrieved chunks
+            - Err: Error message string describing the failure
 
         Example:
-            >>> results = await service.retrieve_relevant(
+            >>> result = await service.retrieve_relevant(
             ...     query="brave warrior with a sword",
             ...     k=5,
             ...     filters=RetrievalFilter(source_types=[SourceType.CHARACTER]),
             ... )
-            >>> for chunk in results.chunks:
-            ...     print(f"{chunk.source_id}: {chunk.score:.2f}")
+            >>> if result.is_ok:
+            ...     for chunk in result.value.chunks:
+            ...         print(f"{chunk.source_id}: {chunk.score:.2f}")
+            >>> else:
+            ...     logger.error(f"Retrieval failed: {result.error}")
         """
         if not query or not query.strip():
-            raise ValueError("query cannot be empty")
+            return Err("query cannot be empty")
 
         # Use provided options or defaults
         retrieval_options = options or RetrievalOptions(k=k)
@@ -305,12 +310,13 @@ class RetrievalService:
         try:
             query_embedding = await self._embedding_service.embed(query)
         except EmbeddingError as e:
+            error_msg = f"Query embedding failed: {e}"
             logger.error(
                 "retrieval_embedding_failed",
                 query=query,
                 error=str(e),
             )
-            raise
+            return Err(error_msg)
 
         # Step 2: Build filter clause
         where_clause: dict[str, Any] = {}
@@ -344,12 +350,13 @@ class RetrievalService:
                 where=where_clause if where_clause else None,
             )
         except VectorStoreError as e:
+            error_msg = f"Vector store query failed: {e}"
             logger.error(
                 "retrieval_query_failed",
                 query=query,
                 error=str(e),
             )
-            raise
+            return Err(error_msg)
 
         logger.debug(
             "retrieval_query_complete",
@@ -470,13 +477,13 @@ class RetrievalService:
             rerank_error=rerank_error,
         )
 
-        return RetrievalResult(
+        return Ok(RetrievalResult(
             chunks=chunks,
             query=query,
             total_retrieved=len(query_results),
             filtered=filtered_count,
             deduplicated=deduplicated_count,
-        )
+        ))
 
     def format_context(
         self,

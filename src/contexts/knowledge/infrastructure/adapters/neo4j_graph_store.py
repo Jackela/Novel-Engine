@@ -85,7 +85,7 @@ class Neo4jGraphStore(IGraphStore):
 
         self._uri = uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
         self._user = user or os.getenv("NEO4J_USER", "neo4j")
-        self._password = password or os.getenv("NEO4J_PASSWORD", "password")
+        self._password = password or os.getenv("NEO4J_PASSWORD", "")
         self._database = database
 
         # Lazy initialization - connect on first use

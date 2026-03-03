@@ -13,9 +13,11 @@ import tempfile
 import threading
 from multiprocessing import active_children
 from pathlib import Path
+from typing import AsyncGenerator, Generator
 from unittest.mock import Mock, patch
 
 import pytest
+import pytest_asyncio
 
 from tests.helpers.postgres import ensure_postgres_service
 
@@ -55,6 +57,152 @@ def project_root_path():
 def test_data_dir():
     """测试数据目录"""
     return Path(__file__).parent / "fixtures"
+
+
+# ============================================================================
+# Database Fixtures (Issue #43)
+# ============================================================================
+
+@pytest.fixture(scope="session")
+def test_database_url():
+    """
+    Test database URL fixture using SQLite in-memory database.
+
+    Using sqlite:///:memory: ensures:
+    - Fast tests (no disk I/O)
+    - Complete isolation between test runs
+    - No cleanup required (memory is freed when connection closes)
+
+    Returns:
+        str: SQLite in-memory database URL
+    """
+    return "sqlite:///:memory:"
+
+
+@pytest.fixture
+def clean_db():
+    """
+    Provides a fresh in-memory SQLite database for each test.
+
+    This fixture creates a new ContextDatabase instance with :memory:
+    for complete test isolation. The database is automatically closed
+    after each test.
+
+    IMPORTANT: With SQLite :memory:, each connection gets its own isolated
+    database. Tests using this fixture should use db.connection directly
+    or be aware that pooled connections may not see schema/data from other
+    connections.
+
+    Yields:
+        ContextDatabase: Fresh in-memory database instance
+
+    Usage:
+        @pytest.mark.asyncio
+        async def test_something(clean_db):
+            await clean_db.initialize()
+            # use clean_db...
+    """
+    from src.database.context_db import ContextDatabase
+
+    db = ContextDatabase(":memory:")
+
+    # Note: Caller must await db.initialize() for async operations
+    yield db
+
+    # Cleanup: close the database connection
+    try:
+        # Try async close if available
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Schedule cleanup task
+            asyncio.create_task(db.close())
+        else:
+            loop.run_until_complete(db.close())
+    except Exception:
+        pass  # Ignore cleanup errors
+
+
+@pytest_asyncio.fixture
+async def db_session():
+    """
+    Async database session fixture with automatic initialization and cleanup.
+
+    Provides a fully initialized ContextDatabase ready for use in async tests.
+    The database is automatically closed after the test completes.
+
+    IMPORTANT: With SQLite :memory:, each connection gets its own isolated
+    database. This fixture initializes the database on a temporary connection,
+    so tests should use the db.connection attribute or get_enhanced_connection()
+    context manager for operations that need to see the schema.
+
+    Yields:
+        ContextDatabase: Initialized in-memory database ready for queries
+
+    Usage:
+        @pytest.mark.asyncio
+        async def test_memory_storage(db_session):
+            result = await db_session.store_enhanced_memory(memory_item)
+            assert result.success
+    """
+    from src.database.context_db import ContextDatabase
+
+    db = ContextDatabase(":memory:")
+    await db.initialize()
+
+    yield db
+
+    # Cleanup
+    await db.close()
+
+
+@pytest.fixture
+def sync_db_session():
+    """
+    Sync database session fixture using SQLAlchemy with in-memory SQLite.
+
+    Provides a synchronous SQLAlchemy session for tests that don't require
+    async database operations. The session uses SQLite's default pool,
+    which for :memory: uses a SingletonThreadPool ensuring all operations
+    see the same in-memory database.
+
+    Yields:
+        Session: SQLAlchemy session bound to in-memory SQLite
+
+    Usage:
+        def test_sync_db(sync_db_session):
+            from sqlalchemy import text
+            result = sync_db_session.execute(text("SELECT 1")).fetchone()
+            assert result[0] == 1
+    """
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session, sessionmaker
+
+    # Create in-memory engine
+    # SQLite :memory: uses SingletonThreadPool by default, which ensures
+    # all operations in the same thread see the same database
+    engine = create_engine(
+        "sqlite:///:memory:",
+        echo=False,
+        future=True,
+    )
+
+    # Create session factory
+    SessionLocal = sessionmaker(bind=engine, class_=Session)
+
+    # Create all tables (if any Base is registered)
+    # Note: This requires models to be imported first
+    session = SessionLocal()
+
+    yield session
+
+    # Cleanup
+    session.close()
+    engine.dispose()
+
+
+# ============================================================================
+# End Database Fixtures
+# ============================================================================
 
 
 @pytest.fixture

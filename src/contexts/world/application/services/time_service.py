@@ -78,7 +78,7 @@ class TimeService:
                 month=calendar.month,
                 day=calendar.day,
                 era_name=calendar.era_name,
-                message="No calendar found for world; created default. This may indicate missing world state initialization.",
+                details="No calendar found for world; created default. This may indicate missing world state initialization.",
             )
         else:
             logger.debug(

@@ -16,9 +16,12 @@ Key Features:
     - Fallback behavior when LLM fails
 """
 
+import asyncio
+import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 import structlog
@@ -35,6 +38,14 @@ from src.contexts.world.domain.ports.faction_intent_repository import (
 )
 from src.core.result import Err, Ok, Result
 
+if TYPE_CHECKING:
+    from src.contexts.knowledge.application.services.retrieval_service import (
+        RetrievalFilter,
+        RetrievalResult,
+        RetrievalService,
+    )
+    from src.contexts.knowledge.domain.models.source_type import SourceType
+
 logger = structlog.get_logger()
 
 
@@ -44,6 +55,8 @@ MILITARY_THRESHOLD_NO_SABOTAGE = 50
 GOLD_THRESHOLD_PRIORITIZE_TRADE = 200
 MAX_INTENTS_PER_GENERATION = 3
 MAX_ACTIVE_INTENTS_PER_FACTION = 10
+LLM_TIMEOUT_SECONDS = 30  # Issue 8: LLM timeout handling
+MAX_RATIONALE_LENGTH = 200  # Truncate rationale to this length
 
 
 @dataclass
@@ -157,22 +170,26 @@ class FactionDecisionService:
         self,
         repository: FactionIntentRepository,
         llm_client: Optional[Any] = None,
-        retrieval_service: Optional[Any] = None,
+        retrieval_service: Optional["RetrievalService"] = None,
     ) -> None:
         """Initialize the decision service.
 
         Args:
             repository: The FactionIntentRepository for persistence
             llm_client: Optional LLM client (stub for future integration)
-            retrieval_service: Optional RAG service (stub for future integration)
+            retrieval_service: Optional RAG service for context enrichment
         """
         self._repository = repository
-        _llm_client = llm_client  # Placeholder for future LLM integration
-        _retrieval_service = retrieval_service  # Placeholder for RAG integration
+        self._llm_client = llm_client  # For future LLM integration
+        self._retrieval_service = retrieval_service  # For RAG context enrichment
         self._events: List[IntentGeneratedEvent] = []
-        logger.debug("faction_decision_service_initialized")
+        logger.debug(
+            "faction_decision_service_initialized",
+            has_llm=llm_client is not None,
+            has_retrieval=retrieval_service is not None,
+        )
 
-    def generate_intents(
+    async def generate_intents(
         self,
         faction: Faction,
         context: DecisionContext,
@@ -201,7 +218,7 @@ class FactionDecisionService:
             ...     faction_id="faction-1",
             ...     resources={"gold": 500, "food": 30, "military": 60}
             ... )
-            >>> result = service.generate_intents(faction, context)
+            >>> result = await service.generate_intents(faction, context)
         """
         # Check capacity
         active_count = self._repository.count_active(faction.id)
@@ -219,8 +236,8 @@ class FactionDecisionService:
             )
             return Err(error_msg)
 
-        # Enrich context with RAG data (stub)
-        enriched_context = self._enrich_context_with_rag(context)
+        # Enrich context with RAG data (async) - Issue 7: track RAG success
+        enriched_context, rag_success = await self._enrich_context_with_rag(context)
 
         # Determine available actions based on constraints
         available_actions = self._get_available_actions(enriched_context)
@@ -242,17 +259,18 @@ class FactionDecisionService:
             )
             return Err(error_msg)
 
-        # Persist intents
-        for intent in intents:
-            self._repository.save(intent)
+        # Persist intents in batch (fixes N+1 query pattern)
+        self._repository.save_batch(intents)
 
-        # Create event
+        # Create event with RAG status - Issue 7: include rag_enriched
         event = IntentGeneratedEvent.create(
             faction_id=faction.id,
             intent_ids=[i.id for i in intents],
             fallback=fallback_used,
             context_summary=enriched_context.get_resource_summary(),
         )
+        # Add rag_enriched to event payload
+        event.payload["rag_enriched"] = rag_success
         self._events.append(event)
 
         logger.info(
@@ -260,39 +278,114 @@ class FactionDecisionService:
             faction_id=faction.id,
             intent_count=len(intents),
             fallback_used=fallback_used,
+            rag_enriched=rag_success,
             intent_types=[i.action_type.value for i in intents],
         )
 
         return Ok((intents, event))
 
-    def _enrich_context_with_rag(self, context: DecisionContext) -> DecisionContext:
+    async def _enrich_context_with_rag(
+        self, context: DecisionContext
+    ) -> Tuple[DecisionContext, bool]:
         """Enrich decision context with RAG-retrieved data.
 
-        This is a stub implementation. Future versions will:
-        - Call RetrievalService for last 5 events involving faction
-        - Call RetrievalService for top 3 lore entries about relationships
-        - Retrieve territory status for controlled locations
+        Queries RetrievalService for:
+        - Last 5 events involving the faction (for Historical Grievances)
+        - Top 3 lore entries about faction relationships
+
+        Falls back gracefully if RetrievalService is unavailable or fails.
+        Returns a NEW context object rather than mutating the input.
+
+        Issue 7: Returns tuple of (context, rag_success) to track RAG status.
 
         Args:
             context: The base decision context
 
         Returns:
-            Enriched context with RAG data (currently unchanged)
+            Tuple of (new enriched context with RAG data, rag_success boolean)
         """
-        # TODO: Wire RetrievalService when available
-        # - context.recent_events = retrieval_service.get_recent_events(
-        #     faction_id=context.faction_id, limit=5
-        # )
-        # - context.relevant_lore = retrieval_service.get_lore_about_factions(
-        #     faction_id=context.faction_id, limit=3
-        # )
+        # Start with copies of original data to avoid mutation
+        recent_events: List[Dict[str, Any]] = []
+        relevant_lore: List[Dict[str, Any]] = []
+        rag_success = False
 
-        logger.debug(
-            "rag_context_enrichment_stub",
+        if self._retrieval_service is None:
+            logger.debug(
+                "rag_context_enrichment_skipped",
+                faction_id=context.faction_id,
+                reason="RetrievalService not configured",
+            )
+            # Return a new context with same data (no mutation)
+            return DecisionContext(
+                faction_id=context.faction_id,
+                resources=dict(context.resources),
+                diplomacy=dict(context.diplomacy),
+                territories=list(context.territories),
+                recent_events=recent_events,
+                relevant_lore=relevant_lore,
+            ), False
+
+        try:
+            # Import here to avoid circular imports
+            from src.contexts.knowledge.application.services.retrieval_service import (
+                RetrievalFilter,
+            )
+            from src.contexts.knowledge.domain.models.source_type import SourceType
+
+            # Issue 9: Use specific keywords for grievances instead of generic query
+            # Query for conflicts, betrayals, battles involving the faction
+            events_result = await self._retrieval_service.retrieve_relevant(
+                query=(
+                    f"conflicts wars betrayals grievances battles "
+                    f"alliances treaties involving {context.faction_id}"
+                ),
+                k=5,
+                filters=RetrievalFilter(
+                    source_types=[SourceType.LORE, SourceType.SCENE]
+                ),
+            )
+            recent_events = [
+                {"summary": chunk.content, "source": chunk.source_id}
+                for chunk in events_result.chunks
+            ]
+
+            # Query for top 3 lore entries about faction relationships
+            lore_result = await self._retrieval_service.retrieve_relevant(
+                query=f"relationships diplomacy lore about {context.faction_id}",
+                k=3,
+                filters=RetrievalFilter(source_types=[SourceType.LORE]),
+            )
+            relevant_lore = [
+                {"summary": chunk.content, "source": chunk.source_id}
+                for chunk in lore_result.chunks
+            ]
+
+            rag_success = True
+            logger.info(
+                "rag_context_enrichment_success",
+                faction_id=context.faction_id,
+                events_count=len(recent_events),
+                lore_count=len(relevant_lore),
+            )
+
+        except Exception as e:
+            # Log warning but continue without RAG context
+            logger.warning(
+                "rag_context_enrichment_failed",
+                faction_id=context.faction_id,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
+
+        # Return a NEW context with enriched data (never mutate input)
+        return DecisionContext(
             faction_id=context.faction_id,
-            message="RAG integration pending RetrievalService implementation",
-        )
-        return context
+            resources=dict(context.resources),
+            diplomacy=dict(context.diplomacy),
+            territories=list(context.territories),
+            recent_events=recent_events,
+            relevant_lore=relevant_lore,
+        ), rag_success
 
     def _get_available_actions(
         self, context: DecisionContext
@@ -403,6 +496,8 @@ class FactionDecisionService:
     ) -> Optional[List[FactionIntent]]:
         """Attempt to generate intents using LLM.
 
+        Issue 8: Adds timeout handling for LLM calls.
+
         This is a stub implementation. Future versions will:
         - Build structured prompt with context and action definitions
         - Call LLM client with JSON schema output format
@@ -428,13 +523,168 @@ class FactionDecisionService:
             message="LLM integration pending - using fallback",
         )
 
-        # TODO: Wire LLM client when available
-        # response = self._llm_client.generate(prompt, response_format="json")
-        # intents = self._parse_llm_response(response, faction.id)
-        # if self._validate_intents(intents, available_actions):
-        #     return intents
+        # TODO: Wire LLM client when available with timeout
+        # try:
+        #     response = await asyncio.wait_for(
+        #         self._llm_client.generate(prompt, response_format="json"),
+        #         timeout=LLM_TIMEOUT_SECONDS
+        #     )
+        #     raw_intents = self._parse_llm_response(response.text)
+        #     intents = self._validate_intents(raw_intents, faction.id, available_actions)
+        #     if intents:
+        #         return intents
+        # except asyncio.TimeoutError:
+        #     logger.warning(
+        #         "llm_generation_timeout",
+        #         faction_id=faction.id,
+        #         timeout_seconds=LLM_TIMEOUT_SECONDS,
+        #     )
+        #     return None
+        # except Exception as e:
+        #     logger.warning("llm_generation_failed", faction_id=faction.id, error=str(e))
+        #     return None
 
         return None
+
+    def _parse_llm_response(self, response_text: str) -> List[Dict[str, Any]]:
+        """Parse LLM response into structured intent data.
+
+        Issue 5: Multi-strategy JSON parsing with robust extraction.
+
+        Tries multiple parsing strategies:
+        1. Direct JSON parse
+        2. Extract from ```json markdown blocks
+        3. Find embedded JSON object with regex
+
+        Args:
+            response_text: Raw text response from LLM
+
+        Returns:
+            List of intent dictionaries, empty list if parsing fails
+        """
+        if not response_text:
+            return []
+
+        cleaned = response_text.strip()
+
+        # Strategy 1: Try direct JSON parse
+        try:
+            data = json.loads(cleaned)
+            if isinstance(data, dict) and "intents" in data:
+                return data["intents"]
+        except json.JSONDecodeError:
+            pass
+
+        # Strategy 2: Extract from ```json markdown blocks
+        if "```json" in cleaned:
+            start = cleaned.find("```json") + 7
+            end = cleaned.find("```", start)
+            if end != -1:
+                json_str = cleaned[start:end].strip()
+                try:
+                    data = json.loads(json_str)
+                    if isinstance(data, dict) and "intents" in data:
+                        return data["intents"]
+                except json.JSONDecodeError:
+                    pass
+
+        # Strategy 3: Find JSON object with regex
+        json_pattern = r'\{[^{}]*"intents"\s*:\s*\[[^\]]*\][^{}]*\}'
+        match = re.search(json_pattern, cleaned, re.DOTALL)
+        if match:
+            try:
+                data = json.loads(match.group())
+                if isinstance(data, dict) and "intents" in data:
+                    return data["intents"]
+            except json.JSONDecodeError:
+                pass
+
+        logger.warning(
+            "llm_response_parse_failed",
+            response_length=len(response_text),
+            response_preview=cleaned[:200],
+        )
+        return []
+
+    def _validate_intents(
+        self,
+        raw_intents: List[Dict[str, Any]],
+        faction_id: str,
+        available_actions: List[ActionDefinition],
+    ) -> List[FactionIntent]:
+        """Validate and convert raw intent data to FactionIntent objects.
+
+        Issue 5: Validates action types, filters by resource constraints,
+        enforces priority range, and truncates rationale.
+
+        Args:
+            raw_intents: List of raw intent dictionaries from LLM
+            faction_id: ID of the faction
+            available_actions: Actions that pass resource constraints
+
+        Returns:
+            List of validated FactionIntent objects
+        """
+        intents: List[FactionIntent] = []
+        available_types = {a.action_type for a in available_actions}
+        now = datetime.now()
+
+        for raw in raw_intents[:MAX_INTENTS_PER_GENERATION]:
+            try:
+                # Validate action_type against enum
+                action_type_str = raw.get("action_type", "").upper()
+                try:
+                    action_type = ActionType(action_type_str)
+                except ValueError:
+                    logger.debug(
+                        "intent_invalid_action_type",
+                        action_type=action_type_str,
+                        valid_types=[a.value for a in ActionType],
+                    )
+                    continue
+
+                # Filter by available_actions (resource constraints)
+                if action_type not in available_types:
+                    logger.debug(
+                        "intent_filtered_by_constraints",
+                        action_type=action_type.value,
+                        reason="Action not in available_actions",
+                    )
+                    continue
+
+                # Enforce priority range 1-3
+                priority = raw.get("priority", 3)
+                if not isinstance(priority, int) or priority < 1 or priority > 3:
+                    priority = 3
+
+                # Truncate rationale to MAX_RATIONALE_LENGTH
+                rationale = raw.get("rationale", "")
+                if len(rationale) > MAX_RATIONALE_LENGTH:
+                    rationale = rationale[:MAX_RATIONALE_LENGTH - 3] + "..."
+
+                if len(rationale) < 10:
+                    rationale = f"Execute {action_type.value} strategy"
+
+                intent = FactionIntent(
+                    faction_id=faction_id,
+                    action_type=action_type,
+                    target_id=raw.get("target_id"),
+                    rationale=rationale,
+                    priority=priority,
+                    status=IntentStatus.PROPOSED,
+                    created_at=now,
+                )
+                intents.append(intent)
+
+            except Exception as e:
+                logger.warning(
+                    "intent_validation_failed",
+                    raw_intent=raw,
+                    error=str(e),
+                )
+                continue
+
+        return intents
 
     def _build_llm_prompt(
         self,

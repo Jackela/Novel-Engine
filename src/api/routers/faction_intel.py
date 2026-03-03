@@ -18,7 +18,7 @@ from typing import Dict
 from uuid import uuid4
 
 import structlog
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from src.api.schemas.system_schemas import ErrorDetail
 from src.api.schemas.world_schemas import (
@@ -34,17 +34,60 @@ from src.contexts.world.domain.entities.faction_intent import (
     FactionIntent,
     IntentStatus,
 )
-from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repository import (
-    InMemoryFactionIntentRepository,
+from src.contexts.world.domain.ports.faction_intent_repository import (
+    FactionIntentRepository,
 )
 
 logger = structlog.get_logger()
 
 router = APIRouter(tags=["faction-intel"])
 
-# Singleton repository for MVP
-# In a multi-world scenario, this would be dependency-injected
-_repository = InMemoryFactionIntentRepository()
+
+def get_repository(request: Request) -> FactionIntentRepository:
+    """Get the FactionIntentRepository from DI container.
+
+    Uses app.state.faction_intent_repository registered during startup.
+    In testing mode (ORCHESTRATOR_MODE=testing), falls back to in-memory repo.
+    In production, raises RuntimeError if repository is not configured.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        FactionIntentRepository instance
+
+    Raises:
+        RuntimeError: If repository not configured in non-testing mode
+    """
+    import os
+
+    repo = getattr(request.app.state, "faction_intent_repository", None)
+    if repo is None:
+        is_testing = os.getenv("ORCHESTRATOR_MODE", "").lower() == "testing"
+        if is_testing:
+            from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repository import (
+                InMemoryFactionIntentRepository,
+            )
+            repo = InMemoryFactionIntentRepository()
+            logger.warning("using_fallback_repository_test_mode")
+        else:
+            raise RuntimeError("FactionIntentRepository not configured. Check startup initialization.")
+    return repo
+
+def _get_event_bus(request: Request):
+    """Get the EventBus from app.state.
+
+    Reads the EventBus from request.app.state.event_bus which is
+    configured during startup. Returns None if not available.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        EventBus instance or None if not configured
+    """
+    return getattr(request.app.state, "event_bus", None)
+
 
 # Rate limiting storage: faction_id -> last_generation_timestamp
 # REQ-API-004: Maximum 1 generation request per faction per 60 seconds
@@ -152,8 +195,9 @@ def _generate_mock_intents(faction_id: str) -> list[FactionIntent]:
 )
 async def generate_faction_intents(
     faction_id: str,
-    request: GenerateIntentsRequest,
-    http_request: Request,
+    request_body: GenerateIntentsRequest,
+    fastapi_request: Request,
+    repository: FactionIntentRepository = Depends(get_repository),
 ) -> GenerateIntentsResponse:
     """Trigger decision generation for a faction.
 
@@ -166,8 +210,9 @@ async def generate_faction_intents(
 
     Args:
         faction_id: Unique identifier for the faction
-        request: Optional context hints for generation
-        http_request: FastAPI request object
+        request_body: Optional context hints for generation
+        fastapi_request: FastAPI request object for accessing app.state
+        repository: Injected FactionIntentRepository
 
     Returns:
         GenerateIntentsResponse with generated intents and generation_id
@@ -179,7 +224,7 @@ async def generate_faction_intents(
     logger.info(
         "generate_intents_request",
         faction_id=faction_id,
-        context_hints=request.context_hints,
+        context_hints=request_body.context_hints,
     )
 
     # Check rate limit (REQ-API-004)
@@ -206,7 +251,7 @@ async def generate_faction_intents(
 
     # Save intents to repository
     for intent in intents:
-        _repository.save(intent)
+        repository.save(intent)
 
     # Update rate limit
     _update_rate_limit(faction_id)
@@ -214,16 +259,48 @@ async def generate_faction_intents(
     # Generate unique batch ID
     generation_id = str(uuid4())
 
+    # Publish IntentGeneratedEvent if EventBus is available
+    event_published = False
+    event_bus = _get_event_bus(fastapi_request)
+    if event_bus is not None:
+        try:
+            from src.contexts.world.domain.events.intent_events import (
+                IntentGeneratedEvent,
+            )
+
+            event = IntentGeneratedEvent.create(
+                faction_id=faction_id,
+                intent_ids=[i.id for i in intents],
+                fallback=True,  # Using mock generation
+                context_summary=f"Generated {len(intents)} intents via mock",
+                source="faction_intel_router",
+            )
+            event_bus.publish(event)
+            event_published = True
+            logger.debug(
+                "intent_generated_event_published",
+                faction_id=faction_id,
+                event_id=event.event_id,
+            )
+        except Exception as exc:
+            logger.warning(
+                "intent_event_publish_failed",
+                faction_id=faction_id,
+                error=str(exc),
+            )
+
     logger.info(
         "generate_intents_success",
         faction_id=faction_id,
         generation_id=generation_id,
         intents_count=len(intents),
+        event_published=event_published,
     )
 
     return GenerateIntentsResponse(
         intents=[_intent_to_response(i) for i in intents],
         generation_id=generation_id,
+        event_published=event_published,
     )
 
 
@@ -244,6 +321,7 @@ async def get_faction_intents(
         20, ge=1, le=100, description="Maximum number of intents to return"
     ),
     offset: int = Query(0, ge=0, description="Number of intents to skip"),
+    repository: FactionIntentRepository = Depends(get_repository),
 ) -> IntentListResponse:
     """Get intent history for a faction.
 
@@ -259,6 +337,7 @@ async def get_faction_intents(
         status: Optional filter by intent status
         limit: Maximum number of intents to return (1-100, default 20)
         offset: Number of intents to skip for pagination
+        repository: Injected FactionIntentRepository
 
     Returns:
         IntentListResponse with intents, total count, and has_more flag
@@ -280,7 +359,7 @@ async def get_faction_intents(
     if status:
         status_enum = IntentStatus(status.value)
 
-    intents, total, has_more = _repository.find_by_faction_paginated(
+    intents, total, has_more = repository.find_by_faction_paginated(
         faction_id=faction_id,
         status=status_enum,
         limit=limit,
@@ -314,6 +393,7 @@ async def get_faction_intents(
 async def select_faction_intent(
     faction_id: str,
     intent_id: str,
+    repository: FactionIntentRepository = Depends(get_repository),
 ) -> SelectIntentResponse:
     """Select an intent for execution.
 
@@ -327,6 +407,7 @@ async def select_faction_intent(
     Args:
         faction_id: Unique identifier for the faction
         intent_id: Unique identifier for the intent
+        repository: Injected FactionIntentRepository
 
     Returns:
         SelectIntentResponse with the selected intent
@@ -342,7 +423,7 @@ async def select_faction_intent(
     )
 
     # Find the intent
-    intent = _repository.find_by_id(intent_id)
+    intent = repository.find_by_id(intent_id)
 
     if intent is None:
         logger.warning(
@@ -396,7 +477,7 @@ async def select_faction_intent(
         )
 
     # Mark as selected
-    success = _repository.mark_selected(intent_id)
+    success = repository.mark_selected(intent_id)
 
     if not success:
         # This shouldn't happen if we got here, but handle defensively
@@ -409,7 +490,7 @@ async def select_faction_intent(
         )
 
     # Re-fetch to get updated state
-    updated_intent = _repository.find_by_id(intent_id)
+    updated_intent = repository.find_by_id(intent_id)
 
     logger.info(
         "select_intent_success",

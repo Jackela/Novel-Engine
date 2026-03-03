@@ -9,13 +9,14 @@
  * - Filter controls for event_type and impact_scope
  * - Expandable descriptions (max 200 chars with expand link)
  * - Accessible with ARIA roles and keyboard navigation
+ * - Virtualized list using react-window for performance with 50+ events
  */
-import { useState, useMemo } from 'react';
-import { History, Filter, X } from 'lucide-react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { VariableSizeList as List } from 'react-window';
+import { History, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/Badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -54,14 +55,32 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
 };
 
 const MAX_DESCRIPTION_LENGTH = 200;
+const LIST_HEIGHT = 400;
+const ITEM_PADDING = 12; // space-y-3 = 12px gap between items
+
+/**
+ * Estimate event card height based on content.
+ * Used for initial virtual list sizing.
+ */
+function estimateEventHeight(event: HistoryEventResponse, isExpanded: boolean): number {
+  const baseHeight = 100; // Header + title + footer + padding
+  if (isExpanded || event.description.length <= MAX_DESCRIPTION_LENGTH) {
+    // Full content: estimate lines based on length
+    const lines = Math.ceil(event.description.length / 60); // ~60 chars per line
+    const keyFiguresHeight = event.key_figures.length > 0 ? 28 : 0;
+    return baseHeight + Math.min(lines * 20, 150) + keyFiguresHeight;
+  }
+  // Truncated: fixed height
+  return baseHeight + 40;
+}
 
 type EventCardProps = {
   event: HistoryEventResponse;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
 };
 
-function EventCard({ event }: EventCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
+const EventCard = React.memo(function EventCard({ event, isExpanded, onToggleExpand }: EventCardProps) {
   const shouldTruncate = event.description.length > MAX_DESCRIPTION_LENGTH;
   const displayDescription =
     shouldTruncate && !isExpanded
@@ -79,6 +98,7 @@ function EventCard({ event }: EventCardProps) {
     <article
       className="relative rounded-lg border border-border bg-card p-4 transition-colors hover:border-border/80"
       aria-labelledby={`event-title-${event.id}`}
+      style={{ marginBottom: ITEM_PADDING }}
     >
       <div className="space-y-3">
         {/* Header: Date and badges */}
@@ -118,12 +138,22 @@ function EventCard({ event }: EventCardProps) {
           {displayDescription}
           {shouldTruncate && (
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={onToggleExpand}
               className="ml-1 text-primary underline-offset-2 hover:underline"
               aria-expanded={isExpanded}
               aria-label={isExpanded ? 'Show less' : 'Show more'}
             >
-              {isExpanded ? 'Show less' : 'Show more'}
+              {isExpanded ? (
+                <span className="flex items-center gap-1">
+                  <ChevronUp className="h-3 w-3" aria-hidden="true" />
+                  Show less
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <ChevronDown className="h-3 w-3" aria-hidden="true" />
+                  Show more
+                </span>
+              )}
             </button>
           )}
         </div>
@@ -147,7 +177,39 @@ function EventCard({ event }: EventCardProps) {
       </div>
     </article>
   );
+});
+
+/**
+ * Virtualized row component for react-window.
+ */
+interface EventRowProps {
+  index: number;
+  style: React.CSSProperties;
+  data: {
+    events: HistoryEventResponse[];
+    expandedIds: Set<string>;
+    onToggleExpand: (id: string) => void;
+  };
 }
+
+const EventRow = React.memo(function EventRow({ index, style, data }: EventRowProps) {
+  const { events, expandedIds, onToggleExpand } = data;
+  const event = events[index];
+
+  if (!event) return null;
+
+  const isExpanded = expandedIds.has(event.id);
+
+  return (
+    <div style={style} role="listitem">
+      <EventCard
+        event={event}
+        isExpanded={isExpanded}
+        onToggleExpand={() => onToggleExpand(event.id)}
+      />
+    </div>
+  );
+});
 
 type FilterControlsProps = {
   filters: EventFilterParams;
@@ -275,16 +337,51 @@ export default function WorldTimeline({ worldId, filters: externalFilters }: Pro
     page_size: 20,
     ...externalFilters,
   });
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const listRef = useRef<List>(null);
+  // Cache for item sizes to avoid recalculation
+  const itemSizeCache = useRef<Map<number, number>>(new Map());
 
   // Merge external and internal filters
-  const activeFilters = {
-    ...internalFilters,
-    ...externalFilters,
-  };
+  const activeFilters = useMemo(
+    () => ({
+      ...internalFilters,
+      ...externalFilters,
+    }),
+    [internalFilters, externalFilters]
+  );
 
   const { data, isLoading, isError, refetch } = useWorldEvents(worldId, activeFilters);
 
   const events = useMemo(() => data?.events ?? [], [data]);
+
+  // Reset expanded state and size cache when events change
+  useEffect(() => {
+    setExpandedIds(new Set());
+    itemSizeCache.current.clear();
+    listRef.current?.resetAfterIndex(0);
+  }, [events.length, activeFilters]);
+
+  // Toggle expand/collapse for an event
+  const handleToggleExpand = useCallback((eventId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(eventId)) {
+        next.delete(eventId);
+      } else {
+        next.add(eventId);
+      }
+      return next;
+    });
+
+    // Find the index and reset its size
+    const index = events.findIndex((e) => e.id === eventId);
+    if (index !== -1) {
+      itemSizeCache.current.delete(index);
+      listRef.current?.resetAfterIndex(index);
+    }
+  }, [events]);
 
   const handleFiltersChange = (newFilters: EventFilterParams) => {
     setInternalFilters(newFilters);
@@ -296,6 +393,33 @@ export default function WorldTimeline({ worldId, filters: externalFilters }: Pro
       page_size: 20,
     });
   };
+
+  // Get item size for virtual list
+  const getItemSize = useCallback(
+    (index: number) => {
+      // Check cache first
+      if (itemSizeCache.current.has(index)) {
+        return itemSizeCache.current.get(index)!;
+      }
+
+      const event = events[index];
+      if (!event) {
+        return 140; // Default fallback
+      }
+
+      const isExpanded = expandedIds.has(event.id);
+      const height = estimateEventHeight(event, isExpanded);
+      itemSizeCache.current.set(index, height);
+      return height;
+    },
+    [events, expandedIds]
+  );
+
+  // Memoize list data to avoid unnecessary re-renders
+  const listData = useMemo(
+    () => ({ events, expandedIds, onToggleExpand: handleToggleExpand }),
+    [events, expandedIds, handleToggleExpand]
+  );
 
   // Empty state
   if (!isLoading && !isError && events.length === 0) {
@@ -380,17 +504,18 @@ export default function WorldTimeline({ worldId, filters: externalFilters }: Pro
         {isLoading ? (
           <TimelineSkeleton />
         ) : (
-          <ScrollArea className="h-[400px] pr-4">
-            <div
-              className="space-y-3"
-              role="feed"
-              aria-label="Historical events timeline"
+          <div style={{ height: LIST_HEIGHT }} className="pr-4" role="list" aria-label="Historical events timeline">
+            <List
+              ref={listRef}
+              height={LIST_HEIGHT}
+              itemCount={events.length}
+              itemSize={getItemSize}
+              width="100%"
+              itemData={listData}
             >
-              {events.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          </ScrollArea>
+              {EventRow}
+            </List>
+          </div>
         )}
       </CardContent>
     </Card>

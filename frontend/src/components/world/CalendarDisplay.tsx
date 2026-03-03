@@ -4,7 +4,7 @@
  * Displays the current world calendar with controls to advance time.
  * Provides accessible UI with loading, error, and success states.
  */
-import { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Clock, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import {
   Card,
@@ -32,7 +32,7 @@ interface CalendarDisplayProps {
  * - Loading and error states
  * - Accessible with WCAG 2.1 AA compliance
  */
-export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
+export const CalendarDisplay = React.memo(function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
   const [announcement, setAnnouncement] = useState<string>('');
   const [isAdvancingUi, setIsAdvancingUi] = useState(false);
   const {
@@ -45,7 +45,7 @@ export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
 
   const advanceMutation = useAdvanceCalendar();
 
-  const handleAdvance = async (days: number) => {
+  const handleAdvance = useCallback(async (days: number) => {
     setIsAdvancingUi(true);
     try {
       await advanceMutation.mutateAsync({ worldId, days });
@@ -56,7 +56,27 @@ export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
     } finally {
       setIsAdvancingUi(false);
     }
-  };
+  }, [worldId, onAdvance, advanceMutation]);
+
+  // Memoize retry handler
+  const handleRetry = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  // Memoize derived state
+  const isAdvancing = useMemo(() =>
+    isAdvancingUi || advanceMutation.isPending,
+    [isAdvancingUi, advanceMutation.isPending]
+  );
+
+  // Memoize formatted date derivation
+  const formattedDateWithoutEra = useMemo(() => {
+    if (!calendar) return '';
+    const eraSuffix = ` - ${calendar.era_name}`;
+    return calendar.formatted_date.endsWith(eraSuffix)
+      ? calendar.formatted_date.slice(0, -eraSuffix.length)
+      : calendar.formatted_date;
+  }, [calendar]);
 
   // Loading state with skeleton
   if (isLoading) {
@@ -106,7 +126,7 @@ export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => refetch()}
+              onClick={handleRetry}
               aria-label="Retry loading calendar"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
@@ -117,12 +137,6 @@ export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
       </Card>
     );
   }
-
-  const isAdvancing = isAdvancingUi || advanceMutation.isPending;
-  const eraSuffix = ` - ${calendar.era_name}`;
-  const formattedDateWithoutEra = calendar.formatted_date.endsWith(eraSuffix)
-    ? calendar.formatted_date.slice(0, -eraSuffix.length)
-    : calendar.formatted_date;
 
   return (
     <Card data-testid="calendar-display" data-state="success">
@@ -190,6 +204,6 @@ export function CalendarDisplay({ worldId, onAdvance }: CalendarDisplayProps) {
       </CardContent>
     </Card>
   );
-}
+});
 
 export default CalendarDisplay;

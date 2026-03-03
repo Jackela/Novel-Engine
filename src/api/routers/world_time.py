@@ -10,8 +10,10 @@ Endpoints:
 
 from __future__ import annotations
 
+import os
+
 import structlog
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.schemas.system_schemas import ErrorDetail
 from src.api.schemas.world_schemas import (
@@ -19,37 +21,75 @@ from src.api.schemas.world_schemas import (
     WorldTimeResponse,
 )
 from src.contexts.world.application.services.time_service import TimeService
-from src.contexts.world.infrastructure.persistence.in_memory_calendar_repository import (
-    InMemoryCalendarRepository,
-)
-from src.events.event_bus import EventBus
+from src.contexts.world.domain.ports.calendar_repository import CalendarRepository
 
 logger = structlog.get_logger()
 
 router = APIRouter(tags=["world-time"])
 
-# Singleton repository and service for the default world
-# In a multi-world scenario, this would be dependency-injected
-_repository = InMemoryCalendarRepository()
-_service = TimeService(_repository)
-_event_bus: EventBus | None = None
-
 # Default world ID for single-world MVP
 DEFAULT_WORLD_ID = "default"
 
 
-def set_event_bus(event_bus: EventBus) -> None:
-    """Set the event bus for publishing time events.
+def get_repository(request: Request) -> CalendarRepository:
+    """Get the CalendarRepository from DI container.
 
-    This should be called during application startup to enable
-    event publishing from the router.
+    Uses app.state.calendar_repository registered during startup.
+    In testing mode (ORCHESTRATOR_MODE=testing), falls back to in-memory repo.
+    In production, raises RuntimeError if repository is not configured.
 
     Args:
-        event_bus: The EventBus instance to use for publishing events
+        request: FastAPI request object
+
+    Returns:
+        CalendarRepository instance
+
+    Raises:
+        RuntimeError: If repository not configured in non-testing mode
     """
-    global _event_bus
-    _event_bus = event_bus
-    logger.info("world_time_router_event_bus_configured")
+    repo = getattr(request.app.state, "calendar_repository", None)
+    if repo is None:
+        is_testing = os.getenv("ORCHESTRATOR_MODE", "").lower() == "testing"
+        if is_testing:
+            from src.contexts.world.infrastructure.persistence.in_memory_calendar_repository import (
+                InMemoryCalendarRepository,
+            )
+            repo = InMemoryCalendarRepository()
+            logger.warning("using_fallback_repository_test_mode")
+        else:
+            raise RuntimeError("CalendarRepository not configured. Check startup initialization.")
+    return repo
+
+
+def get_time_service(request: Request) -> TimeService:
+    """Get the TimeService with injected repository.
+
+    Creates a TimeService instance using the CalendarRepository
+    from the DI container.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        TimeService instance with injected repository
+    """
+    repo = get_repository(request)
+    return TimeService(repo)
+
+
+def _get_event_bus(request: Request):
+    """Get the EventBus from app.state.
+
+    Reads the EventBus from request.app.state.event_bus which is
+    configured during startup. Returns None if not available.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        EventBus instance or None if not configured
+    """
+    return getattr(request.app.state, "event_bus", None)
 
 
 def _calendar_to_response(calendar) -> WorldTimeResponse:
@@ -71,11 +111,18 @@ def _calendar_to_response(calendar) -> WorldTimeResponse:
 
 
 @router.get("/world/time", response_model=WorldTimeResponse)
-async def get_world_time() -> WorldTimeResponse:
+async def get_world_time(
+    request: Request,
+    service: TimeService = Depends(get_time_service),
+) -> WorldTimeResponse:
     """Get the current world time.
 
     Returns the current in-world date. If no calendar exists,
     a default calendar is created (year=1, month=1, day=1, era_name="First Age").
+
+    Args:
+        request: FastAPI request object for accessing app.state
+        service: Injected TimeService
 
     Returns:
         WorldTimeResponse with current calendar state
@@ -91,7 +138,7 @@ async def get_world_time() -> WorldTimeResponse:
         }
     """
     logger.debug("get_world_time_request", world_id=DEFAULT_WORLD_ID)
-    calendar = _service.get_time(DEFAULT_WORLD_ID)
+    calendar = service.get_time(DEFAULT_WORLD_ID)
     response = _calendar_to_response(calendar)
     logger.debug(
         "get_world_time_response",
@@ -105,14 +152,20 @@ async def get_world_time() -> WorldTimeResponse:
 
 
 @router.post("/world/time/advance", response_model=WorldTimeResponse)
-async def advance_world_time(request: AdvanceTimeRequest) -> WorldTimeResponse:
+async def advance_world_time(
+    request_body: AdvanceTimeRequest,
+    fastapi_request: Request,
+    service: TimeService = Depends(get_time_service),
+) -> WorldTimeResponse:
     """Advance the world time by a specified number of days.
 
     Advances the in-world calendar and emits a TimeAdvancedEvent.
     The days parameter must be >= 1.
 
     Args:
-        request: AdvanceTimeRequest with days to advance
+        request_body: AdvanceTimeRequest with days to advance
+        fastapi_request: FastAPI request object for accessing app.state
+        service: Injected TimeService
 
     Returns:
         WorldTimeResponse with updated calendar state
@@ -135,16 +188,16 @@ async def advance_world_time(request: AdvanceTimeRequest) -> WorldTimeResponse:
     logger.info(
         "advance_world_time_request",
         world_id=DEFAULT_WORLD_ID,
-        days=request.days,
+        days=request_body.days,
     )
 
-    result = _service.advance_time(DEFAULT_WORLD_ID, request.days)
+    result = service.advance_time(DEFAULT_WORLD_ID, request_body.days)
 
     if result.is_error:
         logger.error(
             "advance_world_time_failed",
             world_id=DEFAULT_WORLD_ID,
-            days=request.days,
+            days=request_body.days,
             error=result.error,
         )
         raise HTTPException(
@@ -158,9 +211,10 @@ async def advance_world_time(request: AdvanceTimeRequest) -> WorldTimeResponse:
     calendar, event = result.value
 
     # Publish the event to the event bus if available
-    if _event_bus is not None:
+    event_bus = _get_event_bus(fastapi_request)
+    if event_bus is not None:
         try:
-            await _event_bus.publish(event)
+            await event_bus.publish(event)
             logger.info(
                 "time_advanced_event_published",
                 world_id=DEFAULT_WORLD_ID,

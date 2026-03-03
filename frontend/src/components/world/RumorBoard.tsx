@@ -11,13 +11,14 @@
  * - Spread count indicator
  * - Age display (days ago or Today)
  * - Accessible with ARIA roles and keyboard navigation
+ * - Virtualized list using react-window for performance with 50+ rumors
  */
-import { useState } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { MessageCircleWarning, TrendingUp, CheckCircle, AlertTriangle, XCircle, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { VariableSizeList as List } from 'react-window';
 import { Badge } from '@/shared/components/ui/Badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -54,35 +55,72 @@ const VERACITY_ICONS: Record<string, React.ReactNode> = {
 };
 
 const MAX_CONTENT_LENGTH = 150;
+const LIST_HEIGHT = 400;
+const ITEM_PADDING = 12; // space-y-3 = 12px gap between items
+
+/**
+ * Estimate rumor card height based on content length.
+ * Used for initial virtual list sizing.
+ */
+function estimateRumorHeight(content: string, isExpanded: boolean): number {
+  const baseHeight = 100; // Header + footer + padding
+  if (isExpanded || content.length <= MAX_CONTENT_LENGTH) {
+    // Full content: estimate lines based on length
+    const lines = Math.ceil(content.length / 60); // ~60 chars per line
+    return baseHeight + Math.min(lines * 20, 200); // Cap at 200px for content
+  }
+  // Truncated: fixed height
+  return baseHeight + 40;
+}
 
 type RumorCardProps = {
   rumor: RumorResponse;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
 };
 
-function RumorCard({ rumor }: RumorCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+const RumorCard = React.memo(function RumorCard({ rumor, isExpanded, onToggleExpand }: RumorCardProps) {
+  // Memoize derived data
+  const shouldTruncate = useMemo(
+    () => rumor.content.length > MAX_CONTENT_LENGTH,
+    [rumor.content]
+  );
 
-  const shouldTruncate = rumor.content.length > MAX_CONTENT_LENGTH;
-  const displayContent =
-    shouldTruncate && !isExpanded
+  const displayContent = useMemo(
+    () => shouldTruncate && !isExpanded
       ? rumor.content.slice(0, MAX_CONTENT_LENGTH) + '...'
-      : rumor.content;
+      : rumor.content,
+    [shouldTruncate, isExpanded, rumor.content]
+  );
 
-  const colorClasses =
-    VERACITY_COLORS[rumor.veracity_label as keyof typeof VERACITY_COLORS] ??
-    VERACITY_COLORS.Uncertain;
-  const veracityIcon = VERACITY_ICONS[rumor.veracity_label] || VERACITY_ICONS.Uncertain;
+  const colorClasses = useMemo(
+    () => VERACITY_COLORS[rumor.veracity_label as keyof typeof VERACITY_COLORS] ??
+      VERACITY_COLORS.Uncertain,
+    [rumor.veracity_label]
+  );
+
+  const veracityIcon = useMemo(
+    () => VERACITY_ICONS[rumor.veracity_label] || VERACITY_ICONS.Uncertain,
+    [rumor.veracity_label]
+  );
 
   // Calculate age in days
-  const ageDays = rumor.created_date
-    ? Math.max(0, rumor.created_date.day) // Simplified: just use day as proxy for age
-    : 0;
+  const ageDisplay = useMemo(() => {
+    const ageDays = rumor.created_date
+      ? Math.max(0, rumor.created_date.day) // Simplified: just use day as proxy for age
+      : 0;
+    return ageDays === 0 ? 'Today' : `${ageDays} day${ageDays === 1 ? '' : 's'} ago`;
+  }, [rumor.created_date]);
 
-  const ageDisplay = ageDays === 0 ? 'Today' : `${ageDays} day${ageDays === 1 ? '' : 's'} ago`;
+  const originLocationDisplay = useMemo(
+    () => rumor.origin_location_id.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    [rumor.origin_location_id]
+  );
 
   return (
     <li
       className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-border/80"
+      style={{ marginBottom: ITEM_PADDING }}
     >
       <div className="space-y-3">
         {/* Header: Veracity badge and spread count */}
@@ -110,7 +148,7 @@ function RumorCard({ rumor }: RumorCardProps) {
           <p className="text-sm leading-relaxed">{displayContent}</p>
           {shouldTruncate && (
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={onToggleExpand}
               className="text-xs text-primary hover:underline"
               aria-expanded={isExpanded}
             >
@@ -134,7 +172,7 @@ function RumorCard({ rumor }: RumorCardProps) {
           <div className="flex items-center gap-1">
             <MessageCircleWarning className="h-3 w-3" aria-hidden="true" />
             <span className="truncate max-w-[200px]">
-              From: {rumor.origin_location_id.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+              From: {originLocationDisplay}
             </span>
           </div>
           <span>{ageDisplay}</span>
@@ -142,7 +180,39 @@ function RumorCard({ rumor }: RumorCardProps) {
       </div>
     </li>
   );
+});
+
+/**
+ * Virtualized row component for react-window.
+ */
+interface RumorRowProps {
+  index: number;
+  style: React.CSSProperties;
+  data: {
+    rumors: RumorResponse[];
+    expandedIds: Set<string>;
+    onToggleExpand: (id: string) => void;
+  };
 }
+
+const RumorRow = React.memo(function RumorRow({ index, style, data }: RumorRowProps) {
+  const { rumors, expandedIds, onToggleExpand } = data;
+  const rumor = rumors[index];
+
+  if (!rumor) return null;
+
+  const isExpanded = expandedIds.has(rumor.rumor_id);
+
+  return (
+    <div style={style} role="listitem">
+      <RumorCard
+        rumor={rumor}
+        isExpanded={isExpanded}
+        onToggleExpand={() => onToggleExpand(rumor.rumor_id)}
+      />
+    </div>
+  );
+});
 
 function RumorSkeleton() {
   return (
@@ -161,8 +231,13 @@ function RumorSkeleton() {
   );
 }
 
-export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
+export const RumorBoard = React.memo(function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
   const [sortBy, setSortBy] = useState<RumorSortBy>('recent');
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const listRef = useRef<List>(null);
+  // Cache for item sizes to avoid recalculation
+  const itemSizeCache = useRef<Map<number, number>>(new Map());
 
   const { data, isLoading, isError, refetch } = useRumors(
     worldId,
@@ -171,7 +246,71 @@ export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
     maxItems
   );
 
-  const rumors = data?.rumors ?? [];
+  // Memoize derived data
+  const rumors = useMemo(() => data?.rumors ?? [], [data?.rumors]);
+
+  // Reset expanded state and size cache when rumors change
+  useEffect(() => {
+    setExpandedIds(new Set());
+    itemSizeCache.current.clear();
+    listRef.current?.resetAfterIndex(0);
+  }, [rumors.length, sortBy]);
+
+  // Toggle expand/collapse for a rumor
+  const handleToggleExpand = useCallback((rumorId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(rumorId)) {
+        next.delete(rumorId);
+      } else {
+        next.add(rumorId);
+      }
+      return next;
+    });
+
+    // Find the index and reset its size
+    const index = rumors.findIndex((r) => r.rumor_id === rumorId);
+    if (index !== -1) {
+      itemSizeCache.current.delete(index);
+      listRef.current?.resetAfterIndex(index);
+    }
+  }, [rumors]);
+
+  // Memoize handlers
+  const handleSortChange = useCallback((value: RumorSortBy) => {
+    setSortBy(value);
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  // Get item size for virtual list
+  const getItemSize = useCallback(
+    (index: number) => {
+      // Check cache first
+      if (itemSizeCache.current.has(index)) {
+        return itemSizeCache.current.get(index)!;
+      }
+
+      const rumor = rumors[index];
+      if (!rumor) {
+        return 140; // Default fallback
+      }
+
+      const isExpanded = expandedIds.has(rumor.rumor_id);
+      const height = estimateRumorHeight(rumor.content, isExpanded);
+      itemSizeCache.current.set(index, height);
+      return height;
+    },
+    [rumors, expandedIds]
+  );
+
+  // Memoize list data to avoid unnecessary re-renders
+  const listData = useMemo(
+    () => ({ rumors, expandedIds, onToggleExpand: handleToggleExpand }),
+    [rumors, expandedIds, handleToggleExpand]
+  );
 
   return (
     <Card className="h-full">
@@ -184,7 +323,7 @@ export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
           {/* Sort dropdown */}
           <Select
             value={sortBy}
-            onValueChange={(value: RumorSortBy) => setSortBy(value)}
+            onValueChange={handleSortChange}
           >
             <SelectTrigger
               className="w-[140px] h-8"
@@ -216,7 +355,7 @@ export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => refetch()}
+              onClick={handleRetry}
             >
               Try again
             </Button>
@@ -229,20 +368,22 @@ export function RumorBoard({ worldId, locationId, maxItems = 20 }: Props) {
             </p>
           </div>
         ) : (
-          <ScrollArea className="h-[400px] pr-4">
-            <ul
-              className="space-y-3"
-              aria-label="Rumors"
+          <div style={{ height: LIST_HEIGHT }} className="pr-4" role="list" aria-label="Rumors list">
+            <List
+              ref={listRef}
+              height={LIST_HEIGHT}
+              itemCount={rumors.length}
+              itemSize={getItemSize}
+              width="100%"
+              itemData={listData}
             >
-              {rumors.map((rumor) => (
-                <RumorCard key={rumor.rumor_id} rumor={rumor} />
-              ))}
-            </ul>
-          </ScrollArea>
+              {RumorRow}
+            </List>
+          </div>
         )}
       </CardContent>
     </Card>
   );
-}
+});
 
 export default RumorBoard;

@@ -129,6 +129,19 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
   const listRef = useRef<List>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Refs to avoid stale closures in async callbacks
+  const messagesRef = useRef(messages);
+  const streamingContentRef = useRef(streamingContent);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    streamingContentRef.current = streamingContent;
+  }, [streamingContent]);
+
   // Cache for item sizes to avoid recalculation
   const itemSizeCache = useRef<Map<number, number>>(new Map());
 
@@ -210,16 +223,21 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
 
     // Add user message
     const userMessage: ChatMessage = { role: 'user', content: trimmedInput };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => {
+      // Update ref to keep it in sync for the API call below
+      messagesRef.current = [...prev, userMessage];
+      return messagesRef.current;
+    });
     setInput('');
     setIsStreaming(true);
     setStreamingContent('');
 
     // Clear size cache for new index
-    itemSizeCache.current.delete(messages.length);
+    itemSizeCache.current.delete(messagesRef.current.length - 1);
 
-    // Prepare messages for API
-    const chatHistory = messages.map((msg) => ({
+    // Prepare messages for API using ref to get the latest messages
+    // This avoids stale closure bug where messages state hasn't updated yet
+    const chatHistory = messagesRef.current.map((msg) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
     }));
@@ -234,9 +252,10 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
         (chunk: ChatChunk) => {
           if (chunk.done) {
             // Final chunk - add complete assistant message
+            // Use ref to get the latest streaming content
             const assistantMessage: ChatMessage = {
               role: 'assistant',
-              content: streamingContent + chunk.delta,
+              content: streamingContentRef.current + chunk.delta,
             };
             setMessages((prev) => {
               itemSizeCache.current.delete(prev.length + 1);
@@ -246,7 +265,11 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
             setIsStreaming(false);
           } else {
             // Streaming chunk - accumulate content
-            setStreamingContent((prev) => prev + chunk.delta);
+            setStreamingContent((prev) => {
+              const updated = prev + chunk.delta;
+              streamingContentRef.current = updated;
+              return updated;
+            });
           }
         },
         (error: Error) => {
@@ -267,7 +290,7 @@ export function ChatInterface({ sessionId = 'default' }: ChatInterfaceProps) {
       ]);
       setIsStreaming(false);
     }
-  }, [input, isStreaming, messages, sessionId, streamingContent]);
+  }, [input, isStreaming, sessionId]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

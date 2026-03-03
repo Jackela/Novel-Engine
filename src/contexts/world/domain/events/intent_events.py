@@ -34,6 +34,7 @@ class IntentGeneratedEvent(Event):
         fallback: True if fallback rule-based generation was used
         context_summary: Brief summary of decision context (resources, diplomacy)
         generation_method: Method used ('llm' or 'fallback')
+        rag_enriched: True if RAG context enrichment was successful (Issue 7)
 
     Example:
         >>> event = IntentGeneratedEvent(
@@ -55,6 +56,7 @@ class IntentGeneratedEvent(Event):
     fallback: bool = False
     context_summary: str = ""
     generation_method: str = "llm"
+    rag_enriched: bool = False  # Issue 7: Track RAG enrichment status
 
     def __post_init__(self) -> None:
         """Initialize event with intent-specific metadata and validation."""
@@ -83,6 +85,7 @@ class IntentGeneratedEvent(Event):
             "fallback": self.fallback,
             "context_summary": self.context_summary,
             "generation_method": self.generation_method,
+            "rag_enriched": self.rag_enriched,
         })
 
         # Call parent post_init

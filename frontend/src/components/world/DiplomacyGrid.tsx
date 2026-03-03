@@ -12,7 +12,7 @@
  * - HOSTILE: red
  * - AT_WAR: dark-red
  */
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -85,11 +85,15 @@ interface PactDetailDialogProps {
   onClose: () => void;
 }
 
-function PactDetailDialog({ pact, open, onClose }: PactDetailDialogProps) {
+const PactDetailDialog = React.memo(function PactDetailDialog({ pact, open, onClose }: PactDetailDialogProps) {
   if (!pact) return null;
 
+  const handleOpenChange = useCallback((next: boolean) => {
+    if (!next) onClose();
+  }, [onClose]);
+
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md" aria-modal="true">
         <DialogHeader>
           <DialogTitle>Pact Details</DialogTitle>
@@ -135,7 +139,7 @@ function PactDetailDialog({ pact, open, onClose }: PactDetailDialogProps) {
       </DialogContent>
     </Dialog>
   );
-}
+});
 
 export interface DiplomacyGridProps {
   /** The world ID to fetch diplomacy data for */
@@ -163,7 +167,7 @@ export interface DiplomacyGridProps {
  * }
  * ```
  */
-export function DiplomacyGrid({
+export const DiplomacyGrid = React.memo(function DiplomacyGrid({
   worldId,
   className,
   factionNames = {},
@@ -172,12 +176,12 @@ export function DiplomacyGrid({
   const [selectedPact, setSelectedPact] = useState<PactSummary | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Get faction display name
-  const getFactionName = (factionId: string): string => {
+  // Memoize getFactionName callback
+  const getFactionName = useCallback((factionId: string): string => {
     return factionNames[factionId] ?? factionId;
-  };
+  }, [factionNames]);
 
-  // Find pact between two factions
+  // Find pact between two factions - memoized function
   const findPact = useMemo(() => {
     return (factionA: string, factionB: string): PactSummary | undefined => {
       if (!data?.active_pacts) return undefined;
@@ -189,8 +193,8 @@ export function DiplomacyGrid({
     };
   }, [data?.active_pacts]);
 
-  // Handle cell click
-  const handleCellClick = (factionA: string, factionB: string) => {
+  // Handle cell click - memoized
+  const handleCellClick = useCallback((factionA: string, factionB: string) => {
     if (factionA === factionB) return; // Don't show dialog for self
 
     const pact = findPact(factionA, factionB);
@@ -198,7 +202,12 @@ export function DiplomacyGrid({
       setSelectedPact(pact);
       setDialogOpen(true);
     }
-  };
+  }, [findPact]);
+
+  // Handle dialog close - memoized
+  const handleDialogClose = useCallback(() => {
+    setDialogOpen(false);
+  }, []);
 
   // Loading state
   if (isLoading) {
@@ -358,10 +367,10 @@ export function DiplomacyGrid({
       <PactDetailDialog
         pact={selectedPact}
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={handleDialogClose}
       />
     </TooltipProvider>
   );
-}
+});
 
 export default DiplomacyGrid;

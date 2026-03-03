@@ -45,8 +45,8 @@ logger = logging.getLogger(__name__)
 class StateStoreConfig(BaseModel):
     """State store configuration"""
 
-    redis_url: str = "redis://localhost:6379/0"
-    postgres_url: str = "postgresql://user:pass@localhost:5432/novelengine"
+    redis_url: str = Field(default="", description="Redis connection URL (set via REDIS_URL env var)")
+    postgres_url: str = Field(default="", description="PostgreSQL connection URL (set via POSTGRES_URL env var)")
     s3_bucket: str = "novel-engine-storage"
     s3_region: str = "us-east-1"
     aws_access_key: Optional[str] = None
@@ -55,6 +55,14 @@ class StateStoreConfig(BaseModel):
     cache_ttl: int = 3600  # 1 hour
     max_retries: int = 3
     connection_timeout: int = 30
+
+    def __init__(self, **data):
+        # Allow environment variable overrides for sensitive values
+        if not data.get("redis_url"):
+            data["redis_url"] = os.getenv("REDIS_URL", "")
+        if not data.get("postgres_url"):
+            data["postgres_url"] = os.getenv("POSTGRES_URL", "")
+        super().__init__(**data)
 
 
 @dataclass
@@ -1045,8 +1053,8 @@ class ConfigurationManager:
         """Get default configuration"""
         return {
             "state_store": {
-                "redis_url": "redis://localhost:6379/0",
-                "postgres_url": "postgresql://postgres:password@localhost:5432/novelengine",
+                "redis_url": "",  # Set via REDIS_URL environment variable
+                "postgres_url": "",  # Set via POSTGRES_URL environment variable
                 "s3_bucket": "novel-engine-storage",
                 "s3_region": "us-east-1",
                 "cache_ttl": 3600,
