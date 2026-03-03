@@ -6,6 +6,8 @@ Tests the Snapshots API endpoints with full request/response validation.
 Snapshots preserve world state for rollback and recovery.
 """
 
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -66,7 +68,7 @@ class TestSnapshotsAPICreateEndpoint:
         snapshot_data = {
             "description": "Custom state snapshot",
             "tick_number": 5,
-            "state_json": {"characters": ["hero"], "factions": ["guild"]},
+            "state_json": json.dumps({"characters": ["hero"], "factions": ["guild"]}),
         }
 
         response = client.post(
@@ -74,11 +76,9 @@ class TestSnapshotsAPICreateEndpoint:
             json=snapshot_data,
         )
 
-        # May return 200 or 422 depending on validation
-        assert response.status_code in [200, 201]
-        if response.status_code in [200, 201]:
-            data = response.json()
-            assert data["tick_number"] == 5
+        assert response.status_code == 200
+        data = response.json()
+        assert data["tick_number"] == 5
 
 
     @pytest.mark.integration
@@ -259,8 +259,11 @@ class TestSnapshotsAPIDeleteEndpoint:
 
         assert response.status_code == 404
         data = response.json()
-        # Handle various error response formats
-        assert "not found" in str(data).lower() or "error" in str(data).lower()
+        # API returns 404 with error code - either NOT_FOUND (endpoint) or SNAPSHOT_NOT_FOUND (service)
+        assert data.get("code") in ["NOT_FOUND", "SNAPSHOT_NOT_FOUND"]
+        # Check message contains relevant info
+        message = data.get("message", "")
+        assert "not found" in message.lower() or "does not exist" in message.lower()
 
 
 class TestSnapshotsAPIIntegration:
