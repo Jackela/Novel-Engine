@@ -24,6 +24,11 @@ set -o pipefail
 MIN_PYRAMID_SCORE=5.5
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPORTS_DIR="$PROJECT_ROOT/reports"
+
+# Source CI environment variables
+if [ -f "$PROJECT_ROOT/.env.ci" ]; then
+    source "$PROJECT_ROOT/.env.ci"
+fi
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
 # Colors for output
